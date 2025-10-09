@@ -1483,7 +1483,6 @@ files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
-markers = {main = "extra == \"pydantic\""}
 
 [[package]]
 name = "typing-inspection"
@@ -1555,4 +1554,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "200da00c01f7378b6d52301b11a06225069e76454d759f69f6bee96a60214fc3"
+content-hash = "9d87b7d9337c842fca8f1453a05eea1b4e60247bec2fdeae4281766c521f6c48"
