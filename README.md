@@ -5,12 +5,18 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 
-Modern REST framework for Django with types and async support
+Modern REST framework for Django with types and async support!
+
 
 ## Features
 
 - Fully typed with annotations and checked with mypy, [PEP561 compatible](https://www.python.org/dev/peps/pep-0561/)
+- Supports `pydantic2`, but not bound to it. Future versions will include `msgspec` support
+- Supports `asyncio`
+- Supports `openapi` schema generation out of the box
+- Supports all your existing `django` primitives and packages
 - Add yours!
+
 
 ## Installation
 
@@ -18,20 +24,19 @@ Modern REST framework for Django with types and async support
 pip install django-modern-rest
 ```
 
+There are several included extras:
+- `'django-modern-rest[pydantic]'` provides `pydantic` support
+
+
 ## Example
 
-Showcase how your project can be used:
+TODO: ...
 
-```python
-from django_modern_rest.example import some_function
-
-print(some_function(3, 4))
-# => 7
-```
 
 ## License
 
 [MIT](https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE)
+
 
 ## Credits
 
