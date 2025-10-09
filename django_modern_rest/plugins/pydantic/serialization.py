@@ -40,7 +40,10 @@ def _model_dump_kwargs() -> dict[str, Any]:
         getattr(settings, DMR_SETTINGS, {})
         .get('pydantic', {})
         # TODO: document defaults
-        .get('model_dump_kwargs', {'mode': 'json'})
+        .get(
+            'model_dump_kwargs',
+            {'mode': 'json', 'by_alias': True, 'by_name': False},
+        )
     )
 
 
@@ -49,5 +52,5 @@ def _model_validate_kwargs() -> dict[str, Any]:
     return (  # type: ignore[no-any-return]
         getattr(settings, DMR_SETTINGS, {})
         .get('pydantic', {})
-        .get('model_validate_kwargs', {})
+        .get('model_validate_kwargs', {'by_alias': True, 'by_name': False})
     )
