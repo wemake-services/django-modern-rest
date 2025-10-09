@@ -43,6 +43,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
+typing_extensions = ">=4"
 
 pydantic = { version = "^2.12", optional = true }
 
@@ -50,7 +51,8 @@ pydantic = { version = "^2.12", optional = true }
 pydantic = ["pydantic"]
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.18"
+django = "^5.2"
+django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
 
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"

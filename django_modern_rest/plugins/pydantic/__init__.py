@@ -1,7 +1,5 @@
-from typing import final
-
 try:
-    import pydantic
+    import pydantic  # noqa: F401
 except ImportError:  # pragma: no cover
     print(  # noqa: WPS421
         'Looks like `pydantic` is not installed, '
@@ -10,8 +8,5 @@ except ImportError:  # pragma: no cover
     raise
 
 
-@final
-class PydanticSerialization:
-    """Serializes request and response data as pydantic models."""
-
-    serialize = pydantic
+from django_modern_rest.plugins.pydantic.components import Query as Query
+from django_modern_rest.plugins.pydantic.controller import rest as rest
