@@ -41,6 +41,6 @@ def combine_controllers(*controllers: type['Controller']) -> _ViewFunc:
             for controller, view_func in views:
                 if method in controller.existing_http_methods:
                     return view_func(request, *args, **kwargs)
-            return super().dispatch(request, *args, **kwargs)
+            return self.http_method_not_allowed(request, *args, **kwargs)
 
     return ComposedControllerView.as_view()
