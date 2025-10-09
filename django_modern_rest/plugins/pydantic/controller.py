@@ -71,7 +71,7 @@ def rest(
         ) -> HttpResponse:
             model = method(self, *args, **kwargs)
             return HttpResponse(
-                model_dump_json(model, self.model_dump_json_kwargs),
+                model_dump_json(model, self.return_dto_kwargs),
                 content_type='application/json',
             )
 
