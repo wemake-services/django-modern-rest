@@ -1,55 +1,75 @@
 from collections.abc import Callable
-from functools import wraps
-from typing import TYPE_CHECKING, Concatenate, TypeVar, overload
+from typing import Any, ClassVar, TypeAlias
 
 import pydantic
-from django.http import HttpRequest, HttpResponse
-from typing_extensions import ParamSpec
+from django.utils.module_loading import import_string
 
-from django_modern_rest.plugins.pydantic.serialization import model_dump_json
+from django_modern_rest.controller import FromJson, RestEndpoint
+from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.settings import (
+    DMR_JSON_DESERIALIZER_KEY,
+    DMR_JSON_SERIALIZER_KEY,
+    resolve_defaults,
+)
 
-if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-
-_ParamT = ParamSpec('_ParamT')
-_SelfT = TypeVar('_SelfT', bound='Controller')
-_ModelT = TypeVar('_ModelT', bound=pydantic.BaseModel)
+_SerializeHook: TypeAlias = Callable[[Any], Any]
+_Serialize: TypeAlias = Callable[[Any, _SerializeHook], str]
 
 
-@overload
+_Deserealize: TypeAlias = Callable[[FromJson], Any]
+
+
+class PydanticSerializer(BaseSerializer):
+    _serialize: ClassVar[_Serialize]
+    _deserialize: ClassVar[_Deserealize]
+
+    @classmethod
+    def to_json(cls, structure: Any) -> str:
+        return cls._serialize()(structure, cls.serialization_hook)
+
+    @classmethod
+    def serialization_hook(cls, to_serialize: Any) -> Any:
+        # TODO: implement custom `pydantic` fields support
+        return super().serialization_hook(to_serialize)
+
+    @classmethod
+    def from_json(cls, buffer: FromJson) -> Any:
+        return cls._deserialize()(buffer)
+
+    # TODO: merge `_serialize` and `_deserialize`?
+    @classmethod
+    def _serialize(cls) -> _Serialize:
+        existing_attr = getattr(cls, '_serialize', None)
+        if existing_attr is not None:
+            return existing_attr
+
+        setting = cls._setting_name(DMR_JSON_SERIALIZER_KEY)
+        cls._serialize = (
+            import_string(setting) if isinstance(setting, str) else setting
+        )
+        return cls._serialize
+
+    @classmethod
+    def _deserialize(cls) -> _Deserialize:
+        existing_attr = getattr(cls, '_deserialize', None)
+        if existing_attr is not None:
+            return existing_attr
+
+        setting = cls._setting_name(DMR_JSON_DESERIALIZER_KEY)
+        cls._deserialize = (
+            import_string(setting) if isinstance(setting, str) else setting
+        )
+        return cls._deserialize
+
+    @classmethod
+    def _setting_name(cls, suffix: str) -> str:
+        return resolve_defaults().get(suffix)
+
+
 def rest(
-    method: Callable[Concatenate[_SelfT, _ParamT], _ModelT],
-    /,
-) -> Callable[Concatenate[_SelfT, HttpRequest, _ParamT], HttpResponse]: ...
-
-
-@overload
-def rest(  # noqa: WPS234
     *,
     return_dto: type[pydantic.BaseModel],
-    # TODO: add schema modifications here
-) -> Callable[
-    [
-        Callable[Concatenate[_SelfT, _ParamT], HttpResponse],
-    ],
-    Callable[Concatenate[_SelfT, HttpRequest, _ParamT], HttpResponse],
-]: ...
-
-
-def rest(
-    method: Callable[Concatenate[_SelfT, _ParamT], _ModelT] | None = None,
-    /,
-    *,
-    return_dto: type[pydantic.BaseModel] | None = None,
-) -> (
-    Callable[Concatenate[_SelfT, HttpRequest, _ParamT], HttpResponse]
-    | Callable[
-        [
-            Callable[Concatenate[_SelfT, _ParamT], HttpResponse],
-        ],
-        Callable[Concatenate[_SelfT, HttpRequest, _ParamT], HttpResponse],
-    ]
-):
+) -> type[RestEndpoint]:
     """
     Decorator for REST endpoints.
 
@@ -59,44 +79,9 @@ def rest(
     and also want to do an extra round of validation
     to be sure that it fits the schema.
     """
-    if method is not None:
 
-        @wraps(method)
-        def decorator(  # noqa: WPS430
-            self: _SelfT,
-            request: HttpRequest,
-            /,
-            *args: _ParamT.args,
-            **kwargs: _ParamT.kwargs,
-        ) -> HttpResponse:
-            model = method(self, *args, **kwargs)
-            return HttpResponse(
-                model_dump_json(model, self.return_dto_kwargs),
-                content_type='application/json',
-            )
+    def decorator(func):
+        func.__metadata__ = {'return_dto': return_dto}
+        return func
 
-        return decorator
-
-    def factory(
-        method: Callable[Concatenate[_SelfT, _ParamT], HttpResponse],
-    ) -> Callable[Concatenate[_SelfT, HttpRequest, _ParamT], HttpResponse]:
-        @wraps(method)
-        def decorator(
-            self: _SelfT,
-            request: HttpRequest,
-            /,
-            *args: _ParamT.args,
-            **kwargs: _ParamT.kwargs,
-        ) -> HttpResponse:
-            # TODO: validate `HttpResponse.content` with `return_dto`
-            # TODO: support `StreamingHttpResponse`
-            # TODO: support `JsonResponse`
-            # TODO: use `return_dto` for schema generation
-            # TODO: use configurable `json` encoders and decoders
-            # TODO: make sure `return_dto` validation
-            # can be turned off for production
-            return method(self, *args, **kwargs)
-
-        return decorator
-
-    return factory
+    return decorator

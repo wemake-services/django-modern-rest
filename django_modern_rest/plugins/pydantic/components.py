@@ -5,7 +5,10 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.components import BaseBody, BaseHeaders, BaseQuery
-from django_modern_rest.plugins.pydantic.serialization import model_validate
+from django_modern_rest.plugins.pydantic.serialization import (
+    model_validate,
+    model_validate_json,
+)
 
 _QueryT = TypeVar('_QueryT', bound=pydantic.BaseModel)
 _BodyT = TypeVar('_BodyT', bound=pydantic.BaseModel)
@@ -47,7 +50,7 @@ class Query(BaseQuery[_QueryT], Generic[_QueryT]):
         self.parsed_query = model_validate(
             self.__model__,
             request.GET,
-            **self.validate_kwargs,
+            self.validate_kwargs,
         )
 
 
@@ -72,10 +75,11 @@ class Body(BaseBody[_BodyT], Generic[_BodyT]):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        self.parsed_body = model_validate(
+        self.parsed_body = model_validate_json(
             self.__model__,
-            request.GET,
-            **self.validate_kwargs,
+            # TODO: make default encoding configurable
+            request.body.decode(request.encoding or 'utf8'),
+            self.validate_kwargs,
         )
 
 
@@ -102,6 +106,6 @@ class Headers(BaseHeaders[_HeadersT], Generic[_HeadersT]):
     ) -> None:
         self.parsed_headers = model_validate(
             self.__model__,
-            request.GET,
-            **self.validate_kwargs,
+            request.headers,
+            self.validate_kwargs,
         )

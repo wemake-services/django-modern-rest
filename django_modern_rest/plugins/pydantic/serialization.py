@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from functools import lru_cache
 from typing import Any, TypeVar
 
@@ -23,7 +24,7 @@ def model_dump_json(
 
 def model_validate(
     model_type: type[_ModelT],
-    to_validate: dict[str, Any],
+    to_validate: Mapping[str, Any],
     # TODO: support typed per-thing configuration
     # validate_kwargs: ValidateKwargsTypedDict,
     validate_kwargs: dict[str, Any],
@@ -34,6 +35,20 @@ def model_validate(
     return model_type.model_validate(to_validate, **kwargs)
 
 
+def model_validate_json(
+    model_type: type[_ModelT],
+    to_validate: str,
+    # TODO: support typed per-thing configuration
+    # validate_kwargs: ValidateJsonKwargsTypedDict,
+    validate_json_kwargs: dict[str, Any],
+) -> _ModelT:
+    """Loads *model* respecting all configuration: global and class levels."""
+    kwargs = _model_validate_json_kwargs()
+    kwargs.update(validate_json_kwargs)
+    return model_type.model_validate_json(to_validate, **kwargs)
+
+
+# TODO: move to settings.py
 @lru_cache
 def _model_dump_kwargs() -> dict[str, Any]:
     return (  # type: ignore[no-any-return]
@@ -53,4 +68,13 @@ def _model_validate_kwargs() -> dict[str, Any]:
         getattr(settings, DMR_SETTINGS, {})
         .get('pydantic', {})
         .get('model_validate_kwargs', {'by_alias': True, 'by_name': False})
+    )
+
+
+@lru_cache
+def _model_validate_json_kwargs() -> dict[str, Any]:
+    return (  # type: ignore[no-any-return]
+        getattr(settings, DMR_SETTINGS, {})
+        .get('pydantic', {})
+        .get('model_validate_json_kwargs', {'by_alias': True, 'by_name': False})
     )

@@ -2,7 +2,7 @@ from typing import Any, ClassVar, Generic, TypeVar
 
 from typing_extensions import override
 
-from django_modern_rest.request_parser import RequestParserMixin
+from django_modern_rest.serialization import ComponentParserMixin
 from django_modern_rest.types import infer_type_args
 
 _QueryT = TypeVar('_QueryT')
@@ -10,7 +10,7 @@ _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
 
 
-class BaseQuery(RequestParserMixin[_QueryT], Generic[_QueryT]):
+class BaseQuery(ComponentParserMixin[_QueryT], Generic[_QueryT]):
     """
     Base type for query parsing from http requests.
 
@@ -27,7 +27,7 @@ class BaseQuery(RequestParserMixin[_QueryT], Generic[_QueryT]):
         _maybe_set_model_type(cls, BaseQuery)
 
 
-class BaseBody(RequestParserMixin[_BodyT], Generic[_BodyT]):
+class BaseBody(ComponentParserMixin[_BodyT], Generic[_BodyT]):
     """
     Base type for request body parsing.
 
@@ -44,7 +44,7 @@ class BaseBody(RequestParserMixin[_BodyT], Generic[_BodyT]):
         _maybe_set_model_type(cls, BaseBody)
 
 
-class BaseHeaders(RequestParserMixin[_HeadersT], Generic[_HeadersT]):
+class BaseHeaders(ComponentParserMixin[_HeadersT], Generic[_HeadersT]):
     """
     Base type for request headers parsing.
 

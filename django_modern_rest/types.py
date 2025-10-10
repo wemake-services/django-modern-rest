@@ -7,7 +7,7 @@ from typing_extensions import get_original_bases
 def infer_type_args(
     orig_cls: type[Any],
     given_type: type[Any],
-) -> tuple[type[Any], ...] | None:
+) -> tuple[type[Any], ...]:
     """
     Return type args for the closest given type.
 

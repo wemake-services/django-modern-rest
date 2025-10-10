@@ -44,6 +44,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10"
 typing_extensions = ">=4"
+ujson = ">= 5.0"
 
 pydantic = { version = "^2.12", optional = true }
 
@@ -51,7 +52,7 @@ pydantic = { version = "^2.12", optional = true }
 pydantic = ["pydantic"]
 
 [tool.poetry.group.dev.dependencies]
-django = "^5.2"
+django = ">=4.2,<6.0"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
 
 wemake-python-styleguide = "^1.4"
@@ -60,6 +61,8 @@ ruff = "^0.14"
 pytest = "^8.4"
 pytest-cov = "^7.0"
 pytest-randomly = "^4.0"
+pytest-django = "^4.8"
+pytest-asyncio = "^1.2"
 
 [tool.poetry.group.docs]
 optional = true
@@ -149,11 +152,21 @@ flake8-quotes.inline-quotes = "single"
 mccabe.max-complexity = 6
 pydocstyle.convention = "google"
 
+# For `django_test_app` only:
+isort.known-first-party = ["rest_app"]
+
 [tool.ruff.lint.per-file-ignores]
+# Do not require docstrings in test project:
+"django_test_app/**/*.py" = ["D10"]
+# Allow asserts for tests:
 "tests/*.py" = ["S101"]
 
 
 [tool.pytest.ini_options]
+# Django options:
+# https://pytest-django.readthedocs.io/en/latest/
+DJANGO_SETTINGS_MODULE = "django_test_app.settings"
+
 # pytest config: http://doc.pytest.org/en/latest/customize.html
 
 # Strict `@xfail` by default:
@@ -161,14 +174,18 @@ xfail_strict = true
 # Fail on warnings:
 filterwarnings = ["error"]
 
+# PYTHONPATH configuration:
+pythonpath = ["django_test_app"]
+
 addopts = [
   "--strict-config",
   "--strict-markers",
   "--doctest-modules",
-    # Output:
+  # Output:
   "--tb=short",
   # Coverage:
   "--cov=django_modern_rest",
+  "--cov=django_test_app",
   "--cov-report=term-missing:skip-covered",
   "--cov-report=html",
   "--cov-report=xml",
@@ -200,3 +217,8 @@ enable_error_code = [
   "unimported-reveal",
   "deprecated",
 ]
+
+plugins = [
+  "pydantic.mypy",
+]
+

@@ -17,4 +17,7 @@ from django_modern_rest.plugins.pydantic.components import (
 from django_modern_rest.plugins.pydantic.components import (
     Query as Query,
 )
+from django_modern_rest.plugins.pydantic.controller import (
+    PydanticSerializer as PydanticSerializer,
+)
 from django_modern_rest.plugins.pydantic.controller import rest as rest
