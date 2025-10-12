@@ -42,3 +42,9 @@ class SwaggerRenderer(BaseRenderer):
             self.template_name,
             context={'title': config.title},
         )
+
+# TODO: add ReDoc renderer
+# TODO: add OpenAPISchemaView
+# TODO: add schema path customization
+# TODO: extend OpenAPIConfig
+# TODO: add cnd loads for ReDoc and Swagger
