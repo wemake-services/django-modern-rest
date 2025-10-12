@@ -4,8 +4,8 @@ from typing import Any, ClassVar, TypeAlias
 import pydantic
 from django.utils.module_loading import import_string
 
-from django_modern_rest.controller import FromJson, RestEndpoint
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.controller import RestEndpoint
+from django_modern_rest.serialization import BaseSerializer, FromJson
 from django_modern_rest.settings import (
     DMR_JSON_DESERIALIZER_KEY,
     DMR_JSON_SERIALIZER_KEY,

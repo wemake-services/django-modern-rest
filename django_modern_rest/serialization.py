@@ -14,8 +14,8 @@ class BaseSerializer:
 
     content_type: ClassVar[str] = 'application/json'
 
-    @abc.abstractmethod
     @classmethod
+    @abc.abstractmethod
     def to_json(cls, structure: Any) -> str:
         """Serialize structure to JSON string."""
         raise NotImplementedError
@@ -26,8 +26,8 @@ class BaseSerializer:
         # TODO: implement default fields support, like `UUID`
         return to_serialize
 
-    @abc.abstractmethod
     @classmethod
+    @abc.abstractmethod
     def from_json(cls, buffer: FromJson) -> Any:
         """Deserialize JSON buffer to Python object."""
         raise NotImplementedError

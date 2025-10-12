@@ -28,15 +28,15 @@ class RestEndpoint:
         self,
         func: Callable[..., Any],
         *,  # TODO: add openapi metadata?
-        serialize_to_request: Callable[[Any], Any],
+        parser: Callable[[Any], Any],
     ) -> None:
         """Initialize REST endpoint with function and serialization support."""
         if inspect.iscoroutinefunction(func):
-            self._func = _async_serializer(func, serialize_to_request)
+            self._func = _async_serializer(func, parser)
         else:
-            self._func = _sync_serializer(func, serialize_to_request)
+            self._func = _sync_serializer(func, parser)
 
-        functools.update_wrapper(self, self._func)
+        # functools.update_wrapper(self, self._func)  # TODO: fix or remove?
 
     def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
         """Execute the wrapped function and return HTTP response."""
