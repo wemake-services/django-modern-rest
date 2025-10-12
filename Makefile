@@ -10,7 +10,6 @@ lint:
 .PHONY: unit
 unit:
 	poetry run pytest
-	poetry run python ex.py
 
 .PHONY: package
 package:
