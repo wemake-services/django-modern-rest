@@ -1,47 +1,51 @@
 import abc
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from django.http import HttpRequest
+if TYPE_CHECKING:
+    from django_modern_rest.internal.json import FromJson
 
 _ModelT = TypeVar('_ModelT')
-
-#: Types that are possible to load json from.
-FromJson: TypeAlias = str | bytes | bytearray
 
 
 class BaseSerializer:
     content_type: ClassVar[str] = 'application/json'
 
-    @abc.abstractmethod
+    __slots__ = ()
+
     @classmethod
-    def to_json(cls, structure: Any) -> str:
+    @abc.abstractmethod
+    def to_json(cls, structure: Any) -> bytes:
         raise NotImplementedError
 
     @classmethod
-    def serialization_hook(cls, to_serialize: Any) -> Any:
-        # TODO: implement default fields support, like `UUID`
-        return to_serialize
+    def serialize_hook(cls, to_serialize: Any) -> Any:
+        raise TypeError(
+            f'Value {to_serialize} of type {type(to_serialize)} '
+            'is not supported',
+        )
 
-    @abc.abstractmethod
     @classmethod
-    def from_json(cls, buffer: FromJson) -> Any:
-        raise NotImplementedError
-
-
-class ComponentParserMixin(Generic[_ModelT]):
-    """Base abtract parser for request components."""
-
-    __is_base_type__: ClassVar[bool] = True
-
-    # We lie that it is an isntance attribute, but
-    # we can't use type vars in class attrs.
-    __model__: type[_ModelT]
-
     @abc.abstractmethod
-    def _parse_component(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
+    def from_json(cls, buffer: 'FromJson') -> Any:
         raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def from_python(
+        cls,
+        unstructured: Any,
+        model: Any,
+        from_python_kwargs: dict[str, Any],
+    ) -> Any:
+        raise NotImplementedError
+
+    @classmethod
+    def deserialize_hook(
+        cls,
+        target_type: type[Any],
+        to_deserialize: Any,
+    ) -> Any:
+        raise TypeError(
+            f'Value {to_deserialize} of type {type(to_deserialize)} '
+            f'is not supported for {target_type}',
+        )

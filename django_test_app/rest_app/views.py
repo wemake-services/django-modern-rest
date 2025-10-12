@@ -5,14 +5,14 @@ from typing import final
 import pydantic
 from django.http import HttpResponse, JsonResponse
 
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import (
+from django_modern_rest import (
     Body,
+    Controller,
     Headers,
-    PydanticSerializer,
     Query,
     rest,
 )
+from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 @final
@@ -51,7 +51,6 @@ class UserCreateController(  # noqa: WPS215
     Controller[PydanticSerializer],
 ):
     def post(self) -> _UserOutput:
-        print(self, dir(self))
         return _UserOutput(
             uid=uuid.uuid4(),
             email=self.parsed_body.email,
@@ -85,6 +84,6 @@ class UserUpdateController(
 
 @final
 class UserReplaceController(Controller[PydanticSerializer]):
-    @rest(return_dto=_UserInput)
+    @rest(return_type=_UserInput)
     async def put(self, user_id: int) -> HttpResponse:
         return JsonResponse({'email': 'new@email.com', 'age': user_id})

@@ -10,15 +10,16 @@ Modern REST framework for Django with types and async support!
 
 ## Features
 
-- Fully typed with annotations and checked with mypy, [PEP561 compatible](https://www.python.org/dev/peps/pep-0561/)
-- Supports `pydantic2`, but not bound to it. Future versions will include `msgspec` support
-- Supports `asyncio`
-- Supports `openapi` schema generation out of the box
-- Supports all your existing `django` primitives and packages
-- Does not use `from __future__ import annotations`
-- 100% test coverage
-- Uses `ujson` by default for faster serialization / deserialization
-- Add yours!
+- [x] Blazingly fast
+- [x] Fully typed and checked with `mypy` and `pyright`
+- [x] Supports `pydantic2`, but not bound to it. 
+- [ ] Supports `msgspec` support
+- [x] Supports async Django
+- [ ] Supports `openapi` schema generation out of the box
+- [x] Supports all your existing `django` primitives and packages
+- [x] Does not use `from __future__ import annotations`
+- [ ] 100% test coverage
+- [x] No emojis 🌚️️
 
 
 ## Installation
