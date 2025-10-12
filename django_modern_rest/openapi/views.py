@@ -1,8 +1,9 @@
 from collections.abc import Callable
-from typing import Any, cast, override
+from typing import Any, ClassVar
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
+from typing_extensions import override
 
 from django_modern_rest.openapi import BaseRenderer, OpenAPIConfig
 from django_modern_rest.routing import Router
@@ -12,12 +13,13 @@ from django_modern_rest.settings import DMR_OPENAPI_CONFIG_KEY, resolve_defaults
 class OpenAPIView(View):
     """View for OpenAPI."""
 
+    router: ClassVar[Router]
+    renderer: ClassVar[BaseRenderer]
+    config: ClassVar[OpenAPIConfig]
+
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema."""
-        return cast(
-            HttpResponse,
-            self.renderer.render(request, self.config),  # type: ignore[attr-defined]
-        )
+        return self.renderer.render(request, self.config)
 
     @override
     @classmethod
