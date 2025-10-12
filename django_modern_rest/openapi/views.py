@@ -12,26 +12,22 @@ from django_modern_rest.settings import DMR_OPENAPI_CONFIG_KEY, resolve_defaults
 class OpenAPIView(View):
     """View for OpenAPI."""
 
-    router: Router | None = None
-    renderer: type[BaseRenderer] | None = None
-    config: OpenAPIConfig | None = None
+    router: Router = None  # type: ignore[assignment]
+    renderer: BaseRenderer = None  # type: ignore[assignment]
+    config: OpenAPIConfig = None  # type: ignore[assignment]
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize OpenAPIView."""
         super().__init__(**kwargs)
-        if not self.router:
+        if getattr(kwargs, 'router', None) is None:
             raise ValueError(
-                'Router is not set for `OpenAPIView` instance. '
-                'Please assign a `Router` instance to the `router`'
-                'attribute before using this view.',
+                "OpenAPIView requires either a definition of 'router'"
             )
-        if not self.renderer:
+        if getattr(self, 'renderer', None) is None:
             raise ValueError(
-                'Renderer is not set for `OpenAPIView` instance. '
-                'Please assign a `BaseRenderer` subclass to the `renderer`'
-                'attribute before using this view.',
+                "OpenAPIView requires either a definition of 'renderer'"
             )
-        if not self.config:
+        if getattr(self, 'config', None) is None:
             self.config = resolve_defaults()[DMR_OPENAPI_CONFIG_KEY]
 
     def get(self, request: HttpRequest) -> HttpResponse:
