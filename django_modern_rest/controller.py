@@ -181,8 +181,8 @@ def _async_serializer(
 ) -> Callable[..., Awaitable[HttpResponseBase]]:
     @functools.wraps(func)
     async def decorator(*args: Any, **kwargs: Any) -> HttpResponseBase:
-        result = await func(*args, **kwargs)
-        return parser.to_response(result)
+        func_result = await func(*args, **kwargs)
+        return parser.to_response(func_result)
 
     return decorator
 
@@ -193,7 +193,7 @@ def _sync_serializer(
 ) -> Callable[..., HttpResponseBase]:
     @functools.wraps(func)
     def decorator(*args: Any, **kwargs: Any) -> HttpResponseBase:
-        result = func(*args, **kwargs)
-        return parser.to_response(result)
+        func_result = func(*args, **kwargs)
+        return parser.to_response(func_result)
 
     return decorator
