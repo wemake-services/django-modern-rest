@@ -57,31 +57,9 @@ class Controller(View, Generic[_ParserT]):
     def __init_subclass__(cls) -> None:
         """Collect components parsers."""
         super().__init_subclass__()
-        type_args = infer_type_args(cls, Controller)
-        if len(type_args) != 1:
-            raise ValueError(
-                f'Type args {type_args} are not correct for {cls}, '
-                'only 1 type arg must be provided',
-            )
-        cls._parser = type_args[0]
-
-        if getattr(cls, '_component_parsers', None) is None:
-            # TODO: maybe use some metaclass to collect component parsers?
-            # TODO: It looks pretty messy!
-            cls._component_parsers = [
-                subclass
-                for subclass in cls.__mro__[1:]
-                if issubclass(subclass, ComponentParserMixin)
-                and subclass.__module__
-                != 'django_modern_rest.components'  # Muddy!
-                and subclass
-                != ComponentParserMixin  # Exclude base abstract class
-            ]
-        if getattr(cls, '_api_endpoints', None) is None:
-            cls._api_endpoints = {
-                method: RestEndpoint(getattr(cls, method), parser=cls._parser)
-                for method in cls.existing_http_methods
-            }
+        cls._setup_parser()
+        cls._setup_component_parsers()
+        cls._setup_api_endpoints()
 
     @override
     def dispatch(
@@ -123,22 +101,78 @@ class Controller(View, Generic[_ParserT]):
         **kwargs: Any,
     ) -> None:
         for parser_class in self._component_parsers:
-            type_args = infer_type_args(self.__class__, parser_class)
-            if not type_args or len(type_args) != 1:
-                continue
+            self._parse_single_component(parser_class, request, *args, **kwargs)
 
-            model = type_args[0]
+    def _parse_single_component(
+        self,
+        parser_class: type[ComponentParserMixin[Any]],
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        type_args = infer_type_args(self.__class__, parser_class)
+        if not type_args or len(type_args) != 1:
+            return
 
-            parser = parser_class()
-            parser.__class__.__model__ = model
+        model = type_args[0]
+        parser = self._create_parser_instance(parser_class, model)
+        parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
+        self._copy_parsed_attributes(parser)
 
-            parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
+    def _create_parser_instance(
+        self,
+        parser_class: type[ComponentParserMixin[Any]],
+        model: type[Any],
+    ) -> ComponentParserMixin[Any]:
+        parser = parser_class()
+        parser.__class__.__model__ = model
+        return parser
 
-            for attr in dir(parser):
-                if attr.startswith('parsed_') and not attr.startswith(
-                    'parsed__',
-                ):
-                    setattr(self, attr, getattr(parser, attr))
+    def _copy_parsed_attributes(
+        self,
+        parser: ComponentParserMixin[Any],
+    ) -> None:
+        for attr in dir(parser):
+            if attr.startswith('parsed_') and not attr.startswith('parsed__'):
+                setattr(self, attr, getattr(parser, attr))
+
+    @classmethod
+    def _setup_parser(cls) -> None:
+        type_args = infer_type_args(cls, Controller)
+        if len(type_args) != 1:
+            raise ValueError(
+                f'Type args {type_args} are not correct for {cls}, '
+                'only 1 type arg must be provided',
+            )
+        cls._parser = type_args[0]
+
+    @classmethod
+    def _setup_component_parsers(cls) -> None:
+        if getattr(cls, '_component_parsers', None) is None:
+            cls._component_parsers = cls._collect_component_parsers()
+
+    @classmethod
+    def _collect_component_parsers(cls) -> list[ComponentParserMixin[Any]]:
+        # TODO: maybe use some metaclass to collect component parsers?
+        # TODO: It looks pretty messy!
+        return [
+            subclass
+            for subclass in cls.__mro__[1:]
+            if (
+                issubclass(subclass, ComponentParserMixin)
+                and subclass.__module__
+                != 'django_modern_rest.components'  # Muddy!
+                and subclass != ComponentParserMixin
+            )
+        ]
+
+    @classmethod
+    def _setup_api_endpoints(cls) -> None:
+        if getattr(cls, '_api_endpoints', None) is None:
+            cls._api_endpoints = {
+                method: RestEndpoint(getattr(cls, method), parser=cls._parser)
+                for method in cls.existing_http_methods
+            }
 
 
 def _async_serializer(

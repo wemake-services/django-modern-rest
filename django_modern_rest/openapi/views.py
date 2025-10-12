@@ -21,11 +21,11 @@ class OpenAPIView(View):
         super().__init__(**kwargs)
         if getattr(self, 'router', None) is None:
             raise ValueError(
-                "OpenAPIView requires either a definition of 'router'"
+                "OpenAPIView requires either a definition of 'router'",
             )
         if getattr(self, 'renderer', None) is None:
             raise ValueError(
-                "OpenAPIView requires either a definition of 'renderer'"
+                "OpenAPIView requires either a definition of 'renderer'",
             )
         if getattr(self, 'config', None) is None:
             self.config = resolve_defaults()[DMR_OPENAPI_CONFIG_KEY]
