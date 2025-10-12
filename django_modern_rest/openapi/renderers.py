@@ -43,6 +43,7 @@ class SwaggerRenderer(BaseRenderer):
             context={'title': config.title},
         )
 
+
 # TODO: add ReDoc renderer
 # TODO: add OpenAPISchemaView
 # TODO: add schema path customization
