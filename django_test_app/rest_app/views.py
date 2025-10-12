@@ -51,7 +51,6 @@ class UserCreateController(  # noqa: WPS215
     Controller[PydanticSerializer],
 ):
     def post(self) -> _UserOutput:
-        print(self, dir(self))
         return _UserOutput(
             uid=uuid.uuid4(),
             email=self.parsed_body.email,
