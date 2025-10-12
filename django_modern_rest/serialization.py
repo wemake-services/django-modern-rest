@@ -34,11 +34,12 @@ class BaseSerializer:
 
     @classmethod
     @abc.abstractmethod
-    def to_response(cls, data: Any) -> HttpResponse:
+    def to_response(cls, structure: Any) -> HttpResponse:
         """Serialize data to JSON and wrap it in an HTTP response."""
         # TODO: I'm not sure if it belongs here.
         # According to the current code, it turns out that so.
-        raise NotImplemented
+        raise NotImplementedError
+
 
 class ComponentParserMixin(Generic[_ModelT]):
     """Base abtract parser for request components."""

@@ -1,10 +1,8 @@
-import datetime as dt
-import uuid
 from collections.abc import Callable
 from typing import Any, ClassVar, TypeAlias
 
-from django.http import HttpResponse
 import pydantic
+from django.http import HttpResponse
 from django.utils.module_loading import import_string
 
 from django_modern_rest.controller import RestEndpoint
@@ -45,10 +43,13 @@ class PydanticSerializer(BaseSerializer):
         return cls._deserialize()(buffer)
 
     @classmethod
-    def to_response(cls, data: Any) -> HttpResponse:
+    def to_response(cls, structure: Any) -> HttpResponse:
         """Serialize data to JSON and wrap it in an HTTP response."""
         # TODO: may be moved to `BaseSerializer`?
-        return HttpResponse(cls.to_json(data), content_type=cls.content_type)
+        return HttpResponse(
+            cls.to_json(structure),
+            content_type=cls.content_type,
+        )
 
     # TODO: merge `_serialize` and `_deserialize`?
     @classmethod

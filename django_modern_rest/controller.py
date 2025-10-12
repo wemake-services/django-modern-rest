@@ -37,14 +37,12 @@ class RestEndpoint:
         else:
             self._func = _sync_serializer(func, parser)
 
-        # functools.update_wrapper(self, self._func)  # TODO: fix or remove?
-
     def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
         """Execute the wrapped function and return HTTP response."""
-        result = self._func(*args, **kwargs)
-        if inspect.iscoroutine(result):
-            return asyncio.run(result)
-        return result
+        func = self._func(*args, **kwargs)
+        if inspect.iscoroutine(func):
+            return asyncio.run(func)
+        return func
 
 
 class Controller(View, Generic[_ParserT]):
@@ -69,14 +67,15 @@ class Controller(View, Generic[_ParserT]):
 
         if getattr(cls, '_component_parsers', None) is None:
             # TODO: maybe use some metaclass to collect component parsers?
-            # It looks pretty messy!
-            # Include concrete implementations (Query, Headers, Body) but exclude base classes
+            # TODO: It looks pretty messy!
             cls._component_parsers = [
                 subclass
                 for subclass in cls.__mro__[1:]
                 if issubclass(subclass, ComponentParserMixin)
-                and subclass.__module__ != 'django_modern_rest.components'  # Muddy!
-                and subclass != ComponentParserMixin  # Exclude base abstract class
+                and subclass.__module__
+                != 'django_modern_rest.components'  # Muddy!
+                and subclass
+                != ComponentParserMixin  # Exclude base abstract class
             ]
         if getattr(cls, '_api_endpoints', None) is None:
             cls._api_endpoints = {
@@ -92,7 +91,6 @@ class Controller(View, Generic[_ParserT]):
         **kwargs: Any,
     ) -> HttpResponseBase:
         """Parse all components before the dispatching and call controller."""
-
         self._parse_request_components(request, *args, **kwargs)
 
         # Fast path for method resolution:
@@ -118,7 +116,12 @@ class Controller(View, Generic[_ParserT]):
             if getattr(cls, method, None) is not None
         }
 
-    def _parse_request_components(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+    def _parse_request_components(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         for parser_class in self._component_parsers:
             type_args = infer_type_args(self.__class__, parser_class)
             if not type_args or len(type_args) != 1:
@@ -129,10 +132,12 @@ class Controller(View, Generic[_ParserT]):
             parser = parser_class()
             parser.__class__.__model__ = model
 
-            parser._parse_component(request, *args, **kwargs)
+            parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
 
             for attr in dir(parser):
-                if attr.startswith('parsed_') and not attr.startswith('parsed__'):
+                if attr.startswith('parsed_') and not attr.startswith(
+                    'parsed__',
+                ):
                     setattr(self, attr, getattr(parser, attr))
 
 
