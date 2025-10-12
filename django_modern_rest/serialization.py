@@ -8,6 +8,8 @@ _ModelT = TypeVar('_ModelT')
 
 
 class BaseSerializer:
+    """Abstract base class for JSON serialization."""
+
     content_type: ClassVar[str] = 'application/json'
 
     __slots__ = ()
