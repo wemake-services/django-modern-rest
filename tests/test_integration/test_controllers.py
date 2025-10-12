@@ -14,10 +14,20 @@ def test_user_create_view(client: Client, *, start_from: str | None) -> None:
     """Ensure that routes without path parameters work."""
     base_url = reverse('api:user_create')
     start_from_query = '' if start_from is None else f'&start_from={start_from}'
+    import json
     response = client.post(
         f'{base_url}?q=text{start_from_query}',
         headers={'X-API-Token': 'token'},
-        json={'email': 'whatever@email.com', 'age': 0},
+        data=json.dumps({'email': 'whatever@email.com', 'age': 0}),
+        content_type='application/json',
     )
 
-    assert response.headers is None
+    assert response.status_code == 200
+    assert 'Content-Type' in response.headers
+
+
+def test_user_list_view(client: Client) -> None:
+    """Ensure that routes without path parameters work."""
+    base_url = reverse('api:user_create')
+    response = client.get(base_url)
+    assert response.status_code == 200

@@ -64,12 +64,15 @@ class Controller(View, Generic[_ParserT]):
         cls._parser = type_args[0]
 
         if getattr(cls, '_component_parsers', None) is None:
+            # TODO: maybe use some metaclass to collect component parsers?
+            # It looks pretty messy!
+            # Include concrete implementations (Query, Headers, Body) but exclude base classes
             cls._component_parsers = [
-                subclass()
+                subclass
                 for subclass in cls.__mro__[1:]
                 if issubclass(subclass, ComponentParserMixin)
+                and subclass.__module__ != 'django_modern_rest.components'  # Muddy!
             ]
-
         if getattr(cls, '_api_endpoints', None) is None:
             cls._api_endpoints = {
                 method: RestEndpoint(getattr(cls, method), parser=cls._parser)
@@ -84,9 +87,9 @@ class Controller(View, Generic[_ParserT]):
         **kwargs: Any,
     ) -> HttpResponseBase:
         """Parse all components before the dispatching and call controller."""
-        for parser in self._component_parsers:
-            # TODO: maybe parse all at once?
-            parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
+
+        self._parse_request_components(request, *args, **kwargs)
+
         # Fast path for method resolution:
         endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
         if endpoint is not None:
@@ -109,6 +112,23 @@ class Controller(View, Generic[_ParserT]):
             for method in cls.http_method_names
             if getattr(cls, method, None) is not None
         }
+
+    def _parse_request_components(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        for parser_class in self._component_parsers:
+            type_args = infer_type_args(self.__class__, parser_class)
+            if not type_args or len(type_args) != 1:
+                continue
+
+            model = type_args[0]
+
+            parser = parser_class()
+            parser.__class__.__model__ = model
+
+            parser._parse_component(request, *args, **kwargs)
+
+            for attr in dir(parser):
+                if attr.startswith('parsed_') and not attr.startswith('parsed__'):
+                    setattr(self, attr, getattr(parser, attr))
 
 
 def _async_serializer(
