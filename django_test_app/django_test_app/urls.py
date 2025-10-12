@@ -19,6 +19,7 @@ Including another URLconf
 from django.urls import include, path
 
 from django_modern_rest import Router, compose_controllers
+from django_modern_rest.openapi import OpenAPIView, SwaggerRenderer
 from rest_app.views import (
     UserCreateController,
     UserListController,
@@ -44,4 +45,12 @@ router = Router([
 
 urlpatterns = [
     path('api/', include((router.urls, 'rest_app'), namespace='api')),
+    path(
+        'docs/',
+        OpenAPIView.as_view(
+            router=router,
+            renderer=SwaggerRenderer(),
+        ),
+        name='openapi',
+    ),
 ]
