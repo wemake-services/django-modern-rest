@@ -1,7 +1,7 @@
 import functools
 import inspect
 from collections.abc import Awaitable, Callable
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 from django.http import HttpRequest, HttpResponseBase
 from django.utils.functional import classproperty
@@ -18,6 +18,8 @@ _ParserT = TypeVar('_ParserT', bound=BaseSerializer)
 
 
 class RestEndpoint:
+    """Wrapper for REST endpoint functions with serialization support."""
+
     __slots__ = ('_func',)
 
     _func: Callable[..., Any]
@@ -28,6 +30,7 @@ class RestEndpoint:
         *,  # TODO: add openapi metadata?
         serialize_to_request: Callable[[Any], Any],
     ) -> None:
+        """Initialize REST endpoint with function and serialization support."""
         if inspect.iscoroutinefunction(func):
             self._func = _async_serializer(func, serialize_to_request)
         else:
@@ -36,6 +39,7 @@ class RestEndpoint:
         functools.update_wrapper(self, self._func)
 
     def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        """Execute the wrapped function and return HTTP response."""
         return self._func(*args, **kwargs)  # type: ignore[no-any-return]
 
 

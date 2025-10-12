@@ -10,21 +10,26 @@ FromJson: TypeAlias = str | bytes | bytearray
 
 
 class BaseSerializer:
+    """Abstract base class for JSON serialization."""
+
     content_type: ClassVar[str] = 'application/json'
 
     @abc.abstractmethod
     @classmethod
     def to_json(cls, structure: Any) -> str:
+        """Serialize structure to JSON string."""
         raise NotImplementedError
 
     @classmethod
     def serialization_hook(cls, to_serialize: Any) -> Any:
+        """Hook for custom serialization of special types."""
         # TODO: implement default fields support, like `UUID`
         return to_serialize
 
     @abc.abstractmethod
     @classmethod
     def from_json(cls, buffer: FromJson) -> Any:
+        """Deserialize JSON buffer to Python object."""
         raise NotImplementedError
 
 

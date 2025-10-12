@@ -20,4 +20,4 @@ def test_user_create_view(client: Client, *, start_from: str | None) -> None:
         json={'email': 'whatever@email.com', 'age': 0},
     )
 
-    assert response.headers == None
+    assert response.headers is None

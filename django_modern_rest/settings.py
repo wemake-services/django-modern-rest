@@ -1,4 +1,4 @@
-from typing import Final
+from typing import Any, Final
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -20,6 +20,7 @@ _DEFAULTS: Final = {
 
 
 def resolve_defaults() -> dict[str, Any]:
-    from django.conf import settings
+    """Resolve defaults for `django-modern-rest` settings."""
+    from django.conf import settings  # noqa: PLC0415
 
     return getattr(settings, DMR_SETTINGS, _DEFAULTS)

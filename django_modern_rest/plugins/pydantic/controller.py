@@ -16,24 +16,29 @@ _SerializeHook: TypeAlias = Callable[[Any], Any]
 _Serialize: TypeAlias = Callable[[Any, _SerializeHook], str]
 
 
-_Deserealize: TypeAlias = Callable[[FromJson], Any]
+_Deserialize: TypeAlias = Callable[[FromJson], Any]
 
 
 class PydanticSerializer(BaseSerializer):
+    """Pydantic-based JSON serializer for REST endpoints."""
+
     _serialize: ClassVar[_Serialize]
-    _deserialize: ClassVar[_Deserealize]
+    _deserialize: ClassVar[_Deserialize]
 
     @classmethod
     def to_json(cls, structure: Any) -> str:
+        """Serialize structure to JSON using pydantic serializer."""
         return cls._serialize()(structure, cls.serialization_hook)
 
     @classmethod
     def serialization_hook(cls, to_serialize: Any) -> Any:
+        """Hook for custom serialization of pydantic fields."""
         # TODO: implement custom `pydantic` fields support
         return super().serialization_hook(to_serialize)
 
     @classmethod
     def from_json(cls, buffer: FromJson) -> Any:
+        """Deserialize JSON buffer using pydantic deserializer."""
         return cls._deserialize()(buffer)
 
     # TODO: merge `_serialize` and `_deserialize`?
