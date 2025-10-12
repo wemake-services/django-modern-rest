@@ -97,7 +97,7 @@ class Controller(View, Generic[_ParserT]):
             # TODO: use configurable `json` encoders and decoders
             # TODO: make sure `return_dto` validation
             # can be turned off for production
-            return endpoint(*args, **kwargs)  # we don't pass request
+            return endpoint(self, *args, **kwargs)  # we don't pass request
         return self.http_method_not_allowed(request, *args, **kwargs)
 
     @classproperty  # TODO: cache

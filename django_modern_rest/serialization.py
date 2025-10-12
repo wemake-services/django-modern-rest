@@ -1,7 +1,7 @@
 import abc
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 
 _ModelT = TypeVar('_ModelT')
 
@@ -32,6 +32,13 @@ class BaseSerializer:
         """Deserialize JSON buffer to Python object."""
         raise NotImplementedError
 
+    @classmethod
+    @abc.abstractmethod
+    def to_response(cls, data: Any) -> HttpResponse:
+        """Serialize data to JSON and wrap it in an HTTP response."""
+        # TODO: I'm not sure if it belongs here.
+        # According to the current code, it turns out that so.
+        raise NotImplemented
 
 class ComponentParserMixin(Generic[_ModelT]):
     """Base abtract parser for request components."""
