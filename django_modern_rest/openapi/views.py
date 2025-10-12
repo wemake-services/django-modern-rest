@@ -19,7 +19,7 @@ class OpenAPIView(View):
     def __init__(self, **kwargs: Any) -> None:
         """Initialize OpenAPIView."""
         super().__init__(**kwargs)
-        if getattr(kwargs, 'router', None) is None:
+        if getattr(self, 'router', None) is None:
             raise ValueError(
                 "OpenAPIView requires either a definition of 'router'"
             )
