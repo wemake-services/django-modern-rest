@@ -1,80 +1,103 @@
-from collections.abc import Mapping
-from functools import lru_cache
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pydantic
-from django.conf import settings
+from django.utils.module_loading import import_string
+from typing_extensions import override
 
-from django_modern_rest.settings import DMR_SETTINGS
+from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.settings import (
+    DMR_JSON_DESERIALIZE_KEY,
+    DMR_JSON_SERIALIZE_KEY,
+    resolve_defaults,
+)
 
-_ModelT = TypeVar('_ModelT', bound=pydantic.BaseModel)
-
-
-def model_dump_json(
-    model: pydantic.BaseModel,
-    # TODO: support typed per-thing configuration
-    # dump_kwargs: DumpKwargsTypedDict,
-    dump_kwargs: dict[str, Any],
-) -> str:
-    """Dumps *model* respecting all configuration: global and class levels."""
-    kwargs = _model_dump_kwargs()
-    kwargs.update(dump_kwargs)
-    return model.model_dump_json(**kwargs)
-
-
-def model_validate(
-    model_type: type[_ModelT],
-    to_validate: Mapping[str, Any],
-    # TODO: support typed per-thing configuration
-    # validate_kwargs: ValidateKwargsTypedDict,
-    validate_kwargs: dict[str, Any],
-) -> _ModelT:
-    """Loads *model* respecting all configuration: global and class levels."""
-    kwargs = _model_validate_kwargs()
-    kwargs.update(validate_kwargs)
-    return model_type.model_validate(to_validate, **kwargs)
+if TYPE_CHECKING:
+    from django_modern_rest.internal.json import (
+        Deserialize,
+        FromJson,
+        Serialize,
+    )
 
 
-def model_validate_json(
-    model_type: type[_ModelT],
-    to_validate: str,
-    # TODO: support typed per-thing configuration
-    # validate_kwargs: ValidateJsonKwargsTypedDict,
-    validate_json_kwargs: dict[str, Any],
-) -> _ModelT:
-    """Loads *model* respecting all configuration: global and class levels."""
-    kwargs = _model_validate_json_kwargs()
-    kwargs.update(validate_json_kwargs)
-    return model_type.model_validate_json(to_validate, **kwargs)
+class PydanticSerializer(BaseSerializer):
+    _serialize: ClassVar['Serialize']
+    _deserialize: ClassVar['Deserialize']
+    _strict: ClassVar[bool] = True
 
+    __slots__ = ()
 
-# TODO: move to settings.py
-@lru_cache
-def _model_dump_kwargs() -> dict[str, Any]:
-    return (  # type: ignore[no-any-return]
-        getattr(settings, DMR_SETTINGS, {})
-        .get('pydantic', {})
-        # TODO: document defaults
-        .get(
-            'model_dump_kwargs',
-            {'mode': 'json', 'by_alias': True, 'by_name': False},
+    # TODO: use `TypedDict`
+    model_dump_kwargs: ClassVar[dict[str, Any]] = {
+        'by_alias': True,
+        'mode': 'json',
+    }
+
+    @override
+    @classmethod
+    def to_json(cls, structure: Any) -> bytes:
+        return cls._get_serialize_func()(structure, cls.serialize_hook)
+
+    @override
+    @classmethod
+    def serialize_hook(cls, to_serialize: Any) -> Any:
+        if isinstance(to_serialize, pydantic.BaseModel):
+            return to_serialize.model_dump(**cls.model_dump_kwargs)
+        return super().serialize_hook(to_serialize)
+
+    @override
+    @classmethod
+    def from_json(cls, buffer: 'FromJson') -> Any:
+        return cls._get_deserialize_func()(
+            buffer,
+            cls.deserialize_hook,
+            strict=cls._strict,
         )
-    )
 
+    @override
+    @classmethod
+    def from_python(
+        cls,
+        unstructured: Any,
+        model: Any,
+        # TODO: use a TypedDict
+        from_python_kwargs: dict[str, Any],
+    ) -> Any:
+        return pydantic.TypeAdapter(model).validate_python(
+            unstructured,
+            **from_python_kwargs,
+        )
 
-@lru_cache
-def _model_validate_kwargs() -> dict[str, Any]:
-    return (  # type: ignore[no-any-return]
-        getattr(settings, DMR_SETTINGS, {})
-        .get('pydantic', {})
-        .get('model_validate_kwargs', {'by_alias': True, 'by_name': False})
-    )
+    @override
+    @classmethod
+    def deserialize_hook(
+        cls,
+        target_type: type[Any],
+        to_deserialize: Any,
+    ) -> Any:
+        # TODO: implement custom `pydantic` fields support
+        return super().deserialize_hook(target_type, to_deserialize)
 
+    # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
+    @classmethod
+    def _get_serialize_func(cls) -> 'Serialize':
+        existing_attr: Serialize | None = getattr(cls, '_serialize', None)
+        if existing_attr is not None:
+            return existing_attr
 
-@lru_cache
-def _model_validate_json_kwargs() -> dict[str, Any]:
-    return (  # type: ignore[no-any-return]
-        getattr(settings, DMR_SETTINGS, {})
-        .get('pydantic', {})
-        .get('model_validate_json_kwargs', {'by_alias': True, 'by_name': False})
-    )
+        setting = resolve_defaults()[DMR_JSON_SERIALIZE_KEY]
+        cls._serialize = (
+            import_string(setting) if isinstance(setting, str) else setting
+        )
+        return cls._serialize
+
+    @classmethod
+    def _get_deserialize_func(cls) -> 'Deserialize':
+        existing_attr: Deserialize | None = getattr(cls, '_deserialize', None)
+        if existing_attr is not None:
+            return existing_attr
+
+        setting = resolve_defaults()[DMR_JSON_DESERIALIZE_KEY]
+        cls._deserialize = (
+            import_string(setting) if isinstance(setting, str) else setting
+        )
+        return cls._deserialize

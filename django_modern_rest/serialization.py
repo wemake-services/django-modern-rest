@@ -1,12 +1,10 @@
 import abc
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from django.http import HttpRequest, HttpResponse
+if TYPE_CHECKING:
+    from django_modern_rest.internal.json import FromJson
 
 _ModelT = TypeVar('_ModelT')
-
-#: Types that are possible to load json from.
-FromJson: TypeAlias = str | bytes | bytearray
 
 
 class BaseSerializer:
@@ -14,47 +12,42 @@ class BaseSerializer:
 
     content_type: ClassVar[str] = 'application/json'
 
-    @classmethod
-    @abc.abstractmethod
-    def to_json(cls, structure: Any) -> str:
-        """Serialize structure to JSON string."""
-        raise NotImplementedError
-
-    @classmethod
-    def serialization_hook(cls, to_serialize: Any) -> Any:
-        """Hook for custom serialization of special types."""
-        # TODO: implement default fields support, like `UUID`
-        return to_serialize
+    __slots__ = ()
 
     @classmethod
     @abc.abstractmethod
-    def from_json(cls, buffer: FromJson) -> Any:
-        """Deserialize JSON buffer to Python object."""
+    def to_json(cls, structure: Any) -> bytes:
+        raise NotImplementedError
+
+    @classmethod
+    def serialize_hook(cls, to_serialize: Any) -> Any:
+        raise TypeError(
+            f'Value {to_serialize} of type {type(to_serialize)} '
+            'is not supported',
+        )
+
+    @classmethod
+    @abc.abstractmethod
+    def from_json(cls, buffer: 'FromJson') -> Any:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def to_response(cls, structure: Any) -> HttpResponse:
-        """Serialize data to JSON and wrap it in an HTTP response."""
-        # TODO: I'm not sure if it belongs here.
-        # According to the current code, it turns out that so.
+    def from_python(
+        cls,
+        unstructured: Any,
+        model: Any,
+        from_python_kwargs: dict[str, Any],
+    ) -> Any:
         raise NotImplementedError
 
-
-class ComponentParserMixin(Generic[_ModelT]):
-    """Base abtract parser for request components."""
-
-    __is_base_type__: ClassVar[bool] = True
-
-    # We lie that it is an isntance attribute, but
-    # we can't use type vars in class attrs.
-    __model__: type[_ModelT]
-
-    @abc.abstractmethod
-    def _parse_component(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        raise NotImplementedError
+    @classmethod
+    def deserialize_hook(
+        cls,
+        target_type: type[Any],
+        to_deserialize: Any,
+    ) -> Any:
+        raise TypeError(
+            f'Value {to_deserialize} of type {type(to_deserialize)} '
+            f'is not supported for {target_type}',
+        )

@@ -1,11 +1,11 @@
 import abc
-from typing import ClassVar, final, override
+from typing import ClassVar, final
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from typing_extensions import override
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.routing import Router
 
 
 class BaseRenderer(abc.ABC):

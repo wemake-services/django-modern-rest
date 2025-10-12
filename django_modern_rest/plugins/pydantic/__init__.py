@@ -8,16 +8,6 @@ except ImportError:  # pragma: no cover
     raise
 
 
-from django_modern_rest.plugins.pydantic.components import (
-    Body as Body,
-)
-from django_modern_rest.plugins.pydantic.components import (
-    Headers as Headers,
-)
-from django_modern_rest.plugins.pydantic.components import (
-    Query as Query,
-)
-from django_modern_rest.plugins.pydantic.controller import (
+from django_modern_rest.plugins.pydantic.serialization import (
     PydanticSerializer as PydanticSerializer,
 )
-from django_modern_rest.plugins.pydantic.controller import rest as rest

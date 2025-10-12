@@ -9,9 +9,7 @@ lint:
 
 .PHONY: unit
 unit:
-	# poetry run pytest
-	# TODO: remove this smoke test
-	poetry run python ex.py
+	poetry run pytest
 
 .PHONY: package
 package:

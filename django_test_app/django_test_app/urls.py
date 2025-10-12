@@ -31,7 +31,7 @@ router = Router([
     path(
         'user/',
         compose_controllers(UserCreateController, UserListController).as_view(),
-        name='user_create',
+        name='users',
     ),
     path(
         'user/<int:user_id>',
@@ -40,6 +40,11 @@ router = Router([
             UserUpdateController,
         ).as_view(),
         name='user_update',
+    ),
+    path(
+        'user/direct/<int:user_id>',
+        UserUpdateController.as_view(),
+        name='user_update_direct',
     ),
 ])
 

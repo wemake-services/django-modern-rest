@@ -1,76 +1,131 @@
+import abc
 from typing import Any, ClassVar, Generic, TypeVar
 
+from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest.serialization import ComponentParserMixin
-from django_modern_rest.types import infer_type_args
+from django_modern_rest.serialization import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
 
 
-class BaseQuery(ComponentParserMixin[_QueryT], Generic[_QueryT]):
-    """
-    Base type for query parsing from http requests.
-
-    Do not use directly, use specialized version from plugins.
-    """
+class ComponentParserMixin:
+    """Base abtract parser for request components."""
 
     __is_base_type__: ClassVar[bool] = True
+
+    # TODO: use a TypedDict
+    from_python_kwargs: ClassVar[dict[str, Any]] = {}
+
+    @abc.abstractmethod
+    def _parse_component(
+        self,
+        serializer: type[BaseSerializer],
+        type_args: tuple[Any, ...],
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        raise NotImplementedError
+
+
+class Query(ComponentParserMixin, Generic[_QueryT]):
+    """
+    Parses query params of the request.
+
+    For example:
+
+    .. code:: python
+
+       >>> import pydantic
+
+       >>> class Ordering(pydantic.BaseModel):
+       ...     ordering: str
+       ...     reversed: bool
+
+    Will parse a request like ``?ordering=price&reversed=true``
+    into ``Ordering`` model.
+
+    If your controller class inherits from ``Query`` - then you can access
+    parsed query model as ``self.parsed_query`` attribute.
+    """
 
     parsed_query: _QueryT
 
     @override
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        _maybe_set_model_type(cls, BaseQuery)
+    def _parse_component(
+        self,
+        serializer: type[BaseSerializer],
+        type_args: tuple[Any, ...],
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        # TODO: validate `type_args` len
+        self.parsed_query = serializer.from_python(
+            request.GET,
+            type_args[0],
+            self.from_python_kwargs,
+        )
 
 
-class BaseBody(ComponentParserMixin[_BodyT], Generic[_BodyT]):
+class Body(ComponentParserMixin, Generic[_BodyT]):
     """
-    Base type for request body parsing.
+    Parses body of the request.
 
-    Do not use directly, use specialized version from plugins.
+    # TODO: example
+
+    If your controller class inherits from ``Body`` - then you can access
+    parsed body as ``self.parsed_body`` attribute.
     """
-
-    __is_base_type__: ClassVar[bool] = True
 
     parsed_body: _BodyT
 
     @override
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        _maybe_set_model_type(cls, BaseBody)
+    def _parse_component(
+        self,
+        serializer: type[BaseSerializer],
+        type_args: tuple[Any, ...],
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        # TODO: negotiate content-type
+        # TODO: make default encoding configurable
+        unstructured = serializer.from_json(request.body)
+        self.parsed_body = serializer.from_python(
+            unstructured,
+            type_args[0],
+            self.from_python_kwargs,
+        )
 
 
-class BaseHeaders(ComponentParserMixin[_HeadersT], Generic[_HeadersT]):
+class Headers(ComponentParserMixin, Generic[_HeadersT]):
     """
-    Base type for request headers parsing.
+    Parses request headers.
 
-    Do not use directly, use specialized version from plugins.
+    # TODO: example
+
+    If your controller class inherits from ``Headers`` - then you can access
+    parsed headers as ``self.parsed_headers`` attribute.
     """
-
-    __is_base_type__: ClassVar[bool] = True
 
     parsed_headers: _HeadersT
 
     @override
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        _maybe_set_model_type(cls, BaseHeaders)
-
-
-def _maybe_set_model_type(
-    orig_cls: type[Any],
-    base: type[Any],
-) -> None:
-    if orig_cls.__dict__.get('__is_base_type__', False):
-        return
-    type_args = infer_type_args(orig_cls, base)
-    if type_args is None or len(type_args) != 1:
-        raise ValueError(
-            f'Type args {type_args} are not correct for {orig_cls}, '
-            'only 1 type arg must be provided',
+    def _parse_component(
+        self,
+        serializer: type[BaseSerializer],
+        type_args: tuple[Any, ...],
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        # TODO: validate `type_args` len
+        self.parsed_headers = serializer.from_python(
+            request.headers,
+            type_args[0],
+            self.from_python_kwargs,
         )
-    orig_cls.__model__ = type_args[0]

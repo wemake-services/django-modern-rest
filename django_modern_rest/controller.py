@@ -1,65 +1,58 @@
-import asyncio
-import functools
-import inspect
-from collections.abc import Awaitable, Callable
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
 from django.http import HttpRequest, HttpResponseBase
 from django.utils.functional import classproperty
 from django.views import View
 from typing_extensions import override
 
-from django_modern_rest.serialization import (
-    BaseSerializer,
-    ComponentParserMixin,
-)
-from django_modern_rest.types import infer_type_args
+from django_modern_rest.components import ComponentParserMixin
+from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.types import infer_bases, infer_type_args
 
-_ParserT = TypeVar('_ParserT', bound=BaseSerializer)
+_SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 
-
-class RestEndpoint:
-    """Wrapper for REST endpoint functions with serialization support."""
-
-    __slots__ = ('_func',)
-
-    _func: Callable[..., Any]
-
-    def __init__(
-        self,
-        func: Callable[..., Any],
-        *,  # TODO: add openapi metadata?
-        parser: Callable[[Any], Any],
-    ) -> None:
-        """Initialize REST endpoint with function and serialization support."""
-        if inspect.iscoroutinefunction(func):
-            self._func = _async_serializer(func, parser)
-        else:
-            self._func = _sync_serializer(func, parser)
-
-    def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
-        """Execute the wrapped function and return HTTP response."""
-        func = self._func(*args, **kwargs)
-        if inspect.iscoroutine(func):
-            return asyncio.run(func)
-        return func
+_ComponentParserSpec: TypeAlias = tuple[
+    type[ComponentParserMixin],
+    tuple[Any, ...],
+]
 
 
-class Controller(View, Generic[_ParserT]):
+class Controller(View, Generic[_SerializerT]):
     """Defines API views as controllers."""
 
+    # We lie about that it is an instance variable, because type vars
+    # are not allowed in `ClassVar`:
+    _serializer: type[BaseSerializer]
+
     # Internal API:
-    _component_parsers: ClassVar[list[ComponentParserMixin[Any]]]
-    _api_endpoints: ClassVar[dict[str, RestEndpoint]]
-    _parser: type[_ParserT]
+    _component_parsers: ClassVar[list[_ComponentParserSpec]]
+    _api_endpoints: ClassVar[dict[str, Endpoint]]
 
     @override
     def __init_subclass__(cls) -> None:
         """Collect components parsers."""
         super().__init_subclass__()
-        cls._setup_parser()
-        cls._setup_component_parsers()
-        cls._setup_api_endpoints()
+        type_args = infer_type_args(cls, Controller)
+        if len(type_args) != 1:
+            raise ValueError(
+                f'Type args {type_args} are not correct for {cls}, '
+                'only 1 type arg must be provided',
+            )
+        cls._serializer = type_args[0]
+
+        if getattr(cls, '_component_parsers', None) is None:
+            cls._component_parsers = [
+                (subclass, get_args(subclass))
+                for subclass in infer_bases(cls, ComponentParserMixin)
+            ]
+
+        if getattr(cls, '_api_endpoints', None) is None:
+            cls._api_endpoints = {
+                meth: Endpoint(func, serializer=cls._serializer)
+                for meth in cls.existing_http_methods
+                if (func := getattr(cls, meth)) is not getattr(View, meth, None)
+            }
 
     @override
     def dispatch(
@@ -69,18 +62,29 @@ class Controller(View, Generic[_ParserT]):
         **kwargs: Any,
     ) -> HttpResponseBase:
         """Parse all components before the dispatching and call controller."""
-        self._parse_request_components(request, *args, **kwargs)
-
         # Fast path for method resolution:
         endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
         if endpoint is not None:
-            # TODO: validate `HttpResponse.content` with `return_dto`
+            # TODO: validate `HttpResponse.content` with `return_type`
             # TODO: support `StreamingHttpResponse`
             # TODO: support `JsonResponse`
-            # TODO: use `return_dto` for schema generation
+            # TODO: use `return_type` for schema generation
             # TODO: use configurable `json` encoders and decoders
             # TODO: make sure `return_dto` validation
             # can be turned off for production
+            for parser, type_args in self._component_parsers:
+                # TODO: maybe parse all at once?
+                # See https://github.com/wemake-services/django-modern-rest/issues/8
+                parser._parse_component(  # noqa: SLF001
+                    # We lie that this is a `ComponentParserMixin`, but their
+                    # APIs are compatible by design.
+                    self,  # type: ignore[arg-type]
+                    self._serializer,
+                    type_args,
+                    request,
+                    *args,
+                    **kwargs,
+                )
             return endpoint(self, *args, **kwargs)  # we don't pass request
         return self.http_method_not_allowed(request, *args, **kwargs)
 
@@ -93,107 +97,3 @@ class Controller(View, Generic[_ParserT]):
             for method in cls.http_method_names
             if getattr(cls, method, None) is not None
         }
-
-    def _parse_request_components(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        for parser_class in self._component_parsers:
-            self._parse_single_component(parser_class, request, *args, **kwargs)
-
-    def _parse_single_component(
-        self,
-        parser_class: type[ComponentParserMixin[Any]],
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        type_args = infer_type_args(self.__class__, parser_class)
-        if not type_args or len(type_args) != 1:
-            return
-
-        model = type_args[0]
-        parser = self._create_parser_instance(parser_class, model)
-        parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
-        self._copy_parsed_attributes(parser)
-
-    def _create_parser_instance(
-        self,
-        parser_class: type[ComponentParserMixin[Any]],
-        model: type[Any],
-    ) -> ComponentParserMixin[Any]:
-        parser = parser_class()
-        parser.__class__.__model__ = model
-        return parser
-
-    def _copy_parsed_attributes(
-        self,
-        parser: ComponentParserMixin[Any],
-    ) -> None:
-        for attr in dir(parser):
-            if attr.startswith('parsed_') and not attr.startswith('parsed__'):
-                setattr(self, attr, getattr(parser, attr))
-
-    @classmethod
-    def _setup_parser(cls) -> None:
-        type_args = infer_type_args(cls, Controller)
-        if len(type_args) != 1:
-            raise ValueError(
-                f'Type args {type_args} are not correct for {cls}, '
-                'only 1 type arg must be provided',
-            )
-        cls._parser = type_args[0]
-
-    @classmethod
-    def _setup_component_parsers(cls) -> None:
-        if getattr(cls, '_component_parsers', None) is None:
-            cls._component_parsers = cls._collect_component_parsers()
-
-    @classmethod
-    def _collect_component_parsers(cls) -> list[ComponentParserMixin[Any]]:
-        # TODO: maybe use some metaclass to collect component parsers?
-        # TODO: It looks pretty messy!
-        return [
-            subclass
-            for subclass in cls.__mro__[1:]
-            if (
-                issubclass(subclass, ComponentParserMixin)
-                and subclass.__module__
-                != 'django_modern_rest.components'  # Muddy!
-                and subclass != ComponentParserMixin
-            )
-        ]
-
-    @classmethod
-    def _setup_api_endpoints(cls) -> None:
-        if getattr(cls, '_api_endpoints', None) is None:
-            cls._api_endpoints = {
-                method: RestEndpoint(getattr(cls, method), parser=cls._parser)
-                for method in cls.existing_http_methods
-            }
-
-
-def _async_serializer(
-    func: Callable[..., Any],
-    parser: type[BaseSerializer],
-) -> Callable[..., Awaitable[HttpResponseBase]]:
-    @functools.wraps(func)
-    async def decorator(*args: Any, **kwargs: Any) -> HttpResponseBase:
-        func_result = await func(*args, **kwargs)
-        return parser.to_response(func_result)
-
-    return decorator
-
-
-def _sync_serializer(
-    func: Callable[..., Any],
-    parser: type[BaseSerializer],
-) -> Callable[..., HttpResponseBase]:
-    @functools.wraps(func)
-    def decorator(*args: Any, **kwargs: Any) -> HttpResponseBase:
-        func_result = func(*args, **kwargs)
-        return parser.to_response(func_result)
-
-    return decorator
