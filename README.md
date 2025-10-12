@@ -12,7 +12,7 @@ Modern REST framework for Django with types and async support!
 
 - [x] Blazingly fast
 - [x] Fully typed and checked with `mypy` and `pyright`
-- [x] Supports `pydantic2`, but not bound to it. 
+- [x] Supports `pydantic2`, but not bound to it
 - [ ] Supports `msgspec` support
 - [x] Supports async Django
 - [ ] Supports `openapi` schema generation out of the box

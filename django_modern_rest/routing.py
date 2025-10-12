@@ -31,6 +31,13 @@ def compose_controllers(*controllers: type['Controller[Any]']) -> type[View]:
     # TODO: validate that there's at least one controller
 
     views = [(controller, controller.as_view()) for controller in controllers]
+    is_all_async = all(controller.view_is_async for controller, _ in views)
+    is_any_async = any(controller.view_is_async for controller, _ in views)
+    if not is_all_async and is_any_async:
+        raise ValueError(
+            'Composing controllers with async and sync endpoints '
+            'is not supported',
+        )
 
     class ComposedControllerView(View):  # noqa: WPS431
         @override
