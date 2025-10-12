@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import inspect
 from collections.abc import Awaitable, Callable
@@ -36,11 +37,12 @@ class RestEndpoint:
         else:
             self._func = _sync_serializer(func, parser)
 
-        # functools.update_wrapper(self, self._func)  # TODO: fix or remove?
-
     def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
         """Execute the wrapped function and return HTTP response."""
-        return self._func(*args, **kwargs)  # type: ignore[no-any-return]
+        func = self._func(*args, **kwargs)
+        if inspect.iscoroutine(func):
+            return asyncio.run(func)
+        return func
 
 
 class Controller(View, Generic[_ParserT]):
@@ -64,12 +66,17 @@ class Controller(View, Generic[_ParserT]):
         cls._parser = type_args[0]
 
         if getattr(cls, '_component_parsers', None) is None:
+            # TODO: maybe use some metaclass to collect component parsers?
+            # TODO: It looks pretty messy!
             cls._component_parsers = [
-                subclass()
+                subclass
                 for subclass in cls.__mro__[1:]
                 if issubclass(subclass, ComponentParserMixin)
+                and subclass.__module__
+                != 'django_modern_rest.components'  # Muddy!
+                and subclass
+                != ComponentParserMixin  # Exclude base abstract class
             ]
-
         if getattr(cls, '_api_endpoints', None) is None:
             cls._api_endpoints = {
                 method: RestEndpoint(getattr(cls, method), parser=cls._parser)
@@ -84,9 +91,8 @@ class Controller(View, Generic[_ParserT]):
         **kwargs: Any,
     ) -> HttpResponseBase:
         """Parse all components before the dispatching and call controller."""
-        for parser in self._component_parsers:
-            # TODO: maybe parse all at once?
-            parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
+        self._parse_request_components(request, *args, **kwargs)
+
         # Fast path for method resolution:
         endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
         if endpoint is not None:
@@ -97,7 +103,7 @@ class Controller(View, Generic[_ParserT]):
             # TODO: use configurable `json` encoders and decoders
             # TODO: make sure `return_dto` validation
             # can be turned off for production
-            return endpoint(*args, **kwargs)  # we don't pass request
+            return endpoint(self, *args, **kwargs)  # we don't pass request
         return self.http_method_not_allowed(request, *args, **kwargs)
 
     @classproperty  # TODO: cache
@@ -109,6 +115,30 @@ class Controller(View, Generic[_ParserT]):
             for method in cls.http_method_names
             if getattr(cls, method, None) is not None
         }
+
+    def _parse_request_components(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        for parser_class in self._component_parsers:
+            type_args = infer_type_args(self.__class__, parser_class)
+            if not type_args or len(type_args) != 1:
+                continue
+
+            model = type_args[0]
+
+            parser = parser_class()
+            parser.__class__.__model__ = model
+
+            parser._parse_component(request, *args, **kwargs)  # noqa: SLF001
+
+            for attr in dir(parser):
+                if attr.startswith('parsed_') and not attr.startswith(
+                    'parsed__',
+                ):
+                    setattr(self, attr, getattr(parser, attr))
 
 
 def _async_serializer(

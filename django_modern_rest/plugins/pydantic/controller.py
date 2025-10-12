@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, TypeAlias
 
 import pydantic
+from django.http import HttpResponse
 from django.utils.module_loading import import_string
 
 from django_modern_rest.controller import RestEndpoint
@@ -34,25 +35,34 @@ class PydanticSerializer(BaseSerializer):
     def serialization_hook(cls, to_serialize: Any) -> Any:
         """Hook for custom serialization of pydantic fields."""
         # TODO: implement custom `pydantic` fields support
-        return super().serialization_hook(to_serialize)
+        return to_serialize.model_dump(mode='json')
 
     @classmethod
     def from_json(cls, buffer: FromJson) -> Any:
         """Deserialize JSON buffer using pydantic deserializer."""
         return cls._deserialize()(buffer)
 
+    @classmethod
+    def to_response(cls, structure: Any) -> HttpResponse:
+        """Serialize data to JSON and wrap it in an HTTP response."""
+        # TODO: may be moved to `BaseSerializer`?
+        return HttpResponse(
+            cls.to_json(structure),
+            content_type=cls.content_type,
+        )
+
     # TODO: merge `_serialize` and `_deserialize`?
     @classmethod
     def _serialize(cls) -> _Serialize:
-        existing_attr = getattr(cls, '_serialize', None)
+        existing_attr = getattr(cls, '_serialize_hook', None)
         if existing_attr is not None:
             return existing_attr
 
         setting = cls._setting_name(DMR_JSON_SERIALIZER_KEY)
-        cls._serialize = (
+        cls._serialize_hook = (
             import_string(setting) if isinstance(setting, str) else setting
         )
-        return cls._serialize
+        return cls._serialize_hook
 
     @classmethod
     def _deserialize(cls) -> _Deserialize:

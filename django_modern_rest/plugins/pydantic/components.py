@@ -76,7 +76,7 @@ class Body(BaseBody[_BodyT], Generic[_BodyT]):
         **kwargs: Any,
     ) -> None:
         self.parsed_body = model_validate_json(
-            self.__model__,
+            self.__class__.__model__,
             # TODO: make default encoding configurable
             request.body.decode(request.encoding or 'utf8'),
             self.validate_kwargs,

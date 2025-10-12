@@ -8,7 +8,7 @@ DMR_JSON_SERIALIZER_KEY: Final = 'json_serializer'
 DMR_JSON_DESERIALIZER_KEY: Final = 'json_deserializer'
 
 #: Default json serializer.
-DMR_JSON_SERIALIZER: Final = 'django_modern_rest.json.serializer'
+DMR_JSON_SERIALIZER: Final = 'django_modern_rest.json.serialize'
 
 #: Default json deserializer.
 DMR_JSON_DESERIALIZER: Final = 'django_modern_rest.json.deserialize'
