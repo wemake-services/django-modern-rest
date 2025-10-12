@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import inspect
 from collections.abc import Awaitable, Callable
@@ -40,7 +41,10 @@ class RestEndpoint:
 
     def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
         """Execute the wrapped function and return HTTP response."""
-        return self._func(*args, **kwargs)  # type: ignore[no-any-return]
+        result = self._func(*args, **kwargs)
+        if inspect.iscoroutine(result):
+            return asyncio.run(result)
+        return result
 
 
 class Controller(View, Generic[_ParserT]):
@@ -72,6 +76,7 @@ class Controller(View, Generic[_ParserT]):
                 for subclass in cls.__mro__[1:]
                 if issubclass(subclass, ComponentParserMixin)
                 and subclass.__module__ != 'django_modern_rest.components'  # Muddy!
+                and subclass != ComponentParserMixin  # Exclude base abstract class
             ]
         if getattr(cls, '_api_endpoints', None) is None:
             cls._api_endpoints = {

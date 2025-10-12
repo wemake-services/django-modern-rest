@@ -1,3 +1,4 @@
+import json
 import pytest
 from django.test import Client
 from django.urls import reverse
@@ -26,8 +27,15 @@ def test_user_create_view(client: Client, *, start_from: str | None) -> None:
     assert 'Content-Type' in response.headers
 
 
-def test_user_list_view(client: Client) -> None:
-    """Ensure that routes without path parameters work."""
-    base_url = reverse('api:user_create')
-    response = client.get(base_url)
+def test_user_update_controller(client: Client) -> None:
+    """Test UserUpdateController with PATCH request."""
+    url = reverse('api:user_update', kwargs={'user_id': 123})
+
+    response = client.patch(
+        url,
+        data=json.dumps({'email': 'updated@email.com', 'age': 25}),
+        content_type='application/json',
+    )
+
     assert response.status_code == 200
+    assert 'Content-Type' in response.headers
