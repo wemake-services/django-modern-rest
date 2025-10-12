@@ -36,8 +36,6 @@ class RestEndpoint:
         else:
             self._func = _sync_serializer(func, parser)
 
-        # functools.update_wrapper(self, self._func)  # TODO: fix or remove?
-
     def __call__(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
         """Execute the wrapped function and return HTTP response."""
         return self._func(*args, **kwargs)  # type: ignore[no-any-return]
