@@ -4,8 +4,7 @@ from typing import Any, cast, override
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
 
-from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.renderers import BaseRenderer
+from django_modern_rest.openapi import BaseRenderer, OpenAPIConfig
 from django_modern_rest.routing import Router
 from django_modern_rest.settings import DMR_OPENAPI_CONFIG_KEY, resolve_defaults
 
@@ -17,7 +16,7 @@ class OpenAPIView(View):
         """Render the OpenAPI schema."""
         return cast(
             HttpResponse,
-            self.renderer.render(request, self.router, self.config),  # type: ignore[attr-defined]
+            self.renderer.render(request, self.config),  # type: ignore[attr-defined]
         )
 
     @override

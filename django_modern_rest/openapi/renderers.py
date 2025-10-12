@@ -1,5 +1,5 @@
 import abc
-from typing import final, override
+from typing import ClassVar, final, override
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -15,7 +15,6 @@ class BaseRenderer(abc.ABC):
     def render(
         self,
         request: HttpRequest,
-        router: Router,
         config: OpenAPIConfig,
     ) -> HttpResponse:
         """Render the router and config to an HTTP response."""
@@ -26,14 +25,12 @@ class BaseRenderer(abc.ABC):
 class SwaggerRenderer(BaseRenderer):
     """Renderer for Swagger."""
 
-    # TODO: cdn load
-    template_name = 'modern_rest/swagger.html'
+    template_name: ClassVar[str] = 'modern_rest/swagger.html'
 
     @override
     def render(
         self,
         request: HttpRequest,
-        router: Router,
         config: OpenAPIConfig,
     ) -> HttpResponse:
         """Render the Swagger schema."""
@@ -48,4 +45,4 @@ class SwaggerRenderer(BaseRenderer):
 # TODO: add OpenAPISchemaView
 # TODO: add schema path customization
 # TODO: extend OpenAPIConfig
-# TODO: add cnd loads for ReDoc and Swagger
+# TODO: add CDN loads for ReDoc and Swagger
