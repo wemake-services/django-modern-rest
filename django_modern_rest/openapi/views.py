@@ -7,6 +7,7 @@ from typing_extensions import override
 
 from django_modern_rest.openapi import BaseRenderer, OpenAPIConfig
 from django_modern_rest.routing import Router
+from django_modern_rest.settings import DMR_OPENAPI_CONFIG_KEY, resolve_defaults
 
 
 class OpenAPIView(View):
@@ -47,12 +48,6 @@ class OpenAPIView(View):
 
     @classmethod
     def _default_config(cls) -> OpenAPIConfig:
-        # Local import to avoid circular import
-        from django_modern_rest.settings import (
-            DMR_OPENAPI_CONFIG_KEY,
-            resolve_defaults,
-        )
-
         config = resolve_defaults().get(DMR_OPENAPI_CONFIG_KEY)
         if not isinstance(config, OpenAPIConfig):
             raise TypeError(
