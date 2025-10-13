@@ -28,13 +28,10 @@ class ResponseValidator:
         self,
         serializer: type[BaseSerializer],
         endpoint_func: Callable[..., Any],
+        metadata: 'EndpointSpec | Empty',
     ) -> None:
         self._serializer = serializer
-        self._metadata: EndpointSpec | Empty = getattr(
-            endpoint_func,
-            '__endpoint__',
-            EmptyObj,
-        )
+        self._metadata = metadata
         self._parse_annotations(endpoint_func)
 
     def validate_response(self, response: _ResponseT) -> _ResponseT:

@@ -57,7 +57,7 @@ def test_default_alias_serialization(
     response = _AliasController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     assert json.loads(response.content) == request_data
 
 
@@ -89,7 +89,7 @@ def test_custom_alias_serialization(
     response = _NoAliasController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     assert json.loads(response.content) == request_data
 
 
