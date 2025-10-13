@@ -91,9 +91,15 @@ class Controller(View, Generic[_SerializerT]):
     @classproperty  # TODO: cache
     def existing_http_methods(cls) -> set[str]:  # noqa: N805
         """Returns and caches what HTTP methods are implemented in this view."""
-        # TODO: validate that all handlers have `@rest` decorator
-        return {
-            method
-            for method in cls.http_method_names
-            if getattr(cls, method, None) is not None
-        }
+        implemented_methods = set(cls.http_method_names) & vars(cls).keys()
+
+        # Validate that all handlers have `@rest` decorator
+        for method in implemented_methods:
+            method_handler = getattr(cls, method)
+            if not hasattr(method_handler, '__endpoint__'):
+                class_name = getattr(cls, '__name__', str(cls))
+                raise ValueError(
+                    f'Handler {class_name}.{method}() must be decorated with @rest',
+                )
+
+        return implemented_methods

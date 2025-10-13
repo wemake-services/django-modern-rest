@@ -50,6 +50,7 @@ class UserCreateController(  # noqa: WPS215
     Body[_UserInput],
     Controller[PydanticSerializer],
 ):
+    @rest(return_type=_UserOutput)
     def post(self) -> _UserOutput:
         return _UserOutput(
             uid=uuid.uuid4(),
@@ -63,6 +64,7 @@ class UserCreateController(  # noqa: WPS215
 
 @final
 class UserListController(Controller[PydanticSerializer]):
+    @rest(return_type=list[_UserInput])
     def get(self) -> list[_UserInput]:
         return [
             _UserInput(email='first@mail.ru', age=1),
@@ -75,6 +77,7 @@ class UserUpdateController(
     Body[_UserInput],
     Controller[PydanticSerializer],
 ):
+    @rest(return_type=_UserInput)
     async def patch(self, user_id: int) -> _UserInput:
         return _UserInput(
             email=self.parsed_body.email,

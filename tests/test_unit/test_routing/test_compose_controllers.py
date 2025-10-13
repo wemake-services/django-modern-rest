@@ -2,18 +2,20 @@ from typing import final
 
 import pytest
 
-from django_modern_rest import Controller, compose_controllers
+from django_modern_rest import Controller, compose_controllers, rest
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 @final
 class AsyncController(Controller[PydanticSerializer]):
+    @rest(return_type=str)
     async def get(self) -> str:
         return 'abc'
 
 
 @final
 class SyncController(Controller[PydanticSerializer]):
+    @rest(return_type=str)
     def post(self) -> str:
         return 'xyz'
 
