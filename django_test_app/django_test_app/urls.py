@@ -19,7 +19,12 @@ Including another URLconf
 from django.urls import include, path
 
 from django_modern_rest import Router, compose_controllers
-from django_modern_rest.openapi import OpenAPIView, SwaggerRenderer
+from django_modern_rest.openapi import (
+    JsonRenderer,
+    OpenAPIConfig,
+    OpenAPISetup,
+    SwaggerRenderer,
+)
 from rest_app.views import (
     UserCreateController,
     UserListController,
@@ -52,10 +57,19 @@ urlpatterns = [
     path('api/', include((router.urls, 'rest_app'), namespace='api')),
     path(
         'docs/',
-        OpenAPIView.as_view(
-            router=router,
-            renderer=SwaggerRenderer(),
+        include(
+            OpenAPISetup(
+                router=router,
+                renderers=[
+                    SwaggerRenderer(),
+                    JsonRenderer(),
+                ],
+                config=OpenAPIConfig(
+                    title='Test API',
+                    version='1.0.0',
+                ),
+            ).urls(),
+            namespace='docs',
         ),
-        name='openapi',
     ),
 ]

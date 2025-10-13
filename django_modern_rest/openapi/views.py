@@ -7,7 +7,6 @@ from typing_extensions import override
 
 from django_modern_rest.openapi import BaseRenderer, OpenAPIConfig
 from django_modern_rest.routing import Router
-from django_modern_rest.settings import DMR_OPENAPI_CONFIG_KEY, resolve_defaults
 
 
 class OpenAPIView(View):
@@ -27,31 +26,28 @@ class OpenAPIView(View):
         cls,
         router: Router,
         renderer: BaseRenderer,
-        config: OpenAPIConfig | None = None,
+        config: OpenAPIConfig,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Extend the base view to include OpenAPI configuration.
 
         This method extends Django's base 'as_view()' to handle OpenAPI
-        parameters by setting them as class attributes rather than passing
-        them through initkwargs.
+        parameters.
         """
-        if config is None:
-            config = cls._default_config()
-
+        # We need to set these attributes on the class before calling
+        # `super().as_view()` because Django's base `as_view()` method
+        # validates that any initkwargs correspond to existing class attributes.
+        # By setting these attributes first, we ensure that the parameters
+        # can be passed as initkwargs to the parent method without
+        # causing validation errors.
         cls.router = router
         cls.renderer = renderer
         cls.config = config
 
-        return super().as_view(**initkwargs)
-
-    @classmethod
-    def _default_config(cls) -> OpenAPIConfig:
-        config = resolve_defaults().get(DMR_OPENAPI_CONFIG_KEY)
-        if not isinstance(config, OpenAPIConfig):
-            raise TypeError(
-                'OpenAPI config is not set. Please set the '
-                "'DMR_OPENAPI_CONFIG_KEY' setting.",
-            )
-        return config
+        return super().as_view(
+            router=router,
+            renderer=renderer,
+            config=config,
+            **initkwargs,
+        )
