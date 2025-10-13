@@ -1,4 +1,4 @@
-from typing import Any, Final, Literal, TypeVar, final, get_args, get_origin
+from typing import Any, Final, Literal, final, get_args, get_origin
 
 from typing_extensions import get_original_bases
 
@@ -19,7 +19,7 @@ EmptyObj: Final = Empty()
 def infer_type_args(
     orig_cls: type[Any],
     given_type: type[Any],
-) -> tuple[type[Any], ...]:
+) -> tuple[Any, ...]:
     """
     Return type args for the closest given type.
 
@@ -34,14 +34,13 @@ def infer_type_args(
         arg
         for base_class in infer_bases(orig_cls, given_type)
         for arg in get_args(base_class)
-        if not isinstance(arg, TypeVar)
     )
 
 
 def infer_bases(
     orig_cls: type[Any],
     given_type: type[Any],
-) -> list[type[Any]]:
+) -> list[Any]:
     """Infers ``__origin_bases__`` from the given type."""
     return [
         base

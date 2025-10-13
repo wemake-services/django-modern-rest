@@ -7,7 +7,10 @@ from typing_extensions import override
 
 from django_modern_rest.components import ComponentParserMixin
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.exceptions import SerializationError
+from django_modern_rest.exceptions import (
+    SerializationError,
+    UnsolvableAnnotationsError,
+)
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import infer_bases, infer_type_args
 
@@ -36,9 +39,16 @@ class Controller(View, Generic[_SerializerT]):
         super().__init_subclass__()
         type_args = infer_type_args(cls, Controller)
         if len(type_args) != 1:
-            raise ValueError(
+            raise UnsolvableAnnotationsError(
                 f'Type args {type_args} are not correct for {cls}, '
                 'only 1 type arg must be provided',
+            )
+        if isinstance(type_args[0], TypeVar):
+            return  # This is a generic subclass of a controller.
+        if not issubclass(type_args[0], BaseSerializer):
+            raise UnsolvableAnnotationsError(
+                f'Type arg {type_args[0]} are not correct for {cls}, '
+                'it must be a BaseSerializer subclass',
             )
         cls._serializer = type_args[0]
 

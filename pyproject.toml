@@ -22,6 +22,7 @@ keywords = [
   "django",
   "django plugin",
   "djangorestframework",
+  "django-api",
   "API",
   "REST",
   "wemake-python-package",
@@ -213,7 +214,7 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=96.6",  # TODO: set to 100%
+  "--cov-fail-under=97.6",  # TODO: set to 100%
   # Ignores:
   "--ignore=docs",
 ]
