@@ -34,7 +34,7 @@ class JsonRenderer(BaseRenderer):
     def __init__(
         self,
         path: str = 'openapi.json/',
-        name: str = 'openapi_json',
+        name: str = 'json',
     ) -> None:
         self.path = path
         self.name = name

@@ -7,7 +7,6 @@ from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
-from django_modern_rest.settings import DMR_OPENAPI_CONFIG_KEY, resolve_defaults
 
 
 class OpenAPISetup:
@@ -43,6 +42,12 @@ class OpenAPISetup:
 
     @classmethod
     def _default_config(cls) -> OpenAPIConfig:
+        # Circular import:
+        from django_modern_rest.settings import (  # noqa: PLC0415
+            DMR_OPENAPI_CONFIG_KEY,
+            resolve_defaults,
+        )
+
         config = resolve_defaults().get(DMR_OPENAPI_CONFIG_KEY)
         if not isinstance(config, OpenAPIConfig):
             raise TypeError(
