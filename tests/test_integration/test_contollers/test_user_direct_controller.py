@@ -4,41 +4,49 @@ from typing import final
 import pytest
 from django.test import SimpleTestCase
 from django.urls import reverse
+from faker import Faker
 from typing_extensions import override
 
 from django_modern_rest.test import DMRAsyncClient, DMRClient
 
 
-def test_user_update_direct_view(dmr_client: DMRClient) -> None:
+def test_user_update_direct_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that direct routes work."""
+    email = faker.email()
+    user_id = faker.unique.random_int()
+
     response = dmr_client.patch(
-        reverse('api:user_update_direct', kwargs={'user_id': 5}),
-        data={'email': 'test@example.com', 'age': 3},
+        reverse('api:user_update_direct', kwargs={'user_id': user_id}),
+        data={'email': email, 'age': faker.unique.random_int()},
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
-        'email': 'test@example.com',
-        'age': 5,
+        'email': email,
+        'age': user_id,
     }
 
 
 @pytest.mark.asyncio
 async def test_user_update_direct_view_async_client(
     dmr_async_client: DMRAsyncClient,
+    faker: Faker,
 ) -> None:
     """Ensure that direct routes work."""
+    email = faker.email()
+    user_id = faker.unique.random_int()
+
     response = await dmr_async_client.patch(
-        reverse('api:user_update_direct', kwargs={'user_id': 5}),
-        data={'email': 'test@example.com', 'age': 3},
+        reverse('api:user_update_direct', kwargs={'user_id': user_id}),
+        data={'email': email, 'age': faker.unique.random_int()},
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
-        'email': 'test@example.com',
-        'age': 5,
+        'email': email,
+        'age': user_id,
     }
 
 
@@ -72,10 +80,16 @@ class ClientWorksWithRegularTest(SimpleTestCase):
         assert response.headers['Content-Type'] == 'application/json'
 
 
-def test_user_update_direct_view405(dmr_client: DMRClient) -> None:
+def test_user_update_direct_view405(
+    dmr_client: DMRClient,
+    faker: Faker,
+) -> None:
     """Ensure that direct routes raise 405."""
     response = dmr_client.delete(
-        reverse('api:user_update_direct', kwargs={'user_id': 5}),
+        reverse(
+            'api:user_update_direct',
+            kwargs={'user_id': faker.random_int()},
+        ),
     )
 
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
