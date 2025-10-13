@@ -1,9 +1,11 @@
 import abc
 from typing import Any, ClassVar, Generic, TypeVar
 
+import msgspec
 from django.http import HttpRequest
 from typing_extensions import override
 
+from django_modern_rest.exceptions import RequestSerializationError
 from django_modern_rest.serialization import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
@@ -15,9 +17,6 @@ class ComponentParserMixin:
     """Base abtract parser for request components."""
 
     __is_base_type__: ClassVar[bool] = True
-
-    # TODO: use a TypedDict
-    from_python_kwargs: ClassVar[dict[str, Any]] = {}
 
     @abc.abstractmethod
     def _parse_component(
@@ -64,11 +63,13 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
         **kwargs: Any,
     ) -> None:
         # TODO: validate `type_args` len
-        self.parsed_query = serializer.from_python(
-            request.GET,
-            type_args[0],
-            self.from_python_kwargs,
-        )
+        try:
+            self.parsed_query = serializer.from_python(
+                request.GET,
+                type_args[0],
+            )
+        except serializer.validation_error as exc:
+            raise RequestSerializationError(str(exc)) from None
 
 
 class Body(ComponentParserMixin, Generic[_BodyT]):
@@ -94,12 +95,17 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
     ) -> None:
         # TODO: negotiate content-type
         # TODO: make default encoding configurable
-        unstructured = serializer.from_json(request.body)
-        self.parsed_body = serializer.from_python(
-            unstructured,
-            type_args[0],
-            self.from_python_kwargs,
-        )
+        try:
+            self.parsed_body = serializer.from_python(
+                serializer.from_json(request.body),
+                type_args[0],
+            )
+        except (
+            serializer.validation_error,
+            msgspec.DecodeError,
+            TypeError,
+        ) as exc:
+            raise RequestSerializationError(str(exc)) from None
 
 
 class Headers(ComponentParserMixin, Generic[_HeadersT]):
@@ -124,8 +130,10 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
         **kwargs: Any,
     ) -> None:
         # TODO: validate `type_args` len
-        self.parsed_headers = serializer.from_python(
-            request.headers,
-            type_args[0],
-            self.from_python_kwargs,
-        )
+        try:
+            self.parsed_headers = serializer.from_python(
+                request.headers,
+                type_args[0],
+            )
+        except serializer.validation_error as exc:
+            raise RequestSerializationError(str(exc)) from None

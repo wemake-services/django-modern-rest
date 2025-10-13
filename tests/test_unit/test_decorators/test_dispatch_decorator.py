@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from typing import final
 
+import pytest
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, User
 
@@ -17,21 +18,23 @@ class _MyController(Controller[PydanticSerializer]):
         return 'Logged in!'
 
 
-def test_anonymous_user(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures `."""
+@pytest.mark.parametrize(
+    ('user', 'status_code'),
+    [
+        (AnonymousUser(), HTTPStatus.FOUND),
+        (User(), HTTPStatus.OK),
+    ],
+)
+def test_login_required(
+    dmr_rf: DMRRequestFactory,
+    *,
+    user: User | AnonymousUser,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that ``dispatch_decorator`` works and authed user is required."""
     request = dmr_rf.get('/whatever/')
-    request.user = AnonymousUser()
+    request.user = user
 
     response = _MyController.as_view()(request)
 
-    assert response.status_code == HTTPStatus.FOUND
-
-
-def test_regular_user(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures `."""
-    request = dmr_rf.get('/whatever/')
-    request.user = User()
-
-    response = _MyController.as_view()(request)
-
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == status_code

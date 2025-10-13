@@ -71,6 +71,7 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
+inline-snapshot = "^0.29"
 
 [tool.poetry.group.docs]
 optional = true
@@ -178,6 +179,11 @@ isort.known-first-party = ["rest_app"]
 "tests/*.py" = ["S101"]
 
 
+[tool.inline-snapshot]
+# Docs: https://15r10nk.github.io/inline-snapshot/latest/configuration
+format-command="make format"
+
+
 [tool.pytest.ini_options]
 # Django options:
 # https://pytest-django.readthedocs.io/en/latest/
@@ -206,7 +212,7 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=95",  # TODO: set to 100%
+  "--cov-fail-under=95.9",  # TODO: set to 100%
   # Ignores:
   "--ignore=docs",
 ]

@@ -1,28 +1,38 @@
 import dataclasses
 import inspect
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, TypeVar, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
 
 from django.http import HttpResponse
 from typing_extensions import ParamSpec
 
+from django_modern_rest.responses import ResponseValidator
 from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.types import Empty, EmptyObj
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
 
 
 class Endpoint:
-    __slots__ = ('_func',)
+    __slots__ = ('_func', '_response_validator')
 
     _func: Callable[..., Any]
+
+    response_validator_cls: ClassVar[type[ResponseValidator]] = (
+        ResponseValidator
+    )
 
     def __init__(
         self,
         func: Callable[..., Any],
-        *,  # TODO: add openapi metadata?
+        *,
         serializer: type[BaseSerializer],
     ) -> None:
+        self._response_validator = self.response_validator_cls(
+            serializer,
+            func,  # we need a func before any wrappers
+        )
         if inspect.iscoroutinefunction(func):
             self._func = self._async_endpoint(func, serializer)
         else:
@@ -64,11 +74,12 @@ class Endpoint:
         serializer: type[BaseSerializer],
         raw_data: Any,
     ) -> HttpResponse:
-        # TODO: make response data type validation
         if isinstance(raw_data, HttpResponse):
-            return raw_data
+            return self._response_validator.validate_response(raw_data)
         return HttpResponse(
-            serializer.to_json(raw_data),
+            serializer.to_json(
+                self._response_validator.validate_content(raw_data),
+            ),
             content_type='application/json',
         )
 
@@ -76,7 +87,14 @@ class Endpoint:
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class EndpointSpec:
-    return_type: Any
+    """
+    Endpoint metadata specification.
+
+    Stored inside ``__endpoint__`` attribute of functions
+    decorated with :func:`rest`.
+    """
+
+    return_type: Any | Empty
 
 
 _ParamT = ParamSpec('_ParamT')
@@ -85,7 +103,8 @@ _ReturnT = TypeVar('_ReturnT')
 
 def rest(
     *,
-    return_type: Any,  # `type[T]` limits some type annotations
+    # `type[T]` limits some type annotations:
+    return_type: Any | Empty = EmptyObj,
     # TODO:
     # status_code
     # errors
