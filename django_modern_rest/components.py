@@ -18,6 +18,16 @@ class ComponentParserMixin:
 
     __is_base_type__: ClassVar[bool] = True
 
+    @classmethod
+    @abc.abstractmethod
+    def _extract_raw_data(
+        cls,
+        request: HttpRequest,
+        serializer: type[BaseSerializer],
+    ) -> Any:
+        """Extract raw data from request without validation."""
+        raise NotImplementedError
+
     @abc.abstractmethod
     def _parse_component(
         self,
@@ -53,6 +63,15 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
 
     parsed_query: _QueryT
 
+    @classmethod
+    @override
+    def _extract_raw_data(
+        cls,
+        request: HttpRequest,
+        serializer: type[BaseSerializer],
+    ) -> Any:
+        return request.GET  # Просто возвращаем данные
+
     @override
     def _parse_component(
         self,
@@ -83,6 +102,15 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
     """
 
     parsed_body: _BodyT
+
+    @classmethod
+    @override
+    def _extract_raw_data(
+        cls,
+        request: HttpRequest,
+        serializer: type[BaseSerializer],
+    ) -> Any:
+        return serializer.from_json(request.body)  # Только парсим JSON
 
     @override
     def _parse_component(
@@ -119,6 +147,15 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
     """
 
     parsed_headers: _HeadersT
+
+    @classmethod
+    @override
+    def _extract_raw_data(
+        cls,
+        request: HttpRequest,
+        serializer: type[BaseSerializer],
+    ) -> Any:
+        return request.headers
 
     @override
     def _parse_component(

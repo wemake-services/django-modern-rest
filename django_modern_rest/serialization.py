@@ -54,3 +54,22 @@ class BaseSerializer:
             f'Value {to_deserialize} of type {type(to_deserialize)} '
             f'is not supported for {target_type}',
         )
+
+    @classmethod
+    @abc.abstractmethod
+    def create_combined_model(
+        cls,
+        component_specs: dict[str, type[Any]],
+    ) -> type[Any]:
+        """Create a single model that combines all component models."""
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def validate_combined(
+        cls,
+        combined_model: type[Any],
+        data: dict[str, Any],
+    ) -> Any:
+        """Validate all data at once using combined model."""
+        raise NotImplementedError

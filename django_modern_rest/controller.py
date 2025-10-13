@@ -110,19 +110,24 @@ class Controller(View, Generic[_SerializerT]):
             # TODO: use configurable `json` encoders and decoders
             # TODO: make sure `return_dto` validation
             # can be turned off for production
+            component_specs = {}
+            raw_data = {}
+
             for parser, type_args in self._component_parsers:
-                # TODO: maybe parse all at once?
-                # See https://github.com/wemake-services/django-modern-rest/issues/8
-                parser._parse_component(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    # We lie that this is a `ComponentParserMixin`, but their
-                    # APIs are compatible by design.
-                    self,  # type: ignore[arg-type]
-                    self._serializer,
-                    type_args,
-                    request,
-                    *args,
-                    **kwargs,
-                )
+                if type_args:
+                    attr_name = f'parsed_{parser.__name__.lower()}'
+                    component_specs[attr_name] = type_args[0]
+
+                    raw_data[attr_name] = parser._extract_raw_data(request, self._serializer)
+
+            if not hasattr(self.__class__, '_combined_model'):
+                self.__class__._combined_model = self._serializer.create_combined_model(component_specs)
+
+            validated = self._serializer.validate_combined(self._combined_model, raw_data)
+
+            for attr_name in component_specs:
+                setattr(self, attr_name, getattr(validated, attr_name))
+
             return endpoint(self, *args, **kwargs)  # we don't pass request
         return None
 

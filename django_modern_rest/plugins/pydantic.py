@@ -94,6 +94,40 @@ class PydanticSerializer(BaseSerializer):
         # TODO: provide docs why this is needed
         return super().deserialize_hook(target_type, to_deserialize)
 
+    @override
+    @classmethod
+    def create_combined_model(
+        cls,
+        component_specs: dict[str, type[Any]],
+    ) -> type[Any]:
+        """Create a single Pydantic model from all components."""
+        import pydantic
+
+        fields = {
+            name: (model_type, ...)
+            for name, model_type in component_specs.items()
+        }
+
+        # Просто создаём модель без дополнительной конфигурации
+        # by_alias=True будет применён при validate_python
+        return pydantic.create_model('CombinedRequestModel', **fields)
+
+    @override
+    @classmethod
+    def validate_combined(
+        cls,
+        combined_model: type[Any],
+        data: dict[str, Any],
+    ) -> Any:
+        """Validate all data at once - ОДНА валидация для всех компонентов."""
+        import pydantic
+
+        # TypeAdapter с from_python_kwargs применит by_alias=True ко ВСЕЙ иерархии моделей
+        return pydantic.TypeAdapter(combined_model).validate_python(
+            data,
+            **cls.from_python_kwargs,  # by_alias=True применится рекурсивно
+        )
+
 
 # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
 def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
