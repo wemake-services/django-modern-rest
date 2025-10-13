@@ -5,7 +5,7 @@ import pydantic
 from django.http import HttpResponse
 from faker import Faker
 
-from django_modern_rest import Body, Controller
+from django_modern_rest import Body, Controller, rest
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -17,6 +17,7 @@ class _BodyModel(pydantic.BaseModel):
 
 @final
 class _MyController(Controller[PydanticSerializer], Body[_BodyModel]):
+    @rest(return_type=str)
     def post(self) -> str:
         """Simulates `post` method."""
         return self.parsed_body.email
