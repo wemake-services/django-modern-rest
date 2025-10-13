@@ -21,6 +21,7 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def to_json(cls, structure: Any) -> bytes:
+        """Override this method to covert structured data to json bytestring."""
         raise NotImplementedError
 
     @classmethod
