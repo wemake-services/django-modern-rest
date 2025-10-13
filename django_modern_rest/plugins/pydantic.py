@@ -1,6 +1,14 @@
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import pydantic
+try:
+    import pydantic
+except ImportError:  # pragma: no cover
+    print(  # noqa: WPS421
+        'Looks like `pydantic` is not installed, '
+        "consider using `pip install 'django-modern-rest[pydantic]'`",
+    )
+    raise
+
 from django.utils.module_loading import import_string
 from typing_extensions import override
 
