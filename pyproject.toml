@@ -45,10 +45,10 @@ include = ["django_modern_rest_pytest.py"]
 
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 typing_extensions = ">=4"
 
-# Default dependency, since we use for json parsing:
+# Default dependency, since we use it for json parsing:
 msgspec = ">= 0.19"
 
 pydantic = { version = "^2.12", optional = true }
