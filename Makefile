@@ -1,5 +1,9 @@
 SHELL:=/usr/bin/env bash
 
+.PHONY: format
+format:
+	ruff format && ruff check && ruff format
+
 .PHONY: lint
 lint:
 	poetry run ruff check --exit-non-zero-on-fix

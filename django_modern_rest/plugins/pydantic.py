@@ -16,7 +16,7 @@ from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_JSON_DESERIALIZE_KEY,
     DMR_JSON_SERIALIZE_KEY,
-    resolve_defaults,
+    resolve_setting,
 )
 
 if TYPE_CHECKING:
@@ -28,22 +28,33 @@ if TYPE_CHECKING:
 
 
 class PydanticSerializer(BaseSerializer):
-    _serialize: ClassVar['Serialize']
-    _deserialize: ClassVar['Deserialize']
-    _strict: ClassVar[bool] = True
-
     __slots__ = ()
+
+    # Required API:
+    validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
+
+    # Custom API:
 
     # TODO: use `TypedDict`
     model_dump_kwargs: ClassVar[dict[str, Any]] = {
         'by_alias': True,
         'mode': 'json',
     }
+    # TODO: use a TypedDict
+    from_python_kwargs: ClassVar[dict[str, Any]] = {
+        'by_alias': True,
+    }
+    from_json_strict: ClassVar[bool] = True
+
+    # Private API:
+
+    _serialize: ClassVar['Serialize']
+    _deserialize: ClassVar['Deserialize']
 
     @override
     @classmethod
     def to_json(cls, structure: Any) -> bytes:
-        return cls._get_serialize_func()(structure, cls.serialize_hook)
+        return _get_serialize_func(cls)(structure, cls.serialize_hook)
 
     @override
     @classmethod
@@ -55,10 +66,10 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def from_json(cls, buffer: 'FromJson') -> Any:
-        return cls._get_deserialize_func()(
+        return _get_deserialize_func(cls)(
             buffer,
             cls.deserialize_hook,
-            strict=cls._strict,
+            strict=cls.from_json_strict,
         )
 
     @override
@@ -67,12 +78,10 @@ class PydanticSerializer(BaseSerializer):
         cls,
         unstructured: Any,
         model: Any,
-        # TODO: use a TypedDict
-        from_python_kwargs: dict[str, Any],
     ) -> Any:
         return pydantic.TypeAdapter(model).validate_python(
             unstructured,
-            **from_python_kwargs,
+            **cls.from_python_kwargs,
         )
 
     @override
@@ -82,30 +91,30 @@ class PydanticSerializer(BaseSerializer):
         target_type: type[Any],
         to_deserialize: Any,
     ) -> Any:
-        # TODO: implement custom `pydantic` fields support
+        # TODO: provide docs why this is needed
         return super().deserialize_hook(target_type, to_deserialize)
 
-    # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
-    @classmethod
-    def _get_serialize_func(cls) -> 'Serialize':
-        existing_attr: Serialize | None = getattr(cls, '_serialize', None)
-        if existing_attr is not None:
-            return existing_attr
 
-        setting = resolve_defaults()[DMR_JSON_SERIALIZE_KEY]
-        cls._serialize = (
-            import_string(setting) if isinstance(setting, str) else setting
-        )
-        return cls._serialize
+# TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
+def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
+    existing_attr: Serialize | None = getattr(cls, '_serialize', None)
+    if existing_attr is not None:
+        return existing_attr
 
-    @classmethod
-    def _get_deserialize_func(cls) -> 'Deserialize':
-        existing_attr: Deserialize | None = getattr(cls, '_deserialize', None)
-        if existing_attr is not None:
-            return existing_attr
+    setting = resolve_setting(DMR_JSON_SERIALIZE_KEY)
+    cls._serialize = (
+        import_string(setting) if isinstance(setting, str) else setting
+    )
+    return cls._serialize
 
-        setting = resolve_defaults()[DMR_JSON_DESERIALIZE_KEY]
-        cls._deserialize = (
-            import_string(setting) if isinstance(setting, str) else setting
-        )
-        return cls._deserialize
+
+def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
+    existing_attr: Deserialize | None = getattr(cls, '_deserialize', None)
+    if existing_attr is not None:
+        return existing_attr
+
+    setting = resolve_setting(DMR_JSON_DESERIALIZE_KEY)
+    cls._deserialize = (
+        import_string(setting) if isinstance(setting, str) else setting
+    )
+    return cls._deserialize

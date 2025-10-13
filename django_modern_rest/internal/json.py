@@ -33,7 +33,7 @@ def serialize(
     serializer: Callable[[Any], Any],
 ) -> bytes:
     """
-    Encode a value into JSON.
+    Encode a value into JSON bytestring.
 
     Args:
         to_serialize: Value to encode.
@@ -43,13 +43,10 @@ def serialize(
         JSON as bytes.
 
     Raises:
-        ValueError: If error encoding ``obj``.
+        TypeError: If error encoding ``obj``.
+        msgspec.EncodeError: If error encoding ``obj``.
     """
-    try:
-        return msgspec.json.encode(to_serialize, enc_hook=serializer)
-    except (TypeError, msgspec.EncodeError) as msgspec_error:
-        # TODO: custom exception
-        raise ValueError(str(msgspec_error)) from msgspec_error
+    return msgspec.json.encode(to_serialize, enc_hook=serializer)
 
 
 def deserialize(
@@ -72,14 +69,11 @@ def deserialize(
         Decoded object.
 
     Raises:
-        ValueError: If error decoding *value*.
+        TypeError: If error encoding ``obj``.
+        msgspec.DecodeError: If error encoding ``obj``.
     """
-    try:
-        return msgspec.json.decode(
-            to_deserialize,
-            dec_hook=deserializer,
-            strict=strict,
-        )
-    except msgspec.DecodeError as msgspec_error:
-        # TODO: new error type
-        raise ValueError(str(msgspec_error)) from msgspec_error
+    return msgspec.json.decode(
+        to_deserialize,
+        dec_hook=deserializer,
+        strict=strict,
+    )

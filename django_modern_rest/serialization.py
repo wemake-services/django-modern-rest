@@ -10,9 +10,13 @@ _ModelT = TypeVar('_ModelT')
 class BaseSerializer:
     """Abstract base class for JSON serialization."""
 
-    content_type: ClassVar[str] = 'application/json'
-
     __slots__ = ()
+
+    # API that needs to be set in subclasses:
+    validation_error: ClassVar[type[Exception]]
+
+    # API that have defaults:
+    content_type: ClassVar[str] = 'application/json'
 
     @classmethod
     @abc.abstractmethod
@@ -37,7 +41,6 @@ class BaseSerializer:
         cls,
         unstructured: Any,
         model: Any,
-        from_python_kwargs: dict[str, Any],
     ) -> Any:
         raise NotImplementedError
 
