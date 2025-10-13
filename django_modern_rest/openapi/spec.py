@@ -5,12 +5,16 @@ from django.urls import URLPattern, path
 
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.renderers import BaseRenderer
+from django_modern_rest.openapi.schema import SchemaGenerator
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
 
 
-class OpenAPISetup:
-    name: ClassVar[str] = 'openapi'
+class OpenAPISpec:
+    """OpenAPI specification."""
+
+    _name: ClassVar[str] = 'openapi'
+    _schema_generator: type[SchemaGenerator] = SchemaGenerator
 
     def __init__(
         self,
@@ -26,19 +30,21 @@ class OpenAPISetup:
         if self.config is None:
             self.config = self._default_config()
 
+        # TODO: refactor this sh*t
+        generator = self._schema_generator(self.config, self.router)
+
         urlpatterns = [
             path(
                 renderer.path,
                 OpenAPIView.as_view(
-                    router=self.router,
                     renderer=renderer,
-                    config=self.config,
+                    schema=generator.to_schema(),
                 ),
-                name=f'{self.name}_{renderer.name}',
+                name=f'{self._name}_{renderer.name}',
             )
             for renderer in self.renderers
         ]
-        return (urlpatterns, self.name)
+        return (urlpatterns, self._name)
 
     @classmethod
     def _default_config(cls) -> OpenAPIConfig:

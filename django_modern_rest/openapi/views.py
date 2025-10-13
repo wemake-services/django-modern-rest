@@ -5,28 +5,26 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
 from typing_extensions import override
 
-from django_modern_rest.openapi import BaseRenderer, OpenAPIConfig
-from django_modern_rest.routing import Router
+from django_modern_rest.openapi import BaseRenderer
+from django_modern_rest.openapi.schema import OpenAPISchema
 
 
 class OpenAPIView(View):
     """View for OpenAPI."""
 
-    router: ClassVar[Router]
     renderer: ClassVar[BaseRenderer]
-    config: ClassVar[OpenAPIConfig]
+    schema: ClassVar[OpenAPISchema]
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema."""
-        return self.renderer.render(request, self.config)
+        return self.renderer.render(request, self.schema)
 
     @override
     @classmethod
     def as_view(  # type: ignore[override]
         cls,
-        router: Router,
         renderer: BaseRenderer,
-        config: OpenAPIConfig,
+        schema: OpenAPISchema,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -41,13 +39,11 @@ class OpenAPIView(View):
         # By setting these attributes first, we ensure that the parameters
         # can be passed as initkwargs to the parent method without
         # causing validation errors.
-        cls.router = router
         cls.renderer = renderer
-        cls.config = config
+        cls.schema = schema
 
         return super().as_view(
-            router=router,
             renderer=renderer,
-            config=config,
+            schema=schema,
             **initkwargs,
         )

@@ -30,7 +30,7 @@ class Deserialize(Protocol):
 
 def serialize(
     to_serialize: Any,
-    serializer: Callable[[Any], Any],
+    serializer: Callable[[Any], Any] | None = None,
 ) -> bytes:
     """
     Encode a value into JSON bytestring.
@@ -51,7 +51,7 @@ def serialize(
 
 def deserialize(
     to_deserialize: FromJson,
-    deserializer: _DeserializeFunc,
+    deserializer: _DeserializeFunc | None = None,
     *,
     strict: bool = True,
 ) -> Any:

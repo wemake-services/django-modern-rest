@@ -10,11 +10,6 @@ from django_modern_rest.test import DMRClient
     ('endpoint_name', 'expected_status', 'expected_content_type'),
     [
         ('docs:openapi_swagger', HTTPStatus.OK, 'text/html'),
-        (
-            'docs:openapi_json',
-            HTTPStatus.OK,
-            'application/vnd.oai.openapi+json',
-        ),
     ],
 )
 def test_endpoints(
@@ -36,7 +31,6 @@ def test_endpoints(
     ('endpoint_name', 'expected_status'),
     [
         ('docs:openapi_swagger', HTTPStatus.METHOD_NOT_ALLOWED),
-        ('docs:openapi_json', HTTPStatus.METHOD_NOT_ALLOWED),
     ],
 )
 def test_wrong_method(

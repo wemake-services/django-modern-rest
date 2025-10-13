@@ -8,5 +8,5 @@ from django_modern_rest.openapi.renderers import (
 from django_modern_rest.openapi.renderers import (
     SwaggerRenderer as SwaggerRenderer,
 )
-from django_modern_rest.openapi.setup import OpenAPISetup as OpenAPISetup
+from django_modern_rest.openapi.spec import OpenAPISpec as OpenAPISpec
 from django_modern_rest.openapi.views import OpenAPIView as OpenAPIView
