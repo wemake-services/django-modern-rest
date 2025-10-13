@@ -3,6 +3,7 @@ from typing import final
 
 import pydantic
 from django.http import HttpResponse
+from faker import Faker
 
 from django_modern_rest import Body, Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -21,37 +22,36 @@ class _MyController(Controller[PydanticSerializer], Body[_BodyModel]):
         return self.parsed_body.email
 
 
-def test_dmr_rf(dmr_rf: DMRRequestFactory) -> None:
+def test_dmr_rf(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
     """Ensures that :class:`django_modern_rest.test.DMRRequestFactory` works."""
-    request = dmr_rf.post(
-        '/whatever/',
-        data={'email': 'mail@example.com'},
-    )
+    email = faker.email()
 
-    assert request.body == b'{"email": "mail@example.com"}'
+    request = dmr_rf.post('/whatever/', data={'email': email})
+    assert request.body == b'{"email": "%s"}' % email.encode('utf8')
 
     response = _MyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
-    assert response.content == b'"mail@example.com"'
+    assert response.content == b'"%s"' % email.encode('utf8')
 
 
-def test_dmr_async_rf(dmr_async_rf: DMRAsyncRequestFactory) -> None:
+def test_dmr_async_rf(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    faker: Faker,
+) -> None:
     """
     Ensures that :class:`django_modern_rest.test.DMRAsyncRequestFactory` works.
 
     Fully compatible with ``DMRRequestFactory`` with its API.
     """
-    request = dmr_async_rf.post(
-        '/whatever/',
-        data={'email': 'mail@example.com'},
-    )
+    email = faker.email()
 
-    assert request.body == b'{"email": "mail@example.com"}'
+    request = dmr_async_rf.post('/whatever/', data={'email': email})
+    assert request.body == b'{"email": "%s"}' % email.encode('utf8')
 
     response = _MyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
-    assert response.content == b'"mail@example.com"'
+    assert response.content == b'"%s"' % email.encode('utf8')

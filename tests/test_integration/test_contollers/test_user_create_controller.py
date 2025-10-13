@@ -3,6 +3,7 @@ from http import HTTPStatus
 import pytest
 from dirty_equals import IsUUID
 from django.urls import reverse
+from faker import Faker
 
 from django_modern_rest.test import DMRClient
 
@@ -16,23 +17,24 @@ from django_modern_rest.test import DMRClient
 )
 def test_user_create_view(
     dmr_client: DMRClient,
+    faker: Faker,
     *,
     start_from: str | None,
 ) -> None:
     """Ensure that routes without path parameters work."""
     base_url = reverse('api:users')
     start_from_query = '' if start_from is None else f'&start_from={start_from}'
+    request_data = {'email': faker.email(), 'age': faker.random_int()}
     response = dmr_client.post(
         f'{base_url}?q=text{start_from_query}',
         headers={'X-API-Token': 'token'},
-        data={'email': 'whatever@email.com', 'age': 0},
+        data=request_data,
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
-        'age': 0,
-        'email': 'whatever@email.com',
+        **request_data,
         'query': 'text',
         'start_from': start_from,
         'token': 'token',
