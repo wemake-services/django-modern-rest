@@ -256,4 +256,3 @@ plugins = [
 include = ["django_modern_rest", "typesafety", "tests"]
 strict = ["django_modern_rest/**/*"]
 pythonVersion = "3.11"
-venvPath = ".venv"
