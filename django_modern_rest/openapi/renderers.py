@@ -33,7 +33,7 @@ class JsonRenderer(BaseRenderer):
 
     def __init__(
         self,
-        path: str = 'openapi.json',
+        path: str = 'openapi.json/',
         name: str = 'openapi_json',
     ) -> None:
         self.path = path
@@ -62,7 +62,7 @@ class SwaggerRenderer(BaseRenderer):
 
     def __init__(
         self,
-        path: str = 'swagger',
+        path: str = 'swagger/',
         name: str = 'swagger',
     ) -> None:
         self.path = path

@@ -33,11 +33,21 @@ class OpenAPIView(View):
         Extend the base view to include OpenAPI configuration.
 
         This method extends Django's base 'as_view()' to handle OpenAPI
-        parameters by setting them as class attributes rather than passing
-        them through initkwargs.
+        parameters.
         """
+        # We need to set these attributes on the class before calling
+        # `super().as_view()` because Django's base `as_view()` method
+        # validates that any initkwargs correspond to existing class attributes.
+        # By setting these attributes first, we ensure that the parameters
+        # can be passed as initkwargs to the parent method without
+        # causing validation errors.
         cls.router = router
         cls.renderer = renderer
         cls.config = config
 
-        return super().as_view(**initkwargs)
+        return super().as_view(
+            router=router,
+            renderer=renderer,
+            config=config,
+            **initkwargs,
+        )

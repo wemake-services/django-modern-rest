@@ -29,7 +29,7 @@ class OpenAPISetup:
 
         urlpatterns = [
             path(
-                f'{renderer.path}',
+                renderer.path,
                 OpenAPIView.as_view(
                     router=self.router,
                     renderer=renderer,
