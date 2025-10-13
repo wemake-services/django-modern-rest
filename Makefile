@@ -13,7 +13,7 @@ lint:
 .PHONY: type-check
 type-check:
 	poetry run mypy .
-	pyright
+	poetry run pyright
 
 .PHONY: unit
 unit:
