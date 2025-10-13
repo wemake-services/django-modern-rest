@@ -28,8 +28,8 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
 
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final = types.MappingProxyType({
-    DMR_JSON_SERIALIZE_KEY: DMR_JSON_SERIALIZE,
-    DMR_JSON_DESERIALIZE_KEY: DMR_JSON_DESERIALIZE,
+    DMR_SERIALIZE_KEY: DMR_JSON_SERIALIZE,
+    DMR_DESERIALIZE_KEY: DMR_JSON_DESERIALIZE,
     DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
     # Means that we would run extra validation on the response object.
     DMR_VALIDATE_RESPONSE_KEY: True,
