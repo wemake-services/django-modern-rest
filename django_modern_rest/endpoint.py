@@ -1,6 +1,7 @@
 import dataclasses
 import inspect
 from collections.abc import Awaitable, Callable
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
 
 from django.http import HttpResponse
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class Endpoint:
-    __slots__ = ('_func', '_response_validator')
+    __slots__ = ('_func', '_metadata', '_method', 'response_validator')
 
     _func: Callable[..., Any]
 
@@ -29,9 +30,16 @@ class Endpoint:
         *,
         serializer: type[BaseSerializer],
     ) -> None:
-        self._response_validator = self.response_validator_cls(
+        self._method = func.__name__.lower()
+        self._metadata: EndpointSpec | Empty = getattr(
+            func,
+            '__endpoint__',
+            EmptyObj,
+        )
+        self.response_validator = self.response_validator_cls(
             serializer,
             func,  # we need a func before any wrappers
+            metadata=self._metadata,
         )
         if inspect.iscoroutinefunction(func):
             self._func = self._async_endpoint(func, serializer)
@@ -68,20 +76,31 @@ class Endpoint:
 
         return decorator
 
-    # TODO: support headers, metadata, http codes, etc
+    # TODO: support headers, metadata, etc
     def _make_http_response(
         self,
         serializer: type[BaseSerializer],
         raw_data: Any,
     ) -> HttpResponse:
         if isinstance(raw_data, HttpResponse):
-            return self._response_validator.validate_response(raw_data)
+            return self.response_validator.validate_response(raw_data)
         return HttpResponse(
-            serializer.to_json(
-                self._response_validator.validate_content(raw_data),
+            content=serializer.to_json(
+                self.response_validator.validate_content(raw_data),
             ),
             content_type='application/json',
+            status=self._infer_status_code(),
         )
+
+    def _infer_status_code(self) -> int:
+        if not isinstance(self._metadata, Empty) and not isinstance(
+            self._metadata.status_code,
+            Empty,
+        ):
+            return self._metadata.status_code
+        if self._method == 'post':
+            return HTTPStatus.CREATED
+        return HTTPStatus.OK
 
 
 @final
@@ -95,6 +114,7 @@ class EndpointSpec:
     """
 
     return_type: Any | Empty
+    status_code: HTTPStatus | Empty
 
 
 _ParamT = ParamSpec('_ParamT')
@@ -105,8 +125,8 @@ def rest(
     *,
     # `type[T]` limits some type annotations:
     return_type: Any | Empty = EmptyObj,
+    status_code: HTTPStatus | Empty = EmptyObj,
     # TODO:
-    # status_code
     # errors
     # schema_modifications
     # headers
@@ -120,6 +140,9 @@ def rest(
             But, we still want to show the response type in OpenAPI schema
             and also want to do an extra round of validation
             to be sure that it fits the schema.
+        status_code: When *status_code* is passed, always uses it for
+            all responses. When not provided, uses smart inference
+            based on the HTTP method name.
 
     Returns:
         The same function with ``__endpoint__`` metadata definition.
@@ -130,6 +153,7 @@ def rest(
     ) -> Callable[_ParamT, _ReturnT]:
         func.__endpoint__ = EndpointSpec(  # type: ignore[attr-defined]
             return_type=return_type,
+            status_code=status_code,
         )
         return func
 

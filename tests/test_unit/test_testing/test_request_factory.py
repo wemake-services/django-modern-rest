@@ -32,7 +32,7 @@ def test_dmr_rf(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
     response = _MyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     assert response.content == b'"%s"' % email.encode('utf8')
 
 
@@ -53,5 +53,5 @@ def test_dmr_async_rf(
     response = _MyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     assert response.content == b'"%s"' % email.encode('utf8')

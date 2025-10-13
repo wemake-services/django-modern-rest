@@ -4,9 +4,9 @@ from typing import Any, Literal
 import pytest
 
 from django_modern_rest import rest
+from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.responses import ResponseValidator
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
@@ -47,7 +47,10 @@ def test_valid_data(
     validator_builder: Callable[[Any], Callable[..., Any]],
 ) -> None:
     """Ensure that correct data can be validated."""
-    validator = ResponseValidator(PydanticSerializer, _build_annotation(typ))
+    validator = Endpoint(
+        _build_annotation(typ),
+        serializer=PydanticSerializer,
+    ).response_validator
 
     assert validator.validate_content(raw_data)
 
@@ -75,7 +78,10 @@ def test_invalid_data(
     validator_builder: Callable[[Any], Callable[..., Any]],
 ) -> None:
     """Ensure that correct data can be validated."""
-    validator = ResponseValidator(PydanticSerializer, _build_annotation(typ))
+    validator = Endpoint(
+        _build_annotation(typ),
+        serializer=PydanticSerializer,
+    ).response_validator
 
     with pytest.raises(ResponseSerializationError):
         validator.validate_content(raw_data)
