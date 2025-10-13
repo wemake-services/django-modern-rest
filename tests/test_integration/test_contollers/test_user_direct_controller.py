@@ -61,6 +61,9 @@ class ClientWorksWithRegularTest(SimpleTestCase):
 
     def test_user_update_direct_view(self) -> None:
         """Sync test."""
+        # We don't use `faker` here, because it is hard to inject
+        # a reproduceable seeds into a native unittest test.
+        # And this needs to be a pure unittest test.
         response = self._dmr_client.patch(
             reverse('api:user_update_direct', kwargs={'user_id': 5}),
             data={'email': 'test@example.com', 'age': 3},
