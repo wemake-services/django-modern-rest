@@ -1,38 +1,42 @@
 from http import HTTPStatus
 
-from django.test import Client
 from django.urls import reverse
+from faker import Faker
+
+from django_modern_rest.test import DMRClient
 
 
-# TODO: use `faker` for all test data
-def test_user_update_view(client: Client) -> None:
+def test_user_update_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that async `put` routes work."""
-    response = client.put(
-        reverse('api:user_update', kwargs={'user_id': 1}),
-        content_type='application/json',
+    user_id = faker.random_int()
+    response = dmr_client.put(
+        reverse('api:user_update', kwargs={'user_id': user_id}),
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {'email': 'new@email.com', 'age': 1}
+    assert response.json() == {'email': 'new@email.com', 'age': user_id}
 
 
-def test_user_replace_view(client: Client) -> None:
+def test_user_replace_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that async `patch` routes work."""
-    response = client.patch(
-        reverse('api:user_update', kwargs={'user_id': 1}),
-        content_type='application/json',
-        data={'email': 'test@example.com', 'age': 3},
+    user_id = faker.unique.random_int()
+    email = faker.email()
+    response = dmr_client.patch(
+        reverse('api:user_update', kwargs={'user_id': user_id}),
+        data={'email': email, 'age': faker.unique.random_int()},
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {'email': 'test@example.com', 'age': 1}
+    assert response.json() == {'email': email, 'age': user_id}
 
 
-def test_wrong_method(client: Client) -> None:
+def test_wrong_method(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure 405 is correctly handled."""
-    response = client.post(reverse('api:user_update', kwargs={'user_id': 1}))
+    response = dmr_client.post(
+        reverse('api:user_update', kwargs={'user_id': faker.random_int()}),
+    )
 
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     # TODO: assert content-type and error handling

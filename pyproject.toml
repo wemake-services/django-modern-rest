@@ -41,6 +41,9 @@ classifiers = [
   "Framework :: Django :: 5.2",
 ]
 
+include = ["django_modern_rest_pytest.py"]
+
+
 [tool.poetry.dependencies]
 python = "^3.10"
 typing_extensions = ">=4"
@@ -67,6 +70,7 @@ pytest-randomly = "^4.0"
 pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
+faker = "^37.11"
 
 [tool.poetry.group.docs]
 optional = true
@@ -77,6 +81,12 @@ sphinx-autodoc-typehints = "^3.0"
 tomli = "^2.2"
 myst-parser = "^4.0"
 furo = "^2025.9"
+
+
+[tool.poetry.plugins."pytest11"]
+# We need this structure because otherwise `pytest` ruins the coverage report.
+# This happens because we have imports in `django_modern_rest/__init__.py`
+django_modern_rest = "django_modern_rest_pytest"
 
 
 [tool.ruff]
