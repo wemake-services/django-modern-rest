@@ -53,9 +53,9 @@ def compose_controllers(*controllers: type['Controller[Any]']) -> type[View]:
                     return view_func(request, *args, **kwargs)
             return self.http_method_not_allowed(request, *args, **kwargs)
 
-        @override
         @classproperty
-        def view_is_async(cls) -> bool:  # noqa: N805
+        @override
+        def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
             """Returns `True` if all of the controllers are async."""
             return all(controller.view_is_async for controller, _ in views)
 
