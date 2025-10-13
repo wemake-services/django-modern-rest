@@ -23,6 +23,7 @@ class _AliasController(Controller[PydanticSerializer], Body[_BodyModel]):
         return self.parsed_body
 
 
+@final
 class _NoAliasPydanticSerializer(PydanticSerializer):
     model_dump_kwargs: ClassVar[dict[str, Any]] = {
         **PydanticSerializer.model_dump_kwargs,
@@ -48,7 +49,7 @@ def test_default_alias_serialization(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures by defaults aliases are working."""
+    """Ensures by default aliases are working."""
     request_data = {'fullName': faker.name()}
 
     request = dmr_rf.post('/whatever/', data=request_data)
@@ -80,7 +81,7 @@ def test_custom_alias_serialization(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures by in custom type names are working."""
+    """Ensures in custom type names are working."""
     request_data = {'full_name': faker.name()}
 
     request = dmr_rf.post('/whatever/', data=request_data)
@@ -96,7 +97,7 @@ def test_custom_alias_serialization_by_alias(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures by in custom type aliases do not work."""
+    """Ensures in custom type aliases do not work."""
     request_data = {'fullName': faker.name()}
 
     request = dmr_rf.post('/whatever/', data=request_data)
