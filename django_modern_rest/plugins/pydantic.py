@@ -102,10 +102,10 @@ def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
         return existing_attr
 
     setting = resolve_setting(DMR_JSON_SERIALIZE_KEY)
-    cls._serialize = (
+    cls._serialize = (  # pyright: ignore[reportPrivateUsage]
         import_string(setting) if isinstance(setting, str) else setting
     )
-    return cls._serialize
+    return cls._serialize  # pyright: ignore[reportPrivateUsage]
 
 
 def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
@@ -114,7 +114,7 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
         return existing_attr
 
     setting = resolve_setting(DMR_JSON_DESERIALIZE_KEY)
-    cls._deserialize = (
+    cls._deserialize = (  # pyright: ignore[reportPrivateUsage]
         import_string(setting) if isinstance(setting, str) else setting
     )
-    return cls._deserialize
+    return cls._deserialize  # pyright: ignore[reportPrivateUsage]

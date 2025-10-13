@@ -9,7 +9,11 @@ lint:
 	poetry run ruff check --exit-non-zero-on-fix
 	poetry run ruff format --check --diff
 	poetry run flake8 .
+
+.PHONY: type-check
+type-check:
 	poetry run mypy .
+	pyright
 
 .PHONY: unit
 unit:
@@ -20,4 +24,4 @@ package:
 	poetry run pip check
 
 .PHONY: test
-test: lint package unit
+test: lint type-check package unit

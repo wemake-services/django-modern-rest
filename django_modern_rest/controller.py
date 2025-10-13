@@ -103,7 +103,7 @@ class Controller(View, Generic[_SerializerT]):
             for parser, type_args in self._component_parsers:
                 # TODO: maybe parse all at once?
                 # See https://github.com/wemake-services/django-modern-rest/issues/8
-                parser._parse_component(  # noqa: SLF001
+                parser._parse_component(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     # We lie that this is a `ComponentParserMixin`, but their
                     # APIs are compatible by design.
                     self,  # type: ignore[arg-type]

@@ -59,6 +59,7 @@ pydantic = ["pydantic"]
 [tool.poetry.group.dev.dependencies]
 django = ">=4.2,<6.0"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
+pyright = "^1.1"
 
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
@@ -94,7 +95,7 @@ django_modern_rest = "django_modern_rest_pytest"
 # Ruff config: https://docs.astral.sh/ruff/settings
 preview = true
 fix = true
-target-version = "py310"
+target-version = "py311"
 line-length = 80
 
 [tool.ruff.format]
@@ -212,7 +213,7 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=95.9",  # TODO: set to 100%
+  "--cov-fail-under=96.6",  # TODO: set to 100%
   # Ignores:
   "--ignore=docs",
 ]
@@ -249,3 +250,10 @@ plugins = [
   "pydantic.mypy",
 ]
 
+
+[tool.pyright]
+# Docs: https://microsoft.github.io/pyright/#/configuration
+include = ["django_modern_rest", "typesafety", "tests"]
+strict = ["django_modern_rest/**/*"]
+pythonVersion = "3.11"
+venvPath = ".venv"
