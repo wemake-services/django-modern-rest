@@ -14,8 +14,8 @@ from typing_extensions import override
 
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    DMR_JSON_DESERIALIZE_KEY,
-    DMR_JSON_SERIALIZE_KEY,
+    DMR_DESERIALIZE_KEY,
+    DMR_SERIALIZE_KEY,
     resolve_setting,
 )
 
@@ -78,7 +78,9 @@ class PydanticSerializer(BaseSerializer):
         cls,
         unstructured: Any,
         model: Any,
+        # TODO: add `strict` maybe? So we can strictly validate some parts.
     ) -> Any:
+        # TODO: support `.rebuild` and forward refs
         return pydantic.TypeAdapter(model).validate_python(
             unstructured,
             **cls.from_python_kwargs,
@@ -93,6 +95,17 @@ class PydanticSerializer(BaseSerializer):
     ) -> Any:
         # TODO: provide docs why this is needed
         return super().deserialize_hook(target_type, to_deserialize)
+
+    @override
+    @classmethod
+    def error_to_json(cls, error: Exception) -> list[Any]:
+        """Serialize an exception to json the best way possible."""
+        # Security notice: we only process custom exceptions
+        # with this functions, so nothing should leak from exc messages.
+        assert isinstance(error, pydantic.ValidationError), (  # noqa: S101
+            f'Cannot serialize {error} to json safely'
+        )
+        return error.errors(include_url=False)
 
     @override
     @classmethod
@@ -128,7 +141,7 @@ def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
     if existing_attr is not None:
         return existing_attr
 
-    setting = resolve_setting(DMR_JSON_SERIALIZE_KEY)
+    setting = resolve_setting(DMR_SERIALIZE_KEY)
     cls._serialize = (  # pyright: ignore[reportPrivateUsage]
         import_string(setting) if isinstance(setting, str) else setting
     )
@@ -140,7 +153,7 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
     if existing_attr is not None:
         return existing_attr
 
-    setting = resolve_setting(DMR_JSON_DESERIALIZE_KEY)
+    setting = resolve_setting(DMR_DESERIALIZE_KEY)
     cls._deserialize = (  # pyright: ignore[reportPrivateUsage]
         import_string(setting) if isinstance(setting, str) else setting
     )

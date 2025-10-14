@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import final
+from typing import TypeAlias, final
 
 import pydantic
 import pytest
@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller, rest
+from django_modern_rest import Controller, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 
@@ -43,7 +43,7 @@ class _WrongController(Controller[PydanticSerializer]):
         """Does not respect a pydantic model type."""
         return {'wrong': 'abc'}  # type: ignore[return-value]
 
-    @rest(return_type=dict[str, int])
+    @validate(return_type=dict[str, int], status_code=HTTPStatus.OK)
     def delete(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
         return HttpResponse(b'[]')
@@ -84,9 +84,61 @@ def test_validate_response_text(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for str
-  Input should be a valid string \
-[type=string_type, input_value=1, input_type=int]
-    For further information visit https://errors.pydantic.dev/2.12/v/string_type\
-""")
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'string_type',
+                'loc': [],
+                'msg': 'Input should be a valid string',
+                'input': 1,
+            },
+        ],
+    })
+
+
+@final
+class _WrongStatusCodeController(Controller[PydanticSerializer]):
+    @validate(return_type=list[int], status_code=HTTPStatus.CREATED)
+    def get(self) -> HttpResponse:
+        """Does not respect a `status_code` validator."""
+        return HttpResponse(b'[]', status=HTTPStatus.OK)
+
+
+def test_validate_status_code(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that response status_code validation works."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _WrongStatusCodeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': (
+            'response.status_code=200 does not match expected 201 status code'
+        ),
+    })
+
+
+_ListOfInts: TypeAlias = list[int]
+
+
+@final
+class _StringifiedController(Controller[PydanticSerializer]):
+    def get(self) -> '_ListOfInts':
+        """Needs to solve the string annotation correctly."""
+        return [1, 2]
+
+
+def test_solve_string_annotation_for_endpoint(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that response status_code validation works."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _StringifiedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == [1, 2]

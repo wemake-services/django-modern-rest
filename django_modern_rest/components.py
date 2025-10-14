@@ -88,7 +88,9 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
                 type_args[0],
             )
         except serializer.validation_error as exc:
-            raise RequestSerializationError(str(exc)) from None
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None
 
 
 class Body(ComponentParserMixin, Generic[_BodyT]):
@@ -131,12 +133,12 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
                 serializer.from_json(request.body),
                 type_args[0],
             )
-        except (
-            serializer.validation_error,
-            msgspec.DecodeError,
-            TypeError,
-        ) as exc:
-            raise RequestSerializationError(str(exc)) from None
+        except (msgspec.DecodeError, TypeError) as exc:
+            raise RequestSerializationError(str(exc)) from exc
+        except serializer.validation_error as exc:
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None
 
 
 class Headers(ComponentParserMixin, Generic[_HeadersT]):
@@ -176,4 +178,6 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
                 type_args[0],
             )
         except serializer.validation_error as exc:
-            raise RequestSerializationError(str(exc)) from None
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None

@@ -3,12 +3,14 @@ from http import HTTPStatus
 from typing import final
 
 import pydantic
+import pytest
 from django.http import HttpResponse
 from django.test import RequestFactory
 from faker import Faker
 from inline_snapshot import snapshot
 
 from django_modern_rest import Body, Controller
+from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
@@ -40,6 +42,18 @@ def test_invalide_request_body(rf: RequestFactory, faker: Faker) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot(
-        'JSON is malformed: invalid character (byte 1)',
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': 'JSON is malformed: invalid character (byte 1)',
+    })
+
+
+def test_missing_function_return_annotation() -> None:
+    """Ensure that they are required."""
+    with pytest.raises(
+        UnsolvableAnnotationsError,
+        match='return type annotation',
+    ):
+
+        class _MissingReturnController(Controller[PydanticSerializer]):
+            def get(self):  # type: ignore[no-untyped-def]
+                """Does not respect a body type."""

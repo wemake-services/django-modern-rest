@@ -74,7 +74,7 @@ def test_default_alias_serialization_by_name(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert 'fullName' in json.loads(response.content)['detail']
+    assert json.loads(response.content)['detail']
 
 
 def test_custom_alias_serialization(

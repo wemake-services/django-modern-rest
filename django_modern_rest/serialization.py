@@ -21,6 +21,7 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def to_json(cls, structure: Any) -> bytes:
+        """Override this method to covert structured data to json bytestring."""
         raise NotImplementedError
 
     @classmethod
@@ -73,3 +74,8 @@ class BaseSerializer:
     ) -> Any:
         """Validate all data at once using combined model."""
         raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def error_to_json(cls, error: Exception) -> Any:
+        """Serialize an exception to json the best way possible."""
