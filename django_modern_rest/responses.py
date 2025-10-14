@@ -77,8 +77,9 @@ class ResponseValidator:
         try:
             self._serializer.from_python(structured, self.metadata.return_type)
         except self._serializer.validation_error as exc:
-            # TODO: convert `ValidationError` to json
-            raise ResponseSerializationError(str(exc)) from exc
+            raise ResponseSerializationError(
+                self._serializer.error_to_json(exc),
+            ) from None
 
 
 @final
