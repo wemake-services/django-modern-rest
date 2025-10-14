@@ -1,5 +1,6 @@
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import classproperty
 from django.views import View
@@ -56,12 +57,24 @@ class Controller(View, Generic[_SerializerT]):
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParserMixin)
         ]
-        # TODO: validate that either all are sync or all are async
         cls._api_endpoints = {
             meth: Endpoint(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
+        if cls._api_endpoints:
+            is_async = cls._api_endpoints[
+                next(iter(cls._api_endpoints.keys()))
+            ].is_async
+            if any(
+                endpoint.is_async is not is_async
+                for endpoint in cls._api_endpoints.values()
+            ):
+                # The same error message that django has.
+                raise ImproperlyConfigured(
+                    f'{cls!r} HTTP handlers must either '
+                    'be all sync or all async.',
+                )
 
     @override
     def dispatch(

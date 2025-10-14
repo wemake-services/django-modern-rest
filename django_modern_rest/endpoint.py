@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 
 class Endpoint:
-    __slots__ = ('_func', 'response_validator')
+    __slots__ = ('_func', 'is_async', 'response_validator')
 
     _func: Callable[..., Any]
 
@@ -61,8 +61,10 @@ class Endpoint:
         )
         if inspect.iscoroutinefunction(func):
             self._func = self._async_endpoint(func, serializer)
+            self.is_async = True
         else:
             self._func = self._sync_endpoint(func, serializer)
+            self.is_async = False
 
     def __call__(
         self,
