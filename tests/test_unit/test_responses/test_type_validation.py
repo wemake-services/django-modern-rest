@@ -1,27 +1,29 @@
 from collections.abc import Callable
+from http import HTTPStatus
 from typing import Any, Literal
 
 import pytest
+from django.http import HttpResponse
 
-from django_modern_rest import rest
+from django_modern_rest import validate
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
-    def factory() -> typ:  # pyright: ignore[reportInvalidTypeForm]
-        """Used as an endpoint."""
+    def get() -> typ:  # pyright: ignore[reportInvalidTypeForm]
+        raise NotImplementedError
 
-    return factory
+    return get
 
 
 def _build_rest(typ: Any) -> Callable[..., Any]:
-    @rest(return_type=typ)
-    def factory():  # type: ignore[no-untyped-def]
-        """Used as an endpoint."""
+    @validate(return_type=typ, status_code=HTTPStatus.OK)
+    def get() -> HttpResponse:
+        raise NotImplementedError
 
-    return factory
+    return get
 
 
 @pytest.mark.parametrize(
@@ -36,8 +38,6 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
     [
         _build_annotation,
         _build_rest,
-        lambda typ: _build_annotation(_build_rest(rest)),
-        lambda typ: _build_rest(_build_annotation(rest)),
     ],
 )
 def test_valid_data(
@@ -52,7 +52,7 @@ def test_valid_data(
         serializer=PydanticSerializer,
     ).response_validator
 
-    assert validator.validate_content(raw_data)
+    validator.validate_content(raw_data)
 
 
 @pytest.mark.parametrize(
@@ -67,8 +67,6 @@ def test_valid_data(
     [
         _build_annotation,
         _build_rest,
-        lambda typ: _build_annotation(_build_rest(rest)),
-        lambda typ: _build_rest(_build_annotation(rest)),
     ],
 )
 def test_invalid_data(

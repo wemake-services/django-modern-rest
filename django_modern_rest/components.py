@@ -69,6 +69,7 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
                 type_args[0],
             )
         except serializer.validation_error as exc:
+            # TODO: convert `ValidationError` to json
             raise RequestSerializationError(str(exc)) from None
 
 
@@ -136,4 +137,5 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
                 type_args[0],
             )
         except serializer.validation_error as exc:
+            # TODO: convert `ValidationError` to json
             raise RequestSerializationError(str(exc)) from None

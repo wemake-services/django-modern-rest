@@ -8,7 +8,7 @@ import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 
-from django_modern_rest import Controller, rest
+from django_modern_rest import Controller, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSE_KEY,
@@ -47,7 +47,7 @@ class _WrongController(Controller[PydanticSerializer]):
         """Does not respect an annotation type."""
         return 1  # type: ignore[return-value]
 
-    @rest(return_type=list[int])
+    @validate(return_type=list[int], status_code=HTTPStatus.OK)
     def post(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
         return HttpResponse(b'1')
@@ -73,3 +73,24 @@ def test_validate_response_disabled(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.content) == 1
+
+
+@final
+class _WrongStatusCodeController(Controller[PydanticSerializer]):
+    @validate(return_type=list[int], status_code=HTTPStatus.CREATED)
+    def get(self) -> HttpResponse:
+        """Does not respect a `status_code` validator."""
+        return HttpResponse(b'[]', status=HTTPStatus.OK)
+
+
+def test_validate_status_code(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that response status_code validation works."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _WrongStatusCodeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == []

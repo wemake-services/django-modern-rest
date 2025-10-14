@@ -78,7 +78,9 @@ class PydanticSerializer(BaseSerializer):
         cls,
         unstructured: Any,
         model: Any,
+        # TODO: add `strict` maybe? So we can strictly validate some parts.
     ) -> Any:
+        # TODO: support `.rebuild` and forward refs
         return pydantic.TypeAdapter(model).validate_python(
             unstructured,
             **cls.from_python_kwargs,

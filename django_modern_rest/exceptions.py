@@ -11,6 +11,16 @@ class UnsolvableAnnotationsError(Exception):
     """
 
 
+@final
+class MissingEndpointMetadataError(Exception):
+    """Raised when user didn't specify some required endpoint metadata."""
+
+
+@final
+class MethodNotAllowedError(Exception):
+    """Raised when some API method is not allowed for the controller."""
+
+
 class SerializationError(Exception):
     """Base class for all parsing and serialization errors."""
 
