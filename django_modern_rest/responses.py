@@ -1,58 +1,64 @@
+import dataclasses
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, TypeVar
+from http import HTTPMethod, HTTPStatus
+from typing import TYPE_CHECKING, Any, TypeVar, final
 
 from django.http import HttpResponse
-from typing_extensions import get_type_hints
 
 from django_modern_rest.exceptions import (
     ResponseSerializationError,
-    UnsolvableAnnotationsError,
 )
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSE_KEY,
     resolve_setting,
 )
-from django_modern_rest.types import Empty, EmptyObj
 
 if TYPE_CHECKING:
-    from django_modern_rest.endpoint import EndpointSpec
+    from django_modern_rest.endpoint import EndpointMetadata
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 
 class ResponseValidator:
-    __slots__ = ('_metadata', '_return_annotation', '_serializer')
+    __slots__ = ('_method', '_serializer', 'metadata')
 
     def __init__(
         self,
-        serializer: type[BaseSerializer],
         endpoint_func: Callable[..., Any],
-        metadata: 'EndpointSpec | Empty',
+        *,
+        serializer: type[BaseSerializer],
     ) -> None:
         self._serializer = serializer
-        self._metadata = metadata
-        self._parse_annotations(endpoint_func)
+        # `Endpoint` adds `__metadata__` to all functions:
+        self.metadata: EndpointMetadata = (
+            endpoint_func.__endpoint__  # type: ignore[attr-defined]
+        )
+        self._method = HTTPMethod(endpoint_func.__name__.upper())
 
     def validate_response(self, response: _ResponseT) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
         if not resolve_setting(DMR_VALIDATE_RESPONSE_KEY):
             return response
-        self._do_structured_validation(response.content, load=True)
+        self._do_structured_validation(response.content, response=response)
         return response
 
-    def validate_content(self, structured: Any) -> Any:
+    def validate_content(self, structured: Any) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
+        all_response_data = _ValidationContext(
+            raw_data=structured,
+            status_code=self.metadata.status_code,
+        )
         if not resolve_setting(DMR_VALIDATE_RESPONSE_KEY):
-            return structured
+            return all_response_data
         self._do_structured_validation(structured)
-        return structured
+        return all_response_data
 
     def _do_structured_validation(
         self,
         structured: Any | bytes,
         *,
-        load: bool = False,
+        response: HttpResponse | None = None,
     ) -> None:
         """
         Does structured validation based on the provided schema.
@@ -61,42 +67,24 @@ class ResponseValidator:
 
         Args:
             structured: data to be validated.
-            load: pass when *structured* is of type ``bytes`` to load into json.
+            response: possible ``HttpResponse`` instance for validation.
 
         """
-        if load:
+        if response:
             structured = self._serializer.from_json(structured)
+            self.metadata.validate_for_response(response)
 
-        model = (
-            self._metadata.return_type
-            if (
-                not isinstance(self._metadata, Empty)
-                and not isinstance(self._metadata.return_type, Empty)
-            )
-            else self._return_annotation
-        )
         try:
-            self._serializer.from_python(structured, model)
+            self._serializer.from_python(structured, self.metadata.return_type)
         except self._serializer.validation_error as exc:
+            # TODO: convert `ValidationError` to json
             raise ResponseSerializationError(str(exc)) from exc
 
-    def _parse_annotations(self, endpoint_func: Callable[..., Any]) -> None:
-        if self._metadata and self._metadata.return_type is not EmptyObj:
-            # We don't want to parse annotation, since it is slow and can
-            # raise potential errors, so just set it to empty.
-            self._return_annotation = EmptyObj
-            return
 
-        try:
-            self._return_annotation = get_type_hints(
-                endpoint_func,
-            ).get('return', EmptyObj)
-        except TypeError as exc:
-            raise UnsolvableAnnotationsError(
-                f'Annotations of {endpoint_func!r} cannot be solved',
-            ) from exc
+@final
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class _ValidationContext:
+    """Combines all validated data together."""
 
-        if self._return_annotation is EmptyObj:
-            raise UnsolvableAnnotationsError(
-                f'Function {endpoint_func!r} is missing return type annotation',
-            )
+    raw_data: Any  # not empty
+    status_code: HTTPStatus
