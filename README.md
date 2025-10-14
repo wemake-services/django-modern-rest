@@ -34,7 +34,49 @@ There are several included extras:
 
 ## Example
 
-TODO: ...
+The shortest example:
+
+```python
+>>> import uuid
+>>> import pydantic
+>>> from django_modern_rest import Body, Controller, Headers
+>>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+>>> class UserCreateModel(pydantic.BaseModel):
+...     email: str
+
+>>> class UserModel(UserCreateModel):
+...     uid: uuid.UUID
+
+>>> class HeaderModel(pydantic.BaseModel):
+...     token: str = pydantic.Field(alias='X-API-Token')
+
+>>> class UserController(
+...     Controller[PydanticSerializer],
+...     Body[UserCreateModel],
+...     Headers[HeaderModel],
+... ):
+...     def post(self) -> UserModel:
+...         """All added props have the correct types."""
+...         assert self.parsed_headers.token == 'secret!'
+...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+```
+
+And then route this controller in your `urls.py`:
+
+```python
+>>> from django.urls import include, path
+>>> from django_modern_rest import Router
+
+>>> router = Router([
+...     path('user/', UserController, name='users'),
+... ])
+>>> urlpatterns = [
+...     path('api/', include((router.urls, 'your_app'), namespace='api')),
+... ]
+```
+
+Done! Now you have your shiny API with 100% type safe validation and interactive docs.
 
 
 ## License
