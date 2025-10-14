@@ -84,12 +84,16 @@ def test_validate_response_text(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for str
-  Input should be a valid string \
-[type=string_type, input_value=1, input_type=int]
-    For further information visit https://errors.pydantic.dev/2.12/v/string_type\
-""")
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'string_type',
+                'loc': [],
+                'msg': 'Input should be a valid string',
+                'input': 1,
+            },
+        ],
+    })
 
 
 @final
@@ -110,9 +114,11 @@ def test_validate_status_code(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content)['detail'] == snapshot(
-        'response.status_code=200 does not match expected 201 status code',
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': (
+            'response.status_code=200 does not match expected 201 status code'
+        ),
+    })
 
 
 _ListOfInts: TypeAlias = list[int]

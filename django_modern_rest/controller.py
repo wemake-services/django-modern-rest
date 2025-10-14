@@ -115,7 +115,7 @@ class Controller(View, Generic[_SerializerT]):
         raise MethodNotAllowedError
 
     def _handle_error(self, exc: SerializationError) -> HttpResponse:
-        payload = {'detail': str(exc)}  # TODO: to proper json
+        payload = {'detail': exc.args[0]}
         return HttpResponse(
             self._serializer.to_json(payload),
             status=int(exc.status_code),

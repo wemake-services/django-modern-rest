@@ -55,3 +55,8 @@ class BaseSerializer:
             f'Value {to_deserialize} of type {type(to_deserialize)} '
             f'is not supported for {target_type}',
         )
+
+    @classmethod
+    @abc.abstractmethod
+    def error_to_json(cls, error: Exception) -> Any:
+        """Serialize an exception to json the best way possible."""

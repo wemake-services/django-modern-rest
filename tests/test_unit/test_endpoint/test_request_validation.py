@@ -83,12 +83,16 @@ def test_validate_pydantic_request_body(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyPydanticModel
-age
-  Field required [type=missing, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.12/v/missing\
-""")
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'missing',
+                'loc': ['age'],
+                'msg': 'Field required',
+                'input': {},
+            },
+        ],
+    })
 
 
 def test_validate_typed_dict_request_body(dmr_rf: DMRRequestFactory) -> None:
@@ -99,12 +103,16 @@ def test_validate_typed_dict_request_body(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyTypedDict
-name
-  Field required [type=missing, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.12/v/missing\
-""")
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'missing',
+                'loc': ['name'],
+                'msg': 'Field required',
+                'input': {},
+            },
+        ],
+    })
 
 
 def test_validate_request_query(dmr_rf: DMRRequestFactory) -> None:
@@ -115,13 +123,16 @@ def test_validate_request_query(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyPydanticModel
-age
-  Field required [type=missing, input_value=<QueryDict: \
-{'wrong': ['1']}>, input_type=QueryDict]
-    For further information visit https://errors.pydantic.dev/2.12/v/missing\
-""")
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'missing',
+                'loc': ['age'],
+                'msg': 'Field required',
+                'input': {'wrong': ['1']},
+            },
+        ],
+    })
 
 
 def test_validate_request_headers(dmr_rf: DMRRequestFactory) -> None:
@@ -133,10 +144,16 @@ def test_validate_request_headers(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyPydanticHeaders
-X-Timestamp
-  Input should be a valid integer, unable to parse string as an integer \
-[type=int_parsing, input_value='not-int', input_type=str]
-    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing\
-""")
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'int_parsing',
+                'loc': ['X-Timestamp'],
+                'msg': (
+                    'Input should be a valid integer, '
+                    'unable to parse string as an integer'
+                ),
+                'input': 'not-int',
+            },
+        ],
+    })

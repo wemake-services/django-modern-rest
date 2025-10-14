@@ -96,6 +96,17 @@ class PydanticSerializer(BaseSerializer):
         # TODO: provide docs why this is needed
         return super().deserialize_hook(target_type, to_deserialize)
 
+    @override
+    @classmethod
+    def error_to_json(cls, error: Exception) -> list[Any]:
+        """Serialize an exception to json the best way possible."""
+        # Security notice: we only process custom exceptions
+        # with this functions, so nothing should leak from exc messages.
+        assert isinstance(error, pydantic.ValidationError), (  # noqa: S101
+            f'Cannot serialize {error} to json safely'
+        )
+        return error.errors(include_url=False)
+
 
 # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
 def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
