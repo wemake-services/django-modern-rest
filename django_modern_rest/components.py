@@ -110,7 +110,10 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
         request: HttpRequest,
         serializer: type[BaseSerializer],
     ) -> Any:
-        return serializer.from_json(request.body)  # Только парсим JSON
+        try:
+            return serializer.from_json(request.body)
+        except (msgspec.DecodeError, TypeError) as exc:
+            raise RequestSerializationError(str(exc)) from None
 
     @override
     def _parse_component(

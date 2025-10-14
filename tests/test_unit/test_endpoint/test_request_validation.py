@@ -84,8 +84,8 @@ def test_validate_pydantic_request_body(dmr_rf: DMRRequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyPydanticModel
-age
+1 validation error for CombinedRequestModel
+parsed_body.age
   Field required [type=missing, input_value={}, input_type=dict]
     For further information visit https://errors.pydantic.dev/2.12/v/missing\
 """)
@@ -100,8 +100,8 @@ def test_validate_typed_dict_request_body(dmr_rf: DMRRequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyTypedDict
-name
+1 validation error for CombinedRequestModel
+parsed_body.name
   Field required [type=missing, input_value={}, input_type=dict]
     For further information visit https://errors.pydantic.dev/2.12/v/missing\
 """)
@@ -115,13 +115,14 @@ def test_validate_request_query(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyPydanticModel
-age
-  Field required [type=missing, input_value=<QueryDict: \
-{'wrong': ['1']}>, input_type=QueryDict]
+    assert json.loads(response.content)['detail'] == snapshot(
+        """\
+1 validation error for CombinedRequestModel
+parsed_query.age
+  Field required [type=missing, input_value=<QueryDict: {'wrong': ['1']}>, input_type=QueryDict]
     For further information visit https://errors.pydantic.dev/2.12/v/missing\
-""")
+""",
+    )
 
 
 def test_validate_request_headers(dmr_rf: DMRRequestFactory) -> None:
@@ -133,10 +134,11 @@ def test_validate_request_headers(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert json.loads(response.content)['detail'] == snapshot("""\
-1 validation error for _MyPydanticHeaders
-X-Timestamp
-  Input should be a valid integer, unable to parse string as an integer \
-[type=int_parsing, input_value='not-int', input_type=str]
+    assert json.loads(response.content)['detail'] == snapshot(
+        """\
+1 validation error for CombinedRequestModel
+parsed_headers.X-Timestamp
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='not-int', input_type=str]
     For further information visit https://errors.pydantic.dev/2.12/v/int_parsing\
-""")
+""",
+    )
