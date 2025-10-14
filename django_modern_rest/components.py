@@ -16,6 +16,10 @@ _HeadersT = TypeVar('_HeadersT')
 class ComponentParserMixin:
     """Base abtract parser for request components."""
 
+    # Public API:
+    strict_validation: ClassVar[bool] = False
+
+    # Internal API:
     __is_base_type__: ClassVar[bool] = True
 
     @classmethod

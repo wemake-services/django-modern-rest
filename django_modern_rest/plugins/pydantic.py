@@ -1,3 +1,4 @@
+from functools import cache
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django_modern_rest.exceptions import RequestSerializationError
@@ -80,12 +81,36 @@ class PydanticSerializer(BaseSerializer):
         cls,
         unstructured: Any,
         model: Any,
-        # TODO: add `strict` maybe? So we can strictly validate some parts.
+        *,
+        strict: bool,
     ) -> Any:
+        """
+        Parse *unstructured* data from python primitives into *model*.
+
+        Args:
+            unstructured: Python objects to be parsed / validated.
+            model: Python type to serve as a model.
+                Can be any type that ``pydantic`` supports.
+                Examples: ``dict[str, int]]`` and ``BaseModel`` subtypes.
+            strict: Whether we use more strict validation rules.
+                For example, it is fine for a request validation
+                to be less strict in some cases and allow type coercition.
+                But, response types need to be strongly validated.
+
+        Raises:
+            pydantic.ValidationError: When parsing can't be done.
+
+        Returns:
+            Structured and validated data.
+        """
         # TODO: support `.rebuild` and forward refs
-        return pydantic.TypeAdapter(model).validate_python(
+
+        return _get_cached_type_adapter(model).validate_python(
             unstructured,
-            **cls.from_python_kwargs,
+            **{  # pyright: ignore[reportArgumentType]
+                **cls.from_python_kwargs,
+                'strict': strict,
+            },
         )
 
     @override
@@ -170,3 +195,9 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
         import_string(setting) if isinstance(setting, str) else setting
     )
     return cls._deserialize  # pyright: ignore[reportPrivateUsage]
+
+
+@cache
+def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
+    """It is expensive to create, reuse existing ones."""
+    return pydantic.TypeAdapter(model)
