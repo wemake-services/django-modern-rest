@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Callable
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeVar, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
 
 from django.http import HttpResponse
 
@@ -22,6 +22,9 @@ _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 class ResponseValidator:
     __slots__ = ('_method', '_serializer', 'metadata')
+
+    # Public API:
+    strict_validation: ClassVar[bool] = True
 
     def __init__(
         self,
@@ -71,11 +74,15 @@ class ResponseValidator:
 
         """
         if response:
-            structured = self._serializer.from_json(structured)
             self.metadata.validate_for_response(response)
+            structured = self._serializer.from_json(structured)
 
         try:
-            self._serializer.from_python(structured, self.metadata.return_type)
+            self._serializer.from_python(
+                structured,
+                self.metadata.return_type,
+                strict=self.strict_validation,
+            )
         except self._serializer.validation_error as exc:
             raise ResponseSerializationError(
                 self._serializer.error_to_json(exc),
