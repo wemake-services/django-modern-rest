@@ -8,7 +8,7 @@ from typing_extensions import override
 from django_modern_rest.components import ComponentParserMixin
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
-    RequestSerializationError,
+    MethodNotAllowedError,
     SerializationError,
     UnsolvableAnnotationsError,
 )
@@ -114,41 +114,36 @@ class Controller(View, Generic[_SerializerT]):
         **kwargs: Any,
     ) -> None:
         """Validate all request components at once."""
-        try:
-            component_specs = {}
-            raw_data = {}
+        component_specs = {}
+        raw_data = {}
 
-            for parser, type_args in self._component_parsers:
-                if type_args:
-                    attr_name = f'parsed_{parser.__name__.lower()}'
-                    component_specs[attr_name] = type_args[0]
+        for parser, type_args in self._component_parsers:
+            if type_args:
+                attr_name = f'parsed_{parser.__name__.lower()}'
+                component_specs[attr_name] = type_args[0]
 
-                    raw_data[attr_name] = parser._extract_raw_data(  # noqa: SLF001
-                        request,
-                        self._serializer,
-                    )
-
-            if not hasattr(self.__class__, '_combined_model'):
-                self.__class__._combined_model = (  # noqa: SLF001
-                    self._serializer.create_combined_model(component_specs)
+                raw_data[attr_name] = parser._extract_raw_data(  # noqa: SLF001
+                    request,
+                    self._serializer,
                 )
 
-            validated = self._serializer.validate_combined(
-                self._combined_model,
-                raw_data,
+        if not hasattr(self.__class__, '_combined_model'):
+            self.__class__._combined_model = (  # noqa: SLF001
+                self._serializer.create_combined_model(component_specs)
             )
 
-            for attr_name in component_specs:
-                setattr(self, attr_name, getattr(validated, attr_name))
-        except (
-            self._serializer.validation_error,
-            RequestSerializationError,
-        ) as exc:
-            raise RequestSerializationError(str(exc)) from None
+        validated = self._serializer.validate_combined(
+            self._combined_model,  # type:ignore[attr-defined]
+            raw_data,
+        )
+
+        for attr_name in component_specs:
+            setattr(self, attr_name, getattr(validated, attr_name))
 
     def _handle_error(self, exc: SerializationError) -> HttpResponse:
         payload = {'detail': exc.args[0]}
         return HttpResponse(
             self._serializer.to_json(payload),
             status=int(exc.status_code),
+            content_type='application/json',
         )

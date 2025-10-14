@@ -28,17 +28,6 @@ class ComponentParserMixin:
         """Extract raw data from request without validation."""
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def _parse_component(
-        self,
-        serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        raise NotImplementedError
-
 
 class Query(ComponentParserMixin, Generic[_QueryT]):
     """
@@ -70,27 +59,7 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
         request: HttpRequest,
         serializer: type[BaseSerializer],
     ) -> Any:
-        return request.GET  # Просто возвращаем данные
-
-    @override
-    def _parse_component(
-        self,
-        serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        # TODO: validate `type_args` len
-        try:
-            self.parsed_query = serializer.from_python(
-                request.GET,
-                type_args[0],
-            )
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None
+        return request.GET
 
 
 class Body(ComponentParserMixin, Generic[_BodyT]):
@@ -117,29 +86,6 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
         except (msgspec.DecodeError, TypeError) as exc:
             raise RequestSerializationError(str(exc)) from None
 
-    @override
-    def _parse_component(
-        self,
-        serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        # TODO: negotiate content-type
-        # TODO: make default encoding configurable
-        try:
-            self.parsed_body = serializer.from_python(
-                serializer.from_json(request.body),
-                type_args[0],
-            )
-        except (msgspec.DecodeError, TypeError) as exc:
-            raise RequestSerializationError(str(exc)) from exc
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None
-
 
 class Headers(ComponentParserMixin, Generic[_HeadersT]):
     """
@@ -161,23 +107,3 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
         serializer: type[BaseSerializer],
     ) -> Any:
         return request.headers
-
-    @override
-    def _parse_component(
-        self,
-        serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        # TODO: validate `type_args` len
-        try:
-            self.parsed_headers = serializer.from_python(
-                request.headers,
-                type_args[0],
-            )
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None

@@ -70,7 +70,7 @@ class BaseSerializer:
     def validate_combined(
         cls,
         combined_model: type[Any],
-        data: dict[str, Any],
+        component_data: dict[str, Any],
     ) -> Any:
         """Validate all data at once using combined model."""
         raise NotImplementedError

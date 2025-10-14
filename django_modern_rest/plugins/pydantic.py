@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from django_modern_rest.exceptions import RequestSerializationError
+
 try:
     import pydantic
 except ImportError:  # pragma: no cover
@@ -126,13 +128,23 @@ class PydanticSerializer(BaseSerializer):
     def validate_combined(
         cls,
         combined_model: type[Any],
-        data: dict[str, Any],
+        component_data: dict[str, Any],
     ) -> Any:
         """Validate all data at once using single validation call."""
-        return pydantic.TypeAdapter(combined_model).validate_python(
-            data,
-            **cls.from_python_kwargs,
-        )
+        try:
+            return pydantic.TypeAdapter(combined_model).validate_python(
+                component_data,
+                **cls.from_python_kwargs,
+            )
+        except pydantic.ValidationError as exc:
+            errors = exc.errors(
+                include_url=False,
+                include_context=False,
+                # TODO: If iclude_input=True,
+                # TODO: msgspec decoder are broken =D
+                include_input=False,
+            )
+            raise RequestSerializationError(errors) from None
 
 
 # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
