@@ -1,15 +1,18 @@
 from http import HTTPStatus
+from typing import Final
 
 import pytest
 from django.urls import reverse
 
 from django_modern_rest.test import DMRClient
 
+_REVERSE_NAME: Final = 'openapi:swagger'
+
 
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status', 'expected_content_type'),
     [
-        ('docs:openapi_swagger', HTTPStatus.OK, 'text/html'),
+        (_REVERSE_NAME, HTTPStatus.OK, 'text/html'),
     ],
 )
 def test_endpoints(
@@ -30,7 +33,7 @@ def test_endpoints(
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status'),
     [
-        ('docs:openapi_swagger', HTTPStatus.METHOD_NOT_ALLOWED),
+        (_REVERSE_NAME, HTTPStatus.METHOD_NOT_ALLOWED),
     ],
 )
 def test_wrong_method(

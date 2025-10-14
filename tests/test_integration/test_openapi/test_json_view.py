@@ -1,15 +1,18 @@
 from http import HTTPStatus
+from typing import Final
 
 import pytest
 from django.urls import reverse
 
 from django_modern_rest.test import DMRClient
 
+_REVERSE_NAME: Final = 'openapi:json'
+
 
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status', 'expected_content_type'),
     [
-        ('docs:openapi_json', HTTPStatus.OK, 'application/json'),
+        (_REVERSE_NAME, HTTPStatus.OK, 'application/json'),
     ],
 )
 def test_endpoints(
@@ -30,7 +33,7 @@ def test_endpoints(
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status'),
     [
-        ('docs:openapi_json', HTTPStatus.METHOD_NOT_ALLOWED),
+        (_REVERSE_NAME, HTTPStatus.METHOD_NOT_ALLOWED),
     ],
 )
 def test_wrong_method(
@@ -48,7 +51,7 @@ def test_wrong_method(
 
 def test_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
-    url = reverse('docs:openapi_json')
+    url = reverse(_REVERSE_NAME)
     response = dmr_client.get(url)
 
     body = response.json()

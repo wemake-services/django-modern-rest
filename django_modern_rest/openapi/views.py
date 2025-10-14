@@ -1,23 +1,29 @@
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any, ClassVar, final
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
 from typing_extensions import override
 
 from django_modern_rest.openapi import BaseRenderer
-from django_modern_rest.openapi.schema import OpenAPISchema
+from django_modern_rest.openapi.generator import OpenAPISchema
+from django_modern_rest.types import Empty, EmptyObj
 
 
+@final
 class OpenAPIView(View):
     """View for OpenAPI."""
 
-    renderer: ClassVar[BaseRenderer]
-    schema: ClassVar[OpenAPISchema]
+    # Hack for preventing parent `as_view` from validating the attributes
+    renderer: ClassVar[BaseRenderer | Empty] = EmptyObj
+    schema: ClassVar[OpenAPISchema | Empty] = EmptyObj
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema."""
-        return self.renderer.render(request, self.schema)
+        if not isinstance(self.renderer, BaseRenderer):
+            raise TypeError("Renderer must be a 'BaseRenderer' instance.")
+
+        return self.renderer.render(request, self.schema)  # type: ignore[arg-type]
 
     @override
     @classmethod
@@ -33,17 +39,4 @@ class OpenAPIView(View):
         This method extends Django's base 'as_view()' to handle OpenAPI
         parameters.
         """
-        # We need to set these attributes on the class before calling
-        # `super().as_view()` because Django's base `as_view()` method
-        # validates that any initkwargs correspond to existing class attributes.
-        # By setting these attributes first, we ensure that the parameters
-        # can be passed as initkwargs to the parent method without
-        # causing validation errors.
-        cls.renderer = renderer
-        cls.schema = schema
-
-        return super().as_view(
-            renderer=renderer,
-            schema=schema,
-            **initkwargs,
-        )
+        return super().as_view(renderer=renderer, schema=schema, **initkwargs)

@@ -1,14 +1,13 @@
 import abc
 from typing import TYPE_CHECKING, ClassVar, final
 
+import msgspec
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
 
-from django_modern_rest.internal.json import serialize
-
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.schema import OpenAPISchema
+    from django_modern_rest.openapi.generator import OpenAPISchema
 
 
 class BaseRenderer(abc.ABC):
@@ -28,7 +27,7 @@ class BaseRenderer(abc.ABC):
         raise NotImplementedError
 
     def to_json(self, schema: 'OpenAPISchema') -> str:
-        return serialize(schema).decode('utf-8')
+        return msgspec.json.encode(schema).decode('utf-8')
 
 
 @final

@@ -30,14 +30,14 @@ class Deserialize(Protocol):
 
 def serialize(
     to_serialize: Any,
-    serializer: Callable[[Any], Any] | None = None,
+    serializer: Callable[[Any], Any],
 ) -> bytes:
     """
     Encode a value into JSON bytestring.
 
     Args:
         to_serialize: Value to encode.
-        serializer: Optional callable to support non-natively supported types.
+        serializer: Callable to support non-natively supported types.
 
     Returns:
         JSON as bytes.
@@ -51,7 +51,7 @@ def serialize(
 
 def deserialize(
     to_deserialize: FromJson,
-    deserializer: _DeserializeFunc | None = None,
+    deserializer: _DeserializeFunc,
     *,
     strict: bool = True,
 ) -> Any:
