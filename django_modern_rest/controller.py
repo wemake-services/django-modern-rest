@@ -56,6 +56,7 @@ class Controller(View, Generic[_SerializerT]):
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParserMixin)
         ]
+        # TODO: validate that either all are sync or all are async
         cls._api_endpoints = {
             meth: Endpoint(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods

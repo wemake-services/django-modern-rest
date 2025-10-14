@@ -142,3 +142,48 @@ def test_solve_string_annotation_for_endpoint(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.content) == [1, 2]
+
+
+@final
+class _WeakTypeController(Controller[PydanticSerializer]):
+    """All return types of these methods are not correct without coercing."""
+
+    def post(self) -> list[int]:
+        """Does not respect a generic builtin type."""
+        return ['1', '2']  # type: ignore[list-item]
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.POST,
+    ],
+)
+def test_weak_type_response_validation(
+    dmr_rf: DMRRequestFactory,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Ensures weak type response validation does not work."""
+    request = dmr_rf.generic(str(method), '/whatever/')
+
+    response = _WeakTypeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'int_type',
+                'loc': [0],
+                'msg': 'Input should be a valid integer',
+                'input': '1',
+            },
+            {
+                'type': 'int_type',
+                'loc': [1],
+                'msg': 'Input should be a valid integer',
+                'input': '2',
+            },
+        ],
+    })
