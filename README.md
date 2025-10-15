@@ -12,6 +12,7 @@ Modern REST framework for Django with types and async support!
 
 - [x] Blazingly fast
 - [x] Fully typed and checked with `mypy` and `pyright` in strict modes
+- [x] Strict schema validation of both requests and responses
 - [x] Supports `pydantic2`, but not bound to it
 - [ ] Supports `msgspec`, but not bound to it
 - [x] Supports async Django
@@ -69,7 +70,7 @@ And then route this controller in your `urls.py`:
 >>> from django_modern_rest import Router
 
 >>> router = Router([
-...     path('user/', UserController, name='users'),
+...     path('user/', UserController.as_view(), name='users'),
 ... ])
 >>> urlpatterns = [
 ...     path('api/', include((router.urls, 'your_app'), namespace='api')),

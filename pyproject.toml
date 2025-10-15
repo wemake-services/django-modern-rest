@@ -211,7 +211,7 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=98.8",  # TODO: set to 100%
+  "--cov-fail-under=98.9",  # TODO: set to 100%
   # Ignores:
   "--ignore=docs",
   "--ignore=typesafety/assert_type",

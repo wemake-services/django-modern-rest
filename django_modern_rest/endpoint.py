@@ -1,6 +1,6 @@
 import dataclasses
 import inspect
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from http import HTTPMethod, HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -8,25 +8,28 @@ from typing import (
     ClassVar,
     Literal,
     Never,
-    Protocol,
+    TypeAlias,
     final,
     overload,
 )
 
 from django.http import HttpResponse
-from typing_extensions import ParamSpec, TypeVar, deprecated
+from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
-from django_modern_rest.exceptions import (
-    MissingEndpointMetadataError,
-    ResponseSerializationError,
+from django_modern_rest.headers import (
+    HeaderDescription,
+    NewHeader,
+    ResponseHeadersT,
 )
-from django_modern_rest.responses import ResponseValidator
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
-    is_safe_subclass,
     parse_return_annotation,
+)
+from django_modern_rest.validation import (
+    EndpointMetadataValidator,
+    ResponseValidator,
 )
 
 if TYPE_CHECKING:
@@ -108,8 +111,8 @@ class Endpoint:
         validated = self.response_validator.validate_content(raw_data)
         return HttpResponse(
             content=serializer.to_json(validated.raw_data),
-            content_type='application/json',  # TODO: also validated
             status=validated.status_code,
+            headers=validated.headers,
         )
 
 
@@ -133,27 +136,28 @@ class EndpointMetadata:
 
     When *returns_response* is ``False`` we can't provide:
     - *return_type*
+
+    When *returns_response* is ``True`` we can't provide:
+    - ``value`` parameter to all entries in *headers*
     """
 
-    # TODO: this can be a tagged union with `Literal[True]` and `Literal[False]`
-    returns_response: bool
-
-    # Can be provided only when `returns_response` is `True`
-    return_type: Any
+    # Can be provided only when dealing with `HttpResponse` returns:
+    return_type: Any | Empty
 
     # Can be provided at all times:
     status_code: HTTPStatus
+    headers: ResponseHeadersT | Empty
 
-    def validate_for_response(self, response: HttpResponse) -> None:
-        """Validates response against provided metadata."""
-        assert self.returns_response, (  # noqa: S101
-            'Do not run response validation if it is not expected'
-        )
-        if response.status_code != self.status_code:
-            raise ResponseSerializationError(
-                f'{response.status_code=} does not match '
-                f'expected {self.status_code} status code',
-            )
+    def build_headers(self, serializer: type[BaseSerializer]) -> dict[str, Any]:
+        """Returns headers with values for raw data endpoints."""
+        headers: dict[str, Any] = {'Content-Type': serializer.content_type}
+        if isinstance(self.headers, Empty):
+            return headers
+        headers.update({
+            header_name: response_header.value
+            for header_name, response_header in self.headers.items()
+        })
+        return headers
 
 
 _ParamT = ParamSpec('_ParamT')
@@ -165,10 +169,10 @@ def validate(
     *,
     return_type: Any,
     status_code: HTTPStatus,
+    headers: Mapping[str, HeaderDescription] | Empty = EmptyObj,
     # TODO:
     # errors
     # schema_modifications
-    # headers
 ) -> Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]:
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
@@ -202,9 +206,13 @@ def validate(
         status_code: Shows *status_code* in the documentation
             We validate *status_code* to match the specified
             one when ``HttpResponse`` is returned.
+        headers: Shows *headers* in the documentation.
+            When passed, we validate that all given required headers are present
+            in the final response. Headers with ``value`` attribute set
+            will be added to the final response.
 
     Raises:
-        MissingEndpointMetadataError: When user did not specify
+        EndpointMetadataError: When user did not specify
             some required metadata entries.
 
     Returns:
@@ -214,6 +222,7 @@ def validate(
     return _add_metadata(
         return_type=return_type,
         status_code=status_code,
+        headers=headers,
         explicit_decorator_name='validate',
     )
 
@@ -241,10 +250,10 @@ def modify(
     *,
     # `type[T]` limits some type annotations:
     status_code: HTTPStatus | Empty = EmptyObj,
+    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
     # TODO:
     # errors
     # schema_modifications
-    # headers
 ) -> _ModifyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -263,10 +272,14 @@ def modify(
         ...         return [1, 2]  # id of tasks you have started
 
     Args:
-        status_code:
+        status_code: Shows *status_code* in the documentation.
             When *status_code* is passed, always uses it for
             all responses. When not provided, we use smart inference
             based on the HTTP method name.
+        headers: Shows *headers* in the documentation.
+            When *headers* are passed we will add them for all responses.
+            Use non-empty ``value`` parameter
+            of :class:`django_modern_rest.headers.BaseHeaderDescription` object.
 
     Returns:
         The same function with ``__endpoint__``
@@ -274,49 +287,36 @@ def modify(
     """
     return _add_metadata(  # type: ignore[return-value]
         status_code=status_code,
+        headers=headers,
         explicit_decorator_name='modify',
     )
 
 
-def _add_metadata(  # noqa: WPS231
+_ExplicitDecoratorNameT: TypeAlias = Literal['modify', 'validate'] | None
+
+
+def _add_metadata(
     *,
     return_type: Any | Empty = EmptyObj,
     status_code: HTTPStatus | Empty = EmptyObj,
-    explicit_decorator_name: Literal['validate', 'modify'] | None = None,
+    headers: ResponseHeadersT | Empty = EmptyObj,
+    explicit_decorator_name: _ExplicitDecoratorNameT = None,
 ) -> Callable[[Callable[_ParamT, _ReturnT]], Callable[_ParamT, _ReturnT]]:
     # It is cheap for us to do the endpoint metadata calculation here,
     # because we do it once per module import.
-    def decorator(  # noqa: WPS231
+    def decorator(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
-        # I prefer this function to be complex,
-        # but have everything in one place.
-        # TODO: later this can be split into a class
-        # if it gets even more complex.
         return_annotation = parse_return_annotation(func)
-        if is_safe_subclass(return_annotation, HttpResponse):
-            if explicit_decorator_name == 'modify':
-                raise MissingEndpointMetadataError(
-                    f'Since {func!r} returns HttpResponse, '
-                    'it is not allowed to use `@modify` decorator',
-                )
-            if return_type is EmptyObj or status_code is EmptyObj:
-                raise MissingEndpointMetadataError(
-                    f'Since {func!r} returns HttpResponse, '
-                    'it requires `@validate` decorator with these parameters: '
-                    f'{return_type=} {status_code=}',
-                )
-            returns_response = True
-        else:
-            if explicit_decorator_name == 'validate':
-                raise MissingEndpointMetadataError(
-                    f'Since {func!r} returns regular data, '
-                    'it is not allowed to use `@validate` decorator',
-                )
-            returns_response = False
 
+        EndpointMetadataValidator(
+            func,
+            explicit_decorator_name,
+            headers,
+        )(return_annotation)
+
+        # Validation passed, now we can create valid metadata:
         func.__endpoint__ = EndpointMetadata(  # type: ignore[attr-defined]
-            returns_response=returns_response,
             return_type=(
                 return_annotation
                 if isinstance(return_type, Empty)
@@ -327,6 +327,7 @@ def _add_metadata(  # noqa: WPS231
                 if isinstance(status_code, Empty)
                 else status_code
             ),
+            headers=headers,
         )
         return func
 
