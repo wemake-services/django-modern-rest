@@ -106,3 +106,23 @@ def test_custom_alias_serialization_by_alias(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+@final
+class _UnserializableController(Controller[_NoAliasPydanticSerializer]):
+    def post(self) -> dict[str, Any]:
+        return {'a': object()}
+
+
+def test_not_serializable_response(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures in custom type aliases do not work."""
+    request = dmr_rf.post('/whatever/', data={})
+
+    response = _UnserializableController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == {'Content-Type': 'application/json'}
