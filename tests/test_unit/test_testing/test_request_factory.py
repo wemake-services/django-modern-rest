@@ -53,5 +53,5 @@ def test_dmr_async_rf(
     response = _MyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.content == b'"%s"' % email.encode('utf8')

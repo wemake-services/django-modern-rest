@@ -88,3 +88,21 @@ class UserReplaceController(Controller[PydanticSerializer]):
     @validate(return_type=_UserInput, status_code=HTTPStatus.OK)
     async def put(self, user_id: int) -> HttpResponse:
         return JsonResponse({'email': 'new@email.com', 'age': user_id})
+
+
+@final
+class ParseHeadersController(
+    Headers[_CustomHeaders],
+    Controller[PydanticSerializer],
+):
+    def post(self) -> _CustomHeaders:
+        return self.parsed_headers
+
+
+@final
+class AsyncParseHeadersController(
+    Headers[_CustomHeaders],
+    Controller[PydanticSerializer],
+):
+    async def post(self) -> _CustomHeaders:
+        return self.parsed_headers

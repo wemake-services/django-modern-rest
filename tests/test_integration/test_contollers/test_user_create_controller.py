@@ -31,7 +31,7 @@ def test_user_create_view(
         data=request_data,
     )
 
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
         **request_data,
@@ -42,7 +42,6 @@ def test_user_create_view(
     }
 
 
-# TODO: use custom `TestClient`
 def test_user_list_view(dmr_client: DMRClient) -> None:
     """Ensure that list routes work."""
     response = dmr_client.get(reverse('api:users'))

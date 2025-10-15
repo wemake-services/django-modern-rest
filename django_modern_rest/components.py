@@ -13,7 +13,7 @@ _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
 
 
-class ComponentParserMixin:
+class ComponentParser:
     """Base abtract parser for request components."""
 
     # Public API:
@@ -23,7 +23,7 @@ class ComponentParserMixin:
     __is_base_type__: ClassVar[bool] = True
 
     @abc.abstractmethod
-    def _parse_component(
+    def parse_component(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -31,10 +31,11 @@ class ComponentParserMixin:
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        """Implement this method to be able to parse any request component."""
         raise NotImplementedError
 
 
-class Query(ComponentParserMixin, Generic[_QueryT]):
+class Query(ComponentParser, Generic[_QueryT]):
     """
     Parses query params of the request.
 
@@ -58,7 +59,7 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
     parsed_query: _QueryT
 
     @override
-    def _parse_component(
+    def parse_component(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -66,6 +67,7 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        """Parses query strings from request."""
         # TODO: validate `type_args` len
         try:
             self.parsed_query = serializer.from_python(
@@ -79,7 +81,7 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
             ) from None
 
 
-class Body(ComponentParserMixin, Generic[_BodyT]):
+class Body(ComponentParser, Generic[_BodyT]):
     """
     Parses body of the request.
 
@@ -92,7 +94,7 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
     parsed_body: _BodyT
 
     @override
-    def _parse_component(
+    def parse_component(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -100,7 +102,13 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        # TODO: negotiate content-type
+        """Parses request body."""
+        if request.content_type != serializer.content_type:
+            raise RequestSerializationError(
+                'Cannot parse request body '
+                f'with content type {request.content_type!r}, '
+                f'expected {serializer.content_type!r}',
+            )
         try:
             self.parsed_body = serializer.from_python(
                 serializer.from_json(request.body),
@@ -115,7 +123,7 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
             ) from None
 
 
-class Headers(ComponentParserMixin, Generic[_HeadersT]):
+class Headers(ComponentParser, Generic[_HeadersT]):
     """
     Parses request headers.
 
@@ -128,7 +136,7 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
     parsed_headers: _HeadersT
 
     @override
-    def _parse_component(
+    def parse_component(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -136,6 +144,7 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        """Parses request headers."""
         # TODO: validate `type_args` len
         try:
             self.parsed_headers = serializer.from_python(

@@ -1,6 +1,8 @@
 import abc
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+from django.http import HttpHeaders
+
 if TYPE_CHECKING:
     from django_modern_rest.internal.json import FromJson
 
@@ -26,6 +28,8 @@ class BaseSerializer:
 
     @classmethod
     def serialize_hook(cls, to_serialize: Any) -> Any:
+        if isinstance(to_serialize, HttpHeaders):
+            return dict(to_serialize)
         raise TypeError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
