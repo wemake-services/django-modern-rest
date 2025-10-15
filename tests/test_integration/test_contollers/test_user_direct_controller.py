@@ -42,7 +42,7 @@ async def test_user_update_direct_view_async_client(
         data={'email': email, 'age': faker.unique.random_int()},
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
         'email': email,

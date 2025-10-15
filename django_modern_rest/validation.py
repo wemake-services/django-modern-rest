@@ -31,6 +31,13 @@ _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 
 class ResponseValidator:
+    """
+    Response validator.
+
+    Can validate responses that return raw data as well as real ``HttpResponse``
+    that are returned from endpoints.
+    """
+
     __slots__ = ('_serializer', 'metadata')
 
     # Public API:
@@ -42,6 +49,14 @@ class ResponseValidator:
         *,
         serializer: type[BaseSerializer],
     ) -> None:
+        """
+        Build the validatior.
+
+        Args:
+            endpoint_func: Real function that will be used for metadata.
+            serializer: ``BaseSerializer`` type that can parse and validate.
+
+        """
         self._serializer = serializer
         # `Endpoint` adds `__metadata__` to all functions:
         self.metadata: EndpointMetadata = (

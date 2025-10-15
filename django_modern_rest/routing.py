@@ -49,7 +49,7 @@ def compose_controllers(*controllers: type['Controller[Any]']) -> type[View]:
         ) -> HttpResponseBase:
             method = request.method.lower()  # type: ignore[union-attr]
             for controller, view_func in views:
-                if method in controller.existing_http_methods:
+                if method in controller.existing_http_methods():
                     return view_func(request, *args, **kwargs)
             return self.http_method_not_allowed(request, *args, **kwargs)
 

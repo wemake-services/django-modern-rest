@@ -67,6 +67,8 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def from_json(cls, buffer: 'FromJson') -> Any:
+        # TODO: handle PydanticSerializationError here
+        # TODO: handle PydanticSchemaGenerationError here
         return _get_deserialize_func(cls)(
             buffer,
             cls.deserialize_hook,
@@ -89,7 +91,7 @@ class PydanticSerializer(BaseSerializer):
             unstructured: Python objects to be parsed / validated.
             model: Python type to serve as a model.
                 Can be any type that ``pydantic`` supports.
-                Examples: ``dict[str, int]]`` and ``BaseModel`` subtypes.
+                Examples: ``dict[str, int]`` and ``BaseModel`` subtypes.
             strict: Whether we use more strict validation rules.
                 For example, it is fine for a request validation
                 to be less strict in some cases and allow type coercition.

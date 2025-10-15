@@ -17,7 +17,7 @@ type-check:
 
 .PHONY: unit
 unit:
-	poetry run pytest
+	poetry run pytest --inline-snapshot=disable
 
 .PHONY: package
 package:
