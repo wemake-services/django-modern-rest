@@ -27,6 +27,9 @@ _ComponentParserSpec: TypeAlias = tuple[
 class Controller(View, Generic[_SerializerT]):
     """Defines API views as controllers."""
 
+    # Public API:
+    endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+
     # We lie about that it is an instance variable, because type vars
     # are not allowed in `ClassVar`:
     _serializer: type[BaseSerializer]
@@ -58,23 +61,11 @@ class Controller(View, Generic[_SerializerT]):
             for subclass in infer_bases(cls, ComponentParserMixin)
         ]
         cls._api_endpoints = {
-            meth: Endpoint(func, serializer=cls._serializer)
+            meth: cls.endpoint_cls(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
-        if cls._api_endpoints:
-            is_async = cls._api_endpoints[
-                next(iter(cls._api_endpoints.keys()))
-            ].is_async
-            if any(
-                endpoint.is_async is not is_async
-                for endpoint in cls._api_endpoints.values()
-            ):
-                # The same error message that django has.
-                raise ImproperlyConfigured(
-                    f'{cls!r} HTTP handlers must either '
-                    'be all sync or all async.',
-                )
+        cls._validate_endpoints()
 
     @override
     def dispatch(
@@ -101,6 +92,23 @@ class Controller(View, Generic[_SerializerT]):
         }
 
     # Private API:
+
+    @classmethod
+    def _validate_endpoints(cls) -> None:
+        """Validate that endpoints definition is correct in build time."""
+        if not cls._api_endpoints:
+            return
+        is_async = cls._api_endpoints[
+            next(iter(cls._api_endpoints.keys()))
+        ].is_async
+        if any(
+            endpoint.is_async is not is_async
+            for endpoint in cls._api_endpoints.values()
+        ):
+            # The same error message that django has.
+            raise ImproperlyConfigured(
+                f'{cls!r} HTTP handlers must either be all sync or all async.',
+            )
 
     def _handle_request(
         self,

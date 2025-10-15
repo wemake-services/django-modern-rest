@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any, Final, final, get_args, get_origin
 
-from typing_extensions import get_original_bases, get_type_hints, override
+from typing_extensions import get_original_bases, get_type_hints
 
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
 
@@ -9,11 +9,6 @@ from django_modern_rest.exceptions import UnsolvableAnnotationsError
 @final
 class Empty:
     """Special value for empty defaults."""
-
-    @override
-    def __repr__(self) -> str:
-        """Pretty formatting."""
-        return '<empty>'
 
 
 #: Default singleton for empty values.
