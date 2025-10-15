@@ -10,10 +10,12 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.generator import OpenAPISchema
 
 
-class BaseRenderer(abc.ABC):
+class BaseRenderer:
     """Base renderer for OpenAPI."""
 
     def __init__(self, path: str, name: str) -> None:
+        """Base constructor."""
+        # TODO: why do we need this?
         self.path = path
         self.name = name
 
@@ -26,8 +28,11 @@ class BaseRenderer(abc.ABC):
         """Render the router and config to an HTTP response."""
         raise NotImplementedError
 
-    # TODO: supports different decoding options
+    # TODO: support different decoding options
     def to_json(self, schema: 'OpenAPISchema') -> str:
+        """Convert schema to json string."""
+        # TODO(@kondratevdev): use specified `json` encoder,
+        # not the default one. Import settings and get it from there.
         return msgspec.json.encode(schema).decode('utf-8')
 
 
@@ -42,6 +47,7 @@ class JsonRenderer(BaseRenderer):
         path: str = 'openapi.json/',
         name: str = 'json',
     ) -> None:
+        """Create JsonRenderer."""
         self.path = path
         self.name = name
 
@@ -67,11 +73,12 @@ class SwaggerRenderer(BaseRenderer):
 
     def __init__(
         self,
+        # TODO(@kondratevdev): why do we need `path` and `name`?
         path: str = 'swagger/',
         name: str = 'swagger',
     ) -> None:
-        self.path = path
-        self.name = name
+        """Create Swagger renderer."""
+        super().__init__(path=path, name=name)
 
     @override
     def render(

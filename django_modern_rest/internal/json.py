@@ -25,7 +25,8 @@ class Deserialize(Protocol):
         deserializer: _DeserializeFunc,
         *,
         strict: bool = ...,
-    ) -> Any: ...
+    ) -> Any:
+        """Function to be called on deserialization."""
 
 
 def serialize(

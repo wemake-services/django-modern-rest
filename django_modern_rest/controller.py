@@ -34,6 +34,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    api_endpoints: ClassVar[dict[str, Endpoint]]
 
     # We lie about that it is an instance variable, because type vars
     # are not allowed in `ClassVar`:
@@ -41,7 +42,6 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
-    _api_endpoints: ClassVar[dict[str, Endpoint]]
     _current_endpoint: Endpoint
 
     @override
@@ -66,7 +66,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParser)
         ]
-        cls._api_endpoints = {
+        cls.api_endpoints = {
             meth: cls.endpoint_cls(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
@@ -131,14 +131,14 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
     @classmethod
     def _validate_endpoints(cls) -> None:
         """Validate that endpoints definition is correct in build time."""
-        if not cls._api_endpoints:
+        if not cls.api_endpoints:
             return
-        is_async = cls._api_endpoints[
-            next(iter(cls._api_endpoints.keys()))
+        is_async = cls.api_endpoints[
+            next(iter(cls.api_endpoints.keys()))
         ].is_async
         if any(
             endpoint.is_async is not is_async
-            for endpoint in cls._api_endpoints.values()
+            for endpoint in cls.api_endpoints.values()
         ):
             # The same error message that django has.
             raise ImproperlyConfigured(
@@ -152,7 +152,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         **kwargs: Any,
     ) -> HttpResponse:
         # Fast path for method resolution:
-        endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
+        endpoint = self.api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
         if endpoint is not None:
             self._current_endpoint = endpoint
             # TODO: support `StreamingHttpResponse`

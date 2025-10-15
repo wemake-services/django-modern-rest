@@ -42,5 +42,5 @@ def test_solvable_response_annotations() -> None:
         def get(self) -> _RegularAlias:
             raise NotImplementedError
 
-    endpoint = MyController._api_endpoints['get']  # noqa: SLF001
+    endpoint = MyController.api_endpoints['get']
     assert endpoint.response_validator.metadata.return_type == list[int]
