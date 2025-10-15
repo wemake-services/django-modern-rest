@@ -21,6 +21,7 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def to_json(cls, structure: Any) -> bytes:
+        """Override this method to covert structured data to json bytestring."""
         raise NotImplementedError
 
     @classmethod
@@ -41,7 +42,28 @@ class BaseSerializer:
         cls,
         unstructured: Any,
         model: Any,
+        *,
+        strict: bool,
     ) -> Any:
+        """
+        Parse *unstructured* data from python primitives into *model*.
+
+        Args:
+            unstructured: Python objects to be parsed / validated.
+            model: Python type to serve as a model.
+                Can be any type hints that user can theoretically supply.
+                Depends on the serialization plugin.
+            strict: Whether we use more strict validation rules.
+                For example, it is fine for a request validation
+                to be less strict in some cases and allow type coercition.
+                But, response types need to be strongly validated.
+
+        Raises:
+            validation_error: When parsing can't be done.
+
+        Returns:
+            Structured and validated data.
+        """
         raise NotImplementedError
 
     @classmethod
@@ -54,3 +76,8 @@ class BaseSerializer:
             f'Value {to_deserialize} of type {type(to_deserialize)} '
             f'is not supported for {target_type}',
         )
+
+    @classmethod
+    @abc.abstractmethod
+    def error_to_json(cls, error: Exception) -> Any:
+        """Serialize an exception to json the best way possible."""

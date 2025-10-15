@@ -16,6 +16,10 @@ _HeadersT = TypeVar('_HeadersT')
 class ComponentParserMixin:
     """Base abtract parser for request components."""
 
+    # Public API:
+    strict_validation: ClassVar[bool] = False
+
+    # Internal API:
     __is_base_type__: ClassVar[bool] = True
 
     @abc.abstractmethod
@@ -67,9 +71,12 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
             self.parsed_query = serializer.from_python(
                 request.GET,
                 type_args[0],
+                strict=self.strict_validation,
             )
         except serializer.validation_error as exc:
-            raise RequestSerializationError(str(exc)) from None
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None
 
 
 class Body(ComponentParserMixin, Generic[_BodyT]):
@@ -99,13 +106,14 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
             self.parsed_body = serializer.from_python(
                 serializer.from_json(request.body),
                 type_args[0],
+                strict=self.strict_validation,
             )
-        except (
-            serializer.validation_error,
-            msgspec.DecodeError,
-            TypeError,
-        ) as exc:
-            raise RequestSerializationError(str(exc)) from None
+        except (msgspec.DecodeError, TypeError) as exc:
+            raise RequestSerializationError(str(exc)) from exc
+        except serializer.validation_error as exc:
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None
 
 
 class Headers(ComponentParserMixin, Generic[_HeadersT]):
@@ -134,6 +142,9 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
             self.parsed_headers = serializer.from_python(
                 request.headers,
                 type_args[0],
+                strict=self.strict_validation,
             )
         except serializer.validation_error as exc:
-            raise RequestSerializationError(str(exc)) from None
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None

@@ -1,5 +1,6 @@
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import classproperty
 from django.views import View
@@ -8,6 +9,7 @@ from typing_extensions import override
 from django_modern_rest.components import ComponentParserMixin
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
+    MethodNotAllowedError,
     SerializationError,
     UnsolvableAnnotationsError,
 )
@@ -51,19 +53,28 @@ class Controller(View, Generic[_SerializerT]):
                 'it must be a BaseSerializer subclass',
             )
         cls._serializer = type_args[0]
-
-        if getattr(cls, '_component_parsers', None) is None:
-            cls._component_parsers = [
-                (subclass, get_args(subclass))
-                for subclass in infer_bases(cls, ComponentParserMixin)
-            ]
-
-        if getattr(cls, '_api_endpoints', None) is None:
-            cls._api_endpoints = {
-                meth: Endpoint(func, serializer=cls._serializer)
-                for meth in cls.existing_http_methods
-                if (func := getattr(cls, meth)) is not getattr(View, meth, None)
-            }
+        cls._component_parsers = [
+            (subclass, get_args(subclass))
+            for subclass in infer_bases(cls, ComponentParserMixin)
+        ]
+        cls._api_endpoints = {
+            meth: Endpoint(func, serializer=cls._serializer)
+            for meth in cls.existing_http_methods
+            if (func := getattr(cls, meth)) is not getattr(View, meth, None)
+        }
+        if cls._api_endpoints:
+            is_async = cls._api_endpoints[
+                next(iter(cls._api_endpoints.keys()))
+            ].is_async
+            if any(
+                endpoint.is_async is not is_async
+                for endpoint in cls._api_endpoints.values()
+            ):
+                # The same error message that django has.
+                raise ImproperlyConfigured(
+                    f'{cls!r} HTTP handlers must either '
+                    'be all sync or all async.',
+                )
 
     @override
     def dispatch(
@@ -74,18 +85,15 @@ class Controller(View, Generic[_SerializerT]):
     ) -> HttpResponse:
         """Parse all components before the dispatching and call controller."""
         try:
-            response = self._handle_request(request, *args, **kwargs)
+            return self._handle_request(request, *args, **kwargs)
         except SerializationError as exc:
             return self._handle_error(exc)
-        else:
-            if response is not None:
-                return response
-        return self.http_method_not_allowed(request, *args, **kwargs)
+        except MethodNotAllowedError:
+            return self.http_method_not_allowed(request, *args, **kwargs)
 
     @classproperty  # TODO: cache
     def existing_http_methods(cls) -> set[str]:  # noqa: N805
         """Returns and caches what HTTP methods are implemented in this view."""
-        # TODO: validate that all handlers have `@rest` decorator
         return {
             method
             for method in cls.http_method_names
@@ -99,17 +107,11 @@ class Controller(View, Generic[_SerializerT]):
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> HttpResponse | None:
+    ) -> HttpResponse:
         # Fast path for method resolution:
         endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
         if endpoint is not None:
-            # TODO: validate `HttpResponse.content` with `return_type`
             # TODO: support `StreamingHttpResponse`
-            # TODO: support `JsonResponse`
-            # TODO: use `return_type` for schema generation
-            # TODO: use configurable `json` encoders and decoders
-            # TODO: make sure `return_dto` validation
-            # can be turned off for production
             for parser, type_args in self._component_parsers:
                 # TODO: maybe parse all at once?
                 # See https://github.com/wemake-services/django-modern-rest/issues/8
@@ -124,10 +126,10 @@ class Controller(View, Generic[_SerializerT]):
                     **kwargs,
                 )
             return endpoint(self, *args, **kwargs)  # we don't pass request
-        return None
+        raise MethodNotAllowedError
 
     def _handle_error(self, exc: SerializationError) -> HttpResponse:
-        payload = {'detail': str(exc)}
+        payload = {'detail': exc.args[0]}
         return HttpResponse(
             self._serializer.to_json(payload),
             status=int(exc.status_code),

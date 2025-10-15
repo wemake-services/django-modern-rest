@@ -11,7 +11,8 @@ from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,
 )
-from django_modern_rest.endpoint import rest as rest
+from django_modern_rest.endpoint import modify as modify
+from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.routing import Router as Router
 from django_modern_rest.routing import (
     compose_controllers as compose_controllers,

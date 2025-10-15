@@ -156,6 +156,7 @@ ignore = [
   "D401",
   "D404",
   "D405",
+  "D418",  # We should be able to add docstrings to `@overload` decorators
   # TODO: re-enable when ready:
   "D103", "D102", "D101", "D107",
   "ISC001",  # implicit string concat conflicts with `ruff format`
@@ -180,11 +181,6 @@ isort.known-first-party = ["rest_app"]
 "django_test_app/**/*.py" = ["D10"]
 # Allow asserts for tests:
 "tests/*.py" = ["S101"]
-
-
-[tool.inline-snapshot]
-# Docs: https://15r10nk.github.io/inline-snapshot/latest/configuration
-format-command="make format"
 
 
 [tool.pytest.ini_options]
@@ -215,9 +211,10 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=97.6",  # TODO: set to 100%
+  "--cov-fail-under=98.8",  # TODO: set to 100%
   # Ignores:
   "--ignore=docs",
+  "--ignore=typesafety/assert_type",
 ]
 
 

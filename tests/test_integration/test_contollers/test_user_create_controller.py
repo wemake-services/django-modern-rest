@@ -31,7 +31,7 @@ def test_user_create_view(
         data=request_data,
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
         **request_data,

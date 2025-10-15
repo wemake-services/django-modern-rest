@@ -1,3 +1,4 @@
+from functools import cache
 from typing import TYPE_CHECKING, Any, ClassVar
 
 try:
@@ -14,8 +15,8 @@ from typing_extensions import override
 
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    DMR_JSON_DESERIALIZE_KEY,
-    DMR_JSON_SERIALIZE_KEY,
+    DMR_DESERIALIZE_KEY,
+    DMR_SERIALIZE_KEY,
     resolve_setting,
 )
 
@@ -78,10 +79,36 @@ class PydanticSerializer(BaseSerializer):
         cls,
         unstructured: Any,
         model: Any,
+        *,
+        strict: bool,
     ) -> Any:
-        return pydantic.TypeAdapter(model).validate_python(
+        """
+        Parse *unstructured* data from python primitives into *model*.
+
+        Args:
+            unstructured: Python objects to be parsed / validated.
+            model: Python type to serve as a model.
+                Can be any type that ``pydantic`` supports.
+                Examples: ``dict[str, int]]`` and ``BaseModel`` subtypes.
+            strict: Whether we use more strict validation rules.
+                For example, it is fine for a request validation
+                to be less strict in some cases and allow type coercition.
+                But, response types need to be strongly validated.
+
+        Raises:
+            pydantic.ValidationError: When parsing can't be done.
+
+        Returns:
+            Structured and validated data.
+        """
+        # TODO: support `.rebuild` and forward refs
+
+        return _get_cached_type_adapter(model).validate_python(
             unstructured,
-            **cls.from_python_kwargs,
+            **{  # pyright: ignore[reportArgumentType]
+                **cls.from_python_kwargs,
+                'strict': strict,
+            },
         )
 
     @override
@@ -94,6 +121,17 @@ class PydanticSerializer(BaseSerializer):
         # TODO: provide docs why this is needed
         return super().deserialize_hook(target_type, to_deserialize)
 
+    @override
+    @classmethod
+    def error_to_json(cls, error: Exception) -> list[Any]:
+        """Serialize an exception to json the best way possible."""
+        # Security notice: we only process custom exceptions
+        # with this functions, so nothing should leak from exc messages.
+        assert isinstance(error, pydantic.ValidationError), (  # noqa: S101
+            f'Cannot serialize {error} to json safely'
+        )
+        return error.errors(include_url=False)
+
 
 # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
 def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
@@ -101,7 +139,7 @@ def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
     if existing_attr is not None:
         return existing_attr
 
-    setting = resolve_setting(DMR_JSON_SERIALIZE_KEY)
+    setting = resolve_setting(DMR_SERIALIZE_KEY)
     cls._serialize = (  # pyright: ignore[reportPrivateUsage]
         import_string(setting) if isinstance(setting, str) else setting
     )
@@ -113,8 +151,14 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
     if existing_attr is not None:
         return existing_attr
 
-    setting = resolve_setting(DMR_JSON_DESERIALIZE_KEY)
+    setting = resolve_setting(DMR_DESERIALIZE_KEY)
     cls._deserialize = (  # pyright: ignore[reportPrivateUsage]
         import_string(setting) if isinstance(setting, str) else setting
     )
     return cls._deserialize  # pyright: ignore[reportPrivateUsage]
+
+
+@cache
+def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
+    """It is expensive to create, reuse existing ones."""
+    return pydantic.TypeAdapter(model)
