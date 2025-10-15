@@ -10,9 +10,11 @@ except ImportError:  # pragma: no cover
     )
     raise
 
+import pydantic_core
 from django.utils.module_loading import import_string
 from typing_extensions import override
 
+from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_DESERIALIZE_KEY,
@@ -68,7 +70,10 @@ class PydanticSerializer(BaseSerializer):
     @classmethod
     def to_json(cls, structure: Any) -> bytes:
         """Convert any object to json bytestring."""
-        return _get_serialize_func(cls)(structure, cls.serialize_hook)
+        try:
+            return _get_serialize_func(cls)(structure, cls.serialize_hook)
+        except pydantic_core.PydanticSerializationError as exc:
+            raise ResponseSerializationError(str(exc)) from None
 
     @override
     @classmethod
@@ -81,28 +86,16 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def from_json(cls, buffer: 'FromJson') -> Any:
-        """Convert string or bytestring to simple python object."""
-        # TODO: handle PydanticSerializationError here
-        # TODO: handle PydanticSchemaGenerationError here
+        """
+        Convert string or bytestring to simple python object.
+
+        TypeAdapter used for type validation is cached for futher uses.
+        """
         return _get_deserialize_func(cls)(
             buffer,
             cls.deserialize_hook,
             strict=cls.from_json_strict,
         )
-
-    @override
-    @classmethod
-    def deserialize_hook(
-        cls,
-        target_type: type[Any],
-        to_deserialize: Any,
-    ) -> Any:
-        """
-        Customize how some objects are deserialized from json.
-
-        Only add types that are specific to pydantic here.
-        """
-        return super().deserialize_hook(target_type, to_deserialize)
 
     @override
     @classmethod
@@ -133,7 +126,7 @@ class PydanticSerializer(BaseSerializer):
             Structured and validated data.
         """
         # TODO: support `.rebuild` and forward refs
-
+        # TODO: handle PydanticSchemaGenerationError here
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
             **{  # pyright: ignore[reportArgumentType]

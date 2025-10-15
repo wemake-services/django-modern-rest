@@ -22,7 +22,11 @@ class MethodNotAllowedError(Exception):
 
 
 class SerializationError(Exception):
-    """Base class for all parsing and serialization errors."""
+    """
+    Base class for all parsing and serialization errors.
+
+    Do not use it directly, prefer exact exceptions for requests and responses.
+    """
 
     #: All child classes must set this attribute:
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNPROCESSABLE_ENTITY

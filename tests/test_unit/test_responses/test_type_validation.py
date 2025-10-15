@@ -31,6 +31,12 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
     [
         (dict[str, int], {'a': 1}),
         (list[Literal[1]], [1, 1]),
+        (set[int], {1, 2}),
+        (frozenset[int], frozenset((1, 2))),
+        (bytes, b'abc'),
+        (str, 'abc'),
+        (tuple[int, str], (1, 'a')),
+        (tuple[int, ...], (1, 2, 3, 4)),
     ],
 )
 @pytest.mark.parametrize(
