@@ -1,11 +1,13 @@
 import abc
-from typing import ClassVar, final
+from typing import TYPE_CHECKING, ClassVar, final
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
+import msgspec
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
 
-from django_modern_rest.openapi.config import OpenAPIConfig
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.generator import OpenAPISchema
 
 
 class BaseRenderer(abc.ABC):
@@ -19,17 +21,21 @@ class BaseRenderer(abc.ABC):
     def render(
         self,
         request: HttpRequest,
-        config: OpenAPIConfig,
+        schema: 'OpenAPISchema',
     ) -> HttpResponse:
         """Render the router and config to an HTTP response."""
         raise NotImplementedError
+
+    # TODO: supports different decoding options
+    def to_json(self, schema: 'OpenAPISchema') -> str:
+        return msgspec.json.encode(schema).decode('utf-8')
 
 
 @final
 class JsonRenderer(BaseRenderer):
     """Renderer for JSON."""
 
-    content_type: ClassVar[str] = 'application/vnd.oai.openapi+json'
+    content_type: ClassVar[str] = 'application/json'
 
     def __init__(
         self,
@@ -43,12 +49,11 @@ class JsonRenderer(BaseRenderer):
     def render(
         self,
         request: HttpRequest,
-        config: OpenAPIConfig,
+        schema: 'OpenAPISchema',
     ) -> HttpResponse:
         """Render the JSON schema."""
-        # TODO: Render the OpenAPI JSON schema.
-        return JsonResponse(
-            data={'title': config.title},
+        return HttpResponse(
+            content=self.to_json(schema),
             content_type=self.content_type,
         )
 
@@ -72,19 +77,16 @@ class SwaggerRenderer(BaseRenderer):
     def render(
         self,
         request: HttpRequest,
-        config: OpenAPIConfig,
+        schema: 'OpenAPISchema',
     ) -> HttpResponse:
         """Render the Swagger schema."""
         return render(
             request,
             self.template_name,
-            context={'title': config.title},
+            context={'spec': self.to_json(schema)},
             content_type=self.content_type,
         )
 
 
 # TODO: add ReDoc renderer
-# TODO: add OpenAPISchemaView
-# TODO: add schema path customization
-# TODO: extend OpenAPIConfig
 # TODO: add CDN loads for ReDoc and Swagger

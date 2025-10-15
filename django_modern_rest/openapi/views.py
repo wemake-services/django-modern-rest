@@ -1,53 +1,51 @@
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any, ClassVar, final
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
 from typing_extensions import override
 
-from django_modern_rest.openapi import BaseRenderer, OpenAPIConfig
-from django_modern_rest.routing import Router
+from django_modern_rest.openapi.generator import OpenAPISchema
+from django_modern_rest.openapi.renderers import BaseRenderer
+from django_modern_rest.types import Empty, EmptyObj
 
 
+@final
 class OpenAPIView(View):
-    """View for OpenAPI."""
+    """
+    View for rendering OpenAPI schema documentation.
 
-    router: ClassVar[Router]
-    renderer: ClassVar[BaseRenderer]
-    config: ClassVar[OpenAPIConfig]
+    This view handles rendering of OpenAPI specifications using
+    different renderers (JSON, Swagger UI, etc.).
+
+    The view only supports ``GET`` requests and delegates actual rendering
+    to a `BaseRenderer` instance provided via `as_view`.
+    """
+
+    # Hack for preventing parent `as_view()` attributes validating
+    renderer: ClassVar[BaseRenderer | Empty] = EmptyObj
+    schema: ClassVar[OpenAPISchema | Empty] = EmptyObj
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Render the OpenAPI schema."""
-        return self.renderer.render(request, self.config)
+        """Handle `GET` request and render the OpenAPI schema."""
+        if not isinstance(self.renderer, BaseRenderer):
+            raise TypeError("Renderer must be a 'BaseRenderer' instance.")
+
+        return self.renderer.render(request, self.schema)  # type: ignore[arg-type]
 
     @override
     @classmethod
     def as_view(  # type: ignore[override]
         cls,
-        router: Router,
         renderer: BaseRenderer,
-        config: OpenAPIConfig,
+        schema: OpenAPISchema,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
-        Extend the base view to include OpenAPI configuration.
+        Create a view callable with OpenAPI configuration.
 
-        This method extends Django's base 'as_view()' to handle OpenAPI
-        parameters.
+        This method extends Django's base `as_view()` to accept
+        and configure OpenAPI-specific parameters before creating
+        the view callable.
         """
-        # We need to set these attributes on the class before calling
-        # `super().as_view()` because Django's base `as_view()` method
-        # validates that any initkwargs correspond to existing class attributes.
-        # By setting these attributes first, we ensure that the parameters
-        # can be passed as initkwargs to the parent method without
-        # causing validation errors.
-        cls.router = router
-        cls.renderer = renderer
-        cls.config = config
-
-        return super().as_view(
-            router=router,
-            renderer=renderer,
-            config=config,
-            **initkwargs,
-        )
+        return super().as_view(renderer=renderer, schema=schema, **initkwargs)

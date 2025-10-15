@@ -22,9 +22,10 @@ from django_modern_rest import Router, compose_controllers
 from django_modern_rest.openapi import (
     JsonRenderer,
     OpenAPIConfig,
-    OpenAPISetup,
     SwaggerRenderer,
+    openapi_spec,
 )
+from django_modern_rest.openapi.components import Contact, License
 from rest_app.views import (
     UserCreateController,
     UserListController,
@@ -57,19 +58,21 @@ urlpatterns = [
     path('api/', include((router.urls, 'rest_app'), namespace='api')),
     path(
         'docs/',
-        include(
-            OpenAPISetup(
-                router=router,
-                renderers=[
-                    SwaggerRenderer(),
-                    JsonRenderer(),
-                ],
-                config=OpenAPIConfig(
-                    title='Test API',
-                    version='1.0.0',
-                ),
-            ).urls(),
-            namespace='docs',
+        openapi_spec(
+            router=router,
+            renderers=[
+                SwaggerRenderer(),
+                JsonRenderer(),
+            ],
+            config=OpenAPIConfig(
+                title='Test API',
+                version='1.0.0',
+                summary='Test Summary',
+                description='Test Description',
+                terms_of_service='Test Terms of Service',
+                contact=Contact(name='Test Contact', email='test@test.com'),
+                license=License(name='Test License', identifier='license'),
+            ),
         ),
     ),
 ]

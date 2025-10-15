@@ -37,7 +37,7 @@ def serialize(
 
     Args:
         to_serialize: Value to encode.
-        serializer: Optional callable to support non-natively supported types.
+        serializer: Callable to support non-natively supported types.
 
     Returns:
         JSON as bytes.
