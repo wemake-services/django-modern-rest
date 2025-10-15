@@ -97,7 +97,6 @@ def test_with_none_config_uses_default(settings: LazySettings) -> None:
     urlpatterns, app_name, namespace = openapi_spec(
         router=Router([]),
         renderers=[JsonRenderer()],
-        config=None,
     )
 
     assert isinstance(urlpatterns, list)
@@ -122,7 +121,6 @@ def test_default_config_raises_when_wrong_type(
         openapi_spec(
             router=Router([]),
             renderers=[JsonRenderer()],
-            config=None,
         )
 
 
@@ -139,7 +137,6 @@ def test_default_config_raises_when_missing(settings: LazySettings) -> None:
         openapi_spec(
             router=Router([]),
             renderers=[JsonRenderer()],
-            config=None,
         )
 
 

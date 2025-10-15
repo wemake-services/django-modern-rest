@@ -7,12 +7,13 @@ from django_modern_rest.openapi.generator import SchemaGenerator
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
+from django_modern_rest.types import Empty, EmptyObj
 
 
 def openapi_spec(
     router: Router,
     renderers: Sequence[BaseRenderer],
-    config: OpenAPIConfig | None = None,
+    config: OpenAPIConfig | Empty = EmptyObj,
     app_name: str = 'openapi',
     namespace: str = 'docs',
 ) -> tuple[list[URLPattern], str, str]:
@@ -30,7 +31,7 @@ def openapi_spec(
             'render the API documentation.',
         )
 
-    if config is None:
+    if isinstance(config, Empty):
         config = _default_config()
 
     # TODO: separate paths generation and full schema generation
