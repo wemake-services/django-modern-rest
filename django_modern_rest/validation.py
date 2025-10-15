@@ -117,6 +117,11 @@ class ResponseValidator:
     def _validate_response_object(self, response: HttpResponse) -> None:
         """Validates response against provided metadata."""
         # Validate status code:
+        # TODO:
+        # For status codes < 100 or 204, 304 statuses,
+        # no response body is allowed.
+        # If you specify a return annotation other than None,
+        # an ImproperlyConfiguredException will be raised.
         if response.status_code != self.metadata.status_code:
             raise ResponseSerializationError(
                 f'{response.status_code=} does not match '  # noqa: WPS237

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from django.http import HttpHeaders
 
-from django_modern_rest.exceptions import SerializationError
+from django_modern_rest.exceptions import SerializationError, ResponseSerializationError, RequestSerializationError
 
 if TYPE_CHECKING:
     from django_modern_rest.internal.json import FromJson
@@ -38,7 +38,7 @@ class BaseSerializer:
         """
         if isinstance(to_serialize, HttpHeaders):
             return dict(to_serialize)
-        raise SerializationError(
+        raise ResponseSerializationError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
         )
@@ -54,15 +54,14 @@ class BaseSerializer:
         cls,
         target_type: type[Any],
         to_deserialize: Any,
-    ) -> Any:
+    ) -> Any:  # pragma: no cover
         """
         Customize how some objects are deserialized from json.
 
         Only add types that are common for all potential plugins here.
         Should be called inside :meth:`from_json`.
         """
-        # TODO: change to DeserializeError
-        raise TypeError(
+        raise RequestSerializationError(
             f'Value {to_deserialize} of type {type(to_deserialize)} '
             f'is not supported for {target_type}',
         )

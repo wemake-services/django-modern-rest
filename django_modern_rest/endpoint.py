@@ -217,6 +217,8 @@ def validate(
     # TODO:
     # errors
     # schema_modifications
+    # cookies
+    # file downloads
 ) -> Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]:
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
@@ -295,9 +297,6 @@ def modify(
     # `type[T]` limits some type annotations:
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    # TODO:
-    # errors
-    # schema_modifications
 ) -> _ModifyCallable:
     """
     Decorator to modify endpoints that return raw model data.
