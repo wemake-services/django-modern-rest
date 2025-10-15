@@ -56,10 +56,7 @@ def test_returns_correct_structure(dmr_client: DMRClient) -> None:
 
     body = response.json()
 
-    # Check OpenAPI version
     assert body['openapi'] == '3.1.0'
-
-    # Check info section
     assert body['info'] == {
         'title': 'Test API',
         'version': '1.0.0',
@@ -75,6 +72,4 @@ def test_returns_correct_structure(dmr_client: DMRClient) -> None:
             'identifier': 'license',
         },
     }
-
-    # Check paths
     assert 'paths' in body

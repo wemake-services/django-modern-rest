@@ -16,14 +16,25 @@ def openapi_spec(
     app_name: str = 'openapi',
     namespace: str = 'docs',
 ) -> tuple[list[URLPattern], str, str]:
-    """OpenAPI specification."""
+    """
+    Generate OpenAPI specification for API documentation.
+
+    Rendering OpenAPI documentation using the provided renderers.
+    The function generates an OpenAPI schema from the router's endpoints
+    and creates views for each renderer.
+    """
+    if len(renderers) == 0:
+        raise ValueError(
+            "Empty renderers sequence provided to 'openapi_spec()'. "
+            'At least one renderer must be specified to'
+            'render the API documentation.',
+        )
+
     if config is None:
         config = _default_config()
 
-    # TODO: find another way to include generator in func
-    generator = SchemaGenerator(config, router)
-    schema = generator.to_schema()
-
+    # TODO: separate paths generation and full schema generation
+    schema = SchemaGenerator(config, router).to_schema()
     urlpatterns = [
         path(
             renderer.path,
@@ -32,7 +43,6 @@ def openapi_spec(
         )
         for renderer in renderers
     ]
-
     return (urlpatterns, app_name, namespace)
 
 

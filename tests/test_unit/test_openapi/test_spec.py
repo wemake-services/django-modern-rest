@@ -145,10 +145,12 @@ def test_default_config_raises_when_missing(settings: LazySettings) -> None:
 
 def test_empty_renderers_list() -> None:
     """Ensure that empty renderers list creates no URL patterns."""
-    urlpatterns, _, _ = openapi_spec(
-        router=Router([]),
-        renderers=[],
-        config=_TEST_CONFIG,
-    )
-
-    assert urlpatterns == []
+    with pytest.raises(
+        ValueError,
+        match='At least one renderer must be specified',
+    ):
+        openapi_spec(
+            router=Router([]),
+            renderers=[],
+            config=_TEST_CONFIG,
+        )

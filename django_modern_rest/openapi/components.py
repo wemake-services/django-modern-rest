@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Contact:
     """Contact for the OpenAPI."""
 
@@ -10,7 +10,7 @@ class Contact:
     email: str | None = None
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class License:
     """License for the OpenAPI."""
 
@@ -19,7 +19,7 @@ class License:
     url: str | None = None
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class ServerVariable:
     """Server variable for the OpenAPI."""
 
@@ -28,7 +28,7 @@ class ServerVariable:
     description: str | None = None
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Servers:
     """Servers for the OpenAPI."""
 

@@ -26,6 +26,7 @@ class BaseRenderer(abc.ABC):
         """Render the router and config to an HTTP response."""
         raise NotImplementedError
 
+    # TODO: supports different decoding options
     def to_json(self, schema: 'OpenAPISchema') -> str:
         return msgspec.json.encode(schema).decode('utf-8')
 

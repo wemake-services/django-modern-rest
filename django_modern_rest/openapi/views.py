@@ -5,21 +5,29 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
 from typing_extensions import override
 
-from django_modern_rest.openapi import BaseRenderer
 from django_modern_rest.openapi.generator import OpenAPISchema
+from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.types import Empty, EmptyObj
 
 
 @final
 class OpenAPIView(View):
-    """View for OpenAPI."""
+    """
+    View for rendering OpenAPI schema documentation.
 
-    # Hack for preventing parent `as_view` from validating the attributes
+    This view handles rendering of OpenAPI specifications using
+    different renderers (JSON, Swagger UI, etc.).
+
+    The view only supports ``GET`` requests and delegates actual rendering
+    to a :class:`BaseRenderer` instance provided via `as_view`.
+    """
+
+    # Hack for preventing parent `as_view()` attributes validating
     renderer: ClassVar[BaseRenderer | Empty] = EmptyObj
     schema: ClassVar[OpenAPISchema | Empty] = EmptyObj
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Render the OpenAPI schema."""
+        """Handle `GET` request and render the OpenAPI schema."""
         if not isinstance(self.renderer, BaseRenderer):
             raise TypeError("Renderer must be a 'BaseRenderer' instance.")
 
@@ -34,9 +42,10 @@ class OpenAPIView(View):
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
-        Extend the base view to include OpenAPI configuration.
+        Create a view callable with OpenAPI configuration.
 
-        This method extends Django's base 'as_view()' to handle OpenAPI
-        parameters.
+        This method extends Django's base `as_view()` to accept
+        and configure OpenAPI-specific parameters before creating
+        the view callable.
         """
         return super().as_view(renderer=renderer, schema=schema, **initkwargs)

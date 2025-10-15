@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Protocol, TypeAlias, final
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.routing import Router
 
-OpenAPISchema: TypeAlias = dict[str, Any]
+OpenAPISchema: TypeAlias = dict[str, Any]  # TODO: type schema correctly
 
 
 class DataclassLike(Protocol):
@@ -23,6 +23,7 @@ class SchemaGenerator:
         self.config = config
         self.router = router
 
+    # TODO: implement caching
     def to_schema(self) -> OpenAPISchema:
         return {
             'openapi': self.openapi_version,
