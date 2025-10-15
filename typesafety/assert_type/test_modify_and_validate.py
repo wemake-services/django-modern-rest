@@ -3,7 +3,13 @@ from http import HTTPStatus
 import pydantic
 from django.http import HttpResponse, JsonResponse
 
-from django_modern_rest import Controller, modify, validate
+from django_modern_rest import (
+    Controller,
+    HeaderDescription,
+    NewHeader,
+    modify,
+    validate,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
@@ -20,6 +26,10 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
     async def post(self) -> int:
         return 1
 
+    @modify(headers={'X-Custom': NewHeader(value='Example')})
+    def patch(self) -> int:
+        return 1
+
     @modify()  # no args
     async def put(self) -> int:
         return 1
@@ -32,6 +42,14 @@ class _CorrectValidateController(Controller[PydanticSerializer]):
 
     @validate(return_type=list[int], status_code=HTTPStatus.OK)
     async def post(self) -> JsonResponse:
+        return JsonResponse([])
+
+    @validate(
+        return_type=list[int],
+        status_code=HTTPStatus.OK,
+        headers={'X-Custom': HeaderDescription()},
+    )
+    async def put(self) -> JsonResponse:
         return JsonResponse([])
 
 
@@ -48,6 +66,10 @@ class _WrongModifyController(Controller[PydanticSerializer]):
     def put(self) -> HttpResponse:
         return HttpResponse()
 
+    @modify(headers={'X-Custom': HeaderDescription()})  # type: ignore[dict-item]
+    def patch(self) -> int:
+        return 1
+
 
 class _WrongValidateController(Controller[PydanticSerializer]):
     @validate(status_code=HTTPStatus.OK, return_type=_Model)  # type: ignore[type-var]
@@ -61,4 +83,12 @@ class _WrongValidateController(Controller[PydanticSerializer]):
     # Not enough params:
     @validate(return_type=list[int])  # type: ignore[call-arg]
     async def put(self) -> JsonResponse:
+        return JsonResponse([])
+
+    @validate(
+        return_type=list[int],
+        status_code=HTTPStatus.OK,
+        headers={'X-Custom': NewHeader(value=1)},  # type: ignore[dict-item, arg-type]
+    )
+    def patch(self) -> JsonResponse:
         return JsonResponse([])

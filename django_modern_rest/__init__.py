@@ -13,6 +13,8 @@ from django_modern_rest.decorators import (
 )
 from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
+from django_modern_rest.headers import HeaderDescription as HeaderDescription
+from django_modern_rest.headers import NewHeader as NewHeader
 from django_modern_rest.routing import Router as Router
 from django_modern_rest.routing import (
     compose_controllers as compose_controllers,

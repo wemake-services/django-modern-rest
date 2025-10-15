@@ -36,10 +36,16 @@ _DEFAULTS: Final = types.MappingProxyType({
 })
 
 
-# TODO: document that settings need `.cache_clear` in tests.
 @lru_cache
 def resolve_defaults() -> Mapping[str, Any]:
-    """Resolves all settings with defaults."""
+    """
+    Resolve all ``django-modern-rest`` settings with defaults.
+
+    The result is cached using ``@lru_cache`` for performance.
+    When testing with custom settings, you *must* call
+    ``resolve_defaults.cache_clear()`` before and after modifying
+    Django settings to ensure the cache is invalidated.
+    """
     from django.conf import settings  # noqa: PLC0415
 
     return getattr(settings, DMR_SETTINGS, _DEFAULTS)

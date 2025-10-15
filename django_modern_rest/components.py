@@ -84,9 +84,18 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
         cls,
         request: HttpRequest,
         serializer: type[BaseSerializer],
-    ) -> Any:
+        type_args: tuple[Any, ...],
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        # TODO: negotiate content-type
         try:
-            return serializer.from_json(request.body)
+            self.parsed_body = serializer.from_python(
+                serializer.from_json(request.body),
+                type_args[0],
+                strict=self.strict_validation,
+            )
         except (msgspec.DecodeError, TypeError) as exc:
             raise RequestSerializationError(str(exc)) from None
 
@@ -109,5 +118,18 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
         cls,
         request: HttpRequest,
         serializer: type[BaseSerializer],
-    ) -> Any:
-        return request.headers
+        type_args: tuple[Any, ...],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        # TODO: validate `type_args` len
+        try:
+            self.parsed_headers = serializer.from_python(
+                request.headers,
+                type_args[0],
+                strict=self.strict_validation,
+            )
+        except serializer.validation_error as exc:
+            raise RequestSerializationError(
+                serializer.error_to_json(exc),
+            ) from None

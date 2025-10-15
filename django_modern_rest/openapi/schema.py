@@ -1,2 +1,0 @@
-class OpenAPISchema:
-    """OpenAPI schema."""
