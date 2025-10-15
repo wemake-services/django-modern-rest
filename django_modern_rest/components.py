@@ -101,7 +101,6 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
         **kwargs: Any,
     ) -> None:
         # TODO: negotiate content-type
-        # TODO: make default encoding configurable
         try:
             self.parsed_body = serializer.from_python(
                 serializer.from_json(request.body),

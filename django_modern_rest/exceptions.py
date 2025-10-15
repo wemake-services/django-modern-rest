@@ -12,7 +12,7 @@ class UnsolvableAnnotationsError(Exception):
 
 
 @final
-class MissingEndpointMetadataError(Exception):
+class EndpointMetadataError(Exception):
     """Raised when user didn't specify some required endpoint metadata."""
 
 
