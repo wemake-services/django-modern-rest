@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 class Endpoint:
-    __slots__ = ('_func', 'is_async', 'response_validator')
+    __slots__ = ('_func', '_method', 'is_async', 'response_validator')
 
     _func: Callable[..., Any]
 
@@ -51,6 +51,7 @@ class Endpoint:
         *,
         serializer: type[BaseSerializer],
     ) -> None:
+        self._method = HTTPMethod(func.__name__.upper())
         # We need to add metadata to functions that don't have it,
         # since decorator is optional:
         func = (
@@ -77,6 +78,36 @@ class Endpoint:
     ) -> HttpResponse:
         return self._func(contoller, *args, **kwargs)  # type: ignore[no-any-return]
 
+    def to_response(
+        self,
+        serializer: type[BaseSerializer],
+        *,
+        raw_data: Any,
+        headers: dict[str, str] | Empty,
+        status_code: HTTPStatus | Empty,
+    ) -> HttpResponse:
+        """
+        Utility that returns the actual `HttpResponse` object from its parts.
+
+        Does not perform extra validation, only regular response validation.
+        """
+        if isinstance(headers, Empty):
+            response_headers = {}
+        else:
+            response_headers = headers
+            if 'Content-Type' not in headers:
+                response_headers['Content-Type'] = serializer.content_type
+
+        return HttpResponse(
+            content=serializer.to_json(raw_data),
+            status=(
+                _infer_status_code(self._method)
+                if isinstance(status_code, Empty)
+                else status_code
+            ),
+            headers=response_headers,
+        )
+
     def _async_endpoint(
         self,
         func: Callable[..., Any],
@@ -99,12 +130,12 @@ class Endpoint:
 
         return decorator
 
-    # TODO: support headers, metadata, etc
     def _make_http_response(
         self,
         serializer: type[BaseSerializer],
         raw_data: Any,
     ) -> HttpResponse:
+        """Returns the actual `HttpResponse` object."""
         if isinstance(raw_data, HttpResponse):
             return self.response_validator.validate_response(raw_data)
 
@@ -323,7 +354,7 @@ def _add_metadata(
                 else return_type
             ),
             status_code=(
-                _infer_status_code(func)
+                _infer_status_code(func.__name__)
                 if isinstance(status_code, Empty)
                 else status_code
             ),
@@ -334,8 +365,8 @@ def _add_metadata(
     return decorator
 
 
-def _infer_status_code(endpoint_func: Callable[..., Any]) -> HTTPStatus:
-    method = HTTPMethod(endpoint_func.__name__.upper())
+def _infer_status_code(endpoint_name: str) -> HTTPStatus:
+    method = HTTPMethod(endpoint_name.upper())
     if method is HTTPMethod.POST:
         return HTTPStatus.CREATED
     return HTTPStatus.OK

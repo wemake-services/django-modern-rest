@@ -1,6 +1,6 @@
 import dataclasses
 from collections.abc import Callable, Set
-from http import HTTPMethod, HTTPStatus
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
 
 from django.http import HttpResponse
@@ -31,7 +31,7 @@ _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 
 class ResponseValidator:
-    __slots__ = ('_method', '_serializer', 'metadata')
+    __slots__ = ('_serializer', 'metadata')
 
     # Public API:
     strict_validation: ClassVar[bool] = True
@@ -47,7 +47,6 @@ class ResponseValidator:
         self.metadata: EndpointMetadata = (
             endpoint_func.__endpoint__  # type: ignore[attr-defined]
         )
-        self._method = HTTPMethod(endpoint_func.__name__.upper())
 
     def validate_response(self, response: _ResponseT) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
