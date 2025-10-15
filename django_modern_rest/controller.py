@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
 from django.core.exceptions import ImproperlyConfigured
@@ -14,7 +15,12 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.types import infer_bases, infer_type_args
+from django_modern_rest.types import (
+    Empty,
+    EmptyObj,
+    infer_bases,
+    infer_type_args,
+)
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 
@@ -37,6 +43,7 @@ class Controller(View, Generic[_SerializerT]):
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
     _api_endpoints: ClassVar[dict[str, Endpoint]]
+    _current_endpoint: Endpoint
 
     @override
     def __init_subclass__(cls) -> None:
@@ -66,6 +73,28 @@ class Controller(View, Generic[_SerializerT]):
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
         cls._validate_endpoints()
+
+    def to_response(
+        self,
+        raw_data: Any,
+        *,
+        headers: dict[str, str] | Empty = EmptyObj,
+        status_code: HTTPStatus | Empty = EmptyObj,
+    ) -> HttpResponse:
+        """
+        Helpful method to convert response parts into an actual response.
+
+        Should be always used instead of using
+        raw :class:`django.http.HttpResponse` objects.
+        Has better serialization speed and semantics than manual.
+        Does the usual validation, no "second validation" problem exists.
+        """
+        return self._current_endpoint.to_response(
+            self._serializer,
+            raw_data=raw_data,
+            headers=headers,
+            status_code=status_code,
+        )
 
     @override
     def dispatch(
@@ -119,6 +148,7 @@ class Controller(View, Generic[_SerializerT]):
         # Fast path for method resolution:
         endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
         if endpoint is not None:
+            self._current_endpoint = endpoint
             # TODO: support `StreamingHttpResponse`
             for parser, type_args in self._component_parsers:
                 # TODO: maybe parse all at once?
