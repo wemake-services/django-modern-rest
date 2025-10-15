@@ -19,7 +19,7 @@ class OpenAPIView(View):
     different renderers (JSON, Swagger UI, etc.).
 
     The view only supports ``GET`` requests and delegates actual rendering
-    to a :class:`BaseRenderer` instance provided via `as_view`.
+    to a `BaseRenderer` instance provided via `as_view`.
     """
 
     # Hack for preventing parent `as_view()` attributes validating

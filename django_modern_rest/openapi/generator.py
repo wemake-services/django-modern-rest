@@ -13,6 +13,7 @@ class DataclassLike(Protocol):
     __dataclass_fields__: ClassVar[dict[str, Field[Any]]]  # noqa: WPS234
 
 
+# TODO: fully refactor depend on desing doc
 @final
 class SchemaGenerator:
     """OpenAPI schema generator."""
