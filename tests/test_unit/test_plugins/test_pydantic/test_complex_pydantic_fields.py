@@ -161,7 +161,7 @@ def test_complex_pydantic_out_valid_object(
     """Ensures by most builtin types work."""
 
     class _TypeOutputController(Controller[PydanticSerializer]):
-        def get(self) -> typ:
+        def get(self) -> typ:  # pyright: ignore[reportInvalidTypeForm]
             return return_value
 
     request = dmr_rf.get('/whatever/', data={})

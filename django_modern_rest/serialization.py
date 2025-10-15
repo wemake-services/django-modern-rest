@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from django.http import HttpHeaders
 
-from django_modern_rest.exceptions import SerializationError, ResponseSerializationError, RequestSerializationError
+from django_modern_rest.exceptions import (
+    RequestSerializationError,
+    ResponseSerializationError,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.internal.json import FromJson

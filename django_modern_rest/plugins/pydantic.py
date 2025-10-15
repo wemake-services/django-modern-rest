@@ -126,7 +126,6 @@ class PydanticSerializer(BaseSerializer):
             Structured and validated data.
         """
         # TODO: support `.rebuild` and forward refs
-        # TODO: handle PydanticSerializationError here
         # TODO: handle PydanticSchemaGenerationError here
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
