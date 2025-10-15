@@ -12,7 +12,7 @@ version = "0.1.0"
 authors = [
   "Nikita Sobolev <mail@sobolevn.me>",
   "Alexander Kondratev <mail@kondratev.dev>",
-  # TODO: add Alexey
+  "Alexey Potapov <me@black-as-ink.ru>"
 ]
 
 readme = "README.md"

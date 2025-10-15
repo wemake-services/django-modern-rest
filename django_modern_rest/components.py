@@ -1,11 +1,9 @@
 import abc
 from typing import Any, ClassVar, Generic, TypeVar
 
-import msgspec
 from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest.exceptions import RequestSerializationError
 from django_modern_rest.serialization import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
@@ -24,12 +22,19 @@ class ComponentParserMixin:
 
     @classmethod
     @abc.abstractmethod
-    def _extract_raw_data(
+    def _provide_context_name(cls) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def _provide_context_data(
         cls,
         request: HttpRequest,
         serializer: type[BaseSerializer],
+        type_args: tuple[Any, ...],
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
-        """Extract raw data from request without validation."""
         raise NotImplementedError
 
 
@@ -58,10 +63,18 @@ class Query(ComponentParserMixin, Generic[_QueryT]):
 
     @classmethod
     @override
-    def _extract_raw_data(
+    def _provide_context_name(cls) -> str:
+        return 'parsed_query'
+
+    @classmethod
+    @override
+    def _provide_context_data(
         cls,
         request: HttpRequest,
         serializer: type[BaseSerializer],
+        type_args: tuple[Any, ...],
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         return request.GET
 
@@ -80,24 +93,20 @@ class Body(ComponentParserMixin, Generic[_BodyT]):
 
     @classmethod
     @override
-    def _extract_raw_data(
+    def _provide_context_name(cls) -> str:
+        return 'parsed_body'
+
+    @classmethod
+    @override
+    def _provide_context_data(
         cls,
         request: HttpRequest,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
-        request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
-        # TODO: negotiate content-type
-        try:
-            self.parsed_body = serializer.from_python(
-                serializer.from_json(request.body),
-                type_args[0],
-                strict=self.strict_validation,
-            )
-        except (msgspec.DecodeError, TypeError) as exc:
-            raise RequestSerializationError(str(exc)) from None
+    ) -> Any:
+        return serializer.from_json(request.body)
 
 
 class Headers(ComponentParserMixin, Generic[_HeadersT]):
@@ -114,22 +123,17 @@ class Headers(ComponentParserMixin, Generic[_HeadersT]):
 
     @classmethod
     @override
-    def _extract_raw_data(
+    def _provide_context_name(cls) -> str:
+        return 'parsed_headers'
+
+    @classmethod
+    @override
+    def _provide_context_data(
         cls,
         request: HttpRequest,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
         *args: Any,
         **kwargs: Any,
-    ) -> None:
-        # TODO: validate `type_args` len
-        try:
-            self.parsed_headers = serializer.from_python(
-                request.headers,
-                type_args[0],
-                strict=self.strict_validation,
-            )
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None
+    ) -> Any:
+        return request.headers

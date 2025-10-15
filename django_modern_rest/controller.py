@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
@@ -14,7 +14,7 @@ from django_modern_rest.exceptions import (
     SerializationError,
     UnsolvableAnnotationsError,
 )
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
@@ -24,10 +24,7 @@ from django_modern_rest.types import (
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 
-_ComponentParserSpec: TypeAlias = tuple[
-    type[ComponentParserMixin],
-    tuple[Any, ...],
-]
+_ComponentParserSpec: TypeAlias = list[type[ComponentParserMixin],]
 
 
 class Controller(View, Generic[_SerializerT]):
@@ -41,7 +38,7 @@ class Controller(View, Generic[_SerializerT]):
     _serializer: type[BaseSerializer]
 
     # Internal API:
-    _component_parsers: ClassVar[list[_ComponentParserSpec]]
+    _component_parsers: ClassVar[_ComponentParserSpec]
     _api_endpoints: ClassVar[dict[str, Endpoint]]
     _current_endpoint: Endpoint
 
@@ -62,11 +59,9 @@ class Controller(View, Generic[_SerializerT]):
                 f'Type arg {type_args[0]} are not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
+
         cls._serializer = type_args[0]
-        cls._component_parsers = [
-            (subclass, get_args(subclass))
-            for subclass in infer_bases(cls, ComponentParserMixin)
-        ]
+        cls._component_parsers = list(infer_bases(cls, ComponentParserMixin))
         cls._api_endpoints = {
             meth: cls.endpoint_cls(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods
@@ -157,7 +152,7 @@ class Controller(View, Generic[_SerializerT]):
             # can be turned off for production
             self._validate_components(request, *args, **kwargs)
             return endpoint(self, *args, **kwargs)  # we don't pass request
-        return None
+        raise MethodNotAllowedError
 
     def _validate_components(
         self,
@@ -166,31 +161,11 @@ class Controller(View, Generic[_SerializerT]):
         **kwargs: Any,
     ) -> None:
         """Validate all request components at once."""
-        component_specs = {}
-        raw_data = {}
+        context = SerializerContext(self._component_parsers, self._serializer)
+        validated_data = context.collect_and_parse(request, *args, **kwargs)
 
-        for parser, type_args in self._component_parsers:
-            if type_args:
-                attr_name = f'parsed_{parser.__name__.lower()}'
-                component_specs[attr_name] = type_args[0]
-
-                raw_data[attr_name] = parser._extract_raw_data(  # noqa: SLF001
-                    request,
-                    self._serializer,
-                )
-
-        if not hasattr(self.__class__, '_combined_model'):
-            self.__class__._combined_model = (  # noqa: SLF001
-                self._serializer.create_combined_model(component_specs)
-            )
-
-        validated = self._serializer.validate_combined(
-            self._combined_model,  # type:ignore[attr-defined]
-            raw_data,
-        )
-
-        for attr_name in component_specs:
-            setattr(self, attr_name, getattr(validated, attr_name))
+        for attr_name, attr_value in validated_data.items():
+            setattr(self, attr_name, attr_value)
 
     def _handle_error(self, exc: SerializationError) -> HttpResponse:
         payload = {'detail': exc.args[0]}

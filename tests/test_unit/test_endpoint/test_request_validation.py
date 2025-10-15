@@ -87,9 +87,8 @@ def test_validate_pydantic_request_body(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'type': 'missing',
-                'loc': ['age'],
+                'loc': ['parsed_body', 'age'],
                 'msg': 'Field required',
-                'input': {},
             },
         ],
     })
@@ -107,9 +106,8 @@ def test_validate_typed_dict_request_body(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'type': 'missing',
-                'loc': ['name'],
+                'loc': ['parsed_body', 'name'],
                 'msg': 'Field required',
-                'input': {},
             },
         ],
     })
@@ -127,9 +125,8 @@ def test_validate_request_query(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'type': 'missing',
-                'loc': ['age'],
+                'loc': ['parsed_query', 'age'],
                 'msg': 'Field required',
-                'input': {'wrong': ['1']},
             },
         ],
     })
@@ -148,12 +145,11 @@ def test_validate_request_headers(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'type': 'int_parsing',
-                'loc': ['X-Timestamp'],
+                'loc': ['parsed_headers', 'X-Timestamp'],
                 'msg': (
                     'Input should be a valid integer, '
                     'unable to parse string as an integer'
                 ),
-                'input': 'not-int',
             },
         ],
     })
