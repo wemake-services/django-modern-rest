@@ -126,15 +126,26 @@ class SerializerContext:
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Collect raw data from components and validate it all at once."""
-        raw_context = {}
-        component_specs = {}
+        specs, raw_values = self._collect_components(request, *args, **kwargs)
+        validated = self._validate_all(specs, raw_values)
+        return {name: getattr(validated, name) for name in specs}
+
+    def _collect_components(
+        self,
+        request: 'HttpRequest',
+        *args: Any,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Extract specs and raw data from all components in single pass."""
+        specs = {}
+        raw_values = {}
 
         for component in self.components:
             type_args = get_args(component)
             if type_args:
                 name = component._provide_context_name()  # noqa: SLF001
-                component_specs[name] = type_args[0]
-                raw_context[name] = component._provide_context_data(  # noqa: SLF001
+                specs[name] = type_args[0]
+                raw_values[name] = component._provide_context_data(  # noqa: SLF001
                     request,
                     self.serializer,
                     type_args,
@@ -142,10 +153,13 @@ class SerializerContext:
                     **kwargs,
                 )
 
-        combined_model = self.serializer.create_combined_model(component_specs)
-        validated = self.serializer.validate_combined(
-            combined_model,
-            raw_context,
-        )
+        return specs, raw_values
 
-        return {name: getattr(validated, name) for name in component_specs}
+    def _validate_all(
+        self,
+        specs: dict[str, type[Any]],
+        raw_values: dict[str, Any],
+    ) -> Any:
+        """Create combined model and validate all data at once."""
+        combined_model = self.serializer.create_combined_model(specs)
+        return self.serializer.validate_combined(combined_model, raw_values)
