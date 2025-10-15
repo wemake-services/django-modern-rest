@@ -91,12 +91,9 @@ class Endpoint:
 
         Does not perform extra validation, only regular response validation.
         """
-        if isinstance(headers, Empty):
-            response_headers = {}
-        else:
-            response_headers = headers
-            if 'Content-Type' not in headers:
-                response_headers['Content-Type'] = serializer.content_type
+        response_headers = {} if isinstance(headers, Empty) else headers
+        if 'Content-Type' not in response_headers:
+            response_headers['Content-Type'] = serializer.content_type
 
         return HttpResponse(
             content=serializer.to_json(raw_data),

@@ -29,7 +29,7 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
 
     @validate(
         return_type=list[str],
-        status_code=HTTPStatus.ACCEPTED,
+        status_code=HTTPStatus.CREATED,
         headers={'X-Custom': HeaderDescription()},
     )
     def post(self) -> HttpResponse:
@@ -37,8 +37,15 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         return self.to_response(
             ['a', 'b'],
             headers={'X-Custom': 'value', 'Content-Type': 'application/json5'},
-            status_code=HTTPStatus.ACCEPTED,
         )
+
+    @validate(
+        return_type=list[str],
+        status_code=HTTPStatus.OK,
+    )
+    def delete(self) -> HttpResponse:
+        """Minimal version."""
+        return self.to_response(['a', 'b'])
 
 
 class _WrongToResponseController(Controller[PydanticSerializer]):
@@ -103,17 +110,31 @@ def test_to_response_fails_validation(
 
 
 @pytest.mark.parametrize(
-    ('method', 'header'),
+    ('method', 'headers', 'status_code'),
     [
-        (HTTPMethod.GET, 'application/json'),
-        (HTTPMethod.POST, 'application/json5'),
+        (
+            HTTPMethod.GET,
+            {'X-Custom': 'value', 'Content-Type': 'application/json'},
+            HTTPStatus.ACCEPTED,
+        ),
+        (
+            HTTPMethod.POST,
+            {'X-Custom': 'value', 'Content-Type': 'application/json5'},
+            HTTPStatus.CREATED,
+        ),
+        (
+            HTTPMethod.DELETE,
+            {'Content-Type': 'application/json'},
+            HTTPStatus.OK,
+        ),
     ],
 )
 def test_to_response_correct_validation(
     dmr_rf: DMRRequestFactory,
     *,
     method: HTTPMethod,
-    header: str,
+    headers: dict[str, str],
+    status_code: HTTPStatus,
 ) -> None:
     """Ensures that response headers are validated."""
     request = dmr_rf.generic(str(method), '/whatever/')
@@ -121,9 +142,6 @@ def test_to_response_correct_validation(
     response = _CorrectToResponseController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.ACCEPTED
-    assert response.headers == {
-        'X-Custom': 'value',
-        'Content-Type': header,
-    }
+    assert response.status_code == status_code, response.content
+    assert response.headers == headers
     assert json.loads(response.content) == ['a', 'b']
