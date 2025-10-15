@@ -65,6 +65,7 @@ pyright = "^1.1"
 
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
+import-linter = "^2.5"
 
 pytest = "^8.4"
 pytest-cov = "^7.0"
