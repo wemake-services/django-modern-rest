@@ -157,8 +157,6 @@ ignore = [
   "D404",
   "D405",
   "D418",  # We should be able to add docstrings to `@overload` decorators
-  # TODO: re-enable when ready:
-  "D103", "D102", "D101", "D107",
   "ISC001",  # implicit string concat conflicts with `ruff format`
   "ISC003",  # prefer explicit string concat over implicit concat
   "PLR09",   # we have our own complexity rules
@@ -211,7 +209,7 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=98",  # TODO: set to 100%
+  "--cov-fail-under=99",  # TODO: set to 100%
   # Ignores:
   "--ignore=docs",
   "--ignore=typesafety/assert_type",

@@ -29,6 +29,18 @@ if TYPE_CHECKING:
 
 
 class PydanticSerializer(BaseSerializer):
+    """
+    Serialize and deserialize objects using pydantic.
+
+    Pydantic support is optional.
+    To install it run:
+
+    .. code:: bash
+
+        pip install 'django-modern-rest[pydantic]'
+
+    """
+
     __slots__ = ()
 
     # Required API:
@@ -55,11 +67,13 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def to_json(cls, structure: Any) -> bytes:
+        """Convert any object to json bytestring."""
         return _get_serialize_func(cls)(structure, cls.serialize_hook)
 
     @override
     @classmethod
     def serialize_hook(cls, to_serialize: Any) -> Any:
+        """Customize how some objects are serialized into json."""
         if isinstance(to_serialize, pydantic.BaseModel):
             return to_serialize.model_dump(**cls.model_dump_kwargs)
         return super().serialize_hook(to_serialize)
@@ -67,6 +81,7 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def from_json(cls, buffer: 'FromJson') -> Any:
+        """Convert string or bytestring to simple python object."""
         # TODO: handle PydanticSerializationError here
         # TODO: handle PydanticSchemaGenerationError here
         return _get_deserialize_func(cls)(
@@ -74,6 +89,20 @@ class PydanticSerializer(BaseSerializer):
             cls.deserialize_hook,
             strict=cls.from_json_strict,
         )
+
+    @override
+    @classmethod
+    def deserialize_hook(
+        cls,
+        target_type: type[Any],
+        to_deserialize: Any,
+    ) -> Any:
+        """
+        Customize how some objects are deserialized from json.
+
+        Only add types that are specific to pydantic here.
+        """
+        return super().deserialize_hook(target_type, to_deserialize)
 
     @override
     @classmethod
@@ -112,16 +141,6 @@ class PydanticSerializer(BaseSerializer):
                 'strict': strict,
             },
         )
-
-    @override
-    @classmethod
-    def deserialize_hook(
-        cls,
-        target_type: type[Any],
-        to_deserialize: Any,
-    ) -> Any:
-        # TODO: provide docs why this is needed
-        return super().deserialize_hook(target_type, to_deserialize)
 
     @override
     @classmethod

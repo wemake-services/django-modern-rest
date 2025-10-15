@@ -30,6 +30,12 @@ class BaseSerializer:
 
     @classmethod
     def serialize_hook(cls, to_serialize: Any) -> Any:
+        """
+        Customize how some objects are serialized into json.
+
+        Only add types that are common for all potential plugins here.
+        Should be called inside :meth:`to_json`.
+        """
         if isinstance(to_serialize, HttpHeaders):
             return dict(to_serialize)
         raise SerializationError(
@@ -40,7 +46,26 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def from_json(cls, buffer: 'FromJson') -> Any:
+        """Override this method to covert json bytestring to structured data."""
         raise NotImplementedError
+
+    @classmethod
+    def deserialize_hook(
+        cls,
+        target_type: type[Any],
+        to_deserialize: Any,
+    ) -> Any:
+        """
+        Customize how some objects are deserialized from json.
+
+        Only add types that are common for all potential plugins here.
+        Should be called inside :meth:`from_json`.
+        """
+        # TODO: change to DeserializeError
+        raise TypeError(
+            f'Value {to_deserialize} of type {type(to_deserialize)} '
+            f'is not supported for {target_type}',
+        )
 
     @classmethod
     @abc.abstractmethod
@@ -71,17 +96,6 @@ class BaseSerializer:
             Structured and validated data.
         """
         raise NotImplementedError
-
-    @classmethod
-    def deserialize_hook(
-        cls,
-        target_type: type[Any],
-        to_deserialize: Any,
-    ) -> Any:
-        raise TypeError(
-            f'Value {to_deserialize} of type {type(to_deserialize)} '
-            f'is not supported for {target_type}',
-        )
 
     @classmethod
     @abc.abstractmethod

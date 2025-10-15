@@ -37,6 +37,13 @@ if TYPE_CHECKING:
 
 
 class Endpoint:
+    """
+    Represents the single API endpoint.
+
+    Is built during the import time.
+    In the runtime only does response validate, which can be disabled.
+    """
+
     __slots__ = ('_func', '_method', 'is_async', 'response_validator')
 
     _func: Callable[..., Any]
@@ -51,6 +58,14 @@ class Endpoint:
         *,
         serializer: type[BaseSerializer],
     ) -> None:
+        """
+        Create an entrypoint.
+
+        Args:
+            func: Entrypoint handler. An actual function.
+            serializer: ``BaseSerializer`` type that can parse and validate.
+
+        """
         self._method = HTTPMethod(func.__name__.upper())
         # We need to add metadata to functions that don't have it,
         # since decorator is optional:
@@ -76,6 +91,7 @@ class Endpoint:
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        """Run the endpoint and return the response."""
         return self._func(contoller, *args, **kwargs)  # type: ignore[no-any-return]
 
     def to_response(
