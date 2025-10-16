@@ -21,9 +21,6 @@ class _QueryData(pydantic.BaseModel):
     query: str = pydantic.Field(alias='q')
     start_from: dt.datetime | None = None
 
-    # TODO: provide base model types with preset configs?
-    model_config = pydantic.ConfigDict(extra='forbid')
-
 
 @final
 class _CustomHeaders(pydantic.BaseModel):
