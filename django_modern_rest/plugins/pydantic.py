@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
 
 import pydantic_core
 from django.utils.module_loading import import_string
+from pydantic.config import ExtraValues
 from typing_extensions import override
 
 from django_modern_rest.exceptions import ResponseSerializationError
@@ -69,6 +70,18 @@ class ModelDumpKwargs(TypedDict, total=False):
     serialize_as_any: bool
 
 
+@final
+class FromPythonKwargs(TypedDict, total=False):
+    """Keyword arguments for pydantic's python object validation method."""
+
+    extra: ExtraValues | None
+    from_attributes: bool | None
+    context: Any | None
+    experimental_allow_partial: bool | Literal['off', 'on', 'trailing-strings']
+    by_alias: bool | None
+    by_name: bool | None
+
+
 class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
@@ -93,8 +106,7 @@ class PydanticSerializer(BaseSerializer):
         'by_alias': True,
         'mode': 'json',
     }
-    # TODO: use a TypedDict
-    from_python_kwargs: ClassVar[dict[str, Any]] = {
+    from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': True,
     }
     from_json_strict: ClassVar[bool] = True
@@ -167,10 +179,8 @@ class PydanticSerializer(BaseSerializer):
         # TODO: handle PydanticSchemaGenerationError here
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
-            **{  # pyright: ignore[reportArgumentType]
-                **cls.from_python_kwargs,
-                'strict': strict,
-            },
+            strict=strict,
+            **cls.from_python_kwargs,
         )
 
     @override
