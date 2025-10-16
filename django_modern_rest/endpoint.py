@@ -21,6 +21,7 @@ from django_modern_rest.headers import (
     NewHeader,
     ResponseHeadersT,
 )
+from django_modern_rest.response import build_response, infer_status_code
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
@@ -107,18 +108,12 @@ class Endpoint:
 
         Does not perform extra validation, only regular response validation.
         """
-        response_headers = {} if isinstance(headers, Empty) else headers
-        if 'Content-Type' not in response_headers:
-            response_headers['Content-Type'] = serializer.content_type
-
-        return HttpResponse(
-            content=serializer.to_json(raw_data),
-            status=(
-                _infer_status_code(self._method)
-                if isinstance(status_code, Empty)
-                else status_code
-            ),
-            headers=response_headers,
+        return build_response(
+            self._method,
+            serializer,
+            raw_data=raw_data,
+            headers=headers,
+            status_code=status_code,
         )
 
     def _async_endpoint(
@@ -366,7 +361,7 @@ def _add_metadata(
                 else return_type
             ),
             status_code=(
-                _infer_status_code(func.__name__)
+                infer_status_code(func.__name__)
                 if isinstance(status_code, Empty)
                 else status_code
             ),
@@ -375,10 +370,3 @@ def _add_metadata(
         return func
 
     return decorator
-
-
-def _infer_status_code(endpoint_name: str) -> HTTPStatus:
-    method = HTTPMethod(endpoint_name.upper())
-    if method is HTTPMethod.POST:
-        return HTTPStatus.CREATED
-    return HTTPStatus.OK

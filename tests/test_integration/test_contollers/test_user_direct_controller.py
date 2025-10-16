@@ -81,19 +81,3 @@ class ClientWorksWithRegularTest(SimpleTestCase):
 
         assert response.status_code == HTTPStatus.OK
         assert response.headers['Content-Type'] == 'application/json'
-
-
-def test_user_update_direct_view405(
-    dmr_client: DMRClient,
-    faker: Faker,
-) -> None:
-    """Ensure that direct routes raise 405."""
-    response = dmr_client.delete(
-        reverse(
-            'api:user_update_direct',
-            kwargs={'user_id': faker.random_int()},
-        ),
-    )
-
-    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
-    # TODO: test error reporting

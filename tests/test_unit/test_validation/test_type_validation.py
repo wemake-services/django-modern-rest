@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 import pytest
 from django.http import HttpResponse
+from typing_extensions import TypedDict
 
 from django_modern_rest import validate
 from django_modern_rest.endpoint import Endpoint
@@ -26,6 +27,10 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
     return get
 
 
+class _TypedDict(TypedDict):
+    age: int
+
+
 @pytest.mark.parametrize(
     ('typ', 'raw_data'),
     [
@@ -38,6 +43,7 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
         (tuple[int, str], (1, 'a')),
         (tuple[int, ...], (1, 2, 3, 4)),
         (tuple[int, ...], ()),
+        (_TypedDict, {'age': 1}),
     ],
 )
 @pytest.mark.parametrize(
@@ -73,6 +79,9 @@ def test_valid_data(
         (str, b'abc'),
         (tuple[int, str], ('a', 1)),
         (tuple[int, ...], ('a')),
+        (_TypedDict, {}),
+        (_TypedDict, {'a': 1}),
+        (_TypedDict, {'age': 'a'}),
     ],
 )
 @pytest.mark.parametrize(

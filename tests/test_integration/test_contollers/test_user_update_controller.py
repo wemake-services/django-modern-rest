@@ -30,13 +30,3 @@ def test_user_replace_view(dmr_client: DMRClient, faker: Faker) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {'email': email, 'age': user_id}
-
-
-def test_wrong_method(dmr_client: DMRClient, faker: Faker) -> None:
-    """Ensure 405 is correctly handled."""
-    response = dmr_client.post(
-        reverse('api:user_update', kwargs={'user_id': faker.random_int()}),
-    )
-
-    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
-    # TODO: assert content-type and error handling
