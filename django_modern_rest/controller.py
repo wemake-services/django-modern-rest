@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.views import View
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
@@ -117,14 +117,27 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
             return self.handle_method_not_allowed(exc.method)
 
     @override
+    @deprecated(
+        # It is not actually deprecated, but type checkers have no other
+        # ways to raise custom errors.
+        'Please do not use this method with `django-modern-rest`, '
+        'use `handle_method_not_allowed` instead',
+    )
     def http_method_not_allowed(
         self,
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        """Do not use, use :meth:`handle_method_not_allowed` instead."""
-        raise NotImplementedError
+        """
+        Do not use, use :meth:`handle_method_not_allowed` instead.
+
+        ``View.http_method_not_allowed`` raises an error in a wrong format.
+        """
+        raise NotImplementedError(
+            'Please do not use this method with `django-modern-rest`, '
+            'use `handle_method_not_allowed` instead',
+        )
 
     @classmethod
     def handle_method_not_allowed(
