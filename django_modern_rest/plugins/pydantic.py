@@ -1,5 +1,14 @@
+from collections.abc import Callable, Mapping
 from functools import cache
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    TypeAlias,
+    TypedDict,
+    Union,
+)
 
 try:
     import pydantic
@@ -30,6 +39,32 @@ if TYPE_CHECKING:
     )
 
 
+_IncEx: TypeAlias = (
+    set[int]
+    | set[str]
+    | Mapping[int, Union['_IncEx', bool]]
+    | Mapping[str, Union['_IncEx', bool]]
+)
+
+
+class ModelDumpKwargs(TypedDict, total=False):
+    """Keyword arguments for pydantic's model dump method."""
+
+    mode: Literal['json', 'python'] | str
+    include: _IncEx | None
+    exclude: _IncEx | None
+    context: Any | None
+    by_alias: bool | None
+    exclude_unset: bool
+    exclude_defaults: bool
+    exclude_none: bool
+    exclude_computed_fields: bool
+    round_trip: bool
+    warnings: bool | Literal['none', 'warn', 'error']
+    fallback: Callable[[Any], Any] | None
+    serialize_as_any: bool
+
+
 class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
@@ -50,8 +85,7 @@ class PydanticSerializer(BaseSerializer):
 
     # Custom API:
 
-    # TODO: use `TypedDict`
-    model_dump_kwargs: ClassVar[dict[str, Any]] = {
+    model_dump_kwargs: ClassVar[ModelDumpKwargs] = {
         'by_alias': True,
         'mode': 'json',
     }
