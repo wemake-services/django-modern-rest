@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.views import View
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
@@ -13,6 +13,7 @@ from django_modern_rest.exceptions import (
     SerializationError,
     UnsolvableAnnotationsError,
 )
+from django_modern_rest.response import build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
@@ -112,10 +113,68 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
                 # Nothing we can do :(
                 return self._async_handle_error(exc)  # type: ignore[return-value]
             return self._handle_error(exc)
-        except MethodNotAllowedError:
-            # This is the only case when we don't set `self._current_endpoint`
-            # TODO: write our own `http_method_not_allowed` handler
-            return self.http_method_not_allowed(request, *args, **kwargs)
+        except MethodNotAllowedError as exc:
+            return self.handle_method_not_allowed(exc.method)
+
+    @override
+    @deprecated(
+        # It is not actually deprecated, but type checkers have no other
+        # ways to raise custom errors.
+        'Please do not use this method with `django-modern-rest`, '
+        'use `handle_method_not_allowed` instead',
+    )
+    def http_method_not_allowed(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        """
+        Do not use, use :meth:`handle_method_not_allowed` instead.
+
+        ``View.http_method_not_allowed`` raises an error in a wrong format.
+        """
+        raise NotImplementedError(
+            'Please do not use this method with `django-modern-rest`, '
+            'use `handle_method_not_allowed` instead',
+        )
+
+    @classmethod
+    def handle_method_not_allowed(
+        cls,
+        method: str,
+    ) -> HttpResponse:
+        """
+        Return error response for 405 response code.
+
+        It is special in way that we don't have an endpoint associated with it.
+        """
+        # This method cannot call `self.to_response`, because it does not have
+        # an endpoint associated with it. We switch to lower level
+        # `build_response` primitive
+        allowed_methods = sorted(cls.existing_http_methods())
+        response = build_response(
+            None,
+            cls._serializer,
+            raw_data={
+                'detail': (
+                    f'Method {method!r} is not allowed, '
+                    f'allowed: {allowed_methods!r}'
+                ),
+            },
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+        )
+        if cls.view_is_async:
+            # We have to do that the same way original Django does.
+            # It is not THAT slow, because it happens only when 405 happens.
+            # Which is not really that frequent.
+            async def factory() -> HttpResponse:  # noqa: RUF029, WPS430
+                return response
+
+            # And again we have to lie to django :(
+            return factory()  # type: ignore[return-value]
+
+        return response
 
     @classmethod
     def existing_http_methods(cls) -> set[str]:
@@ -152,7 +211,8 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         **kwargs: Any,
     ) -> HttpResponse:
         # Fast path for method resolution:
-        endpoint = self.api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
+        method = request.method.lower()  # type: ignore[union-attr]
+        endpoint = self.api_endpoints.get(method)
         if endpoint is not None:
             self._current_endpoint = endpoint
             # TODO: support `StreamingHttpResponse`
@@ -170,7 +230,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
                     **kwargs,
                 )
             return endpoint(self, *args, **kwargs)  # we don't pass request
-        raise MethodNotAllowedError
+        raise MethodNotAllowedError(method)
 
     # TODO: think about `error` and `handle_error` API. This should be public.
     def _handle_error(self, exc: SerializationError) -> HttpResponse:
