@@ -13,7 +13,6 @@ from typing import (
 
 try:
     import pydantic
-    import pydantic.config
 except ImportError:  # pragma: no cover
     print(  # noqa: WPS421
         'Looks like `pydantic` is not installed, '
@@ -23,6 +22,7 @@ except ImportError:  # pragma: no cover
 
 import pydantic_core
 from django.utils.module_loading import import_string
+from pydantic.config import ExtraValues
 from typing_extensions import override
 
 from django_modern_rest.exceptions import ResponseSerializationError
@@ -74,7 +74,7 @@ class ModelDumpKwargs(TypedDict, total=False):
 class FromPythonKwargs(TypedDict, total=False):
     """Keyword arguments for pydantic's python object validation method."""
 
-    extra: pydantic.config.ExtraValues | None
+    extra: ExtraValues | None
     from_attributes: bool | None
     context: Any | None
     experimental_allow_partial: bool | Literal['off', 'on', 'trailing-strings']
