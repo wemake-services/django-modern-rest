@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
@@ -41,6 +41,8 @@ class Controller(View, Generic[_SerializerT]):
     _component_parsers: ClassVar[_ComponentParserSpec]
     _api_endpoints: ClassVar[dict[str, Endpoint]]
     _current_endpoint: Endpoint
+    _combined_model_cache: ClassVar[type[Any] | None] = None
+    _serializer_context: ClassVar[SerializerContext]
 
     @override
     def __init_subclass__(cls) -> None:
@@ -68,6 +70,13 @@ class Controller(View, Generic[_SerializerT]):
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
         cls._validate_endpoints()
+        cls._combined_model_cache = cls._create_combined_model()
+
+        cls._serializer_context = SerializerContext(
+            cls._component_parsers,
+            cls._serializer,
+            combined_model=cls._combined_model_cache,
+        )
 
     def to_response(
         self,
@@ -118,6 +127,17 @@ class Controller(View, Generic[_SerializerT]):
     # Private API:
 
     @classmethod
+    def _create_combined_model(cls) -> type[Any]:
+        specs = {}
+        for component in cls._component_parsers:
+            type_args = get_args(component)
+            if type_args:
+                name = component._provide_context_name()  # noqa: SLF001
+                specs[name] = type_args[0]
+
+        return cls._serializer.create_combined_model(specs)
+
+    @classmethod
     def _validate_endpoints(cls) -> None:
         """Validate that endpoints definition is correct in build time."""
         if not cls._api_endpoints:
@@ -160,9 +180,11 @@ class Controller(View, Generic[_SerializerT]):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        """Validate all request components at once."""
-        context = SerializerContext(self._component_parsers, self._serializer)
-        validated_data = context.collect_and_parse(request, *args, **kwargs)
+        validated_data = self._serializer_context.collect_and_parse(
+            request,
+            *args,
+            **kwargs,
+        )
 
         for attr_name, attr_value in validated_data.items():
             setattr(self, attr_name, attr_value)
