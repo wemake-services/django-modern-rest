@@ -8,6 +8,7 @@ from typing import (
     TypeAlias,
     TypedDict,
     Union,
+    final,
 )
 
 try:
@@ -39,6 +40,8 @@ if TYPE_CHECKING:
     )
 
 
+# pydantic does not allow to import this,
+# so we have to duplicate this type.
 _IncEx: TypeAlias = (
     set[int]
     | set[str]
@@ -47,6 +50,7 @@ _IncEx: TypeAlias = (
 )
 
 
+@final
 class ModelDumpKwargs(TypedDict, total=False):
     """Keyword arguments for pydantic's model dump method."""
 
