@@ -25,7 +25,13 @@ from django_modern_rest.openapi import (
     SwaggerRenderer,
     openapi_spec,
 )
-from django_modern_rest.openapi.components import Contact, License
+from django_modern_rest.openapi.objects import (
+    Contact,
+    ExternalDocumentation,
+    License,
+    Server,
+    Tag,
+)
 from rest_app.views import (
     AsyncParseHeadersController,
     ParseHeadersController,
@@ -80,6 +86,15 @@ urlpatterns = [
                 terms_of_service='Test Terms of Service',
                 contact=Contact(name='Test Contact', email='test@test.com'),
                 license=License(name='Test License', identifier='license'),
+                external_docs=ExternalDocumentation(
+                    url='https://test.com',
+                    description='Test External Documentation',
+                ),
+                servers=[Server(url='https://test.com')],
+                tags=[
+                    Tag(name='Test Tag', description='Tag Description'),
+                    Tag(name='Test Tag 2', description='Tag 2 Description'),
+                ],
             ),
         ),
     ),

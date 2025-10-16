@@ -1,0 +1,21 @@
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from django_modern_rest.openapi.objects.base import BaseObject
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.objects.contact import Contact
+    from django_modern_rest.openapi.objects.license import License
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
+class Info(BaseObject):
+    """TODO: add docs."""
+
+    title: str
+    version: str
+    summary: str | None = None
+    description: str | None = None
+    terms_of_service: str | None = None
+    contact: 'Contact | None' = None
+    license: 'License | None' = None

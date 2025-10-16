@@ -1,0 +1,12 @@
+from dataclasses import dataclass
+
+from django_modern_rest.openapi.objects.base import BaseObject
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
+class ServerVariable(BaseObject):
+    """TODO: add docs."""
+
+    default: str
+    enum: list[str] | None = None
+    description: str | None = None
