@@ -90,7 +90,8 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         Does the usual validation, no "second validation" problem exists.
         """
         # For mypy: this can't be `None` at this point.
-        return self._current_endpoint.to_response(
+        return build_response(
+            self._current_endpoint.method,
             self._serializer,
             raw_data=raw_data,
             headers=headers,
@@ -201,7 +202,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         ):
             # The same error message that django has.
             raise ImproperlyConfigured(
-                f'{cls!r} HTTP handlers must either be all sync or all async.',
+                f'{cls!r} HTTP handlers must either be all sync or all async',
             )
 
     def _handle_request(
@@ -216,6 +217,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         if endpoint is not None:
             self._current_endpoint = endpoint
             # TODO: support `StreamingHttpResponse`
+            # TODO: support `FileResponse`
             for parser, type_args in self._component_parsers:
                 # TODO: maybe parse all at once?
                 # See https://github.com/wemake-services/django-modern-rest/issues/8

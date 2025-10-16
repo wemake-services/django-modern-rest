@@ -21,7 +21,7 @@ from django_modern_rest.headers import (
     NewHeader,
     ResponseHeadersT,
 )
-from django_modern_rest.response import build_response, infer_status_code
+from django_modern_rest.response import infer_status_code
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
@@ -45,7 +45,7 @@ class Endpoint:
     In the runtime only does response validate, which can be disabled.
     """
 
-    __slots__ = ('_func', '_method', 'is_async', 'response_validator')
+    __slots__ = ('_func', 'is_async', 'method', 'response_validator')
 
     _func: Callable[..., Any]
 
@@ -67,7 +67,7 @@ class Endpoint:
             serializer: ``BaseSerializer`` type that can parse and validate.
 
         """
-        self._method = HTTPMethod(func.__name__.upper())
+        self.method = HTTPMethod(func.__name__.upper())
         # We need to add metadata to functions that don't have it,
         # since decorator is optional:
         func = (
@@ -94,27 +94,6 @@ class Endpoint:
     ) -> HttpResponse:
         """Run the endpoint and return the response."""
         return self._func(contoller, *args, **kwargs)  # type: ignore[no-any-return]
-
-    def to_response(
-        self,
-        serializer: type[BaseSerializer],
-        *,
-        raw_data: Any,
-        headers: dict[str, str] | Empty,
-        status_code: HTTPStatus | Empty,
-    ) -> HttpResponse:
-        """
-        Utility that returns the actual `HttpResponse` object from its parts.
-
-        Does not perform extra validation, only regular response validation.
-        """
-        return build_response(
-            self._method,
-            serializer,
-            raw_data=raw_data,
-            headers=headers,
-            status_code=status_code,
-        )
 
     def _async_endpoint(
         self,
