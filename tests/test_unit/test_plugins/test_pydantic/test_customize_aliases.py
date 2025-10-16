@@ -8,6 +8,7 @@ from faker import Faker
 
 from django_modern_rest import Body, Controller
 from django_modern_rest.plugins.pydantic import (
+    FromPythonKwargs,
     ModelDumpKwargs,
     PydanticSerializer,
 )
@@ -32,7 +33,7 @@ class _NoAliasPydanticSerializer(PydanticSerializer):
         **PydanticSerializer.model_dump_kwargs,
         'by_alias': False,
     }
-    from_python_kwargs: ClassVar[dict[str, Any]] = {
+    from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': False,
         'by_name': True,
     }
