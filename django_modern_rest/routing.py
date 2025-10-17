@@ -1,5 +1,5 @@
-from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any, TypeAlias
+from collections.abc import Callable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
 from django.http import HttpRequest, HttpResponseBase
 from django.urls import URLPattern, URLResolver
@@ -9,6 +9,7 @@ from typing_extensions import override
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.serialization import BaseSerializer
 
 
 class Router:
@@ -21,23 +22,27 @@ class Router:
         self.urls = urls
 
 
+_SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 _ViewFunc: TypeAlias = Callable[..., HttpResponseBase]
+_ControllerT: TypeAlias = type['Controller[Any]']
+_ViewsSpec: TypeAlias = tuple[_ControllerT, _ViewFunc]
 
 
-def compose_controllers(*controllers: type['Controller[Any]']) -> type[View]:
+def compose_controllers(
+    # This seems like a strange design at first, but it actually allows:
+    # at least two pos-only controllers and then any amount of extra ones.
+    first_controller: type['Controller[_SerializerT]'],
+    second_controller: type['Controller[_SerializerT]'],
+    /,
+    *extra: type['Controller[_SerializerT]'],
+) -> type[View]:
     """Combines several controllers with different http methods into one url."""
-    # TODO: validate that there are no intersections of http methods.
-    # TODO: validate that all controllers are either sync or async
-    # TODO: validate that there's at least one controller
+    controllers = [first_controller, second_controller, *extra]
+    is_all_async = _validate_controllers_composition(controllers)
 
     views = [(controller, controller.as_view()) for controller in controllers]
-    is_all_async = all(controller.view_is_async for controller, _ in views)
-    is_any_async = any(controller.view_is_async for controller, _ in views)
-    if not is_all_async and is_any_async:
-        raise ValueError(
-            'Composing controllers with async and sync endpoints '
-            'is not supported',
-        )
+
+    method_mapping = _build_method_mapping(views)
 
     class ComposedControllerView(View):  # noqa: WPS431
         @override
@@ -47,16 +52,63 @@ def compose_controllers(*controllers: type['Controller[Any]']) -> type[View]:
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
+            # Routing is efficient in runtime, with O(1) on average.
+            # Since we build everything during import time :wink:
             method = request.method.lower()  # type: ignore[union-attr]
-            for controller, view_func in views:
-                if method in controller.existing_http_methods():
-                    return view_func(request, *args, **kwargs)
-            return self.http_method_not_allowed(request, *args, **kwargs)
+            view = method_mapping.get(method)
+            if view is not None:
+                return view(request, *args, **kwargs)
+            return first_controller.handle_method_not_allowed(method)
 
         @classproperty
         @override
         def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
             """Returns `True` if all of the controllers are async."""
-            return all(controller.view_is_async for controller, _ in views)
+            return is_all_async
 
     return ComposedControllerView
+
+
+def _validate_controllers_composition(
+    controllers: list[_ControllerT],
+) -> bool:
+    # We know that there are at least 2 controllers as this point:
+    is_async = bool(controllers[0].view_is_async)
+    serializer = controllers[0]._serializer  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+
+    for controller in controllers:
+        if controller.view_is_async is not is_async:
+            raise ValueError(
+                'Composing controllers with async and sync endpoints '
+                'is not supported',
+            )
+        if serializer is not controller._serializer:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            raise ValueError(
+                'Composing controllers with different serializer types '
+                'is not supported',
+            )
+
+    return is_async
+
+
+def _build_method_mapping(
+    views: list[_ViewsSpec],
+) -> Mapping[str, _ViewFunc]:
+    method_mapping: dict[str, _ViewFunc] = {}
+    for controller, view in views:
+        controller_methods = controller.existing_http_methods() - {'options'}
+        if not controller_methods:
+            raise ValueError(
+                f'Controller {controller} must have at least one endpoint '
+                'to be composed',
+            )
+        method_intersection = method_mapping.keys() & controller_methods
+        # TODO: decide what to do with default `options` method.
+        # Do we need it? Maybe it should be removed?
+        if method_intersection:
+            raise ValueError(
+                f'Controllers have {method_intersection!r} common methods, '
+                'while all endpoints must be unique',
+            )
+        method_mapping.update(dict.fromkeys(controller_methods, view))
+    return method_mapping

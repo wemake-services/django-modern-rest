@@ -1,6 +1,7 @@
 import dataclasses
 from collections.abc import Callable, Set
 from http import HTTPStatus
+from types import NoneType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
 
 from django.http import HttpResponse
@@ -22,6 +23,7 @@ from django_modern_rest.settings import (
 from django_modern_rest.types import Empty, is_safe_subclass
 
 if TYPE_CHECKING:
+    from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import (
         EndpointMetadata,
         _ExplicitDecoratorNameT,  # pyright: ignore[reportPrivateUsage]
@@ -30,6 +32,7 @@ if TYPE_CHECKING:
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class ResponseValidator:
     """
     Response validator.
@@ -38,50 +41,59 @@ class ResponseValidator:
     that are returned from endpoints.
     """
 
-    __slots__ = ('_serializer', 'metadata')
-
     # Public API:
+    metadata: 'EndpointMetadata'
+    serializer: type[BaseSerializer]
     strict_validation: ClassVar[bool] = True
 
-    def __init__(
+    def validate_response(
         self,
-        endpoint_func: Callable[..., Any],
-        *,
-        serializer: type[BaseSerializer],
-    ) -> None:
-        """
-        Build the validatior.
-
-        Args:
-            endpoint_func: Real function that will be used for metadata.
-            serializer: ``BaseSerializer`` type that can parse and validate.
-
-        """
-        self._serializer = serializer
-        # `Endpoint` adds `__metadata__` to all functions:
-        self.metadata: EndpointMetadata = (
-            endpoint_func.__endpoint__  # type: ignore[attr-defined]
-        )
-
-    def validate_response(self, response: _ResponseT) -> _ResponseT:
+        controller: 'Controller[BaseSerializer]',
+        response: _ResponseT,
+    ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not resolve_setting(DMR_VALIDATE_RESPONSE_KEY):
+        if not self._is_validation_enabled(controller):
             return response
         self._validate_body(response.content, response=response)
         self._validate_response_object(response)
         return response
 
-    def validate_content(self, structured: Any) -> '_ValidationContext':
+    def validate_content(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        structured: Any,
+    ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         all_response_data = _ValidationContext(
             raw_data=structured,
             status_code=self.metadata.status_code,
-            headers=self.metadata.build_headers(self._serializer),
+            headers=self.metadata.build_headers(self.serializer),
         )
-        if not resolve_setting(DMR_VALIDATE_RESPONSE_KEY):
+        if not self._is_validation_enabled(controller):
             return all_response_data
         self._validate_body(structured)
         return all_response_data
+
+    def _is_validation_enabled(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> bool:
+        """
+        Should we run response validation?
+
+        Priority:
+        - We first return any directly specified *validate_responses*
+          argument to endpoint itself
+        - Then we return *validate_responses* from controller if specified
+        - Lastly we return the default value from settings
+        """
+        if isinstance(self.metadata.validate_responses, bool):
+            return self.metadata.validate_responses
+        if isinstance(controller.validate_responses, bool):
+            return controller.validate_responses
+        return resolve_setting(  # type: ignore[no-any-return]
+            DMR_VALIDATE_RESPONSE_KEY,
+        )
 
     def _validate_body(
         self,
@@ -101,27 +113,22 @@ class ResponseValidator:
 
         """
         if response:
-            structured = self._serializer.from_json(structured)
+            structured = self.serializer.from_json(structured)
 
         try:
-            self._serializer.from_python(
+            self.serializer.from_python(
                 structured,
                 self.metadata.return_type,
                 strict=self.strict_validation,
             )
-        except self._serializer.validation_error as exc:
+        except self.serializer.validation_error as exc:
             raise ResponseSerializationError(
-                self._serializer.error_to_json(exc),
+                self.serializer.error_to_json(exc),
             ) from None
 
     def _validate_response_object(self, response: HttpResponse) -> None:
         """Validates response against provided metadata."""
         # Validate status code:
-        # TODO:
-        # For status codes < 100 or 204, 304 statuses,
-        # no response body is allowed.
-        # If you specify a return annotation other than None,
-        # an ImproperlyConfiguredException will be raised.
         if response.status_code != self.metadata.status_code:
             raise ResponseSerializationError(
                 f'{response.status_code=} does not match '  # noqa: WPS237
@@ -158,7 +165,7 @@ class ResponseValidator:
 
 
 @final
-@dataclasses.dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class EndpointMetadataValidator:
     """
     Validate ``__endpoint__`` metadata definition.
@@ -167,9 +174,11 @@ class EndpointMetadataValidator:
     It is better to be precise here than to be fast.
     """
 
-    _func: Callable[..., Any]
-    _explicit_decorator_name: '_ExplicitDecoratorNameT'
-    _headers: ResponseHeadersT | Empty
+    func: Callable[..., Any]
+    explicit_decorator_name: '_ExplicitDecoratorNameT'
+    headers: ResponseHeadersT | Empty
+    status_code: HTTPStatus
+    return_type: Any | Empty
 
     def __call__(self, return_annotation: Any) -> None:
         """Do the validation."""
@@ -177,48 +186,66 @@ class EndpointMetadataValidator:
             self._validate_response()
         else:
             self._validate_content()
+        self._validate_http_spec()
 
     def _validate_response(self) -> None:
-        if self._explicit_decorator_name in {'modify', None}:
+        if self.explicit_decorator_name in {'modify', None}:
             part = (
                 ''
-                if self._explicit_decorator_name is None
+                if self.explicit_decorator_name is None
                 else ' instead of `@modify`'
             )
             raise EndpointMetadataError(
-                f'Since {self._func!r} returns HttpResponse, '  # noqa: WPS226
+                f'Since {self.func!r} returns HttpResponse, '  # noqa: WPS226
                 f'it requires `@validate` decorator{part}',
             )
 
         # Header validation:
-        if not isinstance(self._headers, Empty) and any(
-            isinstance(header, NewHeader) for header in self._headers.values()
+        if not isinstance(self.headers, Empty) and any(
+            isinstance(header, NewHeader) for header in self.headers.values()
         ):
             raise EndpointMetadataError(
-                f'Since {self._func!r} returns HttpResponse, '
+                f'Since {self.func!r} returns HttpResponse, '
                 'it is not possible to use `NewHeader`. Use '
                 '`.headers = {key: value}` to set headers on response object '
                 'and describe them using `HeaderDescription`',
             )
 
     def _validate_content(self) -> None:
-        if self._explicit_decorator_name == 'validate':
+        if self.explicit_decorator_name == 'validate':
             raise EndpointMetadataError(
-                f'Since {self._func!r} returns regular data, '
+                f'Since {self.func!r} returns regular data, '
                 'it requires `@modify` decorator instead of `@validate`',
             )
 
         # Header validation:
-        if not isinstance(self._headers, Empty) and any(
+        if not isinstance(self.headers, Empty) and any(
             isinstance(header, HeaderDescription)
-            for header in self._headers.values()
+            for header in self.headers.values()
         ):
             raise EndpointMetadataError(
-                f'Since {self._func!r} returns raw data, '
+                f'Since {self.func!r} returns raw data, '
                 'it is not possible to use `HeaderDescription`, because '
                 'there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response',
             )
+
+    def _validate_http_spec(self) -> None:
+        """Validate that we don't violate HTTP spec."""
+        # For status codes < 100 or 204, 304 statuses,
+        # no response body is allowed.
+        # If you specify a return annotation other than None,
+        # an ImproperlyConfiguredException will be raised.
+        status_code = self.status_code
+        if not is_safe_subclass(self.return_type, NoneType) and (
+            status_code < HTTPStatus.CONTINUE
+            or status_code in {HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED}
+        ):
+            raise EndpointMetadataError(
+                f'Can only return `None` not {self.return_type} '
+                f'from an endpoint with status code {status_code}',
+            )
+        # TODO: add more checks
 
 
 @final

@@ -1,5 +1,15 @@
+from collections.abc import Callable, Mapping
 from functools import cache
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    TypeAlias,
+    TypedDict,
+    Union,
+    final,
+)
 
 try:
     import pydantic
@@ -12,10 +22,14 @@ except ImportError:  # pragma: no cover
 
 import pydantic_core
 from django.utils.module_loading import import_string
+from pydantic.config import ExtraValues
 from typing_extensions import override
 
 from django_modern_rest.exceptions import ResponseSerializationError
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serialization import (
+    BaseEndpointOptimizer,
+    BaseSerializer,
+)
 from django_modern_rest.settings import (
     DMR_DESERIALIZE_KEY,
     DMR_SERIALIZE_KEY,
@@ -23,11 +37,65 @@ from django_modern_rest.settings import (
 )
 
 if TYPE_CHECKING:
+    from django_modern_rest.endpoint import EndpointMetadata
     from django_modern_rest.internal.json import (
         Deserialize,
         FromJson,
         Serialize,
     )
+
+
+# pydantic does not allow to import this,
+# so we have to duplicate this type.
+_IncEx: TypeAlias = (
+    set[int]
+    | set[str]
+    | Mapping[int, Union['_IncEx', bool]]
+    | Mapping[str, Union['_IncEx', bool]]
+)
+
+
+@final
+class ModelDumpKwargs(TypedDict, total=False):
+    """Keyword arguments for pydantic's model dump method."""
+
+    mode: Literal['json', 'python'] | str
+    include: _IncEx | None
+    exclude: _IncEx | None
+    context: Any | None
+    by_alias: bool | None
+    exclude_unset: bool
+    exclude_defaults: bool
+    exclude_none: bool
+    exclude_computed_fields: bool
+    round_trip: bool
+    warnings: bool | Literal['none', 'warn', 'error']
+    fallback: Callable[[Any], Any] | None
+    serialize_as_any: bool
+
+
+@final
+class FromPythonKwargs(TypedDict, total=False):
+    """Keyword arguments for pydantic's python object validation method."""
+
+    extra: ExtraValues | None
+    from_attributes: bool | None
+    context: Any | None
+    experimental_allow_partial: bool | Literal['off', 'on', 'trailing-strings']
+    by_alias: bool | None
+    by_name: bool | None
+
+
+class PydanticEndpointOptimizer(BaseEndpointOptimizer):
+    """Optimize endpoints that are parsed with pydantic."""
+
+    @override
+    @classmethod
+    def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
+        """Create models for return types for validation."""
+        # Just build all `TypeAdapater` instances
+        # during import time and cache them for later use in runtime.
+        _get_cached_type_adapter(metadata.return_type)
 
 
 class PydanticSerializer(BaseSerializer):
@@ -47,16 +115,15 @@ class PydanticSerializer(BaseSerializer):
 
     # Required API:
     validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
+    optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
 
     # Custom API:
 
-    # TODO: use `TypedDict`
-    model_dump_kwargs: ClassVar[dict[str, Any]] = {
+    model_dump_kwargs: ClassVar[ModelDumpKwargs] = {
         'by_alias': True,
         'mode': 'json',
     }
-    # TODO: use a TypedDict
-    from_python_kwargs: ClassVar[dict[str, Any]] = {
+    from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': True,
     }
     from_json_strict: ClassVar[bool] = True
@@ -89,7 +156,7 @@ class PydanticSerializer(BaseSerializer):
         """
         Convert string or bytestring to simple python object.
 
-        TypeAdapter used for type validation is cached for futher uses.
+        TypeAdapter used for type validation is cached for further uses.
         """
         return _get_deserialize_func(cls)(
             buffer,
@@ -127,12 +194,12 @@ class PydanticSerializer(BaseSerializer):
         """
         # TODO: support `.rebuild` and forward refs
         # TODO: handle PydanticSchemaGenerationError here
+        # At this point `_get_cached_type_adapter(model)` was already called
+        # during the optimizer stage, so it will be very fast to use in runtime.
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
-            **{  # pyright: ignore[reportArgumentType]
-                **cls.from_python_kwargs,
-                'strict': strict,
-            },
+            strict=strict,
+            **cls.from_python_kwargs,
         )
 
     @override
@@ -174,5 +241,15 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
 
 @cache
 def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
-    """It is expensive to create, reuse existing ones."""
+    """
+    It is expensive to create, reuse existing ones.
+
+    If you want to clear this cache run:
+
+    .. code:: python
+
+        >>> _get_cached_type_adapter.cache_clear()
+
+    """
+    # This is a function not to cache `self` or `cls`
     return pydantic.TypeAdapter(model)

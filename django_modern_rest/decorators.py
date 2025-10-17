@@ -12,7 +12,7 @@ def dispatch_decorator(
     """
     Special helper to decorate class-based view's ``dispatch`` method.
 
-    Use it directly on contollers, like so:
+    Use it directly on controllers, like so:
 
     .. code:: python
 
@@ -28,7 +28,7 @@ def dispatch_decorator(
     In this example we would require all calls
     to all methods of ``MyController`` to require an existing authentication.
 
-    It also works for thigns like:
+    It also works for things like:
     - :func:`django.contrib.auth.decorators.login_not_required`
     - :func:`django.contrib.auth.decorators.user_passes_test`
     - :func:`django.contrib.auth.decorators.permission_required`

@@ -63,6 +63,7 @@ django = ">=4.2,<6.0"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
 pyright = "^1.1"
 
+codespell = "^2.4.1"
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
 import-linter = "^2.5"
@@ -75,7 +76,7 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
-inline-snapshot = "^0.29"
+inline-snapshot = ">=0.29,<0.31"
 
 [tool.poetry.group.docs]
 optional = true
@@ -256,3 +257,8 @@ strict = ["django_modern_rest/**/*"]
 pythonVersion = "3.11"
 venvPath = "."
 venv = ".venv"
+
+
+[tool.codespell]
+# codespell configuration: https://pypi.org/project/codespell
+skip = '__pycache__,_build,.mypy_cache,swagger-*.js'

@@ -14,7 +14,7 @@ _HeadersT = TypeVar('_HeadersT')
 
 
 class ComponentParser:
-    """Base abtract parser for request components."""
+    """Base abstract parser for request components."""
 
     # Public API:
     strict_validation: ClassVar[bool] = False

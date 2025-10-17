@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import TypeAlias, final
+from typing import ClassVar, TypeAlias, final
 
 import pydantic
 import pytest
@@ -8,9 +8,10 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller, validate
+from django_modern_rest import Controller, modify, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
+from django_modern_rest.types import Empty
 
 
 @final
@@ -35,6 +36,7 @@ class _WrongController(Controller[PydanticSerializer]):
         """Does not respect a generic builtin type."""
         return [1, 2]  # type: ignore[list-item]
 
+    @modify(status_code=HTTPStatus.OK)
     def put(self) -> _MyTypedDict:
         """Does not respect a TypedDict type."""
         return {'missing': 1}  # type: ignore[typeddict-item]
@@ -187,3 +189,44 @@ def test_weak_type_response_validation(
             },
         ],
     })
+
+
+@final
+class _EndpointDisabledController(Controller[PydanticSerializer]):
+    @modify(validate_responses=False)
+    def post(self) -> list[int]:
+        return ['a']  # type: ignore[list-item]
+
+
+def test_validation_disabled_endpoint(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that endpoints can disable validation."""
+    request = dmr_rf.post('/whatever/')
+
+    response = _EndpointDisabledController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED
+    assert json.loads(response.content) == ['a']
+
+
+@final
+class _ValidationDisabledController(Controller[PydanticSerializer]):
+    validate_responses: ClassVar[bool | Empty] = False
+
+    def post(self) -> list[int]:
+        return ['a']  # type: ignore[list-item]
+
+
+def test_validation_disabled_controller(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that controllers can disable validation."""
+    request = dmr_rf.post('/whatever/')
+
+    response = _ValidationDisabledController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED
+    assert json.loads(response.content) == ['a']

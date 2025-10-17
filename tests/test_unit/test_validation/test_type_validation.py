@@ -4,11 +4,16 @@ from typing import Any, Literal
 
 import pytest
 from django.http import HttpResponse
+from typing_extensions import TypedDict
 
-from django_modern_rest import validate
+from django_modern_rest import Controller, validate
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+
+class _Controller(Controller[PydanticSerializer]):
+    """Just a placeholder."""
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
@@ -26,6 +31,10 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
     return get
 
 
+class _TypedDict(TypedDict):
+    age: int
+
+
 @pytest.mark.parametrize(
     ('typ', 'raw_data'),
     [
@@ -38,6 +47,8 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
         (tuple[int, str], (1, 'a')),
         (tuple[int, ...], (1, 2, 3, 4)),
         (tuple[int, ...], ()),
+        (_TypedDict, {'age': 1}),
+        (None, None),
     ],
 )
 @pytest.mark.parametrize(
@@ -59,7 +70,7 @@ def test_valid_data(
         serializer=PydanticSerializer,
     ).response_validator
 
-    validator.validate_content(raw_data)
+    validator.validate_content(_Controller(), raw_data)
 
 
 @pytest.mark.parametrize(
@@ -73,6 +84,10 @@ def test_valid_data(
         (str, b'abc'),
         (tuple[int, str], ('a', 1)),
         (tuple[int, ...], ('a')),
+        (_TypedDict, {}),
+        (_TypedDict, {'a': 1}),
+        (_TypedDict, {'age': 'a'}),
+        (None, 1),
     ],
 )
 @pytest.mark.parametrize(
@@ -95,4 +110,4 @@ def test_invalid_data(
     ).response_validator
 
     with pytest.raises(ResponseSerializationError):
-        validator.validate_content(raw_data)
+        validator.validate_content(_Controller(), raw_data)

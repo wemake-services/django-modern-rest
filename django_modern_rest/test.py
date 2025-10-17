@@ -80,7 +80,7 @@ class DMRRequestFactory(_DMRMixin, RequestFactory):
 
 class DMRAsyncRequestFactory(_DMRMixin, AsyncRequestFactory):
     """
-    Version of :class:`DMRRequestFactory` but for ASGI enviroment.
+    Version of :class:`DMRRequestFactory` but for ASGI environment.
 
     Uses the exactly the same API.
     """

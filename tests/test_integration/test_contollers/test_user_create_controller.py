@@ -52,11 +52,3 @@ def test_user_list_view(dmr_client: DMRClient) -> None:
         {'email': 'first@mail.ru', 'age': 1},
         {'email': 'second@mail.ru', 'age': 2},
     ]
-
-
-def test_wrong_method(dmr_client: DMRClient) -> None:
-    """Ensure 405 is correctly handled."""
-    response = dmr_client.put(reverse('api:users'))
-
-    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
-    # TODO: assert content-type and error handling

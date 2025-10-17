@@ -7,7 +7,11 @@ from django.http import HttpResponse
 from faker import Faker
 
 from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.plugins.pydantic import (
+    FromPythonKwargs,
+    ModelDumpKwargs,
+    PydanticSerializer,
+)
 from django_modern_rest.test import DMRRequestFactory
 
 
@@ -25,11 +29,11 @@ class _AliasController(Controller[PydanticSerializer], Body[_BodyModel]):
 
 @final
 class _NoAliasPydanticSerializer(PydanticSerializer):
-    model_dump_kwargs: ClassVar[dict[str, Any]] = {
+    model_dump_kwargs: ClassVar[ModelDumpKwargs] = {
         **PydanticSerializer.model_dump_kwargs,
         'by_alias': False,
     }
-    from_python_kwargs: ClassVar[dict[str, Any]] = {
+    from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': False,
         'by_name': True,
     }
