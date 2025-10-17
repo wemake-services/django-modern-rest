@@ -20,4 +20,4 @@ jobs:
           tg-bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           tg-chat-id: "@opensource_findings_python"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          html-template: "🚀 <b>New issue to <a href=/{repository}>{repository}</a> by <a href=/{user}>@{user}</a> </b><br/>📝 <b>{title}</b> (<a href='{url}'>#{id}</a>)<br/>{body}#django_modern_rest {labels}<br/>{promo}"
+          html-template: "<b>New issue to <a href=/{repository}>{repository}</a> by <a href=/{user}>@{user}</a> </b><br/><b>{title}</b> (<a href='{url}'>#{id}</a>)<br/>{body}#django_modern_rest {labels}<br/>{promo}"
