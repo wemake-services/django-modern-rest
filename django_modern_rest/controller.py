@@ -22,7 +22,11 @@ from django_modern_rest.types import (
     infer_type_args,
 )
 
-_SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
+_SerializerT_co = TypeVar(
+    '_SerializerT_co',
+    bound=BaseSerializer,
+    covariant=True,
+)
 
 _ComponentParserSpec: TypeAlias = tuple[
     type[ComponentParser],
@@ -30,12 +34,13 @@ _ComponentParserSpec: TypeAlias = tuple[
 ]
 
 
-class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
+class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     """Defines API views as controllers."""
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     api_endpoints: ClassVar[dict[str, Endpoint]]
+    validate_responses: ClassVar[bool | Empty] = EmptyObj
 
     # We lie about that it is an instance variable, because type vars
     # are not allowed in `ClassVar`:

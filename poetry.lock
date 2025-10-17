@@ -276,6 +276,24 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "codespell"
+version = "2.4.1"
+description = "Fix common misspellings in text files"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "codespell-2.4.1-py3-none-any.whl", hash = "sha256:3dadafa67df7e4a3dbf51e0d7315061b80d265f9552ebd699b3dd6834b47e425"},
+    {file = "codespell-2.4.1.tar.gz", hash = "sha256:299fcdcb09d23e81e35a671bbe746d5ad7e8385972e65dbb833a2eaac33c01e5"},
+]
+
+[package.extras]
+dev = ["Pygments", "build", "chardet", "pre-commit", "pytest", "pytest-cov", "pytest-dependency", "ruff", "tomli", "twine"]
+hard-encoding-detection = ["chardet"]
+toml = ["tomli ; python_version < \"3.11\""]
+types = ["chardet (>=5.1.0)", "mypy", "pytest", "pytest-cov", "pytest-dependency"]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -2006,4 +2024,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "6f2402f7543fc155a7e197273e5c9eff78ca3d358d67876c2ac3e2cf1a18d064"
+content-hash = "1b982b86cb18319c24fae9740ab051f100528e9fc70e1898b3f286500724d335"

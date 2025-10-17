@@ -63,6 +63,7 @@ django = ">=4.2,<6.0"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
 pyright = "^1.1"
 
+codespell = "^2.4.1"
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
 import-linter = "^2.5"
@@ -257,3 +258,8 @@ strict = ["django_modern_rest/**/*"]
 pythonVersion = "3.11"
 venvPath = "."
 venv = ".venv"
+
+
+[tool.codespell]
+# codespell configuration: https://pypi.org/project/codespell
+skip = '__pycache__,_build,.mypy_cache,swagger-*.js'

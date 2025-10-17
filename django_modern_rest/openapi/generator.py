@@ -13,7 +13,7 @@ class DataclassLike(Protocol):
     __dataclass_fields__: ClassVar[dict[str, Field[Any]]]  # noqa: WPS234
 
 
-# TODO: fully refactor depend on desing doc
+# TODO: fully refactor depend on design doc
 @final
 class SchemaGenerator:
     """OpenAPI schema generator."""
@@ -50,7 +50,7 @@ def _as_dict(datacls: DataclassLike) -> dict[str, Any]:
     """
     result_dict: dict[str, Any] = {}
 
-    # TODO: adding yeild iteration over dataclass fields
+    # TODO: adding yield iteration over dataclass fields
     for field in fields(datacls):
         value = getattr(datacls, field.name)  # noqa: WPS110
         if value is None:
