@@ -3,6 +3,7 @@ from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
+from django.utils.functional import classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
@@ -10,11 +11,15 @@ from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     MethodNotAllowedError,
-    SerializationError,
     UnsolvableAnnotationsError,
 )
+from django_modern_rest.internal.io import identity
 from django_modern_rest.response import build_response
 from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.settings import (
+    DMR_GLOBAL_ERROR_HANDLER_KEY,
+    resolve_setting,
+)
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
@@ -27,6 +32,8 @@ _SerializerT_co = TypeVar(
     bound=BaseSerializer,
     covariant=True,
 )
+
+_ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 _ComponentParserSpec: TypeAlias = tuple[
     type[ComponentParser],
@@ -48,6 +55,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
+    _is_async: ClassVar[bool]
 
     @override
     def __init_subclass__(cls) -> None:
@@ -66,6 +74,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 f'Type arg {type_args[0]} are not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
+        cls._is_async = False  # by default all controllers are sync
         cls._serializer = type_args[0]
         cls._component_parsers = [
             (subclass, get_args(subclass))
@@ -103,6 +112,35 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             status_code=status_code,
         )
 
+    def to_error(
+        self,
+        raw_data: Any,
+        *,
+        status_code: HTTPStatus,
+        headers: dict[str, str] | Empty = EmptyObj,
+    ) -> HttpResponse:
+        """
+        Helpful method to convert API error parts into an actual response.
+
+        Should be always used instead of using
+        raw :class:`django.http.HttpResponse` objects.
+        Does the usual response and error response validation.
+        """
+        return build_response(
+            None,
+            self._serializer,
+            raw_data=raw_data,
+            headers=headers,
+            status_code=status_code,
+        )
+
+    def handle_error(self, exc: Exception) -> HttpResponse:
+        """Return error response."""
+        return resolve_setting(  # type: ignore[no-any-return]
+            DMR_GLOBAL_ERROR_HANDLER_KEY,
+            import_string=True,
+        )(self, exc)
+
     @override
     def dispatch(
         self,
@@ -113,14 +151,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         """Parse all components before the dispatching and call controller."""
         try:
             return self._handle_request(request, *args, **kwargs)
-        except SerializationError as exc:
-            if self.view_is_async:
-                # We have to lie here, because of how `View.dispatch` is typed.
-                # Nothing we can do :(
-                return self._async_handle_error(exc)  # type: ignore[return-value]
-            return self._handle_error(exc)
         except MethodNotAllowedError as exc:
+            # This exception is very special,
+            # since it does not have an attached endpoint.
             return self.handle_method_not_allowed(exc.method)
+        except Exception as exc:
+            return self._maybe_wrap(self.handle_error(exc))
 
     @override
     @deprecated(
@@ -159,28 +195,19 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         # an endpoint associated with it. We switch to lower level
         # `build_response` primitive
         allowed_methods = sorted(cls.existing_http_methods())
-        response = build_response(
-            None,
-            cls._serializer,
-            raw_data={
-                'detail': (
-                    f'Method {method!r} is not allowed, '
-                    f'allowed: {allowed_methods!r}'
-                ),
-            },
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+        return cls._maybe_wrap(
+            build_response(
+                None,
+                cls._serializer,
+                raw_data={
+                    'detail': (
+                        f'Method {method!r} is not allowed, '
+                        f'allowed: {allowed_methods!r}'
+                    ),
+                },
+                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            ),
         )
-        if cls.view_is_async:
-            # We have to do that the same way original Django does.
-            # It is not THAT slow, because it happens only when 405 happens.
-            # Which is not really that frequent.
-            async def factory() -> HttpResponse:  # noqa: RUF029, WPS430
-                return response
-
-            # And again we have to lie to django :(
-            return factory()  # type: ignore[return-value]
-
-        return response
 
     @classmethod
     def existing_http_methods(cls) -> set[str]:
@@ -190,6 +217,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             for method in cls.http_method_names
             if getattr(cls, method, None) is not None
         }
+
+    @classproperty
+    @override
+    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
+        """We already know this in advance, no need to recalculate."""
+        return cls._is_async
 
     # Private API:
 
@@ -209,6 +242,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             raise ImproperlyConfigured(
                 f'{cls!r} HTTP handlers must either be all sync or all async',
             )
+        cls._is_async = is_async
 
     def _handle_request(
         self,
@@ -239,15 +273,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             return endpoint(self, *args, **kwargs)  # we don't pass request
         raise MethodNotAllowedError(method)
 
-    # TODO: think about `error` and `handle_error` API. This should be public.
-    def _handle_error(self, exc: SerializationError) -> HttpResponse:
-        """Return error response."""
-        payload = {'detail': exc.args[0]}
-        return self.to_response(payload, status_code=exc.status_code)
-
-    async def _async_handle_error(
-        self,
-        exc: SerializationError,
-    ) -> HttpResponse:
-        """Async wrapper for the error handler."""
-        return self._handle_error(exc)
+    @classmethod
+    def _maybe_wrap(
+        cls,
+        response: _ResponseT,
+    ) -> _ResponseT:
+        """Wraps response into a coroutine if this is an async controller."""
+        if cls.view_is_async:
+            return identity(response)
+        return response

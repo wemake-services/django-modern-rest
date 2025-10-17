@@ -17,7 +17,7 @@ from django_modern_rest.headers import (
 )
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    DMR_VALIDATE_RESPONSE_KEY,
+    DMR_VALIDATE_RESPONSES_KEY,
     resolve_setting,
 )
 from django_modern_rest.types import Empty, is_safe_subclass
@@ -92,7 +92,7 @@ class ResponseValidator:
         if isinstance(controller.validate_responses, bool):
             return controller.validate_responses
         return resolve_setting(  # type: ignore[no-any-return]
-            DMR_VALIDATE_RESPONSE_KEY,
+            DMR_VALIDATE_RESPONSES_KEY,
         )
 
     def _validate_body(

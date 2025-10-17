@@ -12,7 +12,7 @@ from inline_snapshot import snapshot
 from django_modern_rest import Controller, HeaderDescription, modify, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
-    DMR_VALIDATE_RESPONSE_KEY,
+    DMR_VALIDATE_RESPONSES_KEY,
     resolve_defaults,
     resolve_setting,
 )
@@ -27,7 +27,7 @@ def _disable_response_validation(settings: LazySettings) -> Iterator[None]:
     resolve_setting.cache_clear()
 
     settings.DMR_SETTINGS = {
-        DMR_VALIDATE_RESPONSE_KEY: False,
+        DMR_VALIDATE_RESPONSES_KEY: False,
     }
 
     yield
