@@ -54,7 +54,6 @@ typing_extensions = ">=4"
 msgspec = ">= 0.19"
 
 pydantic = { version = "^2.12", optional = true }
-slotscheck = "^0.19.1"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
@@ -77,6 +76,7 @@ pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
 inline-snapshot = ">=0.29,<0.31"
+slotscheck = "^0.19.1"
 
 [tool.poetry.group.docs]
 optional = true
