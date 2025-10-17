@@ -156,7 +156,7 @@ class PydanticSerializer(BaseSerializer):
         """
         Convert string or bytestring to simple python object.
 
-        TypeAdapter used for type validation is cached for futher uses.
+        TypeAdapter used for type validation is cached for further uses.
         """
         return _get_deserialize_func(cls)(
             buffer,

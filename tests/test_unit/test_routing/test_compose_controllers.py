@@ -72,7 +72,7 @@ def test_compose_different_serializers() -> None:
         compose_controllers(_SyncController, _DifferentSerializerController)
 
 
-def test_compose_contoller_no_endpoints() -> None:
+def test_compose_controller_no_endpoints() -> None:
     """Ensure that controller with no endpoints can't be composed."""
     with pytest.raises(ValueError, match='at least one'):
         compose_controllers(_ZeroMethodsController, _SyncController)

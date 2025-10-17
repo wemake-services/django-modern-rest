@@ -105,12 +105,12 @@ class Endpoint:
 
     def __call__(
         self,
-        contoller: 'Controller[Any]',
+        controller: 'Controller[Any]',
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
         """Run the endpoint and return the response."""
-        return self._func(contoller, *args, **kwargs)  # type: ignore[no-any-return]
+        return self._func(controller, *args, **kwargs)  # type: ignore[no-any-return]
 
     def _async_endpoint(
         self,
@@ -180,8 +180,8 @@ class EndpointMetadata:
             via return type annotation for raw data responses,
             or via ``return_type`` parameter to :func:`validate`.
         status_code: Status code to be returned.
-            Can be infered from the HTTP method name.
-        headers: Optinal headers that response will return.
+            Can be inferred from the HTTP method name.
+        headers: Optional headers that response will return.
         method: HTTP method for this endpoint.
         explicit_decorator_name: Was this metadata created
             with an explicit decorator call?
@@ -246,7 +246,7 @@ def validate(
         >>> from django_modern_rest import Controller, validate
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
-        >>> class TaskContoller(Controller[PydanticSerializer]):
+        >>> class TaskController(Controller[PydanticSerializer]):
         ...     @validate(return_type=list[int], status_code=HTTPStatus.OK)
         ...     def post(self) -> HttpResponse:
         ...         return HttpResponse(b'[1, 2]', status=HTTPStatus.OK)
@@ -272,7 +272,7 @@ def validate(
             in the final response. Headers with ``value`` attribute set
             will be added to the final response.
         metadata_validator_cls: Type that will validate
-            the endpoint definition by deafult. Can be customized.
+            the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
@@ -284,11 +284,11 @@ def validate(
 
     Returns:
         The same function with ``__endpoint__``
-        metadata instanse of :class:`EndpointMetadata`.
+        metadata instance of :class:`EndpointMetadata`.
 
     .. warning::
         Do not disable ``validate_responses`` unless
-        this is preformance critical for you!
+        this is performance critical for you!
 
     """
     return _add_metadata(
@@ -341,7 +341,7 @@ def modify(
         >>> from django_modern_rest import Controller, modify
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
-        >>> class TaskContoller(Controller[PydanticSerializer]):
+        >>> class TaskController(Controller[PydanticSerializer]):
         ...     @modify(status_code=HTTPStatus.ACCEPTED)
         ...     def post(self) -> list[int]:
         ...         return [1, 2]  # id of tasks you have started
@@ -356,7 +356,7 @@ def modify(
             Use non-empty ``value`` parameter
             of :class:`django_modern_rest.headers.BaseHeaderDescription` object.
         metadata_validator_cls: Type that will validate
-            the endpoint definition by deafult. Can be customized.
+            the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
@@ -364,11 +364,11 @@ def modify(
 
     Returns:
         The same function with ``__endpoint__``
-        metadata instanse of :class:`EndpointMetadata`.
+        metadata instance of :class:`EndpointMetadata`.
 
     .. warning::
         Do not disable ``validate_responses`` unless
-        this is preformance critical for you!
+        this is performance critical for you!
 
     """
     return _add_metadata(  # type: ignore[return-value]
@@ -397,7 +397,7 @@ def _add_metadata(  # noqa: WPS211
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
         return_annotation = parse_return_annotation(func)
-        infered_return_type = (
+        inferred_return_type = (
             return_annotation if isinstance(return_type, Empty) else return_type
         )
         method = HTTPMethod(func.__name__.upper())
@@ -412,12 +412,12 @@ def _add_metadata(  # noqa: WPS211
             explicit_decorator_name=explicit_decorator_name,
             headers=headers,
             status_code=status,
-            return_type=infered_return_type,
+            return_type=inferred_return_type,
         )(return_annotation)
 
         # Validation passed, now we can create valid metadata:
         func.__endpoint__ = EndpointMetadata(  # type: ignore[attr-defined]
-            return_type=infered_return_type,
+            return_type=inferred_return_type,
             status_code=status,
             headers=headers,
             explicit_decorator_name=explicit_decorator_name,
