@@ -29,4 +29,4 @@ package:
 	poetry run pip check
 
 .PHONY: test
-test: lint type-check package unit
+test: lint type-check spell-check package unit
