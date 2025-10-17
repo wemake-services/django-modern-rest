@@ -12,7 +12,7 @@ from django_modern_rest.types import (
 
 @overload
 def build_response(
-    method: HTTPMethod,
+    method: HTTPMethod | str,
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
@@ -33,7 +33,7 @@ def build_response(
 
 
 def build_response(
-    method: HTTPMethod | None,
+    method: HTTPMethod | str | None,
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
