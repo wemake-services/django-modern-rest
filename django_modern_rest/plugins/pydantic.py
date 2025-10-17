@@ -177,6 +177,8 @@ class PydanticSerializer(BaseSerializer):
         """
         # TODO: support `.rebuild` and forward refs
         # TODO: handle PydanticSchemaGenerationError here
+        # TODO: call `_get_cached_type_adapter(model)` on import time
+        # the first time, so first requests won't be affected in runtime.
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
             strict=strict,
@@ -223,4 +225,5 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
 @cache
 def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
     """It is expensive to create, reuse existing ones."""
+    # This is a function not to cache `self` or `cls`
     return pydantic.TypeAdapter(model)

@@ -217,6 +217,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         if endpoint is not None:
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
+            # TODO: support redirects
             for parser, type_args in self._component_parsers:
                 # TODO: maybe parse all at once?
                 # See https://github.com/wemake-services/django-modern-rest/issues/8
