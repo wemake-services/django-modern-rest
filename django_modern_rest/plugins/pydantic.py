@@ -26,7 +26,10 @@ from pydantic.config import ExtraValues
 from typing_extensions import override
 
 from django_modern_rest.exceptions import ResponseSerializationError
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serialization import (
+    BaseEndpointOptimizer,
+    BaseSerializer,
+)
 from django_modern_rest.settings import (
     DMR_DESERIALIZE_KEY,
     DMR_SERIALIZE_KEY,
@@ -34,6 +37,7 @@ from django_modern_rest.settings import (
 )
 
 if TYPE_CHECKING:
+    from django_modern_rest.endpoint import EndpointMetadata
     from django_modern_rest.internal.json import (
         Deserialize,
         FromJson,
@@ -82,6 +86,18 @@ class FromPythonKwargs(TypedDict, total=False):
     by_name: bool | None
 
 
+class PydanticEndpointOptimizer(BaseEndpointOptimizer):
+    """Optimize endpoints that are parsed with pydantic."""
+
+    @override
+    @classmethod
+    def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
+        """Create models for return types for validation."""
+        # Just build all `TypeAdapater` instances
+        # during import time and cache them for later use in runtime.
+        _get_cached_type_adapter(metadata.return_type)
+
+
 class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
@@ -99,6 +115,7 @@ class PydanticSerializer(BaseSerializer):
 
     # Required API:
     validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
+    optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
 
     # Custom API:
 
@@ -224,6 +241,15 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
 
 @cache
 def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
-    """It is expensive to create, reuse existing ones."""
+    """
+    It is expensive to create, reuse existing ones.
+
+    If you want to clear this cache run:
+
+    .. code:: python
+
+        >>> _get_cached_type_adapter.cache_clear()
+
+    """
     # This is a function not to cache `self` or `cls`
     return pydantic.TypeAdapter(model)

@@ -92,6 +92,8 @@ class Endpoint:
             metadata,
             serializer,
         )
+        # We can now run endpoint's optimization:
+        serializer.optimizer.optimize_endpoint(metadata)
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):

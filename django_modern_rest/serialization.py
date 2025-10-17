@@ -9,6 +9,7 @@ from django_modern_rest.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from django_modern_rest.endpoint import EndpointMetadata
     from django_modern_rest.internal.json import FromJson
 
 _ModelT = TypeVar('_ModelT')
@@ -21,6 +22,7 @@ class BaseSerializer:
 
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
+    optimizer: ClassVar[type['BaseEndpointOptimizer']]
 
     # API that have defaults:
     content_type: ClassVar[str] = 'application/json'
@@ -103,3 +105,22 @@ class BaseSerializer:
     @abc.abstractmethod
     def error_to_json(cls, error: Exception) -> Any:
         """Serialize an exception to json the best way possible."""
+
+
+class BaseEndpointOptimizer:
+    """
+    Plugins might often need to run some specific preparations for endpoints.
+
+    To achive that we provide an explicit API for that.
+    """
+
+    @classmethod
+    @abc.abstractmethod
+    def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
+        """
+        Optimize the endpoint.
+
+        Args:
+            metadata: Endpoint metadata to optimize.
+
+        """
