@@ -34,7 +34,7 @@ def openapi_spec(
         config = _default_config()
 
     # TODO: temporary schema generation without paths
-    schema = config.to_schema().to_schema()
+    schema = config.to_openapi().to_schema()
 
     urlpatterns = [
         path(

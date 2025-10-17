@@ -26,9 +26,9 @@ class OpenAPIConfig:
     description: str | None = None
     terms_of_service: str | None = None
     contact: Contact | None = None
-    license: License | None = None
     external_docs: ExternalDocumentation | None = None
     security: list[SecurityRequirement] | None = None
+    license: License | None = None
     components: Components | list[Components] = field(
         default_factory=Components,
     )
@@ -37,7 +37,7 @@ class OpenAPIConfig:
     use_handler_docstrings: bool = False
     webhooks: dict[str, PathItem | Reference] | None = None
 
-    def to_schema(self) -> OpenAPI:
+    def to_openapi(self) -> OpenAPI:
         """TODO: add docs."""
         return OpenAPI(
             external_docs=self.external_docs,
