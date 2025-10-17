@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects.base import BaseObject
@@ -23,13 +23,14 @@ if TYPE_CHECKING:
 class OpenAPI(BaseObject):
     """TODO: add docs."""
 
-    info: 'Info'
     openapi: str = '3.1.0'
+
+    info: 'Info'
     json_schema_dialect: str | None = None
-    servers: 'list[Server]' = field(default_factory=lambda x: [Server(url='/')])  # type: ignore[misc, arg-type]
+    servers: 'list[Server] | None' = None
     paths: 'Paths | None' = None
     webhooks: 'dict[str, PathItem | Reference] | None' = None
-    components: 'Components' = field(default_factory=Components)
+    components: 'Components | None' = None
     security: 'list[SecurityRequirement] | None' = None
     tags: 'list[Tag] | None' = None
     external_docs: 'ExternalDocumentation | None' = None

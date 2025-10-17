@@ -29,10 +29,8 @@ class OpenAPIConfig:
     external_docs: ExternalDocumentation | None = None
     security: list[SecurityRequirement] | None = None
     license: License | None = None
-    components: Components | list[Components] = field(
-        default_factory=Components,
-    )
-    servers: list[Server] = field(default_factory=lambda: [Server(url='/')])
+    components: Components | list[Components] | None = None
+    servers: list[Server] | None = None
     tags: list[Tag] | None = None
     use_handler_docstrings: bool = False
     webhooks: dict[str, PathItem | Reference] | None = None
