@@ -43,7 +43,6 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
-    _current_endpoint: Endpoint
 
     @override
     def __init_subclass__(cls) -> None:
@@ -90,8 +89,9 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         Does the usual validation, no "second validation" problem exists.
         """
         # For mypy: this can't be `None` at this point.
+        assert self.request.method  # noqa: S101
         return build_response(
-            self._current_endpoint.method,
+            self.request.method,
             self._serializer,
             raw_data=raw_data,
             headers=headers,
@@ -109,7 +109,7 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         try:
             return self._handle_request(request, *args, **kwargs)
         except SerializationError as exc:
-            if self._current_endpoint.is_async:
+            if self.view_is_async:
                 # We have to lie here, because of how `View.dispatch` is typed.
                 # Nothing we can do :(
                 return self._async_handle_error(exc)  # type: ignore[return-value]
@@ -215,7 +215,6 @@ class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
         method = request.method.lower()  # type: ignore[union-attr]
         endpoint = self.api_endpoints.get(method)
         if endpoint is not None:
-            self._current_endpoint = endpoint
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
             for parser, type_args in self._component_parsers:
