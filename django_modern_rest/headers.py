@@ -26,9 +26,11 @@ class _BaseResponseHeader:
     # TODO: make sure that we can't set fields like `explode`
     # to other values except default
 
-    description: str | None = None
-    deprecated: bool = False
-    example: Any | None = None
+    __slots__ = ('deprecated', 'description', 'example')
+
+    description: str | None
+    deprecated: bool
+    example: Any | None
 
 
 @final
