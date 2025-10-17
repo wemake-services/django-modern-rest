@@ -52,6 +52,6 @@ def resolve_defaults() -> Mapping[str, Any]:
 
 
 @lru_cache
-def resolve_setting(setting_name: str, *, model: Any | None = None) -> Any:
+def resolve_setting(setting_name: str) -> Any:
     """Resolves setting by *setting_name*."""
     return resolve_defaults().get(setting_name, _DEFAULTS[setting_name])

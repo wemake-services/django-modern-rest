@@ -23,6 +23,7 @@ from django_modern_rest.settings import (
 from django_modern_rest.types import Empty, is_safe_subclass
 
 if TYPE_CHECKING:
+    from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import (
         EndpointMetadata,
         _ExplicitDecoratorNameT,  # pyright: ignore[reportPrivateUsage]
@@ -45,25 +46,54 @@ class ResponseValidator:
     serializer: type[BaseSerializer]
     strict_validation: ClassVar[bool] = True
 
-    def validate_response(self, response: _ResponseT) -> _ResponseT:
+    def validate_response(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        response: _ResponseT,
+    ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not resolve_setting(DMR_VALIDATE_RESPONSE_KEY):
+        if not self._is_validation_enabled(controller):
             return response
         self._validate_body(response.content, response=response)
         self._validate_response_object(response)
         return response
 
-    def validate_content(self, structured: Any) -> '_ValidationContext':
+    def validate_content(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        structured: Any,
+    ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         all_response_data = _ValidationContext(
             raw_data=structured,
             status_code=self.metadata.status_code,
             headers=self.metadata.build_headers(self.serializer),
         )
-        if not resolve_setting(DMR_VALIDATE_RESPONSE_KEY):
+        if not self._is_validation_enabled(controller):
             return all_response_data
         self._validate_body(structured)
         return all_response_data
+
+    def _is_validation_enabled(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> bool:
+        """
+        Should we run response validation?
+
+        Priority:
+        - We first return any directly specified *validate_responses*
+          argument to endpoint itself
+        - Then we return *validate_responses* from contoller if specified
+        - Lastly we return the default value from settings
+        """
+        if isinstance(self.metadata.validate_responses, bool):
+            return self.metadata.validate_responses
+        if isinstance(controller.validate_responses, bool):
+            return controller.validate_responses
+        return resolve_setting(  # type: ignore[no-any-return]
+            DMR_VALIDATE_RESPONSE_KEY,
+        )
 
     def _validate_body(
         self,
