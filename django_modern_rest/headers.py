@@ -5,7 +5,6 @@ from typing import Any, ClassVar, TypeAlias, final
 from django_modern_rest.types import Empty, EmptyObj
 
 
-@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _BaseResponseHeader:
     """
     Abstract base class that represents an HTTP header in the response.
@@ -27,9 +26,11 @@ class _BaseResponseHeader:
     # TODO: make sure that we can't set fields like `explode`
     # to other values except default
 
-    description: str | None = None
-    deprecated: bool = False
-    example: Any | None = None
+    __slots__ = ('deprecated', 'description', 'example')
+
+    description: str | None
+    deprecated: bool
+    example: Any | None
 
 
 @final
