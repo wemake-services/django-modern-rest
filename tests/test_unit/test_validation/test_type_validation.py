@@ -6,10 +6,14 @@ import pytest
 from django.http import HttpResponse
 from typing_extensions import TypedDict
 
-from django_modern_rest import validate
+from django_modern_rest import Controller, validate
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+
+class _Controller(Controller[PydanticSerializer]):
+    """Just a placeholder."""
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
@@ -66,7 +70,7 @@ def test_valid_data(
         serializer=PydanticSerializer,
     ).response_validator
 
-    validator.validate_content(raw_data)
+    validator.validate_content(_Controller(), raw_data)
 
 
 @pytest.mark.parametrize(
@@ -106,4 +110,4 @@ def test_invalid_data(
     ).response_validator
 
     with pytest.raises(ResponseSerializationError):
-        validator.validate_content(raw_data)
+        validator.validate_content(_Controller(), raw_data)
