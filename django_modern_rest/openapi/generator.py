@@ -21,11 +21,20 @@ class SchemaGenerator:
     openapi_version: ClassVar[str] = '3.1.0'
 
     def __init__(self, config: OpenAPIConfig, router: Router) -> None:
+        """
+        Create schema generator.
+
+        Args:
+            config: user provided spec configuration.
+            router: API router containing all the routes in the API.
+
+        """
         self.config = config
         self.router = router
 
     # TODO: implement caching
     def to_schema(self) -> OpenAPISchema:
+        """Create OpenAPISchema to be rendered."""
         return {
             'openapi': self.openapi_version,
             'info': _as_dict(self.config),

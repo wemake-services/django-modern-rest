@@ -7,7 +7,11 @@ from django.http import HttpResponse
 from faker import Faker
 
 from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.plugins.pydantic import (
+    FromPythonKwargs,
+    ModelDumpKwargs,
+    PydanticSerializer,
+)
 from django_modern_rest.test import DMRRequestFactory
 
 
@@ -25,11 +29,11 @@ class _AliasController(Controller[PydanticSerializer], Body[_BodyModel]):
 
 @final
 class _NoAliasPydanticSerializer(PydanticSerializer):
-    model_dump_kwargs: ClassVar[dict[str, Any]] = {
+    model_dump_kwargs: ClassVar[ModelDumpKwargs] = {
         **PydanticSerializer.model_dump_kwargs,
         'by_alias': False,
     }
-    from_python_kwargs: ClassVar[dict[str, Any]] = {
+    from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': False,
         'by_name': True,
     }
@@ -106,3 +110,23 @@ def test_custom_alias_serialization_by_alias(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+@final
+class _UnserializableController(Controller[_NoAliasPydanticSerializer]):
+    def post(self) -> dict[str, Any]:
+        return {'a': object()}
+
+
+def test_not_serializable_response(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures in custom type aliases do not work."""
+    request = dmr_rf.post('/whatever/', data={})
+
+    response = _UnserializableController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == {'Content-Type': 'application/json'}

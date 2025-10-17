@@ -66,6 +66,7 @@ pyright = "^1.1"
 
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
+import-linter = "^2.5"
 
 pytest = "^8.4"
 pytest-cov = "^7.0"
@@ -75,7 +76,7 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
-inline-snapshot = "^0.29"
+inline-snapshot = ">=0.29,<0.31"
 
 [tool.poetry.group.docs]
 optional = true
@@ -158,8 +159,6 @@ ignore = [
   "D404",
   "D405",
   "D418",  # We should be able to add docstrings to `@overload` decorators
-  # TODO: re-enable when ready:
-  "D103", "D102", "D101", "D107",
   "ISC001",  # implicit string concat conflicts with `ruff format`
   "ISC003",  # prefer explicit string concat over implicit concat
   "PLR09",   # we have our own complexity rules
@@ -212,7 +211,7 @@ addopts = [
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
-  "--cov-fail-under=99",  # TODO: set to 100%
+  "--cov-fail-under=100",
   # Ignores:
   "--ignore=docs",
   "--ignore=typesafety/assert_type",

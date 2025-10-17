@@ -65,6 +65,7 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
     try:
         return_annotation = get_type_hints(
             endpoint_func,
+            globalns=endpoint_func.__globals__,
         ).get('return', EmptyObj)
     except (TypeError, NameError, ValueError) as exc:
         raise UnsolvableAnnotationsError(

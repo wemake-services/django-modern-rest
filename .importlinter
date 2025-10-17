@@ -1,0 +1,49 @@
+# See https://github.com/seddonym/import-linter
+
+[importlinter]
+root_package = django_modern_rest
+include_external_packages = True
+exclude_type_checking_imports = True
+
+
+[importlinter:contract:layers]
+name = Layered architecture of our project
+type = layers
+
+containers =
+  django_modern_rest
+
+layers =
+  routing
+  controller
+  endpoint | components
+  response
+  validation
+  serialization
+  # DTOs:
+  headers
+  types
+  settings
+  exceptions
+
+
+[importlinter:contract:no-optional-deps]
+name = Do not use these optional dependencies outside of plugins
+type = forbidden
+
+source_modules =
+  django_modern_rest
+
+forbidden_modules =
+  pydantic
+
+ignore_imports =
+  django_modern_rest.plugins.pydantic -> pydantic
+
+
+[importlinter:contract:plugins-independence]
+name = All plugins must be independent
+type = independence
+
+modules =
+  django_modern_rest.plugins.*

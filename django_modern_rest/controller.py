@@ -3,17 +3,17 @@ from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
-from django.utils.functional import classproperty
 from django.views import View
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
-from django_modern_rest.components import ComponentParserMixin
+from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     MethodNotAllowedError,
     SerializationError,
     UnsolvableAnnotationsError,
 )
+from django_modern_rest.response import build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
@@ -25,16 +25,17 @@ from django_modern_rest.types import (
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 
 _ComponentParserSpec: TypeAlias = tuple[
-    type[ComponentParserMixin],
+    type[ComponentParser],
     tuple[Any, ...],
 ]
 
 
-class Controller(View, Generic[_SerializerT]):
+class Controller(View, Generic[_SerializerT]):  # noqa: WPS214
     """Defines API views as controllers."""
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    api_endpoints: ClassVar[dict[str, Endpoint]]
 
     # We lie about that it is an instance variable, because type vars
     # are not allowed in `ClassVar`:
@@ -42,8 +43,6 @@ class Controller(View, Generic[_SerializerT]):
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
-    _api_endpoints: ClassVar[dict[str, Endpoint]]
-    _current_endpoint: Endpoint
 
     @override
     def __init_subclass__(cls) -> None:
@@ -65,11 +64,11 @@ class Controller(View, Generic[_SerializerT]):
         cls._serializer = type_args[0]
         cls._component_parsers = [
             (subclass, get_args(subclass))
-            for subclass in infer_bases(cls, ComponentParserMixin)
+            for subclass in infer_bases(cls, ComponentParser)
         ]
-        cls._api_endpoints = {
+        cls.api_endpoints = {
             meth: cls.endpoint_cls(func, serializer=cls._serializer)
-            for meth in cls.existing_http_methods
+            for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
         cls._validate_endpoints()
@@ -89,7 +88,10 @@ class Controller(View, Generic[_SerializerT]):
         Has better serialization speed and semantics than manual.
         Does the usual validation, no "second validation" problem exists.
         """
-        return self._current_endpoint.to_response(
+        # For mypy: this can't be `None` at this point.
+        assert self.request.method  # noqa: S101
+        return build_response(
+            self.request.method,
             self._serializer,
             raw_data=raw_data,
             headers=headers,
@@ -107,12 +109,76 @@ class Controller(View, Generic[_SerializerT]):
         try:
             return self._handle_request(request, *args, **kwargs)
         except SerializationError as exc:
+            if self.view_is_async:
+                # We have to lie here, because of how `View.dispatch` is typed.
+                # Nothing we can do :(
+                return self._async_handle_error(exc)  # type: ignore[return-value]
             return self._handle_error(exc)
-        except MethodNotAllowedError:
-            return self.http_method_not_allowed(request, *args, **kwargs)
+        except MethodNotAllowedError as exc:
+            return self.handle_method_not_allowed(exc.method)
 
-    @classproperty  # TODO: cache
-    def existing_http_methods(cls) -> set[str]:  # noqa: N805
+    @override
+    @deprecated(
+        # It is not actually deprecated, but type checkers have no other
+        # ways to raise custom errors.
+        'Please do not use this method with `django-modern-rest`, '
+        'use `handle_method_not_allowed` instead',
+    )
+    def http_method_not_allowed(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        """
+        Do not use, use :meth:`handle_method_not_allowed` instead.
+
+        ``View.http_method_not_allowed`` raises an error in a wrong format.
+        """
+        raise NotImplementedError(
+            'Please do not use this method with `django-modern-rest`, '
+            'use `handle_method_not_allowed` instead',
+        )
+
+    @classmethod
+    def handle_method_not_allowed(
+        cls,
+        method: str,
+    ) -> HttpResponse:
+        """
+        Return error response for 405 response code.
+
+        It is special in way that we don't have an endpoint associated with it.
+        """
+        # This method cannot call `self.to_response`, because it does not have
+        # an endpoint associated with it. We switch to lower level
+        # `build_response` primitive
+        allowed_methods = sorted(cls.existing_http_methods())
+        response = build_response(
+            None,
+            cls._serializer,
+            raw_data={
+                'detail': (
+                    f'Method {method!r} is not allowed, '
+                    f'allowed: {allowed_methods!r}'
+                ),
+            },
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+        )
+        if cls.view_is_async:
+            # We have to do that the same way original Django does.
+            # It is not THAT slow, because it happens only when 405 happens.
+            # Which is not really that frequent.
+            async def factory() -> HttpResponse:  # noqa: RUF029, WPS430
+                return response
+
+            # And again we have to lie to django :(
+            return factory()  # type: ignore[return-value]
+
+        return response
+
+    @classmethod
+    def existing_http_methods(cls) -> set[str]:
         """Returns and caches what HTTP methods are implemented in this view."""
         return {
             method
@@ -125,18 +191,18 @@ class Controller(View, Generic[_SerializerT]):
     @classmethod
     def _validate_endpoints(cls) -> None:
         """Validate that endpoints definition is correct in build time."""
-        if not cls._api_endpoints:
+        if not cls.api_endpoints:
             return
-        is_async = cls._api_endpoints[
-            next(iter(cls._api_endpoints.keys()))
+        is_async = cls.api_endpoints[
+            next(iter(cls.api_endpoints.keys()))
         ].is_async
         if any(
             endpoint.is_async is not is_async
-            for endpoint in cls._api_endpoints.values()
+            for endpoint in cls.api_endpoints.values()
         ):
             # The same error message that django has.
             raise ImproperlyConfigured(
-                f'{cls!r} HTTP handlers must either be all sync or all async.',
+                f'{cls!r} HTTP handlers must either be all sync or all async',
             )
 
     def _handle_request(
@@ -146,15 +212,17 @@ class Controller(View, Generic[_SerializerT]):
         **kwargs: Any,
     ) -> HttpResponse:
         # Fast path for method resolution:
-        endpoint = self._api_endpoints.get(request.method.lower())  # type: ignore[union-attr]
+        method = request.method.lower()  # type: ignore[union-attr]
+        endpoint = self.api_endpoints.get(method)
         if endpoint is not None:
-            self._current_endpoint = endpoint
             # TODO: support `StreamingHttpResponse`
+            # TODO: support `FileResponse`
+            # TODO: support redirects
             for parser, type_args in self._component_parsers:
                 # TODO: maybe parse all at once?
                 # See https://github.com/wemake-services/django-modern-rest/issues/8
-                parser._parse_component(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    # We lie that this is a `ComponentParserMixin`, but their
+                parser.parse_component(  # pyright: ignore[reportPrivateUsage]
+                    # We lie that this is a `ComponentParser`, but their
                     # APIs are compatible by design.
                     self,  # type: ignore[arg-type]
                     self._serializer,
@@ -164,11 +232,17 @@ class Controller(View, Generic[_SerializerT]):
                     **kwargs,
                 )
             return endpoint(self, *args, **kwargs)  # we don't pass request
-        raise MethodNotAllowedError
+        raise MethodNotAllowedError(method)
 
+    # TODO: think about `error` and `handle_error` API. This should be public.
     def _handle_error(self, exc: SerializationError) -> HttpResponse:
+        """Return error response."""
         payload = {'detail': exc.args[0]}
-        return HttpResponse(
-            self._serializer.to_json(payload),
-            status=int(exc.status_code),
-        )
+        return self.to_response(payload, status_code=exc.status_code)
+
+    async def _async_handle_error(
+        self,
+        exc: SerializationError,
+    ) -> HttpResponse:
+        """Async wrapper for the error handler."""
+        return self._handle_error(exc)

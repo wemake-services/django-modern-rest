@@ -10,6 +10,7 @@ lint:
 	poetry run ruff format --check --diff
 	poetry run flake8 .
 	poetry run slotscheck -m django_modern_rest
+	poetry run lint-imports
 
 .PHONY: type-check
 type-check:
@@ -18,7 +19,7 @@ type-check:
 
 .PHONY: unit
 unit:
-	poetry run pytest
+	poetry run pytest --inline-snapshot=disable
 
 .PHONY: package
 package:

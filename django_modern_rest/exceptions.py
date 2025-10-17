@@ -20,11 +20,20 @@ class EndpointMetadataError(Exception):
 class MethodNotAllowedError(Exception):
     """Raised when some API method is not allowed for the controller."""
 
+    def __init__(self, method: str) -> None:
+        """Save the passed method name for error message."""
+        super().__init__(method)
+        self.method = method
+
 
 class SerializationError(Exception):
-    """Base class for all parsing and serialization errors."""
+    """
+    Base class for all parsing and serialization errors.
 
-    #: All child classes must set this attribute:
+    Do not use it directly, prefer exact exceptions for requests and responses.
+    """
+
+    #: Child classes can customize this attribute:
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNPROCESSABLE_ENTITY
 
 

@@ -21,6 +21,7 @@ from django_modern_rest.headers import (
     NewHeader,
     ResponseHeadersT,
 )
+from django_modern_rest.response import infer_status_code
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
@@ -37,10 +38,26 @@ if TYPE_CHECKING:
 
 
 class Endpoint:
-    __slots__ = ('_func', '_method', 'is_async', 'response_validator')
+    """
+    Represents the single API endpoint.
+
+    Is built during the import time.
+    In the runtime only does response validate, which can be disabled.
+    """
+
+    __slots__ = (
+        '_func',
+        'endpoint_optimizer',
+        'is_async',
+        'method',
+        'response_validator',
+    )
 
     _func: Callable[..., Any]
 
+    metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
+        EndpointMetadataValidator
+    )
     response_validator_cls: ClassVar[type[ResponseValidator]] = (
         ResponseValidator
     )
@@ -51,18 +68,34 @@ class Endpoint:
         *,
         serializer: type[BaseSerializer],
     ) -> None:
-        self._method = HTTPMethod(func.__name__.upper())
+        """
+        Create an entrypoint.
+
+        Args:
+            func: Entrypoint handler. An actual function.
+            serializer: ``BaseSerializer`` type that can parse and validate.
+
+        """
+        self.method = HTTPMethod(func.__name__.upper())
         # We need to add metadata to functions that don't have it,
         # since decorator is optional:
         func = (
-            _add_metadata()(func)
+            _add_metadata(
+                metadata_validator_cls=self.metadata_validator_cls,
+            )(func)
             if getattr(func, '__endpoint__', None) is None
             else func
         )
+        metadata = func.__endpoint__  # type: ignore[attr-defined]
+        # We need a func before any wrappers, but with metadata:
         self.response_validator = self.response_validator_cls(
-            func,  # we need a func before any wrappers
-            serializer=serializer,
+            metadata,
+            serializer,
         )
+        # We can now run endpoint's optimization:
+        serializer.optimizer.optimize_endpoint(metadata)
+
+        # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
             self._func = self._async_endpoint(func, serializer)
             self.is_async = True
@@ -76,34 +109,8 @@ class Endpoint:
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        """Run the endpoint and return the response."""
         return self._func(contoller, *args, **kwargs)  # type: ignore[no-any-return]
-
-    def to_response(
-        self,
-        serializer: type[BaseSerializer],
-        *,
-        raw_data: Any,
-        headers: dict[str, str] | Empty,
-        status_code: HTTPStatus | Empty,
-    ) -> HttpResponse:
-        """
-        Utility that returns the actual `HttpResponse` object from its parts.
-
-        Does not perform extra validation, only regular response validation.
-        """
-        response_headers = {} if isinstance(headers, Empty) else headers
-        if 'Content-Type' not in response_headers:
-            response_headers['Content-Type'] = serializer.content_type
-
-        return HttpResponse(
-            content=serializer.to_json(raw_data),
-            status=(
-                _infer_status_code(self._method)
-                if isinstance(status_code, Empty)
-                else status_code
-            ),
-            headers=response_headers,
-        )
 
     def _async_endpoint(
         self,
@@ -144,29 +151,26 @@ class Endpoint:
         )
 
 
+_ExplicitDecoratorNameT: TypeAlias = Literal['modify', 'validate'] | None
+
+
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class EndpointMetadata:
     """
     Endpoint metadata specification.
 
-    Stored inside ``__endpoint__`` attribute of functions
-    decorated with :func:`rest`.
+    Attrs:
+        return_type: Stores optional return type that is specified either
+            via return type annotation for raw data responses,
+            or via ``return_type`` parameter to :func:`validate`.
+        status_code: Status code to be returned.
+            Can be infered from the HTTP method name.
+        headers: Optinal headers that response will return.
+        method: HTTP method for this endpoint.
+        explicit_decorator_name: Was this metadata created
+            with an explicit decorator call?
 
-    *returns_response* is determined by :func:`django_modern_rest.endpoint.rest`
-    function and its parameters.
-
-    This spec has two major ways of how it is going
-    to be used depending on *returns_response* option:
-    1. It is going to be used on an endpoint that returns a regular type
-    2. It is going to be used on an endpoint
-       that return :class:`django.http.HttpResponse` instance
-
-    When *returns_response* is ``False`` we can't provide:
-    - *return_type*
-
-    When *returns_response* is ``True`` we can't provide:
-    - ``value`` parameter to all entries in *headers*
     """
 
     # Can be provided only when dealing with `HttpResponse` returns:
@@ -175,6 +179,8 @@ class EndpointMetadata:
     # Can be provided at all times:
     status_code: HTTPStatus
     headers: ResponseHeadersT | Empty
+    method: HTTPMethod
+    explicit_decorator_name: _ExplicitDecoratorNameT
 
     def build_headers(self, serializer: type[BaseSerializer]) -> dict[str, Any]:
         """Returns headers with values for raw data endpoints."""
@@ -198,9 +204,14 @@ def validate(
     return_type: Any,
     status_code: HTTPStatus,
     headers: Mapping[str, HeaderDescription] | Empty = EmptyObj,
+    metadata_validator_cls: type[
+        EndpointMetadataValidator
+    ] = EndpointMetadataValidator,
     # TODO:
     # errors
     # schema_modifications
+    # cookies
+    # file downloads
 ) -> Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]:
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
@@ -238,6 +249,8 @@ def validate(
             When passed, we validate that all given required headers are present
             in the final response. Headers with ``value`` attribute set
             will be added to the final response.
+        metadata_validator_cls: Type that will validate
+            the endpoint definition by deafult. Can be customized.
 
     Raises:
         EndpointMetadataError: When user did not specify
@@ -252,6 +265,7 @@ def validate(
         status_code=status_code,
         headers=headers,
         explicit_decorator_name='validate',
+        metadata_validator_cls=metadata_validator_cls,
     )
 
 
@@ -279,9 +293,9 @@ def modify(
     # `type[T]` limits some type annotations:
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    # TODO:
-    # errors
-    # schema_modifications
+    metadata_validator_cls: type[
+        EndpointMetadataValidator
+    ] = EndpointMetadataValidator,
 ) -> _ModifyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -308,6 +322,8 @@ def modify(
             When *headers* are passed we will add them for all responses.
             Use non-empty ``value`` parameter
             of :class:`django_modern_rest.headers.BaseHeaderDescription` object.
+        metadata_validator_cls: Type that will validate
+            the endpoint definition by deafult. Can be customized.
 
     Returns:
         The same function with ``__endpoint__``
@@ -317,10 +333,8 @@ def modify(
         status_code=status_code,
         headers=headers,
         explicit_decorator_name='modify',
+        metadata_validator_cls=metadata_validator_cls,
     )
-
-
-_ExplicitDecoratorNameT: TypeAlias = Literal['modify', 'validate'] | None
 
 
 def _add_metadata(
@@ -329,6 +343,9 @@ def _add_metadata(
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: ResponseHeadersT | Empty = EmptyObj,
     explicit_decorator_name: _ExplicitDecoratorNameT = None,
+    metadata_validator_cls: type[
+        EndpointMetadataValidator
+    ] = EndpointMetadataValidator,
 ) -> Callable[[Callable[_ParamT, _ReturnT]], Callable[_ParamT, _ReturnT]]:
     # It is cheap for us to do the endpoint metadata calculation here,
     # because we do it once per module import.
@@ -336,34 +353,32 @@ def _add_metadata(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
         return_annotation = parse_return_annotation(func)
+        infered_return_type = (
+            return_annotation if isinstance(return_type, Empty) else return_type
+        )
+        method = HTTPMethod(func.__name__.upper())
+        status = (
+            infer_status_code(method)
+            if isinstance(status_code, Empty)
+            else status_code
+        )
 
-        EndpointMetadataValidator(
-            func,
-            explicit_decorator_name,
-            headers,
+        metadata_validator_cls(
+            func=func,
+            explicit_decorator_name=explicit_decorator_name,
+            headers=headers,
+            status_code=status,
+            return_type=infered_return_type,
         )(return_annotation)
 
         # Validation passed, now we can create valid metadata:
         func.__endpoint__ = EndpointMetadata(  # type: ignore[attr-defined]
-            return_type=(
-                return_annotation
-                if isinstance(return_type, Empty)
-                else return_type
-            ),
-            status_code=(
-                _infer_status_code(func.__name__)
-                if isinstance(status_code, Empty)
-                else status_code
-            ),
+            return_type=infered_return_type,
+            status_code=status,
             headers=headers,
+            explicit_decorator_name=explicit_decorator_name,
+            method=method,
         )
         return func
 
     return decorator
-
-
-def _infer_status_code(endpoint_name: str) -> HTTPStatus:
-    method = HTTPMethod(endpoint_name.upper())
-    if method is HTTPMethod.POST:
-        return HTTPStatus.CREATED
-    return HTTPStatus.OK

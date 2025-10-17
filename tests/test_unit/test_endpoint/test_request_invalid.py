@@ -43,7 +43,10 @@ def test_invalide_request_body(rf: RequestFactory, faker: Faker) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert json.loads(response.content) == snapshot({
-        'detail': 'JSON is malformed: invalid character (byte 1)',
+        'detail': (
+            "Cannot parse request body with content type 'multipart/form-data',"
+            " expected 'application/json'"
+        ),
     })
 
 

@@ -8,7 +8,7 @@ import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 
-from django_modern_rest import Controller, validate
+from django_modern_rest import Controller, HeaderDescription, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSE_KEY,
@@ -93,4 +93,30 @@ def test_validate_status_code(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == []
+
+
+@final
+class _WrongHeadersController(Controller[PydanticSerializer]):
+    @validate(
+        return_type=list[int],
+        status_code=HTTPStatus.CREATED,
+        headers={'X-Token': HeaderDescription()},
+    )
+    def post(self) -> HttpResponse:
+        """Does not respect a `headers` validator."""
+        return self.to_response([])
+
+
+def test_validate_headers(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that response status_code validation works."""
+    request = dmr_rf.post('/whatever/')
+
+    response = _WrongHeadersController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == []

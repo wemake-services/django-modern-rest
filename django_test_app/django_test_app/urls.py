@@ -27,6 +27,8 @@ from django_modern_rest.openapi import (
 )
 from django_modern_rest.openapi.components import Contact, License
 from rest_app.views import (
+    AsyncParseHeadersController,
+    ParseHeadersController,
     UserCreateController,
     UserListController,
     UserReplaceController,
@@ -51,6 +53,12 @@ router = Router([
         'user/direct/<int:user_id>',
         UserUpdateController.as_view(),
         name='user_update_direct',
+    ),
+    path('headers', ParseHeadersController.as_view(), name='parse_headers'),
+    path(
+        'async_headers',
+        AsyncParseHeadersController.as_view(),
+        name='async_parse_headers',
     ),
 ])
 

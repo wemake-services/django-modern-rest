@@ -21,9 +21,6 @@ class _QueryData(pydantic.BaseModel):
     query: str = pydantic.Field(alias='q')
     start_from: dt.datetime | None = None
 
-    # TODO: provide base model types with preset configs?
-    model_config = pydantic.ConfigDict(extra='forbid')
-
 
 @final
 class _CustomHeaders(pydantic.BaseModel):
@@ -88,3 +85,21 @@ class UserReplaceController(Controller[PydanticSerializer]):
     @validate(return_type=_UserInput, status_code=HTTPStatus.OK)
     async def put(self, user_id: int) -> HttpResponse:
         return JsonResponse({'email': 'new@email.com', 'age': user_id})
+
+
+@final
+class ParseHeadersController(
+    Headers[_CustomHeaders],
+    Controller[PydanticSerializer],
+):
+    def post(self) -> _CustomHeaders:
+        return self.parsed_headers
+
+
+@final
+class AsyncParseHeadersController(
+    Headers[_CustomHeaders],
+    Controller[PydanticSerializer],
+):
+    async def post(self) -> _CustomHeaders:
+        return self.parsed_headers
