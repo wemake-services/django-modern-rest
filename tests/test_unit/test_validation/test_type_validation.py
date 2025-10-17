@@ -49,6 +49,7 @@ class _TypedDict(TypedDict):
         (tuple[int, ...], ()),
         (_TypedDict, {'age': 1}),
         (None, None),
+        (Any, None),
     ],
 )
 @pytest.mark.parametrize(
