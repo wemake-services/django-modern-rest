@@ -54,6 +54,7 @@ typing_extensions = ">=4"
 msgspec = ">= 0.19"
 
 pydantic = { version = "^2.12", optional = true }
+slotscheck = "^0.19.1"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]

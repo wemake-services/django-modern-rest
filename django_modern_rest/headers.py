@@ -5,6 +5,7 @@ from typing import Any, ClassVar, TypeAlias, final
 from django_modern_rest.types import Empty, EmptyObj
 
 
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _BaseResponseHeader:
     """
     Abstract base class that represents an HTTP header in the response.
