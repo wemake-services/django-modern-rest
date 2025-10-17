@@ -10,12 +10,15 @@ lint:
 	poetry run ruff format --check --diff
 	poetry run flake8 .
 	poetry run lint-imports
-	poetry run codespell django_modern_rest tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: type-check
 type-check:
 	poetry run mypy .
 	poetry run pyright
+
+.PHONY: spell-check
+spell-check:
+	poetry run codespell django_modern_rest tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: unit
 unit:

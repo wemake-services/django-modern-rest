@@ -84,7 +84,7 @@ class ResponseValidator:
         Priority:
         - We first return any directly specified *validate_responses*
           argument to endpoint itself
-        - Then we return *validate_responses* from contoller if specified
+        - Then we return *validate_responses* from controller if specified
         - Lastly we return the default value from settings
         """
         if isinstance(self.metadata.validate_responses, bool):

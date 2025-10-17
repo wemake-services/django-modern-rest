@@ -24,8 +24,8 @@ class Router:
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 _ViewFunc: TypeAlias = Callable[..., HttpResponseBase]
-_ContollerT: TypeAlias = type['Controller[Any]']
-_ViewsSpec: TypeAlias = tuple[_ContollerT, _ViewFunc]
+_ControllerT: TypeAlias = type['Controller[Any]']
+_ViewsSpec: TypeAlias = tuple[_ControllerT, _ViewFunc]
 
 
 def compose_controllers(
@@ -70,7 +70,7 @@ def compose_controllers(
 
 
 def _validate_controllers_composition(
-    controllers: list[_ContollerT],
+    controllers: list[_ControllerT],
 ) -> bool:
     # We know that there are at least 2 controllers as this point:
     is_async = bool(controllers[0].view_is_async)
@@ -99,7 +99,7 @@ def _build_method_mapping(
         controller_methods = controller.existing_http_methods() - {'options'}
         if not controller_methods:
             raise ValueError(
-                f'Contoller {controller} must have at least one endpoint '
+                f'Controller {controller} must have at least one endpoint '
                 'to be composed',
             )
         method_intersection = method_mapping.keys() & controller_methods

@@ -272,7 +272,7 @@ def validate(
             in the final response. Headers with ``value`` attribute set
             will be added to the final response.
         metadata_validator_cls: Type that will validate
-            the endpoint definition by deafult. Can be customized.
+            the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
@@ -284,11 +284,11 @@ def validate(
 
     Returns:
         The same function with ``__endpoint__``
-        metadata instanse of :class:`EndpointMetadata`.
+        metadata instance of :class:`EndpointMetadata`.
 
     .. warning::
         Do not disable ``validate_responses`` unless
-        this is preformance critical for you!
+        this is performance critical for you!
 
     """
     return _add_metadata(
@@ -356,7 +356,7 @@ def modify(
             Use non-empty ``value`` parameter
             of :class:`django_modern_rest.headers.BaseHeaderDescription` object.
         metadata_validator_cls: Type that will validate
-            the endpoint definition by deafult. Can be customized.
+            the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
@@ -364,11 +364,11 @@ def modify(
 
     Returns:
         The same function with ``__endpoint__``
-        metadata instanse of :class:`EndpointMetadata`.
+        metadata instance of :class:`EndpointMetadata`.
 
     .. warning::
         Do not disable ``validate_responses`` unless
-        this is preformance critical for you!
+        this is performance critical for you!
 
     """
     return _add_metadata(  # type: ignore[return-value]
