@@ -71,9 +71,13 @@ def build_response(
     )
 
 
-def infer_status_code(endpoint_name: str) -> HTTPStatus:
+def infer_status_code(method_name: HTTPMethod | str) -> HTTPStatus:
     """
     Infer status code based on method name.
+
+    >>> from http import HTTPMethod
+    >>> infer_status_code(HTTPMethod.POST)
+    <HTTPStatus.CREATED: 201>
 
     >>> infer_status_code('post')
     <HTTPStatus.CREATED: 201>
@@ -81,7 +85,10 @@ def infer_status_code(endpoint_name: str) -> HTTPStatus:
     >>> infer_status_code('get')
     <HTTPStatus.OK: 200>
     """
-    method = HTTPMethod(endpoint_name.upper())
+    if isinstance(method_name, HTTPMethod):
+        method = method_name
+    else:
+        method = HTTPMethod(method_name.upper())
     if method is HTTPMethod.POST:
         return HTTPStatus.CREATED
     return HTTPStatus.OK

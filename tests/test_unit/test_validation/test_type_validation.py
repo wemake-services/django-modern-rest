@@ -44,6 +44,7 @@ class _TypedDict(TypedDict):
         (tuple[int, ...], (1, 2, 3, 4)),
         (tuple[int, ...], ()),
         (_TypedDict, {'age': 1}),
+        (None, None),
     ],
 )
 @pytest.mark.parametrize(
@@ -82,6 +83,7 @@ def test_valid_data(
         (_TypedDict, {}),
         (_TypedDict, {'a': 1}),
         (_TypedDict, {'age': 'a'}),
+        (None, 1),
     ],
 )
 @pytest.mark.parametrize(
