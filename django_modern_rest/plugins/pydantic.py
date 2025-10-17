@@ -194,8 +194,8 @@ class PydanticSerializer(BaseSerializer):
         """
         # TODO: support `.rebuild` and forward refs
         # TODO: handle PydanticSchemaGenerationError here
-        # TODO: call `_get_cached_type_adapter(model)` on import time
-        # the first time, so first requests won't be affected in runtime.
+        # At this point `_get_cached_type_adapter(model)` was already called
+        # during the optimizer stage, so it will be very fast to use in runtime.
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
             strict=strict,
