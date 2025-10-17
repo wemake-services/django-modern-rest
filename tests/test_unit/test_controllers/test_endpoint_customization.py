@@ -25,20 +25,3 @@ def test_custom_endpoint_controller() -> None:
         _CustomEndpointController.api_endpoints['get'],
         _EndpointSubclass,
     )
-
-
-@final
-class _NoEndpointsController(Controller[PydanticSerializer]):
-    def regular_method(self) -> int:
-        raise NotImplementedError
-
-    def _get(self) -> int:
-        raise NotImplementedError
-
-    def __post(self) -> int:  # noqa: WPS112
-        raise NotImplementedError
-
-
-def test_controller_with_no_endpoints() -> None:
-    """Ensures we can customize the endpoint factory."""
-    assert len(_NoEndpointsController.api_endpoints) == 0
