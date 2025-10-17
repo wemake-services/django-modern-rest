@@ -78,8 +78,8 @@ def _build_method_mapping(
 ) -> Mapping[str, _ViewFunc]:
     method_mapping: dict[str, _ViewFunc] = {}
     for controller, view in views:
-        contoller_methods = controller.existing_http_methods()
-        method_intersection = (method_mapping.keys() & contoller_methods) - {
+        controller_methods = controller.existing_http_methods()
+        method_intersection = (method_mapping.keys() & controller_methods) - {
             'options',
         }
         # TODO: decide what to do with default `options` method.
@@ -89,5 +89,5 @@ def _build_method_mapping(
                 f'Controllers have {method_intersection!r} common methods, '
                 'while all endpoints must be unique',
             )
-        method_mapping.update(dict.fromkeys(contoller_methods, view))
+        method_mapping.update(dict.fromkeys(controller_methods, view))
     return method_mapping

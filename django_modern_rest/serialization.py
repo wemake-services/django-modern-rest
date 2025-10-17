@@ -30,7 +30,7 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def to_json(cls, structure: Any) -> bytes:
-        """Override this method to covert structured data to json bytestring."""
+        """Convert structured data to json bytestring."""
         raise NotImplementedError
 
     @classmethod
@@ -51,7 +51,7 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def from_json(cls, buffer: 'FromJson') -> Any:
-        """Override this method to covert json bytestring to structured data."""
+        """Convert json bytestring to structured data."""
         raise NotImplementedError
 
     @classmethod
@@ -111,7 +111,7 @@ class BaseEndpointOptimizer:
     """
     Plugins might often need to run some specific preparations for endpoints.
 
-    To achive that we provide an explicit API for that.
+    To achieve that we provide an explicit API for that.
     """
 
     @classmethod

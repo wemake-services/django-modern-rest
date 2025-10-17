@@ -19,7 +19,7 @@ from django_modern_rest.test import DMRRequestFactory
 class _BodyModel(pydantic.BaseModel):
     uid: uuid.UUID
     created_at: dt.datetime
-    ellapsed: dt.timedelta
+    elapsed: dt.timedelta
     url: pydantic.HttpUrl
 
 
@@ -40,7 +40,7 @@ def test_complex_pydantic_serialization(
     request_data = {
         'uid': uuid.uuid4(),
         'created_at': faker.future_datetime(),
-        'ellapsed': faker.time_delta(),
+        'elapsed': faker.time_delta(),
         'url': faker.url(),
     }
 
