@@ -219,8 +219,8 @@ addopts = [
 ]
 
 
-# Covdefaults: https://pypi.org/project/covdefaults
 [tool.coverage.run]
+# Covdefaults: https://pypi.org/project/covdefaults
 plugins = ["covdefaults"]
 
 
@@ -255,7 +255,6 @@ plugins = [
 # Docs: https://microsoft.github.io/pyright/#/configuration
 include = ["django_modern_rest", "typesafety", "tests"]
 strict = ["django_modern_rest/**/*"]
-pythonVersion = "3.11"
 venvPath = "."
 venv = ".venv"
 
