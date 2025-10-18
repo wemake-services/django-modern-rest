@@ -252,7 +252,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 f'{func.__name__} is not a valid HTTP method name',
             ) from None
         endpoint = str(func)
-        # TODO: validate contoller's defition.
+        # TODO: validate contoller's definition.
         # Questions: how? when? one time?
         if isinstance(self.payload, ModifyEndpointPayload):
             return self._from_modify(
