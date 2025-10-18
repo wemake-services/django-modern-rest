@@ -212,6 +212,92 @@ class ResponseValidator:
             )
 
 
+class _BaseDefinitionValidator:
+    __slots__ = ()
+
+    def _validate_unique_responses(
+        self,
+        responses: list[ResponseDescription],
+        *,
+        endpoint: str,
+    ) -> None:
+        counter = Counter(response.status_code for response in responses)
+        for status, count in counter.items():
+            if count > 1:
+                raise EndpointMetadataError(
+                    f'{endpoint!r} has {status} specified {count} times',
+                )
+
+    def _validate_http_spec(
+        self,
+        responses: dict[HTTPStatus, ResponseDescription],
+        *,
+        endpoint: str,
+    ) -> None:
+        """Validate that we don't violate HTTP spec."""
+        # For status codes < 100 or 204, 304 statuses,
+        # no response body is allowed.
+        # If you specify a return annotation other than None,
+        # an EndpointMetadataError will be raised.
+        for status_code, response in responses.items():
+            if not is_safe_subclass(response.return_type, NoneType) and (
+                status_code < HTTPStatus.CONTINUE
+                or status_code
+                in {HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED}
+            ):
+                raise EndpointMetadataError(
+                    f'Can only return `None` not {response.return_type} '
+                    f'from an endpoint {endpoint!r} '
+                    f'with status code {status_code}',
+                )
+        # TODO: add more checks
+
+
+class ControllerValidator(_BaseDefinitionValidator):
+    """
+    Validate controller type definition.
+
+    Validates:
+    - Responses
+    - Async vs sync controllers
+    """
+
+    __slots__ = ()
+
+    def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
+        """Run the validation."""
+        typ_name = str(controller)
+        self._validate_unique_responses(controller.responses, endpoint=typ_name)
+        self._validate_http_spec(
+            {
+                response.status_code: response
+                for response in controller.responses
+            },
+            endpoint=typ_name,
+        )
+        return self._validate_endpoints(controller)
+
+    def _validate_endpoints(
+        self,
+        controller: 'type[Controller[BaseSerializer]]',
+    ) -> bool:
+        if not controller.api_endpoints:
+            return False
+        is_async = controller.api_endpoints[
+            next(iter(controller.api_endpoints.keys()))
+        ].is_async
+        if any(
+            endpoint.is_async is not is_async
+            for endpoint in controller.api_endpoints.values()
+        ):
+            # The same error message that django has.
+            raise EndpointMetadataError(
+                f'{controller!r} HTTP handlers must either '
+                'be all sync or all async',
+            )
+        return is_async
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ValidateEndpointPayload:
     """Payload created by ``@validate``."""
@@ -232,7 +318,7 @@ class ModifyEndpointPayload:
 
 # TODO: possibly split this into several validators? What would API look like?
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadataValidator:  # noqa: WPS214
+class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
     """
     Validate ``__endpoint__`` metadata definition.
 
@@ -422,44 +508,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
             f'Since {endpoint!r} returns regular data, '
             'it requires `@modify` decorator instead of `@validate`',
         )
-
-    def _validate_http_spec(
-        self,
-        responses: dict[HTTPStatus, ResponseDescription],
-        *,
-        endpoint: str,
-    ) -> None:
-        """Validate that we don't violate HTTP spec."""
-        # For status codes < 100 or 204, 304 statuses,
-        # no response body is allowed.
-        # If you specify a return annotation other than None,
-        # an EndpointMetadataError will be raised.
-        for status_code, response in responses.items():
-            if not is_safe_subclass(response.return_type, NoneType) and (
-                status_code < HTTPStatus.CONTINUE
-                or status_code
-                in {HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED}
-            ):
-                raise EndpointMetadataError(
-                    f'Can only return `None` not {response.return_type} '
-                    f'from an endpoint {endpoint!r} '
-                    f'with status code {status_code}',
-                )
-        # TODO: add more checks
-
-    def _validate_unique_responses(
-        self,
-        responses: list[ResponseDescription],
-        *,
-        endpoint: str,
-    ) -> None:
-        counter = Counter(response.status_code for response in responses)
-        for status, count in counter.items():
-            if count > 1:
-                raise EndpointMetadataError(
-                    f'Endpoint {endpoint!r} has {status} '
-                    f'specified {count} times',
-                )
 
     def _validate_responses(
         self,
