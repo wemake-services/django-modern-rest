@@ -1,6 +1,6 @@
 import abc
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar, final
 
 from django.http import HttpHeaders, HttpRequest
 from typing_extensions import TypedDict
@@ -11,10 +11,14 @@ from django_modern_rest.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from django_modern_rest.components import ComponentParser
+    from django_modern_rest.controller import Controller
     from django_modern_rest.internal.json import FromJson
     from django_modern_rest.metadata import EndpointMetadata
 
 _ModelT = TypeVar('_ModelT')
+_ComponentParserList = list[type['ComponentParser']]
+_TypeMapResult: TypeAlias = tuple[_ComponentParserList, dict[str, Any]]
 
 
 class BaseSerializer:
@@ -130,16 +134,7 @@ class BaseEndpointOptimizer:
 
 @final
 @dataclass(slots=True, frozen=True, kw_only=True)
-class _ComponentSpec:
-    name: str
-    data_getter: Any
-    model: Any
-    strict: bool
-
-
-@final
-@dataclass(slots=True, frozen=True, kw_only=True)
-class SerializerContext:  # noqa: WPS214
+class SerializerContext:
     """Parse and bind request components for a controller.
 
     This context collects raw data for all registered components, validates
@@ -147,30 +142,14 @@ class SerializerContext:  # noqa: WPS214
     and then binds the parsed values back to the controller.
     """
 
-    _specs: tuple[_ComponentSpec, ...]
+    _specs: list[type['ComponentParser']]
     _serializer: type[BaseSerializer]
     _combined_model: Any
-
-    def __call__(self, context: dict[str, Any]) -> dict[str, Any]:
-        """Validate provided context mapping and return parsed values."""
-        return self._validate_context(context)
-
-    def parse_and_bind(
-        self,
-        controller: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """Collect, validate, and bind component data to the controller."""
-        context = self._collect_context(controller, request, *args, **kwargs)
-        validated = self(context)
-        self._bind_parsed(controller, validated)
 
     @classmethod
     def build_for_class(
         cls,
-        controller_cls: type[Any],
+        controller_cls: 'type[Controller[BaseSerializer]]',
         serializer: type[BaseSerializer],
     ) -> 'SerializerContext':
         """Eagerly build context for a given controller and serializer."""
@@ -180,87 +159,78 @@ class SerializerContext:  # noqa: WPS214
         CombinedModel = TypedDict(combined_name, type_map, total=True)  # type: ignore[misc]
 
         return SerializerContext(
-            _specs=tuple(specs),
+            _specs=specs,
             _serializer=serializer,
             _combined_model=CombinedModel,
         )
 
+    def parse_and_bind(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """Collect, validate, and bind component data to the controller."""
+        context = self._collect_context(controller, request, *args, **kwargs)
+        validated = self._validate_context(context)
+        self._bind_parsed(controller, validated)
+
     def _collect_context(
         self,
-        controller: Any,
+        controller: 'Controller[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
         context: dict[str, Any] = {}
-        for spec in self._specs:
-            raw = spec.data_getter(
-                controller,
+        for component in self._specs:
+            raw = component.provide_context_data(
+                controller,  # type: ignore[arg-type]
                 self._serializer,
-                (spec.model,),
                 request,
                 *args,
                 **kwargs,
             )
-            context[spec.name] = raw
+            context[component.context_name] = raw
         return context
 
     def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
         try:
-            return self._validate_via_serializer(context)
+            return self._serializer.from_python(  # type: ignore[no-any-return]
+                context,
+                self._combined_model,
+                strict=False,
+            )
         except self._serializer.validation_error as exc:
             raise RequestSerializationError(
                 self._serializer.error_to_json(exc),
             ) from None
 
-    def _validate_via_serializer(
+    def _bind_parsed(
         self,
-        context: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Run serializer validation for the combined model."""
-        return cast(
-            dict[str, Any],
-            self._serializer.from_python(
-                context,
-                self._combined_model,
-                strict=False,
-            ),
-        )
-
-    def _bind_parsed(self, controller: Any, validated: dict[str, Any]) -> None:
+        controller: 'Controller[BaseSerializer]',
+        validated: dict[str, Any],
+    ) -> None:
         """Bind parsed values back to the controller instance."""
         for name, parsed_value in validated.items():
             setattr(controller, name, parsed_value)
 
 
-def _build_type_map(  # noqa: WPS210
-    controller_cls: type[Any],
+def _build_type_map(
+    controller_cls: type['Controller[BaseSerializer]'],
     serializer: type[BaseSerializer],
-) -> tuple[list[_ComponentSpec], dict[str, Any]]:
+) -> _TypeMapResult:
     """Build mapping name -> model and return specs and type_map."""
-    specs: list[_ComponentSpec] = []
+    specs: list[type[ComponentParser]] = []
     type_map: dict[str, Any] = {}
 
-    for component_cls, type_args in getattr(
-        controller_cls,
-        '_component_parsers',
-        [],
-    ):
-        data_getter = component_cls.provide_context_data
+    for component_cls, type_args in controller_cls._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
         model = type_args[0]
-        strict = getattr(component_cls, 'strict_validation', False)
 
-        name = component_cls.context_name
-        type_map[name] = model
+        type_map[component_cls.context_name] = model
 
-        specs.append(
-            _ComponentSpec(
-                name=name,
-                data_getter=data_getter,
-                model=model,
-                strict=strict,
-            ),
-        )
+        specs.append(component_cls)
     return specs, type_map

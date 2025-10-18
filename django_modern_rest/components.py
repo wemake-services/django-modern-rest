@@ -27,7 +27,6 @@ class ComponentParser:
     def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
@@ -68,7 +67,6 @@ class Query(ComponentParser, Generic[_QueryT]):
     def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
@@ -93,7 +91,6 @@ class Body(ComponentParser, Generic[_BodyT]):
     def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
@@ -127,7 +124,6 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,

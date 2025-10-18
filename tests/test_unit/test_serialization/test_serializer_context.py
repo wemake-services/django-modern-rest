@@ -26,16 +26,3 @@ def test_validation_error_with_invalid_data() -> None:
 
     errors = ctx_exc.value.args[0]  # noqa: WPS441
     assert isinstance(errors, list)
-
-
-def test_serializer_context_call_method() -> None:  # noqa: WPS432
-    """Test that __call__ method validates context correctly."""
-    ctx = _TestController._serializer_context  # noqa: SLF001
-
-    # Test successful validation
-    validated = ctx({'parsed_query': {'age': 25}})
-    assert validated['parsed_query'].age == 25  # noqa: WPS432
-
-    # Test validation error
-    with pytest.raises(RequestSerializationError):
-        ctx({'parsed_query': {'age': 'not_a_number'}})
