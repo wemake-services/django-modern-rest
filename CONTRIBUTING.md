@@ -10,7 +10,7 @@ To install them you would need to run `install` command:
 poetry install
 ```
 
-To activate your `virtualenv` run `poetry shell` or `source .venv/bin/activate`.
+To activate your `virtualenv` run `eval "$(poetry env activate)"` or `source .venv/bin/activate`.
 
 ## One magic command
 
