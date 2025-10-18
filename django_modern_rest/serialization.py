@@ -1,7 +1,9 @@
 import abc
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
-from django.http import HttpHeaders
+from django.http import HttpHeaders, HttpRequest
+from typing_extensions import TypedDict
 
 from django_modern_rest.exceptions import (
     RequestSerializationError,
@@ -124,3 +126,177 @@ class BaseEndpointOptimizer:
             metadata: Endpoint metadata to optimize.
 
         """
+
+
+@dataclass(slots=True, frozen=True)
+class _ComponentSpec:
+    name: str
+    data_getter: Any
+    model: Any
+    strict: bool
+
+
+class SerializerContext:  # noqa: WPS214
+    """Parse and bind request components for a controller.
+
+    This context collects raw data for all registered components, validates
+    the combined payload in a single call using a cached TypedDict model,
+    and then binds the parsed values back to the controller.
+    """
+
+    __slots__ = ('_combined_model', '_names', '_serializer', '_specs')
+
+    def __init__(
+        self,
+        specs: tuple[_ComponentSpec, ...],
+        serializer: type[BaseSerializer],
+        combined_model: Any,
+        names: tuple[str, ...],
+    ) -> None:
+        """Initialize the context with a compiled plan and combined model."""
+        self._specs = specs
+        self._serializer = serializer
+        self._combined_model = combined_model
+        self._names = names
+
+    def parse_and_bind(
+        self,
+        controller: Any,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """Collect, validate, and bind component data to the controller."""
+        context = self._collect_context(controller, request, *args, **kwargs)
+        validated = self._validate_context(context)
+        self._bind_parsed(controller, validated)
+
+    @classmethod
+    def for_controller(
+        cls,
+        controller_cls: type[Any],
+        serializer: type[BaseSerializer],
+    ) -> 'SerializerContext':
+        """Return controller cached context instance (built at import-time)."""
+        return cast(
+            SerializerContext,
+            controller_cls._serializer_context,  # noqa: SLF001
+        )
+
+    @classmethod
+    def build_for_class(
+        cls,
+        controller_cls: type[Any],
+        serializer: type[BaseSerializer],
+    ) -> 'SerializerContext':
+        """Eagerly build context for a given controller and serializer."""
+        specs: list[_ComponentSpec] = []
+        names: list[str] = []
+        type_map = _build_type_map(controller_cls, serializer, specs, names)
+
+        combined_name = f'_{controller_cls.__name__}ContextModel'
+        CombinedModel = TypedDict(combined_name, type_map, total=True)  # type: ignore[misc]
+
+        return SerializerContext(
+            tuple(specs),
+            serializer,
+            CombinedModel,
+            tuple(names),
+        )
+
+    def _collect_context(
+        self,
+        controller: Any,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Collect raw data for all components into a mapping."""
+        context: dict[str, Any] = {}
+        for spec in self._specs:
+            raw = spec.data_getter(
+                controller,
+                self._serializer,
+                (spec.model,),
+                request,
+                *args,
+                **kwargs,
+            )
+            context[spec.name] = raw
+        return context
+
+    def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
+        """Validate the combined payload using the cached TypedDict model."""
+        try:  # noqa: WPS229
+            return self._validate_via_serializer(context)
+        except self._serializer.validation_error as exc:
+            errors = self._try_strip_component_prefix(
+                self._serializer.error_to_json(exc),
+            )
+            raise RequestSerializationError(errors) from None
+        except Exception as exc:
+            raise RequestSerializationError(str(exc)) from exc
+
+    def _validate_via_serializer(
+        self,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Run serializer validation for the combined model."""
+        return cast(
+            dict[str, Any],
+            self._serializer.from_python(
+                context,
+                self._combined_model,
+                strict=False,
+            ),
+        )
+
+    def _try_strip_component_prefix(self, errors: list[Any]) -> list[Any]:
+        """Strip top-level component name from error locations if present."""
+        component_names = set(self._names)
+        for err in errors:
+            loc = list(err.get('loc', ()))
+            is_comp = bool(
+                loc and isinstance(loc[0], str) and loc[0] in component_names,
+            )
+            if is_comp:
+                loc = loc[1:]
+            err['loc'] = loc
+        return errors
+
+    def _bind_parsed(self, controller: Any, validated: dict[str, Any]) -> None:
+        """Bind parsed values back to the controller instance."""
+        for name, parsed_value in validated.items():
+            setattr(controller, name, parsed_value)
+
+
+def _build_type_map(  # noqa: WPS210
+    controller_cls: type[Any],
+    serializer: type[BaseSerializer],
+    specs: list[_ComponentSpec],
+    names: list[str],
+) -> dict[str, Any]:
+    """Build mapping name -> model and fill specs/names lists."""
+    type_map: dict[str, Any] = {}
+    for component_cls, type_args in getattr(
+        controller_cls,
+        '_component_parsers',
+        [],
+    ):
+        data_getter = component_cls._provide_context_data  # noqa: SLF001
+        model = type_args[0] if len(type_args) >= 1 else Any
+        strict = getattr(component_cls, 'strict_validation', False)
+
+        name = component_cls._provide_context_name()  # noqa: SLF001
+        names.append(name)
+        type_map[name] = model
+
+        specs.append(
+            _ComponentSpec(
+                name=name,
+                data_getter=data_getter,
+                model=model,
+                strict=strict,
+            ),
+        )
+    return type_map
