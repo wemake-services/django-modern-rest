@@ -9,7 +9,13 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Link(BaseObject):
-    """TODO: add docs."""
+    """
+    The Link object represents a possible design-time link for a response.
+
+    The presence of a link does not guarantee the caller's ability
+    to successfully invoke it, rather it provides a known relationship
+    and traversal mechanism between responses and other operations.
+    """
 
     operation_ref: str | None = None
     operation_id: str | None = None

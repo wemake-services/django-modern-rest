@@ -5,7 +5,7 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class License(BaseObject):
-    """TODO: add docs."""
+    """License information for the exposed API."""
 
     name: str
     identifier: str | None = None

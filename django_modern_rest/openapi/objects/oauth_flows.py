@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class OAuthFlows(BaseObject):
-    """TODO: add docs."""
+    """Allows configuration of the supported OAuth Flows."""
 
     implicit: 'OAuthFlow | None' = None
     password: 'OAuthFlow | None' = None

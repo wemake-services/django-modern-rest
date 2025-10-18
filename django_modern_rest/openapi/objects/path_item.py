@@ -12,7 +12,13 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class PathItem(BaseObject):
-    """TODO: add docs."""
+    """
+    Describes the operations available on a single path.
+
+    A Path Item MAY be empty, due to ACL constraints.
+    The path itself is still exposed to the documentation viewer but
+    they will not know which operations and parameters are available.
+    """
 
     ref: str | None = None
     summary: str | None = None

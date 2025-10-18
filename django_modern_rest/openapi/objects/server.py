@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Server(BaseObject):
-    """TODO: add docs."""
+    """An object representing a `Server`."""
 
     url: str
     description: str | None = None

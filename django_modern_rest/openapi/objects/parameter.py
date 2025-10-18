@@ -6,7 +6,7 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.example import Example
-    from django_modern_rest.openapi.objects.media_type import OpenAPIMediaType
+    from django_modern_rest.openapi.objects.media_type import MediaType
     from django_modern_rest.openapi.objects.reference import Reference
     from django_modern_rest.openapi.objects.schema import Schema
 
@@ -27,4 +27,4 @@ class Parameter(BaseObject):
     allow_reserved: bool = False
     example: Any | None = None
     examples: 'Mapping[str, Example | Reference] | None' = None
-    content: 'dict[str, OpenAPIMediaType] | None' = None
+    content: 'dict[str, MediaType] | None' = None

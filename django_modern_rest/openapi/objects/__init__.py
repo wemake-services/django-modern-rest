@@ -28,7 +28,7 @@ from django_modern_rest.openapi.objects.info import Info as Info
 from django_modern_rest.openapi.objects.license import License as License
 from django_modern_rest.openapi.objects.link import Link as Link
 from django_modern_rest.openapi.objects.media_type import (
-    OpenAPIMediaType as OpenAPIMediaType,
+    MediaType as MediaType,
 )
 from django_modern_rest.openapi.objects.oauth_flow import OAuthFlow as OAuthFlow
 from django_modern_rest.openapi.objects.oauth_flows import (
@@ -44,7 +44,7 @@ from django_modern_rest.openapi.objects.request_body import (
     RequestBody as RequestBody,
 )
 from django_modern_rest.openapi.objects.response import (
-    OpenAPIResponse as OpenAPIResponse,
+    Response as Response,
 )
 from django_modern_rest.openapi.objects.responses import Responses as Responses
 from django_modern_rest.openapi.objects.schema import Schema as Schema

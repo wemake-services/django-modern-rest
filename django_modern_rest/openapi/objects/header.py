@@ -5,14 +5,25 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.example import Example
-    from django_modern_rest.openapi.objects.media_type import OpenAPIMediaType
+    from django_modern_rest.openapi.objects.media_type import MediaType
     from django_modern_rest.openapi.objects.reference import Reference
     from django_modern_rest.openapi.objects.schema import Schema
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class OpenAPIHeader(BaseObject):
-    """TODO: add docs."""
+    """
+    Header Object.
+
+    The Header Object follows the structure of the Parameter Object
+    with the following changes:
+
+    1. `name` MUST NOT be specified, it is given in the corresponding
+        headers map.
+    2. `in` MUST NOT be specified, it is implicitly in header.
+    3. All traits that are affected by the location MUST be applicable to
+        a location of header (for example, style).
+    """
 
     schema: 'Schema | Reference | None' = None
     name: Literal[''] = ''
@@ -24,8 +35,4 @@ class OpenAPIHeader(BaseObject):
     explode: bool | None = None
     example: Any | None = None
     examples: 'dict[str, Example | Reference] | None' = None
-    content: 'dict[str, OpenAPIMediaType] | None' = None
-
-    @property
-    def _exclude_fields(self) -> set[str]:
-        return {'name', 'param_in'}
+    content: 'dict[str, MediaType] | None' = None

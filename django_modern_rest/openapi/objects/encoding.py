@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Encoding(BaseObject):
-    """TODO: add docs."""
+    """A single encoding definition applied to a single schema property."""
 
     content_type: str | None = None
     headers: 'dict[str, OpenAPIHeader | Reference] | None' = None

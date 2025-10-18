@@ -11,8 +11,13 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
-class OpenAPIMediaType(BaseObject):
-    """TODO: add docs."""
+class MediaType(BaseObject):
+    """
+    Media Type Object.
+
+    Each Media Type Object provides schema and examples for the media
+    type identified by its key.
+    """
 
     schema: 'Reference | Schema | None' = None
     example: Any | None = None

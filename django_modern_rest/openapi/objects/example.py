@@ -6,7 +6,14 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Example(BaseObject):
-    """TODO: add docs."""
+    """
+    Example Object.
+
+    In all cases, the example value is expected to be compatible with the
+    type schema of its associated value. Tooling implementations MAY choose
+    to validate compatibility automatically, and reject the example
+    value(s) if incompatible.
+    """
 
     id: str | None = None
     summary: str | None = None

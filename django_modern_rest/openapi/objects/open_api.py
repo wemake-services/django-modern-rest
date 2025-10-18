@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class OpenAPI(BaseObject):
-    """TODO: add docs."""
+    """This is the root object of the OpenAPI document."""
 
     openapi: str = '3.1.0'
 

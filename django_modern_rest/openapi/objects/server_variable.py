@@ -5,7 +5,7 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class ServerVariable(BaseObject):
-    """TODO: add docs."""
+    """An object representing a `Server Variable` for server URL template."""
 
     default: str
     enum: list[str] | None = None

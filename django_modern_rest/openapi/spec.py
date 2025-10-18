@@ -33,8 +33,8 @@ def openapi_spec(
     if isinstance(config, Empty):
         config = _default_config()
 
-    # TODO: temporary schema generation without content
-    schema = config.to_openapi().to_schema()
+    # TODO: temporary schema without content
+    schema = {'openapi': '3.1.0'}
 
     urlpatterns = [
         path(

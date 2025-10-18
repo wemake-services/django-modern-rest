@@ -5,7 +5,7 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class ExternalDocumentation(BaseObject):
-    """TODO: add docs."""
+    """Allows referencing an external resource for extended documentation."""
 
     url: str
     description: str | None = None

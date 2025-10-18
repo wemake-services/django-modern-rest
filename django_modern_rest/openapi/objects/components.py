@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.path_item import PathItem
     from django_modern_rest.openapi.objects.reference import Reference
     from django_modern_rest.openapi.objects.request_body import RequestBody
-    from django_modern_rest.openapi.objects.response import OpenAPIResponse
+    from django_modern_rest.openapi.objects.response import Response
     from django_modern_rest.openapi.objects.schema import Schema
     from django_modern_rest.openapi.objects.security_scheme import (
         SecurityScheme,
@@ -21,10 +21,16 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Components(BaseObject):
-    """TODO: add docs."""
+    """
+    Holds a set of reusable objects for different aspects of the OAS.
+
+    All objects defined within the components object will have no effect
+    on the API unless they are explicitly referenced from properties
+    outside the components object.
+    """
 
     schemas: 'dict[str, Schema] | None' = None
-    responses: 'dict[str, OpenAPIResponse | Reference] | None' = None
+    responses: 'dict[str, Response | Reference] | None' = None
     parameters: 'dict[str, Parameter | Reference] | None' = None
     examples: 'dict[str, Example | Reference] | None' = None
     request_bodies: 'dict[str, RequestBody | Reference] | None' = None

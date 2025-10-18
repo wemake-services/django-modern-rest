@@ -11,7 +11,12 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Tag(BaseObject):
-    """TODO: add docs."""
+    """
+    Adds metadata to a single tag that is used by the `Operation` object.
+
+    It is not mandatory to have a `Tag` object per tag defined in the
+    `Operation` object instances.
+    """
 
     name: str
     description: str | None = None

@@ -10,7 +10,12 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Info(BaseObject):
-    """TODO: add docs."""
+    """
+    The Info object provides metadata about the API.
+
+    The metadata MAY be used by the clients if needed, and MAY be presented
+    in editing or documentation generation tools for convenience.
+    """
 
     title: str
     version: str

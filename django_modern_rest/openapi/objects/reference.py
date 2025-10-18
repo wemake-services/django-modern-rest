@@ -5,7 +5,12 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Reference(BaseObject):
-    """TODO: add docs."""
+    """
+    A simple object to allow referencing other components in document.
+
+    The `$ref` string value contains a URI RFC3986, which identifies
+    the location of the value being referenced.
+    """
 
     ref: str
     summary: str | None = None

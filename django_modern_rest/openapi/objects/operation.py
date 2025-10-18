@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Operation(BaseObject):
-    """TODO: add docs."""
+    """Describes a single API operation on a path."""
 
     tags: list[str] | None = None
     summary: str | None = None

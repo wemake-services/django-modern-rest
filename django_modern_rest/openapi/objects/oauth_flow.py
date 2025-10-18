@@ -5,7 +5,7 @@ from django_modern_rest.openapi.objects.base import BaseObject
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class OAuthFlow(BaseObject):
-    """TODO: add docs."""
+    """Configuration details for a supported OAuth Flow."""
 
     authorization_url: str | None = None
     token_url: str | None = None
