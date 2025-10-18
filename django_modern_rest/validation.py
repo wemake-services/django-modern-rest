@@ -64,7 +64,7 @@ class ResponseValidator:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
         if not self._is_validation_enabled(controller):
             return response
-        schema = self._get_response_schema(response.status_code)
+        schema = self._get_response_schema(controller, response.status_code)
         self._validate_body(response.content, schema, response=response)
         self._validate_response_object(response, schema)
         return response
@@ -93,22 +93,35 @@ class ResponseValidator:
         )
         if not self._is_validation_enabled(controller):
             return all_response_data
-        schema = self._get_response_schema(all_response_data.status_code)
+        schema = self._get_response_schema(
+            controller,
+            all_response_data.status_code,
+        )
         self._validate_body(structured, schema)
         return all_response_data
 
     def _get_response_schema(
         self,
+        controller: 'Controller[BaseSerializer]',
         status_code: HTTPStatus | int,
     ) -> ResponseDescription:
-        schema = self.metadata.responses.get(HTTPStatus(status_code))
-        if schema is None:
-            allowed = set(self.metadata.responses.keys())
-            raise ResponseSerializationError(
-                f'Returned {status_code=} is not specified '
-                f'in the list of allowed codes {allowed}',
-            )
-        return schema
+        status = HTTPStatus(status_code)
+        schema = self.metadata.responses.get(status)
+        if schema is not None:
+            return schema
+
+        schema = controller.response_map.get(status)
+        if schema is not None:
+            return schema
+
+        # TODO: support global responses
+        allowed = (
+            set(self.metadata.responses.keys()) | controller.response_map.keys()
+        )
+        raise ResponseSerializationError(
+            f'Returned {status_code=} is not specified '
+            f'in the list of allowed codes {allowed}',
+        )
 
     def _is_validation_enabled(
         self,
@@ -455,7 +468,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
         # for mypy: this can't happen, we always have at least one response
         # due to `@validate`'s signature.
         assert payload.responses, f'No responses found for {endpoint!r}'  # noqa: S101
-        # TODO: validate unique responses
         return {resp.status_code: resp for resp in payload.responses}
 
     def _validate_respones_and_modification(

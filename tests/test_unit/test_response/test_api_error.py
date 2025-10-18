@@ -1,5 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
+from typing import ClassVar
 
 import pytest
 from django.http import HttpResponse
@@ -121,6 +122,29 @@ def test_api_error_invalid(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content)['detail']
+
+
+class _ControllerLevelAPIError(Controller[PydanticSerializer]):
+    responses: ClassVar[list[ResponseDescription]] = [
+        ResponseDescription(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+    ]
+
+    def get(self) -> str:
+        """Type mismatch, but works."""
+        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
+
+
+def test_valid_api_error_contoller_level(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures validation can validate api errors on controllers."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _ControllerLevelAPIError.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    assert json.loads(response.content) == 1
 
 
 class _InvalidDisabledAPIError(Controller[PydanticSerializer]):
