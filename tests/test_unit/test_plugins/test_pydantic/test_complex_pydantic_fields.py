@@ -88,7 +88,7 @@ def test_complex_pydantic_in_arbitrary_types(
         'detail': [
             {
                 'type': 'is_instance_of',
-                'loc': ['user'],
+                'loc': ['parsed_body', 'user'],
                 'msg': 'Input should be an instance of _User',
                 'input': 1,
                 'ctx': {'class': '_User'},

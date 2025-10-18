@@ -14,24 +14,28 @@ _HeadersT = TypeVar('_HeadersT')
 
 
 class ComponentParser:
-    """Base abstract parser for request components."""
+    """Base abstract provider for request components."""
 
     # Public API:
     strict_validation: ClassVar[bool] = False
+    context_name: ClassVar[str]
 
     # Internal API:
     __is_base_type__: ClassVar[bool] = True
 
     @abc.abstractmethod
-    def parse_component(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
-        """Implement this method to be able to parse any request component."""
+    ) -> Any:
+        """
+        Return unstructured raw value for serializer.from_python().
+
+        Implement body JSON decoding / content-type checks here if needed.
+        """
         raise NotImplementedError
 
 
@@ -57,28 +61,17 @@ class Query(ComponentParser, Generic[_QueryT]):
     """
 
     parsed_query: _QueryT
+    context_name: ClassVar[str] = 'parsed_query'
 
     @override
-    def parse_component(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
-        """Parses query strings from request."""
-        # TODO: validate `type_args` len
-        try:
-            self.parsed_query = serializer.from_python(
-                request.GET,
-                type_args[0],
-                strict=self.strict_validation,
-            )
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None
+    ) -> Any:
+        return request.GET
 
 
 class Body(ComponentParser, Generic[_BodyT]):
@@ -92,17 +85,16 @@ class Body(ComponentParser, Generic[_BodyT]):
     """
 
     parsed_body: _BodyT
+    context_name: ClassVar[str] = 'parsed_body'
 
     @override
-    def parse_component(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
-        """Parses request body."""
+    ) -> Any:
         if request.content_type != serializer.content_type:
             raise RequestSerializationError(
                 'Cannot parse request body '
@@ -110,17 +102,9 @@ class Body(ComponentParser, Generic[_BodyT]):
                 f'expected {serializer.content_type!r}',
             )
         try:
-            self.parsed_body = serializer.from_python(
-                serializer.from_json(request.body),
-                type_args[0],
-                strict=self.strict_validation,
-            )
-        except msgspec.DecodeError as exc:
+            return serializer.from_json(request.body)
+        except (msgspec.DecodeError, TypeError) as exc:
             raise RequestSerializationError(str(exc)) from exc
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None
 
 
 class Headers(ComponentParser, Generic[_HeadersT]):
@@ -134,25 +118,14 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     """
 
     parsed_headers: _HeadersT
+    context_name: ClassVar[str] = 'parsed_headers'
 
     @override
-    def parse_component(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
-        type_args: tuple[Any, ...],
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
-        """Parses request headers."""
-        # TODO: validate `type_args` len
-        try:
-            self.parsed_headers = serializer.from_python(
-                request.headers,
-                type_args[0],
-                strict=self.strict_validation,
-            )
-        except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_to_json(exc),
-            ) from None
+    ) -> Any:
+        return request.headers

@@ -25,7 +25,7 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import ResponseDescription, build_response
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import (
     DMR_GLOBAL_ERROR_HANDLER_KEY,
     resolve_setting,
@@ -56,6 +56,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    serializer_context_cls: ClassVar[type[SerializerContext]] = (
+        SerializerContext
+    )
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
     responses: ClassVar[list[ResponseDescription]] = []
@@ -67,6 +70,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
     _is_async: ClassVar[bool]
+    _serializer_context: ClassVar[Any]
 
     @override
     def __init_subclass__(cls) -> None:
@@ -97,6 +101,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
         cls._validate_endpoints()
+
+        cls._serializer_context = cls.serializer_context_cls.build_for_class(
+            cls,
+            cls._serializer,
+        )
 
     def to_response(
         self,
@@ -281,19 +290,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
             # TODO: support redirects
-            for parser, type_args in self._component_parsers:
-                # TODO: maybe parse all at once?
-                # See https://github.com/wemake-services/django-modern-rest/issues/8
-                parser.parse_component(  # pyright: ignore[reportPrivateUsage]
-                    # We lie that this is a `ComponentParser`, but their
-                    # APIs are compatible by design.
-                    self,  # type: ignore[arg-type]
-                    self._serializer,
-                    type_args,
-                    request,
-                    *args,
-                    **kwargs,
-                )
+            self._serializer_context.parse_and_bind(
+                self,
+                request,
+                *args,
+                **kwargs,
+            )
             return endpoint(self, *args, **kwargs)  # we don't pass request
         raise MethodNotAllowedError(method)
 
