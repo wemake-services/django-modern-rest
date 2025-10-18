@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller, modify, validate
+from django_modern_rest import Controller, ResponseDescription, modify, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 from django_modern_rest.types import Empty
@@ -45,7 +45,12 @@ class _WrongController(Controller[PydanticSerializer]):
         """Does not respect a pydantic model type."""
         return {'wrong': 'abc'}  # type: ignore[return-value]
 
-    @validate(return_type=dict[str, int], status_code=HTTPStatus.OK)
+    @validate(
+        ResponseDescription(
+            return_type=dict[str, int],
+            status_code=HTTPStatus.OK,
+        ),
+    )
     def delete(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
         return HttpResponse(b'[]')
@@ -100,7 +105,12 @@ def test_validate_response_text(
 
 @final
 class _WrongStatusCodeController(Controller[PydanticSerializer]):
-    @validate(return_type=list[int], status_code=HTTPStatus.CREATED)
+    @validate(
+        ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.CREATED,
+        ),
+    )
     def get(self) -> HttpResponse:
         """Does not respect a `status_code` validator."""
         return HttpResponse(b'[]', status=HTTPStatus.OK)
@@ -118,7 +128,8 @@ def test_validate_status_code(
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
         'detail': (
-            'response.status_code=200 does not match expected 201 status code'
+            'Returned status_code=200 is not specified in the list '
+            'of allowed codes {<HTTPStatus.CREATED: 201>}'
         ),
     })
 

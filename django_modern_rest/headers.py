@@ -1,8 +1,11 @@
 import dataclasses
 from collections.abc import Mapping
-from typing import Any, ClassVar, TypeAlias, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
 
 from django_modern_rest.types import Empty, EmptyObj
+
+if TYPE_CHECKING:
+    from django_modern_rest.serialization import BaseSerializer
 
 
 class _BaseResponseHeader:
@@ -49,6 +52,10 @@ class NewHeader(_BaseResponseHeader):
     # But they can add an exact value from the spec.
     value: str  # noqa: WPS110
 
+    def to_description(self) -> 'HeaderDescription':
+        """Convert header type."""
+        return HeaderDescription(required=self.required)
+
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -70,3 +77,18 @@ class HeaderDescription(_BaseResponseHeader):
 ResponseHeadersT: TypeAlias = (
     Mapping[str, NewHeader] | Mapping[str, HeaderDescription]
 )
+
+
+def build_headers(
+    headers: Mapping[str, NewHeader] | Empty,
+    serializer: type['BaseSerializer'],
+) -> dict[str, Any]:
+    """Returns headers with values for raw data endpoints."""
+    result_headers: dict[str, Any] = {'Content-Type': serializer.content_type}
+    if isinstance(headers, Empty):
+        return result_headers
+    result_headers.update({
+        header_name: response_header.value
+        for header_name, response_header in headers.items()
+    })
+    return result_headers

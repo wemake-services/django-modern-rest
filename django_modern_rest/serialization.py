@@ -11,8 +11,8 @@ from django_modern_rest.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.endpoint import EndpointMetadata
     from django_modern_rest.internal.json import FromJson
+    from django_modern_rest.metadata import EndpointMetadata
 
 _ModelT = TypeVar('_ModelT')
 

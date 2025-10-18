@@ -1,20 +1,30 @@
+from collections import Counter
+from collections.abc import Mapping
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
+from typing import (
+    Any,
+    ClassVar,
+    Generic,
+    TypeAlias,
+    TypeVar,
+    get_args,
+)
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
-from django.utils.functional import classproperty
+from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
+    EndpointMetadataError,
     MethodNotAllowedError,
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
-from django_modern_rest.response import build_response
+from django_modern_rest.response import ResponseDescription, build_response
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import (
     DMR_GLOBAL_ERROR_HANDLER_KEY,
@@ -51,6 +61,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
+    responses: ClassVar[list[ResponseDescription]] = []
 
     # We lie about that it is an instance variable, because type vars
     # are not allowed in `ClassVar`:
@@ -227,6 +238,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             if getattr(cls, method, None) is not None
         }
 
+    @cached_property
+    def response_map(self) -> Mapping[HTTPStatus, ResponseDescription]:
+        """Returns and caches the responses as a map."""
+        return {response.status_code: response for response in self.responses}
+
     @classproperty
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
@@ -238,6 +254,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     @classmethod
     def _validate_endpoints(cls) -> None:
         """Validate that endpoints definition is correct in build time."""
+        # Validate responses:
+        counter = Counter(response.status_code for response in cls.responses)
+        for status, count in counter.items():
+            if count > 1:
+                raise EndpointMetadataError(
+                    f'Controller {cls!r} has {status} specified {count} times',
+                )
+
         if not cls.api_endpoints:
             return
         is_async = cls.api_endpoints[
