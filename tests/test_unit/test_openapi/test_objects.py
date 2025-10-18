@@ -1,6 +1,6 @@
 import pytest
 
-from django_modern_rest.openapi.normalization import normalize_key
+from django_modern_rest.openapi.objects.base import _normalize_key
 
 
 @pytest.mark.parametrize(
@@ -30,5 +30,5 @@ from django_modern_rest.openapi.normalization import normalize_key
     ],
 )
 def test_normalize_key(input_key: str, expected_output: str) -> None:
-    """Ensure that `normalize_key` converts field names to OpenAPI keys."""
-    assert normalize_key(input_key) == expected_output
+    """Ensure that `_normalize_key` converts field names to OpenAPI keys."""
+    assert _normalize_key(input_key) == expected_output

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 from django_modern_rest.openapi.objects.base import BaseObject
 from django_modern_rest.openapi.objects.components import Components
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.tag import Tag
 
 
+@final
 @dataclass(frozen=True, kw_only=True, slots=True)
 class OpenAPI(BaseObject):
     """This is the root object of the OpenAPI document."""

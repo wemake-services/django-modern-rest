@@ -1,6 +1,8 @@
 import enum
+from typing import final
 
 
+@final
 class OpenAPIFormat(enum.StrEnum):
     """TODO: add docs."""
 
@@ -27,6 +29,7 @@ class OpenAPIFormat(enum.StrEnum):
     BINARY = 'binary'
 
 
+@final
 class OpenAPIType(enum.StrEnum):
     """TODO: add docs."""
 

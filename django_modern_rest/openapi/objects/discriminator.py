@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from typing import final
 
 from django_modern_rest.openapi.objects.base import BaseObject
 
 
+@final
 @dataclass(unsafe_hash=True, frozen=True, kw_only=True, slots=True)
 class Discriminator(BaseObject):
     """

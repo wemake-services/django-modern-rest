@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, final
 
 from django_modern_rest.openapi.objects.base import BaseObject
 
@@ -11,9 +11,10 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.schema import Schema
 
 
+@final
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Parameter(BaseObject):
-    """TODO: add docs."""
+    """Describes a single operation parameter."""
 
     name: str
     param_in: str
