@@ -4,9 +4,7 @@ from django_modern_rest.openapi.objects import (  # noqa: WPS235d
     Components,
     Contact,
     ExternalDocumentation,
-    Info,
     License,
-    OpenAPI,
     PathItem,
     Reference,
     SecurityRequirement,
@@ -17,7 +15,14 @@ from django_modern_rest.openapi.objects import (  # noqa: WPS235d
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class OpenAPIConfig:
-    """Configuration for OpenAPI."""
+    """
+    Configuration class for customizing OpenAPI specification metadata.
+
+    This class provides a way to configure various aspects of the OpenAPI
+    specification that will be generated for your API documentation. It allows
+    you to customize the API information, contact details, licensing, security
+    requirements, and other metadata that appears in the generated OpenAPI spec.
+    """
 
     title: str
     version: str
@@ -34,23 +39,3 @@ class OpenAPIConfig:
     tags: list[Tag] | None = None
     use_handler_docstrings: bool = False
     webhooks: dict[str, PathItem | Reference] | None = None
-
-    def to_openapi(self) -> OpenAPI:
-        """TODO: add docs."""
-        return OpenAPI(
-            external_docs=self.external_docs,
-            security=self.security,
-            servers=self.servers,
-            tags=self.tags,
-            webhooks=self.webhooks,
-            info=Info(
-                title=self.title,
-                version=self.version,
-                description=self.description,
-                contact=self.contact,
-                license=self.license,
-                summary=self.summary,
-                terms_of_service=self.terms_of_service,
-            ),
-            paths={},
-        )

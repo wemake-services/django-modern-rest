@@ -22,7 +22,7 @@ from django_modern_rest.openapi.objects.external_documentation import (
     ExternalDocumentation as ExternalDocumentation,
 )
 from django_modern_rest.openapi.objects.header import (
-    OpenAPIHeader as OpenAPIHeader,
+    Header as Header,
 )
 from django_modern_rest.openapi.objects.info import Info as Info
 from django_modern_rest.openapi.objects.license import License as License

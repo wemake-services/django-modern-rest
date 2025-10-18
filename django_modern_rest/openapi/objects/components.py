@@ -6,7 +6,7 @@ from django_modern_rest.openapi.objects.base import BaseObject
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.callback import Callback
     from django_modern_rest.openapi.objects.example import Example
-    from django_modern_rest.openapi.objects.header import OpenAPIHeader
+    from django_modern_rest.openapi.objects.header import Header
     from django_modern_rest.openapi.objects.link import Link
     from django_modern_rest.openapi.objects.parameter import Parameter
     from django_modern_rest.openapi.objects.path_item import PathItem
@@ -34,7 +34,7 @@ class Components(BaseObject):
     parameters: 'dict[str, Parameter | Reference] | None' = None
     examples: 'dict[str, Example | Reference] | None' = None
     request_bodies: 'dict[str, RequestBody | Reference] | None' = None
-    headers: 'dict[str, OpenAPIHeader | Reference] | None' = None
+    headers: 'dict[str, Header | Reference] | None' = None
     security_schemes: 'dict[str, SecurityScheme | Reference] | None' = None
     links: 'dict[str, Link | Reference] | None' = None
     callbacks: 'dict[str, Callback | Reference] | None' = None

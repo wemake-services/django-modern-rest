@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
-class OpenAPIHeader(BaseObject):
+class Header(BaseObject):
     """
     Header Object.
 
