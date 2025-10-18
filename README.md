@@ -19,7 +19,7 @@ Modern REST framework for Django with types and async support!
 - [ ] Supports `openapi` schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages
 - [x] Does not use `from __future__ import annotations`
-- [ ] 100% test coverage
+- [x] 100% test coverage
 - [x] No emojis 🌚️️
 
 
