@@ -1,6 +1,6 @@
 import abc
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast, final
 
 from django.http import HttpHeaders, HttpRequest
 from typing_extensions import TypedDict
@@ -128,7 +128,8 @@ class BaseEndpointOptimizer:
         """
 
 
-@dataclass(slots=True, frozen=True)
+@final
+@dataclass(slots=True, frozen=True, kw_only=True)
 class _ComponentSpec:
     name: str
     data_getter: Any
@@ -136,6 +137,8 @@ class _ComponentSpec:
     strict: bool
 
 
+@final
+@dataclass(slots=True, frozen=True, kw_only=True)
 class SerializerContext:  # noqa: WPS214
     """Parse and bind request components for a controller.
 
@@ -144,20 +147,13 @@ class SerializerContext:  # noqa: WPS214
     and then binds the parsed values back to the controller.
     """
 
-    __slots__ = ('_combined_model', '_names', '_serializer', '_specs')
+    _specs: tuple[_ComponentSpec, ...]
+    _serializer: type[BaseSerializer]
+    _combined_model: Any
 
-    def __init__(
-        self,
-        specs: tuple[_ComponentSpec, ...],
-        serializer: type[BaseSerializer],
-        combined_model: Any,
-        names: tuple[str, ...],
-    ) -> None:
-        """Initialize the context with a compiled plan and combined model."""
-        self._specs = specs
-        self._serializer = serializer
-        self._combined_model = combined_model
-        self._names = names
+    def __call__(self, context: dict[str, Any]) -> dict[str, Any]:
+        """Validate provided context mapping and return parsed values."""
+        return self._validate_context(context)
 
     def parse_and_bind(
         self,
@@ -168,20 +164,8 @@ class SerializerContext:  # noqa: WPS214
     ) -> None:
         """Collect, validate, and bind component data to the controller."""
         context = self._collect_context(controller, request, *args, **kwargs)
-        validated = self._validate_context(context)
+        validated = self(context)
         self._bind_parsed(controller, validated)
-
-    @classmethod
-    def for_controller(
-        cls,
-        controller_cls: type[Any],
-        serializer: type[BaseSerializer],
-    ) -> 'SerializerContext':
-        """Return controller cached context instance (built at import-time)."""
-        return cast(
-            SerializerContext,
-            controller_cls._serializer_context,  # noqa: SLF001
-        )
 
     @classmethod
     def build_for_class(
@@ -190,18 +174,15 @@ class SerializerContext:  # noqa: WPS214
         serializer: type[BaseSerializer],
     ) -> 'SerializerContext':
         """Eagerly build context for a given controller and serializer."""
-        specs: list[_ComponentSpec] = []
-        names: list[str] = []
-        type_map = _build_type_map(controller_cls, serializer, specs, names)
+        specs, type_map = _build_type_map(controller_cls, serializer)
 
-        combined_name = f'_{controller_cls.__name__}ContextModel'
+        combined_name = f'_{controller_cls.__qualname__}@ContextModel'
         CombinedModel = TypedDict(combined_name, type_map, total=True)  # type: ignore[misc]
 
         return SerializerContext(
-            tuple(specs),
-            serializer,
-            CombinedModel,
-            tuple(names),
+            _specs=tuple(specs),
+            _serializer=serializer,
+            _combined_model=CombinedModel,
         )
 
     def _collect_context(
@@ -227,15 +208,12 @@ class SerializerContext:  # noqa: WPS214
 
     def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
-        try:  # noqa: WPS229
+        try:
             return self._validate_via_serializer(context)
         except self._serializer.validation_error as exc:
-            errors = self._try_strip_component_prefix(
+            raise RequestSerializationError(
                 self._serializer.error_to_json(exc),
-            )
-            raise RequestSerializationError(errors) from None
-        except Exception as exc:
-            raise RequestSerializationError(str(exc)) from exc
+            ) from None
 
     def _validate_via_serializer(
         self,
@@ -251,19 +229,6 @@ class SerializerContext:  # noqa: WPS214
             ),
         )
 
-    def _try_strip_component_prefix(self, errors: list[Any]) -> list[Any]:
-        """Strip top-level component name from error locations if present."""
-        component_names = set(self._names)
-        for err in errors:
-            loc = list(err.get('loc', ()))
-            is_comp = bool(
-                loc and isinstance(loc[0], str) and loc[0] in component_names,
-            )
-            if is_comp:
-                loc = loc[1:]
-            err['loc'] = loc
-        return errors
-
     def _bind_parsed(self, controller: Any, validated: dict[str, Any]) -> None:
         """Bind parsed values back to the controller instance."""
         for name, parsed_value in validated.items():
@@ -273,22 +238,21 @@ class SerializerContext:  # noqa: WPS214
 def _build_type_map(  # noqa: WPS210
     controller_cls: type[Any],
     serializer: type[BaseSerializer],
-    specs: list[_ComponentSpec],
-    names: list[str],
-) -> dict[str, Any]:
-    """Build mapping name -> model and fill specs/names lists."""
+) -> tuple[list[_ComponentSpec], dict[str, Any]]:
+    """Build mapping name -> model and return specs and type_map."""
+    specs: list[_ComponentSpec] = []
     type_map: dict[str, Any] = {}
+
     for component_cls, type_args in getattr(
         controller_cls,
         '_component_parsers',
         [],
     ):
-        data_getter = component_cls._provide_context_data  # noqa: SLF001
-        model = type_args[0] if len(type_args) >= 1 else Any
+        data_getter = component_cls.provide_context_data
+        model = type_args[0]
         strict = getattr(component_cls, 'strict_validation', False)
 
-        name = component_cls._provide_context_name()  # noqa: SLF001
-        names.append(name)
+        name = component_cls.context_name
         type_map[name] = model
 
         specs.append(
@@ -299,4 +263,4 @@ def _build_type_map(  # noqa: WPS210
                 strict=strict,
             ),
         )
-    return type_map
+    return specs, type_map

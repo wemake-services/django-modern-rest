@@ -18,18 +18,13 @@ class ComponentParser:
 
     # Public API:
     strict_validation: ClassVar[bool] = False
+    context_name: ClassVar[str]
 
     # Internal API:
     __is_base_type__: ClassVar[bool] = True
 
-    @classmethod
     @abc.abstractmethod
-    def _provide_context_name(cls) -> str:
-        """Attribute name to bind parsed data to (e.g. 'parsed_body')."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def _provide_context_data(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -67,14 +62,10 @@ class Query(ComponentParser, Generic[_QueryT]):
     """
 
     parsed_query: _QueryT
-
-    @classmethod
-    @override
-    def _provide_context_name(cls) -> str:
-        return 'parsed_query'
+    context_name: ClassVar[str] = 'parsed_query'
 
     @override
-    def _provide_context_data(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -96,14 +87,10 @@ class Body(ComponentParser, Generic[_BodyT]):
     """
 
     parsed_body: _BodyT
-
-    @classmethod
-    @override
-    def _provide_context_name(cls) -> str:
-        return 'parsed_body'
+    context_name: ClassVar[str] = 'parsed_body'
 
     @override
-    def _provide_context_data(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],
@@ -134,14 +121,10 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     """
 
     parsed_headers: _HeadersT
-
-    @classmethod
-    @override
-    def _provide_context_name(cls) -> str:
-        return 'parsed_headers'
+    context_name: ClassVar[str] = 'parsed_headers'
 
     @override
-    def _provide_context_data(
+    def provide_context_data(
         self,
         serializer: type[BaseSerializer],
         type_args: tuple[Any, ...],

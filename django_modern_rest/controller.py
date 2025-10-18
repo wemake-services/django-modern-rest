@@ -46,6 +46,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    serializer_context_cls: ClassVar[type[SerializerContext]] = (
+        SerializerContext
+    )
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
 
@@ -88,7 +91,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         }
         cls._validate_endpoints()
 
-        cls._serializer_context = SerializerContext.build_for_class(
+        cls._serializer_context = cls.serializer_context_cls.build_for_class(
             cls,
             cls._serializer,
         )
@@ -263,10 +266,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
             # TODO: support redirects
-            self._serializer_context.for_controller(
-                type(self),
-                self._serializer,
-            ).parse_and_bind(self, request, *args, **kwargs)
+            self._serializer_context.parse_and_bind(
+                self,
+                request,
+                *args,
+                **kwargs,
+            )
             return endpoint(self, *args, **kwargs)  # we don't pass request
         raise MethodNotAllowedError(method)
 
