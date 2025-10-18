@@ -1,4 +1,3 @@
-import dataclasses
 import inspect
 from collections.abc import Awaitable, Callable, Mapping
 from http import HTTPMethod, HTTPStatus
@@ -6,10 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
-    Literal,
     Never,
-    TypeAlias,
-    final,
     overload,
 )
 
@@ -17,20 +13,19 @@ from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from django_modern_rest.headers import (
-    HeaderDescription,
     NewHeader,
-    ResponseHeadersT,
 )
-from django_modern_rest.response import infer_status_code
+from django_modern_rest.response import ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
-    parse_return_annotation,
 )
 from django_modern_rest.validation import (
     EndpointMetadataValidator,
+    ModifyEndpointPayload,
     ResponseValidator,
+    ValidateEndpointPayload,
 )
 
 if TYPE_CHECKING:
@@ -82,6 +77,7 @@ class Endpoint:
         func = (
             _add_metadata(
                 metadata_validator_cls=self.metadata_validator_cls,
+                payload=None,
             )(func)
             if getattr(func, '__endpoint__', None) is None
             else func
@@ -155,7 +151,7 @@ class Endpoint:
                 raw_data,
             )
 
-        validated = self.response_validator.validate_content(
+        validated = self.response_validator.validate_modification(
             controller,
             raw_data,
         )
@@ -166,73 +162,19 @@ class Endpoint:
         )
 
 
-_ExplicitDecoratorNameT: TypeAlias = Literal['modify', 'validate'] | None
-
-
-@final
-@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadata:
-    """
-    Endpoint metadata specification.
-
-    Attrs:
-        return_type: Stores optional return type that is specified either
-            via return type annotation for raw data responses,
-            or via ``return_type`` parameter to :func:`validate`.
-        status_code: Status code to be returned.
-            Can be inferred from the HTTP method name.
-        headers: Optional headers that response will return.
-        method: HTTP method for this endpoint.
-        explicit_decorator_name: Was this metadata created
-            with an explicit decorator call?
-        validate_responses: Do we have to run runtime validation
-            of responses for this endpoint? Customizable via global setting,
-            per controller, and per endpoint.
-            Here we only store the per endpoint information.
-
-    """
-
-    # Can be provided only when dealing with `HttpResponse` returns:
-    return_type: Any | Empty
-    validate_responses: bool | Empty
-
-    # Can be provided at all times:
-    status_code: HTTPStatus
-    headers: ResponseHeadersT | Empty
-    method: HTTPMethod
-    explicit_decorator_name: _ExplicitDecoratorNameT
-
-    def build_headers(self, serializer: type[BaseSerializer]) -> dict[str, Any]:
-        """Returns headers with values for raw data endpoints."""
-        headers: dict[str, Any] = {'Content-Type': serializer.content_type}
-        if isinstance(self.headers, Empty):
-            return headers
-        headers.update({
-            header_name: response_header.value
-            for header_name, response_header in self.headers.items()
-        })
-        return headers
-
-
 _ParamT = ParamSpec('_ParamT')
 _ReturnT = TypeVar('_ReturnT')
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse | Awaitable[HttpResponse])
 
 
 def validate(
-    *,
-    return_type: Any,
-    status_code: HTTPStatus,
-    headers: Mapping[str, HeaderDescription] | Empty = EmptyObj,
+    response: ResponseDescription,
+    /,
+    *responses: ResponseDescription,
     metadata_validator_cls: type[
         EndpointMetadataValidator
     ] = EndpointMetadataValidator,
     validate_responses: bool | Empty = EmptyObj,
-    # TODO:
-    # errors
-    # schema_modifications
-    # cookies
-    # file downloads
 ) -> Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]:
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
@@ -243,11 +185,20 @@ def validate(
 
         >>> from http import HTTPStatus
         >>> from django.http import HttpResponse
-        >>> from django_modern_rest import Controller, validate
+        >>> from django_modern_rest import (
+        ...     Controller,
+        ...     validate,
+        ...     ResponseDescription,
+        ... )
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class TaskController(Controller[PydanticSerializer]):
-        ...     @validate(return_type=list[int], status_code=HTTPStatus.OK)
+        ...     @validate(
+        ...         ResponseDescription(
+        ...             return_type=list[int],
+        ...             status_code=HTTPStatus.OK,
+        ...         ),
+        ...     )
         ...     def post(self) -> HttpResponse:
         ...         return HttpResponse(b'[1, 2]', status=HTTPStatus.OK)
 
@@ -260,17 +211,9 @@ def validate(
         >>> DMR_SETTINGS = {'validate_responses': False}
 
     Args:
-        return_type: Shows *return_type* in the documentation
-            as returned model schema.
-            We validate *return_type* to match the returned response content
-            by default, can be turned off.
-        status_code: Shows *status_code* in the documentation
-            We validate *status_code* to match the specified
-            one when ``HttpResponse`` is returned.
-        headers: Shows *headers* in the documentation.
-            When passed, we validate that all given required headers are present
-            in the final response. Headers with ``value`` attribute set
-            will be added to the final response.
+        response: The main response that this endpoint is allowed to return.
+        responses: A collection of other responses that are allowed
+            to be returned from this endpoint.
         metadata_validator_cls: Type that will validate
             the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
@@ -279,8 +222,7 @@ def validate(
             Here we only store the per endpoint information.
 
     Raises:
-        EndpointMetadataError: When user did not specify
-            some required metadata entries.
+        EndpointMetadataError: When metadata is not valid.
 
     Returns:
         The same function with ``__endpoint__``
@@ -292,12 +234,11 @@ def validate(
 
     """
     return _add_metadata(
-        return_type=return_type,
-        status_code=status_code,
-        headers=headers,
-        explicit_decorator_name='validate',
+        payload=ValidateEndpointPayload(
+            responses=[response, *responses],
+            validate_responses=validate_responses,
+        ),
         metadata_validator_cls=metadata_validator_cls,
-        validate_responses=validate_responses,
     )
 
 
@@ -322,13 +263,13 @@ class _ModifyCallable(Protocol):
 
 def modify(
     *,
-    # `type[T]` limits some type annotations:
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
     metadata_validator_cls: type[
         EndpointMetadataValidator
     ] = EndpointMetadataValidator,
     validate_responses: bool | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
 ) -> _ModifyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -348,13 +289,14 @@ def modify(
 
     Args:
         status_code: Shows *status_code* in the documentation.
-            When *status_code* is passed, always uses it for
-            all responses. When not provided, we use smart inference
-            based on the HTTP method name.
+            When *status_code* is passed, always use it by default.
+            When not provided, we use smart inference
+            based on the HTTP method name for default returned response.
         headers: Shows *headers* in the documentation.
-            When *headers* are passed we will add them for all responses.
+            When *headers* are passed we will add them for the default response.
             Use non-empty ``value`` parameter
-            of :class:`django_modern_rest.headers.BaseHeaderDescription` object.
+            of :data:`django_modern_rest.headers.ResponseHeadersT` object.
+        extra_responses: List of extra responses that this endpoint can return.
         metadata_validator_cls: Type that will validate
             the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
@@ -372,58 +314,30 @@ def modify(
 
     """
     return _add_metadata(  # type: ignore[return-value]
-        status_code=status_code,
-        headers=headers,
-        explicit_decorator_name='modify',
+        payload=ModifyEndpointPayload(
+            status_code=status_code,
+            headers=headers,
+            responses=extra_responses,
+            validate_responses=validate_responses,
+        ),
         metadata_validator_cls=metadata_validator_cls,
-        validate_responses=validate_responses,
     )
 
 
-def _add_metadata(  # noqa: WPS211
+def _add_metadata(
     *,
-    return_type: Any | Empty = EmptyObj,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: ResponseHeadersT | Empty = EmptyObj,
-    explicit_decorator_name: _ExplicitDecoratorNameT = None,
-    metadata_validator_cls: type[
-        EndpointMetadataValidator
-    ] = EndpointMetadataValidator,
-    validate_responses: bool | Empty = EmptyObj,
+    metadata_validator_cls: type[EndpointMetadataValidator],
+    payload: ModifyEndpointPayload | ValidateEndpointPayload | None,
 ) -> Callable[[Callable[_ParamT, _ReturnT]], Callable[_ParamT, _ReturnT]]:
     # It is cheap for us to do the endpoint metadata calculation here,
     # because we do it once per module import.
     def decorator(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
-        return_annotation = parse_return_annotation(func)
-        inferred_return_type = (
-            return_annotation if isinstance(return_type, Empty) else return_type
-        )
-        method = HTTPMethod(func.__name__.upper())
-        status = (
-            infer_status_code(method)
-            if isinstance(status_code, Empty)
-            else status_code
-        )
-
-        metadata_validator_cls(
-            func=func,
-            explicit_decorator_name=explicit_decorator_name,
-            headers=headers,
-            status_code=status,
-            return_type=inferred_return_type,
-        )(return_annotation)
+        metadata = metadata_validator_cls(payload=payload)(func)
 
         # Validation passed, now we can create valid metadata:
-        func.__endpoint__ = EndpointMetadata(  # type: ignore[attr-defined]
-            return_type=inferred_return_type,
-            status_code=status,
-            headers=headers,
-            explicit_decorator_name=explicit_decorator_name,
-            method=method,
-            validate_responses=validate_responses,
-        )
+        func.__endpoint__ = metadata  # type: ignore[attr-defined]
         return func
 
     return decorator

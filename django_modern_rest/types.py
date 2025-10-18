@@ -1,3 +1,4 @@
+import dataclasses
 from collections.abc import Callable
 from typing import Any, Final, final, get_args, get_origin
 
@@ -7,6 +8,7 @@ from django_modern_rest.exceptions import UnsolvableAnnotationsError
 
 
 @final
+@dataclasses.dataclass(slots=True, frozen=True)
 class Empty:
     """Special value for empty defaults."""
 

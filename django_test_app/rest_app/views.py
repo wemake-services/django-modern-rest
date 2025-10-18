@@ -11,6 +11,7 @@ from django_modern_rest import (
     Controller,
     Headers,
     Query,
+    ResponseDescription,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -82,7 +83,12 @@ class UserUpdateController(
 
 @final
 class UserReplaceController(Controller[PydanticSerializer]):
-    @validate(return_type=_UserInput, status_code=HTTPStatus.OK)
+    @validate(
+        ResponseDescription(
+            return_type=_UserInput,
+            status_code=HTTPStatus.OK,
+        ),
+    )
     async def put(self, user_id: int) -> HttpResponse:
         return JsonResponse({'email': 'new@email.com', 'age': user_id})
 

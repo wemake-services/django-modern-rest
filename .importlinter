@@ -17,8 +17,8 @@ layers =
   routing
   controller
   endpoint | components
-  response
   validation
+  response
   serialization
   # DTOs:
   headers
