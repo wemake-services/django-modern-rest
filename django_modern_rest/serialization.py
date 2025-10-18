@@ -142,6 +142,11 @@ class SerializerContext:
     and then binds the parsed values back to the controller.
     """
 
+    # Public API:
+    strict_validation: ClassVar[bool] = False
+
+    # Protected API:
+
     _specs: list[type['ComponentParser']]
     _serializer: type[BaseSerializer]
     _combined_model: Any
@@ -153,7 +158,7 @@ class SerializerContext:
         serializer: type[BaseSerializer],
     ) -> 'SerializerContext':
         """Eagerly build context for a given controller and serializer."""
-        specs, type_map = _build_type_map(controller_cls, serializer)
+        specs, type_map = cls._build_type_map(controller_cls, serializer)
 
         combined_name = f'_{controller_cls.__qualname__}@ContextModel'
         CombinedModel = TypedDict(combined_name, type_map, total=True)  # type: ignore[misc]
@@ -175,6 +180,22 @@ class SerializerContext:
         context = self._collect_context(controller, request, *args, **kwargs)
         validated = self._validate_context(context)
         self._bind_parsed(controller, validated)
+
+    @classmethod
+    def _build_type_map(
+        cls,
+        controller_cls: type['Controller[BaseSerializer]'],
+        serializer: type[BaseSerializer],
+    ) -> _TypeMapResult:
+        """Build mapping name -> model and return specs and type_map."""
+        specs: list[type[ComponentParser]] = []
+        type_map: dict[str, Any] = {}
+        parsers = controller_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+
+        for component_cls, type_args in parsers:
+            type_map[component_cls.context_name] = type_args[0]
+            specs.append(component_cls)
+        return specs, type_map
 
     def _collect_context(
         self,
@@ -202,7 +223,7 @@ class SerializerContext:
             return self._serializer.from_python(  # type: ignore[no-any-return]
                 context,
                 self._combined_model,
-                strict=False,
+                strict=self.strict_validation,
             )
         except self._serializer.validation_error as exc:
             raise RequestSerializationError(
@@ -217,20 +238,3 @@ class SerializerContext:
         """Bind parsed values back to the controller instance."""
         for name, parsed_value in validated.items():
             setattr(controller, name, parsed_value)
-
-
-def _build_type_map(
-    controller_cls: type['Controller[BaseSerializer]'],
-    serializer: type[BaseSerializer],
-) -> _TypeMapResult:
-    """Build mapping name -> model and return specs and type_map."""
-    specs: list[type[ComponentParser]] = []
-    type_map: dict[str, Any] = {}
-
-    for component_cls, type_args in controller_cls._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        model = type_args[0]
-
-        type_map[component_cls.context_name] = model
-
-        specs.append(component_cls)
-    return specs, type_map

@@ -17,7 +17,6 @@ class ComponentParser:
     """Base abstract provider for request components."""
 
     # Public API:
-    strict_validation: ClassVar[bool] = False
     context_name: ClassVar[str]
 
     # Internal API:
