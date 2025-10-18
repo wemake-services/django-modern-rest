@@ -115,7 +115,7 @@ class Body(ComponentParser, Generic[_BodyT]):
                 type_args[0],
                 strict=self.strict_validation,
             )
-        except (msgspec.DecodeError, TypeError) as exc:
+        except msgspec.DecodeError as exc:
             raise RequestSerializationError(str(exc)) from exc
         except serializer.validation_error as exc:
             raise RequestSerializationError(

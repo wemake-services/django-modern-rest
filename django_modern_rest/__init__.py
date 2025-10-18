@@ -15,6 +15,7 @@ from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.headers import HeaderDescription as HeaderDescription
 from django_modern_rest.headers import NewHeader as NewHeader
+from django_modern_rest.response import APIError as APIError
 from django_modern_rest.response import (
     ResponseDescription as ResponseDescription,
 )

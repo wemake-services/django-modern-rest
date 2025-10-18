@@ -25,6 +25,7 @@ layers =
   types
   settings
   exceptions
+  internal
 
 
 [importlinter:contract:no-optional-deps]

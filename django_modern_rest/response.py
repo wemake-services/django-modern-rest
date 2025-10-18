@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from typing import Any, overload
+from typing import Any, Generic, TypeVar, overload
 
 from django.http import HttpResponse
 
@@ -14,6 +14,60 @@ from django_modern_rest.types import (
     Empty,
     EmptyObj,
 )
+
+_ItemT = TypeVar('_ItemT')
+
+
+class APIError(Exception, Generic[_ItemT]):
+    """
+    Special class to fast return errors from API.
+
+    Does perform the regular response validation.
+
+    Usage:
+
+    .. code:: python
+
+        >>> from http import HTTPStatus
+        >>> from django_modern_rest import (
+        ...     APIError,
+        ...     Controller,
+        ...     ResponseDescription,
+        ...     modify,
+        ... )
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+        >>> class UserController(Controller[PydanticSerializer]):
+        ...     @modify(
+        ...         extra_responses=[
+        ...             ResponseDescription(
+        ...                 str,
+        ...                 status_code=HTTPStatus.NOT_FOUND,
+        ...             ),
+        ...         ],
+        ...     )
+        ...     def get(self, user_id: int) -> str:
+        ...         if user_id < 0:
+        ...             raise APIError(
+        ...                 'There are no users with ids < 0',
+        ...                 status_code=HTTPStatus.NOT_FOUND,
+        ...             )
+        ...         return f'{user_id}@example.com'  # email
+
+    """
+
+    def __init__(
+        self,
+        raw_data: _ItemT,
+        *,
+        status_code: HTTPStatus,
+        headers: dict[str, str] | Empty = EmptyObj,
+    ) -> None:
+        """Create response from parts."""
+        super().__init__()
+        self.raw_data = raw_data
+        self.status_code = status_code
+        self.headers = headers
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

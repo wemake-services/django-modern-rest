@@ -1,6 +1,9 @@
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
+
+_ThingT = TypeVar('_ThingT')
 
 
 class _DMRMixin:
@@ -84,6 +87,24 @@ class DMRAsyncRequestFactory(_DMRMixin, AsyncRequestFactory):
 
     Uses the exactly the same API.
     """
+
+    if TYPE_CHECKING:  # noqa: WPS604
+
+        def wrap(self, thing: _ThingT) -> Awaitable[_ThingT]:  # pyright: ignore[reportReturnType]
+            """Does nothing."""
+
+    else:
+
+        def wrap(self, thing):
+            """
+            Utility method for testing.
+
+            Pretends to wrap async controllers into async functions for typing.
+            But in reallity does nothing.
+
+            This happens due to the fact that ``View`` is typed as sync object.
+            """
+            return thing
 
 
 class DMRClient(_DMRMixin, Client):
