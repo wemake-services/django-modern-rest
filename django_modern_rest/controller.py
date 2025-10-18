@@ -95,17 +95,16 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParser)
         ]
+        cls._serializer_context = cls.serializer_context_cls.build_for_class(
+            cls,
+            cls._serializer,
+        )
         cls.api_endpoints = {
             meth: cls.endpoint_cls(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
         cls._validate_endpoints()
-
-        cls._serializer_context = cls.serializer_context_cls.build_for_class(
-            cls,
-            cls._serializer,
-        )
 
     def to_response(
         self,
