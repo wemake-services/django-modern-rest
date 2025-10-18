@@ -21,7 +21,6 @@ except ImportError:  # pragma: no cover
     raise
 
 import pydantic_core
-from django.utils.module_loading import import_string
 from pydantic.config import ExtraValues
 from typing_extensions import override
 
@@ -220,10 +219,8 @@ def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
     if existing_attr is not None:
         return existing_attr
 
-    setting = resolve_setting(DMR_SERIALIZE_KEY)
-    cls._serialize = (  # pyright: ignore[reportPrivateUsage]
-        import_string(setting) if isinstance(setting, str) else setting
-    )
+    setting = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
+    cls._serialize = setting  # pyright: ignore[reportPrivateUsage]
     return cls._serialize  # pyright: ignore[reportPrivateUsage]
 
 
@@ -232,10 +229,8 @@ def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
     if existing_attr is not None:
         return existing_attr
 
-    setting = resolve_setting(DMR_DESERIALIZE_KEY)
-    cls._deserialize = (  # pyright: ignore[reportPrivateUsage]
-        import_string(setting) if isinstance(setting, str) else setting
-    )
+    setting = resolve_setting(DMR_DESERIALIZE_KEY, import_string=True)
+    cls._deserialize = setting  # pyright: ignore[reportPrivateUsage]
     return cls._deserialize  # pyright: ignore[reportPrivateUsage]
 
 
