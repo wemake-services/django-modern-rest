@@ -28,12 +28,3 @@ class Parameter(BaseObject):
     example: Any | None = None
     examples: 'Mapping[str, Example | Reference] | None' = None
     content: 'dict[str, OpenAPIMediaType] | None' = None
-
-    @property
-    def _exclude_fields(self) -> set[str]:
-        exclude: set[str] = set()
-        if self.param_in != 'query':
-            # these are only allowed in query params
-            exclude.update({'allow_empty_value', 'allow_reserved'})
-
-        return exclude

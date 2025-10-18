@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects.base import BaseObject
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 class Components(BaseObject):
     """TODO: add docs."""
 
-    schemas: 'dict[str, Schema]' = field(default_factory=dict)
+    schemas: 'dict[str, Schema] | None' = None
     responses: 'dict[str, OpenAPIResponse | Reference] | None' = None
     parameters: 'dict[str, Parameter | Reference] | None' = None
     examples: 'dict[str, Example | Reference] | None' = None

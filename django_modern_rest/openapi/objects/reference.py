@@ -10,8 +10,3 @@ class Reference(BaseObject):
     ref: str
     summary: str | None = None
     description: str | None = None
-
-    @property
-    def value(self) -> str:
-        """TODO: add docs."""
-        return self.ref.split('/')[-1]
