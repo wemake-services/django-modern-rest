@@ -1,4 +1,3 @@
-from collections import Counter
 from collections.abc import Mapping
 from http import HTTPStatus
 from typing import (
@@ -10,7 +9,6 @@ from typing import (
     get_args,
 )
 
-from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property, classproperty
 from django.views import View
@@ -19,7 +17,6 @@ from typing_extensions import deprecated, override
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
-    EndpointMetadataError,
     MethodNotAllowedError,
     UnsolvableAnnotationsError,
 )
@@ -36,6 +33,7 @@ from django_modern_rest.types import (
     infer_bases,
     infer_type_args,
 )
+from django_modern_rest.validation import ControllerValidator
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -58,6 +56,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     serializer_context_cls: ClassVar[type[SerializerContext]] = (
         SerializerContext
+    )
+    controller_validator_cls: ClassVar[type[ControllerValidator]] = (
+        ControllerValidator
     )
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
@@ -89,7 +90,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 f'Type arg {type_args[0]} are not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
-        cls._is_async = False  # by default all controllers are sync
         cls._serializer = type_args[0]
         cls._component_parsers = [
             (subclass, get_args(subclass))
@@ -104,7 +104,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
-        cls._validate_endpoints()
+        cls._is_async = cls.controller_validator_cls()(cls)
 
     def to_response(
         self,
@@ -249,32 +249,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls._is_async
 
     # Private API:
-
-    @classmethod
-    def _validate_endpoints(cls) -> None:
-        """Validate that endpoints definition is correct in build time."""
-        # Validate responses:
-        counter = Counter(response.status_code for response in cls.responses)
-        for status, count in counter.items():
-            if count > 1:
-                raise EndpointMetadataError(
-                    f'Controller {cls!r} has {status} specified {count} times',
-                )
-
-        if not cls.api_endpoints:
-            return
-        is_async = cls.api_endpoints[
-            next(iter(cls.api_endpoints.keys()))
-        ].is_async
-        if any(
-            endpoint.is_async is not is_async
-            for endpoint in cls.api_endpoints.values()
-        ):
-            # The same error message that django has.
-            raise ImproperlyConfigured(
-                f'{cls!r} HTTP handlers must either be all sync or all async',
-            )
-        cls._is_async = is_async
 
     def _handle_request(
         self,
