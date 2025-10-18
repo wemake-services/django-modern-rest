@@ -1,4 +1,4 @@
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator
 from dataclasses import Field, dataclass, fields
 from enum import Enum
 from typing import Any, TypeAlias
@@ -96,10 +96,10 @@ def _normalize_value(value: Any) -> Any:
     if isinstance(value, BaseObject):
         return value.to_schema()
 
-    if isinstance(value, Sequence):
+    if isinstance(value, list):
         return [_normalize_value(val) for val in value]
 
-    if isinstance(value, Mapping):
+    if isinstance(value, dict):
         return {
             _normalize_key(str(key)): _normalize_value(val)
             for key, val in value.items()
