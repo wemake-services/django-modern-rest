@@ -14,7 +14,6 @@ DMR_SETTINGS: Final = 'DMR_SETTINGS'
 DMR_SERIALIZE_KEY: Final = 'serialize'
 DMR_DESERIALIZE_KEY: Final = 'deserialize'
 DMR_VALIDATE_RESPONSES_KEY: Final = 'validate_responses'
-DMR_VALIDATE_ERRORS_KEY: Final = 'validate_errors'
 DMR_GLOBAL_ERROR_HANDLER_KEY: Final = 'global_error_handler'
 DMR_OPENAPI_CONFIG_KEY: Final = 'openapi_config'
 
@@ -42,8 +41,6 @@ _DEFAULTS: Final = types.MappingProxyType({
     DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
     # Means that we would run extra validation on the response object.
     DMR_VALIDATE_RESPONSES_KEY: True,
-    # Means that we would run extra validation of errors.
-    DMR_VALIDATE_ERRORS_KEY: True,
     DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
 })
 
