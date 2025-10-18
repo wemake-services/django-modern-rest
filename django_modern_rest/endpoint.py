@@ -15,7 +15,7 @@ from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 from django_modern_rest.headers import (
     NewHeader,
 )
-from django_modern_rest.response import ResponseDescription
+from django_modern_rest.response import APIError, ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.types import (
     Empty,
@@ -118,7 +118,14 @@ class Endpoint:
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
-            func_result = await func(controller, *args, **kwargs)
+            try:
+                func_result = await func(controller, *args, **kwargs)
+            except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
+                func_result = controller.to_error(
+                    exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
+                    status_code=exc.status_code,
+                    headers=exc.headers,
+                )
             return self._make_http_response(controller, serializer, func_result)
 
         return decorator
@@ -133,7 +140,14 @@ class Endpoint:
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
-            func_result = func(controller, *args, **kwargs)
+            try:
+                func_result = func(controller, *args, **kwargs)
+            except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
+                func_result = controller.to_error(
+                    exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
+                    status_code=exc.status_code,
+                    headers=exc.headers,
+                )
             return self._make_http_response(controller, serializer, func_result)
 
         return decorator

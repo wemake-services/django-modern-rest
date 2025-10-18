@@ -196,7 +196,7 @@ def test_validate_duplicate_statuses() -> None:
                 ResponseDescription(int, status_code=HTTPStatus.OK),
                 ResponseDescription(str, status_code=HTTPStatus.OK),
             )
-            def get(self) -> HttpResponse:
+            async def get(self) -> HttpResponse:
                 raise NotImplementedError
 
 
