@@ -3,6 +3,12 @@ from typing import Any
 
 import pytest
 
+from django_modern_rest.openapi.objects import (
+    OpenAPIFormat,
+    OpenAPIType,
+    Schema,
+    Tag,
+)
 from django_modern_rest.openapi.objects.base import (
     _normalize_key,
     _normalize_value,
@@ -130,21 +136,111 @@ def test_normalize_value_key_normalization(
     assert _normalize_value(input_value) == expected_output
 
 
-def test_normalize_value_nested_structures() -> None:
+@pytest.mark.parametrize(
+    ('input_value', 'expected_output'),
+    [
+        (
+            {
+                'items': [1, 2, 3],
+                'external_docs': {'ref': 'test', 'param_in': 42},
+                'schema_all_of': [_TestEnum.STR_VALUE, 'other'],
+            },
+            {
+                'items': [1, 2, 3],
+                'externalDocs': {'$ref': 'test', 'in': 42},
+                'allOf': ['first', 'other'],
+            },
+        ),
+    ],
+)
+def test_normalize_value_nested_structures(
+    input_value: Any,
+    expected_output: Any,
+) -> None:
     """Ensure that `_normalize_value` handles nested structures."""
-    input_value = {
-        'items': [1, 2, 3],
-        'external_docs': {'ref': 'test', 'param_in': 42},
-        'schema_all_of': ['tag1', 'tag2'],
-    }
-    expected_output = {
-        'items': [1, 2, 3],
-        'externalDocs': {'$ref': 'test', 'in': 42},
-        'allOf': ['tag1', 'tag2'],
-    }
-
     assert _normalize_value(input_value) == expected_output
 
 
-# TODO: check tests corner cases
-# TODO: add BaseObject tests
+@pytest.mark.parametrize(
+    ('input_value', 'expected_output'),
+    [
+        # Basic `BaseObject` with `None` values
+        (
+            Tag(
+                name='test-tag',
+                description='Test description',
+                external_docs=None,
+            ),
+            {'name': 'test-tag', 'description': 'Test description'},
+        ),
+        # `Enum` values conversion
+        (
+            Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.EMAIL),
+            {'type': 'string', 'format': 'email'},
+        ),
+        # Key normalization (snake_case to camelCase)
+        (
+            Schema(
+                type=OpenAPIType.OBJECT,
+                max_length=100,
+                read_only=True,
+                external_docs=None,
+            ),
+            {
+                'type': 'object',
+                'maxLength': 100,
+                'readOnly': True,
+            },
+        ),
+        # Sequence fields (enum as list)
+        (
+            Schema(
+                type=OpenAPIType.ARRAY,
+                enum=['value1', 'value2', 'value3'],
+            ),
+            {
+                'type': 'array',
+                'enum': ['value1', 'value2', 'value3'],
+            },
+        ),
+        # Nested BaseObject (all_of with Schema)
+        (
+            Schema(
+                all_of=[Schema(type=OpenAPIType.STRING)],
+                type=OpenAPIType.OBJECT,
+            ),
+            {
+                'allOf': [{'type': 'string'}],
+                'type': 'object',
+            },
+        ),
+        # Mixed types in enum
+        (
+            Schema(
+                type=OpenAPIType.OBJECT,
+                enum=['string1', 42, True, None],
+            ),
+            {
+                'type': 'object',
+                'enum': ['string1', 42, True, None],
+            },
+        ),
+        # Special key normalization cases
+        (
+            Schema(
+                schema_not=Schema(type=OpenAPIType.STRING),
+                all_of=[Schema(type=OpenAPIType.OBJECT)],
+            ),
+            {
+                'not': {'type': 'string'},
+                'allOf': [{'type': 'object'}],
+            },
+        ),
+    ],
+)
+def test_normalize_value_base_objects(
+    input_value: Any,
+    expected_output: Any,
+) -> None:
+    """Ensure that `_normalize_value` calls to_schema() correctly."""
+    assert _normalize_value(input_value) == expected_output

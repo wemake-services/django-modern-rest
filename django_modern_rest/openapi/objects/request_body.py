@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
 class RequestBody(BaseObject):
-    """TODO: add docs."""
+    """Describes a single request body."""
 
     content: 'dict[str, MediaType]'
     description: str | None = None

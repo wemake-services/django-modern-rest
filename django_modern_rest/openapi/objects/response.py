@@ -13,7 +13,11 @@ if TYPE_CHECKING:
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Response(BaseObject):
-    """TODO: add docs."""
+    """
+    Describes a single response from an API Operation.
+
+    Including design-time, static links to operations based on the response.
+    """
 
     description: str
     headers: 'dict[str, Header | Reference] | None' = None

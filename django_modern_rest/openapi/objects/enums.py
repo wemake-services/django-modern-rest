@@ -4,7 +4,7 @@ from typing import final
 
 @final
 class OpenAPIFormat(enum.StrEnum):
-    """TODO: add docs."""
+    """OpenAPI format."""
 
     DATE = 'date'
     DATE_TIME = 'date-time'
@@ -31,7 +31,7 @@ class OpenAPIFormat(enum.StrEnum):
 
 @final
 class OpenAPIType(enum.StrEnum):
-    """TODO: add docs."""
+    """OpenAPI types."""
 
     ARRAY = 'array'
     BOOLEAN = 'boolean'
