@@ -1,4 +1,6 @@
-from typing import ClassVar, final, override
+from typing import ClassVar, final
+
+from typing_extensions import override
 
 from django_modern_rest import Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
