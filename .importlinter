@@ -27,6 +27,10 @@ layers =
   exceptions
   internal
 
+ignore_imports =
+  # Needs to validate settings
+  django_modern_rest.settings -> django_modern_rest.validation
+
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins

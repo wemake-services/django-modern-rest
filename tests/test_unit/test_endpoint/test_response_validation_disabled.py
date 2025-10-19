@@ -19,8 +19,7 @@ from django_modern_rest import (
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSES_KEY,
-    resolve_defaults,
-    resolve_setting,
+    clear_settings_cache,
 )
 from django_modern_rest.test import DMRRequestFactory
 from django_modern_rest.types import Empty
@@ -29,8 +28,7 @@ from django_modern_rest.types import Empty
 @pytest.fixture(autouse=True)
 def _disable_response_validation(settings: LazySettings) -> Iterator[None]:
     # TODO: make a fixture out of it.
-    resolve_defaults.cache_clear()
-    resolve_setting.cache_clear()
+    clear_settings_cache()
 
     settings.DMR_SETTINGS = {
         DMR_VALIDATE_RESPONSES_KEY: False,
@@ -38,8 +36,7 @@ def _disable_response_validation(settings: LazySettings) -> Iterator[None]:
 
     yield
 
-    resolve_defaults.cache_clear()
-    resolve_setting.cache_clear()
+    clear_settings_cache()
 
 
 @final

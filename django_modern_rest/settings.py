@@ -1,11 +1,15 @@
 import types
 from collections.abc import Mapping
-from functools import lru_cache
-from typing import Any, Final
+from functools import cache, lru_cache
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, Final
 
 from django.utils import module_loading
 
 from django_modern_rest.openapi.config import OpenAPIConfig
+
+if TYPE_CHECKING:
+    from django_modern_rest.response import ResponseDescription
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -14,6 +18,7 @@ DMR_SETTINGS: Final = 'DMR_SETTINGS'
 DMR_SERIALIZE_KEY: Final = 'serialize'
 DMR_DESERIALIZE_KEY: Final = 'deserialize'
 DMR_VALIDATE_RESPONSES_KEY: Final = 'validate_responses'
+DMR_RESPONSES_KEY: Final = 'responses'
 DMR_GLOBAL_ERROR_HANDLER_KEY: Final = 'global_error_handler'
 DMR_OPENAPI_CONFIG_KEY: Final = 'openapi_config'
 
@@ -34,6 +39,7 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
     version='0.1.0',
 )
 
+# TODO: create TypedDict with types for settings
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final = types.MappingProxyType({
     DMR_SERIALIZE_KEY: DMR_SERIALIZE,
@@ -41,6 +47,7 @@ _DEFAULTS: Final = types.MappingProxyType({
     DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
     # Means that we would run extra validation on the response object.
     DMR_VALIDATE_RESPONSES_KEY: True,
+    DMR_RESPONSES_KEY: [],  # global responses, for response validation
     DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
 })
 
@@ -52,18 +59,42 @@ def resolve_defaults() -> Mapping[str, Any]:
 
     The result is cached using ``@lru_cache`` for performance.
     When testing with custom settings, you *must* call
-    ``resolve_defaults.cache_clear()`` before and after modifying
-    Django settings to ensure the cache is invalidated.
+    :func:`clear_settings_cache` before and after modifying
+    Django settings to ensure the cache is invalidated properly.
     """
     from django.conf import settings  # noqa: PLC0415
 
     return getattr(settings, DMR_SETTINGS, _DEFAULTS)
 
 
-@lru_cache
+@cache
 def resolve_setting(setting_name: str, *, import_string: bool = False) -> Any:
     """Resolves setting by *setting_name*."""
     setting = resolve_defaults().get(setting_name, _DEFAULTS[setting_name])
     if import_string and isinstance(setting, str):
         return module_loading.import_string(setting)
     return setting
+
+
+@cache
+def resolve_responses() -> dict[HTTPStatus, 'ResponseDescription']:
+    """Returns and caches configured global responses."""
+    from django_modern_rest.validation import (  # noqa: PLC0415
+        ResponsesDefinitionValidator,
+    )
+
+    return ResponsesDefinitionValidator().validate_definition(
+        resolve_setting(DMR_RESPONSES_KEY),
+        endpoint="settings.DMR_SETTINGS['responses']",
+    )
+
+
+def clear_settings_cache() -> None:
+    """
+    Clears settings cache for all functions in this module.
+
+    Useful for tests, when you modify the global settings object.
+    """
+    resolve_defaults.cache_clear()
+    resolve_setting.cache_clear()
+    resolve_responses.cache_clear()
