@@ -34,6 +34,8 @@ from django_modern_rest.openapi.objects import (
 )
 from rest_app.views import (
     AsyncParseHeadersController,
+    CsrfProtectedController,
+    CsrfTokenController,
     ParseHeadersController,
     UserCreateController,
     UserListController,
@@ -66,6 +68,8 @@ router = Router([
         AsyncParseHeadersController.as_view(),
         name='async_parse_headers',
     ),
+    path('csrf-token', CsrfTokenController.as_view(), name='csrf_token'),
+    path('csrf-protected', CsrfProtectedController.as_view(), name='csrf_test'),
 ])
 
 urlpatterns = [

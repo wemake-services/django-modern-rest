@@ -5,6 +5,7 @@ from typing import final
 
 import pydantic
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 from django_modern_rest import (
     Body,
@@ -12,6 +13,7 @@ from django_modern_rest import (
     Headers,
     Query,
     ResponseDescription,
+    dispatch_decorator,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -109,3 +111,23 @@ class AsyncParseHeadersController(
 ):
     async def post(self) -> _CustomHeaders:
         return self.parsed_headers
+
+
+@final
+@dispatch_decorator(ensure_csrf_cookie)
+class CsrfTokenController(Controller[PydanticSerializer]):
+    """Controller to obtain CSRF token."""
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that ensures CSRF cookie is set."""
+        return {'message': 'CSRF token set'}
+
+
+@final
+@dispatch_decorator(csrf_protect)
+class CsrfProtectedController(
+    Body[_UserInput],
+    Controller[PydanticSerializer],
+):
+    def post(self) -> _UserInput:
+        return self.parsed_body
