@@ -55,3 +55,37 @@ jobs:
       with:
         files: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
+
+  build-no-extras:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install poetry
+      run: |
+        curl -sSL "https://install.python-poetry.org" | python
+
+        # Adding `poetry` to `$PATH`:
+        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
+
+    - name: Install dependencies
+      run: |
+        poetry config virtualenvs.in-project true
+        poetry run pip install -U pip
+        poetry install
+
+    - name: Run checks
+      run: |
+        make smoke
