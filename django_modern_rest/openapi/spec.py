@@ -3,7 +3,6 @@ from collections.abc import Sequence
 from django.urls import URLPattern, path
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.generator import SchemaGenerator
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
@@ -34,8 +33,9 @@ def openapi_spec(
     if isinstance(config, Empty):
         config = _default_config()
 
-    # TODO: separate paths generation and full schema generation
-    schema = SchemaGenerator(config, router).to_schema()
+    # TODO: temporary schema without content
+    schema = {'openapi': '3.1.0'}
+
     urlpatterns = [
         path(
             renderer.path,

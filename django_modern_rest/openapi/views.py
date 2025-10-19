@@ -5,7 +5,6 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.views import View
 from typing_extensions import override
 
-from django_modern_rest.openapi.generator import OpenAPISchema
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.types import Empty, EmptyObj
 
@@ -24,7 +23,7 @@ class OpenAPIView(View):
 
     # Hack for preventing parent `as_view()` attributes validating
     renderer: ClassVar[BaseRenderer | Empty] = EmptyObj
-    schema: ClassVar[OpenAPISchema | Empty] = EmptyObj
+    schema: ClassVar[dict[str, Any] | Empty] = EmptyObj
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Handle `GET` request and render the OpenAPI schema."""
@@ -38,7 +37,7 @@ class OpenAPIView(View):
     def as_view(  # type: ignore[override]
         cls,
         renderer: BaseRenderer,
-        schema: OpenAPISchema,
+        schema: dict[str, Any],
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """

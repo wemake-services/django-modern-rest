@@ -180,8 +180,8 @@ isort.known-first-party = ["rest_app"]
 [tool.ruff.lint.per-file-ignores]
 # Do not require docstrings in test project:
 "django_test_app/**/*.py" = ["D10"]
-# Allow asserts for tests:
-"tests/*.py" = ["S101"]
+# Allow asserts and private name imports for tests:
+"tests/*.py" = ["S101", "PLC2701"]
 
 
 [tool.pytest.ini_options]

@@ -1,13 +1,10 @@
 import abc
-from typing import TYPE_CHECKING, ClassVar, final
+from typing import Any, ClassVar, final
 
 import msgspec
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
-
-if TYPE_CHECKING:
-    from django_modern_rest.openapi.generator import OpenAPISchema
 
 
 class BaseRenderer:
@@ -23,13 +20,13 @@ class BaseRenderer:
     def render(
         self,
         request: HttpRequest,
-        schema: 'OpenAPISchema',
+        schema: dict[str, Any],
     ) -> HttpResponse:
         """Render the router and config to an HTTP response."""
         raise NotImplementedError
 
     # TODO: support different decoding options
-    def to_json(self, schema: 'OpenAPISchema') -> str:
+    def to_json(self, schema: dict[str, Any]) -> str:
         """Convert schema to json string."""
         # TODO(@kondratevdev): use specified `json` encoder,
         # not the default one. Import settings and get it from there.
@@ -55,7 +52,7 @@ class JsonRenderer(BaseRenderer):
     def render(
         self,
         request: HttpRequest,
-        schema: 'OpenAPISchema',
+        schema: dict[str, Any],
     ) -> HttpResponse:
         """Render the JSON schema."""
         return HttpResponse(
@@ -84,7 +81,7 @@ class SwaggerRenderer(BaseRenderer):
     def render(
         self,
         request: HttpRequest,
-        schema: 'OpenAPISchema',
+        schema: dict[str, Any],
     ) -> HttpResponse:
         """Render the Swagger schema."""
         return render(

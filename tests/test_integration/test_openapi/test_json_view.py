@@ -57,19 +57,3 @@ def test_returns_correct_structure(dmr_client: DMRClient) -> None:
     body = response.json()
 
     assert body['openapi'] == '3.1.0'
-    assert body['info'] == {
-        'title': 'Test API',
-        'version': '1.0.0',
-        'summary': 'Test Summary',
-        'description': 'Test Description',
-        'termsOfService': 'Test Terms of Service',
-        'contact': {
-            'name': 'Test Contact',
-            'email': 'test@test.com',
-        },
-        'license': {
-            'name': 'Test License',
-            'identifier': 'license',
-        },
-    }
-    assert 'paths' in body
