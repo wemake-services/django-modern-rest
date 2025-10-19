@@ -2,8 +2,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.discriminator import Discriminator
     from django_modern_rest.openapi.objects.enums import (
@@ -19,7 +17,7 @@ if TYPE_CHECKING:
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Schema(BaseObject):
+class Schema:
     """
     The Schema Object allows the definition of input and output data types.
 

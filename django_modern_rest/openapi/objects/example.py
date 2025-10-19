@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from typing import Any, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Example(BaseObject):
+class Example:
     """
     Example Object.
 

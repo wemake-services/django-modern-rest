@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
 from django_modern_rest.openapi.objects.components import Components
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class OpenAPI(BaseObject):
+class OpenAPI:
     """This is the root object of the OpenAPI document."""
 
     openapi: str = '3.1.0'
