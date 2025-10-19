@@ -9,7 +9,13 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from django_modern_rest import Controller, HeaderDescription, modify, validate
+from django_modern_rest import (
+    Controller,
+    HeaderDescription,
+    ResponseDescription,
+    modify,
+    validate,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSES_KEY,
@@ -49,7 +55,9 @@ class _WrongController(Controller[PydanticSerializer]):
         """Does not respect an annotation type."""
         return 1  # type: ignore[return-value]
 
-    @validate(return_type=list[int], status_code=HTTPStatus.OK)
+    @validate(
+        ResponseDescription(return_type=list[int], status_code=HTTPStatus.OK),
+    )
     def post(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
         return HttpResponse(b'1')
@@ -85,7 +93,12 @@ def test_validate_response_disabled(
 
 @final
 class _WrongStatusCodeController(Controller[PydanticSerializer]):
-    @validate(return_type=list[int], status_code=HTTPStatus.CREATED)
+    @validate(
+        ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.CREATED,
+        ),
+    )
     def get(self) -> HttpResponse:
         """Does not respect a `status_code` validator."""
         return HttpResponse(b'[]', status=HTTPStatus.OK)
@@ -107,9 +120,11 @@ def test_validate_status_code(
 @final
 class _WrongHeadersController(Controller[PydanticSerializer]):
     @validate(
-        return_type=list[int],
-        status_code=HTTPStatus.CREATED,
-        headers={'X-Token': HeaderDescription()},
+        ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.CREATED,
+            headers={'X-Token': HeaderDescription()},
+        ),
     )
     def post(self) -> HttpResponse:
         """Does not respect a `headers` validator."""
@@ -133,8 +148,10 @@ def test_validate_headers(
 @final
 class _ValidatedEndpointController(Controller[PydanticSerializer]):
     @validate(
-        return_type=list[int],
-        status_code=HTTPStatus.CREATED,
+        ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.CREATED,
+        ),
         validate_responses=True,
     )
     def post(self) -> HttpResponse:
@@ -168,15 +185,19 @@ class _ValidatedController(Controller[PydanticSerializer]):
     validate_responses: ClassVar[bool | Empty] = True
 
     @validate(
-        return_type=list[int],
-        status_code=HTTPStatus.CREATED,
+        ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.CREATED,
+        ),
     )
     def post(self) -> HttpResponse:
         return self.to_response(['a'])  # list[str]
 
     @validate(
-        return_type=list[int],
-        status_code=HTTPStatus.CREATED,
+        ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
+        ),
     )
     def put(self) -> HttpResponse:
         return self.to_response(['a'])  # list[str]

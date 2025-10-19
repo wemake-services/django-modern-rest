@@ -17,14 +17,15 @@ layers =
   routing
   controller
   endpoint | components
-  response
   validation
+  response
   serialization
   # DTOs:
   headers
   types
   settings
   exceptions
+  internal
 
 
 [importlinter:contract:no-optional-deps]

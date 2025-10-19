@@ -1,9 +1,16 @@
+from collections.abc import Mapping
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, get_args
+from typing import (
+    Any,
+    ClassVar,
+    Generic,
+    TypeAlias,
+    TypeVar,
+    get_args,
+)
 
-from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
-from django.utils.functional import classproperty
+from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
@@ -14,8 +21,8 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
-from django_modern_rest.response import build_response
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.response import ResponseDescription, build_response
+from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import (
     DMR_GLOBAL_ERROR_HANDLER_KEY,
     resolve_setting,
@@ -26,6 +33,7 @@ from django_modern_rest.types import (
     infer_bases,
     infer_type_args,
 )
+from django_modern_rest.validation import ControllerValidator
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -46,8 +54,15 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    serializer_context_cls: ClassVar[type[SerializerContext]] = (
+        SerializerContext
+    )
+    controller_validator_cls: ClassVar[type[ControllerValidator]] = (
+        ControllerValidator
+    )
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
+    responses: ClassVar[list[ResponseDescription]] = []
 
     # We lie about that it is an instance variable, because type vars
     # are not allowed in `ClassVar`:
@@ -56,6 +71,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
     _is_async: ClassVar[bool]
+    _serializer_context: ClassVar[Any]
 
     @override
     def __init_subclass__(cls) -> None:
@@ -74,18 +90,21 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 f'Type arg {type_args[0]} are not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
-        cls._is_async = False  # by default all controllers are sync
         cls._serializer = type_args[0]
         cls._component_parsers = [
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParser)
         ]
+        cls._serializer_context = cls.serializer_context_cls.build_for_class(
+            cls,
+            cls._serializer,
+        )
         cls.api_endpoints = {
             meth: cls.endpoint_cls(func, serializer=cls._serializer)
             for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
-        cls._validate_endpoints()
+        cls._is_async = cls.controller_validator_cls()(cls)
 
     def to_response(
         self,
@@ -218,6 +237,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             if getattr(cls, method, None) is not None
         }
 
+    @cached_property
+    def response_map(self) -> Mapping[HTTPStatus, ResponseDescription]:
+        """Returns and caches the responses as a map."""
+        return {response.status_code: response for response in self.responses}
+
     @classproperty
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
@@ -225,24 +249,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls._is_async
 
     # Private API:
-
-    @classmethod
-    def _validate_endpoints(cls) -> None:
-        """Validate that endpoints definition is correct in build time."""
-        if not cls.api_endpoints:
-            return
-        is_async = cls.api_endpoints[
-            next(iter(cls.api_endpoints.keys()))
-        ].is_async
-        if any(
-            endpoint.is_async is not is_async
-            for endpoint in cls.api_endpoints.values()
-        ):
-            # The same error message that django has.
-            raise ImproperlyConfigured(
-                f'{cls!r} HTTP handlers must either be all sync or all async',
-            )
-        cls._is_async = is_async
 
     def _handle_request(
         self,
@@ -257,19 +263,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
             # TODO: support redirects
-            for parser, type_args in self._component_parsers:
-                # TODO: maybe parse all at once?
-                # See https://github.com/wemake-services/django-modern-rest/issues/8
-                parser.parse_component(  # pyright: ignore[reportPrivateUsage]
-                    # We lie that this is a `ComponentParser`, but their
-                    # APIs are compatible by design.
-                    self,  # type: ignore[arg-type]
-                    self._serializer,
-                    type_args,
-                    request,
-                    *args,
-                    **kwargs,
-                )
+            self._serializer_context.parse_and_bind(
+                self,
+                request,
+                *args,
+                **kwargs,
+            )
             return endpoint(self, *args, **kwargs)  # we don't pass request
         raise MethodNotAllowedError(method)
 

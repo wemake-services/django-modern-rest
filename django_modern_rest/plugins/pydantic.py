@@ -36,12 +36,12 @@ from django_modern_rest.settings import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.endpoint import EndpointMetadata
     from django_modern_rest.internal.json import (
         Deserialize,
         FromJson,
         Serialize,
     )
+    from django_modern_rest.metadata import EndpointMetadata
 
 
 # pydantic does not allow to import this,
@@ -94,7 +94,8 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
         """Create models for return types for validation."""
         # Just build all `TypeAdapater` instances
         # during import time and cache them for later use in runtime.
-        _get_cached_type_adapter(metadata.return_type)
+        for response in metadata.responses.values():
+            _get_cached_type_adapter(response.return_type)
 
 
 class PydanticSerializer(BaseSerializer):

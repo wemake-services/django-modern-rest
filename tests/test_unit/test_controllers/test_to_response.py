@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Controller,
     HeaderDescription,
+    ResponseDescription,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -15,9 +16,11 @@ from django_modern_rest.test import DMRRequestFactory
 
 class _CorrectToResponseController(Controller[PydanticSerializer]):
     @validate(
-        return_type=list[str],
-        status_code=HTTPStatus.ACCEPTED,
-        headers={'X-Custom': HeaderDescription()},
+        ResponseDescription(
+            return_type=list[str],
+            status_code=HTTPStatus.ACCEPTED,
+            headers={'X-Custom': HeaderDescription()},
+        ),
     )
     def get(self) -> HttpResponse:
         """Tests that `.to_response` works correctly."""
@@ -28,9 +31,11 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         )
 
     @validate(
-        return_type=list[str],
-        status_code=HTTPStatus.CREATED,
-        headers={'X-Custom': HeaderDescription()},
+        ResponseDescription(
+            return_type=list[str],
+            status_code=HTTPStatus.CREATED,
+            headers={'X-Custom': HeaderDescription()},
+        ),
     )
     def post(self) -> HttpResponse:
         """Tests that `.to_response` works with extra headers."""
@@ -40,8 +45,10 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         )
 
     @validate(
-        return_type=list[str],
-        status_code=HTTPStatus.OK,
+        ResponseDescription(
+            return_type=list[str],
+            status_code=HTTPStatus.OK,
+        ),
     )
     def delete(self) -> HttpResponse:
         """Minimal version."""
@@ -50,9 +57,11 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
 
 class _WrongToResponseController(Controller[PydanticSerializer]):
     @validate(
-        return_type=list[str],
-        status_code=HTTPStatus.ACCEPTED,
-        headers={'X-Custom': HeaderDescription()},
+        ResponseDescription(
+            return_type=list[str],
+            status_code=HTTPStatus.ACCEPTED,
+            headers={'X-Custom': HeaderDescription()},
+        ),
     )
     def post(self) -> HttpResponse:
         """Wrong body format."""
@@ -63,9 +72,11 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         )
 
     @validate(
-        return_type=list[str],
-        status_code=HTTPStatus.ACCEPTED,
-        headers={'X-Custom': HeaderDescription()},
+        ResponseDescription(
+            return_type=list[str],
+            status_code=HTTPStatus.ACCEPTED,
+            headers={'X-Custom': HeaderDescription()},
+        ),
     )
     def put(self) -> HttpResponse:
         """Wrong headers."""
@@ -75,9 +86,11 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         )
 
     @validate(
-        return_type=list[str],
-        status_code=HTTPStatus.ACCEPTED,
-        headers={'X-Custom': HeaderDescription()},
+        ResponseDescription(
+            return_type=list[str],
+            status_code=HTTPStatus.ACCEPTED,
+            headers={'X-Custom': HeaderDescription()},
+        ),
     )
     def patch(self) -> HttpResponse:
         """Wrong status code."""

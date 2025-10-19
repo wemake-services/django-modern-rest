@@ -6,7 +6,13 @@ import pytest
 from django.http import HttpResponse
 from django.test import RequestFactory
 
-from django_modern_rest import Controller, HeaderDescription, NewHeader, modify
+from django_modern_rest import (
+    Controller,
+    HeaderDescription,
+    NewHeader,
+    ResponseDescription,
+    modify,
+)
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
@@ -53,6 +59,47 @@ def test_modify_with_header_description() -> None:
             @modify(
                 status_code=HTTPStatus.OK,
                 headers={'Authorization': HeaderDescription()},  # type: ignore[dict-item]
+            )
+            def get(self) -> int:
+                raise NotImplementedError
+
+
+def test_modify_duplicate_statuses() -> None:
+    """Ensures `@modify` can't have duplicate status codes."""
+    with pytest.raises(EndpointMetadataError, match='2 times'):
+
+        class _DuplicateStatuses(Controller[PydanticSerializer]):
+            @modify(
+                extra_responses=[
+                    ResponseDescription(int, status_code=HTTPStatus.OK),
+                    ResponseDescription(str, status_code=HTTPStatus.OK),
+                ],
+            )
+            def get(self) -> int:
+                raise NotImplementedError
+
+
+def test_modify_modified_in_responses() -> None:
+    """Ensures `@modify` can't have duplicate status codes."""
+    with pytest.raises(EndpointMetadataError, match='duplicate 200'):
+
+        class _DuplicateExplicitStatuses(Controller[PydanticSerializer]):
+            @modify(
+                status_code=HTTPStatus.OK,
+                extra_responses=[
+                    ResponseDescription(int, status_code=HTTPStatus.OK),
+                ],
+            )
+            def get(self) -> int:
+                raise NotImplementedError
+
+    with pytest.raises(EndpointMetadataError, match='duplicate 200'):
+
+        class _DuplicateImplicitStatuses(Controller[PydanticSerializer]):
+            @modify(
+                extra_responses=[
+                    ResponseDescription(int, status_code=HTTPStatus.OK),
+                ],
             )
             def get(self) -> int:
                 raise NotImplementedError

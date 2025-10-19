@@ -30,7 +30,7 @@ def test_parse_headers_error(dmr_client: DMRClient, *, url: str) -> None:
         'detail': [
             {
                 'type': 'missing',
-                'loc': ['X-API-Token'],
+                'loc': ['parsed_headers', 'X-API-Token'],
                 'msg': 'Field required',
                 'input': {
                     'Cookie': '',
@@ -68,7 +68,7 @@ async def test_parse_headers_error_async(
         'detail': [
             {
                 'type': 'missing',
-                'loc': ['X-API-Token'],
+                'loc': ['parsed_headers', 'X-API-Token'],
                 'msg': 'Field required',
                 'input': {
                     'Host': 'testserver',
