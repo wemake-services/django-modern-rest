@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.operation import Operation
     from django_modern_rest.openapi.objects.parameter import Parameter
@@ -12,7 +10,7 @@ if TYPE_CHECKING:
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class PathItem(BaseObject):
+class PathItem:
     """
     Describes the operations available on a single path.
 

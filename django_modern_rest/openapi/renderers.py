@@ -6,7 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
 
-from django_modern_rest.openapi.objects.base import SchemaData
+from django_modern_rest.openapi.converter import ConvertedSchema
 
 
 class BaseRenderer:
@@ -22,13 +22,13 @@ class BaseRenderer:
     def render(
         self,
         request: HttpRequest,
-        schema: SchemaData,
+        schema: ConvertedSchema,
     ) -> HttpResponse:
         """Render the router and config to an HTTP response."""
         raise NotImplementedError
 
     # TODO: support different decoding options
-    def to_json(self, schema: SchemaData) -> str:
+    def to_json(self, schema: ConvertedSchema) -> str:
         """Convert schema to json string."""
         # TODO(@kondratevdev): use specified `json` encoder,
         # not the default one. Import settings and get it from there.
@@ -54,7 +54,7 @@ class JsonRenderer(BaseRenderer):
     def render(
         self,
         request: HttpRequest,
-        schema: SchemaData,
+        schema: ConvertedSchema,
     ) -> HttpResponse:
         """Render the JSON schema."""
         return HttpResponse(
@@ -83,7 +83,7 @@ class SwaggerRenderer(BaseRenderer):
     def render(
         self,
         request: HttpRequest,
-        schema: SchemaData,
+        schema: ConvertedSchema,
     ) -> HttpResponse:
         """Render the Swagger schema."""
         return render(

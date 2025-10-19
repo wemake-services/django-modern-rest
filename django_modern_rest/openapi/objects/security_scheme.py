@@ -1,15 +1,13 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.oauth_flows import OAuthFlows
 
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class SecurityScheme(BaseObject):
+class SecurityScheme:
     """
     Defines a security scheme that can be used by the operations.
 

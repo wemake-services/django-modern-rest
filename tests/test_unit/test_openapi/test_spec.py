@@ -92,7 +92,7 @@ def test_custom_app_and_namespace(
 
 
 @pytest.mark.usefixtures('_clear_cache')
-def test_with_none_config_uses_default(settings: LazySettings) -> None:
+def test_with_none_config_uses_default() -> None:
     """Ensure that `None` config triggers default config loading."""
     urlpatterns, app_name, namespace = openapi_spec(
         router=Router([]),

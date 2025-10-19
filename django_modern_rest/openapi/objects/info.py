@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.contact import Contact
     from django_modern_rest.openapi.objects.license import License
@@ -10,7 +8,7 @@ if TYPE_CHECKING:
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Info(BaseObject):
+class Info:
     """
     The Info object provides metadata about the API.
 

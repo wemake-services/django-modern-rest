@@ -1,15 +1,13 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.oauth_flow import OAuthFlow
 
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class OAuthFlows(BaseObject):
+class OAuthFlows:
     """Allows configuration of the supported OAuth Flows."""
 
     implicit: 'OAuthFlow | None' = None

@@ -2,8 +2,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.example import Example
     from django_modern_rest.openapi.objects.media_type import MediaType
@@ -13,7 +11,7 @@ if TYPE_CHECKING:
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Parameter(BaseObject):
+class Parameter:
     """Describes a single operation parameter."""
 
     name: str
