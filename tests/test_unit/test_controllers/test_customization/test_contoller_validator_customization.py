@@ -18,7 +18,7 @@ class _ControllerValidatorSubclass(ControllerValidator):
     @override
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation and mark that it was called."""
-        _ControllerValidatorSubclass.was_called = True
+        self.__class__.was_called = True
         return super().__call__(controller)
 
 
