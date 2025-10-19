@@ -25,9 +25,14 @@ spell-check:
 unit:
 	poetry run pytest --inline-snapshot=disable
 
+.PHONY: smoke
+smoke:
+	# Checks that it is possible to import the base package without django.setup
+  python -c 'from django_modern_rest import Controller'
+
 .PHONY: package
 package:
 	poetry run pip check
 
 .PHONY: test
-test: lint type-check spell-check package unit
+test: lint type-check spell-check package smoke unit
