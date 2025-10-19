@@ -58,6 +58,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         serializer: Serializer that is passed via type parameters.
             The main goal of the serializer is to serialize object
             to json and deserialize them from json.
+            You can't change the serializer simply by modifying
+            the attribute in the controller class.
+            Because it is already passed to many other places.
+            To customize it: create a new class, pass the serializer
+            type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
             We combine all components like ``Headers``, ``Query``, etc into
             one big model for faster validation and better error messages.
@@ -71,6 +76,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     """
 
     # Public API:
+    serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     serializer_context_cls: ClassVar[type[SerializerContext]] = (
         SerializerContext
@@ -81,10 +87,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
     responses: ClassVar[list[ResponseDescription]] = []
-
-    # We lie about that it is an instance variable, because type vars
-    # are not allowed in `ClassVar`, can be accessed in runtype via class:
-    serializer: type[BaseSerializer]
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
