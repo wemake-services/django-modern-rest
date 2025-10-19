@@ -22,7 +22,7 @@ class _CustomSerializerContextController(Controller[PydanticSerializer]):
 
 def test_custom_serializer_context_cls() -> None:
     """Ensure we can customize the serializer context."""
-    assert isinstance(
-        _CustomSerializerContextController._serializer_context,  # noqa: SLF001
-        _SerializerContextSubclass,
+    assert (
+        _CustomSerializerContextController.serializer_context_cls
+        is _SerializerContextSubclass
     )

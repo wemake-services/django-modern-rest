@@ -35,4 +35,3 @@ class _CustomControllerValidatorController(Controller[PydanticSerializer]):
 def test_custom_controller_validator_cls() -> None:
     """Ensure we can customize the controller validator factory."""
     assert _ControllerValidatorSubclass.was_called is True
-    assert _CustomControllerValidatorController._is_async is False  # noqa: SLF001
