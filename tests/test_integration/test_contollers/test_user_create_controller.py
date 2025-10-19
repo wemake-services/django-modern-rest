@@ -4,6 +4,7 @@ import pytest
 from dirty_equals import IsUUID
 from django.urls import reverse
 from faker import Faker
+from inline_snapshot import snapshot
 
 from django_modern_rest.test import DMRClient
 
@@ -40,6 +41,52 @@ def test_user_create_view(
         'token': 'token',
         'uid': IsUUID,
     }
+
+
+def test_user_create_view_multiple_errors(
+    dmr_client: DMRClient,
+) -> None:
+    """Ensure that all errors are shown at once."""
+    response = dmr_client.post(
+        reverse('api:users'),
+        headers={},
+        data={},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [
+            {
+                'type': 'missing',
+                'loc': ['parsed_query', 'q'],
+                'msg': 'Field required',
+                'input': {},
+            },
+            {
+                'type': 'missing',
+                'loc': ['parsed_headers', 'X-API-Token'],
+                'msg': 'Field required',
+                'input': {
+                    'Cookie': '',
+                    'Content-Length': '2',
+                    'Content-Type': 'application/json',
+                },
+            },
+            {
+                'type': 'missing',
+                'loc': ['parsed_body', 'email'],
+                'msg': 'Field required',
+                'input': {},
+            },
+            {
+                'type': 'missing',
+                'loc': ['parsed_body', 'age'],
+                'msg': 'Field required',
+                'input': {},
+            },
+        ],
+    })
 
 
 def test_user_list_view(dmr_client: DMRClient) -> None:

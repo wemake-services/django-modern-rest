@@ -1,6 +1,6 @@
 import abc
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar, final
+import dataclasses
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
 from django.http import HttpHeaders, HttpRequest
 from typing_extensions import TypedDict
@@ -132,8 +132,7 @@ class BaseEndpointOptimizer:
         """
 
 
-@final
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclasses.dataclass(slots=True)
 class SerializerContext:
     """Parse and bind request components for a controller.
 
@@ -147,26 +146,24 @@ class SerializerContext:
 
     # Protected API:
 
-    _specs: list[type['ComponentParser']]
-    _serializer: type[BaseSerializer]
-    _combined_model: Any
+    controller_cls: 'type[Controller[BaseSerializer]]'
+    _specs: list[type['ComponentParser']] = dataclasses.field(init=False)
+    _combined_model: Any = dataclasses.field(init=False)
 
-    @classmethod
-    def build_for_class(
-        cls,
-        controller_cls: 'type[Controller[BaseSerializer]]',
-        serializer: type[BaseSerializer],
-    ) -> 'SerializerContext':
+    def __post_init__(self) -> None:
         """Eagerly build context for a given controller and serializer."""
-        specs, type_map = cls._build_type_map(controller_cls, serializer)
+        specs, type_map = self._build_type_map(self.controller_cls)
+        self._specs = specs
 
-        combined_name = f'_{controller_cls.__qualname__}@ContextModel'
-        CombinedModel = TypedDict(combined_name, type_map, total=True)  # type: ignore[misc]
+        # Name is not really important,
+        # we use `@` to identify that it is generated:
+        name_prefix = self.controller_cls.__qualname__
+        combined_name = f'_{name_prefix}@ContextModel'
 
-        return SerializerContext(
-            _specs=specs,
-            _serializer=serializer,
-            _combined_model=CombinedModel,
+        self._combined_model = TypedDict(  # type: ignore[misc]
+            combined_name,  # pyright: ignore[reportArgumentType]
+            type_map,
+            total=True,
         )
 
     def parse_and_bind(
@@ -181,11 +178,9 @@ class SerializerContext:
         validated = self._validate_context(context)
         self._bind_parsed(controller, validated)
 
-    @classmethod
     def _build_type_map(
-        cls,
+        self,
         controller_cls: type['Controller[BaseSerializer]'],
-        serializer: type[BaseSerializer],
     ) -> _TypeMapResult:
         """Build mapping name -> model and return specs and type_map."""
         specs: list[type[ComponentParser]] = []
@@ -209,7 +204,7 @@ class SerializerContext:
         for component in self._specs:
             raw = component.provide_context_data(
                 controller,  # type: ignore[arg-type]
-                self._serializer,
+                self.controller_cls.serializer,
                 request,
                 *args,
                 **kwargs,
@@ -219,15 +214,16 @@ class SerializerContext:
 
     def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
+        serializer = self.controller_cls.serializer
         try:
-            return self._serializer.from_python(  # type: ignore[no-any-return]
+            return serializer.from_python(  # type: ignore[no-any-return]
                 context,
                 self._combined_model,
                 strict=self.strict_validation,
             )
-        except self._serializer.validation_error as exc:
+        except serializer.validation_error as exc:
             raise RequestSerializationError(
-                self._serializer.error_to_json(exc),
+                serializer.error_to_json(exc),
             ) from None
 
     def _bind_parsed(

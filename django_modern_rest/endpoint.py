@@ -93,10 +93,10 @@ class Endpoint:
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
-            self._func = self._async_endpoint(func, serializer)
+            self._func = self._async_endpoint(func)
             self.is_async = True
         else:
-            self._func = self._sync_endpoint(func, serializer)
+            self._func = self._sync_endpoint(func)
             self.is_async = False
 
     def __call__(
@@ -111,7 +111,6 @@ class Endpoint:
     def _async_endpoint(
         self,
         func: Callable[..., Any],
-        serializer: type[BaseSerializer],
     ) -> Callable[..., Awaitable[HttpResponse]]:
         async def decorator(
             controller: 'Controller[BaseSerializer]',
@@ -126,14 +125,13 @@ class Endpoint:
                     status_code=exc.status_code,
                     headers=exc.headers,
                 )
-            return self._make_http_response(controller, serializer, func_result)
+            return self._make_http_response(controller, func_result)
 
         return decorator
 
     def _sync_endpoint(
         self,
         func: Callable[..., Any],
-        serializer: type[BaseSerializer],
     ) -> Callable[..., HttpResponse]:
         def decorator(
             controller: 'Controller[BaseSerializer]',
@@ -148,14 +146,13 @@ class Endpoint:
                     status_code=exc.status_code,
                     headers=exc.headers,
                 )
-            return self._make_http_response(controller, serializer, func_result)
+            return self._make_http_response(controller, func_result)
 
         return decorator
 
     def _make_http_response(
         self,
         controller: 'Controller[BaseSerializer]',
-        serializer: type[BaseSerializer],
         raw_data: Any,
     ) -> HttpResponse:
         """Returns the actual `HttpResponse` object."""
@@ -170,7 +167,7 @@ class Endpoint:
             raw_data,
         )
         return HttpResponse(
-            content=serializer.to_json(validated.raw_data),
+            content=controller.serializer.to_json(validated.raw_data),
             status=validated.status_code,
             headers=validated.headers,
         )

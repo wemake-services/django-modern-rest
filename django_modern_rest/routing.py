@@ -74,7 +74,7 @@ def _validate_controllers_composition(
 ) -> bool:
     # We know that there are at least 2 controllers as this point:
     is_async = bool(controllers[0].view_is_async)
-    serializer = controllers[0]._serializer  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+    serializer = controllers[0].serializer
 
     for controller in controllers:
         if controller.view_is_async is not is_async:
@@ -82,7 +82,7 @@ def _validate_controllers_composition(
                 'Composing controllers with async and sync endpoints '
                 'is not supported',
             )
-        if serializer is not controller._serializer:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        if serializer is not controller.serializer:
             raise ValueError(
                 'Composing controllers with different serializer types '
                 'is not supported',

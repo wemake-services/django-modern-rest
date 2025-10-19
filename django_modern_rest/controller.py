@@ -50,7 +50,25 @@ _ComponentParserSpec: TypeAlias = tuple[
 
 
 class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
-    """Defines API views as controllers."""
+    """
+    Defines API views as controllers.
+
+    Attrs:
+        endpoint_cls: Class to create endpoints with.
+        serializer: Serializer that is passed via type parameters.
+            The main goal of the serializer is to serialize object
+            to json and deserialize them from json.
+        serializer_context_cls: Class for the input model generation.
+            We combine all components like ``Headers``, ``Query``, etc into
+            one big model for faster validation and better error messages.
+        controller_validator_cls: Runs controller validation on definition.
+        api_endpoints: Dictionary of HTTPMethod name to controller instance.
+        validate_responses: Boolean whether or not validating responses.
+            Works in runtime, can be disabled for better performance.
+        responses: List of responses schemas that this controller can return.
+            Also customizable in endpoints and globally.
+
+    """
 
     # Public API:
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
@@ -65,8 +83,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     responses: ClassVar[list[ResponseDescription]] = []
 
     # We lie about that it is an instance variable, because type vars
-    # are not allowed in `ClassVar`:
-    _serializer: type[BaseSerializer]
+    # are not allowed in `ClassVar`, can be accessed in runtype via class:
+    serializer: type[BaseSerializer]
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
@@ -90,17 +108,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 f'Type arg {type_args[0]} are not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
-        cls._serializer = type_args[0]
+        cls.serializer = type_args[0]
         cls._component_parsers = [
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParser)
         ]
-        cls._serializer_context = cls.serializer_context_cls.build_for_class(
-            cls,
-            cls._serializer,
-        )
+        cls._serializer_context = cls.serializer_context_cls(cls)
         cls.api_endpoints = {
-            meth: cls.endpoint_cls(func, serializer=cls._serializer)
+            meth: cls.endpoint_cls(func, serializer=cls.serializer)
             for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
@@ -125,7 +140,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         assert self.request.method  # noqa: S101
         return build_response(
             self.request.method,
-            self._serializer,
+            self.serializer,
             raw_data=raw_data,
             headers=headers,
             status_code=status_code,
@@ -147,7 +162,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         """
         return build_response(
             None,
-            self._serializer,
+            self.serializer,
             raw_data=raw_data,
             headers=headers,
             status_code=status_code,
@@ -217,7 +232,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls._maybe_wrap(
             build_response(
                 None,
-                cls._serializer,
+                cls.serializer,
                 raw_data={
                     'detail': (
                         f'Method {method!r} is not allowed, '
