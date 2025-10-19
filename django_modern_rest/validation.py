@@ -115,15 +115,15 @@ class ResponseValidator:
         if schema is not None:
             return schema
 
-        global_respones = resolve_responses()
-        schema = global_respones.get(status)
+        global_responses = resolve_responses()
+        schema = global_responses.get(status)
         if schema is not None:
             return schema
 
         allowed = (
             set(self.metadata.responses.keys())
             | controller.response_map.keys()
-            | global_respones.keys()
+            | global_responses.keys()
         )
         raise ResponseSerializationError(
             f'Returned {status_code=} is not specified '

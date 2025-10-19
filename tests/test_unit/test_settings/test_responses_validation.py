@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from http import HTTPStatus
 
 import pytest
@@ -11,7 +12,9 @@ from django_modern_rest.settings import clear_settings_cache, resolve_responses
 
 
 @pytest.fixture(autouse=True)
-def _clear_cache(settings: LazySettings) -> None:
+def _clear_cache(settings: LazySettings) -> Iterator[None]:
+    clear_settings_cache()
+    yield
     clear_settings_cache()
 
 
