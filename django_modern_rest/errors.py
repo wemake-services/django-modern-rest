@@ -55,5 +55,6 @@ def global_error_handler(
     """
     if isinstance(exc, SerializationError):
         payload = {'detail': exc.args[0]}
+        # TODO: this is never represented in the openapi spec / responses
         return controller.to_error(payload, status_code=exc.status_code)
     raise exc
