@@ -1,6 +1,6 @@
 import json
 from collections.abc import Iterator
-from http import HTTPMethod, HTTPStatus
+from http import HTTPStatus
 from typing import final
 
 import pytest
@@ -35,17 +35,29 @@ class _GlobalResponsesController(Controller[PydanticSerializer]):
         raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
 
-@pytest.mark.parametrize('method', [HTTPMethod.POST])
-def test_global_responses(
-    dmr_rf: DMRRequestFactory,
-    *,
-    method: HTTPMethod,
-) -> None:
+def test_global_responses(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that response status_code validation works."""
-    request = dmr_rf.generic(str(method), '/whatever/')
+    request = dmr_rf.post('/whatever/')
 
     response = _GlobalResponsesController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
     assert json.loads(response.content) == 1
+
+
+@final
+class _WrongGlobalResponseController(Controller[PydanticSerializer]):
+    def post(self) -> int:
+        raise APIError('abc', status_code=HTTPStatus.UNAUTHORIZED)
+
+
+def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that response status_code validation works."""
+    request = dmr_rf.post('/whatever/')
+
+    response = _WrongGlobalResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert '401' in json.loads(response.content)['detail']
