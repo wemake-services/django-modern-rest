@@ -3,8 +3,8 @@ from dataclasses import Field, fields
 from typing import Any, ClassVar, Protocol, TypeAlias, final
 
 from django_modern_rest.openapi.normalizers import (
-    NormalizeKey,
-    NormalizeValue,
+    NormalizeKeyFunc,
+    NormalizeValueFunc,
     normalize_key,
     normalize_value,
 )
@@ -32,33 +32,31 @@ class SchemaConverter:
     `normalize_value` function.
     """
 
-    normalize_key: NormalizeKey = normalize_key
-    normalize_value: NormalizeValue = normalize_value
+    def __init__(
+        self,
+        normalize_key: NormalizeKeyFunc = normalize_key,
+        normalize_value: NormalizeValueFunc = normalize_value,
+    ) -> None:
+        """Allow to inject normalization function."""
+        self.normalize_key = normalize_key
+        self.normalize_value = normalize_value
 
-    @classmethod
-    def convert(
-        cls,
-        schema_obj: SchemaObject | type[SchemaObject],
-    ) -> ConvertedSchema:
+    def convert(self, schema_obj: SchemaObject) -> ConvertedSchema:
         """Convert the object to OpenAPI schema dictionary."""
         schema: ConvertedSchema = {}
 
-        for field in cls._iter_fields(schema_obj):
+        for field in self._iter_fields(schema_obj):
             value = getattr(schema_obj, field.name, None)  # noqa: WPS110
             if value is None:
                 continue
 
-            schema[cls.normalize_key(field.name)] = cls.normalize_value(
+            schema[self.normalize_key(field.name)] = self.normalize_value(
                 value,
-                cls.convert,
+                self.convert,
             )
 
         return schema
 
     # Private API:
-    @classmethod
-    def _iter_fields(
-        cls,
-        schema_obj: SchemaObject | type[SchemaObject],
-    ) -> Iterator[Field[Any]]:
+    def _iter_fields(self, schema_obj: SchemaObject) -> Iterator[Field[Any]]:
         yield from fields(schema_obj)

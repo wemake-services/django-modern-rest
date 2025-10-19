@@ -1,4 +1,5 @@
 import enum
+from dataclasses import dataclass
 from typing import Any
 
 import pytest
@@ -17,9 +18,9 @@ from django_modern_rest.openapi.objects import (
 
 
 @pytest.fixture
-def converter() -> type[SchemaConverter]:
+def converter() -> SchemaConverter:
     """Fixtutre for converter class."""
-    return SchemaConverter
+    return SchemaConverter()
 
 
 @pytest.mark.parametrize(
@@ -81,7 +82,7 @@ def test_normalize_value_primitives(
     input_value: Any,
     expected_output: Any,
     *,
-    converter: type[SchemaConverter],
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` returns primitive values as-is."""
     assert normalize_value(input_value, converter.convert) == expected_output
@@ -103,7 +104,7 @@ def test_normalize_value_list(
     input_value: Any,
     expected_output: Any,
     *,
-    converter: type[SchemaConverter],
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` processes list recursively."""
     normalized = normalize_value(input_value, converter.convert)
@@ -123,7 +124,7 @@ def test_normalize_value_dict(
     input_value: Any,
     expected_output: Any,
     *,
-    converter: type[SchemaConverter],
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` processes dict recursively."""
     normalized = normalize_value(input_value, converter.convert)
@@ -146,7 +147,7 @@ def test_normalize_value_key_normalization(
     input_value: Any,
     expected_output: Any,
     *,
-    converter: type[SchemaConverter],
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` normalizes mapping keys."""
     assert normalize_value(input_value, converter.convert) == expected_output
@@ -173,7 +174,7 @@ def test_normalize_value_nested_structures(
     input_value: Any,
     expected_output: Any,
     *,
-    converter: type[SchemaConverter],
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` handles nested structures."""
     assert normalize_value(input_value, converter.convert) == expected_output
@@ -260,7 +261,7 @@ def test_normalize_value_base_objects(
     input_value: Any,
     expected_output: Any,
     *,
-    converter: type[SchemaConverter],
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` calls to_schema() correctly."""
     assert normalize_value(input_value, converter.convert) == expected_output

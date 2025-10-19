@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias, cast
 if TYPE_CHECKING:
     from django_modern_rest.openapi.converter import ConverterFunc, SchemaObject
 
-NormalizeKey: TypeAlias = Callable[[str], str]
-NormalizeValue: TypeAlias = Callable[[Any, 'ConverterFunc'], Any]
+NormalizeKeyFunc: TypeAlias = Callable[[str], str]
+NormalizeValueFunc: TypeAlias = Callable[[Any, 'ConverterFunc'], Any]
 
 
 def normalize_key(key: str) -> str:
