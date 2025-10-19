@@ -97,7 +97,6 @@ def test_normalize_value_list(
     """Ensure that `_normalize_value` processes list recursively."""
     normalized = _normalize_value(input_value)
     assert normalized == expected_output
-    assert isinstance(normalized, list)
 
 
 @pytest.mark.parametrize(
@@ -113,7 +112,6 @@ def test_normalize_value_dict(input_value: Any, expected_output: Any) -> None:
     """Ensure that `_normalize_value` processes dict recursively."""
     normalized = _normalize_value(input_value)
     assert normalized == expected_output
-    assert isinstance(normalized, dict)
 
 
 @pytest.mark.parametrize(

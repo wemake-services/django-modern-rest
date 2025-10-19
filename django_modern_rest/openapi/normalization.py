@@ -1,0 +1,2 @@
+class BaseNormalization:
+    """TODO: docs."""

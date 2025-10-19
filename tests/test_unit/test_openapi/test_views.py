@@ -1,14 +1,15 @@
 from http import HTTPStatus
-from typing import Any, Final
+from typing import Final
 
 import pytest
 from django.http import HttpResponse
 
+from django_modern_rest.openapi.objects.base import SchemaData
 from django_modern_rest.openapi.renderers import JsonRenderer
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.test import DMRRequestFactory
 
-_TEST_SCHEMA: Final[dict[str, Any]] = {  # noqa: WPS407
+_TEST_SCHEMA: Final[SchemaData] = {  # noqa: WPS407
     'openapi': '3.1.0',
     'info': {'title': 'Test', 'version': '1.0.0'},
     'paths': {},

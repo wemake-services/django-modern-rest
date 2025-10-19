@@ -1,0 +1,2 @@
+class SchemaConverter:
+    """TODO: docs."""
