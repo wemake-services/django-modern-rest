@@ -71,7 +71,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
         responses: List of responses schemas that this controller can return.
-            Also customizable in endpoints and globally.
+            Also customizable in endpoints and globally with ``'responses'``
+            key in the settings.
 
     """
 

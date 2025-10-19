@@ -27,6 +27,7 @@ from django_modern_rest.response import (
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSES_KEY,
+    resolve_responses,
     resolve_setting,
 )
 from django_modern_rest.types import (
@@ -114,9 +115,15 @@ class ResponseValidator:
         if schema is not None:
             return schema
 
-        # TODO: support global responses
+        global_respones = resolve_responses()
+        schema = global_respones.get(status)
+        if schema is not None:
+            return schema
+
         allowed = (
-            set(self.metadata.responses.keys()) | controller.response_map.keys()
+            set(self.metadata.responses.keys())
+            | controller.response_map.keys()
+            | global_respones.keys()
         )
         raise ResponseSerializationError(
             f'Returned {status_code=} is not specified '
@@ -212,8 +219,27 @@ class ResponseValidator:
             )
 
 
-class _BaseDefinitionValidator:
+class ResponsesDefinitionValidator:
+    """Base class to validate defined responses."""
+
     __slots__ = ()
+
+    def validate_definition(
+        self,
+        responses: list[ResponseDescription],
+        *,
+        endpoint: str,
+    ) -> dict[HTTPStatus, ResponseDescription]:
+        """Run the basic validation."""
+        self._validate_unique_responses(responses, endpoint=endpoint)
+        response_map = {
+            response.status_code: response for response in responses
+        }
+        self._validate_http_spec(
+            response_map,
+            endpoint=endpoint,
+        )
+        return response_map
 
     def _validate_unique_responses(
         self,
@@ -253,7 +279,7 @@ class _BaseDefinitionValidator:
         # TODO: add more checks
 
 
-class ControllerValidator(_BaseDefinitionValidator):
+class ControllerValidator(ResponsesDefinitionValidator):
     """
     Validate controller type definition.
 
@@ -267,14 +293,7 @@ class ControllerValidator(_BaseDefinitionValidator):
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
         typ_name = str(controller)
-        self._validate_unique_responses(controller.responses, endpoint=typ_name)
-        self._validate_http_spec(
-            {
-                response.status_code: response
-                for response in controller.responses
-            },
-            endpoint=typ_name,
-        )
+        self.validate_definition(controller.responses, endpoint=typ_name)
         return self._validate_endpoints(controller)
 
     def _validate_endpoints(
@@ -318,7 +337,7 @@ class ModifyEndpointPayload:
 
 # TODO: possibly split this into several validators? What would API look like?
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
+class EndpointMetadataValidator(ResponsesDefinitionValidator):  # noqa: WPS214
     """
     Validate ``__endpoint__`` metadata definition.
 
