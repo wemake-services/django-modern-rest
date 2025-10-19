@@ -192,7 +192,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             # This exception is very special,
             # since it does not have an attached endpoint.
             return self.handle_method_not_allowed(exc.method)
-        except Exception as exc:
+        except Exception as exc:  # TODO: should this be moved to `endpoint`?
             return self._maybe_wrap(self.handle_error(exc))
 
     @override

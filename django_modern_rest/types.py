@@ -84,7 +84,12 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
 def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
     """Possibly unwraps subscribbed class before checking for subclassing."""
     # Not a type guard, because `annotation` can be not a `type` :(
-    return issubclass(
-        get_origin(annotation) or annotation,
-        base_class,
-    )
+    if annotation is None:
+        annotation = type(None)
+    try:
+        return issubclass(
+            get_origin(annotation) or annotation,
+            base_class,
+        )
+    except TypeError:
+        return False
