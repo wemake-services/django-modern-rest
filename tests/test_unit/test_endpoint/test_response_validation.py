@@ -241,3 +241,158 @@ def test_validation_disabled_controller(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
     assert json.loads(response.content) == ['a']
+
+
+@final
+class _ModelWithFieldValidator(pydantic.BaseModel):
+    username: str
+
+    @pydantic.field_validator('username', mode='before')
+    @classmethod
+    def validate_username(cls, username: str) -> str:
+        # prefix "validated-" to the username for each validation
+        return f'validated-{username}'
+
+
+@final
+class _ValidateController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseDescription(
+            return_type=_ModelWithFieldValidator,
+            status_code=HTTPStatus.OK,
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return HttpResponse(
+            json.dumps(
+                _ModelWithFieldValidator(username='admin').model_dump(),
+            ),
+        )
+
+
+def test_double_validation_with_validate(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that @validate does not cause double validation."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _ValidateController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'username': 'validated-admin'}
+
+
+@final
+class _ModifyWithValidationController(
+    Controller[PydanticSerializer],
+):
+    @modify(
+        status_code=HTTPStatus.OK,
+        validate_responses=True,
+    )
+    def get(self) -> _ModelWithFieldValidator:
+        return _ModelWithFieldValidator(username='admin')
+
+
+def test_double_validation_modify_with_validation(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that @modify with validation does not cause double validation."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _ModifyWithValidationController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'username': 'validated-admin'}
+
+
+@final
+class _ModifyWithValidationRawDataController(
+    Controller[PydanticSerializer],
+):
+    @modify(
+        status_code=HTTPStatus.OK,
+        validate_responses=True,
+    )
+    def get(self) -> _ModelWithFieldValidator:
+        return {'username': 'admin'}  # type: ignore[return-value]
+
+
+def test_double_validation_modify_raw_data(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that @modify with raw data does not cause double validation."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _ModifyWithValidationRawDataController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'username': 'admin'}
+
+
+@final
+class _ModifyNoValidationController(
+    Controller[PydanticSerializer],
+):
+    @modify(
+        status_code=HTTPStatus.OK,
+        validate_responses=False,
+    )
+    def get(self) -> _ModelWithFieldValidator:
+        return _ModelWithFieldValidator(username='admin')
+
+
+def test_double_validation_modify_no_validation(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that @modify without validation performs zero validations."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _ModifyNoValidationController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'username': 'validated-admin'}
+
+
+@final
+class _RawPydanticReturnController(
+    Controller[PydanticSerializer],
+):
+    def get(self) -> _ModelWithFieldValidator:
+        return _ModelWithFieldValidator(username='admin')
+
+
+def test_double_validation_pydantic_model_return(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that Pydantic model return does not cause double validation."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _RawPydanticReturnController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'username': 'validated-admin'}
+
+
+@final
+class _RawDictReturnController(Controller[PydanticSerializer]):
+    def get(self) -> _ModelWithFieldValidator:
+        return {'username': 'admin'}  # type: ignore[return-value]
+
+
+def test_double_validation_raw_dict_return(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that returning raw data does not cause double validation."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _RawDictReturnController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'username': 'admin'}
