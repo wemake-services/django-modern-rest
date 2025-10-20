@@ -274,7 +274,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        # Framework-level CSRF handling when required:
         csrf_response = self._csrf_enforce_if_required(request)
         if csrf_response is not None:
             return csrf_response
@@ -299,11 +298,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         self,
         request: HttpRequest,
     ) -> HttpResponse | None:
-        """
-        Run CSRF enforcement when this controller requires it.
-
-        Returns wrapped response when check fails, otherwise None.
-        """
         if not getattr(self, '_dmr_require_csrf', False):
             return None
         dont_enforce = getattr(request, '_dont_enforce_csrf_checks', False)
