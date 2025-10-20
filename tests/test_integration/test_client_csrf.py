@@ -120,5 +120,7 @@ def _assert_successful_response(
 def _assert_csrf_forbidden_response(response: Any) -> None:
     """Assert that response is CSRF forbidden."""
     assert response.status_code == HTTPStatus.FORBIDDEN, response.content
-    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
-    assert b'CSRF verification failed' in response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == {
+        'detail': 'CSRF verification failed. Request aborted.',
+    }

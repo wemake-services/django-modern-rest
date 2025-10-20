@@ -2,8 +2,15 @@ from collections.abc import Callable
 from typing import Any, TypeVar
 
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
+
+
+def _dmr_csrf_class_decorator(cls: _TypeT) -> _TypeT:
+    """Mark controller for internal CSRF and exempt dispatch from Django."""
+    cls._dmr_require_csrf = True
+    return method_decorator(csrf_exempt, name='dispatch')(cls)
 
 
 def dispatch_decorator(
@@ -34,5 +41,12 @@ def dispatch_decorator(
     - :func:`django.contrib.auth.decorators.permission_required`
     - and any other default or custom django decorator
 
+    Additionally, when used with
+    :func:`django.views.decorators.csrf.csrf_protect`, we reroute
+    CSRF enforcement to framework-level handling to allow
+    consistent JSON error responses without changing global settings.
     """
+    if func is csrf_protect:
+        return _dmr_csrf_class_decorator
+
     return method_decorator(func, name='dispatch')

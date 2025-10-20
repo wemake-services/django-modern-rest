@@ -10,6 +10,7 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse
+from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
@@ -273,6 +274,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        # Framework-level CSRF handling when required:
+        csrf_response = self._csrf_enforce_if_required(request)
+        if csrf_response is not None:
+            return csrf_response
+
         # Fast path for method resolution:
         method = request.method.lower()  # type: ignore[union-attr]
         endpoint = self.api_endpoints.get(method)
@@ -289,6 +295,40 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             return endpoint(self, *args, **kwargs)  # we don't pass request
         raise MethodNotAllowedError(method)
 
+    def _csrf_enforce_if_required(
+        self,
+        request: HttpRequest,
+    ) -> HttpResponse | None:
+        """
+        Run CSRF enforcement when this controller requires it.
+
+        Returns wrapped response when check fails, otherwise None.
+        """
+        if not getattr(self, '_dmr_require_csrf', False):
+            return None
+        dont_enforce = getattr(request, '_dont_enforce_csrf_checks', False)
+        if dont_enforce:
+            return None
+
+        reason = CsrfViewMiddleware(_dmr_csrf_dummy_response).process_view(
+            request,
+            _dmr_csrf_dummy_response,
+            (),
+            {},
+        )
+        if reason is None:
+            return None
+
+        message = 'CSRF verification failed. Request aborted.'
+        return self._maybe_wrap(
+            build_response(
+                None,
+                self.serializer,
+                raw_data={'detail': message},
+                status_code=HTTPStatus.FORBIDDEN,
+            ),
+        )
+
     @classmethod
     def _maybe_wrap(
         cls,
@@ -298,3 +338,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         if cls.view_is_async:
             return identity(response)
         return response
+
+
+def _dmr_csrf_dummy_response(  # pragma: no cover
+    req: HttpRequest,
+) -> HttpResponse:
+    return HttpResponse()
