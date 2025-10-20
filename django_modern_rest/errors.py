@@ -19,7 +19,7 @@ def global_error_handler(
     It is the last item in the chain that we try:
     1. Per endpoint configuration via :func:`errors` decorator
     2. Per controller configuration via
-       :attr:`django_modern_rest.controller.Conrtoller.errors` attribute
+       :attr:`django_modern_rest.controller.Controller.errors` attribute
     3. This global handler, specified via the configuration
 
     If some exception cannot be handled, it is just reraised.
