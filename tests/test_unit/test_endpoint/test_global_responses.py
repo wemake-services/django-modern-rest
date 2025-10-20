@@ -29,20 +29,20 @@ def _set_global_responses(settings: LazySettings) -> Iterator[None]:
     clear_settings_cache()
 
 
-@final
-class _GlobalResponsesController(Controller[PydanticSerializer]):
-    def post(self) -> int:
-        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
-
-
 def test_global_responses(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that response status_code validation works."""
     request = dmr_rf.post('/whatever/')
 
+    class _GlobalResponsesController(Controller[PydanticSerializer]):
+        """Needs to be inside a test for fixture with responses to work."""
+
+        def post(self) -> int:
+            raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
+
     response = _GlobalResponsesController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED, response.content
     assert json.loads(response.content) == 1
 
 

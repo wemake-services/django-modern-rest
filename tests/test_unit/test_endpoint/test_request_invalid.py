@@ -31,7 +31,7 @@ class _WrongPydanticBodyController(
         return 'done'  # not an exception for a better test clarity
 
 
-def test_invalide_request_body(rf: RequestFactory, faker: Faker) -> None:
+def test_invalid_request_body(rf: RequestFactory, faker: Faker) -> None:
     """Ensures that request body validation works for default settings."""
     request = rf.post(
         '/whatever/',
@@ -41,12 +41,25 @@ def test_invalide_request_body(rf: RequestFactory, faker: Faker) -> None:
     response = _WrongPydanticBodyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': (
-            "Cannot parse request body with content type 'multipart/form-data',"
-            " expected 'application/json'"
-        ),
+        'detail': ([
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, Cannot parse request body with content type '
+                    "'multipart/form-data', expected 'application/json'"
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'Cannot parse request body with content type '
+                        "'multipart/form-data', expected 'application/json'"
+                    ),
+                },
+            },
+        ]),
     })
 
 

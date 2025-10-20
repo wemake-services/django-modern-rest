@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.exceptions import RequestSerializationError
+from django_modern_rest.response import ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
@@ -37,6 +38,26 @@ class ComponentParser:
         Implement body JSON decoding / content-type checks here if needed.
         """
         raise NotImplementedError
+
+    @classmethod
+    def provide_responses(
+        cls,
+        serializer: type[BaseSerializer],
+        model: Any,
+    ) -> list[ResponseDescription]:
+        """
+        Return a list of extra responses that this component produces.
+
+        For example, when parsing something, we always have an option
+        to fail a parsing, if some request does not fit our model.
+        """
+        return [
+            ResponseDescription(
+                # We do this for runtime validation, not static type check:
+                serializer.response_parsing_error_model,
+                status_code=RequestSerializationError.status_code,
+            ),
+        ]
 
 
 class Query(ComponentParser, Generic[_QueryT]):
@@ -99,14 +120,18 @@ class Body(ComponentParser, Generic[_BodyT]):
     ) -> Any:
         if request.content_type != serializer.content_type:
             raise RequestSerializationError(
-                'Cannot parse request body '
-                f'with content type {request.content_type!r}, '
-                f'expected {serializer.content_type!r}',
+                serializer.error_to_json(
+                    'Cannot parse request body '
+                    f'with content type {request.content_type!r}, '
+                    f'expected {serializer.content_type!r}',
+                ),
             )
         try:
             return serializer.from_json(request.body)
-        except (msgspec.DecodeError, TypeError) as exc:
-            raise RequestSerializationError(str(exc)) from exc
+        except msgspec.DecodeError as exc:
+            raise RequestSerializationError(
+                serializer.error_to_json(str(exc)),
+            ) from exc
 
 
 class Headers(ComponentParser, Generic[_HeadersT]):

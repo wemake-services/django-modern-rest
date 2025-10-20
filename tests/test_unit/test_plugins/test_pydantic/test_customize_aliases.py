@@ -77,7 +77,7 @@ def test_default_alias_serialization_by_name(
     response = _AliasController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert json.loads(response.content)['detail']
 
 

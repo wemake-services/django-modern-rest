@@ -29,6 +29,7 @@ class BaseSerializer:
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
     optimizer: ClassVar[type['BaseEndpointOptimizer']]
+    response_parsing_error_model: ClassVar[Any]
 
     # API that have defaults:
     content_type: ClassVar[str] = 'application/json'
@@ -109,7 +110,7 @@ class BaseSerializer:
 
     @classmethod
     @abc.abstractmethod
-    def error_to_json(cls, error: Exception) -> Any:
+    def error_to_json(cls, error: Exception | str) -> Any:
         """Serialize an exception to json the best way possible."""
 
 
@@ -173,7 +174,14 @@ class SerializerContext:
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        """Collect, validate, and bind component data to the controller."""
+        """
+        Collect, validate, and bind component data to the controller.
+
+        Raises:
+            serializer.validation_error: When provided data does not
+                match the expected model.
+
+        """
         context = self._collect_context(controller, request, *args, **kwargs)
         validated = self._validate_context(context)
         self._bind_parsed(controller, validated)
