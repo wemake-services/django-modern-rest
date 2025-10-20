@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from django_modern_rest.metadata import EndpointMetadata
 
 _ModelT = TypeVar('_ModelT')
-_ComponentParserList = list[type['ComponentParser']]
-_TypeMapResult: TypeAlias = tuple[_ComponentParserList, dict[str, Any]]
+_ComponentParserSpec = dict[type['ComponentParser'], Any]
+_TypeMapResult: TypeAlias = tuple[_ComponentParserSpec, dict[str, Any]]
 
 
 class BaseSerializer:
@@ -147,7 +147,7 @@ class SerializerContext:
     # Protected API:
 
     controller_cls: 'type[Controller[BaseSerializer]]'
-    _specs: list[type['ComponentParser']] = dataclasses.field(init=False)
+    _specs: _ComponentParserSpec = dataclasses.field(init=False)
     _combined_model: Any = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
@@ -183,13 +183,13 @@ class SerializerContext:
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> _TypeMapResult:
         """Build mapping name -> model and return specs and type_map."""
-        specs: list[type[ComponentParser]] = []
+        specs: _ComponentParserSpec = {}
         type_map: dict[str, Any] = {}
         parsers = controller_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
         for component_cls, type_args in parsers:
             type_map[component_cls.context_name] = type_args[0]
-            specs.append(component_cls)
+            specs[component_cls] = type_args[0]
         return specs, type_map
 
     def _collect_context(
@@ -201,10 +201,11 @@ class SerializerContext:
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
         context: dict[str, Any] = {}
-        for component in self._specs:
+        for component, submodel in self._specs.items():
             raw = component.provide_context_data(
                 controller,  # type: ignore[arg-type]
                 self.controller_cls.serializer,
+                submodel,  # just the one for the exact key
                 request,
                 *args,
                 **kwargs,
