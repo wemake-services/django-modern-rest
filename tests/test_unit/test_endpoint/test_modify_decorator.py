@@ -66,7 +66,7 @@ def test_modify_with_header_description() -> None:
 
 def test_modify_duplicate_statuses() -> None:
     """Ensures `@modify` can't have duplicate status codes."""
-    with pytest.raises(EndpointMetadataError, match='2 times'):
+    with pytest.raises(EndpointMetadataError, match='200 specified 3 times'):
 
         class _DuplicateStatuses(Controller[PydanticSerializer]):
             @modify(
@@ -81,7 +81,7 @@ def test_modify_duplicate_statuses() -> None:
 
 def test_modify_modified_in_responses() -> None:
     """Ensures `@modify` can't have duplicate status codes."""
-    with pytest.raises(EndpointMetadataError, match='duplicate 200'):
+    with pytest.raises(EndpointMetadataError, match='200 specified 2 times'):
 
         class _DuplicateExplicitStatuses(Controller[PydanticSerializer]):
             @modify(
@@ -93,7 +93,7 @@ def test_modify_modified_in_responses() -> None:
             def get(self) -> int:
                 raise NotImplementedError
 
-    with pytest.raises(EndpointMetadataError, match='duplicate 200'):
+    with pytest.raises(EndpointMetadataError, match='200 specified 2 times'):
 
         class _DuplicateImplicitStatuses(Controller[PydanticSerializer]):
             @modify(

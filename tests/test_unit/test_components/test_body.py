@@ -39,10 +39,23 @@ def test_body_parse_wrong_content_type(rf: RequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert json.loads(response.content) == snapshot({
-        'detail': (
-            "Cannot parse request body with content type 'application/xml', "
-            "expected 'application/json'"
-        ),
+        'detail': ([
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, Cannot parse request body with content '
+                    "type 'application/xml', expected 'application/json'"
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'Cannot parse request body with content '
+                        "type 'application/xml', expected 'application/json'"
+                    ),
+                },
+            },
+        ]),
     })
 
 
@@ -61,10 +74,23 @@ def test_body_parse_wrong_content_type_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert json.loads(response.content) == snapshot({
-        'detail': (
-            "Cannot parse request body with content type 'application/xml', "
-            "expected 'application/json'"
-        ),
+        'detail': ([
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, Cannot parse request body with content '
+                    "type 'application/xml', expected 'application/json'"
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'Cannot parse request body with content '
+                        "type 'application/xml', expected 'application/json'"
+                    ),
+                },
+            },
+        ]),
     })
 
 
@@ -78,7 +104,23 @@ def test_body_parse_invalid_json(dmr_rf: DMRRequestFactory) -> None:
     response = _WrongPydanticBodyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': ('JSON is malformed: object keys must be strings (byte 1)'),
+        'detail': ([
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, JSON is malformed: object keys '
+                    'must be strings (byte 1)'
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'JSON is malformed: object keys '
+                        'must be strings (byte 1)'
+                    ),
+                },
+            },
+        ]),
     })

@@ -1,4 +1,3 @@
-from collections.abc import Mapping
 from http import HTTPStatus
 from typing import (
     Any,
@@ -10,23 +9,18 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse
-from django.utils.functional import cached_property, classproperty
+from django.utils.functional import classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
-    MethodNotAllowedError,
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import ResponseDescription, build_response
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
-from django_modern_rest.settings import (
-    DMR_GLOBAL_ERROR_HANDLER_KEY,
-    resolve_setting,
-)
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
@@ -78,6 +72,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     # Public API:
     serializer: ClassVar[type[BaseSerializer]]
+    serializer_context: ClassVar[SerializerContext]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     serializer_context_cls: ClassVar[type[SerializerContext]] = (
         SerializerContext
@@ -88,11 +83,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
     responses: ClassVar[list[ResponseDescription]] = []
+    responses_from_components: ClassVar[bool] = True
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
     _is_async: ClassVar[bool]
-    _serializer_context: ClassVar[Any]
 
     @override
     def __init_subclass__(cls) -> None:
@@ -116,9 +111,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             (subclass, get_args(subclass))
             for subclass in infer_bases(cls, ComponentParser)
         ]
-        cls._serializer_context = cls.serializer_context_cls(cls)
+        cls.serializer_context = cls.serializer_context_cls(cls)
         cls.api_endpoints = {
-            meth: cls.endpoint_cls(func, serializer=cls.serializer)
+            meth: cls.endpoint_cls(func, controller_cls=cls)
             for meth in cls.existing_http_methods()
             if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
@@ -171,13 +166,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             status_code=status_code,
         )
 
-    def handle_error(self, exc: Exception) -> HttpResponse:
-        """Return error response."""
-        return resolve_setting(  # type: ignore[no-any-return]
-            DMR_GLOBAL_ERROR_HANDLER_KEY,
-            import_string=True,
-        )(self, exc)
-
     @override
     def dispatch(
         self,
@@ -185,15 +173,26 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        """Parse all components before the dispatching and call controller."""
-        try:
-            return self._handle_request(request, *args, **kwargs)
-        except MethodNotAllowedError as exc:
-            # This exception is very special,
-            # since it does not have an attached endpoint.
-            return self.handle_method_not_allowed(exc.method)
-        except Exception as exc:  # TODO: should this be moved to `endpoint`?
-            return self._maybe_wrap(self.handle_error(exc))
+        """
+        Find an endpoint that serves this HTTP method and call it.
+
+        Return 405 if this method is not allowed.
+        """
+        # Fast path for method resolution:
+        method = request.method.lower()  # type: ignore[union-attr]
+        endpoint = self.api_endpoints.get(method)
+        if endpoint is not None:
+            # TODO: support `StreamingHttpResponse`
+            # TODO: support `FileResponse`
+            # TODO: support redirects
+            return endpoint(self, *args, **kwargs)  # we don't pass request
+        # This return is very special,
+        # since it does not have an attached endpoint.
+        # All other responses are handled on endpoint level
+        # with all the response type validation.
+        # TODO: currently this is the only response that is not validated.
+        # maybe we should create a default endpoint and use it instead?
+        return self.handle_method_not_allowed(method)
 
     @override
     @deprecated(
@@ -255,40 +254,37 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             if getattr(cls, method, None) is not None
         }
 
-    @cached_property
-    def response_map(self) -> Mapping[HTTPStatus, ResponseDescription]:
-        """Returns and caches the responses as a map."""
-        return {response.status_code: response for response in self.responses}
+    @classmethod
+    def semantic_responses(cls) -> list[ResponseDescription]:
+        """
+        Returns all user-defined and component-defined responses.
+
+        Optionally component-defined responses can be turned off with falsy
+        :attr:`responses_from_components` attribute on a controller.
+        We call it once per endpoint creation.
+        """
+        if not cls.responses_from_components:
+            return cls.responses
+
+        # Get the responses that were provided by the user.
+        existing_codes = {response.status_code for response in cls.responses}
+        extra_responses = [
+            response
+            for component, model in cls._component_parsers
+            for response in component.provide_responses(
+                cls.serializer,
+                model,
+            )
+            # If some response already exists, do not override it.
+            if response.status_code not in existing_codes
+        ]
+        return [*cls.responses, *set(extra_responses)]
 
     @classproperty
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
         """We already know this in advance, no need to recalculate."""
         return cls._is_async
-
-    # Private API:
-
-    def _handle_request(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponse:
-        # Fast path for method resolution:
-        method = request.method.lower()  # type: ignore[union-attr]
-        endpoint = self.api_endpoints.get(method)
-        if endpoint is not None:
-            # TODO: support `StreamingHttpResponse`
-            # TODO: support `FileResponse`
-            # TODO: support redirects
-            self._serializer_context.parse_and_bind(
-                self,
-                request,
-                *args,
-                **kwargs,
-            )
-            return endpoint(self, *args, **kwargs)  # we don't pass request
-        raise MethodNotAllowedError(method)
 
     @classmethod
     def _maybe_wrap(

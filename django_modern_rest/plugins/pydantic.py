@@ -5,11 +5,13 @@ from typing import (
     Any,
     ClassVar,
     Literal,
+    NotRequired,
     TypeAlias,
-    TypedDict,
     Union,
     final,
 )
+
+from typing_extensions import TypedDict
 
 try:
     import pydantic
@@ -98,6 +100,31 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
             _get_cached_type_adapter(response.return_type)
 
 
+class PydanticErrorDetails(TypedDict):
+    """
+    Base schema for pydantic error detail.
+
+    We can't use ``pydantic_core.ErrorDetails``,
+    because it has ``loc`` typed as ``tuple``
+    and in runtime it is ``list``.
+    Since we use ``strict=True`` for responses,
+    this fails during the validation.
+    """
+
+    type: str
+    loc: list[int | str]
+    msg: str
+    input: Any
+    ctx: NotRequired[dict[str, Any]]
+    url: NotRequired[str]
+
+
+class PydanticErrorModel(TypedDict):
+    """Error response schema for serialization errors."""
+
+    detail: list[PydanticErrorDetails]
+
+
 class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
@@ -116,6 +143,7 @@ class PydanticSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
+    response_parsing_error_model: ClassVar[Any] = PydanticErrorModel
 
     # Custom API:
 
@@ -204,14 +232,23 @@ class PydanticSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def error_to_json(cls, error: Exception) -> list[Any]:
+    def error_to_json(cls, error: Exception | str) -> Any:
         """Serialize an exception to json the best way possible."""
-        # Security notice: we only process custom exceptions
-        # with this functions, so nothing should leak from exc messages.
-        assert isinstance(error, pydantic.ValidationError), (  # noqa: S101
-            f'Cannot serialize {error} to json safely'
-        )
-        return error.errors(include_url=False)
+        if isinstance(error, str):
+            error = pydantic.ValidationError.from_exception_data(
+                error,
+                [
+                    {
+                        'type': 'value_error',
+                        'loc': (),
+                        'input': '',
+                        'ctx': {'error': error},
+                    },
+                ],
+            )
+        if isinstance(error, pydantic.ValidationError):
+            return error.errors(include_url=False)
+        raise NotImplementedError(f'Cannot serialize {error} to json safely')
 
 
 # TODO: merge `_get_serialize_func` and `_get_deserialize_func`?

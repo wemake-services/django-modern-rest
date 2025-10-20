@@ -26,3 +26,7 @@ def test_custom_serializer_context_cls() -> None:
         _CustomSerializerContextController.serializer_context_cls
         is _SerializerContextSubclass
     )
+    assert isinstance(
+        _CustomSerializerContextController.serializer_context,
+        _SerializerContextSubclass,
+    )

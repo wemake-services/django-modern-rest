@@ -16,16 +16,6 @@ class EndpointMetadataError(Exception):
     """Raised when user didn't specify some required endpoint metadata."""
 
 
-@final
-class MethodNotAllowedError(Exception):
-    """Raised when some API method is not allowed for the controller."""
-
-    def __init__(self, method: str) -> None:
-        """Save the passed method name for error message."""
-        super().__init__(method)
-        self.method = method
-
-
 class SerializationError(Exception):
     """
     Base class for all parsing and serialization errors.
