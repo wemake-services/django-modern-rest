@@ -1,11 +1,13 @@
 import abc
 from typing import Any, ClassVar, Generic, TypeVar
 
-import msgspec
 from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest.exceptions import RequestSerializationError
+from django_modern_rest.exceptions import (
+    DataParsingError,
+    RequestSerializationError,
+)
 from django_modern_rest.response import ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
 
@@ -120,17 +122,17 @@ class Body(ComponentParser, Generic[_BodyT]):
     ) -> Any:
         if request.content_type != serializer.content_type:
             raise RequestSerializationError(
-                serializer.error_to_json(
+                serializer.error_serialize(
                     'Cannot parse request body '
                     f'with content type {request.content_type!r}, '
                     f'expected {serializer.content_type!r}',
                 ),
             )
         try:
-            return serializer.from_json(request.body)
-        except msgspec.DecodeError as exc:
+            return serializer.deserialize(request.body)
+        except DataParsingError as exc:
             raise RequestSerializationError(
-                serializer.error_to_json(str(exc)),
+                serializer.error_serialize(str(exc)),
             ) from exc
 
 

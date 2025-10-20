@@ -7,6 +7,8 @@ from typing import Any, Protocol, TypeAlias
 
 import msgspec
 
+from django_modern_rest.exceptions import DataParsingError
+
 #: Types that are possible to load json from.
 FromJson: TypeAlias = str | bytes | bytearray
 
@@ -31,7 +33,7 @@ class Deserialize(Protocol):
 
 def serialize(
     to_serialize: Any,
-    serializer: Callable[[Any], Any],
+    serializer: Callable[[Any], Any] | None = None,
 ) -> bytes:
     """
     Encode a value into JSON bytestring.
@@ -52,7 +54,7 @@ def serialize(
 
 def deserialize(
     to_deserialize: FromJson,
-    deserializer: _DeserializeFunc,
+    deserializer: _DeserializeFunc | None = None,
     *,
     strict: bool = True,
 ) -> Any:
@@ -73,8 +75,11 @@ def deserialize(
         TypeError: If error encoding ``obj``.
         msgspec.DecodeError: If error encoding ``obj``.
     """
-    return msgspec.json.decode(
-        to_deserialize,
-        dec_hook=deserializer,
-        strict=strict,
-    )
+    try:
+        return msgspec.json.decode(
+            to_deserialize,
+            dec_hook=deserializer,
+            strict=strict,
+        )
+    except msgspec.DecodeError as exc:
+        raise DataParsingError(str(exc)) from exc
