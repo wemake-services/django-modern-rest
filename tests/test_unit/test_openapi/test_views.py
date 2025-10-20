@@ -20,7 +20,7 @@ _TEST_PATH: Final[str] = 'test/'
 def test_get_with_valid_renderer(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that GET request works with valid renderer and schema."""
     view = OpenAPIView.as_view(
-        renderer=JsonRenderer(_TEST_PATH),
+        renderer=JsonRenderer(path=_TEST_PATH),
         schema=_TEST_SCHEMA,
     )
     response = view(dmr_rf.get(_TEST_PATH))
@@ -59,7 +59,7 @@ def test_only_get_method_allowed(
 ) -> None:
     """Ensure that only GET method is allowed."""
     view = OpenAPIView.as_view(
-        renderer=JsonRenderer(_TEST_PATH),
+        renderer=JsonRenderer(path=_TEST_PATH),
         schema=_TEST_SCHEMA,
     )
     request_factory_method = getattr(dmr_rf, http_method)
