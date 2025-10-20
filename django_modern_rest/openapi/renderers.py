@@ -35,7 +35,7 @@ def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
     return cast(SerializedSchema, serialize(schema, None).decode('utf-8'))
 
 
-class BaseRenderer(abc.ABC):
+class BaseRenderer:
     """
     Abstract base class for OpenAPI schema renderers.
 
