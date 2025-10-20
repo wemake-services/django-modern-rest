@@ -168,7 +168,7 @@ class ResponseValidator:
 
         """
         if response:
-            structured = self.serializer.from_json(structured)
+            structured = self.serializer.deserialize(structured)
 
         try:
             self.serializer.from_python(
@@ -178,7 +178,7 @@ class ResponseValidator:
             )
         except self.serializer.validation_error as exc:
             raise ResponseSerializationError(
-                self.serializer.error_to_json(exc),
+                self.serializer.error_serialize(exc),
             ) from None
 
     def _validate_response_object(

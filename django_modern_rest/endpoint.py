@@ -225,7 +225,7 @@ class Endpoint:  # noqa: WPS214
             raw_data,
         )
         return HttpResponse(
-            content=self._controller.serializer.to_json(validated.raw_data),
+            content=self._controller.serializer.serialize(validated.raw_data),
             status=validated.status_code,
             headers=validated.headers,
         )

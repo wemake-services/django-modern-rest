@@ -199,7 +199,7 @@ def build_response(
         response_headers['Content-Type'] = serializer.content_type
 
     return HttpResponse(
-        content=serializer.to_json(raw_data),
+        content=serializer.serialize(raw_data),
         status=status,
         headers=response_headers,
     )

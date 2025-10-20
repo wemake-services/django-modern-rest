@@ -1,7 +1,6 @@
 import abc
 from typing import ClassVar, final
 
-import msgspec
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
@@ -28,15 +27,19 @@ class BaseRenderer:
         raise NotImplementedError
 
     # TODO: support different decoding options
-    def to_json(self, schema: ConvertedSchema) -> str:
+    def serialize(self, schema: ConvertedSchema) -> str:
         """Convert schema to json string."""
-        # TODO(@kondratevdev): use specified `json` encoder,
-        # not the default one. Import settings and get it from there.
-        return msgspec.json.encode(schema).decode('utf-8')
+        from django_modern_rest.settings import (  # noqa: PLC0415
+            DMR_SERIALIZE_KEY,
+            resolve_setting,
+        )
+
+        serialize = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
+        return serialize(schema).decode('utf-8')  # type: ignore[no-any-return]
 
 
 @final
-class JsonRenderer(BaseRenderer):
+class JsonRenderer(BaseRenderer):  # TODO: a dataclass?
     """Renderer for JSON."""
 
     content_type: ClassVar[str] = 'application/json'
@@ -47,8 +50,7 @@ class JsonRenderer(BaseRenderer):
         name: str = 'json',
     ) -> None:
         """Create JsonRenderer."""
-        self.path = path
-        self.name = name
+        super().__init__(path, name)
 
     @override
     def render(
@@ -58,7 +60,7 @@ class JsonRenderer(BaseRenderer):
     ) -> HttpResponse:
         """Render the JSON schema."""
         return HttpResponse(
-            content=self.to_json(schema),
+            content=self.serialize(schema),
             content_type=self.content_type,
         )
 
@@ -89,7 +91,7 @@ class SwaggerRenderer(BaseRenderer):
         return render(
             request,
             self.template_name,
-            context={'spec': self.to_json(schema)},
+            context={'spec': self.serialize(schema)},
             content_type=self.content_type,
         )
 

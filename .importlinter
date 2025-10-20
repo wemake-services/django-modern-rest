@@ -24,8 +24,8 @@ layers =
   headers
   types
   settings
-  exceptions
   internal
+  exceptions
 
 
 [importlinter:contract:no-optional-deps]
@@ -37,9 +37,12 @@ source_modules =
 
 forbidden_modules =
   pydantic
+  msgspec
 
 ignore_imports =
   django_modern_rest.plugins.pydantic -> pydantic
+  # TODO: remove, see #43
+  django_modern_rest.internal.json -> msgspec
 
 
 [importlinter:contract:plugins-independence]

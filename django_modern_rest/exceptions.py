@@ -16,6 +16,11 @@ class EndpointMetadataError(Exception):
     """Raised when user didn't specify some required endpoint metadata."""
 
 
+@final
+class DataParsingError(Exception):
+    """Raised when json/xml data cannot be parsed."""
+
+
 class SerializationError(Exception):
     """
     Base class for all parsing and serialization errors.
