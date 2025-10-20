@@ -190,8 +190,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         # since it does not have an attached endpoint.
         # All other responses are handled on endpoint level
         # with all the response type validation.
-        # TODO: currently this is the only response that is not validated.
-        # maybe we should create a default endpoint and use it instead?
         return self.handle_method_not_allowed(method)
 
     @override
