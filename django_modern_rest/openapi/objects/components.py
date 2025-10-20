@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.callback import Callback
     from django_modern_rest.openapi.objects.example import Example
@@ -21,7 +19,7 @@ if TYPE_CHECKING:
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Components(BaseObject):
+class Components:
     """
     Holds a set of reusable objects for different aspects of the OAS.
 

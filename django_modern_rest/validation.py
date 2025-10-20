@@ -3,7 +3,17 @@ from collections import Counter
 from collections.abc import Callable, Mapping, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, assert_never, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    NewType,
+    TypeAlias,
+    TypeVar,
+    assert_never,
+    cast,
+    final,
+)
 
 from django.http import HttpResponse
 
@@ -26,6 +36,7 @@ from django_modern_rest.response import (
 )
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
+    DMR_RESPONSES_KEY,
     DMR_VALIDATE_RESPONSES_KEY,
     resolve_setting,
 )
@@ -110,14 +121,7 @@ class ResponseValidator:
         if schema is not None:
             return schema
 
-        schema = controller.response_map.get(status)
-        if schema is not None:
-            return schema
-
-        # TODO: support global responses
-        allowed = (
-            set(self.metadata.responses.keys()) | controller.response_map.keys()
-        )
+        allowed = set(self.metadata.responses.keys())
         raise ResponseSerializationError(
             f'Returned {status_code=} is not specified '
             f'in the list of allowed codes {allowed}',
@@ -164,7 +168,7 @@ class ResponseValidator:
 
         """
         if response:
-            structured = self.serializer.from_json(structured)
+            structured = self.serializer.deserialize(structured)
 
         try:
             self.serializer.from_python(
@@ -174,7 +178,7 @@ class ResponseValidator:
             )
         except self.serializer.validation_error as exc:
             raise ResponseSerializationError(
-                self.serializer.error_to_json(exc),
+                self.serializer.error_serialize(exc),
             ) from None
 
     def _validate_response_object(
@@ -212,53 +216,11 @@ class ResponseValidator:
             )
 
 
-class _BaseDefinitionValidator:
-    __slots__ = ()
-
-    def _validate_unique_responses(
-        self,
-        responses: list[ResponseDescription],
-        *,
-        endpoint: str,
-    ) -> None:
-        counter = Counter(response.status_code for response in responses)
-        for status, count in counter.items():
-            if count > 1:
-                raise EndpointMetadataError(
-                    f'{endpoint!r} has {status} specified {count} times',
-                )
-
-    def _validate_http_spec(
-        self,
-        responses: dict[HTTPStatus, ResponseDescription],
-        *,
-        endpoint: str,
-    ) -> None:
-        """Validate that we don't violate HTTP spec."""
-        # For status codes < 100 or 204, 304 statuses,
-        # no response body is allowed.
-        # If you specify a return annotation other than None,
-        # an EndpointMetadataError will be raised.
-        for status_code, response in responses.items():
-            if not is_safe_subclass(response.return_type, NoneType) and (
-                status_code < HTTPStatus.CONTINUE
-                or status_code
-                in {HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED}
-            ):
-                raise EndpointMetadataError(
-                    f'Can only return `None` not {response.return_type} '
-                    f'from an endpoint {endpoint!r} '
-                    f'with status code {status_code}',
-                )
-        # TODO: add more checks
-
-
-class ControllerValidator(_BaseDefinitionValidator):
+class ControllerValidator:
     """
     Validate controller type definition.
 
     Validates:
-    - Responses
     - Async vs sync controllers
     """
 
@@ -266,15 +228,6 @@ class ControllerValidator(_BaseDefinitionValidator):
 
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
-        typ_name = str(controller)
-        self._validate_unique_responses(controller.responses, endpoint=typ_name)
-        self._validate_http_spec(
-            {
-                response.status_code: response
-                for response in controller.responses
-            },
-            endpoint=typ_name,
-        )
         return self._validate_endpoints(controller)
 
     def _validate_endpoints(
@@ -316,27 +269,111 @@ class ModifyEndpointPayload:
     validate_responses: bool | Empty
 
 
-# TODO: possibly split this into several validators? What would API look like?
+#: Alias for different payload types:
+PayloadT: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
+
+#: NewType for better typing safety, don't forget to resolve all responses
+#: before passing them to validation.
+_AllResponses = NewType('_AllResponses', list[ResponseDescription])
+
+
+class _ResponseListValidator:
+    def __call__(
+        self,
+        responses: _AllResponses,
+        *,
+        endpoint: str,
+    ) -> dict[HTTPStatus, ResponseDescription]:
+        self._validate_unique_responses(responses, endpoint=endpoint)
+        self._validate_header_descriptions(responses, endpoint=endpoint)
+        self._validate_http_spec(responses, endpoint=endpoint)
+        return self._convert_responses(responses)
+
+    def _validate_unique_responses(
+        self,
+        responses: _AllResponses,
+        *,
+        endpoint: str,
+    ) -> None:
+        counter = Counter(response.status_code for response in responses)
+        for status, count in counter.items():
+            if count > 1:
+                raise EndpointMetadataError(
+                    f'{endpoint!r} has {status} specified {count} times',
+                )
+
+    def _validate_header_descriptions(
+        self,
+        responses: _AllResponses,
+        *,
+        endpoint: str,
+    ) -> None:
+        for response in responses:
+            if isinstance(response.headers, Empty):
+                continue
+            if any(
+                isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
+                for header in response.headers.values()
+            ):
+                raise EndpointMetadataError(
+                    f'Cannot use `NewHeader` in {response} , '
+                    f'use `HeaderDescription` instead in {endpoint!r}',
+                )
+
+    def _validate_http_spec(
+        self,
+        responses: _AllResponses,
+        *,
+        endpoint: str,
+    ) -> None:
+        """Validate that we don't violate HTTP spec."""
+        # For status codes < 100 or 204, 304 statuses,
+        # no response body is allowed.
+        # If you specify a return annotation other than None,
+        # an EndpointMetadataError will be raised.
+        for response in responses:
+            if not is_safe_subclass(response.return_type, NoneType) and (
+                response.status_code < HTTPStatus.CONTINUE
+                or response.status_code
+                in {HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED}
+            ):
+                raise EndpointMetadataError(
+                    f'Can only return `None` not {response.return_type} '
+                    f'from an endpoint {endpoint!r} '
+                    f'with status code {response.status_code}',
+                )
+        # TODO: add more checks
+
+    def _convert_responses(
+        self,
+        all_responses: _AllResponses,
+    ) -> dict[HTTPStatus, ResponseDescription]:
+        return {resp.status_code: resp for resp in all_responses}
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
+class EndpointMetadataValidator:
     """
-    Validate ``__endpoint__`` metadata definition.
+    Validate the metadata definition.
 
     It is done during import-time only once, so it can be not blazing fast.
     It is better to be precise here than to be fast.
     """
 
-    payload: ValidateEndpointPayload | ModifyEndpointPayload | None
+    response_list_validator_cls: ClassVar[type[_ResponseListValidator]] = (
+        _ResponseListValidator
+    )
 
-    def __call__(self, func: Callable[..., Any]) -> EndpointMetadata:
+    payload: PayloadT
+
+    def __call__(
+        self,
+        func: Callable[..., Any],
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
-        try:
-            method = HTTPMethod(func.__name__.upper())
-        except ValueError:
-            raise EndpointMetadataError(
-                f'{func.__name__} is not a valid HTTP method name',
-            ) from None
+        method = validate_method_name(func.__name__)
         endpoint = str(func)
         # TODO: validate contoller's definition.
         # Questions: how? when? one time?
@@ -346,6 +383,7 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
                 return_annotation,
                 method,
                 endpoint=endpoint,
+                controller_cls=controller_cls,
             )
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
@@ -353,14 +391,36 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
                 return_annotation,
                 method,
                 endpoint=endpoint,
+                controller_cls=controller_cls,
             )
         if self.payload is None:
             return self._from_raw_data(
                 return_annotation,
                 method,
                 endpoint=endpoint,
+                controller_cls=controller_cls,
             )
         assert_never(self.payload)
+
+    def _resolve_all_responses(
+        self,
+        endpoint_responses: list[ResponseDescription],
+        *,
+        controller_cls: type['Controller[BaseSerializer]'],
+        modification: ResponseModification | None = None,
+    ) -> _AllResponses:
+        modification_spec = (
+            [modification.to_description()] if modification else []
+        )
+        return cast(
+            '_AllResponses',
+            [
+                *modification_spec,
+                *endpoint_responses,
+                *controller_cls.semantic_responses(),
+                *resolve_setting(DMR_RESPONSES_KEY),
+            ],
+        )
 
     def _from_validate(
         self,
@@ -369,16 +429,24 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
         method: HTTPMethod,
         *,
         endpoint: str,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             needs_response=True,
         )
-        self._validate_header_descriptions(payload.responses, endpoint=endpoint)
-        self._validate_unique_responses(payload.responses, endpoint=endpoint)
-        responses = self._validate_responses(payload, endpoint=endpoint)
-        self._validate_http_spec(responses, endpoint=endpoint)
+        # for mypy: this can't happen, we always have at least one response
+        # due to `@validate`'s signature.
+        assert payload.responses, f'No responses found for {endpoint!r}'  # noqa: S101
+        all_responses = self._resolve_all_responses(
+            payload.responses,
+            controller_cls=controller_cls,
+        )
+        responses = self.response_list_validator_cls()(
+            all_responses,
+            endpoint=endpoint,
+        )
         return EndpointMetadata(
             responses=responses,
             method=method,
@@ -393,6 +461,7 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
         method: HTTPMethod,
         *,
         endpoint: str,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
@@ -401,22 +470,28 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
             modify_used=True,
         )
         self._validate_new_headers(payload, endpoint=endpoint)
-        if not isinstance(payload.responses, Empty):
-            self._validate_header_descriptions(
-                payload.responses,
-                endpoint=endpoint,
-            )
-            self._validate_unique_responses(
-                payload.responses,
-                endpoint=endpoint,
-            )
-        responses, modification = self._validate_respones_and_modification(
-            payload,
-            return_annotation,
-            method,
+        modification = ResponseModification(
+            return_type=return_annotation,
+            headers=payload.headers,
+            status_code=(
+                infer_status_code(method)
+                if isinstance(payload.status_code, Empty)
+                else payload.status_code
+            ),
+        )
+        if isinstance(payload.responses, Empty):
+            payload_responses = []
+        else:
+            payload_responses = payload.responses
+        all_responses = self._resolve_all_responses(
+            payload_responses,
+            controller_cls=controller_cls,
+            modification=modification,
+        )
+        responses = self.response_list_validator_cls()(
+            all_responses,
             endpoint=endpoint,
         )
-        self._validate_http_spec(responses, endpoint=endpoint)
         return EndpointMetadata(
             responses=responses,
             validate_responses=payload.validate_responses,
@@ -430,6 +505,7 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
         method: HTTPMethod,
         *,
         endpoint: str,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
@@ -442,8 +518,15 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
             status_code=status_code,
             headers=EmptyObj,
         )
-        responses = {status_code: modification.to_description()}
-        self._validate_http_spec(responses, endpoint=endpoint)
+        all_responses = self._resolve_all_responses(
+            [],
+            controller_cls=controller_cls,
+            modification=modification,
+        )
+        responses = self.response_list_validator_cls()(
+            all_responses,
+            endpoint=endpoint,
+        )
         return EndpointMetadata(
             responses=responses,
             validate_responses=EmptyObj,
@@ -468,24 +551,6 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
                 '`NewHeader` to add new headers to the response',
             )
 
-    def _validate_header_descriptions(
-        self,
-        responses: list[ResponseDescription],
-        *,
-        endpoint: str,
-    ) -> None:
-        for response in responses:
-            if isinstance(response.headers, Empty):
-                continue
-            if any(
-                isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
-                for header in response.headers.values()
-            ):
-                raise EndpointMetadataError(
-                    f'Cannot use `NewHeader` in {response} , '
-                    f'use `HeaderDescription` instead in {endpoint!r}',
-                )
-
     def _validate_return_annotation(
         self,
         return_annotation: Any,
@@ -509,52 +574,6 @@ class EndpointMetadataValidator(_BaseDefinitionValidator):  # noqa: WPS214
             'it requires `@modify` decorator instead of `@validate`',
         )
 
-    def _validate_responses(
-        self,
-        payload: ValidateEndpointPayload,
-        *,
-        endpoint: str,
-    ) -> dict[HTTPStatus, ResponseDescription]:
-        # for mypy: this can't happen, we always have at least one response
-        # due to `@validate`'s signature.
-        assert payload.responses, f'No responses found for {endpoint!r}'  # noqa: S101
-        return {resp.status_code: resp for resp in payload.responses}
-
-    def _validate_respones_and_modification(
-        self,
-        payload: ModifyEndpointPayload,
-        return_annotation: Any,
-        method: HTTPMethod,
-        *,
-        endpoint: str,
-    ) -> tuple[
-        dict[HTTPStatus, ResponseDescription],
-        ResponseModification | None,
-    ]:
-        responses = (
-            {}
-            if isinstance(payload.responses, Empty)
-            else {resp.status_code: resp for resp in payload.responses}
-        )
-        status_code = (
-            infer_status_code(method)
-            if isinstance(payload.status_code, Empty)
-            else payload.status_code
-        )
-        modification = ResponseModification(
-            return_type=return_annotation,
-            headers=payload.headers,
-            status_code=status_code,
-        )
-        if modification.status_code in responses:
-            raise EndpointMetadataError(
-                f'Do not duplicate {modification.status_code} '
-                f'in `responses=` (which are {responses.keys()}), '
-                f'it will be added automatically for {endpoint!r}',
-            )
-        responses[modification.status_code] = modification.to_description()
-        return responses, modification
-
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -564,3 +583,15 @@ class _ValidationContext:
     raw_data: Any  # not empty
     status_code: HTTPStatus
     headers: dict[str, str]
+
+
+def validate_method_name(func_name: str) -> HTTPMethod:
+    """Validates that a function has correct HTTP method name."""
+    try:  # noqa: WPS229
+        if func_name != func_name.lower():
+            raise ValueError  # noqa: TRY301
+        return HTTPMethod(func_name.upper())
+    except ValueError:
+        raise EndpointMetadataError(
+            f'{func_name} is not a valid HTTP method name',
+        ) from None

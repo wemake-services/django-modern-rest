@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from typing import final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Contact(BaseObject):
+class Contact:
     """Contact information for the exposed API."""
 
     name: str | None = None

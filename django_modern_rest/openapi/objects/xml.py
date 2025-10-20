@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from typing import final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class XML(BaseObject):
+class XML:
     """
     A metadata object that allows for more fine-tuned XML model definitions.
 

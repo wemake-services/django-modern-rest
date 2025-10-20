@@ -8,7 +8,7 @@ from django.urls import URLPattern
 from django_modern_rest import Router
 from django_modern_rest.openapi import OpenAPIConfig, openapi_spec
 from django_modern_rest.openapi.renderers import JsonRenderer, SwaggerRenderer
-from django_modern_rest.settings import resolve_defaults
+from django_modern_rest.settings import clear_settings_cache
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
@@ -17,9 +17,9 @@ _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 @pytest.fixture
 def _clear_cache() -> Iterator[None]:
     """Clear settings cache before and after test."""
-    resolve_defaults.cache_clear()
+    clear_settings_cache()
     yield
-    resolve_defaults.cache_clear()
+    clear_settings_cache()
 
 
 def test_returns_correct_structure() -> None:
@@ -92,7 +92,7 @@ def test_custom_app_and_namespace(
 
 
 @pytest.mark.usefixtures('_clear_cache')
-def test_with_none_config_uses_default(settings: LazySettings) -> None:
+def test_with_none_config_uses_default() -> None:
     """Ensure that `None` config triggers default config loading."""
     urlpatterns, app_name, namespace = openapi_spec(
         router=Router([]),

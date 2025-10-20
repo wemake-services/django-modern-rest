@@ -1,9 +1,11 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Generic, TypeVar, final
+from typing import Generic, Literal, TypeVar, final
 
 import pytest
 from django.http import HttpResponse
+from inline_snapshot import snapshot
+from typing_extensions import TypedDict
 
 from django_modern_rest import (
     Controller,
@@ -214,3 +216,125 @@ def test_validate_raises_on_new_header() -> None:
             )
             def get(self) -> HttpResponse:
                 raise NotImplementedError
+
+
+class _EmptyResponseController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseDescription(
+            None,
+            status_code=HTTPStatus.NO_CONTENT,
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(
+            None,
+            status_code=HTTPStatus.NO_CONTENT,
+        )
+
+
+def test_validate_empty_response(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` can validate empty response."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _EmptyResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert json.loads(response.content) is None
+
+
+class _TypedDictResponse(TypedDict):
+    user: str
+
+
+class _TypedDictResponseController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseDescription(
+            _TypedDictResponse,
+            status_code=HTTPStatus.OK,
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response({'user': 'name'})
+
+    @validate(
+        ResponseDescription(
+            _TypedDictResponse,
+            status_code=HTTPStatus.CREATED,
+        ),
+    )
+    def post(self) -> HttpResponse:
+        return self.to_response({'user': 1})
+
+
+def test_validate_type_dict_response(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` can validate typed dicts."""
+    request = dmr_rf.get('/whatever/')
+    response = _TypedDictResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'user': 'name'}
+
+    request = dmr_rf.post('/whatever/')
+    response = _TypedDictResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'string_type',
+                'loc': ['user'],
+                'msg': 'Input should be a valid string',
+                'input': 1,
+            },
+        ],
+    })
+
+
+class _LiteralResponseController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseDescription(
+            Literal[1],
+            status_code=HTTPStatus.OK,
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(1)
+
+    @validate(
+        ResponseDescription(
+            Literal[1],
+            status_code=HTTPStatus.CREATED,
+        ),
+    )
+    def post(self) -> HttpResponse:
+        return self.to_response(2)
+
+
+def test_validate_literal_response(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` can validate literals."""
+    request = dmr_rf.get('/whatever/')
+    response = _LiteralResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == 1
+
+    request = dmr_rf.post('/whatever/')
+    response = _LiteralResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'literal_error',
+                'loc': [],
+                'msg': 'Input should be 1',
+                'input': 2,
+                'ctx': {'expected': '1'},
+            },
+        ],
+    })

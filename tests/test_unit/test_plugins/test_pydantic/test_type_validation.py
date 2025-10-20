@@ -70,7 +70,7 @@ def test_valid_data(
     """Ensure that correct data can be validated."""
     validator = Endpoint(
         _build_annotation(typ),
-        serializer=PydanticSerializer,
+        controller_cls=_Controller,
     ).response_validator
 
     validator.validate_modification(_Controller(), raw_data)
@@ -109,7 +109,7 @@ def test_invalid_data(
     """Ensure that correct data can be validated."""
     validator = Endpoint(
         _build_annotation(typ),
-        serializer=PydanticSerializer,
+        controller_cls=_Controller,
     ).response_validator
 
     with pytest.raises(ResponseSerializationError):

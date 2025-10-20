@@ -17,13 +17,8 @@ class EndpointMetadataError(Exception):
 
 
 @final
-class MethodNotAllowedError(Exception):
-    """Raised when some API method is not allowed for the controller."""
-
-    def __init__(self, method: str) -> None:
-        """Save the passed method name for error message."""
-        super().__init__(method)
-        self.method = method
+class DataParsingError(Exception):
+    """Raised when json/xml data cannot be parsed."""
 
 
 class SerializationError(Exception):

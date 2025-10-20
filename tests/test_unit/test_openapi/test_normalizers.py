@@ -3,16 +3,23 @@ from typing import Any
 
 import pytest
 
+from django_modern_rest.openapi.converter import SchemaConverter
+from django_modern_rest.openapi.normalizers import (
+    normalize_key,
+    normalize_value,
+)
 from django_modern_rest.openapi.objects import (
     OpenAPIFormat,
     OpenAPIType,
     Schema,
     Tag,
 )
-from django_modern_rest.openapi.objects.base import (
-    _normalize_key,
-    _normalize_value,
-)
+
+
+@pytest.fixture
+def converter() -> SchemaConverter:
+    """Fixtutre for converter class."""
+    return SchemaConverter()
 
 
 @pytest.mark.parametrize(
@@ -43,7 +50,7 @@ from django_modern_rest.openapi.objects.base import (
 )
 def test_normalize_key(input_key: str, expected_output: str) -> None:
     """Ensure that `_normalize_key` converts field names to OpenAPI keys."""
-    assert _normalize_key(input_key) == expected_output
+    assert normalize_key(input_key) == expected_output
 
 
 class _TestEnum(enum.Enum):
@@ -73,9 +80,11 @@ class _TestEnum(enum.Enum):
 def test_normalize_value_primitives(
     input_value: Any,
     expected_output: Any,
+    *,
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` returns primitive values as-is."""
-    assert _normalize_value(input_value) == expected_output
+    assert normalize_value(input_value, converter.convert) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -93,11 +102,12 @@ def test_normalize_value_primitives(
 def test_normalize_value_list(
     input_value: Any,
     expected_output: Any,
+    *,
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` processes list recursively."""
-    normalized = _normalize_value(input_value)
+    normalized = normalize_value(input_value, converter.convert)
     assert normalized == expected_output
-    assert isinstance(normalized, list)
 
 
 @pytest.mark.parametrize(
@@ -109,11 +119,15 @@ def test_normalize_value_list(
         ({'key1': None, 'key2': 'value'}, {'key1': None, 'key2': 'value'}),
     ],
 )
-def test_normalize_value_dict(input_value: Any, expected_output: Any) -> None:
+def test_normalize_value_dict(
+    input_value: Any,
+    expected_output: Any,
+    *,
+    converter: SchemaConverter,
+) -> None:
     """Ensure that `_normalize_value` processes dict recursively."""
-    normalized = _normalize_value(input_value)
+    normalized = normalize_value(input_value, converter.convert)
     assert normalized == expected_output
-    assert isinstance(normalized, dict)
 
 
 @pytest.mark.parametrize(
@@ -131,9 +145,11 @@ def test_normalize_value_dict(input_value: Any, expected_output: Any) -> None:
 def test_normalize_value_key_normalization(
     input_value: Any,
     expected_output: Any,
+    *,
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` normalizes mapping keys."""
-    assert _normalize_value(input_value) == expected_output
+    assert normalize_value(input_value, converter.convert) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -156,9 +172,11 @@ def test_normalize_value_key_normalization(
 def test_normalize_value_nested_structures(
     input_value: Any,
     expected_output: Any,
+    *,
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` handles nested structures."""
-    assert _normalize_value(input_value) == expected_output
+    assert normalize_value(input_value, converter.convert) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -241,6 +259,8 @@ def test_normalize_value_nested_structures(
 def test_normalize_value_base_objects(
     input_value: Any,
     expected_output: Any,
+    *,
+    converter: SchemaConverter,
 ) -> None:
     """Ensure that `_normalize_value` calls to_schema() correctly."""
-    assert _normalize_value(input_value) == expected_output
+    assert normalize_value(input_value, converter.convert) == expected_output

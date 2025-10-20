@@ -1,6 +1,6 @@
 import inspect
 from collections.abc import Awaitable, Callable, Mapping
-from http import HTTPMethod, HTTPStatus
+from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -17,6 +17,10 @@ from django_modern_rest.headers import (
 )
 from django_modern_rest.response import APIError, ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.settings import (
+    DMR_GLOBAL_ERROR_HANDLER_KEY,
+    resolve_setting,
+)
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
@@ -24,15 +28,17 @@ from django_modern_rest.types import (
 from django_modern_rest.validation import (
     EndpointMetadataValidator,
     ModifyEndpointPayload,
+    PayloadT,
     ResponseValidator,
     ValidateEndpointPayload,
+    validate_method_name,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
 
 
-class Endpoint:
+class Endpoint:  # noqa: WPS214
     """
     Represents the single API endpoint.
 
@@ -41,14 +47,16 @@ class Endpoint:
     """
 
     __slots__ = (
+        '_controller',
         '_func',
-        'endpoint_optimizer',
+        '_method',
         'is_async',
-        'method',
+        'metadata',
         'response_validator',
     )
 
     _func: Callable[..., Any]
+    _controller: 'Controller[BaseSerializer]'
 
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
@@ -61,35 +69,33 @@ class Endpoint:
         self,
         func: Callable[..., Any],
         *,
-        serializer: type[BaseSerializer],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """
         Create an entrypoint.
 
         Args:
             func: Entrypoint handler. An actual function.
-            serializer: ``BaseSerializer`` type that can parse and validate.
+            controller_cls: ``Controller`` class that this endpoint belongs to.
 
         """
-        self.method = HTTPMethod(func.__name__.upper())
+        payload: PayloadT = getattr(func, '__payload__', None)
         # We need to add metadata to functions that don't have it,
         # since decorator is optional:
-        func = (
-            _add_metadata(
-                metadata_validator_cls=self.metadata_validator_cls,
-                payload=None,
-            )(func)
-            if getattr(func, '__endpoint__', None) is None
-            else func
+        metadata = self.metadata_validator_cls(payload=payload)(
+            func,
+            controller_cls=controller_cls,
         )
-        metadata = func.__endpoint__  # type: ignore[attr-defined]
+        func.__metadata__ = metadata  # type: ignore[attr-defined]
+        self.metadata = metadata
+
         # We need a func before any wrappers, but with metadata:
         self.response_validator = self.response_validator_cls(
             metadata,
-            serializer,
+            controller_cls.serializer,
         )
         # We can now run endpoint's optimization:
-        serializer.optimizer.optimize_endpoint(metadata)
+        controller_cls.serializer.optimizer.optimize_endpoint(metadata)
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -101,31 +107,62 @@ class Endpoint:
 
     def __call__(
         self,
-        controller: 'Controller[Any]',
+        controller: 'Controller[BaseSerializer]',
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
         """Run the endpoint and return the response."""
-        return self._func(controller, *args, **kwargs)  # type: ignore[no-any-return]
+        self._controller = controller
+        return self._func(*args, **kwargs)  # type: ignore[no-any-return]
+
+    def handle_error(self, exc: Exception) -> HttpResponse:
+        """
+        Return error response if possible.
+
+        Override this method to add custom error handling.
+        """
+        return self._handle_default_error(exc)
+
+    async def handle_async_error(self, exc: Exception) -> HttpResponse:
+        """
+        Return error response if possible.
+
+        Override this method to add custom async error handling.
+        """
+        return self._handle_default_error(exc)
 
     def _async_endpoint(
         self,
         func: Callable[..., Any],
     ) -> Callable[..., Awaitable[HttpResponse]]:
         async def decorator(
-            controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
+            # Parse request:
             try:
-                func_result = await func(controller, *args, **kwargs)
+                self._controller.serializer_context.parse_and_bind(
+                    self._controller,
+                    self._controller.request,
+                    *args,
+                    **kwargs,
+                )
+            except Exception as exc:
+                return self._make_http_response(
+                    await self.handle_async_error(exc),
+                )
+            # Return response:
+            try:
+                func_result = await func(self._controller, *args, **kwargs)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
-                func_result = controller.to_error(
+                func_result = self._controller.to_error(
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
                     status_code=exc.status_code,
                     headers=exc.headers,
                 )
-            return self._make_http_response(controller, func_result)
+            except Exception as exc:
+                func_result = await self.handle_async_error(exc)
+            return self._make_http_response(func_result)
 
         return decorator
 
@@ -134,43 +171,75 @@ class Endpoint:
         func: Callable[..., Any],
     ) -> Callable[..., HttpResponse]:
         def decorator(
-            controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
+            # Parse request:
             try:
-                func_result = func(controller, *args, **kwargs)
+                self._controller.serializer_context.parse_and_bind(
+                    self._controller,
+                    self._controller.request,
+                    *args,
+                    **kwargs,
+                )
+            except Exception as exc:
+                return self._make_http_response(
+                    self.handle_error(exc),
+                )
+            # Return response:
+            try:
+                func_result = func(self._controller, *args, **kwargs)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
-                func_result = controller.to_error(
+                func_result = self._controller.to_error(
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
                     status_code=exc.status_code,
                     headers=exc.headers,
                 )
-            return self._make_http_response(controller, func_result)
+            except Exception as exc:
+                func_result = self.handle_error(exc)
+            return self._make_http_response(func_result)
 
         return decorator
 
-    def _make_http_response(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        raw_data: Any,
-    ) -> HttpResponse:
-        """Returns the actual `HttpResponse` object."""
+    def _make_http_response(self, raw_data: Any | HttpResponse) -> HttpResponse:
+        """
+        Returns the actual ``HttpResponse`` object after optional validation.
+
+        If it is already the :class:`django.http.HttpResponse` object,
+        just validates it before returning.
+        """
+        try:
+            return self._validate_response(raw_data)
+        except Exception as exc:
+            return self.handle_error(exc)
+
+    def _validate_response(self, raw_data: Any | HttpResponse) -> HttpResponse:
         if isinstance(raw_data, HttpResponse):
             return self.response_validator.validate_response(
-                controller,
+                self._controller,
                 raw_data,
             )
 
         validated = self.response_validator.validate_modification(
-            controller,
+            self._controller,
             raw_data,
         )
         return HttpResponse(
-            content=controller.serializer.to_json(validated.raw_data),
+            content=self._controller.serializer.serialize(validated.raw_data),
             status=validated.status_code,
             headers=validated.headers,
         )
+
+    def _handle_default_error(self, exc: Exception) -> HttpResponse:
+        """
+        Import the global error handling and call it.
+
+        If not class level error handling has happened.
+        """
+        return resolve_setting(  # type: ignore[no-any-return]
+            DMR_GLOBAL_ERROR_HANDLER_KEY,
+            import_string=True,
+        )(self._controller, self, exc)
 
 
 _ParamT = ParamSpec('_ParamT')
@@ -182,9 +251,6 @@ def validate(
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
-    metadata_validator_cls: type[
-        EndpointMetadataValidator
-    ] = EndpointMetadataValidator,
     validate_responses: bool | Empty = EmptyObj,
 ) -> Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]:
     """
@@ -225,18 +291,13 @@ def validate(
         response: The main response that this endpoint is allowed to return.
         responses: A collection of other responses that are allowed
             to be returned from this endpoint.
-        metadata_validator_cls: Type that will validate
-            the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
 
-    Raises:
-        EndpointMetadataError: When metadata is not valid.
-
     Returns:
-        The same function with ``__endpoint__``
+        The same function with ``__payload__``
         metadata instance of :class:`EndpointMetadata`.
 
     .. warning::
@@ -244,12 +305,11 @@ def validate(
         this is performance critical for you!
 
     """
-    return _add_metadata(
+    return _add_payload(
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
         ),
-        metadata_validator_cls=metadata_validator_cls,
     )
 
 
@@ -276,9 +336,6 @@ def modify(
     *,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    metadata_validator_cls: type[
-        EndpointMetadataValidator
-    ] = EndpointMetadataValidator,
     validate_responses: bool | Empty = EmptyObj,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
 ) -> _ModifyCallable:
@@ -308,15 +365,13 @@ def modify(
             Use non-empty ``value`` parameter
             of :data:`django_modern_rest.headers.ResponseHeadersT` object.
         extra_responses: List of extra responses that this endpoint can return.
-        metadata_validator_cls: Type that will validate
-            the endpoint definition by default. Can be customized.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
 
     Returns:
-        The same function with ``__endpoint__``
+        The same function with ``__payload__``
         metadata instance of :class:`EndpointMetadata`.
 
     .. warning::
@@ -324,31 +379,26 @@ def modify(
         this is performance critical for you!
 
     """
-    return _add_metadata(  # type: ignore[return-value]
+    return _add_payload(  # type: ignore[return-value]
         payload=ModifyEndpointPayload(
             status_code=status_code,
             headers=headers,
             responses=extra_responses,
             validate_responses=validate_responses,
         ),
-        metadata_validator_cls=metadata_validator_cls,
     )
 
 
-def _add_metadata(
+def _add_payload(
     *,
-    metadata_validator_cls: type[EndpointMetadataValidator],
-    payload: ModifyEndpointPayload | ValidateEndpointPayload | None,
+    payload: ModifyEndpointPayload | ValidateEndpointPayload,
 ) -> Callable[[Callable[_ParamT, _ReturnT]], Callable[_ParamT, _ReturnT]]:
-    # It is cheap for us to do the endpoint metadata calculation here,
-    # because we do it once per module import.
+    # Add payload for future use in the Endpoint validation.
     def decorator(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
-        metadata = metadata_validator_cls(payload=payload)(func)
-
-        # Validation passed, now we can create valid metadata:
-        func.__endpoint__ = metadata  # type: ignore[attr-defined]
+        validate_method_name(func.__name__)
+        func.__payload__ = payload  # type: ignore[attr-defined]
         return func
 
     return decorator

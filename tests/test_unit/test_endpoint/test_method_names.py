@@ -22,6 +22,25 @@ def test_modify_decorator_method_name(
                 raise NotImplementedError
 
 
+def test_modify_decorator_mixed_case(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that `modify` requires correct endpoint name."""
+    with pytest.raises(EndpointMetadataError, match='GET'):
+
+        class _WrongController(Controller[PydanticSerializer]):
+            @modify(status_code=HTTPStatus.OK)
+            def GET(self) -> list[int]:  # noqa: N802
+                raise NotImplementedError
+
+    with pytest.raises(EndpointMetadataError, match='gEt'):
+
+        class _WrongController2(Controller[PydanticSerializer]):
+            @modify(status_code=HTTPStatus.OK)
+            def gEt(self) -> list[int]:  # noqa: N802
+                raise NotImplementedError
+
+
 def test_verify_decorator_method_name(
     dmr_rf: DMRRequestFactory,
 ) -> None:

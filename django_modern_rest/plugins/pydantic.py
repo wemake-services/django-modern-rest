@@ -5,11 +5,13 @@ from typing import (
     Any,
     ClassVar,
     Literal,
+    NotRequired,
     TypeAlias,
-    TypedDict,
     Union,
     final,
 )
+
+from typing_extensions import TypedDict
 
 try:
     import pydantic
@@ -37,9 +39,7 @@ from django_modern_rest.settings import (
 
 if TYPE_CHECKING:
     from django_modern_rest.internal.json import (
-        Deserialize,
         FromJson,
-        Serialize,
     )
     from django_modern_rest.metadata import EndpointMetadata
 
@@ -98,6 +98,31 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
             _get_cached_type_adapter(response.return_type)
 
 
+class PydanticErrorDetails(TypedDict):
+    """
+    Base schema for pydantic error detail.
+
+    We can't use ``pydantic_core.ErrorDetails``,
+    because it has ``loc`` typed as ``tuple``
+    and in runtime it is ``list``.
+    Since we use ``strict=True`` for responses,
+    this fails during the validation.
+    """
+
+    type: str
+    loc: list[int | str]
+    msg: str
+    input: Any
+    ctx: NotRequired[dict[str, Any]]
+    url: NotRequired[str]
+
+
+class PydanticErrorModel(TypedDict):
+    """Error response schema for serialization errors."""
+
+    detail: list[PydanticErrorDetails]
+
+
 class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
@@ -116,6 +141,7 @@ class PydanticSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
+    response_parsing_error_model: ClassVar[Any] = PydanticErrorModel
 
     # Custom API:
 
@@ -128,17 +154,16 @@ class PydanticSerializer(BaseSerializer):
     }
     from_json_strict: ClassVar[bool] = True
 
-    # Private API:
-
-    _serialize: ClassVar['Serialize']
-    _deserialize: ClassVar['Deserialize']
-
     @override
     @classmethod
-    def to_json(cls, structure: Any) -> bytes:
+    def serialize(cls, structure: Any) -> bytes:
         """Convert any object to json bytestring."""
+        serialize = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
         try:
-            return _get_serialize_func(cls)(structure, cls.serialize_hook)
+            return serialize(  # type: ignore[no-any-return]
+                structure,
+                cls.serialize_hook,
+            )
         except pydantic_core.PydanticSerializationError as exc:
             raise ResponseSerializationError(str(exc)) from None
 
@@ -152,13 +177,14 @@ class PydanticSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def from_json(cls, buffer: 'FromJson') -> Any:
+    def deserialize(cls, buffer: 'FromJson') -> Any:
         """
         Convert string or bytestring to simple python object.
 
         TypeAdapter used for type validation is cached for further uses.
         """
-        return _get_deserialize_func(cls)(
+        deserialize = resolve_setting(DMR_DESERIALIZE_KEY, import_string=True)
+        return deserialize(
             buffer,
             cls.deserialize_hook,
             strict=cls.from_json_strict,
@@ -204,35 +230,23 @@ class PydanticSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def error_to_json(cls, error: Exception) -> list[Any]:
+    def error_serialize(cls, error: Exception | str) -> Any:
         """Serialize an exception to json the best way possible."""
-        # Security notice: we only process custom exceptions
-        # with this functions, so nothing should leak from exc messages.
-        assert isinstance(error, pydantic.ValidationError), (  # noqa: S101
-            f'Cannot serialize {error} to json safely'
-        )
-        return error.errors(include_url=False)
-
-
-# TODO: merge `_get_serialize_func` and `_get_deserialize_func`?
-def _get_serialize_func(cls: type[PydanticSerializer]) -> 'Serialize':
-    existing_attr: Serialize | None = getattr(cls, '_serialize', None)
-    if existing_attr is not None:
-        return existing_attr
-
-    setting = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
-    cls._serialize = setting  # pyright: ignore[reportPrivateUsage]
-    return cls._serialize  # pyright: ignore[reportPrivateUsage]
-
-
-def _get_deserialize_func(cls: type[PydanticSerializer]) -> 'Deserialize':
-    existing_attr: Deserialize | None = getattr(cls, '_deserialize', None)
-    if existing_attr is not None:
-        return existing_attr
-
-    setting = resolve_setting(DMR_DESERIALIZE_KEY, import_string=True)
-    cls._deserialize = setting  # pyright: ignore[reportPrivateUsage]
-    return cls._deserialize  # pyright: ignore[reportPrivateUsage]
+        if isinstance(error, str):
+            error = pydantic.ValidationError.from_exception_data(
+                error,
+                [
+                    {
+                        'type': 'value_error',
+                        'loc': (),
+                        'input': '',
+                        'ctx': {'error': error},
+                    },
+                ],
+            )
+        if isinstance(error, pydantic.ValidationError):
+            return error.errors(include_url=False)
+        raise NotImplementedError(f'Cannot serialize {error} to json safely')
 
 
 @cache

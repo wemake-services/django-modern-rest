@@ -36,6 +36,9 @@ def test_controller_duplicate_responses() -> None:
                 ResponseDescription(str, status_code=HTTPStatus.FORBIDDEN),
             ]
 
+            def get(self) -> str:  # needs at least one endpoint to validate
+                raise NotImplementedError
+
 
 def test_controller_http_spec() -> None:
     """Ensure that controllers with NO_CONTENT must not have bodies."""
@@ -48,3 +51,6 @@ def test_controller_http_spec() -> None:
             responses: ClassVar[list[ResponseDescription]] = [
                 ResponseDescription(int, status_code=HTTPStatus.NO_CONTENT),
             ]
+
+            def get(self) -> str:  # needs at least one endpoint to validate
+                raise NotImplementedError

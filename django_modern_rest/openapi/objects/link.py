@@ -1,15 +1,13 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
-from django_modern_rest.openapi.objects.base import BaseObject
-
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.server import Server
 
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Link(BaseObject):
+class Link:
     """
     The Link object represents a possible design-time link for a response.
 

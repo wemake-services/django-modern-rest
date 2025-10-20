@@ -1,7 +1,6 @@
 # Parts of the code in this directory is taken from
 # https://github.com/litestar-org/litestar/tree/main/litestar/openapi/spec
 # under MIT license.
-from django_modern_rest.openapi.objects.base import BaseObject as BaseObject
 from django_modern_rest.openapi.objects.callback import Callback as Callback
 from django_modern_rest.openapi.objects.components import (
     Components as Components,
