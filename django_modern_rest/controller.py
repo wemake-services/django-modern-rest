@@ -14,7 +14,7 @@ from django.views import View
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
-from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.endpoint import Endpoint, validate
 from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
@@ -29,7 +29,6 @@ from django_modern_rest.types import (
     infer_type_args,
 )
 from django_modern_rest.validation import ControllerValidator
-from django_modern_rest.endpoint import validate
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -114,7 +113,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             for subclass in infer_bases(cls, ComponentParser)
         ]
         cls.serializer_context = cls.serializer_context_cls(cls)
-        
+
         # Build API endpoints
         api_endpoints = {}
         for meth in cls.existing_http_methods():
@@ -124,24 +123,29 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 if meth == 'options' and func is cls.options:
                     continue
                 api_endpoints[meth] = cls.endpoint_cls(func, controller_cls=cls)
-        
+
         # Special handling for meta method -> options mapping
         meta_func = getattr(cls, 'meta', None)
         if meta_func is not None:
-            api_endpoints['options'] = cls.endpoint_cls(meta_func, controller_cls=cls)
+            api_endpoints['options'] = cls.endpoint_cls(
+                meta_func, controller_cls=cls
+            )
         else:
             # Default OPTIONS handler when no meta method is defined
             @validate(
                 ResponseDescription(
-                    None, 
+                    None,
                     status_code=HTTPStatus.NO_CONTENT,
                     headers={'Allow': HeaderDescription()},
-                )
+                ),
             )
             def default_options_wrapper(self) -> HttpResponse:
                 return cls._default_options_handler()
-            api_endpoints['options'] = cls.endpoint_cls(default_options_wrapper, controller_cls=cls)
-        
+
+            api_endpoints['options'] = cls.endpoint_cls(
+                default_options_wrapper, controller_cls=cls
+            )
+
         cls.api_endpoints = api_endpoints
         cls._is_async = cls.controller_validator_cls()(cls)
 
@@ -301,10 +305,10 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             for method in cls.http_method_names
             if getattr(cls, method, None) is not None
         }
-        
+
         # Always include options (either custom meta method or default handler)
         methods.add('options')
-        
+
         return methods
 
     @classmethod
@@ -312,8 +316,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     def _default_options_handler(cls) -> HttpResponse:
         """Default OPTIONS handler that returns Allow header."""
         allowed_methods = sorted(
-            method.upper() 
-            for method in cls.existing_http_methods()
+            method.upper() for method in cls.existing_http_methods()
         )
         return cls._maybe_wrap(
             build_response(
@@ -322,7 +325,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 raw_data=None,
                 status_code=HTTPStatus.NO_CONTENT,
                 headers={'Allow': ', '.join(allowed_methods)},
-            )
+            ),
         )
 
     @classmethod

@@ -611,15 +611,15 @@ def validate_method_name(func_name: str) -> HTTPMethod:
     # Special case for 'meta' which maps to OPTIONS
     if func_name == 'meta':
         return HTTPMethod.OPTIONS
-    
+
     # Special case for internal default options handler
     if func_name == '_default_options_handler':
         return HTTPMethod.OPTIONS
-    
+
     # Special case for internal default options wrapper
     if func_name == 'default_options_wrapper':
         return HTTPMethod.OPTIONS
-    
+
     try:  # noqa: WPS229
         if func_name != func_name.lower():
             raise ValueError  # noqa: TRY301
