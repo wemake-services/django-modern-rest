@@ -87,7 +87,7 @@ jobs:
         poetry install --extras=pydantic
 
     - name: Run checks
-      run: make test
+      run: make unit
 
 
   build-no-extras:

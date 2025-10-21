@@ -11,6 +11,10 @@ class _HeaderModel(msgspec.Struct):
     token: str
 
 
+# Test that type args work:
+_HeaderModel(token=1)  # type: ignore[arg-type]
+
+
 class _QueryModel(msgspec.Struct):
     search: str
 
