@@ -112,7 +112,7 @@ class PydanticErrorDetails(TypedDict):
     type: str
     loc: list[int | str]
     msg: str
-    input: Any
+    input: NotRequired[Any]
     ctx: NotRequired[dict[str, Any]]
     url: NotRequired[str]
 

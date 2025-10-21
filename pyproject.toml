@@ -216,6 +216,7 @@ addopts = [
   "--ignore=docs",
   "--ignore=typesafety/assert_type",
   "--ignore=django_modern_rest/internal/json/msgspec.py",
+  "--ignore=django_modern_rest/plugins/msgspec.py",
 ]
 
 

@@ -30,7 +30,7 @@ def serialize(
     Returns:
         JSON as bytes.
     """
-    return msgspec.json.encode(  # type: ignore[no-any-return, unused-ignore]
+    return msgspec.json.encode(
         to_serialize,
         enc_hook=serializer,
     )

@@ -43,6 +43,8 @@ forbidden_modules =
 ignore_imports =
   # Pydantic plugin:
   django_modern_rest.plugins.pydantic -> pydantic
+  # Msgspec plugin:
+  django_modern_rest.plugins.msgspec -> msgspec
   # Optional json support from msgspec:
   django_modern_rest.internal.json.msgspec -> msgspec
 
