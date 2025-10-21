@@ -1,1 +1,5 @@
-.. mdinclude:: ../../CHANGELOG.md
+List of changes
+===============
+
+.. include:: ../../CHANGELOG.md
+   :parser: myst_parser.sphinx_
