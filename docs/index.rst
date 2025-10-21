@@ -7,6 +7,35 @@ django-modern-rest
 This guide will walk you through all the details of how to install, use,
 and extend ``django-modern-rest`` framework.
 
+
+Installations
+-------------
+
+
+.. tabs::
+
+    .. tab:: :iconify:`material-icon-theme:uv` uv
+
+        .. code-block:: bash
+
+            uv add django-modern-rest
+
+    .. tab:: :iconify:`devicon:poetry` poetry
+
+        .. code-block:: bash
+
+            poetry add django-modern-rest
+
+    .. tab:: :iconify:`devicon:pypi` pip
+
+        .. code-block:: bash
+
+            pip install django-modern-rest
+
+
+Showcase
+--------
+
 Quick example:
 
 .. tabs::
