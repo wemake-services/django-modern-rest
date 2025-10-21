@@ -95,7 +95,10 @@ class _ControllerWithOptions(Controller[PydanticSerializer]):
 
     @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
     def options(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
     ) -> HttpResponse:
         return HttpResponse(b'OPTIONS')
 
@@ -108,7 +111,10 @@ class _ControllerWithOptions2(Controller[PydanticSerializer]):
 
     @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
     def options(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
     ) -> HttpResponse:
         return HttpResponse(b'OPTIONS')
 
@@ -118,7 +124,8 @@ def test_compose_controllers_with_options() -> None:
     # Both controllers have options methods, but composition should work
     # because OPTIONS methods are excluded from composition in routing.py
     composed = compose_controllers(
-        _ControllerWithOptions, _ControllerWithOptions2
+        _ControllerWithOptions,
+        _ControllerWithOptions2,
     )
 
     # Verify that both controllers have options endpoints
