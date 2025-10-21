@@ -7,6 +7,8 @@ from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
+from django_modern_rest.response import ResponseDescription
+
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny = Callable[..., Any]
 _ViewDecorator = Callable[[_CallableAny], _CallableAny]
@@ -14,21 +16,25 @@ _ViewDecorator = Callable[[_CallableAny], _CallableAny]
 
 T = TypeVar('T', bound=type[Any])  # noqa: WPS111
 MiddlewareDecorator = Callable[[Callable[..., Any]], Callable[..., Any]]  # noqa: WPS221
+ResponseConverter = Callable[[HttpResponse], HttpResponse]
+ConverterSpec = tuple[ResponseDescription, ResponseConverter]
 
 
-def _apply_callback(
+def _apply_converter(
     response: HttpResponse,
-    callback: Callable[[HttpResponse], HttpResponse | None] | None,
+    converter: ConverterSpec,
 ) -> HttpResponse:
-    """Apply middleware callback if present."""
-    if callback:
-        return callback(response) or response
+    """Apply response converter based on status code matching."""
+    response_desc, converter_func = converter
+    if response.status_code == response_desc.status_code:
+        return converter_func(response)
     return response
 
 
 def _create_sync_dispatch(
     original_dispatch: Callable[..., Any],
     middleware: MiddlewareDecorator,
+    converter: ConverterSpec,
 ) -> Callable[..., HttpResponse]:
     """Create synchronous dispatch wrapper."""
 
@@ -40,8 +46,7 @@ def _create_sync_dispatch(
     ) -> HttpResponse:
         view_callable = partial(original_dispatch, self)
         response = middleware(view_callable)(request, *args, **kwargs)
-        callback = getattr(self, 'middleware_callback', None)
-        return _apply_callback(response, callback)
+        return _apply_converter(response, converter)
 
     return dispatch
 
@@ -49,6 +54,7 @@ def _create_sync_dispatch(
 def _create_async_dispatch(
     original_dispatch: Callable[..., Any],
     middleware: MiddlewareDecorator,
+    converter: ConverterSpec,
 ) -> Callable[..., Any]:
     """Create asynchronous dispatch wrapper."""
 
@@ -62,34 +68,78 @@ def _create_async_dispatch(
         response = middleware(view_callable)(request, *args, **kwargs)
         if inspect.isawaitable(response):
             response = await response
-        callback = getattr(self, 'middleware_callback', None)
-        return _apply_callback(response, callback)
+        return _apply_converter(response, converter)
 
     return dispatch
 
 
-def _do_wrap_dispatch(cls: Any, middleware: MiddlewareDecorator) -> None:
+def _do_wrap_dispatch(
+    cls: Any,
+    middleware: MiddlewareDecorator,
+    converter: ConverterSpec,
+) -> None:
     """Internal function to wrap dispatch in middleware."""
     original_dispatch = cls.dispatch
     is_async = getattr(cls, 'view_is_async', False)
 
     if is_async:
-        cls.dispatch = _create_async_dispatch(original_dispatch, middleware)
+        cls.dispatch = _create_async_dispatch(
+            original_dispatch,
+            middleware,
+            converter,
+        )
     else:
-        cls.dispatch = _create_sync_dispatch(original_dispatch, middleware)
+        cls.dispatch = _create_sync_dispatch(
+            original_dispatch,
+            middleware,
+            converter,
+        )
 
 
 def wrap_middleware(
     middleware: MiddlewareDecorator,
+    converter: ConverterSpec,
 ) -> Callable[[_TypeT], _TypeT]:
     """
-    Middleware wrapper.
+    Wrap controller dispatch with middleware and response converter.
 
-    TODO: example.
+    This decorator applies Django middleware to a controller and allows
+    converting middleware responses based on status code.
+
+    Args:
+        middleware: Django middleware to apply
+        converter: Tuple of (ResponseDescription, converter_function).
+            When middleware returns a response matching the status_code,
+            the converter function is called to transform it.
+
+    Example:
+        >>> from django.views.decorators.csrf import csrf_protect
+        >>> from django.http import JsonResponse
+        >>> from http import HTTPStatus
+        >>> from django_modern_rest import Controller, ResponseDescription
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>>
+        >>> @wrap_middleware(  # doctest: +SKIP
+        ...     csrf_protect,
+        ...     converter=(
+        ...         ResponseDescription(
+        ...             return_type=dict[str, str],
+        ...             status_code=HTTPStatus.FORBIDDEN,
+        ...         ),
+        ...         lambda resp: JsonResponse(
+        ...             {'detail': 'CSRF failed'},
+        ...             status=403,
+        ...         ),
+        ...     ),
+        ... )
+        ... class MyController(Controller[PydanticSerializer]):
+        ...     def post(self) -> dict[str, str]:
+        ...         return {'message': 'ok'}
+
     """
 
     def decorator(cls: _TypeT) -> _TypeT:
-        _do_wrap_dispatch(cls, middleware)
+        _do_wrap_dispatch(cls, middleware, converter)
         return method_decorator(csrf_exempt, name='dispatch')(cls)
 
     return decorator
