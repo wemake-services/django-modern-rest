@@ -50,6 +50,10 @@ class BaseSerializer:
         """
         if isinstance(to_serialize, HttpHeaders):
             return dict(to_serialize)
+        if isinstance(to_serialize, (set, frozenset)):  # pragma: no cover
+            # This is impossible to reach with `msgspec`, but is needed
+            # for raw `json` serialization.
+            return list(to_serialize)
         raise ResponseSerializationError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
