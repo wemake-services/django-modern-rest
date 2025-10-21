@@ -1,6 +1,8 @@
 import pytest
 
-from django_modern_rest import Body, Headers, Query
+from django_modern_rest import Body, Controller, Headers, Query
+from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 def test_validate_components_type_params() -> None:
@@ -8,3 +10,43 @@ def test_validate_components_type_params() -> None:
     for component_cls in (Headers, Body, Query):
         with pytest.raises(TypeError):
             component_cls[*()]  # pyright: ignore[reportInvalidTypeArguments]
+
+    for component_cls in (Headers, Body, Query):
+        with pytest.raises(TypeError):
+            component_cls[int, str]  # pyright: ignore[reportInvalidTypeArguments]
+
+
+def test_validate_headers_zero_params() -> None:
+    """Ensure that we need at least one type param for component."""
+    with pytest.raises(EndpointMetadataError, match='_WrongHeaders'):
+
+        class _WrongHeaders(
+            Headers,  # type: ignore[type-arg]
+            Controller[PydanticSerializer],
+        ):
+            def get(self) -> dict[str, str]:
+                return self.parsed_headers  # type: ignore[no-any-return]
+
+
+def test_validate_body_zero_params() -> None:
+    """Ensure that we need at least one type param for component."""
+    with pytest.raises(EndpointMetadataError, match='_WrongBody'):
+
+        class _WrongBody(
+            Body,  # type: ignore[type-arg]
+            Controller[PydanticSerializer],
+        ):
+            def get(self) -> dict[str, str]:
+                return self.parsed_body  # type: ignore[no-any-return]
+
+
+def test_validate_query_zero_params() -> None:
+    """Ensure that we need at least one type param for component."""
+    with pytest.raises(EndpointMetadataError, match='_WrongQuery'):
+
+        class _WrongQuery(
+            Query,  # type: ignore[type-arg]
+            Controller[PydanticSerializer],
+        ):
+            def get(self) -> dict[str, str]:
+                return self.parsed_query  # type: ignore[no-any-return]

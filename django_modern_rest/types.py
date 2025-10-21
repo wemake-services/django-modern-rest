@@ -41,12 +41,17 @@ def infer_type_args(
 def infer_bases(
     orig_cls: type[Any],
     given_type: type[Any],
+    *,
+    use_origin: bool = True,
 ) -> list[Any]:
     """Infers ``__origin_bases__`` from the given type."""
     return [
         base
         for base in get_original_bases(orig_cls)
-        if (origin := get_origin(base)) and issubclass(origin, given_type)
+        if (
+            (origin := get_origin(base) if use_origin else base)  # noqa: WPS509
+            and is_safe_subclass(origin, given_type)
+        )
     ]
 
 

@@ -16,8 +16,9 @@ containers =
 layers =
   routing
   controller
-  endpoint | components
+  endpoint
   validation
+  components
   response
   serialization
   # DTOs:
