@@ -3,8 +3,13 @@ import sys
 from http import HTTPMethod, HTTPStatus
 from typing import final
 
-import msgspec
 import pytest
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed')
+
 from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
