@@ -1,8 +1,10 @@
+import warnings
 from http import HTTPStatus
 
+import pytest
 from django.http import HttpResponse
+from django.test import RequestFactory
 from typing_extensions import override
-
 from django_modern_rest import (
     Controller,
     HeaderDescription,
@@ -14,7 +16,7 @@ from django_modern_rest.test import DMRRequestFactory
 
 
 class _ProblematicController(Controller[PydanticSerializer]):
-    """Reproduces the issue from GitHub - shows typing error with @override options."""
+    """Reproduces the issue from GitHub - shows typing error with @override."""
 
     @validate(ResponseDescription(list[str], status_code=HTTPStatus.ACCEPTED))
     def get(self) -> HttpResponse:
@@ -62,7 +64,7 @@ class _NewMetaController(Controller[PydanticSerializer]):
             None,
             status_code=HTTPStatus.NO_CONTENT,
             headers={
-                'Allow': ', '.join(['GET', 'OPTIONS']),
+                'Allow': 'GET, OPTIONS',
             },
         )
 
@@ -71,7 +73,7 @@ def test_options_method_typing_error() -> None:
     """Test shows typing error with @override options method."""
     # This test should show mypy/pyright error when we run type checking
     # The error should be:
-    # error: Signature of "options" incompatible with supertype "django.views.generic.base.View"
+    # error: Signature of "options" incompatible with supertype "View"
 
 
 def test_meta_method_works(dmr_rf: DMRRequestFactory) -> None:
@@ -115,25 +117,24 @@ def test_options_deprecated() -> None:
 
     controller = _DeprecatedController()
 
-    from django.test import RequestFactory
-
     rf = RequestFactory()
     request = rf.options('/test/')
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
-        try:
+        with pytest.raises(NotImplementedError) as exc_info:
             controller.options(request)
-        except NotImplementedError as e:
-            assert (
-                'Please do not use `options` method with `django-modern-rest`'
-                in str(e)
-            )
-            assert 'use `meta` method instead' in str(e)
+
+        assert (
+            'Please do not use `options` method with `django-modern-rest`'
+            in str(exc_info.value)
+        )
+        assert 'use `meta` method instead' in str(exc_info.value)
 
     assert len(w) > 0, 'Should have deprecation warning'
     deprecation_warning = w[0]
     warning_text = str(deprecation_warning.message).lower()
     assert 'please do not use' in warning_text
     assert 'options' in warning_text
-    assert 'use' in warning_text and 'meta' in warning_text
+    assert 'use' in warning_text
+    assert 'meta' in warning_text

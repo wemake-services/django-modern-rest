@@ -91,7 +91,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     _is_async: ClassVar[bool]
 
     @override
-    def __init_subclass__(cls) -> None:
+    def __init_subclass__(cls) -> None:  # noqa: C901
         """Collect components parsers."""
         super().__init_subclass__()
         type_args = infer_type_args(cls, Controller)
@@ -128,7 +128,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         meta_func = getattr(cls, 'meta', None)
         if meta_func is not None:
             api_endpoints['options'] = cls.endpoint_cls(
-                meta_func, controller_cls=cls
+                meta_func, controller_cls=cls,
             )
         else:
             # Default OPTIONS handler when no meta method is defined
@@ -139,11 +139,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                     headers={'Allow': HeaderDescription()},
                 ),
             )
-            def default_options_wrapper(self) -> HttpResponse:
+            def default_options_wrapper(self: Controller[_SerializerT_co]) -> HttpResponse:
                 return cls._default_options_handler()
 
             api_endpoints['options'] = cls.endpoint_cls(
-                default_options_wrapper, controller_cls=cls
+                default_options_wrapper, controller_cls=cls,
             )
 
         cls.api_endpoints = api_endpoints
@@ -261,7 +261,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         """
         Do not use, use `meta` method instead.
 
-        Django's `View.options` has incompatible signature with django-modern-rest.
+        Django's `View.options` has incompatible signature with
+        django-modern-rest.
         Use `meta` method for OPTIONS handling.
         """
         raise NotImplementedError(
@@ -316,7 +317,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     def _default_options_handler(cls) -> HttpResponse:
         """Default OPTIONS handler that returns Allow header."""
         allowed_methods = sorted(
-            method.upper() for method in cls.existing_http_methods()
+            method.upper()
+            for method in cls.existing_http_methods()
         )
         return cls._maybe_wrap(
             build_response(
