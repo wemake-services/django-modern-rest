@@ -13,10 +13,35 @@ from django_modern_rest import (
     Headers,
     Query,
     ResponseDescription,
-    dispatch_decorator,
     validate,
+    wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+
+def custom_header_middleware(get_response):  # type: ignore[no-untyped-def]
+    """Simple middleware that adds a custom header to response."""
+
+    def middleware(request):  # type: ignore[no-untyped-def]  # noqa: WPS430
+        response = get_response(request)
+        response['X-Custom-Header'] = 'CustomValue'
+        return response
+
+    return middleware
+
+
+def rate_limit_middleware(get_response):  # type: ignore[no-untyped-def]
+    """Middleware that simulates rate limiting."""
+
+    def middleware(request):  # type: ignore[no-untyped-def]  # noqa: WPS430
+        if request.headers.get('X-Rate-Limited') == 'true':
+            return JsonResponse(
+                {'detail': 'Rate limit exceeded'},
+                status=HTTPStatus.TOO_MANY_REQUESTS,
+            )
+        return get_response(request)
+
+    return middleware
 
 
 @final
@@ -114,7 +139,7 @@ class AsyncParseHeadersController(
 
 
 @final
-@dispatch_decorator(ensure_csrf_cookie)
+@wrap_middleware(ensure_csrf_cookie)
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
 
@@ -124,10 +149,75 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
 
 @final
-@dispatch_decorator(csrf_protect)
+@wrap_middleware(csrf_protect)
 class CsrfProtectedController(
     Body[_UserInput],
     Controller[PydanticSerializer],
 ):
     def post(self) -> _UserInput:
         return self.parsed_body
+
+    def middleware_callback(
+        self,
+        response: HttpResponse,
+    ) -> HttpResponse | None:
+        # Convert default CSRF failure HTML into JSON 403
+        if response.status_code == HTTPStatus.FORBIDDEN:
+            return JsonResponse(
+                {'detail': 'CSRF verification failed. Request aborted.'},
+                status=HTTPStatus.FORBIDDEN,
+            )
+        return None
+
+
+@final
+@wrap_middleware(csrf_protect)
+class AsyncCsrfProtectedController(
+    Body[_UserInput],
+    Controller[PydanticSerializer],
+):
+    async def post(self) -> _UserInput:
+        return self.parsed_body
+
+    def middleware_callback(
+        self,
+        response: HttpResponse,
+    ) -> HttpResponse | None:
+        if response.status_code == HTTPStatus.FORBIDDEN:
+            return JsonResponse(
+                {'detail': 'CSRF verification failed. Request aborted.'},
+                status=HTTPStatus.FORBIDDEN,
+            )
+        return None
+
+
+@final
+@wrap_middleware(custom_header_middleware)
+class CustomHeaderController(Controller[PydanticSerializer]):
+    """Controller with custom header middleware."""
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that returns simple data."""
+        return {'message': 'Success'}
+
+
+@final
+@wrap_middleware(rate_limit_middleware)
+class RateLimitedController(
+    Body[_UserInput],
+    Controller[PydanticSerializer],
+):
+    """Controller with rate limiting middleware."""
+
+    def post(self) -> _UserInput:
+        """POST endpoint with rate limiting."""
+        return self.parsed_body
+
+    def middleware_callback(
+        self,
+        response: HttpResponse,
+    ) -> HttpResponse | None:
+        """Handle rate limit responses."""
+        if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+            return response
+        return None

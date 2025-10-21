@@ -293,9 +293,3 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         if cls.view_is_async:
             return identity(response)
         return response
-
-
-def _dmr_csrf_dummy_response(  # pragma: no cover
-    req: HttpRequest,
-) -> HttpResponse:
-    return HttpResponse()

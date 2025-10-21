@@ -32,11 +32,14 @@ from django_modern_rest.openapi.objects import (
     Server,
     Tag,
 )
-from rest_app.views import (
+from rest_app.views import (  # noqa: WPS235
+    AsyncCsrfProtectedController,
     AsyncParseHeadersController,
     CsrfProtectedController,
     CsrfTokenController,
+    CustomHeaderController,
     ParseHeadersController,
+    RateLimitedController,
     UserCreateController,
     UserListController,
     UserReplaceController,
@@ -70,6 +73,17 @@ router = Router([
     ),
     path('csrf-token', CsrfTokenController.as_view(), name='csrf_token'),
     path('csrf-protected', CsrfProtectedController.as_view(), name='csrf_test'),
+    path(
+        'async-csrf-protected',
+        AsyncCsrfProtectedController.as_view(),
+        name='async_csrf_test',
+    ),
+    path(
+        'custom-header',
+        CustomHeaderController.as_view(),
+        name='custom_header',
+    ),
+    path('rate-limited', RateLimitedController.as_view(), name='rate_limited'),
 ])
 
 urlpatterns = [
