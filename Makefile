@@ -9,7 +9,7 @@ lint:
 	poetry run ruff check --exit-non-zero-on-fix
 	poetry run ruff format --check --diff
 	poetry run flake8 .
-	poetry run slotscheck -v -m django_modern_rest
+	poetry run slotscheck --no-strict-imports -v -m django_modern_rest
 	poetry run lint-imports
 
 .PHONY: type-check

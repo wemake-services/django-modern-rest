@@ -18,6 +18,7 @@ Modern REST framework for Django with types and async support!
 - [x] Supports async Django
 - [ ] Supports `openapi` schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages
+- [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] Does not use `from __future__ import annotations`
 - [x] 100% test coverage
 - [x] No emojis 🌚️️
@@ -30,6 +31,8 @@ pip install django-modern-rest
 ```
 
 There are several included extras:
+- `'django-modern-rest[msgspec]'` provides `msgspec` support
+  and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
 
 

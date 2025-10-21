@@ -50,13 +50,12 @@ include = ["django_modern_rest_pytest.py"]
 python = "^3.11"
 typing_extensions = ">=4"
 
-# Default dependency, since we use it for json parsing:
-msgspec = ">= 0.19"
-
+msgspec = { version = ">= 0.19", optional = true }
 pydantic = { version = "^2.12", optional = true }
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
+msgspec = ["msgspec"]
 
 [tool.poetry.group.dev.dependencies]
 django = ">=4.2,<6.0"
@@ -216,10 +215,17 @@ addopts = [
   # Ignores:
   "--ignore=docs",
   "--ignore=typesafety/assert_type",
+  "--ignore=django_modern_rest/internal/json/msgspec.py",
 ]
 
 
 [tool.coverage.run]
+# Coverage settings: https://coverage.readthedocs.io
+omit = [
+  "django_modern_rest/internal/json/raw.py",  # when msgspec is installed
+  "django_modern_rest/internal/json/msgspec.py",  # when not
+]
+
 # Covdefaults: https://pypi.org/project/covdefaults
 plugins = ["covdefaults"]
 
@@ -254,6 +260,7 @@ plugins = [
 [tool.pyright]
 # Docs: https://microsoft.github.io/pyright/#/configuration
 include = ["django_modern_rest", "typesafety", "tests"]
+exclude = ["django_modern_rest/internal/json/msgspec.py"]
 strict = ["django_modern_rest/**/*"]
 venvPath = "."
 venv = ".venv"

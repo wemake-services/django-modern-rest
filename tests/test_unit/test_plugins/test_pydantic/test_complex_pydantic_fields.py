@@ -169,5 +169,5 @@ def test_complex_pydantic_out_valid_object(
     response = _TypeOutputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content)
