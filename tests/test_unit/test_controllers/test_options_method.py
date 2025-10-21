@@ -5,6 +5,7 @@ import pytest
 from django.http import HttpResponse
 from django.test import RequestFactory
 from typing_extensions import override
+
 from django_modern_rest import (
     Controller,
     HeaderDescription,
@@ -106,8 +107,6 @@ def test_default_options_behavior(dmr_rf: DMRRequestFactory) -> None:
 
 def test_options_deprecated() -> None:
     """Test shows that options method should be blocked."""
-    import warnings
-
     warnings.simplefilter('always')
 
     class _DeprecatedController(Controller[PydanticSerializer]):
