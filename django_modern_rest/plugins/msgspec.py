@@ -1,7 +1,9 @@
+from collections.abc import Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    NotRequired,
 )
 
 try:
@@ -41,6 +43,14 @@ class MsgspecErrorDetails(TypedDict):
     msg: str
 
 
+class MsgspecConvertOptions(TypedDict):
+    """Custom serializer API options, taken by `msgpec.convert`."""
+
+    from_attributes: NotRequired[bool]
+    builtin_types: NotRequired[Iterable[type] | None]
+    str_keys: NotRequired[bool]
+
+
 class MsgspecErrorModel(TypedDict):
     """Error response schema for serialization errors."""
 
@@ -78,7 +88,7 @@ class MsgspecSerializer(BaseSerializer):
 
     # Custom API:
     from_json_strict: ClassVar[bool] = True
-    convert_kwargs: ClassVar[dict[str, Any]] = {'str_keys': True}
+    convert_kwargs: ClassVar[MsgspecConvertOptions] = {'str_keys': True}
 
     @override
     @classmethod
