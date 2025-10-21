@@ -75,7 +75,7 @@ def test_options_method_works(dmr_rf: DMRRequestFactory) -> None:
     # Debug: check what endpoints are created
     print(f'API endpoints: {list(_NewOptionsController.api_endpoints.keys())}')
     print(
-         f'Existing HTTP methods: '
+        f'Existing HTTP methods: '
         f'{_NewOptionsController.existing_http_methods()}',
     )
 
