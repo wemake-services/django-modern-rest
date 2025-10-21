@@ -46,7 +46,7 @@ Quick example:
         :linenos:
         :emphasize-lines: 6, 22
 
-    .. tab:: pydantic
+    .. tab:: :iconify:`simple-icons:pydantic` pydantic
 
       .. literalinclude:: /examples/getting_started/pydantic_controller.py
         :linenos:
