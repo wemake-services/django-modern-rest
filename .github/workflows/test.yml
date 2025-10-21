@@ -87,7 +87,7 @@ jobs:
         poetry install --extras=pydantic
 
     - name: Run checks
-      run: make unit
+      run: pytest --cov-fail-under=98
 
 
   build-no-extras:
