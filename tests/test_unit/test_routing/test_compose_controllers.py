@@ -132,7 +132,9 @@ def test_compose_controllers_with_options() -> None:
     assert 'options' in _ControllerWithOptions.api_endpoints
     assert 'options' in _ControllerWithOptions2.api_endpoints
 
-    # Verify that composition works (OPTIONS methods are excluded from composition)
-    # This is the expected behavior - OPTIONS methods are excluded from composition
+    # Verify that composition works (OPTIONS methods are excluded from
+    # composition)
+    # This is the expected behavior - OPTIONS methods are excluded from
+    # composition
     # to avoid conflicts between multiple controllers with OPTIONS methods
     assert composed is not None
