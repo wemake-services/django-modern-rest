@@ -128,7 +128,7 @@ def wrap_middleware(
         ...         ),
         ...         lambda resp: JsonResponse(
         ...             {'detail': 'CSRF failed'},
-        ...             status=403,
+        ...             status=HTTPStatus.FORBIDDEN,
         ...         ),
         ...     ),
         ... )
