@@ -1,9 +1,8 @@
 import warnings
 from http import HTTPStatus
-from typing import Any
 
 import pytest
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse
 from django.test import RequestFactory
 from typing_extensions import override
 
@@ -74,9 +73,11 @@ class _NewOptionsController(Controller[PydanticSerializer]):
 def test_options_method_works(dmr_rf: DMRRequestFactory) -> None:
     """Test shows that options method works without typing errors."""
     # Debug: check what endpoints are created
-    print(f"API endpoints: {list(_NewOptionsController.api_endpoints.keys())}")
-    print(f"Existing HTTP methods: {_NewOptionsController.existing_http_methods()}")
-    
+    print(f'API endpoints: {list(_NewOptionsController.api_endpoints.keys())}')
+    print(
+        f'Existing HTTP methods: {_NewOptionsController.existing_http_methods()}'
+    )
+
     request = dmr_rf.options('/test/')
     response = _NewOptionsController.as_view()(request)
 

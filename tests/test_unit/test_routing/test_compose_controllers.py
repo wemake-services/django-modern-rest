@@ -1,10 +1,15 @@
-from typing import Any, ClassVar, final
 from http import HTTPStatus
+from typing import Any, ClassVar, final
 
 import pytest
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest import Controller, compose_controllers, validate, ResponseDescription
+from django_modern_rest import (
+    Controller,
+    ResponseDescription,
+    compose_controllers,
+    validate,
+)
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
@@ -89,7 +94,9 @@ class _ControllerWithOptions(Controller[PydanticSerializer]):
         return HttpResponse(b'GET')
 
     @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
-    def options(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def options(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
         return HttpResponse(b'OPTIONS')
 
 
@@ -100,7 +107,9 @@ class _ControllerWithOptions2(Controller[PydanticSerializer]):
         return HttpResponse(b'POST')
 
     @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
-    def options(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def options(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
         return HttpResponse(b'OPTIONS')
 
 
@@ -108,12 +117,14 @@ def test_compose_controllers_with_options() -> None:
     """Test that controllers with options methods can be composed."""
     # Both controllers have options methods, but composition should work
     # because OPTIONS methods are excluded from composition in routing.py
-    composed = compose_controllers(_ControllerWithOptions, _ControllerWithOptions2)
-    
+    composed = compose_controllers(
+        _ControllerWithOptions, _ControllerWithOptions2
+    )
+
     # Verify that both controllers have options endpoints
     assert 'options' in _ControllerWithOptions.api_endpoints
     assert 'options' in _ControllerWithOptions2.api_endpoints
-    
+
     # Verify that composition works (OPTIONS methods are excluded from composition)
     # This is the expected behavior - OPTIONS methods are excluded from composition
     # to avoid conflicts between multiple controllers with OPTIONS methods
