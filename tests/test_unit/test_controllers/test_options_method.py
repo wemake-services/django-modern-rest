@@ -1,8 +1,9 @@
 import warnings
 from http import HTTPStatus
+from typing import Any
 
 import pytest
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from django.test import RequestFactory
 from typing_extensions import override
 
@@ -46,8 +47,8 @@ class _ProblematicController(Controller[PydanticSerializer]):
         )
 
 
-class _NewMetaController(Controller[PydanticSerializer]):
-    """Shows new solution with meta method."""
+class _NewOptionsController(Controller[PydanticSerializer]):
+    """Shows new solution with options method."""
 
     @validate(ResponseDescription(str, status_code=HTTPStatus.OK))
     def get(self) -> HttpResponse:
@@ -60,7 +61,7 @@ class _NewMetaController(Controller[PydanticSerializer]):
             headers={'Allow': HeaderDescription()},
         ),
     )
-    def meta(self) -> HttpResponse:  # New solution!
+    def options(self) -> HttpResponse:
         return self.to_response(
             None,
             status_code=HTTPStatus.NO_CONTENT,
@@ -70,39 +71,17 @@ class _NewMetaController(Controller[PydanticSerializer]):
         )
 
 
-def test_options_method_typing_error() -> None:
-    """Test shows typing error with @override options method."""
-    # This test should show mypy/pyright error when we run type checking
-    # The error should be:
-    # error: Signature of "options" incompatible with supertype "View"
-
-
-def test_meta_method_works(dmr_rf: DMRRequestFactory) -> None:
-    """Test shows that meta method works without typing errors."""
+def test_options_method_works(dmr_rf: DMRRequestFactory) -> None:
+    """Test shows that options method works without typing errors."""
+    # Debug: check what endpoints are created
+    print(f"API endpoints: {list(_NewOptionsController.api_endpoints.keys())}")
+    print(f"Existing HTTP methods: {_NewOptionsController.existing_http_methods()}")
+    
     request = dmr_rf.options('/test/')
-    response = _NewMetaController.as_view()(request)
+    response = _NewOptionsController.as_view()(request)
 
     assert response.status_code == HTTPStatus.NO_CONTENT
     assert response['Allow'] == 'GET, OPTIONS'
-
-
-def test_default_options_behavior(dmr_rf: DMRRequestFactory) -> None:
-    """Test shows automatic OPTIONS behavior."""
-
-    class _SimpleController(Controller[PydanticSerializer]):
-        def get(self) -> str:
-            return 'OK'
-
-        def post(self) -> str:
-            return 'Created'
-
-    request = dmr_rf.options('/test/')
-    response = _SimpleController.as_view()(request)
-
-    assert response.status_code == HTTPStatus.NO_CONTENT
-    assert 'GET' in response['Allow']
-    assert 'POST' in response['Allow']
-    assert 'OPTIONS' in response['Allow']
 
 
 def test_options_deprecated() -> None:
@@ -128,7 +107,7 @@ def test_options_deprecated() -> None:
             'Please do not use `options` method with `django-modern-rest`'
             in str(exc_info.value)
         )
-        assert 'use `meta` method instead' in str(exc_info.value)
+        assert 'define your own `options` method instead' in str(exc_info.value)
 
     assert len(w) > 0, 'Should have deprecation warning'
     deprecation_warning = w[0]
@@ -136,4 +115,3 @@ def test_options_deprecated() -> None:
     assert 'please do not use' in warning_text
     assert 'options' in warning_text
     assert 'use' in warning_text
-    assert 'meta' in warning_text

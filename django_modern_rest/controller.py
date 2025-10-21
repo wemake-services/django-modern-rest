@@ -14,11 +14,10 @@ from django.views import View
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
-from django_modern_rest.endpoint import Endpoint, validate
+from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
-from django_modern_rest.headers import HeaderDescription
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import ResponseDescription, build_response
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
@@ -91,9 +90,16 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     _is_async: ClassVar[bool]
 
     @override
-    def __init_subclass__(cls) -> None:  # noqa: C901
+    def __init_subclass__(cls) -> None:
         """Collect components parsers."""
         super().__init_subclass__()
+        cls._setup_controller()
+        cls._build_api_endpoints()
+        cls._is_async = cls.controller_validator_cls()(cls)
+
+    @classmethod
+    def _setup_controller(cls) -> None:
+        """Setup controller serializer and components."""
         type_args = infer_type_args(cls, Controller)
         if len(type_args) != 1:
             raise UnsolvableAnnotationsError(
@@ -114,44 +120,29 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         ]
         cls.serializer_context = cls.serializer_context_cls(cls)
 
-        # Build API endpoints
+    @classmethod
+    def _build_api_endpoints(cls) -> None:
+        """Build API endpoints from controller methods."""
         api_endpoints = {}
         for meth in cls.existing_http_methods():
             func = getattr(cls, meth, None)
-            if func is not None and func is not getattr(View, meth, None):
-                # Skip our deprecated options method
-                if meth == 'options' and func is cls.options:
-                    continue
-                api_endpoints[meth] = cls.endpoint_cls(func, controller_cls=cls)
+            if func is None:
+                continue
 
-        # Special handling for meta method -> options mapping
-        meta_func = getattr(cls, 'meta', None)
-        if meta_func is not None:
-            api_endpoints['options'] = cls.endpoint_cls(
-                meta_func,
-                controller_cls=cls,
-            )
-        else:
-            # Default OPTIONS handler when no meta method is defined
-            @validate(
-                ResponseDescription(
-                    None,
-                    status_code=HTTPStatus.NO_CONTENT,
-                    headers={'Allow': HeaderDescription()},
-                ),
-            )
-            def default_options_wrapper(
-                self: Controller[_SerializerT_co],
-            ) -> HttpResponse:
-                return cls._default_options_handler()
+            # Skip Django View's default methods
+            view_func = getattr(View, meth, None)
+            if view_func is not None and func is view_func:
+                continue
 
-            api_endpoints['options'] = cls.endpoint_cls(
-                default_options_wrapper,
-                controller_cls=cls,
-            )
+            # Skip our deprecated options method from Controller base class
+            controller_func = getattr(Controller, meth, None)
+            if controller_func is not None and func is controller_func:
+                continue
+
+            # This is a user-defined method, create endpoint
+            api_endpoints[meth] = cls.endpoint_cls(func, controller_cls=cls)
 
         cls.api_endpoints = api_endpoints
-        cls._is_async = cls.controller_validator_cls()(cls)
 
     def to_response(
         self,
@@ -254,7 +245,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         # It is not actually deprecated, but type checkers have no other
         # ways to raise custom errors.
         'Please do not use `options` method with `django-modern-rest`, '
-        'use `meta` method instead',
+        'define your own `options` method instead',
     )
     def options(
         self,
@@ -263,15 +254,15 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         **kwargs: Any,
     ) -> HttpResponse:
         """
-        Do not use, use `meta` method instead.
+        Do not use, define your own `options` method instead.
 
         Django's `View.options` has incompatible signature with
         django-modern-rest.
-        Use `meta` method for OPTIONS handling.
+        Define your own `options` method for OPTIONS handling.
         """
         raise NotImplementedError(
             'Please do not use `options` method with `django-modern-rest`, '
-            'use `meta` method instead',
+            'define your own `options` method instead',
         )
 
     @classmethod
@@ -305,33 +296,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     @classmethod
     def existing_http_methods(cls) -> set[str]:
         """Returns and caches what HTTP methods are implemented in this view."""
-        methods = {
+        return {
             method
             for method in cls.http_method_names
             if getattr(cls, method, None) is not None
         }
-
-        # Always include options (either custom meta method or default handler)
-        methods.add('options')
-
-        return methods
-
-    @classmethod
-    @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
-    def _default_options_handler(cls) -> HttpResponse:
-        """Default OPTIONS handler that returns Allow header."""
-        allowed_methods = sorted(
-            method.upper() for method in cls.existing_http_methods()
-        )
-        return cls._maybe_wrap(
-            build_response(
-                None,
-                cls.serializer,
-                raw_data=None,
-                status_code=HTTPStatus.NO_CONTENT,
-                headers={'Allow': ', '.join(allowed_methods)},
-            ),
-        )
 
     @classmethod
     def semantic_responses(cls) -> list[ResponseDescription]:

@@ -1,8 +1,10 @@
-from typing import ClassVar, final
+from typing import Any, ClassVar, final
+from http import HTTPStatus
 
 import pytest
+from django.http import HttpResponse, HttpRequest
 
-from django_modern_rest import Controller, compose_controllers
+from django_modern_rest import Controller, compose_controllers, validate, ResponseDescription
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
@@ -78,3 +80,41 @@ def test_compose_controller_no_endpoints() -> None:
         compose_controllers(_ZeroMethodsController, _SyncController)
     with pytest.raises(ValueError, match='at least one'):
         compose_controllers(_SyncController, _ZeroMethodsController)
+
+
+@final
+class _ControllerWithOptions(Controller[PydanticSerializer]):
+    @validate(ResponseDescription(str, status_code=HTTPStatus.OK))
+    def get(self) -> HttpResponse:
+        return HttpResponse(b'GET')
+
+    @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
+    def options(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return HttpResponse(b'OPTIONS')
+
+
+@final
+class _ControllerWithOptions2(Controller[PydanticSerializer]):
+    @validate(ResponseDescription(str, status_code=HTTPStatus.OK))
+    def post(self) -> HttpResponse:
+        return HttpResponse(b'POST')
+
+    @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
+    def options(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return HttpResponse(b'OPTIONS')
+
+
+def test_compose_controllers_with_options() -> None:
+    """Test that controllers with options methods can be composed."""
+    # Both controllers have options methods, but composition should work
+    # because OPTIONS methods are excluded from composition in routing.py
+    composed = compose_controllers(_ControllerWithOptions, _ControllerWithOptions2)
+    
+    # Verify that both controllers have options endpoints
+    assert 'options' in _ControllerWithOptions.api_endpoints
+    assert 'options' in _ControllerWithOptions2.api_endpoints
+    
+    # Verify that composition works (OPTIONS methods are excluded from composition)
+    # This is the expected behavior - OPTIONS methods are excluded from composition
+    # to avoid conflicts between multiple controllers with OPTIONS methods
+    assert composed is not None
