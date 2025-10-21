@@ -17,7 +17,7 @@ serializers: list[Any] = [PydanticSerializer]
 try:
     from django_modern_rest.plugins.msgspec import MsgspecSerializer
 except ImportError:
-    pass  # do nothing then :(
+    pass  # do nothing then :(  # noqa: WPS420
 else:
     serializers.append(MsgspecSerializer)
 
