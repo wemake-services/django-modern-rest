@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any, Literal
@@ -19,7 +20,8 @@ try:
 except ImportError:
     pass  # do nothing then :(  # noqa: WPS420
 else:
-    serializers.append(MsgspecSerializer)
+    if sys.version_info < (3, 14):  # 3.14 does not fully support msgspec yet
+        serializers.append(MsgspecSerializer)
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
