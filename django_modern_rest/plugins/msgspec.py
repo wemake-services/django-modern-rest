@@ -78,6 +78,7 @@ class MsgspecSerializer(BaseSerializer):
 
     # Custom API:
     from_json_strict: ClassVar[bool] = True
+    convert_kwargs: ClassVar[dict[str, Any]] = {'str_keys': True}
 
     @override
     @classmethod
@@ -119,7 +120,7 @@ class MsgspecSerializer(BaseSerializer):
         Args:
             unstructured: Python objects to be parsed / validated.
             model: Python type to serve as a model.
-                Can be any type that ``pydantic`` supports.
+                Can be any type that ``msgspec`` supports.
                 Examples: ``dict[str, int]`` and ``BaseModel`` subtypes.
             strict: Whether we use more strict validation rules.
                 For example, it is fine for a request validation
@@ -127,7 +128,7 @@ class MsgspecSerializer(BaseSerializer):
                 But, response types need to be strongly validated.
 
         Raises:
-            pydantic.ValidationError: When parsing can't be done.
+            msgspec.ValidationError: When parsing can't be done.
 
         Returns:
             Structured and validated data.
@@ -137,6 +138,7 @@ class MsgspecSerializer(BaseSerializer):
             model,
             strict=strict,
             dec_hook=cls.deserialize_hook,
+            **cls.convert_kwargs,
         )
 
     @override
