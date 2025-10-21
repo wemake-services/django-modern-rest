@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any, Literal
@@ -10,10 +11,17 @@ from django_modern_rest import Controller, ResponseDescription, validate
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.serialization import BaseSerializer
 
+serializers: list[Any] = [PydanticSerializer]
 
-class _Controller(Controller[PydanticSerializer]):
-    """Just a placeholder."""
+try:
+    from django_modern_rest.plugins.msgspec import MsgspecSerializer
+except ImportError:
+    pass  # do nothing then :(  # noqa: WPS420
+else:
+    if sys.version_info < (3, 14):  # 3.14 does not fully support msgspec yet
+        serializers.append(MsgspecSerializer)
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
@@ -61,13 +69,22 @@ class _TypedDict(TypedDict):
         _build_rest,
     ],
 )
+@pytest.mark.parametrize(
+    'serializer',
+    serializers,
+)
 def test_valid_data(
     *,
     typ: Any,
     raw_data: Any,
     validator_builder: Callable[[Any], Callable[..., Any]],
+    serializer: type[BaseSerializer],
 ) -> None:
     """Ensure that correct data can be validated."""
+
+    class _Controller(Controller[serializer]):  # type: ignore[valid-type]
+        """Just a placeholder."""
+
     validator = Endpoint(
         _build_annotation(typ),
         controller_cls=_Controller,
@@ -100,13 +117,22 @@ def test_valid_data(
         _build_rest,
     ],
 )
+@pytest.mark.parametrize(
+    'serializer',
+    serializers,
+)
 def test_invalid_data(
     *,
     typ: Any,
     raw_data: Any,
     validator_builder: Callable[[Any], Callable[..., Any]],
+    serializer: type[BaseSerializer],
 ) -> None:
     """Ensure that correct data can be validated."""
+
+    class _Controller(Controller[serializer]):  # type: ignore[valid-type]
+        """Just a placeholder."""
+
     validator = Endpoint(
         _build_annotation(typ),
         controller_cls=_Controller,
