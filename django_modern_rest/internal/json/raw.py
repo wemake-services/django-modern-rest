@@ -23,7 +23,7 @@ class _DMREncoder(DjangoJSONEncoder):
         super().__init__(*args, **kwargs)
         self._serializer = serializer
 
-    def default(self, o: Any) -> Any:
+    def default(self, o: Any) -> Any:  # noqa: WPS111
         try:
             return super().default(o)
         except TypeError:
