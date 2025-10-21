@@ -44,7 +44,7 @@ ignore_imports =
   # Pydantic plugin:
   django_modern_rest.plugins.pydantic -> pydantic
   # Optional json support from msgspec:
-  django_modern_rest.internal.json -> msgspec
+  django_modern_rest.internal.json.msgspec -> msgspec
 
 
 [importlinter:contract:plugins-independence]

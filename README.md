@@ -32,7 +32,7 @@ pip install django-modern-rest
 
 There are several included extras:
 - `'django-modern-rest[msgspec]'` provides `msgspec` support
-  and the fastest json parsing, recommened to be **always** included
+  and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
 
 

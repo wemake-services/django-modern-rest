@@ -1,15 +1,18 @@
 from collections.abc import Callable
 from typing import Any, Protocol, TypeAlias
 
-try:
-    import msgspec  # noqa: F401
-except ImportError:  # pragma: no cover
-    from django_modern_rest.internal.json.raw import deserialize, serialize
-else:
+try:  # noqa: WPS229
     from django_modern_rest.internal.json.msgspec import (
         deserialize as deserialize,
     )
     from django_modern_rest.internal.json.msgspec import serialize as serialize
+except ImportError:  # pragma: no cover
+    from django_modern_rest.internal.json.raw import (
+        deserialize as deserialize,
+    )
+    from django_modern_rest.internal.json.raw import (
+        serialize as serialize,
+    )
 
 #: Types that are possible to load json from.
 FromJson: TypeAlias = str | bytes | bytearray

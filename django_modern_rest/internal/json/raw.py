@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from django.core.serializers.json import DjangoJSONEncoder
+from typing_extensions import override
 
 from django_modern_rest.exceptions import DataParsingError
 
@@ -23,6 +24,7 @@ class _DMREncoder(DjangoJSONEncoder):
         super().__init__(*args, **kwargs)
         self._serializer = serializer
 
+    @override
     def default(self, o: Any) -> Any:  # noqa: WPS111
         try:
             return super().default(o)
