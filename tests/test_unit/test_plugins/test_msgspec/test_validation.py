@@ -8,7 +8,7 @@ import pytest
 try:
     import msgspec
 except ImportError:  # pragma: no cover
-    pytest.skip(reason='msgspec is not installed')
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 from django.http import HttpResponse
 from faker import Faker
