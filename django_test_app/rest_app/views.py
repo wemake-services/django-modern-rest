@@ -141,12 +141,13 @@ class AsyncParseHeadersController(
 @final
 @wrap_middleware(
     ensure_csrf_cookie,
-    converter=(
+    converter=validate(
         ResponseDescription(
             return_type=dict[str, str],
             status_code=HTTPStatus.OK,
+        )(
+            lambda resp: resp,  # No conversion needed
         ),
-        lambda resp: resp,  # No conversion needed
     ),
 )
 class CsrfTokenController(Controller[PydanticSerializer]):
@@ -160,14 +161,15 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 @final
 @wrap_middleware(
     csrf_protect,
-    converter=(
+    converter=validate(
         ResponseDescription(
             return_type=dict[str, str],
             status_code=HTTPStatus.FORBIDDEN,
-        ),
-        lambda resp: JsonResponse(
-            {'detail': 'CSRF verification failed. Request aborted.'},
-            status=HTTPStatus.FORBIDDEN,
+        )(
+            lambda resp: JsonResponse(
+                {'detail': 'CSRF verification failed. Request aborted.'},
+                status=HTTPStatus.FORBIDDEN,
+            ),
         ),
     ),
 )
@@ -182,14 +184,15 @@ class CsrfProtectedController(
 @final
 @wrap_middleware(
     csrf_protect,
-    converter=(
+    converter=validate(
         ResponseDescription(
             return_type=dict[str, str],
             status_code=HTTPStatus.FORBIDDEN,
-        ),
-        lambda resp: JsonResponse(
-            {'detail': 'CSRF verification failed. Request aborted.'},
-            status=HTTPStatus.FORBIDDEN,
+        )(
+            lambda resp: JsonResponse(
+                {'detail': 'CSRF verification failed. Request aborted.'},
+                status=HTTPStatus.FORBIDDEN,
+            ),
         ),
     ),
 )
@@ -204,12 +207,13 @@ class AsyncCsrfProtectedController(
 @final
 @wrap_middleware(
     custom_header_middleware,
-    converter=(
+    converter=validate(
         ResponseDescription(
             return_type=dict[str, str],
             status_code=HTTPStatus.OK,
+        )(
+            lambda resp: resp,  # No conversion needed
         ),
-        lambda resp: resp,  # No conversion needed
     ),
 )
 class CustomHeaderController(Controller[PydanticSerializer]):
@@ -223,12 +227,13 @@ class CustomHeaderController(Controller[PydanticSerializer]):
 @final
 @wrap_middleware(
     rate_limit_middleware,
-    converter=(
+    converter=validate(
         ResponseDescription(
             return_type=dict[str, str],
             status_code=HTTPStatus.TOO_MANY_REQUESTS,
+        )(
+            lambda resp: resp,  # Already JSON from middleware
         ),
-        lambda resp: resp,  # Already JSON from middleware
     ),
 )
 class RateLimitedController(

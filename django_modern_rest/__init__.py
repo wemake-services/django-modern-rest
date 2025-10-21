@@ -9,6 +9,9 @@ from django_modern_rest.components import (
 )
 from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.decorators import (
+    ConverterSpec as ConverterSpec,
+)
+from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,
 )
 from django_modern_rest.decorators import wrap_middleware as wrap_middleware

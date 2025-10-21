@@ -14,12 +14,12 @@ _CallableAny: TypeAlias = Callable[..., Any]
 _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 _MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 _ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
-_ConverterSpec: TypeAlias = tuple[ResponseDescription, _ResponseConverter]
+ConverterSpec: TypeAlias = tuple[ResponseDescription, _ResponseConverter]
 
 
 def _apply_converter(
     response: HttpResponse,
-    converter: _ConverterSpec,
+    converter: ConverterSpec,
 ) -> HttpResponse:
     """Apply response converter based on status code matching."""
     response_desc, converter_func = converter
@@ -31,7 +31,7 @@ def _apply_converter(
 def _create_sync_dispatch(
     original_dispatch: Callable[..., Any],
     middleware: _MiddlewareDecorator,
-    converter: _ConverterSpec,
+    converter: ConverterSpec,
 ) -> Callable[..., HttpResponse]:
     """Create synchronous dispatch wrapper."""
 
@@ -51,7 +51,7 @@ def _create_sync_dispatch(
 def _create_async_dispatch(
     original_dispatch: Callable[..., Any],
     middleware: _MiddlewareDecorator,
-    converter: _ConverterSpec,
+    converter: ConverterSpec,
 ) -> Callable[..., Any]:
     """Create asynchronous dispatch wrapper."""
 
@@ -73,7 +73,7 @@ def _create_async_dispatch(
 def _do_wrap_dispatch(
     cls: Any,
     middleware: _MiddlewareDecorator,
-    converter: _ConverterSpec,
+    converter: ConverterSpec,
 ) -> None:
     """Internal function to wrap dispatch in middleware."""
     original_dispatch = cls.dispatch
@@ -95,7 +95,7 @@ def _do_wrap_dispatch(
 
 def wrap_middleware(
     middleware: _MiddlewareDecorator,
-    converter: _ConverterSpec,
+    converter: ConverterSpec,
 ) -> Callable[[_TypeT], _TypeT]:
     """
     Wrap controller dispatch with middleware and response converter.
