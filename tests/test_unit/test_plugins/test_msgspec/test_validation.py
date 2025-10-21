@@ -1,4 +1,5 @@
 import json
+import sys
 from http import HTTPMethod, HTTPStatus
 from typing import final
 
@@ -41,6 +42,10 @@ class _ModelController(
         return _ReturnModel(full_name=f'{first_name} {last_name}')
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='3.14 does not fully support msgspec yet',
+)
 def test_msgspec_model_controller(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
@@ -61,6 +66,10 @@ def test_msgspec_model_controller(
     }
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='3.14 does not fully support msgspec yet',
+)
 def test_msgspec_model_controller_invalid_input(
     dmr_rf: DMRRequestFactory,
 ) -> None:
@@ -86,6 +95,10 @@ def test_msgspec_model_controller_invalid_input(
     })
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='3.14 does not fully support msgspec yet',
+)
 def test_msgspec_model_controller_invalid_types(
     dmr_rf: DMRRequestFactory,
 ) -> None:
