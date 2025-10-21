@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any, Protocol, TypeAlias
 
-try:  # noqa: WPS229
+try:  # noqa: WPS229  # pragma: no cover
     from django_modern_rest.internal.json.msgspec import (
         deserialize as deserialize,
     )

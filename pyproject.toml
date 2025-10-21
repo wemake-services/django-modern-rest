@@ -215,6 +215,7 @@ addopts = [
   # Ignores:
   "--ignore=docs",
   "--ignore=typesafety/assert_type",
+  "--ignore=django_modern_rest/internal/json/msgspec.py",
 ]
 
 
@@ -259,6 +260,7 @@ plugins = [
 [tool.pyright]
 # Docs: https://microsoft.github.io/pyright/#/configuration
 include = ["django_modern_rest", "typesafety", "tests"]
+exclude = ["django_modern_rest/internal/json/msgspec.py"]
 strict = ["django_modern_rest/**/*"]
 venvPath = "."
 venv = ".venv"
