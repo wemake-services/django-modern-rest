@@ -45,6 +45,10 @@ repos:
       - id: ruff
         args: ["--exit-non-zero-on-fix"]
       - id: ruff-format
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.3  # or other specific tag
+    hooks:
+      - id: yamlfmt
 
   # Should be the last:
   - repo: meta

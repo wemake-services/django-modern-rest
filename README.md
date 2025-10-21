@@ -14,7 +14,7 @@ Modern REST framework for Django with types and async support!
 - [x] Fully typed and checked with `mypy` and `pyright` in strict modes
 - [x] Strict schema validation of both requests and responses
 - [x] Supports `pydantic2`, but not bound to it
-- [ ] Supports `msgspec`, but not bound to it
+- [x] Supports `msgspec`, but not bound to it
 - [x] Supports async Django
 - [ ] Supports `openapi` schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages
@@ -44,6 +44,7 @@ The shortest example:
 >>> import uuid
 >>> import pydantic
 >>> from django_modern_rest import Body, Controller, Headers
+>>> # Or use `django_modern_rest.plugins.msgspec` or write your own!
 >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 >>> class UserCreateModel(pydantic.BaseModel):
@@ -61,7 +62,7 @@ The shortest example:
 ...     Headers[HeaderModel],
 ... ):
 ...     def post(self) -> UserModel:
-...         """All added props have the correct types."""
+...         """All added props have the correct runtime and static types."""
 ...         assert self.parsed_headers.token == 'secret!'
 ...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 ```
