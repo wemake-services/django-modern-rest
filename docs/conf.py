@@ -28,7 +28,7 @@ def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
     return cast(
         dict[str, str],
-        tomli.loads(pyproject.read_text())['project'],
+        tomli.loads(pyproject.read_text())['tool']['poetry'],
     )
 
 
@@ -55,13 +55,23 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
-    # https://github.com/wemake-services/wemake-django-template/issues/159
+    'sphinx_copybutton',
+    'sphinx_contributors',
+    'sphinx_tabs.tabs',
+    'sphinx_iconify',
     'sphinx_autodoc_typehints',
 ]
+
+
+# Intersphinx
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+}
 
 # If true, Sphinx will warn about all references
 # where the target cannot be found. Default is `False``.
@@ -99,8 +109,19 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-# TODO: try https://shibuya.lepture.com/
-html_theme = 'furo'
+html_theme = 'shibuya'
+
+html_theme_options = {
+    'github_url': 'https://github.com/wemake-services/django-modern-rest',
+    'readthedocs_url': 'https://django-modern-rest.readthedocs.io',
+    'globaltoc_expand_depth': 1,
+}
+
+html_context = {
+    'source_type': 'github',
+    'source_user': 'wemake-services',
+    'source_repo': 'django-modern-rest',
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
