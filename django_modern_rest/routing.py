@@ -37,6 +37,7 @@ def compose_controllers(
     *extra: type['Controller[_SerializerT]'],
 ) -> type[View]:
     """Combines several controllers with different http methods into one url."""
+    # TODO: validate `meta` composition. Because right now it is not correct.
     controllers = [first_controller, second_controller, *extra]
     is_all_async = _validate_controllers_composition(controllers)
 
@@ -45,6 +46,8 @@ def compose_controllers(
     method_mapping = _build_method_mapping(views)
 
     class ComposedControllerView(View):  # noqa: WPS431
+        original_controllers = controllers
+
         @override
         def dispatch(
             self,
@@ -75,7 +78,6 @@ def _validate_controllers_composition(
     # We know that there are at least 2 controllers as this point:
     is_async = bool(controllers[0].view_is_async)
     serializer = controllers[0].serializer
-
     for controller in controllers:
         if controller.view_is_async is not is_async:
             raise ValueError(
@@ -96,15 +98,13 @@ def _build_method_mapping(
 ) -> Mapping[str, _ViewFunc]:
     method_mapping: dict[str, _ViewFunc] = {}
     for controller, view in views:
-        controller_methods = controller.existing_http_methods() - {'options'}
+        controller_methods = controller.existing_http_methods()
         if not controller_methods:
             raise ValueError(
                 f'Controller {controller} must have at least one endpoint '
                 'to be composed',
             )
         method_intersection = method_mapping.keys() & controller_methods
-        # TODO: decide what to do with default `options` method.
-        # Do we need it? Maybe it should be removed?
         if method_intersection:
             raise ValueError(
                 f'Controllers have {method_intersection!r} common methods, '

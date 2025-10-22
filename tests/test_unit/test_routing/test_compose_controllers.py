@@ -2,7 +2,11 @@ from typing import ClassVar, final
 
 import pytest
 
-from django_modern_rest import Controller, compose_controllers
+from django_modern_rest import (
+    Controller,
+    MetaMixin,
+    compose_controllers,
+)
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
@@ -78,3 +82,17 @@ def test_compose_controller_no_endpoints() -> None:
         compose_controllers(_ZeroMethodsController, _SyncController)
     with pytest.raises(ValueError, match='at least one'):
         compose_controllers(_SyncController, _ZeroMethodsController)
+
+
+def test_compose_controllers_with_meta() -> None:
+    """Ensure that controller with no endpoints can't be composed."""
+
+    @final
+    class _OptionsController(MetaMixin, Controller[PydanticSerializer]):
+        """Just a placeholder."""
+
+    # Ok:
+    compose_controllers(_SyncController, _OptionsController)
+
+    with pytest.raises(ValueError, match='meta'):
+        compose_controllers(_OptionsController, _OptionsController)

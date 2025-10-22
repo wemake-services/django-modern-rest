@@ -1,4 +1,4 @@
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 from typing import (
     Any,
     ClassVar,
@@ -83,10 +83,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     controller_validator_cls: ClassVar[type[ControllerValidator]] = (
         ControllerValidator
     )
+    # str and not HTTPMethod, because of `meta` method:
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | Empty] = EmptyObj
     responses: ClassVar[list[ResponseDescription]] = []
     responses_from_components: ClassVar[bool] = True
+    http_methods: ClassVar[frozenset[str]] = frozenset(
+        {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
+    )
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
@@ -116,9 +120,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         ]
         cls.serializer_context = cls.serializer_context_cls(cls)
         cls.api_endpoints = {
-            meth: cls.endpoint_cls(func, controller_cls=cls)
+            # Rename `meta` back to `options`:
+            'options' if meth == 'meta' else meth: cls.endpoint_cls(
+                getattr(cls, meth),
+                controller_cls=cls,
+            )
             for meth in cls.existing_http_methods()
-            if (func := getattr(cls, meth)) is not getattr(View, meth, None)
         }
         cls._is_async = cls.controller_validator_cls()(cls)
 
@@ -218,6 +225,90 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             'use `handle_method_not_allowed` instead',
         )
 
+    @override
+    @deprecated(
+        # It is not actually deprecated, but type checkers have no other
+        # ways to raise custom errors.
+        'Please do not use `options` method with `django-modern-rest`, '
+        'define your own `meta` method instead',
+    )
+    def options(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        """
+        Do not use, define your own `meta` method instead.
+
+        Django's `View.options` has incompatible signature with
+        ``django-modern-rest``. It would be a typing error
+        to define something like:
+
+        .. warning::
+
+            Don't do this!
+
+            .. code:: python
+
+                >>> from http import HTTPStatus
+                >>> from django_modern_rest import Controller, validate
+                >>> from django_modern_rest.plugins.pydantic import (
+                ...     PydanticSerializer,
+                ... )
+                >>> class MyController(Controller[PydanticSerializer]):
+                ...     @validate(
+                ...         ResponseDescription(
+                ...             None,
+                ...             status_code=HTTPStatus.NO_CONTENT,
+                ...         ),
+                ...     )
+                ...     def options(self) -> HttpResponse:  # <- typing problem
+                ...         ...
+
+        That's why instead of ``options`` you should define
+        our own ``meta`` method:
+
+        .. code:: python
+
+           >>> class MyController(Controller[PydanticSerializer]):
+           ...     @validate(
+           ...         ResponseDescription(
+           ...             None,
+           ...             status_code=HTTPStatus.NO_CONTENT,
+           ...         ),
+           ...     )
+           ...     def meta(self) -> HttpResponse:
+           ...         allow = ','.join(
+           ...             method.upper() for method in self.http_methods
+           ...         )
+           ...         return self.to_response(
+           ...             None,
+           ...             status_code=HTTPStatus.NO_CONTENT,
+           ...             headers={'Allow': allow},
+           ...         )
+
+        .. note::
+
+            By default ``meta`` method is not provided for you.
+            If you want to support ``OPTIONS`` http method
+            with the default implementation, use:
+
+            .. code:: python
+
+               >>> from django_modern_rest import MetaMixin
+
+               >>> class ControllerWithMeta(
+               ...     MetaMixin,
+               ...     Controller[PydanticSerializer],
+               ... ): ...
+
+        """
+        raise NotImplementedError(
+            'Please do not use `options` method with `django-modern-rest`, '
+            'define your own `meta` method instead',
+        )
+
     @classmethod
     def handle_method_not_allowed(
         cls,
@@ -251,7 +342,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         """Returns and caches what HTTP methods are implemented in this view."""
         return {
             method
-            for method in cls.http_method_names
+            for method in cls.http_methods
             if getattr(cls, method, None) is not None
         }
 
