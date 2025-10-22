@@ -6,8 +6,7 @@ from typing import Any, Final, cast
 from django.utils import module_loading
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.types import DMRSettings  
-
+from django_modern_rest.types import DMRSettings
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
