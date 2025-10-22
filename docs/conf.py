@@ -49,6 +49,7 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
@@ -56,10 +57,10 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.napoleon',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
+    'sphinx_design',
     'sphinx_copybutton',
     'sphinx_contributors',
     'sphinx_tabs.tabs',
@@ -68,10 +69,17 @@ extensions = [
 ]
 
 
-# Intersphinx
+# Intersphinx:
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
 }
+
+# Napoleon:
+napoleon_google_docstring = True
+
+# autodoc-typehints:
+always_document_param_types = True
+typehints_use_signature_return = True
 
 # If true, Sphinx will warn about all references
 # where the target cannot be found. Default is `False``.
@@ -80,7 +88,7 @@ nitpicky = True
 
 # Set `typing.TYPE_CHECKING` to `True`:
 # https://pypi.org/project/sphinx-autodoc-typehints/
-set_type_checking_flag = False
+set_type_checking_flag = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

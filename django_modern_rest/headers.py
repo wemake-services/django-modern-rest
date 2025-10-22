@@ -15,7 +15,7 @@ class _BaseResponseHeader:
     It will be later transformed into
     https://spec.openapis.org/oas/v3.1.0#parameterObject for doc purposes.
 
-    Attrs:
+    Attributes:
         value: Optional value that can be added to the response headers.
         description: Documentation, why this header is needed and what it does.
         required: Whether this header is required or optional.
