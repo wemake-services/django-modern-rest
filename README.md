@@ -38,7 +38,7 @@ There are several included extras:
 
 ## Example
 
-The shortest example:
+1. The shortest example:
 
 ```python
 >>> import uuid
@@ -82,6 +82,72 @@ And then route this controller in your `urls.py`:
 ```
 
 Done! Now you have your shiny API with 100% type safe validation and interactive docs.
+
+2. Also single file API is supported
+
+Paste in `main.py` file code snippet below
+```python
+import uuid
+
+import pydantic
+from django.conf import settings
+from django.core.handlers import wsgi
+from django.urls import include, path
+
+from django_modern_rest import Body, Controller, Headers, Router
+
+# Or use `django_modern_rest.plugins.msgspec` or write your own!
+from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+settings.configure(
+    # Keep it as is
+    ROOT_URLCONF=__name__,
+    # Required options but feel free to configure as you like
+    DMR_SETTINGS={},
+    ALLOWED_HOSTS="*",
+)
+
+app = wsgi.WSGIHandler()
+
+class UserCreateModel(pydantic.BaseModel):
+    email: str
+
+class UserModel(UserCreateModel):
+    uid: uuid.UUID
+
+class HeaderModel(pydantic.BaseModel):
+    token: str = pydantic.Field(alias='X-API-Token')
+
+class UserController(
+    Controller[PydanticSerializer],
+    Body[UserCreateModel],
+    Headers[HeaderModel],
+):
+    def post(self) -> UserModel:
+        """All added props have the correct runtime and static types"""
+        assert self.parsed_headers.token == 'secret!'
+        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+
+router = Router([
+     path('user/', UserController.as_view(), name='users'),
+ ])
+urlpatterns = [
+     path('api/', include((router.urls, 'your_app'), namespace='api')),
+]
+
+```
+Then run it via wsgi server. Let's use `gunicorn`
+```bash
+gunicorn main:app
+```
+Ensure API works
+```bash
+curl -X POST \
+--url "http://127.0.0.1:8000/api/user/" \
+-H "Content-Type: application/json" \
+-H "X-API-Token: secret\!" \
+-d '{"email": "example@example.com"}'
+```
 
 
 ## License
