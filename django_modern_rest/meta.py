@@ -13,7 +13,8 @@ if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
 
-_OptionsResponse: Final = ResponseDescription(
+#: Metadata for the default options response.
+OptionsResponse: Final = ResponseDescription(
     None,
     status_code=HTTPStatus.NO_CONTENT,
     headers={'Allow': HeaderDescription()},
@@ -44,7 +45,7 @@ class MetaMixin:
 
     __slots__ = ()
 
-    @validate(_OptionsResponse)
+    @validate(OptionsResponse)
     def meta(self) -> HttpResponse:
         """Default sync implementation for ``OPTIONS`` http method."""
         return _meta_impl(self)  # type: ignore[arg-type]
@@ -74,7 +75,7 @@ class AsyncMetaMixin:
 
     __slots__ = ()
 
-    @validate(_OptionsResponse)
+    @validate(OptionsResponse)
     async def meta(self) -> HttpResponse:
         """Default async implementation for ``OPTIONS`` http method."""
         return _meta_impl(self)  # type: ignore[arg-type]
@@ -83,7 +84,7 @@ class AsyncMetaMixin:
 def _meta_impl(controller: 'Controller[BaseSerializer]') -> HttpResponse:
     allow = ', '.join(
         validate_method_name(method).value
-        for method in sorted(controller.existing_http_methods())
+        for method in sorted(controller.api_endpoints.keys())
     )
     return controller.to_response(
         None,

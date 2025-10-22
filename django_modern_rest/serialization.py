@@ -185,6 +185,9 @@ class SerializerContext:
                 match the expected model.
 
         """
+        if not self._specs:
+            return
+
         context = self._collect_context(controller, request, *args, **kwargs)
         validated = self._validate_context(context)
         self._bind_parsed(controller, validated)
