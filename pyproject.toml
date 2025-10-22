@@ -59,6 +59,7 @@ pydantic = ["pydantic"]
 msgspec = ["msgspec"]
 
 [tool.poetry.group.dev.dependencies]
+django = "^5.2"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
 pyright = "^1.1"
 
