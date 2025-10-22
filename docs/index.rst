@@ -59,7 +59,7 @@ Main features include:
 
       And ``msgspec`` support allows users to have
       `x5-15 times faster <https://jcristharif.com/msgspec/benchmarks.html>`_
-      APIs then the alternatives.
+      APIs than the alternatives.
 
     .. grid-item-card:: :octicon:`star` Sync and Async support
       :link: pages/performance
