@@ -1,5 +1,6 @@
 # django-modern-rest
 
+[![wemake.services](https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D)](https://wemake-services.github.io)
 [![test](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/wemake-services/django-modern-rest/branch/master/graph/badge.svg)](https://codecov.io/gh/wemake-services/django-modern-rest)
 [![Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
@@ -15,11 +16,11 @@ Modern REST framework for Django with types and async support!
 - [x] Strict schema validation of both requests and responses
 - [x] Supports `pydantic2`, but not bound to it
 - [x] Supports `msgspec`, but not bound to it
+- [x] Strict schema validation for requests and responses
 - [x] Supports async Django
 - [ ] Supports `openapi` schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
-- [x] Does not use `from __future__ import annotations`
 - [x] 100% test coverage
 - [x] No emojis 🌚️️
 
@@ -38,7 +39,7 @@ There are several included extras:
 
 ## Example
 
-1. The shortest example:
+The shortest example:
 
 ```python
 >>> import uuid
@@ -61,7 +62,7 @@ There are several included extras:
 ...     Body[UserCreateModel],
 ...     Headers[HeaderModel],
 ... ):
-...     def post(self) -> UserModel:
+...     def post(self) -> UserModel:  # <- can be async as well!
 ...         """All added props have the correct runtime and static types."""
 ...         assert self.parsed_headers.token == 'secret!'
 ...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
@@ -82,72 +83,6 @@ And then route this controller in your `urls.py`:
 ```
 
 Done! Now you have your shiny API with 100% type safe validation and interactive docs.
-
-2. Also single file API is supported
-
-Paste in `main.py` file code snippet below
-```python
-import uuid
-
-import pydantic
-from django.conf import settings
-from django.core.handlers import wsgi
-from django.urls import include, path
-
-from django_modern_rest import Body, Controller, Headers, Router
-
-# Or use `django_modern_rest.plugins.msgspec` or write your own!
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-
-settings.configure(
-    # Keep it as is
-    ROOT_URLCONF=__name__,
-    # Required options but feel free to configure as you like
-    DMR_SETTINGS={},
-    ALLOWED_HOSTS="*",
-)
-
-app = wsgi.WSGIHandler()
-
-class UserCreateModel(pydantic.BaseModel):
-    email: str
-
-class UserModel(UserCreateModel):
-    uid: uuid.UUID
-
-class HeaderModel(pydantic.BaseModel):
-    token: str = pydantic.Field(alias='X-API-Token')
-
-class UserController(
-    Controller[PydanticSerializer],
-    Body[UserCreateModel],
-    Headers[HeaderModel],
-):
-    def post(self) -> UserModel:
-        """All added props have the correct runtime and static types"""
-        assert self.parsed_headers.token == 'secret!'
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
-
-router = Router([
-     path('user/', UserController.as_view(), name='users'),
- ])
-urlpatterns = [
-     path('api/', include((router.urls, 'your_app'), namespace='api')),
-]
-
-```
-Then run it via wsgi server. Let's use `gunicorn`
-```bash
-gunicorn main:app
-```
-Ensure API works
-```bash
-curl -X POST \
---url "http://127.0.0.1:8000/api/user/" \
--H "Content-Type: application/json" \
--H "X-API-Token: secret\!" \
--d '{"email": "example@example.com"}'
-```
 
 
 ## License

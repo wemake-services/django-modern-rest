@@ -43,7 +43,7 @@ class BaseRenderer:
     formats (JSON, HTML, etc.). Subclasses must implement the render method
     and define default configuration values.
 
-    Attrs:
+    Attributes:
         default_path: Default URL path for the renderer endpoint.
         default_name: Default name identifier for the renderer.
         content_type: MIME type of the rendered content.

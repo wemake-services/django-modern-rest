@@ -24,7 +24,7 @@ class EndpointMetadata:
     """
     Base class for common endpoint metadata.
 
-    Attrs:
+    Attributes:
         responses: Mapping of HTTP method to response description.
             All possible responses that this API can return.
         method: HTTP method for this endpoint.
