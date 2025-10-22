@@ -75,7 +75,7 @@ Main features include:
       :link-type: doc
 
       Of course, OpenAPI schema generation and modification
-      are avaliable out of the box.
+      are available out of the box.
 
       But, there's more: we also provide validation
       and testing tools for your schema!
@@ -100,7 +100,7 @@ Main features include:
 
       Every part of the framework can be customized and extended.
 
-      Since, there's no magic happenning, it would be really easy to do.
+      Since, there's no magic happening, it would be really easy to do.
       Our docs and tests provide multiple examples of that.
 
       Public API stability is guaranteed.
