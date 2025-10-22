@@ -19,14 +19,14 @@ ConverterSpec: TypeAlias = tuple[ResponseDescription, _ResponseConverter]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class _DecoratorWithResponses:  # noqa: WPS202
+class _DecoratorWithResponses:
     """Type for decorator with responses attribute."""
 
     decorator: Callable[[Any], Any]
     responses: list[ResponseDescription]
 
-    def __call__(self, cls: _TypeT) -> _TypeT:  # noqa: WPS117
-        return cast(_TypeT, self.decorator(cls))
+    def __call__(self, klass: _TypeT) -> _TypeT:
+        return cast(_TypeT, self.decorator(klass))
 
 
 def _apply_converter(
