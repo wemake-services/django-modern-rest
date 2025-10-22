@@ -49,6 +49,7 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
@@ -56,31 +57,47 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.napoleon',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
+    'sphinx_design',
     'sphinx_copybutton',
     'sphinx_contributors',
     'sphinx_tabs.tabs',
     'sphinx_iconify',
-    'sphinx_autodoc_typehints',
 ]
 
 
-# Intersphinx
+# Intersphinx:
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
+    'python': ('https://docs.python.org/3/', None),
+    'django': ('https://docs.djangoproject.com/en/stable/', None),
+    'pydantic': ('https://docs.pydantic.dev/latest/', None),
+    'msgspec': ('https://jcristharif.com/msgspec/', None),
 }
+
+# Napoleon:
+napoleon_google_docstring = True
+napoleon_include_special_with_doc = True
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = False
+napoleon_attr_annotations = True
 
 # If true, Sphinx will warn about all references
 # where the target cannot be found. Default is `False``.
 # You can activate this mode temporarily using the `-n` command-line switch.
 nitpicky = True
 
+PY_CLASS = 'py:class'
+nitpick_ignore = [
+    # external library / undocumented external
+    (PY_CLASS, 'FromJson'),
+]
+
 # Set `typing.TYPE_CHECKING` to `True`:
 # https://pypi.org/project/sphinx-autodoc-typehints/
-set_type_checking_flag = False
+set_type_checking_flag = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

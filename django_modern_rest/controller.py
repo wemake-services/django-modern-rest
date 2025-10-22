@@ -47,7 +47,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     """
     Defines API views as controllers.
 
-    Attrs:
+    Attributes:
         endpoint_cls: Class to create endpoints with.
         serializer: Serializer that is passed via type parameters.
             The main goal of the serializer is to serialize object
@@ -55,10 +55,13 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             You can't change the serializer simply by modifying
             the attribute in the controller class.
             Because it is already passed to many other places.
-            To customize it: create a new class, pass the serializer
-            type as a type argument to the controller.
+            To customize it: create a new class,
+            subclass :class:`~django_modern_rest.serialization.BaseSerializer`,
+            and pass the new type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
-            We combine all components like ``Headers``, ``Query``, etc into
+            We combine all components like
+            :class:`~django_modern_rest.components.Headers`,
+            :class:`~django_modern_rest.components.Query`, etc into
             one big model for faster validation and better error messages.
         controller_validator_cls: Runs controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
