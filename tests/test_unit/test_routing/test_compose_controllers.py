@@ -1,14 +1,11 @@
-from http import HTTPStatus
-from typing import Any, ClassVar, final
+from typing import ClassVar, final
 
 import pytest
-from django.http import HttpRequest, HttpResponse
 
 from django_modern_rest import (
     Controller,
-    ResponseDescription,
+    MetaMixin,
     compose_controllers,
-    validate,
 )
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
@@ -87,54 +84,15 @@ def test_compose_controller_no_endpoints() -> None:
         compose_controllers(_SyncController, _ZeroMethodsController)
 
 
-@final
-class _ControllerWithOptions(Controller[PydanticSerializer]):
-    @validate(ResponseDescription(str, status_code=HTTPStatus.OK))
-    def get(self) -> HttpResponse:
-        return HttpResponse(b'GET')
+def test_compose_controllers_with_meta() -> None:
+    """Ensure that controller with no endpoints can't be composed."""
 
-    @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
-    def options(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponse:
-        return HttpResponse(b'OPTIONS')
+    @final
+    class _OptionsController(MetaMixin, Controller[PydanticSerializer]):
+        """Just a placeholder."""
 
+    # Ok:
+    compose_controllers(_SyncController, _OptionsController)
 
-@final
-class _ControllerWithOptions2(Controller[PydanticSerializer]):
-    @validate(ResponseDescription(str, status_code=HTTPStatus.OK))
-    def post(self) -> HttpResponse:
-        return HttpResponse(b'POST')
-
-    @validate(ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT))
-    def options(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponse:
-        return HttpResponse(b'OPTIONS')
-
-
-def test_compose_controllers_with_options() -> None:
-    """Test that controllers with options methods can be composed."""
-    # Both controllers have options methods, but composition should work
-    # because OPTIONS methods are excluded from composition in routing.py
-    composed = compose_controllers(
-        _ControllerWithOptions,
-        _ControllerWithOptions2,
-    )
-
-    # Verify that both controllers have options endpoints
-    assert 'options' in _ControllerWithOptions.api_endpoints
-    assert 'options' in _ControllerWithOptions2.api_endpoints
-
-    # Verify that composition works (OPTIONS methods are excluded from
-    # composition)
-    # This is the expected behavior - OPTIONS methods are excluded from
-    # composition
-    # to avoid conflicts between multiple controllers with OPTIONS methods
-    assert composed is not None
+    with pytest.raises(ValueError, match='meta'):
+        compose_controllers(_OptionsController, _OptionsController)

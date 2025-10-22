@@ -232,6 +232,8 @@ class ControllerValidator:
 
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
+        # TODO: validate that sync controller have `MetaMixin`
+        # and async ones have `AsyncMetaMixin`
         self._validate_components(controller)
         return self._validate_endpoints(controller)
 
@@ -395,6 +397,7 @@ class EndpointMetadataValidator:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
         method = validate_method_name(func.__name__)
+        func.__name__ = str(method).lower()  # we can change it :)
         endpoint = str(func)
         # TODO: validate contoller's definition.
         # Questions: how? when? one time?
@@ -611,6 +614,8 @@ def validate_method_name(func_name: str) -> HTTPMethod:
     try:  # noqa: WPS229
         if func_name != func_name.lower():
             raise ValueError  # noqa: TRY301
+        if func_name == 'meta':
+            return HTTPMethod.OPTIONS
         return HTTPMethod(func_name.upper())
     except ValueError:
         raise EndpointMetadataError(

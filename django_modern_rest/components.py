@@ -14,6 +14,7 @@ from django_modern_rest.serialization import BaseSerializer
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
+_PathT = TypeVar('_PathT')
 
 
 class ComponentParser:
@@ -159,3 +160,31 @@ class Headers(ComponentParser, Generic[_HeadersT]):
         **kwargs: Any,
     ) -> Any:
         return request.headers
+
+
+class Path(ComponentParser, Generic[_PathT]):
+    """
+    Parses the url part of the request.
+
+    # TODO: example
+
+    If your controller class inherits from ``Path`` - then you can access
+    parsed paths parameters as ``self.parsed_path`` attribute.
+
+    It is way stricter than the original Django's routing system.
+    For example, django allows to
+    """
+
+    parsed_path: _PathT
+    context_name: ClassVar[str] = 'parsed_path'
+
+    @override
+    def provide_context_data(
+        self,
+        serializer: type[BaseSerializer],
+        model: Any,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        return kwargs
