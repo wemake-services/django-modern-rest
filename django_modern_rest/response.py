@@ -101,13 +101,6 @@ class ResponseDescription:
 
     # TODO: description, examples, etc
 
-    def __call__(
-        self,
-        converter: Any,
-    ) -> tuple['ResponseDescription', Any]:
-        """Create converter spec tuple for wrap_middleware."""
-        return (self, converter)
-
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ResponseModification:

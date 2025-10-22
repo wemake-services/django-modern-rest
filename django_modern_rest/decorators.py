@@ -1,7 +1,8 @@
 import inspect
 from collections.abc import Callable
+from dataclasses import dataclass
 from functools import partial
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar, cast
 
 from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import method_decorator
@@ -15,6 +16,17 @@ _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 _MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 _ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
 ConverterSpec: TypeAlias = tuple[ResponseDescription, _ResponseConverter]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class _DecoratorWithResponses:  # noqa: WPS202
+    """Type for decorator with responses attribute."""
+
+    decorator: Callable[[Any], Any]
+    responses: list[ResponseDescription]
+
+    def __call__(self, cls: _TypeT) -> _TypeT:  # noqa: WPS117
+        return cast(_TypeT, self.decorator(cls))
 
 
 def _apply_converter(
@@ -93,56 +105,73 @@ def _do_wrap_dispatch(
         )
 
 
-def wrap_middleware(
+def wrap_middleware_factory(  # noqa: WPS202
     middleware: _MiddlewareDecorator,
-    converter: ConverterSpec,
-) -> Callable[[_TypeT], _TypeT]:
+    response_description: ResponseDescription,
+) -> Callable[[_ResponseConverter], _DecoratorWithResponses]:
     """
-    Wrap controller dispatch with middleware and response converter.
+    Factory function that creates a decorator with pre-configured middleware.
 
-    This decorator applies Django middleware to a controller and allows
-    converting middleware responses based on status code.
+    This allows creating reusable decorators with specific middleware
+    and response handling.
 
     Args:
         middleware: Django middleware to apply
-        converter: Tuple of (ResponseDescription, converter_function).
-            When middleware returns a response matching the status_code,
-            the converter function is called to transform it.
+        response_description: ResponseDescription for the middleware response
+
+    Returns:
+        A function that takes a converter and returns a class decorator
 
     .. code:: python
+
         >>> from django.views.decorators.csrf import csrf_protect
-        >>> from django.http import JsonResponse
+        >>> from django.http import JsonResponse, HttpResponse
         >>> from http import HTTPStatus
         >>> from django_modern_rest import Controller, ResponseDescription
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
-        >>>
-        >>> @wrap_middleware(
+
+        >>> @wrap_middleware_factory(
         ...     csrf_protect,
-        ...     converter=(
-        ...         ResponseDescription(
-        ...             return_type=dict[str, str],
-        ...             status_code=HTTPStatus.FORBIDDEN,
-        ...         ),
-        ...         lambda resp: JsonResponse(
-        ...             {'detail': 'CSRF failed'},
-        ...             status=HTTPStatus.FORBIDDEN,
-        ...         ),
+        ...     ResponseDescription(
+        ...         return_type=dict[str, str],
+        ...         status_code=HTTPStatus.FORBIDDEN,
         ...     ),
         ... )
+        ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
+        ...     return JsonResponse(
+        ...         {'detail': 'CSRF verification failed. Request aborted.'},
+        ...         status=HTTPStatus.FORBIDDEN,
+        ...     )
+
+        >>> @csrf_protect_json
         ... class MyController(Controller[PydanticSerializer]):
+        ...     responses = [
+        ...         *csrf_protect_json.responses,
+        ...     ]
+        ...
         ...     def post(self) -> dict[str, str]:
         ...         return {'message': 'ok'}
-
     """
 
-    def decorator(cls: _TypeT) -> _TypeT:
-        _do_wrap_dispatch(cls, middleware, converter)
-        return method_decorator(csrf_exempt, name='dispatch')(cls)
+    def decorator_factory(  # noqa: WPS430
+        converter: _ResponseConverter,
+    ) -> _DecoratorWithResponses:
+        """Create a decorator with the given converter."""
+        converter_spec = (response_description, converter)
 
-    return decorator
+        def decorator(cls: _TypeT) -> _TypeT:
+            _do_wrap_dispatch(cls, middleware, converter_spec)
+            return method_decorator(csrf_exempt, name='dispatch')(cls)
+
+        return _DecoratorWithResponses(
+            decorator=decorator,
+            responses=[response_description],
+        )
+
+    return decorator_factory
 
 
-def dispatch_decorator(
+def dispatch_decorator(  # noqa: WPS202
     func: Callable[..., Any],
 ) -> Callable[[_TypeT], _TypeT]:
     """

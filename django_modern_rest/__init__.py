@@ -14,7 +14,9 @@ from django_modern_rest.decorators import (
 from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,
 )
-from django_modern_rest.decorators import wrap_middleware as wrap_middleware
+from django_modern_rest.decorators import (
+    wrap_middleware_factory as wrap_middleware_factory,
+)
 from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.headers import HeaderDescription as HeaderDescription

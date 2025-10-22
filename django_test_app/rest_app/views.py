@@ -1,7 +1,7 @@
 import datetime as dt
 import uuid
 from http import HTTPStatus
-from typing import final
+from typing import ClassVar, final
 
 import pydantic
 from django.http import HttpResponse, JsonResponse
@@ -14,7 +14,7 @@ from django_modern_rest import (
     Query,
     ResponseDescription,
     validate,
-    wrap_middleware,
+    wrap_middleware_factory,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
@@ -42,6 +42,53 @@ def rate_limit_middleware(get_response):  # type: ignore[no-untyped-def]
         return get_response(request)
 
     return middleware
+
+
+@wrap_middleware_factory(
+    csrf_protect,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.FORBIDDEN,
+    ),
+)
+def csrf_protect_json(response: HttpResponse) -> HttpResponse:
+    return JsonResponse(
+        {'detail': 'CSRF verification failed. Request aborted.'},
+        status=HTTPStatus.FORBIDDEN,
+    )
+
+
+@wrap_middleware_factory(
+    ensure_csrf_cookie,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def ensure_csrf_cookie_json(response: HttpResponse) -> HttpResponse:
+    return response
+
+
+@wrap_middleware_factory(
+    custom_header_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def custom_header_json(response: HttpResponse) -> HttpResponse:
+    return response
+
+
+@wrap_middleware_factory(
+    rate_limit_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.TOO_MANY_REQUESTS,
+    ),
+)
+def rate_limit_json(response: HttpResponse) -> HttpResponse:
+    return response
 
 
 @final
@@ -139,17 +186,7 @@ class AsyncParseHeadersController(
 
 
 @final
-@wrap_middleware(
-    ensure_csrf_cookie,
-    converter=validate(
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.OK,
-        )(
-            lambda resp: resp,  # No conversion needed
-        ),
-    ),
-)
+@ensure_csrf_cookie_json
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
 
@@ -159,63 +196,33 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
 
 @final
-@wrap_middleware(
-    csrf_protect,
-    converter=validate(
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.FORBIDDEN,
-        )(
-            lambda resp: JsonResponse(
-                {'detail': 'CSRF verification failed. Request aborted.'},
-                status=HTTPStatus.FORBIDDEN,
-            ),
-        ),
-    ),
-)
+@csrf_protect_json
 class CsrfProtectedController(
     Body[_UserInput],
     Controller[PydanticSerializer],
 ):
+    # Just add responses from middleware
+    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+
     def post(self) -> _UserInput:
         return self.parsed_body
 
 
 @final
-@wrap_middleware(
-    csrf_protect,
-    converter=validate(
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.FORBIDDEN,
-        )(
-            lambda resp: JsonResponse(
-                {'detail': 'CSRF verification failed. Request aborted.'},
-                status=HTTPStatus.FORBIDDEN,
-            ),
-        ),
-    ),
-)
+@csrf_protect_json
 class AsyncCsrfProtectedController(
     Body[_UserInput],
     Controller[PydanticSerializer],
 ):
+    # Just add responses from middleware
+    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+
     async def post(self) -> _UserInput:
         return self.parsed_body
 
 
 @final
-@wrap_middleware(
-    custom_header_middleware,
-    converter=validate(
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.OK,
-        )(
-            lambda resp: resp,  # No conversion needed
-        ),
-    ),
-)
+@custom_header_json
 class CustomHeaderController(Controller[PydanticSerializer]):
     """Controller with custom header middleware."""
 
@@ -225,17 +232,7 @@ class CustomHeaderController(Controller[PydanticSerializer]):
 
 
 @final
-@wrap_middleware(
-    rate_limit_middleware,
-    converter=validate(
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.TOO_MANY_REQUESTS,
-        )(
-            lambda resp: resp,  # Already JSON from middleware
-        ),
-    ),
-)
+@rate_limit_json
 class RateLimitedController(
     Body[_UserInput],
     Controller[PydanticSerializer],

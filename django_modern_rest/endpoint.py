@@ -12,7 +12,6 @@ from typing import (
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
-from django_modern_rest.decorators import ConverterSpec
 from django_modern_rest.headers import (
     NewHeader,
 )
@@ -248,7 +247,6 @@ _ReturnT = TypeVar('_ReturnT')
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse | Awaitable[HttpResponse])
 
 
-@overload
 def validate(
     response: ResponseDescription,
     /,
@@ -257,25 +255,7 @@ def validate(
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
     Callable[_ParamT, _ResponseT],
-]: ...
-
-
-@overload
-def validate(
-    converter_spec: ConverterSpec,
-    /,
-) -> ConverterSpec: ...
-
-
-def validate(
-    response: ResponseDescription | ConverterSpec,
-    /,
-    *responses: ResponseDescription,
-    validate_responses: bool | Empty = EmptyObj,
-) -> (
-    Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]  # noqa: WPS221
-    | ConverterSpec
-):
+]:
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
 
@@ -330,8 +310,6 @@ def validate(
     """
     # If tuple passed (from ResponseDescription.__call__),
     # return it as-is for converter parameter
-    if isinstance(response, tuple):
-        return response
 
     return _add_payload(
         payload=ValidateEndpointPayload(
