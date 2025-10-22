@@ -1,11 +1,13 @@
 import types
 from collections.abc import Mapping
 from functools import cache, lru_cache
-from typing import Any, Final
+from typing import Any, Final, cast
 
 from django.utils import module_loading
 
 from django_modern_rest.openapi.config import OpenAPIConfig
+from django_modern_rest.types import DMRSettings  
+
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -35,17 +37,23 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
     version='0.1.0',
 )
 
-# TODO: create TypedDict with types for settings
+
+# Typed defaults section
+
+
 #: Default settings for `django_modern_rest`.
-_DEFAULTS: Final = types.MappingProxyType({
-    DMR_SERIALIZE_KEY: DMR_SERIALIZE,
-    DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
-    DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
-    # Means that we would run extra validation on the response object.
-    DMR_VALIDATE_RESPONSES_KEY: True,
-    DMR_RESPONSES_KEY: [],  # global responses, for response validation
-    DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
-})
+_DEFAULTS: Final[DMRSettings] = cast(
+    DMRSettings,
+    types.MappingProxyType({
+        DMR_SERIALIZE_KEY: DMR_SERIALIZE,
+        DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
+        DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
+        # Means that we would run extra validation on the response object.
+        DMR_VALIDATE_RESPONSES_KEY: True,
+        DMR_RESPONSES_KEY: [],  # global responses, for response validation
+        DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
+    }),
+)
 
 
 @lru_cache

@@ -1,10 +1,26 @@
 import dataclasses
 from collections.abc import Callable
-from typing import Any, Final, final, get_args, get_origin
-
+from typing import Any, Final, final, get_args, get_origin, TypedDict
 from typing_extensions import get_original_bases, get_type_hints
 
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
+from django_modern_rest.openapi.config import OpenAPIConfig
+
+
+#  TypedDict for Django Modern REST settings
+
+
+class DMRSettings(TypedDict, total=False):
+    """
+    TypedDict defining the shape of django-modern-rest settings.
+    """
+
+    serialize: str | Callable[..., Any]
+    deserialize: str | Callable[..., Any]
+    openapi_config: OpenAPIConfig
+    validate_responses: bool
+    responses: list[Any]
+    global_error_handler: str | Callable[..., Any]
 
 
 @final
@@ -49,7 +65,7 @@ def infer_bases(
         base
         for base in get_original_bases(orig_cls)
         if (
-            (origin := get_origin(base) if use_origin else base)  # noqa: WPS509
+            (origin := get_origin(base) if use_origin else base)
             and is_safe_subclass(origin, given_type)
         )
     ]
@@ -63,8 +79,8 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
         endpoint_func: function with return type annotation.
 
     Raises:
-        UnsolvableAnnotationsError: when annotation can't be solved.
-            Or when does not exist.
+        UnsolvableAnnotationsError: when annotation can't be solved
+            or when the annotation does not exist.
 
     Returns:
         Function's parsed and solved return type.
@@ -87,8 +103,7 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
 
 
 def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
-    """Possibly unwraps subscribbed class before checking for subclassing."""
-    # Not a type guard, because `annotation` can be not a `type` :(
+    """Possibly unwraps subscribed class before checking for subclassing."""
     if annotation is None:
         annotation = type(None)
     try:
