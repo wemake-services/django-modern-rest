@@ -35,22 +35,6 @@ def dmr_async_client() -> 'DMRAsyncClient':
 
 
 @pytest.fixture
-def dmr_client_csrf() -> 'DMRClient':
-    """Customized version of :class:`django.test.Client` with csrf."""
-    from django_modern_rest.test import DMRClient  # noqa: PLC0415
-
-    return DMRClient(enforce_csrf_checks=True)
-
-
-@pytest.fixture
-def dmr_async_client_csrf() -> 'DMRAsyncClient':
-    """Customized version of :class:`django.test.AsyncClient` with csrf."""
-    from django_modern_rest.test import DMRAsyncClient  # noqa: PLC0415
-
-    return DMRAsyncClient(enforce_csrf_checks=True)
-
-
-@pytest.fixture
 def dmr_rf() -> 'DMRRequestFactory':
     """Customized version of :class:`django.test.RequestFactory`."""
     from django_modern_rest.test import DMRRequestFactory  # noqa: PLC0415

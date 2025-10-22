@@ -1,7 +1,8 @@
 import datetime as dt
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import ClassVar, final
+from typing import Any, ClassVar, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse, JsonResponse
@@ -15,37 +16,18 @@ from django_modern_rest import (
     Query,
     ResponseDescription,
     validate,
-    wrap_middleware_factory,
+    wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from rest_app.middleware import (
+    custom_header_middleware,
+    rate_limit_middleware,
+)
+
+_CallableAny: TypeAlias = Callable[..., Any]
 
 
-def custom_header_middleware(get_response):  # type: ignore[no-untyped-def]
-    """Simple middleware that adds a custom header to response."""
-
-    def middleware(request):  # type: ignore[no-untyped-def]  # noqa: WPS430
-        response = get_response(request)
-        response['X-Custom-Header'] = 'CustomValue'
-        return response
-
-    return middleware
-
-
-def rate_limit_middleware(get_response):  # type: ignore[no-untyped-def]
-    """Middleware that simulates rate limiting."""
-
-    def middleware(request):  # type: ignore[no-untyped-def]  # noqa: WPS430
-        if request.headers.get('X-Rate-Limited') == 'true':
-            return JsonResponse(
-                {'detail': 'Rate limit exceeded'},
-                status=HTTPStatus.TOO_MANY_REQUESTS,
-            )
-        return get_response(request)
-
-    return middleware
-
-
-@wrap_middleware_factory(
+@wrap_middleware(
     csrf_protect,
     ResponseDescription(
         return_type=dict[str, str],
@@ -59,7 +41,7 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
     )
 
 
-@wrap_middleware_factory(
+@wrap_middleware(
     ensure_csrf_cookie,
     ResponseDescription(
         return_type=dict[str, str],
@@ -70,7 +52,7 @@ def ensure_csrf_cookie_json(response: HttpResponse) -> HttpResponse:
     return response
 
 
-@wrap_middleware_factory(
+@wrap_middleware(
     custom_header_middleware,
     ResponseDescription(
         return_type=dict[str, str],
@@ -81,7 +63,7 @@ def custom_header_json(response: HttpResponse) -> HttpResponse:
     return response
 
 
-@wrap_middleware_factory(
+@wrap_middleware(
     rate_limit_middleware,
     ResponseDescription(
         return_type=dict[str, str],
@@ -201,6 +183,9 @@ class AsyncParseHeadersController(
 @ensure_csrf_cookie_json
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
+
+    # We don't add `ensure_csrf_cookie_json.responses`,
+    # because it always returns ones we already have
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""

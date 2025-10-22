@@ -308,9 +308,6 @@ def validate(
         this is performance critical for you!
 
     """
-    # If tuple passed (from ResponseDescription.__call__),
-    # return it as-is for converter parameter
-
     return _add_payload(
         payload=ValidateEndpointPayload(
             responses=[response, *responses],

@@ -31,6 +31,18 @@ def user_data(faker: Faker) -> _UserData:
     )
 
 
+@pytest.fixture
+def _dmr_client_csrf() -> DMRClient:
+    """Customized version of :class:`django.test.Client` with csrf."""
+    return DMRClient(enforce_csrf_checks=True)
+
+
+@pytest.fixture
+def _dmr_async_client_csrf() -> DMRAsyncClient:
+    """Customized version of :class:`django.test.AsyncClient` with csrf."""
+    return DMRAsyncClient(enforce_csrf_checks=True)
+
+
 def test_csrf_protection_default_off(
     dmr_client: DMRClient,
     user_data: _UserData,
@@ -45,11 +57,11 @@ def test_csrf_protection_default_off(
 
 
 def test_csrf_without_token(
-    dmr_client_csrf: DMRClient,
+    _dmr_client_csrf: DMRClient,  # noqa: PT019
     user_data: _UserData,
 ) -> None:
     """Tests frobidden request with csrf checks."""
-    response = dmr_client_csrf.post(
+    response = _dmr_client_csrf.post(
         reverse(_CSRF_TEST_ENDPOINT),
         data=user_data,
     )
@@ -59,11 +71,11 @@ def test_csrf_without_token(
 
 @pytest.mark.asyncio
 async def test_csrf_async_without_token(
-    dmr_async_client_csrf: DMRAsyncClient,
+    _dmr_async_client_csrf: DMRAsyncClient,  # noqa: PT019
     user_data: _UserData,
 ) -> None:
     """Tests forbidden async request with csrf checks."""
-    response = await dmr_async_client_csrf.post(
+    response = await _dmr_async_client_csrf.post(
         reverse(_ASYNC_CSRF_TEST_ENDPOINT),
         data=user_data,
     )
@@ -72,17 +84,17 @@ async def test_csrf_async_without_token(
 
 
 def test_csrf_with_token(
-    dmr_client_csrf: DMRClient,
+    _dmr_client_csrf: DMRClient,  # noqa: PT019
     user_data: _UserData,
 ) -> None:
     """Tests protected csrf request."""
-    response = dmr_client_csrf.get(reverse('api:csrf_token'))
+    response = _dmr_client_csrf.get(reverse('api:csrf_token'))
     assert response.status_code == HTTPStatus.OK
 
-    csrf_token = dmr_client_csrf.cookies.get('csrftoken')
+    csrf_token = _dmr_client_csrf.cookies.get('csrftoken')
     assert csrf_token is not None
 
-    response = dmr_client_csrf.post(
+    response = _dmr_client_csrf.post(
         reverse(_CSRF_TEST_ENDPOINT),
         data=user_data,
         headers={'X-CSRFToken': csrf_token.value},
@@ -93,17 +105,17 @@ def test_csrf_with_token(
 
 @pytest.mark.asyncio
 async def test_csrf_async_with_token(
-    dmr_async_client_csrf: DMRAsyncClient,
+    _dmr_async_client_csrf: DMRAsyncClient,  # noqa: PT019
     user_data: _UserData,
 ) -> None:
     """Tests protected csrf async request."""
-    response = await dmr_async_client_csrf.get(reverse('api:csrf_token'))
+    response = await _dmr_async_client_csrf.get(reverse('api:csrf_token'))
     assert response.status_code == HTTPStatus.OK
 
-    csrf_token = dmr_async_client_csrf.cookies.get('csrftoken')
+    csrf_token = _dmr_async_client_csrf.cookies.get('csrftoken')
     assert csrf_token is not None
 
-    response = await dmr_async_client_csrf.post(
+    response = await _dmr_async_client_csrf.post(
         reverse(_ASYNC_CSRF_TEST_ENDPOINT),
         data=user_data,
         headers={'X-CSRFToken': csrf_token.value},

@@ -1,114 +1,23 @@
-import inspect
 from collections.abc import Callable
-from dataclasses import dataclass
-from functools import partial
-from typing import Any, TypeAlias, TypeVar, cast
+from typing import Any
 
-from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
+from django_modern_rest.internal.middleware_wrapper import (
+    DecoratorWithResponses,
+    MiddlewareDecorator,
+    ResponseConverter,
+    TypeT,
+    do_wrap_dispatch,
+)
 from django_modern_rest.response import ResponseDescription
 
-_TypeT = TypeVar('_TypeT', bound=type[Any])
-_CallableAny: TypeAlias = Callable[..., Any]
-_ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
-_MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
-_ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
-ConverterSpec: TypeAlias = tuple[ResponseDescription, _ResponseConverter]
 
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class _DecoratorWithResponses:
-    """Type for decorator with responses attribute."""
-
-    decorator: Callable[[Any], Any]
-    responses: list[ResponseDescription]
-
-    def __call__(self, klass: _TypeT) -> _TypeT:
-        return cast(_TypeT, self.decorator(klass))
-
-
-def _apply_converter(
-    response: HttpResponse,
-    converter: ConverterSpec,
-) -> HttpResponse:
-    """Apply response converter based on status code matching."""
-    response_desc, converter_func = converter
-    if response.status_code == response_desc.status_code:
-        return converter_func(response)
-    return response
-
-
-def _create_sync_dispatch(
-    original_dispatch: Callable[..., Any],
-    middleware: _MiddlewareDecorator,
-    converter: ConverterSpec,
-) -> Callable[..., HttpResponse]:
-    """Create synchronous dispatch wrapper."""
-
-    def dispatch(  # noqa: WPS430
-        self: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponse:
-        view_callable = partial(original_dispatch, self)
-        response = middleware(view_callable)(request, *args, **kwargs)
-        return _apply_converter(response, converter)
-
-    return dispatch
-
-
-def _create_async_dispatch(
-    original_dispatch: Callable[..., Any],
-    middleware: _MiddlewareDecorator,
-    converter: ConverterSpec,
-) -> Callable[..., Any]:
-    """Create asynchronous dispatch wrapper."""
-
-    async def dispatch(  # noqa: WPS430
-        self: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponse:
-        view_callable = partial(original_dispatch, self)
-        response = middleware(view_callable)(request, *args, **kwargs)
-        if inspect.isawaitable(response):
-            response = await response
-        return _apply_converter(response, converter)
-
-    return dispatch
-
-
-def _do_wrap_dispatch(
-    cls: Any,
-    middleware: _MiddlewareDecorator,
-    converter: ConverterSpec,
-) -> None:
-    """Internal function to wrap dispatch in middleware."""
-    original_dispatch = cls.dispatch
-    is_async = getattr(cls, 'view_is_async', False)
-
-    if is_async:
-        cls.dispatch = _create_async_dispatch(
-            original_dispatch,
-            middleware,
-            converter,
-        )
-    else:
-        cls.dispatch = _create_sync_dispatch(
-            original_dispatch,
-            middleware,
-            converter,
-        )
-
-
-def wrap_middleware_factory(  # noqa: WPS202
-    middleware: _MiddlewareDecorator,
+def wrap_middleware(  # noqa: WPS202
+    middleware: MiddlewareDecorator,
     response_description: ResponseDescription,
-) -> Callable[[_ResponseConverter], _DecoratorWithResponses]:
+) -> Callable[[ResponseConverter], DecoratorWithResponses]:
     """
     Factory function that creates a decorator with pre-configured middleware.
 
@@ -130,7 +39,7 @@ def wrap_middleware_factory(  # noqa: WPS202
         >>> from django_modern_rest import Controller, ResponseDescription
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
-        >>> @wrap_middleware_factory(
+        >>> @wrap_middleware(
         ...     csrf_protect,
         ...     ResponseDescription(
         ...         return_type=dict[str, str],
@@ -140,7 +49,7 @@ def wrap_middleware_factory(  # noqa: WPS202
         ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
         ...     return JsonResponse(
         ...         {'detail': 'CSRF verification failed. Request aborted.'},
-        ...         status=HTTPStatus.FORBIDDEN,
+        ...         status=HTTPStatus(response.status_code),
         ...     )
 
         >>> @csrf_protect_json
@@ -154,16 +63,16 @@ def wrap_middleware_factory(  # noqa: WPS202
     """
 
     def decorator_factory(  # noqa: WPS430
-        converter: _ResponseConverter,
-    ) -> _DecoratorWithResponses:
+        converter: ResponseConverter,
+    ) -> DecoratorWithResponses:
         """Create a decorator with the given converter."""
         converter_spec = (response_description, converter)
 
-        def decorator(cls: _TypeT) -> _TypeT:
-            _do_wrap_dispatch(cls, middleware, converter_spec)
+        def decorator(cls: TypeT) -> TypeT:
+            do_wrap_dispatch(cls, middleware, converter_spec)
             return method_decorator(csrf_exempt, name='dispatch')(cls)
 
-        return _DecoratorWithResponses(
+        return DecoratorWithResponses(
             decorator=decorator,
             responses=[response_description],
         )
@@ -173,7 +82,7 @@ def wrap_middleware_factory(  # noqa: WPS202
 
 def dispatch_decorator(  # noqa: WPS202
     func: Callable[..., Any],
-) -> Callable[[_TypeT], _TypeT]:
+) -> Callable[[TypeT], TypeT]:
     """
     Special helper to decorate class-based view's ``dispatch`` method.
 
