@@ -172,7 +172,12 @@ class Path(ComponentParser, Generic[_PathT]):
     parsed paths parameters as ``self.parsed_path`` attribute.
 
     It is way stricter than the original Django's routing system.
-    For example, django allows to
+    For example, django allows to such cases:
+    - ``user_id`` is defined as ``int`` in the ``path('user/<int:user_id>')``
+    - ``user_id`` is defined as ``str`` in the view function:
+      ``def get(self, request, user_id: str): ...``
+
+    In ``django-modern-rest`` there's now a way to validate this in runtime.
     """
 
     parsed_path: _PathT
@@ -187,4 +192,9 @@ class Path(ComponentParser, Generic[_PathT]):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
+        if args:
+            raise RequestSerializationError(
+                f'Path {type(self)} with {model=} does not allow '
+                f'unnamed path parameters {args=}',
+            )
         return kwargs
