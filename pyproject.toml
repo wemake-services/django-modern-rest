@@ -49,6 +49,7 @@ include = ["django_modern_rest_pytest.py"]
 [tool.poetry.dependencies]
 python = "^3.11"
 typing_extensions = ">=4"
+django = ">=4.2,<6.0"
 
 msgspec = { version = ">= 0.19", optional = true }
 pydantic = { version = "^2.12", optional = true }
@@ -58,7 +59,6 @@ pydantic = ["pydantic"]
 msgspec = ["msgspec"]
 
 [tool.poetry.group.dev.dependencies]
-django = ">=4.2,<6.0"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
 pyright = "^1.1"
 
