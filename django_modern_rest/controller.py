@@ -162,15 +162,17 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         headers: dict[str, str] | Empty = EmptyObj,
     ) -> HttpResponse:
         """
-        Helpful method to convert API error parts into an actual response.
+        Helpful method to convert API error parts into an actual error.
+
+        Always requires the error code to be passed.
 
         Should be always used instead of using
         raw :class:`django.http.HttpResponse` objects.
-        Does the usual response and error response validation.
+        Does the usual validation, no "second validation" problem exists.
         """
         return build_response(
-            None,
-            self.serializer,
+            method=None,
+            serializer=self.serializer,
             raw_data=raw_data,
             headers=headers,
             status_code=status_code,
@@ -322,7 +324,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         # This method cannot call `self.to_response`, because it does not have
         # an endpoint associated with it. We switch to lower level
         # `build_response` primitive
-        allowed_methods = sorted(cls.existing_http_methods())
+        allowed_methods = sorted(cls.api_endpoints.keys())
         return cls._maybe_wrap(
             build_response(
                 None,

@@ -82,7 +82,11 @@ And then route this controller in your `urls.py`:
 ... ]
 ```
 
-Done! Now you have your shiny API with 100% type safe validation and interactive docs.
+Done! Now you have your shiny API with 100% type
+safe validation and interactive docs.
+
+[The full documentation](https://django-modern-rest.rtfd.io)
+has everything you need to get started!
 
 
 ## License
