@@ -2,7 +2,7 @@ import datetime as dt
 import json
 import uuid
 from http import HTTPStatus
-from typing import Any, final
+from typing import Any, ClassVar, final
 
 import pydantic
 import pytest
@@ -11,7 +11,10 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.plugins.pydantic import (
+    ModelDumpKwargs,
+    PydanticSerializer,
+)
 from django_modern_rest.test import DMRRequestFactory
 
 
@@ -21,6 +24,7 @@ class _BodyModel(pydantic.BaseModel):
     created_at: dt.datetime
     elapsed: dt.timedelta
     url: pydantic.HttpUrl
+    extra: pydantic.Json[Any]
 
 
 @final
@@ -42,6 +46,7 @@ def test_complex_pydantic_serialization(
         'created_at': faker.future_datetime(),
         'elapsed': faker.time_delta(),
         'url': faker.url(),
+        'extra': '{"key": "value"}',
     }
 
     request = dmr_rf.post('/whatever/', data=request_data)
@@ -51,6 +56,47 @@ def test_complex_pydantic_serialization(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
     assert json.loads(response.content).keys() == request_data.keys()
+    assert json.loads(response.content)['extra'] == {'key': 'value'}
+
+
+@final
+class _RoundTripPydanticSerializer(PydanticSerializer):
+    model_dump_kwargs: ClassVar[ModelDumpKwargs] = {
+        **PydanticSerializer.model_dump_kwargs,
+        'round_trip': True,
+    }
+
+
+@final
+class _RoundTripJsonFieldController(
+    Controller[_RoundTripPydanticSerializer],
+    Body[_BodyModel],
+):
+    def post(self) -> _BodyModel:
+        return self.parsed_body
+
+
+def test_pydantic_round_trip_json_field(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures by round trip json field works."""
+    request_data = {
+        'uid': uuid.uuid4(),
+        'created_at': faker.future_datetime(),
+        'elapsed': faker.time_delta(),
+        'url': faker.url(),
+        'extra': '{"key": "value"}',
+    }
+
+    request = dmr_rf.post('/whatever/', data=request_data)
+
+    response = _RoundTripJsonFieldController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED
+    assert json.loads(response.content).keys() == request_data.keys()
+    assert json.loads(response.content)['extra'] == '{"key":"value"}'
 
 
 @final
@@ -169,5 +215,5 @@ def test_complex_pydantic_out_valid_object(
     response = _TypeOutputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content)

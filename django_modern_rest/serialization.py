@@ -46,10 +46,14 @@ class BaseSerializer:
         Customize how some objects are serialized into json.
 
         Only add types that are common for all potential plugins here.
-        Should be called inside :meth:`to_json`.
+        Should be called inside :meth:`serialize`.
         """
         if isinstance(to_serialize, HttpHeaders):
             return dict(to_serialize)
+        if isinstance(to_serialize, (set, frozenset)):  # pragma: no cover
+            # This is impossible to reach with `msgspec`, but is needed
+            # for raw `json` serialization.
+            return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         raise ResponseSerializationError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
@@ -71,7 +75,7 @@ class BaseSerializer:
         Customize how some objects are deserialized from json.
 
         Only add types that are common for all potential plugins here.
-        Should be called inside :meth:`from_json`.
+        Should be called inside :meth:`deserialize`.
         """
         raise RequestSerializationError(
             f'Value {to_deserialize} of type {type(to_deserialize)} '
@@ -90,6 +94,8 @@ class BaseSerializer:
         """
         Parse *unstructured* data from python primitives into *model*.
 
+        Raises ``cls.validation_error`` when something cannot be parsed.
+
         Args:
             unstructured: Python objects to be parsed / validated.
             model: Python type to serve as a model.
@@ -99,9 +105,6 @@ class BaseSerializer:
                 For example, it is fine for a request validation
                 to be less strict in some cases and allow type coercition.
                 But, response types need to be strongly validated.
-
-        Raises:
-            validation_error: When parsing can't be done.
 
         Returns:
             Structured and validated data.

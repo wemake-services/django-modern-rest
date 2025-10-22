@@ -13,10 +13,12 @@ from typing import (
     assert_never,
     cast,
     final,
+    get_args,
 )
 
 from django.http import HttpResponse
 
+from django_modern_rest.components import ComponentParser
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
     ResponseSerializationError,
@@ -43,6 +45,7 @@ from django_modern_rest.settings import (
 from django_modern_rest.types import (
     Empty,
     EmptyObj,
+    infer_bases,
     is_safe_subclass,
     parse_return_annotation,
 )
@@ -222,13 +225,33 @@ class ControllerValidator:
 
     Validates:
     - Async vs sync controllers
+    - Components definition
     """
 
     __slots__ = ()
 
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
+        # TODO: validate that sync controller have `MetaMixin`
+        # and async ones have `AsyncMetaMixin`
+        self._validate_components(controller)
         return self._validate_endpoints(controller)
+
+    def _validate_components(
+        self,
+        controller: 'type[Controller[BaseSerializer]]',
+    ) -> None:
+        possible_violations = infer_bases(
+            controller,
+            ComponentParser,
+            use_origin=False,
+        )
+        for component_cls in possible_violations:
+            if not get_args(component_cls):
+                raise EndpointMetadataError(
+                    f'Component {component_cls} in {controller} '
+                    'must have 1 type argument, given 0',
+                )
 
     def _validate_endpoints(
         self,
@@ -374,6 +397,7 @@ class EndpointMetadataValidator:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
         method = validate_method_name(func.__name__)
+        func.__name__ = str(method).lower()  # we can change it :)
         endpoint = str(func)
         # TODO: validate contoller's definition.
         # Questions: how? when? one time?
@@ -590,6 +614,8 @@ def validate_method_name(func_name: str) -> HTTPMethod:
     try:  # noqa: WPS229
         if func_name != func_name.lower():
             raise ValueError  # noqa: TRY301
+        if func_name == 'meta':
+            return HTTPMethod.OPTIONS
         return HTTPMethod(func_name.upper())
     except ValueError:
         raise EndpointMetadataError(

@@ -16,8 +16,9 @@ containers =
 layers =
   routing
   controller
-  endpoint | components
+  endpoint
   validation
+  components
   response
   serialization
   # DTOs:
@@ -40,9 +41,12 @@ forbidden_modules =
   msgspec
 
 ignore_imports =
+  # Pydantic plugin:
   django_modern_rest.plugins.pydantic -> pydantic
-  # TODO: remove, see #43
-  django_modern_rest.internal.json -> msgspec
+  # Msgspec plugin:
+  django_modern_rest.plugins.msgspec -> msgspec
+  # Optional json support from msgspec:
+  django_modern_rest.internal.json.msgspec -> msgspec
 
 
 [importlinter:contract:plugins-independence]

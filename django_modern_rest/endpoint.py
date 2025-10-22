@@ -153,7 +153,7 @@ class Endpoint:  # noqa: WPS214
                 )
             # Return response:
             try:
-                func_result = await func(self._controller, *args, **kwargs)
+                func_result = await func(self._controller)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
                 func_result = self._controller.to_error(
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
@@ -188,7 +188,7 @@ class Endpoint:  # noqa: WPS214
                 )
             # Return response:
             try:
-                func_result = func(self._controller, *args, **kwargs)
+                func_result = func(self._controller)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
                 func_result = self._controller.to_error(
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]

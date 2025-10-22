@@ -28,7 +28,7 @@ def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
     return cast(
         dict[str, str],
-        tomli.loads(pyproject.read_text())['project'],
+        tomli.loads(pyproject.read_text())['tool']['poetry'],
     )
 
 
@@ -49,28 +49,55 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
-    # https://github.com/wemake-services/wemake-django-template/issues/159
-    'sphinx_autodoc_typehints',
+    'sphinx_design',
+    'sphinx_copybutton',
+    'sphinx_contributors',
+    'sphinx_tabs.tabs',
+    'sphinx_iconify',
 ]
+
+
+# Intersphinx:
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3/', None),
+    'django': ('https://docs.djangoproject.com/en/stable/', None),
+    'pydantic': ('https://docs.pydantic.dev/latest/', None),
+    'msgspec': ('https://jcristharif.com/msgspec/', None),
+}
+
+# Napoleon:
+napoleon_google_docstring = True
+napoleon_include_special_with_doc = True
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = False
+napoleon_attr_annotations = True
 
 # If true, Sphinx will warn about all references
 # where the target cannot be found. Default is `False``.
 # You can activate this mode temporarily using the `-n` command-line switch.
 nitpicky = True
 
+PY_CLASS = 'py:class'
+nitpick_ignore = [
+    # external library / undocumented external
+    (PY_CLASS, 'FromJson'),
+]
+
 # Set `typing.TYPE_CHECKING` to `True`:
 # https://pypi.org/project/sphinx-autodoc-typehints/
-set_type_checking_flag = False
+set_type_checking_flag = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -99,8 +126,19 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-# TODO: try https://shibuya.lepture.com/
-html_theme = 'furo'
+html_theme = 'shibuya'
+
+html_theme_options = {
+    'github_url': 'https://github.com/wemake-services/django-modern-rest',
+    'readthedocs_url': 'https://django-modern-rest.readthedocs.io',
+    'globaltoc_expand_depth': 1,
+}
+
+html_context = {
+    'source_type': 'github',
+    'source_user': 'wemake-services',
+    'source_repo': 'django-modern-rest',
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

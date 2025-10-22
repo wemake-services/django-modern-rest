@@ -11,6 +11,7 @@ from django_modern_rest import (
     Body,
     Controller,
     Headers,
+    Path,
     Query,
     ResponseDescription,
     validate,
@@ -105,7 +106,6 @@ class _CustomHeaders(pydantic.BaseModel):
 class _UserInput(pydantic.BaseModel):
     email: str
     age: int
-    # TODO: test and support `pydantic.Json` type
 
 
 @final
@@ -114,6 +114,11 @@ class _UserOutput(_UserInput):
     token: str
     query: str
     start_from: dt.datetime | None
+
+
+@final
+class _UserPath(pydantic.BaseModel):
+    user_id: int
 
 
 @final
@@ -147,24 +152,31 @@ class UserListController(Controller[PydanticSerializer]):
 class UserUpdateController(
     Body[_UserInput],
     Controller[PydanticSerializer],
+    Path[_UserPath],
 ):
-    async def patch(self, user_id: int) -> _UserInput:
+    async def patch(self) -> _UserInput:
         return _UserInput(
             email=self.parsed_body.email,
-            age=user_id,
+            age=self.parsed_path.user_id,
         )
 
 
 @final
-class UserReplaceController(Controller[PydanticSerializer]):
+class UserReplaceController(
+    Controller[PydanticSerializer],
+    Path[_UserPath],
+):
     @validate(
         ResponseDescription(
             return_type=_UserInput,
             status_code=HTTPStatus.OK,
         ),
     )
-    async def put(self, user_id: int) -> HttpResponse:
-        return JsonResponse({'email': 'new@email.com', 'age': user_id})
+    async def put(self) -> HttpResponse:
+        return JsonResponse({
+            'email': 'new@email.com',
+            'age': self.parsed_path.user_id,
+        })
 
 
 @final

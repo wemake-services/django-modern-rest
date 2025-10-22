@@ -27,7 +27,6 @@ from django_modern_rest.types import Empty
 
 @pytest.fixture(autouse=True)
 def _disable_response_validation(settings: LazySettings) -> Iterator[None]:
-    # TODO: make a fixture out of it.
     clear_settings_cache()
 
     settings.DMR_SETTINGS = {

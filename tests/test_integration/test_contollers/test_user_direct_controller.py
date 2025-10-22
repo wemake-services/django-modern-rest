@@ -81,3 +81,18 @@ class ClientWorksWithRegularTest(SimpleTestCase):
 
         assert response.status_code == HTTPStatus.OK
         assert response.headers['Content-Type'] == 'application/json'
+
+
+def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
+    """Ensure that path unnamed path parameters are not allowed."""
+    email = faker.email()
+    user_id = faker.unique.random_int()
+
+    response = dmr_client.patch(
+        reverse('api:user_update_direct_re', args=(user_id,)),
+        data={'email': email, 'age': faker.unique.random_int()},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['detail']

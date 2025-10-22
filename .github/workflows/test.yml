@@ -46,8 +46,7 @@ jobs:
         poetry install --all-extras
 
     - name: Run checks
-      run: |
-        make test
+      run: make test
 
     # Upload coverage to codecov: https://codecov.io/
     - name: Upload coverage to Codecov
@@ -55,6 +54,114 @@ jobs:
       with:
         files: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
+
+
+  build-older-django:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.13']
+        django-version:
+          - 'Django~=4.2.0'
+          - 'Django~=5.0.0'
+          - 'Django~=5.1.0'
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install poetry
+      run: |
+        curl -sSL "https://install.python-poetry.org" | python
+
+        # Adding `poetry` to `$PATH`:
+        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
+
+    - name: Install dependencies
+      run: |
+        poetry config virtualenvs.in-project true
+        poetry run pip install -U pip
+        poetry install --all-extras
+        poetry run pip install -U "${{ matrix.django-version }}"
+
+    - name: Run checks
+      run: make unit
+
+
+  build-no-msgspec:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.13', '3.14t']
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install poetry
+      run: |
+        curl -sSL "https://install.python-poetry.org" | python
+
+        # Adding `poetry` to `$PATH`:
+        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
+
+    - name: Install dependencies
+      run: |
+        poetry config virtualenvs.in-project true
+        poetry run pip install -U pip
+        poetry install --extras=pydantic
+
+    - name: Run checks
+      run: poetry run pytest --cov-fail-under=75
+
+
+  build-no-pydantic:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.13']
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install poetry
+      run: |
+        curl -sSL "https://install.python-poetry.org" | python
+
+        # Adding `poetry` to `$PATH`:
+        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
+
+    - name: Install dependencies
+      run: |
+        poetry config virtualenvs.in-project true
+        poetry run pip install -U pip
+        poetry install --extras=msgspec
+
+    - name: Run checks
+      run: poetry run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
+
 
   build-no-extras:
     runs-on: ubuntu-latest
@@ -87,5 +194,4 @@ jobs:
         poetry install
 
     - name: Run checks
-      run: |
-        make smoke
+      run: make smoke

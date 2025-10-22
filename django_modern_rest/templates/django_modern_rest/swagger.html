@@ -18,7 +18,7 @@
   <script>
     window.onload = function () {
       window.ui = SwaggerUIBundle({
-        spec: {{ spec | safe }},
+        spec: {{ schema | safe }},
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [

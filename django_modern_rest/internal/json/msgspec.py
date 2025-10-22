@@ -3,32 +3,17 @@
 # under MIT license.
 
 from collections.abc import Callable
-from typing import Any, Protocol, TypeAlias
+from typing import TYPE_CHECKING, Any
 
 import msgspec
 
 from django_modern_rest.exceptions import DataParsingError
 
-#: Types that are possible to load json from.
-FromJson: TypeAlias = str | bytes | bytearray
-
-#: Type that represents the `serialize` callback.
-Serialize: TypeAlias = Callable[[Any, Callable[[Any], Any]], bytes]
-
-_DeserializeFunc: TypeAlias = Callable[[type[Any], Any], Any]
-
-
-class Deserialize(Protocol):
-    """Type that represents the `deserialize` callback."""
-
-    def __call__(
-        self,
-        to_deserialize: FromJson,
-        deserializer: _DeserializeFunc,
-        *,
-        strict: bool = ...,
-    ) -> Any:
-        """Function to be called on deserialization."""
+if TYPE_CHECKING:
+    from django_modern_rest.internal.json import (
+        DeserializeFunc,
+        FromJson,
+    )
 
 
 def serialize(
@@ -44,17 +29,16 @@ def serialize(
 
     Returns:
         JSON as bytes.
-
-    Raises:
-        TypeError: If error encoding ``obj``.
-        msgspec.EncodeError: If error encoding ``obj``.
     """
-    return msgspec.json.encode(to_serialize, enc_hook=serializer)
+    return msgspec.json.encode(
+        to_serialize,
+        enc_hook=serializer,
+    )
 
 
 def deserialize(
-    to_deserialize: FromJson,
-    deserializer: _DeserializeFunc | None = None,
+    to_deserialize: 'FromJson',
+    deserializer: 'DeserializeFunc | None' = None,
     *,
     strict: bool = True,
 ) -> Any:
@@ -72,8 +56,8 @@ def deserialize(
         Decoded object.
 
     Raises:
-        TypeError: If error encoding ``obj``.
-        msgspec.DecodeError: If error encoding ``obj``.
+        DataParsingError: If error encoding ``obj``.
+
     """
     try:
         return msgspec.json.decode(

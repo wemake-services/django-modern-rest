@@ -13,7 +13,6 @@ from django_modern_rest.settings import clear_settings_cache
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
-# TODO: make a fixture out of it.
 @pytest.fixture
 def _clear_cache() -> Iterator[None]:
     """Clear settings cache before and after test."""
