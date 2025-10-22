@@ -45,7 +45,7 @@ Available extras:
 
 .. note::
 
-  You don't need to add ``django-modern-rest`` to the list of installed apps.
+  You don't need to add ``'django-modern-rest'`` to the ``INSTALLED_APPS``.
 
 
 Showcase
