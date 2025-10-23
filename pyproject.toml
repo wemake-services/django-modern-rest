@@ -170,6 +170,7 @@ ignore = [
   "PLR09",   # we have our own complexity rules
   "PLR2004", # do not report magic numbers
   "PLR6301", # do not require classmethod / staticmethod when self not used
+  "PLC0414", # do not raise on `as` re-exports
   "TRY003",  # long exception messages from `tryceratops`
 ]
 external = [ "WPS" ]

@@ -1,10 +1,17 @@
 import dataclasses
 from collections.abc import Callable
-from typing import Any, Final, final, get_args, get_origin
+from typing import (
+    Any,
+    Final,
+    final,
+    get_args,
+    get_origin,
+)
 
 from typing_extensions import get_original_bases, get_type_hints
 
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
+from django_modern_rest.internal.types import DMRSettings as DMRSettings
 
 
 @final
@@ -63,8 +70,8 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
         endpoint_func: function with return type annotation.
 
     Raises:
-        UnsolvableAnnotationsError: when annotation can't be solved.
-            Or when does not exist.
+        UnsolvableAnnotationsError: when annotation can't be solved
+            or when the annotation does not exist.
 
     Returns:
         Function's parsed and solved return type.
@@ -87,8 +94,7 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
 
 
 def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
-    """Possibly unwraps subscribbed class before checking for subclassing."""
-    # Not a type guard, because `annotation` can be not a `type` :(
+    """Possibly unwraps subscribed class before checking for subclassing."""
     if annotation is None:
         annotation = type(None)
     try:
