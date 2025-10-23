@@ -25,7 +25,7 @@ class Serialize(Protocol):
         self,
         to_serialize: Any,
         serializer: Callable[[Any], Any],
-    ) -> bytes:
+    ) -> bytes:  # pyright: ignore[reportReturnType]
         """Function to be called on object serialization."""
 
 
