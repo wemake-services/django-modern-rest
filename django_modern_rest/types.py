@@ -1,25 +1,17 @@
 import dataclasses
 from collections.abc import Callable
-from typing import Any, Final, TypedDict, final, get_args, get_origin
+from typing import (
+    Any,
+    Final,
+    final,
+    get_args,
+    get_origin,
+)
 
 from typing_extensions import get_original_bases, get_type_hints
 
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
-from django_modern_rest.internal.json import Deserialize, Serialize
-from django_modern_rest.openapi.config import OpenAPIConfig
-
-#  TypedDict for Django Modern REST settings
-
-
-class DMRSettings(TypedDict, total=False):
-    """TypedDict defining the shape of our settings."""
-
-    serialize: str | Serialize
-    deserialize: str | Deserialize
-    openapi_config: OpenAPIConfig
-    validate_responses: bool
-    responses: list[Any]
-    global_error_handler: str | Callable[..., Any]
+from django_modern_rest.internal.types import DMRSettings as DMRSettings
 
 
 @final

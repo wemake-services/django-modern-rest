@@ -42,7 +42,7 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
 
 
 #: Default settings for `django_modern_rest`.
-_DEFAULTS: Final['DMRSettings'] = {
+_DEFAULTS: Final['DMRSettings'] = {  # noqa: WPS407
     DMR_SERIALIZE_KEY: DMR_SERIALIZE,
     DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
     DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
@@ -78,7 +78,10 @@ def resolve_setting(setting_name: str, *, import_string: bool = False) -> Any:
     :func:`clear_settings_cache` before and after modifying
     Django settings to ensure the cache is invalidated properly.
     """
-    setting = resolve_defaults().get(setting_name, _DEFAULTS[setting_name])
+    setting = resolve_defaults().get(
+        setting_name,
+        _DEFAULTS[setting_name],  # type: ignore[literal-required]
+    )
     if import_string and isinstance(setting, str):
         return module_loading.import_string(setting)
     return setting
