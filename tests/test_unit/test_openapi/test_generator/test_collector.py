@@ -6,10 +6,8 @@ from django.urls import URLPattern, URLResolver, include, path
 from django.views import View
 
 from django_modern_rest import Controller
-from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.openapi.generator.collector import (
     EndpointInfo,
-    _extract_endpoints,
     _join_paths,
     _process_pattern,
     _process_resolver,
@@ -106,30 +104,6 @@ def test_join_paths(
 
 
 @pytest.mark.parametrize(
-    ('controller_class', 'expected_count'),
-    [
-        (_FullController, 5),
-        (_GetController, 1),
-        (_EmptyController, 0),
-    ],
-)
-def test_extract_endpoints(
-    controller_class: type[Controller[PydanticSerializer]],
-    expected_count: int,
-) -> None:
-    """Ensure that `_extract_endpoints` extracts correct number of endpoints."""
-    path = '/api/test/'
-    endpoints = _extract_endpoints(path, controller_class())
-
-    assert len(endpoints) == expected_count
-    assert all(isinstance(endpoint, EndpointInfo) for endpoint in endpoints)
-    assert all(endpoint.path == path for endpoint in endpoints)
-    assert all(
-        isinstance(endpoint.endpoint, Endpoint) for endpoint in endpoints
-    )
-
-
-@pytest.mark.parametrize(
     ('path_str', 'view_class', 'expected_count'),
     [
         ('full/', _FullController, 5),
@@ -173,11 +147,11 @@ def test_process_pattern_with_different_views(
             [
                 path(
                     'nested/',
-                    include([path('inner/', _FullController.as_view())])
+                    include([path('inner/', _FullController.as_view())]),
                 ),
             ],
             5,
-        )
+        ),
     ],
 )
 def test_process_resolver_with_nested_patterns(

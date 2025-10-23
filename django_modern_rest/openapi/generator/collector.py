@@ -1,8 +1,7 @@
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from django.urls import URLPattern, URLResolver
 
-from django_modern_rest.controller import Controller
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.routing import Router
 
@@ -45,26 +44,11 @@ def _process_pattern(
     url_pattern: URLPattern,
     base_path: str = '',
 ) -> list[EndpointInfo]:
-    endpoints: list[EndpointInfo] = []
-    full_path = _join_paths(base_path, str(url_pattern.pattern))
+    path = _join_paths(base_path, str(url_pattern.pattern))
     view = url_pattern.callback.view_class  # type: ignore[attr-defined]
-
-    if hasattr(view, 'original_controllers'):
-        for controller in view.original_controllers:
-            endpoints.extend(_extract_endpoints(full_path, controller))
-    elif hasattr(view, 'api_endpoints'):
-        endpoints.extend(_extract_endpoints(full_path, view))
-
-    return endpoints
-
-
-def _extract_endpoints(
-    path: str,
-    controller: Controller[Any],
-) -> list[EndpointInfo]:
     return [
         EndpointInfo(path=path, endpoint=endpoint)
-        for endpoint in controller.api_endpoints.values()
+        for endpoint in view.api_endpoints.values()
     ]
 
 
