@@ -119,14 +119,16 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             for subclass in infer_bases(cls, ComponentParser)
         ]
         cls.serializer_context = cls.serializer_context_cls(cls)
-        cls.api_endpoints = {
+        if getattr(cls, 'api_endpoints', None) is None:
+            cls.api_endpoints = {}
+        cls.api_endpoints.update({
             # Rename `meta` back to `options`:
             'options' if meth == 'meta' else meth: cls.endpoint_cls(
                 getattr(cls, meth),
                 controller_cls=cls,
             )
             for meth in cls.existing_http_methods()
-        }
+        })
         cls._is_async = cls.controller_validator_cls()(cls)
 
     def to_response(

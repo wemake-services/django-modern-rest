@@ -18,10 +18,10 @@ from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.headers import HeaderDescription as HeaderDescription
 from django_modern_rest.headers import NewHeader as NewHeader
-from django_modern_rest.meta import (
+from django_modern_rest.options_mixins import (
     AsyncMetaMixin as AsyncMetaMixin,
 )
-from django_modern_rest.meta import (
+from django_modern_rest.options_mixins import (
     MetaMixin as MetaMixin,
 )
 from django_modern_rest.response import APIError as APIError

@@ -7,6 +7,7 @@ from django_modern_rest import (
     MetaMixin,
     compose_controllers,
 )
+from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
@@ -53,10 +54,10 @@ class _DifferentSerializerController(Controller[_DifferentSerializer]):
 
 def test_compose_async_and_sync() -> None:
     """Ensures that you can't compose sync and async controllers."""
-    msg = 'async and sync endpoints'
-    with pytest.raises(ValueError, match=msg):
+    msg = 'all sync or all async'
+    with pytest.raises(EndpointMetadataError, match=msg):
         compose_controllers(_AsyncController, _SyncController)
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(EndpointMetadataError, match=msg):
         compose_controllers(_SyncController, _AsyncController)
 
 
@@ -94,5 +95,5 @@ def test_compose_controllers_with_meta() -> None:
     # Ok:
     compose_controllers(_SyncController, _OptionsController)
 
-    with pytest.raises(ValueError, match='meta'):
+    with pytest.raises(ValueError, match='options'):
         compose_controllers(_OptionsController, _OptionsController)
