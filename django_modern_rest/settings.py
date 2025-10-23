@@ -7,7 +7,7 @@ from django.utils import module_loading
 from django_modern_rest.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
-    from django_modern_rest.types import DMRSettings
+    pass
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
