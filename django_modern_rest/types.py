@@ -1,12 +1,12 @@
 import dataclasses
 from collections.abc import Callable
-from typing import Any, Final, final, get_args, get_origin, TypedDict
+from typing import Any, Final, TypedDict, final, get_args, get_origin
+
 from typing_extensions import get_original_bases, get_type_hints
 
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.internal.json import Serialize, Deserialize
-
 
 #  TypedDict for Django Modern REST settings
 
