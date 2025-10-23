@@ -12,9 +12,7 @@ from django_modern_rest.openapi.config import OpenAPIConfig
 
 
 class DMRSettings(TypedDict, total=False):
-    """
-    TypedDict defining the shape of django-modern-rest settings.
-    """
+    """TypedDict defining the shape of our settings."""
 
     serialize: str | Serialize
     deserialize: str | Deserialize
