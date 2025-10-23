@@ -64,7 +64,7 @@ def infer_bases(
         base
         for base in get_original_bases(orig_cls)
         if (
-            (origin := get_origin(base) if use_origin else base)
+            (origin := get_origin(base) if use_origin else base)  # noqa: WPS509
             and is_safe_subclass(origin, given_type)
         )
     ]
