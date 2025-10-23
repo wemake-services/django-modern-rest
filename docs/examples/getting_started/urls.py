@@ -1,4 +1,4 @@
-from .views import UserController  # noqa: I001
+from .views import UserController  # noqa: I001, WPS300
 
 from django.urls import include, path
 
