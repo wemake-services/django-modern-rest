@@ -128,6 +128,7 @@ Here are our amazing people who made this project possible.
   pages/configuration.rst
   pages/openapi.rst
   pages/bring-your-own-di.rst
+  pages/micro-framework.rst
   pages/performance.rst
   pages/testing.rst
 
