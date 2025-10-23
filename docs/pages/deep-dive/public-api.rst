@@ -78,4 +78,3 @@ Utilities
 .. autoclass:: django_modern_rest.types.Empty
 
 .. autodata:: django_modern_rest.types.EmptyObj
-
