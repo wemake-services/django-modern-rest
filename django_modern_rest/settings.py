@@ -7,7 +7,7 @@ from django.utils import module_loading
 from django_modern_rest.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
-    pass
+    from django_modern_rest.types import DMRSettings
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -42,18 +42,15 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
 
 
 #: Default settings for `django_modern_rest`.
-_DEFAULTS: Final = cast(
-    'DMRSettings',
-    {
-        DMR_SERIALIZE_KEY: DMR_SERIALIZE,
-        DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
-        DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
-        # Means that we would run extra validation on the response object.
-        DMR_VALIDATE_RESPONSES_KEY: True,
-        DMR_RESPONSES_KEY: [],  # global responses, for response validation
-        DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
-    },
-)
+_DEFAULTS: Final['DMRSettings'] = {
+    DMR_SERIALIZE_KEY: DMR_SERIALIZE,
+    DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
+    DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
+    # Means that we would run extra validation on the response object.
+    DMR_VALIDATE_RESPONSES_KEY: True,
+    DMR_RESPONSES_KEY: [],  # global responses, for response validation
+    DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
+}
 
 
 @lru_cache
