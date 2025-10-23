@@ -84,7 +84,7 @@ schemathesis = "^4.3"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8.1"
+sphinx = "^8.2"
 sphinx-autodoc-typehints = "^3.0"
 sphinx-iconify = "^0.2"
 sphinx-tabs = "^3.4"
