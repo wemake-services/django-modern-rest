@@ -8,7 +8,6 @@ from django.http import HttpResponse
 from typing_extensions import TypedDict
 
 from django_modern_rest import Controller, ResponseDescription, validate
-from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
@@ -17,15 +16,16 @@ serializers: list[Any] = [PydanticSerializer]
 
 try:
     from django_modern_rest.plugins.msgspec import MsgspecSerializer
-except ImportError:
+except ImportError:  # pragma: no cover
     pass  # do nothing then :(  # noqa: WPS420
 else:
-    if sys.version_info < (3, 14):  # 3.14 does not fully support msgspec yet
+    # 3.14 does not fully support msgspec yet:
+    if sys.version_info < (3, 14):  # pragma: no cover
         serializers.append(MsgspecSerializer)
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
-    def get() -> typ:  # pyright: ignore[reportInvalidTypeForm]
+    def get(self: Any) -> typ:  # pyright: ignore[reportInvalidTypeForm]
         raise NotImplementedError
 
     return get
@@ -35,7 +35,7 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
     @validate(
         ResponseDescription(return_type=typ, status_code=HTTPStatus.OK),
     )
-    def get() -> HttpResponse:
+    def get(self: Any) -> HttpResponse:
         raise NotImplementedError
 
     return get
@@ -83,14 +83,16 @@ def test_valid_data(
     """Ensure that correct data can be validated."""
 
     class _Controller(Controller[serializer]):  # type: ignore[valid-type]
-        """Just a placeholder."""
+        get = validator_builder(typ)
 
-    validator = Endpoint(
-        _build_annotation(typ),
-        controller_cls=_Controller,
-    ).response_validator
+    endpoint = _Controller.api_endpoints['get']
+    validator = endpoint.response_validator
 
-    validator.validate_modification(_Controller(), raw_data)
+    assert HTTPStatus.OK in endpoint.metadata.responses
+    validator._validate_body(  # noqa: SLF001
+        raw_data,
+        endpoint.metadata.responses[HTTPStatus.OK],
+    )
 
 
 @pytest.mark.parametrize(
@@ -131,12 +133,14 @@ def test_invalid_data(
     """Ensure that correct data can be validated."""
 
     class _Controller(Controller[serializer]):  # type: ignore[valid-type]
-        """Just a placeholder."""
+        get = validator_builder(typ)
 
-    validator = Endpoint(
-        _build_annotation(typ),
-        controller_cls=_Controller,
-    ).response_validator
+    endpoint = _Controller.api_endpoints['get']
+    validator = endpoint.response_validator
 
-    with pytest.raises(ResponseSerializationError):
-        validator.validate_modification(_Controller(), raw_data)
+    assert HTTPStatus.OK in endpoint.metadata.responses
+    with pytest.raises(ResponseSerializationError, match='type'):
+        validator._validate_body(  # noqa: SLF001
+            raw_data,
+            endpoint.metadata.responses[HTTPStatus.OK],
+        )

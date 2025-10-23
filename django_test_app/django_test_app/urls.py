@@ -20,9 +20,7 @@ from django.urls import include, path, re_path
 
 from django_modern_rest import Router, compose_controllers
 from django_modern_rest.openapi import (
-    JsonRenderer,
     OpenAPIConfig,
-    SwaggerRenderer,
     openapi_spec,
 )
 from django_modern_rest.openapi.objects import (
@@ -31,6 +29,11 @@ from django_modern_rest.openapi.objects import (
     License,
     Server,
     Tag,
+)
+from django_modern_rest.openapi.renderers import (
+    JsonRenderer,
+    ScalarRenderer,
+    SwaggerRenderer,
 )
 from rest_app.views import (
     AsyncParseHeadersController,
@@ -82,6 +85,7 @@ urlpatterns = [
             renderers=[
                 SwaggerRenderer(),
                 JsonRenderer(),
+                ScalarRenderer(),
             ],
             config=OpenAPIConfig(
                 title='Test API',

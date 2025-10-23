@@ -26,4 +26,4 @@ def test_http_spec_none_body_for_status(
         class _ValidController(Controller[PydanticSerializer]):
             @modify(status_code=status_code)
             def post(self) -> int:
-                return 1
+                raise NotImplementedError

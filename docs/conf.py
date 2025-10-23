@@ -11,10 +11,9 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 import sys
+import tomllib
 from pathlib import Path
 from typing import cast
-
-import tomli
 
 # We need `server` to be importable from here:
 _ROOT = Path('..').resolve(strict=True)
@@ -28,7 +27,7 @@ def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
     return cast(
         dict[str, str],
-        tomli.loads(pyproject.read_text())['tool']['poetry'],
+        tomllib.loads(pyproject.read_text())['tool']['poetry'],
     )
 
 
@@ -81,7 +80,7 @@ napoleon_google_docstring = True
 napoleon_include_special_with_doc = True
 napoleon_use_admonition_for_examples = True
 napoleon_use_admonition_for_notes = True
-napoleon_use_admonition_for_references = False
+napoleon_use_admonition_for_references = True
 napoleon_attr_annotations = True
 
 # If true, Sphinx will warn about all references
@@ -91,8 +90,13 @@ nitpicky = True
 
 PY_CLASS = 'py:class'
 nitpick_ignore = [
-    # external library / undocumented external
+    # internal type helpers
     (PY_CLASS, 'FromJson'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ResponseT'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ModifyCallable'),
+    (PY_CLASS, '_ParamT'),
+    # TODO: fix out why this is an error
+    (PY_CLASS, 'django.http.response.HttpResponse'),
 ]
 
 # Set `typing.TYPE_CHECKING` to `True`:
@@ -127,11 +131,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'shibuya'
+html_favicon = '_static/images/favicon.svg'
 
 html_theme_options = {
     'github_url': 'https://github.com/wemake-services/django-modern-rest',
     'readthedocs_url': 'https://django-modern-rest.readthedocs.io',
     'globaltoc_expand_depth': 1,
+    'accent_color': 'green',
+    'light_logo': '_static/images/logo-light.svg',
+    'dark_logo': '_static/images/logo-dark.svg',
 }
 
 html_context = {

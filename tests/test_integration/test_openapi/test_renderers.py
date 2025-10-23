@@ -6,14 +6,16 @@ from django.urls import reverse
 
 from django_modern_rest.test import DMRClient
 
-_REVERSE_NAME: Final = 'openapi:json'
+ENDPOINTS: Final = (
+    ('openapi:json', HTTPStatus.OK, 'application/json'),
+    ('openapi:swagger', HTTPStatus.OK, 'text/html'),
+    ('openapi:scalar', HTTPStatus.OK, 'text/html'),
+)
 
 
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status', 'expected_content_type'),
-    [
-        (_REVERSE_NAME, HTTPStatus.OK, 'application/json'),
-    ],
+    ENDPOINTS,
 )
 def test_endpoints(
     dmr_client: DMRClient,
@@ -23,8 +25,7 @@ def test_endpoints(
     expected_content_type: str,
 ) -> None:
     """Ensure that endpoints work."""
-    url = reverse(endpoint_name)
-    response = dmr_client.get(url)
+    response = dmr_client.get(reverse(endpoint_name))
 
     assert response.status_code == expected_status
     assert response.headers['Content-Type'] == expected_content_type
@@ -32,9 +33,7 @@ def test_endpoints(
 
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status'),
-    [
-        (_REVERSE_NAME, HTTPStatus.METHOD_NOT_ALLOWED),
-    ],
+    [(endpoint[0], HTTPStatus.METHOD_NOT_ALLOWED) for endpoint in ENDPOINTS],
 )
 def test_wrong_method(
     dmr_client: DMRClient,
@@ -43,17 +42,21 @@ def test_wrong_method(
     expected_status: int,
 ) -> None:
     """Ensure that wrong HTTP method is correctly handled."""
-    url = reverse(endpoint_name)
-    response = dmr_client.post(url)
+    response = dmr_client.post(reverse(endpoint_name))
 
     assert response.status_code == expected_status
 
 
-def test_returns_correct_structure(dmr_client: DMRClient) -> None:
+@pytest.mark.parametrize(
+    'endpoint_name',
+    ['openapi:json'],
+)
+def test_returns_correct_structure(
+    dmr_client: DMRClient,
+    *,
+    endpoint_name: str,
+) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
-    url = reverse(_REVERSE_NAME)
-    response = dmr_client.get(url)
+    response = dmr_client.get(reverse(endpoint_name))
 
-    body = response.json()
-
-    assert body['openapi'] == '3.1.0'
+    assert response.json()['openapi'] == '3.1.0'
