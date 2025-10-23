@@ -25,7 +25,7 @@ else:
 
 
 def _build_annotation(typ: Any) -> Callable[..., Any]:
-    def get(self) -> typ:  # pyright: ignore[reportInvalidTypeForm]
+    def get(self: Any) -> typ:  # pyright: ignore[reportInvalidTypeForm]
         raise NotImplementedError
 
     return get
@@ -35,7 +35,7 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
     @validate(
         ResponseDescription(return_type=typ, status_code=HTTPStatus.OK),
     )
-    def get(self) -> HttpResponse:
+    def get(self: Any) -> HttpResponse:
         raise NotImplementedError
 
     return get
@@ -88,9 +88,10 @@ def test_valid_data(
     endpoint = _Controller.api_endpoints['get']
     validator = endpoint.response_validator
 
+    assert HTTPStatus.OK in endpoint.metadata.responses
     validator._validate_body(  # noqa: SLF001
         raw_data,
-        endpoint.metadata.responses.get(HTTPStatus.OK),
+        endpoint.metadata.responses[HTTPStatus.OK],
     )
 
 
@@ -137,8 +138,9 @@ def test_invalid_data(
     endpoint = _Controller.api_endpoints['get']
     validator = endpoint.response_validator
 
+    assert HTTPStatus.OK in endpoint.metadata.responses
     with pytest.raises(ResponseSerializationError, match='type'):
         validator._validate_body(  # noqa: SLF001
             raw_data,
-            endpoint.metadata.responses.get(HTTPStatus.OK),
+            endpoint.metadata.responses[HTTPStatus.OK],
         )
