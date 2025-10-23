@@ -54,6 +54,14 @@ Validation
 .. autoclass:: django_modern_rest.validation.ControllerValidator
   :members:
 
+.. autoclass:: django_modern_rest.validation.ResponseValidator
+
+.. autoclass:: django_modern_rest.validation.EndpointMetadataValidator
+
+.. autoclass:: django_modern_rest.validation.ModifyEndpointPayload
+
+.. autoclass:: django_modern_rest.validation.ValidateEndpointPayload
+
 
 Serialization
 -------------
