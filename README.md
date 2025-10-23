@@ -18,7 +18,7 @@ Modern REST framework for Django with types and async support!
 - [x] Supports `msgspec`, but not bound to it
 - [x] Strict schema validation for requests and responses
 - [x] Supports async Django
-- [ ] Supports `openapi` schema generation out of the box
+- [ ] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage

@@ -59,29 +59,47 @@ Quick example:
     .. tab:: msgspec
 
       .. literalinclude:: /examples/getting_started/msgspec_controller.py
+        :caption: views.py
         :linenos:
-        :emphasize-lines: 6, 22
+        :emphasize-lines: 7, 24
 
     .. tab:: pydantic
 
       .. literalinclude:: /examples/getting_started/pydantic_controller.py
+        :caption: views.py
         :linenos:
-        :emphasize-lines: 6, 22
+        :emphasize-lines: 7, 24
 
 In this example:
 
 1. We defined regular ``pydantic`` and ``msgspec`` models
    that we will use for our API
-2. We added two component parsers one for request's
+2. We added two component parsers: one for request's
    :class:`~django_modern_rest.components.Body` and one
    for :class:`~django_modern_rest.components.Headers`
-   which will parse them into a typed model
+   which will parse them into typed models that we pass
+   to these components as type parameters
 3. You can see how we created
    a :class:`~django_modern_rest.controller.Controller` class
-   with ``pydantic`` and ``msgspec`` serializers
-4. How we defined ``post`` endpoint and returned
+   with :class:`pydantic.BaseModel` and :class:`msgspec.Struct` serializers
+4. And how we defined ``post`` endpoint and returned
    a simple model response from it, it will automatically
-   transformed into ``HttpResponse`` instance by the framework
+   transformed into :class:`django.http.HttpResponse` instance by the framework
+
+Now, let's add our API to the list of URLs:
+
+.. literalinclude:: /examples/getting_started/urls.py
+  :caption: urls.py
+  :linenos:
+  :lines: 3-
+
+Basically - that's it! Your first ``django-modern-rest`` API is ready.
+Next, you can learn:
+
+- How to generate OpenAPI schema
+- How to handle errors
+- How to cusstomize controllers and endpoints
+
 
 Next up
 -------
