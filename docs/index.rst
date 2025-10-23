@@ -139,3 +139,10 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst
+
+
+.. toctree::
+  :caption: Community
+  :hidden:
+
+  pages/community/logos.rst
