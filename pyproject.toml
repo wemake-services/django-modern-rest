@@ -78,6 +78,7 @@ dirty-equals = "^0.10"
 faker = "^37.11"
 inline-snapshot = ">=0.29,<0.31"
 slotscheck = "^0.19.1"
+schemathesis = "^4.3.10"
 
 [tool.poetry.group.docs]
 optional = true
