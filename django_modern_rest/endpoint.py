@@ -236,6 +236,7 @@ class Endpoint:  # noqa: WPS214
 
         If not class level error handling has happened.
         """
+        # TODO: handler errors per controller as well
         return resolve_setting(  # type: ignore[no-any-return]
             DMR_GLOBAL_ERROR_HANDLER_KEY,
             import_string=True,
@@ -297,8 +298,7 @@ def validate(
             Here we only store the per endpoint information.
 
     Returns:
-        The same function with ``__payload__``
-        metadata instance of :class:`EndpointMetadata`.
+        The same function with ``__payload__`` payload instance.
 
     .. warning::
         Do not disable ``validate_responses`` unless
@@ -371,8 +371,7 @@ def modify(
             Here we only store the per endpoint information.
 
     Returns:
-        The same function with ``__payload__``
-        metadata instance of :class:`EndpointMetadata`.
+        The same function with ``__payload__`` payload instance.
 
     .. warning::
         Do not disable ``validate_responses`` unless

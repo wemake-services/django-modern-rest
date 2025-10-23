@@ -91,8 +91,10 @@ nitpicky = True
 
 PY_CLASS = 'py:class'
 nitpick_ignore = [
-    # external library / undocumented external
+    # internal type helpers
     (PY_CLASS, 'FromJson'),
+    (PY_CLASS, '_ResponseT'),
+    (PY_CLASS, '_ModifyCallable'),
 ]
 
 # Set `typing.TYPE_CHECKING` to `True`:

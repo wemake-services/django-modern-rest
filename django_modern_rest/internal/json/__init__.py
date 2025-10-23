@@ -17,8 +17,17 @@ except ImportError:  # pragma: no cover
 #: Types that are possible to load json from.
 FromJson: TypeAlias = str | bytes | bytearray
 
-#: Type that represents the `serialize` callback.
-Serialize: TypeAlias = Callable[[Any, Callable[[Any], Any]], bytes]
+
+class Serialize(Protocol):
+    """Type that represents the `serialize` callback."""
+
+    def __call__(
+        self,
+        to_serialize: Any,
+        serializer: Callable[[Any], Any],
+    ) -> bytes:
+        """Function to be called on object serialization."""
+
 
 #: Type that represents the `deserializer` hook.
 DeserializeFunc: TypeAlias = Callable[[type[Any], Any], Any]
@@ -34,4 +43,4 @@ class Deserialize(Protocol):
         *,
         strict: bool = ...,
     ) -> Any:
-        """Function to be called on deserialization."""
+        """Function to be called on object deserialization."""

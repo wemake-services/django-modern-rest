@@ -21,19 +21,19 @@ from django_modern_rest.serialization import (
 @final
 class _AsyncController(Controller[PydanticSerializer]):
     async def get(self) -> str:
-        return 'abc'
+        raise NotImplementedError
 
 
 @final
 class _SyncController(Controller[PydanticSerializer]):
     def post(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 @final
 class _DuplicatePostController(Controller[PydanticSerializer]):
     def post(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 @final
@@ -49,7 +49,7 @@ class _DifferentSerializer(BaseSerializer):  # type: ignore[misc]
 @final
 class _DifferentSerializerController(Controller[_DifferentSerializer]):
     def get(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 def test_compose_async_and_sync() -> None:

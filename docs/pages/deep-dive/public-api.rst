@@ -1,7 +1,6 @@
 Public API
 ==========
 
-
 Controller
 ----------
 
@@ -12,6 +11,13 @@ Endpoint
 --------
 
 .. autoclass:: django_modern_rest.endpoint.Endpoint
+  :members:
+
+.. autoclass:: django_modern_rest.metadata.EndpointMetadata
+
+.. autofunction:: django_modern_rest.endpoint.modify
+
+.. autofunction:: django_modern_rest.endpoint.validate
 
 
 Components
@@ -30,11 +36,16 @@ Response and headers
 .. autoclass:: django_modern_rest.response.ResponseDescription
   :members:
 
+.. autoclass:: django_modern_rest.response.ResponseModification
+  :members:
+
 .. autoclass:: django_modern_rest.headers.HeaderDescription
   :members:
 
 .. autoclass:: django_modern_rest.headers.NewHeader
   :members:
+
+.. autodata:: django_modern_rest.headers.ResponseHeadersT
 
 
 Validation
