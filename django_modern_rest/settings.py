@@ -42,7 +42,7 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[DMRSettings] = cast(
     DMRSettings,
-               {
+    {
         DMR_SERIALIZE_KEY: DMR_SERIALIZE,
         DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
         DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
