@@ -1,10 +1,8 @@
 import abc
 from collections.abc import Callable
-from typing import ClassVar, TypeAlias, cast, final
+from typing import ClassVar, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
-from typing_extensions import override
 
 from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.types import Empty, EmptyObj
@@ -32,7 +30,7 @@ def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
     )
 
     serialize = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
-    return cast(SerializedSchema, serialize(schema, None).decode('utf-8'))
+    return serialize(schema, None).decode('utf-8')  # type: ignore[no-any-return]
 
 
 class BaseRenderer:
@@ -95,60 +93,3 @@ class BaseRenderer:
             Django HTTP response with rendered content.
         """
         raise NotImplementedError
-
-
-@final
-class JsonRenderer(BaseRenderer):
-    """
-    Renderer for OpenAPI schema in JSON format.
-
-    Provides JSON representation of OpenAPI specification suitable for
-    API documentation tools and client code generation.
-    """
-
-    default_path: ClassVar[str] = 'openapi.json/'
-    default_name: ClassVar[str] = 'json'
-    content_type: ClassVar[str] = 'application/json'
-    serializer: SchemaSerialier = staticmethod(json_serializer)  # noqa: WPS421
-
-    @override
-    def render(
-        self,
-        request: HttpRequest,
-        schema: ConvertedSchema,
-    ) -> HttpResponse:
-        """Render the OpenAPI schema as JSON response."""
-        return HttpResponse(
-            content=self.serializer(schema),
-            content_type=self.content_type,
-        )
-
-
-@final
-class SwaggerRenderer(BaseRenderer):
-    """
-    Renderer for OpenAPI schema using Swagger UI.
-
-    Provides interactive HTML interface for exploring OpenAPI specification
-    using Swagger UI components.
-    """
-
-    default_path: ClassVar[str] = 'swagger/'
-    default_name: ClassVar[str] = 'swagger'
-    content_type: ClassVar[str] = 'text/html'
-    template_name: ClassVar[str] = 'django_modern_rest/swagger.html'
-    serializer: SchemaSerialier = staticmethod(json_serializer)  # noqa: WPS421
-
-    @override
-    def render(
-        self,
-        request: HttpRequest,
-        schema: ConvertedSchema,
-    ) -> HttpResponse:
-        """Render the OpenAPI schema using Swagger UI template."""
-        return render(
-            request,
-            self.template_name,
-            context={'schema': self.serializer(schema)},
-            content_type=self.content_type,
-        )

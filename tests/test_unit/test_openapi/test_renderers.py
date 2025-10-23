@@ -9,6 +9,7 @@ from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.openapi.renderers import (
     BaseRenderer,
     JsonRenderer,
+    ScalarRenderer,
     SwaggerRenderer,
     json_serializer,
 )
@@ -40,6 +41,7 @@ def test_json_serializer_basic_functionality() -> None:
     [
         (JsonRenderer, 'application/json'),
         (SwaggerRenderer, 'text/html'),
+        (ScalarRenderer, 'text/html'),
     ],
 )
 def test_renderer_content_types(
@@ -56,6 +58,7 @@ def test_renderer_content_types(
     [
         (JsonRenderer, 'openapi.json/'),
         (SwaggerRenderer, 'swagger/'),
+        (ScalarRenderer, 'scalar/'),
     ],
 )
 def test_renderer_default_paths(
@@ -72,6 +75,7 @@ def test_renderer_default_paths(
     [
         (JsonRenderer, 'json'),
         (SwaggerRenderer, 'swagger'),
+        (ScalarRenderer, 'scalar'),
     ],
 )
 def test_renderer_default_names(
@@ -98,16 +102,22 @@ def test_json_renderer_render_method(dmr_rf: DMRRequestFactory) -> None:
     assert parsed_content == _TEST_SCHEMA
 
 
-def test_swagger_renderer_render_method(dmr_rf: DMRRequestFactory) -> None:
-    """Ensure that `SwaggerRenderer.render` returns HTML response."""
-    renderer = SwaggerRenderer()
-    request = dmr_rf.get('/swagger/')
+@pytest.mark.parametrize(
+    'renderer_class',
+    [SwaggerRenderer, ScalarRenderer],
+)
+def test_html_renderer_render_method(
+    dmr_rf: DMRRequestFactory,
+    *,
+    renderer_class: type[BaseRenderer],
+) -> None:
+    """Ensure that HTML renderers return proper HTML response."""
+    renderer = renderer_class()
+    request = dmr_rf.get(f'/{renderer.default_path}')
 
     response = renderer.render(request, _TEST_SCHEMA)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert response['Content-Type'] == 'text/html'
-
-    content = response.content.decode('utf-8')  # noqa: WPS110
-    assert 'swagger' in content.lower() or 'openapi' in content.lower()
+    assert '<html' in response.content.decode('utf-8').lower()
