@@ -103,7 +103,17 @@ class Body(ComponentParser, Generic[_BodyT]):
     """
     Parses body of the request.
 
-    # TODO: example
+    For example:
+    .. code:: python
+
+        >>> import pydantic
+
+        >>> class UserCreateInput(pydantic.BaseModel):
+        ...     email: str
+        ...     age: int
+
+    Will parse a body like ``{'email': 'user@mail.ru', 'age': 18}`` into
+    ``UserCreateInput`` model.
 
     If your controller class inherits from ``Body`` - then you can access
     parsed body as ``self.parsed_body`` attribute.
@@ -141,7 +151,17 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     """
     Parses request headers.
 
-    # TODO: example
+    For example:
+    .. code:: python
+
+        >>> import pydantic
+
+        >>> class AuthHeaders(pydantic.BaseModel):
+        ...     token: str = pydantic.Field(alias='X-API-Token')
+
+    Will parse request headers like ``Token: secret-token`` into
+    ``AuthHeaders`` model.
+
 
     If your controller class inherits from ``Headers`` - then you can access
     parsed headers as ``self.parsed_headers`` attribute.
@@ -166,7 +186,15 @@ class Path(ComponentParser, Generic[_PathT]):
     """
     Parses the url part of the request.
 
-    # TODO: example
+    For example:
+    .. code:: python
+
+        >>> import pydantic
+
+        >>> class UserPath(pydantic.BaseModel):
+        ...     user_id: int
+
+    Will parse a url path like ``/user_id/100`` into ``UserPath`` model.
 
     If your controller class inherits from ``Path`` - then you can access
     parsed paths parameters as ``self.parsed_path`` attribute.
