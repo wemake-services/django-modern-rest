@@ -236,8 +236,11 @@ addopts = [
 [tool.coverage.run]
 # Coverage settings: https://coverage.readthedocs.io
 omit = [
-  "django_modern_rest/internal/json/raw.py",  # when msgspec is installed
-  "django_modern_rest/internal/json/msgspec.py",  # when not
+  # When msgspec is installed:
+  "django_modern_rest/internal/json/raw.py",
+  "tests/test_unit/test_plugins/test_msgspec/test_validation.py",
+  # When not:
+  "django_modern_rest/internal/json/msgspec.py",
 ]
 
 # Covdefaults: https://pypi.org/project/covdefaults
