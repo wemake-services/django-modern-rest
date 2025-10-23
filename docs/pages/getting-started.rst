@@ -98,7 +98,7 @@ Next, you can learn:
 
 - How to generate OpenAPI schema
 - How to handle errors
-- How to cusstomize controllers and endpoints
+- How to customize controllers and endpoints
 
 
 Next up
