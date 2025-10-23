@@ -1,8 +1,6 @@
 import dataclasses
 from http import HTTPMethod, HTTPStatus
 from typing import (
-    Literal,
-    TypeAlias,
     final,
 )
 
@@ -13,9 +11,6 @@ from django_modern_rest.response import (
 from django_modern_rest.types import (
     Empty,
 )
-
-#: Decorator name that was used to create this metadata.
-ExplicitDecoratorNameT: TypeAlias = Literal['modify', 'validate'] | None
 
 
 @final

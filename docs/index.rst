@@ -62,7 +62,7 @@ Main features include:
       APIs than the alternatives.
 
     .. grid-item-card:: :octicon:`star` Sync and Async support
-      :link: pages/performance
+      :link: pages/core-concepts
       :link-type: doc
 
       Fully utilizes best of the both worlds in ``django``.
@@ -137,4 +137,5 @@ Here are our amazing people who made this project possible.
   :hidden:
 
   pages/deep-dive/public-api.rst
+  pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst

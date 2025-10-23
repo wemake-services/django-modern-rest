@@ -80,7 +80,7 @@ napoleon_google_docstring = True
 napoleon_include_special_with_doc = True
 napoleon_use_admonition_for_examples = True
 napoleon_use_admonition_for_notes = True
-napoleon_use_admonition_for_references = False
+napoleon_use_admonition_for_references = True
 napoleon_attr_annotations = True
 
 # If true, Sphinx will warn about all references
@@ -90,8 +90,13 @@ nitpicky = True
 
 PY_CLASS = 'py:class'
 nitpick_ignore = [
-    # external library / undocumented external
+    # internal type helpers
     (PY_CLASS, 'FromJson'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ResponseT'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ModifyCallable'),
+    (PY_CLASS, '_ParamT'),
+    # TODO: fix out why this is an error
+    (PY_CLASS, 'django.http.response.HttpResponse'),
 ]
 
 # Set `typing.TYPE_CHECKING` to `True`:

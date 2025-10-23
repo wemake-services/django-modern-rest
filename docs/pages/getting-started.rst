@@ -45,7 +45,8 @@ Available extras:
 
 .. note::
 
-  You don't need to add ``'django-modern-rest'`` to the ``INSTALLED_APPS``.
+  You don't need to add ``'django-modern-rest'`` to the ``INSTALLED_APPS``,
+  unless you want to serve static files for the OpenAPI.
 
 
 Showcase
