@@ -616,6 +616,8 @@ def validate_method_name(func_name: str) -> HTTPMethod:
             raise ValueError  # noqa: TRY301
         if func_name == 'meta':
             return HTTPMethod.OPTIONS
+        if func_name == 'query':
+            return HTTPMethod.GET  # There is no `query` in http enums.
         return HTTPMethod(func_name.upper())
     except ValueError:
         raise EndpointMetadataError(
