@@ -1,11 +1,13 @@
 from collections.abc import Mapping
 from functools import cache, lru_cache
-from typing import Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final
 
 from django.utils import module_loading
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.types import DMRSettings
+
+if TYPE_CHECKING:
+    from django_modern_rest.types import DMRSettings
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -40,8 +42,8 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
 
 
 #: Default settings for `django_modern_rest`.
-_DEFAULTS: Final[DMRSettings] = cast(
-    DMRSettings,
+_DEFAULTS: Final = cast(
+    'DMRSettings',
     {
         DMR_SERIALIZE_KEY: DMR_SERIALIZE,
         DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
