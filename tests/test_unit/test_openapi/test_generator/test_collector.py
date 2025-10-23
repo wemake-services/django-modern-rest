@@ -3,7 +3,6 @@ from typing import Any, final
 
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
-from django.views import View
 
 from django_modern_rest import Controller
 from django_modern_rest.openapi.generator.collector import (
