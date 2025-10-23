@@ -131,11 +131,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'shibuya'
+html_favicon = '_static/images/favicon.svg'
 
 html_theme_options = {
     'github_url': 'https://github.com/wemake-services/django-modern-rest',
     'readthedocs_url': 'https://django-modern-rest.readthedocs.io',
     'globaltoc_expand_depth': 1,
+    'accent_color': 'green',
+    'light_logo': '_static/images/logo-light.svg',
+    'dark_logo': '_static/images/logo-dark.svg',
 }
 
 html_context = {
