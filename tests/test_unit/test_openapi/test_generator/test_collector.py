@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import final
+from typing import Any, final
 
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
@@ -114,7 +114,7 @@ def test_join_paths(
 )
 def test_process_pattern_with_different_views(
     path_str: str,
-    view_class: type[View],
+    view_class: type[Controller[Any]],
     expected_count: int,
 ) -> None:
     """Ensure that `_process_pattern` processes different types correctly."""
