@@ -91,7 +91,6 @@ sphinx-tabs = "^3.4"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
 sphinx-design = "^0.6"
-tomli = "^2.2"
 myst-parser = "^4.0"
 shibuya = "^2025.10"
 

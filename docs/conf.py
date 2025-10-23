@@ -11,10 +11,9 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 import sys
+import tomllib
 from pathlib import Path
 from typing import cast
-
-import tomli
 
 # We need `server` to be importable from here:
 _ROOT = Path('..').resolve(strict=True)
@@ -28,7 +27,7 @@ def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
     return cast(
         dict[str, str],
-        tomli.loads(pyproject.read_text())['tool']['poetry'],
+        tomllib.loads(pyproject.read_text())['tool']['poetry'],
     )
 
 
