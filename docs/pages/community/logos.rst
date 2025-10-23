@@ -21,7 +21,7 @@ for information about permission and usage of the logo.
                     :alt: Light theme logo
                     :width: 200px
                     :align: center
-                    :target: _static/images/logo-light.svg
+                    :target: /_static/images/logo-light.svg
 
             .. grid-item-card:: Dark Theme
                 :class-card: text-center
@@ -30,7 +30,7 @@ for information about permission and usage of the logo.
                     :alt: Dark theme logo
                     :width: 200px
                     :align: center
-                    :target: _static/images/logo-dark.png
+                    :target: /_static/images/logo-dark.png
 
     .. tab:: SVG format
 
@@ -46,7 +46,7 @@ for information about permission and usage of the logo.
                     :alt: Light theme logo
                     :width: 200px
                     :align: center
-                    :target: _static/images/logo-light.svg
+                    :target: /_static/images/logo-light.svg
 
             .. grid-item-card:: Dark Theme
                 :class-card: text-center
@@ -55,7 +55,7 @@ for information about permission and usage of the logo.
                     :alt: Dark theme logo
                     :width: 200px
                     :align: center
-                    :target: _static/images/logo-dark.svg
+                    :target: /_static/images/logo-dark.svg
 
 Font
 ----
