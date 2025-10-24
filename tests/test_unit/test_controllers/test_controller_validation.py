@@ -3,9 +3,15 @@ from typing import ClassVar
 
 import pytest
 
-from django_modern_rest import Controller, ResponseDescription
+from django_modern_rest import (
+    AsyncMetaMixin,
+    Controller,
+    MetaMixin,
+    ResponseDescription,
+)
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.validation import ControllerValidator
 
 
 def test_controller_either_sync_or_async() -> None:
@@ -53,4 +59,78 @@ def test_controller_http_spec() -> None:
             ]
 
             def get(self) -> str:  # needs at least one endpoint to validate
+                raise NotImplementedError
+
+
+def test_controller_have_either_mixins() -> None:
+    """Ensure that controllers does not have both mixins."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match='can only have one of',
+    ):
+
+        class _MixedController(
+            AsyncMetaMixin,
+            MetaMixin,
+            Controller[PydanticSerializer],
+        ):
+            async def post(self) -> list[str]:
+                raise NotImplementedError
+
+
+def test_controller_have_valid_mixins() -> None:
+    """Ensure that controller have a valid mixin."""
+
+    class _MixedSyncController(
+        MetaMixin,
+        Controller[PydanticSerializer],
+    ):
+        def post(self) -> list[str]:
+            raise NotImplementedError
+
+    class _MixedAsyncController(
+        AsyncMetaMixin,
+        Controller[PydanticSerializer],
+    ):
+        async def post(self) -> list[str]:
+            raise NotImplementedError
+
+
+def test_sync_controller_have_invalid_mixin(monkeypatch) -> None:
+    """Ensure that sync controller have an invalid mixin."""
+    monkeypatch.setattr(
+        ControllerValidator,
+        '_validate_endpoints',
+        lambda self, controller: False,
+    )
+    with pytest.raises(
+        EndpointMetadataError,
+        match='contains incompatible mixin',
+    ):
+
+        class _MixedSyncController(
+            AsyncMetaMixin,
+            Controller[PydanticSerializer],
+        ):
+            def post(self) -> list[str]:
+                raise NotImplementedError
+
+
+def test_async_controller_have_invalid_mixin(monkeypatch) -> None:
+    """Ensure that async controller have an invalid mixin."""
+    monkeypatch.setattr(
+        ControllerValidator,
+        '_validate_endpoints',
+        lambda self, controller: True,
+    )
+    with pytest.raises(
+        EndpointMetadataError,
+        match='contains incompatible mixin',
+    ):
+
+        class _MixedAsyncController(
+            MetaMixin,
+            Controller[PydanticSerializer],
+        ):
+            async def post(self) -> list[str]:
                 raise NotImplementedError
