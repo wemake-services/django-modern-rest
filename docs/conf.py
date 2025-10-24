@@ -144,7 +144,7 @@ html_theme_options = {
     'accent_color': 'green',
     'light_logo': '_static/images/logo-light.svg',
     'dark_logo': '_static/images/logo-dark.svg',
-    'og_image_url': 'https://repository-images.githubusercontent.com/1072817092/f0ab70e3-c165-485b-b591-e860c16f7c4f'
+    'og_image_url': 'https://repository-images.githubusercontent.com/1072817092/f0ab70e3-c165-485b-b591-e860c16f7c4f',
 }
 
 html_context = {
