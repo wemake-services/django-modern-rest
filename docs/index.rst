@@ -81,7 +81,7 @@ Main features include:
 
       But, there's more: we also provide validation
       and testing tools for your schema!
-      Powered by `schemathesis <https://github.com/schemathesis/schemathesis>`
+      Powered by `schemathesis <https://github.com/schemathesis/schemathesis>`_
 
     .. grid-item-card:: :octicon:`rocket` Still good old Django
       :link: pages/core-concepts
