@@ -20,13 +20,13 @@ class Empty:
     """Special value for empty defaults."""
 
 
-class BaseMetaMixin:
+class BaseMeta:
     """Base class for sync MetaMixin."""
 
     __slots__ = ()
 
 
-class BaseAsyncMetaMixin:
+class BaseAsyncMeta:
     """Base class for async MetaMixin."""
 
     __slots__ = ()

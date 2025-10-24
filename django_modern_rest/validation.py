@@ -43,8 +43,8 @@ from django_modern_rest.settings import (
     resolve_setting,
 )
 from django_modern_rest.types import (
-    BaseAsyncMetaMixin,
-    BaseMetaMixin,
+    BaseAsyncMeta,
+    BaseMeta,
     Empty,
     EmptyObj,
     infer_bases,
@@ -248,8 +248,8 @@ class ControllerValidator:
         if not controller.api_endpoints:
             return
 
-        has_async_mixin = is_safe_subclass(controller, BaseAsyncMetaMixin)
-        has_sync_mixin = is_safe_subclass(controller, BaseMetaMixin)
+        has_async_mixin = is_safe_subclass(controller, BaseAsyncMeta)
+        has_sync_mixin = is_safe_subclass(controller, BaseMeta)
         if not (has_async_mixin or has_sync_mixin):
             return
 
