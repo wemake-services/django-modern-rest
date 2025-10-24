@@ -1,12 +1,11 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
-from pprint import pprint
 
 from django.urls import URLPattern, path
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.converter import SchemaConverter
-from django_modern_rest.openapi.generator.new_collector import collect_controllers
+from django_modern_rest.openapi.generator.new_collector import (
+    collect_controllers,
+)
 from django_modern_rest.openapi.generator.path_item import gen_pathitems
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
@@ -49,7 +48,7 @@ def openapi_spec(
     controllers = collect_controllers(router)
     path_items = gen_pathitems(controllers)
     print(path_items)
-    
+
     urlpatterns = [
         path(
             renderer.path,

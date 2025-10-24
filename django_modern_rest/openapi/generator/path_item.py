@@ -1,4 +1,5 @@
 import uuid
+
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.headers import HeaderDescription
 from django_modern_rest.metadata import EndpointMetadata
@@ -66,7 +67,7 @@ def create_response(response_description: ResponseDescription) -> Response:
 
 def create_headers(headers: dict[str, HeaderDescription] | Empty) -> dict[str, Header | Reference] | None:
     if isinstance(headers, Empty):
-        return
+        return None
 
     _headers: dict[str, Header | Reference] = {}
 
