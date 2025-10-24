@@ -79,7 +79,7 @@ def wrap_middleware(  # noqa: WPS202
         """Create a decorator with the given converter."""
         all_descriptions = [response_description, *response_descriptions]
 
-        #TODO: validate responses definition
+        # TODO: validate responses definition
         response_dict = {desc.status_code: desc for desc in all_descriptions}
         converter_spec = (response_dict, converter)
 
