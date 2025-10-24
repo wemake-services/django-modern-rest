@@ -1,21 +1,15 @@
 import dataclasses
 from http import HTTPMethod, HTTPStatus
 from typing import (
-    Literal,
-    TypeAlias,
     final,
 )
 
+from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.response import (
     ResponseDescription,
     ResponseModification,
 )
-from django_modern_rest.types import (
-    Empty,
-)
-
-#: Decorator name that was used to create this metadata.
-ExplicitDecoratorNameT: TypeAlias = Literal['modify', 'validate'] | None
+from django_modern_rest.types import Empty
 
 
 @final
@@ -34,6 +28,8 @@ class EndpointMetadata:
             Here we only store the per endpoint information.
         modification: Default modifications that are applied
             to the returned data. Can be ``None``, when ``@validate`` is used.
+        error_handler: Callback function to be called
+            when this endpoint faces an exception.
 
     Abstract, cannot be created directly, use specific subclasses for that.
     """
@@ -42,3 +38,4 @@ class EndpointMetadata:
     validate_responses: bool | Empty
     method: HTTPMethod
     modification: ResponseModification | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty

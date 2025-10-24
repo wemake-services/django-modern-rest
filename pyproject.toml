@@ -67,6 +67,7 @@ codespell = "^2.4.1"
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
 import-linter = "^2.5"
+slotscheck = "^0.19"
 
 pytest = "^8.4"
 pytest-cov = "^7.0"
@@ -76,21 +77,23 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
-inline-snapshot = ">=0.29,<0.31"
-slotscheck = "^0.19.1"
+inline-snapshot = "^0.30"
+schemathesis = "^4.3"
+
+httpx = "^0.28"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8.1"
+sphinx = "^8.2"
 sphinx-autodoc-typehints = "^3.0"
 sphinx-iconify = "^0.2"
 sphinx-tabs = "^3.4"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
 sphinx-design = "^0.6"
-tomli = "^2.2"
+sphinxcontrib-mermaid = "^1.0"
 myst-parser = "^4.0"
 shibuya = "^2025.10"
 
@@ -170,6 +173,7 @@ ignore = [
   "PLR09",   # we have our own complexity rules
   "PLR2004", # do not report magic numbers
   "PLR6301", # do not require classmethod / staticmethod when self not used
+  "PLC0414", # do not raise on `as` re-exports
   "TRY003",  # long exception messages from `tryceratops`
 ]
 external = [ "WPS" ]
@@ -210,19 +214,24 @@ addopts = [
   "--strict-config",
   "--strict-markers",
   "--doctest-modules",
+  "--doctest-glob=*.rst",
   # Output:
   "--tb=short",
   # Coverage:
   "--cov=django_modern_rest",
   "--cov=django_test_app",
+  "--cov=tests",
   "--cov-report=term-missing:skip-covered",
   "--cov-report=html",
   "--cov-report=xml",
   "--cov-branch",
   "--cov-fail-under=100",
-  # Ignores:
-  "--ignore=docs",
+  # Ignores docs:
+  "--ignore=docs/conf.py",
+  "--ignore=docs/examples/",
+  # Ignores typesafety tests:
   "--ignore=typesafety/assert_type",
+  # Ignores optional deps:
   "--ignore=django_modern_rest/internal/json/msgspec.py",
   "--ignore=django_modern_rest/plugins/msgspec.py",
 ]
@@ -231,8 +240,11 @@ addopts = [
 [tool.coverage.run]
 # Coverage settings: https://coverage.readthedocs.io
 omit = [
-  "django_modern_rest/internal/json/raw.py",  # when msgspec is installed
-  "django_modern_rest/internal/json/msgspec.py",  # when not
+  # When msgspec is installed:
+  "django_modern_rest/internal/json/raw.py",
+  "tests/test_unit/test_plugins/test_msgspec/test_validation.py",
+  # When not:
+  "django_modern_rest/internal/json/msgspec.py",
 ]
 
 # Covdefaults: https://pypi.org/project/covdefaults

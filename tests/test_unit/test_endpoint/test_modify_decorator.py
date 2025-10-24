@@ -8,6 +8,7 @@ from django.test import RequestFactory
 
 from django_modern_rest import (
     Controller,
+    Endpoint,
     HeaderDescription,
     NewHeader,
     ResponseDescription,
@@ -128,3 +129,43 @@ def test_modify_response_headers(rf: RequestFactory) -> None:
         'X-Test': 'true',
     }
     assert json.loads(response.content) == {'result': 'done'}
+
+
+def test_modify_sync_error_handler_for_async() -> None:
+    """Ensure that it is impossible to pass sync error handler to async case."""
+    with pytest.raises(EndpointMetadataError, match=' sync `error_handler`'):
+
+        class _WrongModifyController(Controller[PydanticSerializer]):
+            def endpoint_error(
+                self,
+                endpoint: Endpoint,
+                exc: Exception,
+            ) -> HttpResponse:
+                raise NotImplementedError
+
+            @modify(  # type: ignore[deprecated]
+                status_code=HTTPStatus.OK,
+                error_handler=endpoint_error,
+            )
+            async def post(self) -> int:
+                raise NotImplementedError
+
+
+def test_modify_async_endpoint_error_for_sync() -> None:
+    """Ensure that it is impossible to pass async error handler to sync case."""
+    with pytest.raises(EndpointMetadataError, match='async `error_handler`'):
+
+        class _WrongModifyController(Controller[PydanticSerializer]):
+            async def async_endpoint_error(
+                self,
+                endpoint: Endpoint,
+                exc: Exception,
+            ) -> HttpResponse:
+                raise NotImplementedError
+
+            @modify(  # type: ignore[type-var]
+                status_code=HTTPStatus.OK,
+                error_handler=async_endpoint_error,
+            )
+            def get(self) -> int:
+                raise NotImplementedError

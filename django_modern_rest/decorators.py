@@ -108,5 +108,12 @@ def dispatch_decorator(  # noqa: WPS202
     - :func:`django.contrib.auth.decorators.permission_required`
     - and any other default or custom django decorator
 
+    .. warning::
+
+        This will return non-json responses, without respecting your spec!
+        Use with caution!
+
+        If you want full spec support, use middleware wrappers.
+
     """
     return method_decorator(func, name='dispatch')

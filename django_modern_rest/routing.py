@@ -1,14 +1,14 @@
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
-from django.http import HttpRequest, HttpResponseBase
+from django.http import HttpRequest, HttpResponse
 from django.urls import URLPattern, URLResolver
-from django.utils.functional import classproperty
-from django.views import View
 from typing_extensions import override
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
     from django_modern_rest.serialization import BaseSerializer
 
 
@@ -23,9 +23,8 @@ class Router:
 
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
-_ViewFunc: TypeAlias = Callable[..., HttpResponseBase]
+_ViewFunc: TypeAlias = Callable[..., HttpResponse]
 _ControllerT: TypeAlias = type['Controller[Any]']
-_ViewsSpec: TypeAlias = tuple[_ControllerT, _ViewFunc]
 
 
 def compose_controllers(
@@ -35,18 +34,43 @@ def compose_controllers(
     second_controller: type['Controller[_SerializerT]'],
     /,
     *extra: type['Controller[_SerializerT]'],
-) -> type[View]:
-    """Combines several controllers with different http methods into one url."""
-    # TODO: validate `meta` composition. Because right now it is not correct.
+    meta_mixin: type['MetaMixin | AsyncMetaMixin'] | None = None,
+    **init_kwargs: Any,
+) -> type['Controller[_SerializerT]']:
+    """
+    Combines several controllers with different http methods into one url.
+
+    Args:
+        first_controller: First required controller class to compose.
+        second_controller: Second required controller class to compose.
+        extra: Other optional controller classes to compose.
+        meta_mixin: Type to add to support ``OPTIONS`` method.
+        init_kwargs: Kwargs to be passed to controller instance creation.
+
+    Raises:
+        ValueError: When local validation fails.
+        EndpointMetadataError: When controller validation fails.
+
+    Returns:
+        New controller class that has all the endpoints
+        from all composed controllers.
+
+    """
+    from django_modern_rest.controller import Controller  # noqa: PLC0415
+
     controllers = [first_controller, second_controller, *extra]
-    is_all_async = _validate_controllers_composition(controllers)
+    _validate_controllers_composition(controllers)
 
-    views = [(controller, controller.as_view()) for controller in controllers]
+    endpoints, method_mapping = _build_method_mapping(controllers)
+    serializer = first_controller.serializer
+    controller_mixins = (meta_mixin,) if meta_mixin else ()
 
-    method_mapping = _build_method_mapping(views)
-
-    class ComposedControllerView(View):  # noqa: WPS431
+    class ComposedController(  # noqa: WPS431
+        *controller_mixins,  # type: ignore[misc]  # noqa: WPS606
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
         original_controllers = controllers
+        api_endpoints = endpoints
 
         @override
         def dispatch(
@@ -54,51 +78,51 @@ def compose_controllers(
             request: HttpRequest,
             *args: Any,
             **kwargs: Any,
-        ) -> HttpResponseBase:
+        ) -> HttpResponse:
             # Routing is efficient in runtime, with O(1) on average.
             # Since we build everything during import time :wink:
             method = request.method.lower()  # type: ignore[union-attr]
-            view = method_mapping.get(method)
-            if view is not None:
-                return view(request, *args, **kwargs)
+            controller_cls = method_mapping.get(method)
+            if controller_cls is not None:
+                # Here we have to construct new controller instances,
+                # this is rather cheap and has the principle of "least surprise"
+                # but I would love to reuse instances for speed :(
+                controller = controller_cls(**init_kwargs)
+                # We skip useless default checks after `.setup` here:
+                controller.setup(request, *args, **kwargs)
+                return controller.dispatch(request, *args, **kwargs)
+            if meta_mixin and method == 'options':
+                return self.api_endpoints['options'](self, *args, **kwargs)
             return first_controller.handle_method_not_allowed(method)
 
-        @classproperty
-        @override
-        def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
-            """Returns `True` if all of the controllers are async."""
-            return is_all_async
-
-    return ComposedControllerView
+    return ComposedController
 
 
 def _validate_controllers_composition(
     controllers: list[_ControllerT],
-) -> bool:
+) -> None:
     # We know that there are at least 2 controllers as this point:
-    is_async = bool(controllers[0].view_is_async)
     serializer = controllers[0].serializer
     for controller in controllers:
-        if controller.view_is_async is not is_async:
-            raise ValueError(
-                'Composing controllers with async and sync endpoints '
-                'is not supported',
-            )
         if serializer is not controller.serializer:
             raise ValueError(
                 'Composing controllers with different serializer types '
                 'is not supported',
             )
 
-    return is_async
+
+_MethodMappingT: TypeAlias = dict[str, _ControllerT]
+_EndpointsT: TypeAlias = dict[str, 'Endpoint']
 
 
 def _build_method_mapping(
-    views: list[_ViewsSpec],
-) -> Mapping[str, _ViewFunc]:
-    method_mapping: dict[str, _ViewFunc] = {}
-    for controller, view in views:
-        controller_methods = controller.existing_http_methods()
+    controllers: list[_ControllerT],
+) -> tuple[_EndpointsT, _MethodMappingT]:
+    method_mapping: _MethodMappingT = {}
+    endpoints: _EndpointsT = {}
+
+    for controller in controllers:
+        controller_methods = controller.api_endpoints.keys()
         if not controller_methods:
             raise ValueError(
                 f'Controller {controller} must have at least one endpoint '
@@ -110,5 +134,9 @@ def _build_method_mapping(
                 f'Controllers have {method_intersection!r} common methods, '
                 'while all endpoints must be unique',
             )
-        method_mapping.update(dict.fromkeys(controller_methods, view))
-    return method_mapping
+
+        endpoints.update(controller.api_endpoints)
+        method_mapping.update(
+            dict.fromkeys(controller.api_endpoints, controller),
+        )
+    return endpoints, method_mapping

@@ -1,11 +1,13 @@
-import types
 from collections.abc import Mapping
 from functools import cache, lru_cache
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from django.utils import module_loading
 
 from django_modern_rest.openapi.config import OpenAPIConfig
+
+if TYPE_CHECKING:
+    from django_modern_rest.types import DMRSettings
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -35,9 +37,12 @@ DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
     version='0.1.0',
 )
 
-# TODO: create TypedDict with types for settings
+
+# Typed defaults section
+
+
 #: Default settings for `django_modern_rest`.
-_DEFAULTS: Final = types.MappingProxyType({
+_DEFAULTS: Final['DMRSettings'] = {  # noqa: WPS407
     DMR_SERIALIZE_KEY: DMR_SERIALIZE,
     DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
     DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
@@ -45,7 +50,7 @@ _DEFAULTS: Final = types.MappingProxyType({
     DMR_VALIDATE_RESPONSES_KEY: True,
     DMR_RESPONSES_KEY: [],  # global responses, for response validation
     DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
-})
+}
 
 
 @lru_cache
@@ -73,7 +78,10 @@ def resolve_setting(setting_name: str, *, import_string: bool = False) -> Any:
     :func:`clear_settings_cache` before and after modifying
     Django settings to ensure the cache is invalidated properly.
     """
-    setting = resolve_defaults().get(setting_name, _DEFAULTS[setting_name])
+    setting = resolve_defaults().get(
+        setting_name,
+        _DEFAULTS[setting_name],  # type: ignore[literal-required]
+    )
     if import_string and isinstance(setting, str):
         return module_loading.import_string(setting)
     return setting

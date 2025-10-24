@@ -1,4 +1,5 @@
 import uuid
+from typing import final
 
 import msgspec
 
@@ -18,6 +19,7 @@ class HeaderModel(msgspec.Struct):
     token: str = msgspec.field(name='X-API-Token')
 
 
+@final
 class UserController(
     Controller[MsgspecSerializer],
     Body[UserCreateModel],
