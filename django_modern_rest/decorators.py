@@ -77,10 +77,9 @@ def wrap_middleware(  # noqa: WPS202
         converter: ResponseConverter,
     ) -> DecoratorWithResponses:
         """Create a decorator with the given converter."""
-        converter_spec = (
-            [response_description, *response_descriptions],
-            converter,
-        )
+        all_descriptions = [response_description, *response_descriptions]
+        response_dict = {desc.status_code: desc for desc in all_descriptions}
+        converter_spec = (response_dict, converter)
 
         def decorator(cls: _TypeT) -> _TypeT:
             do_wrap_dispatch(cls, middleware, converter_spec)

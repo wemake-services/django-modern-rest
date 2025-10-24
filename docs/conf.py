@@ -98,7 +98,7 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifyAsyncCallable'),
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
-    (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper.TypeT'),
+    (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
     # TODO: fix out why this is an error
     (PY_CLASS, 'django.http.response.HttpResponse'),
     (PY_CLASS, 'django.http.request.HttpRequest'),

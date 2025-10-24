@@ -1,6 +1,7 @@
 import inspect
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
 from django.http import HttpRequest, HttpResponse
@@ -13,7 +14,7 @@ _CallableAny: TypeAlias = Callable[..., Any]
 MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
 _ConverterSpec: TypeAlias = tuple[
-    list['ResponseDescription'],
+    dict[HTTPStatus, 'ResponseDescription'],
     ResponseConverter,
 ]
 _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
@@ -37,9 +38,8 @@ def apply_converter(
 ) -> HttpResponse:
     """Apply response converter based on status code matching."""
     response_descs, converter_func = converter
-    for response_desc in response_descs:
-        if response.status_code == response_desc.status_code:
-            return converter_func(response)
+    if response.status_code in response_descs:
+        return converter_func(response)
     return response
 
 
