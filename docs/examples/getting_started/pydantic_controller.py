@@ -1,4 +1,5 @@
 import uuid
+from typing import final
 
 import pydantic
 
@@ -18,6 +19,7 @@ class HeaderModel(pydantic.BaseModel):
     token: str = pydantic.Field(alias='X-API-Token')
 
 
+@final
 class UserController(
     Controller[PydanticSerializer],
     Body[UserCreateModel],

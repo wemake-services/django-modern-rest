@@ -25,7 +25,7 @@ def test_validate_headers_zero_params() -> None:
             Controller[PydanticSerializer],
         ):
             def get(self) -> dict[str, str]:
-                return self.parsed_headers  # type: ignore[no-any-return]
+                raise NotImplementedError
 
 
 def test_validate_body_zero_params() -> None:
@@ -37,7 +37,7 @@ def test_validate_body_zero_params() -> None:
             Controller[PydanticSerializer],
         ):
             def get(self) -> dict[str, str]:
-                return self.parsed_body  # type: ignore[no-any-return]
+                raise NotImplementedError
 
 
 def test_validate_query_zero_params() -> None:
@@ -49,4 +49,4 @@ def test_validate_query_zero_params() -> None:
             Controller[PydanticSerializer],
         ):
             def get(self) -> dict[str, str]:
-                return self.parsed_query  # type: ignore[no-any-return]
+                raise NotImplementedError

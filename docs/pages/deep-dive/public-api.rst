@@ -1,17 +1,25 @@
 Public API
 ==========
 
-
 Controller
 ----------
 
 .. autoclass:: django_modern_rest.controller.Controller
+  :members:
+  :exclude-members: endpoint_cls, serializer_context_cls, controller_validator_cls
 
 
 Endpoint
 --------
 
 .. autoclass:: django_modern_rest.endpoint.Endpoint
+  :members:
+
+.. autoclass:: django_modern_rest.metadata.EndpointMetadata
+
+.. autofunction:: django_modern_rest.endpoint.modify
+
+.. autofunction:: django_modern_rest.endpoint.validate
 
 
 Components
@@ -30,11 +38,16 @@ Response and headers
 .. autoclass:: django_modern_rest.response.ResponseDescription
   :members:
 
+.. autoclass:: django_modern_rest.response.ResponseModification
+  :members:
+
 .. autoclass:: django_modern_rest.headers.HeaderDescription
   :members:
 
 .. autoclass:: django_modern_rest.headers.NewHeader
   :members:
+
+.. autodata:: django_modern_rest.headers.ResponseHeadersT
 
 
 Validation
@@ -42,6 +55,14 @@ Validation
 
 .. autoclass:: django_modern_rest.validation.ControllerValidator
   :members:
+
+.. autoclass:: django_modern_rest.validation.ResponseValidator
+
+.. autoclass:: django_modern_rest.validation.EndpointMetadataValidator
+
+.. autoclass:: django_modern_rest.validation.ModifyEndpointPayload
+
+.. autoclass:: django_modern_rest.validation.ValidateEndpointPayload
 
 
 Serialization

@@ -34,7 +34,13 @@ def openapi_spec(
         config = _default_config()
 
     # TODO: temporary schema without content
-    schema = {'openapi': '3.1.0'}
+    schema = {
+        'openapi': '3.1.0',
+        'info': {
+            'title': 'Minimal API',
+            'version': '1.0.0',
+        },
+    }
 
     urlpatterns = [
         path(

@@ -21,13 +21,13 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 @final
 class _PostController(Controller[PydanticSerializer]):
     def post(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 @final
 class _GetController(Controller[PydanticSerializer]):
     def get(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 def test_meta_sync(dmr_rf: DMRRequestFactory) -> None:
@@ -38,6 +38,7 @@ def test_meta_sync(dmr_rf: DMRRequestFactory) -> None:
         meta_mixin=MetaMixin,
     )
     assert 'options' in composed.api_endpoints
+    assert 'meta' not in composed.api_endpoints
 
     request = dmr_rf.options('/whatever/', data={})
 
@@ -55,13 +56,13 @@ def test_meta_sync(dmr_rf: DMRRequestFactory) -> None:
 @final
 class _AsyncPostController(Controller[PydanticSerializer]):
     async def post(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 @final
 class _AsyncGetController(Controller[PydanticSerializer]):
     async def get(self) -> str:
-        return 'xyz'
+        raise NotImplementedError
 
 
 @pytest.mark.asyncio
@@ -73,6 +74,7 @@ async def test_meta_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
         meta_mixin=AsyncMetaMixin,
     )
     assert 'options' in composed.api_endpoints
+    assert 'meta' not in composed.api_endpoints
 
     request = dmr_async_rf.options('/whatever/', data={})
 
