@@ -140,9 +140,12 @@ Error handling
   String or a function to globally handle all errors in the application.
   Here's our error handling hieracy:
 
-  1. Per-endpoint :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
+  1. Per-endpoint with
+     :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
      and :meth:`~django_modern_rest.endpoint.Endpoint.handle_async_error`
-  2. Per-controller with ``handle_error`` or ``handle_async_error``
+  2. Per-controller with
+     :meth:`~django_modern_rest.controller.Controller.handle_error`
+     or :meth:`~django_modern_rest.controller.Controller.handle_async_error`
   3. If nothing helped, ``'global_error_handler'`` is called
 
   See :func:`~django_modern_rest.errors.global_error_handler`

@@ -45,9 +45,18 @@ def test_verify_decorator_method_name(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that `modify` requires correct endpoint name."""
-    with pytest.raises(EndpointMetadataError, match='custom_name'):
+    with pytest.raises(EndpointMetadataError, match='query'):
 
         class _WrongController(Controller[PydanticSerializer]):
+            @validate(
+                ResponseDescription(return_type=str, status_code=HTTPStatus.OK),
+            )
+            def query(self) -> HttpResponse:
+                raise NotImplementedError
+
+    with pytest.raises(EndpointMetadataError, match='custom_name'):
+
+        class _WrongController2(Controller[PydanticSerializer]):
             @validate(
                 ResponseDescription(return_type=str, status_code=HTTPStatus.OK),
             )
@@ -58,6 +67,9 @@ def test_verify_decorator_method_name(
 @final
 class _NoEndpointsController(Controller[PydanticSerializer]):
     def regular_method(self) -> int:
+        raise NotImplementedError
+
+    def query(self) -> int:
         raise NotImplementedError
 
     def _get(self) -> int:
