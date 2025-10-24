@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 @final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True, slots=True)
 class PathItem:
     """
     Describes the operations available on a single path.
