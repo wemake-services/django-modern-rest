@@ -38,6 +38,7 @@ def test_meta_sync(dmr_rf: DMRRequestFactory) -> None:
         meta_mixin=MetaMixin,
     )
     assert 'options' in composed.api_endpoints
+    assert 'meta' not in composed.api_endpoints
 
     request = dmr_rf.options('/whatever/', data={})
 
@@ -73,6 +74,7 @@ async def test_meta_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
         meta_mixin=AsyncMetaMixin,
     )
     assert 'options' in composed.api_endpoints
+    assert 'meta' not in composed.api_endpoints
 
     request = dmr_async_rf.options('/whatever/', data={})
 
