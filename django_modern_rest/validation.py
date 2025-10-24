@@ -43,6 +43,8 @@ from django_modern_rest.settings import (
     resolve_setting,
 )
 from django_modern_rest.types import (
+    BaseAsyncMetaMixin,
+    BaseMetaMixin,
     Empty,
     EmptyObj,
     infer_bases,
@@ -232,10 +234,40 @@ class ControllerValidator:
 
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
-        # TODO: validate that sync controller have `MetaMixin`
-        # and async ones have `AsyncMetaMixin`
         self._validate_components(controller)
-        return self._validate_endpoints(controller)
+        is_async = self._validate_endpoints(controller)
+        self._validate_meta_mixins(controller, is_async=is_async)
+        return is_async
+
+    def _validate_meta_mixins(
+        self,
+        controller: 'type[Controller[BaseSerializer]]',
+        *,
+        is_async: bool,
+    ) -> None:
+        if not controller.api_endpoints:
+            return
+
+        has_async_mixin = is_safe_subclass(controller, BaseAsyncMetaMixin)
+        has_sync_mixin = is_safe_subclass(controller, BaseMetaMixin)
+        if not (has_async_mixin or has_sync_mixin):
+            return
+
+        if has_async_mixin and has_sync_mixin:
+            raise EndpointMetadataError(
+                f'Controller {controller} can only have one of '
+                f'MetaMixin or AsyncMetaMixin, not both.',
+            )
+
+        async_controller_with_sync_mixin = is_async and has_sync_mixin
+        sync_controller_with_async_mixin = not is_async and has_async_mixin
+        if async_controller_with_sync_mixin or sync_controller_with_async_mixin:
+            raise EndpointMetadataError(
+                f'Controller {controller} contains '
+                f'incompatible mixin. Do not use '
+                f'AsyncMetaMixin in sync Controller '
+                f'and opposite MetaMixin in async Controller',
+            )
 
     def _validate_components(
         self,
