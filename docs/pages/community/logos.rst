@@ -7,31 +7,6 @@ for information about permission and usage of the logo.
 
 .. tabs::
 
-    .. tab:: PNG format
-
-        .. grid:: 2
-            :class-row: surface
-            :padding: 1
-            :gutter: 2
-
-            .. grid-item-card:: Light Theme
-                :class-card: text-center
-
-                .. image:: /_static/images/logo-light.svg
-                    :alt: Light theme logo
-                    :width: 200px
-                    :align: center
-                    :target: /_static/images/logo-light.svg
-
-            .. grid-item-card:: Dark Theme
-                :class-card: text-center
-
-                .. image:: /_static/images/logo-dark.png
-                    :alt: Dark theme logo
-                    :width: 200px
-                    :align: center
-                    :target: /_static/images/logo-dark.png
-
     .. tab:: SVG format
 
         .. grid:: 2
@@ -46,7 +21,7 @@ for information about permission and usage of the logo.
                     :alt: Light theme logo
                     :width: 200px
                     :align: center
-                    :target: /_static/images/logo-light.svg
+                    :target: ../../_static/images/logo-light.svg
 
             .. grid-item-card:: Dark Theme
                 :class-card: text-center
@@ -55,7 +30,32 @@ for information about permission and usage of the logo.
                     :alt: Dark theme logo
                     :width: 200px
                     :align: center
-                    :target: /_static/images/logo-dark.svg
+                    :target: ../../_static/images/logo-dark.svg
+
+    .. tab:: PNG format
+
+        .. grid:: 2
+            :class-row: surface
+            :padding: 1
+            :gutter: 2
+
+            .. grid-item-card:: Light Theme
+                :class-card: text-center
+
+                .. image:: /_static/images/logo-light.svg
+                    :alt: Light theme logo
+                    :width: 200px
+                    :align: center
+                    :target: ../../_static/images/logo-light.png
+
+            .. grid-item-card:: Dark Theme
+                :class-card: text-center
+
+                .. image:: /_static/images/logo-dark.svg
+                    :alt: Dark theme logo
+                    :width: 200px
+                    :align: center
+                    :target: ../../_static/images/logo-dark.png
 
 Font
 ----

@@ -1,13 +1,18 @@
-# django-modern-rest
+<div align="center">
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/logo-light.svg#gh-light-mode-only" alt="Modern REST Logo - Light" width="100%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/logo-dark.svg#gh-dark-mode-only" alt="Modern REST Logo - Dark" width="100%" height="auto" />
+</p>
+
+<p align="center">
+    <em>Modern REST framework for Django with types and async support!</em>
+</p>
 
 [![wemake.services](https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D)](https://wemake-services.github.io)
 [![test](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/wemake-services/django-modern-rest/branch/master/graph/badge.svg)](https://codecov.io/gh/wemake-services/django-modern-rest)
 [![Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
-
-Modern REST framework for Django with types and async support!
-
+</div>
 
 ## Features
 
