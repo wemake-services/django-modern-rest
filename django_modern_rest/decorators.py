@@ -17,6 +17,7 @@ from django_modern_rest.response import ResponseDescription
 def wrap_middleware(  # noqa: WPS202
     middleware: MiddlewareDecorator,
     response_description: ResponseDescription,
+    *response_descriptions: ResponseDescription,
 ) -> Callable[[ResponseConverter], DecoratorWithResponses]:
     """
     Factory function that creates a decorator with pre-configured middleware.
@@ -27,6 +28,7 @@ def wrap_middleware(  # noqa: WPS202
     Args:
         middleware: Django middleware to apply
         response_description: ResponseDescription for the middleware response
+        response_descriptions: Others ResponseDescription
 
     Returns:
         A function that takes a converter and returns a class decorator
@@ -34,9 +36,13 @@ def wrap_middleware(  # noqa: WPS202
     .. code:: python
 
         >>> from django.views.decorators.csrf import csrf_protect
-        >>> from django.http import JsonResponse, HttpResponse
+        >>> from django.http import HttpResponse
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import Controller, ResponseDescription
+        >>> from django_modern_rest import (
+        ...     Controller,
+        ...     ResponseDescription,
+        ...     build_response,
+        ... )
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> @wrap_middleware(
@@ -47,9 +53,13 @@ def wrap_middleware(  # noqa: WPS202
         ...     ),
         ... )
         ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-        ...     return JsonResponse(
-        ...         {'detail': 'CSRF verification failed. Request aborted.'},
-        ...         status=HTTPStatus(response.status_code),
+        ...     return build_response(
+        ...         None,
+        ...         PydanticSerializer,
+        ...         raw_data={
+        ...             'detail': 'CSRF verification failed. Request aborted.'
+        ...         },
+        ...         status_code=HTTPStatus(response.status_code),
         ...     )
 
         >>> @csrf_protect_json
@@ -74,7 +84,7 @@ def wrap_middleware(  # noqa: WPS202
 
         return DecoratorWithResponses(
             decorator=decorator,
-            responses=[response_description],
+            responses=[response_description, *response_descriptions],
         )
 
     return decorator_factory

@@ -186,6 +186,7 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
     # We don't add `ensure_csrf_cookie_json.responses`,
     # because it always returns ones we already have
+    # TODO: We need a special flag for Controller.deduplicate_responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""

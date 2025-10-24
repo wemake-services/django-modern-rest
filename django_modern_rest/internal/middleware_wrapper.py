@@ -1,7 +1,7 @@
+import inspect
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from functools import partial
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
 from django.http import HttpRequest, HttpResponse
 
@@ -9,11 +9,11 @@ if TYPE_CHECKING:
     from django_modern_rest.response import ResponseDescription
 
 TypeT = TypeVar('TypeT', bound=type[Any])
-CallableAny: TypeAlias = Callable[..., Any]
-MiddlewareDecorator: TypeAlias = Callable[[CallableAny], CallableAny]
+_CallableAny: TypeAlias = Callable[..., Any]
+MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
-ConverterSpec: TypeAlias = tuple['ResponseDescription', ResponseConverter]
-ViewDecorator: TypeAlias = Callable[[CallableAny], CallableAny]
+_ConverterSpec: TypeAlias = tuple['ResponseDescription', ResponseConverter]
+_ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -24,13 +24,13 @@ class DecoratorWithResponses:
     responses: list['ResponseDescription']
 
     def __call__(self, klass: TypeT) -> TypeT:
-        """Wrap for cast types."""
-        return cast(TypeT, self.decorator(klass))
+        """Apply the decorator to the class."""
+        return self.decorator(klass)  # type: ignore[no-any-return]
 
 
 def apply_converter(
     response: HttpResponse,
-    converter: ConverterSpec,
+    converter: _ConverterSpec,
 ) -> HttpResponse:
     """Apply response converter based on status code matching."""
     response_desc, converter_func = converter
@@ -42,7 +42,7 @@ def apply_converter(
 def create_sync_dispatch(
     original_dispatch: Callable[..., Any],
     middleware: MiddlewareDecorator,
-    converter: ConverterSpec,
+    converter: _ConverterSpec,
 ) -> Callable[..., HttpResponse]:
     """Create synchronous dispatch wrapper."""
 
@@ -52,7 +52,13 @@ def create_sync_dispatch(
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        view_callable = partial(original_dispatch, self)
+        def view_callable(  # noqa: WPS430
+            req: HttpRequest,
+            *view_args: Any,
+            **view_kwargs: Any,
+        ) -> HttpResponse:
+            return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
+
         response = middleware(view_callable)(request, *args, **kwargs)
         return apply_converter(response, converter)
 
@@ -62,7 +68,7 @@ def create_sync_dispatch(
 def create_async_dispatch(
     original_dispatch: Callable[..., Any],
     middleware: MiddlewareDecorator,
-    converter: ConverterSpec,
+    converter: _ConverterSpec,
 ) -> Callable[..., Any]:
     """Create asynchronous dispatch wrapper."""
 
@@ -72,11 +78,17 @@ def create_async_dispatch(
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        view_callable = partial(original_dispatch, self)
+        def view_callable(  # noqa: WPS430
+            req: HttpRequest,
+            *view_args: Any,
+            **view_kwargs: Any,
+        ) -> HttpResponse:
+            return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
+
         response: HttpResponse | Awaitable[HttpResponse] = middleware(
             view_callable,
         )(request, *args, **kwargs)
-        if isinstance(response, Awaitable):
+        if inspect.isawaitable(response):
             response = await response
         return apply_converter(response, converter)
 
@@ -86,11 +98,11 @@ def create_async_dispatch(
 def do_wrap_dispatch(
     cls: Any,
     middleware: MiddlewareDecorator,
-    converter: ConverterSpec,
+    converter: _ConverterSpec,
 ) -> None:
     """Internal function to wrap dispatch in middleware."""
     original_dispatch = cls.dispatch
-    is_async = getattr(cls, 'view_is_async', False)
+    is_async = cls.view_is_async
 
     if is_async:
         cls.dispatch = create_async_dispatch(

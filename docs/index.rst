@@ -138,6 +138,7 @@ Here are our amazing people who made this project possible.
   pages/core-concepts.rst
   pages/configuration.rst
   pages/error-handling.rst
+  pages/middleware.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst

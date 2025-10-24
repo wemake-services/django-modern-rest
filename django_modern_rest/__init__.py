@@ -14,10 +14,10 @@ from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,
 )
-from django_modern_rest.endpoint import Endpoint as Endpoint
 from django_modern_rest.decorators import (
     wrap_middleware as wrap_middleware,
 )
+from django_modern_rest.endpoint import Endpoint as Endpoint
 from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.headers import HeaderDescription as HeaderDescription
@@ -32,6 +32,7 @@ from django_modern_rest.response import APIError as APIError
 from django_modern_rest.response import (
     ResponseDescription as ResponseDescription,
 )
+from django_modern_rest.response import build_response as build_response
 from django_modern_rest.routing import Router as Router
 from django_modern_rest.routing import (
     compose_controllers as compose_controllers,
