@@ -5,6 +5,8 @@ Controller
 ----------
 
 .. autoclass:: django_modern_rest.controller.Controller
+  :members:
+  :exclude-members: endpoint_cls, serializer_context_cls, controller_validator_cls
 
 
 Endpoint

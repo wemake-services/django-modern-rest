@@ -64,6 +64,7 @@ extensions = [
     'sphinx_contributors',
     'sphinx_tabs.tabs',
     'sphinx_iconify',
+    'sphinxcontrib.mermaid',
 ]
 
 
@@ -93,10 +94,13 @@ nitpick_ignore = [
     # internal type helpers
     (PY_CLASS, 'FromJson'),
     (PY_CLASS, 'django_modern_rest.endpoint._ResponseT'),
-    (PY_CLASS, 'django_modern_rest.endpoint._ModifyCallable'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ModifyAnyCallable'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ModifyAsyncCallable'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
     # TODO: fix out why this is an error
     (PY_CLASS, 'django.http.response.HttpResponse'),
+    (PY_CLASS, 'django.http.request.HttpRequest'),
 ]
 
 # Set `typing.TYPE_CHECKING` to `True`:

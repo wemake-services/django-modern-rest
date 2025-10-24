@@ -70,6 +70,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
+        responses_from_components: Should we automatically add response schemas
+            from components like :class:`django_modern_rest.components.Headers`
+            into the :attr:`responses`?
 
     """
 
@@ -98,7 +101,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     @override
     def __init_subclass__(cls) -> None:
-        """Collect components parsers."""
+        """Build controller class from different parts."""
         super().__init_subclass__()
         type_args = infer_type_args(cls, Controller)
         if len(type_args) != 1:
@@ -205,6 +208,30 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         # All other responses are handled on endpoint level
         # with all the response type validation.
         return self.handle_method_not_allowed(method)
+
+    def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
+        """
+        Return error response if possible. Sync case.
+
+        Override this method to add custom error handling for sync execution.
+        By default - does nothing, only re-raises the passed error.
+        Won't be called when using async endpoints.
+        """
+        raise exc
+
+    async def handle_async_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        """
+        Return error response if possible. Async case.
+
+        Override this method to add custom error handling for async execution.
+        By default - does nothing, only re-raises the passed error.
+        Won't be called when using sync endpoints.
+        """
+        raise exc
 
     @override
     @deprecated(

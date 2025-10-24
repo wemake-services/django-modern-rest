@@ -14,6 +14,7 @@ from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,
 )
+from django_modern_rest.endpoint import Endpoint as Endpoint
 from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.headers import HeaderDescription as HeaderDescription
