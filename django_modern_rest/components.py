@@ -244,7 +244,7 @@ class Path(ComponentParser, Generic[_PathT]):
         ...     ),
         ... ]
 
-    Will parse a url path like ``/user_id/100`` 
+    Will parse a url path like ``/user_id/100``
     which will be translated into ``{'user_id': 100}``
     into ``UserPath`` model.
 
