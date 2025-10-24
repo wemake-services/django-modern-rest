@@ -255,4 +255,3 @@ Here's a complete example showing how to set up CSRF protection for a REST API:
         def get(self) -> dict[str, str]:
             """Public endpoint that sets CSRF cookie."""
             return {'message': 'CSRF cookie set'}
-
