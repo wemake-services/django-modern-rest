@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -8,10 +8,11 @@ from django_modern_rest.internal.middleware_wrapper import (
     DecoratorWithResponses,
     MiddlewareDecorator,
     ResponseConverter,
-    TypeT,
     do_wrap_dispatch,
 )
 from django_modern_rest.response import ResponseDescription
+
+_TypeT = TypeVar('_TypeT', bound=type[Any])
 
 
 def wrap_middleware(  # noqa: WPS202
@@ -76,9 +77,12 @@ def wrap_middleware(  # noqa: WPS202
         converter: ResponseConverter,
     ) -> DecoratorWithResponses:
         """Create a decorator with the given converter."""
-        converter_spec = (response_description, converter)
+        converter_spec = (
+            [response_description, *response_descriptions],
+            converter,
+        )
 
-        def decorator(cls: TypeT) -> TypeT:
+        def decorator(cls: _TypeT) -> _TypeT:
             do_wrap_dispatch(cls, middleware, converter_spec)
             return method_decorator(csrf_exempt, name='dispatch')(cls)
 
@@ -92,7 +96,7 @@ def wrap_middleware(  # noqa: WPS202
 
 def dispatch_decorator(  # noqa: WPS202
     func: Callable[..., Any],
-) -> Callable[[TypeT], TypeT]:
+) -> Callable[[_TypeT], _TypeT]:
     """
     Special helper to decorate class-based view's ``dispatch`` method.
 

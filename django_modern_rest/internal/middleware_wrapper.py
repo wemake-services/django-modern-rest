@@ -8,11 +8,14 @@ from django.http import HttpRequest, HttpResponse
 if TYPE_CHECKING:
     from django_modern_rest.response import ResponseDescription
 
-TypeT = TypeVar('TypeT', bound=type[Any])
+_TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny: TypeAlias = Callable[..., Any]
 MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
-_ConverterSpec: TypeAlias = tuple['ResponseDescription', ResponseConverter]
+_ConverterSpec: TypeAlias = tuple[
+    list['ResponseDescription'],
+    ResponseConverter,
+]
 _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 
 
@@ -20,12 +23,12 @@ _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 class DecoratorWithResponses:
     """Type for decorator with responses attribute."""
 
-    decorator: Callable[[Any], Any]
+    decorator: Callable[[_TypeT], _TypeT]  # pyright: ignore[reportGeneralTypeIssues]
     responses: list['ResponseDescription']
 
-    def __call__(self, klass: TypeT) -> TypeT:
+    def __call__(self, klass: _TypeT) -> _TypeT:
         """Apply the decorator to the class."""
-        return self.decorator(klass)  # type: ignore[no-any-return]
+        return self.decorator(klass)  # pyright: ignore[reportReturnType]
 
 
 def apply_converter(
@@ -33,9 +36,10 @@ def apply_converter(
     converter: _ConverterSpec,
 ) -> HttpResponse:
     """Apply response converter based on status code matching."""
-    response_desc, converter_func = converter
-    if response.status_code == response_desc.status_code:
-        return converter_func(response)
+    response_descs, converter_func = converter
+    for response_desc in response_descs:
+        if response.status_code == response_desc.status_code:
+            return converter_func(response)
     return response
 
 
@@ -88,6 +92,12 @@ def create_async_dispatch(
         response: HttpResponse | Awaitable[HttpResponse] = middleware(
             view_callable,
         )(request, *args, **kwargs)
+        # Django middleware can be either sync or async. When we wrap an async
+        # view with middleware, the middleware itself might be sync
+        # (returning HttpResponse) or async (returning Awaitable[HttpResponse]).
+        # We need to check the actual return type at runtime and await it only
+        # if it's a coroutine/awaitable, otherwise we'd get
+        # "cannot await non-coroutine" error.
         if inspect.isawaitable(response):
             response = await response
         return apply_converter(response, converter)
