@@ -225,12 +225,7 @@ class Path(ComponentParser, Generic[_PathT]):
         >>> class UserPath(pydantic.BaseModel):
         ...     user_id: int
 
-        >>> class UserUpdateInput(pydantic.BaseModel):
-        ...     email: str
-        ...     age: int
-
         >>> class UserUpdateController(
-        ...     Body[UserUpdateInput],
         ...     Path[UserPath],
         ...     Controller[PydanticSerializer],
         ... ): ...
@@ -249,7 +244,9 @@ class Path(ComponentParser, Generic[_PathT]):
         ...     ),
         ... ]
 
-    Will parse a url path like ``/user_id/100`` into ``UserPath`` model.
+    Will parse a url path like ``/user_id/100`` 
+    which will be translated into ``{'user_id': 100}``
+    into ``UserPath`` model.
 
     If your controller class inherits from ``Path`` - then you can access
     parsed paths parameters as ``self.parsed_path`` attribute.
