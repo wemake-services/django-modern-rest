@@ -3,7 +3,7 @@ Middleware
 
 ``django-modern-rest`` provides a powerful middleware system that allows you to wrap Django middleware around your controllers while maintaining proper OpenAPI documentation and response handling.
 
-The main function for this is :func:`django_modern_rest.wrap_middleware`, which creates reusable decorators that can be applied to controller classes.
+The main function for this is :func:`~django_modern_rest.decorators.wrap_middleware`, which creates reusable decorators that can be applied to controller classes.
 
 How it works
 ------------
