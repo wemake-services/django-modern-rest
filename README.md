@@ -102,3 +102,9 @@ has everything you need to get started!
 ## Credits
 
 This project was generated with [`wemake-python-package`](https://github.com/wemake-services/wemake-python-package). Current template version is: [e1fcf312d7f715323dcff0d376a40b7e3b47f9b7](https://github.com/wemake-services/wemake-python-package/tree/e1fcf312d7f715323dcff0d376a40b7e3b47f9b7). See what is [updated](https://github.com/wemake-services/wemake-python-package/compare/e1fcf312d7f715323dcff0d376a40b7e3b47f9b7...master) since then.
+
+## Feedback
+> The one thing I really love about **django-modern-rest** is its pluggable serializers and validators.
+  Frameworks that are tightly coupled with **pydantic** can be really painful to work with.
+
+— **[Kirill Podoprigora](https://github.com/Eclips4)**, CPython core developer
