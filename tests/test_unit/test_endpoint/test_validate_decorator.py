@@ -9,6 +9,7 @@ from typing_extensions import TypedDict
 
 from django_modern_rest import (
     Controller,
+    Endpoint,
     HeaderDescription,
     NewHeader,
     ResponseDescription,
@@ -338,3 +339,43 @@ def test_validate_literal_response(dmr_rf: DMRRequestFactory) -> None:
             },
         ],
     })
+
+
+def test_validate_sync_error_handler_for_async() -> None:
+    """Ensure that it is impossible to pass sync error handler to async case."""
+    with pytest.raises(EndpointMetadataError, match=' sync `error_handler`'):
+
+        class _WrongModifyController(Controller[PydanticSerializer]):
+            def endpoint_error(
+                self,
+                endpoint: Endpoint,
+                exc: Exception,
+            ) -> HttpResponse:
+                raise NotImplementedError
+
+            @validate(  # type: ignore[arg-type]
+                ResponseDescription(list[int], status_code=HTTPStatus.OK),
+                error_handler=endpoint_error,
+            )
+            async def post(self) -> HttpResponse:
+                raise NotImplementedError
+
+
+def test_validate_async_endpoint_error_for_sync() -> None:
+    """Ensure that it is impossible to pass async error handler to sync case."""
+    with pytest.raises(EndpointMetadataError, match='async `error_handler`'):
+
+        class _WrongValidateErrorsController(Controller[PydanticSerializer]):
+            async def async_endpoint_error(
+                self,
+                endpoint: Endpoint,
+                exc: Exception,
+            ) -> HttpResponse:
+                raise NotImplementedError
+
+            @validate(  # type: ignore[arg-type]
+                ResponseDescription(list[int], status_code=HTTPStatus.OK),
+                error_handler=async_endpoint_error,
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError

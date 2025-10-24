@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 
 from django_modern_rest import (
     Controller,
+    Endpoint,
     HeaderDescription,
     NewHeader,
     ResponseDescription,
@@ -37,14 +38,30 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
 
 
 class _CorrectValidateController(Controller[PydanticSerializer]):
+    def endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return JsonResponse([])
+
     @validate(
         ResponseDescription(status_code=HTTPStatus.OK, return_type=_Model),
+        error_handler=endpoint_error,
     )
     def get(self) -> HttpResponse:
         return HttpResponse()
 
+    async def async_endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return JsonResponse([])
+
     @validate(
         ResponseDescription(return_type=list[int], status_code=HTTPStatus.OK),
+        error_handler=async_endpoint_error,
     )
     async def post(self) -> JsonResponse:
         return JsonResponse([])
@@ -61,6 +78,36 @@ class _CorrectValidateController(Controller[PydanticSerializer]):
 
 
 class _WrongModifyController(Controller[PydanticSerializer]):
+    async def async_endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return JsonResponse([])
+
+    @modify(  # type: ignore[type-var]
+        status_code=HTTPStatus.OK,
+        error_handler=async_endpoint_error,
+    )
+    def get(self) -> int:
+        return 1
+
+    def endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return JsonResponse([])
+
+    @modify(  # type: ignore[deprecated]
+        status_code=HTTPStatus.OK,
+        error_handler=endpoint_error,
+    )
+    async def post(self) -> int:
+        return 1
+
+
+class _WrongModifyErrorController(Controller[PydanticSerializer]):
     @modify(status_code=HTTPStatus.OK)  # type: ignore[deprecated]
     def get(self) -> JsonResponse:
         return JsonResponse([])
@@ -106,6 +153,36 @@ class _WrongValidateController(Controller[PydanticSerializer]):
     def patch(self) -> JsonResponse:
         return JsonResponse([])
 
-    @validate()  # type: ignore[call-arg]
+    @validate()  # type: ignore[call-overload, misc]
     async def delete(self) -> HttpResponse:
+        return JsonResponse([])
+
+
+class _WrongValidateErrorsController(Controller[PydanticSerializer]):
+    async def async_endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return JsonResponse([])
+
+    @validate(  # type: ignore[arg-type]
+        ResponseDescription(list[int], status_code=HTTPStatus.OK),
+        error_handler=async_endpoint_error,
+    )
+    def get(self) -> HttpResponse:
+        return JsonResponse([])
+
+    def endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return JsonResponse([])
+
+    @validate(  # type: ignore[arg-type]
+        ResponseDescription(list[int], status_code=HTTPStatus.OK),
+        error_handler=endpoint_error,
+    )
+    async def post(self) -> HttpResponse:
         return JsonResponse([])

@@ -1,4 +1,9 @@
-from typing import TYPE_CHECKING
+from collections.abc import Awaitable, Callable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeAlias,
+)
 
 from django.http import HttpResponse
 
@@ -7,11 +12,23 @@ from django_modern_rest.exceptions import SerializationError
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serialization import BaseSerializer
+
+
+#: Error handler type for sync callbacks.
+SyncErrorHandlerT: TypeAlias = Callable[
+    [Any, 'Endpoint', Exception],  # this is not `Any`, but mypy can't do better
+    HttpResponse,
+]
+
+#: Error handler type for async callbacks.
+AsyncErrorHandlerT: TypeAlias = Callable[
+    [Any, 'Endpoint', Exception],  # this is not `Any`, but mypy can't do better
+    Awaitable[HttpResponse],
+]
 
 
 def global_error_handler(
-    controller: 'Controller[BaseSerializer]',
+    controller: 'Controller[Any]',
     endpoint: 'Endpoint',
     exc: Exception,
 ) -> HttpResponse:
@@ -59,7 +76,7 @@ def global_error_handler(
        ...             status_code=HTTPStatus.NOT_IMPLEMENTED,
        ...         )
        ...     # Call the original handler to handle default errors:
-       ...     return global_error_handler(endpoint, exc)
+       ...     return global_error_handler(controller, endpoint, exc)
 
        >>> # And then in your settings file:
        >>> DMR_SETTINGS = {
