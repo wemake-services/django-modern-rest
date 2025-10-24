@@ -1,4 +1,5 @@
 import dataclasses
+import inspect
 from collections import Counter
 from collections.abc import Callable, Mapping, Set
 from http import HTTPMethod, HTTPStatus
@@ -19,6 +20,7 @@ from typing import (
 from django.http import HttpResponse
 
 from django_modern_rest.components import ComponentParser
+from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
     ResponseSerializationError,
@@ -312,6 +314,7 @@ class ValidateEndpointPayload:
 
     responses: list[ResponseDescription]
     validate_responses: bool | Empty
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -322,6 +325,7 @@ class ModifyEndpointPayload:
     headers: Mapping[str, NewHeader] | Empty
     responses: list[ResponseDescription] | Empty
     validate_responses: bool | Empty
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
 
 
 #: Alias for different payload types:
@@ -407,7 +411,7 @@ class _ResponseListValidator:
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadataValidator:
+class EndpointMetadataValidator:  # noqa: WPS214
     """
     Validate the metadata definition.
 
@@ -431,13 +435,12 @@ class EndpointMetadataValidator:
         method = validate_method_name(func.__name__)
         func.__name__ = str(method).lower()  # we can change it :)
         endpoint = str(func)
-        # TODO: validate contoller's definition.
-        # Questions: how? when? one time?
         if isinstance(self.payload, ModifyEndpointPayload):
             return self._from_modify(
                 self.payload,
                 return_annotation,
                 method,
+                func,
                 endpoint=endpoint,
                 controller_cls=controller_cls,
             )
@@ -446,6 +449,7 @@ class EndpointMetadataValidator:
                 self.payload,
                 return_annotation,
                 method,
+                func,
                 endpoint=endpoint,
                 controller_cls=controller_cls,
             )
@@ -478,15 +482,17 @@ class EndpointMetadataValidator:
             ],
         )
 
-    def _from_validate(
+    def _from_validate(  # noqa: WPS211
         self,
         payload: ValidateEndpointPayload,
         return_annotation: Any,
         method: HTTPMethod,
+        func: Callable[..., Any],
         *,
         endpoint: str,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
+        self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
@@ -508,17 +514,20 @@ class EndpointMetadataValidator:
             method=method,
             validate_responses=payload.validate_responses,
             modification=None,
+            error_handler=payload.error_handler,
         )
 
-    def _from_modify(
+    def _from_modify(  # noqa: WPS211
         self,
         payload: ModifyEndpointPayload,
         return_annotation: Any,
         method: HTTPMethod,
+        func: Callable[..., Any],
         *,
         endpoint: str,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
+        self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
@@ -553,6 +562,7 @@ class EndpointMetadataValidator:
             validate_responses=payload.validate_responses,
             method=method,
             modification=modification,
+            error_handler=payload.error_handler,
         )
 
     def _from_raw_data(
@@ -588,6 +598,7 @@ class EndpointMetadataValidator:
             validate_responses=EmptyObj,
             method=method,
             modification=modification,
+            error_handler=EmptyObj,
         )
 
     def _validate_new_headers(
@@ -629,6 +640,25 @@ class EndpointMetadataValidator:
             f'Since {endpoint!r} returns regular data, '
             'it requires `@modify` decorator instead of `@validate`',
         )
+
+    def _validate_error_handler(
+        self,
+        payload: ValidateEndpointPayload | ModifyEndpointPayload,
+        func: Callable[..., Any],
+        *,
+        endpoint: str,
+    ) -> None:
+        if isinstance(payload.error_handler, Empty):
+            return
+        if inspect.iscoroutinefunction(func):
+            if not inspect.iscoroutinefunction(payload.error_handler):
+                raise EndpointMetadataError(
+                    f'Cannot pass sync `error_handler` to async {endpoint}',
+                )
+        elif inspect.iscoroutinefunction(payload.error_handler):
+            raise EndpointMetadataError(
+                f'Cannot pass async `error_handler` to sync {endpoint}',
+            )
 
 
 @final
