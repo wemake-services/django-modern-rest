@@ -107,4 +107,4 @@ This project was generated with [`wemake-python-package`](https://github.com/wem
 > The one thing I really love about **django-modern-rest** is its pluggable serializers and validators.
   Frameworks that are tightly coupled with **pydantic** can be really painful to work with.
 
-— **Kirill Podoprigora**, CPython core developer
+— **[Kirill Podoprigora](https://github.com/Eclips4)**, CPython core developer
