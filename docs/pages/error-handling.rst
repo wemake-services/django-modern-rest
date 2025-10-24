@@ -94,10 +94,9 @@ You can dive even deeper and:
 Error handling diagram
 ----------------------
 
-The same can be represented as a diagram (zoom-in works!):
+The same error handling logic can be represented as a diagram:
 
 .. mermaid::
-  :zoom:
   :caption: Error handling logic
   :config: {"theme": "forest"}
 
