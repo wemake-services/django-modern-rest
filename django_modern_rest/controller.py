@@ -92,6 +92,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     responses: ClassVar[list[ResponseDescription]] = []
     responses_from_components: ClassVar[bool] = True
     http_methods: ClassVar[frozenset[str]] = frozenset(
+        # We replace old existing `View.options` method with `Controller.meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
 

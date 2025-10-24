@@ -34,6 +34,7 @@ class _MetaController(
 def test_meta_sync(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that sync meta mixin works."""
     assert 'options' in _MetaController.api_endpoints
+    assert 'meta' not in _MetaController.api_endpoints
 
     request = dmr_rf.options('/whatever/', data={})
 
@@ -69,6 +70,7 @@ class _AsyncMetaController(
 async def test_meta_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
     """Ensures that async meta mixin works."""
     assert 'options' in _AsyncMetaController.api_endpoints
+    assert 'meta' not in _AsyncMetaController.api_endpoints
 
     request = dmr_async_rf.options('/whatever/', data={})
 

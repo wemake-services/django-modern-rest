@@ -298,6 +298,7 @@ def validate(  # noqa: WPS234
     *responses: ResponseDescription,
     error_handler: AsyncErrorHandlerT,
     validate_responses: bool | Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponse]]],
     Callable[_ParamT, Awaitable[HttpResponse]],
@@ -311,6 +312,7 @@ def validate(
     *responses: ResponseDescription,
     error_handler: SyncErrorHandlerT,
     validate_responses: bool | Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
     Callable[_ParamT, HttpResponse],
@@ -324,6 +326,7 @@ def validate(
     *responses: ResponseDescription,
     validate_responses: bool | Empty = EmptyObj,
     error_handler: Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
     Callable[_ParamT, _ResponseT],
@@ -336,6 +339,7 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseDescription,
     validate_responses: bool | Empty = EmptyObj,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -390,6 +394,9 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
             Here we only store the per endpoint information.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
+        allow_custom_http_methods: Should we allow custom HTTP
+            methods for this endpoint. By "custom" we mean ones that
+            are not in :class:`http.HTTPMethod` enum.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -404,6 +411,7 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
             responses=[response, *responses],
             validate_responses=validate_responses,
             error_handler=error_handler,
+            allow_custom_http_methods=allow_custom_http_methods,
         ),
     )
 
@@ -485,6 +493,7 @@ def modify(
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
     validate_responses: bool | Empty = EmptyObj,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> _ModifyAsyncCallable: ...
 
 
@@ -496,6 +505,7 @@ def modify(
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
     validate_responses: bool | Empty = EmptyObj,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> _ModifySyncCallable: ...
 
 
@@ -507,16 +517,18 @@ def modify(
     validate_responses: bool | Empty = EmptyObj,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     error_handler: Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> _ModifyAnyCallable: ...
 
 
-def modify(
+def modify(  # noqa: WPS211
     *,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
     validate_responses: bool | Empty = EmptyObj,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+    allow_custom_http_methods: bool = False,
 ) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -550,6 +562,9 @@ def modify(
             Here we only store the per endpoint information.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
+        allow_custom_http_methods: Should we allow custom HTTP
+            methods for this endpoint. By "custom" we mean ones that
+            are not in :class:`http.HTTPMethod` enum.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -566,6 +581,7 @@ def modify(
             responses=extra_responses,
             validate_responses=validate_responses,
             error_handler=error_handler,
+            allow_custom_http_methods=allow_custom_http_methods,
         ),
     )
 
@@ -578,7 +594,10 @@ def _add_payload(
     def decorator(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
-        validate_method_name(func.__name__)
+        validate_method_name(
+            func.__name__,
+            allow_custom_http_methods=payload.allow_custom_http_methods,
+        )
         func.__payload__ = payload  # type: ignore[attr-defined]
         return func
 
