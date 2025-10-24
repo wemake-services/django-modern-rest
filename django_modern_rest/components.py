@@ -71,14 +71,21 @@ class Query(ComponentParser, Generic[_QueryT]):
 
     .. code:: python
 
-       >>> import pydantic
+        >>> import pydantic
+        >>> from django_modern_rest import Query, Controller
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
-       >>> class Ordering(pydantic.BaseModel):
-       ...     ordering: str
-       ...     reversed: bool
+        >>> class ProductQuery(pydantic.BaseModel):
+        ...     category: str
+        ...     reversed: bool
 
-    Will parse a request like ``?ordering=price&reversed=true``
-    into ``Ordering`` model.
+        >>> class ProductListController(
+        ...     Query[ProductQuery],
+        ...     Controller[PydanticSerializer],
+        ... ): ...
+
+    Will parse a request like ``?category=cars&reversed=true``
+    into ``ProductQuery`` model.
 
     If your controller class inherits from ``Query`` - then you can access
     parsed query model as ``self.parsed_query`` attribute.
@@ -104,13 +111,21 @@ class Body(ComponentParser, Generic[_BodyT]):
     Parses body of the request.
 
     For example:
+
     .. code:: python
 
         >>> import pydantic
+        >>> from django_modern_rest import Body, Controller
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class UserCreateInput(pydantic.BaseModel):
         ...     email: str
         ...     age: int
+
+        >>> class UserCreateController(
+        ...     Body[UserCreateInput],
+        ...     Controller[PydanticSerializer],
+        ... ): ...
 
     Will parse a body like ``{'email': 'user@mail.ru', 'age': 18}`` into
     ``UserCreateInput`` model.
@@ -152,16 +167,28 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     Parses request headers.
 
     For example:
+
     .. code:: python
 
         >>> import pydantic
+        >>> from django_modern_rest import Headers, Body, Controller
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class AuthHeaders(pydantic.BaseModel):
         ...     token: str = pydantic.Field(alias='X-API-Token')
 
-    Will parse request headers like ``Token: secret-token`` into
-    ``AuthHeaders`` model.
+        >>> class UserCreateInput(pydantic.BaseModel):
+        ...     email: str
+        ...     age: int
 
+        >>> class UserCreateController(
+        ...     Headers[AuthHeaders],
+        ...     Body[UserCreateInput],
+        ...     Controller[PydanticSerializer],
+        ... ): ...
+
+    Will parse request headers like ``Token: secret`` into ``AuthHeaders``
+    model.
 
     If your controller class inherits from ``Headers`` - then you can access
     parsed headers as ``self.parsed_headers`` attribute.
@@ -187,12 +214,40 @@ class Path(ComponentParser, Generic[_PathT]):
     Parses the url part of the request.
 
     For example:
+
     .. code:: python
 
         >>> import pydantic
+        >>> from django_modern_rest import Body, Path, Controller, Router
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from django.urls import path, include
 
         >>> class UserPath(pydantic.BaseModel):
         ...     user_id: int
+
+        >>> class UserUpdateInput(pydantic.BaseModel):
+        ...     email: str
+        ...     age: int
+
+        >>> class UserUpdateController(
+        ...     Body[UserUpdateInput],
+        ...     Path[UserPath],
+        ...     Controller[PydanticSerializer],
+        ... ): ...
+
+        >>> router = Router([
+        ...     path(
+        ...         'user/<int:user_id>',
+        ...         UserUpdateController.as_view(),
+        ...         name='users',
+        ...     ),
+        ... ])
+
+        >>> urlpatterns = [
+        ...     path(
+        ...         'api/', include((router.urls, 'rest_app'), namespace='api')
+        ...     ),
+        ... ]
 
     Will parse a url path like ``/user_id/100`` into ``UserPath`` model.
 
