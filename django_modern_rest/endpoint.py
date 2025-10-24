@@ -12,6 +12,8 @@ from typing import (
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
+from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
+from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import (
     NewHeader,
 )
@@ -121,7 +123,24 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom error handling.
         """
-        return self._handle_default_error(exc)
+        if not isinstance(self.metadata.error_handler, Empty):
+            try:
+                # We validate this, no error possible in runtime:
+                return self.metadata.error_handler(  # type: ignore[return-value]
+                    self._controller,
+                    self,
+                    exc,
+                )
+            except Exception:  # noqa: S110
+                # We don't use `suppress` here for speed.
+                pass  # noqa: WPS420
+        # Per-endpoint error handler didn't work.
+        # Now, try the per-controller one.
+        try:
+            return self._controller.handle_error(self, exc)
+        except Exception:
+            # And the last option is to handle error globally:
+            return self._handle_default_error(exc)
 
     async def handle_async_error(self, exc: Exception) -> HttpResponse:
         """
@@ -129,7 +148,24 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom async error handling.
         """
-        return self._handle_default_error(exc)
+        if not isinstance(self.metadata.error_handler, Empty):
+            try:
+                # We validate this, no error possible in runtime:
+                return await self.metadata.error_handler(  # type: ignore[no-any-return, misc]
+                    self._controller,
+                    self,
+                    exc,
+                )
+            except Exception:  # noqa: S110
+                # We don't use `suppress` here for speed.
+                pass  # noqa: WPS420
+        # Per-endpoint error handler didn't work.
+        # Now, try the per-controller one.
+        try:
+            return await self._controller.handle_async_error(self, exc)
+        except Exception:
+            # And the last option is to handle error globally:
+            return self._handle_default_error(exc)
 
     def _async_endpoint(
         self,
@@ -210,8 +246,16 @@ class Endpoint:  # noqa: WPS214
         """
         try:
             return self._validate_response(raw_data)
-        except Exception as exc:
-            return self.handle_error(exc)
+        except ResponseSerializationError as exc:
+            # We can't call `self.handle_error` or `self.handle_async_error`
+            # here, because it is too late. Since `ResponseSerializationError`
+            # happened mostly because the return
+            # schema validation was not successful.
+            payload = {'detail': exc.args[0]}
+            return self._controller.to_error(
+                payload,
+                status_code=exc.status_code,
+            )
 
     def _validate_response(self, raw_data: Any | HttpResponse) -> HttpResponse:
         if isinstance(raw_data, HttpResponse):
@@ -236,7 +280,6 @@ class Endpoint:  # noqa: WPS214
 
         If not class level error handling has happened.
         """
-        # TODO: handler errors per controller as well
         return resolve_setting(  # type: ignore[no-any-return]
             DMR_GLOBAL_ERROR_HANDLER_KEY,
             import_string=True,
@@ -248,12 +291,61 @@ _ReturnT = TypeVar('_ReturnT')
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse | Awaitable[HttpResponse])
 
 
+@overload
+def validate(  # noqa: WPS234
+    response: ResponseDescription,
+    /,
+    *responses: ResponseDescription,
+    error_handler: AsyncErrorHandlerT,
+    validate_responses: bool | Empty = EmptyObj,
+) -> Callable[
+    [Callable[_ParamT, Awaitable[HttpResponse]]],
+    Callable[_ParamT, Awaitable[HttpResponse]],
+]: ...
+
+
+@overload
+def validate(
+    response: ResponseDescription,
+    /,
+    *responses: ResponseDescription,
+    error_handler: SyncErrorHandlerT,
+    validate_responses: bool | Empty = EmptyObj,
+) -> Callable[
+    [Callable[_ParamT, HttpResponse]],
+    Callable[_ParamT, HttpResponse],
+]: ...
+
+
+@overload
 def validate(
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
     validate_responses: bool | Empty = EmptyObj,
-) -> Callable[[Callable[_ParamT, _ResponseT]], Callable[_ParamT, _ResponseT]]:
+    error_handler: Empty = EmptyObj,
+) -> Callable[
+    [Callable[_ParamT, _ResponseT]],
+    Callable[_ParamT, _ResponseT],
+]: ...
+
+
+def validate(  # pyright: ignore[reportInconsistentOverload]
+    response: ResponseDescription,
+    /,
+    *responses: ResponseDescription,
+    validate_responses: bool | Empty = EmptyObj,
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+) -> (
+    Callable[
+        [Callable[_ParamT, Awaitable[HttpResponse]]],
+        Callable[_ParamT, Awaitable[HttpResponse]],
+    ]
+    | Callable[
+        [Callable[_ParamT, HttpResponse]],
+        Callable[_ParamT, HttpResponse],
+    ]
+):
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
 
@@ -296,6 +388,8 @@ def validate(
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        error_handler: Callback function to be called
+            when this endpoint faces an exception.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -309,11 +403,62 @@ def validate(
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
+            error_handler=error_handler,
         ),
     )
 
 
-class _ModifyCallable(Protocol):
+class _ModifyAsyncCallable(Protocol):
+    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Do not use `@modify` decorator with `HttpResponse` return type',
+    )
+    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable[_ParamT, Awaitable[_ReturnT]],
+        /,
+    ) -> Callable[_ParamT, _ReturnT]: ...
+
+
+class _ModifySyncCallable(Protocol):
+    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Do not use `@modify` decorator with `HttpResponse` return type',
+    )
+    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Passing sync `error_hanlder` to `@modify` requires sync endpoint',
+    )
+    def __call__(
+        self,
+        func: Callable[_ParamT, Awaitable[_ReturnT]],
+        /,
+    ) -> Never: ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable[_ParamT, _ReturnT],
+        /,
+    ) -> Callable[_ParamT, _ReturnT]: ...
+
+
+class _ModifyAnyCallable(Protocol):
     """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
 
     @overload
@@ -332,13 +477,47 @@ class _ModifyCallable(Protocol):
     ) -> Callable[_ParamT, _ReturnT]: ...
 
 
+@overload
+def modify(
+    *,
+    error_handler: AsyncErrorHandlerT,
+    status_code: HTTPStatus | Empty = EmptyObj,
+    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    validate_responses: bool | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+) -> _ModifyAsyncCallable: ...
+
+
+@overload
+def modify(
+    *,
+    error_handler: SyncErrorHandlerT,
+    status_code: HTTPStatus | Empty = EmptyObj,
+    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    validate_responses: bool | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+) -> _ModifySyncCallable: ...
+
+
+@overload
 def modify(
     *,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
     validate_responses: bool | Empty = EmptyObj,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
-) -> _ModifyCallable:
+    error_handler: Empty = EmptyObj,
+) -> _ModifyAnyCallable: ...
+
+
+def modify(
+    *,
+    status_code: HTTPStatus | Empty = EmptyObj,
+    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    validate_responses: bool | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
 
@@ -369,6 +548,8 @@ def modify(
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        error_handler: Callback function to be called
+            when this endpoint faces an exception.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -384,6 +565,7 @@ def modify(
             headers=headers,
             responses=extra_responses,
             validate_responses=validate_responses,
+            error_handler=error_handler,
         ),
     )
 

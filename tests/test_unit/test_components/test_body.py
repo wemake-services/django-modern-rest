@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import final
 
 import pydantic
+import pytest
 from dirty_equals import IsStr
 from django.http import HttpResponse
 from django.test import RequestFactory
@@ -10,7 +11,7 @@ from inline_snapshot import snapshot
 
 from django_modern_rest import Body, Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final
@@ -60,8 +61,18 @@ def test_body_parse_wrong_content_type(rf: RequestFactory) -> None:
     })
 
 
-def test_body_parse_wrong_content_type_async(
-    dmr_async_rf: DMRRequestFactory,
+@final
+class _WrongAsyncPydanticBodyController(
+    Controller[PydanticSerializer],
+    Body[_MyPydanticModel],
+):
+    async def post(self) -> str:
+        raise NotImplementedError
+
+
+@pytest.mark.asyncio
+async def test_body_parse_wrong_content_type_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that async body can't be parsed with wrong content type."""
     request = dmr_async_rf.post(
@@ -70,7 +81,9 @@ def test_body_parse_wrong_content_type_async(
         headers={'Content-Type': 'application/xml'},
     )
 
-    response = _WrongPydanticBodyController.as_view()(request)
+    response = await dmr_async_rf.wrap(
+        _WrongAsyncPydanticBodyController.as_view()(request),
+    )
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST

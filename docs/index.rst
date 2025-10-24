@@ -1,3 +1,5 @@
+:layout: landing
+
 django-modern-rest
 ==================
 
@@ -79,7 +81,7 @@ Main features include:
 
       But, there's more: we also provide validation
       and testing tools for your schema!
-      Powered by `schemathesis <https://github.com/schemathesis/schemathesis>`
+      Powered by `schemathesis <https://github.com/schemathesis/schemathesis>`_
 
     .. grid-item-card:: :octicon:`rocket` Still good old Django
       :link: pages/core-concepts
@@ -103,7 +105,7 @@ Main features include:
       Since, there's no magic happening, it would be really easy to do.
       Our docs and tests provide multiple examples of that.
 
-      Public API stability is guaranteed.
+      Public API stability is guaranteed from 1.0.0 release.
 
 
 
@@ -126,8 +128,10 @@ Here are our amazing people who made this project possible.
   pages/getting-started.rst
   pages/core-concepts.rst
   pages/configuration.rst
+  pages/error-handling.rst
   pages/openapi.rst
-  pages/bring-your-own-di.rst
+  pages/integrations.rst
+  pages/micro-framework.rst
   pages/performance.rst
   pages/testing.rst
 
@@ -139,3 +143,10 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst
+
+
+.. toctree::
+  :caption: Community
+  :hidden:
+
+  pages/community/logos.rst

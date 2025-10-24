@@ -67,6 +67,7 @@ codespell = "^2.4.1"
 wemake-python-styleguide = "^1.4"
 ruff = "^0.14"
 import-linter = "^2.5"
+slotscheck = "^0.19"
 
 pytest = "^8.4"
 pytest-cov = "^7.0"
@@ -76,9 +77,10 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
-inline-snapshot = ">=0.29,<0.31"
-slotscheck = "^0.19.1"
+inline-snapshot = "^0.30"
 schemathesis = "^4.3"
+
+httpx = "^0.28"
 
 [tool.poetry.group.docs]
 optional = true
@@ -91,6 +93,7 @@ sphinx-tabs = "^3.4"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
 sphinx-design = "^0.6"
+sphinxcontrib-mermaid = "^1.0"
 myst-parser = "^4.0"
 shibuya = "^2025.10"
 
@@ -170,6 +173,7 @@ ignore = [
   "PLR09",   # we have our own complexity rules
   "PLR2004", # do not report magic numbers
   "PLR6301", # do not require classmethod / staticmethod when self not used
+  "PLC0414", # do not raise on `as` re-exports
   "TRY003",  # long exception messages from `tryceratops`
 ]
 external = [ "WPS" ]
