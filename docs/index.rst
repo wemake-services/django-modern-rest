@@ -1,6 +1,15 @@
 :layout: landing
 
-django-modern-rest
+.. figure:: /_static/images/logo-light.svg
+   :figclass: light-only
+   :width: 700
+   :align: center
+
+.. figure:: /_static/images/logo-dark.svg
+   :figclass: dark-only
+   :width: 700
+   :align: center
+
 ==================
 
 .. container:: badges
