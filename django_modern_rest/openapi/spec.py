@@ -3,16 +3,16 @@ from collections.abc import Sequence
 from django.urls import URLPattern, path
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.generator.new_collector import (
-    collect_controllers,
-)
-from django_modern_rest.openapi.generator.path_item import gen_pathitems
+from django_modern_rest.openapi.converter import SchemaConverter
+from django_modern_rest.openapi.core.builder import OpenApiBuilder
+from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
 from django_modern_rest.types import Empty, EmptyObj
 
 
+# TODO!!!: think about files layout in `openapi` directory.
 def openapi_spec(
     router: Router,
     renderers: Sequence[BaseRenderer],
@@ -37,22 +37,17 @@ def openapi_spec(
     if isinstance(config, Empty):
         config = _default_config()
 
-    # TODO: temporary schema without content
-    schema = {
-        'openapi': '3.1.0',
-        'info': {
-            'title': 'Minimal API',
-            'version': '1.0.0',
-        },
-    }
-    controllers = collect_controllers(router)
-    path_items = gen_pathitems(controllers)
-    print(path_items)
+    context = OpenAPIContext(
+        config=config,
+        processors=[],  # TODO: add processors
+    )
+    schema = OpenApiBuilder(context).build(router)
+    schema_dict = SchemaConverter().convert(schema)
 
     urlpatterns = [
         path(
             renderer.path,
-            OpenAPIView.as_view(renderer=renderer, schema=schema),
+            OpenAPIView.as_view(renderer=renderer, schema=schema_dict),
             name=renderer.name,
         )
         for renderer in renderers
