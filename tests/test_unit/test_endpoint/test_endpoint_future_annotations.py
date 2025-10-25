@@ -48,5 +48,5 @@ def test_solvable_response_annotations() -> None:
     assert str(endpoint.response_validator.metadata.responses) == snapshot(
         '{<HTTPStatus.OK: 200>: '
         'ResponseDescription(return_type=list[int], '
-        'status_code=<HTTPStatus.OK: 200>, headers=Empty())}',
+        'status_code=<HTTPStatus.OK: 200>, headers=None)}',
     )
