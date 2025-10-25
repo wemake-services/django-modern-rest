@@ -104,10 +104,14 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
     (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
+    (PY_CLASS, '_SerializerT'),
+    # Undocumented in Django:
+    (PY_CLASS, 'django.urls.resolvers.URLPattern'),
+    (PY_CLASS, 'django.urls.resolvers.URLResolver'),
 ]
 
 qualname_overrides = {
-    # Django documents these classes  under re-exported path names:
+    # Django documents these classes under re-exported path names:
     'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
     'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
 }

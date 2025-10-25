@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-    <em>Modern REST framework for Django with types and async support!</em>
+  <em>Modern REST framework for Django with types and async support!</em>
 </p>
 
 [![wemake.services](https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D)](https://wemake-services.github.io)
@@ -40,6 +40,15 @@ There are several included extras:
 - `'django-modern-rest[msgspec]'` provides `msgspec` support
   and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
+
+
+## Testimonials
+
+> The one thing I really love about **django-modern-rest** is its pluggable
+> serializers and validators. Frameworks that are tightly coupled
+> with **pydantic** can be really painful to work with.
+
+— **[Kirill Podoprigora](https://github.com/Eclips4)**, CPython core developer
 
 
 ## Example
@@ -93,6 +102,9 @@ safe validation and interactive docs.
 [The full documentation](https://django-modern-rest.rtfd.io)
 has everything you need to get started!
 
+[wemake-django-template](https://github.com/wemake-services/wemake-django-template)
+can be used to jump-start your new project with `django-modern-rest`!
+
 
 ## License
 
@@ -102,9 +114,3 @@ has everything you need to get started!
 ## Credits
 
 This project was generated with [`wemake-python-package`](https://github.com/wemake-services/wemake-python-package). Current template version is: [e1fcf312d7f715323dcff0d376a40b7e3b47f9b7](https://github.com/wemake-services/wemake-python-package/tree/e1fcf312d7f715323dcff0d376a40b7e3b47f9b7). See what is [updated](https://github.com/wemake-services/wemake-python-package/compare/e1fcf312d7f715323dcff0d376a40b7e3b47f9b7...master) since then.
-
-## Feedback
-> The one thing I really love about **django-modern-rest** is its pluggable serializers and validators.
-  Frameworks that are tightly coupled with **pydantic** can be really painful to work with.
-
-— **[Kirill Podoprigora](https://github.com/Eclips4)**, CPython core developer

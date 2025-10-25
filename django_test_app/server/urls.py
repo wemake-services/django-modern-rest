@@ -7,7 +7,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 Examples:
 Function views
     1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+    2. Add a URL to urlpatterns:  path('', rest_views.home, name='home')
 Class-based views
     1. Add an import:  from other_app.views import Home
     2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
@@ -35,70 +35,82 @@ from django_modern_rest.openapi.renderers import (
     ScalarRenderer,
     SwaggerRenderer,
 )
-from rest_app import views
+from server.apps.models_example import urls as models_example_urls
+from server.apps.rest import views as rest_views
 
 router = Router([
     path(
+        'model_examples/',
+        include(
+            (models_example_urls.router.urls, 'models_example'),
+            namespace='model_examples',
+        ),
+    ),
+    path(
         'user/',
         compose_controllers(
-            views.UserCreateController,
-            views.UserListController,
+            rest_views.UserCreateController,
+            rest_views.UserListController,
         ).as_view(),
         name='users',
     ),
     path(
         'user/<int:user_id>',
         compose_controllers(
-            views.UserReplaceController,
-            views.UserUpdateController,
+            rest_views.UserReplaceController,
+            rest_views.UserUpdateController,
         ).as_view(),
         name='user_update',
     ),
     re_path(
         r'user/direct/re/(\d+)',
-        views.UserUpdateController.as_view(),
+        rest_views.UserUpdateController.as_view(),
         name='user_update_direct_re',
     ),
     path(
         'user/direct/<int:user_id>',
-        views.UserUpdateController.as_view(),
+        rest_views.UserUpdateController.as_view(),
         name='user_update_direct',
     ),
     path(
         'headers',
-        views.ParseHeadersController.as_view(),
+        rest_views.ParseHeadersController.as_view(),
         name='parse_headers',
     ),
     path(
         'async_headers',
-        views.AsyncParseHeadersController.as_view(),
+        rest_views.AsyncParseHeadersController.as_view(),
         name='async_parse_headers',
     ),
-    path('csrf-token', views.CsrfTokenController.as_view(), name='csrf_token'),
+    path(
+        'csrf-token',
+        rest_views.CsrfTokenController.as_view(),
+        name='csrf_token',
+    ),
     path(
         'csrf-protected',
-        views.CsrfProtectedController.as_view(),
+        rest_views.CsrfProtectedController.as_view(),
         name='csrf_test',
     ),
     path(
         'async-csrf-protected',
-        views.AsyncCsrfProtectedController.as_view(),
+        rest_views.AsyncCsrfProtectedController.as_view(),
         name='async_csrf_test',
     ),
     path(
         'custom-header',
-        views.CustomHeaderController.as_view(),
+        rest_views.CustomHeaderController.as_view(),
         name='custom_header',
     ),
     path(
         'rate-limited',
-        views.RateLimitedController.as_view(),
+        rest_views.RateLimitedController.as_view(),
         name='rate_limited',
     ),
 ])
 
 urlpatterns = [
-    path('api/', include((router.urls, 'rest_app'), namespace='api')),
+    path('api/', include((router.urls, 'server'), namespace='api')),
     path(
         'docs/',
         openapi_spec(

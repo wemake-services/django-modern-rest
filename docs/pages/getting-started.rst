@@ -36,7 +36,7 @@ Available extras:
 
 .. important::
 
-  I highly recommend to always install
+  We highly recommend to always install
   `msgspec <https://github.com/jcrist/msgspec>`_, even when using just
   `pydantic <https://github.com/pydantic/pydantic>`_ for APIs,
   because we use ``msgspec`` to parse ``json``, when it is available,
@@ -77,11 +77,13 @@ In this example:
 2. We added two component parsers: one for request's
    :class:`~django_modern_rest.components.Body` and one
    for :class:`~django_modern_rest.components.Headers`
-   which will parse them into typed models that we pass
+   which will parse them into typed models
+   (:class:`pydantic.BaseModel` or :class:`msgspec.Struct` based) that we pass
    to these components as type parameters
 3. You can see how we created
    a :class:`~django_modern_rest.controller.Controller` class
-   with :class:`pydantic.BaseModel` and :class:`msgspec.Struct` serializers
+   with :class:`~django_modern_rest.plugins.pydantic.PydanticSerializer`
+   or :class:`~django_modern_rest.plugins.msgspec.MsgspecSerializer`
 4. And how we defined ``post`` endpoint and returned
    a simple model response from it, it will automatically
    transformed into :class:`django.http.HttpResponse` instance by the framework
