@@ -280,7 +280,7 @@ class ControllerValidator:
         return is_async
 
 
-@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class _OpenAPIPayload:
     summary: str | None = None
     description: str | None = None

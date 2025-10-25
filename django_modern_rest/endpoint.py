@@ -521,6 +521,13 @@ def modify(
     validate_responses: bool | None = None,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifyAsyncCallable: ...
 
 
@@ -533,6 +540,13 @@ def modify(
     validate_responses: bool | None = None,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifySyncCallable: ...
 
 
@@ -545,6 +559,13 @@ def modify(
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifyAnyCallable: ...
 
 

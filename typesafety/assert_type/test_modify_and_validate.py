@@ -19,19 +19,22 @@ class _Model(pydantic.BaseModel):
 
 
 class _CorrectModifyController(Controller[PydanticSerializer]):
-    @modify(status_code=HTTPStatus.OK)
+    @modify(status_code=HTTPStatus.OK, description='Test GET endpoint')
     def get(self) -> str:
         return 'Done'
 
-    @modify(status_code=HTTPStatus.OK)
+    @modify(status_code=HTTPStatus.OK, description='Test POST endpoint')
     async def post(self) -> int:
         return 1
 
-    @modify(headers={'X-Custom': NewHeader(value='Example')})
+    @modify(
+        headers={'X-Custom': NewHeader(value='Example')},
+        description='Test PATCH endpoint',
+    )
     def patch(self) -> int:
         return 1
 
-    @modify()  # no args
+    @modify(description='Test PUT endpoint')  # no args
     async def put(self) -> int:
         return 1
 
