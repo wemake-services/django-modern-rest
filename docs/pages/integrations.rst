@@ -38,7 +38,7 @@ If you don't like how ``tag_list`` looks, you can do the same manually:
            'tags': user.tags.all(),
        })
 
-While specifing ``model_config = pydantic.ConfigDict(from_attributes=True)``
+While specifying ``model_config = pydantic.ConfigDict(from_attributes=True)``
 on ``TagSchema`` and ``RoleSchema``.
 Both options work, just choose what style do you like more.
 
