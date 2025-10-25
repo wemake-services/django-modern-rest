@@ -68,7 +68,7 @@ def test_controller_have_either_mixins() -> None:
         match='incompatible mixin',
     ):
 
-        class _MixedController(
+        class _MixedController(  # type: ignore[misc]
             AsyncMetaMixin,
             MetaMixin,
             Controller[PydanticSerializer],
