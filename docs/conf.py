@@ -99,9 +99,13 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
     (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
+    (PY_CLASS, '_SerializerT'),
     # TODO: fix out why this is an error
     (PY_CLASS, 'django.http.response.HttpResponse'),
     (PY_CLASS, 'django.http.request.HttpRequest'),
+    (PY_CLASS, 'django.urls.resolvers.URLPattern'),
+    (PY_CLASS, 'django.urls.resolvers.URLResolver'),
+    (PY_CLASS, 'django.db.models.QuerySet'),
 ]
 
 # Set `typing.TYPE_CHECKING` to `True`:

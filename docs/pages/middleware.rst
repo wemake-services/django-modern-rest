@@ -1,14 +1,26 @@
 Middleware
 ==========
 
-``django-modern-rest`` provides a powerful middleware system that allows you to wrap Django middleware around your controllers while maintaining proper OpenAPI documentation and response handling.
+As by our main principle, you can use any default
+Django middleware with your API. But, it has several minor problems by default:
 
-The main function for this is :func:`~django_modern_rest.decorators.wrap_middleware`, which creates reusable decorators that can be applied to controller classes.
+1. Any middleware responses won't show up in your schema
+2. Responses won't have the right ``'Content-Type'``
+3. Responses won't be validated
+
+That's why ``django-modern-rest`` provides a powerful middleware
+system that allows you to wrap Django middleware around your controllers
+while maintaining proper OpenAPI documentation and response handling.
+
+The main function for this
+is :func:`~django_modern_rest.decorators.wrap_middleware`,
+which creates reusable decorators that can be applied to controller classes.
 
 How it works
 ------------
 
-``wrap_middleware`` is a factory function that creates decorators with pre-configured middleware. It takes:
+``wrap_middleware`` is a factory function that creates decorators
+with pre-configured middleware. It takes:
 
 1. A middleware function or class
 2. One or more :class:`~django_modern_rest.response.ResponseDescription` objects
@@ -67,13 +79,15 @@ In this example:
 
 1. We create a middleware decorator using ``wrap_middleware``
 2. The decorator wraps ``csrf_protect`` middleware around the controller
-3. When CSRF verification fails, our converter function transforms the response to JSON
+3. When CSRF verification fails, our converter function
+   transforms the response to JSON
 4. The response description is automatically added to the OpenAPI schema
 
 Custom Middleware
 -----------------
 
-You can also create custom middleware functions. Here's an example of a rate limiting middleware:
+You can also create custom middleware functions.
+Here's an example of a rate limiting middleware:
 
 .. code-block:: python
 
@@ -163,32 +177,41 @@ Async Controllers
             # Your async logic here
             return {'message': 'async response'}
 
-The middleware will automatically detect whether the controller is async and handle it appropriately.
+The middleware will automatically detect whether the controller is async
+and handle it appropriately.
 
 Response Converter Function
 ---------------------------
 
-The response converter function is called when the middleware returns a response with a status code that matches one of the provided response descriptions. This allows you to:
+The response converter function is called when the middleware returns
+a response with a status code that matches one
+of the provided response descriptions. This allows you to:
 
 - Transform error responses to JSON format
 - Add custom headers
 - Modify response content
 - Apply consistent error formatting across your API
 
-The converter function receives the original response and should return a modified :class:`django.http.HttpResponse`.
+The converter function receives the original response and should
+return a modified :class:`django.http.HttpResponse`.
 
 Best Practices
 --------------
 
-1. **Always include response descriptions**: This ensures your OpenAPI documentation is complete and accurate.
+1. **Always include response descriptions**: This ensures your OpenAPI
+   documentation is complete and accurate.
 
-2. **Use consistent error formatting**: Create reusable converter functions that format errors consistently across your API.
+2. **Use consistent error formatting**: Create reusable converter functions
+   that format errors consistently across your API.
 
-3. **Handle both sync and async**: The same middleware decorator works with both sync and async controllers.
+3. **Handle both sync and async**: The same middleware decorator works
+   with both sync and async controllers.
 
-4. **Test your middleware**: Make sure to test both the success and error cases for your middleware.
+4. **Test your middleware**: Make sure to test both the success
+   and error cases for your middleware.
 
-5. **Document your middleware**: Add docstrings to explain what your middleware does and when it's triggered.
+5. **Document your middleware**: Add docstrings to explain what
+   your middleware does and when it's triggered.
 
 Example: Complete CSRF Protection Setup
 ----------------------------------------

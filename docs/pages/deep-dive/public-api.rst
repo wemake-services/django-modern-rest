@@ -74,6 +74,47 @@ Serialization
 .. autoclass:: django_modern_rest.serialization.SerializerContext
 
 
+Routing
+-------
+
+.. autoclass:: django_modern_rest.routing.Router
+  :members:
+
+.. autofunction:: django_modern_rest.routing.compose_controllers
+
+
+Meta mixins
+-----------
+
+.. autoclass:: django_modern_rest.options_mixins.MetaMixin
+  :members:
+
+.. autoclass:: django_modern_rest.options_mixins.AsyncMetaMixin
+  :members:
+
+
+Exceptions
+----------
+
+.. autoclass:: django_modern_rest.exceptions.UnsolvableAnnotationsError
+  :members:
+
+.. autoclass:: django_modern_rest.exceptions.EndpointMetadataError
+  :members:
+
+.. autoclass:: django_modern_rest.exceptions.DataParsingError
+  :members:
+
+.. autoclass:: django_modern_rest.exceptions.SerializationError
+  :members:
+
+.. autoclass:: django_modern_rest.exceptions.RequestSerializationError
+  :members:
+
+.. autoclass:: django_modern_rest.exceptions.ResponseSerializationError
+  :members:
+
+
 Utilities
 ---------
 
@@ -88,3 +129,11 @@ Decorators
 .. autoclass:: django_modern_rest.decorators.dispatch_decorator
 
 .. autoclass:: django_modern_rest.decorators.wrap_middleware
+
+
+Plugins
+-------
+
+.. autoclass:: django_modern_rest.plugins.pydantic.PydanticSerializer
+
+.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecSerializer

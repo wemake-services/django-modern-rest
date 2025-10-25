@@ -30,9 +30,14 @@ smoke:
 	# Checks that it is possible to import the base package without django.setup
 	poetry run python -c 'from django_modern_rest import Controller'
 
+
+.PHONY: example
+example:
+	cd django_test_app && mypy --config-file mypy.ini
+
 .PHONY: package
 package:
 	poetry run pip check
 
 .PHONY: test
-test: lint type-check spell-check package smoke unit
+test: lint type-check example spell-check package smoke unit
