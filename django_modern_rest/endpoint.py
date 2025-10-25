@@ -409,19 +409,14 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
         summary: A short summary of what the operation does.
-            Used in OpenAPI documentation.
         description: A verbose explanation of the operation behavior.
-            Used in OpenAPI documentation.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
         operation_id: Unique string used to identify the operation.
-            Used in OpenAPI documentation.
         deprecated: Declares this operation to be deprecated.
-            Used in OpenAPI documentation.
         security: A declaration of which security mechanisms can be used
-            for this operation. Used in OpenAPI documentation.
+            for this operation.
         external_docs: Additional external documentation for this operation.
-            Used in OpenAPI documentation.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -605,19 +600,19 @@ def modify(  # noqa: WPS211
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
         summary: A short summary of what the operation does.
-            Used in OpenAPI documentation.
+
         description: A verbose explanation of the operation behavior.
-            Used in OpenAPI documentation.
+
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
         operation_id: Unique string used to identify the operation.
-            Used in OpenAPI documentation.
+
         deprecated: Declares this operation to be deprecated.
-            Used in OpenAPI documentation.
+
         security: A declaration of which security mechanisms can be used
-            for this operation. Used in OpenAPI documentation.
+            for this operation.
         external_docs: Additional external documentation for this operation.
-            Used in OpenAPI documentation.
+
 
     Returns:
         The same function with ``__payload__`` payload instance.

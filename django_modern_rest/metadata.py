@@ -2,8 +2,6 @@ import dataclasses
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
-    Any,
-    TypedDict,
     final,
 )
 
@@ -19,15 +17,6 @@ if TYPE_CHECKING:
         ExternalDocumentation,
         SecurityRequirement,
     )
-
-
-class RequestModels(TypedDict, total=False):
-    """Model for request components."""
-
-    body: Any
-    query: Any
-    headers: Any
-    path: Any
 
 
 @final
@@ -49,21 +38,16 @@ class EndpointMetadata:
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         summary: A short summary of what the operation does.
-            Used in OpenAPI documentation.
         description: A verbose explanation of the operation behavior.
-            Used in OpenAPI documentation.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
         operation_id: Unique string used to identify the operation.
-            Used in OpenAPI documentation.
         deprecated: Declares this operation to be deprecated.
-            Used in OpenAPI documentation.
         security: A declaration of which security mechanisms can be used
             for this operation. List of security requirement objects.
-            Used in OpenAPI documentation.
         external_docs: Additional external documentation for this operation.
-            Instance of :class:`~django_modern_rest.openapi.objects.external_documentation.ExternalDocumentation`.
-            Used in OpenAPI documentation.
+
+
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
