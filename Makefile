@@ -32,7 +32,7 @@ smoke:
 
 .PHONY: example
 example:
-	cd django_test_app && poerty run mypy --config-file mypy.ini
+	cd django_test_app && poetry run mypy --config-file mypy.ini
 
 .PHONY: package
 package:
