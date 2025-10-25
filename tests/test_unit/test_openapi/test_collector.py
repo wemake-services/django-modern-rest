@@ -3,8 +3,6 @@ from typing import Any, final
 
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
-
-from django_modern_rest import Controller
 from django_modern_rest.openapi.generator.collector import (
     EndpointInfo,
     _join_paths,
@@ -12,6 +10,8 @@ from django_modern_rest.openapi.generator.collector import (
     _process_resolver,
     collect_endpoints,
 )
+
+from django_modern_rest import Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import Router, compose_controllers
 

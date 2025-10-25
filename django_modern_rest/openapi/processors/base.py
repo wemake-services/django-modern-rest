@@ -1,4 +1,5 @@
 import abc
+from typing import Any
 
 
 class BaseProcessor:
@@ -10,6 +11,6 @@ class BaseProcessor:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def process(self) -> ...:
+    def process(self) -> Any:
         """Whatever must be replaced."""
         raise NotImplementedError

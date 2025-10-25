@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.collector import ControllerCollector
+from django_modern_rest.openapi.collector import (
+    ControllerCollector,
+    controller_collector,
+)
 from django_modern_rest.openapi.core.merger import ConfigMerger
 from django_modern_rest.openapi.generators.component import ComponentGenerator
 from django_modern_rest.openapi.generators.path_item import PathItemGenerator
@@ -21,11 +24,11 @@ class OpenApiBuilder:
         self._config_merger = ConfigMerger(context)
         self._path_generator = PathItemGenerator(context)
         self._component_generator = ComponentGenerator(context)
-        self._controller_collector = ControllerCollector(context)
+        self._controller_collector: ControllerCollector = controller_collector
 
     def build(self, router: Router) -> OpenAPI:
         """Whatever must be replaced."""
-        controller_registry = self._controller_collector.collect(router)
+        controller_registry = self._controller_collector(router)
 
         paths_items: Paths = {}
         for controller in controller_registry:

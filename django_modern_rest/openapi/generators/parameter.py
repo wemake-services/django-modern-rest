@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects.parameter import Parameter
+from django_modern_rest.openapi.objects.reference import Reference
 
 if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
@@ -14,5 +15,6 @@ class ParameterGenerator:
         """Whatever must be replaced."""
         self.context = context
 
-    def generate(self, endpoint: 'Endpoint') -> list[Parameter]:
+    def generate(self, endpoint: 'Endpoint') -> list[Parameter | Reference]:
         """Whatever must be replaced."""
+        raise NotImplementedError

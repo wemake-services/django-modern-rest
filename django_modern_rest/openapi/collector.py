@@ -1,9 +1,9 @@
-from typing import Any, NamedTuple
+from collections.abc import Callable
+from typing import Any, NamedTuple, TypeAlias
 
 from django.urls import URLPattern, URLResolver
 
 from django_modern_rest.controller import Controller
-from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.routing import Router
 
 
@@ -65,7 +65,10 @@ def _join_paths(base_path: str, pattern_path: str) -> str:
     return base_path
 
 
-class ControllerCollector:
+ControllerCollector: TypeAlias = Callable[[Router], list[ControllerMapping]]
+
+
+def controller_collector(router: Router) -> list[ControllerMapping]:
     """
     Collect all API endpoints from a router for OpenAPI generation.
 
@@ -78,21 +81,14 @@ class ControllerCollector:
     direct URL patterns and nested URL resolvers, to build a comprehensive
     list of all available API endpoints.
     """
+    controllers: list[ControllerMapping] = []
 
-    def __init__(self, context: OpenAPIContext) -> None:
-        """Whatever must be replaced."""
-        self.context = context
+    for url in router.urls:
+        if isinstance(url, URLPattern):
+            pattern_endpoints = _process_pattern(url)
+            controllers.append(pattern_endpoints)
+        else:
+            resolver_endpoints = _process_resolver(url)
+            controllers.extend(resolver_endpoints)
 
-    def collect(self, router: Router) -> list[ControllerMapping]:
-        """Whatever must be replaced."""
-        controllers: list[ControllerMapping] = []
-
-        for url in router.urls:
-            if isinstance(url, URLPattern):
-                pattern_endpoints = _process_pattern(url)
-                controllers.append(pattern_endpoints)
-            else:
-                resolver_endpoints = _process_resolver(url)
-                controllers.extend(resolver_endpoints)
-
-        return controllers
+    return controllers
