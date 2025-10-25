@@ -67,13 +67,13 @@ for the :term:`controller` definition.
 
       .. code:: python
 
-        >>> from django_modern_rest.plugins.msgspec import MsgspecSerializer
+        from django_modern_rest.plugins.msgspec import MsgspecSerializer
 
     .. tab:: pydantic
 
       .. code:: python
 
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 Routing
