@@ -108,6 +108,9 @@ nitpick_ignore = [
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (PY_CLASS, 'django.urls.resolvers.URLResolver'),
+    # OpenAPI types used in TYPE_CHECKING blocks:
+    (PY_CLASS, 'SecurityRequirement'),
+    (PY_CLASS, 'ExternalDocumentation'),
 ]
 
 qualname_overrides = {
@@ -115,7 +118,6 @@ qualname_overrides = {
     'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
     'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
 }
-
 
 # Set `typing.TYPE_CHECKING` to `True`:
 # https://pypi.org/project/sphinx-autodoc-typehints/
