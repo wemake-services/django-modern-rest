@@ -25,8 +25,6 @@ from django_modern_rest.response import (
 )
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.types import (
-    Empty,
-    EmptyObj,
     infer_bases,
     infer_type_args,
 )
@@ -91,7 +89,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     # str and not HTTPMethod, because of `meta` method:
     api_endpoints: ClassVar[dict[str, Endpoint]]
-    validate_responses: ClassVar[bool | Empty] = EmptyObj
+    validate_responses: ClassVar[bool | None] = None
     responses: ClassVar[list[ResponseDescription]] = []
     responses_from_components: ClassVar[bool] = True
     http_methods: ClassVar[frozenset[str]] = frozenset(
@@ -142,8 +140,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         self,
         raw_data: Any,
         *,
-        headers: dict[str, str] | Empty = EmptyObj,
-        status_code: HTTPStatus | Empty = EmptyObj,
+        headers: dict[str, str] | None = None,
+        status_code: HTTPStatus | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert response parts into an actual response.
@@ -168,7 +166,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | Empty = EmptyObj,
+        headers: dict[str, str] | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert API error parts into an actual error.

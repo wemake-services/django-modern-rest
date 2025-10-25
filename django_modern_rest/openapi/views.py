@@ -7,7 +7,6 @@ from typing_extensions import override
 
 from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.openapi.renderers import BaseRenderer
-from django_modern_rest.types import Empty, EmptyObj
 
 
 @final
@@ -23,8 +22,8 @@ class OpenAPIView(View):
     """
 
     # Hack for preventing parent `as_view()` attributes validating
-    renderer: ClassVar[BaseRenderer | Empty] = EmptyObj
-    schema: ClassVar[ConvertedSchema | Empty] = EmptyObj
+    renderer: ClassVar[BaseRenderer | None] = None
+    schema: ClassVar[ConvertedSchema | None] = None
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Handle `GET` request and render the OpenAPI schema."""

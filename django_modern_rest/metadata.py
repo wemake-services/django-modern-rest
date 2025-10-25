@@ -46,8 +46,6 @@ class EndpointMetadata:
             for this operation. List of security requirement objects.
         external_docs: Additional external documentation for this operation.
 
-
-
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
     ``allow_custom_http_methods`` is used for endpoint definition.
