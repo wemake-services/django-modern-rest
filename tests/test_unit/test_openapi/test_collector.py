@@ -5,12 +5,12 @@ import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
 from django_modern_rest import Controller
-from django_modern_rest.openapi.generator.collector import (
-    EndpointInfo,
+from django_modern_rest.openapi.collector import (
+    ControllerMapping,
     _join_paths,
     _process_pattern,
     _process_resolver,
-    collect_endpoints,
+    controller_collector,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import Router, compose_controllers
@@ -103,70 +103,48 @@ def test_join_paths(
 
 
 @pytest.mark.parametrize(
-    ('path_str', 'view_class', 'expected_count'),
+    ('path_str', 'view_class'),
     [
-        ('full/', _FullController, 5),
-        ('composed', compose_controllers(_GetController, _PostController), 2),
-        ('sla/shed/', _GetController, 1),
-        ('', _EmptyController, 0),
+        ('full/', _FullController),
+        ('composed', compose_controllers(_GetController, _PostController)),
+        ('sla/shed/', _GetController),
+        ('', _EmptyController),
     ],
 )
 def test_process_pattern_with_different_views(
     path_str: str,
     view_class: type[Controller[Any]],
-    expected_count: int,
 ) -> None:
     """Ensure that `_process_pattern` processes different types correctly."""
     pattern = path(path_str, view_class.as_view())
-    endpoints = _process_pattern(pattern, '/api/')
+    controller_mapping = _process_pattern(pattern, '/api/')
 
-    assert len(endpoints) == expected_count
-    assert all(isinstance(endpoint, EndpointInfo) for endpoint in endpoints)
-    assert all(endpoint.path == f'/api/{path_str}' for endpoint in endpoints)
+    assert isinstance(controller_mapping, ControllerMapping)
+    assert controller_mapping.path == f'/api/{path_str}'
 
 
 @pytest.mark.parametrize(
-    ('nested_patterns', 'expected_count'),
+    'view_func',
     [
-        ([path('nested/', _GetController.as_view())], 1),
-        ([path('nested/', _FullController.as_view())], 5),
-        (
-            [
-                path(
-                    'nested/',
-                    compose_controllers(
-                        _GetController,
-                        _PostController,
-                    ).as_view(),
-                ),
-            ],
-            2,
-        ),
-        (
-            [
-                path(
-                    'nested/',
-                    include([path('inner/', _FullController.as_view())]),
-                ),
-            ],
-            5,
-        ),
+        _EmptyController.as_view(),
+        _FullController.as_view(),
+        compose_controllers(_GetController, _PostController).as_view(),
+        include([path('inner/', _FullController.as_view())]),
     ],
 )
-def test_process_resolver_with_nested_patterns(
-    nested_patterns: list[URLPattern],
-    expected_count: int,
-) -> None:
+def test_process_resolver_with_nested_patterns(view_func: Any) -> None:
     """Test _process_resolver with nested URL resolvers."""
-    resolver = path('api/', include(nested_patterns))
-    endpoints = _process_resolver(resolver, '/base/')
+    nested_patterns = [path('nested/', view_func)]
+    resolver = path('api/', include((nested_patterns, 'test_app')))
+    controllers = _process_resolver(resolver, '/base/')
 
-    assert len(endpoints) == expected_count
-    assert all(isinstance(endpoint, EndpointInfo) for endpoint in endpoints)
+    assert all(
+        isinstance(controller, ControllerMapping) for controller in controllers
+    )
 
 
-def test_collect_endpoints_with_router() -> None:
-    """Test the main collect_endpoints function with a Router."""
+def test_controller_collector_with_router() -> None:
+    """Test the main controller_collector function with a Router."""
     patterns: Sequence[URLPattern | URLResolver] = [
         path('direct/', _GetController.as_view()),
         path('nested/', include([path('inner/', _PostController.as_view())])),
@@ -175,7 +153,9 @@ def test_collect_endpoints_with_router() -> None:
             compose_controllers(_GetController, _PostController).as_view(),
         ),
     ]
-    endpoints = collect_endpoints(Router(patterns))
+    controllers = controller_collector(Router(patterns))
 
-    assert len(endpoints) == 4
-    assert all(isinstance(endpoint, EndpointInfo) for endpoint in endpoints)
+    assert len(controllers) == 3
+    assert all(
+        isinstance(controller, ControllerMapping) for controller in controllers
+    )
