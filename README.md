@@ -50,6 +50,9 @@ There are several included extras:
 
 — **[Kirill Podoprigora](https://github.com/Eclips4)**, CPython core developer
 
+> Using `django-modern-rest` has been a game-changer for my productivity. The strict type safety and schema validation for both requests and responses mean I spend less time debugging and more time building.
+
+— **[Josiah Kaviani](https://github.com/proofit404)**, Django core developer
 
 ## Example
 
