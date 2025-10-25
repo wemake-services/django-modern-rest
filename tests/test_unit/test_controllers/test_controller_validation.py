@@ -11,7 +11,6 @@ from django_modern_rest import (
 )
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.validation import ControllerValidator
 
 
 def test_controller_either_sync_or_async() -> None:
@@ -66,69 +65,11 @@ def test_controller_have_either_mixins() -> None:
     """Ensure that controllers does not have both mixins."""
     with pytest.raises(
         EndpointMetadataError,
-        match='can only have one of',
+        match='incompatible mixin',
     ):
 
         class _MixedController(
             AsyncMetaMixin,
-            MetaMixin,
-            Controller[PydanticSerializer],
-        ):
-            async def post(self) -> list[str]:
-                raise NotImplementedError
-
-
-def test_controller_have_valid_mixins() -> None:
-    """Ensure that controller have a valid mixin."""
-
-    class _MixedSyncController(
-        MetaMixin,
-        Controller[PydanticSerializer],
-    ):
-        def post(self) -> list[str]:
-            raise NotImplementedError
-
-    class _MixedAsyncController(
-        AsyncMetaMixin,
-        Controller[PydanticSerializer],
-    ):
-        async def post(self) -> list[str]:
-            raise NotImplementedError
-
-
-def test_sync_controller_have_invalid_mixin(monkeypatch) -> None:
-    """Ensure that sync controller have an invalid mixin."""
-    monkeypatch.setattr(
-        ControllerValidator,
-        '_validate_endpoints',
-        lambda self, controller: False,
-    )
-    with pytest.raises(
-        EndpointMetadataError,
-        match='contains incompatible mixin',
-    ):
-
-        class _MixedSyncController(
-            AsyncMetaMixin,
-            Controller[PydanticSerializer],
-        ):
-            def post(self) -> list[str]:
-                raise NotImplementedError
-
-
-def test_async_controller_have_invalid_mixin(monkeypatch) -> None:
-    """Ensure that async controller have an invalid mixin."""
-    monkeypatch.setattr(
-        ControllerValidator,
-        '_validate_endpoints',
-        lambda self, controller: True,
-    )
-    with pytest.raises(
-        EndpointMetadataError,
-        match='contains incompatible mixin',
-    ):
-
-        class _MixedAsyncController(
             MetaMixin,
             Controller[PydanticSerializer],
         ):

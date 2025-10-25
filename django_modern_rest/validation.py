@@ -245,30 +245,31 @@ class ControllerValidator:
         self,
         controller: 'type[Controller[BaseSerializer]]',
         *,
-        is_async: bool,
+        is_async: bool = False,
     ) -> None:
         if not controller.api_endpoints:
             return
 
-        has_async_mixin = is_safe_subclass(controller, BaseAsyncMeta)
-        has_sync_mixin = is_safe_subclass(controller, BaseMeta)
-        if not (has_async_mixin or has_sync_mixin):
-            return
-
-        if has_async_mixin and has_sync_mixin:
+        is_subclass_of_meta_mixin = issubclass(controller, BaseMeta)
+        is_subclass_of_async_meta_mixin = issubclass(
+            controller,
+            BaseAsyncMeta,
+        )
+        err_header = f'Controller {controller} contains incompatible mixins'
+        if is_subclass_of_meta_mixin and is_subclass_of_async_meta_mixin:
             raise EndpointMetadataError(
-                f'Controller {controller} can only have one of '
-                f'MetaMixin or AsyncMetaMixin, not both.',
+                f'{err_header}. Use only MetaMixin or AsyncMetaMixin, '
+                f'not both.',
             )
 
-        async_controller_with_sync_mixin = is_async and has_sync_mixin
-        sync_controller_with_async_mixin = not is_async and has_async_mixin
-        if async_controller_with_sync_mixin or sync_controller_with_async_mixin:
+        if is_async and is_subclass_of_meta_mixin:
             raise EndpointMetadataError(
-                f'Controller {controller} contains '
-                f'incompatible mixin. Do not use '
-                f'AsyncMetaMixin in sync Controller '
-                f'and opposite MetaMixin in async Controller',
+                f'{err_header}. Use AsyncMetaMixin in async Controller.',
+            )
+
+        if not is_async and is_subclass_of_async_meta_mixin:
+            raise EndpointMetadataError(
+                f'{err_header}. Use MetaMixin in sync Controller.',
             )
 
     def _validate_components(
