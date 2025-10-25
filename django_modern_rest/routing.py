@@ -2,7 +2,7 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
 from django.http import HttpRequest, HttpResponse
-from django.urls import URLPattern, URLResolver
+from django.urls.resolvers import URLPattern, URLResolver
 from typing_extensions import override
 
 if TYPE_CHECKING:
