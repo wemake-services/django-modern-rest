@@ -49,6 +49,13 @@ Available extras:
   unless you want to serve static files for the OpenAPI.
 
 
+Project template
+----------------
+
+Jump start your new ``django-modern-rest`` project with
+`wemake-django-template <https://github.com/wemake-services/wemake-django-template>`_!
+
+
 Showcase
 --------
 
