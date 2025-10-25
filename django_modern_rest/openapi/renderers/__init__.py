@@ -10,6 +10,9 @@ from django_modern_rest.openapi.renderers.base import (
 from django_modern_rest.openapi.renderers.json import (
     JsonRenderer as JsonRenderer,
 )
+from django_modern_rest.openapi.renderers.redoc import (
+    RedocRenderer as RedocRenderer,
+)
 from django_modern_rest.openapi.renderers.scalar import (
     ScalarRenderer as ScalarRenderer,
 )

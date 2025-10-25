@@ -32,6 +32,7 @@ from django_modern_rest.openapi.objects import (
 )
 from django_modern_rest.openapi.renderers import (
     JsonRenderer,
+    RedocRenderer,
     ScalarRenderer,
     SwaggerRenderer,
 )
@@ -107,6 +108,7 @@ urlpatterns = [
                 SwaggerRenderer(),
                 JsonRenderer(),
                 ScalarRenderer(),
+                RedocRenderer(),
             ],
             config=OpenAPIConfig(
                 title='Test API',

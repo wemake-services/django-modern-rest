@@ -9,6 +9,7 @@ from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.openapi.renderers import (
     BaseRenderer,
     JsonRenderer,
+    RedocRenderer,
     ScalarRenderer,
     SwaggerRenderer,
     json_serializer,
@@ -40,6 +41,7 @@ def test_json_serializer_basic_functionality() -> None:
     ('renderer_class', 'expected_content_type'),
     [
         (JsonRenderer, 'application/json'),
+        (RedocRenderer, 'text/html'),
         (SwaggerRenderer, 'text/html'),
         (ScalarRenderer, 'text/html'),
     ],
@@ -57,6 +59,7 @@ def test_renderer_content_types(
     ('renderer_class', 'expected_path'),
     [
         (JsonRenderer, 'openapi.json/'),
+        (RedocRenderer, 'redoc/'),
         (SwaggerRenderer, 'swagger/'),
         (ScalarRenderer, 'scalar/'),
     ],
@@ -74,6 +77,7 @@ def test_renderer_default_paths(
     ('renderer_class', 'expected_name'),
     [
         (JsonRenderer, 'json'),
+        (RedocRenderer, 'redoc'),
         (SwaggerRenderer, 'swagger'),
         (ScalarRenderer, 'scalar'),
     ],
@@ -104,7 +108,7 @@ def test_json_renderer_render_method(dmr_rf: DMRRequestFactory) -> None:
 
 @pytest.mark.parametrize(
     'renderer_class',
-    [SwaggerRenderer, ScalarRenderer],
+    [RedocRenderer, SwaggerRenderer, ScalarRenderer],
 )
 def test_html_renderer_render_method(
     dmr_rf: DMRRequestFactory,
