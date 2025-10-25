@@ -170,4 +170,5 @@ Here are our amazing people who made this project possible.
   :caption: Community
   :hidden:
 
+  pages/community/testimonials.rst
   pages/community/logos.rst
