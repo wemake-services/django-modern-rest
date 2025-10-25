@@ -65,7 +65,7 @@ def test_controller_have_either_mixins() -> None:
     """Ensure that controllers does not have both mixins."""
     with pytest.raises(
         EndpointMetadataError,
-        match='incompatible mixin',
+        match="'AsyncMetaMixin'",
     ):
 
         class _MixedController(  # type: ignore[misc]
@@ -74,4 +74,17 @@ def test_controller_have_either_mixins() -> None:
             Controller[PydanticSerializer],
         ):
             async def post(self) -> list[str]:
+                raise NotImplementedError
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match="'MetaMixin'",
+    ):
+
+        class _MixedController2(  # type: ignore[misc]
+            MetaMixin,
+            AsyncMetaMixin,
+            Controller[PydanticSerializer],
+        ):
+            def post(self) -> list[str]:
                 raise NotImplementedError

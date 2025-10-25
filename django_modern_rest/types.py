@@ -20,18 +20,6 @@ class Empty:
     """Special value for empty defaults."""
 
 
-class BaseMeta:
-    """Base class for sync MetaMixin."""
-
-    __slots__ = ()
-
-
-class BaseAsyncMeta:
-    """Base class for async MetaMixin."""
-
-    __slots__ = ()
-
-
 #: Default singleton for empty values.
 EmptyObj: Final = Empty()
 

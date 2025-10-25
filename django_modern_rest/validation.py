@@ -45,8 +45,6 @@ from django_modern_rest.settings import (
     resolve_setting,
 )
 from django_modern_rest.types import (
-    BaseAsyncMeta,
-    BaseMeta,
     Empty,
     EmptyObj,
     infer_bases,
@@ -247,29 +245,21 @@ class ControllerValidator:
         *,
         is_async: bool = False,
     ) -> None:
-        if not controller.api_endpoints:
-            return
-
-        is_subclass_of_meta_mixin = issubclass(controller, BaseMeta)
-        is_subclass_of_async_meta_mixin = issubclass(
-            controller,
-            BaseAsyncMeta,
+        from django_modern_rest.options_mixins import (  # noqa: PLC0415
+            AsyncMetaMixin,
+            MetaMixin,
         )
-        err_header = f'Controller {controller} contains incompatible mixins'
-        if is_subclass_of_meta_mixin and is_subclass_of_async_meta_mixin:
-            raise EndpointMetadataError(
-                f'{err_header}. Use only MetaMixin or AsyncMetaMixin, '
-                f'not both.',
-            )
 
-        if is_async and is_subclass_of_meta_mixin:
-            raise EndpointMetadataError(
-                f'{err_header}. Use AsyncMetaMixin in async Controller.',
+        if (
+            issubclass(controller, MetaMixin)
+            and issubclass(controller, AsyncMetaMixin)  # type: ignore[unreachable]
+        ):
+            suggestion = (  # type: ignore[unreachable]
+                'AsyncMetaMixin' if is_async else 'MetaMixin'
             )
-
-        if not is_async and is_subclass_of_async_meta_mixin:
             raise EndpointMetadataError(
-                f'{err_header}. Use MetaMixin in sync Controller.',
+                f'Use only {suggestion!r}, '
+                f'not both meta mixins in {controller!r}',
             )
 
     def _validate_components(

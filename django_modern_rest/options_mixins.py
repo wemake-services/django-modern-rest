@@ -6,7 +6,6 @@ from django.http import HttpResponse
 from django_modern_rest.endpoint import validate
 from django_modern_rest.headers import HeaderDescription
 from django_modern_rest.response import ResponseDescription
-from django_modern_rest.types import BaseAsyncMeta, BaseMeta
 from django_modern_rest.validation import validate_method_name
 
 if TYPE_CHECKING:
@@ -22,7 +21,7 @@ OptionsResponse: Final = ResponseDescription(
 )
 
 
-class MetaMixin(BaseMeta):
+class MetaMixin:
     """
     Mixing that provides default ``meta`` method or ``OPTIONS`` http method.
 
@@ -52,7 +51,7 @@ class MetaMixin(BaseMeta):
         return _meta_impl(self)  # type: ignore[arg-type]
 
 
-class AsyncMetaMixin(BaseAsyncMeta):
+class AsyncMetaMixin:
     """
     Mixing that provides default ``meta`` method or ``OPTIONS`` http method.
 
