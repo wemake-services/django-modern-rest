@@ -8,6 +8,7 @@ from django_modern_rest.test import DMRClient
 
 ENDPOINTS: Final = (
     ('openapi:json', HTTPStatus.OK, 'application/json'),
+    ('openapi:redoc', HTTPStatus.OK, 'text/html'),
     ('openapi:swagger', HTTPStatus.OK, 'text/html'),
     ('openapi:scalar', HTTPStatus.OK, 'text/html'),
 )
