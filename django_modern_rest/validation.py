@@ -1,6 +1,5 @@
 import dataclasses
 import inspect
-from collections import Counter
 from collections.abc import Callable, Mapping, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
@@ -347,12 +346,18 @@ class _ResponseListValidator:
         *,
         endpoint: str,
     ) -> None:
-        counter = Counter(response.status_code for response in responses)
-        for status, count in counter.items():
-            if count > 1:
+        # Now, check if we have any conflicts in responses.
+        # For example: same status code, mismatching metadata.
+        unique: dict[HTTPStatus, ResponseDescription] = {}
+        for response in responses:
+            existing_response = unique.get(response.status_code)
+            if existing_response is not None and existing_response != response:
                 raise EndpointMetadataError(
-                    f'{endpoint!r} has {status} specified {count} times',
+                    f'Endpoint {endpoint} has multiple responses '
+                    f'for {response.status_code=}, but with different '
+                    f'metadata: {response} and {existing_response}',
                 )
+            unique.setdefault(response.status_code, response)
 
     def _validate_header_descriptions(
         self,

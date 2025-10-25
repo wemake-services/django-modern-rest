@@ -7,7 +7,12 @@ from django.urls import URLPattern
 
 from django_modern_rest import Router
 from django_modern_rest.openapi import OpenAPIConfig, openapi_spec
-from django_modern_rest.openapi.renderers import JsonRenderer, SwaggerRenderer
+from django_modern_rest.openapi.renderers import (
+    JsonRenderer,
+    RedocRenderer,
+    ScalarRenderer,
+    SwaggerRenderer,
+)
 from django_modern_rest.settings import clear_settings_cache
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
@@ -55,12 +60,19 @@ def test_pattern_names_match_renderers() -> None:
     """Ensure that URL pattern names match renderer names."""
     urlpatterns, _, _ = openapi_spec(
         router=Router([]),
-        renderers=[JsonRenderer(), SwaggerRenderer()],
+        renderers=[
+            JsonRenderer(),
+            RedocRenderer(),
+            ScalarRenderer(),
+            SwaggerRenderer(),
+        ],
         config=_TEST_CONFIG,
     )
 
     pattern_names = [pattern.name for pattern in urlpatterns]
     assert 'json' in pattern_names
+    assert 'redoc' in pattern_names
+    assert 'scalar' in pattern_names
     assert 'swagger' in pattern_names
 
 

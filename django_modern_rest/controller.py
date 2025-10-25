@@ -19,7 +19,10 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
-from django_modern_rest.response import ResponseDescription, build_response
+from django_modern_rest.response import (
+    ResponseDescription,
+    build_response,
+)
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.types import (
     Empty,
