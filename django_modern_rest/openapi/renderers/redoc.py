@@ -21,6 +21,7 @@ class RedocRenderer(BaseRenderer):
     using Redoc components.
     """
 
+    # TODO: implement local static later.
     default_path: ClassVar[str] = 'redoc/'
     default_name: ClassVar[str] = 'redoc'
     content_type: ClassVar[str] = 'text/html'
