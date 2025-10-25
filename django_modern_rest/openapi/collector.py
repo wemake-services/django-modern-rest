@@ -1,10 +1,11 @@
-from collections.abc import Callable
-from typing import Any, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Any, NamedTuple
 
+from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
-from django_modern_rest.controller import Controller
-from django_modern_rest.routing import Router
+if TYPE_CHECKING:
+    from django_modern_rest.controller import Controller
+    from django_modern_rest.routing import Router
 
 
 class ControllerMapping(NamedTuple):
@@ -20,7 +21,7 @@ class ControllerMapping(NamedTuple):
     """
 
     path: str
-    controller: Controller[Any]
+    controller: 'Controller[Any]'
 
 
 def _process_resolver(
@@ -45,11 +46,12 @@ def _process_pattern(
 ) -> ControllerMapping:
     path = _join_paths(base_path, str(url_pattern.pattern))
     controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
-    return ControllerMapping(path=path, controller=controller)
+    # TODO: path normalization must be configurable (simplify_regex)
+    return ControllerMapping(path=simplify_regex(path), controller=controller)
+
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
-    # TODO: also normalize paths
     if not base_path:
         return pattern_path
     if not pattern_path:
@@ -63,10 +65,7 @@ def _join_paths(base_path: str, pattern_path: str) -> str:
     return base_path
 
 
-ControllerCollector: TypeAlias = Callable[[Router], list[ControllerMapping]]
-
-
-def controller_collector(router: Router) -> list[ControllerMapping]:
+def controller_collector(router: 'Router') -> list[ControllerMapping]:
     """
     Collect all API controllers from a router for OpenAPI generation.
 

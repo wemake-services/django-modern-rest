@@ -42,7 +42,7 @@ def openapi_spec(
         processors=[],  # TODO: add processors
     )
     schema = OpenApiBuilder(context).build(router)
-    schema_dict = SchemaConverter().convert(schema)
+    schema_dict = SchemaConverter.convert(schema)
 
     urlpatterns = [
         path(

@@ -36,6 +36,7 @@ class OpenAPIContext:
         self.request_body_generator = RequestBodyGenerator(self)
         self.response_generator = ResponseGenerator(self)
         self.operation_generator = OperationGenerator(self)
+        
         self.header_generator = HeaderGenerator(self)
 
     def add_operation_id(self, operation_id: str | Empty = EmptyObj) -> str:

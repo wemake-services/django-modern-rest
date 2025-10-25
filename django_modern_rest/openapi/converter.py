@@ -32,31 +32,28 @@ class SchemaConverter:
     `normalize_value` function.
     """
 
-    def __init__(
-        self,
-        normalize_key: NormalizeKeyFunc = normalize_key,
-        normalize_value: NormalizeValueFunc = normalize_value,
-    ) -> None:
-        """Allow to inject normalization function."""
-        self.normalize_key = normalize_key
-        self.normalize_value = normalize_value
+    # Private API:
+    _normalize_key: NormalizeKeyFunc = staticmethod(normalize_key)
+    _normalize_value: NormalizeValueFunc = staticmethod(normalize_value)
 
-    def convert(self, schema_obj: SchemaObject) -> ConvertedSchema:
+    @classmethod
+    def convert(cls, schema_obj: SchemaObject) -> ConvertedSchema:
         """Convert the object to OpenAPI schema dictionary."""
         schema: ConvertedSchema = {}
 
-        for field in self._iter_fields(schema_obj):
+        for field in cls._iter_fields(schema_obj):
             value = getattr(schema_obj, field.name, None)  # noqa: WPS110
             if value is None:
                 continue
 
-            schema[self.normalize_key(field.name)] = self.normalize_value(
+            schema[cls._normalize_key(field.name)] = cls._normalize_value(
                 value,
-                self.convert,
+                cls.convert,
             )
 
         return schema
 
     # Private API:
-    def _iter_fields(self, schema_obj: SchemaObject) -> Iterator[Field[Any]]:
+    @classmethod
+    def _iter_fields(cls, schema_obj: SchemaObject) -> Iterator[Field[Any]]:
         yield from fields(schema_obj)

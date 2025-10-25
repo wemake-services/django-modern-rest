@@ -27,8 +27,8 @@ class OperationGenerator:
 
     def _extract_summary(self, endpoint: 'Endpoint') -> str:
         """Whatever must be replaced3."""
-        return 'test'
+        return 'foo'
 
     def _extract_description(self, endpoint: 'Endpoint') -> str:
         """Whatever must be replaced4."""
-        return 'test'
+        return 'bar'

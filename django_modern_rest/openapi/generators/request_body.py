@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.request_body import RequestBody
 
 if TYPE_CHECKING:
@@ -16,4 +17,7 @@ class RequestBodyGenerator:
 
     def generate(self, endpoint: 'Endpoint') -> RequestBody:
         """Whatever must be replaced."""
-        ...
+        return RequestBody(
+            content={'application/json': MediaType()},
+            description='test',
+        )

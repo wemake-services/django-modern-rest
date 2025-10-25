@@ -16,4 +16,4 @@ class ComponentGenerator:
 
     def generate(self, paths_items: Paths) -> Components:
         """Whatever must be replaced."""
-        ...
+        return Components()

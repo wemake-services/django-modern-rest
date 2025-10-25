@@ -1,4 +1,3 @@
-from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.objects import (  # noqa: WPS235d
     Components,
@@ -17,11 +16,11 @@ class ConfigMerger:
 
     def merge(
         self,
-        config: OpenAPIConfig,
         paths: Paths,
         components: Components,
     ) -> OpenAPI:
         """Whatever must be replaced."""
+        config = self.context.config
         return OpenAPI(
             info=Info(
                 title=config.title,
