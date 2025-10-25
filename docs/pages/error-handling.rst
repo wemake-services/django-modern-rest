@@ -18,9 +18,10 @@ Here's how it works:
    controllers
    and :meth:`~django_modern_rest.controller.Controller.handle_async_error`
    for async controllers
-4. If controller's handler returns :class:`django.http.HttpResponse`,
+4. If controller's handler returns :class:`~django.http.HttpResponse`,
    just return it to the user
-5. If it raises, call :func:`django_modern_rest.errors.global_error_handler`
+5. If it raises, call configured global error handler, by default
+   it is :func:`~django_modern_rest.errors.global_error_handler`
    (it is always sync)
 
 .. warning::
@@ -51,6 +52,8 @@ to ``get`` endpoint (which serves as a division operation),
 while keeping ``post`` endpoint (which serves as a multiply operation)
 without a custom error handler.
 Because :exc:`ZeroDivisionError` can't happen in ``post``.
+
+Per-endpoint's error handling has a priority over per-controller handlers.
 
 
 Customizing controller error handler

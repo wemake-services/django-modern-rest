@@ -45,6 +45,17 @@ and extend ``django-modern-rest`` framework.
     `GitHub <https://github.com/wemake-services/django-modern-rest>`_
 
 
+.. rubric:: Testimonials
+
+.. epigraph::
+
+   | The one thing I really love about **django-modern-rest** is its pluggable
+   | serializers and validators. Frameworks that are tightly coupled
+   | with **pydantic** can be really painful to work with.
+
+   -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
+
+
 Main features include:
 
 .. grid:: 1 1 2 2
@@ -138,6 +149,7 @@ Here are our amazing people who made this project possible.
   pages/core-concepts.rst
   pages/configuration.rst
   pages/error-handling.rst
+  pages/middleware.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst

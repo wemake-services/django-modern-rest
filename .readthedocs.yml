@@ -10,7 +10,11 @@ build:
       - asdf global poetry latest
       - poetry config virtualenvs.create false
       - poetry self add poetry-plugin-export
-      - poetry export --only main --only docs --format=requirements.txt --output=requirements.txt
+      - poetry export
+        --all-extras
+        --only main --only docs
+        --format=requirements.txt
+        --output=requirements.txt
 
 python:
   install:
