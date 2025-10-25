@@ -65,6 +65,8 @@ Validation
 .. autoclass:: django_modern_rest.validation.ValidateEndpointPayload
 
 
+.. _serializer:
+
 Serialization
 -------------
 

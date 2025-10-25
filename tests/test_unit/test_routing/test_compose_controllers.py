@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import ClassVar, final
 
 import pytest
@@ -12,6 +13,7 @@ from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
 )
+from django_modern_rest.response import ResponseDescription
 from django_modern_rest.serialization import (
     BaseEndpointOptimizer,
     BaseSerializer,
@@ -88,12 +90,47 @@ def test_compose_controller_no_endpoints() -> None:
 def test_compose_controllers_with_meta() -> None:
     """Ensure that controller with no endpoints can't be composed."""
 
-    @final
     class _OptionsController(MetaMixin, Controller[PydanticSerializer]):
         """Just a placeholder."""
 
     # Ok:
     compose_controllers(_SyncController, _OptionsController)
-
     with pytest.raises(ValueError, match='options'):
         compose_controllers(_OptionsController, _OptionsController)
+
+
+def test_compose_controllers_with_responses() -> None:
+    """Ensure that composed controller do not share responses."""
+
+    class _FirstController(Controller[PydanticSerializer]):
+        responses: ClassVar[list[ResponseDescription]] = [
+            ResponseDescription(int, status_code=HTTPStatus.CREATED),
+        ]
+
+        def get(self) -> list[int]:
+            raise NotImplementedError
+
+    class _SecondController(Controller[PydanticSerializer]):
+        responses: ClassVar[list[ResponseDescription]] = [
+            ResponseDescription(str, status_code=HTTPStatus.ACCEPTED),
+        ]
+
+        def put(self) -> list[int]:
+            raise NotImplementedError
+
+    class _ThirdController(Controller[PydanticSerializer]):
+        responses: ClassVar[list[ResponseDescription]] = [
+            ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT),
+        ]
+
+        def patch(self) -> list[int]:
+            raise NotImplementedError
+
+    composed = compose_controllers(
+        _FirstController,
+        _SecondController,
+        _ThirdController,
+    )
+    assert composed.responses == []
+    for endpoint, description in composed.api_endpoints.items():
+        assert len(description.metadata.responses) == 2, endpoint

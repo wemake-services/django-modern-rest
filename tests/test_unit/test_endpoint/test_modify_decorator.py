@@ -107,7 +107,7 @@ def test_modify_modified_in_responses() -> None:
     """Ensures `@modify` can't have duplicate status codes."""
     with pytest.raises(EndpointMetadataError, match='different metadata'):
 
-        class _DuplicateExplicitStatuses(Controller[PydanticSerializer]):
+        class _DuplicateDifferentReturns(Controller[PydanticSerializer]):
             @modify(
                 status_code=HTTPStatus.OK,
                 extra_responses=[
@@ -119,10 +119,14 @@ def test_modify_modified_in_responses() -> None:
 
     with pytest.raises(EndpointMetadataError, match='different metadata'):
 
-        class _DuplicateImplicitStatuses(Controller[PydanticSerializer]):
+        class _DuplicateDifferentHeaders(Controller[PydanticSerializer]):
             @modify(
                 extra_responses=[
-                    ResponseDescription(str, status_code=HTTPStatus.OK),
+                    ResponseDescription(
+                        str,
+                        status_code=HTTPStatus.OK,
+                        headers={'Accept': HeaderDescription()},
+                    ),
                 ],
             )
             def get(self) -> int:
