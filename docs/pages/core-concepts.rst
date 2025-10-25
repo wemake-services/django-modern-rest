@@ -37,7 +37,7 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
   Routing
     Routing is a mapping of URLs to controllers.
     If some controllers need the same URLs, but different data parsing, we can
-    :func:`compose <django_modern_rest.routing.compose_controllers>` them.
+    :ref:`compose <routing>` them.
 
 Example:
 
@@ -76,17 +76,19 @@ for the :term:`controller` definition.
         from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
+.. _routing:
+
 Routing
 -------
 
-In our :term:`Controller` is built without knowing anything
+Our :term:`Controller` is built without knowing anything
 about its future URL. Why so?
 
-1. Because Django already has amazing URL
+1. Because Django already has an amazing URL
    `routing system <https://docs.djangoproject.com/en/5.2/topics/http/urls/>`_
    and we don't need to duplicate it
-2. Because all controller might be used in multiple URLs,
-   for example in ``api/v1`` and ``api/v2``. Our way allows any customization
+2. Because all controllers might be used in multiple URLs,
+   for example in ``api/v1`` and ``api/v2``. Our way allows any customizations
 
 So, how do you compose different controllers with different parsing
 behaviour into a single URL? For this we use
@@ -122,18 +124,69 @@ attached to this behaviour:
 
 1. Controllers to be composed can't have duplicate endpoints, otherwise,
    it would be not clear which endpoint from which controller needs to called.
-   This includes :ref:`meta` method as well
+   This includes :ref:`meta <meta>` method for `OPTION` HTTP calls as well
 2. All controllers have to be either sync or async,
    otherwise it would be hard to run them
 3. Controllers must have the same :term:`serializer`,
    because otherwise parsing can probably error out
 4. Controllers to be composed must have at least one endpoint
 
+Controllers in ``django-modern-rest`` are not built
+to be extended, but composed!
+
+
+Returning responses
+-------------------
+
+By default, all responses are validated at runtime to match the schema.
+This allows us to be super strict about schema generation as a pro,
+but as a con, it is slower than can possibly be.
+
+You can disable response validation via configuration:
+per endpoint, per controller, and globally.
+
 
 .. _meta:
 
 Defining OPTIONS or meta method
 -------------------------------
+
+`RFC 9110 <https://www.rfc-editor.org/rfc/rfc9110.html#name-options>`_
+defines the ``OPTIONS`` HTTP method, but sadly Django's
+:class:`~django.views.generic.base.View` which we use as a base class
+for all controllers, already have
+:meth:`django.views.generic.base.View.options` method.
+
+It would generate a typing error to redefine it with a different
+signature that we need for our endpoints.
+
+That's why we created ``meta`` controller method as a replacement
+for older ``options`` name.
+
+To use it you have two options:
+
+1. Define the implementation yourself
+2. Use :class:`~django_modern_rest.options_mixins.MetaMixin`
+   or :class:`~django_modern_rest.options_mixins.AsyncMetaMixin`
+   with the default implementation: provide ``Allow`` header
+   with all the allowed HTTP method in this controller
+
+When using :func:`~django_modern_rest.routing.compose_controllers`,
+duplicate ``meta`` methods will be a import-time error. To solve this,
+remove ``meta`` method from individual controllers
+and use ``meta_mixin=`` keyword parameter to ``compose_controllers``.
+
+Example:
+
+.. code:: python
+
+  from django_modern_rest import AsyncMetaMixin
+
+  composed = compose_controllers(UserPut, UserPatch, meta_mixin=AsyncMetaMixin)
+
+This will create an ``async def meta`` endpoint in the composed controller.
+All methods from ``UserPut`` and ``UserPatch`` will be listed
+in the response's ``Allow`` header.
 
 
 Maximum integration with Django
