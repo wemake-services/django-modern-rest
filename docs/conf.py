@@ -102,6 +102,9 @@ nitpick_ignore = [
     # TODO: fix out why this is an error
     (PY_CLASS, 'django.http.response.HttpResponse'),
     (PY_CLASS, 'django.http.request.HttpRequest'),
+    # OpenAPI types used in TYPE_CHECKING blocks:
+    (PY_CLASS, 'SecurityRequirement'),
+    (PY_CLASS, 'ExternalDocumentation'),
 ]
 
 # Set `typing.TYPE_CHECKING` to `True`:
