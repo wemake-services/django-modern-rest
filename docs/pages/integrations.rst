@@ -4,7 +4,7 @@ Integrations
 Serializing QuerySets into models
 ---------------------------------
 
-Django is built around its :class:`django.db.models.QuerySet` type.
+Django is built around its :class:`django.db.models.query.QuerySet` type.
 Of course, we have to make sure that it is supported.
 
 Let's say you have these models that you already work with:
@@ -50,7 +50,7 @@ would look like:
   :linenos:
 
 Now you have your REST API that returns fully typed model responses
-and can work with :class:`~django.db.models.QuerySet`
+and can work with :class:`~django.db.models.query.QuerySet`
 and :class:`~django.db.models.Model` instances.
 
 
