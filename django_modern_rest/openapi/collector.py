@@ -50,7 +50,6 @@ def _process_pattern(
     return ControllerMapping(path=simplify_regex(path), controller=controller)
 
 
-
 def _join_paths(base_path: str, pattern_path: str) -> str:
     if not base_path:
         return pattern_path

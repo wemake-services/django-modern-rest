@@ -33,8 +33,8 @@ class SchemaConverter:
     """
 
     # Private API:
-    _normalize_key: NormalizeKeyFunc = staticmethod(normalize_key)
-    _normalize_value: NormalizeValueFunc = staticmethod(normalize_value)
+    _normalize_key: NormalizeKeyFunc = staticmethod(normalize_key)  # noqa: WPS421
+    _normalize_value: NormalizeValueFunc = staticmethod(normalize_value)  # noqa: WPS421
 
     @classmethod
     def convert(cls, schema_obj: SchemaObject) -> ConvertedSchema:

@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from typing import Any, final
 
-from django.views import View
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
@@ -129,7 +128,7 @@ def test_process_pattern_with_different_views(
     [
         _EmptyController.as_view(),
         _FullController.as_view(),
-        compose_controllers(_GetController,_PostController).as_view(),
+        compose_controllers(_GetController, _PostController).as_view(),
         include([path('inner/', _FullController.as_view())]),
     ],
 )
