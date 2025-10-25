@@ -104,9 +104,6 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
     (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
-    # TODO: fix out why this is an error
-    (PY_CLASS, 'django.http.response.HttpResponse'),
-    (PY_CLASS, 'django.http.request.HttpRequest'),
     # OpenAPI types used in TYPE_CHECKING blocks:
     (PY_CLASS, 'SecurityRequirement'),
     (PY_CLASS, 'ExternalDocumentation'),
