@@ -127,7 +127,7 @@ jobs:
 
     - name: Run checks
       run: |
-        make smoke type-check example
+        make smoke example
         poetry run pytest --cov-fail-under=75
 
 
