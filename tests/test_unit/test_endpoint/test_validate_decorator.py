@@ -192,7 +192,7 @@ def test_validate_on_non_response() -> None:
 
 def test_validate_duplicate_statuses() -> None:
     """Ensures `@validate` can't have duplicate status codes."""
-    with pytest.raises(EndpointMetadataError, match='2 times'):
+    with pytest.raises(EndpointMetadataError, match='different metadata'):
 
         class _DuplicateStatuses(Controller[PydanticSerializer]):
             @validate(

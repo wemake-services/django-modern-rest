@@ -184,9 +184,9 @@ class AsyncParseHeadersController(
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
 
-    # We don't add `ensure_csrf_cookie_json.responses`,
-    # because it always returns ones we already have
-    # TODO: We need a special flag for Controller.deduplicate_responses
+    responses: ClassVar[list[ResponseDescription]] = (
+        ensure_csrf_cookie_json.responses
+    )
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
@@ -224,6 +224,10 @@ class AsyncCsrfProtectedController(
 class CustomHeaderController(Controller[PydanticSerializer]):
     """Controller with custom header middleware."""
 
+    responses: ClassVar[list[ResponseDescription]] = (
+        custom_header_json.responses
+    )
+
     def get(self) -> dict[str, str]:
         """GET endpoint that returns simple data."""
         return {'message': 'Success'}
@@ -236,6 +240,8 @@ class RateLimitedController(
     Controller[PydanticSerializer],
 ):
     """Controller with rate limiting middleware."""
+
+    responses: ClassVar[list[ResponseDescription]] = rate_limit_json.responses
 
     def post(self) -> _UserInput:
         """POST endpoint with rate limiting."""
