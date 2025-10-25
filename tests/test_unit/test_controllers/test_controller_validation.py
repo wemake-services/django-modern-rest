@@ -3,7 +3,12 @@ from typing import ClassVar
 
 import pytest
 
-from django_modern_rest import Controller, ResponseDescription
+from django_modern_rest import (
+    AsyncMetaMixin,
+    Controller,
+    MetaMixin,
+    ResponseDescription,
+)
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
@@ -53,4 +58,33 @@ def test_controller_http_spec() -> None:
             ]
 
             def get(self) -> str:  # needs at least one endpoint to validate
+                raise NotImplementedError
+
+
+def test_controller_have_either_mixins() -> None:
+    """Ensure that controllers does not have both mixins."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match="'AsyncMetaMixin'",
+    ):
+
+        class _MixedController(  # type: ignore[misc]
+            AsyncMetaMixin,
+            MetaMixin,
+            Controller[PydanticSerializer],
+        ):
+            async def post(self) -> list[str]:
+                raise NotImplementedError
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match="'MetaMixin'",
+    ):
+
+        class _MixedController2(  # type: ignore[misc]
+            MetaMixin,
+            AsyncMetaMixin,
+            Controller[PydanticSerializer],
+        ):
+            def post(self) -> list[str]:
                 raise NotImplementedError

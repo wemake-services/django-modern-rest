@@ -92,7 +92,7 @@ jobs:
         poetry run pip install -U "${{ matrix.django-version }}"
 
     - name: Run checks
-      run: make unit
+      run: make smoke unit
 
 
   build-no-msgspec:
@@ -126,7 +126,9 @@ jobs:
         poetry install --extras=pydantic
 
     - name: Run checks
-      run: poetry run pytest --cov-fail-under=75
+      run: |
+        make smoke example
+        poetry run pytest --cov-fail-under=75
 
 
   build-no-pydantic:
@@ -160,7 +162,9 @@ jobs:
         poetry install --extras=msgspec
 
     - name: Run checks
-      run: poetry run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
+      run: |
+        make smoke
+        poetry run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
 
 
   build-no-extras:

@@ -19,7 +19,7 @@ from django_modern_rest import (
     wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from rest_app.middleware import (
+from server.apps.rest.middleware import (
     custom_header_middleware,
     rate_limit_middleware,
 )
