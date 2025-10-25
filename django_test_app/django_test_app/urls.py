@@ -35,44 +35,65 @@ from django_modern_rest.openapi.renderers import (
     ScalarRenderer,
     SwaggerRenderer,
 )
-from rest_app.views import (
-    AsyncParseHeadersController,
-    ParseHeadersController,
-    UserCreateController,
-    UserListController,
-    UserReplaceController,
-    UserUpdateController,
-)
+from rest_app import views
 
 router = Router([
     path(
         'user/',
-        compose_controllers(UserCreateController, UserListController).as_view(),
+        compose_controllers(
+            views.UserCreateController,
+            views.UserListController,
+        ).as_view(),
         name='users',
     ),
     path(
         'user/<int:user_id>',
         compose_controllers(
-            UserReplaceController,
-            UserUpdateController,
+            views.UserReplaceController,
+            views.UserUpdateController,
         ).as_view(),
         name='user_update',
     ),
     re_path(
         r'user/direct/re/(\d+)',
-        UserUpdateController.as_view(),
+        views.UserUpdateController.as_view(),
         name='user_update_direct_re',
     ),
     path(
         'user/direct/<int:user_id>',
-        UserUpdateController.as_view(),
+        views.UserUpdateController.as_view(),
         name='user_update_direct',
     ),
-    path('headers', ParseHeadersController.as_view(), name='parse_headers'),
+    path(
+        'headers',
+        views.ParseHeadersController.as_view(),
+        name='parse_headers',
+    ),
     path(
         'async_headers',
-        AsyncParseHeadersController.as_view(),
+        views.AsyncParseHeadersController.as_view(),
         name='async_parse_headers',
+    ),
+    path('csrf-token', views.CsrfTokenController.as_view(), name='csrf_token'),
+    path(
+        'csrf-protected',
+        views.CsrfProtectedController.as_view(),
+        name='csrf_test',
+    ),
+    path(
+        'async-csrf-protected',
+        views.AsyncCsrfProtectedController.as_view(),
+        name='async_csrf_test',
+    ),
+    path(
+        'custom-header',
+        views.CustomHeaderController.as_view(),
+        name='custom_header',
+    ),
+    path(
+        'rate-limited',
+        views.RateLimitedController.as_view(),
+        name='rate_limited',
     ),
 ])
 

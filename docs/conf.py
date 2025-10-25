@@ -102,7 +102,8 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifyAnyCallable'),
     (PY_CLASS, 'django_modern_rest.endpoint._ModifyAsyncCallable'),
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
-    (PY_CLASS, '_ParamT'),
+    (PY_CLASS, 'django_modern_rest.endpoint._ParamT'),
+    (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
 ]
 
 qualname_overrides = {
