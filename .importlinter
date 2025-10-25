@@ -16,6 +16,7 @@ containers =
 layers =
   routing
   controller
+  options_mixins
   endpoint
   validation
   components
@@ -27,6 +28,10 @@ layers =
   settings
   internal
   exceptions
+
+ignore_imports =
+  # Mixin validation:
+  django_modern_rest.validation -> django_modern_rest.options_mixins
 
 
 [importlinter:contract:no-optional-deps]

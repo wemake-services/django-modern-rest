@@ -234,10 +234,33 @@ class ControllerValidator:
 
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
-        # TODO: validate that sync controller have `MetaMixin`
-        # and async ones have `AsyncMetaMixin`
         self._validate_components(controller)
-        return self._validate_endpoints(controller)
+        is_async = self._validate_endpoints(controller)
+        self._validate_meta_mixins(controller, is_async=is_async)
+        return is_async
+
+    def _validate_meta_mixins(
+        self,
+        controller: 'type[Controller[BaseSerializer]]',
+        *,
+        is_async: bool = False,
+    ) -> None:
+        from django_modern_rest.options_mixins import (  # noqa: PLC0415
+            AsyncMetaMixin,
+            MetaMixin,
+        )
+
+        if (
+            issubclass(controller, MetaMixin)
+            and issubclass(controller, AsyncMetaMixin)  # type: ignore[unreachable]
+        ):
+            suggestion = (  # type: ignore[unreachable]
+                'AsyncMetaMixin' if is_async else 'MetaMixin'
+            )
+            raise EndpointMetadataError(
+                f'Use only {suggestion!r}, '
+                f'not both meta mixins in {controller!r}',
+            )
 
     def _validate_components(
         self,
