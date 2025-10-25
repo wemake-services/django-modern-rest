@@ -81,6 +81,7 @@ inline-snapshot = "^0.30"
 schemathesis = "^4.3"
 
 httpx = "^0.28"
+types-docutils = "^0.22.2.20251006"
 
 [tool.poetry.group.docs]
 optional = true
@@ -96,7 +97,6 @@ sphinx-design = "^0.6"
 sphinxcontrib-mermaid = "^1.0"
 myst-parser = "^4.0"
 shibuya = "^2025.10"
-types-docutils = "^0.22.2.20251006"
 
 
 [tool.poetry.plugins."pytest11"]
