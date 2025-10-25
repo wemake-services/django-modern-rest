@@ -12,7 +12,6 @@ from django_modern_rest.routing import Router
 from django_modern_rest.types import Empty, EmptyObj
 
 
-# TODO!!!: think about files layout in `openapi` directory.
 def openapi_spec(
     router: Router,
     renderers: Sequence[BaseRenderer],
@@ -37,10 +36,7 @@ def openapi_spec(
     if isinstance(config, Empty):
         config = _default_config()
 
-    context = OpenAPIContext(
-        config=config,
-        processors=[],  # TODO: add processors
-    )
+    context = OpenAPIContext(config=config)
     schema = OpenApiBuilder(context).build(router)
     schema_dict = SchemaConverter.convert(schema)
 

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.objects import Operation
 
 
-class _PathItem(TypedDict, total=False):
+class _PathItemKwargs(TypedDict, total=False):
     get: 'Operation'
     put: 'Operation'
     post: 'Operation'
@@ -28,7 +28,7 @@ class PathItemGenerator:
 
     def generate(self, mapping: 'ControllerMapping') -> PathItem:
         """Whatever must be replaced."""
-        kwargs: _PathItem = {}
+        kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
             operation = self.context.operation_generator.generate(endpoint)

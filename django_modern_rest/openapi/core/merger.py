@@ -1,10 +1,13 @@
-from django_modern_rest.openapi.core.context import OpenAPIContext
+from typing import TYPE_CHECKING
 from django_modern_rest.openapi.objects import (
     Components,
     Info,
     OpenAPI,
     Paths,
 )
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
 class ConfigMerger:
