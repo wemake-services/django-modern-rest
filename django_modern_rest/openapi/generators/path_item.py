@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.objects import Operation
 
 
+# TODO: support openapi 3.2.0
 class _PathItemKwargs(TypedDict, total=False):
     get: 'Operation'
     put: 'Operation'
