@@ -1,10 +1,12 @@
 import datetime as dt
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import final
+from typing import Any, ClassVar, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 from django_modern_rest import (
     Body,
@@ -14,8 +16,62 @@ from django_modern_rest import (
     Query,
     ResponseDescription,
     validate,
+    wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from rest_app.middleware import (
+    custom_header_middleware,
+    rate_limit_middleware,
+)
+
+_CallableAny: TypeAlias = Callable[..., Any]
+
+
+@wrap_middleware(
+    csrf_protect,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.FORBIDDEN,
+    ),
+)
+def csrf_protect_json(response: HttpResponse) -> HttpResponse:
+    return JsonResponse(
+        {'detail': 'CSRF verification failed. Request aborted.'},
+        status=HTTPStatus.FORBIDDEN,
+    )
+
+
+@wrap_middleware(
+    ensure_csrf_cookie,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def ensure_csrf_cookie_json(response: HttpResponse) -> HttpResponse:
+    return response
+
+
+@wrap_middleware(
+    custom_header_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def custom_header_json(response: HttpResponse) -> HttpResponse:
+    return response
+
+
+@wrap_middleware(
+    rate_limit_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.TOO_MANY_REQUESTS,
+    ),
+)
+def rate_limit_json(response: HttpResponse) -> HttpResponse:
+    return response
 
 
 @final
@@ -121,3 +177,66 @@ class AsyncParseHeadersController(
 ):
     async def post(self) -> _CustomHeaders:
         return self.parsed_headers
+
+
+@final
+@ensure_csrf_cookie_json
+class CsrfTokenController(Controller[PydanticSerializer]):
+    """Controller to obtain CSRF token."""
+
+    # We don't add `ensure_csrf_cookie_json.responses`,
+    # because it always returns ones we already have
+    # TODO: We need a special flag for Controller.deduplicate_responses
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that ensures CSRF cookie is set."""
+        return {'message': 'CSRF token set'}
+
+
+@final
+@csrf_protect_json
+class CsrfProtectedController(
+    Body[_UserInput],
+    Controller[PydanticSerializer],
+):
+    # Just add responses from middleware
+    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+
+    def post(self) -> _UserInput:
+        return self.parsed_body
+
+
+@final
+@csrf_protect_json
+class AsyncCsrfProtectedController(
+    Body[_UserInput],
+    Controller[PydanticSerializer],
+):
+    # Just add responses from middleware
+    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+
+    async def post(self) -> _UserInput:
+        return self.parsed_body
+
+
+@final
+@custom_header_json
+class CustomHeaderController(Controller[PydanticSerializer]):
+    """Controller with custom header middleware."""
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that returns simple data."""
+        return {'message': 'Success'}
+
+
+@final
+@rate_limit_json
+class RateLimitedController(
+    Body[_UserInput],
+    Controller[PydanticSerializer],
+):
+    """Controller with rate limiting middleware."""
+
+    def post(self) -> _UserInput:
+        """POST endpoint with rate limiting."""
+        return self.parsed_body

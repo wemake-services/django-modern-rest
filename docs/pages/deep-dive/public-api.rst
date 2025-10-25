@@ -80,3 +80,11 @@ Utilities
 .. autoclass:: django_modern_rest.types.Empty
 
 .. autodata:: django_modern_rest.types.EmptyObj
+
+
+Decorators
+----------
+
+.. autoclass:: django_modern_rest.decorators.dispatch_decorator
+
+.. autoclass:: django_modern_rest.decorators.wrap_middleware
