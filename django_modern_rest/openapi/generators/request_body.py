@@ -16,4 +16,4 @@ class RequestBodyGenerator:
 
     def generate(self, endpoint: 'Endpoint') -> RequestBody:
         """Whatever must be replaced."""
-        raise NotImplementedError
+        ...

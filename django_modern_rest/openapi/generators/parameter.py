@@ -17,4 +17,4 @@ class ParameterGenerator:
 
     def generate(self, endpoint: 'Endpoint') -> list[Parameter | Reference]:
         """Whatever must be replaced."""
-        raise NotImplementedError
+        ...

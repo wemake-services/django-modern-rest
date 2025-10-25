@@ -9,14 +9,14 @@ from django_modern_rest.routing import Router
 
 class ControllerMapping(NamedTuple):
     """
-    Information about an API endpoint for OpenAPI generation.
+    Information about an API controller for OpenAPI generation.
 
     This named tuple contains the essential information needed to generate
-    OpenAPI specifications for a single API endpoint.
+    OpenAPI specifications for a single API controller.
 
     Attributes:
-        path: The URL path pattern for this endpoint (e.g., '/api/users/{id}/')
-        endpoint: The Endpoint instance that handles this API endpoint
+        path: The URL path pattern for this controller (e.g., '/users/{id}/')
+        controller: The Controller instance that handles this API controller
     """
 
     path: str
@@ -32,11 +32,9 @@ def _process_resolver(
 
     for url_pattern in url_resolver.url_patterns:
         if isinstance(url_pattern, URLPattern):
-            pattern_controllers = _process_pattern(url_pattern, full_path)
-            controllers.append(pattern_controllers)
+            controllers.append(_process_pattern(url_pattern, full_path))
         else:
-            resolver_controllers = _process_resolver(url_pattern, full_path)
-            controllers.extend(resolver_controllers)
+            controllers.extend(_process_resolver(url_pattern, full_path))
 
     return controllers
 
@@ -70,25 +68,23 @@ ControllerCollector: TypeAlias = Callable[[Router], list[ControllerMapping]]
 
 def controller_collector(router: Router) -> list[ControllerMapping]:
     """
-    Collect all API endpoints from a router for OpenAPI generation.
+    Collect all API controllers from a router for OpenAPI generation.
 
-    This is the main entry point for collecting endpoint information from
+    This is the main entry point for collecting controllers information from
     a Router instance. It processes all URL patterns and resolvers in the
-    router to find all API endpoints that can be documented in an OpenAPI
+    router to find all API controllers that can be documented in an OpenAPI
     specification.
 
     The function traverses the entire URL configuration tree, handling both
     direct URL patterns and nested URL resolvers, to build a comprehensive
-    list of all available API endpoints.
+    list of all available API controllers.
     """
     controllers: list[ControllerMapping] = []
 
     for url in router.urls:
         if isinstance(url, URLPattern):
-            pattern_endpoints = _process_pattern(url)
-            controllers.append(pattern_endpoints)
+            controllers.append(_process_pattern(url))
         else:
-            resolver_endpoints = _process_resolver(url)
-            controllers.extend(resolver_endpoints)
+            controllers.extend(_process_resolver(url))
 
     return controllers
