@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 from django_modern_rest.openapi.objects import (
     Components,
     Info,
@@ -19,7 +20,7 @@ class ConfigMerger:
     a complete OpenAPI specification object.
     """
 
-    def __init__(self, context: OpenAPIContext) -> None:
+    def __init__(self, context: 'OpenAPIContext') -> None:
         """Initialize the merger with OpenAPI context."""
         self.context = context
 

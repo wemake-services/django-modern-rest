@@ -8,12 +8,20 @@ if TYPE_CHECKING:
 
 
 class ComponentGenerator:
-    """Whatever must be replaced."""
+    """
+    Generator for OpenAPI Components section.
+
+    The Components Generator is responsible for extracting and organizing
+    reusable objects from the API specification. It processes all path items
+    to identify shared components like schemas, parameters, responses,
+    request bodies, headers, examples, security schemes, links, and callbacks
+    that can be referenced throughout the OpenAPI specification.
+    """
 
     def __init__(self, context: 'OpenAPIContext') -> None:
-        """Whatever must be replaced."""
+        """Initialize the Components Generator."""
         self.context = context
 
     def generate(self, paths_items: Paths) -> Components:
-        """Whatever must be replaced."""
+        """Generate OpenAPI Components from path items."""
         return Components()

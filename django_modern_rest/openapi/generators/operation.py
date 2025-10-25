@@ -8,27 +8,28 @@ if TYPE_CHECKING:
 
 
 class OperationGenerator:
-    """Whatever must be replaced."""
+    """
+    Generator for OpenAPI Operation objects.
+
+    The Operation Generator is responsible for creating OpenAPI Operation
+    objects that describe individual API operations (HTTP methods like GET,
+    POST, etc.) for a specific endpoint. It extracts metadata from the
+    endpoint and generates a complete Operation specification.
+    """
 
     def __init__(self, context: 'OpenAPIContext') -> None:
-        """Whatever must be replaced."""
+        """Initialize the Operation Generator."""
         self.context = context
 
     def generate(self, endpoint: 'Endpoint') -> Operation:
-        """Whatever must be replaced2."""
+        """Generate an OpenAPI Operation from an endpoint."""
+        metadata = endpoint.metadata
         return Operation(
-            operation_id=self.context.add_operation_id(),
-            parameters=self.context.parameter_generator.generate(endpoint),
-            request_body=self.context.request_body_generator.generate(endpoint),
-            responses=self.context.response_generator.generate(endpoint),
-            summary=self._extract_summary(endpoint),
-            description=self._extract_description(endpoint),
+            tags=metadata.tags,
+            summary=metadata.summary,
+            description=metadata.description,
+            deprecated=metadata.deprecated,
+            security=metadata.security,
+            external_docs=metadata.external_docs,
+            # TODO: implement another attributes generation.
         )
-
-    def _extract_summary(self, endpoint: 'Endpoint') -> str:
-        """Whatever must be replaced3."""
-        return 'foo'
-
-    def _extract_description(self, endpoint: 'Endpoint') -> str:
-        """Whatever must be replaced4."""
-        return 'bar'

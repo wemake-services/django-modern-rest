@@ -63,7 +63,7 @@ def normalize_key(key: str) -> str:
 
 
 # pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false
-def normalize_value(value: Any, converter: '_ConverterFunc') -> Any:  # noqa: WPS110
+def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
     """
     Normalize a value for OpenAPI schema.
 
@@ -74,22 +74,24 @@ def normalize_value(value: Any, converter: '_ConverterFunc') -> Any:  # noqa: WP
     - Primitive values (return as-is)
     - None values (should be filtered out by caller)
     """
-    if is_dataclass(value):
-        return converter(cast(SchemaObject, value))
+    if is_dataclass(to_normalize):
+        return converter(cast(SchemaObject, to_normalize))
 
-    if isinstance(value, list):
-        return [normalize_value(val, converter) for val in value]  # noqa: WPS110
+    if isinstance(to_normalize, list):
+        return [
+            normalize_value(list_item, converter) for list_item in to_normalize
+        ]
 
-    if isinstance(value, dict):
+    if isinstance(to_normalize, dict):
         return {
             normalize_value(key, converter): normalize_value(val, converter)
-            for key, val in value.items()  # noqa: WPS110
+            for key, val in to_normalize.items()  # noqa: WPS110
         }
 
-    if isinstance(value, Enum):
-        return value.value
+    if isinstance(to_normalize, Enum):
+        return to_normalize.value
 
-    return value
+    return to_normalize
 
 
 @final

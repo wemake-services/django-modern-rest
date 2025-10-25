@@ -45,23 +45,17 @@ def _process_pattern(
     base_path: str = '',
 ) -> ControllerMapping:
     path = _join_paths(base_path, str(url_pattern.pattern))
-    controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
+    controller: Controller[Any] = url_pattern.callback.view_class  # type: ignore[attr-defined]
     # TODO: path normalization must be configurable (simplify_regex)
     return ControllerMapping(path=simplify_regex(path), controller=controller)
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
-    if not base_path:
-        return pattern_path
     if not pattern_path:
         return base_path
-
-    pattern_path = pattern_path.lstrip('/')
-
-    if pattern_path:
-        base_path = base_path.rstrip('/')
-        return f'{base_path}/{pattern_path}'
-    return base_path
+    base = base_path.rstrip('/')
+    pattern = pattern_path.lstrip('/')
+    return f'{base}/{pattern}' if base else pattern
 
 
 def controller_collector(router: 'Router') -> list[ControllerMapping]:

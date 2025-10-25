@@ -20,14 +20,21 @@ class _PathItemKwargs(TypedDict, total=False):
 
 
 class PathItemGenerator:
-    """Whatever must be replaced."""
+    """
+    Generator for OpenAPI PathItem objects.
+
+    The PathItem Generator is responsible for creating PathItem objects
+    that represent a single API endpoint with its possible HTTP operations.
+    It takes a controller mapping and generates a PathItem containing all
+    the operations (GET, POST, PUT, DELETE, etc.) defined for that endpoint.
+    """
 
     def __init__(self, context: 'OpenAPIContext') -> None:
-        """Whatever must be replaced."""
+        """Initialize the PathItem Generator."""
         self.context = context
 
     def generate(self, mapping: 'ControllerMapping') -> PathItem:
-        """Whatever must be replaced."""
+        """Generate an OpenAPI PathItem from a controller mapping."""
         kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
