@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 from django_modern_rest.openapi.objects import (
     Components,
     Info,
