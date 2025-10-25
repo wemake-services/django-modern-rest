@@ -54,6 +54,10 @@ from django_modern_rest.types import (
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.openapi.objects import (
+        ExternalDocumentation,
+        SecurityRequirement,
+    )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
@@ -285,6 +289,15 @@ class ValidateEndpointPayload:
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
     allow_custom_http_methods: bool
 
+    # OpenAPI documentation fields:
+    summary: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    operation_id: str | None = None
+    deprecated: bool = False
+    security: list['SecurityRequirement'] | None = None
+    external_docs: 'ExternalDocumentation | None' = None
+
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ModifyEndpointPayload:
@@ -296,6 +309,15 @@ class ModifyEndpointPayload:
     validate_responses: bool | Empty
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
     allow_custom_http_methods: bool
+
+    # OpenAPI documentation fields:
+    summary: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    operation_id: str | None = None
+    deprecated: bool = False
+    security: list['SecurityRequirement'] | None = None
+    external_docs: 'ExternalDocumentation | None' = None
 
 
 #: Alias for different payload types:
@@ -492,6 +514,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             validate_responses=payload.validate_responses,
             modification=None,
             error_handler=payload.error_handler,
+            summary=payload.summary,
+            description=payload.description,
+            tags=payload.tags,
+            operation_id=payload.operation_id,
+            deprecated=payload.deprecated,
+            security=payload.security,
+            external_docs=payload.external_docs,
         )
 
     def _from_modify(  # noqa: WPS211
@@ -540,6 +569,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=payload.error_handler,
+            summary=payload.summary,
+            description=payload.description,
+            tags=payload.tags,
+            operation_id=payload.operation_id,
+            deprecated=payload.deprecated,
+            security=payload.security,
+            external_docs=payload.external_docs,
         )
 
     def _from_raw_data(
@@ -636,6 +672,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'Cannot pass async `error_handler` to sync {endpoint}',
             )
+
+    # TODO: Does we need extract methods for summary and
+    # description from endpoint.__doc__?
 
 
 @final

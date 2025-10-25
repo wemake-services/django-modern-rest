@@ -1,6 +1,9 @@
 import dataclasses
 from http import HTTPStatus
 from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypedDict,
     final,
 )
 
@@ -10,6 +13,21 @@ from django_modern_rest.response import (
     ResponseModification,
 )
 from django_modern_rest.types import Empty
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.objects import (
+        ExternalDocumentation,
+        SecurityRequirement,
+    )
+
+
+class RequestModels(TypedDict, total=False):
+    """Model for request components."""
+
+    body: Any
+    query: Any
+    headers: Any
+    path: Any
 
 
 @final
@@ -49,3 +67,12 @@ class EndpointMetadata:
     method: str
     modification: ResponseModification | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+
+    # OpenAPI documentation fields:
+    summary: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    operation_id: str | None = None
+    deprecated: bool = False
+    security: list['SecurityRequirement'] | None = None
+    external_docs: 'ExternalDocumentation | None' = None

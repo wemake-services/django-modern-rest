@@ -17,6 +17,10 @@ from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import (
     NewHeader,
 )
+from django_modern_rest.openapi.objects import (
+    ExternalDocumentation,
+    SecurityRequirement,
+)
 from django_modern_rest.response import APIError, ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
@@ -333,13 +337,20 @@ def validate(
 ]: ...
 
 
-def validate(  # pyright: ignore[reportInconsistentOverload]
+def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
     validate_responses: bool | Empty = EmptyObj,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -397,6 +408,20 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
+        summary: A short summary of what the operation does.
+            Used in OpenAPI documentation.
+        description: A verbose explanation of the operation behavior.
+            Used in OpenAPI documentation.
+        tags: A list of tags for API documentation control.
+            Used to group operations in OpenAPI documentation.
+        operation_id: Unique string used to identify the operation.
+            Used in OpenAPI documentation.
+        deprecated: Declares this operation to be deprecated.
+            Used in OpenAPI documentation.
+        security: A declaration of which security mechanisms can be used
+            for this operation. Used in OpenAPI documentation.
+        external_docs: Additional external documentation for this operation.
+            Used in OpenAPI documentation.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -412,6 +437,13 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
             validate_responses=validate_responses,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
+            summary=summary,
+            description=description,
+            tags=tags,
+            operation_id=operation_id,
+            deprecated=deprecated,
+            security=security,
+            external_docs=external_docs,
         ),
     )
 
@@ -529,6 +561,13 @@ def modify(  # noqa: WPS211
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -565,6 +604,20 @@ def modify(  # noqa: WPS211
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
+        summary: A short summary of what the operation does.
+            Used in OpenAPI documentation.
+        description: A verbose explanation of the operation behavior.
+            Used in OpenAPI documentation.
+        tags: A list of tags for API documentation control.
+            Used to group operations in OpenAPI documentation.
+        operation_id: Unique string used to identify the operation.
+            Used in OpenAPI documentation.
+        deprecated: Declares this operation to be deprecated.
+            Used in OpenAPI documentation.
+        security: A declaration of which security mechanisms can be used
+            for this operation. Used in OpenAPI documentation.
+        external_docs: Additional external documentation for this operation.
+            Used in OpenAPI documentation.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -582,6 +635,13 @@ def modify(  # noqa: WPS211
             validate_responses=validate_responses,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
+            summary=summary,
+            description=description,
+            tags=tags,
+            operation_id=operation_id,
+            deprecated=deprecated,
+            security=security,
+            external_docs=external_docs,
         ),
     )
 
