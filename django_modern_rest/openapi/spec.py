@@ -9,13 +9,12 @@ from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
-from django_modern_rest.types import Empty, EmptyObj
 
 
 def openapi_spec(
     router: Router,
     renderers: Sequence[BaseRenderer],
-    config: OpenAPIConfig | Empty = EmptyObj,
+    config: OpenAPIConfig | None = None,
     app_name: str = 'openapi',
     namespace: str = 'docs',
 ) -> tuple[list[URLPattern], str, str]:
@@ -33,7 +32,7 @@ def openapi_spec(
             'render the API documentation.',
         )
 
-    if isinstance(config, Empty):
+    if config is None:
         config = _default_config()
 
     context = OpenAPIContext(config=config)

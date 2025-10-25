@@ -44,8 +44,6 @@ from django_modern_rest.settings import (
     resolve_setting,
 )
 from django_modern_rest.types import (
-    Empty,
-    EmptyObj,
     infer_bases,
     is_safe_subclass,
     parse_return_annotation,
@@ -197,7 +195,7 @@ class ResponseValidator:
         """Validates response against provided metadata."""
         # Validate headers, at this point we know
         # that only `HeaderDescription` can be in `metadata.headers`:
-        if isinstance(schema.headers, Empty):
+        if schema.headers is None:
             metadata_headers: Set[str] = set()
         else:
             metadata_headers = schema.headers.keys()
@@ -327,9 +325,9 @@ class ValidateEndpointPayload(_OpenAPIPayload):
 class ModifyEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@modify``."""
 
-    status_code: HTTPStatus | Empty
-    headers: Mapping[str, NewHeader] | Empty
-    responses: list[ResponseDescription] | Empty
+    status_code: HTTPStatus | None
+    headers: Mapping[str, NewHeader] | None
+    responses: list[ResponseDescription] | None
     validate_responses: bool | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
@@ -381,7 +379,7 @@ class _ResponseListValidator:
         endpoint: str,
     ) -> None:
         for response in responses:
-            if isinstance(response.headers, Empty):
+            if response.headers is None:
                 continue
             if any(
                 isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -567,11 +565,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
             headers=payload.headers,
             status_code=(
                 infer_status_code(method)
-                if isinstance(payload.status_code, Empty)
+                if payload.status_code is None
                 else payload.status_code
             ),
         )
-        if isinstance(payload.responses, Empty):
+        if payload.responses is None:
             payload_responses = []
         else:
             payload_responses = payload.responses
@@ -616,7 +614,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         modification = ResponseModification(
             return_type=return_annotation,
             status_code=status_code,
-            headers=EmptyObj,
+            headers=None,
         )
         all_responses = self._resolve_all_responses(
             [],
@@ -641,7 +639,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if not isinstance(payload.headers, Empty) and any(
+        if payload.headers is not None and any(
             isinstance(header, HeaderDescription)  # pyright: ignore[reportUnnecessaryIsInstance]
             for header in payload.headers.values()
         ):

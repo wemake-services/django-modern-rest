@@ -5,7 +5,6 @@ from typing import ClassVar, TypeAlias
 from django.http import HttpRequest, HttpResponse
 
 from django_modern_rest.openapi.converter import ConvertedSchema
-from django_modern_rest.types import Empty, EmptyObj
 
 SerializedSchema: TypeAlias = str
 SchemaSerialier: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
@@ -63,8 +62,8 @@ class BaseRenderer:
     def __init__(
         self,
         *,
-        path: str | Empty = EmptyObj,
-        name: str | Empty = EmptyObj,
+        path: str | None = None,
+        name: str | None = None,
     ) -> None:
         """
         Initialize renderer with optional custom path and name.
@@ -73,8 +72,8 @@ class BaseRenderer:
             path: Custom URL path, uses `default_path` if not provided.
             name: Custom name identifier, uses `default_name` if not provided.
         """
-        self.path = self.default_path if isinstance(path, Empty) else path
-        self.name = self.default_name if isinstance(name, Empty) else name
+        self.path = self.default_path if path is None else path
+        self.name = self.default_name if name is None else name
 
     @abc.abstractmethod
     def render(

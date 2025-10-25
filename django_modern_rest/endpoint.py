@@ -27,10 +27,6 @@ from django_modern_rest.settings import (
     DMR_GLOBAL_ERROR_HANDLER_KEY,
     resolve_setting,
 )
-from django_modern_rest.types import (
-    Empty,
-    EmptyObj,
-)
 from django_modern_rest.validation import (
     EndpointMetadataValidator,
     ModifyEndpointPayload,
@@ -516,10 +512,10 @@ class _ModifyAnyCallable(Protocol):
 def modify(
     *,
     error_handler: AsyncErrorHandlerT,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -535,10 +531,10 @@ def modify(
 def modify(
     *,
     error_handler: SyncErrorHandlerT,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -553,10 +549,10 @@ def modify(
 @overload
 def modify(
     *,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -571,10 +567,10 @@ def modify(
 
 def modify(  # noqa: WPS211
     *,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    extra_responses: list[ResponseDescription] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
