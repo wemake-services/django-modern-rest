@@ -1,10 +1,22 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
-from django_modern_rest.openapi.collector import ControllerMapping
-from django_modern_rest.openapi.objects.path_item import PathItem
+from django_modern_rest.openapi.objects import PathItem
 
 if TYPE_CHECKING:
+    from django_modern_rest.openapi.collector import ControllerMapping
     from django_modern_rest.openapi.core.context import OpenAPIContext
+    from django_modern_rest.openapi.objects import Operation
+
+
+class _PathItem(TypedDict, total=False):
+    get: 'Operation'
+    put: 'Operation'
+    post: 'Operation'
+    delete: 'Operation'
+    options: 'Operation'
+    head: 'Operation'
+    patch: 'Operation'
+    trace: 'Operation'
 
 
 class PathItemGenerator:
@@ -14,11 +26,12 @@ class PathItemGenerator:
         """Whatever must be replaced."""
         self.context = context
 
-    def generate(self, mapping: ControllerMapping) -> PathItem:
+    def generate(self, mapping: 'ControllerMapping') -> PathItem:
         """Whatever must be replaced."""
-        path_item = PathItem()  # TODO: Make it frozen
+        kwargs: _PathItem = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
             operation = self.context.operation_generator.generate(endpoint)
-            setattr(path_item, method.lower(), operation)
-        return path_item
+            kwargs[method.lower()] = operation  # type: ignore[literal-required]
+
+        return PathItem(**kwargs)

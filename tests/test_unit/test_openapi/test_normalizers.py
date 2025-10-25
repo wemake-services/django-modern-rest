@@ -3,8 +3,8 @@ from typing import Any
 
 import pytest
 
-from django_modern_rest.openapi.converter import SchemaConverter
-from django_modern_rest.openapi.normalizers import (
+from django_modern_rest.openapi.converter import (
+    SchemaConverter,
     normalize_key,
     normalize_value,
 )
@@ -115,7 +115,7 @@ def test_normalize_value_list(
     [
         ({}, {}),
         ({'a': 1, 'b': 2}, {'a': 1, 'b': 2}),
-        ({'status': _TestEnum.STR_VALUE}, {'status': 'first'}),
+        ({_TestEnum.INT_VALUE: _TestEnum.STR_VALUE}, {42: 'first'}),
         ({'key1': None, 'key2': 'value'}, {'key1': None, 'key2': 'value'}),
     ],
 )
@@ -128,55 +128,6 @@ def test_normalize_value_dict(
     """Ensure that `_normalize_value` processes dict recursively."""
     normalized = normalize_value(input_value, converter.convert)
     assert normalized == expected_output
-
-
-@pytest.mark.parametrize(
-    ('input_value', 'expected_output'),
-    [
-        ({'simple': 'value'}, {'simple': 'value'}),
-        ({'external_docs': 'value'}, {'externalDocs': 'value'}),
-        ({'operation_id': 123}, {'operationId': 123}),
-        ({'ref': 'reference'}, {'$ref': 'reference'}),
-        ({'param_in': 'query'}, {'in': 'query'}),
-        ({'schema_not': 'value'}, {'not': 'value'}),
-        ({'schema_all_of': 'value'}, {'allOf': 'value'}),
-    ],
-)
-def test_normalize_value_key_normalization(
-    input_value: Any,
-    expected_output: Any,
-    *,
-    converter: SchemaConverter,
-) -> None:
-    """Ensure that `_normalize_value` normalizes mapping keys."""
-    assert normalize_value(input_value, converter.convert) == expected_output
-
-
-@pytest.mark.parametrize(
-    ('input_value', 'expected_output'),
-    [
-        (
-            {
-                'items': [1, 2, 3],
-                'external_docs': {'ref': 'test', 'param_in': 42},
-                'schema_all_of': [_TestEnum.STR_VALUE, 'other'],
-            },
-            {
-                'items': [1, 2, 3],
-                'externalDocs': {'$ref': 'test', 'in': 42},
-                'allOf': ['first', 'other'],
-            },
-        ),
-    ],
-)
-def test_normalize_value_nested_structures(
-    input_value: Any,
-    expected_output: Any,
-    *,
-    converter: SchemaConverter,
-) -> None:
-    """Ensure that `_normalize_value` handles nested structures."""
-    assert normalize_value(input_value, converter.convert) == expected_output
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,5 @@
 from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.objects import (  # noqa: WPS235d
+from django_modern_rest.openapi.objects import (
     Components,
     Info,
     OpenAPI,
@@ -8,10 +8,16 @@ from django_modern_rest.openapi.objects import (  # noqa: WPS235d
 
 
 class ConfigMerger:
-    """Whatever must be replaced."""
+    """
+    Merges OpenAPI configuration with generated paths and components.
+
+    This class is responsible for combining the OpenAPI configuration
+    from the context with the generated paths and components to create
+    a complete OpenAPI specification object.
+    """
 
     def __init__(self, context: OpenAPIContext) -> None:
-        """Whatever must be replaced."""
+        """Initialize the merger with OpenAPI context."""
         self.context = context
 
     def merge(
@@ -19,7 +25,7 @@ class ConfigMerger:
         paths: Paths,
         components: Components,
     ) -> OpenAPI:
-        """Whatever must be replaced."""
+        """Merge paths and components with configuration."""
         config = self.context.config
         return OpenAPI(
             info=Info(
@@ -38,7 +44,4 @@ class ConfigMerger:
             webhooks=config.webhooks,
             paths=paths,
             components=components,
-            # TODO: Merge config.components and components
-            # TODO: Merge config.webhooks and webhooks
-            # TODO: Merge config.security and security
         )
