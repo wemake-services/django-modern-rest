@@ -53,6 +53,10 @@ from django_modern_rest.types import (
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.openapi.objects import (
+        ExternalDocumentation,
+        SecurityRequirement,
+    )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
@@ -298,25 +302,36 @@ class ControllerValidator:
         return is_async
 
 
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
+class _OpenAPIPayload:
+    summary: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    operation_id: str | None = None
+    deprecated: bool = False
+    security: list['SecurityRequirement'] | None = None
+    external_docs: 'ExternalDocumentation | None' = None
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ValidateEndpointPayload:
+class ValidateEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@validate``."""
 
     responses: list[ResponseDescription]
-    validate_responses: bool | Empty
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    validate_responses: bool | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ModifyEndpointPayload:
+class ModifyEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@modify``."""
 
     status_code: HTTPStatus | Empty
     headers: Mapping[str, NewHeader] | Empty
     responses: list[ResponseDescription] | Empty
-    validate_responses: bool | Empty
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    validate_responses: bool | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
 
 
@@ -520,6 +535,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             validate_responses=payload.validate_responses,
             modification=None,
             error_handler=payload.error_handler,
+            summary=payload.summary,
+            description=payload.description,
+            tags=payload.tags,
+            operation_id=payload.operation_id,
+            deprecated=payload.deprecated,
+            security=payload.security,
+            external_docs=payload.external_docs,
         )
 
     def _from_modify(  # noqa: WPS211
@@ -568,6 +590,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=payload.error_handler,
+            summary=payload.summary,
+            description=payload.description,
+            tags=payload.tags,
+            operation_id=payload.operation_id,
+            deprecated=payload.deprecated,
+            security=payload.security,
+            external_docs=payload.external_docs,
         )
 
     def _from_raw_data(
@@ -600,10 +629,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         return EndpointMetadata(
             responses=responses,
-            validate_responses=EmptyObj,
+            validate_responses=None,
             method=method,
             modification=modification,
-            error_handler=EmptyObj,
+            error_handler=None,
         )
 
     def _validate_new_headers(
@@ -653,7 +682,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if isinstance(payload.error_handler, Empty):
+        if payload.error_handler is None:
             return
         if inspect.iscoroutinefunction(func):
             if not inspect.iscoroutinefunction(payload.error_handler):
@@ -664,6 +693,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'Cannot pass async `error_handler` to sync {endpoint}',
             )
+
+    # TODO: Does we need extract methods for summary and
+    # description from endpoint.__doc__?
 
 
 @final

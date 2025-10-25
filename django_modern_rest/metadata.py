@@ -1,6 +1,7 @@
 import dataclasses
 from http import HTTPStatus
 from typing import (
+    TYPE_CHECKING,
     final,
 )
 
@@ -9,7 +10,12 @@ from django_modern_rest.response import (
     ResponseDescription,
     ResponseModification,
 )
-from django_modern_rest.types import Empty
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.objects import (
+        ExternalDocumentation,
+        SecurityRequirement,
+    )
 
 
 @final
@@ -30,6 +36,17 @@ class EndpointMetadata:
             to the returned data. Can be ``None``, when ``@validate`` is used.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
+        summary: A short summary of what the operation does.
+        description: A verbose explanation of the operation behavior.
+        tags: A list of tags for API documentation control.
+            Used to group operations in OpenAPI documentation.
+        operation_id: Unique string used to identify the operation.
+        deprecated: Declares this operation to be deprecated.
+        security: A declaration of which security mechanisms can be used
+            for this operation. List of security requirement objects.
+        external_docs: Additional external documentation for this operation.
+
+
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
@@ -45,7 +62,16 @@ class EndpointMetadata:
     """
 
     responses: dict[HTTPStatus, ResponseDescription]
-    validate_responses: bool | Empty
+    validate_responses: bool | None
     method: str
     modification: ResponseModification | None
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
+
+    # OpenAPI documentation fields:
+    summary: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    operation_id: str | None = None
+    deprecated: bool = False
+    security: list['SecurityRequirement'] | None = None
+    external_docs: 'ExternalDocumentation | None' = None
