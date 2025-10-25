@@ -127,7 +127,7 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom error handling.
         """
-        if not isinstance(self.metadata.error_handler, Empty):
+        if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return self.metadata.error_handler(  # type: ignore[return-value]
@@ -152,7 +152,7 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom async error handling.
         """
-        if not isinstance(self.metadata.error_handler, Empty):
+        if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return await self.metadata.error_handler(  # type: ignore[no-any-return, misc]
@@ -301,7 +301,7 @@ def validate(  # noqa: WPS234
     /,
     *responses: ResponseDescription,
     error_handler: AsyncErrorHandlerT,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -315,7 +315,7 @@ def validate(
     /,
     *responses: ResponseDescription,
     error_handler: SyncErrorHandlerT,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
@@ -328,8 +328,8 @@ def validate(
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
-    validate_responses: bool | Empty = EmptyObj,
-    error_handler: Empty = EmptyObj,
+    validate_responses: bool | None = None,
+    error_handler: None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
@@ -341,8 +341,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
-    validate_responses: bool | Empty = EmptyObj,
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+    validate_responses: bool | None = None,
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -518,7 +518,7 @@ def modify(
     error_handler: AsyncErrorHandlerT,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     allow_custom_http_methods: bool = False,
 ) -> _ModifyAsyncCallable: ...
@@ -530,7 +530,7 @@ def modify(
     error_handler: SyncErrorHandlerT,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
     allow_custom_http_methods: bool = False,
 ) -> _ModifySyncCallable: ...
@@ -541,9 +541,9 @@ def modify(
     *,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
-    error_handler: Empty = EmptyObj,
+    error_handler: None = None,
     allow_custom_http_methods: bool = False,
 ) -> _ModifyAnyCallable: ...
 
@@ -552,9 +552,9 @@ def modify(  # noqa: WPS211
     *,
     status_code: HTTPStatus | Empty = EmptyObj,
     headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     extra_responses: list[ResponseDescription] | Empty = EmptyObj,
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,

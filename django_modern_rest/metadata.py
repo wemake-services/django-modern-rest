@@ -10,7 +10,6 @@ from django_modern_rest.response import (
     ResponseDescription,
     ResponseModification,
 )
-from django_modern_rest.types import Empty
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects import (
@@ -63,10 +62,10 @@ class EndpointMetadata:
     """
 
     responses: dict[HTTPStatus, ResponseDescription]
-    validate_responses: bool | Empty
+    validate_responses: bool | None
     method: str
     modification: ResponseModification | None
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
 
     # OpenAPI documentation fields:
     summary: str | None = None

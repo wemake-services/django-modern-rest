@@ -281,15 +281,7 @@ class ControllerValidator:
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ValidateEndpointPayload:
-    """Payload created by ``@validate``."""
-
-    responses: list[ResponseDescription]
-    validate_responses: bool | Empty
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
-    allow_custom_http_methods: bool
-
-    # OpenAPI documentation fields:
+class _OpenAPIPayload:
     summary: str | None = None
     description: str | None = None
     tags: list[str] | None = None
@@ -300,24 +292,25 @@ class ValidateEndpointPayload:
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ModifyEndpointPayload:
+class ValidateEndpointPayload(_OpenAPIPayload):
+    """Payload created by ``@validate``."""
+
+    responses: list[ResponseDescription]
+    validate_responses: bool | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
+    allow_custom_http_methods: bool
+
+
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class ModifyEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@modify``."""
 
     status_code: HTTPStatus | Empty
     headers: Mapping[str, NewHeader] | Empty
     responses: list[ResponseDescription] | Empty
-    validate_responses: bool | Empty
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    validate_responses: bool | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
-
-    # OpenAPI documentation fields:
-    summary: str | None = None
-    description: str | None = None
-    tags: list[str] | None = None
-    operation_id: str | None = None
-    deprecated: bool = False
-    security: list['SecurityRequirement'] | None = None
-    external_docs: 'ExternalDocumentation | None' = None
 
 
 #: Alias for different payload types:
@@ -608,10 +601,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         return EndpointMetadata(
             responses=responses,
-            validate_responses=EmptyObj,
+            validate_responses=None,
             method=method,
             modification=modification,
-            error_handler=EmptyObj,
+            error_handler=None,
         )
 
     def _validate_new_headers(
@@ -661,7 +654,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if isinstance(payload.error_handler, Empty):
+        if payload.error_handler is None:
             return
         if inspect.iscoroutinefunction(func):
             if not inspect.iscoroutinefunction(payload.error_handler):
