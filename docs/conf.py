@@ -12,7 +12,7 @@
 
 import sys
 import tomllib
-from collections.abc import Generator
+from collections.abc import Iterator
 from pathlib import Path
 from typing import cast
 
@@ -191,7 +191,7 @@ def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:
         * https://stackoverflow.com/a/62301461 - source of this hack
 
     """
-    pending_xrefs: Generator[pending_xref] = doctree.findall(
+    pending_xrefs: Iterable[pending_xref] = doctree.findall(
         condition=pending_xref,
     )
     for node in pending_xrefs:
