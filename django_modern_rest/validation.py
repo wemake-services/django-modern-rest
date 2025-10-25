@@ -316,6 +316,7 @@ class ValidateEndpointPayload:
     responses: list[ResponseDescription]
     validate_responses: bool | Empty
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    allow_custom_http_methods: bool
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -327,6 +328,7 @@ class ModifyEndpointPayload:
     responses: list[ResponseDescription] | Empty
     validate_responses: bool | Empty
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    allow_custom_http_methods: bool
 
 
 #: Alias for different payload types:
@@ -433,8 +435,15 @@ class EndpointMetadataValidator:  # noqa: WPS214
     ) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
-        method = validate_method_name(func.__name__)
-        func.__name__ = str(method).lower()  # we can change it :)
+        method = validate_method_name(
+            func.__name__,
+            allow_custom_http_methods=getattr(
+                self.payload,
+                'allow_custom_http_methods',
+                False,
+            ),
+        )
+        func.__name__ = method  # we can change it :)
         endpoint = str(func)
         if isinstance(self.payload, ModifyEndpointPayload):
             return self._from_modify(
@@ -487,7 +496,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         payload: ValidateEndpointPayload,
         return_annotation: Any,
-        method: HTTPMethod,
+        method: str,
         func: Callable[..., Any],
         *,
         endpoint: str,
@@ -522,7 +531,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         payload: ModifyEndpointPayload,
         return_annotation: Any,
-        method: HTTPMethod,
+        method: str,
         func: Callable[..., Any],
         *,
         endpoint: str,
@@ -569,7 +578,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
     def _from_raw_data(
         self,
         return_annotation: Any,
-        method: HTTPMethod,
+        method: str,
         *,
         endpoint: str,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -672,14 +681,20 @@ class _ValidationContext:
     headers: dict[str, str]
 
 
-def validate_method_name(func_name: str) -> HTTPMethod:
+def validate_method_name(
+    func_name: str,
+    *,
+    allow_custom_http_methods: bool,
+) -> str:
     """Validates that a function has correct HTTP method name."""
     try:  # noqa: WPS229
         if func_name != func_name.lower():
             raise ValueError  # noqa: TRY301
         if func_name == 'meta':
-            return HTTPMethod.OPTIONS
-        return HTTPMethod(func_name.upper())
+            return 'options'
+        if allow_custom_http_methods:
+            return func_name
+        return HTTPMethod(func_name.upper()).value.lower()
     except ValueError:
         raise EndpointMetadataError(
             f'{func_name} is not a valid HTTP method name',

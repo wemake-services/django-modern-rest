@@ -9,7 +9,7 @@ We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
 
   Remember, that ``django_modern_rest`` settings are cached after the access.
   If you need to modify settings dynamically
-  in runtime use :func:`clear_settings_cache`.
+  in runtime use :func:`~django_modern_rest.settings.clear_settings_cache`.
 
 Here are all keys and values that can be set.
 To configure ``django-modern-rest`` place this into your ``settings.py``:
@@ -161,4 +161,4 @@ Error handling
 Misc
 ----
 
-.. autofunction:: clear_settings_cache
+.. autofunction:: django_modern_rest.settings.clear_settings_cache

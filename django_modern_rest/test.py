@@ -113,13 +113,11 @@ class DMRClient(_DMRMixin, Client):
 
     Based on :class:`django.test.Client`.
     See their docs for advanced usage:
-    https://docs.djangoproject.com/en/dev/topics/testing/tools
+    https://docs.djangoproject.com/en/dev/topics/testing/tools/
 
     This type, in contrast to a regular ``Client``,
     sets ``content-type`` as ``application/json``.
     """
-
-    # TODO: add `csrf` support
 
 
 class DMRAsyncClient(_DMRMixin, AsyncClient):

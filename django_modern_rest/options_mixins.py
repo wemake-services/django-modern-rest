@@ -84,7 +84,7 @@ class AsyncMetaMixin(BaseAsyncMeta):
 
 def _meta_impl(controller: 'Controller[BaseSerializer]') -> HttpResponse:
     allow = ', '.join(
-        validate_method_name(method).value
+        validate_method_name(method, allow_custom_http_methods=False).upper()
         for method in sorted(controller.api_endpoints.keys())
     )
     return controller.to_response(

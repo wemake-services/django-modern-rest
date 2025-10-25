@@ -1,6 +1,15 @@
 :layout: landing
 
-django-modern-rest
+.. figure:: /_static/images/logo-light.svg
+   :figclass: light-only
+   :width: 700
+   :align: center
+
+.. figure:: /_static/images/logo-dark.svg
+   :figclass: dark-only
+   :width: 700
+   :align: center
+
 ==================
 
 .. container:: badges
@@ -34,6 +43,17 @@ and extend ``django-modern-rest`` framework.
 
     :doc:`pages/getting-started`
     `GitHub <https://github.com/wemake-services/django-modern-rest>`_
+
+
+.. rubric:: Testimonials
+
+.. epigraph::
+
+   | The one thing I really love about **django-modern-rest** is its pluggable
+   | serializers and validators. Frameworks that are tightly coupled
+   | with **pydantic** can be really painful to work with.
+
+   -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
 
 
 Main features include:
@@ -129,6 +149,7 @@ Here are our amazing people who made this project possible.
   pages/core-concepts.rst
   pages/configuration.rst
   pages/error-handling.rst
+  pages/middleware.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst

@@ -37,8 +37,12 @@ source_modules =
   django_modern_rest
 
 forbidden_modules =
+  # optinal deps:
   pydantic
   msgspec
+  # internal modules:
+  django_modern_rest_pytest
+  django_test_app
 
 ignore_imports =
   # Pydantic plugin:
