@@ -162,6 +162,7 @@ Here are our amazing people who made this project possible.
   pages/configuration.rst
   pages/error-handling.rst
   pages/middleware.rst
+  pages/components.rst
   pages/plugins.rst
   pages/openapi.rst
   pages/integrations.rst

@@ -27,7 +27,7 @@ def openapi_spec(
     """
     if len(renderers) == 0:
         raise ValueError(
-            "Empty renderers sequence provided to 'openapi_spec()'. "
+            'Empty renderers sequence provided to `openapi_spec()`. '
             'At least one renderer must be specified to '
             'render the API documentation.',
         )

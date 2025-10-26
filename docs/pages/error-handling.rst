@@ -36,6 +36,16 @@ Here's how it works:
      And :meth:`~django_modern_rest.controller.Controller.handle_async_error`
      won't be called for sync ones.
 
+.. note::
+
+  :exc:`~django_modern_rest.response.APIError` does not follow any of these
+  rules and has a default handler, which will convert an instance
+  of ``APIError`` to :class:`~django.http.HttpResponse` via
+  :meth:`~django_modern_rest.controller.Controller.to_error` call.
+
+  You don't need to catch ``APIError`` in any way,
+  unless you know what you are doing.
+
 
 Customizing endpoint error handler
 ----------------------------------
