@@ -3,11 +3,13 @@
 # under MIT license.
 
 from collections.abc import Callable
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 import msgspec
 
 from django_modern_rest.exceptions import DataParsingError
+from django_modern_rest.settings import MAX_CACHE_SIZE
 
 if TYPE_CHECKING:
     from django_modern_rest.internal.json import (
@@ -30,10 +32,7 @@ def serialize(
     Returns:
         JSON as bytes.
     """
-    return msgspec.json.encode(
-        to_serialize,
-        enc_hook=serializer,
-    )
+    return _get_serializer(serializer).encode(to_serialize)
 
 
 def deserialize(
@@ -60,10 +59,25 @@ def deserialize(
 
     """
     try:
-        return msgspec.json.decode(
-            to_deserialize,
-            dec_hook=deserializer,
+        return _get_deserializer(
+            deserializer,
             strict=strict,
-        )
+        ).decode(to_deserialize)
     except msgspec.DecodeError as exc:
         raise DataParsingError(str(exc)) from exc
+
+
+@lru_cache(maxsize=MAX_CACHE_SIZE)
+def _get_serializer(
+    serializer: Callable[[Any], Any] | None,
+) -> msgspec.json.Encoder:
+    return msgspec.json.Encoder(enc_hook=serializer)
+
+
+@lru_cache(maxsize=MAX_CACHE_SIZE)
+def _get_deserializer(
+    deserializer: 'DeserializeFunc | None',
+    *,
+    strict: bool,
+) -> msgspec.json.Decoder[Any]:
+    return msgspec.json.Decoder(dec_hook=deserializer, strict=strict)

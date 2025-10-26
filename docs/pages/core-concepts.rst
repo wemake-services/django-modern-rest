@@ -1,4 +1,4 @@
-Core Concepts
+Core concepts
 =============
 
 To learn ``django-modern-rest`` you have to learn just a couple of things:

@@ -1,5 +1,6 @@
+import os
 from collections.abc import Mapping
-from functools import cache, lru_cache
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Final
 
 from django.utils import module_loading
@@ -8,6 +9,16 @@ from django_modern_rest.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
     from django_modern_rest.types import DMRSettings
+
+
+# Settings with env vars only
+# ---------------------------
+
+MAX_CACHE_SIZE: Final = int(os.environ.get('DMR_MAX_CACHE_SIZE', '256'))
+
+
+# Settings with `settings.py`
+# ---------------------------
 
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
@@ -53,7 +64,7 @@ _DEFAULTS: Final['DMRSettings'] = {  # noqa: WPS407
 }
 
 
-@lru_cache
+@lru_cache(maxsize=MAX_CACHE_SIZE)
 def resolve_defaults() -> Mapping[str, Any]:
     """
     Resolve all ``django-modern-rest`` settings with defaults.
@@ -68,7 +79,7 @@ def resolve_defaults() -> Mapping[str, Any]:
     return getattr(settings, DMR_SETTINGS, _DEFAULTS)
 
 
-@cache
+@lru_cache(maxsize=MAX_CACHE_SIZE)
 def resolve_setting(setting_name: str, *, import_string: bool = False) -> Any:
     """
     Resolves setting by *setting_name*.
