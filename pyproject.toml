@@ -53,6 +53,7 @@ django = ">=4.2,<6.0"
 
 msgspec = { version = ">= 0.19", optional = true }
 pydantic = { version = "^2.12", optional = true }
+types-docutils = "^0.22.2.20251006"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]

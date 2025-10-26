@@ -2631,6 +2631,18 @@ files = [
 ]
 
 [[package]]
+name = "types-docutils"
+version = "0.22.2.20251006"
+description = "Typing stubs for docutils"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "types_docutils-0.22.2.20251006-py3-none-any.whl", hash = "sha256:1e61afdeb4fab4ae802034deea3e853ced5c9b5e1d156179000cb68c85daf384"},
+    {file = "types_docutils-0.22.2.20251006.tar.gz", hash = "sha256:c36c0459106eda39e908e9147bcff9dbd88535975cde399433c428a517b9e3b2"},
+]
+
+[[package]]
 name = "types-pyyaml"
 version = "6.0.12.20250915"
 description = "Typing stubs for PyYAML"
@@ -2770,4 +2782,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "2cf10bb0406cd9a73bef9143e97d884fd9685ad1c0f21728f4d19f219ca827e4"
+content-hash = "8b489019f9aae9c476d99824cafd3a16a656413e8eb96a8e12973fcc1baa9961"
