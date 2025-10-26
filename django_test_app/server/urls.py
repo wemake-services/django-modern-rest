@@ -134,7 +134,7 @@ urlpatterns = [
                     url='https://test.com',
                     description='Test External Documentation',
                 ),
-                servers=[Server(url='https://test.com')],
+                servers=[Server(url='http://127.0.0.1:8000/api/')],
                 tags=[
                     Tag(name='Test Tag', description='Tag Description'),
                     Tag(name='Test Tag 2', description='Tag 2 Description'),

@@ -1,3 +1,4 @@
+import re
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from django.contrib.admindocs.views import simplify_regex
@@ -24,6 +25,12 @@ class ControllerMapping(NamedTuple):
     controller: 'Controller[Any]'
 
 
+def _normalize_path(path: str) -> str:
+    path = simplify_regex(path)
+    pattern = re.compile(r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>')
+    return re.sub(pattern, r'{\g<parameter>}', path)
+
+
 def _process_resolver(
     url_resolver: URLResolver,
     base_path: str = '',
@@ -46,8 +53,8 @@ def _process_pattern(
 ) -> ControllerMapping:
     path = _join_paths(base_path, str(url_pattern.pattern))
     controller: Controller[Any] = url_pattern.callback.view_class  # type: ignore[attr-defined]
-    # TODO: path normalization must be configurable (simplify_regex)
-    return ControllerMapping(path=simplify_regex(path), controller=controller)
+    normalized = _normalize_path(path)
+    return ControllerMapping(path=normalized, controller=controller)
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
