@@ -42,6 +42,17 @@ While specifying ``model_config = pydantic.ConfigDict(from_attributes=True)``
 on ``TagSchema`` and ``RoleSchema``.
 Both options work, just choose what style do you like more.
 
+.. note::
+
+  Models and QuerySets can't be serialized to json by default.
+  This is a design choice, this is a feature.
+
+  Why?
+
+  Because Models and QuerySets are not for serialization,
+  they are for database access. Mixing these two layers
+  will complicate, not simplify, your app.
+
 Here's how the final :class:`~django_modern_rest.controller.Controller`
 would look like:
 

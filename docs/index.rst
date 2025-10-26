@@ -156,9 +156,13 @@ Here are our amazing people who made this project possible.
 
   pages/getting-started.rst
   pages/core-concepts.rst
+  pages/using-controller.rst
+  pages/returning-responses.rst
+  pages/routing.rst
   pages/configuration.rst
   pages/error-handling.rst
   pages/middleware.rst
+  pages/plugins.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst
