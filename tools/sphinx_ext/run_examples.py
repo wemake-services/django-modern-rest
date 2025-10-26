@@ -68,8 +68,6 @@ class AppBuilder:
         self.file_path = file_path
         self.config = config
 
-        self._settings_configured = False
-
     def build_app(self) -> ASGIHandler:
         """Build and return configured ASGI application."""
         self._configure_settings()
