@@ -111,6 +111,11 @@ nitpick_ignore = [
     # OpenAPI types used in TYPE_CHECKING blocks:
     (PY_CLASS, 'SecurityRequirement'),
     (PY_CLASS, 'ExternalDocumentation'),
+    (PY_CLASS, 'Callback'),
+    (PY_CLASS, 'Server'),
+    (PY_CLASS, 'Reference'),
+    (PY_CLASS, 'Paths'),
+    (PY_CLASS, 'Responses'),
 ]
 
 qualname_overrides = {

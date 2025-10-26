@@ -52,8 +52,11 @@ from django_modern_rest.types import (
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
     from django_modern_rest.openapi.objects import (
+        Callback,
         ExternalDocumentation,
+        Reference,
         SecurityRequirement,
+        Server,
     )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
@@ -309,6 +312,8 @@ class _OpenAPIPayload:
     deprecated: bool = False
     security: list['SecurityRequirement'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
+    callbacks: 'dict[str, Callback | Reference] | None' = None
+    servers: list['Server'] | None = None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -540,6 +545,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             deprecated=payload.deprecated,
             security=payload.security,
             external_docs=payload.external_docs,
+            callbacks=payload.callbacks,
+            servers=payload.servers,
         )
 
     def _from_modify(  # noqa: WPS211
@@ -595,6 +602,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             deprecated=payload.deprecated,
             security=payload.security,
             external_docs=payload.external_docs,
+            callbacks=payload.callbacks,
+            servers=payload.servers,
         )
 
     def _from_raw_data(
