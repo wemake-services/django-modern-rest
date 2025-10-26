@@ -7,3 +7,9 @@ but as a con, it is slower than can possibly be.
 
 You can disable response validation via configuration:
 per endpoint, per controller, and globally.
+
+
+.. _response_validation:
+
+Response validation
+-------------------

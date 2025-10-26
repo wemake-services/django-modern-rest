@@ -103,6 +103,7 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifyAsyncCallable'),
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
+    (PY_CLASS, 'django_modern_rest.response._ItemT'),
     (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
     (PY_CLASS, '_SerializerT'),
     # Undocumented in Django:
