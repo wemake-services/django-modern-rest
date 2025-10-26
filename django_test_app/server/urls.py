@@ -16,9 +16,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.urls import include, path, re_path
+from django.urls import include, re_path
 
-from django_modern_rest import Router, compose_controllers
+from django_modern_rest import Router, compose_controllers, path
 from django_modern_rest.openapi import (
     OpenAPIConfig,
     openapi_spec,

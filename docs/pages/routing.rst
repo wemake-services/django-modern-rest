@@ -16,8 +16,8 @@ behaviours into a single URL? For this we use
 
 .. code:: python
 
-  from django.urls import include, path
-  from django_modern_rest import Router, compose_controllers
+  from django.urls import include
+  from django_modern_rest import Router, compose_controllers, path
 
   router = Router([
     path(

@@ -1,8 +1,8 @@
 from .views import UserController  # noqa: I001, WPS300
 
-from django.urls import include, path
+from django.urls import include
 
-from django_modern_rest import Router
+from django_modern_rest import Router, path
 
 
 # Router is just a collection of regular Django urls:

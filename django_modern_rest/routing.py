@@ -1,8 +1,16 @@
-from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
+from collections.abc import Callable, Coroutine, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeAlias,
+    TypeVar,
+    cast,
+    overload,
+)
 
-from django.http import HttpRequest, HttpResponse
-from django.urls.resolvers import URLPattern, URLResolver
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
+from django.urls import path as _django_path
+from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -11,20 +19,23 @@ if TYPE_CHECKING:
     from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
     from django_modern_rest.serialization import BaseSerializer
 
+_SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
+_ViewFunc: TypeAlias = Callable[..., HttpResponse]
+_ControllerT: TypeAlias = type['Controller[Any]']
+_CapturedArgs: TypeAlias = tuple[Any, ...]
+_CapturedKwargs: TypeAlias = dict[str, int | str]
+_RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
+_AnyPattern = URLPattern | URLResolver
+
 
 class Router:
     """Collection of HTTP routes for REST framework."""
 
     __slots__ = ('urls',)
 
-    def __init__(self, urls: Sequence[URLPattern | URLResolver]) -> None:
+    def __init__(self, urls: Sequence[_AnyPattern]) -> None:
         """Just stores the passed routes."""
         self.urls = urls
-
-
-_SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
-_ViewFunc: TypeAlias = Callable[..., HttpResponse]
-_ControllerT: TypeAlias = type['Controller[Any]']
 
 
 def compose_controllers(
@@ -140,3 +151,89 @@ def _build_method_mapping(
             dict.fromkeys(controller.api_endpoints, controller),
         )
     return endpoints, method_mapping
+
+
+class _PrefixRoutePattern(RoutePattern):
+    def __init__(
+        self,
+        route: str,
+        name: str | None = None,
+        is_endpoint: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
+        idx = route.find('<')
+        if idx == -1:
+            self._prefix = route
+            self._is_static = True
+        else:
+            self._is_static = False
+            self._prefix = route[:idx]
+        self._is_endpoint = is_endpoint
+        super().__init__(route, name, is_endpoint)
+
+    @override
+    def match(
+        self,
+        path: str,
+    ) -> _RouteMatch | None:
+        if self._is_static:
+            if self._is_endpoint and path == self._prefix:
+                return '', (), {}
+            if not self._is_endpoint and path.startswith(self._prefix):
+                return path[len(self._prefix) :], (), {}
+        elif path.startswith(self._prefix):
+            return cast(_RouteMatch | None, super().match(path))  # type: ignore[redundant-cast]
+        return None
+
+
+@overload
+def path(
+    route: str,
+    view: Callable[..., HttpResponseBase],
+    kwargs: dict[str, Any] = ...,
+    name: str = ...,
+) -> URLPattern: ...
+
+
+@overload
+def path(
+    route: str,
+    view: Callable[..., Coroutine[Any, Any, HttpResponseBase]],
+    kwargs: dict[str, Any] = ...,
+    name: str = ...,
+) -> URLPattern: ...
+
+
+@overload
+def path(
+    route: str,
+    view: tuple[Sequence[_AnyPattern], str | None, str | None],
+    kwargs: dict[str, Any] = ...,
+    name: str = ...,
+) -> URLResolver: ...
+
+
+@overload
+def path(
+    route: str,
+    view: Sequence[URLResolver | str],
+    kwargs: dict[str, Any] = ...,
+    name: str = ...,
+) -> URLResolver: ...
+
+
+def path(
+    route: str,
+    view: (
+        Callable[..., HttpResponseBase]
+        | Callable[..., Coroutine[Any, Any, HttpResponseBase]]
+        | tuple[Sequence[_AnyPattern], str | None, str | None]
+        | Sequence[URLResolver | str]
+    ),
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> _AnyPattern:
+    """Creates URL pattern using prefix-based matching for faster routing."""
+    return cast(
+        _AnyPattern,
+        _django_path(route, view, kwargs, name, Pattern=_PrefixRoutePattern),  # type: ignore[call-overload]
+    )

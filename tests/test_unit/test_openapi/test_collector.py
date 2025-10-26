@@ -2,9 +2,9 @@ from collections.abc import Sequence
 from typing import Any, final
 
 import pytest
-from django.urls import URLPattern, URLResolver, include, path
+from django.urls import URLPattern, URLResolver, include
 
-from django_modern_rest import Controller
+from django_modern_rest import Controller, path
 from django_modern_rest.openapi.collector import (
     ControllerMapping,
     _join_paths,
