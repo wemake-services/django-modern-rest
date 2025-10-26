@@ -1,4 +1,4 @@
-Using Controller
+Using controller
 ================
 
 
@@ -32,7 +32,6 @@ Here's an example of a custom ``meta`` implementation:
 .. literalinclude:: /examples/using_controller/custom_meta.py
   :caption: views.py
   :linenos:
-  :lines: 10-
 
 
 See how you can use :ref:`composed-meta`

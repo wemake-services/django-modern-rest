@@ -119,25 +119,9 @@ def test_default_config_raises_when_wrong_type(
 ) -> None:
     """Ensure that `TypeError` is raised when config is not `OpenAPIConfig`."""
     settings.DMR_SETTINGS = {
-        'json_serialize': 'django_modern_rest.internal.json.serialize',
+        'openapi_config': 'not-an-object',
     }
 
-    with pytest.raises(
-        TypeError,
-        match='OpenAPI config is not set',
-    ):
-        openapi_spec(
-            router=Router([]),
-            renderers=[JsonRenderer()],
-        )
-
-
-@pytest.mark.usefixtures('_clear_cache')
-def test_default_config_raises_when_missing(settings: LazySettings) -> None:
-    """Ensure that `TypeError` is raised when config key is missing."""
-    settings.DMR_SETTINGS = {
-        'json_serialize': 'django_modern_rest.internal.json.serialize',
-    }
     with pytest.raises(
         TypeError,
         match='OpenAPI config is not set',

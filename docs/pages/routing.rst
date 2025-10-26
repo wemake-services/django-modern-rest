@@ -11,10 +11,8 @@ about its future URL. Why so?
    for example in ``api/v1`` and ``api/v2``. Our way allows any customizations
 
 So, how do you compose different controllers with different parsing
-behaviour into a single URL? For this we use
-:func:`~django_modern_rest.routing.compose_controllers` function.
-It composes different controllers with different parsing
-strategies into a single one:
+behaviours into a single URL? For this we use
+:func:`~django_modern_rest.routing.compose_controllers` function:
 
 .. code:: python
 
@@ -44,7 +42,7 @@ attached to this behaviour:
 
 1. Controllers to be composed can't have duplicate endpoints, otherwise,
    it would be not clear which endpoint from which controller needs to called.
-   This includes :ref:`meta <meta>` method for `OPTION` HTTP calls as well
+   This includes :ref:`meta <meta>` method for ``OPTION`` HTTP calls as well
 2. All controllers have to be either sync or async,
    otherwise it would be hard to run them
 3. Controllers must have the same :term:`serializer`,
@@ -57,8 +55,8 @@ to be extended, but composed!
 
 .. _composed-meta:
 
-Handling ``meta`` endpoints
----------------------------
+Handling meta endpoint
+----------------------
 
 When using :func:`~django_modern_rest.routing.compose_controllers`,
 duplicate ``meta`` methods will be a import-time error. To solve this,
@@ -71,8 +69,18 @@ Example:
 
   from django_modern_rest import AsyncMetaMixin
 
-  composed = compose_controllers(UserPut, UserPatch, meta_mixin=AsyncMetaMixin)
+  composed = compose_controllers(
+      UserPut,
+      UserPatch,
+      # If controllers are sync, use `MetaMixin`
+      meta_mixin=AsyncMetaMixin,
+  )
 
 This will create an ``async def meta`` endpoint in the composed controller.
 All methods from ``UserPut`` and ``UserPatch`` will be listed
 in the response's ``Allow`` header.
+
+.. warning::
+
+  As usually, we validate that the resulting ``Controller``
+  won't have a mix of sync and async endpoints.

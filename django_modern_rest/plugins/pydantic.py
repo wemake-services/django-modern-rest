@@ -1,5 +1,5 @@
 from collections.abc import Callable, Mapping
-from functools import cache
+from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -34,6 +34,7 @@ from django_modern_rest.serialization import (
 from django_modern_rest.settings import (
     DMR_DESERIALIZE_KEY,
     DMR_SERIALIZE_KEY,
+    MAX_CACHE_SIZE,
     resolve_setting,
 )
 
@@ -249,7 +250,7 @@ class PydanticSerializer(BaseSerializer):
         raise NotImplementedError(f'Cannot serialize {error} to json safely')
 
 
-@cache
+@lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
     """
     It is expensive to create, reuse existing ones.

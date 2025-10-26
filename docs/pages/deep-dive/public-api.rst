@@ -73,6 +73,9 @@ Serialization
 .. autoclass:: django_modern_rest.serialization.BaseSerializer
   :members:
 
+.. autoclass:: django_modern_rest.serialization.BaseEndpointOptimizer
+  :members:
+
 .. autoclass:: django_modern_rest.serialization.SerializerContext
 
 
