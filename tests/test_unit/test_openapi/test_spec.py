@@ -7,7 +7,12 @@ from django.urls import URLPattern
 
 from django_modern_rest import Router
 from django_modern_rest.openapi import OpenAPIConfig, openapi_spec
-from django_modern_rest.openapi.renderers import JsonRenderer, SwaggerRenderer
+from django_modern_rest.openapi.renderers import (
+    JsonRenderer,
+    RedocRenderer,
+    ScalarRenderer,
+    SwaggerRenderer,
+)
 from django_modern_rest.settings import clear_settings_cache
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
@@ -55,13 +60,17 @@ def test_pattern_names_match_renderers() -> None:
     """Ensure that URL pattern names match renderer names."""
     urlpatterns, _, _ = openapi_spec(
         router=Router([]),
-        renderers=[JsonRenderer(), SwaggerRenderer()],
+        renderers=[
+            JsonRenderer(),
+            RedocRenderer(),
+            ScalarRenderer(),
+            SwaggerRenderer(),
+        ],
         config=_TEST_CONFIG,
     )
 
-    pattern_names = [pattern.name for pattern in urlpatterns]
-    assert 'json' in pattern_names
-    assert 'swagger' in pattern_names
+    renderer_names = {'json', 'redoc', 'scalar', 'swagger'}
+    assert {pattern.name for pattern in urlpatterns} == renderer_names
 
 
 @pytest.mark.parametrize(
@@ -110,25 +119,9 @@ def test_default_config_raises_when_wrong_type(
 ) -> None:
     """Ensure that `TypeError` is raised when config is not `OpenAPIConfig`."""
     settings.DMR_SETTINGS = {
-        'json_serialize': 'django_modern_rest.internal.json.serialize',
+        'openapi_config': 'not-an-object',
     }
 
-    with pytest.raises(
-        TypeError,
-        match='OpenAPI config is not set',
-    ):
-        openapi_spec(
-            router=Router([]),
-            renderers=[JsonRenderer()],
-        )
-
-
-@pytest.mark.usefixtures('_clear_cache')
-def test_default_config_raises_when_missing(settings: LazySettings) -> None:
-    """Ensure that `TypeError` is raised when config key is missing."""
-    settings.DMR_SETTINGS = {
-        'json_serialize': 'django_modern_rest.internal.json.serialize',
-    }
     with pytest.raises(
         TypeError,
         match='OpenAPI config is not set',

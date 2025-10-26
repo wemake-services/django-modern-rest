@@ -7,9 +7,10 @@ We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
 
 .. note::
 
-  Remember, that ``django_modern_rest`` settings are cached after the access.
+  Remember, that ``django_modern_rest`` settings
+  are cached after the first access.
   If you need to modify settings dynamically
-  in runtime use :func:`clear_settings_cache`.
+  in runtime use :func:`~django_modern_rest.settings.clear_settings_cache`.
 
 Here are all keys and values that can be set.
 To configure ``django-modern-rest`` place this into your ``settings.py``:
@@ -158,7 +159,27 @@ Error handling
 
 .. autofunction:: django_modern_rest.errors.global_error_handler
 
+
+Environment variables
+---------------------
+
+.. envvar:: DMR_MAX_CACHE_SIZE
+
+  Default: ``256``
+
+  We use :func:`functools.lru_cache` in many places internally.
+  For example:
+
+  - To create json encoders and decoders only once
+  - To create type validation objects
+    in :class:`~django_modern_rest.serialization.BaseEndpointOptimizer`
+
+  You can control the size / memory usage with this setting.
+
+  Increase if you have a lot of different return types.
+
+
 Misc
 ----
 
-.. autofunction:: clear_settings_cache
+.. autofunction:: django_modern_rest.settings.clear_settings_cache

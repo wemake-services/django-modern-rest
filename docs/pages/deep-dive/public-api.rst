@@ -17,9 +17,9 @@ Endpoint
 
 .. autoclass:: django_modern_rest.metadata.EndpointMetadata
 
-.. autofunction:: django_modern_rest.endpoint.modify
+.. autodecorator:: django_modern_rest.endpoint.modify
 
-.. autofunction:: django_modern_rest.endpoint.validate
+.. autodecorator:: django_modern_rest.endpoint.validate
 
 
 Components
@@ -39,6 +39,9 @@ Response and headers
   :members:
 
 .. autoclass:: django_modern_rest.response.ResponseModification
+  :members:
+
+.. autoexception:: django_modern_rest.response.APIError
   :members:
 
 .. autoclass:: django_modern_rest.headers.HeaderDescription
@@ -65,13 +68,59 @@ Validation
 .. autoclass:: django_modern_rest.validation.ValidateEndpointPayload
 
 
+.. _serializer:
+
 Serialization
 -------------
 
 .. autoclass:: django_modern_rest.serialization.BaseSerializer
   :members:
 
+.. autoclass:: django_modern_rest.serialization.BaseEndpointOptimizer
+  :members:
+
 .. autoclass:: django_modern_rest.serialization.SerializerContext
+
+
+Routing
+-------
+
+.. autoclass:: django_modern_rest.routing.Router
+  :members:
+
+.. autofunction:: django_modern_rest.routing.compose_controllers
+
+
+Meta mixins
+-----------
+
+.. autoclass:: django_modern_rest.options_mixins.MetaMixin
+  :members:
+
+.. autoclass:: django_modern_rest.options_mixins.AsyncMetaMixin
+  :members:
+
+
+Exceptions
+----------
+
+.. autoexception:: django_modern_rest.exceptions.UnsolvableAnnotationsError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.EndpointMetadataError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.DataParsingError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.SerializationError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.RequestSerializationError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.ResponseSerializationError
+  :members:
 
 
 Utilities
@@ -80,3 +129,19 @@ Utilities
 .. autoclass:: django_modern_rest.types.Empty
 
 .. autodata:: django_modern_rest.types.EmptyObj
+
+
+Decorators
+----------
+
+.. autoclass:: django_modern_rest.decorators.dispatch_decorator
+
+.. autoclass:: django_modern_rest.decorators.wrap_middleware
+
+
+Plugins
+-------
+
+.. autoclass:: django_modern_rest.plugins.pydantic.PydanticSerializer
+
+.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecSerializer

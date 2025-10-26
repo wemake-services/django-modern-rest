@@ -12,8 +12,13 @@
 
 import sys
 import tomllib
+from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
+
+from docutils.nodes import Node
+from sphinx.addnodes import pending_xref
+from sphinx.application import Sphinx
 
 # We need `server` to be importable from here:
 _ROOT = Path('..').resolve(strict=True)
@@ -101,10 +106,22 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.endpoint._ModifyAsyncCallable'),
     (PY_CLASS, 'django_modern_rest.endpoint._ModifySyncCallable'),
     (PY_CLASS, '_ParamT'),
-    # TODO: fix out why this is an error
-    (PY_CLASS, 'django.http.response.HttpResponse'),
-    (PY_CLASS, 'django.http.request.HttpRequest'),
+    (PY_CLASS, 'django_modern_rest.response._ItemT'),
+    (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
+    (PY_CLASS, '_SerializerT'),
+    # Undocumented in Django:
+    (PY_CLASS, 'django.urls.resolvers.URLPattern'),
+    (PY_CLASS, 'django.urls.resolvers.URLResolver'),
+    # OpenAPI types used in TYPE_CHECKING blocks:
+    (PY_CLASS, 'SecurityRequirement'),
+    (PY_CLASS, 'ExternalDocumentation'),
 ]
+
+qualname_overrides = {
+    # Django documents these classes under re-exported path names:
+    'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
+    'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
+}
 
 # Set `typing.TYPE_CHECKING` to `True`:
 # https://pypi.org/project/sphinx-autodoc-typehints/
@@ -160,3 +177,43 @@ html_context = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:
+    """Resolve canonical names of types to names that resolve in intersphinx.
+
+    Projects often document functions/classes under a name that is re-exported.
+    For example, cryptography documents "Certificate"
+    under ``cryptography.x509.Certificate``, but it's actually implemented in
+    ``cryptography.x509.base.Certificate`` (and re-exported in x509.py).
+
+    When Sphinx encounters typehints it tries to create links to the types,
+    looking up types from external projects using ``sphinx.ext.intersphinx``.
+    The lookup for such re-exported types fails because Sphinx
+    tries to look up the object in the implemented ("canonical") location.
+
+    .. seealso::
+
+        * https://github.com/sphinx-doc/sphinx/issues/4826 - solves this
+            with the "canonical" directive
+        * https://github.com/pyca/cryptography/pull/7938 - where this
+            was fixed for cryptography
+        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events
+        * https://stackoverflow.com/a/62301461 - source of this hack
+
+    """
+    pending_xrefs: Iterable[pending_xref] = doctree.findall(
+        condition=pending_xref,
+    )
+    for node in pending_xrefs:
+        alias = node.get('reftarget')
+        if alias is None:
+            continue
+
+        if alias in qualname_overrides:
+            node['reftarget'] = qualname_overrides.get(alias)
+
+
+def setup(app: Sphinx) -> None:
+    """Add hook functions to Sphinx hooks."""
+    app.connect('doctree-read', resolve_canonical_names)

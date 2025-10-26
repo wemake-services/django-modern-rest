@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import final
+from typing import ClassVar, final
 
 import pytest
 from django.http import HttpResponse
@@ -67,7 +67,7 @@ def test_modify_with_header_description() -> None:
 
 def test_modify_duplicate_statuses() -> None:
     """Ensures `@modify` can't have duplicate status codes."""
-    with pytest.raises(EndpointMetadataError, match='200 specified 3 times'):
+    with pytest.raises(EndpointMetadataError, match='different metadata'):
 
         class _DuplicateStatuses(Controller[PydanticSerializer]):
             @modify(
@@ -80,26 +80,53 @@ def test_modify_duplicate_statuses() -> None:
                 raise NotImplementedError
 
 
+def test_modify_deduplicate_statuses() -> None:
+    """Ensures `@modify` same duplicate status codes."""
+
+    class _DeduplicateStatuses(Controller[PydanticSerializer]):
+        responses: ClassVar[list[ResponseDescription]] = [
+            # From components:
+            ResponseDescription(int, status_code=HTTPStatus.OK),
+        ]
+
+        @modify(
+            extra_responses=[
+                # From middleware:
+                ResponseDescription(int, status_code=HTTPStatus.OK),
+                ResponseDescription(int, status_code=HTTPStatus.OK),
+            ],
+        )
+        def get(self) -> int:
+            raise NotImplementedError
+
+    endpoint = _DeduplicateStatuses.api_endpoints['get']
+    assert len(endpoint.metadata.responses) == 1
+
+
 def test_modify_modified_in_responses() -> None:
     """Ensures `@modify` can't have duplicate status codes."""
-    with pytest.raises(EndpointMetadataError, match='200 specified 2 times'):
+    with pytest.raises(EndpointMetadataError, match='different metadata'):
 
-        class _DuplicateExplicitStatuses(Controller[PydanticSerializer]):
+        class _DuplicateDifferentReturns(Controller[PydanticSerializer]):
             @modify(
                 status_code=HTTPStatus.OK,
                 extra_responses=[
-                    ResponseDescription(int, status_code=HTTPStatus.OK),
+                    ResponseDescription(str, status_code=HTTPStatus.OK),
                 ],
             )
             def get(self) -> int:
                 raise NotImplementedError
 
-    with pytest.raises(EndpointMetadataError, match='200 specified 2 times'):
+    with pytest.raises(EndpointMetadataError, match='different metadata'):
 
-        class _DuplicateImplicitStatuses(Controller[PydanticSerializer]):
+        class _DuplicateDifferentHeaders(Controller[PydanticSerializer]):
             @modify(
                 extra_responses=[
-                    ResponseDescription(int, status_code=HTTPStatus.OK),
+                    ResponseDescription(
+                        str,
+                        status_code=HTTPStatus.OK,
+                        headers={'Accept': HeaderDescription()},
+                    ),
                 ],
             )
             def get(self) -> int:

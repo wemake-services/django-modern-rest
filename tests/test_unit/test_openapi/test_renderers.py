@@ -6,9 +6,11 @@ import pytest
 from django.http import HttpResponse
 
 from django_modern_rest.openapi.converter import ConvertedSchema
+from django_modern_rest.openapi.objects.open_api import _OPENAPI_VERSION
 from django_modern_rest.openapi.renderers import (
     BaseRenderer,
     JsonRenderer,
+    RedocRenderer,
     ScalarRenderer,
     SwaggerRenderer,
     json_serializer,
@@ -16,7 +18,7 @@ from django_modern_rest.openapi.renderers import (
 from django_modern_rest.test import DMRRequestFactory
 
 _TEST_SCHEMA: Final[ConvertedSchema] = {  # noqa: WPS407
-    'openapi': '3.1.0',
+    'openapi': _OPENAPI_VERSION,
     'info': {'title': 'Test API', 'version': '1.0.0'},
     'paths': {
         '/test/': {
@@ -40,6 +42,7 @@ def test_json_serializer_basic_functionality() -> None:
     ('renderer_class', 'expected_content_type'),
     [
         (JsonRenderer, 'application/json'),
+        (RedocRenderer, 'text/html'),
         (SwaggerRenderer, 'text/html'),
         (ScalarRenderer, 'text/html'),
     ],
@@ -57,6 +60,7 @@ def test_renderer_content_types(
     ('renderer_class', 'expected_path'),
     [
         (JsonRenderer, 'openapi.json/'),
+        (RedocRenderer, 'redoc/'),
         (SwaggerRenderer, 'swagger/'),
         (ScalarRenderer, 'scalar/'),
     ],
@@ -74,6 +78,7 @@ def test_renderer_default_paths(
     ('renderer_class', 'expected_name'),
     [
         (JsonRenderer, 'json'),
+        (RedocRenderer, 'redoc'),
         (SwaggerRenderer, 'swagger'),
         (ScalarRenderer, 'scalar'),
     ],
@@ -104,7 +109,7 @@ def test_json_renderer_render_method(dmr_rf: DMRRequestFactory) -> None:
 
 @pytest.mark.parametrize(
     'renderer_class',
-    [SwaggerRenderer, ScalarRenderer],
+    [RedocRenderer, SwaggerRenderer, ScalarRenderer],
 )
 def test_html_renderer_render_method(
     dmr_rf: DMRRequestFactory,

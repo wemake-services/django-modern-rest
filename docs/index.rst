@@ -15,6 +15,9 @@
 .. container:: badges
    :name: badges
 
+   .. image:: https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D
+      :alt: Developed by
+
    .. image:: https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml/badge.svg?event=push
       :alt: Tests result
 
@@ -26,9 +29,6 @@
 
    .. image:: https://img.shields.io/badge/style-wemake-000000.svg
       :alt: Code style
-
-   .. image:: https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D
-      :alt: Developed by
 
 
 .. rst-class:: lead
@@ -43,6 +43,26 @@ and extend ``django-modern-rest`` framework.
 
     :doc:`pages/getting-started`
     `GitHub <https://github.com/wemake-services/django-modern-rest>`_
+
+
+.. rubric:: Testimonials
+
+.. epigraph::
+
+   | The one thing I really love about **django-modern-rest** is its pluggable
+   | serializers and validators. Frameworks that are tightly coupled
+   | with **pydantic** can be really painful to work with.
+
+   -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
+
+.. epigraph::
+
+   | Using ``django-modern-rest`` has been a game-changer
+   | for my productivity. The strict type safety and schema validation
+   | for both requests and responses mean I spend less time debugging
+   | and more time building.
+
+   -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
 
 
 Main features include:
@@ -136,8 +156,14 @@ Here are our amazing people who made this project possible.
 
   pages/getting-started.rst
   pages/core-concepts.rst
+  pages/using-controller.rst
+  pages/returning-responses.rst
+  pages/routing.rst
   pages/configuration.rst
   pages/error-handling.rst
+  pages/middleware.rst
+  pages/components.rst
+  pages/plugins.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst

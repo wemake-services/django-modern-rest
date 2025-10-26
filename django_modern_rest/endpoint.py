@@ -17,15 +17,15 @@ from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import (
     NewHeader,
 )
+from django_modern_rest.openapi.objects import (
+    ExternalDocumentation,
+    SecurityRequirement,
+)
 from django_modern_rest.response import APIError, ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_GLOBAL_ERROR_HANDLER_KEY,
     resolve_setting,
-)
-from django_modern_rest.types import (
-    Empty,
-    EmptyObj,
 )
 from django_modern_rest.validation import (
     EndpointMetadataValidator,
@@ -123,7 +123,7 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom error handling.
         """
-        if not isinstance(self.metadata.error_handler, Empty):
+        if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return self.metadata.error_handler(  # type: ignore[return-value]
@@ -148,7 +148,7 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom async error handling.
         """
-        if not isinstance(self.metadata.error_handler, Empty):
+        if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return await self.metadata.error_handler(  # type: ignore[no-any-return, misc]
@@ -297,7 +297,7 @@ def validate(  # noqa: WPS234
     /,
     *responses: ResponseDescription,
     error_handler: AsyncErrorHandlerT,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -311,7 +311,7 @@ def validate(
     /,
     *responses: ResponseDescription,
     error_handler: SyncErrorHandlerT,
-    validate_responses: bool | Empty = EmptyObj,
+    validate_responses: bool | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
@@ -324,8 +324,8 @@ def validate(
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
-    validate_responses: bool | Empty = EmptyObj,
-    error_handler: Empty = EmptyObj,
+    validate_responses: bool | None = None,
+    error_handler: None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
@@ -333,13 +333,20 @@ def validate(
 ]: ...
 
 
-def validate(  # pyright: ignore[reportInconsistentOverload]
+def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     response: ResponseDescription,
     /,
     *responses: ResponseDescription,
-    validate_responses: bool | Empty = EmptyObj,
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+    validate_responses: bool | None = None,
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -397,6 +404,15 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
+        summary: A short summary of what the operation does.
+        description: A verbose explanation of the operation behavior.
+        tags: A list of tags for API documentation control.
+            Used to group operations in OpenAPI documentation.
+        operation_id: Unique string used to identify the operation.
+        deprecated: Declares this operation to be deprecated.
+        security: A declaration of which security mechanisms can be used
+            for this operation.
+        external_docs: Additional external documentation for this operation.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -412,6 +428,13 @@ def validate(  # pyright: ignore[reportInconsistentOverload]
             validate_responses=validate_responses,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
+            summary=summary,
+            description=description,
+            tags=tags,
+            operation_id=operation_id,
+            deprecated=deprecated,
+            security=security,
+            external_docs=external_docs,
         ),
     )
 
@@ -489,11 +512,18 @@ class _ModifyAnyCallable(Protocol):
 def modify(
     *,
     error_handler: AsyncErrorHandlerT,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
+    validate_responses: bool | None = None,
+    extra_responses: list[ResponseDescription] | None = None,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifyAsyncCallable: ...
 
 
@@ -501,34 +531,55 @@ def modify(
 def modify(
     *,
     error_handler: SyncErrorHandlerT,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
+    validate_responses: bool | None = None,
+    extra_responses: list[ResponseDescription] | None = None,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifySyncCallable: ...
 
 
 @overload
 def modify(
     *,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
-    error_handler: Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
+    validate_responses: bool | None = None,
+    extra_responses: list[ResponseDescription] | None = None,
+    error_handler: None = None,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifyAnyCallable: ...
 
 
 def modify(  # noqa: WPS211
     *,
-    status_code: HTTPStatus | Empty = EmptyObj,
-    headers: Mapping[str, NewHeader] | Empty = EmptyObj,
-    validate_responses: bool | Empty = EmptyObj,
-    extra_responses: list[ResponseDescription] | Empty = EmptyObj,
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty = EmptyObj,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader] | None = None,
+    validate_responses: bool | None = None,
+    extra_responses: list[ResponseDescription] | None = None,
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
 ) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -565,6 +616,20 @@ def modify(  # noqa: WPS211
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
+        summary: A short summary of what the operation does.
+
+        description: A verbose explanation of the operation behavior.
+
+        tags: A list of tags for API documentation control.
+            Used to group operations in OpenAPI documentation.
+        operation_id: Unique string used to identify the operation.
+
+        deprecated: Declares this operation to be deprecated.
+
+        security: A declaration of which security mechanisms can be used
+            for this operation.
+        external_docs: Additional external documentation for this operation.
+
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -582,6 +647,13 @@ def modify(  # noqa: WPS211
             validate_responses=validate_responses,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
+            summary=summary,
+            description=description,
+            tags=tags,
+            operation_id=operation_id,
+            deprecated=deprecated,
+            security=security,
+            external_docs=external_docs,
         ),
     )
 

@@ -10,10 +10,6 @@ from django_modern_rest.headers import (
     NewHeader,
 )
 from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.types import (
-    Empty,
-    EmptyObj,
-)
 
 _ItemT = TypeVar('_ItemT')
 
@@ -61,7 +57,7 @@ class APIError(Exception, Generic[_ItemT]):
         raw_data: _ItemT,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | Empty = EmptyObj,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Create response from parts."""
         super().__init__()
@@ -94,9 +90,9 @@ class ResponseDescription:
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus = dataclasses.field(kw_only=True)
-    headers: dict[str, HeaderDescription] | Empty = dataclasses.field(
+    headers: dict[str, HeaderDescription] | None = dataclasses.field(
         kw_only=True,
-        default=EmptyObj,
+        default=None,
     )
 
     # TODO: description, examples, etc
@@ -126,7 +122,7 @@ class ResponseModification:
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus
-    headers: Mapping[str, NewHeader] | Empty
+    headers: Mapping[str, NewHeader] | None
 
     def to_description(self) -> ResponseDescription:
         """Convert response modification to response description."""
@@ -134,8 +130,8 @@ class ResponseModification:
             return_type=self.return_type,
             status_code=self.status_code,
             headers=(
-                EmptyObj
-                if isinstance(self.headers, Empty)
+                None
+                if self.headers is None
                 else {
                     header_name: header.to_description()
                     for header_name, header in self.headers.items()
@@ -150,8 +146,8 @@ def build_response(
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
-    headers: dict[str, str] | Empty = EmptyObj,
-    status_code: HTTPStatus | Empty = EmptyObj,
+    headers: dict[str, str] | None = None,
+    status_code: HTTPStatus | None = None,
 ) -> HttpResponse: ...
 
 
@@ -162,7 +158,7 @@ def build_response(
     *,
     raw_data: Any,
     status_code: HTTPStatus,
-    headers: dict[str, str] | Empty = EmptyObj,
+    headers: dict[str, str] | None = None,
 ) -> HttpResponse: ...
 
 
@@ -171,8 +167,8 @@ def build_response(
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
-    headers: dict[str, str] | Empty = EmptyObj,
-    status_code: HTTPStatus | Empty = EmptyObj,
+    headers: dict[str, str] | None = None,
+    status_code: HTTPStatus | None = None,
 ) -> HttpResponse:
     """
     Utility that returns the actual `HttpResponse` object from its parts.
@@ -185,7 +181,7 @@ def build_response(
 
     You have to provide either *method* or *status_code*.
     """
-    if not isinstance(status_code, Empty):
+    if status_code is not None:
         status = status_code
     elif method is not None:
         status = infer_status_code(method)
@@ -194,7 +190,7 @@ def build_response(
             'Cannot pass both `method=None` and `status_code=Empty`',
         )
 
-    response_headers = {} if isinstance(headers, Empty) else headers
+    response_headers = {} if headers is None else headers
     if 'Content-Type' not in response_headers:
         response_headers['Content-Type'] = serializer.content_type
 

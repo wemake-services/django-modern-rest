@@ -2,8 +2,6 @@ import dataclasses
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
 
-from django_modern_rest.types import Empty, EmptyObj
-
 if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
@@ -68,7 +66,7 @@ class HeaderDescription(_BaseResponseHeader):
     """
 
     # Does not have a value.
-    value: ClassVar[Empty] = EmptyObj  # noqa: WPS110
+    value: ClassVar[None] = None  # noqa: WPS110
     # But it's "required" state can be customized.
     required: bool = True
 
@@ -80,12 +78,12 @@ ResponseHeadersT: TypeAlias = (
 
 
 def build_headers(
-    headers: Mapping[str, NewHeader] | Empty,
+    headers: Mapping[str, NewHeader] | None,
     serializer: type['BaseSerializer'],
 ) -> dict[str, Any]:
     """Returns headers with values for raw data endpoints."""
     result_headers: dict[str, Any] = {'Content-Type': serializer.content_type}
-    if isinstance(headers, Empty):
+    if headers is None:
         return result_headers
     result_headers.update({
         header_name: response_header.value

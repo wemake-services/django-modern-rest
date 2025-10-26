@@ -22,7 +22,6 @@ from django_modern_rest.settings import (
     clear_settings_cache,
 )
 from django_modern_rest.test import DMRRequestFactory
-from django_modern_rest.types import Empty
 
 
 @pytest.fixture(autouse=True)
@@ -178,7 +177,7 @@ def test_override_endpoint_validation(
 
 @final
 class _ValidatedController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | Empty] = True
+    validate_responses: ClassVar[bool | None] = True
 
     @validate(
         ResponseDescription(
@@ -232,7 +231,7 @@ def test_override_controller_validation(
 
 @final
 class _EndpointOverController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | Empty] = False
+    validate_responses: ClassVar[bool | None] = False
 
     @modify(validate_responses=True)  # takes priority
     def post(self) -> list[int]:

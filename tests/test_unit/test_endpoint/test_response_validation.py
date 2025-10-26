@@ -11,7 +11,6 @@ from typing_extensions import TypedDict
 from django_modern_rest import Controller, ResponseDescription, modify, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
-from django_modern_rest.types import Empty
 
 
 @final
@@ -224,7 +223,7 @@ def test_validation_disabled_endpoint(
 
 @final
 class _ValidationDisabledController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | Empty] = False
+    validate_responses: ClassVar[bool | None] = False
 
     def post(self) -> list[int]:
         return ['a']  # type: ignore[list-item]

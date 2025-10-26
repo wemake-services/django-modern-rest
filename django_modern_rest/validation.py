@@ -1,6 +1,5 @@
 import dataclasses
 import inspect
-from collections import Counter
 from collections.abc import Callable, Mapping, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
@@ -45,8 +44,6 @@ from django_modern_rest.settings import (
     resolve_setting,
 )
 from django_modern_rest.types import (
-    Empty,
-    EmptyObj,
     infer_bases,
     is_safe_subclass,
     parse_return_annotation,
@@ -54,6 +51,10 @@ from django_modern_rest.types import (
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.openapi.objects import (
+        ExternalDocumentation,
+        SecurityRequirement,
+    )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
@@ -194,7 +195,7 @@ class ResponseValidator:
         """Validates response against provided metadata."""
         # Validate headers, at this point we know
         # that only `HeaderDescription` can be in `metadata.headers`:
-        if isinstance(schema.headers, Empty):
+        if schema.headers is None:
             metadata_headers: Set[str] = set()
         else:
             metadata_headers = schema.headers.keys()
@@ -234,10 +235,33 @@ class ControllerValidator:
 
     def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
         """Run the validation."""
-        # TODO: validate that sync controller have `MetaMixin`
-        # and async ones have `AsyncMetaMixin`
         self._validate_components(controller)
-        return self._validate_endpoints(controller)
+        is_async = self._validate_endpoints(controller)
+        self._validate_meta_mixins(controller, is_async=is_async)
+        return is_async
+
+    def _validate_meta_mixins(
+        self,
+        controller: 'type[Controller[BaseSerializer]]',
+        *,
+        is_async: bool = False,
+    ) -> None:
+        from django_modern_rest.options_mixins import (  # noqa: PLC0415
+            AsyncMetaMixin,
+            MetaMixin,
+        )
+
+        if (
+            issubclass(controller, MetaMixin)
+            and issubclass(controller, AsyncMetaMixin)  # type: ignore[unreachable]
+        ):
+            suggestion = (  # type: ignore[unreachable]
+                'AsyncMetaMixin' if is_async else 'MetaMixin'
+            )
+            raise EndpointMetadataError(
+                f'Use only {suggestion!r}, '
+                f'not both meta mixins in {controller!r}',
+            )
 
     def _validate_components(
         self,
@@ -276,25 +300,36 @@ class ControllerValidator:
         return is_async
 
 
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
+class _OpenAPIPayload:
+    summary: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    operation_id: str | None = None
+    deprecated: bool = False
+    security: list['SecurityRequirement'] | None = None
+    external_docs: 'ExternalDocumentation | None' = None
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ValidateEndpointPayload:
+class ValidateEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@validate``."""
 
     responses: list[ResponseDescription]
-    validate_responses: bool | Empty
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    validate_responses: bool | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ModifyEndpointPayload:
+class ModifyEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@modify``."""
 
-    status_code: HTTPStatus | Empty
-    headers: Mapping[str, NewHeader] | Empty
-    responses: list[ResponseDescription] | Empty
-    validate_responses: bool | Empty
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | Empty
+    status_code: HTTPStatus | None
+    headers: Mapping[str, NewHeader] | None
+    responses: list[ResponseDescription] | None
+    validate_responses: bool | None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
 
 
@@ -324,12 +359,18 @@ class _ResponseListValidator:
         *,
         endpoint: str,
     ) -> None:
-        counter = Counter(response.status_code for response in responses)
-        for status, count in counter.items():
-            if count > 1:
+        # Now, check if we have any conflicts in responses.
+        # For example: same status code, mismatching metadata.
+        unique: dict[HTTPStatus, ResponseDescription] = {}
+        for response in responses:
+            existing_response = unique.get(response.status_code)
+            if existing_response is not None and existing_response != response:
                 raise EndpointMetadataError(
-                    f'{endpoint!r} has {status} specified {count} times',
+                    f'Endpoint {endpoint} has multiple responses '
+                    f'for {response.status_code=}, but with different '
+                    f'metadata: {response} and {existing_response}',
                 )
+            unique.setdefault(response.status_code, response)
 
     def _validate_header_descriptions(
         self,
@@ -338,7 +379,7 @@ class _ResponseListValidator:
         endpoint: str,
     ) -> None:
         for response in responses:
-            if isinstance(response.headers, Empty):
+            if response.headers is None:
                 continue
             if any(
                 isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -492,6 +533,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             validate_responses=payload.validate_responses,
             modification=None,
             error_handler=payload.error_handler,
+            summary=payload.summary,
+            description=payload.description,
+            tags=payload.tags,
+            operation_id=payload.operation_id,
+            deprecated=payload.deprecated,
+            security=payload.security,
+            external_docs=payload.external_docs,
         )
 
     def _from_modify(  # noqa: WPS211
@@ -517,11 +565,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
             headers=payload.headers,
             status_code=(
                 infer_status_code(method)
-                if isinstance(payload.status_code, Empty)
+                if payload.status_code is None
                 else payload.status_code
             ),
         )
-        if isinstance(payload.responses, Empty):
+        if payload.responses is None:
             payload_responses = []
         else:
             payload_responses = payload.responses
@@ -540,6 +588,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=payload.error_handler,
+            summary=payload.summary,
+            description=payload.description,
+            tags=payload.tags,
+            operation_id=payload.operation_id,
+            deprecated=payload.deprecated,
+            security=payload.security,
+            external_docs=payload.external_docs,
         )
 
     def _from_raw_data(
@@ -559,7 +614,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         modification = ResponseModification(
             return_type=return_annotation,
             status_code=status_code,
-            headers=EmptyObj,
+            headers=None,
         )
         all_responses = self._resolve_all_responses(
             [],
@@ -572,10 +627,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         return EndpointMetadata(
             responses=responses,
-            validate_responses=EmptyObj,
+            validate_responses=None,
             method=method,
             modification=modification,
-            error_handler=EmptyObj,
+            error_handler=None,
         )
 
     def _validate_new_headers(
@@ -584,7 +639,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if not isinstance(payload.headers, Empty) and any(
+        if payload.headers is not None and any(
             isinstance(header, HeaderDescription)  # pyright: ignore[reportUnnecessaryIsInstance]
             for header in payload.headers.values()
         ):
@@ -625,7 +680,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if isinstance(payload.error_handler, Empty):
+        if payload.error_handler is None:
             return
         if inspect.iscoroutinefunction(func):
             if not inspect.iscoroutinefunction(payload.error_handler):
@@ -636,6 +691,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'Cannot pass async `error_handler` to sync {endpoint}',
             )
+
+    # TODO: Does we need extract methods for summary and
+    # description from endpoint.__doc__?
 
 
 @final
