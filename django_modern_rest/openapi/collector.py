@@ -25,12 +25,6 @@ class ControllerMapping(NamedTuple):
     controller: 'Controller[Any]'
 
 
-def _normalize_path(path: str) -> str:
-    path = simplify_regex(path)
-    pattern = re.compile(r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>')
-    return re.sub(pattern, r'{\g<parameter>}', path)
-
-
 def _process_resolver(
     url_resolver: URLResolver,
     base_path: str = '',
@@ -63,6 +57,12 @@ def _join_paths(base_path: str, pattern_path: str) -> str:
     base = base_path.rstrip('/')
     pattern = pattern_path.lstrip('/')
     return f'{base}/{pattern}' if base else pattern
+
+
+def _normalize_path(path: str) -> str:
+    path = simplify_regex(path)
+    pattern = re.compile(r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>')
+    return re.sub(pattern, r'{\g<parameter>}', path)
 
 
 def controller_collector(router: 'Router') -> list[ControllerMapping]:

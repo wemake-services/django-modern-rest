@@ -115,8 +115,8 @@ def test_normalize_path(
     normalized = _normalize_path(input_path)
     assert normalized == expected_output, (
         f'Path normalization failed: '
-        f'Input:  {input_path!r}; '
-        f'Output: {normalized!r};  '
+        f'Input: {input_path!r}; '
+        f'Output: {normalized!r}; '
         f'Expected: {expected_output!r}'
     )
 
