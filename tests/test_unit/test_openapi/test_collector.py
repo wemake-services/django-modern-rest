@@ -8,6 +8,7 @@ from django_modern_rest import Controller
 from django_modern_rest.openapi.collector import (
     ControllerMapping,
     _join_paths,
+    _normalize_path,
     _process_pattern,
     _process_resolver,
     controller_collector,
@@ -66,6 +67,58 @@ class _EmptyController(Controller[PydanticSerializer]):
     def incorrect_method(self) -> str:
         """Non-API method that should be ignored."""
         raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    ('input_path', 'expected_output'),
+    [
+        # Typed parameters
+        ('users/<int:user_id>', '/users/{user_id}'),
+        ('api/<slug:username>/profile', '/api/{username}/profile'),
+        ('api/<str:user>/tags/<int:id>', '/api/{user}/tags/{id}'),
+        ('users/<uuid:user_uuid>', '/users/{user_uuid}'),
+        # Untyped parameters
+        ('files/<filename>', '/files/{filename}'),
+        ('tags/<slug>/posts', '/tags/{slug}/posts'),
+        # Trailing slashes
+        ('users/<int:user_id>/', '/users/{user_id}/'),
+        ('api/v1/posts/<int:post_id>/', '/api/v1/posts/{post_id}/'),
+        # Multiple params
+        ('api/v1/<int:user_id>/posts/<int:id>', '/api/v1/{user_id}/posts/{id}'),
+        (
+            'shops/<slug:shop_name>/products/<str:product_category>/items/<int:item_id>',
+            '/shops/{shop_name}/products/{product_category}/items/{item_id}',
+        ),
+        # Without parameters (should remain unchanged)
+        ('users', '/users'),
+        ('api/v1/health', '/api/v1/health'),
+        ('api/v1/health/', '/api/v1/health/'),
+        # Empty path
+        ('', '/'),
+        # Paths with regex patterns that simplify_regex processes
+        ('^posts/(?P<post_id>\\d+)$', '/posts/{post_id}'),  # noqa: WPS342
+        (
+            '^api/v1/users/(?P<user_id>\\d+)/posts/(?P<post_id>\\d+)$',  # noqa: WPS342
+            '/api/v1/users/{user_id}/posts/{post_id}',
+        ),
+        # Edge cases
+        ('blog/posts/<slug>', '/blog/posts/{slug}'),
+        ('/api/users/<int:id>', '/api/users/{id}'),
+        ('api/<str:name>/suffix/<int:value>', '/api/{name}/suffix/{value}'),
+    ],
+)
+def test_normalize_path(
+    input_path: str,
+    expected_output: str,
+) -> None:
+    """Ensure that `_normalize_path` correctly normalizes patterns."""
+    normalized = _normalize_path(input_path)
+    assert normalized == expected_output, (
+        f'Path normalization failed: '
+        f'Input: {input_path!r}; '
+        f'Output: {normalized!r}; '
+        f'Expected: {expected_output!r}'
+    )
 
 
 @pytest.mark.parametrize(

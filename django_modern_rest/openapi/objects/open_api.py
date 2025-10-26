@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Final, final
 
 from django_modern_rest.openapi.objects.components import Components
 
@@ -17,13 +17,15 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.server import Server
     from django_modern_rest.openapi.objects.tag import Tag
 
+_OPENAPI_VERSION: Final = '3.1.0'
+
 
 @final
 @dataclass(frozen=True, kw_only=True, slots=True)
 class OpenAPI:
     """This is the root object of the OpenAPI document."""
 
-    openapi: str = '3.1.0'
+    openapi: str = _OPENAPI_VERSION
 
     info: 'Info'
     json_schema_dialect: str | None = None

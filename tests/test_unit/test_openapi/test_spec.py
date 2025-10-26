@@ -69,11 +69,8 @@ def test_pattern_names_match_renderers() -> None:
         config=_TEST_CONFIG,
     )
 
-    pattern_names = [pattern.name for pattern in urlpatterns]
-    assert 'json' in pattern_names
-    assert 'redoc' in pattern_names
-    assert 'scalar' in pattern_names
-    assert 'swagger' in pattern_names
+    renderer_names = {'json', 'redoc', 'scalar', 'swagger'}
+    assert {pattern.name for pattern in urlpatterns} == renderer_names
 
 
 @pytest.mark.parametrize(

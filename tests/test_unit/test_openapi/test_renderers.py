@@ -6,6 +6,7 @@ import pytest
 from django.http import HttpResponse
 
 from django_modern_rest.openapi.converter import ConvertedSchema
+from django_modern_rest.openapi.objects.open_api import _OPENAPI_VERSION
 from django_modern_rest.openapi.renderers import (
     BaseRenderer,
     JsonRenderer,
@@ -17,7 +18,7 @@ from django_modern_rest.openapi.renderers import (
 from django_modern_rest.test import DMRRequestFactory
 
 _TEST_SCHEMA: Final[ConvertedSchema] = {  # noqa: WPS407
-    'openapi': '3.1.0',
+    'openapi': _OPENAPI_VERSION,
     'info': {'title': 'Test API', 'version': '1.0.0'},
     'paths': {
         '/test/': {

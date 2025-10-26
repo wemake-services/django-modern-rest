@@ -4,9 +4,10 @@ from typing import Final
 import pytest
 from django.urls import reverse
 
+from django_modern_rest.openapi.objects.open_api import _OPENAPI_VERSION
 from django_modern_rest.test import DMRClient
 
-ENDPOINTS: Final = (
+_ENDPOINTS: Final = (
     ('openapi:json', HTTPStatus.OK, 'application/json'),
     ('openapi:redoc', HTTPStatus.OK, 'text/html'),
     ('openapi:swagger', HTTPStatus.OK, 'text/html'),
@@ -16,7 +17,7 @@ ENDPOINTS: Final = (
 
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status', 'expected_content_type'),
-    ENDPOINTS,
+    _ENDPOINTS,
 )
 def test_endpoints(
     dmr_client: DMRClient,
@@ -34,7 +35,7 @@ def test_endpoints(
 
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_status'),
-    [(endpoint[0], HTTPStatus.METHOD_NOT_ALLOWED) for endpoint in ENDPOINTS],
+    [(endpoint[0], HTTPStatus.METHOD_NOT_ALLOWED) for endpoint in _ENDPOINTS],
 )
 def test_wrong_method(
     dmr_client: DMRClient,
@@ -60,4 +61,4 @@ def test_returns_correct_structure(
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
     response = dmr_client.get(reverse(endpoint_name))
 
-    assert response.json()['openapi'] == '3.1.0'
+    assert response.json()['openapi'] == _OPENAPI_VERSION
