@@ -212,7 +212,7 @@ def on_env_before_read_docs(
     """Create temporary directory for examples before reading docs."""
     tmp_examples_path = Path.cwd() / 'docs/_build/_tmp_examples'
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
-    env.tmp_examples_path = tmp_examples_path  # type: ignore[attr-defined]
+    env.tmp_examples_path = tmp_examples_path
 
 
 def setup(app: Sphinx) -> dict[str, bool]:
