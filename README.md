@@ -32,6 +32,10 @@
 
 ## Installation
 
+Works for:
+- Python 3.11+
+- Django 4.2+
+
 ```bash
 pip install django-modern-rest
 ```
