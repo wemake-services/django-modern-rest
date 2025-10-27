@@ -544,6 +544,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             validate_responses=payload.validate_responses,
             modification=None,
             error_handler=payload.error_handler,
+            component_parsers=controller_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -600,6 +601,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=payload.error_handler,
+            component_parsers=controller_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -645,6 +647,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=None,
+            component_parsers=controller_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
         )
 
     def _validate_new_headers(
