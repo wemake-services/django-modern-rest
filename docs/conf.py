@@ -117,6 +117,7 @@ nitpick_ignore = [
     (PY_CLASS, 'Reference'),
     (PY_CLASS, 'Paths'),
     (PY_CLASS, 'Responses'),
+    (PY_CLASS, 'ComponentParser'),
 ]
 
 qualname_overrides = {
