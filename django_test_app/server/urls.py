@@ -114,14 +114,9 @@ router = Router([
         name='request_id',
     ),
     path(
-        'authenticated',
-        rest_views.AuthenticatedController.as_view(),
-        name='authenticated',
-    ),
-    path(
-        'protected',
-        rest_views.ProtectedController.as_view(),
-        name='protected',
+        'login-required',
+        rest_views.LoginRequiredController.as_view(),
+        name='login_required',
     ),
 ])
 

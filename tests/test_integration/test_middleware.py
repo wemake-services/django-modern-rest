@@ -12,10 +12,7 @@ _ASYNC_CSRF_TEST_ENDPOINT: Final = 'api:async_csrf_test'
 _CUSTOM_HEADER_ENDPOINT: Final = 'api:custom_header'
 _RATE_LIMITED_ENDPOINT: Final = 'api:rate_limited'
 _REQUEST_ID_ENDPOINT: Final = 'api:request_id'
-_AUTHENTICATED_ENDPOINT: Final = 'api:authenticated'
-_PROTECTED_ENDPOINT: Final = 'api:protected'
-
-_TEST_USER_ID: Final = 456
+_LOGIN_REQUIRED_ENDPOINT: Final = 'api:login_required'
 
 
 class _UserData(TypedDict):
@@ -179,111 +176,6 @@ async def test_request_id_middleware_async(
     assert response.headers['X-Request-ID'] == request_id
 
 
-@pytest.mark.parametrize(
-    ('token', 'expected_authenticated', 'expected_user_id'),
-    [
-        (None, False, 'anonymous'),  # No token
-        ('invalid_token', False, 'anonymous'),  # Invalid format
-        ('user_abc', False, 'anonymous'),  # Malformed user ID
-        ('user_42', True, 42),  # Valid token
-    ],
-)
-def test_auth_middleware(
-    dmr_client: DMRClient,
-    token: str | None,
-    expected_authenticated: bool,  # noqa: FBT001
-    expected_user_id: str | int,
-) -> None:
-    """Test auth middleware with various token scenarios."""
-    headers = {'X-Auth-Token': token} if token else {}
-    response = dmr_client.get(reverse(_AUTHENTICATED_ENDPOINT), headers=headers)
-
-    assert response.status_code == HTTPStatus.OK
-    response_data = response.json()
-    assert response_data['authenticated'] is expected_authenticated
-    assert response_data['user_id'] == expected_user_id
-
-    if expected_authenticated:
-        assert response.headers['X-Authenticated'] == 'true'
-    else:
-        assert 'X-Authenticated' not in response.headers
-
-
-@pytest.mark.asyncio
-async def test_auth_middleware_async(dmr_async_client: DMRAsyncClient) -> None:
-    """Test auth middleware with async controller."""
-    response = await dmr_async_client.get(
-        reverse(_AUTHENTICATED_ENDPOINT),
-        headers={'X-Auth-Token': f'user_{_TEST_USER_ID}'},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    response_data = response.json()
-    assert response_data['authenticated'] is True
-    assert response_data['user_id'] == _TEST_USER_ID
-    assert response.headers['X-Authenticated'] == 'true'
-
-
-@pytest.mark.parametrize(
-    ('token', 'expected_status', 'expected_detail'),
-    [
-        (None, HTTPStatus.UNAUTHORIZED, 'Authentication required'),
-        ('invalid', HTTPStatus.UNAUTHORIZED, 'Authentication required'),
-        ('user_abc', HTTPStatus.UNAUTHORIZED, 'Invalid authentication token'),
-        (f'user_{_TEST_USER_ID}', HTTPStatus.OK, None),
-    ],
-)
-def test_require_auth_middleware(
-    dmr_client: DMRClient,
-    token: str | None,
-    expected_status: HTTPStatus,
-    expected_detail: str | None,
-) -> None:
-    """Test require_auth middleware with various authentication scenarios."""
-    headers = {'X-Auth-Token': token} if token else {}
-    response = dmr_client.get(reverse(_PROTECTED_ENDPOINT), headers=headers)
-
-    assert response.status_code == expected_status
-
-    if expected_status == HTTPStatus.OK:
-        response_data = response.json()
-        assert response_data['user_id'] == _TEST_USER_ID
-        assert response.headers['X-Authenticated'] == 'true'
-    else:
-        assert response.json() == {'detail': expected_detail}
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ('token', 'expected_status', 'expected_detail'),
-    [
-        (None, HTTPStatus.UNAUTHORIZED, 'Authentication required'),
-        (f'user_{_TEST_USER_ID}', HTTPStatus.OK, None),
-    ],
-)
-async def test_require_auth_middleware_async(
-    dmr_async_client: DMRAsyncClient,
-    token: str | None,
-    expected_status: HTTPStatus,
-    expected_detail: str | None,
-) -> None:
-    """Test require_auth middleware with async controller."""
-    headers = {'X-Auth-Token': token} if token else {}
-    response = await dmr_async_client.get(
-        reverse(_PROTECTED_ENDPOINT),
-        headers=headers,
-    )
-
-    assert response.status_code == expected_status
-
-    if expected_status == HTTPStatus.OK:
-        response_data = response.json()
-        assert response_data['user_id'] == _TEST_USER_ID
-        assert response.headers['X-Authenticated'] == 'true'
-    else:
-        assert response.json() == {'detail': expected_detail}
-
-
 def _get_csrf_token(client: DMRClient) -> str:
     """Get CSRF token from the client."""
     response = client.get(reverse('api:csrf_token'))
@@ -323,3 +215,33 @@ def _assert_csrf_forbidden_response(response: Any) -> None:
     assert response.json() == {
         'detail': 'CSRF verification failed. Request aborted.',
     }
+
+
+def test_login_required_unauthenticated(dmr_client: DMRClient) -> None:
+    """Test Django's login_required returns 401 for unauthenticated users."""
+    response = dmr_client.get(reverse(_LOGIN_REQUIRED_ENDPOINT))
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {
+        'detail': 'Authentication credentials were not provided',
+    }
+
+
+def test_login_required_authenticated(
+    dmr_client: DMRClient,
+    django_user_model: Any,
+) -> None:
+    """Test Django's login_required allows authenticated users."""
+    user = django_user_model.objects.create_user(
+        username='testuser',
+        password='testpass123',  # noqa: S106
+    )
+    dmr_client.force_login(user)
+
+    response = dmr_client.get(reverse(_LOGIN_REQUIRED_ENDPOINT))
+
+    assert response.status_code == HTTPStatus.OK
+    response_data = response.json()
+    assert response_data['username'] == 'testuser'
+    expected_message = 'Successfully accessed protected resource'
+    assert response_data['message'] == expected_message

@@ -317,10 +317,12 @@ This is called "short-circuiting" - the view is never executed.
 
 Common use cases:
 
-- Authentication failures (return 401)
 - Rate limiting (return 429)
 - Request validation failures (return 400)
 - Cache hits (return cached response)
+- Custom authentication/authorization checks
+
+Example with rate limiting:
 
 .. code-block:: python
 
@@ -328,41 +330,24 @@ Common use cases:
     from django_modern_rest import build_response
     from django_modern_rest.plugins.pydantic import PydanticSerializer
 
-    def require_auth_middleware(
+    def rate_limit_middleware(
         get_response: Callable[[HttpRequest], HttpResponse],
     ) -> Callable[[HttpRequest], HttpResponse]:
-        """Requires authentication - returns 401 if missing."""
+        """Middleware that blocks rate-limited requests."""
 
         def decorator(request: HttpRequest) -> HttpResponse:
-            # Check authentication BEFORE calling view
-            token = request.headers.get('X-Auth-Token')
-
-            if not token or not token.startswith('user_'):
-                # Return 401 WITHOUT calling get_response
+            # Check rate limit BEFORE calling view
+            if request.headers.get('X-Rate-Limited') == 'true':
+                # Return 429 WITHOUT calling get_response
                 # The view is never executed
                 return build_response(
                     PydanticSerializer,
-                    raw_data={'detail': 'Authentication required'},
-                    status_code=HTTPStatus.UNAUTHORIZED,
+                    raw_data={'detail': 'Rate limit exceeded'},
+                    status_code=HTTPStatus.TOO_MANY_REQUESTS,
                 )
 
-            # Parse token and add user info to request
-            try:
-                user_id = int(token.replace('user_', ''))
-                request.user_id = user_id
-                request.authenticated = True
-            except ValueError:
-                return build_response(
-                    PydanticSerializer,
-                    raw_data={'detail': 'Invalid authentication token'},
-                    status_code=HTTPStatus.UNAUTHORIZED,
-                )
-
-            # Authentication successful - call the view
-            response = get_response(request)
-            response['X-Authenticated'] = 'true'
-
-            return response
+            # Rate limit OK - call the view
+            return get_response(request)
 
         return decorator
 
@@ -371,58 +356,63 @@ Use with ``wrap_middleware``:
 .. code-block:: python
 
     @wrap_middleware(
-        require_auth_middleware,
+        rate_limit_middleware,
         ResponseDescription(
             return_type=dict[str, str],
-            status_code=HTTPStatus.UNAUTHORIZED,
+            status_code=HTTPStatus.TOO_MANY_REQUESTS,
         ),
     )
-    def require_auth_json(response: HttpResponse) -> HttpResponse:
-        """Converter for 401 responses."""
+    def rate_limit_json(response: HttpResponse) -> HttpResponse:
+        """Pass through the rate limit response."""
         return response
 
-    @require_auth_json
-    class ProtectedController(Controller[PydanticSerializer]):
-        responses = [*require_auth_json.responses]
+    @rate_limit_json
+    class RateLimitedController(Controller[PydanticSerializer]):
+        responses = [*rate_limit_json.responses]
 
-        def get(self) -> dict[str, int]:
-            # This only executes if authentication succeeds
-            user_id = self.request.user_id
-            return {'user_id': user_id}
+        def post(self) -> dict[str, str]:
+            return {'message': 'Request processed'}
 
-Complete Example: Authentication Middleware
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Wrapping Django's Built-in Decorators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here's a complete example combining both phases:
+You can wrap Django's built-in authentication decorators like ``login_required``
+to make them REST API friendly. By default, ``login_required`` returns a 302
+redirect, but you can convert it to a JSON 401 response:
 
 .. code-block:: python
 
-    def auth_middleware(
-        get_response: Callable[[HttpRequest], HttpResponse],
-    ) -> Callable[[HttpRequest], HttpResponse]:
-        """Adds authentication info to request (like Django's AuthenticationMiddleware)."""
+    from django.contrib.auth.decorators import login_required
+    from http import HTTPStatus
+    from django_modern_rest import build_response, wrap_middleware
+    from django_modern_rest.plugins.pydantic import PydanticSerializer
 
-        def decorator(request: HttpRequest) -> HttpResponse:
-            token = request.headers.get('X-Auth-Token')
+    @wrap_middleware(
+        login_required,
+        ResponseDescription(
+            return_type=dict[str, str],
+            status_code=HTTPStatus.FOUND,
+        ),
+    )
+    def login_required_json(response: HttpResponse) -> HttpResponse:
+        """Convert Django's login_required redirect to JSON 401 response."""
+        # Django's login_required returns 302 redirect when user not authenticated
+        if response.status_code == HTTPStatus.FOUND:  # 302 redirect
+            return build_response(
+                PydanticSerializer,
+                raw_data={'detail': 'Authentication credentials were not provided'},
+                status_code=HTTPStatus.UNAUTHORIZED,
+            )
+        return response
 
-            if token and token.startswith('user_'):
-                try:
-                    user_id = int(token.replace('user_', ''))
-                    request.user_id = user_id
-                    request.authenticated = True
-                except ValueError:
-                    request.authenticated = False
-            else:
-                request.authenticated = False
+    @login_required_json
+    class ProtectedController(Controller[PydanticSerializer]):
+        responses = [*login_required_json.responses]
 
-            response = get_response(request)
-
-            if request.authenticated:
-                response['X-Authenticated'] = 'true'
-
-            return response
-
-        return decorator
+        def get(self) -> dict[str, str]:
+            # This only executes if user is authenticated
+            username = self.request.user.username
+            return {'username': username, 'message': 'Successfully accessed protected resource'}
 
 Visual Flow
 ~~~~~~~~~~~
