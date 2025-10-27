@@ -39,8 +39,7 @@ class _ComponentController(
     Headers[_HeadersModel],
     Query[_QueryModel],
 ):
-    # TODO: remove pragma, when 3.14 is fully supported
-    def get(self) -> str:  # pragma: no cover
+    def get(self) -> str:
         first_name = self.parsed_headers.first_name
         last_name = self.parsed_query.last_name[0]
         return f'{first_name} {last_name}'
@@ -50,8 +49,7 @@ class _ComponentController(
     sys.version_info >= (3, 14),
     reason='3.14 does not fully support msgspec yet',
 )
-# TODO: remove pragma, when 3.14 is fully supported
-def test_msgspec_components(  # pragma: no cover
+def test_msgspec_components(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
