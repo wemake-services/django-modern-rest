@@ -1,6 +1,6 @@
 import abc
 from collections.abc import Callable
-from typing import ClassVar, TypeAlias
+from typing import Any, ClassVar, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
 
@@ -8,6 +8,8 @@ from django_modern_rest.openapi.converter import ConvertedSchema
 
 SerializedSchema: TypeAlias = str
 SchemaSerialier: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
+_CallableAny: TypeAlias = Callable[..., Any]
+_ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 
 
 def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
@@ -49,6 +51,7 @@ class BaseRenderer:
 
     __slots__ = (
         'content_type',
+        'decorators',
         'name',
         'path',
         'serializer',
@@ -64,16 +67,19 @@ class BaseRenderer:
         *,
         path: str | None = None,
         name: str | None = None,
+        decorators: list[_ViewDecorator] | None = None,
     ) -> None:
         """
-        Initialize renderer with optional custom path and name.
+        Initialize renderer with optional parameters.
 
         Args:
             path: Custom URL path, uses `default_path` if not provided.
             name: Custom name identifier, uses `default_name` if not provided.
+            decorators: List of decorators to apply to the renderer.
         """
         self.path = self.default_path if path is None else path
         self.name = self.default_name if name is None else name
+        self.decorators = decorators
 
     @abc.abstractmethod
     def render(

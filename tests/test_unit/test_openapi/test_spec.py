@@ -4,6 +4,7 @@ from typing import Final
 import pytest
 from django.conf import LazySettings
 from django.urls import URLPattern
+from django.views.decorators.csrf import csrf_exempt
 
 from django_modern_rest import Router
 from django_modern_rest.openapi import OpenAPIConfig, openapi_spec
@@ -143,3 +144,15 @@ def test_empty_renderers_list() -> None:
             renderers=[],
             config=_TEST_CONFIG,
         )
+
+
+def test_decorated_view_with_csrf_exempt() -> None:
+    """Ensure that csrf_exempt decorator is applied to view."""
+    renderer = JsonRenderer(decorators=[csrf_exempt])
+    urlpatterns, _, _ = openapi_spec(
+        router=Router([]),
+        renderers=[renderer],
+        config=_TEST_CONFIG,
+    )
+
+    assert hasattr(urlpatterns[0].callback, 'csrf_exempt')
