@@ -8,6 +8,7 @@ import pydantic
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
+from django_modern_rest.response import build_response
 from django_modern_rest import (
     Body,
     Controller,
@@ -35,7 +36,7 @@ _CallableAny: TypeAlias = Callable[..., Any]
     ),
 )
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-    return JsonResponse(
+    return build_response(
         {'detail': 'CSRF verification failed. Request aborted.'},
         status=HTTPStatus.FORBIDDEN,
     )
@@ -155,7 +156,7 @@ class UserReplaceController(
         ),
     )
     async def put(self) -> HttpResponse:
-        return JsonResponse({
+        return self.to_response({
             'email': 'new@email.com',
             'age': self.parsed_path.user_id,
         })

@@ -141,6 +141,10 @@ You can specify multiple response descriptions for different status codes:
 
 .. code-block:: python
 
+    from http import HTTPStatus
+
+    from django_modern_rest.response import build_response
+
     @wrap_middleware(
         custom_middleware,
         ResponseDescription(
@@ -155,9 +159,15 @@ You can specify multiple response descriptions for different status codes:
     def multi_status_middleware(response: HttpResponse) -> HttpResponse:
         """Handle multiple status codes."""
         if response.status_code == HTTPStatus.BAD_REQUEST:
-            return JsonResponse({'error': 'Bad request'}, status=400)
+            return build_response(
+                {'error': 'Bad request'},
+                status_code=response.status_code,
+            )
         elif response.status_code == HTTPStatus.UNAUTHORIZED:
-            return JsonResponse({'error': 'Unauthorized'}, status=401)
+            return build_response(
+                {'error': 'Unauthorized'},
+                status_code=response.status_code,
+            )
         return response
 
 Async Controllers
@@ -228,6 +238,7 @@ Here's a complete example showing how to set up CSRF protection for a REST API:
         ResponseDescription,
         wrap_middleware,
     )
+    from django_modern_rest.response import build_response
     from django_modern_rest.plugins.pydantic import PydanticSerializer
 
     # CSRF protection for POST/PUT/DELETE requests
@@ -239,7 +250,7 @@ Here's a complete example showing how to set up CSRF protection for a REST API:
         ),
     )
     def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-        return JsonResponse(
+        return build_response(
             {'detail': 'CSRF verification failed. Request aborted.'},
             status=HTTPStatus.FORBIDDEN,
         )
