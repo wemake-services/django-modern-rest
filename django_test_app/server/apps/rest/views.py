@@ -21,8 +21,11 @@ from django_modern_rest import (
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 from server.apps.rest.middleware import (
+    add_request_id_middleware,
+    auth_middleware,
     custom_header_middleware,
     rate_limit_middleware,
+    require_auth_middleware,
 )
 
 _CallableAny: TypeAlias = Callable[..., Any]
@@ -73,6 +76,42 @@ def custom_header_json(response: HttpResponse) -> HttpResponse:
     ),
 )
 def rate_limit_json(response: HttpResponse) -> HttpResponse:
+    return response
+
+
+@wrap_middleware(
+    add_request_id_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def add_request_id_json(response: HttpResponse) -> HttpResponse:
+    """Pass through response - request_id is added automatically."""
+    return response
+
+
+@wrap_middleware(
+    auth_middleware,
+    ResponseDescription(
+        return_type=dict[str, str | int | bool],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def auth_json(response: HttpResponse) -> HttpResponse:
+    """Pass through response - authentication info is added automatically."""
+    return response
+
+
+@wrap_middleware(
+    require_auth_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.UNAUTHORIZED,
+    ),
+)
+def require_auth_json(response: HttpResponse) -> HttpResponse:
+    """Convert unauthorized response to JSON - called for 401 responses."""
     return response
 
 
@@ -192,7 +231,8 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
-        return {'message': 'CSRF token set'}
+        message_key = 'message'  # noqa: WPS226
+        return {message_key: 'CSRF token set'}
 
 
 @final
@@ -248,3 +288,66 @@ class RateLimitedController(
     def post(self) -> _UserInput:
         """POST endpoint with rate limiting."""
         return self.parsed_body
+
+
+@final
+@add_request_id_json
+class RequestIdController(Controller[PydanticSerializer]):
+    """Controller that uses request_id added by middleware."""
+
+    responses: ClassVar[list[ResponseDescription]] = (
+        add_request_id_json.responses
+    )
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that returns request_id from modified request."""
+        # Access request.request_id that was added by middleware
+        request_id = getattr(self.request, 'request_id', 'unknown')
+        return {'request_id': request_id, 'message': 'Request ID tracked'}
+
+
+@final
+@auth_json
+class AuthenticatedController(Controller[PydanticSerializer]):
+    """Controller that uses authentication middleware but allows all requests.
+
+    Uses auth_middleware which adds user info to request but doesn't block.
+    This demonstrates middleware that enriches request without short-circuiting.
+    """
+
+    responses: ClassVar[list[ResponseDescription]] = auth_json.responses
+
+    def get(self) -> dict[str, str | int | bool]:
+        """GET endpoint that returns authentication status."""
+        # Access authentication info added by middleware
+        authenticated = getattr(self.request, 'authenticated', False)
+        user_id_attr = 'user_id'  # noqa: WPS226
+        user_id = getattr(self.request, user_id_attr, None)
+
+        return {
+            'authenticated': authenticated,
+            user_id_attr: user_id or 'anonymous',  # noqa: WPS504
+            'message': 'Authentication checked',
+        }
+
+
+@final
+@require_auth_json
+class ProtectedController(Controller[PydanticSerializer]):
+    """Controller that requires strict authentication.
+
+    Uses require_auth_middleware which returns 401 for unauthenticated requests.
+    This demonstrates middleware short-circuiting and error response conversion.
+    """
+
+    responses: ClassVar[list[ResponseDescription]] = require_auth_json.responses
+
+    def get(self) -> dict[str, str | int]:
+        """GET endpoint that only works with valid authentication."""
+        # This will only be reached if authentication succeeds
+        user_id = getattr(self.request, 'user_id', 0)
+
+        return {
+            'user_id': user_id,
+            'message': 'Access granted to protected resource',
+        }
