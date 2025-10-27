@@ -13,8 +13,11 @@ from django_modern_rest.response import (
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects import (
+        Callback,
         ExternalDocumentation,
+        Reference,
         SecurityRequirement,
+        Server,
     )
 
 
@@ -45,6 +48,14 @@ class EndpointMetadata:
         security: A declaration of which security mechanisms can be used
             for this operation. List of security requirement objects.
         external_docs: Additional external documentation for this operation.
+        callbacks: A map of possible out-of band callbacks related to the
+            parent operation. The key is a unique identifier for the Callback
+            Object. Each value in the map is a Callback Object that describes
+            a request that may be initiated by the API provider and the
+            expected responses.
+        servers: An alternative servers array to service this operation.
+            If a servers array is specified at the Path Item Object or
+            OpenAPI Object level, it will be overridden by this value.
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
@@ -73,3 +84,5 @@ class EndpointMetadata:
     deprecated: bool = False
     security: list['SecurityRequirement'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
+    callbacks: 'dict[str, Callback | Reference] | None' = None
+    servers: list['Server'] | None = None
