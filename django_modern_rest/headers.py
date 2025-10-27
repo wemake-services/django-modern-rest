@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
 
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
 class _BaseResponseHeader:
     """
     Abstract base class that represents an HTTP header in the response.
@@ -27,11 +28,9 @@ class _BaseResponseHeader:
     # TODO: make sure that we can't set fields like `explode`
     # to other values except default
 
-    __slots__ = ('deprecated', 'description', 'example')
-
-    description: str | None
-    deprecated: bool
-    example: Any | None
+    description: str | None = None
+    deprecated: bool = False
+    example: Any | None = None
 
 
 @final
