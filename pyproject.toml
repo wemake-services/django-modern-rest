@@ -196,6 +196,8 @@ isort.known-first-party = ["server"]
 "tests/*.py" = ["S101", "PLC2701"]
 # Allow examples to be a bit less strict:
 "docs/examples/**/*.py" = ["D1", "S1"]
+# Allow benchmarks to not have docs:
+"benchmarks/**/*.py" = ["D"]
 
 
 [tool.pytest.ini_options]
@@ -245,7 +247,7 @@ addopts = [
 omit = [
   # When msgspec is installed:
   "django_modern_rest/internal/json/raw.py",
-  "tests/test_unit/test_plugins/test_msgspec/test_validation.py",
+  "tests/test_unit/test_plugins/test_msgspec/*.py",
   # When not:
   "django_modern_rest/internal/json/msgspec.py",
 ]

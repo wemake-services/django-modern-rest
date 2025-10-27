@@ -24,7 +24,7 @@
 - [x] Strict schema validation for requests and responses
 - [x] Supports async Django
 - [ ] Supports `openapi` 3.1+ schema generation out of the box
-- [x] Supports all your existing `django` primitives and packages
+- [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project

@@ -91,7 +91,7 @@ class MsgspecSerializer(BaseSerializer):
 
     # Custom API:
     from_json_strict: ClassVar[bool] = True
-    convert_kwargs: ClassVar[MsgspecConvertOptions] = {'str_keys': True}
+    convert_kwargs: ClassVar[MsgspecConvertOptions] = {}
 
     @override
     @classmethod
