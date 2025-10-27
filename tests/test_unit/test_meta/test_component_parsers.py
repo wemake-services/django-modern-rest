@@ -49,7 +49,7 @@ def test_single_component_query() -> None:
     assert len(endpoint.metadata.component_parsers) == 1
 
     component_cls, type_args = endpoint.metadata.component_parsers[0]
-    assert component_cls.__name__ == 'Query'
+    assert component_cls is Query
     assert type_args == (_QueryModel,)
 
 
@@ -113,7 +113,7 @@ def test_parsers_shared_across_endpoints() -> None:  # noqa: WPS210
         post_endpoint.metadata.component_parsers[0]
     )
 
-    assert get_component_cls.__name__ == 'Query'
-    assert post_component_cls.__name__ == 'Query'
+    assert get_component_cls is Query
+    assert post_component_cls is Query
     assert get_type_args == (_QueryModel,)
     assert post_type_args == (_QueryModel,)
