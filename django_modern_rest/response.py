@@ -177,7 +177,7 @@ def build_response(
     We need this as a function, so it can be called when no endpoints exist.
 
     Do not use directly, prefer using
-    :meth:`django_modern_rest.endpoint.Endpoint.to_response` method.
+    :meth:`~django_modern_rest.controller.Controller.to_response` method.
 
     You have to provide either *method* or *status_code*.
     """

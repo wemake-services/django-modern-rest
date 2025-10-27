@@ -13,8 +13,12 @@ Returning responses
 
   - :meth:`~django_modern_rest.controller.Controller.to_response`
   - :meth:`~django_modern_rest.controller.Controller.to_error`
-  - :exc:`~django_modern_rest.responses.APIError`
-  - :func:`~django_modern_rest.responses.build_response`
+  - :exc:`~django_modern_rest.response.APIError`
+
+  In case when you don't have a controller / endpoint instance
+  (like in a middleware, for example),
+  you can fallback to using :func:`~django_modern_rest.response.build_response`
+  lower level primitive.
 
   Why?
 
