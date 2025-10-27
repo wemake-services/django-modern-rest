@@ -58,7 +58,6 @@ Let's create a simple middleware decorator for CSRF protection:
     )
     def csrf_protect_json(response: HttpResponse) -> HttpResponse:
         return build_response(
-            None,
             PydanticSerializer,
             raw_data={
                 'detail': 'CSRF verification failed. Request aborted.'
@@ -105,7 +104,6 @@ Here's an example of a rate limiting middleware:
         def decorator(request: HttpRequest) -> HttpResponse:
             if request.headers.get('X-Rate-Limited') == 'true':
                 return build_response(
-                    None,
                     PydanticSerializer,
                     raw_data={'detail': 'Rate limit exceeded'},
                     status_code=HTTPStatus.TOO_MANY_REQUESTS,
@@ -160,12 +158,14 @@ You can specify multiple response descriptions for different status codes:
         """Handle multiple status codes."""
         if response.status_code == HTTPStatus.BAD_REQUEST:
             return build_response(
-                {'error': 'Bad request'},
+                PydanticSerializer,
+                raw_data={'error': 'Bad request'},
                 status_code=response.status_code,
             )
         elif response.status_code == HTTPStatus.UNAUTHORIZED:
             return build_response(
-                {'error': 'Unauthorized'},
+                PydanticSerializer,
+                raw_data={'error': 'Unauthorized'},
                 status_code=response.status_code,
             )
         return response
@@ -251,7 +251,8 @@ Here's a complete example showing how to set up CSRF protection for a REST API:
     )
     def csrf_protect_json(response: HttpResponse) -> HttpResponse:
         return build_response(
-            {'detail': 'CSRF verification failed. Request aborted.'},
+            PydanticSerializer,
+            raw_data={'detail': 'CSRF verification failed. Request aborted.'},
             status=HTTPStatus.FORBIDDEN,
         )
 

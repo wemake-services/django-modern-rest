@@ -142,10 +142,10 @@ class ResponseModification:
 
 @overload
 def build_response(
-    method: HTTPMethod | str,
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
+    method: HTTPMethod | str,
     headers: dict[str, str] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse: ...
@@ -153,20 +153,20 @@ def build_response(
 
 @overload
 def build_response(
-    method: None,
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
     status_code: HTTPStatus,
+    method: None = None,
     headers: dict[str, str] | None = None,
 ) -> HttpResponse: ...
 
 
 def build_response(
-    method: HTTPMethod | str | None,
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
+    method: HTTPMethod | str | None = None,
     headers: dict[str, str] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse:

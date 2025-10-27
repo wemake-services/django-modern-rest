@@ -55,7 +55,6 @@ def wrap_middleware(  # noqa: WPS202
         ... )
         ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
         ...     return build_response(
-        ...         None,
         ...         PydanticSerializer,
         ...         raw_data={
         ...             'detail': 'CSRF verification failed. Request aborted.'

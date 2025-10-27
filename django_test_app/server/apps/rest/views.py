@@ -5,10 +5,9 @@ from http import HTTPStatus
 from typing import Any, ClassVar, TypeAlias, final
 
 import pydantic
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
-from django_modern_rest.response import build_response
 from django_modern_rest import (
     Body,
     Controller,
@@ -20,6 +19,7 @@ from django_modern_rest import (
     wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 from server.apps.rest.middleware import (
     custom_header_middleware,
     rate_limit_middleware,
@@ -37,8 +37,9 @@ _CallableAny: TypeAlias = Callable[..., Any]
 )
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
     return build_response(
-        {'detail': 'CSRF verification failed. Request aborted.'},
-        status=HTTPStatus.FORBIDDEN,
+        PydanticSerializer,
+        raw_data={'detail': 'CSRF verification failed. Request aborted.'},
+        status_code=HTTPStatus.FORBIDDEN,
     )
 
 
