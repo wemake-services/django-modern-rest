@@ -1,3 +1,4 @@
+import uuid
 from http import HTTPStatus
 from typing import final
 
@@ -7,6 +8,7 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Body,
     Controller,
+    HeaderDescription,
     ResponseDescription,
     validate,
 )
@@ -22,15 +24,25 @@ class UserController(
     Controller[PydanticSerializer],
     Body[UserModel],
 ):
-    @validate(  # <- describes unique return types from this endpoint
+    @validate(
         ResponseDescription(
             UserModel,
             status_code=HTTPStatus.OK,
+            headers={
+                'X-Created': HeaderDescription(),
+                'X-Our-Domain': HeaderDescription(required=False),
+            },
         ),
     )
     def post(self) -> HttpResponse:
-        # This response would have an explicit status code `200`:
+        uid = uuid.uuid4()
+        # This response would have an explicit status code `200`
+        # and one required header `X-Created` and one optional `X-Our-Domain`:
+        headers = {'X-Created': str(uid)}
+        if '@ourdomain.com' in self.parsed_body.email:
+            headers['X-Our-Domain'] = 'true'
         return self.to_response(
             self.parsed_body,
             status_code=HTTPStatus.OK,
+            headers=headers,
         )
