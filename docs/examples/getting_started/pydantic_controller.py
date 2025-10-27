@@ -16,7 +16,7 @@ class UserModel(UserCreateModel):
 
 
 class HeaderModel(pydantic.BaseModel):
-    token: str = pydantic.Field(alias='X-API-Token')
+    consumer: str = pydantic.Field(alias='X-API-Consumer')
 
 
 @final
@@ -27,5 +27,5 @@ class UserController(
 ):
     def post(self) -> UserModel:
         """All added props have the correct runtime and static types."""
-        assert self.parsed_headers.token == 'secret!'
+        assert self.parsed_headers.consumer == 'my-api'
         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)

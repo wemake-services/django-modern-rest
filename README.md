@@ -27,6 +27,8 @@
 - [x] Supports all your existing `django` primitives and packages
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage
+- [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
+- [x] Great docs
 - [x] No emojis 🌚️️
 
 
@@ -76,7 +78,7 @@ The shortest example:
 ...     uid: uuid.UUID
 
 >>> class HeaderModel(pydantic.BaseModel):
-...     token: str = pydantic.Field(alias='X-API-Token')
+...     consumer: str = pydantic.Field(alias='X-API-Consumer')
 
 >>> class UserController(
 ...     Controller[PydanticSerializer],
@@ -85,7 +87,7 @@ The shortest example:
 ... ):
 ...     def post(self) -> UserModel:  # <- can be async as well!
 ...         """All added props have the correct runtime and static types."""
-...         assert self.parsed_headers.token == 'secret!'
+...         assert self.parsed_headers.consumer == 'my-api'
 ...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 ```
 
