@@ -182,6 +182,10 @@ class _ByNameController(
         return _ByNameModel(first_name=self.parsed_body.first_name)
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='3.14 does not fully support msgspec yet',
+)
 def test_msgspec_field_names_work(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
@@ -216,6 +220,10 @@ class _CamelCaseController(
         )
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='3.14 does not fully support msgspec yet',
+)
 def test_msgspec_struct_renames_work(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
