@@ -212,8 +212,8 @@ Django middleware operates in two distinct phases around the view execution.
 Understanding this pattern is crucial for effectively using middleware
 with ``django-modern-rest``.
 
-The ``get_response`` Callback
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+get_response callback
+~~~~~~~~~~~~~~~~~~~~~
 
 Every Django middleware receives a ``get_response`` callable parameter.
 This is **not** the actual response - it's a callback that represents
@@ -238,8 +238,8 @@ the next middleware in the chain or the final view function.
 
         return middleware_function
 
-Phase 1: Process Request (Before ``get_response``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Phase 1: Process Request (before get_response)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before calling ``get_response``, you can:
 
@@ -281,8 +281,8 @@ Now your controller can access ``self.request.request_id``:
             request_id = self.request.request_id
             return {'request_id': request_id}
 
-Phase 2: Process Response (After ``get_response``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Phase 2: Process Response (after get_response)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After calling ``get_response``, you can:
 
@@ -309,8 +309,8 @@ After calling ``get_response``, you can:
 
         return decorator
 
-Short-Circuiting: Returning Without Calling ``get_response``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Short-Circuiting: Returning Without Calling get_response
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Middleware can return a response **without** calling ``get_response``.
 This is called "short-circuiting" - the view is never executed.
@@ -396,18 +396,18 @@ redirect, but you can convert it to a JSON 401 response:
     )
     def login_required_json(response: HttpResponse) -> HttpResponse:
         """Convert Django's login_required redirect to JSON 401 response."""
-        # Django's login_required returns 302 redirect when user not authenticated
-        if response.status_code == HTTPStatus.FOUND:  # 302 redirect
-            return build_response(
-                PydanticSerializer,
-                raw_data={'detail': 'Authentication credentials were not provided'},
-                status_code=HTTPStatus.UNAUTHORIZED,
-            )
-        return response
+        # Converter called only for 302 redirect, always convert to 401
+        return build_response(
+            PydanticSerializer,
+            raw_data={'detail': 'Authentication credentials were not provided'},
+            status_code=HTTPStatus.UNAUTHORIZED,
+        )
 
     @login_required_json
     class ProtectedController(Controller[PydanticSerializer]):
-        responses = [*login_required_json.responses]
+        responses: ClassVar[list[ResponseDescription]] = (
+          login_required_json.responses
+      )
 
         def get(self) -> dict[str, str]:
             # This only executes if user is authenticated

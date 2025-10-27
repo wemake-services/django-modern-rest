@@ -94,19 +94,16 @@ def add_request_id_json(response: HttpResponse) -> HttpResponse:
     login_required,
     ResponseDescription(
         return_type=dict[str, str],
-        status_code=HTTPStatus.FOUND,  # 302 redirect
+        status_code=HTTPStatus.FOUND,
     ),
 )
 def login_required_json(response: HttpResponse) -> HttpResponse:
     """Convert Django's login_required redirect to JSON 401 response."""
-    # Django's login_required returns 302 redirect when user not authenticated
-    if response.status_code == HTTPStatus.FOUND:  # 302 redirect
-        return build_response(
-            PydanticSerializer,
-            raw_data={'detail': 'Authentication credentials were not provided'},
-            status_code=HTTPStatus.UNAUTHORIZED,
-        )
-    return response  # pragma: no cover
+    return build_response(
+        PydanticSerializer,
+        raw_data={'detail': 'Authentication credentials were not provided'},
+        status_code=HTTPStatus.UNAUTHORIZED,
+    )
 
 
 @final
