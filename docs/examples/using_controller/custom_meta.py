@@ -21,6 +21,7 @@ class SettingsController(Controller[MsgspecSerializer]):
     def post(self) -> str:
         return 'default post setting'
 
+    # `meta` response is also validated, schema is required:
     @validate(
         ResponseDescription(
             None,
@@ -28,7 +29,7 @@ class SettingsController(Controller[MsgspecSerializer]):
             headers={'Allow': HeaderDescription()},
         ),
     )
-    def meta(self) -> HttpResponse:
+    def meta(self) -> HttpResponse:  # Handles `OPTIONS` http method
         return self.to_response(
             None,
             status_code=HTTPStatus.NO_CONTENT,

@@ -27,7 +27,7 @@ def openapi_spec(
     """
     if len(renderers) == 0:
         raise ValueError(
-            "Empty renderers sequence provided to 'openapi_spec()'. "
+            'Empty renderers sequence provided to `openapi_spec()`. '
             'At least one renderer must be specified to '
             'render the API documentation.',
         )
@@ -53,13 +53,13 @@ def openapi_spec(
 def _default_config() -> OpenAPIConfig:
     from django_modern_rest.settings import (  # noqa: PLC0415
         DMR_OPENAPI_CONFIG_KEY,
-        resolve_defaults,
+        resolve_setting,
     )
 
-    config = resolve_defaults().get(DMR_OPENAPI_CONFIG_KEY)
+    config = resolve_setting(DMR_OPENAPI_CONFIG_KEY)
     if not isinstance(config, OpenAPIConfig):
         raise TypeError(
-            'OpenAPI config is not set. Please set the '
-            "'DMR_OPENAPI_CONFIG' setting.",
+            'OpenAPI config is not set. Please, set the '
+            f'{DMR_OPENAPI_CONFIG_KEY!r} setting.',
         )
     return config

@@ -17,9 +17,9 @@ Endpoint
 
 .. autoclass:: django_modern_rest.metadata.EndpointMetadata
 
-.. autofunction:: django_modern_rest.endpoint.modify
+.. autodecorator:: django_modern_rest.endpoint.modify
 
-.. autofunction:: django_modern_rest.endpoint.validate
+.. autodecorator:: django_modern_rest.endpoint.validate
 
 
 Components
@@ -40,6 +40,11 @@ Response and headers
 
 .. autoclass:: django_modern_rest.response.ResponseModification
   :members:
+
+.. autoexception:: django_modern_rest.response.APIError
+  :members:
+
+.. autofunction:: django_modern_rest.response.build_response
 
 .. autoclass:: django_modern_rest.headers.HeaderDescription
   :members:
@@ -73,6 +78,9 @@ Serialization
 .. autoclass:: django_modern_rest.serialization.BaseSerializer
   :members:
 
+.. autoclass:: django_modern_rest.serialization.BaseEndpointOptimizer
+  :members:
+
 .. autoclass:: django_modern_rest.serialization.SerializerContext
 
 
@@ -98,22 +106,22 @@ Meta mixins
 Exceptions
 ----------
 
-.. autoclass:: django_modern_rest.exceptions.UnsolvableAnnotationsError
+.. autoexception:: django_modern_rest.exceptions.UnsolvableAnnotationsError
   :members:
 
-.. autoclass:: django_modern_rest.exceptions.EndpointMetadataError
+.. autoexception:: django_modern_rest.exceptions.EndpointMetadataError
   :members:
 
-.. autoclass:: django_modern_rest.exceptions.DataParsingError
+.. autoexception:: django_modern_rest.exceptions.DataParsingError
   :members:
 
-.. autoclass:: django_modern_rest.exceptions.SerializationError
+.. autoexception:: django_modern_rest.exceptions.SerializationError
   :members:
 
-.. autoclass:: django_modern_rest.exceptions.RequestSerializationError
+.. autoexception:: django_modern_rest.exceptions.RequestSerializationError
   :members:
 
-.. autoclass:: django_modern_rest.exceptions.ResponseSerializationError
+.. autoexception:: django_modern_rest.exceptions.ResponseSerializationError
   :members:
 
 

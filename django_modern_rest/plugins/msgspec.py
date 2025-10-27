@@ -63,7 +63,10 @@ class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
     @override
     @classmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
-        """Create models for return types for validation."""
+        """Does nothing for msgspec."""
+        # `msgspec.convert` does not have any API
+        # to pre-build validation schema.
+        # Returning `Struct` or `list[Struct]` will be just fast enough.
 
 
 class MsgspecSerializer(BaseSerializer):
@@ -160,4 +163,6 @@ class MsgspecSerializer(BaseSerializer):
         """Serialize an exception to json the best way possible."""
         if isinstance(error, msgspec.ValidationError):
             return [{'type': 'value_error', 'loc': [], 'msg': str(error)}]
-        raise NotImplementedError(f'Cannot serialize {error} to json safely')
+        raise NotImplementedError(
+            f'Cannot serialize {error!r} of type {type(error)} to json safely',
+        )

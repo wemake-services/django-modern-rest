@@ -166,3 +166,67 @@ def test_msgspec_returns_validated(
     )
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content)['detail']
+
+
+@final
+class _ByNameModel(msgspec.Struct):
+    first_name: str = msgspec.field(name='firstName')
+
+
+@final
+class _ByNameController(
+    Controller[MsgspecSerializer],
+    Body[_ByNameModel],
+):
+    def post(self) -> _ByNameModel:
+        return _ByNameModel(first_name=self.parsed_body.first_name)
+
+
+def test_msgspec_field_names_work(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures that ``field(name=...)`` works."""
+    request_data = {'firstName': faker.name()}
+    request = dmr_rf.post('/whatever/', data=request_data)
+
+    response = _ByNameController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == request_data
+
+
+@final
+class _CamelCaseModel(msgspec.Struct, rename='camel'):
+    first_name: str
+    last_name: str
+
+
+@final
+class _CamelCaseController(
+    Controller[MsgspecSerializer],
+    Body[_CamelCaseModel],
+):
+    def post(self) -> _CamelCaseModel:
+        return _CamelCaseModel(
+            first_name=self.parsed_body.first_name,
+            last_name=self.parsed_body.last_name,
+        )
+
+
+def test_msgspec_struct_renames_work(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures that ``rename=`` keyword works."""
+    request_data = {'firstName': faker.name(), 'lastName': faker.name()}
+    request = dmr_rf.post('/whatever/', data=request_data)
+
+    response = _CamelCaseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == request_data

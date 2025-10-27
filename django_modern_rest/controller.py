@@ -154,8 +154,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         # For mypy: this can't be `None` at this point.
         assert self.request.method  # noqa: S101
         return build_response(
-            self.request.method,
             self.serializer,
+            method=self.request.method,
             raw_data=raw_data,
             headers=headers,
             status_code=status_code,
@@ -178,8 +178,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         Does the usual validation, no "second validation" problem exists.
         """
         return build_response(
-            method=None,
-            serializer=self.serializer,
+            self.serializer,
             raw_data=raw_data,
             headers=headers,
             status_code=status_code,
@@ -358,7 +357,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         allowed_methods = sorted(cls.api_endpoints.keys())
         return cls._maybe_wrap(
             build_response(
-                None,
                 cls.serializer,
                 raw_data={
                     'detail': (
