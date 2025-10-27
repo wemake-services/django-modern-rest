@@ -36,7 +36,8 @@ JSON Parsing
 
   Custom configuration example, let's say you want to always use ``ujson``:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'serialize': 'path.to.your.ujson.serialize'}
 
@@ -55,7 +56,8 @@ JSON Parsing
 
   Custom configuration example, let's say you want to always use ``ujson``:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'deserialize': 'path.to.your.ujson.deserialize'}
 
@@ -76,7 +78,8 @@ Response handling
 
   Use it to set global responses' status codes like ``500``:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> from http import HTTPStatus
     >>> from typing_extensions import TypedDict
@@ -118,7 +121,8 @@ Response handling
   But, there's a runtime cost to this. It is recommended to switch
   this validation off for production:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'validate_responses': False}
 
@@ -152,7 +156,8 @@ Error handling
   See :func:`~django_modern_rest.errors.global_error_handler`
   for the callback type.
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'global_error_handler': 'path.to.your.handler'}
 

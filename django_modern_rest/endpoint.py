@@ -387,7 +387,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     by sending *validate_responses* falsy parameter
     or by setting this configuration in your ``settings.py`` file:
 
-    .. code:: python
+    .. code-block:: python
+        :caption: settings.py
 
         >>> DMR_SETTINGS = {'validate_responses': False}
 
