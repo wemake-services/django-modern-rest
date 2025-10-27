@@ -1,7 +1,7 @@
 Configuration
 =============
 
-.. currentmodule:: django_modern_rest.settings
+.. module:: django_modern_rest.settings
 
 We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
 
@@ -24,7 +24,7 @@ JSON Parsing
   It is recommended to always install ``msgspec``
   with ``'django-modern-rest[msgspec]'`` extra for better performance.
 
-.. data:: 'serialize'
+.. data:: serialize
 
   Default: ``'django_modern_rest.internal.json.serialize'``
 
@@ -44,7 +44,7 @@ JSON Parsing
   See :class:`~django_modern_rest.internal.json.Serialize` for the callback type.
 
 
-.. data:: 'deserialize'
+.. data:: deserialize
 
   Default: ``'django_modern_rest.internal.json.deserialize'``
 
@@ -68,7 +68,7 @@ JSON Parsing
 Response handling
 -----------------
 
-.. data:: 'responses'
+.. data:: responses
 
   Default: ``[]``
 
@@ -99,7 +99,7 @@ Response handling
     ...     ],
     ... }
 
-.. data:: 'validate_responses'
+.. data:: validate_responses
 
   Default: ``True``
 
@@ -138,7 +138,7 @@ Response handling
 Error handling
 --------------
 
-.. data:: 'global_error_handler'
+.. data:: global_error_handler
 
   Default: ``'django_modern_rest.errors.global_error_handler'``
 
