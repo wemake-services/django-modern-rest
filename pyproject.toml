@@ -77,7 +77,7 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
-inline-snapshot = "^0.30"
+inline-snapshot = ">=0.30,<0.32"
 schemathesis = "^4.3"
 
 httpx = "^0.28"
