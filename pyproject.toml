@@ -196,8 +196,8 @@ isort.known-first-party = ["server"]
 "tests/*.py" = ["S101", "PLC2701"]
 # Allow examples to be a bit less strict:
 "docs/examples/**/*.py" = ["D1", "S1"]
-# Allow benchmarks to not have docs:
-"benchmarks/**/*.py" = ["D"]
+# Allow benchmarks to not have docs and do scripting:
+"benchmarks/**/*.py" = ["D", "S"]
 
 
 [tool.pytest.ini_options]
@@ -231,6 +231,8 @@ addopts = [
   "--cov-report=xml",
   "--cov-branch",
   "--cov-fail-under=100",
+  # Ignores benchmarks:
+  "--ignore=benchmarks/",
   # Ignores docs:
   "--ignore=docs/conf.py",
   "--ignore=docs/examples/",
@@ -267,6 +269,8 @@ warn_unreachable = true
 exclude = [
   # It has its own type-checking setup, since uses django:
   "django_test_app/",
+  # We don't care about benchmark code:
+  "benchmarks/",
 ]
 
 enable_error_code = [
