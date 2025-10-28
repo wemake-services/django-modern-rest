@@ -798,14 +798,14 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "hypothesis"
-version = "6.142.3"
+version = "6.142.4"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "hypothesis-6.142.3-py3-none-any.whl", hash = "sha256:2fc19a2824c9bdc3f8e39d87861fbdf1d766982b20d54646a642bce82bcac179"},
-    {file = "hypothesis-6.142.3.tar.gz", hash = "sha256:f1aaf83f6cc0c50f1b61e167974a8a67377dce13e0ea628b67a83f574ef30b85"},
+    {file = "hypothesis-6.142.4-py3-none-any.whl", hash = "sha256:25eecc73fadecd8b491aed822204cfe4be9c98ff5c1e8e038d181136ffc54b5b"},
+    {file = "hypothesis-6.142.4.tar.gz", hash = "sha256:b3e71a84708994aa910ea47f1483ad892a7c390839959d689b2a2b07ebfd160e"},
 ]
 
 [package.dependencies]
@@ -925,14 +925,14 @@ files = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.30.1"
+version = "0.31.0"
 description = "golden master/snapshot/approval testing library which puts the values right into your source code"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "inline_snapshot-0.30.1-py3-none-any.whl", hash = "sha256:4e65fe9d6d266d5dcbab9a75aef65ade386ba257238e30e11ce4cebf9a4312c8"},
-    {file = "inline_snapshot-0.30.1.tar.gz", hash = "sha256:77c2e94a40f2da02909b39e3386c9fc23f532c92af45558e2d7bbabb5fd0cbc1"},
+    {file = "inline_snapshot-0.31.0-py3-none-any.whl", hash = "sha256:8bb54ea7c5da628f53e4485aed484118ed06d7e29c686aecb952e3771b540c80"},
+    {file = "inline_snapshot-0.31.0.tar.gz", hash = "sha256:7b5ac05ad695151ae425b0f04318613a2440d3402c08d51ecc66ba6d0b434e5d"},
 ]
 
 [package.dependencies]
@@ -2128,14 +2128,14 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.3.11"
+version = "4.3.14"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.3.11-py3-none-any.whl", hash = "sha256:da0f3c7a5e3c052eb9066a697445b3b71427652ebf17fb7de486f961633373e9"},
-    {file = "schemathesis-4.3.11.tar.gz", hash = "sha256:d5c45ba75a8acc0fe55ec775fb28cce0bd7ccf9c982634813ecf7e4c70189948"},
+    {file = "schemathesis-4.3.14-py3-none-any.whl", hash = "sha256:30577d53200afb6c8929b00de1ce0a1a60c977ccebf5b440eb1c8de88a5c1ed0"},
+    {file = "schemathesis-4.3.14.tar.gz", hash = "sha256:435f240427081b30f9d12145a57a02a839934691040349f315fe37faa33e86be"},
 ]
 
 [package.dependencies]
@@ -2537,14 +2537,14 @@ doc = ["sphinx"]
 
 [[package]]
 name = "starlette"
-version = "0.48.0"
+version = "0.49.0"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "starlette-0.48.0-py3-none-any.whl", hash = "sha256:0764ca97b097582558ecb498132ed0c7d942f233f365b86ba37770e026510659"},
-    {file = "starlette-0.48.0.tar.gz", hash = "sha256:7e8cee469a8ab2352911528110ce9088fdc6a37d9876926e73da7ce4aa4c7a46"},
+    {file = "starlette-0.49.0-py3-none-any.whl", hash = "sha256:6f3988f55dda3fd36e5640aeaceee5b691063e0ebc4d7851e1c3a6695fbdc8ba"},
+    {file = "starlette-0.49.0.tar.gz", hash = "sha256:cb75dfe3267b99caf9036db355601f8c6092c4d50d132b3724cb373766cb2ab1"},
 ]
 
 [package.dependencies]
@@ -2722,4 +2722,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "9afacead6798a4cbc0b5dee7744945deeb2dcaa0c187bb6299d7f6ea56d3864d"
+content-hash = "6e00a303b85f493c598f053d671694f8abcbaf444ccd214738a6a09a62fe35f8"

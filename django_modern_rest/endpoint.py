@@ -18,8 +18,11 @@ from django_modern_rest.headers import (
     NewHeader,
 )
 from django_modern_rest.openapi.objects import (
+    Callback,
     ExternalDocumentation,
+    Reference,
     SecurityRequirement,
+    Server,
 )
 from django_modern_rest.response import APIError, ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
@@ -347,6 +350,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     deprecated: bool = False,
     security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -387,7 +392,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     by sending *validate_responses* falsy parameter
     or by setting this configuration in your ``settings.py`` file:
 
-    .. code:: python
+    .. code-block:: python
+        :caption: settings.py
 
         >>> DMR_SETTINGS = {'validate_responses': False}
 
@@ -413,6 +419,14 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         security: A declaration of which security mechanisms can be used
             for this operation.
         external_docs: Additional external documentation for this operation.
+        callbacks: A map of possible out-of band callbacks related to the
+            parent operation. The key is a unique identifier for the Callback
+            Object. Each value in the map is a Callback Object that describes
+            a request that may be initiated by the API provider and the
+            expected responses.
+        servers: An alternative servers array to service this operation.
+            If a servers array is specified at the Path Item Object or
+            OpenAPI Object level, it will be overridden by this value.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -435,6 +449,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             deprecated=deprecated,
             security=security,
             external_docs=external_docs,
+            callbacks=callbacks,
+            servers=servers,
         ),
     )
 
@@ -524,6 +540,8 @@ def modify(
     deprecated: bool = False,
     security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> _ModifyAsyncCallable: ...
 
 
@@ -543,6 +561,8 @@ def modify(
     deprecated: bool = False,
     security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> _ModifySyncCallable: ...
 
 
@@ -562,6 +582,8 @@ def modify(
     deprecated: bool = False,
     security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> _ModifyAnyCallable: ...
 
 
@@ -580,6 +602,8 @@ def modify(  # noqa: WPS211
     deprecated: bool = False,
     security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -629,6 +653,14 @@ def modify(  # noqa: WPS211
         security: A declaration of which security mechanisms can be used
             for this operation.
         external_docs: Additional external documentation for this operation.
+        callbacks: A map of possible out-of band callbacks related to the
+            parent operation. The key is a unique identifier for the Callback
+            Object. Each value in the map is a Callback Object that describes
+            a request that may be initiated by the API provider and the
+            expected responses.
+        servers: An alternative servers array to service this operation.
+            If a servers array is specified at the Path Item Object or
+            OpenAPI Object level, it will be overridden by this value.
 
 
     Returns:
@@ -654,6 +686,8 @@ def modify(  # noqa: WPS211
             deprecated=deprecated,
             security=security,
             external_docs=external_docs,
+            callbacks=callbacks,
+            servers=servers,
         ),
     )
 

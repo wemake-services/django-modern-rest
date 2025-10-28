@@ -31,5 +31,7 @@ class OperationGenerator:
             deprecated=metadata.deprecated,
             security=metadata.security,
             external_docs=metadata.external_docs,
+            servers=metadata.servers,
+            callbacks=metadata.callbacks,
             # TODO: implement another attributes generation.
         )

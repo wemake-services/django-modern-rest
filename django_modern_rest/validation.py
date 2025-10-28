@@ -52,8 +52,11 @@ from django_modern_rest.types import (
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
     from django_modern_rest.openapi.objects import (
+        Callback,
         ExternalDocumentation,
+        Reference,
         SecurityRequirement,
+        Server,
     )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
@@ -309,6 +312,8 @@ class _OpenAPIPayload:
     deprecated: bool = False
     security: list['SecurityRequirement'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
+    callbacks: 'dict[str, Callback | Reference] | None' = None
+    servers: list['Server'] | None = None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -316,9 +321,9 @@ class ValidateEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@validate``."""
 
     responses: list[ResponseDescription]
-    validate_responses: bool | None
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
-    allow_custom_http_methods: bool
+    validate_responses: bool | None = None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
+    allow_custom_http_methods: bool = False
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -443,6 +448,15 @@ class EndpointMetadataValidator:  # noqa: WPS214
     ) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
+        if self.payload is None and is_safe_subclass(
+            return_annotation,
+            HttpResponse,
+        ):
+            object.__setattr__(
+                self,
+                'payload',
+                ValidateEndpointPayload(responses=[]),
+            )
         method = validate_method_name(
             func.__name__,
             allow_custom_http_methods=getattr(
@@ -453,8 +467,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         func.__name__ = method  # we can change it :)
         endpoint = str(func)
-        if isinstance(self.payload, ModifyEndpointPayload):
-            return self._from_modify(
+        if isinstance(self.payload, ValidateEndpointPayload):
+            return self._from_validate(
                 self.payload,
                 return_annotation,
                 method,
@@ -462,8 +476,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 endpoint=endpoint,
                 controller_cls=controller_cls,
             )
-        if isinstance(self.payload, ValidateEndpointPayload):
-            return self._from_validate(
+        if isinstance(self.payload, ModifyEndpointPayload):
+            return self._from_modify(
                 self.payload,
                 return_annotation,
                 method,
@@ -514,11 +528,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            needs_response=True,
+            controller_cls=controller_cls,
         )
-        # for mypy: this can't happen, we always have at least one response
-        # due to `@validate`'s signature.
-        assert payload.responses, f'No responses found for {endpoint!r}'  # noqa: S101
         all_responses = self._resolve_all_responses(
             payload.responses,
             controller_cls=controller_cls,
@@ -540,6 +551,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             deprecated=payload.deprecated,
             security=payload.security,
             external_docs=payload.external_docs,
+            callbacks=payload.callbacks,
+            servers=payload.servers,
         )
 
     def _from_modify(  # noqa: WPS211
@@ -556,8 +569,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            needs_response=False,
-            modify_used=True,
+            controller_cls=controller_cls,
         )
         self._validate_new_headers(payload, endpoint=endpoint)
         modification = ResponseModification(
@@ -595,6 +607,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             deprecated=payload.deprecated,
             security=payload.security,
             external_docs=payload.external_docs,
+            callbacks=payload.callbacks,
+            servers=payload.servers,
         )
 
     def _from_raw_data(
@@ -608,7 +622,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            needs_response=False,
+            controller_cls=controller_cls,
         )
         status_code = infer_status_code(method)
         modification = ResponseModification(
@@ -655,23 +669,36 @@ class EndpointMetadataValidator:  # noqa: WPS214
         return_annotation: Any,
         *,
         endpoint: str,
-        needs_response: bool,
-        modify_used: bool = False,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponse):
-            if needs_response:
-                return
-            part = ' instead of `@modify`' if modify_used else ''
-            raise EndpointMetadataError(
-                f'Since {endpoint!r} returns HttpResponse, '  # noqa: WPS226
-                f'it requires `@validate` decorator{part}',
-            )
-        if not needs_response:
+            if isinstance(self.payload, ModifyEndpointPayload):
+                raise EndpointMetadataError(
+                    f'{endpoint!r} returns HttpResponse '
+                    'it requires `@validate` decorator instead of `@modify`',
+                )
+            # We can't reach this point with `None`, it is processed before.
+            assert isinstance(self.payload, ValidateEndpointPayload)  # noqa: S101
+            if not self._resolve_all_responses(
+                self.payload.responses,
+                controller_cls=controller_cls,
+            ):
+                raise EndpointMetadataError(
+                    f'{endpoint!r} returns HttpResponse '
+                    'and has no configured responses, '
+                    'it requires `@validate` decorator with '
+                    'at least one configured `ResponseDescription`',
+                )
+
+            # There are some configured errors,
+            # we will check them in runtime if they are correct or not.
             return
-        raise EndpointMetadataError(
-            f'Since {endpoint!r} returns regular data, '
-            'it requires `@modify` decorator instead of `@validate`',
-        )
+
+        if isinstance(self.payload, ValidateEndpointPayload):
+            raise EndpointMetadataError(
+                f'{endpoint!r} returns raw data, '
+                'it requires `@modify` decorator instead of `@validate`',
+            )
 
     def _validate_error_handler(
         self,

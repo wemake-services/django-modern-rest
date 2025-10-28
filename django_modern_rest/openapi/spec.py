@@ -3,7 +3,10 @@ from collections.abc import Sequence
 from django.urls import URLPattern
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.converter import SchemaConverter
+from django_modern_rest.openapi.converter import (
+    ConvertedSchema,
+    SchemaConverter,
+)
 from django_modern_rest.openapi.core.builder import OpenApiBuilder
 from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.renderers import BaseRenderer
@@ -32,21 +35,17 @@ def openapi_spec(
             'render the API documentation.',
         )
 
-    if config is None:
-        config = _default_config()
+    schema = _build_schema(config or _default_config(), router)
 
-    context = OpenAPIContext(config=config)
-    schema = OpenApiBuilder(context).build(router)
-    schema_dict = SchemaConverter.convert(schema)
+    urlpatterns: list[URLPattern] = []
+    for renderer in renderers:
+        view = OpenAPIView.as_view(renderer=renderer, schema=schema)
+        if renderer.decorators:
+            for decorator in renderer.decorators:
+                view = decorator(view)
 
-    urlpatterns = [
-        path(
-            renderer.path,
-            OpenAPIView.as_view(renderer=renderer, schema=schema_dict),
-            name=renderer.name,
-        )
-        for renderer in renderers
-    ]
+        urlpatterns.append(path(renderer.path, view, name=renderer.name))
+
     return (urlpatterns, app_name, namespace)
 
 
@@ -63,3 +62,10 @@ def _default_config() -> OpenAPIConfig:
             f'{DMR_OPENAPI_CONFIG_KEY!r} setting.',
         )
     return config
+
+
+def _build_schema(config: OpenAPIConfig, router: Router) -> ConvertedSchema:
+    # TODO: refactor
+    context = OpenAPIContext(config=config)
+    schema = OpenApiBuilder(context).build(router)
+    return SchemaConverter.convert(schema)

@@ -44,6 +44,8 @@ Response and headers
 .. autoexception:: django_modern_rest.response.APIError
   :members:
 
+.. autofunction:: django_modern_rest.response.build_response
+
 .. autoclass:: django_modern_rest.headers.HeaderDescription
   :members:
 

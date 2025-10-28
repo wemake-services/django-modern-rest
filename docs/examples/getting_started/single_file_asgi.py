@@ -29,7 +29,7 @@ class UserModel(UserCreateModel):
 
 
 class HeaderModel(pydantic.BaseModel):
-    token: str = pydantic.Field(alias='X-API-Token')
+    consumer: str = pydantic.Field(alias='X-API-Consumer')
 
 
 class UserController(
@@ -38,7 +38,7 @@ class UserController(
     Headers[HeaderModel],
 ):
     async def post(self) -> UserModel:
-        assert self.parsed_headers.token == 'secret!'
+        assert self.parsed_headers.consumer == 'my-api'
         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 
 

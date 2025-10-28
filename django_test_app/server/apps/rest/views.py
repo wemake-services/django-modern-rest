@@ -5,7 +5,7 @@ from http import HTTPStatus
 from typing import Any, ClassVar, TypeAlias, final
 
 import pydantic
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 from django_modern_rest import (
@@ -19,6 +19,7 @@ from django_modern_rest import (
     wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 from server.apps.rest.middleware import (
     custom_header_middleware,
     rate_limit_middleware,
@@ -35,9 +36,10 @@ _CallableAny: TypeAlias = Callable[..., Any]
     ),
 )
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-    return JsonResponse(
-        {'detail': 'CSRF verification failed. Request aborted.'},
-        status=HTTPStatus.FORBIDDEN,
+    return build_response(
+        PydanticSerializer,
+        raw_data={'detail': 'CSRF verification failed. Request aborted.'},
+        status_code=HTTPStatus.FORBIDDEN,
     )
 
 
@@ -155,7 +157,7 @@ class UserReplaceController(
         ),
     )
     async def put(self) -> HttpResponse:
-        return JsonResponse({
+        return self.to_response({
             'email': 'new@email.com',
             'age': self.parsed_path.user_id,
         })

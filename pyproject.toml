@@ -77,7 +77,7 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 dirty-equals = "^0.10"
 faker = "^37.11"
-inline-snapshot = "^0.30"
+inline-snapshot = ">=0.30,<0.32"
 schemathesis = "^4.3"
 
 httpx = "^0.28"
@@ -196,6 +196,8 @@ isort.known-first-party = ["server"]
 "tests/*.py" = ["S101", "PLC2701"]
 # Allow examples to be a bit less strict:
 "docs/examples/**/*.py" = ["D1", "S1"]
+# Allow benchmarks to not have docs and do scripting:
+"benchmarks/**/*.py" = ["D", "S"]
 
 
 [tool.pytest.ini_options]
@@ -229,6 +231,8 @@ addopts = [
   "--cov-report=xml",
   "--cov-branch",
   "--cov-fail-under=100",
+  # Ignores benchmarks:
+  "--ignore=benchmarks/",
   # Ignores docs:
   "--ignore=docs/conf.py",
   "--ignore=docs/examples/",
@@ -245,7 +249,7 @@ addopts = [
 omit = [
   # When msgspec is installed:
   "django_modern_rest/internal/json/raw.py",
-  "tests/test_unit/test_plugins/test_msgspec/test_validation.py",
+  "tests/test_unit/test_plugins/test_msgspec/*.py",
   # When not:
   "django_modern_rest/internal/json/msgspec.py",
 ]
@@ -265,6 +269,8 @@ warn_unreachable = true
 exclude = [
   # It has its own type-checking setup, since uses django:
   "django_test_app/",
+  # We don't care about benchmark code:
+  "benchmarks/",
 ]
 
 enable_error_code = [
