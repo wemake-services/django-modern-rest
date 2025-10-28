@@ -22,7 +22,7 @@ Benchmarks do not test real performance, they test ideas of performance.
 - We test the minimal possible app
 - We use the same exact data for all apps
 - We test production-like setups with `DEBUG=False`
-- We test both sync (`gunicorn`) 
+- We test both sync (`gunicorn`)
   and async (`uvicorn`) version if the requested mode is supported
   (yes, DRF, we are looking at you)
 - But, we don't compare sync to async and vice a versa,
