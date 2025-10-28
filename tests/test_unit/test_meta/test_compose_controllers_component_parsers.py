@@ -34,7 +34,7 @@ class _GetController(
 ):
     @modify()
     def get(self) -> list[int]:  # pragma: no cover
-        return [1, 2, 3]
+        raise NotImplementedError
 
 
 class _PostController(
@@ -75,20 +75,15 @@ def test_compose_controllers_preserves_parsers() -> None:  # noqa: WPS210
 
     post_endpoint = ComposedController.api_endpoints['post']
     assert len(post_endpoint.metadata.component_parsers) == 2
-    post_component_dict = {
-        klass.__name__: args
-        for klass, args in post_endpoint.metadata.component_parsers
-    }
-    assert post_component_dict['Body'] == (_BodyModel,)
-    assert post_component_dict['Headers'] == (_HeadersModel,)
+    post_component_dict = dict(post_endpoint.metadata.component_parsers)
+
+    assert post_component_dict[Body[_BodyModel]] == (_BodyModel,)
+    assert post_component_dict[Headers[_HeadersModel]] == (_HeadersModel,)
 
     put_endpoint = ComposedController.api_endpoints['put']
     assert len(put_endpoint.metadata.component_parsers) == 3
 
-    put_component_dict = {
-        klass.__name__: args
-        for klass, args in put_endpoint.metadata.component_parsers
-    }
-    assert put_component_dict['Query'] == (_QueryModel,)
-    assert put_component_dict['Body'] == (_BodyModel,)
-    assert put_component_dict['Path'] == (_PathModel,)
+    put_component_dict = dict(put_endpoint.metadata.component_parsers)
+    assert put_component_dict[Query[_QueryModel]] == (_QueryModel,)
+    assert put_component_dict[Body[_BodyModel]] == (_BodyModel,)
+    assert put_component_dict[Path[_PathModel]] == (_PathModel,)
