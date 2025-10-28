@@ -82,7 +82,7 @@ Main features include:
       You would never miss an important status code in the docs anymore!
 
     .. grid-item-card:: :octicon:`zap` Blazingly Fast!
-      :link: pages/performance
+      :link: pages/deep-dive/performance
       :link-type: doc
 
       Built with performance in mind. Import time optimizations,
@@ -167,7 +167,6 @@ Here are our amazing people who made this project possible.
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst
-  pages/performance.rst
   pages/testing.rst
 
 
@@ -175,6 +174,7 @@ Here are our amazing people who made this project possible.
   :caption: Deep Dive
   :hidden:
 
+  pages/deep-dive/performance.rst
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst
