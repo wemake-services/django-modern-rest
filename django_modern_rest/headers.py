@@ -1,6 +1,6 @@
 import dataclasses
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
+from typing import TYPE_CHECKING, Any, TypeAlias, final
 
 if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
