@@ -33,7 +33,7 @@ class _GetController(
     Controller[PydanticSerializer],
 ):
     @modify()
-    def get(self) -> list[int]:  # pragma: no cover
+    def get(self) -> list[int]:
         raise NotImplementedError
 
 
@@ -43,8 +43,8 @@ class _PostController(
     Controller[PydanticSerializer],
 ):
     @modify()
-    def post(self) -> dict[str, str]:  # pragma: no cover
-        return {'status': 'created'}
+    def post(self) -> dict[str, str]:
+        raise NotImplementedError
 
 
 class _PutController(  # noqa: WPS215
@@ -54,8 +54,8 @@ class _PutController(  # noqa: WPS215
     Controller[PydanticSerializer],
 ):
     @modify()
-    def put(self) -> dict[str, str]:  # pragma: no cover
-        return {'status': 'updated'}
+    def put(self) -> dict[str, str]:
+        raise NotImplementedError
 
 
 ComposedController = compose_controllers(
