@@ -146,13 +146,13 @@ def test_empty_renderers_list() -> None:
         )
 
 
+# pyright: reportFunctionMemberAccess=false
 def test_decorated_view_with_csrf_exempt() -> None:
     """Ensure that csrf_exempt decorator is applied to view."""
-    renderer = JsonRenderer(decorators=[csrf_exempt])
     urlpatterns, _, _ = openapi_spec(
         router=Router([]),
-        renderers=[renderer],
+        renderers=[JsonRenderer(decorators=[csrf_exempt])],
         config=_TEST_CONFIG,
     )
 
-    assert hasattr(urlpatterns[0].callback, 'csrf_exempt')
+    assert urlpatterns[0].callback.csrf_exempt is True  # type: ignore[attr-defined]

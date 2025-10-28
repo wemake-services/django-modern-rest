@@ -43,8 +43,9 @@ class BaseRenderer:
     and define default configuration values.
 
     Attributes:
-        default_path: Default URL path for the renderer endpoint.
-        default_name: Default name identifier for the renderer.
+        path: URL path for the renderer endpoint.
+        name: Name identifier for the renderer.
+        decorators: List of decorators to apply to the renderer.
         content_type: MIME type of the rendered content.
         serializer: Function to convert schema to serialized format.
     """
@@ -56,7 +57,6 @@ class BaseRenderer:
         'path',
         'serializer',
     )
-
     default_path: ClassVar[str]
     default_name: ClassVar[str]
     content_type: ClassVar[str]
@@ -91,10 +91,10 @@ class BaseRenderer:
         Render OpenAPI schema into HTTP response.
 
         Args:
-            request: Django HTTP request object.
+            request: Django `HttpRequest` object.
             schema: Converted OpenAPI schema to render.
 
         Returns:
-            Django HTTP response with rendered content.
+            Django `HttpResponse` with rendered content.
         """
         raise NotImplementedError

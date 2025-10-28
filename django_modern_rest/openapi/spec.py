@@ -14,7 +14,7 @@ from django_modern_rest.openapi.views import OpenAPIView
 from django_modern_rest.routing import Router
 
 
-def openapi_spec(  # noqa: WPS210
+def openapi_spec(
     router: Router,
     renderers: Sequence[BaseRenderer],
     config: OpenAPIConfig | None = None,
@@ -35,10 +35,7 @@ def openapi_spec(  # noqa: WPS210
             'render the API documentation.',
         )
 
-    if config is None:
-        config = _default_config()
-
-    schema = _build_schema(config, router)
+    schema = _build_schema(config or _default_config(), router)
 
     urlpatterns: list[URLPattern] = []
     for renderer in renderers:
