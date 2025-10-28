@@ -35,7 +35,7 @@ Async
 While ``fastapi`` is faster at the moment, we have several ideas
 to optimize ``django_modern_rest`` even further,
 so it can be on par (or even faster!)
-with the fastest python web frameworks in existance.
+with the fastest python web frameworks in existence.
 
 While keeping 100% of compatibility with the older libs and tools.
 
