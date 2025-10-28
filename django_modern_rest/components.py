@@ -218,9 +218,9 @@ class Path(ComponentParser, Generic[_PathT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Body, Path, Controller, Router, path
+        >>> from django_modern_rest import Body, Path, Controller, Router
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
-        >>> from django.urls import include
+        >>> from django.urls import include, path
 
         >>> class UserPath(pydantic.BaseModel):
         ...     user_id: int

@@ -92,8 +92,8 @@ The shortest example:
 And then route this controller in your `urls.py`:
 
 ```python
->>> from django.urls import include
->>> from django_modern_rest import Router, path
+>>> from django.urls import include, path
+>>> from django_modern_rest import Router
 
 >>> router = Router([
 ...     path('user/', UserController.as_view(), name='users'),
