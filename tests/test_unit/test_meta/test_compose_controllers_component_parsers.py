@@ -28,42 +28,45 @@ class _PathModel(pydantic.BaseModel):
     user_id: int
 
 
+class _GetController(
+    Query[_QueryModel],
+    Controller[PydanticSerializer],
+):
+    @modify()
+    def get(self) -> list[int]:  # pragma: no cover
+        return [1, 2, 3]
+
+
+class _PostController(
+    Body[_BodyModel],
+    Headers[_HeadersModel],
+    Controller[PydanticSerializer],
+):
+    @modify()
+    def post(self) -> dict[str, str]:  # pragma: no cover
+        return {'status': 'created'}
+
+
+class _PutController(  # noqa: WPS215
+    Query[_QueryModel],
+    Body[_BodyModel],
+    Path[_PathModel],
+    Controller[PydanticSerializer],
+):
+    @modify()
+    def put(self) -> dict[str, str]:  # pragma: no cover
+        return {'status': 'updated'}
+
+
+ComposedController = compose_controllers(
+    _GetController,
+    _PostController,
+    _PutController,
+)
+
+
 def test_compose_controllers_preserves_parsers() -> None:  # noqa: WPS210
     """Ensure composed controller preserves component_parsers."""
-
-    class _GetController(
-        Query[_QueryModel],
-        Controller[PydanticSerializer],
-    ):
-        @modify()
-        def get(self) -> list[int]:  # pragma: no cover
-            return [1, 2, 3]
-
-    class _PostController(
-        Body[_BodyModel],
-        Headers[_HeadersModel],
-        Controller[PydanticSerializer],
-    ):
-        @modify()
-        def post(self) -> dict[str, str]:  # pragma: no cover
-            return {'status': 'created'}
-
-    class _PutController(  # noqa: WPS215
-        Query[_QueryModel],
-        Body[_BodyModel],
-        Path[_PathModel],
-        Controller[PydanticSerializer],
-    ):
-        @modify()
-        def put(self) -> dict[str, str]:  # pragma: no cover
-            return {'status': 'updated'}
-
-    ComposedController = compose_controllers(  # noqa: N806
-        _GetController,
-        _PostController,
-        _PutController,
-    )
-
     get_endpoint = ComposedController.api_endpoints['get']
     assert len(get_endpoint.metadata.component_parsers) == 1
     component_cls, type_args = get_endpoint.metadata.component_parsers[0]
