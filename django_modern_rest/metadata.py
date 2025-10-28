@@ -2,6 +2,8 @@ import dataclasses
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
+    Any,
+    TypeAlias,
     final,
 )
 
@@ -12,6 +14,7 @@ from django_modern_rest.response import (
 )
 
 if TYPE_CHECKING:
+    from django_modern_rest.components import ComponentParser
     from django_modern_rest.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -19,6 +22,8 @@ if TYPE_CHECKING:
         SecurityRequirement,
         Server,
     )
+
+ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
 
 
 @final
@@ -39,6 +44,9 @@ class EndpointMetadata:
             to the returned data. Can be ``None``, when ``@validate`` is used.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
+        component_parsers: List of component parser specifications
+            from the controller. Each spec is a tuple
+            of (ComponentParser class, type args).
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -75,6 +83,7 @@ class EndpointMetadata:
     method: str
     modification: ResponseModification | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
+    component_parsers: list[ComponentParserSpec]
 
     # OpenAPI documentation fields:
     summary: str | None = None
