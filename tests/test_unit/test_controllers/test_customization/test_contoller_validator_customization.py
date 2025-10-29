@@ -2,36 +2,51 @@ from typing import ClassVar, final
 
 from typing_extensions import override
 
-from django_modern_rest import Controller
+from django_modern_rest import Blueprint, Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.validation import ControllerValidator
+from django_modern_rest.validation import BlueprintValidator
 
 
-@final
-class _ControllerValidatorSubclass(ControllerValidator):
-    """Test that we can replace the default controller validator."""
+def test_custom_blueprint_validator_cls() -> None:
+    """Ensure we can customize the blueprint validator factory."""
 
-    # We can add a marker to track if this was called
-    was_called: ClassVar[bool] = False
+    @final
+    class _BlueprintValidatorSubclass(BlueprintValidator):
+        # We can add a marker to track if this was called
+        was_called: ClassVar[bool] = False
 
-    @override
-    def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
-        """Run the validation and mark that it was called."""
-        self.__class__.was_called = True
-        return super().__call__(controller)
+        @override
+        def __call__(self, blueprint: type[Blueprint[BaseSerializer]]) -> bool:
+            self.__class__.was_called = True
+            return super().__call__(blueprint)
 
+    @final
+    class _CustomValidatorBlueprint(Blueprint[PydanticSerializer]):
+        validator_cls: ClassVar[type[BlueprintValidator]] = (
+            _BlueprintValidatorSubclass
+        )
 
-@final
-class _CustomControllerValidatorController(Controller[PydanticSerializer]):
-    controller_validator_cls: ClassVar[type[ControllerValidator]] = (
-        _ControllerValidatorSubclass
-    )
-
-    def get(self) -> int:
-        raise NotImplementedError
+    assert _BlueprintValidatorSubclass.was_called
 
 
 def test_custom_controller_validator_cls() -> None:
     """Ensure we can customize the controller validator factory."""
-    assert _ControllerValidatorSubclass.was_called is True
+
+    @final
+    class _BlueprintValidatorSubclass(BlueprintValidator):
+        # We can add a marker to track if this was called
+        was_called: ClassVar[bool] = False
+
+        @override
+        def __call__(self, blueprint: type[Blueprint[BaseSerializer]]) -> bool:
+            self.__class__.was_called = True
+            return super().__call__(blueprint)
+
+    @final
+    class _CustomValidatorController(Controller[PydanticSerializer]):
+        validator_cls: ClassVar[type[BlueprintValidator]] = (
+            _BlueprintValidatorSubclass
+        )
+
+    assert _BlueprintValidatorSubclass.was_called

@@ -91,7 +91,7 @@ class MsgspecSerializer(BaseSerializer):
 
     # Custom API:
     from_json_strict: ClassVar[bool] = True
-    convert_kwargs: ClassVar[MsgspecConvertOptions] = {'str_keys': True}
+    convert_kwargs: ClassVar[MsgspecConvertOptions] = {}
 
     @override
     @classmethod
@@ -163,4 +163,6 @@ class MsgspecSerializer(BaseSerializer):
         """Serialize an exception to json the best way possible."""
         if isinstance(error, msgspec.ValidationError):
             return [{'type': 'value_error', 'loc': [], 'msg': str(error)}]
-        raise NotImplementedError(f'Cannot serialize {error} to json safely')
+        raise NotImplementedError(
+            f'Cannot serialize {error!r} of type {type(error)} to json safely',
+        )

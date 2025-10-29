@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/logo-light.svg#gh-light-mode-only" alt="Modern REST Logo - Light" width="100%" height="auto" />
   <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/logo-dark.svg#gh-dark-mode-only" alt="Modern REST Logo - Dark" width="100%" height="auto" />
-</p>
+</div>
 
 <p align="center">
   <em>Modern REST framework for Django with types and async support!</em>
@@ -16,7 +16,7 @@
 
 ## Features
 
-- [x] Blazingly fast
+- [x] [Blazingly fast](https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html)
 - [x] Fully typed and checked with `mypy` and `pyright` in strict modes
 - [x] Strict schema validation of both requests and responses
 - [x] Supports `pydantic2`, but not bound to it
@@ -24,10 +24,22 @@
 - [x] Strict schema validation for requests and responses
 - [x] Supports async Django
 - [ ] Supports `openapi` 3.1+ schema generation out of the box
-- [x] Supports all your existing `django` primitives and packages
+- [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage
+- [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
+- [x] Great docs
 - [x] No emojis 🌚️️
+
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="100%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmakr - Dark" width="100%" height="auto" />
+</div>
+
+<p align="center">
+  <em>Sync mode</em>
+</p>
 
 
 ## Installation
@@ -76,7 +88,7 @@ The shortest example:
 ...     uid: uuid.UUID
 
 >>> class HeaderModel(pydantic.BaseModel):
-...     token: str = pydantic.Field(alias='X-API-Token')
+...     consumer: str = pydantic.Field(alias='X-API-Consumer')
 
 >>> class UserController(
 ...     Controller[PydanticSerializer],
@@ -85,7 +97,7 @@ The shortest example:
 ... ):
 ...     def post(self) -> UserModel:  # <- can be async as well!
 ...         """All added props have the correct runtime and static types."""
-...         assert self.parsed_headers.token == 'secret!'
+...         assert self.parsed_headers.consumer == 'my-api'
 ...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 ```
 

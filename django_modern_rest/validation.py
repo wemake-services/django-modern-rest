@@ -17,6 +17,7 @@ from typing import (
 )
 
 from django.http import HttpResponse
+from typing_extensions import override
 
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
@@ -50,10 +51,14 @@ from django_modern_rest.types import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
+    from django_modern_rest.controller import Blueprint, Controller
+    from django_modern_rest.endpoint import Endpoint
     from django_modern_rest.openapi.objects import (
+        Callback,
         ExternalDocumentation,
+        Reference,
         SecurityRequirement,
+        Server,
     )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
@@ -75,27 +80,27 @@ class ResponseValidator:
 
     def validate_response(
         self,
-        controller: 'Controller[BaseSerializer]',
+        blueprint: 'Blueprint[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not self._is_validation_enabled(controller):
+        if not self._is_validation_enabled(blueprint):
             return response
-        schema = self._get_response_schema(controller, response.status_code)
+        schema = self._get_response_schema(response.status_code)
         self._validate_body(response.content, schema, response=response)
         self._validate_response_object(response, schema)
         return response
 
     def validate_modification(
         self,
-        controller: 'Controller[BaseSerializer]',
+        blueprint: 'Blueprint[BaseSerializer]',
         structured: Any,
     ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
             method = self.metadata.method
             raise ResponseSerializationError(
-                f'Controller {controller} in {method} returned '
+                f'{blueprint} in {method} returned '
                 f'raw data of type {type(structured)} '
                 'without associated `@modify` usage.',
             )
@@ -108,18 +113,14 @@ class ResponseValidator:
                 self.serializer,
             ),
         )
-        if not self._is_validation_enabled(controller):
+        if not self._is_validation_enabled(blueprint):
             return all_response_data
-        schema = self._get_response_schema(
-            controller,
-            all_response_data.status_code,
-        )
+        schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(structured, schema)
         return all_response_data
 
     def _get_response_schema(
         self,
-        controller: 'Controller[BaseSerializer]',
         status_code: HTTPStatus | int,
     ) -> ResponseDescription:
         status = HTTPStatus(status_code)
@@ -135,7 +136,7 @@ class ResponseValidator:
 
     def _is_validation_enabled(
         self,
-        controller: 'Controller[BaseSerializer]',
+        blueprint: 'Blueprint[BaseSerializer]',
     ) -> bool:
         """
         Should we run response validation?
@@ -148,8 +149,8 @@ class ResponseValidator:
         """
         if isinstance(self.metadata.validate_responses, bool):
             return self.metadata.validate_responses
-        if isinstance(controller.validate_responses, bool):
-            return controller.validate_responses
+        if isinstance(blueprint.validate_responses, bool):
+            return blueprint.validate_responses
         return resolve_setting(  # type: ignore[no-any-return]
             DMR_VALIDATE_RESPONSES_KEY,
         )
@@ -222,27 +223,27 @@ class ResponseValidator:
             )
 
 
-class ControllerValidator:
+class BlueprintValidator:
     """
-    Validate controller type definition.
+    Validate blueprint type definition.
 
     Validates:
-    - Async vs sync controllers
+    - Async vs sync blueprints
     - Components definition
     """
 
     __slots__ = ()
 
-    def __call__(self, controller: 'type[Controller[BaseSerializer]]') -> bool:
+    def __call__(self, blueprint: 'type[Blueprint[BaseSerializer]]', /) -> bool:
         """Run the validation."""
-        self._validate_components(controller)
-        is_async = self._validate_endpoints(controller)
-        self._validate_meta_mixins(controller, is_async=is_async)
+        self._validate_components(blueprint)
+        is_async = self._validate_endpoints(blueprint)
+        self._validate_meta_mixins(blueprint, is_async=is_async)
         return is_async
 
     def _validate_meta_mixins(
         self,
-        controller: 'type[Controller[BaseSerializer]]',
+        blueprint: 'type[Blueprint[BaseSerializer]]',
         *,
         is_async: bool = False,
     ) -> None:
@@ -252,52 +253,130 @@ class ControllerValidator:
         )
 
         if (
-            issubclass(controller, MetaMixin)
-            and issubclass(controller, AsyncMetaMixin)  # type: ignore[unreachable]
+            issubclass(blueprint, MetaMixin)  # type: ignore[unreachable]
+            and issubclass(blueprint, AsyncMetaMixin)  # type: ignore[unreachable]
         ):
             suggestion = (  # type: ignore[unreachable]
                 'AsyncMetaMixin' if is_async else 'MetaMixin'
             )
             raise EndpointMetadataError(
                 f'Use only {suggestion!r}, '
-                f'not both meta mixins in {controller!r}',
+                f'not both meta mixins in {blueprint!r}',
             )
 
     def _validate_components(
         self,
-        controller: 'type[Controller[BaseSerializer]]',
+        blueprint: 'type[Blueprint[BaseSerializer]]',
     ) -> None:
         possible_violations = infer_bases(
-            controller,
+            blueprint,
             ComponentParser,
             use_origin=False,
         )
         for component_cls in possible_violations:
             if not get_args(component_cls):
                 raise EndpointMetadataError(
-                    f'Component {component_cls} in {controller} '
+                    f'Component {component_cls} in {blueprint} '
                     'must have 1 type argument, given 0',
                 )
 
     def _validate_endpoints(
         self,
-        controller: 'type[Controller[BaseSerializer]]',
+        blueprint: 'type[Blueprint[BaseSerializer]]',
     ) -> bool:
-        if not controller.api_endpoints:
+        if not blueprint.api_endpoints:
             return False
-        is_async = controller.api_endpoints[
-            next(iter(controller.api_endpoints.keys()))
+        is_async = blueprint.api_endpoints[
+            next(iter(blueprint.api_endpoints.keys()))
         ].is_async
         if any(
             endpoint.is_async is not is_async
-            for endpoint in controller.api_endpoints.values()
+            for endpoint in blueprint.api_endpoints.values()
         ):
             # The same error message that django has.
             raise EndpointMetadataError(
-                f'{controller!r} HTTP handlers must either '
+                f'{blueprint!r} HTTP handlers must either '
                 'be all sync or all async',
             )
         return is_async
+
+
+class ControllerValidator(BlueprintValidator):
+    """
+    Validates that controller is created correctly.
+
+    Also validates possible composed blueprints.
+    """
+
+    __slots__ = ()
+
+    @override
+    def __call__(  # type: ignore[override]
+        self,
+        controller: type['Controller[BaseSerializer]'],
+        /,
+    ) -> bool:
+        """Run the validation."""
+        self._validate_blueprints(controller)
+        self._validate_composed_endpoints(controller)
+        return super().__call__(controller)
+
+    def _validate_blueprints(
+        self,
+        controller: type['Controller[BaseSerializer]'],
+    ) -> None:
+        if not controller.blueprints:
+            return
+
+        serializer = controller.blueprints[0].serializer
+        for blueprint in controller.blueprints:
+            if serializer is not blueprint.serializer:
+                raise EndpointMetadataError(
+                    'Composing blueprints with different serializer types is '
+                    f'not supported: {serializer} and {blueprint.serializer}',
+                )
+
+    def _validate_composed_endpoints(
+        self,
+        controller: type['Controller[BaseSerializer]'],
+    ) -> None:
+        canonical_methods = {
+            canonical for canonical, _dsl in controller.existing_http_methods()
+        }
+        endpoints: dict[str, Endpoint] = {}
+        for blueprint in controller.blueprints:
+            self._validate_blueprint(
+                blueprint,
+                endpoints,
+                controller,
+                canonical_methods,
+            )
+            endpoints.update(blueprint.api_endpoints)
+
+    def _validate_blueprint(
+        self,
+        blueprint: type['Blueprint[BaseSerializer]'],
+        endpoints: dict[str, 'Endpoint'],
+        controller: type['Controller[BaseSerializer]'],
+        canonical_methods: set[str],
+    ) -> None:
+        blueprint_methods = blueprint.api_endpoints.keys()
+        if not blueprint_methods:
+            raise EndpointMetadataError(
+                f'{blueprint} must have at least one endpoint to be composed',
+            )
+        method_intersection = blueprint_methods & canonical_methods
+        if method_intersection:
+            raise EndpointMetadataError(
+                f'{blueprint} have {method_intersection!r} common methods '
+                f'with {controller}',
+            )
+        method_intersection = endpoints.keys() & blueprint_methods
+        if method_intersection:
+            raise EndpointMetadataError(
+                f'Blueprints have {method_intersection!r} common methods, '
+                'while all endpoints must be unique',
+            )
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
@@ -309,6 +388,8 @@ class _OpenAPIPayload:
     deprecated: bool = False
     security: list['SecurityRequirement'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
+    callbacks: 'dict[str, Callback | Reference] | None' = None
+    servers: list['Server'] | None = None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -316,9 +397,9 @@ class ValidateEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@validate``."""
 
     responses: list[ResponseDescription]
-    validate_responses: bool | None
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
-    allow_custom_http_methods: bool
+    validate_responses: bool | None = None
+    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
+    allow_custom_http_methods: bool = False
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -439,10 +520,19 @@ class EndpointMetadataValidator:  # noqa: WPS214
     def __call__(
         self,
         func: Callable[..., Any],
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
+        if self.payload is None and is_safe_subclass(
+            return_annotation,
+            HttpResponse,
+        ):
+            object.__setattr__(
+                self,
+                'payload',
+                ValidateEndpointPayload(responses=[]),
+            )
         method = validate_method_name(
             func.__name__,
             allow_custom_http_methods=getattr(
@@ -453,15 +543,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         func.__name__ = method  # we can change it :)
         endpoint = str(func)
-        if isinstance(self.payload, ModifyEndpointPayload):
-            return self._from_modify(
-                self.payload,
-                return_annotation,
-                method,
-                func,
-                endpoint=endpoint,
-                controller_cls=controller_cls,
-            )
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
@@ -469,14 +550,23 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 method,
                 func,
                 endpoint=endpoint,
-                controller_cls=controller_cls,
+                blueprint_cls=blueprint_cls,
+            )
+        if isinstance(self.payload, ModifyEndpointPayload):
+            return self._from_modify(
+                self.payload,
+                return_annotation,
+                method,
+                func,
+                endpoint=endpoint,
+                blueprint_cls=blueprint_cls,
             )
         if self.payload is None:
             return self._from_raw_data(
                 return_annotation,
                 method,
                 endpoint=endpoint,
-                controller_cls=controller_cls,
+                blueprint_cls=blueprint_cls,
             )
         assert_never(self.payload)
 
@@ -484,7 +574,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         endpoint_responses: list[ResponseDescription],
         *,
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
         modification: ResponseModification | None = None,
     ) -> _AllResponses:
         modification_spec = (
@@ -495,7 +585,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             [
                 *modification_spec,
                 *endpoint_responses,
-                *controller_cls.semantic_responses(),
+                *blueprint_cls.semantic_responses(),
                 *resolve_setting(DMR_RESPONSES_KEY),
             ],
         )
@@ -508,20 +598,17 @@ class EndpointMetadataValidator:  # noqa: WPS214
         func: Callable[..., Any],
         *,
         endpoint: str,
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            needs_response=True,
+            blueprint_cls=blueprint_cls,
         )
-        # for mypy: this can't happen, we always have at least one response
-        # due to `@validate`'s signature.
-        assert payload.responses, f'No responses found for {endpoint!r}'  # noqa: S101
         all_responses = self._resolve_all_responses(
             payload.responses,
-            controller_cls=controller_cls,
+            blueprint_cls=blueprint_cls,
         )
         responses = self.response_list_validator_cls()(
             all_responses,
@@ -533,6 +620,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             validate_responses=payload.validate_responses,
             modification=None,
             error_handler=payload.error_handler,
+            component_parsers=blueprint_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -540,6 +628,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             deprecated=payload.deprecated,
             security=payload.security,
             external_docs=payload.external_docs,
+            callbacks=payload.callbacks,
+            servers=payload.servers,
         )
 
     def _from_modify(  # noqa: WPS211
@@ -550,14 +640,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
         func: Callable[..., Any],
         *,
         endpoint: str,
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            needs_response=False,
-            modify_used=True,
+            blueprint_cls=blueprint_cls,
         )
         self._validate_new_headers(payload, endpoint=endpoint)
         modification = ResponseModification(
@@ -575,7 +664,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             payload_responses = payload.responses
         all_responses = self._resolve_all_responses(
             payload_responses,
-            controller_cls=controller_cls,
+            blueprint_cls=blueprint_cls,
             modification=modification,
         )
         responses = self.response_list_validator_cls()(
@@ -588,6 +677,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=payload.error_handler,
+            component_parsers=blueprint_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -595,6 +685,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             deprecated=payload.deprecated,
             security=payload.security,
             external_docs=payload.external_docs,
+            callbacks=payload.callbacks,
+            servers=payload.servers,
         )
 
     def _from_raw_data(
@@ -603,12 +695,12 @@ class EndpointMetadataValidator:  # noqa: WPS214
         method: str,
         *,
         endpoint: str,
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            needs_response=False,
+            blueprint_cls=blueprint_cls,
         )
         status_code = infer_status_code(method)
         modification = ResponseModification(
@@ -618,7 +710,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         all_responses = self._resolve_all_responses(
             [],
-            controller_cls=controller_cls,
+            blueprint_cls=blueprint_cls,
             modification=modification,
         )
         responses = self.response_list_validator_cls()(
@@ -631,6 +723,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=None,
+            component_parsers=blueprint_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
         )
 
     def _validate_new_headers(
@@ -655,23 +748,36 @@ class EndpointMetadataValidator:  # noqa: WPS214
         return_annotation: Any,
         *,
         endpoint: str,
-        needs_response: bool,
-        modify_used: bool = False,
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponse):
-            if needs_response:
-                return
-            part = ' instead of `@modify`' if modify_used else ''
-            raise EndpointMetadataError(
-                f'Since {endpoint!r} returns HttpResponse, '  # noqa: WPS226
-                f'it requires `@validate` decorator{part}',
-            )
-        if not needs_response:
+            if isinstance(self.payload, ModifyEndpointPayload):
+                raise EndpointMetadataError(
+                    f'{endpoint!r} returns HttpResponse '
+                    'it requires `@validate` decorator instead of `@modify`',
+                )
+            # We can't reach this point with `None`, it is processed before.
+            assert isinstance(self.payload, ValidateEndpointPayload)  # noqa: S101
+            if not self._resolve_all_responses(
+                self.payload.responses,
+                blueprint_cls=blueprint_cls,
+            ):
+                raise EndpointMetadataError(
+                    f'{endpoint!r} returns HttpResponse '
+                    'and has no configured responses, '
+                    'it requires `@validate` decorator with '
+                    'at least one configured `ResponseDescription`',
+                )
+
+            # There are some configured errors,
+            # we will check them in runtime if they are correct or not.
             return
-        raise EndpointMetadataError(
-            f'Since {endpoint!r} returns regular data, '
-            'it requires `@modify` decorator instead of `@validate`',
-        )
+
+        if isinstance(self.payload, ValidateEndpointPayload):
+            raise EndpointMetadataError(
+                f'{endpoint!r} returns raw data, '
+                'it requires `@modify` decorator instead of `@validate`',
+            )
 
     def _validate_error_handler(
         self,

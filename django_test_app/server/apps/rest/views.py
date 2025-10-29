@@ -5,10 +5,11 @@ from http import HTTPStatus
 from typing import Any, ClassVar, TypeAlias, final
 
 import pydantic
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
-from django_modern_rest import (
+from django_modern_rest import (  # noqa: WPS235
+    Blueprint,
     Body,
     Controller,
     Headers,
@@ -19,6 +20,7 @@ from django_modern_rest import (
     wrap_middleware,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 from server.apps.rest.middleware import (
     custom_header_middleware,
     rate_limit_middleware,
@@ -35,9 +37,10 @@ _CallableAny: TypeAlias = Callable[..., Any]
     ),
 )
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-    return JsonResponse(
-        {'detail': 'CSRF verification failed. Request aborted.'},
-        status=HTTPStatus.FORBIDDEN,
+    return build_response(
+        PydanticSerializer,
+        raw_data={'detail': 'CSRF verification failed. Request aborted.'},
+        status_code=HTTPStatus.FORBIDDEN,
     )
 
 
@@ -104,11 +107,11 @@ class _UserPath(pydantic.BaseModel):
 
 
 @final
-class UserCreateController(  # noqa: WPS215
+class UserCreateBlueprint(  # noqa: WPS215
     Query[_QueryData],
     Headers[_CustomHeaders],
     Body[_UserInput],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
 ):
     def post(self) -> _UserOutput:
         return _UserOutput(
@@ -122,7 +125,7 @@ class UserCreateController(  # noqa: WPS215
 
 
 @final
-class UserListController(Controller[PydanticSerializer]):
+class UserListBlueprint(Blueprint[PydanticSerializer]):
     def get(self) -> list[_UserInput]:
         return [
             _UserInput(email='first@mail.ru', age=1),
@@ -131,9 +134,9 @@ class UserListController(Controller[PydanticSerializer]):
 
 
 @final
-class UserUpdateController(
+class UserUpdateBlueprint(
     Body[_UserInput],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
     Path[_UserPath],
 ):
     async def patch(self) -> _UserInput:
@@ -144,8 +147,8 @@ class UserUpdateController(
 
 
 @final
-class UserReplaceController(
-    Controller[PydanticSerializer],
+class UserReplaceBlueprint(
+    Blueprint[PydanticSerializer],
     Path[_UserPath],
 ):
     @validate(
@@ -155,7 +158,7 @@ class UserReplaceController(
         ),
     )
     async def put(self) -> HttpResponse:
-        return JsonResponse({
+        return self.to_response({
             'email': 'new@email.com',
             'age': self.parsed_path.user_id,
         })

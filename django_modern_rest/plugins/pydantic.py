@@ -247,7 +247,9 @@ class PydanticSerializer(BaseSerializer):
             )
         if isinstance(error, pydantic.ValidationError):
             return error.errors(include_url=False)
-        raise NotImplementedError(f'Cannot serialize {error} to json safely')
+        raise NotImplementedError(
+            f'Cannot serialize {error!r} of type {type(error)} to json safely',
+        )
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)

@@ -28,7 +28,12 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
         return 1
 
     @modify(
-        headers={'X-Custom': NewHeader(value='Example')},
+        headers={
+            'X-Custom': NewHeader(
+                value='Example',
+                description='Header test description',
+            ),
+        },
         description='Test PATCH endpoint',
     )
     def patch(self) -> int:
@@ -56,7 +61,11 @@ class _CorrectValidateController(Controller[PydanticSerializer]):
         ResponseDescription(
             return_type=list[int],
             status_code=HTTPStatus.OK,
-            headers={'X-Custom': HeaderDescription()},
+            headers={
+                'X-Custom': HeaderDescription(
+                    description='Header test description',
+                ),
+            },
         ),
     )
     async def put(self) -> JsonResponse:

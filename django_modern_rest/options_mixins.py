@@ -6,7 +6,6 @@ from django.http import HttpResponse
 from django_modern_rest.endpoint import validate
 from django_modern_rest.headers import HeaderDescription
 from django_modern_rest.response import ResponseDescription
-from django_modern_rest.validation import validate_method_name
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -83,11 +82,10 @@ class AsyncMetaMixin:
 
 def _meta_impl(controller: 'Controller[BaseSerializer]') -> HttpResponse:
     allow = ', '.join(
-        validate_method_name(method, allow_custom_http_methods=False).upper()
-        for method in sorted(controller.api_endpoints.keys())
+        method for method in sorted(controller.api_endpoints.keys())
     )
     return controller.to_response(
-        None,
+        raw_data=None,
         status_code=HTTPStatus.NO_CONTENT,
         headers={'Allow': allow},
     )

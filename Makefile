@@ -27,7 +27,7 @@ unit:
 
 .PHONY: smoke
 smoke:
-	# Checks that it is possible to import the base package without django.setup
+# Checks that it is possible to import the base package without django.setup
 	poetry run python -c 'from django_modern_rest import Controller'
 
 .PHONY: example

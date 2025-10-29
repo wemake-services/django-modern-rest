@@ -1,5 +1,5 @@
 import abc
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from django.http import HttpRequest
 from typing_extensions import override
@@ -10,6 +10,9 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.response import ResponseDescription
 from django_modern_rest.serialization import BaseSerializer
+
+if TYPE_CHECKING:
+    from django_modern_rest.controller import Blueprint
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -26,10 +29,11 @@ class ComponentParser:
     # Internal API:
     __is_base_type__: ClassVar[bool] = True
 
+    @classmethod
     @abc.abstractmethod
     def provide_context_data(
-        self,
-        serializer: type[BaseSerializer],
+        cls,
+        blueprint: 'Blueprint[BaseSerializer]',
         model: Any,
         request: HttpRequest,
         *args: Any,
@@ -95,9 +99,10 @@ class Query(ComponentParser, Generic[_QueryT]):
     context_name: ClassVar[str] = 'parsed_query'
 
     @override
+    @classmethod
     def provide_context_data(
-        self,
-        serializer: type[BaseSerializer],
+        cls,
+        blueprint: 'Blueprint[BaseSerializer]',
         model: Any,
         request: HttpRequest,
         *args: Any,
@@ -138,14 +143,16 @@ class Body(ComponentParser, Generic[_BodyT]):
     context_name: ClassVar[str] = 'parsed_body'
 
     @override
+    @classmethod
     def provide_context_data(
-        self,
-        serializer: type[BaseSerializer],
+        cls,
+        blueprint: 'Blueprint[BaseSerializer]',
         model: Any,
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> Any:
+        serializer = blueprint.serializer
         if request.content_type != serializer.content_type:
             raise RequestSerializationError(
                 serializer.error_serialize(
@@ -198,9 +205,10 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     context_name: ClassVar[str] = 'parsed_headers'
 
     @override
+    @classmethod
     def provide_context_data(
-        self,
-        serializer: type[BaseSerializer],
+        cls,
+        blueprint: 'Blueprint[BaseSerializer]',
         model: Any,
         request: HttpRequest,
         *args: Any,
@@ -220,7 +228,7 @@ class Path(ComponentParser, Generic[_PathT]):
         >>> import pydantic
         >>> from django_modern_rest import Body, Path, Controller, Router
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
-        >>> from django.urls import path, include
+        >>> from django.urls import include, path
 
         >>> class UserPath(pydantic.BaseModel):
         ...     user_id: int
@@ -264,9 +272,10 @@ class Path(ComponentParser, Generic[_PathT]):
     context_name: ClassVar[str] = 'parsed_path'
 
     @override
+    @classmethod
     def provide_context_data(
-        self,
-        serializer: type[BaseSerializer],
+        cls,
+        blueprint: 'Blueprint[BaseSerializer]',
         model: Any,
         request: HttpRequest,
         *args: Any,
@@ -274,7 +283,7 @@ class Path(ComponentParser, Generic[_PathT]):
     ) -> Any:
         if args:
             raise RequestSerializationError(
-                f'Path {type(self)} with {model=} does not allow '
+                f'Path {cls} with {model=} does not allow '
                 f'unnamed path parameters {args=}',
             )
         return kwargs

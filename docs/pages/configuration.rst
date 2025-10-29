@@ -1,7 +1,7 @@
 Configuration
 =============
 
-.. currentmodule:: django_modern_rest.settings
+.. module:: django_modern_rest.settings
 
 We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
 
@@ -24,7 +24,7 @@ JSON Parsing
   It is recommended to always install ``msgspec``
   with ``'django-modern-rest[msgspec]'`` extra for better performance.
 
-.. data:: 'serialize'
+.. data:: serialize
 
   Default: ``'django_modern_rest.internal.json.serialize'``
 
@@ -36,14 +36,15 @@ JSON Parsing
 
   Custom configuration example, let's say you want to always use ``ujson``:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'serialize': 'path.to.your.ujson.serialize'}
 
   See :class:`~django_modern_rest.internal.json.Serialize` for the callback type.
 
 
-.. data:: 'deserialize'
+.. data:: deserialize
 
   Default: ``'django_modern_rest.internal.json.deserialize'``
 
@@ -55,7 +56,8 @@ JSON Parsing
 
   Custom configuration example, let's say you want to always use ``ujson``:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'deserialize': 'path.to.your.ujson.deserialize'}
 
@@ -66,7 +68,7 @@ JSON Parsing
 Response handling
 -----------------
 
-.. data:: 'responses'
+.. data:: responses
 
   Default: ``[]``
 
@@ -76,7 +78,8 @@ Response handling
 
   Use it to set global responses' status codes like ``500``:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> from http import HTTPStatus
     >>> from typing_extensions import TypedDict
@@ -96,7 +99,7 @@ Response handling
     ...     ],
     ... }
 
-.. data:: 'validate_responses'
+.. data:: validate_responses
 
   Default: ``True``
 
@@ -118,7 +121,8 @@ Response handling
   But, there's a runtime cost to this. It is recommended to switch
   this validation off for production:
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'validate_responses': False}
 
@@ -134,7 +138,7 @@ Response handling
 Error handling
 --------------
 
-.. data:: 'global_error_handler'
+.. data:: global_error_handler
 
   Default: ``'django_modern_rest.errors.global_error_handler'``
 
@@ -152,7 +156,8 @@ Error handling
   See :func:`~django_modern_rest.errors.global_error_handler`
   for the callback type.
 
-  .. code:: python
+  .. code-block:: python
+    :caption: settings.py
 
     >>> DMR_SETTINGS = {'global_error_handler': 'path.to.your.handler'}
 

@@ -99,7 +99,7 @@ def test_modify_deduplicate_statuses() -> None:
         def get(self) -> int:
             raise NotImplementedError
 
-    endpoint = _DeduplicateStatuses.api_endpoints['get']
+    endpoint = _DeduplicateStatuses.api_endpoints['GET']
     assert len(endpoint.metadata.responses) == 1
 
 
