@@ -56,7 +56,7 @@ Technical details
 -----------------
 
 See source code for our
-`benchmark suite <https://github.com/wemake-services/django-modern-rest/tree/master/benchmark>`_.
+`benchmark suite <https://github.com/wemake-services/django-modern-rest/tree/master/benchmarks>`_.
 
 .. include:: ../../../benchmarks/README.md
    :parser: myst_parser.sphinx_

@@ -59,7 +59,7 @@ Run from `benchmarks/` directory:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python run_benchmark.py
+make bench
 ```
 
 
@@ -84,4 +84,28 @@ ab -c 20 -n 1000 -l -p payload.json \
   -H 'X-Request-Origin: some-origin' \
   -T 'application/json' \
   'http://127.0.0.1:8000/async/user/?per_page=1&count=2&page=3&filter=abc'
+```
+
+
+## Feature benchmarks
+
+We also benchmark several our features that can be used independenly.
+
+Pre-requirements:
+- [`hyperfine`](https://github.com/sharkdp/hyperfine)
+
+### path replacement
+
+See our [routing guide](https://django-modern-rest.readthedocs.io/en/latest/pages/routing.html)
+
+`make -C benchmarks bench-resolver` produces:
+
+```
+Summary
+  dmr-best ran
+    1.09 ± 0.01 times faster than django-best
+    1.55 ± 0.01 times faster than dmr-avg
+    1.75 ± 0.01 times faster than django-avg
+    1.98 ± 0.02 times faster than dmr-worst
+    2.58 ± 0.02 times faster than django-worst
 ```

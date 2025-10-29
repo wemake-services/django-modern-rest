@@ -53,162 +53,6 @@ Controllers in ``django-modern-rest`` are not built
 to be extended, but composed!
 
 
-Optimized URL Routing
----------------------
-
-``django-modern-rest`` provides
-an optimized :func:`~django_modern_rest.routing.path` function
-that is a **drop-in replacement** for Django's :func:`django.urls.path`.
-
-What's Changed?
-^^^^^^^^^^^^^^^
-
-The custom implementation uses prefix-based pattern matching
-for faster routing. Instead of immediately running Django's regex engine
-on every request, it performs a quick prefix check first.
-
-How It Works
-^^^^^^^^^^^^
-
-The optimizer works in two stages:
-
-**At router creation time:**
-1. Extract static prefix from route (everything before first ``<``)
-
-**On every request:**
-2. **Prefix Check** - Fast ``str.startswith()`` comparison
-3. **Pattern Resolution** - Only if prefix matches, run Django's full pattern matching to extract parameters
-
-Example Workflow:
-=================
-
-Let's say you have this URL configuration:
-
-.. code:: python
-
-    from django_modern_rest import Router, path
-
-    router = Router([
-        path('api/v1/users/', views.UserList.as_view()),
-        path('api/v1/posts/', views.PostList.as_view()),
-        path('api/v1/users/<int:id>/', views.UserDetail.as_view()),
-    ])
-
-**Traditional Django path() behavior:**
-::
-
-    Request: GET /api/v1/comments/
-
-    Django matches ALL patterns:
-    ❌ Try 'api/v1/users/'
-        Run regex... no match
-    ❌ Try 'api/v1/posts/'
-        Run regex... no match
-    ❌ Try 'api/v1/users/<int:id>/'
-        Run regex... no match
-    ❌ 404 Not Found
-
-**Optimized path() behavior:**
-::
-
-    Request: GET /api/v1/comments/
-
-    Django-modern-rest matches:
-    ✓ Check prefix 'api/v1/users/'
-        'api/v1/comments/'.startswith('api/v1/users/') = False
-        Skip regex entirely
-
-    ✓ Check prefix 'api/v1/posts/'
-        'api/v1/comments/'.startswith('api/v1/posts/') = False
-        Skip regex entirely
-
-    ✓ Check prefix 'api/v1/users/'
-        'api/v1/comments/'.startswith('api/v1/users/') = False
-        Skip regex entirely
-
-    ❌ 404 Not Found
-
-The key optimization: regex is only executed if the prefix matches!
-
-Static Routes (Zero Regex!)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For routes without parameters, the optimizer uses simple string comparison:
-
-.. code:: python
-
-    path('api/users/', view)
-
-Matching flow:
-::
-
-    Request: GET /api/users/
-
-    Match 'api/users/':
-        path == 'api/users/' ? Yes ✓
-        Return immediately (no regex at all!)
-
-Dynamic Routes (Prefix Pre-filtering)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For routes with parameters, prefix checking filters out most failed matches:
-
-.. code:: python
-
-    path('api/v1/users/<int:id>/', view)
-
-Matching flow:
-::
-
-    Request: GET /api/v1/users/123/
-
-    Match 'api/v1/users/<int:id>/':
-        'api/v1/users/123/'.startswith('api/v1/users/') ? Yes ✓
-        Now run Django's regex to extract 'id'
-        Extract: id = 123
-        Return match
-
-    Request: GET /api/v1/posts/123/
-
-    Match 'api/v1/users/<int:id>/':
-        'api/v1/posts/123/'.startswith('api/v1/users/') ? No ✓
-        Skip regex entirely, try next pattern
-
-Performance Impact
-^^^^^^^^^^^^^^^^^^
-
-Benchmark results on MacBook Pro M4 Pro:
-
-- **Best case**: 8–9% faster (match found in first few URL patterns)
-- **Average case**: 8–9% faster (match found in middle of URL patterns list)
-- **Worst case**: 23–31% faster (404 Not Found, all patterns checked)
-
-The prefix-based optimization dramatically reduces regex operations:
-
-- **Static routes**: Simple string comparison (no regex at all)
-- **Dynamic routes**: Regex only runs when prefix matches
-- **Failed matches**: Eliminated in one operation (startswith check)
-
-This is especially beneficial for applications with:
-- Large number of routes
-- High traffic
-
-Migration
-^^^^^^^^^
-
-Simply replace Django's ``path`` with ``django_modern_rest.routing.path``:
-
-.. code:: python
-
-    from django_modern_rest.routing import path  # Instead of from django.urls import path
-
-    urlpatterns = [
-        path('api/', include('myapp.urls')),
-    ]
-
-This is a drop-in replacement with no API changes required.
-
-
 .. _composed-meta:
 
 Handling meta endpoint
@@ -240,3 +84,163 @@ in the response's ``Allow`` header.
 
   As usually, we validate that the resulting ``Controller``
   won't have a mix of sync and async endpoints.
+
+
+Optimized URL Routing
+---------------------
+
+``django-modern-rest`` provides
+an optimized :func:`~django_modern_rest.routing.path` function
+that is a **drop-in replacement** for Django's :func:`django.urls.path`.
+
+What's Changed?
+^^^^^^^^^^^^^^^
+
+The custom implementation uses prefix-based pattern matching
+for faster routing. Instead of immediately running Django's regex engine
+on every request, it performs a quick prefix check first.
+
+How It Works
+^^^^^^^^^^^^
+
+The optimizer works in two stages:
+
+**At router creation time:**
+
+1. Extract static prefix from route (everything before first ``<``)
+
+**On every request:**
+
+2. Prefix Check: fast ``str.startswith()`` comparison
+3. Pattern Resolution: only if prefix matches, run Django's
+   full pattern matching to extract parameters
+
+Example Workflow
+~~~~~~~~~~~~~~~~
+
+Let's say you have this URL configuration:
+
+.. code:: python
+
+    from django_modern_rest import Router, path
+
+    router = Router([
+        path('api/v1/users/', views.UserList.as_view()),
+        path('api/v1/posts/', views.PostList.as_view()),
+        path('api/v1/users/<int:id>/', views.UserDetail.as_view()),
+    ])
+
+.. code-block::
+  :caption: Traditional Django ``path()`` behavior
+
+    Request: GET /api/v1/comments/
+
+    Django matches ALL patterns:
+    ❌ Try 'api/v1/users/'
+        Run regex... no match
+    ❌ Try 'api/v1/posts/'
+        Run regex... no match
+    ❌ Try 'api/v1/users/<int:id>/'
+        Run regex... no match
+    ❌ 404 Not Found
+
+.. code-block::
+  :caption: Our optimized ``path()`` behavior
+
+    Request: GET /api/v1/comments/
+
+    Django-modern-rest matches:
+    ✓ Check prefix 'api/v1/users/'
+        'api/v1/comments/'.startswith('api/v1/users/') = False
+        Skip regex entirely
+
+    ✓ Check prefix 'api/v1/posts/'
+        'api/v1/comments/'.startswith('api/v1/posts/') = False
+        Skip regex entirely
+
+    ✓ Check prefix 'api/v1/users/'
+        'api/v1/comments/'.startswith('api/v1/users/') = False
+        Skip regex entirely
+
+    ❌ 404 Not Found
+
+The key optimization: regex is only executed if the prefix matches!
+
+Static Routes
+~~~~~~~~~~~~~
+
+Zero regex!
+
+For routes without parameters, the optimizer uses simple string comparison:
+
+.. code:: python
+
+    path('api/users/', view)
+
+Matching flow::
+
+    Request: GET /api/users/
+
+    Match 'api/users/':
+        path == 'api/users/' ? Yes ✓
+        Return immediately (no regex at all!)
+
+Dynamic Routes (Prefix Pre-filtering)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For routes with parameters, prefix checking filters out most failed matches:
+
+.. code:: python
+
+    path('api/v1/users/<int:id>/', view)
+
+Matching flow::
+
+    Request: GET /api/v1/users/123/
+
+    Match 'api/v1/users/<int:id>/':
+        'api/v1/users/123/'.startswith('api/v1/users/') ? Yes ✓
+        Now run Django's regex to extract 'id'
+        Extract: id = 123
+        Return match
+
+    Request: GET /api/v1/posts/123/
+
+    Match 'api/v1/users/<int:id>/':
+        'api/v1/posts/123/'.startswith('api/v1/users/') ? No ✓
+        Skip regex entirely, try next pattern
+
+Performance Impact
+~~~~~~~~~~~~~~~~~~
+
+Benchmark results on MacBook Pro M4 Pro:
+
+- **Best case**: 8–9% faster (match found in first few URL patterns)
+- **Average case**: 8–9% faster (match found in middle of URL patterns list)
+- **Worst case**: 23–31% faster (404 Not Found, all patterns checked)
+
+The prefix-based optimization dramatically reduces regex operations:
+
+- **Static routes**: Simple string comparison (no regex at all)
+- **Dynamic routes**: Regex only runs when prefix matches
+- **Failed matches**: Eliminated in one operation (startswith check)
+
+This is especially beneficial for applications with:
+- Large number of routes
+- High traffic
+
+Migration
+~~~~~~~~~
+
+Simply replace Django's ``path`` with ``django_modern_rest.routing.path``:
+
+.. code:: python
+
+    # Instead of ``from django.urls import path``:
+    from django_modern_rest.routing import path
+
+    urlpatterns = [
+        path('api/', include('myapp.urls')),
+    ]
+
+This is a drop-in replacement with no API changes required.

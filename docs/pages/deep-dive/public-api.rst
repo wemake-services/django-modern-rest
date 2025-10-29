@@ -92,6 +92,8 @@ Routing
 
 .. autofunction:: django_modern_rest.routing.compose_controllers
 
+.. autofunction:: django_modern_rest.routing.path
+
 
 Meta mixins
 -----------
