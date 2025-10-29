@@ -123,6 +123,9 @@ qualname_overrides = {
     # Django documents these classes under re-exported path names:
     'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
     'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
+    'django.http.response.HttpResponseBase': (
+        'django:django.http.HttpResponseBase'
+    ),
 }
 
 # Set `typing.TYPE_CHECKING` to `True`:

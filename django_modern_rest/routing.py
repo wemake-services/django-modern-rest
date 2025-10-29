@@ -181,7 +181,7 @@ class _PrefixRoutePattern(RoutePattern):
             if not self._is_endpoint and path.startswith(self._prefix):
                 return path[len(self._prefix) :], (), {}
         elif path.startswith(self._prefix):
-            return super().match(path)  # pyright: ignore
+            return super().match(path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
         return None
 
 
