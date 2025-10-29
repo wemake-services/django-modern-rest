@@ -1,3 +1,4 @@
+import types
 from collections.abc import Callable, Coroutine, Sequence
 from typing import (
     TYPE_CHECKING,
@@ -8,24 +9,22 @@ from typing import (
     overload,
 )
 
-from django.http import HttpRequest, HttpResponse, HttpResponseBase
+from django.http import HttpResponseBase
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from typing_extensions import override
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.controller import Blueprint, Controller
     from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
     from django_modern_rest.serialization import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
-_ViewFunc: TypeAlias = Callable[..., HttpResponse]
-_ControllerT: TypeAlias = type['Controller[Any]']
+_BlueprintT: TypeAlias = type['Blueprint[_SerializerT]']
 _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
-_AnyPattern = URLPattern | URLResolver
+_AnyPattern: TypeAlias = URLPattern | URLResolver
 
 
 class Router:
@@ -38,119 +37,57 @@ class Router:
         self.urls = urls
 
 
-def compose_controllers(
+def compose_blueprints(
     # This seems like a strange design at first, but it actually allows:
     # at least two pos-only controllers and then any amount of extra ones.
-    first_controller: type['Controller[_SerializerT]'],
-    second_controller: type['Controller[_SerializerT]'],
+    first_blueprint: '_BlueprintT[_SerializerT]',
     /,
-    *extra: type['Controller[_SerializerT]'],
+    *extra: '_BlueprintT[_SerializerT]',
     meta_mixin: type['MetaMixin | AsyncMetaMixin'] | None = None,
-    **init_kwargs: Any,
 ) -> type['Controller[_SerializerT]']:
     """
-    Combines several controllers with different http methods into one url.
+    Combines several blueprints with different http methods into one controller.
+
+    That can be used a single URL route.
 
     Args:
-        first_controller: First required controller class to compose.
-        second_controller: Second required controller class to compose.
-        extra: Other optional controller classes to compose.
+        first_blueprint: First required blueprint class to compose.
+        extra: Other optional blueprint classes to compose.
         meta_mixin: Type to add to support ``OPTIONS`` method.
-        init_kwargs: Kwargs to be passed to controller instance creation.
 
     Raises:
-        ValueError: When local validation fails.
-        EndpointMetadataError: When controller validation fails.
+        EndpointMetadataError: When blueprint validation fails.
 
     Returns:
         New controller class that has all the endpoints
-        from all composed controllers.
+        from all composed blueprints.
 
     """
     from django_modern_rest.controller import Controller  # noqa: PLC0415
 
-    controllers = [first_controller, second_controller, *extra]
-    _validate_controllers_composition(controllers)
+    blueprints = [first_blueprint, *extra]
+    type_name = ', '.join(typ.__qualname__ for typ in blueprints)
 
-    endpoints, method_mapping = _build_method_mapping(controllers)
-    serializer = first_controller.serializer
-    controller_mixins = (meta_mixin,) if meta_mixin else ()
-
-    class ComposedController(  # noqa: WPS431
-        *controller_mixins,  # type: ignore[misc]  # noqa: WPS606
+    serializer = first_blueprint.serializer
+    bases = [
+        *([meta_mixin] if meta_mixin else []),
         Controller[serializer],  # type: ignore[valid-type]
-    ):
-        original_controllers = controllers
-        api_endpoints = endpoints
-
-        @override
-        def dispatch(
-            self,
-            request: HttpRequest,
-            *args: Any,
-            **kwargs: Any,
-        ) -> HttpResponse:
-            # Routing is efficient in runtime, with O(1) on average.
-            # Since we build everything during import time :wink:
-            method = request.method.lower()  # type: ignore[union-attr]
-            controller_cls = method_mapping.get(method)
-            if controller_cls is not None:
-                # Here we have to construct new controller instances,
-                # this is rather cheap and has the principle of "least surprise"
-                # but I would love to reuse instances for speed :(
-                controller = controller_cls(**init_kwargs)
-                # We skip useless default checks after `.setup` here:
-                controller.setup(request, *args, **kwargs)
-                return controller.dispatch(request, *args, **kwargs)
-            if meta_mixin and method == 'options':
-                return self.api_endpoints['options'](self, *args, **kwargs)
-            return first_controller.handle_method_not_allowed(method)
-
-    return ComposedController
+    ]
+    return types.new_class(
+        f'Composed@[{type_name}]',
+        bases,
+        exec_body=_body_builder(blueprints),
+    )
 
 
-def _validate_controllers_composition(
-    controllers: list[_ControllerT],
-) -> None:
-    # We know that there are at least 2 controllers as this point:
-    serializer = controllers[0].serializer
-    for controller in controllers:
-        if serializer is not controller.serializer:
-            raise ValueError(
-                'Composing controllers with different serializer types '
-                'is not supported',
-            )
+def _body_builder(
+    blueprints: list['_BlueprintT[_SerializerT]'],
+) -> Callable[[dict[str, Any]], object]:
+    def factory(ns: dict[str, Any]) -> object:
+        ns['blueprints'] = blueprints
+        return ns
 
-
-_MethodMappingT: TypeAlias = dict[str, _ControllerT]
-_EndpointsT: TypeAlias = dict[str, 'Endpoint']
-
-
-def _build_method_mapping(
-    controllers: list[_ControllerT],
-) -> tuple[_EndpointsT, _MethodMappingT]:
-    method_mapping: _MethodMappingT = {}
-    endpoints: _EndpointsT = {}
-
-    for controller in controllers:
-        controller_methods = controller.api_endpoints.keys()
-        if not controller_methods:
-            raise ValueError(
-                f'Controller {controller} must have at least one endpoint '
-                'to be composed',
-            )
-        method_intersection = method_mapping.keys() & controller_methods
-        if method_intersection:
-            raise ValueError(
-                f'Controllers have {method_intersection!r} common methods, '
-                'while all endpoints must be unique',
-            )
-
-        endpoints.update(controller.api_endpoints)
-        method_mapping.update(
-            dict.fromkeys(controller.api_endpoints, controller),
-        )
-    return endpoints, method_mapping
+    return factory
 
 
 class _PrefixRoutePattern(RoutePattern):
@@ -194,6 +131,7 @@ def path(
 ) -> URLPattern: ...
 
 
+# NOTE: keep in sync with `django-stubs`!
 @overload
 def path(
     route: str,
@@ -235,5 +173,11 @@ def path(
     """Creates URL pattern using prefix-based matching for faster routing."""
     return cast(
         _AnyPattern,
-        _django_path(route, view, kwargs, name, Pattern=_PrefixRoutePattern),  # type: ignore[call-overload]
+        _django_path(  # type: ignore[call-overload]
+            route,
+            view,
+            kwargs,
+            name,
+            Pattern=_PrefixRoutePattern,
+        ),
     )

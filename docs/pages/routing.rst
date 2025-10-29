@@ -12,17 +12,17 @@ about its future URL. Why so?
 
 So, how do you compose different controllers with different parsing
 behaviours into a single URL? For this we use
-:func:`~django_modern_rest.routing.compose_controllers` function:
+:func:`~django_modern_rest.routing.compose_blueprints` function:
 
 .. code:: python
 
   from django.urls import include, path
-  from django_modern_rest import Router, compose_controllers
+  from django_modern_rest import Router, compose_blueprints
 
   router = Router([
     path(
         'user/',
-        compose_controllers(
+        compose_blueprints(
             views.UserCreateController,
             views.UserListController,
             # Can compose as many controllers as you need!
@@ -58,10 +58,10 @@ to be extended, but composed!
 Handling meta endpoint
 ----------------------
 
-When using :func:`~django_modern_rest.routing.compose_controllers`,
+When using :func:`~django_modern_rest.routing.compose_blueprints`,
 duplicate ``meta`` methods will be a import-time error. To solve this,
 remove ``meta`` method from individual controllers
-and use ``meta_mixin=`` keyword parameter to ``compose_controllers``.
+and use ``meta_mixin=`` keyword parameter to ``compose_blueprints``.
 
 Example:
 
@@ -69,7 +69,7 @@ Example:
 
   from django_modern_rest import AsyncMetaMixin
 
-  composed = compose_controllers(
+  composed = compose_blueprints(
       UserPut,
       UserPatch,
       # If controllers are sync, use `MetaMixin`

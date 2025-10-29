@@ -40,9 +40,10 @@ from django_modern_rest.validation import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
+    from django_modern_rest.controller import Blueprint, Controller
 
 
+# TODO: make generic
 class Endpoint:  # noqa: WPS214
     """
     Represents the single API endpoint.
@@ -52,16 +53,15 @@ class Endpoint:  # noqa: WPS214
     """
 
     __slots__ = (
-        '_controller',
         '_func',
         '_method',
+        '_original_blueprint_cls',
         'is_async',
         'metadata',
         'response_validator',
     )
 
     _func: Callable[..., Any]
-    _controller: 'Controller[BaseSerializer]'
 
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
@@ -74,14 +74,19 @@ class Endpoint:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         *,
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> None:
         """
         Create an entrypoint.
 
         Args:
-            func: Entrypoint handler. An actual function.
-            controller_cls: ``Controller`` class that this endpoint belongs to.
+            func: Entrypoint handler. An actual function to be called.
+            blueprint_cls: ``Blueprint`` class that this endpoint belongs to.
+
+        .. error::
+
+            Endpoint object must not have any mutable instance state,
+            because its instance is reused for all requests.
 
         """
         payload: PayloadT = getattr(func, '__payload__', None)
@@ -89,7 +94,7 @@ class Endpoint:  # noqa: WPS214
         # since decorator is optional:
         metadata = self.metadata_validator_cls(payload=payload)(
             func,
-            controller_cls=controller_cls,
+            blueprint_cls=blueprint_cls,
         )
         func.__metadata__ = metadata  # type: ignore[attr-defined]
         self.metadata = metadata
@@ -97,10 +102,10 @@ class Endpoint:  # noqa: WPS214
         # We need a func before any wrappers, but with metadata:
         self.response_validator = self.response_validator_cls(
             metadata,
-            controller_cls.serializer,
+            blueprint_cls.serializer,
         )
         # We can now run endpoint's optimization:
-        controller_cls.serializer.optimizer.optimize_endpoint(metadata)
+        blueprint_cls.serializer.optimizer.optimize_endpoint(metadata)
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -109,99 +114,127 @@ class Endpoint:  # noqa: WPS214
         else:
             self._func = self._sync_endpoint(func)
             self.is_async = False
+        self._original_blueprint_cls = blueprint_cls
 
     def __call__(
         self,
+        blueprint: 'Blueprint[BaseSerializer] | None',
         controller: 'Controller[BaseSerializer]',
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
         """Run the endpoint and return the response."""
-        self._controller = controller
-        return self._func(*args, **kwargs)  # type: ignore[no-any-return]
+        return self._func(  # type: ignore[no-any-return]
+            blueprint,
+            controller,
+            *args,
+            **kwargs,
+        )
 
-    def handle_error(self, exc: Exception) -> HttpResponse:
+    def handle_error(
+        self,
+        blueprint: 'Blueprint[BaseSerializer] | None',
+        controller: 'Controller[BaseSerializer]',
+        exc: Exception,
+    ) -> HttpResponse:
         """
         Return error response if possible.
 
         Override this method to add custom error handling.
         """
+        active_blueprint = blueprint or controller
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return self.metadata.error_handler(  # type: ignore[return-value]
-                    self._controller,
+                    active_blueprint,
                     self,
                     exc,
                 )
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        # Per-endpoint error handler didn't work.
+        # TODO: redesign error handling, do not skip `Blueprint` layer
+        # Per-endpoint error handler and per-blueprint handlers didn't work.
         # Now, try the per-controller one.
         try:
-            return self._controller.handle_error(self, exc)
+            return active_blueprint.handle_error(self, exc)
         except Exception:
             # And the last option is to handle error globally:
-            return self._handle_default_error(exc)
+            return self._handle_default_error(active_blueprint, exc)
 
-    async def handle_async_error(self, exc: Exception) -> HttpResponse:
+    async def handle_async_error(
+        self,
+        blueprint: 'Blueprint[BaseSerializer] | None',
+        controller: 'Controller[BaseSerializer]',
+        exc: Exception,
+    ) -> HttpResponse:
         """
         Return error response if possible.
 
         Override this method to add custom async error handling.
         """
+        active_blueprint = blueprint or controller
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return await self.metadata.error_handler(  # type: ignore[no-any-return, misc]
-                    self._controller,
+                    active_blueprint,
                     self,
                     exc,
                 )
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        # Per-endpoint error handler didn't work.
+        # TODO: redesign error handling, do not skip `Blueprint` layer
+        # Per-endpoint error handler and per-blueprint handlers didn't work.
         # Now, try the per-controller one.
         try:
-            return await self._controller.handle_async_error(self, exc)
+            return await active_blueprint.handle_async_error(self, exc)
         except Exception:
             # And the last option is to handle error globally:
-            return self._handle_default_error(exc)
+            return self._handle_default_error(active_blueprint, exc)
 
     def _async_endpoint(
         self,
         func: Callable[..., Any],
     ) -> Callable[..., Awaitable[HttpResponse]]:
         async def decorator(
+            blueprint: 'Blueprint[BaseSerializer] | None',
+            controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
+            active_blueprint = blueprint or controller
             # Parse request:
             try:
-                self._controller.serializer_context.parse_and_bind(
-                    self._controller,
-                    self._controller.request,
+                active_blueprint.serializer_context.parse_and_bind(
+                    active_blueprint,
+                    active_blueprint.request,
                     *args,
                     **kwargs,
                 )
             except Exception as exc:
                 return self._make_http_response(
-                    await self.handle_async_error(exc),
+                    active_blueprint,
+                    await self.handle_async_error(blueprint, controller, exc),
                 )
             # Return response:
             try:
-                func_result = await func(self._controller)
+                func_result = await func(active_blueprint)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
-                func_result = self._controller.to_error(
+                func_result = active_blueprint.to_error(
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
                     status_code=exc.status_code,
                     headers=exc.headers,
                 )
             except Exception as exc:
-                func_result = await self.handle_async_error(exc)
-            return self._make_http_response(func_result)
+                func_result = await self.handle_async_error(
+                    blueprint,
+                    controller,
+                    exc,
+                )
+            return self._make_http_response(active_blueprint, func_result)
 
         return decorator
 
@@ -210,37 +243,53 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., HttpResponse]:
         def decorator(
+            blueprint: 'Blueprint[BaseSerializer] | None',
+            controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
+            active_blueprint = blueprint or controller
             # Parse request:
             try:
-                self._controller.serializer_context.parse_and_bind(
-                    self._controller,
-                    self._controller.request,
+                active_blueprint.serializer_context.parse_and_bind(
+                    active_blueprint,
+                    active_blueprint.request,
                     *args,
                     **kwargs,
                 )
             except Exception as exc:
                 return self._make_http_response(
-                    self.handle_error(exc),
+                    active_blueprint,
+                    self.handle_error(
+                        blueprint,
+                        controller,
+                        exc,
+                    ),
                 )
             # Return response:
             try:
-                func_result = func(self._controller)
+                func_result = func(active_blueprint)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
-                func_result = self._controller.to_error(
+                func_result = active_blueprint.to_error(
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
                     status_code=exc.status_code,
                     headers=exc.headers,
                 )
             except Exception as exc:
-                func_result = self.handle_error(exc)
-            return self._make_http_response(func_result)
+                func_result = self.handle_error(
+                    blueprint,
+                    controller,
+                    exc,
+                )
+            return self._make_http_response(active_blueprint, func_result)
 
         return decorator
 
-    def _make_http_response(self, raw_data: Any | HttpResponse) -> HttpResponse:
+    def _make_http_response(
+        self,
+        blueprint: 'Blueprint[BaseSerializer]',
+        raw_data: Any | HttpResponse,
+    ) -> HttpResponse:
         """
         Returns the actual ``HttpResponse`` object after optional validation.
 
@@ -248,36 +297,44 @@ class Endpoint:  # noqa: WPS214
         just validates it before returning.
         """
         try:
-            return self._validate_response(raw_data)
+            return self._validate_response(blueprint, raw_data)
         except ResponseSerializationError as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # here, because it is too late. Since `ResponseSerializationError`
             # happened mostly because the return
             # schema validation was not successful.
             payload = {'detail': exc.args[0]}
-            return self._controller.to_error(
+            return blueprint.to_error(
                 payload,
                 status_code=exc.status_code,
             )
 
-    def _validate_response(self, raw_data: Any | HttpResponse) -> HttpResponse:
+    def _validate_response(
+        self,
+        blueprint: 'Blueprint[BaseSerializer]',
+        raw_data: Any | HttpResponse,
+    ) -> HttpResponse:
         if isinstance(raw_data, HttpResponse):
             return self.response_validator.validate_response(
-                self._controller,
+                blueprint,
                 raw_data,
             )
 
         validated = self.response_validator.validate_modification(
-            self._controller,
+            blueprint,
             raw_data,
         )
         return HttpResponse(
-            content=self._controller.serializer.serialize(validated.raw_data),
+            content=blueprint.serializer.serialize(validated.raw_data),
             status=validated.status_code,
             headers=validated.headers,
         )
 
-    def _handle_default_error(self, exc: Exception) -> HttpResponse:
+    def _handle_default_error(
+        self,
+        blueprint: 'Blueprint[BaseSerializer]',
+        exc: Exception,
+    ) -> HttpResponse:
         """
         Import the global error handling and call it.
 
@@ -286,7 +343,7 @@ class Endpoint:  # noqa: WPS214
         return resolve_setting(  # type: ignore[no-any-return]
             DMR_GLOBAL_ERROR_HANDLER_KEY,
             import_string=True,
-        )(self._controller, self, exc)
+        )(blueprint, self, exc)
 
 
 _ParamT = ParamSpec('_ParamT')

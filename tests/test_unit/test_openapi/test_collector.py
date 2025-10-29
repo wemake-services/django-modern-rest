@@ -4,7 +4,7 @@ from typing import Any, final
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
-from django_modern_rest import Controller
+from django_modern_rest import Blueprint, Controller, compose_blueprints
 from django_modern_rest.openapi.collector import (
     ControllerMapping,
     _join_paths,
@@ -14,7 +14,7 @@ from django_modern_rest.openapi.collector import (
     controller_collector,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import Router, compose_controllers
+from django_modern_rest.routing import Router
 
 
 @final
@@ -57,6 +57,18 @@ class _PostController(Controller[PydanticSerializer]):
 
     def post(self) -> str:
         """POST endpoint."""
+        raise NotImplementedError
+
+
+@final
+class _GetBlueprint(Blueprint[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+@final
+class _PostBlueprint(Blueprint[PydanticSerializer]):
+    def post(self) -> str:
         raise NotImplementedError
 
 
@@ -159,7 +171,7 @@ def test_join_paths(
     ('path_str', 'view_class'),
     [
         ('full/', _FullController),
-        ('composed', compose_controllers(_GetController, _PostController)),
+        ('composed', compose_blueprints(_GetBlueprint, _PostBlueprint)),
         ('sla/shed/', _GetController),
         ('', _EmptyController),
     ],
@@ -181,7 +193,7 @@ def test_process_pattern_with_different_views(
     [
         _EmptyController.as_view(),
         _FullController.as_view(),
-        compose_controllers(_GetController, _PostController).as_view(),
+        compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
         include([path('inner/', _FullController.as_view())]),
     ],
 )
@@ -203,7 +215,7 @@ def test_controller_collector_with_router() -> None:
         path('nested/', include([path('inner/', _PostController.as_view())])),
         path(
             'composed/',
-            compose_controllers(_GetController, _PostController).as_view(),
+            compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
         ),
     ]
     controllers = controller_collector(Router(patterns))

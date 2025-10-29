@@ -134,7 +134,7 @@ Here's an example of a custom ``meta`` implementation:
 
 
 See how you can use :ref:`composed-meta`
-with :func:`~django_modern_rest.routing.compose_controllers`.
+with :func:`~django_modern_rest.routing.compose_blueprints`.
 
 
 Customizing controllers

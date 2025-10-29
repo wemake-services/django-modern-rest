@@ -55,7 +55,7 @@ def test_no_components(
     method: HTTPMethod,
 ) -> None:
     """Ensure controller without components has empty component_parsers."""
-    endpoint = _NoComponentsController.api_endpoints[str(method).lower()]
+    endpoint = _NoComponentsController.api_endpoints[str(method)]
     assert endpoint.metadata.component_parsers == []
 
 
@@ -84,7 +84,7 @@ def test_single_component_query(
     method: HTTPMethod,
 ) -> None:
     """Ensure controller with Query component has it in component_parsers."""
-    endpoint = _QueryController.api_endpoints[str(method).lower()]
+    endpoint = _QueryController.api_endpoints[str(method)]
     assert endpoint.metadata.component_parsers == [
         (
             Query[_QueryModel],
@@ -121,7 +121,7 @@ def test_multiple_components(
     method: HTTPMethod,
 ) -> None:
     """Ensure controller has all multiple components in component_parsers."""
-    endpoint = _MultiComponentController.api_endpoints[str(method).lower()]
+    endpoint = _MultiComponentController.api_endpoints[str(method)]
     assert isinstance(endpoint.metadata.component_parsers, list)
     assert tuple(endpoint.metadata.component_parsers) == (
         (Query[_QueryModel], (_QueryModel,)),

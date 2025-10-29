@@ -106,6 +106,8 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.response._ItemT'),
     (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
     (PY_CLASS, '_SerializerT'),
+    (PY_CLASS, '_BlueprintT'),
+    ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (PY_CLASS, 'django.urls.resolvers.URLResolver'),
