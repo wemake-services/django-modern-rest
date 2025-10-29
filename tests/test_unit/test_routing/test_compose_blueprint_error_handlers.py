@@ -1,17 +1,13 @@
 import json
 from collections.abc import Iterator, Sequence
 from http import HTTPStatus
-from typing import (
-    ClassVar,
-    TypeAlias,
-    final,
-    override,
-)
+from typing import ClassVar, TypeAlias, final
 
 import pydantic
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
+from typing_extensions import override
 
 from django_modern_rest import (
     Blueprint,
