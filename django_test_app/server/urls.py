@@ -18,7 +18,7 @@ Including another URLconf
 
 from django.urls import include, path, re_path
 
-from django_modern_rest import Router, compose_controllers
+from django_modern_rest import Router, compose_blueprints
 from django_modern_rest.openapi import (
     OpenAPIConfig,
     openapi_spec,
@@ -49,28 +49,28 @@ router = Router([
     ),
     path(
         'user/',
-        compose_controllers(
-            rest_views.UserCreateController,
-            rest_views.UserListController,
+        compose_blueprints(
+            rest_views.UserCreateBlueprint,
+            rest_views.UserListBlueprint,
         ).as_view(),
         name='users',
     ),
     path(
         'user/<int:user_id>',
-        compose_controllers(
-            rest_views.UserReplaceController,
-            rest_views.UserUpdateController,
+        compose_blueprints(
+            rest_views.UserReplaceBlueprint,
+            rest_views.UserUpdateBlueprint,
         ).as_view(),
         name='user_update',
     ),
     re_path(
         r'user/direct/re/(\d+)',
-        rest_views.UserUpdateController.as_view(),
+        compose_blueprints(rest_views.UserUpdateBlueprint).as_view(),
         name='user_update_direct_re',
     ),
     path(
         'user/direct/<int:user_id>',
-        rest_views.UserUpdateController.as_view(),
+        compose_blueprints(rest_views.UserUpdateBlueprint).as_view(),
         name='user_update_direct',
     ),
     path(

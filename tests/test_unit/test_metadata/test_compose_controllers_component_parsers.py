@@ -6,13 +6,13 @@ import pytest
 from django.http import HttpResponse
 
 from django_modern_rest import (  # noqa: WPS235
+    Blueprint,
     Body,
-    Controller,
     Headers,
     Path,
     Query,
     ResponseDescription,
-    compose_controllers,
+    compose_blueprints,
     modify,
     validate,
 )
@@ -35,40 +35,33 @@ class _PathModel(pydantic.BaseModel):
     user_id: int
 
 
-class _GetController(
+class _GetBlueprint(
     Query[_QueryModel],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
 ):
     @modify()
     def get(self) -> list[int]:
         raise NotImplementedError
 
 
-class _PostController(
+class _PostBlueprint(
     Body[_BodyModel],
     Headers[_HeadersModel],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
 ):
     @validate(ResponseDescription(list[int], status_code=HTTPStatus.OK))
     def post(self) -> HttpResponse:
         raise NotImplementedError
 
 
-class _PutController(  # noqa: WPS215
+class _PutBlueprint(  # noqa: WPS215
     Query[_QueryModel],
     Body[_BodyModel],
     Path[_PathModel],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
 ):
     def put(self) -> dict[str, str]:
         raise NotImplementedError
-
-
-ComposedController = compose_controllers(
-    _GetController,
-    _PostController,
-    _PutController,
-)
 
 
 @pytest.mark.parametrize(
@@ -95,11 +88,17 @@ ComposedController = compose_controllers(
         ),
     ],
 )
-def test_compose_controllers_preserves_parsers(
+def test_compose_blueprints_preserves_parsers(
     *,
     method: HTTPMethod,
     expected: Any,
 ) -> None:
-    """Ensure composed controller preserves component_parsers."""
-    endpoint = ComposedController.api_endpoints[str(method).lower()]
+    """Ensure composed blueprints preserve ``component_parsers``."""
+    composed = compose_blueprints(
+        _GetBlueprint,
+        _PostBlueprint,
+        _PutBlueprint,
+    )
+
+    endpoint = composed.api_endpoints[str(method)]
     assert endpoint.metadata.component_parsers == list(expected)

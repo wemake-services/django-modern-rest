@@ -138,7 +138,7 @@ def test_valid_api_error_contoller_level(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures validation can validate api errors on controllers."""
-    endpoint = _ControllerLevelAPIError.api_endpoints['get']
+    endpoint = _ControllerLevelAPIError.api_endpoints['GET']
     assert len(endpoint.metadata.responses) == 2
 
     request = dmr_rf.get('/whatever/')

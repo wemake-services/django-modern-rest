@@ -8,7 +8,8 @@ import pydantic
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
-from django_modern_rest import (
+from django_modern_rest import (  # noqa: WPS235
+    Blueprint,
     Body,
     Controller,
     Headers,
@@ -106,11 +107,11 @@ class _UserPath(pydantic.BaseModel):
 
 
 @final
-class UserCreateController(  # noqa: WPS215
+class UserCreateBlueprint(  # noqa: WPS215
     Query[_QueryData],
     Headers[_CustomHeaders],
     Body[_UserInput],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
 ):
     def post(self) -> _UserOutput:
         return _UserOutput(
@@ -124,7 +125,7 @@ class UserCreateController(  # noqa: WPS215
 
 
 @final
-class UserListController(Controller[PydanticSerializer]):
+class UserListBlueprint(Blueprint[PydanticSerializer]):
     def get(self) -> list[_UserInput]:
         return [
             _UserInput(email='first@mail.ru', age=1),
@@ -133,9 +134,9 @@ class UserListController(Controller[PydanticSerializer]):
 
 
 @final
-class UserUpdateController(
+class UserUpdateBlueprint(
     Body[_UserInput],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
     Path[_UserPath],
 ):
     async def patch(self) -> _UserInput:
@@ -146,8 +147,8 @@ class UserUpdateController(
 
 
 @final
-class UserReplaceController(
-    Controller[PydanticSerializer],
+class UserReplaceBlueprint(
+    Blueprint[PydanticSerializer],
     Path[_UserPath],
 ):
     @validate(

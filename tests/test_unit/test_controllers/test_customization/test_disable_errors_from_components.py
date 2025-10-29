@@ -47,7 +47,7 @@ def test_responses_are_not_added(
     method: HTTPMethod,
 ) -> None:
     """Ensures that response validation works for default settings."""
-    endpoint = _WrongController.api_endpoints[str(method).lower()]
+    endpoint = _WrongController.api_endpoints[str(method)]
     assert len(endpoint.metadata.responses) == 1
 
     request = dmr_rf.generic(str(method), '/whatever/')

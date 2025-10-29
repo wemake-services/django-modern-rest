@@ -1,3 +1,4 @@
+from collections.abc import Mapping, Sequence
 from http import HTTPMethod, HTTPStatus
 from typing import (
     Any,
@@ -28,7 +29,10 @@ from django_modern_rest.types import (
     infer_bases,
     infer_type_args,
 )
-from django_modern_rest.validation import ControllerValidator
+from django_modern_rest.validation import (
+    BlueprintValidator,
+    ControllerValidator,
+)
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -44,9 +48,15 @@ _ComponentParserSpec: TypeAlias = tuple[
 ]
 
 
-class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
+class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     """
-    Defines API views as controllers.
+    Building block for the API, a collection of named endpoints.
+
+    Use it when you want to compose several endpoints with different
+    parsing rules into one final controller.
+
+    It cannot be used directly in routing.
+    Before routing, it must be turned into a full-featured controller.
 
     Attributes:
         endpoint_cls: Class to create endpoints with.
@@ -64,7 +74,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             :class:`~django_modern_rest.components.Headers`,
             :class:`~django_modern_rest.components.Query`, etc into
             one big model for faster validation and better error messages.
-        controller_validator_cls: Runs controller validation on definition.
+        validator_cls: Runs controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
@@ -74,6 +84,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         responses_from_components: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
+        request: Current :class:`~django.http.HttpRequest` instance.
+        args: Path positional parameters of the request.
+        kwargs: Path named parameters of the request.
 
     """
 
@@ -84,18 +97,23 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     serializer_context_cls: ClassVar[type[SerializerContext]] = (
         SerializerContext
     )
-    controller_validator_cls: ClassVar[type[ControllerValidator]] = (
-        ControllerValidator
-    )
+    validator_cls: ClassVar[type[BlueprintValidator]] = BlueprintValidator
     # str and not HTTPMethod, because of `meta` method:
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | None] = None
     responses: ClassVar[list[ResponseDescription]] = []
     responses_from_components: ClassVar[bool] = True
     http_methods: ClassVar[frozenset[str]] = frozenset(
-        # We replace old existing `View.options` method with `Controller.meta`:
+        # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
+
+    # Instance public API:
+    request: HttpRequest
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any]
+
+    __slots__ = ('args', 'kwargs', 'request')
 
     # Internal API:
     _component_parsers: ClassVar[list[_ComponentParserSpec]]
@@ -103,9 +121,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     @override
     def __init_subclass__(cls) -> None:
-        """Build controller class from different parts."""
+        """Build blueprint class from different parts."""
         super().__init_subclass__()
-        type_args = infer_type_args(cls, Controller)
+        type_args = infer_type_args(cls, Blueprint)
         if len(type_args) != 1:
             raise UnsolvableAnnotationsError(
                 f'Type args {type_args} are not correct for {cls}, '
@@ -127,14 +145,24 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         if getattr(cls, 'api_endpoints', None) is None:
             cls.api_endpoints = {}
         cls.api_endpoints.update({
-            # Rename `meta` back to `options`:
-            'options' if meth == 'meta' else meth: cls.endpoint_cls(
-                getattr(cls, meth),
-                controller_cls=cls,
+            canonical: cls.endpoint_cls(
+                getattr(cls, dsl),
+                blueprint_cls=cls,
             )
-            for meth in cls.existing_http_methods()
+            for canonical, dsl in cls.existing_http_methods()
         })
-        cls._is_async = cls.controller_validator_cls()(cls)
+        cls._is_async = cls.validator_cls()(cls)
+
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        """
+        Set request context.
+
+        Unlike :meth:`~django.views.generic.base.View.setup` does not set
+        ``head`` method automatically.
+        """
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
 
     def to_response(
         self,
@@ -184,32 +212,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             status_code=status_code,
         )
 
-    @override
-    def dispatch(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponse:
-        """
-        Find an endpoint that serves this HTTP method and call it.
-
-        Return 405 if this method is not allowed.
-        """
-        # Fast path for method resolution:
-        method = request.method.lower()  # type: ignore[union-attr]
-        endpoint = self.api_endpoints.get(method)
-        if endpoint is not None:
-            # TODO: support `StreamingHttpResponse`
-            # TODO: support `FileResponse`
-            # TODO: support redirects
-            return endpoint(self, *args, **kwargs)  # we don't pass request
-        # This return is very special,
-        # since it does not have an attached endpoint.
-        # All other responses are handled on endpoint level
-        # with all the response type validation.
-        return self.handle_method_not_allowed(method)
-
     def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
         """
         Return error response if possible. Sync case.
@@ -233,6 +235,170 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         Won't be called when using sync endpoints.
         """
         raise exc
+
+    @classmethod
+    def existing_http_methods(cls) -> set[tuple[str, str]]:
+        """
+        Returns what HTTP methods are implemented in this view.
+
+        Returns both canonical http method name and our dsl name.
+        """
+        return {
+            # Rename `meta` back to `options`:
+            (
+                'OPTIONS' if dsl_method == 'meta' else dsl_method.upper(),
+                dsl_method,
+            )
+            for dsl_method in cls.http_methods
+            if getattr(cls, dsl_method, None) is not None
+        }
+
+    @classmethod
+    def semantic_responses(cls) -> list[ResponseDescription]:
+        """
+        Returns all user-defined and component-defined responses.
+
+        Optionally component-defined responses can be turned off with falsy
+        :attr:`responses_from_components` attribute on a controller.
+        We call it once per endpoint creation.
+        """
+        if not cls.responses_from_components:
+            return cls.responses
+
+        # Get the responses that were provided by the user.
+        existing_codes = {response.status_code for response in cls.responses}
+        extra_responses = [
+            response
+            for component, model in cls._component_parsers
+            for response in component.provide_responses(
+                cls.serializer,
+                model,
+            )
+            # If some response already exists, do not override it.
+            if response.status_code not in existing_codes
+        ]
+        return [*cls.responses, *set(extra_responses)]
+
+    # Private API:
+
+    @classmethod
+    def _maybe_wrap(
+        cls,
+        response: _ResponseT,
+    ) -> _ResponseT:
+        """Wraps response into a coroutine if this is an async controller."""
+        if cls._is_async:
+            return identity(response)
+        return response
+
+
+class Controller(Blueprint[_SerializerT_co], View):
+    """
+    Defines API views as controllers.
+
+    Controller is a ``View`` subclass that should be used in the final routing.
+
+    Attributes:
+        endpoint_cls: Class to create endpoints with.
+        serializer: Serializer that is passed via type parameters.
+            The main goal of the serializer is to serialize object
+            to json and deserialize them from json.
+            You can't change the serializer simply by modifying
+            the attribute in the controller class.
+            Because it is already passed to many other places.
+            To customize it: create a new class,
+            subclass :class:`~django_modern_rest.serialization.BaseSerializer`,
+            and pass the new type as a type argument to the controller.
+        serializer_context_cls: Class for the input model generation.
+            We combine all components like
+            :class:`~django_modern_rest.components.Headers`,
+            :class:`~django_modern_rest.components.Query`, etc into
+            one big model for faster validation and better error messages.
+        validator_cls: Runs controller validation on definition.
+        api_endpoints: Dictionary of HTTPMethod name to controller instance.
+        validate_responses: Boolean whether or not validating responses.
+            Works in runtime, can be disabled for better performance.
+        responses: List of responses schemas that this controller can return.
+            Also customizable in endpoints and globally with ``'responses'``
+            key in the settings.
+        responses_from_components: Should we automatically add response schemas
+            from components like :class:`django_modern_rest.components.Headers`
+            into the :attr:`responses`?
+        request: Current :class:`~django.http.HttpRequest` instance.
+        args: Path positional parameters of the request.
+        kwargs: Path named parameters of the request.
+        blueprints: A sequence of :class:`Blueprint` types
+            that should be composed together.
+
+    """
+
+    # Public class-level API:
+    blueprints: ClassVar[Sequence[type[Blueprint[BaseSerializer]]]]  # noqa: WPS234
+    validator_cls: ClassVar[type[BlueprintValidator]] = ControllerValidator
+
+    # Protected API:
+    _blueprint_per_method: ClassVar[  # noqa: WPS234
+        Mapping[str, type[Blueprint[BaseSerializer]]]
+    ]
+    _blueprint: Blueprint[_SerializerT_co] | None
+
+    @override
+    def __init_subclass__(cls) -> None:
+        """Collect blueprints if they exist."""
+        cls.blueprints = getattr(cls, 'blueprints', [])
+        cls.api_endpoints = {}  # will be re-populated in the very end
+        for blueprint in cls.blueprints:
+            cls.api_endpoints.update(blueprint.api_endpoints)
+        super().__init_subclass__()
+        # It is validated that we don't have intersections.
+        cls._blueprint_per_method = {
+            # TODO: this violation is a bug in WPS
+            canonical: blueprint  # noqa: WPS441
+            for blueprint in cls.blueprints
+            for canonical, _dsl in blueprint.existing_http_methods()  # noqa: WPS441
+        }
+
+    @override
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        """Set up common attributes."""
+        super().setup(request, *args, **kwargs)
+        # Controller is created once per request, so we can assign attributes.
+        blueprint = self._blueprint_per_method.get(
+            request.method,  # type: ignore[arg-type]
+        )
+        if blueprint:
+            instance = blueprint()
+            instance.setup(request, *args, **kwargs)
+            # We validate that serializer match
+            self._blueprint = instance  # type: ignore[assignment]
+        else:
+            self._blueprint = None
+
+    @override
+    def dispatch(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        """
+        Find an endpoint that serves this HTTP method and call it.
+
+        Return 405 if this method is not allowed.
+        """
+        # Fast path for method resolution:
+        method: str = request.method  # type: ignore[assignment]
+        endpoint = self.api_endpoints.get(method)
+        if endpoint is not None:
+            # TODO: support `StreamingHttpResponse`
+            # TODO: support `FileResponse`
+            # TODO: support redirects
+            return endpoint(self._blueprint, self, *args, **kwargs)
+        # This return is very special,
+        # since it does not have an attached endpoint.
+        # All other responses are handled on endpoint level
+        # with all the response type validation.
+        return self.handle_method_not_allowed(method)
 
     @override
     @deprecated(
@@ -368,53 +534,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             ),
         )
 
-    @classmethod
-    def existing_http_methods(cls) -> set[str]:
-        """Returns and caches what HTTP methods are implemented in this view."""
-        return {
-            method
-            for method in cls.http_methods
-            if getattr(cls, method, None) is not None
-        }
-
-    @classmethod
-    def semantic_responses(cls) -> list[ResponseDescription]:
-        """
-        Returns all user-defined and component-defined responses.
-
-        Optionally component-defined responses can be turned off with falsy
-        :attr:`responses_from_components` attribute on a controller.
-        We call it once per endpoint creation.
-        """
-        if not cls.responses_from_components:
-            return cls.responses
-
-        # Get the responses that were provided by the user.
-        existing_codes = {response.status_code for response in cls.responses}
-        extra_responses = [
-            response
-            for component, model in cls._component_parsers
-            for response in component.provide_responses(
-                cls.serializer,
-                model,
-            )
-            # If some response already exists, do not override it.
-            if response.status_code not in existing_codes
-        ]
-        return [*cls.responses, *set(extra_responses)]
-
     @classproperty
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
         """We already know this in advance, no need to recalculate."""
         return cls._is_async
-
-    @classmethod
-    def _maybe_wrap(
-        cls,
-        response: _ResponseT,
-    ) -> _ResponseT:
-        """Wraps response into a coroutine if this is an async controller."""
-        if cls.view_is_async:
-            return identity(response)
-        return response

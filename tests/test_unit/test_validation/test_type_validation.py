@@ -85,7 +85,7 @@ def test_valid_data(
     class _Controller(Controller[serializer]):  # type: ignore[valid-type]
         get = validator_builder(typ)
 
-    endpoint = _Controller.api_endpoints['get']
+    endpoint = _Controller.api_endpoints['GET']
     validator = endpoint.response_validator
 
     assert HTTPStatus.OK in endpoint.metadata.responses
@@ -135,7 +135,7 @@ def test_invalid_data(
     class _Controller(Controller[serializer]):  # type: ignore[valid-type]
         get = validator_builder(typ)
 
-    endpoint = _Controller.api_endpoints['get']
+    endpoint = _Controller.api_endpoints['GET']
     validator = endpoint.response_validator
 
     assert HTTPStatus.OK in endpoint.metadata.responses

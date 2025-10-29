@@ -10,6 +10,7 @@ from django_modern_rest.components import (
 from django_modern_rest.components import (
     Query as Query,
 )
+from django_modern_rest.controller import Blueprint as Blueprint
 from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,
@@ -35,6 +36,6 @@ from django_modern_rest.response import (
 from django_modern_rest.response import build_response as build_response
 from django_modern_rest.routing import Router as Router
 from django_modern_rest.routing import (
-    compose_controllers as compose_controllers,
+    compose_blueprints as compose_blueprints,
 )
 from django_modern_rest.routing import path as path

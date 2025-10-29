@@ -22,6 +22,6 @@ def test_custom_endpoint_controller() -> None:
     """Ensures we can customize the endpoint factory."""
     assert len(_CustomEndpointController.api_endpoints) == 1
     assert isinstance(
-        _CustomEndpointController.api_endpoints['get'],
+        _CustomEndpointController.api_endpoints['GET'],
         _EndpointSubclass,
     )
