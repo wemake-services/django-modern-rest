@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from django.urls import URLPattern, path
+from django.urls import URLPattern
 
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.converter import (
@@ -11,7 +11,7 @@ from django_modern_rest.openapi.core.builder import OpenApiBuilder
 from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
-from django_modern_rest.routing import Router
+from django_modern_rest.routing import Router, path
 
 
 def openapi_spec(

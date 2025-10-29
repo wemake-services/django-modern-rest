@@ -130,6 +130,15 @@ can be used to jump-start your new project with `django-modern-rest`!
 [MIT](https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE)
 
 
+## Performance benchmarks
+
+Prerequisites:
+- Install `hyperfine`.
+
+```bash
+make bench-path
+```
+
 ## Credits
 
 This project was generated with [`wemake-python-package`](https://github.com/wemake-services/wemake-python-package). Current template version is: [e1fcf312d7f715323dcff0d376a40b7e3b47f9b7](https://github.com/wemake-services/wemake-python-package/tree/e1fcf312d7f715323dcff0d376a40b7e3b47f9b7). See what is [updated](https://github.com/wemake-services/wemake-python-package/compare/e1fcf312d7f715323dcff0d376a40b7e3b47f9b7...master) since then.

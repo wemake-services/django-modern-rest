@@ -40,3 +40,8 @@ package:
 
 .PHONY: test
 test: lint type-check example spell-check package smoke unit
+
+.PHONY: bench-resolver
+bench-resolver:
+	hyperfine --warmup 1 --shell=none -L impl django,dmr -L case best,avg,worst --min-runs=5 \
+		-n {impl}-{case} "poetry run python benchmarks/url_resolver.py --impl {impl} --case {case}"

@@ -37,3 +37,4 @@ from django_modern_rest.routing import Router as Router
 from django_modern_rest.routing import (
     compose_controllers as compose_controllers,
 )
+from django_modern_rest.routing import path as path
