@@ -292,6 +292,9 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         return response
 
 
+_BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
+
+
 class Controller(Blueprint[_SerializerT_co], View):
     """
     Defines API views as controllers.
@@ -333,13 +336,11 @@ class Controller(Blueprint[_SerializerT_co], View):
     """
 
     # Public class-level API:
-    blueprints: ClassVar[Sequence[type[Blueprint[BaseSerializer]]]]  # noqa: WPS234
+    blueprints: ClassVar[Sequence[_BlueprintT]]
     validator_cls: ClassVar[type[BlueprintValidator]] = ControllerValidator
 
     # Protected API:
-    _blueprint_per_method: ClassVar[  # noqa: WPS234
-        Mapping[str, type[Blueprint[BaseSerializer]]]
-    ]
+    _blueprint_per_method: ClassVar[Mapping[str, _BlueprintT]]
     _blueprint: Blueprint[_SerializerT_co] | None
 
     @override

@@ -150,13 +150,17 @@ class Endpoint:  # noqa: WPS214
                     exc,
                 )
             except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
+                # We don't use `suppress` instead of `expect / pass` for speed.
                 pass  # noqa: WPS420
-        # TODO: redesign error handling, do not skip `Blueprint` layer
+        if blueprint:
+            try:
+                return blueprint.handle_error(self, exc)
+            except Exception:  # noqa: S110
+                pass  # noqa: WPS420
         # Per-endpoint error handler and per-blueprint handlers didn't work.
         # Now, try the per-controller one.
         try:
-            return active_blueprint.handle_error(self, exc)
+            return controller.handle_error(self, exc)
         except Exception:
             # And the last option is to handle error globally:
             return self._handle_default_error(active_blueprint, exc)
@@ -184,11 +188,15 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        # TODO: redesign error handling, do not skip `Blueprint` layer
+        if blueprint:
+            try:
+                return await blueprint.handle_async_error(self, exc)
+            except Exception:  # noqa: S110
+                pass  # noqa: WPS420
         # Per-endpoint error handler and per-blueprint handlers didn't work.
         # Now, try the per-controller one.
         try:
-            return await active_blueprint.handle_async_error(self, exc)
+            return await controller.handle_async_error(self, exc)
         except Exception:
             # And the last option is to handle error globally:
             return self._handle_default_error(active_blueprint, exc)

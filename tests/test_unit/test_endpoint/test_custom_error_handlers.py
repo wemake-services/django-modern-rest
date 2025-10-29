@@ -9,8 +9,10 @@ from inline_snapshot import snapshot
 from typing_extensions import override
 
 from django_modern_rest import (
+    Blueprint,
     Controller,
     ResponseDescription,
+    compose_blueprints,
     modify,
     validate,
 )
@@ -50,16 +52,40 @@ class _AsyncValidateErrorHandlerController(Controller[PydanticSerializer]):
         raise ValueError('Error message')
 
 
+class _AsyncValidateErrorHandlerBlueprint(Blueprint[PydanticSerializer]):
+    async def async_endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return self.to_error(str(exc), status_code=HTTPStatus.PAYMENT_REQUIRED)
+
+    @validate(
+        ResponseDescription(list[int], status_code=HTTPStatus.OK),
+        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        error_handler=async_endpoint_error,
+    )
+    async def get(self) -> HttpResponse:
+        raise ValueError('Error message')
+
+
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'typ',
+    [
+        compose_blueprints(_AsyncValidateErrorHandlerBlueprint),
+        _AsyncValidateErrorHandlerController,
+    ],
+)
 async def test_validate_async_endpoint_error_for_sync(
     dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    typ: type[Controller[PydanticSerializer]],
 ) -> None:
     """Ensure that async error handler for `@validate` works."""
     request = dmr_async_rf.get('/whatever/', data={})
 
-    response = await dmr_async_rf.wrap(
-        _AsyncValidateErrorHandlerController.as_view()(request),
-    )
+    response = await dmr_async_rf.wrap(typ.as_view()(request))
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
