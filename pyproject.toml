@@ -85,6 +85,7 @@ schemathesis = "^4.3"
 httpx = "^0.28"
 types-docutils = "^0.22.2.20251006"
 uvicorn = "^0.38.0"
+auto-pytabs = "^0.5.0"
 
 [tool.poetry.group.docs]
 optional = true

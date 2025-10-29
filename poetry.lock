@@ -114,7 +114,7 @@ version = "0.5.0"
 description = "Automatically generate code examples for different Python versions in mkdocs or Sphinx based documentations"
 optional = false
 python-versions = "<4.0,>=3.8"
-groups = ["docs"]
+groups = ["dev", "docs"]
 files = [
     {file = "auto_pytabs-0.5.0-py3-none-any.whl", hash = "sha256:e59fb6d2f8b41b05d0906a322dd4bb1a86749d429483ec10036587de3657dcc8"},
     {file = "auto_pytabs-0.5.0.tar.gz", hash = "sha256:30087831c8be5b2314e663efd06c96b84c096572a060a492540f586362cc4326"},
@@ -2768,4 +2768,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "8434a51409dd7a22e71850589acb07ecf646c5eee071b54448d62ecb0a559a03"
+content-hash = "abe16ed4e1e4f2a7a606558487a434b250a8a5e8d466ca9523145ec0e297601e"
