@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django_modern_rest.exceptions import SerializationError
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
+    from django_modern_rest.controller import Blueprint
     from django_modern_rest.endpoint import Endpoint
 
 
@@ -28,7 +28,7 @@ AsyncErrorHandlerT: TypeAlias = Callable[
 
 
 def global_error_handler(
-    controller: 'Controller[Any]',
+    controller: 'Blueprint[Any]',
     endpoint: 'Endpoint',
     exc: Exception,
 ) -> HttpResponse:
