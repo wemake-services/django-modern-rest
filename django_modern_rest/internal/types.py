@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, TypedDict
 from django_modern_rest.internal.json import Deserialize, Serialize
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
+    from django_modern_rest.controller import Blueprint
     from django_modern_rest.endpoint import Endpoint
     from django_modern_rest.openapi.config import OpenAPIConfig
 
@@ -18,5 +18,5 @@ class DMRSettings(TypedDict, total=False):
     validate_responses: bool
     responses: list[Any]
     global_error_handler: (
-        str | Callable[['Controller[Any]', 'Endpoint', Exception], Any]
+        str | Callable[['Blueprint[Any]', 'Endpoint', Exception], Any]
     )
