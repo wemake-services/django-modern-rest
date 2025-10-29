@@ -55,7 +55,6 @@ class Endpoint:  # noqa: WPS214
     __slots__ = (
         '_func',
         '_method',
-        '_original_blueprint_cls',
         'is_async',
         'metadata',
         'response_validator',
@@ -114,7 +113,6 @@ class Endpoint:  # noqa: WPS214
         else:
             self._func = self._sync_endpoint(func)
             self.is_async = False
-        self._original_blueprint_cls = blueprint_cls
 
     def __call__(
         self,
