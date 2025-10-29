@@ -7,7 +7,13 @@ Results
 Sync
 ~~~~
 
-.. figure:: /_static/images/benchmarks/sync.png
+.. figure:: /_static/images/benchmarks/sync-light.svg
+   :figclass: light-only
+   :width: 700
+   :align: center
+
+.. figure:: /_static/images/benchmarks/sync-dark.svg
+   :figclass: dark-only
    :width: 700
    :align: center
 
@@ -28,7 +34,13 @@ Why so fast?
 Async
 ~~~~~
 
-.. figure:: /_static/images/benchmarks/async.png
+.. figure:: /_static/images/benchmarks/async-light.svg
+   :figclass: light-only
+   :width: 700
+   :align: center
+
+.. figure:: /_static/images/benchmarks/async-dark.svg
+   :figclass: dark-only
    :width: 700
    :align: center
 
