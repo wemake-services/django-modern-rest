@@ -38,8 +38,6 @@ Basic Usage
 Let's create a simple middleware decorator for CSRF protection:
 
 .. literalinclude:: /examples/middleware/csrf_protect_json.py
-    :caption: csrf_protect_json.py
-    :language: python
     :linenos:
 
 In this example:
@@ -57,8 +55,6 @@ You can also create custom middleware functions.
 Here's an example of a rate limiting middleware:
 
 .. literalinclude:: /examples/middleware/rate_limit.py
-    :caption: rate_limit.py
-    :language: python
     :linenos:
 
 Multiple Response Descriptions
@@ -67,8 +63,6 @@ Multiple Response Descriptions
 You can specify multiple response descriptions for different status codes:
 
 .. literalinclude:: /examples/middleware/multi_status.py
-  :caption: multi_status.py
-  :language: python
   :linenos:
 
 Async Controllers
@@ -77,8 +71,6 @@ Async Controllers
 ``wrap_middleware`` works seamlessly with both sync and async controllers:
 
 .. literalinclude:: /examples/middleware/async_controller.py
-  :caption: async_controller.py
-  :language: python
   :linenos:
 
 The middleware will automatically detect whether the controller is async
@@ -123,6 +115,4 @@ Example: Complete CSRF Protection Setup
 Here's a complete example showing how to set up CSRF protection for a REST API:
 
 .. literalinclude:: /examples/middleware/complete_csrf_setup.py
-  :caption: complete_csrf_setup.py
-  :language: python
   :linenos:
