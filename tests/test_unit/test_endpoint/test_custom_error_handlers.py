@@ -9,9 +9,10 @@ from inline_snapshot import snapshot
 from typing_extensions import override
 
 from django_modern_rest import (
-    Body,
+    Blueprint,
     Controller,
     ResponseDescription,
+    compose_blueprints,
     modify,
     validate,
 )
@@ -34,86 +35,6 @@ class _ErrorPayload(pydantic.BaseModel):
     message: str
 
 
-@final
-class _CustomEndpoint(Endpoint):
-    """Endpoint with JSON-aware error handlers for tests."""
-
-    @override
-    def handle_error(self, exc: Exception) -> HttpResponse:
-        return self._controller.to_error(
-            {'mode': 'sync', 'message': str(exc)},
-            status_code=HTTPStatus.BAD_REQUEST,
-        )
-
-    @override
-    async def handle_async_error(self, exc: Exception) -> HttpResponse:
-        return self._controller.to_error(
-            {'mode': 'async', 'message': str(exc)},
-            status_code=HTTPStatus.BAD_REQUEST,
-        )
-
-
-@final
-class _SyncController(Body[_Payload], Controller[PydanticSerializer]):
-    endpoint_cls: ClassVar[type[Endpoint]] = _CustomEndpoint
-    responses: ClassVar[list[ResponseDescription]] = [
-        ResponseDescription(
-            _ErrorPayload,
-            status_code=HTTPStatus.BAD_REQUEST,
-        ),
-    ]
-
-    def post(self) -> _Payload:
-        raise RuntimeError('sync boom')
-
-
-@final
-class _AsyncController(Body[_Payload], Controller[PydanticSerializer]):
-    endpoint_cls: ClassVar[type[Endpoint]] = _CustomEndpoint
-    responses: ClassVar[list[ResponseDescription]] = [
-        ResponseDescription(
-            _ErrorPayload,
-            status_code=HTTPStatus.BAD_REQUEST,
-        ),
-    ]
-
-    async def post(self) -> _Payload:
-        raise RuntimeError('async boom')
-
-
-def test_custom_sync_handle_error(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures sync custom error handler returns JSON response."""
-    request = dmr_rf.post('/whatever/', data=json.dumps({'number': 1}))
-
-    response = _SyncController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.headers['Content-Type'] == 'application/json'
-    assert json.loads(response.content) == {
-        'mode': 'sync',
-        'message': 'sync boom',
-    }
-
-
-@pytest.mark.asyncio
-async def test_custom_async_handle_error(
-    dmr_async_rf: DMRAsyncRequestFactory,
-) -> None:
-    """Ensures async custom error handler returns JSON response."""
-    request = dmr_async_rf.post('/whatever/', data=json.dumps({'number': 1}))
-
-    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.headers['Content-Type'] == 'application/json'
-    assert json.loads(response.content) == {
-        'mode': 'async',
-        'message': 'async boom',
-    }
-
-
 class _AsyncValidateErrorHandlerController(Controller[PydanticSerializer]):
     async def async_endpoint_error(
         self,
@@ -131,16 +52,40 @@ class _AsyncValidateErrorHandlerController(Controller[PydanticSerializer]):
         raise ValueError('Error message')
 
 
+class _AsyncValidateErrorHandlerBlueprint(Blueprint[PydanticSerializer]):
+    async def async_endpoint_error(
+        self,
+        endpoint: Endpoint,
+        exc: Exception,
+    ) -> HttpResponse:
+        return self.to_error(str(exc), status_code=HTTPStatus.PAYMENT_REQUIRED)
+
+    @validate(
+        ResponseDescription(list[int], status_code=HTTPStatus.OK),
+        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        error_handler=async_endpoint_error,
+    )
+    async def get(self) -> HttpResponse:
+        raise ValueError('Error message')
+
+
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'typ',
+    [
+        compose_blueprints(_AsyncValidateErrorHandlerBlueprint),
+        _AsyncValidateErrorHandlerController,
+    ],
+)
 async def test_validate_async_endpoint_error_for_sync(
     dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    typ: type[Controller[PydanticSerializer]],
 ) -> None:
     """Ensure that async error handler for `@validate` works."""
     request = dmr_async_rf.get('/whatever/', data={})
 
-    response = await dmr_async_rf.wrap(
-        _AsyncValidateErrorHandlerController.as_view()(request),
-    )
+    response = await dmr_async_rf.wrap(typ.as_view()(request))
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED

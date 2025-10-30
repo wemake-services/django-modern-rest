@@ -12,7 +12,7 @@ from django_modern_rest.exceptions import (
 
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
-    from django_modern_rest.controller import Controller
+    from django_modern_rest.controller import Blueprint
     from django_modern_rest.internal.json import FromJson
     from django_modern_rest.metadata import EndpointMetadata
 
@@ -150,18 +150,18 @@ class SerializerContext:
 
     # Protected API:
 
-    controller_cls: 'type[Controller[BaseSerializer]]'
+    blueprint_cls: 'type[Blueprint[BaseSerializer]]'
     _specs: _ComponentParserSpec = dataclasses.field(init=False)
     _combined_model: Any = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
         """Eagerly build context for a given controller and serializer."""
-        specs, type_map = self._build_type_map(self.controller_cls)
+        specs, type_map = self._build_type_map(self.blueprint_cls)
         self._specs = specs
 
         # Name is not really important,
         # we use `@` to identify that it is generated:
-        name_prefix = self.controller_cls.__qualname__
+        name_prefix = self.blueprint_cls.__qualname__
         combined_name = f'_{name_prefix}@ContextModel'
 
         self._combined_model = TypedDict(  # type: ignore[misc]
@@ -172,7 +172,7 @@ class SerializerContext:
 
     def parse_and_bind(
         self,
-        controller: 'Controller[BaseSerializer]',
+        blueprint: 'Blueprint[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
@@ -188,18 +188,18 @@ class SerializerContext:
         if not self._specs:
             return
 
-        context = self._collect_context(controller, request, *args, **kwargs)
+        context = self._collect_context(blueprint, request, *args, **kwargs)
         validated = self._validate_context(context)
-        self._bind_parsed(controller, validated)
+        self._bind_parsed(blueprint, validated)
 
     def _build_type_map(
         self,
-        controller_cls: type['Controller[BaseSerializer]'],
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
     ) -> _TypeMapResult:
         """Build mapping name -> model and return specs and type_map."""
         specs: _ComponentParserSpec = {}
         type_map: dict[str, Any] = {}
-        parsers = controller_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        parsers = blueprint_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
         for component_cls, type_args in parsers:
             type_map[component_cls.context_name] = type_args[0]
@@ -208,7 +208,7 @@ class SerializerContext:
 
     def _collect_context(
         self,
-        controller: 'Controller[BaseSerializer]',
+        blueprint: 'Blueprint[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
@@ -217,8 +217,7 @@ class SerializerContext:
         context: dict[str, Any] = {}
         for component, submodel in self._specs.items():
             raw = component.provide_context_data(
-                controller,  # type: ignore[arg-type]
-                self.controller_cls.serializer,
+                blueprint,
                 submodel,  # just the one for the exact key
                 request,
                 *args,
@@ -229,7 +228,7 @@ class SerializerContext:
 
     def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
-        serializer = self.controller_cls.serializer
+        serializer = self.blueprint_cls.serializer
         try:
             return serializer.from_python(  # type: ignore[no-any-return]
                 context,
@@ -243,9 +242,9 @@ class SerializerContext:
 
     def _bind_parsed(
         self,
-        controller: 'Controller[BaseSerializer]',
+        blueprint: 'Blueprint[BaseSerializer]',
         validated: dict[str, Any],
     ) -> None:
-        """Bind parsed values back to the controller instance."""
+        """Bind parsed values back to the blueprint instance."""
         for name, parsed_value in validated.items():
-            setattr(controller, name, parsed_value)
+            setattr(blueprint, name, parsed_value)

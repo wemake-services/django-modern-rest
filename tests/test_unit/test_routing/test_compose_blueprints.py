@@ -1,12 +1,14 @@
+from collections.abc import Sequence
 from http import HTTPStatus
 from typing import ClassVar, final
 
 import pytest
 
 from django_modern_rest import (
+    Blueprint,
     Controller,
     MetaMixin,
-    compose_controllers,
+    compose_blueprints,
 )
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import (
@@ -21,25 +23,25 @@ from django_modern_rest.serialization import (
 
 
 @final
-class _AsyncController(Controller[PydanticSerializer]):
+class _AsyncBlueprint(Blueprint[PydanticSerializer]):
     async def get(self) -> str:
         raise NotImplementedError
 
 
 @final
-class _SyncController(Controller[PydanticSerializer]):
+class _SyncBlueprint(Blueprint[PydanticSerializer]):
     def post(self) -> str:
         raise NotImplementedError
 
 
 @final
-class _DuplicatePostController(Controller[PydanticSerializer]):
+class _DuplicatePostBlueprint(Blueprint[PydanticSerializer]):
     def post(self) -> str:
         raise NotImplementedError
 
 
 @final
-class _ZeroMethodsController(Controller[PydanticSerializer]):
+class _ZeroMethodsBlueprint(Blueprint[PydanticSerializer]):
     """Just a placeholder."""
 
 
@@ -49,7 +51,7 @@ class _DifferentSerializer(BaseSerializer):  # type: ignore[misc]
 
 
 @final
-class _DifferentSerializerController(Controller[_DifferentSerializer]):
+class _DifferentSerializerBlueprint(Blueprint[_DifferentSerializer]):
     def get(self) -> str:
         raise NotImplementedError
 
@@ -58,51 +60,66 @@ def test_compose_async_and_sync() -> None:
     """Ensures that you can't compose sync and async controllers."""
     msg = 'all sync or all async'
     with pytest.raises(EndpointMetadataError, match=msg):
-        compose_controllers(_AsyncController, _SyncController)
+        compose_blueprints(_AsyncBlueprint, _SyncBlueprint)
     with pytest.raises(EndpointMetadataError, match=msg):
-        compose_controllers(_SyncController, _AsyncController)
+        compose_blueprints(_SyncBlueprint, _AsyncBlueprint)
 
 
 def test_compose_overlapping_controllers() -> None:
     """Ensure that controllers with the overlapping methods can't be used."""
-    with pytest.raises(ValueError, match='post'):
-        compose_controllers(_DuplicatePostController, _SyncController)
-    with pytest.raises(ValueError, match='post'):
-        compose_controllers(_SyncController, _DuplicatePostController)
+    with pytest.raises(EndpointMetadataError, match='POST'):
+        compose_blueprints(_DuplicatePostBlueprint, _SyncBlueprint)
+    with pytest.raises(EndpointMetadataError, match='POST'):
+        compose_blueprints(_SyncBlueprint, _DuplicatePostBlueprint)
 
 
 def test_compose_different_serializers() -> None:
     """Ensure that controllers with different serializers can't be used."""
-    with pytest.raises(ValueError, match='different serializer'):
-        compose_controllers(_DifferentSerializerController, _SyncController)
-    with pytest.raises(ValueError, match='different serializer'):
-        compose_controllers(_SyncController, _DifferentSerializerController)
+    with pytest.raises(EndpointMetadataError, match='different serializer'):
+        compose_blueprints(_DifferentSerializerBlueprint, _SyncBlueprint)
+    with pytest.raises(EndpointMetadataError, match='different serializer'):
+        compose_blueprints(_SyncBlueprint, _DifferentSerializerBlueprint)
 
 
 def test_compose_controller_no_endpoints() -> None:
     """Ensure that controller with no endpoints can't be composed."""
-    with pytest.raises(ValueError, match='at least one'):
-        compose_controllers(_ZeroMethodsController, _SyncController)
-    with pytest.raises(ValueError, match='at least one'):
-        compose_controllers(_SyncController, _ZeroMethodsController)
+    with pytest.raises(EndpointMetadataError, match='at least one'):
+        compose_blueprints(_ZeroMethodsBlueprint, _SyncBlueprint)
+    with pytest.raises(EndpointMetadataError, match='at least one'):
+        compose_blueprints(_SyncBlueprint, _ZeroMethodsBlueprint)
 
 
-def test_compose_controllers_with_meta() -> None:
+def test_compose_blueprints_with_meta() -> None:
     """Ensure that controller with no endpoints can't be composed."""
 
-    class _OptionsController(MetaMixin, Controller[PydanticSerializer]):
+    class _OptionsBlueprint(MetaMixin, Blueprint[PydanticSerializer]):
         """Just a placeholder."""
 
     # Ok:
-    compose_controllers(_SyncController, _OptionsController)
-    with pytest.raises(ValueError, match='options'):
-        compose_controllers(_OptionsController, _OptionsController)
+    compose_blueprints(_SyncBlueprint, _OptionsBlueprint)
+    with pytest.raises(EndpointMetadataError, match='OPTIONS'):
+        compose_blueprints(_OptionsBlueprint, _OptionsBlueprint)
 
 
-def test_compose_controllers_with_responses() -> None:
+def test_compose_with_existing_endpoint() -> None:
+    """Check that class-level composition checks for existing endpoints."""
+    with pytest.raises(EndpointMetadataError, match='POST'):
+
+        class MyController(Controller[PydanticSerializer]):
+            blueprints: ClassVar[  # noqa: WPS234
+                Sequence[type[Blueprint[BaseSerializer]]]
+            ] = [
+                _SyncBlueprint,
+            ]
+
+            def post(self) -> list[int]:
+                raise NotImplementedError
+
+
+def test_compose_blueprints_with_responses() -> None:
     """Ensure that composed controller do not share responses."""
 
-    class _FirstController(Controller[PydanticSerializer]):
+    class _FirstBlueprint(Blueprint[PydanticSerializer]):
         responses: ClassVar[list[ResponseDescription]] = [
             ResponseDescription(int, status_code=HTTPStatus.CREATED),
         ]
@@ -110,7 +127,7 @@ def test_compose_controllers_with_responses() -> None:
         def get(self) -> list[int]:
             raise NotImplementedError
 
-    class _SecondController(Controller[PydanticSerializer]):
+    class _SecondBlueprint(Blueprint[PydanticSerializer]):
         responses: ClassVar[list[ResponseDescription]] = [
             ResponseDescription(str, status_code=HTTPStatus.ACCEPTED),
         ]
@@ -118,7 +135,7 @@ def test_compose_controllers_with_responses() -> None:
         def put(self) -> list[int]:
             raise NotImplementedError
 
-    class _ThirdController(Controller[PydanticSerializer]):
+    class _ThirdBlueprint(Blueprint[PydanticSerializer]):
         responses: ClassVar[list[ResponseDescription]] = [
             ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT),
         ]
@@ -126,10 +143,10 @@ def test_compose_controllers_with_responses() -> None:
         def patch(self) -> list[int]:
             raise NotImplementedError
 
-    composed = compose_controllers(
-        _FirstController,
-        _SecondController,
-        _ThirdController,
+    composed = compose_blueprints(
+        _FirstBlueprint,
+        _SecondBlueprint,
+        _ThirdBlueprint,
     )
     assert composed.responses == []
     for endpoint, description in composed.api_endpoints.items():

@@ -4,9 +4,15 @@ Public API
 Controller
 ----------
 
+.. autoclass:: django_modern_rest.controller.Blueprint
+  :members:
+  :exclude-members: endpoint_cls, serializer_context_cls, validator_cls
+
 .. autoclass:: django_modern_rest.controller.Controller
   :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, controller_validator_cls
+  :inherited-members:
+  :exclude-members: endpoint_cls, serializer_context_cls, validator_cls
+  :show-inheritance:
 
 
 Endpoint
@@ -58,7 +64,7 @@ Response and headers
 Validation
 ----------
 
-.. autoclass:: django_modern_rest.validation.ControllerValidator
+.. autoclass:: django_modern_rest.validation.BlueprintValidator
   :members:
 
 .. autoclass:: django_modern_rest.validation.ResponseValidator
@@ -90,7 +96,9 @@ Routing
 .. autoclass:: django_modern_rest.routing.Router
   :members:
 
-.. autofunction:: django_modern_rest.routing.compose_controllers
+.. autofunction:: django_modern_rest.routing.compose_blueprints
+
+.. autofunction:: django_modern_rest.routing.path
 
 
 Meta mixins

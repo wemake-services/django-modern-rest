@@ -41,6 +41,6 @@ class Deserialize(Protocol):
         to_deserialize: FromJson,
         deserializer: DeserializeFunc,
         *,
-        strict: bool = ...,
+        strict: bool = True,
     ) -> Any:
         """Function to be called on object deserialization."""

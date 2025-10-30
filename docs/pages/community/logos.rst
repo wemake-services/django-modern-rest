@@ -58,6 +58,24 @@ for information about permission and usage of the logo.
                     :align: center
                     :target: ../../_static/images/logo-dark.png
 
+Colors
+------
+
+The Modern REST logo uses specific color palettes for different themes:
+
+.. list-table:: Color Palette
+   :header-rows: 1
+
+   * - Theme
+     - Primary Color
+     - Secondary Color
+   * - Light
+     - ``#09271D``
+     - ``#35544A``
+   * - Dark
+     - ``#FFFFFF``
+     - ``#BAC5C4``
+
 Font
 ----
 

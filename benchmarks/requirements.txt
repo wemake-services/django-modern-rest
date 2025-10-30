@@ -1,0 +1,7 @@
+-e ..[msgspec]
+fastapi
+djangorestframework
+django-ninja
+uvicorn
+gunicorn
+tabulate

@@ -44,7 +44,7 @@ def test_solvable_response_annotations() -> None:
         def get(self) -> _RegularAlias:
             raise NotImplementedError
 
-    endpoint = MyController.api_endpoints['get']
+    endpoint = MyController.api_endpoints['GET']
     assert str(endpoint.response_validator.metadata.responses) == snapshot(
         '{<HTTPStatus.OK: 200>: '
         'ResponseDescription(return_type=list[int], '

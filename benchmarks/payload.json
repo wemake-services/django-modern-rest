@@ -1,0 +1,200 @@
+{
+  "email": "plvpjyvbLgTVEocDJZie",
+  "age": 8090,
+  "height": 856016.168063173,
+  "average_score": -2.26325427111858,
+  "balance": "2566672150622640225703798460352013271371090937115423072705094165554168535293122281875947436.2787334871993190440119672978162105102902366981419",
+  "skills": [
+    {
+      "name": "PxDeAhcALzYtmxofdwIJ",
+      "description": "vQxCKSafEyNmWPEbWYkl",
+      "optional": true,
+      "level": "starter"
+    },
+    {
+      "name": "BcOffcGYMqfWXzkbrGHF",
+      "description": "cLyJctuAPYTngCIvGkBf",
+      "optional": false,
+      "level": "pro"
+    },
+    {
+      "name": "FrZtLslJjQNPVejBBdFs",
+      "description": "hFgosOsrbawHJHRxedke",
+      "optional": true,
+      "level": "starter"
+    },
+    {
+      "name": "VSwlOMYPyjsnswKrFhUj",
+      "description": "xEZuNUdaVleYILwEzNPk",
+      "optional": false,
+      "level": "mid"
+    },
+    {
+      "name": "RRjetkqVRBRtNocEnfxL",
+      "description": "ZmXfSKIHNtImRjaDWNaj",
+      "optional": false,
+      "level": "pro"
+    }
+  ],
+  "aliases": {
+    "dVcUntdsXjVryBIxJvFc": "gLNAiWuqSzjtIMQKeuuX",
+    "ppYPgopqMgJPruDMJVCN": "XeYYifLGYYPkDvqudSZa",
+    "uxdzUXEimvizGhcWWKFf": 0,
+    "QDcIhSMjkZrMiUyhREeH": "qZjJyoeFrZJvwuvGHvuy",
+    "xdsbzqMdStpDIslgIwDQ": "DedDwSrFuejFtjrztLzR",
+    "cRocRJSgvgtfMPLcZcKG": 192354
+  },
+  "birthday": "2023-06-07T07:39:06.721384",
+  "best_friend": {
+    "email": "ALgcsWhatGnRpsrAYfQf",
+    "age": 7498,
+    "height": -3.61774650823762,
+    "average_score": 91.1314491824168,
+    "balance": "43701018185216763538319488491112307759.759929846062678225676717464",
+    "skills": [
+      {
+        "name": "dUgeNMipQXHicwfwfzJK",
+        "description": "FNShCygsCfMknZoTQDEB",
+        "optional": true,
+        "level": "pro"
+      }
+    ],
+    "aliases": {
+      "XCBQRbbINUfnKvCieXuu": "rQbBMZPPYDLUCdeTvayF"
+    },
+    "birthday": "2016-11-22T09:49:39.608462",
+    "best_friend": null,
+    "friends": [],
+    "timezone_diff": "P0D",
+    "promocodes": [
+      "1019a295-a639-42e9-b682-255d04668769"
+    ],
+    "items": [
+      {
+        "name": "AIhoNifGowVFFoPnmLsI",
+        "quality": 2157,
+        "count": 9931,
+        "rarety": 7494,
+        "parts": []
+      }
+    ],
+    "uid": "fb075379-1372-41e9-ae1f-390802ced0e7"
+  },
+  "friends": [
+    {
+      "email": "FTAGTwtXcjGrzXMmqrBO",
+      "age": 465,
+      "height": 79.109673490157,
+      "average_score": -6344951.61460793,
+      "balance": "-57623936184.237711687797918398797184",
+      "skills": [
+        {
+          "name": "LfNTfkcSSvRNKZCLohee",
+          "description": "meNuDoDawSLrxUnXbCwN",
+          "optional": true,
+          "level": "mid"
+        }
+      ],
+      "aliases": {
+        "dXDXWsiplSZZGhMwuCkh": "kIMZiWhsUoMYHhywUWso"
+      },
+      "birthday": "2021-09-17T16:06:32.389265",
+      "best_friend": null,
+      "friends": [],
+      "timezone_diff": "P0D",
+      "promocodes": [
+        "a568d9ec-88c1-4fc9-b2a8-2ec81d0f9d92"
+      ],
+      "items": [
+        {
+          "name": "sUBGHOWUqDDVFGYhoYQx",
+          "quality": 4348,
+          "count": 7019,
+          "rarety": 2738,
+          "parts": []
+        }
+      ],
+      "uid": "4f511c6b-4705-444e-8831-891f8e63df1d"
+    }
+  ],
+  "timezone_diff": "P0D",
+  "promocodes": [
+    "3d2656e9-14cc-47b9-b2f4-4056fa55c282",
+    "4423b40c-e7f1-431e-9222-43f28bd85565",
+    "c5a7a739-5d53-48ab-b283-a2545dbbbd13",
+    "7a01b3ea-548a-4eae-9555-09500fbad407",
+    "097203a7-08dc-4f34-969f-c504ebb7f50c",
+    "678bf32e-eb65-4054-aad4-dfc0a8bf778d",
+    "b9576077-64e5-44e5-a9c2-ba2f823bfbb0"
+  ],
+  "items": [
+    {
+      "name": "cXqVPuSCmNfxKOmZmcUI",
+      "quality": 3783,
+      "count": 4861,
+      "rarety": 5450,
+      "parts": [
+        {
+          "name": "OuQDjqTaCfxRkAmFibKC",
+          "quality": 3639,
+          "count": 4169,
+          "rarety": 7723,
+          "parts": []
+        },
+        {
+          "name": "hqNmXxDaQlbIcmkcPNbE",
+          "quality": 5905,
+          "count": 864,
+          "rarety": 7570,
+          "parts": [
+            {
+              "name": "IrQScqWtsKUSSudHqbPW",
+              "quality": 7594,
+              "count": 4956,
+              "rarety": 2954,
+              "parts": [
+                {
+                  "name": "gJlKPohGenOIIBeHaBKY",
+                  "quality": 32,
+                  "count": 9484,
+                  "rarety": 6455,
+                  "parts": [
+                    {
+                      "name": "AkLWWRWVvndSyqEmEvhH",
+                      "quality": 7519,
+                      "count": 8912,
+                      "rarety": 218,
+                      "parts": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "VITVftIPhEdgfYrSlclu",
+      "quality": 3274,
+      "count": 5031,
+      "rarety": 5473,
+      "parts": []
+    },
+    {
+      "name": "pWtDACSiupQbEalYGwyG",
+      "quality": 6493,
+      "count": 3049,
+      "rarety": 7976,
+      "parts": [
+        {
+          "name": "GTsTLzDoxUSssMCkyMFi",
+          "quality": 1625,
+          "count": 1012,
+          "rarety": 6510,
+          "parts": []
+        }
+      ]
+    }
+  ]
+}

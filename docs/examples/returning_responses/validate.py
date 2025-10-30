@@ -1,4 +1,3 @@
-import uuid
 from http import HTTPStatus
 from typing import final
 
@@ -8,39 +7,30 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Body,
     Controller,
-    HeaderDescription,
     ResponseDescription,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
-class UserCreateModel(pydantic.BaseModel):
+class UserModel(pydantic.BaseModel):
     email: str
-
-
-class UserModel(UserCreateModel):
-    uid: uuid.UUID
 
 
 @final
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserCreateModel],
+    Body[UserModel],
 ):
-    @validate(  # <- describes all possible return types from this endpoint
+    @validate(  # <- describes unique return types from this endpoint
         ResponseDescription(
             UserModel,
             status_code=HTTPStatus.OK,
-            headers={'X-Created': HeaderDescription()},
         ),
     )
     def post(self) -> HttpResponse:
-        uid = uuid.uuid4()
-        # This response would have an explicit status code `200`
-        # and new explicit header `{'X-Created': obj_uuid}`:
+        # This response would have an explicit status code `200`:
         return self.to_response(
-            UserModel(uid=uid, email=self.parsed_body.email),
+            self.parsed_body,
             status_code=HTTPStatus.OK,
-            headers={'X-Created': str(uid)},
         )

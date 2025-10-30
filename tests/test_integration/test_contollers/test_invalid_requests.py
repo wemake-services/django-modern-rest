@@ -124,7 +124,7 @@ def test_single_view_sync405(
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     assert response.headers['Content-Type'] == 'application/json'
     assert json.loads(response.content) == snapshot({
-        'detail': ("Method 'delete' is not allowed, allowed: ['post']"),
+        'detail': ("Method 'DELETE' is not allowed, allowed: ['POST']"),
     })
 
 
@@ -142,7 +142,7 @@ def test_single_view_async405(
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     assert response.headers['Content-Type'] == 'application/json'
     assert json.loads(response.content) == snapshot({
-        'detail': ("Method 'delete' is not allowed, allowed: ['post']"),
+        'detail': ("Method 'DELETE' is not allowed, allowed: ['POST']"),
     })
 
 
@@ -153,7 +153,7 @@ def test_composed_view_sync405(dmr_client: DMRClient) -> None:
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     assert response.headers['Content-Type'] == 'application/json'
     assert json.loads(response.content) == snapshot({
-        'detail': "Method 'put' is not allowed, allowed: ['post']",
+        'detail': "Method 'PUT' is not allowed, allowed: ['GET', 'POST']",
     })
 
 
@@ -166,5 +166,5 @@ def test_composed_view_async405(dmr_client: DMRClient, faker: Faker) -> None:
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     assert response.headers['Content-Type'] == 'application/json'
     assert json.loads(response.content) == snapshot({
-        'detail': "Method 'delete' is not allowed, allowed: ['put']",
+        'detail': "Method 'DELETE' is not allowed, allowed: ['PATCH', 'PUT']",
     })
