@@ -2,7 +2,8 @@ import sys
 
 import pytest
 
-pytest.skip(reason='Module does not supported yet', allow_module_level=True)
+if sys.version_info >= (3, 14):
+    pytest.skip(reason='Module does not supported yet', allow_module_level=True)
 
 import json  # type: ignore[unreachable, unused-ignore]
 from http import HTTPStatus
