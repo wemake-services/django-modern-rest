@@ -37,6 +37,10 @@ There will be several things that ``django_modern_rest`` will do for you here:
    unless :ref:`response_validation` is explicitly turned off
 5. The same metadata will be used to render OpenAPI spec
 
+``django_modern_rest`` never creates implicit methods for you.
+No ``HEAD``, no :ref:`OPTIONS <meta>`,
+if you need them – create them explicitly.
+
 modify
 ~~~~~~
 
@@ -178,7 +182,25 @@ with :func:`~django_modern_rest.routing.compose_blueprints`.
 Customizing controllers
 -----------------------
 
-TODO
+``Controller`` is built to be customized with a class-level API.
+If you need granual control, you can change anything.
+
+Here are feature that you can enable or disable easily:
+
+- :attr:`~django_modern_rest.controller.Controller.responses_from_components`
+  set it to ``False`` to disable automatic responses metadata
+  generation for component parsers, can be useful
+  when you create your own exceptions handlers
+
+Check out our API for the advanced features:
+
+- :attr:`~django_modern_rest.controller.Controller.http_methods`
+  to support custom HTTP methods like ``QUERY``
+  or your custom DSLs on top of HTTP
+- :attr:`~django_modern_rest.controller.Controller.endpoint_cls`
+  to customize how endpoints are created
+- :attr:`~django_modern_rest.controller.Controller.serializer_context_cls`
+  to customize how model for serialization of incoming data is created
 
 
 Next up

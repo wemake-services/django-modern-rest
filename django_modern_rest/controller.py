@@ -84,6 +84,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         responses_from_components: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
+        http_methods: Set of names to be treated as names for endpoints.
+            Does not include ``options``, but includes ``meta``.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -340,6 +342,8 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         responses_from_components: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
+        http_methods: Set of names to be treated as names for endpoints.
+            Does not include ``options``, but includes ``meta``.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
