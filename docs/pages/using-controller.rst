@@ -183,7 +183,7 @@ Customizing controllers
 -----------------------
 
 ``Controller`` is built to be customized with a class-level API.
-If you need granual controll, you can change anything.
+If you need granual control, you can change anything.
 
 Here are feature that you can enable or disable easily:
 

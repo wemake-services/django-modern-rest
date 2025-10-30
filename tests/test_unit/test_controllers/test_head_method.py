@@ -39,7 +39,7 @@ class _GetController(Controller[PydanticSerializer]):
         allow_custom_http_methods=True,
     )
     def get(self) -> HttpResponse:
-        return self.to_response(None, status_code=HTTPStatus.OK)
+        raise NotImplementedError
 
 
 def test_no_explicit_head_method(dmr_rf: DMRRequestFactory) -> None:
