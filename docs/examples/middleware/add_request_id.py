@@ -4,7 +4,6 @@ from typing import Any, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
 
-
 _CallableAny: TypeAlias = Callable[..., Any]
 
 

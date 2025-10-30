@@ -1,10 +1,10 @@
 from typing import ClassVar, final
 
 from django.http import HttpRequest
+from project.app.middleware import add_request_id_json  # Don't forget to change
+
 from django_modern_rest import Controller, ResponseDescription
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-
-from project.app.middleware import add_request_id_json  # Don't forget to change
 
 
 @final
@@ -26,7 +26,6 @@ class RequestIdController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns request_id from modified request."""
-
         return {
             'request_id': self.request.request_id,
             'message': 'Request ID tracked',

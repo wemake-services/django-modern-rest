@@ -306,7 +306,6 @@ class RequestIdController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns request_id from modified request."""
-
         return {
             'request_id': self.request.request_id,
             'message': 'Request ID tracked',

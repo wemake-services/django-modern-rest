@@ -52,9 +52,9 @@ class LoginRequiredController(Controller[PydanticSerializer]):
         """GET endpoint that requires Django authentication."""
         # Access Django's authenticated user
         user = self.request.user
-        username = user.username if user.is_authenticated else 'anonymous'
+        username = user.username if user.is_authenticated else 'anonymous'  # type: ignore[attr-defined]
 
         return {
             'username': username,
-            _MESSAGE_KEY: 'Successfully accessed protected resource',
+            'message': 'Successfully accessed protected resource',
         }
