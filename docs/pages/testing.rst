@@ -73,7 +73,7 @@ Let's reuse the models for data generation in tests!
 .. literalinclude:: /examples/testing/polyfactory_usage.py
   :caption: test_user_create.py
   :linenos:
-  :lines: 8-
+  :lines: 9-
 
 Which will make your tests simple, fast,
 and will help you find unexpected corner cases.
