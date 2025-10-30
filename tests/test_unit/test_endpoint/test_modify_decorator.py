@@ -5,8 +5,11 @@ from typing import ClassVar, final
 import pytest
 from django.http import HttpResponse
 from django.test import RequestFactory
+from inline_snapshot import snapshot
 
 from django_modern_rest import (
+    Blueprint,
+    BlueprintsT,
     Controller,
     Endpoint,
     HeaderDescription,
@@ -83,7 +86,21 @@ def test_modify_duplicate_statuses() -> None:
 def test_modify_deduplicate_statuses() -> None:
     """Ensures `@modify` same duplicate status codes."""
 
+    class _Blueprint(Blueprint[PydanticSerializer]):
+        responses: ClassVar[list[ResponseDescription]] = [
+            # From components:
+            ResponseDescription(int, status_code=HTTPStatus.OK),
+            ResponseDescription(
+                dict[str, str],
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            ),
+        ]
+
+        def post(self) -> str:
+            raise NotImplementedError
+
     class _DeduplicateStatuses(Controller[PydanticSerializer]):
+        blueprints: ClassVar[BlueprintsT] = [_Blueprint]
         responses: ClassVar[list[ResponseDescription]] = [
             # From components:
             ResponseDescription(int, status_code=HTTPStatus.OK),
@@ -99,8 +116,27 @@ def test_modify_deduplicate_statuses() -> None:
         def get(self) -> int:
             raise NotImplementedError
 
-    endpoint = _DeduplicateStatuses.api_endpoints['GET']
-    assert len(endpoint.metadata.responses) == 1
+    endpoints = _DeduplicateStatuses.api_endpoints
+    assert endpoints['GET'].metadata.responses == snapshot({
+        HTTPStatus.OK: ResponseDescription(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+        ),
+    })
+    assert endpoints['POST'].metadata.responses == snapshot({
+        HTTPStatus.CREATED: ResponseDescription(
+            return_type=str,
+            status_code=HTTPStatus.CREATED,
+        ),
+        HTTPStatus.OK: ResponseDescription(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+        ),
+        HTTPStatus.PAYMENT_REQUIRED: ResponseDescription(
+            return_type=dict[str, str],
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
+    })
 
 
 def test_modify_modified_in_responses() -> None:

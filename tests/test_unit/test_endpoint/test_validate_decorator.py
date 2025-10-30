@@ -8,6 +8,8 @@ from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from django_modern_rest import (
+    Blueprint,
+    Body,
     Controller,
     Endpoint,
     HeaderDescription,
@@ -16,7 +18,10 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.plugins.pydantic import (
+    PydanticErrorModel,
+    PydanticSerializer,
+)
 from django_modern_rest.test import DMRRequestFactory
 
 _InnerT = TypeVar('_InnerT')
@@ -419,3 +424,72 @@ def test_validate_async_endpoint_error_for_sync() -> None:
             )
             def get(self) -> HttpResponse:
                 raise NotImplementedError
+
+
+def test_validate_responses_from_blueprint() -> None:
+    """Ensures `@validate` has right `responses` metadata."""
+
+    class _Blueprint(
+        Blueprint[PydanticSerializer],
+        Body[list[str]],
+    ):
+        responses: ClassVar[list[ResponseDescription]] = [
+            ResponseDescription(
+                dict[str, str],
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            ),
+        ]
+
+        @validate(
+            ResponseDescription(list[int], status_code=HTTPStatus.OK),
+        )
+        def post(self) -> HttpResponse:
+            raise NotImplementedError
+
+    assert _Blueprint.api_endpoints['POST'].metadata.responses == snapshot({
+        HTTPStatus.OK: ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
+        ),
+        HTTPStatus.PAYMENT_REQUIRED: ResponseDescription(
+            return_type=dict[str, str],
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
+        HTTPStatus.BAD_REQUEST: ResponseDescription(
+            return_type=PydanticErrorModel,
+            status_code=HTTPStatus.BAD_REQUEST,
+        ),
+    })
+
+
+def test_validate_responses_from_components() -> None:
+    """Ensures `@validate` has right `responses_from_components` metadata."""
+
+    class _Blueprint(
+        Blueprint[PydanticSerializer],
+        Body[list[str]],
+    ):
+        responses_from_components = False
+        responses: ClassVar[list[ResponseDescription]] = [
+            ResponseDescription(
+                dict[str, str],
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            ),
+        ]
+
+        @validate(
+            ResponseDescription(list[int], status_code=HTTPStatus.OK),
+        )
+        def post(self) -> HttpResponse:
+            raise NotImplementedError
+
+    assert _Blueprint.api_endpoints['POST'].metadata.responses == snapshot({
+        HTTPStatus.OK: ResponseDescription(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
+        ),
+        HTTPStatus.PAYMENT_REQUIRED: ResponseDescription(
+            return_type=dict[str, str],
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
+    })

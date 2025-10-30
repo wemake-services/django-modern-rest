@@ -74,6 +74,7 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> None:
         """
         Create an entrypoint.
@@ -81,6 +82,8 @@ class Endpoint:  # noqa: WPS214
         Args:
             func: Entrypoint handler. An actual function to be called.
             blueprint_cls: ``Blueprint`` class that this endpoint belongs to.
+            controller_cls: ``Controller`` class that this endpoint
+                might belong to.
 
         .. error::
 
@@ -94,6 +97,7 @@ class Endpoint:  # noqa: WPS214
         metadata = self.metadata_validator_cls(payload=payload)(
             func,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         func.__metadata__ = metadata  # type: ignore[attr-defined]
         self.metadata = metadata

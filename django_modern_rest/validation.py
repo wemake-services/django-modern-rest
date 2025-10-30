@@ -527,6 +527,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
@@ -557,6 +558,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 func,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             )
         if isinstance(self.payload, ModifyEndpointPayload):
             return self._from_modify(
@@ -566,6 +568,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 func,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             )
         if self.payload is None:
             return self._from_raw_data(
@@ -573,6 +576,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 method,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             )
         assert_never(self.payload)
 
@@ -581,6 +585,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         endpoint_responses: list[ResponseDescription],
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
         modification: ResponseModification | None = None,
     ) -> _AllResponses:
         modification_spec = (
@@ -592,6 +597,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 *modification_spec,
                 *endpoint_responses,
                 *blueprint_cls.semantic_responses(),
+                *(
+                    []
+                    if controller_cls is None
+                    else controller_cls.semantic_responses()
+                ),
                 *resolve_setting(DMR_RESPONSES_KEY),
             ],
         )
@@ -605,16 +615,19 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         all_responses = self._resolve_all_responses(
             payload.responses,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         responses = self.response_list_validator_cls()(
             all_responses,
@@ -647,12 +660,14 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         self._validate_new_headers(payload, endpoint=endpoint)
         modification = ResponseModification(
@@ -671,6 +686,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         all_responses = self._resolve_all_responses(
             payload_responses,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
             modification=modification,
         )
         responses = self.response_list_validator_cls()(
@@ -702,11 +718,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         status_code = infer_status_code(method)
         modification = ResponseModification(
@@ -717,6 +735,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         all_responses = self._resolve_all_responses(
             [],
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
             modification=modification,
         )
         responses = self.response_list_validator_cls()(
@@ -755,6 +774,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponse):
             if isinstance(self.payload, ModifyEndpointPayload):
@@ -767,6 +787,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             if not self._resolve_all_responses(
                 self.payload.responses,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             ):
                 raise EndpointMetadataError(
                     f'{endpoint!r} returns HttpResponse '
