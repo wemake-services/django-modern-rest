@@ -301,7 +301,7 @@ _BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
 BlueprintsT: TypeAlias = Sequence[_BlueprintT]
 
 
-class Controller(Blueprint[_SerializerT_co], View):
+class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     """
     Defines API views as controllers.
 
