@@ -38,7 +38,7 @@ There will be several things that ``django_modern_rest`` will do for you here:
 5. The same metadata will be used to render OpenAPI spec
 
 ``django_modern_rest`` never creates implicit methods for you.
-No ``HEAD``, no :ref:`OPTIONS <meta>`_,
+No ``HEAD``, no :ref:`OPTIONS <meta>`,
 if you need them – create them explicitly.
 
 modify
