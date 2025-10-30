@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from http import HTTPStatus
 from typing import ClassVar, final
 
@@ -6,6 +5,7 @@ import pytest
 
 from django_modern_rest import (
     Blueprint,
+    BlueprintsT,
     Controller,
     MetaMixin,
     compose_blueprints,
@@ -106,9 +106,7 @@ def test_compose_with_existing_endpoint() -> None:
     with pytest.raises(EndpointMetadataError, match='POST'):
 
         class MyController(Controller[PydanticSerializer]):
-            blueprints: ClassVar[  # noqa: WPS234
-                Sequence[type[Blueprint[BaseSerializer]]]
-            ] = [
+            blueprints: ClassVar[BlueprintsT] = [
                 _SyncBlueprint,
             ]
 

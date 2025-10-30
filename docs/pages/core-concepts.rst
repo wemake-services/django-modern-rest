@@ -11,12 +11,18 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
     by its name – HTTP method – and its :term:`Metadata`, what response schema
     it returns, what status codes it can return, etc.
 
+  Blueprint
+    :class:`~django_modern_rest.controller.Blueprint` is a building block
+    for composition of different HTTP methods and parsing rules under
+    one resulting URL.
+
   Controller
     :class:`~django_modern_rest.controller.Controller`
     is a collection of one or more :term:`endpoints <Endpoint>`.
-    Controller is defined by incoming data parsing.
-    So, if some endpoints expect the same data – they might live
-    in the same controller.
+    Controller is a subclass of :class:`~django.views.generic.base.View`, so
+    it can be used in a routing.
+    Controller can also be composed of different :term:`blueprints <Blueprint>`,
+    so different parsing rules can share one final URL.
 
   Component
     Controllers parse data via components like

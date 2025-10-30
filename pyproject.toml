@@ -185,7 +185,7 @@ mccabe.max-complexity = 6
 pydocstyle.convention = "google"
 
 # For `django_test_app` only:
-isort.known-first-party = ["server"]
+isort.known-first-party = ["server", "examples"]
 
 [tool.ruff.lint.per-file-ignores]
 # Do not require docstrings in test project:

@@ -11,6 +11,7 @@ from django_modern_rest.components import (
     Query as Query,
 )
 from django_modern_rest.controller import Blueprint as Blueprint
+from django_modern_rest.controller import BlueprintsT as BlueprintsT
 from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.decorators import (
     dispatch_decorator as dispatch_decorator,

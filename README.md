@@ -31,6 +31,7 @@
 - [x] Great docs
 - [x] No emojis 🌚️️
 
+---------
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="100%" height="auto" />
@@ -40,22 +41,6 @@
 <p align="center">
   <em>Sync mode</em>
 </p>
-
-
-## Installation
-
-Works for:
-- Python 3.11+
-- Django 4.2+
-
-```bash
-pip install django-modern-rest
-```
-
-There are several included extras:
-- `'django-modern-rest[msgspec]'` provides `msgspec` support
-  and the fastest json parsing, recommended to be **always** included
-- `'django-modern-rest[pydantic]'` provides `pydantic` support
 
 
 ## Testimonials
@@ -69,6 +54,23 @@ There are several included extras:
 > Using `django-modern-rest` has been a game-changer for my productivity. The strict type safety and schema validation for both requests and responses mean I spend less time debugging and more time building.
 
 — **[Josiah Kaviani](https://github.com/proofit404)**, Django core developer
+
+
+## Installation
+
+Works for:
+- СPython 3.11+
+- Django 4.2+
+
+```bash
+pip install django-modern-rest
+```
+
+There are several included extras:
+- `'django-modern-rest[msgspec]'` provides `msgspec` support
+  and the fastest json parsing, recommended to be **always** included
+- `'django-modern-rest[pydantic]'` provides `pydantic` support
+
 
 ## Example
 
