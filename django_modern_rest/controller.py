@@ -120,7 +120,11 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     _is_async: ClassVar[bool]
 
     @override
-    def __init_subclass__(cls) -> None:
+    def __init_subclass__(
+        cls,
+        *,
+        controller_cls: type['Controller[BaseSerializer]'] | None = None,
+    ) -> None:
         """Build blueprint class from different parts."""
         super().__init_subclass__()
         type_args = infer_type_args(cls, Blueprint)
@@ -148,6 +152,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             canonical: cls.endpoint_cls(
                 getattr(cls, dsl),
                 blueprint_cls=cls,
+                controller_cls=controller_cls,
             )
             for canonical, dsl in cls.existing_http_methods()
         })
@@ -258,11 +263,13 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     @classmethod
     def semantic_responses(cls) -> list[ResponseDescription]:
         """
-        Returns all user-defined and component-defined responses.
+        Returns all user-defined responses in layers above endpoint itself.
 
-        Optionally component-defined responses can be turned off with falsy
-        :attr:`responses_from_components` attribute on a controller.
-        We call it once per endpoint creation.
+        Optionally responses can be turned off with falsy
+        :attr:`responses_from_components` attribute
+        on a blueprint or a controller.
+        We call it once per blueprint
+        and once per controller when creating endpoint.
         """
         if not cls.responses_from_components:
             return cls.responses
@@ -358,7 +365,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         cls.api_endpoints = {}  # will be re-populated in the very end
         for blueprint in cls.blueprints:
             cls.api_endpoints.update(blueprint.api_endpoints)
-        super().__init_subclass__()
+        super().__init_subclass__(controller_cls=cls)
         # It is validated that we don't have intersections.
         cls._blueprint_per_method = {
             # TODO: this violation is a bug in WPS

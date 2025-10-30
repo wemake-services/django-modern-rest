@@ -26,9 +26,10 @@ class _CustomEndpointMetadataValidator(EndpointMetadataValidator):
         self,
         func: Callable[..., Any],
         blueprint_cls: type[Blueprint[BaseSerializer]],
+        controller_cls: type[Controller[BaseSerializer]] | None,
     ) -> EndpointMetadata:
         self.__class__.was_called = True
-        return super().__call__(func, blueprint_cls)
+        return super().__call__(func, blueprint_cls, controller_cls)
 
 
 @final

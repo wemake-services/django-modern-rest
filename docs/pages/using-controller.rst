@@ -108,9 +108,8 @@ When modeling your endpoints and data, you might find yourself
 in a situation when you would need to have different data
 parsing rules for different endpoints on the same URL:
 
-- ``GET /users`` does not require any body parsing
-  and just returns the list of users
-- ``POST /users`` requires a request body of some ``UserInput``
+- ``GET /users`` does not a body and just returns the list of users
+- ``POST /users`` requires a request body of some ``UserInput`` type
   to create a new user with the pre-defined set of fields
 
 To achieve that we have a special composition primitive called
