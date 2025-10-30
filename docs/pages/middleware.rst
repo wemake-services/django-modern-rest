@@ -54,7 +54,7 @@ Custom Middleware
 You can also create custom middleware functions.
 Here's an example of a rate limiting middleware:
 
-.. literalinclude:: /examples/middleware/rate_limit_full.py
+.. literalinclude:: /examples/middleware/rate_limit.py
     :linenos:
 
 Multiple Response Descriptions
@@ -154,13 +154,15 @@ Common use cases:
 
 Example with rate limiting:
 
-.. literalinclude:: /examples/middleware/rate_limit_middleware.py
+.. literalinclude:: /examples/middleware/rate_limit.py
   :linenos:
+  :lines: 16-30
 
 Use with ``wrap_middleware``:
 
-.. literalinclude:: /examples/middleware/rate_limit_wrapper.py
+.. literalinclude:: /examples/middleware/rate_limit.py
   :linenos:
+  :lines: 33-
 
 Wrapping Django's Built-in Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
