@@ -38,11 +38,11 @@ class _CustomResponseValidator(ResponseValidator):
     @override
     def validate_response(
         self,
-        blueprint: Blueprint[BaseSerializer],
+        controller: Controller[BaseSerializer],
         response: _ResponseT,
     ) -> _ResponseT:
         self.__class__.was_called = True
-        return super().validate_response(blueprint, response)
+        return super().validate_response(controller, response)
 
 
 @final

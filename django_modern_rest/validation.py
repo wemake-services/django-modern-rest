@@ -80,11 +80,11 @@ class ResponseValidator:
 
     def validate_response(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not self._is_validation_enabled(blueprint):
+        if not self._is_validation_enabled(controller):
             return response
         schema = self._get_response_schema(response.status_code)
         self._validate_body(response.content, schema, response=response)
@@ -93,14 +93,14 @@ class ResponseValidator:
 
     def validate_modification(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         structured: Any,
     ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
             method = self.metadata.method
             raise ResponseSerializationError(
-                f'{blueprint} in {method} returned '
+                f'{controller} in {method} returned '
                 f'raw data of type {type(structured)} '
                 'without associated `@modify` usage.',
             )
@@ -113,7 +113,7 @@ class ResponseValidator:
                 self.serializer,
             ),
         )
-        if not self._is_validation_enabled(blueprint):
+        if not self._is_validation_enabled(controller):
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(structured, schema)
@@ -136,7 +136,7 @@ class ResponseValidator:
 
     def _is_validation_enabled(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
     ) -> bool:
         """
         Should we run response validation?
@@ -144,13 +144,19 @@ class ResponseValidator:
         Priority:
         - We first return any directly specified *validate_responses*
           argument to endpoint itself
+        - Second is *validate_responses* on the blueprint, if it exists
         - Then we return *validate_responses* from controller if specified
         - Lastly we return the default value from settings
         """
         if isinstance(self.metadata.validate_responses, bool):
             return self.metadata.validate_responses
-        if isinstance(blueprint.validate_responses, bool):
-            return blueprint.validate_responses
+        if controller.blueprint and isinstance(
+            controller.blueprint.validate_responses,
+            bool,
+        ):
+            return controller.blueprint.validate_responses
+        if isinstance(controller.validate_responses, bool):
+            return controller.validate_responses
         return resolve_setting(  # type: ignore[no-any-return]
             DMR_VALIDATE_RESPONSES_KEY,
         )
