@@ -105,24 +105,8 @@ Every Django middleware receives a ``get_response`` callable parameter.
 This is **not** the actual response - it's a callback that represents
 the next middleware in the chain or the final view function.
 
-.. code-block:: python
-
-    def my_middleware(
-        get_response: Callable[[HttpRequest], HttpResponse],
-    ) -> Callable[[HttpRequest], HttpResponse]:
-        """
-        get_response is a callback that will:
-        1. Call the next middleware (if any)
-        2. Eventually call your controller/view
-        3. Return the response
-        """
-
-        def middleware_function(request: HttpRequest) -> HttpResponse:
-            # Your middleware logic here
-            response = get_response(request)  # Call the view
-            return response
-
-        return middleware_function
+.. literalinclude:: /examples/middleware/get_response.py
+  :linenos:
 
 Phase 1: Process Request (before get_response)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,38 +118,13 @@ Before calling ``get_response``, you can:
 - Perform authentication/authorization
 - Short-circuit and return early (without calling the view)
 
-.. code-block:: python
-
-    import uuid
-    from collections.abc import Callable
-    from django.http import HttpRequest, HttpResponse
-
-    def add_request_id_middleware(
-        get_response: Callable[[HttpRequest], HttpResponse],
-    ) -> Callable[[HttpRequest], HttpResponse]:
-        """Adds a unique request_id to every request."""
-
-        def decorator(request: HttpRequest) -> HttpResponse:
-            request_id = str(uuid.uuid4())
-            request.request_id = request_id  # Add attribute to request
-
-            response = get_response(request)
-            response['X-Request-ID'] = request_id
-
-            return response
-
-        return decorator
+.. literalinclude:: /examples/middleware/add_request_id.py
+  :linenos:
 
 Now your controller can access ``self.request.request_id``:
 
-.. code-block:: python
-
-    @add_request_id_json
-    class MyController(Controller[PydanticSerializer]):
-        def get(self) -> dict[str, str]:
-            # Access the request_id added by middleware
-            request_id = self.request.request_id
-            return {'request_id': request_id}
+.. literalinclude:: /examples/middleware/usage_add_request_id.py
+  :linenos:
 
 Phase 2: Process Response (after get_response)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -177,23 +136,8 @@ After calling ``get_response``, you can:
 - Log response details
 - Transform response content
 
-.. code-block:: python
-
-    def custom_header_middleware(
-        get_response: Callable[[HttpRequest], HttpResponse],
-    ) -> Callable[[HttpRequest], HttpResponse]:
-        """Adds custom headers to all responses."""
-
-        def decorator(request: HttpRequest) -> HttpResponse:
-            # Call the view first
-            response = get_response(request)
-
-            response['X-Custom-Header'] = 'CustomValue'
-            response['X-Processed-By'] = 'custom_header_middleware'
-
-            return response
-
-        return decorator
+.. literalinclude:: /examples/middleware/custom_header.py
+  :linenos:
 
 Short-Circuiting: Returning Without Calling get_response
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -266,39 +210,8 @@ You can wrap Django's built-in authentication decorators like ``login_required``
 to make them REST API friendly. By default, ``login_required`` returns a 302
 redirect, but you can convert it to a JSON 401 response:
 
-.. code-block:: python
-
-    from django.contrib.auth.decorators import login_required
-    from http import HTTPStatus
-    from django_modern_rest import build_response, wrap_middleware
-    from django_modern_rest.plugins.pydantic import PydanticSerializer
-
-    @wrap_middleware(
-        login_required,
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.FOUND,
-        ),
-    )
-    def login_required_json(response: HttpResponse) -> HttpResponse:
-        """Convert Django's login_required redirect to JSON 401 response."""
-        # Converter called only for 302 redirect, always convert to 401
-        return build_response(
-            PydanticSerializer,
-            raw_data={'detail': 'Authentication credentials were not provided'},
-            status_code=HTTPStatus.UNAUTHORIZED,
-        )
-
-    @login_required_json
-    class ProtectedController(Controller[PydanticSerializer]):
-        responses: ClassVar[list[ResponseDescription]] = (
-          login_required_json.responses
-      )
-
-        def get(self) -> dict[str, str]:
-            # This only executes if user is authenticated
-            username = self.request.user.username
-            return {'username': username, 'message': 'Successfully accessed protected resource'}
+.. literalinclude:: /examples/middleware/built_in_decorators.py
+  :linenos:
 
 Visual Flow
 ~~~~~~~~~~~

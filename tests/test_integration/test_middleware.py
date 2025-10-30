@@ -32,13 +32,13 @@ def user_data(faker: Faker) -> _UserData:
 
 
 @pytest.fixture
-def _dmr_client_csrf() -> DMRClient:
+def dmr_client_csrf() -> DMRClient:
     """Customized version of :class:`django.test.Client` with csrf."""
     return DMRClient(enforce_csrf_checks=True)
 
 
 @pytest.fixture
-def _dmr_async_client_csrf() -> DMRAsyncClient:
+def dmr_async_client_csrf() -> DMRAsyncClient:
     """Customized version of :class:`django.test.AsyncClient` with csrf."""
     return DMRAsyncClient(enforce_csrf_checks=True)
 
@@ -56,11 +56,11 @@ def test_csrf_protection_default_off(
 
 
 def test_csrf_without_token(
-    _dmr_client_csrf: DMRClient,  # noqa: PT019
+    dmr_client_csrf: DMRClient,
     user_data: _UserData,
 ) -> None:
     """Tests forbidden request with csrf checks."""
-    response = _dmr_client_csrf.post(
+    response = dmr_client_csrf.post(
         reverse(_CSRF_TEST_ENDPOINT),
         data=user_data,
     )
@@ -68,13 +68,13 @@ def test_csrf_without_token(
 
 
 def test_csrf_with_token(
-    _dmr_client_csrf: DMRClient,  # noqa: PT019
+    dmr_client_csrf: DMRClient,
     user_data: _UserData,
 ) -> None:
     """Tests protected csrf request."""
-    csrf_token = _get_csrf_token(_dmr_client_csrf)
+    csrf_token = _get_csrf_token(dmr_client_csrf)
 
-    response = _dmr_client_csrf.post(
+    response = dmr_client_csrf.post(
         reverse(_CSRF_TEST_ENDPOINT),
         data=user_data,
         headers={'X-CSRFToken': csrf_token},
@@ -84,11 +84,11 @@ def test_csrf_with_token(
 
 @pytest.mark.asyncio
 async def test_csrf_async_without_token(
-    _dmr_async_client_csrf: DMRAsyncClient,  # noqa: PT019
+    dmr_async_client_csrf: DMRAsyncClient,
     user_data: _UserData,
 ) -> None:
     """Tests forbidden async request with csrf checks."""
-    response = await _dmr_async_client_csrf.post(
+    response = await dmr_async_client_csrf.post(
         reverse(_ASYNC_CSRF_TEST_ENDPOINT),
         data=user_data,
     )
@@ -97,13 +97,13 @@ async def test_csrf_async_without_token(
 
 @pytest.mark.asyncio
 async def test_csrf_async_with_token(
-    _dmr_async_client_csrf: DMRAsyncClient,  # noqa: PT019
+    dmr_async_client_csrf: DMRAsyncClient,
     user_data: _UserData,
 ) -> None:
     """Tests protected csrf async request."""
-    csrf_token = await _get_csrf_token_async(_dmr_async_client_csrf)
+    csrf_token = await _get_csrf_token_async(dmr_async_client_csrf)
 
-    response = await _dmr_async_client_csrf.post(
+    response = await dmr_async_client_csrf.post(
         reverse(_ASYNC_CSRF_TEST_ENDPOINT),
         data=user_data,
         headers={'X-CSRFToken': csrf_token},
@@ -156,8 +156,7 @@ def test_request_id_middleware(dmr_client: DMRClient) -> None:
     response = dmr_client.get(reverse(_REQUEST_ID_ENDPOINT))
 
     assert response.status_code == HTTPStatus.OK
-    response_data = response.json()
-    request_id = response_data['request_id']
+    request_id = response.json()['request_id']
 
     assert response.headers['X-Request-ID'] == request_id
 
@@ -170,8 +169,7 @@ async def test_request_id_middleware_async(
     response = await dmr_async_client.get(reverse(_REQUEST_ID_ENDPOINT))
 
     assert response.status_code == HTTPStatus.OK
-    response_data = response.json()
-    request_id = response_data['request_id']
+    request_id = response.json()['request_id']
 
     assert response.headers['X-Request-ID'] == request_id
 
@@ -230,18 +228,22 @@ def test_login_required_unauthenticated(dmr_client: DMRClient) -> None:
 def test_login_required_authenticated(
     dmr_client: DMRClient,
     django_user_model: Any,
+    faker: Faker,
 ) -> None:
     """Test Django's login_required allows authenticated users."""
+    username = faker.user_name()
     user = django_user_model.objects.create_user(
-        username='testuser',
-        password='testpass123',  # noqa: S106
+        username=username,
+        password=faker.password(),
     )
     dmr_client.force_login(user)
 
     response = dmr_client.get(reverse(_LOGIN_REQUIRED_ENDPOINT))
 
     assert response.status_code == HTTPStatus.OK
-    response_data = response.json()
-    assert response_data['username'] == 'testuser'
-    expected_message = 'Successfully accessed protected resource'
-    assert response_data['message'] == expected_message
+
+    expected = {
+        'username': username,
+        'message': 'Successfully accessed protected resource',
+    }
+    assert response.json() == expected

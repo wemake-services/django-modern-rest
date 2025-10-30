@@ -2,11 +2,11 @@ import datetime as dt
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, ClassVar, TypeAlias, final
+from typing import Any, ClassVar, Final, TypeAlias, final
 
 import pydantic
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 from django_modern_rest import (  # noqa: WPS235
@@ -29,6 +29,12 @@ from server.apps.rest.middleware import (
 )
 
 _CallableAny: TypeAlias = Callable[..., Any]
+_MESSAGE_KEY: Final = 'message'
+
+
+@final
+class _RequestWithID(HttpRequest):
+    request_id: str
 
 
 @wrap_middleware(
@@ -97,14 +103,20 @@ def add_request_id_json(response: HttpResponse) -> HttpResponse:
         return_type=dict[str, str],
         status_code=HTTPStatus.FOUND,
     ),
+    ResponseDescription(  # Uses for proxy authed response with HTTPStatus.OK
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
 )
 def login_required_json(response: HttpResponse) -> HttpResponse:
     """Convert Django's login_required redirect to JSON 401 response."""
-    return build_response(
-        PydanticSerializer,
-        raw_data={'detail': 'Authentication credentials were not provided'},
-        status_code=HTTPStatus.UNAUTHORIZED,
-    )
+    if response.status_code == HTTPStatus.FOUND:
+        return build_response(
+            PydanticSerializer,
+            raw_data={'detail': 'Authentication credentials were not provided'},
+            status_code=HTTPStatus.UNAUTHORIZED,
+        )
+    return response
 
 
 @final
@@ -223,8 +235,7 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
-        message_key = 'message'  # noqa: WPS226
-        return {message_key: 'CSRF token set'}
+        return {_MESSAGE_KEY: 'CSRF token set'}
 
 
 @final
@@ -264,7 +275,7 @@ class CustomHeaderController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns simple data."""
-        return {'message': 'Success'}
+        return {_MESSAGE_KEY: 'Success'}
 
 
 @final
@@ -291,11 +302,15 @@ class RequestIdController(Controller[PydanticSerializer]):
         add_request_id_json.responses
     )
 
+    request: _RequestWithID  # type: ignore[mutable-override]
+
     def get(self) -> dict[str, str]:
         """GET endpoint that returns request_id from modified request."""
-        # Access request.request_id that was added by middleware
-        request_id = getattr(self.request, 'request_id', 'unknown')
-        return {'request_id': request_id, 'message': 'Request ID tracked'}
+
+        return {
+            'request_id': self.request.request_id,
+            'message': 'Request ID tracked',
+        }
 
 
 @final
@@ -319,5 +334,5 @@ class LoginRequiredController(Controller[PydanticSerializer]):
 
         return {
             'username': username,
-            'message': 'Successfully accessed protected resource',
+            _MESSAGE_KEY: 'Successfully accessed protected resource',
         }
