@@ -54,7 +54,7 @@ Custom Middleware
 You can also create custom middleware functions.
 Here's an example of a rate limiting middleware:
 
-.. literalinclude:: /examples/middleware/rate_limit.py
+.. literalinclude:: /examples/middleware/rate_limit_full.py
     :linenos:
 
 Multiple Response Descriptions
@@ -154,54 +154,13 @@ Common use cases:
 
 Example with rate limiting:
 
-.. code-block:: python
-
-    from http import HTTPStatus
-    from django_modern_rest import build_response
-    from django_modern_rest.plugins.pydantic import PydanticSerializer
-
-    def rate_limit_middleware(
-        get_response: Callable[[HttpRequest], HttpResponse],
-    ) -> Callable[[HttpRequest], HttpResponse]:
-        """Middleware that blocks rate-limited requests."""
-
-        def decorator(request: HttpRequest) -> HttpResponse:
-            # Check rate limit BEFORE calling view
-            if request.headers.get('X-Rate-Limited') == 'true':
-                # Return 429 WITHOUT calling get_response
-                # The view is never executed
-                return build_response(
-                    PydanticSerializer,
-                    raw_data={'detail': 'Rate limit exceeded'},
-                    status_code=HTTPStatus.TOO_MANY_REQUESTS,
-                )
-
-            # Rate limit OK - call the view
-            return get_response(request)
-
-        return decorator
+.. literalinclude:: /examples/middleware/rate_limit_middleware.py
+  :linenos:
 
 Use with ``wrap_middleware``:
 
-.. code-block:: python
-
-    @wrap_middleware(
-        rate_limit_middleware,
-        ResponseDescription(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.TOO_MANY_REQUESTS,
-        ),
-    )
-    def rate_limit_json(response: HttpResponse) -> HttpResponse:
-        """Pass through the rate limit response."""
-        return response
-
-    @rate_limit_json
-    class RateLimitedController(Controller[PydanticSerializer]):
-        responses = [*rate_limit_json.responses]
-
-        def post(self) -> dict[str, str]:
-            return {'message': 'Request processed'}
+.. literalinclude:: /examples/middleware/rate_limit_wrapper.py
+  :linenos:
 
 Wrapping Django's Built-in Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -218,22 +177,17 @@ Visual Flow
 
 Here's how a request flows through middleware:
 
-.. code-block:: text
+.. mermaid::
+  :caption: Middleware execution flow
+  :config: {"theme": "forest"}
 
-    HTTP Request
-        ↓
-    Middleware 1 (Phase 1: process request)
-        ↓
-    Middleware 2 (Phase 1: process request)
-        ↓
-    Controller/View executes
-        ↓
-    Middleware 2 (Phase 2: process response)
-        ↓
-    Middleware 1 (Phase 2: process response)
-        ↓
-    HTTP Response
-
+    graph TB
+      A[HTTP Request] --> B1["Middleware 1 (Phase 1: process request)"]
+      B1 --> B2["Middleware 2 (Phase 1: process request)"]
+      B2 --> C[Controller/View executes]
+      C --> D2["Middleware 2 (Phase 2: process response)"]
+      D2 --> D1["Middleware 1 (Phase 2: process response)"]
+      D1 --> E[HTTP Response]
 
 Best Practices
 --------------
