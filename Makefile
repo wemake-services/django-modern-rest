@@ -34,6 +34,7 @@ smoke:
 example:
 	cd django_test_app && poetry run mypy --config-file mypy.ini
 	PYTHONPATH='docs/' poetry run pytest -o addopts='' \
+	  --suppress-no-test-exit-code \
 		docs/examples/testing/polyfactory_usage.py
 
 .PHONY: package
