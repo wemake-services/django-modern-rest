@@ -292,7 +292,11 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         return response
 
 
+#: Type that we expect for a single blueprint composition.
 _BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
+
+#: Type for blueprints composition.
+BlueprintsT: TypeAlias = Sequence[_BlueprintT]
 
 
 class Controller(Blueprint[_SerializerT_co], View):
@@ -336,7 +340,7 @@ class Controller(Blueprint[_SerializerT_co], View):
     """
 
     # Public class-level API:
-    blueprints: ClassVar[Sequence[_BlueprintT]]
+    blueprints: ClassVar[BlueprintsT]
     validator_cls: ClassVar[type[BlueprintValidator]] = ControllerValidator
 
     # Protected API:
