@@ -10,7 +10,7 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse
-from django.utils.functional import classproperty
+from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
@@ -159,6 +159,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
 
         Unlike :meth:`~django.views.generic.base.View.setup` does not set
         ``head`` method automatically.
+
+        Thread safety: there's only one blueprint instance per request.
         """
         self.request = request
         self.args = args
@@ -292,10 +294,14 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         return response
 
 
+#: Type that we expect for a single blueprint composition.
 _BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
 
+#: Type for blueprints composition.
+BlueprintsT: TypeAlias = Sequence[_BlueprintT]
 
-class Controller(Blueprint[_SerializerT_co], View):
+
+class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     """
     Defines API views as controllers.
 
@@ -336,12 +342,14 @@ class Controller(Blueprint[_SerializerT_co], View):
     """
 
     # Public class-level API:
-    blueprints: ClassVar[Sequence[_BlueprintT]]
+    blueprints: ClassVar[BlueprintsT]
     validator_cls: ClassVar[type[BlueprintValidator]] = ControllerValidator
+
+    # Public instance API:
+    blueprint: Blueprint[_SerializerT_co] | None
 
     # Protected API:
     _blueprint_per_method: ClassVar[Mapping[str, _BlueprintT]]
-    _blueprint: Blueprint[_SerializerT_co] | None
 
     @override
     def __init_subclass__(cls) -> None:
@@ -361,7 +369,11 @@ class Controller(Blueprint[_SerializerT_co], View):
 
     @override
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
-        """Set up common attributes."""
+        """
+        Set up common attributes.
+
+        Thread safety: there's only one controller instance per request.
+        """
         super().setup(request, *args, **kwargs)
         # Controller is created once per request, so we can assign attributes.
         blueprint = self._blueprint_per_method.get(
@@ -370,10 +382,10 @@ class Controller(Blueprint[_SerializerT_co], View):
         if blueprint:
             instance = blueprint()
             instance.setup(request, *args, **kwargs)
-            # We validate that serializer match
-            self._blueprint = instance  # type: ignore[assignment]
+            # We validate that serializers match:
+            self.blueprint = instance  # type: ignore[assignment]
         else:
-            self._blueprint = None
+            self.blueprint = None
 
     @override
     def dispatch(
@@ -394,7 +406,7 @@ class Controller(Blueprint[_SerializerT_co], View):
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
             # TODO: support redirects
-            return endpoint(self._blueprint, self, *args, **kwargs)
+            return endpoint(self, *args, **kwargs)
         # This return is very special,
         # since it does not have an attached endpoint.
         # All other responses are handled on endpoint level
@@ -540,3 +552,8 @@ class Controller(Blueprint[_SerializerT_co], View):
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
         """We already know this in advance, no need to recalculate."""
         return cls._is_async
+
+    @cached_property
+    def active_blueprint(self) -> Blueprint[_SerializerT_co]:
+        """Returns a blueprint if it was used, otherwise, returns self."""
+        return self.blueprint or self

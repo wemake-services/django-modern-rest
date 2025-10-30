@@ -116,14 +116,12 @@ class Endpoint:  # noqa: WPS214
 
     def __call__(
         self,
-        blueprint: 'Blueprint[BaseSerializer] | None',
         controller: 'Controller[BaseSerializer]',
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
         """Run the endpoint and return the response."""
         return self._func(  # type: ignore[no-any-return]
-            blueprint,
             controller,
             *args,
             **kwargs,
@@ -131,7 +129,6 @@ class Endpoint:  # noqa: WPS214
 
     def handle_error(
         self,
-        blueprint: 'Blueprint[BaseSerializer] | None',
         controller: 'Controller[BaseSerializer]',
         exc: Exception,
     ) -> HttpResponse:
@@ -140,7 +137,7 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom error handling.
         """
-        active_blueprint = blueprint or controller
+        active_blueprint = controller.active_blueprint
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
@@ -152,9 +149,9 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` instead of `expect / pass` for speed.
                 pass  # noqa: WPS420
-        if blueprint:
+        if controller.blueprint:
             try:
-                return blueprint.handle_error(self, exc)
+                return controller.blueprint.handle_error(self, exc)
             except Exception:  # noqa: S110
                 pass  # noqa: WPS420
         # Per-endpoint error handler and per-blueprint handlers didn't work.
@@ -167,7 +164,6 @@ class Endpoint:  # noqa: WPS214
 
     async def handle_async_error(
         self,
-        blueprint: 'Blueprint[BaseSerializer] | None',
         controller: 'Controller[BaseSerializer]',
         exc: Exception,
     ) -> HttpResponse:
@@ -176,7 +172,7 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom async error handling.
         """
-        active_blueprint = blueprint or controller
+        active_blueprint = controller.active_blueprint
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
@@ -188,9 +184,9 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if blueprint:
+        if controller.blueprint:
             try:
-                return await blueprint.handle_async_error(self, exc)
+                return await controller.blueprint.handle_async_error(self, exc)
             except Exception:  # noqa: S110
                 pass  # noqa: WPS420
         # Per-endpoint error handler and per-blueprint handlers didn't work.
@@ -206,12 +202,11 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., Awaitable[HttpResponse]]:
         async def decorator(
-            blueprint: 'Blueprint[BaseSerializer] | None',
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
-            active_blueprint = blueprint or controller
+            active_blueprint = controller.active_blueprint
             # Parse request:
             try:
                 active_blueprint.serializer_context.parse_and_bind(
@@ -222,8 +217,8 @@ class Endpoint:  # noqa: WPS214
                 )
             except Exception as exc:
                 return self._make_http_response(
-                    active_blueprint,
-                    await self.handle_async_error(blueprint, controller, exc),
+                    controller,
+                    await self.handle_async_error(controller, exc),
                 )
             # Return response:
             try:
@@ -235,12 +230,8 @@ class Endpoint:  # noqa: WPS214
                     headers=exc.headers,
                 )
             except Exception as exc:
-                func_result = await self.handle_async_error(
-                    blueprint,
-                    controller,
-                    exc,
-                )
-            return self._make_http_response(active_blueprint, func_result)
+                func_result = await self.handle_async_error(controller, exc)
+            return self._make_http_response(controller, func_result)
 
         return decorator
 
@@ -249,12 +240,11 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., HttpResponse]:
         def decorator(
-            blueprint: 'Blueprint[BaseSerializer] | None',
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
-            active_blueprint = blueprint or controller
+            active_blueprint = controller.active_blueprint
             # Parse request:
             try:
                 active_blueprint.serializer_context.parse_and_bind(
@@ -265,12 +255,8 @@ class Endpoint:  # noqa: WPS214
                 )
             except Exception as exc:
                 return self._make_http_response(
-                    active_blueprint,
-                    self.handle_error(
-                        blueprint,
-                        controller,
-                        exc,
-                    ),
+                    controller,
+                    self.handle_error(controller, exc),
                 )
             # Return response:
             try:
@@ -282,18 +268,14 @@ class Endpoint:  # noqa: WPS214
                     headers=exc.headers,
                 )
             except Exception as exc:
-                func_result = self.handle_error(
-                    blueprint,
-                    controller,
-                    exc,
-                )
-            return self._make_http_response(active_blueprint, func_result)
+                func_result = self.handle_error(controller, exc)
+            return self._make_http_response(controller, func_result)
 
         return decorator
 
     def _make_http_response(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         raw_data: Any | HttpResponse,
     ) -> HttpResponse:
         """
@@ -303,35 +285,35 @@ class Endpoint:  # noqa: WPS214
         just validates it before returning.
         """
         try:
-            return self._validate_response(blueprint, raw_data)
+            return self._validate_response(controller, raw_data)
         except ResponseSerializationError as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # here, because it is too late. Since `ResponseSerializationError`
             # happened mostly because the return
             # schema validation was not successful.
             payload = {'detail': exc.args[0]}
-            return blueprint.to_error(
+            return controller.to_error(
                 payload,
                 status_code=exc.status_code,
             )
 
     def _validate_response(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         raw_data: Any | HttpResponse,
     ) -> HttpResponse:
         if isinstance(raw_data, HttpResponse):
             return self.response_validator.validate_response(
-                blueprint,
+                controller,
                 raw_data,
             )
 
         validated = self.response_validator.validate_modification(
-            blueprint,
+            controller,
             raw_data,
         )
         return HttpResponse(
-            content=blueprint.serializer.serialize(validated.raw_data),
+            content=controller.serializer.serialize(validated.raw_data),
             status=validated.status_code,
             headers=validated.headers,
         )
