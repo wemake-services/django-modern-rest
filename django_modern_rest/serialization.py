@@ -114,7 +114,16 @@ class BaseSerializer:
     @classmethod
     @abc.abstractmethod
     def error_serialize(cls, error: Exception | str) -> Any:
-        """Serialize an exception to json the best way possible."""
+        """
+        Serialize a serializer exception to json the best way possible.
+
+        Args:
+            error: A serialization exception like a validation error or
+            a ``django_modern_rest.exceptions.DataParsingError``.
+
+        Returns:
+            Simple python object - exception converted to json.
+        """
 
 
 class BaseEndpointOptimizer:
