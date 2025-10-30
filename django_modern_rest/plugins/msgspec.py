@@ -165,7 +165,7 @@ class MsgspecSerializer(BaseSerializer):
 
         Args:
             error: A serialization exception like a validation error or
-            a ``django_modern_rest.exceptions.DataParsingError``.
+                a ``django_modern_rest.exceptions.DataParsingError``.
 
         Returns:
             Simple python object - exception converted to json.
