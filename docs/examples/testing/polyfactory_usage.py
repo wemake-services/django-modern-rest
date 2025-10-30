@@ -1,3 +1,10 @@
+import sys
+
+import pytest
+
+if sys.version_info >= (3, 14):
+    pytest.skip(reason='Module does not supported yet', allow_module_level=True)
+
 import json
 from http import HTTPStatus
 from typing import final
