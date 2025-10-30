@@ -7,7 +7,7 @@ We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
 
 .. note::
 
-  Remember, that ``django_modern_rest`` settings
+  Remember, that ``django-modern-rest`` settings
   are cached after the first access.
   If you need to modify settings dynamically
   in runtime use :func:`~django_modern_rest.settings.clear_settings_cache`.

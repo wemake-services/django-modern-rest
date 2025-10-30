@@ -62,7 +62,7 @@ We support both Django modes: sync and async, the same way regular Django
 
 We don't do anything special with the async mode, so any existing
 guides, tools, deployment strategies should
-just work with ``django_modern_rest`` if they work for Django.
+just work with ``django-modern-rest`` if they work for Django.
 
 
 Maximum integration with Django

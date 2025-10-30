@@ -149,6 +149,18 @@ Decorators
 .. autoclass:: django_modern_rest.decorators.wrap_middleware
 
 
+Testing
+-------
+
+.. autoclass:: django_modern_rest.test.DMRRequestFactory
+
+.. autoclass:: django_modern_rest.test.DMRAsyncRequestFactory
+
+.. autoclass:: django_modern_rest.test.DMRClient
+
+.. autoclass:: django_modern_rest.test.DMRAsyncClient
+
+
 Plugins
 -------
 

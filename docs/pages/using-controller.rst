@@ -22,12 +22,12 @@ or async method with the right name:
   ...     def post(self) -> str:
   ...         return 'ok'
 
-There will be several things that ``django_modern_rest`` will do for you here:
+There will be several things that ``django-modern-rest`` will do for you here:
 
 1. It will know that ``post`` endpoint will handle ``POST`` HTTP method,
    it is true for all HTTP methods, except :ref:`OPTIONS <meta>`.
 2. It will know that ``post`` will return :class:`str` as a response type spec.
-   There's **no** implicit type conversions in ``django_modern_rest``.
+   There's **no** implicit type conversions in ``django-modern-rest``.
    If your endpoint declares something to be returned, it must return this type
 3. It will infer the default status code for ``post``, which will be ``201``.
    All other endpoints would have ``200`` as the default
@@ -37,7 +37,7 @@ There will be several things that ``django_modern_rest`` will do for you here:
    unless :ref:`response_validation` is explicitly turned off
 5. The same metadata will be used to render OpenAPI spec
 
-``django_modern_rest`` never creates implicit methods for you.
+``django-modern-rest`` never creates implicit methods for you.
 No ``HEAD``, no :ref:`OPTIONS <meta>`,
 if you need them – create them explicitly.
 
