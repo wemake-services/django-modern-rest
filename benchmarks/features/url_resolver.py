@@ -90,7 +90,7 @@ def _bench(resolve: Callable[[str], Any], url: str, repeat: int) -> None:
             resolve(url)
 
 
-REPEAT: Final[int] = 1_000_100
+_REPEAT: Final = 1_000_100
 
 
 def main() -> None:
@@ -102,7 +102,7 @@ def main() -> None:
         choices=['best', 'avg', 'worst'],
         required=True,
     )
-    parser.add_argument('--repeat', type=int, default=REPEAT)
+    parser.add_argument('--repeat', type=int, default=_REPEAT)
     args = parser.parse_args()
     match args.impl:
         case 'dmr':
