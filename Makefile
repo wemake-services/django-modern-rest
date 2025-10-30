@@ -33,6 +33,8 @@ smoke:
 .PHONY: example
 example:
 	cd django_test_app && poetry run mypy --config-file mypy.ini
+	PYTHONPATH='docs/' pytest -o addopts='' \
+		docs/examples/testing/polyfactory_usage.py
 
 .PHONY: package
 package:

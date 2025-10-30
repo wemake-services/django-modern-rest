@@ -61,6 +61,7 @@ msgspec = ["msgspec"]
 [tool.poetry.group.dev.dependencies]
 django = "^5.2"
 django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
+types-docutils = "^0.22"
 pyright = "^1.1"
 
 codespell = "^2.4.1"
@@ -79,9 +80,9 @@ dirty-equals = "^0.10"
 faker = "^37.11"
 inline-snapshot = ">=0.30,<0.32"
 schemathesis = "^4.3"
+polyfactory = "^2.22"
 
 httpx = "^0.28"
-types-docutils = "^0.22.2.20251006"
 
 [tool.poetry.group.docs]
 optional = true

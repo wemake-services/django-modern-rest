@@ -45,7 +45,7 @@ Async
    :align: center
 
 While ``fastapi`` is faster at the moment, we have several ideas
-to optimize ``django_modern_rest`` even further,
+to optimize ``django-modern-rest`` even further,
 so it can be on par (or even faster!)
 with the fastest python web frameworks in existence.
 
