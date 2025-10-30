@@ -52,7 +52,7 @@ def add_request_id_middleware(
     """
 
     def decorator(request: HttpRequest) -> Any:
-        request_id = str(uuid.uuid4())
+        request_id = uuid.uuid4().hex
         request.request_id = request_id  # type: ignore[attr-defined]
 
         response = get_response(request)
