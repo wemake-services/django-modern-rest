@@ -302,7 +302,7 @@ class _ValidatedBlueprint(Blueprint[PydanticSerializer]):
 
 @final
 class _EndpointOverBlueprint(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | None] = False  # overriden
+    validate_responses: ClassVar[bool | None] = False  # overridden
 
     blueprints: ClassVar[BlueprintsT] = [_ValidatedBlueprint]
 
