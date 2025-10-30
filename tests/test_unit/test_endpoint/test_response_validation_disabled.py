@@ -10,6 +10,8 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from django_modern_rest import (
+    Blueprint,
+    BlueprintsT,
     Controller,
     HeaderDescription,
     ResponseDescription,
@@ -193,6 +195,7 @@ class _ValidatedController(Controller[PydanticSerializer]):
             return_type=list[int],
             status_code=HTTPStatus.OK,
         ),
+        validate_responses=True,
     )
     def put(self) -> HttpResponse:
         return self.to_response(['a'])  # list[str]
@@ -245,6 +248,72 @@ def test_override_endpoint_over_controller(
     request = dmr_rf.post('/whatever/')
 
     response = _EndpointOverController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'int_type',
+                'loc': [0],
+                'msg': 'Input should be a valid integer',
+                'input': 'a',
+            },
+        ],
+    })
+
+
+@final
+class _NonValidatedBlueprint(Blueprint[PydanticSerializer]):
+    validate_responses: ClassVar[bool | None] = False
+
+    def post(self) -> list[int]:
+        return ['a']  # type: ignore[list-item]
+
+
+@final
+class _BlueprintOverController(Controller[PydanticSerializer]):
+    validate_responses: ClassVar[bool | None] = True  # blueprint overrides
+
+    blueprints: ClassVar[BlueprintsT] = [_NonValidatedBlueprint]
+
+
+def test_override_blueprint_over_controller(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that blueprints have a prioriry over controller."""
+    request = dmr_rf.post('/whatever/')
+
+    response = _BlueprintOverController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED
+    assert json.loads(response.content) == snapshot(['a'])
+
+
+@final
+class _ValidatedBlueprint(Blueprint[PydanticSerializer]):
+    validate_responses: ClassVar[bool | None] = False
+
+    @modify(validate_responses=True)
+    def post(self) -> list[int]:
+        return ['a']  # type: ignore[list-item]
+
+
+@final
+class _EndpointOverBlueprint(Controller[PydanticSerializer]):
+    validate_responses: ClassVar[bool | None] = False  # overriden
+
+    blueprints: ClassVar[BlueprintsT] = [_ValidatedBlueprint]
+
+
+def test_override_endpoint_over_blueprint(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that endpoints have a prioriry over blueprints."""
+    request = dmr_rf.post('/whatever/')
+
+    response = _EndpointOverBlueprint.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
