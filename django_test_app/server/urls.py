@@ -108,6 +108,16 @@ router = Router([
         rest_views.RateLimitedController.as_view(),
         name='rate_limited',
     ),
+    path(
+        'request-id',
+        rest_views.RequestIdController.as_view(),
+        name='request_id',
+    ),
+    path(
+        'login-required',
+        rest_views.LoginRequiredController.as_view(),
+        name='login_required',
+    ),
 ])
 
 urlpatterns = [

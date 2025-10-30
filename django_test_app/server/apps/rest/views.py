@@ -2,10 +2,11 @@ import datetime as dt
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, ClassVar, TypeAlias, final
+from typing import Any, ClassVar, Final, TypeAlias, final
 
 import pydantic
-from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 from django_modern_rest import (  # noqa: WPS235
@@ -22,11 +23,18 @@ from django_modern_rest import (  # noqa: WPS235
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 from server.apps.rest.middleware import (
+    add_request_id_middleware,
     custom_header_middleware,
     rate_limit_middleware,
 )
 
 _CallableAny: TypeAlias = Callable[..., Any]
+_MESSAGE_KEY: Final = 'message'
+
+
+@final
+class _RequestWithID(HttpRequest):
+    request_id: str
 
 
 @wrap_middleware(
@@ -74,6 +82,40 @@ def custom_header_json(response: HttpResponse) -> HttpResponse:
     ),
 )
 def rate_limit_json(response: HttpResponse) -> HttpResponse:
+    return response
+
+
+@wrap_middleware(
+    add_request_id_middleware,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def add_request_id_json(response: HttpResponse) -> HttpResponse:
+    """Pass through response - request_id is added automatically."""
+    return response
+
+
+@wrap_middleware(
+    login_required,
+    ResponseDescription(
+        return_type=dict[str, str],
+        status_code=HTTPStatus.FOUND,
+    ),
+    ResponseDescription(  # Uses for proxy authed response with HTTPStatus.OK
+        return_type=dict[str, str],
+        status_code=HTTPStatus.OK,
+    ),
+)
+def login_required_json(response: HttpResponse) -> HttpResponse:
+    """Convert Django's login_required redirect to JSON 401 response."""
+    if response.status_code == HTTPStatus.FOUND:
+        return build_response(
+            PydanticSerializer,
+            raw_data={'detail': 'Authentication credentials were not provided'},
+            status_code=HTTPStatus.UNAUTHORIZED,
+        )
     return response
 
 
@@ -193,7 +235,7 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
-        return {'message': 'CSRF token set'}
+        return {_MESSAGE_KEY: 'CSRF token set'}
 
 
 @final
@@ -233,7 +275,7 @@ class CustomHeaderController(Controller[PydanticSerializer]):
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns simple data."""
-        return {'message': 'Success'}
+        return {_MESSAGE_KEY: 'Success'}
 
 
 @final
@@ -249,3 +291,47 @@ class RateLimitedController(
     def post(self) -> _UserInput:
         """POST endpoint with rate limiting."""
         return self.parsed_body
+
+
+@final
+@add_request_id_json
+class RequestIdController(Controller[PydanticSerializer]):
+    """Controller that uses request_id added by middleware."""
+
+    responses: ClassVar[list[ResponseDescription]] = (
+        add_request_id_json.responses
+    )
+
+    request: _RequestWithID
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that returns request_id from modified request."""
+        return {
+            'request_id': self.request.request_id,
+            'message': 'Request ID tracked',
+        }
+
+
+@final
+@login_required_json
+class LoginRequiredController(Controller[PydanticSerializer]):
+    """Controller that uses Django's login_required decorator.
+
+    Demonstrates wrapping Django's built-in authentication decorators.
+    Converts 302 redirect to JSON 401 response for REST API compatibility.
+    """
+
+    responses: ClassVar[list[ResponseDescription]] = (
+        login_required_json.responses
+    )
+
+    def get(self) -> dict[str, str]:
+        """GET endpoint that requires Django authentication."""
+        # Access Django's authenticated user
+        user = self.request.user
+        username = user.username if user.is_authenticated else 'anonymous'
+
+        return {
+            'username': username,
+            _MESSAGE_KEY: 'Successfully accessed protected resource',
+        }

@@ -91,6 +91,106 @@ of the provided response descriptions. This allows you to:
 The converter function receives the original response and should
 return a modified :class:`django.http.HttpResponse`.
 
+Understanding the Two-Phase Middleware Pattern
+-----------------------------------------------
+
+Django middleware operates in two distinct phases around the view execution.
+Understanding this pattern is crucial for effectively using middleware
+with ``django-modern-rest``.
+
+get_response callback
+~~~~~~~~~~~~~~~~~~~~~
+
+Every Django middleware receives a ``get_response`` callable parameter.
+This is **not** the actual response - it's a callback that represents
+the next middleware in the chain or the final view function.
+
+.. literalinclude:: /examples/middleware/get_response.py
+  :linenos:
+
+Phase 1: Process Request (before get_response)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before calling ``get_response``, you can:
+
+- Read and validate request data
+- Add attributes to the request object
+- Perform authentication/authorization
+- Short-circuit and return early (without calling the view)
+
+.. literalinclude:: /examples/middleware/add_request_id.py
+  :linenos:
+
+Now your controller can access ``self.request.request_id``:
+
+.. literalinclude:: /examples/middleware/usage_add_request_id.py
+  :linenos:
+
+Phase 2: Process Response (after get_response)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After calling ``get_response``, you can:
+
+- Modify the response object
+- Add headers
+- Log response details
+- Transform response content
+
+.. literalinclude:: /examples/middleware/custom_header.py
+  :linenos:
+
+Short-Circuiting: Returning Without Calling get_response
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Middleware can return a response **without** calling ``get_response``.
+This is called "short-circuiting" - the view is never executed.
+
+Common use cases:
+
+- Rate limiting (return 429)
+- Request validation failures (return 400)
+- Cache hits (return cached response)
+- Custom authentication/authorization checks
+
+Example with rate limiting:
+
+.. literalinclude:: /examples/middleware/rate_limit.py
+  :linenos:
+  :lines: 16-30
+
+Use with ``wrap_middleware``:
+
+.. literalinclude:: /examples/middleware/rate_limit.py
+  :linenos:
+  :lines: 33-
+
+Wrapping Django's Built-in Decorators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can wrap Django's built-in authentication decorators like ``login_required``
+to make them REST API friendly. By default, ``login_required`` returns a 302
+redirect, but you can convert it to a JSON 401 response:
+
+.. literalinclude:: /examples/middleware/built_in_decorators.py
+  :linenos:
+
+Visual Flow
+~~~~~~~~~~~
+
+Here's how a request flows through middleware:
+
+.. mermaid::
+  :caption: Middleware execution flow
+  :config: {"theme": "forest"}
+
+    graph TB
+      A[HTTP Request] --> B1["Middleware 1 (Phase 1: process request)"]
+      B1 --> B2["Middleware 2 (Phase 1: process request)"]
+      B2 --> C[Controller/View executes]
+      C --> D2["Middleware 2 (Phase 2: process response)"]
+      D2 --> D1["Middleware 1 (Phase 2: process response)"]
+      D1 --> E[HTTP Response]
+
 Best Practices
 --------------
 
