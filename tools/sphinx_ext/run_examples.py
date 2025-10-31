@@ -389,10 +389,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         clean_content: str,
     ) -> None:
         cwd = Path.cwd()
-        if cwd.name == 'docs':
-            docs_dir = cwd
-        else:
-            docs_dir = cwd / 'docs'
+        docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
         tmp_file = (
             cwd
             / PATH_TO_TMP_EXAMPLES
