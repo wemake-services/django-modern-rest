@@ -6,13 +6,11 @@ import pytest
 from typing_extensions import override
 
 from django_modern_rest import (
-    AsyncMetaMixin,
     Blueprint,
     Controller,
-    Endpoint,
-    MetaMixin,
     ResponseDescription,
 )
+from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
 from django_modern_rest.plugins.pydantic import PydanticSerializer
