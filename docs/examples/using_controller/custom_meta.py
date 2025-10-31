@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from django_modern_rest import (
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     ResponseSpec,
     validate,
 )
@@ -25,7 +25,7 @@ class SettingsController(Controller[MsgspecSerializer]):
         ResponseSpec(
             None,
             status_code=HTTPStatus.NO_CONTENT,
-            headers={'Allow': HeaderDescription()},
+            headers={'Allow': HeaderSpec()},
         ),
     )
     def meta(self) -> HttpResponse:  # Handles `OPTIONS` http method

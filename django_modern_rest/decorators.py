@@ -158,7 +158,7 @@ def endpoint_decorator(
 
         >>> from http import HTTPStatus
 
-        >>> from django_modern_rest import Controller, HeaderDescription, modify
+        >>> from django_modern_rest import Controller, HeaderSpec, modify
         >>> from django_modern_rest.decorators import endpoint_decorator
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
         >>> from django.contrib.auth.decorators import login_required
@@ -170,7 +170,7 @@ def endpoint_decorator(
         ...             ResponseSpec(
         ...                 None,
         ...                 status_code=HTTPStatus.FOUND,
-        ...                 headers={'Location': HeaderDescription()},
+        ...                 headers={'Location': HeaderSpec()},
         ...             ),
         ...         ],
         ...     )

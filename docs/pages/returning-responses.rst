@@ -89,7 +89,7 @@ You also must specify which headers are returned (if any).
 When using "real endpoints", you can provide ``headers`` parameter
 to :class:`~django_modern_rest.response.ResponseSpec`
 if there are headers you want to describe.
-:class:`~django_modern_rest.headers.HeaderDescription` is here to help.
+:class:`~django_modern_rest.headers.HeaderSpec` is here to help.
 You can create both ``required=True``
 (always must be present on the response object)
 and ``required=False`` headers (might be missing in some cases):

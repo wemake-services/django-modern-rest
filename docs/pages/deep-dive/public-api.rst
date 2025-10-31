@@ -42,7 +42,7 @@ Response and headers
 
 .. autofunction:: django_modern_rest.response.build_response
 
-.. autoclass:: django_modern_rest.headers.HeaderDescription
+.. autoclass:: django_modern_rest.headers.HeaderSpec
   :members:
 
 .. autoclass:: django_modern_rest.headers.NewHeader

@@ -12,7 +12,7 @@ from inline_snapshot import snapshot
 from django_modern_rest import (
     Blueprint,
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     ResponseSpec,
     modify,
     validate,
@@ -120,7 +120,7 @@ class _WrongHeadersController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.CREATED,
-            headers={'X-Token': HeaderDescription()},
+            headers={'X-Token': HeaderSpec()},
         ),
     )
     def post(self) -> HttpResponse:

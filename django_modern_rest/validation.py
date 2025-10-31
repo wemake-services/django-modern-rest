@@ -26,7 +26,7 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.headers import (
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
     build_headers,
 )
@@ -201,7 +201,7 @@ class ResponseValidator:
     ) -> None:
         """Validates response against provided metadata."""
         # Validate headers, at this point we know
-        # that only `HeaderDescription` can be in `metadata.headers`:
+        # that only `HeaderSpec` can be in `metadata.headers`:
         if schema.headers is None:
             metadata_headers: Set[str] = set()
         else:
@@ -503,7 +503,7 @@ class _ResponseListValidator:
             ):
                 raise EndpointMetadataError(
                     f'Cannot use `NewHeader` in {response} , '
-                    f'use `HeaderDescription` instead in {endpoint!r}',
+                    f'use `HeaderSpec` instead in {endpoint!r}',
                 )
 
     def _validate_http_spec(
@@ -787,12 +787,12 @@ class EndpointMetadataValidator:  # noqa: WPS214
         endpoint: str,
     ) -> None:
         if payload.headers is not None and any(
-            isinstance(header, HeaderDescription)  # pyright: ignore[reportUnnecessaryIsInstance]
+            isinstance(header, HeaderSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
             for header in payload.headers.values()
         ):
             raise EndpointMetadataError(
                 f'Since {endpoint!r} returns raw data, '
-                f'it is not possible to use `HeaderDescription` '
+                f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response',
             )

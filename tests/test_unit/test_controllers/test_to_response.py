@@ -6,7 +6,7 @@ from django.http import HttpResponse
 
 from django_modern_rest import (
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     ResponseSpec,
     validate,
 )
@@ -19,7 +19,7 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.ACCEPTED,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def get(self) -> HttpResponse:
@@ -34,7 +34,7 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.CREATED,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def post(self) -> HttpResponse:
@@ -60,7 +60,7 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.ACCEPTED,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def post(self) -> HttpResponse:
@@ -75,7 +75,7 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.ACCEPTED,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def put(self) -> HttpResponse:
@@ -89,7 +89,7 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.ACCEPTED,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def patch(self) -> HttpResponse:

@@ -10,7 +10,7 @@ from inline_snapshot import snapshot
 from django_modern_rest import (
     Blueprint,
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
     ResponseSpec,
     modify,
@@ -56,13 +56,13 @@ def test_modify_on_response() -> None:
 
 
 def test_modify_with_header_description() -> None:
-    """Ensures `@modify` can't be used with `HeaderDescription`."""
-    with pytest.raises(EndpointMetadataError, match='HeaderDescription'):
+    """Ensures `@modify` can't be used with `HeaderSpec`."""
+    with pytest.raises(EndpointMetadataError, match='HeaderSpec'):
 
         class _WrongValidate(Controller[PydanticSerializer]):
             @modify(
                 status_code=HTTPStatus.OK,
-                headers={'Authorization': HeaderDescription()},  # type: ignore[dict-item]
+                headers={'Authorization': HeaderSpec()},  # type: ignore[dict-item]
             )
             def get(self) -> int:
                 raise NotImplementedError
@@ -161,7 +161,7 @@ def test_modify_modified_in_responses() -> None:
                     ResponseSpec(
                         str,
                         status_code=HTTPStatus.OK,
-                        headers={'Accept': HeaderDescription()},
+                        headers={'Accept': HeaderSpec()},
                     ),
                 ],
             )
