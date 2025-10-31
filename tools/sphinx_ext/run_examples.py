@@ -388,9 +388,13 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         file_path: Path,
         clean_content: str,
     ) -> None:
-        docs_dir = Path.cwd() / 'docs'
+        cwd = Path.cwd()
+        if cwd.name == 'docs':
+            docs_dir = cwd
+        else:
+            docs_dir = cwd / 'docs'
         tmp_file = (
-            Path.cwd()
+            cwd
             / PATH_TO_TMP_EXAMPLES
             / str(
                 file_path.relative_to(docs_dir),
