@@ -85,7 +85,7 @@ def wrap_middleware(
 
         def decorator(cls: _TypeT) -> _TypeT:
             do_wrap_dispatch(cls, middleware, converter_spec)
-            return dispatch_decorator(cls)
+            return dispatch_decorator(csrf_exempt)(cls)
 
         return DecoratorWithResponses(
             decorator=decorator,
