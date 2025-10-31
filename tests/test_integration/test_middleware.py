@@ -7,12 +7,13 @@ from faker import Faker
 
 from django_modern_rest.test import DMRAsyncClient, DMRClient
 
-_CSRF_TEST_ENDPOINT: Final = 'api:csrf_test'
-_ASYNC_CSRF_TEST_ENDPOINT: Final = 'api:async_csrf_test'
-_CUSTOM_HEADER_ENDPOINT: Final = 'api:custom_header'
-_RATE_LIMITED_ENDPOINT: Final = 'api:rate_limited'
-_REQUEST_ID_ENDPOINT: Final = 'api:request_id'
-_LOGIN_REQUIRED_ENDPOINT: Final = 'api:login_required'
+_CSRF_TOKEN_ENDPOINT: Final = 'api:middlewares:csrf_token'  # noqa: S105
+_CSRF_TEST_ENDPOINT: Final = 'api:middlewares:csrf_test'
+_ASYNC_CSRF_TEST_ENDPOINT: Final = 'api:middlewares:async_csrf_test'
+_CUSTOM_HEADER_ENDPOINT: Final = 'api:middlewares:custom_header'
+_RATE_LIMITED_ENDPOINT: Final = 'api:middlewares:rate_limited'
+_REQUEST_ID_ENDPOINT: Final = 'api:middlewares:request_id'
+_LOGIN_REQUIRED_ENDPOINT: Final = 'api:middlewares:login_required'
 
 
 class _UserData(TypedDict):
@@ -176,7 +177,7 @@ async def test_request_id_middleware_async(
 
 def _get_csrf_token(client: DMRClient) -> str:
     """Get CSRF token from the client."""
-    response = client.get(reverse('api:csrf_token'))
+    response = client.get(reverse(_CSRF_TOKEN_ENDPOINT))
     assert response.status_code == HTTPStatus.OK
 
     csrf_token = client.cookies.get('csrftoken')
@@ -187,7 +188,7 @@ def _get_csrf_token(client: DMRClient) -> str:
 
 async def _get_csrf_token_async(client: DMRAsyncClient) -> str:
     """Get CSRF token from the async client."""
-    response = await client.get(reverse('api:csrf_token'))
+    response = await client.get(reverse(_CSRF_TOKEN_ENDPOINT))
     assert response.status_code == HTTPStatus.OK
 
     csrf_token = client.cookies.get('csrftoken')
