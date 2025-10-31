@@ -50,4 +50,4 @@ urlpatterns = [
     path('api/', include((router.urls, 'your_app'), namespace='api')),
 ]
 
-# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wms.org"}, "headers": {"X-API-Token": "secret!"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wms.org"}, "headers": {"X-API-Consumer": "my-api"}, "url": "/api/user/"}  # noqa: ERA001, E501

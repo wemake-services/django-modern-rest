@@ -1,3 +1,9 @@
+"""
+This file contains code adapted from Litestar.
+
+See: https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples.py.
+"""
+
 from __future__ import annotations
 
 import importlib
@@ -11,14 +17,15 @@ import socket
 import subprocess  # noqa: S404
 import sys
 import time
+from collections.abc import Generator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, ClassVar, Final, TypeAlias, cast
 
 import httpx
 import uvicorn
-from auto_pytabs.sphinx_ext import CodeBlockOverride, LiteralIncludeOverride
+from auto_pytabs.sphinx_ext import LiteralIncludeOverride
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
@@ -26,15 +33,12 @@ from django.views import View
 from docutils.nodes import Node, admonition, literal_block, title
 from docutils.parsers.rst import directives
 from sphinx.addnodes import highlightlang
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-    from typing import ClassVar, TypeAlias
-
-    from sphinx.application import Sphinx
+from sphinx.application import Sphinx
 
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
+
+PATH_TO_TMP_EXAMPLES: Final = 'docs/_build/_tmp_example/'
 
 RGX_RUN = re.compile(r'# +?run:(.*)')
 
@@ -385,9 +389,13 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         clean_content: str,
     ) -> None:
         docs_dir = Path.cwd() / 'docs'
-        tmp_file = self.env.tmp_examples_path / str(
-            file_path.relative_to(docs_dir),
-        ).replace('/', '_')
+        tmp_file = (
+            Path.cwd()
+            / PATH_TO_TMP_EXAMPLES
+            / str(
+                file_path.relative_to(docs_dir),
+            ).replace('/', '_')
+        )
 
         self.arguments[0] = f'/{tmp_file.relative_to(docs_dir)!s}'
         tmp_file.write_text(clean_content)
@@ -395,7 +403,6 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
 
 def setup(app: Sphinx) -> dict[str, bool]:
     """Register Sphinx extension directives."""
-    app.add_directive('literalinclude', LiteralInclude, override=True)
-    app.add_directive('code-block', CodeBlockOverride, override=True)
-
+    tmp_examples_path = Path.cwd() / PATH_TO_TMP_EXAMPLES
+    tmp_examples_path.mkdir(exist_ok=True, parents=True)
     return {'parallel_read_safe': True, 'parallel_write_safe': True}

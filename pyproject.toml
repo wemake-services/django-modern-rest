@@ -84,8 +84,6 @@ schemathesis = "^4.3"
 
 httpx = "^0.28"
 types-docutils = "^0.22.2.20251006"
-uvicorn = "^0.38.0"
-auto-pytabs = "^0.5.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -102,6 +100,7 @@ sphinxcontrib-mermaid = "^1.0"
 myst-parser = "^4.0"
 shibuya = "^2025.10"
 auto-pytabs = "^0.5.0"
+uvicorn = "^0.38.0"
 
 
 [tool.poetry.plugins."pytest11"]
