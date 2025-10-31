@@ -65,14 +65,14 @@ Bring your own DI
 We don't have any opinions about any DI that you can potentially use.
 Because ``django-modern-rest`` is compatible with any of the existing ones.
 
-You any DI that you already use with ``django``.
+Use any DI that you already have or want to use with ``django``.
 
 Try any of these officially recommended tools:
 
 - https://github.com/reagento/dishka
 - https://github.com/bobthemighty/punq
 
-Or keep using what you already have :)
+Or any other one that suits your needs :)
 
 
 Typing
