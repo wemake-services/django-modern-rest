@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller, ResponseDescription, modify, validate
+from django_modern_rest import Controller, ResponseSpec, modify, validate
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 
@@ -45,7 +45,7 @@ class _WrongController(Controller[PydanticSerializer]):
         return {'wrong': 'abc'}  # type: ignore[return-value]
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=dict[str, int],
             status_code=HTTPStatus.OK,
         ),
@@ -105,7 +105,7 @@ def test_validate_response_text(
 @final
 class _WrongStatusCodeController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.CREATED,
         ),
@@ -256,7 +256,7 @@ class _ModelWithFieldValidator(pydantic.BaseModel):
 @final
 class _ValidateController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=_ModelWithFieldValidator,
             status_code=HTTPStatus.OK,
         ),

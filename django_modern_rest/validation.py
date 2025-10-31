@@ -34,8 +34,8 @@ from django_modern_rest.metadata import (
     EndpointMetadata,
 )
 from django_modern_rest.response import (
-    ResponseDescription,
     ResponseModification,
+    ResponseSpec,
     infer_status_code,
 )
 from django_modern_rest.serialization import BaseSerializer
@@ -122,7 +122,7 @@ class ResponseValidator:
     def _get_response_schema(
         self,
         status_code: HTTPStatus | int,
-    ) -> ResponseDescription:
+    ) -> ResponseSpec:
         status = HTTPStatus(status_code)
         schema = self.metadata.responses.get(status)
         if schema is not None:
@@ -164,7 +164,7 @@ class ResponseValidator:
     def _validate_body(
         self,
         structured: Any | bytes,
-        schema: ResponseDescription,
+        schema: ResponseSpec,
         *,
         response: HttpResponse | None = None,
     ) -> None:
@@ -197,7 +197,7 @@ class ResponseValidator:
     def _validate_response_object(
         self,
         response: HttpResponse,
-        schema: ResponseDescription,
+        schema: ResponseSpec,
     ) -> None:
         """Validates response against provided metadata."""
         # Validate headers, at this point we know
@@ -431,7 +431,7 @@ class _OpenAPIPayload:
 class ValidateEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@validate``."""
 
-    responses: list[ResponseDescription]
+    responses: list[ResponseSpec]
     validate_responses: bool | None = None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
     allow_custom_http_methods: bool = False
@@ -443,7 +443,7 @@ class ModifyEndpointPayload(_OpenAPIPayload):
 
     status_code: HTTPStatus | None
     headers: Mapping[str, NewHeader] | None
-    responses: list[ResponseDescription] | None
+    responses: list[ResponseSpec] | None
     validate_responses: bool | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
@@ -454,7 +454,7 @@ PayloadT: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
 
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
-_AllResponses = NewType('_AllResponses', list[ResponseDescription])
+_AllResponses = NewType('_AllResponses', list[ResponseSpec])
 
 
 class _ResponseListValidator:
@@ -463,7 +463,7 @@ class _ResponseListValidator:
         responses: _AllResponses,
         *,
         endpoint: str,
-    ) -> dict[HTTPStatus, ResponseDescription]:
+    ) -> dict[HTTPStatus, ResponseSpec]:
         self._validate_unique_responses(responses, endpoint=endpoint)
         self._validate_header_descriptions(responses, endpoint=endpoint)
         self._validate_http_spec(responses, endpoint=endpoint)
@@ -477,7 +477,7 @@ class _ResponseListValidator:
     ) -> None:
         # Now, check if we have any conflicts in responses.
         # For example: same status code, mismatching metadata.
-        unique: dict[HTTPStatus, ResponseDescription] = {}
+        unique: dict[HTTPStatus, ResponseSpec] = {}
         for response in responses:
             existing_response = unique.get(response.status_code)
             if existing_response is not None and existing_response != response:
@@ -533,7 +533,7 @@ class _ResponseListValidator:
     def _convert_responses(
         self,
         all_responses: _AllResponses,
-    ) -> dict[HTTPStatus, ResponseDescription]:
+    ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
 
 
@@ -611,7 +611,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
 
     def _resolve_all_responses(
         self,
-        endpoint_responses: list[ResponseDescription],
+        endpoint_responses: list[ResponseSpec],
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
         controller_cls: type['Controller[BaseSerializer]'] | None,
@@ -822,7 +822,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                     f'{endpoint!r} returns HttpResponse '
                     'and has no configured responses, '
                     'it requires `@validate` decorator with '
-                    'at least one configured `ResponseDescription`',
+                    'at least one configured `ResponseSpec`',
                 )
 
             # There are some configured errors,

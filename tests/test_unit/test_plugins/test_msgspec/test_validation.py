@@ -17,7 +17,7 @@ from inline_snapshot import snapshot
 from django_modern_rest import (
     Body,
     Controller,
-    ResponseDescription,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -137,7 +137,7 @@ class _OutputController(Controller[MsgspecSerializer]):
     def put(self) -> int:
         return 'a'  # type: ignore[return-value]
 
-    @validate(ResponseDescription(list[int], status_code=HTTPStatus.CREATED))
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.CREATED))
     def patch(self) -> HttpResponse:
         return self.to_response(['1', '2'], status_code=HTTPStatus.CREATED)
 

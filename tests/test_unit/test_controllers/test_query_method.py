@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from django_modern_rest import (
     Controller,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -16,7 +16,7 @@ class _QueryController(Controller[PydanticSerializer]):
     http_methods = frozenset((*Controller.http_methods, 'query'))
 
     @validate(
-        ResponseDescription(None, status_code=HTTPStatus.OK),
+        ResponseSpec(None, status_code=HTTPStatus.OK),
         allow_custom_http_methods=True,
     )
     def query(self) -> HttpResponse:

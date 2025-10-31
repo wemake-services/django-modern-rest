@@ -72,7 +72,7 @@ Response handling
 
   Default: ``[]``
 
-  The list of global :class:`~django_modern_rest.response.ResponseDescription`
+  The list of global :class:`~django_modern_rest.response.ResponseSpec`
   object that will be added to all endpoints' metadata
   as a possible response schema.
 
@@ -83,7 +83,7 @@ Response handling
 
     >>> from http import HTTPStatus
     >>> from typing_extensions import TypedDict
-    >>> from django_modern_rest.response import ResponseDescription
+    >>> from django_modern_rest.response import ResponseSpec
 
     >>> class Error(TypedDict):
     ...     detail: str
@@ -92,7 +92,7 @@ Response handling
     >>> # error message:
     >>> DMR_SETTINGS = {
     ...     'responses': [
-    ...         ResponseDescription(
+    ...         ResponseSpec(
     ...             Error,
     ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
     ...         ),

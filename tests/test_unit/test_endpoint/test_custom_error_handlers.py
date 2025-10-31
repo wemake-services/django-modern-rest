@@ -11,7 +11,7 @@ from typing_extensions import override
 from django_modern_rest import (
     Blueprint,
     Controller,
-    ResponseDescription,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -44,8 +44,8 @@ class _AsyncValidateErrorHandlerController(Controller[PydanticSerializer]):
         return self.to_error(str(exc), status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
-        ResponseDescription(list[int], status_code=HTTPStatus.OK),
-        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(list[int], status_code=HTTPStatus.OK),
+        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
         error_handler=async_endpoint_error,
     )
     async def get(self) -> HttpResponse:
@@ -61,8 +61,8 @@ class _AsyncValidateErrorHandlerBlueprint(Blueprint[PydanticSerializer]):
         return self.to_error(str(exc), status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
-        ResponseDescription(list[int], status_code=HTTPStatus.OK),
-        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(list[int], status_code=HTTPStatus.OK),
+        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
         error_handler=async_endpoint_error,
     )
     async def get(self) -> HttpResponse:
@@ -103,8 +103,8 @@ class _ErrorHandlerValidationController(Controller[PydanticSerializer]):
         return self.to_error(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
-        ResponseDescription(list[int], status_code=HTTPStatus.OK),
-        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(list[int], status_code=HTTPStatus.OK),
+        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
         error_handler=async_endpoint_error,
     )
     async def get(self) -> HttpResponse:
@@ -138,8 +138,8 @@ async def test_validate_error_handler_validation(
 
 
 class _ModifyComplexHandler(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseDescription]] = [
-        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+    responses: ClassVar[list[ResponseSpec]] = [
+        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
     ]
 
     def endpoint_error(
@@ -218,8 +218,8 @@ def test_modify_global_handler(dmr_rf: DMRRequestFactory) -> None:
 
 
 class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseDescription]] = [
-        ResponseDescription(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
+    responses: ClassVar[list[ResponseSpec]] = [
+        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
     ]
 
     async def endpoint_error(

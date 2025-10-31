@@ -7,7 +7,7 @@ import pytest
 
 from django_modern_rest import (
     Controller,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
@@ -24,7 +24,7 @@ def test_validate_forward_ref(dmr_rf: DMRRequestFactory) -> None:
 
         class _CorrectHeadersController(Controller[PydanticSerializer]):
             @validate(
-                ResponseDescription(
+                ResponseSpec(
                     return_type=list[str],
                     status_code=HTTPStatus.OK,
                 ),

@@ -79,12 +79,12 @@ to any endpoint that returns ``HttpResponse`` objects:
 
   >>> from django.http import HttpResponse
   >>> from django_modern_rest import (
-  ...     HeaderDescription, ResponseDescription, validate,
+  ...     HeaderDescription, ResponseSpec, validate,
   ... )
 
   >>> class MyController(Controller[PydanticSerializer]):
   ...     @validate(
-  ...         ResponseDescription(
+  ...         ResponseSpec(
   ...             str,
   ...             status_code=HTTPStatus.OK,
   ...             headers={'X-Handled-By': HeaderDescription()},

@@ -8,7 +8,7 @@ from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
 )
-from django_modern_rest.response import ResponseDescription
+from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 
 if TYPE_CHECKING:
@@ -18,6 +18,7 @@ _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
 _PathT = TypeVar('_PathT')
+_CookiesT = TypeVar('_CookiesT')
 
 
 class ComponentParser:
@@ -51,7 +52,7 @@ class ComponentParser:
         cls,
         serializer: type[BaseSerializer],
         model: Any,
-    ) -> list[ResponseDescription]:
+    ) -> list[ResponseSpec]:
         """
         Return a list of extra responses that this component produces.
 
@@ -59,7 +60,7 @@ class ComponentParser:
         to fail a parsing, if some request does not fit our model.
         """
         return [
-            ResponseDescription(
+            ResponseSpec(
                 # We do this for runtime validation, not static type check:
                 serializer.response_parsing_error_model,
                 status_code=RequestSerializationError.status_code,
@@ -91,8 +92,7 @@ class Query(ComponentParser, Generic[_QueryT]):
     Will parse a request like ``?category=cars&reversed=true``
     into ``ProductQuery`` model.
 
-    If your controller class inherits from ``Query`` - then you can access
-    parsed query model as ``self.parsed_query`` attribute.
+    You can access parsed query as ``self.parsed_query`` attribute.
     """
 
     parsed_query: _QueryT
@@ -135,8 +135,7 @@ class Body(ComponentParser, Generic[_BodyT]):
     Will parse a body like ``{'email': 'user@mail.ru', 'age': 18}`` into
     ``UserCreateInput`` model.
 
-    If your controller class inherits from ``Body`` - then you can access
-    parsed body as ``self.parsed_body`` attribute.
+    You can access parsed body as ``self.parsed_body`` attribute.
     """
 
     parsed_body: _BodyT
@@ -178,27 +177,21 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Headers, Body, Controller
+        >>> from django_modern_rest import Headers, Controller
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class AuthHeaders(pydantic.BaseModel):
         ...     token: str = pydantic.Field(alias='X-API-Token')
 
-        >>> class UserCreateInput(pydantic.BaseModel):
-        ...     email: str
-        ...     age: int
-
         >>> class UserCreateController(
         ...     Headers[AuthHeaders],
-        ...     Body[UserCreateInput],
         ...     Controller[PydanticSerializer],
         ... ): ...
 
     Will parse request headers like ``Token: secret`` into ``AuthHeaders``
     model.
 
-    If your controller class inherits from ``Headers`` - then you can access
-    parsed headers as ``self.parsed_headers`` attribute.
+    You can access parsed headers as ``self.parsed_headers`` attribute.
     """
 
     parsed_headers: _HeadersT
@@ -226,7 +219,7 @@ class Path(ComponentParser, Generic[_PathT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Body, Path, Controller
+        >>> from django_modern_rest import Path, Controller
         >>> from django_modern_rest.routing import Router
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
         >>> from django.urls import include, path
@@ -262,6 +255,7 @@ class Path(ComponentParser, Generic[_PathT]):
 
     It is way stricter than the original Django's routing system.
     For example, django allows to such cases:
+
     - ``user_id`` is defined as ``int`` in the ``path('user/<int:user_id>')``
     - ``user_id`` is defined as ``str`` in the view function:
       ``def get(self, request, user_id: str): ...``
@@ -288,3 +282,51 @@ class Path(ComponentParser, Generic[_PathT]):
                 f'unnamed path parameters {args=}',
             )
         return kwargs
+
+
+class Cookies(ComponentParser, Generic[_CookiesT]):
+    """
+    Parses the cookies from :attr:`django.http.HttpRequest.COOKIES`.
+
+    For example:
+
+    .. code:: python
+
+        >>> import pydantic
+        >>> from django_modern_rest import Cookies, Controller
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+        >>> class UserSession(pydantic.BaseModel):
+        ...     session_id: int
+
+        >>> class UserUpdateController(
+        ...     Cookies[UserSession],
+        ...     Controller[PydanticSerializer],
+        ... ): ...
+
+
+    Will parse a request header like ``Cookie: session_id=123``
+    into a model ``UserSession``.
+
+    You can access parsed cookies as ``self.parsed_cookies`` attribute.
+
+    .. seealso::
+
+        https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cookie
+
+    """
+
+    parsed_cookies: _CookiesT
+    context_name: ClassVar[str] = 'parsed_cookies'
+
+    @override
+    @classmethod
+    def provide_context_data(
+        cls,
+        blueprint: 'Blueprint[BaseSerializer]',
+        model: Any,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        return request.COOKIES

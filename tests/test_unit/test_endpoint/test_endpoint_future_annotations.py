@@ -47,6 +47,6 @@ def test_solvable_response_annotations() -> None:
     endpoint = MyController.api_endpoints['GET']
     assert str(endpoint.response_validator.metadata.responses) == snapshot(
         '{<HTTPStatus.OK: 200>: '
-        'ResponseDescription(return_type=list[int], '
+        'ResponseSpec(return_type=list[int], '
         'status_code=<HTTPStatus.OK: 200>, headers=None)}',
     )

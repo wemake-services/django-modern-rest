@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 from django.http import HttpRequest, HttpResponse
 
 if TYPE_CHECKING:
-    from django_modern_rest.response import ResponseDescription
+    from django_modern_rest.response import ResponseSpec
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny: TypeAlias = Callable[..., Any]
 MiddlewareDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 ResponseConverter: TypeAlias = Callable[[HttpResponse], HttpResponse]
 _ConverterSpec: TypeAlias = tuple[
-    dict[HTTPStatus, 'ResponseDescription'],
+    dict[HTTPStatus, 'ResponseSpec'],
     ResponseConverter,
 ]
 _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
@@ -25,7 +25,7 @@ class DecoratorWithResponses:
     """Type for decorator with responses attribute."""
 
     decorator: Callable[[_TypeT], _TypeT]  # pyright: ignore[reportGeneralTypeIssues]
-    responses: list['ResponseDescription']
+    responses: list['ResponseSpec']
 
     def __call__(self, klass: _TypeT) -> _TypeT:
         """Apply the decorator to the class."""

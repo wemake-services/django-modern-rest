@@ -4,7 +4,7 @@ from typing import ClassVar, final
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-from django_modern_rest import Controller, ResponseDescription
+from django_modern_rest import Controller, ResponseSpec
 from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
@@ -12,11 +12,11 @@ from django_modern_rest.response import build_response
 
 @wrap_middleware(
     login_required,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.FOUND,
     ),
-    ResponseDescription(  # Uses for proxy authed response with HTTPStatus.OK
+    ResponseSpec(  # Uses for proxy authed response with HTTPStatus.OK
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
     ),
@@ -41,9 +41,7 @@ class LoginRequiredController(Controller[PydanticSerializer]):
     Converts 302 redirect to JSON 401 response for REST API compatibility.
     """
 
-    responses: ClassVar[list[ResponseDescription]] = (
-        login_required_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = login_required_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that requires Django authentication."""

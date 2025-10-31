@@ -120,7 +120,7 @@ Now you can understand how you can create:
 
 - Endpoints with custom error handlers
 - Controllers with custom error handlers
-- :class:`~django_modern_rest.response.ResponseDescription` objects
+- :class:`~django_modern_rest.response.ResponseSpec` objects
   for new error response schemas
 
 You can dive even deeper and:

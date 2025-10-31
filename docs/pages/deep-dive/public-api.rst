@@ -28,20 +28,10 @@ Endpoint
 .. autodecorator:: django_modern_rest.endpoint.validate
 
 
-Components
-----------
-
-.. autoclass:: django_modern_rest.components.Headers
-
-.. autoclass:: django_modern_rest.components.Query
-
-.. autoclass:: django_modern_rest.components.Body
-
-
 Response and headers
 --------------------
 
-.. autoclass:: django_modern_rest.response.ResponseDescription
+.. autoclass:: django_modern_rest.response.ResponseSpec
   :members:
 
 .. autoclass:: django_modern_rest.response.ResponseModification

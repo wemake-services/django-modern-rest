@@ -7,7 +7,7 @@ from django_modern_rest import (
     Controller,
     HeaderDescription,
     NewHeader,
-    ResponseDescription,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -46,19 +46,19 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
 
 class _CorrectValidateController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(status_code=HTTPStatus.OK, return_type=_Model),
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
     )
     def get(self) -> HttpResponse:
         return HttpResponse()
 
     @validate(
-        ResponseDescription(return_type=list[int], status_code=HTTPStatus.OK),
+        ResponseSpec(return_type=list[int], status_code=HTTPStatus.OK),
     )
     async def post(self) -> JsonResponse:
         return JsonResponse([])
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.OK,
             headers={
@@ -92,24 +92,24 @@ class _WrongModifyController(Controller[PydanticSerializer]):
 
 class _WrongValidateController(Controller[PydanticSerializer]):
     @validate(  # type: ignore[type-var]
-        ResponseDescription(status_code=HTTPStatus.OK, return_type=_Model),
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
     )
     def get(self) -> int:
         return 1
 
     @validate(  # type: ignore[type-var]
-        ResponseDescription(return_type=list[int], status_code=HTTPStatus.OK),
+        ResponseSpec(return_type=list[int], status_code=HTTPStatus.OK),
     )
     async def post(self) -> str:
         return 'a'
 
     # Not enough params:
-    @validate(ResponseDescription(return_type=list[int]))  # type: ignore[call-arg]
+    @validate(ResponseSpec(return_type=list[int]))  # type: ignore[call-arg]
     async def put(self) -> JsonResponse:
         return JsonResponse([])
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.OK,
             headers={'X-Custom': NewHeader(value=1)},  # type: ignore[dict-item, arg-type]
