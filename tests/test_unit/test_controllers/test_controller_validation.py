@@ -14,6 +14,7 @@ from django_modern_rest import (
     ResponseDescription,
 )
 from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
 

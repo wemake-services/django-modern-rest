@@ -5,17 +5,17 @@ import pytest
 
 from django_modern_rest import (
     Blueprint,
-    BlueprintsT,
     Controller,
-    MetaMixin,
-    compose_blueprints,
 )
+from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.options_mixins import MetaMixin
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
 )
 from django_modern_rest.response import ResponseDescription
+from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.serialization import (
     BaseEndpointOptimizer,
     BaseSerializer,

@@ -518,7 +518,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
 
             .. code:: python
 
-               >>> from django_modern_rest import MetaMixin
+               >>> from django_modern_rest.options_mixins import MetaMixin
 
                >>> class ControllerWithMeta(
                ...     MetaMixin,

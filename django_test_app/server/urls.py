@@ -18,7 +18,6 @@ Including another URLconf
 
 from django.urls import include, path, re_path
 
-from django_modern_rest import Router, compose_blueprints
 from django_modern_rest.openapi import (
     OpenAPIConfig,
     openapi_spec,
@@ -36,6 +35,7 @@ from django_modern_rest.openapi.renderers import (
     ScalarRenderer,
     SwaggerRenderer,
 )
+from django_modern_rest.routing import Router, compose_blueprints
 from server.apps.models_example import urls as models_example_urls
 from server.apps.rest import views as rest_views
 

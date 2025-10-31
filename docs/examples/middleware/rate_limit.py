@@ -4,13 +4,10 @@ from typing import ClassVar
 
 from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest import (
-    Controller,
-    ResponseDescription,
-    build_response,
-    wrap_middleware,
-)
+from django_modern_rest import Controller, ResponseDescription
+from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 
 
 def rate_limit_middleware(

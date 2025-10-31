@@ -4,7 +4,7 @@ from typing import Any, final
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
-from django_modern_rest import Blueprint, Controller, compose_blueprints
+from django_modern_rest import Blueprint, Controller
 from django_modern_rest.openapi.collector import (
     ControllerMapping,
     _join_paths,
@@ -14,7 +14,7 @@ from django_modern_rest.openapi.collector import (
     controller_collector,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import Router
+from django_modern_rest.routing import Router, compose_blueprints
 
 
 @final

@@ -1,5 +1,6 @@
-from django_modern_rest import Blueprint, compose_blueprints
+from django_modern_rest import Blueprint
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.routing import compose_blueprints
 
 # 0 args:
 compose_blueprints()  # type: ignore[call-arg]

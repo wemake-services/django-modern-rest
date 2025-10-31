@@ -7,10 +7,11 @@ from typing import Annotated
 import msgspec
 from django.conf import settings
 from django.core.handlers import asgi, wsgi
-from django.urls import include, path
+from django.urls import include
 
-from django_modern_rest import Body, Controller, Headers, Query, Router
+from django_modern_rest import Body, Controller, Headers, Query
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from django_modern_rest.routing import Router, path
 
 if not settings.configured:
     settings.configure(

@@ -5,8 +5,8 @@ from typing import Any, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest import build_response
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 
 _CallableAny: TypeAlias = Callable[..., Any]
 
