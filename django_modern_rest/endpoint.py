@@ -24,7 +24,7 @@ from django_modern_rest.openapi.objects import (
     SecurityRequirement,
     Server,
 )
-from django_modern_rest.response import APIError, ResponseDescription
+from django_modern_rest.response import APIError, ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_GLOBAL_ERROR_HANDLER_KEY,
@@ -345,9 +345,9 @@ _ResponseT = TypeVar('_ResponseT', bound=HttpResponse | Awaitable[HttpResponse])
 
 @overload
 def validate(  # noqa: WPS234
-    response: ResponseDescription,
+    response: ResponseSpec,
     /,
-    *responses: ResponseDescription,
+    *responses: ResponseSpec,
     error_handler: AsyncErrorHandlerT,
     validate_responses: bool | None = None,
     allow_custom_http_methods: bool = False,
@@ -359,9 +359,9 @@ def validate(  # noqa: WPS234
 
 @overload
 def validate(
-    response: ResponseDescription,
+    response: ResponseSpec,
     /,
-    *responses: ResponseDescription,
+    *responses: ResponseSpec,
     error_handler: SyncErrorHandlerT,
     validate_responses: bool | None = None,
     allow_custom_http_methods: bool = False,
@@ -373,9 +373,9 @@ def validate(
 
 @overload
 def validate(
-    response: ResponseDescription,
+    response: ResponseSpec,
     /,
-    *responses: ResponseDescription,
+    *responses: ResponseSpec,
     validate_responses: bool | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
@@ -386,9 +386,9 @@ def validate(
 
 
 def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
-    response: ResponseDescription,
+    response: ResponseSpec,
     /,
-    *responses: ResponseDescription,
+    *responses: ResponseSpec,
     validate_responses: bool | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
@@ -423,13 +423,13 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         >>> from django_modern_rest import (
         ...     Controller,
         ...     validate,
-        ...     ResponseDescription,
+        ...     ResponseSpec,
         ... )
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class TaskController(Controller[PydanticSerializer]):
         ...     @validate(
-        ...         ResponseDescription(
+        ...         ResponseSpec(
         ...             return_type=list[int],
         ...             status_code=HTTPStatus.OK,
         ...         ),
@@ -580,7 +580,7 @@ def modify(
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -601,7 +601,7 @@ def modify(
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -621,7 +621,7 @@ def modify(
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -641,7 +641,7 @@ def modify(  # noqa: WPS211
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
     validate_responses: bool | None = None,
-    extra_responses: list[ResponseDescription] | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,

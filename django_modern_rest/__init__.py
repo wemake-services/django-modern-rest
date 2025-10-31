@@ -11,5 +11,5 @@ from django_modern_rest.headers import HeaderDescription as HeaderDescription
 from django_modern_rest.headers import NewHeader as NewHeader
 from django_modern_rest.response import APIError as APIError
 from django_modern_rest.response import (
-    ResponseDescription as ResponseDescription,
+    ResponseSpec as ResponseSpec,
 )

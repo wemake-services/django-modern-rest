@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Controller,
     HeaderDescription,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
@@ -22,7 +22,7 @@ class SettingsController(Controller[MsgspecSerializer]):
 
     # `meta` response is also validated, schema is required:
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             None,
             status_code=HTTPStatus.NO_CONTENT,
             headers={'Allow': HeaderDescription()},

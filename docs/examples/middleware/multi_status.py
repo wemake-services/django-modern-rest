@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest import ResponseDescription
+from django_modern_rest import ResponseSpec
 from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
@@ -23,11 +23,11 @@ def custom_middleware(
 
 @wrap_middleware(
     custom_middleware,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.BAD_REQUEST,
     ),
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.UNAUTHORIZED,
     ),

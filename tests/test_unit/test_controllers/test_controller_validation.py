@@ -8,7 +8,7 @@ from typing_extensions import override
 from django_modern_rest import (
     Blueprint,
     Controller,
-    ResponseDescription,
+    ResponseSpec,
 )
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
@@ -52,9 +52,9 @@ def test_controller_duplicate_responses() -> None:
     ):
 
         class _MixedController(Controller[PydanticSerializer]):
-            responses: ClassVar[list[ResponseDescription]] = [
-                ResponseDescription(int, status_code=HTTPStatus.FORBIDDEN),
-                ResponseDescription(str, status_code=HTTPStatus.FORBIDDEN),
+            responses: ClassVar[list[ResponseSpec]] = [
+                ResponseSpec(int, status_code=HTTPStatus.FORBIDDEN),
+                ResponseSpec(str, status_code=HTTPStatus.FORBIDDEN),
             ]
 
             def get(self) -> str:  # needs at least one endpoint to validate
@@ -69,8 +69,8 @@ def test_controller_http_spec() -> None:
     ):
 
         class _MixedController(Controller[PydanticSerializer]):
-            responses: ClassVar[list[ResponseDescription]] = [
-                ResponseDescription(int, status_code=HTTPStatus.NO_CONTENT),
+            responses: ClassVar[list[ResponseSpec]] = [
+                ResponseSpec(int, status_code=HTTPStatus.NO_CONTENT),
             ]
 
             def get(self) -> str:  # needs at least one endpoint to validate

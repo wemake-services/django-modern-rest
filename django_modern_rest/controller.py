@@ -21,7 +21,7 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import (
-    ResponseDescription,
+    ResponseSpec,
     build_response,
 )
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
@@ -103,7 +103,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     # str and not HTTPMethod, because of `meta` method:
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | None] = None
-    responses: ClassVar[list[ResponseDescription]] = []
+    responses: ClassVar[list[ResponseSpec]] = []
     responses_from_components: ClassVar[bool] = True
     http_methods: ClassVar[frozenset[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
@@ -263,7 +263,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         }
 
     @classmethod
-    def semantic_responses(cls) -> list[ResponseDescription]:
+    def semantic_responses(cls) -> list[ResponseSpec]:
         """
         Returns all user-defined responses in layers above endpoint itself.
 
@@ -480,7 +480,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
                 ... )
                 >>> class MyController(Controller[PydanticSerializer]):
                 ...     @validate(
-                ...         ResponseDescription(
+                ...         ResponseSpec(
                 ...             None,
                 ...             status_code=HTTPStatus.NO_CONTENT,
                 ...         ),
@@ -495,7 +495,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
 
            >>> class MyController(Controller[PydanticSerializer]):
            ...     @validate(
-           ...         ResponseDescription(
+           ...         ResponseSpec(
            ...             None,
            ...             status_code=HTTPStatus.NO_CONTENT,
            ...         ),

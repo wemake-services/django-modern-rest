@@ -14,7 +14,7 @@ from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
 )
-from django_modern_rest.response import ResponseDescription
+from django_modern_rest.response import ResponseSpec
 from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.serialization import (
     BaseEndpointOptimizer,
@@ -118,24 +118,24 @@ def test_compose_blueprints_with_responses() -> None:
     """Ensure that composed controller do not share responses."""
 
     class _FirstBlueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseDescription]] = [
-            ResponseDescription(int, status_code=HTTPStatus.CREATED),
+        responses: ClassVar[list[ResponseSpec]] = [
+            ResponseSpec(int, status_code=HTTPStatus.CREATED),
         ]
 
         def get(self) -> list[int]:
             raise NotImplementedError
 
     class _SecondBlueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseDescription]] = [
-            ResponseDescription(str, status_code=HTTPStatus.ACCEPTED),
+        responses: ClassVar[list[ResponseSpec]] = [
+            ResponseSpec(str, status_code=HTTPStatus.ACCEPTED),
         ]
 
         def put(self) -> list[int]:
             raise NotImplementedError
 
     class _ThirdBlueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseDescription]] = [
-            ResponseDescription(None, status_code=HTTPStatus.NO_CONTENT),
+        responses: ClassVar[list[ResponseSpec]] = [
+            ResponseSpec(None, status_code=HTTPStatus.NO_CONTENT),
         ]
 
         def patch(self) -> list[int]:

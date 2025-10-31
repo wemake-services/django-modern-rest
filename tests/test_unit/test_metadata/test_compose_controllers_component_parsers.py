@@ -11,7 +11,7 @@ from django_modern_rest import (  # noqa: WPS235
     Headers,
     Path,
     Query,
-    ResponseDescription,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -49,7 +49,7 @@ class _PostBlueprint(
     Headers[_HeadersModel],
     Blueprint[PydanticSerializer],
 ):
-    @validate(ResponseDescription(list[int], status_code=HTTPStatus.OK))
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
     def post(self) -> HttpResponse:
         raise NotImplementedError
 

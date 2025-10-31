@@ -8,7 +8,7 @@ from django_modern_rest import (
     Body,
     Controller,
     Headers,
-    ResponseDescription,
+    ResponseSpec,
     modify,
 )
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
@@ -30,7 +30,7 @@ class UserController(
 ):
     @modify(
         extra_responses=[
-            ResponseDescription(
+            ResponseSpec(
                 dict[str, str],
                 status_code=HTTPStatus.NOT_ACCEPTABLE,
             ),

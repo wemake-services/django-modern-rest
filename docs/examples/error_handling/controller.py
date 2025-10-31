@@ -7,7 +7,7 @@ from typing_extensions import override
 
 from django_modern_rest import (
     Controller,
-    ResponseDescription,
+    ResponseSpec,
 )
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.plugins.pydantic import (
@@ -16,9 +16,9 @@ from django_modern_rest.plugins.pydantic import (
 
 
 class ProxyController(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseDescription]] = [
+    responses: ClassVar[list[ResponseSpec]] = [
         # Custom schema that we can return when `HTTPError` happens:
-        ResponseDescription(str, status_code=HTTPStatus.FAILED_DEPENDENCY),
+        ResponseSpec(str, status_code=HTTPStatus.FAILED_DEPENDENCY),
     ]
 
     async def get(self) -> None:

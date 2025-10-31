@@ -4,7 +4,7 @@ from typing import final
 import pytest
 from django.http import HttpResponse
 
-from django_modern_rest import Controller, ResponseDescription, modify, validate
+from django_modern_rest import Controller, ResponseSpec, modify, validate
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
@@ -49,7 +49,7 @@ def test_verify_decorator_method_name(
 
         class _WrongController(Controller[PydanticSerializer]):
             @validate(
-                ResponseDescription(return_type=str, status_code=HTTPStatus.OK),
+                ResponseSpec(return_type=str, status_code=HTTPStatus.OK),
             )
             def query(self) -> HttpResponse:
                 raise NotImplementedError
@@ -58,7 +58,7 @@ def test_verify_decorator_method_name(
 
         class _WrongController2(Controller[PydanticSerializer]):
             @validate(
-                ResponseDescription(return_type=str, status_code=HTTPStatus.OK),
+                ResponseSpec(return_type=str, status_code=HTTPStatus.OK),
             )
             def custom_name(self) -> HttpResponse:
                 raise NotImplementedError

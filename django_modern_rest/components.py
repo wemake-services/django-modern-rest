@@ -8,7 +8,7 @@ from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
 )
-from django_modern_rest.response import ResponseDescription
+from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ class ComponentParser:
         cls,
         serializer: type[BaseSerializer],
         model: Any,
-    ) -> list[ResponseDescription]:
+    ) -> list[ResponseSpec]:
         """
         Return a list of extra responses that this component produces.
 
@@ -60,7 +60,7 @@ class ComponentParser:
         to fail a parsing, if some request does not fit our model.
         """
         return [
-            ResponseDescription(
+            ResponseSpec(
                 # We do this for runtime validation, not static type check:
                 serializer.response_parsing_error_model,
                 status_code=RequestSerializationError.status_code,
