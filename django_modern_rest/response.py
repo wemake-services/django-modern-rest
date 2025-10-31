@@ -6,7 +6,7 @@ from typing import Any, Generic, TypeVar, overload
 from django.http import HttpResponse
 
 from django_modern_rest.headers import (
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
 )
 from django_modern_rest.serialization import BaseSerializer
@@ -90,7 +90,7 @@ class ResponseSpec:
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus = dataclasses.field(kw_only=True)
-    headers: dict[str, HeaderDescription] | None = dataclasses.field(
+    headers: dict[str, HeaderSpec] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )

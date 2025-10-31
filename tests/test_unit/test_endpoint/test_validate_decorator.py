@@ -11,7 +11,7 @@ from django_modern_rest import (
     Blueprint,
     Body,
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
     ResponseSpec,
     validate,
@@ -76,7 +76,7 @@ class _WrongHeadersController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.OK,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def post(self) -> HttpResponse:
@@ -111,7 +111,7 @@ class _CorrectHeadersController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.OK,
-            headers={'X-Custom': HeaderDescription()},
+            headers={'X-Custom': HeaderSpec()},
         ),
     )
     def get(self) -> HttpResponse:
@@ -122,7 +122,7 @@ class _CorrectHeadersController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[str],
             status_code=HTTPStatus.OK,
-            headers={'X-Custom': HeaderDescription(required=False)},
+            headers={'X-Custom': HeaderSpec(required=False)},
         ),
     )
     def post(self) -> HttpResponse:

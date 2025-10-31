@@ -7,7 +7,7 @@ from django_modern_rest.controller import Blueprint as Blueprint
 from django_modern_rest.controller import Controller as Controller
 from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
-from django_modern_rest.headers import HeaderDescription as HeaderDescription
+from django_modern_rest.headers import HeaderSpec as HeaderSpec
 from django_modern_rest.headers import NewHeader as NewHeader
 from django_modern_rest.response import APIError as APIError
 from django_modern_rest.response import ResponseSpec as ResponseSpec

@@ -8,7 +8,7 @@ from django.http import HttpResponse
 
 from django_modern_rest import (
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     ResponseSpec,
     modify,
 )
@@ -25,7 +25,7 @@ class _MyController(Controller[PydanticSerializer]):
             ResponseSpec(
                 None,
                 status_code=HTTPStatus.FOUND,
-                headers={'Location': HeaderDescription()},
+                headers={'Location': HeaderSpec()},
             ),
         ],
     )

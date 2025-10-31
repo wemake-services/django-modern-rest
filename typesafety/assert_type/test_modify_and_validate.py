@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 
 from django_modern_rest import (
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
     ResponseSpec,
     modify,
@@ -62,7 +62,7 @@ class _CorrectValidateController(Controller[PydanticSerializer]):
             return_type=list[int],
             status_code=HTTPStatus.OK,
             headers={
-                'X-Custom': HeaderDescription(
+                'X-Custom': HeaderSpec(
                     description='Header test description',
                 ),
             },
@@ -85,7 +85,7 @@ class _WrongModifyController(Controller[PydanticSerializer]):
     def put(self) -> HttpResponse:
         return HttpResponse()
 
-    @modify(headers={'X-Custom': HeaderDescription()})  # type: ignore[dict-item]
+    @modify(headers={'X-Custom': HeaderSpec()})  # type: ignore[dict-item]
     def patch(self) -> int:
         return 1
 

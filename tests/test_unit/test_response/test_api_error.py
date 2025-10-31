@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django_modern_rest import (
     APIError,
     Controller,
-    HeaderDescription,
+    HeaderSpec,
     ResponseSpec,
     modify,
     validate,
@@ -78,7 +78,7 @@ class _InvalidAPIError(Controller[PydanticSerializer]):
         ResponseSpec(
             int,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
-            headers={'X-API': HeaderDescription()},
+            headers={'X-API': HeaderSpec()},
         ),
     )
     def patch(self) -> HttpResponse:

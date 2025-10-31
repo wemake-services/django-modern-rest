@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Final
 from django.http import HttpResponse
 
 from django_modern_rest.endpoint import validate
-from django_modern_rest.headers import HeaderDescription
+from django_modern_rest.headers import HeaderSpec
 from django_modern_rest.response import ResponseSpec
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 OptionsResponse: Final = ResponseSpec(
     None,
     status_code=HTTPStatus.NO_CONTENT,
-    headers={'Allow': HeaderDescription()},
+    headers={'Allow': HeaderSpec()},
 )
 
 
