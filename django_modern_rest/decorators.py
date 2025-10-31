@@ -23,8 +23,8 @@ _TypeT = TypeVar('_TypeT', bound=type[Any])
 
 def wrap_middleware(
     middleware: MiddlewareDecorator,
-    response_description: ResponseDescription,
-    *response_descriptions: ResponseDescription,
+    response: ResponseDescription,
+    *responses: ResponseDescription,
 ) -> Callable[[ResponseConverter], DecoratorWithResponses]:
     """
     Factory function that creates a decorator with pre-configured middleware.
@@ -34,8 +34,8 @@ def wrap_middleware(
 
     Args:
         middleware: Django middleware to apply
-        response_description: ResponseDescription for the middleware response
-        response_descriptions: Others ResponseDescription
+        response: ResponseDescription for the middleware response
+        responses: Others ResponseDescription
 
     Returns:
         A function that takes a converter and returns a class decorator
@@ -75,24 +75,24 @@ def wrap_middleware(
         ...         return {'message': 'ok'}
     """
 
-    def decorator_factory(  # noqa: WPS430
+    def factory(
         converter: ResponseConverter,
     ) -> DecoratorWithResponses:
         """Create a decorator with the given converter."""
-        all_descriptions = [response_description, *response_descriptions]
+        all_descriptions = [response, *responses]
         response_dict = {desc.status_code: desc for desc in all_descriptions}
         converter_spec = (response_dict, converter)
 
         def decorator(cls: _TypeT) -> _TypeT:
             do_wrap_dispatch(cls, middleware, converter_spec)
-            return method_decorator(csrf_exempt, name='dispatch')(cls)
+            return dispatch_decorator(csrf_exempt)(cls)
 
         return DecoratorWithResponses(
             decorator=decorator,
-            responses=[response_description, *response_descriptions],
+            responses=all_descriptions,
         )
 
-    return decorator_factory
+    return factory
 
 
 def dispatch_decorator(
