@@ -14,7 +14,7 @@ from django_modern_rest import (
     Headers,
     Path,
     Query,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -97,7 +97,7 @@ class UserReplaceBlueprint(
     Path[_UserPath],
 ):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=_UserInput,
             status_code=HTTPStatus.OK,
         ),
