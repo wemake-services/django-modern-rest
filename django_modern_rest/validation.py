@@ -245,6 +245,7 @@ class BlueprintValidator:
         self._validate_components(blueprint)
         is_async = self._validate_endpoints(blueprint)
         self._validate_meta_mixins(blueprint, is_async=is_async)
+        self._validate_error_handlers(blueprint, is_async=is_async)
         return is_async
 
     def _validate_meta_mixins(
@@ -305,6 +306,31 @@ class BlueprintValidator:
                 'be all sync or all async',
             )
         return is_async
+
+    def _validate_error_handlers(
+        self,
+        blueprint: 'type[Blueprint[BaseSerializer]]',
+        *,
+        is_async: bool,
+    ) -> None:
+        handle_error_overridden = 'handle_error' in blueprint.__dict__
+        handle_async_error_overridden = (
+            'handle_async_error' in blueprint.__dict__
+        )
+
+        if is_async and handle_error_overridden:
+            raise EndpointMetadataError(
+                f'{blueprint!r} has async endpoints but overrides '
+                '`handle_error` (sync handler). '
+                'Use `handle_async_error` instead for async endpoints.',
+            )
+
+        if not is_async and handle_async_error_overridden:
+            raise EndpointMetadataError(
+                f'{blueprint!r} has sync endpoints but overrides '
+                '`handle_async_error` (async handler). '
+                'Use `handle_error` instead for sync endpoints.',
+            )
 
 
 class ControllerValidator(BlueprintValidator):

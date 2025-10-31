@@ -1,11 +1,13 @@
 from http import HTTPStatus
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
+from typing_extensions import override
 
 from django_modern_rest import (
     AsyncMetaMixin,
     Controller,
+    Endpoint,
     MetaMixin,
     ResponseDescription,
 )
@@ -88,3 +90,75 @@ def test_controller_have_either_mixins() -> None:
         ):
             def post(self) -> list[str]:
                 raise NotImplementedError
+
+
+def test_sync_controller_async_error_handler() -> None:
+    """Ensure sync controllers cannot override handle_async_error."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r'Use `handle_error` instead for sync endpoints.',
+    ):
+
+        class _BadController(Controller[PydanticSerializer]):
+            @override
+            async def handle_async_error(
+                self,
+                endpoint: Endpoint,
+                exc: Exception,
+            ) -> Any:
+                raise NotImplementedError
+
+            def post(self) -> str:
+                raise NotImplementedError
+
+
+def test_async_controller_sync_error_handler() -> None:
+    """Ensure async controllers cannot override handle_error."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r'Use `handle_async_error` instead for async endpoints.',
+    ):
+
+        class _BadController(Controller[PydanticSerializer]):
+            @override
+            def handle_error(
+                self,
+                endpoint: Endpoint,
+                exc: Exception,
+            ) -> Any:
+                raise NotImplementedError
+
+            async def post(self) -> str:
+                raise NotImplementedError
+
+
+def test_sync_controller_sync_error_handler() -> None:
+    """Ensure sync error handler works with sync endpoint."""
+
+    class _GoodSyncController(Controller[PydanticSerializer]):
+        @override
+        def handle_error(
+            self,
+            endpoint: Endpoint,
+            exc: Exception,
+        ) -> Any:
+            raise NotImplementedError
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+
+def test_async_controller_async_error_handler() -> None:
+    """Ensure async error handler works with async endpoint."""
+
+    class _GoodAsyncController(Controller[PydanticSerializer]):
+        @override
+        async def handle_async_error(
+            self,
+            endpoint: Endpoint,
+            exc: Exception,
+        ) -> Any:
+            raise NotImplementedError
+
+        async def post(self) -> str:
+            raise NotImplementedError
