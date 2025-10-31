@@ -22,7 +22,7 @@ decorator, :attr:`~django_modern_rest.controller.Controller.responses`
 ``Controller`` attribute, or :data:`~django_modern_rest.settings.responses`
 global setting to specify all possible responses.
 
-To do that we utilize :class:`~django_modern_rest.response.ResponseDescription`:
+To do that we utilize :class:`~django_modern_rest.response.ResponseSpec`:
 
 .. literalinclude:: /examples/returning_responses/validate.py
   :caption: views.py
@@ -87,7 +87,7 @@ Describing headers
 You also must specify which headers are returned (if any).
 
 When using "real endpoints", you can provide ``headers`` parameter
-to :class:`~django_modern_rest.response.ResponseDescription`
+to :class:`~django_modern_rest.response.ResponseSpec`
 if there are headers you want to describe.
 :class:`~django_modern_rest.headers.HeaderDescription` is here to help.
 You can create both ``required=True``

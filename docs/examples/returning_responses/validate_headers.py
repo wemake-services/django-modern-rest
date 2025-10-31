@@ -9,7 +9,7 @@ from django_modern_rest import (
     Body,
     Controller,
     HeaderDescription,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -25,7 +25,7 @@ class UserController(
     Body[UserModel],
 ):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             UserModel,
             status_code=HTTPStatus.OK,
             headers={

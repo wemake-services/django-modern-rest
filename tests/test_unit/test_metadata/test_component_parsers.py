@@ -10,7 +10,7 @@ from django_modern_rest import (
     Headers,
     Path,
     Query,
-    ResponseDescription,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -41,7 +41,7 @@ class _NoComponentsController(Controller[PydanticSerializer]):
     def post(self) -> list[str]:
         raise NotImplementedError
 
-    @validate(ResponseDescription(list[int], status_code=HTTPStatus.OK))
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
     def put(self) -> HttpResponse:
         raise NotImplementedError
 
@@ -70,7 +70,7 @@ class _QueryController(
     def post(self) -> list[str]:
         raise NotImplementedError
 
-    @validate(ResponseDescription(list[int], status_code=HTTPStatus.OK))
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
     def put(self) -> HttpResponse:
         raise NotImplementedError
 
@@ -107,7 +107,7 @@ class _MultiComponentController(  # noqa: WPS215
     def post(self) -> list[str]:
         raise NotImplementedError
 
-    @validate(ResponseDescription(list[int], status_code=HTTPStatus.OK))
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
     def put(self) -> HttpResponse:
         raise NotImplementedError
 

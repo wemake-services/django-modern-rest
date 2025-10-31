@@ -7,7 +7,7 @@ from inline_snapshot import snapshot
 
 from django_modern_rest import (
     Controller,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -16,7 +16,7 @@ from django_modern_rest.test import DMRRequestFactory
 
 class _HeadController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(None, status_code=HTTPStatus.OK),
+        ResponseSpec(None, status_code=HTTPStatus.OK),
         allow_custom_http_methods=True,
     )
     def head(self) -> HttpResponse:
@@ -35,7 +35,7 @@ def test_head_method(dmr_rf: DMRRequestFactory) -> None:
 
 class _GetController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(None, status_code=HTTPStatus.OK),
+        ResponseSpec(None, status_code=HTTPStatus.OK),
         allow_custom_http_methods=True,
     )
     def get(self) -> HttpResponse:

@@ -16,7 +16,7 @@ from django_modern_rest import (
     Headers,
     Path,
     Query,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.decorators import wrap_middleware
@@ -39,7 +39,7 @@ class _RequestWithID(HttpRequest):
 
 @wrap_middleware(
     csrf_protect,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.FORBIDDEN,
     ),
@@ -54,7 +54,7 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
 
 @wrap_middleware(
     ensure_csrf_cookie,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
     ),
@@ -65,7 +65,7 @@ def ensure_csrf_cookie_json(response: HttpResponse) -> HttpResponse:
 
 @wrap_middleware(
     custom_header_middleware,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
     ),
@@ -76,7 +76,7 @@ def custom_header_json(response: HttpResponse) -> HttpResponse:
 
 @wrap_middleware(
     rate_limit_middleware,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.TOO_MANY_REQUESTS,
     ),
@@ -87,7 +87,7 @@ def rate_limit_json(response: HttpResponse) -> HttpResponse:
 
 @wrap_middleware(
     add_request_id_middleware,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
     ),
@@ -99,11 +99,11 @@ def add_request_id_json(response: HttpResponse) -> HttpResponse:
 
 @wrap_middleware(
     login_required,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.FOUND,
     ),
-    ResponseDescription(  # Uses for proxy authed response with HTTPStatus.OK
+    ResponseSpec(  # Uses for proxy authed response with HTTPStatus.OK
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
     ),
@@ -194,7 +194,7 @@ class UserReplaceBlueprint(
     Path[_UserPath],
 ):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=_UserInput,
             status_code=HTTPStatus.OK,
         ),
@@ -229,9 +229,7 @@ class AsyncParseHeadersController(
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
 
-    responses: ClassVar[list[ResponseDescription]] = (
-        ensure_csrf_cookie_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = ensure_csrf_cookie_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
@@ -245,7 +243,7 @@ class CsrfProtectedController(
     Controller[PydanticSerializer],
 ):
     # Just add responses from middleware
-    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+    responses: ClassVar[list[ResponseSpec]] = csrf_protect_json.responses
 
     def post(self) -> _UserInput:
         return self.parsed_body
@@ -258,7 +256,7 @@ class AsyncCsrfProtectedController(
     Controller[PydanticSerializer],
 ):
     # Just add responses from middleware
-    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+    responses: ClassVar[list[ResponseSpec]] = csrf_protect_json.responses
 
     async def post(self) -> _UserInput:
         return self.parsed_body
@@ -269,9 +267,7 @@ class AsyncCsrfProtectedController(
 class CustomHeaderController(Controller[PydanticSerializer]):
     """Controller with custom header middleware."""
 
-    responses: ClassVar[list[ResponseDescription]] = (
-        custom_header_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = custom_header_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns simple data."""
@@ -286,7 +282,7 @@ class RateLimitedController(
 ):
     """Controller with rate limiting middleware."""
 
-    responses: ClassVar[list[ResponseDescription]] = rate_limit_json.responses
+    responses: ClassVar[list[ResponseSpec]] = rate_limit_json.responses
 
     def post(self) -> _UserInput:
         """POST endpoint with rate limiting."""
@@ -298,9 +294,7 @@ class RateLimitedController(
 class RequestIdController(Controller[PydanticSerializer]):
     """Controller that uses request_id added by middleware."""
 
-    responses: ClassVar[list[ResponseDescription]] = (
-        add_request_id_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = add_request_id_json.responses
 
     request: _RequestWithID
 
@@ -321,9 +315,7 @@ class LoginRequiredController(Controller[PydanticSerializer]):
     Converts 302 redirect to JSON 401 response for REST API compatibility.
     """
 
-    responses: ClassVar[list[ResponseDescription]] = (
-        login_required_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = login_required_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that requires Django authentication."""

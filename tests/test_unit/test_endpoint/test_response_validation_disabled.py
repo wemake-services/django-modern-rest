@@ -13,7 +13,7 @@ from django_modern_rest import (
     Blueprint,
     Controller,
     HeaderDescription,
-    ResponseDescription,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -53,7 +53,7 @@ class _WrongController(Controller[PydanticSerializer]):
         return 1  # type: ignore[return-value]
 
     @validate(
-        ResponseDescription(return_type=list[int], status_code=HTTPStatus.OK),
+        ResponseSpec(return_type=list[int], status_code=HTTPStatus.OK),
     )
     def post(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
@@ -91,7 +91,7 @@ def test_validate_response_disabled(
 @final
 class _WrongStatusCodeController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.CREATED,
         ),
@@ -117,7 +117,7 @@ def test_validate_status_code(
 @final
 class _WrongHeadersController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.CREATED,
             headers={'X-Token': HeaderDescription()},
@@ -145,7 +145,7 @@ def test_validate_headers(
 @final
 class _ValidatedEndpointController(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.CREATED,
         ),
@@ -182,7 +182,7 @@ class _ValidatedController(Controller[PydanticSerializer]):
     validate_responses: ClassVar[bool | None] = True
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.CREATED,
         ),
@@ -191,7 +191,7 @@ class _ValidatedController(Controller[PydanticSerializer]):
         return self.to_response(['a'])  # list[str]
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.OK,
         ),

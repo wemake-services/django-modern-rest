@@ -12,7 +12,7 @@ from django_modern_rest.internal.middleware_wrapper import (
     ResponseConverter,
     do_wrap_dispatch,
 )
-from django_modern_rest.response import ResponseDescription
+from django_modern_rest.response import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint
@@ -23,8 +23,8 @@ _TypeT = TypeVar('_TypeT', bound=type[Any])
 
 def wrap_middleware(
     middleware: MiddlewareDecorator,
-    response: ResponseDescription,
-    *responses: ResponseDescription,
+    response: ResponseSpec,
+    *responses: ResponseSpec,
 ) -> Callable[[ResponseConverter], DecoratorWithResponses]:
     """
     Factory function that creates a decorator with pre-configured middleware.
@@ -34,8 +34,8 @@ def wrap_middleware(
 
     Args:
         middleware: Django middleware to apply
-        response: ResponseDescription for the middleware response
-        responses: Others ResponseDescription
+        response: ResponseSpec for the middleware response
+        responses: Others ResponseSpec
 
     Returns:
         A function that takes a converter and returns a class decorator
@@ -45,13 +45,13 @@ def wrap_middleware(
         >>> from django.views.decorators.csrf import csrf_protect
         >>> from django.http import HttpResponse
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import Controller, ResponseDescription
+        >>> from django_modern_rest import Controller, ResponseSpec
         >>> from django_modern_rest.response import build_response
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> @wrap_middleware(
         ...     csrf_protect,
-        ...     ResponseDescription(
+        ...     ResponseSpec(
         ...         return_type=dict[str, str],
         ...         status_code=HTTPStatus.FORBIDDEN,
         ...     ),
@@ -167,7 +167,7 @@ def endpoint_decorator(
         ...     @endpoint_decorator(login_required())
         ...     @modify(
         ...         extra_responses=[
-        ...             ResponseDescription(
+        ...             ResponseSpec(
         ...                 None,
         ...                 status_code=HTTPStatus.FOUND,
         ...                 headers={'Location': HeaderDescription()},

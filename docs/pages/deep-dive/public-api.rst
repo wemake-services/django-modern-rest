@@ -31,7 +31,7 @@ Endpoint
 Response and headers
 --------------------
 
-.. autoclass:: django_modern_rest.response.ResponseDescription
+.. autoclass:: django_modern_rest.response.ResponseSpec
   :members:
 
 .. autoclass:: django_modern_rest.response.ResponseModification

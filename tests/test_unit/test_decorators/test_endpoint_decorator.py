@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Controller,
     HeaderDescription,
-    ResponseDescription,
+    ResponseSpec,
     modify,
 )
 from django_modern_rest.decorators import endpoint_decorator
@@ -22,7 +22,7 @@ class _MyController(Controller[PydanticSerializer]):
     @endpoint_decorator(login_required())
     @modify(
         extra_responses=[
-            ResponseDescription(
+            ResponseSpec(
                 None,
                 status_code=HTTPStatus.FOUND,
                 headers={'Location': HeaderDescription()},

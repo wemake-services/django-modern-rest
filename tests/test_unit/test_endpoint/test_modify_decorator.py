@@ -12,7 +12,7 @@ from django_modern_rest import (
     Controller,
     HeaderDescription,
     NewHeader,
-    ResponseDescription,
+    ResponseSpec,
     modify,
 )
 from django_modern_rest.controller import BlueprintsT
@@ -75,8 +75,8 @@ def test_modify_duplicate_statuses() -> None:
         class _DuplicateStatuses(Controller[PydanticSerializer]):
             @modify(
                 extra_responses=[
-                    ResponseDescription(int, status_code=HTTPStatus.OK),
-                    ResponseDescription(str, status_code=HTTPStatus.OK),
+                    ResponseSpec(int, status_code=HTTPStatus.OK),
+                    ResponseSpec(str, status_code=HTTPStatus.OK),
                 ],
             )
             def get(self) -> int:
@@ -87,10 +87,10 @@ def test_modify_deduplicate_statuses() -> None:
     """Ensures `@modify` same duplicate status codes."""
 
     class _Blueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseDescription]] = [
+        responses: ClassVar[list[ResponseSpec]] = [
             # From components:
-            ResponseDescription(int, status_code=HTTPStatus.OK),
-            ResponseDescription(
+            ResponseSpec(int, status_code=HTTPStatus.OK),
+            ResponseSpec(
                 dict[str, str],
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             ),
@@ -101,16 +101,16 @@ def test_modify_deduplicate_statuses() -> None:
 
     class _DeduplicateStatuses(Controller[PydanticSerializer]):
         blueprints: ClassVar[BlueprintsT] = [_Blueprint]
-        responses: ClassVar[list[ResponseDescription]] = [
+        responses: ClassVar[list[ResponseSpec]] = [
             # From components:
-            ResponseDescription(int, status_code=HTTPStatus.OK),
+            ResponseSpec(int, status_code=HTTPStatus.OK),
         ]
 
         @modify(
             extra_responses=[
                 # From middleware:
-                ResponseDescription(int, status_code=HTTPStatus.OK),
-                ResponseDescription(int, status_code=HTTPStatus.OK),
+                ResponseSpec(int, status_code=HTTPStatus.OK),
+                ResponseSpec(int, status_code=HTTPStatus.OK),
             ],
         )
         def get(self) -> int:
@@ -118,21 +118,21 @@ def test_modify_deduplicate_statuses() -> None:
 
     endpoints = _DeduplicateStatuses.api_endpoints
     assert endpoints['GET'].metadata.responses == snapshot({
-        HTTPStatus.OK: ResponseDescription(
+        HTTPStatus.OK: ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.OK,
         ),
     })
     assert endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.CREATED: ResponseDescription(
+        HTTPStatus.CREATED: ResponseSpec(
             return_type=str,
             status_code=HTTPStatus.CREATED,
         ),
-        HTTPStatus.OK: ResponseDescription(
+        HTTPStatus.OK: ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.OK,
         ),
-        HTTPStatus.PAYMENT_REQUIRED: ResponseDescription(
+        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
@@ -147,7 +147,7 @@ def test_modify_modified_in_responses() -> None:
             @modify(
                 status_code=HTTPStatus.OK,
                 extra_responses=[
-                    ResponseDescription(str, status_code=HTTPStatus.OK),
+                    ResponseSpec(str, status_code=HTTPStatus.OK),
                 ],
             )
             def get(self) -> int:
@@ -158,7 +158,7 @@ def test_modify_modified_in_responses() -> None:
         class _DuplicateDifferentHeaders(Controller[PydanticSerializer]):
             @modify(
                 extra_responses=[
-                    ResponseDescription(
+                    ResponseSpec(
                         str,
                         status_code=HTTPStatus.OK,
                         headers={'Accept': HeaderDescription()},

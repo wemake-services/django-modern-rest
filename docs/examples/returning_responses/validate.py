@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Body,
     Controller,
-    ResponseDescription,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -23,7 +23,7 @@ class UserController(
     Body[UserModel],
 ):
     @validate(  # <- describes unique return types from this endpoint
-        ResponseDescription(
+        ResponseSpec(
             UserModel,
             status_code=HTTPStatus.OK,
         ),
