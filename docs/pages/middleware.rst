@@ -184,11 +184,11 @@ Here's how a request flows through middleware:
   :config: {"theme": "forest"}
 
     graph TB
-      A[HTTP Request] --> B1["Middleware 1 (Phase 1: process request)"]
-      B1 --> B2["Middleware 2 (Phase 1: process request)"]
+      A[HTTP Request] --> B1[Middleware 1<br/>Phase 1: process request]
+      B1 --> B2[Middleware 2<br/>Phase 1: process request]
       B2 --> C[Controller/View executes]
-      C --> D2["Middleware 2 (Phase 2: process response)"]
-      D2 --> D1["Middleware 1 (Phase 2: process response)"]
+      C --> D2[Middleware 2<br/>Phase 2: process response]
+      D2 --> D1[Middleware 1<br/>Phase 2: process response]
       D1 --> E[HTTP Response]
 
 Best Practices
