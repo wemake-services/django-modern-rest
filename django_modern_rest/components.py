@@ -87,8 +87,7 @@ class Query(ComponentParser, Generic[_QueryT]):
         >>> class ProductListController(
         ...     Query[ProductQuery],
         ...     Controller[PydanticSerializer],
-        ... ):
-        ...     ...
+        ... ): ...
 
     Will parse a request like ``?category=cars&reversed=true``
     into ``ProductQuery`` model.
@@ -131,8 +130,7 @@ class Body(ComponentParser, Generic[_BodyT]):
         >>> class UserCreateController(
         ...     Body[UserCreateInput],
         ...     Controller[PydanticSerializer],
-        ... ):
-        ...     ...
+        ... ): ...
 
     Will parse a body like ``{'email': 'user@mail.ru', 'age': 18}`` into
     ``UserCreateInput`` model.
@@ -188,8 +186,7 @@ class Headers(ComponentParser, Generic[_HeadersT]):
         >>> class UserCreateController(
         ...     Headers[AuthHeaders],
         ...     Controller[PydanticSerializer],
-        ... ):
-        ...     ...
+        ... ): ...
 
     Will parse request headers like ``Token: secret`` into ``AuthHeaders``
     model.
@@ -233,8 +230,7 @@ class Path(ComponentParser, Generic[_PathT]):
         >>> class UserUpdateController(
         ...     Path[UserPath],
         ...     Controller[PydanticSerializer],
-        ... ):
-        ...     ...
+        ... ): ...
 
         >>> router = Router([
         ...     path(
@@ -306,8 +302,7 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
         >>> class UserUpdateController(
         ...     Cookies[UserSession],
         ...     Controller[PydanticSerializer],
-        ... ):
-        ...     ...
+        ... ): ...
 
 
     Will parse a request header like ``Cookie: session_id=123``
