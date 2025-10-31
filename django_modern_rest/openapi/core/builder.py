@@ -31,7 +31,7 @@ class OpenApiBuilder:
         """Build complete OpenAPI specification from a router."""
         paths_items: Paths = {}
 
-        for controller in controller_collector(router):
+        for controller in controller_collector(router.urls):
             path_item = self._path_generator.generate(controller)
             paths_items[controller.path] = path_item
 
