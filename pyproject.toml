@@ -248,6 +248,8 @@ addopts = [
   # Ignores optional deps:
   "--ignore=django_modern_rest/internal/json/msgspec.py",
   "--ignore=django_modern_rest/plugins/msgspec.py",
+  # Ignore sphinx ext tests
+  "--ignore=tools/"
 ]
 
 
