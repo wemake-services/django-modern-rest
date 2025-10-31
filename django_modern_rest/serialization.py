@@ -115,7 +115,7 @@ class BaseSerializer:
     @abc.abstractmethod
     def error_serialize(cls, error: Exception | str) -> Any:
         """
-        Serialize a serializer exception to json the best way possible.
+        Convert serialization or deserialization error to json format.
 
         Args:
             error: A serialization exception like a validation error or
