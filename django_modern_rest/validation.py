@@ -313,6 +313,9 @@ class BlueprintValidator:
         *,
         is_async: bool,
     ) -> None:
+        if not blueprint.api_endpoints:
+            return
+
         handle_error_overridden = 'handle_error' in blueprint.__dict__
         handle_async_error_overridden = (
             'handle_async_error' in blueprint.__dict__
