@@ -110,6 +110,9 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.internal.middleware_wrapper._TypeT'),
     (PY_CLASS, '_SerializerT'),
     (PY_CLASS, '_BlueprintT'),
+    (PY_CLASS, 'django_modern_rest.decorators._ReturnT'),
+    (PY_CLASS, 'django_modern_rest.decorators._ViewT'),
+    (PY_CLASS, 'django_modern_rest.decorators._TypeT'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
@@ -171,6 +174,12 @@ html_theme_options = {
     'github_url': 'https://github.com/wemake-services/django-modern-rest',
     'readthedocs_url': 'https://django-modern-rest.readthedocs.io',
     'globaltoc_expand_depth': 1,
+    'nav_links': [
+        {
+            'title': 'Ask DeepWiki',
+            'url': 'https://deepwiki.com/wemake-services/django-modern-rest',
+        },
+    ],
     'accent_color': 'green',
     'light_logo': '_static/images/logo-light.svg',
     'dark_logo': '_static/images/logo-dark.svg',

@@ -13,14 +13,21 @@ Here's how it works:
    definition via :func:`~django_modern_rest.endpoint.modify`
    or :func:`~django_modern_rest.endpoint.validate`
 2. If it returns :class:`django.http.HttpResponse`, just return it to the user
-3. If it raises, call
+3. If it raises and :term:`Blueprint` was used to created this endpoint, call
+   :meth:`~django_modern_rest.controller.Blueprint.handle_error` for sync
+   blueprints
+   and :meth:`~django_modern_rest.controller.Blueprint.handle_async_error`
+   for async blueprints
+4. If blueprint's handler returns :class:`~django.http.HttpResponse`,
+   just return it to the user
+5. If it raises, call
    :meth:`~django_modern_rest.controller.Controller.handle_error` for sync
    controllers
    and :meth:`~django_modern_rest.controller.Controller.handle_async_error`
    for async controllers
-4. If controller's handler returns :class:`~django.http.HttpResponse`,
+6. If controller's handler returns :class:`~django.http.HttpResponse`,
    just return it to the user
-5. If it raises, call configured global error handler, by default
+7. If it raises, call configured global error handler, by default
    it is :func:`~django_modern_rest.errors.global_error_handler`
    (it is always sync)
 
@@ -31,10 +38,10 @@ Here's how it works:
   1. Async endpoints will require async ``error_handler`` parameter,
      Sync endpoints will require sync ``error_handler`` parameter.
      This is validated on endpoint creation
-  2. :meth:`~django_modern_rest.controller.Controller.handle_error`
-     won't be called for async controllers.
-     And :meth:`~django_modern_rest.controller.Controller.handle_async_error`
-     won't be called for sync ones.
+  2. We don't allow to define ``handle_error`` handler
+     for async blueprints and controllers.
+     We also don't allow ``handle_async_error`` for sync ones.
+     It is probably an error.
 
 .. note::
 
@@ -63,7 +70,33 @@ while keeping ``post`` endpoint (which serves as a multiply operation)
 without a custom error handler.
 Because :exc:`ZeroDivisionError` can't happen in ``post``.
 
-Per-endpoint's error handling has a priority over per-controller handlers.
+Per-endpoint's error handling has a priority
+over per-blueprint and per-controller handlers.
+
+
+Customizing blueprint error handler
+-----------------------------------
+
+Let's create custom error handling for the all endpoints in a blueprint:
+
+.. literalinclude:: /examples/error_handling/blueprint.py
+  :caption: views.py
+  :linenos:
+  :lines: 18-
+
+In this example we define ``async_error_handler`` for both endpoints.
+All ``httpx.HTTPError`` errors that can happen in both endpoints
+will be safely handled. Notice that we also add new response schema
+to :attr:`~django_modern_rest.controller.Blueprint.responses`
+to be sure that it will be present in the OpenAPI
+and response validation will work.
+
+Per-blueprint's error handling has a priority
+over per-controller handlers.
+
+.. note::
+
+  If you are not using blueprints, then this error-handling layer won't exist.
 
 
 Customizing controller error handler
@@ -76,12 +109,8 @@ Let's create custom error handling for the whole controller:
   :linenos:
   :lines: 18-
 
-In this example we define ``async_error_handler`` for both endpoints.
-All ``httpx.HTTPError`` errors that can happen in both endpoints
-will be safely handled. Notice that we also add new response schema
-to :attr:`~django_modern_rest.controller.Controller.responses`
-to be sure that it will be present in the OpenAPI
-and response validation will work.
+We do the same as in blueprint's example to show that they are very similar.
+The main difference is the priority and scope.
 
 
 Going further
@@ -91,7 +120,7 @@ Now you can understand how you can create:
 
 - Endpoints with custom error handlers
 - Controllers with custom error handlers
-- :class:`~django_modern_rest.response.ResponseDescription` objects
+- :class:`~django_modern_rest.response.ResponseSpec` objects
   for new error response schemas
 
 You can dive even deeper and:
@@ -118,7 +147,12 @@ The same error handling logic can be represented as a diagram:
       Error -->|Yes| Endpoint[Endpoint-level handler];
       Endpoint --> EndpointHandler{Raises or returns response?};
       EndpointHandler -->|response| Failure[Error response];
-      EndpointHandler -->|raises| Controller[Controller-level handler];
+      EndpointHandler -->|raises| Blueprint[Blueprint-level handler];
+      Blueprint --> BlueprintDefinition{Is blueprint used?}
+      BlueprintDefinition -->|yes| BlueprintHandler{Raises or returns response?};
+      BlueprintDefinition -->|no| Controller;
+      BlueprintHandler -->|response| Failure[Error response];
+      BlueprintHandler -->|raises| Controller[Controller-level handler];
       Controller --> ControllerHandler{Raises or returns response?};
       ControllerHandler -->|response| Failure[Error response];
       ControllerHandler -->|raises| Global[Global handler];

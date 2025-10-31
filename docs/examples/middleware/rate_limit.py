@@ -4,13 +4,10 @@ from typing import ClassVar
 
 from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest import (
-    Controller,
-    ResponseDescription,
-    build_response,
-    wrap_middleware,
-)
+from django_modern_rest import Controller, ResponseSpec
+from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 
 
 def rate_limit_middleware(
@@ -32,7 +29,7 @@ def rate_limit_middleware(
 
 @wrap_middleware(
     rate_limit_middleware,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.TOO_MANY_REQUESTS,
     ),
@@ -46,7 +43,7 @@ def rate_limit_json(response: HttpResponse) -> HttpResponse:
 class RateLimitedController(Controller[PydanticSerializer]):
     """Example controller with custom rate limit middleware."""
 
-    responses: ClassVar[list[ResponseDescription]] = rate_limit_json.responses
+    responses: ClassVar[list[ResponseSpec]] = rate_limit_json.responses
 
     def post(self) -> dict[str, str]:
         return {'message': 'Request processed'}

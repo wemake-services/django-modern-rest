@@ -11,12 +11,18 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
     by its name – HTTP method – and its :term:`Metadata`, what response schema
     it returns, what status codes it can return, etc.
 
+  Blueprint
+    :class:`~django_modern_rest.controller.Blueprint` is a building block
+    for composition of different HTTP methods and parsing rules under
+    one resulting URL.
+
   Controller
     :class:`~django_modern_rest.controller.Controller`
     is a collection of one or more :term:`endpoints <Endpoint>`.
-    Controller is defined by incoming data parsing.
-    So, if some endpoints expect the same data – they might live
-    in the same controller.
+    Controller is a subclass of :class:`~django.views.generic.base.View`, so
+    it can be used in a routing.
+    Controller can also be composed of different :term:`blueprints <Blueprint>`,
+    so different parsing rules can share one final URL.
 
   Component
     Controllers parse data via components like
@@ -56,7 +62,7 @@ We support both Django modes: sync and async, the same way regular Django
 
 We don't do anything special with the async mode, so any existing
 guides, tools, deployment strategies should
-just work with ``django_modern_rest`` if they work for Django.
+just work with ``django-modern-rest`` if they work for Django.
 
 
 Maximum integration with Django
@@ -69,6 +75,15 @@ up to `django-ratelimit <https://pypi.org/project/django-ratelimit>`_.
 
 We also provide :doc:`middleware` wrapper tools to convert any middleware
 response to the required API schema and set needed ``Content-Type``, etc.
+
+We support all existing mixins: because
+:class:`~django_modern_rest.controller.Controller` is a subclass
+of Django's :class:`django.views.generic.base.View` class.
+
+We support all existing decorators: because we have
+:func:`~django_modern_rest.decorators.endpoint_decorator`
+and :func:`~django_modern_rest.decorators.dispatch_decorator` utilities
+that can decorate endpoints and controllers.
 
 Works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.
 Read next: our :doc:`integrations` guide.

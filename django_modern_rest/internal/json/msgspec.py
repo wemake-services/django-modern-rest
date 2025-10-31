@@ -64,6 +64,11 @@ def deserialize(
             strict=strict,
         ).decode(to_deserialize)
     except msgspec.DecodeError as exc:
+        # Corner case: when deserializing an empty body, return `null` instead.
+        # We do this here, because we don't want
+        # a penalty for all posiive cases.
+        if to_deserialize == b'':
+            return None
         raise DataParsingError(str(exc)) from exc
 
 

@@ -16,7 +16,10 @@ def test_user_update_direct_view(dmr_client: DMRClient, faker: Faker) -> None:
     user_id = faker.unique.random_int()
 
     response = dmr_client.patch(
-        reverse('api:user_update_direct', kwargs={'user_id': user_id}),
+        reverse(
+            'api:controllers:user_update_direct',
+            kwargs={'user_id': user_id},
+        ),
         data={'email': email, 'age': faker.unique.random_int()},
     )
 
@@ -38,7 +41,10 @@ async def test_user_update_direct_view_async_client(
     user_id = faker.unique.random_int()
 
     response = await dmr_async_client.patch(
-        reverse('api:user_update_direct', kwargs={'user_id': user_id}),
+        reverse(
+            'api:controllers:user_update_direct',
+            kwargs={'user_id': user_id},
+        ),
         data={'email': email, 'age': faker.unique.random_int()},
     )
 
@@ -65,7 +71,10 @@ class ClientWorksWithRegularTest(SimpleTestCase):
         # a reproduceable seeds into a native unittest test.
         # And this needs to be a pure unittest test.
         response = self._dmr_client.patch(
-            reverse('api:user_update_direct', kwargs={'user_id': 5}),
+            reverse(
+                'api:controllers:user_update_direct',
+                kwargs={'user_id': 5},
+            ),
             data={'email': 'test@example.com', 'age': 3},
         )
 
@@ -75,7 +84,10 @@ class ClientWorksWithRegularTest(SimpleTestCase):
     async def test_user_update_direct_view_async(self) -> None:
         """Async test."""
         response = await self._dmr_async_client.patch(
-            reverse('api:user_update_direct', kwargs={'user_id': 5}),
+            reverse(
+                'api:controllers:user_update_direct',
+                kwargs={'user_id': 5},
+            ),
             data={'email': 'test@example.com', 'age': 3},
         )
 
@@ -89,7 +101,7 @@ def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
     user_id = faker.unique.random_int()
 
     response = dmr_client.patch(
-        reverse('api:user_update_direct_re', args=(user_id,)),
+        reverse('api:controllers:user_update_direct_re', args=(user_id,)),
         data={'email': email, 'age': faker.unique.random_int()},
     )
 

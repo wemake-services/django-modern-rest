@@ -10,7 +10,7 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse
-from django.utils.functional import classproperty
+from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
@@ -21,7 +21,7 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import (
-    ResponseDescription,
+    ResponseSpec,
     build_response,
 )
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
@@ -84,6 +84,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         responses_from_components: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
+        http_methods: Set of names to be treated as names for endpoints.
+            Does not include ``options``, but includes ``meta``.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -101,7 +103,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     # str and not HTTPMethod, because of `meta` method:
     api_endpoints: ClassVar[dict[str, Endpoint]]
     validate_responses: ClassVar[bool | None] = None
-    responses: ClassVar[list[ResponseDescription]] = []
+    responses: ClassVar[list[ResponseSpec]] = []
     responses_from_components: ClassVar[bool] = True
     http_methods: ClassVar[frozenset[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
@@ -120,7 +122,11 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     _is_async: ClassVar[bool]
 
     @override
-    def __init_subclass__(cls) -> None:
+    def __init_subclass__(
+        cls,
+        *,
+        controller_cls: type['Controller[BaseSerializer]'] | None = None,
+    ) -> None:
         """Build blueprint class from different parts."""
         super().__init_subclass__()
         type_args = infer_type_args(cls, Blueprint)
@@ -148,6 +154,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             canonical: cls.endpoint_cls(
                 getattr(cls, dsl),
                 blueprint_cls=cls,
+                controller_cls=controller_cls,
             )
             for canonical, dsl in cls.existing_http_methods()
         })
@@ -159,6 +166,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
 
         Unlike :meth:`~django.views.generic.base.View.setup` does not set
         ``head`` method automatically.
+
+        Thread safety: there's only one blueprint instance per request.
         """
         self.request = request
         self.args = args
@@ -254,13 +263,15 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         }
 
     @classmethod
-    def semantic_responses(cls) -> list[ResponseDescription]:
+    def semantic_responses(cls) -> list[ResponseSpec]:
         """
-        Returns all user-defined and component-defined responses.
+        Returns all user-defined responses in layers above endpoint itself.
 
-        Optionally component-defined responses can be turned off with falsy
-        :attr:`responses_from_components` attribute on a controller.
-        We call it once per endpoint creation.
+        Optionally responses can be turned off with falsy
+        :attr:`responses_from_components` attribute
+        on a blueprint or a controller.
+        We call it once per blueprint
+        and once per controller when creating endpoint.
         """
         if not cls.responses_from_components:
             return cls.responses
@@ -292,10 +303,14 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         return response
 
 
+#: Type that we expect for a single blueprint composition.
 _BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
 
+#: Type for blueprints composition.
+BlueprintsT: TypeAlias = Sequence[_BlueprintT]
 
-class Controller(Blueprint[_SerializerT_co], View):
+
+class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     """
     Defines API views as controllers.
 
@@ -327,6 +342,8 @@ class Controller(Blueprint[_SerializerT_co], View):
         responses_from_components: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
+        http_methods: Set of names to be treated as names for endpoints.
+            Does not include ``options``, but includes ``meta``.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -336,12 +353,14 @@ class Controller(Blueprint[_SerializerT_co], View):
     """
 
     # Public class-level API:
-    blueprints: ClassVar[Sequence[_BlueprintT]]
+    blueprints: ClassVar[BlueprintsT]
     validator_cls: ClassVar[type[BlueprintValidator]] = ControllerValidator
+
+    # Public instance API:
+    blueprint: Blueprint[_SerializerT_co] | None
 
     # Protected API:
     _blueprint_per_method: ClassVar[Mapping[str, _BlueprintT]]
-    _blueprint: Blueprint[_SerializerT_co] | None
 
     @override
     def __init_subclass__(cls) -> None:
@@ -350,7 +369,7 @@ class Controller(Blueprint[_SerializerT_co], View):
         cls.api_endpoints = {}  # will be re-populated in the very end
         for blueprint in cls.blueprints:
             cls.api_endpoints.update(blueprint.api_endpoints)
-        super().__init_subclass__()
+        super().__init_subclass__(controller_cls=cls)
         # It is validated that we don't have intersections.
         cls._blueprint_per_method = {
             # TODO: this violation is a bug in WPS
@@ -361,7 +380,11 @@ class Controller(Blueprint[_SerializerT_co], View):
 
     @override
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
-        """Set up common attributes."""
+        """
+        Set up common attributes.
+
+        Thread safety: there's only one controller instance per request.
+        """
         super().setup(request, *args, **kwargs)
         # Controller is created once per request, so we can assign attributes.
         blueprint = self._blueprint_per_method.get(
@@ -370,10 +393,10 @@ class Controller(Blueprint[_SerializerT_co], View):
         if blueprint:
             instance = blueprint()
             instance.setup(request, *args, **kwargs)
-            # We validate that serializer match
-            self._blueprint = instance  # type: ignore[assignment]
+            # We validate that serializers match:
+            self.blueprint = instance  # type: ignore[assignment]
         else:
-            self._blueprint = None
+            self.blueprint = None
 
     @override
     def dispatch(
@@ -394,7 +417,7 @@ class Controller(Blueprint[_SerializerT_co], View):
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
             # TODO: support redirects
-            return endpoint(self._blueprint, self, *args, **kwargs)
+            return endpoint(self, *args, **kwargs)
         # This return is very special,
         # since it does not have an attached endpoint.
         # All other responses are handled on endpoint level
@@ -457,7 +480,7 @@ class Controller(Blueprint[_SerializerT_co], View):
                 ... )
                 >>> class MyController(Controller[PydanticSerializer]):
                 ...     @validate(
-                ...         ResponseDescription(
+                ...         ResponseSpec(
                 ...             None,
                 ...             status_code=HTTPStatus.NO_CONTENT,
                 ...         ),
@@ -472,7 +495,7 @@ class Controller(Blueprint[_SerializerT_co], View):
 
            >>> class MyController(Controller[PydanticSerializer]):
            ...     @validate(
-           ...         ResponseDescription(
+           ...         ResponseSpec(
            ...             None,
            ...             status_code=HTTPStatus.NO_CONTENT,
            ...         ),
@@ -495,7 +518,7 @@ class Controller(Blueprint[_SerializerT_co], View):
 
             .. code:: python
 
-               >>> from django_modern_rest import MetaMixin
+               >>> from django_modern_rest.options_mixins import MetaMixin
 
                >>> class ControllerWithMeta(
                ...     MetaMixin,
@@ -540,3 +563,8 @@ class Controller(Blueprint[_SerializerT_co], View):
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
         """We already know this in advance, no need to recalculate."""
         return cls._is_async
+
+    @cached_property
+    def active_blueprint(self) -> Blueprint[_SerializerT_co]:
+        """Returns a blueprint if it was used, otherwise, returns self."""
+        return self.blueprint or self

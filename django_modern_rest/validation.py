@@ -26,7 +26,7 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.headers import (
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
     build_headers,
 )
@@ -34,8 +34,8 @@ from django_modern_rest.metadata import (
     EndpointMetadata,
 )
 from django_modern_rest.response import (
-    ResponseDescription,
     ResponseModification,
+    ResponseSpec,
     infer_status_code,
 )
 from django_modern_rest.serialization import BaseSerializer
@@ -80,11 +80,11 @@ class ResponseValidator:
 
     def validate_response(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not self._is_validation_enabled(blueprint):
+        if not self._is_validation_enabled(controller):
             return response
         schema = self._get_response_schema(response.status_code)
         self._validate_body(response.content, schema, response=response)
@@ -93,14 +93,14 @@ class ResponseValidator:
 
     def validate_modification(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         structured: Any,
     ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
             method = self.metadata.method
             raise ResponseSerializationError(
-                f'{blueprint} in {method} returned '
+                f'{controller} in {method} returned '
                 f'raw data of type {type(structured)} '
                 'without associated `@modify` usage.',
             )
@@ -113,7 +113,7 @@ class ResponseValidator:
                 self.serializer,
             ),
         )
-        if not self._is_validation_enabled(blueprint):
+        if not self._is_validation_enabled(controller):
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(structured, schema)
@@ -122,7 +122,7 @@ class ResponseValidator:
     def _get_response_schema(
         self,
         status_code: HTTPStatus | int,
-    ) -> ResponseDescription:
+    ) -> ResponseSpec:
         status = HTTPStatus(status_code)
         schema = self.metadata.responses.get(status)
         if schema is not None:
@@ -136,7 +136,7 @@ class ResponseValidator:
 
     def _is_validation_enabled(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
     ) -> bool:
         """
         Should we run response validation?
@@ -144,13 +144,19 @@ class ResponseValidator:
         Priority:
         - We first return any directly specified *validate_responses*
           argument to endpoint itself
+        - Second is *validate_responses* on the blueprint, if it exists
         - Then we return *validate_responses* from controller if specified
         - Lastly we return the default value from settings
         """
         if isinstance(self.metadata.validate_responses, bool):
             return self.metadata.validate_responses
-        if isinstance(blueprint.validate_responses, bool):
-            return blueprint.validate_responses
+        if controller.blueprint and isinstance(
+            controller.blueprint.validate_responses,
+            bool,
+        ):
+            return controller.blueprint.validate_responses
+        if isinstance(controller.validate_responses, bool):
+            return controller.validate_responses
         return resolve_setting(  # type: ignore[no-any-return]
             DMR_VALIDATE_RESPONSES_KEY,
         )
@@ -158,7 +164,7 @@ class ResponseValidator:
     def _validate_body(
         self,
         structured: Any | bytes,
-        schema: ResponseDescription,
+        schema: ResponseSpec,
         *,
         response: HttpResponse | None = None,
     ) -> None:
@@ -191,11 +197,11 @@ class ResponseValidator:
     def _validate_response_object(
         self,
         response: HttpResponse,
-        schema: ResponseDescription,
+        schema: ResponseSpec,
     ) -> None:
         """Validates response against provided metadata."""
         # Validate headers, at this point we know
-        # that only `HeaderDescription` can be in `metadata.headers`:
+        # that only `HeaderSpec` can be in `metadata.headers`:
         if schema.headers is None:
             metadata_headers: Set[str] = set()
         else:
@@ -239,6 +245,7 @@ class BlueprintValidator:
         self._validate_components(blueprint)
         is_async = self._validate_endpoints(blueprint)
         self._validate_meta_mixins(blueprint, is_async=is_async)
+        self._validate_error_handlers(blueprint, is_async=is_async)
         return is_async
 
     def _validate_meta_mixins(
@@ -299,6 +306,34 @@ class BlueprintValidator:
                 'be all sync or all async',
             )
         return is_async
+
+    def _validate_error_handlers(
+        self,
+        blueprint: 'type[Blueprint[BaseSerializer]]',
+        *,
+        is_async: bool,
+    ) -> None:
+        if not blueprint.api_endpoints:
+            return
+
+        handle_error_overridden = 'handle_error' in blueprint.__dict__
+        handle_async_error_overridden = (
+            'handle_async_error' in blueprint.__dict__
+        )
+
+        if is_async and handle_error_overridden:
+            raise EndpointMetadataError(
+                f'{blueprint!r} has async endpoints but overrides '
+                '`handle_error` (sync handler). '
+                'Use `handle_async_error` instead for async endpoints.',
+            )
+
+        if not is_async and handle_async_error_overridden:
+            raise EndpointMetadataError(
+                f'{blueprint!r} has sync endpoints but overrides '
+                '`handle_async_error` (async handler). '
+                'Use `handle_error` instead for sync endpoints.',
+            )
 
 
 class ControllerValidator(BlueprintValidator):
@@ -396,7 +431,7 @@ class _OpenAPIPayload:
 class ValidateEndpointPayload(_OpenAPIPayload):
     """Payload created by ``@validate``."""
 
-    responses: list[ResponseDescription]
+    responses: list[ResponseSpec]
     validate_responses: bool | None = None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
     allow_custom_http_methods: bool = False
@@ -408,7 +443,7 @@ class ModifyEndpointPayload(_OpenAPIPayload):
 
     status_code: HTTPStatus | None
     headers: Mapping[str, NewHeader] | None
-    responses: list[ResponseDescription] | None
+    responses: list[ResponseSpec] | None
     validate_responses: bool | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     allow_custom_http_methods: bool
@@ -419,7 +454,7 @@ PayloadT: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
 
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
-_AllResponses = NewType('_AllResponses', list[ResponseDescription])
+_AllResponses = NewType('_AllResponses', list[ResponseSpec])
 
 
 class _ResponseListValidator:
@@ -428,7 +463,7 @@ class _ResponseListValidator:
         responses: _AllResponses,
         *,
         endpoint: str,
-    ) -> dict[HTTPStatus, ResponseDescription]:
+    ) -> dict[HTTPStatus, ResponseSpec]:
         self._validate_unique_responses(responses, endpoint=endpoint)
         self._validate_header_descriptions(responses, endpoint=endpoint)
         self._validate_http_spec(responses, endpoint=endpoint)
@@ -442,7 +477,7 @@ class _ResponseListValidator:
     ) -> None:
         # Now, check if we have any conflicts in responses.
         # For example: same status code, mismatching metadata.
-        unique: dict[HTTPStatus, ResponseDescription] = {}
+        unique: dict[HTTPStatus, ResponseSpec] = {}
         for response in responses:
             existing_response = unique.get(response.status_code)
             if existing_response is not None and existing_response != response:
@@ -468,7 +503,7 @@ class _ResponseListValidator:
             ):
                 raise EndpointMetadataError(
                     f'Cannot use `NewHeader` in {response} , '
-                    f'use `HeaderDescription` instead in {endpoint!r}',
+                    f'use `HeaderSpec` instead in {endpoint!r}',
                 )
 
     def _validate_http_spec(
@@ -498,7 +533,7 @@ class _ResponseListValidator:
     def _convert_responses(
         self,
         all_responses: _AllResponses,
-    ) -> dict[HTTPStatus, ResponseDescription]:
+    ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
 
 
@@ -521,6 +556,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = parse_return_annotation(func)
@@ -551,6 +587,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 func,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             )
         if isinstance(self.payload, ModifyEndpointPayload):
             return self._from_modify(
@@ -560,6 +597,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 func,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             )
         if self.payload is None:
             return self._from_raw_data(
@@ -567,14 +605,16 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 method,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             )
         assert_never(self.payload)
 
     def _resolve_all_responses(
         self,
-        endpoint_responses: list[ResponseDescription],
+        endpoint_responses: list[ResponseSpec],
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
         modification: ResponseModification | None = None,
     ) -> _AllResponses:
         modification_spec = (
@@ -586,6 +626,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 *modification_spec,
                 *endpoint_responses,
                 *blueprint_cls.semantic_responses(),
+                *(
+                    []
+                    if controller_cls is None
+                    else controller_cls.semantic_responses()
+                ),
                 *resolve_setting(DMR_RESPONSES_KEY),
             ],
         )
@@ -599,16 +644,19 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         all_responses = self._resolve_all_responses(
             payload.responses,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         responses = self.response_list_validator_cls()(
             all_responses,
@@ -641,12 +689,14 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         self._validate_new_headers(payload, endpoint=endpoint)
         modification = ResponseModification(
@@ -665,6 +715,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         all_responses = self._resolve_all_responses(
             payload_responses,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
             modification=modification,
         )
         responses = self.response_list_validator_cls()(
@@ -696,11 +747,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
         )
         status_code = infer_status_code(method)
         modification = ResponseModification(
@@ -711,6 +764,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         all_responses = self._resolve_all_responses(
             [],
             blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
             modification=modification,
         )
         responses = self.response_list_validator_cls()(
@@ -733,12 +787,12 @@ class EndpointMetadataValidator:  # noqa: WPS214
         endpoint: str,
     ) -> None:
         if payload.headers is not None and any(
-            isinstance(header, HeaderDescription)  # pyright: ignore[reportUnnecessaryIsInstance]
+            isinstance(header, HeaderSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
             for header in payload.headers.values()
         ):
             raise EndpointMetadataError(
                 f'Since {endpoint!r} returns raw data, '
-                f'it is not possible to use `HeaderDescription` '
+                f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response',
             )
@@ -749,6 +803,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'],
+        controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponse):
             if isinstance(self.payload, ModifyEndpointPayload):
@@ -761,12 +816,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             if not self._resolve_all_responses(
                 self.payload.responses,
                 blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
             ):
                 raise EndpointMetadataError(
                     f'{endpoint!r} returns HttpResponse '
                     'and has no configured responses, '
                     'it requires `@validate` decorator with '
-                    'at least one configured `ResponseDescription`',
+                    'at least one configured `ResponseSpec`',
                 )
 
             # There are some configured errors,

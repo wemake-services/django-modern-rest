@@ -1,7 +1,7 @@
 import json
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from http import HTTPStatus
-from typing import ClassVar, TypeAlias, final
+from typing import ClassVar, final
 
 import pydantic
 import pytest
@@ -15,6 +15,7 @@ from django_modern_rest import (
     Controller,
     modify,
 )
+from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
@@ -56,11 +57,8 @@ class _ErrorHandlingBlueprint(Blueprint[PydanticSerializer], Body[_ErrorBody]):
         raise exc
 
 
-_BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
-
-
 class _ErrorHandlingController(Controller[PydanticSerializer]):
-    blueprints: ClassVar[Sequence[_BlueprintT]] = [_ErrorHandlingBlueprint]
+    blueprints: ClassVar[BlueprintsT] = [_ErrorHandlingBlueprint]
 
     @override
     def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
@@ -165,7 +163,7 @@ class _AsyncErrorHandlingBlueprint(
 
 
 class _AsyncErrorHandlingController(Controller[PydanticSerializer]):
-    blueprints: ClassVar[Sequence[_BlueprintT]] = [_AsyncErrorHandlingBlueprint]
+    blueprints: ClassVar[BlueprintsT] = [_AsyncErrorHandlingBlueprint]
 
     @override
     async def handle_async_error(

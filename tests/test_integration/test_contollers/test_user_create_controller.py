@@ -23,7 +23,7 @@ def test_user_create_view(
     start_from: str | None,
 ) -> None:
     """Ensure that routes without path parameters work."""
-    base_url = reverse('api:users')
+    base_url = reverse('api:controllers:users')
     start_from_query = '' if start_from is None else f'&start_from={start_from}'
     request_data = {'email': faker.email(), 'age': faker.random_int()}
     response = dmr_client.post(
@@ -48,7 +48,7 @@ def test_user_create_view_multiple_errors(
 ) -> None:
     """Ensure that all errors are shown at once."""
     response = dmr_client.post(
-        reverse('api:users'),
+        reverse('api:controllers:users'),
         headers={},
         data={},
     )
@@ -91,7 +91,7 @@ def test_user_create_view_multiple_errors(
 
 def test_user_list_view(dmr_client: DMRClient) -> None:
     """Ensure that list routes work."""
-    response = dmr_client.get(reverse('api:users'))
+    response = dmr_client.get(reverse('api:controllers:users'))
 
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'

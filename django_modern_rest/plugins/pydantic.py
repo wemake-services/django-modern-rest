@@ -232,7 +232,16 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def error_serialize(cls, error: Exception | str) -> Any:
-        """Serialize an exception to json the best way possible."""
+        """
+        Convert serialization or deserialization error to json format.
+
+        Args:
+            error: A serialization exception like a validation error or
+                a ``django_modern_rest.exceptions.DataParsingError``.
+
+        Returns:
+            Simple python object - exception converted to json.
+        """
         if isinstance(error, str):
             error = pydantic.ValidationError.from_exception_data(
                 error,

@@ -26,9 +26,10 @@ class _CustomEndpointMetadataValidator(EndpointMetadataValidator):
         self,
         func: Callable[..., Any],
         blueprint_cls: type[Blueprint[BaseSerializer]],
+        controller_cls: type[Controller[BaseSerializer]] | None,
     ) -> EndpointMetadata:
         self.__class__.was_called = True
-        return super().__call__(func, blueprint_cls)
+        return super().__call__(func, blueprint_cls, controller_cls)
 
 
 @final
@@ -38,11 +39,11 @@ class _CustomResponseValidator(ResponseValidator):
     @override
     def validate_response(
         self,
-        blueprint: Blueprint[BaseSerializer],
+        controller: Controller[BaseSerializer],
         response: _ResponseT,
     ) -> _ResponseT:
         self.__class__.was_called = True
-        return super().validate_response(blueprint, response)
+        return super().validate_response(controller, response)
 
 
 @final

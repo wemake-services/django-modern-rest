@@ -7,7 +7,7 @@ import pytest
 from django.http import HttpResponse
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller, ResponseDescription, validate
+from django_modern_rest import Controller, ResponseSpec, validate
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
@@ -33,7 +33,7 @@ def _build_annotation(typ: Any) -> Callable[..., Any]:
 
 def _build_rest(typ: Any) -> Callable[..., Any]:
     @validate(
-        ResponseDescription(return_type=typ, status_code=HTTPStatus.OK),
+        ResponseSpec(return_type=typ, status_code=HTTPStatus.OK),
     )
     def get(self: Any) -> HttpResponse:
         raise NotImplementedError

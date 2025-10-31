@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Final
 from django.http import HttpResponse
 
 from django_modern_rest.endpoint import validate
-from django_modern_rest.headers import HeaderDescription
-from django_modern_rest.response import ResponseDescription
+from django_modern_rest.headers import HeaderSpec
+from django_modern_rest.response import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 
 
 #: Metadata for the default options response.
-OptionsResponse: Final = ResponseDescription(
+OptionsResponse: Final = ResponseSpec(
     None,
     status_code=HTTPStatus.NO_CONTENT,
-    headers={'Allow': HeaderDescription()},
+    headers={'Allow': HeaderSpec()},
 )
 
 
@@ -32,7 +32,8 @@ class MetaMixin:
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller, MetaMixin
+        >>> from django_modern_rest import Controller
+        >>> from django_modern_rest.options_mixins import MetaMixin
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class SupportsOptionsHttpMethod(
@@ -62,7 +63,8 @@ class AsyncMetaMixin:
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller, AsyncMetaMixin
+        >>> from django_modern_rest import Controller
+        >>> from django_modern_rest.options_mixins import AsyncMetaMixin
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class SupportsOptionsHttpMethod(

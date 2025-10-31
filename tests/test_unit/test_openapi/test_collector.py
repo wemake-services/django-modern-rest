@@ -4,17 +4,16 @@ from typing import Any, final
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
-from django_modern_rest import Blueprint, Controller, compose_blueprints
+from django_modern_rest import Blueprint, Controller
 from django_modern_rest.openapi.collector import (
     ControllerMapping,
     _join_paths,
     _normalize_path,
     _process_pattern,
-    _process_resolver,
     controller_collector,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import Router
+from django_modern_rest.routing import Router, compose_blueprints
 
 
 @final
@@ -188,26 +187,6 @@ def test_process_pattern_with_different_views(
     assert controller_mapping.path == f'/api/{path_str}'
 
 
-@pytest.mark.parametrize(
-    'view_func',
-    [
-        _EmptyController.as_view(),
-        _FullController.as_view(),
-        compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
-        include([path('inner/', _FullController.as_view())]),
-    ],
-)
-def test_process_resolver_with_nested_patterns(view_func: Any) -> None:
-    """Test _process_resolver with nested URL resolvers."""
-    nested_patterns = [path('nested/', view_func)]
-    resolver = path('api/', include((nested_patterns, 'test_app')))
-    controllers = _process_resolver(resolver, '/base/')
-
-    assert all(
-        isinstance(controller, ControllerMapping) for controller in controllers
-    )
-
-
 def test_controller_collector_with_router() -> None:
     """Test the main controller_collector function with a Router."""
     patterns: Sequence[URLPattern | URLResolver] = [
@@ -218,7 +197,7 @@ def test_controller_collector_with_router() -> None:
             compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
         ),
     ]
-    controllers = controller_collector(Router(patterns))
+    controllers = controller_collector(Router(patterns).urls)
 
     assert len(controllers) == 3
     assert all(

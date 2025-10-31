@@ -11,12 +11,12 @@ from django_modern_rest import (  # noqa: WPS235
     Headers,
     Path,
     Query,
-    ResponseDescription,
-    compose_blueprints,
+    ResponseSpec,
     modify,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.routing import compose_blueprints
 
 
 class _QueryModel(pydantic.BaseModel):
@@ -49,7 +49,7 @@ class _PostBlueprint(
     Headers[_HeadersModel],
     Blueprint[PydanticSerializer],
 ):
-    @validate(ResponseDescription(list[int], status_code=HTTPStatus.OK))
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
     def post(self) -> HttpResponse:
         raise NotImplementedError
 

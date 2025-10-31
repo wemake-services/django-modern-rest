@@ -6,7 +6,7 @@ from typing import Any, Generic, TypeVar, overload
 from django.http import HttpResponse
 
 from django_modern_rest.headers import (
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
 )
 from django_modern_rest.serialization import BaseSerializer
@@ -28,7 +28,7 @@ class APIError(Exception, Generic[_ItemT]):
         >>> from django_modern_rest import (
         ...     APIError,
         ...     Controller,
-        ...     ResponseDescription,
+        ...     ResponseSpec,
         ...     modify,
         ... )
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -36,7 +36,7 @@ class APIError(Exception, Generic[_ItemT]):
         >>> class UserController(Controller[PydanticSerializer]):
         ...     @modify(
         ...         extra_responses=[
-        ...             ResponseDescription(
+        ...             ResponseSpec(
         ...                 str,
         ...                 status_code=HTTPStatus.NOT_FOUND,
         ...             ),
@@ -67,9 +67,9 @@ class APIError(Exception, Generic[_ItemT]):
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class ResponseDescription:
+class ResponseSpec:
     """
-    Represents a single API response.
+    Represents a single API response specification.
 
     Args:
         return_type: Shows *return_type* in the documentation
@@ -90,7 +90,7 @@ class ResponseDescription:
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus = dataclasses.field(kw_only=True)
-    headers: dict[str, HeaderDescription] | None = dataclasses.field(
+    headers: dict[str, HeaderSpec] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -124,9 +124,9 @@ class ResponseModification:
     status_code: HTTPStatus
     headers: Mapping[str, NewHeader] | None
 
-    def to_description(self) -> ResponseDescription:
+    def to_description(self) -> ResponseSpec:
         """Convert response modification to response description."""
-        return ResponseDescription(
+        return ResponseSpec(
             return_type=self.return_type,
             status_code=self.status_code,
             headers=(

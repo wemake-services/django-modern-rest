@@ -68,7 +68,7 @@ class _DMRMixin:
 
 class DMRRequestFactory(_DMRMixin, RequestFactory):
     """
-    Test utility for testing apps using ``django_modern_rest``.
+    Test utility for testing apps using ``django-modern-rest``.
 
     Based on :class:`django.test.RequestFactory`.
     See their docs for advanced usage:
@@ -109,7 +109,7 @@ class DMRAsyncRequestFactory(_DMRMixin, AsyncRequestFactory):
 
 class DMRClient(_DMRMixin, Client):
     """
-    Test utility for testing apps using ``django_modern_rest``.
+    Test utility for testing apps using ``django-modern-rest``.
 
     Based on :class:`django.test.Client`.
     See their docs for advanced usage:

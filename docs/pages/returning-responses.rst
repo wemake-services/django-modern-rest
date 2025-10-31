@@ -22,7 +22,7 @@ decorator, :attr:`~django_modern_rest.controller.Controller.responses`
 ``Controller`` attribute, or :data:`~django_modern_rest.settings.responses`
 global setting to specify all possible responses.
 
-To do that we utilize :class:`~django_modern_rest.response.ResponseDescription`:
+To do that we utilize :class:`~django_modern_rest.response.ResponseSpec`:
 
 .. literalinclude:: /examples/returning_responses/validate.py
   :caption: views.py
@@ -87,9 +87,9 @@ Describing headers
 You also must specify which headers are returned (if any).
 
 When using "real endpoints", you can provide ``headers`` parameter
-to :class:`~django_modern_rest.response.ResponseDescription`
+to :class:`~django_modern_rest.response.ResponseSpec`
 if there are headers you want to describe.
-:class:`~django_modern_rest.headers.HeaderDescription` is here to help.
+:class:`~django_modern_rest.headers.HeaderSpec` is here to help.
 You can create both ``required=True``
 (always must be present on the response object)
 and ``required=False`` headers (might be missing in some cases):
@@ -155,6 +155,13 @@ You can disable response validation via configuration:
     .. tab:: Disable per endpoint
 
       .. literalinclude:: /examples/returning_responses/per_endpoint.py
+        :caption: views.py
+        :linenos:
+        :emphasize-lines: 6, 24
+
+    .. tab:: Disable per blueprint
+
+      .. literalinclude:: /examples/returning_responses/per_blueprint.py
         :caption: views.py
         :linenos:
         :emphasize-lines: 6, 24

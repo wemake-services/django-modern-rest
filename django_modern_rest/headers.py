@@ -45,14 +45,14 @@ class NewHeader(_BaseResponseHeader):
 
     value: str  # noqa: WPS110
 
-    def to_description(self) -> 'HeaderDescription':
+    def to_description(self) -> 'HeaderSpec':
         """Convert header type."""
-        return HeaderDescription(required=True)
+        return HeaderSpec(required=True)
 
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class HeaderDescription(_BaseResponseHeader):
+class HeaderSpec(_BaseResponseHeader):
     """
     Existing header that :class:`django.http.HttpResponse` already has.
 
@@ -64,9 +64,7 @@ class HeaderDescription(_BaseResponseHeader):
 
 
 #: Type of all possible return headers.
-ResponseHeadersT: TypeAlias = (
-    Mapping[str, NewHeader] | Mapping[str, HeaderDescription]
-)
+ResponseHeadersT: TypeAlias = Mapping[str, NewHeader] | Mapping[str, HeaderSpec]
 
 
 def build_headers(

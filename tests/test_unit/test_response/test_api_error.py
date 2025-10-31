@@ -8,8 +8,8 @@ from django.http import HttpResponse
 from django_modern_rest import (
     APIError,
     Controller,
-    HeaderDescription,
-    ResponseDescription,
+    HeaderSpec,
+    ResponseSpec,
     modify,
     validate,
 )
@@ -19,7 +19,7 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 class _ValidAPIError(Controller[PydanticSerializer]):
     @validate(
-        ResponseDescription(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
     )
     def get(self) -> HttpResponse:
         raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
@@ -27,7 +27,7 @@ class _ValidAPIError(Controller[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.OK,
         extra_responses=[
-            ResponseDescription(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+            ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
         ],
     )
     def post(self) -> str:
@@ -68,17 +68,17 @@ class _InvalidAPIError(Controller[PydanticSerializer]):
         raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
-        ResponseDescription(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
     )
     def put(self) -> HttpResponse:
         """Status code mismatch."""
         raise APIError(1, status_code=HTTPStatus.UNAUTHORIZED)
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             int,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
-            headers={'X-API': HeaderDescription()},
+            headers={'X-API': HeaderSpec()},
         ),
     )
     def patch(self) -> HttpResponse:
@@ -86,7 +86,7 @@ class _InvalidAPIError(Controller[PydanticSerializer]):
         raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             int,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
@@ -125,8 +125,8 @@ def test_api_error_invalid(
 
 
 class _ControllerLevelAPIError(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseDescription]] = [
-        ResponseDescription(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+    responses: ClassVar[list[ResponseSpec]] = [
+        ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
     ]
 
     def get(self) -> str:

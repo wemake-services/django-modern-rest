@@ -36,8 +36,10 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'server.apps.rest',
     'server.apps.models_example',
+    'server.apps.middlewares',
+    'server.apps.controllers',
+    'server.apps.openapi',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

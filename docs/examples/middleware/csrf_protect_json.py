@@ -4,18 +4,15 @@ from typing import ClassVar
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect
 
-from django_modern_rest import (
-    Controller,
-    ResponseDescription,
-    build_response,
-    wrap_middleware,
-)
+from django_modern_rest import Controller, ResponseSpec
+from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import build_response
 
 
 @wrap_middleware(
     csrf_protect,
-    ResponseDescription(
+    ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.FORBIDDEN,
     ),
@@ -35,7 +32,7 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
 class MyController(Controller[PydanticSerializer]):
     """Example controller using CSRF protection middleware."""
 
-    responses: ClassVar[list[ResponseDescription]] = csrf_protect_json.responses
+    responses: ClassVar[list[ResponseSpec]] = csrf_protect_json.responses
 
     def post(self) -> dict[str, str]:
         return {'message': 'ok'}

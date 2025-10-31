@@ -16,7 +16,7 @@ Benchmarks do not test real performance, they test ideas of performance.
 
 ## Assumptions
 
-- We test only the API part, because ``django_modern_rest`` does not include
+- We test only the API part, because ``django-modern-rest`` does not include
   any database features, we want to make sure that the part that
   we are covering is measured, not something else
 - We test the minimal possible app

@@ -28,20 +28,10 @@ Endpoint
 .. autodecorator:: django_modern_rest.endpoint.validate
 
 
-Components
-----------
-
-.. autoclass:: django_modern_rest.components.Headers
-
-.. autoclass:: django_modern_rest.components.Query
-
-.. autoclass:: django_modern_rest.components.Body
-
-
 Response and headers
 --------------------
 
-.. autoclass:: django_modern_rest.response.ResponseDescription
+.. autoclass:: django_modern_rest.response.ResponseSpec
   :members:
 
 .. autoclass:: django_modern_rest.response.ResponseModification
@@ -52,7 +42,7 @@ Response and headers
 
 .. autofunction:: django_modern_rest.response.build_response
 
-.. autoclass:: django_modern_rest.headers.HeaderDescription
+.. autoclass:: django_modern_rest.headers.HeaderSpec
   :members:
 
 .. autoclass:: django_modern_rest.headers.NewHeader
@@ -144,9 +134,23 @@ Utilities
 Decorators
 ----------
 
-.. autoclass:: django_modern_rest.decorators.dispatch_decorator
+.. autofunction:: django_modern_rest.decorators.dispatch_decorator
 
-.. autoclass:: django_modern_rest.decorators.wrap_middleware
+.. autofunction:: django_modern_rest.decorators.endpoint_decorator
+
+.. autofunction:: django_modern_rest.decorators.wrap_middleware
+
+
+Testing
+-------
+
+.. autoclass:: django_modern_rest.test.DMRRequestFactory
+
+.. autoclass:: django_modern_rest.test.DMRAsyncRequestFactory
+
+.. autoclass:: django_modern_rest.test.DMRClient
+
+.. autoclass:: django_modern_rest.test.DMRAsyncClient
 
 
 Plugins

@@ -9,8 +9,8 @@ from typing import (
 
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.response import (
-    ResponseDescription,
     ResponseModification,
+    ResponseSpec,
 )
 
 if TYPE_CHECKING:
@@ -78,7 +78,7 @@ class EndpointMetadata:
 
     """
 
-    responses: dict[HTTPStatus, ResponseDescription]
+    responses: dict[HTTPStatus, ResponseSpec]
     validate_responses: bool | None
     method: str
     modification: ResponseModification | None

@@ -5,7 +5,8 @@ import pytest
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, User
 
-from django_modern_rest import Controller, dispatch_decorator
+from django_modern_rest import Controller
+from django_modern_rest.decorators import dispatch_decorator
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 

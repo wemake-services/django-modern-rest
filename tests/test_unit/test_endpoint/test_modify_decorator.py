@@ -5,15 +5,18 @@ from typing import ClassVar, final
 import pytest
 from django.http import HttpResponse
 from django.test import RequestFactory
+from inline_snapshot import snapshot
 
 from django_modern_rest import (
+    Blueprint,
     Controller,
-    Endpoint,
-    HeaderDescription,
+    HeaderSpec,
     NewHeader,
-    ResponseDescription,
+    ResponseSpec,
     modify,
 )
+from django_modern_rest.controller import BlueprintsT
+from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
@@ -53,13 +56,13 @@ def test_modify_on_response() -> None:
 
 
 def test_modify_with_header_description() -> None:
-    """Ensures `@modify` can't be used with `HeaderDescription`."""
-    with pytest.raises(EndpointMetadataError, match='HeaderDescription'):
+    """Ensures `@modify` can't be used with `HeaderSpec`."""
+    with pytest.raises(EndpointMetadataError, match='HeaderSpec'):
 
         class _WrongValidate(Controller[PydanticSerializer]):
             @modify(
                 status_code=HTTPStatus.OK,
-                headers={'Authorization': HeaderDescription()},  # type: ignore[dict-item]
+                headers={'Authorization': HeaderSpec()},  # type: ignore[dict-item]
             )
             def get(self) -> int:
                 raise NotImplementedError
@@ -72,8 +75,8 @@ def test_modify_duplicate_statuses() -> None:
         class _DuplicateStatuses(Controller[PydanticSerializer]):
             @modify(
                 extra_responses=[
-                    ResponseDescription(int, status_code=HTTPStatus.OK),
-                    ResponseDescription(str, status_code=HTTPStatus.OK),
+                    ResponseSpec(int, status_code=HTTPStatus.OK),
+                    ResponseSpec(str, status_code=HTTPStatus.OK),
                 ],
             )
             def get(self) -> int:
@@ -83,24 +86,57 @@ def test_modify_duplicate_statuses() -> None:
 def test_modify_deduplicate_statuses() -> None:
     """Ensures `@modify` same duplicate status codes."""
 
-    class _DeduplicateStatuses(Controller[PydanticSerializer]):
-        responses: ClassVar[list[ResponseDescription]] = [
+    class _Blueprint(Blueprint[PydanticSerializer]):
+        responses: ClassVar[list[ResponseSpec]] = [
             # From components:
-            ResponseDescription(int, status_code=HTTPStatus.OK),
+            ResponseSpec(int, status_code=HTTPStatus.OK),
+            ResponseSpec(
+                dict[str, str],
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            ),
+        ]
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+    class _DeduplicateStatuses(Controller[PydanticSerializer]):
+        blueprints: ClassVar[BlueprintsT] = [_Blueprint]
+        responses: ClassVar[list[ResponseSpec]] = [
+            # From components:
+            ResponseSpec(int, status_code=HTTPStatus.OK),
         ]
 
         @modify(
             extra_responses=[
                 # From middleware:
-                ResponseDescription(int, status_code=HTTPStatus.OK),
-                ResponseDescription(int, status_code=HTTPStatus.OK),
+                ResponseSpec(int, status_code=HTTPStatus.OK),
+                ResponseSpec(int, status_code=HTTPStatus.OK),
             ],
         )
         def get(self) -> int:
             raise NotImplementedError
 
-    endpoint = _DeduplicateStatuses.api_endpoints['GET']
-    assert len(endpoint.metadata.responses) == 1
+    endpoints = _DeduplicateStatuses.api_endpoints
+    assert endpoints['GET'].metadata.responses == snapshot({
+        HTTPStatus.OK: ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+        ),
+    })
+    assert endpoints['POST'].metadata.responses == snapshot({
+        HTTPStatus.CREATED: ResponseSpec(
+            return_type=str,
+            status_code=HTTPStatus.CREATED,
+        ),
+        HTTPStatus.OK: ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+        ),
+        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
+            return_type=dict[str, str],
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
+    })
 
 
 def test_modify_modified_in_responses() -> None:
@@ -111,7 +147,7 @@ def test_modify_modified_in_responses() -> None:
             @modify(
                 status_code=HTTPStatus.OK,
                 extra_responses=[
-                    ResponseDescription(str, status_code=HTTPStatus.OK),
+                    ResponseSpec(str, status_code=HTTPStatus.OK),
                 ],
             )
             def get(self) -> int:
@@ -122,10 +158,10 @@ def test_modify_modified_in_responses() -> None:
         class _DuplicateDifferentHeaders(Controller[PydanticSerializer]):
             @modify(
                 extra_responses=[
-                    ResponseDescription(
+                    ResponseSpec(
                         str,
                         status_code=HTTPStatus.OK,
-                        headers={'Accept': HeaderDescription()},
+                        headers={'Accept': HeaderSpec()},
                     ),
                 ],
             )

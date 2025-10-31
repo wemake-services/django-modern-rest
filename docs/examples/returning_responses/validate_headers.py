@@ -8,8 +8,8 @@ from django.http import HttpResponse
 from django_modern_rest import (
     Body,
     Controller,
-    HeaderDescription,
-    ResponseDescription,
+    HeaderSpec,
+    ResponseSpec,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -25,12 +25,12 @@ class UserController(
     Body[UserModel],
 ):
     @validate(
-        ResponseDescription(
+        ResponseSpec(
             UserModel,
             status_code=HTTPStatus.OK,
             headers={
-                'X-Created': HeaderDescription(),
-                'X-Our-Domain': HeaderDescription(required=False),
+                'X-Created': HeaderSpec(),
+                'X-Our-Domain': HeaderSpec(required=False),
             },
         ),
     )

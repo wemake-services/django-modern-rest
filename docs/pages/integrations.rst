@@ -4,7 +4,7 @@ Integrations
 Serializing QuerySets into models
 ---------------------------------
 
-Django is built around its :class:`django.db.models.query.QuerySet` type.
+Django is built around its :class:`~django.db.models.query.QuerySet` type.
 Of course, we have to make sure that it is supported.
 
 Let's say you have these models that you already work with:
@@ -13,45 +13,39 @@ Let's say you have these models that you already work with:
   :caption: models.py
   :linenos:
 
-And you want to create an API that will work with your models.
+Now, let's create an API that will work with your models.
 To do that the first thing you need to do is to create
 your API serializers / deserializers.
 
-While it may seems that this is a duplication of code, and that it
+While it may seems that this is a redundant duplication of code, and that it
 should be possible to build serialization schemas out of Django models,
-but that's quite rare in real apps. Because models and serialization
-schemes must change independenly. Otherwise, your API would be a mess 100%.
+but that's actually the **opposite**.
+
+Because models and serialization
+schemes must change independenly. Otherwise, your API would
+be a mess and will change unexpectedly, when you create a new migration.
+This problem happened to me too many times.
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/serializers.py
   :caption: serializers.py
   :linenos:
 
-If you don't like how ``tag_list`` looks, you can do the same manually:
-
-.. code:: python
-
-   def post(self) -> UserSchema:
-       user = user_create_service(self.parsed_body)
-       return UserSchema.model_validate({
-           'email': user.email,
-           'role': user.role,
-           'tags': user.tags.all(),
-       })
-
-While specifying ``model_config = pydantic.ConfigDict(from_attributes=True)``
-on ``TagSchema`` and ``RoleSchema``.
-Both options work, just choose what style do you like more.
-
-.. note::
+.. important::
 
   Models and QuerySets can't be serialized to json by default.
   This is a design choice, this is a feature.
 
   Why?
 
-  Because Models and QuerySets are not for serialization,
-  they are for database access. Mixing these two layers
-  will complicate, not simplify, your app.
+  Because Models and QuerySets are not designed for serialization,
+  they are designed for the database access. Mixing these two layers
+  will **complicate**, not simplify, your app.
+
+Now, let's create a service to build your model instances:
+
+.. literalinclude:: ../../django_test_app/server/apps/models_example/services.py
+  :caption: services.py
+  :linenos:
 
 Here's how the final :class:`~django_modern_rest.controller.Controller`
 would look like:
@@ -71,14 +65,14 @@ Bring your own DI
 We don't have any opinions about any DI that you can potentially use.
 Because ``django-modern-rest`` is compatible with any of the existing ones.
 
-You any DI that you already use with ``django``.
+Use any DI that you already have or want to use with ``django``.
 
 Try any of these officially recommended tools:
 
 - https://github.com/reagento/dishka
 - https://github.com/bobthemighty/punq
 
-Or keep using what you already have :)
+Or any other one that suits your needs :)
 
 
 Typing
