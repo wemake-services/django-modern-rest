@@ -34,8 +34,8 @@ from django_modern_rest.metadata import (
     EndpointMetadata,
 )
 from django_modern_rest.response import (
-    ResponseSpec,
     ResponseModification,
+    ResponseSpec,
     infer_status_code,
 )
 from django_modern_rest.serialization import BaseSerializer

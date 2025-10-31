@@ -17,9 +17,7 @@ class _RequestWithID(HttpRequest):
 class RequestIdController(Controller[PydanticSerializer]):
     """Controller that uses request_id added by middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = (
-        add_request_id_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = add_request_id_json.responses
 
     # Use request with request_id field
     request: _RequestWithID

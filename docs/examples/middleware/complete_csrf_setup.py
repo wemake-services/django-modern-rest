@@ -40,9 +40,7 @@ class ProtectedController(Controller[PydanticSerializer]):
 
 @ensure_csrf_cookie_json
 class PublicController(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseSpec]] = (
-        ensure_csrf_cookie_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = ensure_csrf_cookie_json.responses
 
     def get(self) -> dict[str, str]:
         """Public endpoint that sets CSRF cookie."""

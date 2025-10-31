@@ -229,9 +229,7 @@ class AsyncParseHeadersController(
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
 
-    responses: ClassVar[list[ResponseSpec]] = (
-        ensure_csrf_cookie_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = ensure_csrf_cookie_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
@@ -269,9 +267,7 @@ class AsyncCsrfProtectedController(
 class CustomHeaderController(Controller[PydanticSerializer]):
     """Controller with custom header middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = (
-        custom_header_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = custom_header_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns simple data."""
@@ -298,9 +294,7 @@ class RateLimitedController(
 class RequestIdController(Controller[PydanticSerializer]):
     """Controller that uses request_id added by middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = (
-        add_request_id_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = add_request_id_json.responses
 
     request: _RequestWithID
 
@@ -321,9 +315,7 @@ class LoginRequiredController(Controller[PydanticSerializer]):
     Converts 302 redirect to JSON 401 response for REST API compatibility.
     """
 
-    responses: ClassVar[list[ResponseSpec]] = (
-        login_required_json.responses
-    )
+    responses: ClassVar[list[ResponseSpec]] = login_required_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that requires Django authentication."""

@@ -9,8 +9,8 @@ from typing import (
 
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.response import (
-    ResponseSpec,
     ResponseModification,
+    ResponseSpec,
 )
 
 if TYPE_CHECKING:
