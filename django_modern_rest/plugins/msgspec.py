@@ -160,7 +160,16 @@ class MsgspecSerializer(BaseSerializer):
         cls,
         error: Exception | str,
     ) -> list[MsgspecErrorDetails]:
-        """Serialize an exception to json the best way possible."""
+        """
+        Convert serialization or deserialization error to json format.
+
+        Args:
+            error: A serialization exception like a validation error or
+                a ``django_modern_rest.exceptions.DataParsingError``.
+
+        Returns:
+            Simple python object - exception converted to json.
+        """
         if isinstance(error, msgspec.ValidationError):
             return [{'type': 'value_error', 'loc': [], 'msg': str(error)}]
         raise NotImplementedError(
