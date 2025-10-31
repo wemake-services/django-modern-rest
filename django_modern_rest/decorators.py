@@ -138,7 +138,7 @@ def dispatch_decorator(
     return method_decorator(func, name='dispatch')
 
 
-_ParamsT = ParamSpec('_ParamsT')
+_ParamT = ParamSpec('_ParamT')
 _ReturnT = TypeVar('_ReturnT')
 _ViewT = TypeVar(
     '_ViewT',
@@ -148,7 +148,7 @@ _ViewT = TypeVar(
 
 def endpoint_decorator(
     original_decorator: Callable[[_ViewT], _ViewT],
-) -> Callable[[Callable[_ParamsT, _ReturnT]], Callable[_ParamsT, _ReturnT]]:
+) -> Callable[[Callable[_ParamT, _ReturnT]], Callable[_ParamT, _ReturnT]]:
     """
     Apply regular Django-styled decorator to a single endpoint.
 
@@ -195,13 +195,13 @@ def endpoint_decorator(
     """
 
     def factory(
-        func: Callable[_ParamsT, _ReturnT],
-    ) -> Callable[_ParamsT, _ReturnT]:
+        func: Callable[_ParamT, _ReturnT],
+    ) -> Callable[_ParamT, _ReturnT]:
         @wraps(func)
         def decorator(
             self: 'Blueprint[BaseSerializer]',
-            *args: _ParamsT.args,
-            **kwargs: _ParamsT.kwargs,
+            *args: _ParamT.args,
+            **kwargs: _ParamT.kwargs,
         ) -> _ReturnT:
             # There's no good way in telling what is going
             # on with the decorated function :(

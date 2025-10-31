@@ -88,4 +88,6 @@ def deserialize(
             # TODO: support `deserializer`
         )
     except (ValueError, TypeError) as exc:
+        if to_deserialize == b'':
+            return None
         raise DataParsingError(str(exc)) from exc
