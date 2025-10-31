@@ -1,12 +1,14 @@
 import re
-from typing import TYPE_CHECKING, Any, NamedTuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
-    from django_modern_rest.routing import Router
+
+_AnyPattern: TypeAlias = URLPattern | URLResolver
 
 
 class ControllerMapping(NamedTuple):
@@ -23,22 +25,6 @@ class ControllerMapping(NamedTuple):
 
     path: str
     controller: 'Controller[Any]'
-
-
-def _process_resolver(
-    url_resolver: URLResolver,
-    base_path: str = '',
-) -> list[ControllerMapping]:
-    controllers: list[ControllerMapping] = []
-    full_path = _join_paths(base_path, str(url_resolver.pattern))
-
-    for url_pattern in url_resolver.url_patterns:
-        if isinstance(url_pattern, URLPattern):
-            controllers.append(_process_pattern(url_pattern, full_path))
-        else:
-            controllers.extend(_process_resolver(url_pattern, full_path))
-
-    return controllers
 
 
 def _process_pattern(
@@ -65,7 +51,10 @@ def _normalize_path(path: str) -> str:
     return re.sub(pattern, r'{\g<parameter>}', path)
 
 
-def controller_collector(router: 'Router') -> list[ControllerMapping]:
+def controller_collector(
+    urls: Sequence[_AnyPattern],
+    base_path: str = '',
+) -> list[ControllerMapping]:
     """
     Collect all API controllers from a router for OpenAPI generation.
 
@@ -80,10 +69,13 @@ def controller_collector(router: 'Router') -> list[ControllerMapping]:
     """
     controllers: list[ControllerMapping] = []
 
-    for url in router.urls:
+    for url in urls:
         if isinstance(url, URLPattern):
-            controllers.append(_process_pattern(url))
+            controllers.append(_process_pattern(url, base_path))
         else:
-            controllers.extend(_process_resolver(url))
+            current_path = _join_paths(base_path, str(url.pattern))
+            controllers.extend(
+                controller_collector(url.url_patterns, current_path),
+            )
 
     return controllers
