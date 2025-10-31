@@ -9,14 +9,14 @@ from inline_snapshot import snapshot
 
 from django_modern_rest import (
     Blueprint,
-    BlueprintsT,
     Controller,
-    Endpoint,
     HeaderDescription,
     NewHeader,
     ResponseDescription,
     modify,
 )
+from django_modern_rest.controller import BlueprintsT
+from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 

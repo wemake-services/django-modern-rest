@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from django_modern_rest import Router
+from django_modern_rest.routing import Router
 from examples.using_controller.custom_meta import SettingsController
 
 router = Router([

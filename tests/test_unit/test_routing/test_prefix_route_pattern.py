@@ -2,8 +2,7 @@ import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import include
 
-from django_modern_rest import path
-from django_modern_rest.routing import _PrefixRoutePattern
+from django_modern_rest.routing import _PrefixRoutePattern, path
 
 
 def _simple_view(request: HttpRequest) -> HttpResponse:

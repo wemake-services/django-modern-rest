@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
-from django_modern_rest import (  # noqa: WPS235
+from django_modern_rest import (
     Blueprint,
     Body,
     Controller,
@@ -18,8 +18,8 @@ from django_modern_rest import (  # noqa: WPS235
     Query,
     ResponseDescription,
     validate,
-    wrap_middleware,
 )
+from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 from server.apps.rest.middleware import (

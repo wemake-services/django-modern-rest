@@ -32,7 +32,8 @@ class MetaMixin:
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller, MetaMixin
+        >>> from django_modern_rest import Controller
+        >>> from django_modern_rest.options_mixins import MetaMixin
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class SupportsOptionsHttpMethod(
@@ -62,7 +63,8 @@ class AsyncMetaMixin:
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller, AsyncMetaMixin
+        >>> from django_modern_rest import Controller
+        >>> from django_modern_rest.options_mixins import AsyncMetaMixin
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class SupportsOptionsHttpMethod(

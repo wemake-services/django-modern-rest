@@ -167,6 +167,7 @@ Here are our amazing people who made this project possible.
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst
+  pages/sse.rst
   pages/testing.rst
 
 

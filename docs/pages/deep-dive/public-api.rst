@@ -144,9 +144,11 @@ Utilities
 Decorators
 ----------
 
-.. autoclass:: django_modern_rest.decorators.dispatch_decorator
+.. autofunction:: django_modern_rest.decorators.dispatch_decorator
 
-.. autoclass:: django_modern_rest.decorators.wrap_middleware
+.. autofunction:: django_modern_rest.decorators.endpoint_decorator
+
+.. autofunction:: django_modern_rest.decorators.wrap_middleware
 
 
 Testing

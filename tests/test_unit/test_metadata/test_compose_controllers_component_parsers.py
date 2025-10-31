@@ -12,11 +12,11 @@ from django_modern_rest import (  # noqa: WPS235
     Path,
     Query,
     ResponseDescription,
-    compose_blueprints,
     modify,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.routing import compose_blueprints
 
 
 class _QueryModel(pydantic.BaseModel):

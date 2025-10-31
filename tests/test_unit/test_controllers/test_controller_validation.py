@@ -4,12 +4,11 @@ from typing import ClassVar
 import pytest
 
 from django_modern_rest import (
-    AsyncMetaMixin,
     Controller,
-    MetaMixin,
     ResponseDescription,
 )
 from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
