@@ -11,13 +11,13 @@ from inline_snapshot import snapshot
 
 from django_modern_rest import (
     Blueprint,
-    BlueprintsT,
     Controller,
     HeaderDescription,
     ResponseDescription,
     modify,
     validate,
 )
+from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
     DMR_VALIDATE_RESPONSES_KEY,

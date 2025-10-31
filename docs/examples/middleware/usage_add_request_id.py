@@ -22,7 +22,7 @@ class RequestIdController(Controller[PydanticSerializer]):
     )
 
     # Use request with request_id field
-    request: _RequestWithID  # type: ignore[mutable-override]
+    request: _RequestWithID
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns request_id from modified request."""

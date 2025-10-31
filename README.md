@@ -22,7 +22,7 @@
 - [x] Supports `pydantic2`, but not bound to it
 - [x] Supports `msgspec`, but not bound to it
 - [x] Strict schema validation for requests and responses
-- [x] Supports async Django
+- [x] Supports async Django without any `sync_to_async` calls inside
 - [ ] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives

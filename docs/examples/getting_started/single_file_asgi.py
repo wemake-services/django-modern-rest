@@ -5,8 +5,9 @@ from django.conf import settings
 from django.core.handlers import asgi
 from django.urls import include, path
 
-from django_modern_rest import Body, Controller, Headers, Router
+from django_modern_rest import Body, Controller, Headers
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.routing import Router
 
 settings.configure(
     # Keep it as is

@@ -12,12 +12,12 @@ from django_modern_rest import (
     Blueprint,
     Controller,
     ResponseDescription,
-    compose_blueprints,
     modify,
     validate,
 )
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.test import (
     DMRAsyncRequestFactory,
     DMRRequestFactory,

@@ -11,12 +11,12 @@ from django_modern_rest import (
     Blueprint,
     Body,
     Controller,
-    Endpoint,
     HeaderDescription,
     NewHeader,
     ResponseDescription,
     validate,
 )
+from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import (
     PydanticErrorModel,

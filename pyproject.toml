@@ -284,7 +284,6 @@ enable_error_code = [
   "possibly-undefined",
   "redundant-self",
   "explicit-override",
-  "mutable-override",
   "unimported-reveal",
   "deprecated",
 ]

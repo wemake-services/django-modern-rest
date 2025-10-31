@@ -1,6 +1,8 @@
-from collections.abc import Callable
-from typing import Any, TypeVar
+from collections.abc import Awaitable, Callable
+from functools import wraps
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
+from django.http import HttpResponseBase
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
@@ -12,10 +14,14 @@ from django_modern_rest.internal.middleware_wrapper import (
 )
 from django_modern_rest.response import ResponseDescription
 
+if TYPE_CHECKING:
+    from django_modern_rest.controller import Blueprint
+    from django_modern_rest.serialization import BaseSerializer
+
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 
 
-def wrap_middleware(  # noqa: WPS202
+def wrap_middleware(
     middleware: MiddlewareDecorator,
     response_description: ResponseDescription,
     *response_descriptions: ResponseDescription,
@@ -39,11 +45,8 @@ def wrap_middleware(  # noqa: WPS202
         >>> from django.views.decorators.csrf import csrf_protect
         >>> from django.http import HttpResponse
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import (
-        ...     Controller,
-        ...     ResponseDescription,
-        ...     build_response,
-        ... )
+        >>> from django_modern_rest import Controller, ResponseDescription
+        >>> from django_modern_rest.response import build_response
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> @wrap_middleware(
@@ -92,7 +95,7 @@ def wrap_middleware(  # noqa: WPS202
     return decorator_factory
 
 
-def dispatch_decorator(  # noqa: WPS202
+def dispatch_decorator(
     func: Callable[..., Any],
 ) -> Callable[[_TypeT], _TypeT]:
     """
@@ -102,7 +105,8 @@ def dispatch_decorator(  # noqa: WPS202
 
     .. code:: python
 
-        >>> from django_modern_rest import dispatch_decorator, Controller
+        >>> from django_modern_rest import Controller
+        >>> from django_modern_rest.decorators import dispatch_decorator
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
         >>> from django.contrib.auth.decorators import login_required
 
@@ -120,12 +124,92 @@ def dispatch_decorator(  # noqa: WPS202
     - :func:`django.contrib.auth.decorators.permission_required`
     - and any other default or custom django decorator
 
-    .. warning::
+    .. error::
 
         This will return non-json responses, without respecting your spec!
         Use with caution!
 
         If you want full spec support, use middleware wrappers.
+        You would probably want to use
+        :func:`~django_modern_rest.decorators.wrap_middleware` as well.
+        Or use :func:`~django_modern_rest.decorators.endpoint_decorator`.
 
     """
     return method_decorator(func, name='dispatch')
+
+
+_ParamsT = ParamSpec('_ParamsT')
+_ReturnT = TypeVar('_ReturnT')
+_ViewT = TypeVar(
+    '_ViewT',
+    bound=Callable[..., HttpResponseBase | Awaitable[HttpResponseBase]],
+)
+
+
+def endpoint_decorator(
+    original_decorator: Callable[[_ViewT], _ViewT],
+) -> Callable[[Callable[_ParamsT, _ReturnT]], Callable[_ParamsT, _ReturnT]]:
+    """
+    Apply regular Django-styled decorator to a single endpoint.
+
+    Example:
+
+    .. code:: python
+
+        >>> from http import HTTPStatus
+
+        >>> from django_modern_rest import Controller, HeaderDescription, modify
+        >>> from django_modern_rest.decorators import endpoint_decorator
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from django.contrib.auth.decorators import login_required
+
+        >>> class MyController(Controller[PydanticSerializer]):
+        ...     @endpoint_decorator(login_required())
+        ...     @modify(
+        ...         extra_responses=[
+        ...             ResponseDescription(
+        ...                 None,
+        ...                 status_code=HTTPStatus.FOUND,
+        ...                 headers={'Location': HeaderDescription()},
+        ...             ),
+        ...         ],
+        ...     )
+        ...     def get(self) -> str:
+        ...         return 'Logged in!'
+
+    It also works for things like:
+    - :func:`django.contrib.auth.decorators.login_not_required`
+    - :func:`django.contrib.auth.decorators.user_passes_test`
+    - :func:`django.contrib.auth.decorators.permission_required`
+    - and any other default or custom django decorator
+
+    .. warning::
+
+        Be careful with decorators that you apply.
+        They will not escape the response validation,
+        but will return unmodified responses from the original decorators.
+
+        For example: ``login_required`` will return a redirect.
+        You can describe it with the extra metadata.
+
+    """
+
+    def factory(
+        func: Callable[_ParamsT, _ReturnT],
+    ) -> Callable[_ParamsT, _ReturnT]:
+        @wraps(func)
+        def decorator(
+            self: 'Blueprint[BaseSerializer]',
+            *args: _ParamsT.args,
+            **kwargs: _ParamsT.kwargs,
+        ) -> _ReturnT:
+            # There's no good way in telling what is going
+            # on with the decorated function :(
+            # So, we just keep the function type as-is.
+            return original_decorator(  # type: ignore[return-value]
+                func,  # type: ignore[arg-type]
+            )(self.request, *args, **kwargs)
+
+        return decorator  # type: ignore[return-value]
+
+    return factory

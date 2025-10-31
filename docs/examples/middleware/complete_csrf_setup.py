@@ -4,11 +4,8 @@ from typing import ClassVar
 from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from django_modern_rest import (
-    Controller,
-    ResponseDescription,
-    wrap_middleware,
-)
+from django_modern_rest import Controller, ResponseDescription
+from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from examples.middleware.csrf_protect_json import csrf_protect_json
 

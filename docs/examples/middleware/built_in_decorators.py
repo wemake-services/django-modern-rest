@@ -4,11 +4,8 @@ from typing import ClassVar, final
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-from django_modern_rest import (
-    Controller,
-    ResponseDescription,
-    wrap_middleware,
-)
+from django_modern_rest import Controller, ResponseDescription
+from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 

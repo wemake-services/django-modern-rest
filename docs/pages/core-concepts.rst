@@ -76,6 +76,15 @@ up to `django-ratelimit <https://pypi.org/project/django-ratelimit>`_.
 We also provide :doc:`middleware` wrapper tools to convert any middleware
 response to the required API schema and set needed ``Content-Type``, etc.
 
+We support all existing mixins: because
+:class:`~django_modern_rest.controller.Controller` is a subclass
+of Django's :class:`django.views.generic.base.View` class.
+
+We support all existing decorators: because we have
+:func:`~django_modern_rest.decorators.endpoint_decorator`
+and :func:`~django_modern_rest.decorators.dispatch_decorator` utilities
+that can decorate endpoints and controllers.
+
 Works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.
 Read next: our :doc:`integrations` guide.
 

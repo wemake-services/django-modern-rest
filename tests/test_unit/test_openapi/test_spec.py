@@ -6,7 +6,6 @@ from django.conf import LazySettings
 from django.urls import URLPattern
 from django.views.decorators.csrf import csrf_exempt
 
-from django_modern_rest import Router
 from django_modern_rest.openapi import OpenAPIConfig, openapi_spec
 from django_modern_rest.openapi.renderers import (
     JsonRenderer,
@@ -14,6 +13,7 @@ from django_modern_rest.openapi.renderers import (
     ScalarRenderer,
     SwaggerRenderer,
 )
+from django_modern_rest.routing import Router
 from django_modern_rest.settings import clear_settings_cache
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
