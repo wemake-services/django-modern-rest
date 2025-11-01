@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from django_modern_rest.openapi.core.extractor import BaseSchemaExtractor
+from django_modern_rest.openapi.extractors.base import BaseExtractor
 from django_modern_rest.openapi.generators.operation import OperationGenerator
 
 if TYPE_CHECKING:
@@ -25,9 +25,9 @@ class OpenAPIContext:
 
         # Initialize generators once with shared context:
         self.operation_generator = OperationGenerator(self)
-        self.schema_extractors = BaseSchemaExtractor.get_extractors()
+        self.schema_extractors = BaseExtractor.get_extractors()
 
-    def get_extractor(self, type_: Any) -> BaseSchemaExtractor:
+    def get_extractor(self, type_: Any) -> BaseExtractor:
         """Get extractor by given type."""
         for extractor in self.schema_extractors:
             if extractor.supports_type(type_):
