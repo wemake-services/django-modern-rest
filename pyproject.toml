@@ -101,9 +101,11 @@ sphinx-design = "^0.6"
 sphinxcontrib-mermaid = "^1.0"
 myst-parser = "^4.0"
 shibuya = "^2025.10"
-auto-pytabs = "^0.5.0"
-uvicorn = "^0.38.0"
-httpx = "^0.28.1"
+
+# Needed for our extension:
+auto-pytabs = "^0.5"
+uvicorn = "^0.38"
+httpx = "^0.28"
 
 
 [tool.poetry.plugins."pytest11"]
@@ -243,13 +245,12 @@ addopts = [
   # Ignores docs:
   "--ignore=docs/conf.py",
   "--ignore=docs/examples/",
+  "--ignore=docs/tools/",
   # Ignores typesafety tests:
   "--ignore=typesafety/assert_type",
   # Ignores optional deps:
   "--ignore=django_modern_rest/internal/json/msgspec.py",
   "--ignore=django_modern_rest/plugins/msgspec.py",
-  # Ignore sphinx ext tests
-  "--ignore=tools/"
 ]
 
 
