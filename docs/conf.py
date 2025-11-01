@@ -190,6 +190,7 @@ html_context = {
     'source_type': 'github',
     'source_user': 'wemake-services',
     'source_repo': 'django-modern-rest',
+    'source_version': 'master',
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
