@@ -72,7 +72,7 @@ extensions = [
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
     # custom extensions
-    'tools.sphinx_ext',
+    'docs.tools.sphinx_ext',
 ]
 
 
