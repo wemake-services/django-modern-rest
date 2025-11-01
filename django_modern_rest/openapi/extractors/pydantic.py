@@ -11,6 +11,7 @@ from django_modern_rest.openapi.objects import (
     Schema,
 )
 
+
 @final
 class PydanticExtractor(BaseExtractor):
     """OpenAPI schema extractor for Pydantic models."""
