@@ -1,5 +1,5 @@
-from http import HTTPStatus
 import sys
+from http import HTTPStatus
 from typing import final
 
 import pytest
