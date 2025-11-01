@@ -7,7 +7,7 @@ We use [poetry](https://github.com/python-poetry/poetry) to manage the dependenc
 To install them you would need to run `install` command:
 
 ```bash
-poetry install --all-extras
+poetry install --all-extras --all-groups
 ```
 
 To activate your `virtualenv` run `eval "$(poetry env activate)"` or `source .venv/bin/activate`.
