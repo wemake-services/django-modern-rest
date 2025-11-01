@@ -245,6 +245,7 @@ addopts = [
   # Ignores docs:
   "--ignore=docs/conf.py",
   "--ignore=docs/examples/",
+  "--ignore=docs/tools/",
   # Ignores typesafety tests:
   "--ignore=typesafety/assert_type",
   # Ignores optional deps:
