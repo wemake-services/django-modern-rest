@@ -5,14 +5,15 @@ import pytest
 from django.http import HttpResponse
 from faker import Faker
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
-from django_modern_rest.test import DMRRequestFactory
-
 try:
     import msgspec
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
+
+from django_modern_rest import Body, Controller
+from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from django_modern_rest.test import DMRRequestFactory
 
 
 class _ForTestError(Exception):
