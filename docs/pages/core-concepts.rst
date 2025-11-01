@@ -18,7 +18,8 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 
   Controller
     :class:`~django_modern_rest.controller.Controller`
-    is a collection of one or more :term:`endpoints <Endpoint>`.
+    is a collection of one or more :term:`endpoints <Endpoint>`
+    with the same set of :term:`components <Component>`.
     Controller is a subclass of :class:`~django.views.generic.base.View`, so
     it can be used in a routing.
     Controller can also be composed of different :term:`blueprints <Blueprint>`,
