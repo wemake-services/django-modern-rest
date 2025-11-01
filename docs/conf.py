@@ -64,12 +64,15 @@ extensions = [
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
+    'auto_pytabs.sphinx_ext',
     'sphinx_design',
     'sphinx_copybutton',
     'sphinx_contributors',
     'sphinx_tabs.tabs',
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
+    # custom extensions
+    'tools.sphinx_ext',
 ]
 
 

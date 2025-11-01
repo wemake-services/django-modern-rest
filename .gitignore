@@ -130,6 +130,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+.auto_pytabs_cache/
 
 # PyBuilder
 target/
