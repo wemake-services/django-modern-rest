@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects import PathItem
+    from django_modern_rest.openapi.objects.path_item import PathItem
 
 Paths = dict[str, 'PathItem']
 """

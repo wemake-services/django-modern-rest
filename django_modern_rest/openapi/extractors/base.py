@@ -1,14 +1,21 @@
 import abc
 from collections.abc import Sequence
 from types import MappingProxyType
-from typing import Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+
+from typing_extensions import override
 
 from django_modern_rest.metadata import ComponentParserSpec
 from django_modern_rest.openapi.objects import (
     OpenAPIType,
+    Reference,
     RequestBody,
     Schema,
 )
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.core.context import OpenAPIContext
+
 
 JSON_SCHEMA_TYPE_MAP: MappingProxyType[str, OpenAPIType] = MappingProxyType({
     'string': OpenAPIType.STRING,
@@ -58,8 +65,10 @@ class BaseExtractor:  # noqa: WPS214
     this interface to convert their types into OpenAPI objects.
     """
 
+    context: 'OpenAPIContext | None' = None
     _registry: ClassVar[_BaseSchemaExtractorRegistry] = []
 
+    @override
     def __init_subclass__(cls) -> None:
         """Register subclasses schema extractors."""
         cls._registry.append(cls)
@@ -78,7 +87,7 @@ class BaseExtractor:  # noqa: WPS214
         raise NotImplementedError
 
     @abc.abstractmethod
-    def extract_schema(self, type_: Any) -> Schema:
+    def extract_schema(self, type_: Any) -> Schema | Reference:
         """Extract OpenAPI Schema from a type annotation."""
         raise NotImplementedError
 
@@ -89,7 +98,14 @@ class BaseExtractor:  # noqa: WPS214
 
     # TODO: Extract other parts of schema
 
-    def _convert_json_schema(self, json_schema: dict[str, Any]) -> Schema:
+    def _convert_json_schema(
+        self,
+        json_schema: dict[str, Any],
+    ) -> Schema | Reference:
+        ref = json_schema.get('$ref')
+        if ref:
+            return Reference(ref=ref)
+
         kwargs = self._extract_basic_fields(json_schema)
         kwargs.update(self._extract_complex_fields(json_schema))
         return Schema(**kwargs)

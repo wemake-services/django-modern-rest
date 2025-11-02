@@ -1,12 +1,22 @@
-from typing import Any, final, get_origin
+from typing import Any, cast, final, get_origin
 
-import pydantic  # TODO: !!! Remove it !!!
+from typing_extensions import is_typeddict, override
+
+try:
+    import pydantic
+except ImportError:  # pragma: no cover
+    print(  # noqa: WPS421
+        'Looks like `pydantic` is not installed, '
+        "consider using `pip install 'django-modern-rest[pydantic]'`",
+    )
+    raise
 
 from django_modern_rest.components import Body
 from django_modern_rest.metadata import ComponentParserSpec
 from django_modern_rest.openapi.extractors.base import BaseExtractor
 from django_modern_rest.openapi.objects import (
     MediaType,
+    Reference,
     RequestBody,
     Schema,
 )
@@ -16,11 +26,24 @@ from django_modern_rest.openapi.objects import (
 class PydanticExtractor(BaseExtractor):
     """OpenAPI schema extractor for Pydantic models."""
 
+    @override
     def supports_type(self, type_: Any) -> bool:
         """Check if this extractor can handle the given type."""
-        # TODO: complex checks?
-        return issubclass(type_, pydantic.BaseModel)
+        # TODO: Too dirty. Need refactor
+        if isinstance(type_, type) and issubclass(type_, pydantic.BaseModel):
+            return True
 
+        if is_typeddict(type_):  # pyright: ignore[reportUnknownArgumentType]
+            return True
+
+        try:
+            pydantic.TypeAdapter(cast(Any, type_))
+        except Exception:
+            return False
+        else:
+            return True
+
+    @override
     def extract_request_body(
         self,
         component_specs: list[ComponentParserSpec],
@@ -38,10 +61,33 @@ class PydanticExtractor(BaseExtractor):
                 )
         return None
 
-    def extract_schema(self, type_: Any) -> Schema:
+    @override
+    def extract_schema(self, type_: Any) -> Schema | Reference:
         """Extract OpenAPI Schema from pydantic type."""
-        adapter = pydantic.TypeAdapter(type_)
-        json_schema = adapter.json_schema(mode='serialization')
+        json_schema = pydantic.TypeAdapter(type_).json_schema(
+            mode='serialization',
+            ref_template='#/components/schemas/{model}',
+        )
+
+        # Extract and collect $defs if they exist
+        defs = json_schema.pop('$defs', None)
+        if defs and self.context:
+            for def_name, def_schema in defs.items():
+                self.context.collect_schema(
+                    def_name,
+                    self._convert_json_schema(def_schema),
+                )
+
+        # TODO: Maybe extract to method?
+        # Get the title from the schema (model name)
+        title = json_schema.get('title')
+        if title and self.context:
+            self.context.collect_schema(
+                title,
+                self._convert_json_schema(json_schema),
+            )
+            return Reference(ref=f'#/components/schemas/{title}')
+
         return self._convert_json_schema(json_schema)
 
     # TODO: Extract other parts of schema
