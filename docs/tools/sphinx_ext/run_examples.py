@@ -265,7 +265,7 @@ def _process_single_example(
         return ''
 
     clean_args_string = ' '.join(clean_args)
-    return '\n'.join((f'> {clean_args_string}', *stdout))
+    return '\n'.join((f'$ {clean_args_string}', *stdout))
 
 
 _CurlArgsT: TypeAlias = list[str]
@@ -325,7 +325,7 @@ def _add_headers(
 
 @final
 class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
-    """Extended literalinclude directive with code execution capability."""
+    """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
         **LiteralIncludeOverride.option_spec,
@@ -353,7 +353,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         nodes.append(
             admonition(
                 '',
-                title('', 'Run it'),
+                title('', 'Run result'),
                 highlightlang(
                     '',
                     literal_block('', executed_result),
@@ -362,9 +362,9 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
                     linenothreshold=sys.maxsize,
                 ),
                 literal_block('', executed_result),
+                classes=['tip'],
             ),
         )
-
         return nodes
 
     def _need_to_run(self, file_path: Path) -> bool:

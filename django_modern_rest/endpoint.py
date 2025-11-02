@@ -85,7 +85,7 @@ class Endpoint:  # noqa: WPS214
             controller_cls: ``Controller`` class that this endpoint
                 might belong to.
 
-        .. error::
+        .. danger::
 
             Endpoint object must not have any mutable instance state,
             because its instance is reused for all requests.

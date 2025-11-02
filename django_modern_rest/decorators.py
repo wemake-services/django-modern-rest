@@ -124,7 +124,7 @@ def dispatch_decorator(
     - :func:`django.contrib.auth.decorators.permission_required`
     - and any other default or custom django decorator
 
-    .. error::
+    .. danger::
 
         This will return non-json responses, without respecting your spec!
         Use with caution!
