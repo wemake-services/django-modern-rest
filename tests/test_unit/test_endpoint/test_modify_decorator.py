@@ -232,3 +232,77 @@ def test_modify_async_endpoint_error_for_sync() -> None:
             )
             def get(self) -> int:
                 raise NotImplementedError
+
+
+def test_modify_with_set_cookie_in_headers_raises_error() -> None:
+    """@modify with Set-Cookie in headers= raise EndpointMetadataError."""
+    with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
+
+        class _SetCookieHeaderController(Controller[PydanticSerializer]):
+            @modify(
+                status_code=HTTPStatus.OK,
+                headers={'Set-Cookie': NewHeader(value='session=abc123')},
+            )
+            def post(self) -> dict[str, str]:
+                return {'result': 'done'}  # pragma: no cover
+
+
+def test_modify_with_set_cookie_case_insensitive() -> None:
+    """@modify with Set-Cookie in headers= raise EndpointMetadataError."""
+    with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
+
+        class _SetCookieHeaderController(Controller[PydanticSerializer]):
+            @modify(
+                status_code=HTTPStatus.OK,
+                headers={'set-cookie': NewHeader(value='session=abc123')},
+            )
+            def post(self) -> dict[str, str]:
+                return {'result': 'done'}  # pragma: no cover
+
+
+def test_modify_with_set_cookie_uppercase() -> None:
+    """@modify with Set-Cookie in headers= raise EndpointMetadataError."""
+    with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
+
+        class _SetCookieHeaderController(Controller[PydanticSerializer]):
+            @modify(
+                status_code=HTTPStatus.OK,
+                headers={'SET-COOKIE': NewHeader(value='session=abc123')},
+            )
+            def post(self) -> dict[str, str]:
+                return {'result': 'done'}  # pragma: no cover
+
+
+@final
+class _ModifyWithNormalHeadersController(Controller[PydanticSerializer]):
+    """Testing @modify with non-Set-Cookie headers."""
+
+    @modify(
+        status_code=HTTPStatus.OK,
+        headers={
+            'X-Custom-Header': NewHeader(value='custom'),
+            'X-Another': NewHeader(value='another'),
+            'X-Third': NewHeader(value='third'),
+        },
+    )
+    def post(self) -> dict[str, str]:
+        return {'result': 'done'}  # pragma: no cover
+
+
+def test_modify_with_normal_headers() -> None:
+    """@modify with non-Set-Cookie header should work."""
+    assert 'POST' in _ModifyWithNormalHeadersController.api_endpoints
+
+
+@final
+class _ModifyWithoutHeadersController(Controller[PydanticSerializer]):
+    """Testing @modify without headers."""
+
+    @modify(status_code=HTTPStatus.CREATED)
+    def post(self) -> dict[str, str]:
+        return {'result': 'done'}  # pragma: no cover
+
+
+def test_modify_without_headers() -> None:
+    """@modify without headers should work."""
+    assert 'POST' in _ModifyWithoutHeadersController.api_endpoints

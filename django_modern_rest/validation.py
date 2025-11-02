@@ -536,6 +536,14 @@ class _ResponseListValidator:
         for response in responses:
             if response.headers is None:
                 continue
+
+            for name in response.headers:
+                if name.lower() == 'set-cookie':
+                    raise EndpointMetadataError(
+                        f'Cannot use "Set-Cookie" header in {response}'
+                        f'use `cookies=` parameter instead in {endpoint!r}.',
+                    )
+
             if any(
                 isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
                 for header in response.headers.values()
@@ -827,7 +835,17 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if payload.headers is not None and any(
+        if payload.headers is None:
+            return
+
+        for name in payload.headers:
+            if name.lower() == 'set-cookie':
+                raise EndpointMetadataError(
+                    f'Cannot use "Set-Cookie" header in {endpoint!r}'
+                    f'use `cookies=` parameter instead.',
+                )
+
+        if any(
             isinstance(header, HeaderSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
             for header in payload.headers.values()
         ):
