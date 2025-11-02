@@ -35,8 +35,8 @@
 ---------
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="100%" height="auto" />
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmakr - Dark" width="100%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="80%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmakr - Dark" width="80%" height="auto" />
 </div>
 
 <p align="center">

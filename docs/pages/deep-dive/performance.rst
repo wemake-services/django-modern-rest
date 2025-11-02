@@ -7,15 +7,64 @@ Results
 Sync
 ~~~~
 
-.. figure:: /_static/images/benchmarks/sync-light.svg
-   :figclass: light-only
-   :width: 700
-   :align: center
+.. chartjs::
 
-.. figure:: /_static/images/benchmarks/sync-dark.svg
-   :figclass: dark-only
-   :width: 700
-   :align: center
+  {
+    "type": "bar",
+    "data": {
+      "labels": ["Requests Per Second"],
+      "datasets": [
+        {
+          "label": "dmr",
+          "data": [5774.94],
+          "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
+          "borderColor": ["rgba(53, 84, 74, 1)"],
+          "borderWidth": 2
+        },
+        {
+          "label": "ninja",
+          "data": [3888.13],
+          "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+          "borderColor": ["rgba(53, 84, 74, 0.7)"],
+          "borderWidth": 2
+        },
+        {
+          "label": "drf",
+          "data": [3024.24],
+          "backgroundColor": ["rgba(53, 84, 74, 0.3)"],
+          "borderColor": ["rgba(53, 84, 74, 0.6)"],
+          "borderWidth": 2
+        }
+      ]
+    },
+    "options": {
+      "responsive": true,
+      "maintainAspectRatio": true,
+      "scales": {
+        "y": {
+          "beginAtZero": true,
+          "title": {
+            "display": true,
+            "text": "higher is better"
+          }
+        },
+        "x": {
+          "grid": {
+            "display": false
+          }
+        }
+      },
+      "plugins": {
+        "legend": {
+          "display": true,
+          "position": "top",
+          "labels": {
+            "usePointStyle": true
+          }
+        }
+      }
+    }
+  }
 
 Why so fast?
 
@@ -33,16 +82,64 @@ Why so fast?
 
 Async
 ~~~~~
+.. chartjs::
 
-.. figure:: /_static/images/benchmarks/async-light.svg
-   :figclass: light-only
-   :width: 700
-   :align: center
-
-.. figure:: /_static/images/benchmarks/async-dark.svg
-   :figclass: dark-only
-   :width: 700
-   :align: center
+  {
+    "type": "bar",
+    "data": {
+      "labels": ["Requests Per Second"],
+      "datasets": [
+          {
+            "label": "fastapi",
+            "data": [10854.6],
+            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+            "borderColor": ["rgba(53, 84, 74, 0.7)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "dmr",
+            "data": [7026.27],
+            "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "ninja",
+            "data": [4359.12],
+            "backgroundColor": ["rgba(53, 84, 74, 0.3)"],
+            "borderColor": ["rgba(53, 84, 74, 0.6)"],
+            "borderWidth": 2
+          }
+        ]
+    },
+    "options": {
+      "responsive": true,
+      "maintainAspectRatio": true,
+      "scales": {
+        "y": {
+          "beginAtZero": true,
+          "title": {
+            "display": true,
+            "text": "higher is better"
+          }
+        },
+        "x": {
+          "grid": {
+            "display": false
+          }
+        }
+      },
+      "plugins": {
+        "legend": {
+          "display": true,
+          "position": "top",
+          "labels": {
+            "usePointStyle": true
+          }
+        }
+      }
+    }
+  }
 
 While ``fastapi`` is faster at the moment, we have several ideas
 to optimize ``django-modern-rest`` even further,
