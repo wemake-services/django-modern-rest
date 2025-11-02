@@ -399,8 +399,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         tmp_file.write_text(clean_content)
 
 
-def setup(app: Sphinx) -> dict[str, bool]:
+def setup(app: Sphinx) -> None:
     """Register Sphinx extension directives."""
     tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
-    return {'parallel_read_safe': True, 'parallel_write_safe': True}

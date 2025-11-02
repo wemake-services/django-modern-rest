@@ -14,10 +14,12 @@ def _register_directives(app: Sphinx) -> None:
         override=True,
     )
     app.add_directive('code-block', CodeBlockOverride, override=True)
+    app.add_directive('chartjs', chartjs.ChartJSDirective)
 
 
 def setup(app: Sphinx) -> dict[str, bool]:
     """Initialize Sphinx extensions and return configuration."""
     app.connect('builder-inited', _register_directives)
     chartjs.setup(app)
-    return run_examples.setup(app)
+    run_examples.setup(app)
+    return {'parallel_read_safe': True, 'parallel_write_safe': True}

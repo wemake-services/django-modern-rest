@@ -1,10 +1,10 @@
 import json
-from typing import TYPE_CHECKING, Any, Final, final
-from typing_extensions import override
+from typing import TYPE_CHECKING, Final, final
 
 from docutils import nodes
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
@@ -32,6 +32,7 @@ _SCRIPT: Final = """
 }})();
 </script>
 """
+
 
 @final
 class ChartJSNode(nodes.General, nodes.Element):
@@ -102,16 +103,6 @@ def _depart_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
     """Depart ChartJS node for HTML output."""
 
 
-def setup(app: Sphinx) -> dict[str, Any]:
+def setup(app: Sphinx) -> None:
     """Setup Chart.js directive."""
-    app.add_node(
-        ChartJSNode,
-        html=(_visit_chartjs_html, _depart_chartjs_html),
-    )
-    app.add_directive('chartjs', ChartJSDirective)
-
-    return {
-        'version': '0.1.0',
-        'parallel_read_safe': True,
-        'parallel_write_safe': True,
-    }
+    app.add_node(ChartJSNode, html=(_visit_chartjs_html, _depart_chartjs_html))
