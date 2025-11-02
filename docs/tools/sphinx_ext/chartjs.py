@@ -1,10 +1,10 @@
 import json
 from typing import TYPE_CHECKING, Any, Final
-from typing_extensions import override
 
 from docutils import nodes
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
