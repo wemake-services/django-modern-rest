@@ -1,5 +1,6 @@
 import json
-from typing import TYPE_CHECKING, Any, Final, override
+from typing import TYPE_CHECKING, Any, Final
+from typing_extensions import override
 
 from docutils import nodes
 from sphinx.application import Sphinx
