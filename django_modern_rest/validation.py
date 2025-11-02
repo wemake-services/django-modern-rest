@@ -1,6 +1,7 @@
 import dataclasses
 import inspect
 from collections.abc import Callable, Mapping, Set
+from functools import lru_cache
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import (
@@ -41,6 +42,7 @@ from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     DMR_RESPONSES_KEY,
     DMR_VALIDATE_RESPONSES_KEY,
+    MAX_CACHE_SIZE,
     resolve_setting,
 )
 from django_modern_rest.types import (
@@ -83,7 +85,10 @@ class ResponseValidator:
         response: _ResponseT,
     ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not self._is_validation_enabled(controller):
+        if not _is_validation_enabled(
+            controller,
+            metadata_validate_responses=self.metadata.validate_responses,
+        ):
             return response
         schema = self._get_response_schema(response.status_code)
         self._validate_body(response.content, schema, response=response)
@@ -114,7 +119,10 @@ class ResponseValidator:
             ),
             cookies=self.metadata.modification.cookies,
         )
-        if not self._is_validation_enabled(controller):
+        if not _is_validation_enabled(
+            controller,
+            metadata_validate_responses=self.metadata.validate_responses,
+        ):
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(structured, schema)
@@ -133,33 +141,6 @@ class ResponseValidator:
         raise ResponseSerializationError(
             f'Returned {status_code=} is not specified '
             f'in the list of allowed codes {allowed}',
-        )
-
-    def _is_validation_enabled(
-        self,
-        controller: 'Controller[BaseSerializer]',
-    ) -> bool:
-        """
-        Should we run response validation?
-
-        Priority:
-        - We first return any directly specified *validate_responses*
-          argument to endpoint itself
-        - Second is *validate_responses* on the blueprint, if it exists
-        - Then we return *validate_responses* from controller if specified
-        - Lastly we return the default value from settings
-        """
-        if isinstance(self.metadata.validate_responses, bool):
-            return self.metadata.validate_responses
-        if controller.blueprint and isinstance(
-            controller.blueprint.validate_responses,
-            bool,
-        ):
-            return controller.blueprint.validate_responses
-        if isinstance(controller.validate_responses, bool):
-            return controller.validate_responses
-        return resolve_setting(  # type: ignore[no-any-return]
-            DMR_VALIDATE_RESPONSES_KEY,
         )
 
     def _validate_body(
@@ -264,6 +245,36 @@ class ResponseValidator:
                     f'Response cookie {cookie_key}={cookie_body!r} is not '
                     f'equal to {metadata_cookies[cookie_key]!r}',
                 )
+
+
+@lru_cache(maxsize=MAX_CACHE_SIZE)
+def _is_validation_enabled(
+    controller: 'Controller[BaseSerializer]',
+    *,
+    metadata_validate_responses: bool | None,
+) -> bool:
+    """
+    Should we run response validation?
+
+    Priority:
+    - We first return any directly specified *validate_responses*
+        argument to endpoint itself
+    - Second is *validate_responses* on the blueprint, if it exists
+    - Then we return *validate_responses* from controller if specified
+    - Lastly we return the default value from settings
+    """
+    if metadata_validate_responses is not None:
+        return metadata_validate_responses
+    if (
+        controller.blueprint
+        and controller.blueprint.validate_responses is not None
+    ):
+        return controller.blueprint.validate_responses
+    if controller.validate_responses is not None:
+        return controller.validate_responses
+    return resolve_setting(  # type: ignore[no-any-return]
+        DMR_VALIDATE_RESPONSES_KEY,
+    )
 
 
 class BlueprintValidator:
