@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=2.0"]
+requires = ["poetry-core>=2.1"]
 build-backend = "poetry.core.masonry.api"
 
 
@@ -8,6 +8,7 @@ name = "django-modern-rest"
 description = "Modern REST framework for Django with types and async support"
 license = "MIT"
 version = "0.1.0"
+requires-poetry = ">=2.2"
 
 authors = [
   "Nikita Sobolev <mail@sobolevn.me>",
