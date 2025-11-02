@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, final
 from typing_extensions import override
 
 from docutils import nodes
@@ -33,11 +33,12 @@ _SCRIPT: Final = """
 </script>
 """
 
-
+@final
 class ChartJSNode(nodes.General, nodes.Element):
     """Custom node for Chart.js diagrams."""
 
 
+@final
 class ChartJSDirective(SphinxDirective):
     """Directive for embedding Chart.js diagrams.
 
@@ -81,7 +82,7 @@ class ChartJSDirective(SphinxDirective):
         return [node]
 
 
-def visit_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
+def _visit_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
     """Visit ChartJS node for HTML output."""
     title = node.get('title', '')
     if title:
@@ -97,7 +98,7 @@ def visit_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
     )
 
 
-def depart_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
+def _depart_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
     """Depart ChartJS node for HTML output."""
 
 
@@ -105,7 +106,7 @@ def setup(app: Sphinx) -> dict[str, Any]:
     """Setup Chart.js directive."""
     app.add_node(
         ChartJSNode,
-        html=(visit_chartjs_html, depart_chartjs_html),
+        html=(_visit_chartjs_html, _depart_chartjs_html),
     )
     app.add_directive('chartjs', ChartJSDirective)
 
