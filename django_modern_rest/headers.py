@@ -1,8 +1,8 @@
 import dataclasses
-from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeAlias, final
+from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
+    from django_modern_rest.response import ResponseModification
     from django_modern_rest.serialization import BaseSerializer
 
 
@@ -45,9 +45,11 @@ class NewHeader(_BaseResponseHeader):
 
     value: str  # noqa: WPS110
 
-    def to_description(self) -> 'HeaderSpec':
+    def to_spec(self) -> 'HeaderSpec':
         """Convert header type."""
-        return HeaderSpec(required=True)
+        namespace = dataclasses.asdict(self)
+        namespace.pop('value')
+        return HeaderSpec(**namespace, required=True)
 
 
 @final
@@ -63,20 +65,16 @@ class HeaderSpec(_BaseResponseHeader):
     required: bool = True
 
 
-#: Type of all possible return headers.
-ResponseHeadersT: TypeAlias = Mapping[str, NewHeader] | Mapping[str, HeaderSpec]
-
-
 def build_headers(
-    headers: Mapping[str, NewHeader] | None,
+    modification: 'ResponseModification',
     serializer: type['BaseSerializer'],
-) -> dict[str, Any]:
+) -> dict[str, str]:
     """Returns headers with values for raw data endpoints."""
     result_headers: dict[str, Any] = {'Content-Type': serializer.content_type}
-    if headers is None:
+    if not modification.headers:
         return result_headers
     result_headers.update({
         header_name: response_header.value
-        for header_name, response_header in headers.items()
+        for header_name, response_header in modification.headers.items()
     })
     return result_headers

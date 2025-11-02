@@ -5,6 +5,7 @@ from typing import Any, Generic, TypeVar, overload
 
 from django.http import HttpResponse
 
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.headers import (
     HeaderSpec,
     NewHeader,
@@ -81,8 +82,10 @@ class ResponseSpec:
             one when ``HttpResponse`` is returned.
         headers: Shows *headers* in the documentation.
             When passed, we validate that all given required headers are present
-            in the final response. Headers with ``value`` attribute set
-            will be added to the final response.
+            in the final response.
+        cookies: Shows *cookies* in the documentation.
+            When passed, we validate that all given required cookies are present
+            in the final response.
 
     We use this structure to validate responses and render them in OpenAPI.
     """
@@ -90,7 +93,11 @@ class ResponseSpec:
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus = dataclasses.field(kw_only=True)
-    headers: dict[str, HeaderSpec] | None = dataclasses.field(
+    headers: Mapping[str, HeaderSpec] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    cookies: Mapping[str, CookieSpec] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -112,19 +119,20 @@ class ResponseModification:
             We validate *status_code* to match the specified
             one when ``HttpResponse`` is returned.
         headers: Shows *headers* in the documentation.
-            When passed, we validate that all given required headers are present
-            in the final response. Headers with ``value`` attribute set
-            will be added to the final response.
+            Headers passed here will be added to the final response.
+        cookies: Shows *cookies* in the documentation.
+            Cookies passed here will be added to the final response.
 
-    We use this structure to validate responses and render them in OpenAPI.
+    We use this structure to modify the default response.
     """
 
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus
     headers: Mapping[str, NewHeader] | None
+    cookies: Mapping[str, NewCookie] | None
 
-    def to_description(self) -> ResponseSpec:
+    def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
         return ResponseSpec(
             return_type=self.return_type,
@@ -133,8 +141,16 @@ class ResponseModification:
                 None
                 if self.headers is None
                 else {
-                    header_name: header.to_description()
+                    header_name: header.to_spec()
                     for header_name, header in self.headers.items()
+                }
+            ),
+            cookies=(
+                None
+                if self.cookies is None
+                else {
+                    cookie_key: cookie.to_spec()
+                    for cookie_key, cookie in self.cookies.items()
                 }
             ),
         )
@@ -147,6 +163,7 @@ def build_response(
     raw_data: Any,
     method: HTTPMethod | str,
     headers: dict[str, str] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse: ...
 
@@ -159,15 +176,17 @@ def build_response(
     status_code: HTTPStatus,
     method: None = None,
     headers: dict[str, str] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
 ) -> HttpResponse: ...
 
 
-def build_response(
+def build_response(  # noqa: WPS211
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
     method: HTTPMethod | str | None = None,
     headers: dict[str, str] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse:
     """
@@ -194,11 +213,15 @@ def build_response(
     if 'Content-Type' not in response_headers:
         response_headers['Content-Type'] = serializer.content_type
 
-    return HttpResponse(
+    response = HttpResponse(
         content=serializer.serialize(raw_data),
         status=status,
         headers=response_headers,
     )
+    if cookies:
+        for cookie_key, new_cookie in cookies.items():
+            response.set_cookie(cookie_key, **new_cookie.as_dict())
+    return response
 
 
 def infer_status_code(method_name: HTTPMethod | str) -> HTTPStatus:

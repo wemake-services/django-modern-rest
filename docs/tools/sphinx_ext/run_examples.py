@@ -253,6 +253,15 @@ def _process_single_example(
         capture_output=True,
         text=True,
     )
+    if proc.returncode != 0:
+        raise _StartupError(
+            (
+                f'Could not run {args!r} in {app_file}, '
+                f'got {proc.returncode} error code'
+            ),
+            proc.stdout,
+            proc.stderr,
+        )
     stdout = proc.stdout.splitlines()
     if not stdout:
         logger.debug(proc.stderr)
@@ -277,14 +286,31 @@ def _build_curl_request(
     port: int,
     url_path: str,
 ) -> tuple[_CurlArgsT, _CurlCleanArgsT]:
-    args = ['curl', '-v', '-s', f'http://127.0.0.1:{port}{url_path}']
+    args = [
+        'curl',
+        '--fail-with-body',
+        '-v',
+        '-s',
+        f'http://127.0.0.1:{port}{url_path}',
+    ]
     clean_args = ['curl', f'http://127.0.0.1:8000{url_path}']
 
+    _add_curl_flags(args, clean_args, run_args)
     _add_method(args, clean_args, run_args)
     _add_body_and_content_type(args, clean_args, run_args)
     _add_headers(args, clean_args, run_args)
 
     return args, clean_args
+
+
+def _add_curl_flags(
+    args: list[str],
+    clean_args: list[str],
+    run_args: _AppRunArgsT,
+) -> None:
+    curl_extra_args = run_args.get('curl_args', [])
+    args.extend(curl_extra_args)
+    clean_args.extend(curl_extra_args)
 
 
 def _add_method(

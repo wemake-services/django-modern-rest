@@ -5,6 +5,8 @@ from django_modern_rest.components import Path as Path
 from django_modern_rest.components import Query as Query
 from django_modern_rest.controller import Blueprint as Blueprint
 from django_modern_rest.controller import Controller as Controller
+from django_modern_rest.cookies import CookieSpec as CookieSpec
+from django_modern_rest.cookies import NewCookie as NewCookie
 from django_modern_rest.endpoint import modify as modify
 from django_modern_rest.endpoint import validate as validate
 from django_modern_rest.headers import HeaderSpec as HeaderSpec

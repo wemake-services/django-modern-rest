@@ -15,6 +15,7 @@ from django.views import View
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
@@ -178,6 +179,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         headers: dict[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
     ) -> HttpResponse:
         """
@@ -195,6 +197,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             method=self.request.method,
             raw_data=raw_data,
             headers=headers,
+            cookies=cookies,
             status_code=status_code,
         )
 
@@ -204,6 +207,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         *,
         status_code: HTTPStatus,
         headers: dict[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert API error parts into an actual error.
@@ -218,6 +222,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             self.serializer,
             raw_data=raw_data,
             headers=headers,
+            cookies=cookies,
             status_code=status_code,
         )
 
