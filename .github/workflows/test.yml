@@ -43,7 +43,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
-        poetry install --all-extras
+        poetry install --all-extras --all-groups
 
     - name: Run checks
       run: make test
