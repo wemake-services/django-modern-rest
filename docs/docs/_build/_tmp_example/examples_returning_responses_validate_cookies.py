@@ -46,4 +46,3 @@ class UserController(
             self.parsed_body,
             cookies=cookies,
         )
-

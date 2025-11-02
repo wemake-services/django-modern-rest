@@ -23,4 +23,3 @@ class UserController(
         # This response would have an implicit status code `201`
         # and explicit cookie `user_created` set to `true` with `max-age=1000`
         return self.parsed_body
-
