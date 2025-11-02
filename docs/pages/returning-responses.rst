@@ -124,6 +124,45 @@ and pass ``headers`` dict to
 :meth:`~django_modern_rest.controller.Controller.to_response` method.
 
 
+Describing cookies
+------------------
+
+.. warning::
+
+  Some may say that returning cookies is not "RESTful",
+  because cookies is an implicit state, that RESTful APIs must not have.
+  Be careful, only use this feature when you need to.
+
+  See: https://parottasalna.hashnode.dev/is-it-okay-to-add-cookie-to-a-rest-api
+
+We also support setting and validating response cookies.
+
+You can use :class:`~django_modern_rest.cookies.NewCookie`
+to add new cookies with statically known values to "raw endpoints".
+
+.. literalinclude:: /examples/returning_responses/modify_cookies.py
+  :caption: views.py
+  :linenos:
+  :lines: 9-
+  :emphasize-lines: 12
+
+And you can set any cookies to :attr:`django.http.HttpResponse.cookies`
+with "real endpoints". As well as describing the expected cookies with
+:class:`~django_modern_rest.cookies.CookieSpec`:
+
+.. literalinclude:: /examples/returning_responses/validate_cookies.py
+  :caption: views.py
+  :linenos:
+  :lines: 19-
+  :emphasize-lines: 14-17, 24-26
+
+
+.. note::
+
+  All cookie parts are validated by default. Except ``expires`` field,
+  because it is relative to the current time.
+
+
 .. _response_validation:
 
 Response validation

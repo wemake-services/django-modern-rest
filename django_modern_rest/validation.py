@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from typing_extensions import override
 
 from django_modern_rest.components import ComponentParser
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
@@ -30,9 +31,7 @@ from django_modern_rest.headers import (
     NewHeader,
     build_headers,
 )
-from django_modern_rest.metadata import (
-    EndpointMetadata,
-)
+from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.response import (
     ResponseModification,
     ResponseSpec,
@@ -88,7 +87,8 @@ class ResponseValidator:
             return response
         schema = self._get_response_schema(response.status_code)
         self._validate_body(response.content, schema, response=response)
-        self._validate_response_object(response, schema)
+        self._validate_response_headers(response, schema)
+        self._validate_response_cookies(response, schema)
         return response
 
     def validate_modification(
@@ -109,9 +109,10 @@ class ResponseValidator:
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
             headers=build_headers(
-                self.metadata.modification.headers,
+                self.metadata.modification,
                 self.serializer,
             ),
+            cookies=self.metadata.modification.cookies,
         )
         if not self._is_validation_enabled(controller):
             return all_response_data
@@ -194,14 +195,12 @@ class ResponseValidator:
                 self.serializer.error_serialize(exc),
             ) from None
 
-    def _validate_response_object(
+    def _validate_response_headers(
         self,
         response: HttpResponse,
         schema: ResponseSpec,
     ) -> None:
-        """Validates response against provided metadata."""
-        # Validate headers, at this point we know
-        # that only `HeaderSpec` can be in `metadata.headers`:
+        """Validates response headers against provided metadata."""
         if schema.headers is None:
             metadata_headers: Set[str] = set()
         else:
@@ -227,6 +226,44 @@ class ResponseValidator:
                 'Response has extra undescribed '
                 f'{extra_response_headers!r} headers',
             )
+
+    def _validate_response_cookies(  # noqa: WPS210
+        self,
+        response: HttpResponse,
+        schema: ResponseSpec,
+    ) -> None:
+        """Validates response cookies against provided metadata."""
+        metadata_cookies = schema.cookies or {}
+
+        # Find missing cookies:
+        missing_required_cookies = {
+            cookie
+            for cookie, response_cookie in metadata_cookies.items()
+            if response_cookie.required
+        } - response.cookies.keys()
+        if missing_required_cookies:
+            raise ResponseSerializationError(
+                'Response has missing required '
+                f'{missing_required_cookies!r} cookie',
+            )
+
+        # Find extra cookies:
+        extra_response_cookies = (
+            response.cookies.keys() - metadata_cookies.keys()
+        )
+        if extra_response_cookies:
+            raise ResponseSerializationError(
+                'Response has extra undescribed '
+                f'{extra_response_cookies!r} cookies',
+            )
+
+        # Find not fully described cookies:
+        for cookie_key, cookie_body in response.cookies.items():
+            if not metadata_cookies[cookie_key].is_equal(cookie_body):
+                raise ResponseSerializationError(
+                    f'Response cookie {cookie_key}={cookie_body!r} is not '
+                    f'equal to {metadata_cookies[cookie_key]!r}',
+                )
 
 
 class BlueprintValidator:
@@ -443,6 +480,7 @@ class ModifyEndpointPayload(_OpenAPIPayload):
 
     status_code: HTTPStatus | None
     headers: Mapping[str, NewHeader] | None
+    cookies: Mapping[str, NewCookie] | None
     responses: list[ResponseSpec] | None
     validate_responses: bool | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
@@ -466,6 +504,7 @@ class _ResponseListValidator:
     ) -> dict[HTTPStatus, ResponseSpec]:
         self._validate_unique_responses(responses, endpoint=endpoint)
         self._validate_header_descriptions(responses, endpoint=endpoint)
+        # TODO: validate cookie descriptions
         self._validate_http_spec(responses, endpoint=endpoint)
         return self._convert_responses(responses)
 
@@ -559,6 +598,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'] | None,
     ) -> EndpointMetadata:
         """Do the validation."""
+        # TODO: validate that we can't specify `Set-Cookie` header.
+        # You should use `cookies=` instead.
         return_annotation = parse_return_annotation(func)
         if self.payload is None and is_safe_subclass(
             return_annotation,
@@ -617,9 +658,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'] | None,
         modification: ResponseModification | None = None,
     ) -> _AllResponses:
-        modification_spec = (
-            [modification.to_description()] if modification else []
-        )
+        modification_spec = [modification.to_spec()] if modification else []
         return cast(
             '_AllResponses',
             [
@@ -702,6 +741,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         modification = ResponseModification(
             return_type=return_annotation,
             headers=payload.headers,
+            cookies=payload.cookies,
             status_code=(
                 infer_status_code(method)
                 if payload.status_code is None
@@ -760,6 +800,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             return_type=return_annotation,
             status_code=status_code,
             headers=None,
+            cookies=None,
         )
         all_responses = self._resolve_all_responses(
             [],
@@ -866,6 +907,7 @@ class _ValidationContext:
     raw_data: Any  # not empty
     status_code: HTTPStatus
     headers: dict[str, str]
+    cookies: Mapping[str, NewCookie] | None
 
 
 def validate_method_name(

@@ -28,8 +28,8 @@ Endpoint
 .. autodecorator:: django_modern_rest.endpoint.validate
 
 
-Response and headers
---------------------
+Response, headers and cookies
+-----------------------------
 
 .. autoclass:: django_modern_rest.response.ResponseSpec
   :members:
@@ -48,7 +48,11 @@ Response and headers
 .. autoclass:: django_modern_rest.headers.NewHeader
   :members:
 
-.. autodata:: django_modern_rest.headers.ResponseHeadersT
+.. autoclass:: django_modern_rest.cookies.CookieSpec
+  :members:
+
+.. autoclass:: django_modern_rest.cookies.NewCookie
+  :members:
 
 
 Validation

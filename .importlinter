@@ -23,7 +23,7 @@ layers =
   response
   serialization
   # DTOs:
-  headers
+  headers | cookies
   types
   internal
   settings
