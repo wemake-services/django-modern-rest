@@ -170,7 +170,7 @@ class MsgspecSerializer(BaseSerializer):
         Returns:
             Simple python object - exception converted to json.
         """
-        if isinstance(error, msgspec.ValidationError):
+        if isinstance(error, (msgspec.ValidationError, str)):
             return [{'type': 'value_error', 'loc': [], 'msg': str(error)}]
         raise NotImplementedError(
             f'Cannot serialize {error!r} of type {type(error)} to json safely',

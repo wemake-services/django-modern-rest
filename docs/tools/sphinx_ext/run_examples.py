@@ -17,11 +17,11 @@ import socket
 import subprocess  # noqa: S404
 import sys
 import time
-from collections.abc import Generator
+from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Final, TypeAlias, cast
+from typing import Any, ClassVar, Final, TypeAlias, cast, final
 
 import httpx
 import uvicorn
@@ -38,19 +38,17 @@ from sphinx.application import Sphinx
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
 
-PATH_TO_TMP_EXAMPLES: Final = 'docs/_build/_tmp_example/'
+_PATH_TO_TMP_EXAMPLES: Final = 'docs/_build/_tmp_example/'
+_RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 
-RGX_RUN = re.compile(r'# +?run:(.*)')
+_AppRunArgsT: TypeAlias = dict[str, Any]
 
-
-logger = logging.getLogger(__name__)
-
-ignore_missing_output = True
-
-AppRunArgs: TypeAlias = dict[str, Any]
+logger: Final = logging.getLogger(__name__)
+ignore_missing_output: Final = True
 
 
-class StartupError(RuntimeError):
+@final
+class _StartupError(RuntimeError):
     """Raised when application fails to start."""
 
 
@@ -59,15 +57,16 @@ def _get_available_port() -> int:
         try:
             sock.bind(('localhost', 0))
         except OSError as error:
-            raise StartupError('Could not find an open port') from error
+            raise _StartupError('Could not find an open port') from error
         else:
             return cast(int, sock.getsockname()[1])
 
 
-class AppBuilder:
+@final
+class _AppBuilder:
     """Builds a Django application from configuration."""
 
-    def __init__(self, file_path: Path, config: AppRunArgs) -> None:
+    def __init__(self, file_path: Path, config: _AppRunArgsT) -> None:
         """Initialize application builder with file path and configuration."""
         self.file_path = file_path
         self.config = config
@@ -133,7 +132,9 @@ class AppBuilder:
         controller_cls: View,
     ) -> None:
         url_conf_module = ModuleType('url_conf')
-        url_path = _get_url_path_from_run_args(self.config).lstrip('/')  # noqa: WPS226
+        url_path = _get_url_path_from_run_args(
+            self.config,
+        ).lstrip('/')  # noqa: WPS226
 
         url_conf_module.urlpatterns = [  # type: ignore[attr-defined]
             path(url_path, controller_cls.as_view()),
@@ -142,30 +143,30 @@ class AppBuilder:
         sys.modules['url_conf'] = url_conf_module
 
 
-def _get_url_path_from_run_args(run_args: AppRunArgs) -> str:
+def _get_url_path_from_run_args(run_args: _AppRunArgsT) -> str:
     controller_name = run_args['controller'].lower()
-    url = run_args.get(
+    url: str = run_args.get(
         'url',
         f'api/{controller_name}/',
     )
-    return cast(str, url)
+    return url
 
 
 @contextmanager
-def run_app(path: Path, config: AppRunArgs) -> Generator[int, None, None]:
+def _run_app(path: Path, config: _AppRunArgsT) -> Iterator[int]:
     """Start a Django app on an available port."""
     restart_duration = 0.2
     port = _get_available_port()
-    app = AppBuilder(path, config).build_app()
+    app = _AppBuilder(path, config).build_app()
 
     attempts = 0
     while attempts < 100:
-        proc = multiprocessing.Process(target=_run_app, args=(app, port))
+        proc = multiprocessing.Process(target=_run_app_worker, args=(app, port))
         proc.start()
 
         try:
             _wait_for_app_startup(port)
-        except StartupError:
+        except _StartupError:
             time.sleep(restart_duration)
             attempts += 1
             port = _get_available_port()
@@ -175,10 +176,10 @@ def run_app(path: Path, config: AppRunArgs) -> Generator[int, None, None]:
         finally:
             proc.kill()
     else:
-        _raise_startup_error(str(path))
+        raise _StartupError(str(path))
 
 
-def _run_app(app: ASGIHandler, port: int) -> None:
+def _run_app_worker(app: ASGIHandler, port: int) -> None:
     with redirect_stderr(Path(os.devnull).open(encoding='utf-8')):
         uvicorn.run(app, port=port, access_log=False)
 
@@ -192,15 +193,10 @@ def _wait_for_app_startup(port: int) -> None:
             time.sleep(0.1)
         else:
             return
-    _raise_startup_error(f'App failed to come online on port {port}')
+    raise _StartupError(f'App failed to come online on port {port}')
 
 
-def _raise_startup_error(message: str) -> None:
-    """Raise StartupError with given message."""
-    raise StartupError(message)
-
-
-def extract_run_args(file_content: str) -> tuple[str, list[AppRunArgs]]:
+def _extract_run_args(file_content: str) -> tuple[str, list[_AppRunArgsT]]:
     """Extract run args from a python file.
 
     Return the file content stripped of the run comments
@@ -209,7 +205,7 @@ def extract_run_args(file_content: str) -> tuple[str, list[AppRunArgs]]:
     new_lines = []
     run_configs = []
     for line in file_content.splitlines():
-        run_stmt_match = RGX_RUN.match(line)
+        run_stmt_match = _RGX_RUN.match(line)
         if run_stmt_match:
             run_stmt = run_stmt_match.group(1).lstrip()
             if '# noqa' in run_stmt:
@@ -220,7 +216,7 @@ def extract_run_args(file_content: str) -> tuple[str, list[AppRunArgs]]:
     return '\n'.join(new_lines), run_configs
 
 
-def exec_examples(app_file: Path, run_configs: list[AppRunArgs]) -> str:
+def _exec_examples(app_file: Path, run_configs: list[_AppRunArgsT]) -> str:
     """
     Start a server with the example application, run the specified requests.
 
@@ -230,7 +226,7 @@ def exec_examples(app_file: Path, run_configs: list[AppRunArgs]) -> str:
 
     for run_args in run_configs:
         url_path = _get_url_path_from_run_args(run_args)
-        with run_app(app_file, run_args) as port:
+        with _run_app(app_file, run_args) as port:
             example_result = _process_single_example(
                 app_file,
                 run_args,
@@ -245,7 +241,7 @@ def exec_examples(app_file: Path, run_configs: list[AppRunArgs]) -> str:
 
 def _process_single_example(
     app_file: Path,
-    run_args: AppRunArgs,
+    run_args: _AppRunArgsT,
     port: int,
     url_path: str,
 ) -> str:
@@ -269,18 +265,18 @@ def _process_single_example(
         return ''
 
     clean_args_string = ' '.join(clean_args)
-    return '\n'.join((f'> {clean_args_string}', *stdout))
+    return '\n'.join((f'$ {clean_args_string}', *stdout))
 
 
-CurlArgs: TypeAlias = list[str]
-CurlCleanArgs: TypeAlias = list[str]
+_CurlArgsT: TypeAlias = list[str]
+_CurlCleanArgsT: TypeAlias = list[str]
 
 
 def _build_curl_request(
-    run_args: AppRunArgs,
+    run_args: _AppRunArgsT,
     port: int,
     url_path: str,
-) -> tuple[CurlArgs, CurlCleanArgs]:
+) -> tuple[_CurlArgsT, _CurlCleanArgsT]:
     args = ['curl', '-v', '-s', f'http://127.0.0.1:{port}{url_path}']
     clean_args = ['curl', f'http://127.0.0.1:8000{url_path}']
 
@@ -294,7 +290,7 @@ def _build_curl_request(
 def _add_method(
     args: list[str],
     clean_args: list[str],
-    run_args: AppRunArgs,
+    run_args: _AppRunArgsT,
 ) -> None:
     method = run_args.get('method', 'get').upper()
     if method != 'GET':
@@ -305,7 +301,7 @@ def _add_method(
 def _add_body_and_content_type(
     args: list[str],
     clean_args: list[str],
-    run_args: AppRunArgs,
+    run_args: _AppRunArgsT,
 ) -> None:
     if 'body' in run_args:
         body_data = json.dumps(run_args.get('body', {}))
@@ -319,7 +315,7 @@ def _add_body_and_content_type(
 def _add_headers(
     args: list[str],
     clean_args: list[str],
-    run_args: AppRunArgs,
+    run_args: _AppRunArgsT,
 ) -> None:
     header_flag = '-H'
     for header_name, header_value in run_args.get('headers', {}).items():
@@ -327,8 +323,9 @@ def _add_headers(
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
 
 
+@final
 class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
-    """Extended literalinclude directive with code execution capability."""
+    """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
         **LiteralIncludeOverride.option_spec,
@@ -348,7 +345,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
 
         nodes = cast(list[Node], super().run())
 
-        executed_result = exec_examples(
+        executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
             run_args,
         )
@@ -356,7 +353,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         nodes.append(
             admonition(
                 '',
-                title('', 'Run it'),
+                title('', 'Run result'),
                 highlightlang(
                     '',
                     literal_block('', executed_result),
@@ -365,9 +362,9 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
                     linenothreshold=sys.maxsize,
                 ),
                 literal_block('', executed_result),
+                classes=['tip'],
             ),
         )
-
         return nodes
 
     def _need_to_run(self, file_path: Path) -> bool:
@@ -379,9 +376,9 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
     def _execute_code(
         self,
         file_path: Path,
-    ) -> tuple[str, list[AppRunArgs]]:
+    ) -> tuple[str, list[_AppRunArgsT]]:
         file_content = file_path.read_text(encoding='utf-8')
-        return extract_run_args(file_content)
+        return _extract_run_args(file_content)
 
     def _create_tmp_example_file(
         self,
@@ -392,7 +389,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
         tmp_file = (
             cwd
-            / PATH_TO_TMP_EXAMPLES
+            / _PATH_TO_TMP_EXAMPLES
             / str(
                 file_path.relative_to(docs_dir),
             ).replace('/', '_')
@@ -404,6 +401,6 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
 
 def setup(app: Sphinx) -> dict[str, bool]:
     """Register Sphinx extension directives."""
-    tmp_examples_path = Path.cwd() / PATH_TO_TMP_EXAMPLES
+    tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
     return {'parallel_read_safe': True, 'parallel_write_safe': True}
