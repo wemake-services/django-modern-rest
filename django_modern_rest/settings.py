@@ -52,6 +52,12 @@ class HttpSpec(enum.StrEnum):
       ...     },
       ... }
 
+    Attributes:
+        empty_request_body: Disables validation that methods
+            like ``GET`` and ``HEAD`` can't have request bodies.
+        empty_response_body: Disables validation that some status codes
+            like ``204`` must not have response bodies.
+
     """
 
     empty_request_body = 'empty_request_body'
