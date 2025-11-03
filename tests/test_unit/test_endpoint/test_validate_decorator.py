@@ -493,3 +493,27 @@ def test_validate_responses_from_components() -> None:
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
     })
+
+
+@pytest.mark.parametrize(
+    'header_name',
+    [
+        'Set-Cookie',
+        'set-cookie',
+        'SET-COOKIE',
+    ],
+)
+def test_validate_with_set_cookie_header(header_name: str) -> None:
+    """@validate with Set-Cookie in ResponseSpec.headers should raise error."""
+    with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
+
+        class _SetCookieHeaderController(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(
+                    return_type=dict,
+                    status_code=HTTPStatus.OK,
+                    headers={header_name: HeaderSpec(required=True)},
+                ),
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError
