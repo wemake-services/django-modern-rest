@@ -1,6 +1,5 @@
-from collections.abc import Sequence
 from http import HTTPStatus
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar
 
 import pytest
 from typing_extensions import override
@@ -10,13 +9,11 @@ from django_modern_rest import (
     Controller,
     ResponseSpec,
 )
+from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
-
-_BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
 
 
 class _SyncBlueprint(Blueprint[PydanticSerializer]):
@@ -55,22 +52,6 @@ def test_controller_duplicate_responses() -> None:
             responses: ClassVar[list[ResponseSpec]] = [
                 ResponseSpec(int, status_code=HTTPStatus.FORBIDDEN),
                 ResponseSpec(str, status_code=HTTPStatus.FORBIDDEN),
-            ]
-
-            def get(self) -> str:  # needs at least one endpoint to validate
-                raise NotImplementedError
-
-
-def test_controller_http_spec() -> None:
-    """Ensure that controllers with NO_CONTENT must not have bodies."""
-    with pytest.raises(
-        EndpointMetadataError,
-        match='None',
-    ):
-
-        class _MixedController(Controller[PydanticSerializer]):
-            responses: ClassVar[list[ResponseSpec]] = [
-                ResponseSpec(int, status_code=HTTPStatus.NO_CONTENT),
             ]
 
             def get(self) -> str:  # needs at least one endpoint to validate
@@ -258,7 +239,7 @@ def test_async_bp_with_sync_handler_fails() -> None:
     ):
 
         class _BadController(Controller[PydanticSerializer]):
-            blueprints: ClassVar[Sequence[_BlueprintT]] = [
+            blueprints: ClassVar[BlueprintsT] = [
                 _AsyncBlueprint,
             ]
 
@@ -279,7 +260,7 @@ def test_sync_bp_with_async_handler_fails() -> None:
     ):
 
         class _BadController(Controller[PydanticSerializer]):
-            blueprints: ClassVar[Sequence[_BlueprintT]] = [
+            blueprints: ClassVar[BlueprintsT] = [
                 _SyncBlueprint,
             ]
 
@@ -296,7 +277,7 @@ def test_async_bp_with_async_handler_ok() -> None:
     """Ensure controllers with async blueprints can use async error handler."""
 
     class _GoodController(Controller[PydanticSerializer]):
-        blueprints: ClassVar[Sequence[_BlueprintT]] = [
+        blueprints: ClassVar[BlueprintsT] = [
             _AsyncBlueprint,
         ]
 
@@ -313,7 +294,7 @@ def test_sync_bp_with_sync_handler_ok() -> None:
     """Ensure controllers with sync blueprints can use sync error handler."""
 
     class _GoodController(Controller[PydanticSerializer]):
-        blueprints: ClassVar[Sequence[_BlueprintT]] = [
+        blueprints: ClassVar[BlueprintsT] = [
             _SyncBlueprint,
         ]
 

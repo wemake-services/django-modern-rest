@@ -28,10 +28,34 @@ class Settings(enum.StrEnum):
 
     serialize = 'serialize'
     deserialize = 'deserialize'
+    no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
+
+
+@final
+@enum.unique
+class HttpSpec(enum.StrEnum):
+    """
+    Keys for our HTTP spec validation.
+
+    All rules can be disabled per endpoint, per blueprint, and per controller.
+    You can disable any of the validation rules we have here globally by:
+
+    .. code:: python
+
+      >>> DMR_SETTINGS = {
+      ...     Settings.no_validate_http_spec: {
+      ...         HttpSpec.empty_response_body,
+      ...     },
+      ... }
+
+    """
+
+    empty_request_body = 'empty_request_body'
+    empty_response_body = 'empty_response_body'
 
 
 #: Default settings for `django_modern_rest`.
@@ -42,6 +66,9 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
         title='Django Modern Rest',
         version='0.1.0',
     ),
+    # We validate some HTTP spec things by default to be strict,
+    # can be disabled:
+    Settings.no_validate_http_spec: frozenset(),
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
     Settings.responses: [],  # global responses, for response validation
@@ -49,6 +76,10 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
         'django_modern_rest.errors.global_error_handler'
     ),
 }
+
+assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
+    'Some Settings keys do not have default values'
+)
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
