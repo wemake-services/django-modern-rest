@@ -215,7 +215,7 @@ HTTP Spec validation
 
     >>> DMR_SETTINGS = {
     ...     Settings.no_validate_http_spec: {
-    ...         HttpSpec.empty_request_bodies,
+    ...         HttpSpec.empty_request_body,
     ...     },
     ... }
 
