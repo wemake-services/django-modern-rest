@@ -8,16 +8,16 @@ from django_modern_rest.validation.endpint_metadata import (
     EndpointMetadataValidator as EndpointMetadataValidator,
 )
 from django_modern_rest.validation.endpint_metadata import (
+    validate_method_name as validate_method_name,
+)
+from django_modern_rest.validation.payload import (
     ModifyEndpointPayload as ModifyEndpointPayload,
 )
-from django_modern_rest.validation.endpint_metadata import (
+from django_modern_rest.validation.payload import (
     PayloadT as PayloadT,
 )
-from django_modern_rest.validation.endpint_metadata import (
+from django_modern_rest.validation.payload import (
     ValidateEndpointPayload as ValidateEndpointPayload,
-)
-from django_modern_rest.validation.endpint_metadata import (
-    validate_method_name as validate_method_name,
 )
 from django_modern_rest.validation.response import (
     ResponseValidator as ResponseValidator,
