@@ -562,7 +562,9 @@ class _ResponseListValidator:
         endpoint: str,
     ) -> None:
         for response in responses:
-            if response.headers is not None and any(
+            if response.headers is None:
+                continue
+            if any(
                 header_name.lower() == 'set-cookie'
                 for header_name in response.headers
             ):
