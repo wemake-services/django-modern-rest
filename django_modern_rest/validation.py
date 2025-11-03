@@ -544,7 +544,9 @@ class _ResponseListValidator:
         endpoint: str,
     ) -> None:
         for response in responses:
-            if response.headers is not None and any(
+            if response.headers is None:
+                continue
+            if any(
                 isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
                 for header in response.headers.values()
             ):
