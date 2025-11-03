@@ -34,9 +34,9 @@ As usual, all settings go to ``settings.py`` file in your Django project.
 
   .. code:: python
 
-    >>> from django_modern_rest.settings import Settings, resolve_settings
+    >>> from django_modern_rest.settings import Settings, resolve_setting
 
-    >>> resolve_settings(Settings.responses)
+    >>> resolve_setting(Settings.responses)
     []
 
   To set settings use:
