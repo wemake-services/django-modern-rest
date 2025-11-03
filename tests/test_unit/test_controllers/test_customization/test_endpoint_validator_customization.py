@@ -13,8 +13,8 @@ from django_modern_rest.test import DMRRequestFactory
 from django_modern_rest.validation import (
     EndpointMetadataValidator,
     ResponseValidator,
-    _ResponseT,
 )
+from django_modern_rest.validation.response import _ResponseT
 
 
 @final
