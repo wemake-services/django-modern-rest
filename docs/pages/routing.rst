@@ -105,7 +105,7 @@ Let's say you have this URL configuration:
 
 .. code:: python
 
-    from django_modern_rest import Router, path
+    from django_modern_rest.routing import Router, path
 
     router = Router([
         path('api/v1/users/', views.UserList.as_view()),
