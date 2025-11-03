@@ -196,6 +196,36 @@ Error handling
 .. autofunction:: django_modern_rest.errors.global_error_handler
 
 
+HTTP Spec validation
+--------------------
+
+.. data:: django_modern_rest.settings.Settings.no_validate_http_spec
+
+  Default: ``frozenset()``
+
+  A set of unique :class:`~django_modern_rest.settings.HttpSpec` codes
+  to be globally disabled.
+
+  We don't recommend disabling any of these checks globally.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from django_modern_rest.settings import HttpSpec
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.no_validate_http_spec: {
+    ...         HttpSpec.empty_request_body,
+    ...     },
+    ... }
+
+
+.. autoclass:: django_modern_rest.settings.HttpSpec
+  :show-inheritance:
+  :members:
+
+
+
 Environment variables
 ---------------------
 

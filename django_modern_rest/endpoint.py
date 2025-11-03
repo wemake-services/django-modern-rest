@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping, Set
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -26,6 +26,7 @@ from django_modern_rest.openapi.objects import (
 from django_modern_rest.response import APIError, ResponseSpec, build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
+    HttpSpec,
     Settings,
     resolve_setting,
 )
@@ -351,6 +352,7 @@ def validate(  # noqa: WPS234
     *responses: ResponseSpec,
     error_handler: AsyncErrorHandlerT,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -365,6 +367,7 @@ def validate(
     *responses: ResponseSpec,
     error_handler: SyncErrorHandlerT,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
@@ -378,6 +381,7 @@ def validate(
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
@@ -391,6 +395,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -455,6 +460,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        no_validate_http_spec: Set of http spec validation checks
+            that we disable for this endpoint.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         allow_custom_http_methods: Should we allow custom HTTP
@@ -490,6 +497,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
+            no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
             summary=summary,
@@ -583,6 +591,7 @@ def modify(
     cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -605,6 +614,7 @@ def modify(
     cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -626,6 +636,7 @@ def modify(
     cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -647,6 +658,7 @@ def modify(  # noqa: WPS211
     cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -689,6 +701,8 @@ def modify(  # noqa: WPS211
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        no_validate_http_spec: Set of http spec validation checks
+            that we disable for this endpoint.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         allow_custom_http_methods: Should we allow custom HTTP
@@ -731,6 +745,7 @@ def modify(  # noqa: WPS211
             cookies=cookies,
             responses=extra_responses,
             validate_responses=validate_responses,
+            no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
             summary=summary,
