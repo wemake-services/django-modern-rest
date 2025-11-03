@@ -495,7 +495,15 @@ def test_validate_responses_from_components() -> None:
     })
 
 
-def test_validate_with_set_cookie_header() -> None:
+@pytest.mark.parametrize(
+    'header_name',
+    [
+        'Set-Cookie',
+        'set-cookie',
+        'SET-COOKIE',
+    ],
+)
+def test_validate_with_set_cookie_header(header_name: str) -> None:
     """@validate with Set-Cookie in ResponseSpec.headers should raise error."""
     with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
 
@@ -504,44 +512,7 @@ def test_validate_with_set_cookie_header() -> None:
                 ResponseSpec(
                     return_type=dict,
                     status_code=HTTPStatus.OK,
-                    headers={'Set-Cookie': HeaderSpec(required=True)},
-                ),
-            )
-            def get(self) -> HttpResponse:
-                raise NotImplementedError
-
-
-def test_validate_with_set_cookie_header_insensitive() -> None:
-    """@validate with set-cookie in ResponseSpec should raise error."""
-    with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
-
-        class _SetCookieHeaderController(Controller[PydanticSerializer]):
-            @validate(
-                ResponseSpec(
-                    return_type=dict,
-                    status_code=HTTPStatus.OK,
-                    headers={'set-cookie': HeaderSpec(required=True)},
-                ),
-            )
-            def get(self) -> HttpResponse:
-                raise NotImplementedError
-
-
-def test_validate_with_set_cookie_in_multiple_response_specs() -> None:
-    """@validate with Set-Cookie in second ResponseSpec should raise error."""
-    with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
-
-        class _SetCookieHeaderController(Controller[PydanticSerializer]):
-            @validate(
-                ResponseSpec(
-                    return_type=dict,
-                    status_code=HTTPStatus.OK,
-                    headers={'X-Custom': HeaderSpec()},
-                ),
-                ResponseSpec(
-                    return_type=dict,
-                    status_code=HTTPStatus.CREATED,
-                    headers={'Set-Cookie': HeaderSpec()},
+                    headers={header_name: HeaderSpec(required=True)},
                 ),
             )
             def get(self) -> HttpResponse:
