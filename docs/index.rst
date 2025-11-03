@@ -35,7 +35,7 @@
       :alt: Code style
       :target: https://github.com/wemake-services/wemake-python-styleguide
 
-   .. image:: https://img.shields.io/badge/Ask_DeepWiki-blue
+   .. image:: https://deepwiki.com/badge.svg
       :alt: DeepWiki
       :target: https://deepwiki.com/wemake-services/django-modern-rest
 

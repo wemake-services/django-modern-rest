@@ -1,9 +1,9 @@
 Configuration
 =============
 
-.. module:: django_modern_rest.settings
-
 We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
+All keys are typed with :class:`~django_modern_rest.settings.Settings` enum keys
+which can be used to both set and get settings.
 
 .. note::
 
@@ -11,9 +11,40 @@ We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
   are cached after the first access.
   If you need to modify settings dynamically
   in runtime use :func:`~django_modern_rest.settings.clear_settings_cache`.
+  You can modify the size of cache with adjusting
+  :envvar:`DMR_MAX_CACHE_SIZE` value.
 
 Here are all keys and values that can be set.
-To configure ``django-modern-rest`` place this into your ``settings.py``:
+As usual, all settings go to ``settings.py`` file in your Django project.
+
+.. seealso::
+
+  - Official Django settings docs:
+    https://docs.djangoproject.com/en/5.2/topics/settings
+  - ``django-split-settings`` configuration helper
+    https://github.com/wemake-services/django-split-settings
+
+
+.. autoclass:: django_modern_rest.settings.Settings
+  :show-inheritance:
+
+  To get settings use
+  :func:`~django_modern_rest.settings.resolve_setting` function
+  together with ``Settings`` keys:
+
+  .. code:: python
+
+    >>> from django_modern_rest.settings import Settings, resolve_setting
+
+    >>> resolve_setting(Settings.responses)
+    []
+
+  To set settings use:
+
+  .. code:: python
+
+    >>> DMR_SETTINGS = {Settings.responses: []}
+
 
 
 JSON Parsing
@@ -24,7 +55,7 @@ JSON Parsing
   It is recommended to always install ``msgspec``
   with ``'django-modern-rest[msgspec]'`` extra for better performance.
 
-.. data:: serialize
+.. data:: django_modern_rest.settings.Settings.serialize
 
   Default: ``'django_modern_rest.internal.json.serialize'``
 
@@ -39,12 +70,12 @@ JSON Parsing
   .. code-block:: python
     :caption: settings.py
 
-    >>> DMR_SETTINGS = {'serialize': 'path.to.your.ujson.serialize'}
+    >>> DMR_SETTINGS = {Settings.serialize: 'path.to.your.ujson.serialize'}
 
   See :class:`~django_modern_rest.internal.json.Serialize` for the callback type.
 
 
-.. data:: deserialize
+.. data:: django_modern_rest.settings.Settings.deserialize
 
   Default: ``'django_modern_rest.internal.json.deserialize'``
 
@@ -59,7 +90,7 @@ JSON Parsing
   .. code-block:: python
     :caption: settings.py
 
-    >>> DMR_SETTINGS = {'deserialize': 'path.to.your.ujson.deserialize'}
+    >>> DMR_SETTINGS = {Settings.deserialize: 'path.to.your.ujson.deserialize'}
 
   See :class:`~django_modern_rest.internal.json.Deserialize`
   for the callback type.
@@ -68,7 +99,7 @@ JSON Parsing
 Response handling
 -----------------
 
-.. data:: responses
+.. data:: django_modern_rest.settings.Settings.responses
 
   Default: ``[]``
 
@@ -91,7 +122,7 @@ Response handling
     >>> # If our API can always return a 500 response with `{"detail": str}`
     >>> # error message:
     >>> DMR_SETTINGS = {
-    ...     'responses': [
+    ...     Settings.responses: [
     ...         ResponseSpec(
     ...             Error,
     ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -99,7 +130,7 @@ Response handling
     ...     ],
     ... }
 
-.. data:: validate_responses
+.. data:: django_modern_rest.settings.Settings.validate_responses
 
   Default: ``True``
 
@@ -124,7 +155,7 @@ Response handling
   .. code-block:: python
     :caption: settings.py
 
-    >>> DMR_SETTINGS = {'validate_responses': False}
+    >>> DMR_SETTINGS = {Settings.validate_responses: False}
 
   .. note::
 
@@ -138,7 +169,7 @@ Response handling
 Error handling
 --------------
 
-.. data:: global_error_handler
+.. data:: django_modern_rest.settings.Settings.global_error_handler
 
   Default: ``'django_modern_rest.errors.global_error_handler'``
 
@@ -159,7 +190,7 @@ Error handling
   .. code-block:: python
     :caption: settings.py
 
-    >>> DMR_SETTINGS = {'global_error_handler': 'path.to.your.handler'}
+    >>> DMR_SETTINGS = {Settings.global_error_handler: 'path.to.your.handler'}
 
 
 .. autofunction:: django_modern_rest.errors.global_error_handler
@@ -186,5 +217,7 @@ Environment variables
 
 Misc
 ----
+
+.. autofunction:: django_modern_rest.settings.resolve_setting
 
 .. autofunction:: django_modern_rest.settings.clear_settings_cache
