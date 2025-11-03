@@ -504,7 +504,7 @@ class _ResponseListValidator:
     ) -> dict[HTTPStatus, ResponseSpec]:
         self._validate_unique_responses(responses, endpoint=endpoint)
         self._validate_header_descriptions(responses, endpoint=endpoint)
-        # TODO: validate cookie descriptions
+        self._validate_cookie_descriptions(responses, endpoint=endpoint)
         self._validate_http_spec(responses, endpoint=endpoint)
         return self._convert_responses(responses)
 
@@ -534,23 +534,29 @@ class _ResponseListValidator:
         endpoint: str,
     ) -> None:
         for response in responses:
-            if response.headers is None:
-                continue
-
-            for name in response.headers:
-                if name.lower() == 'set-cookie':
-                    raise EndpointMetadataError(
-                        f'Cannot use "Set-Cookie" header in {response}'
-                        f'use `cookies=` parameter instead in {endpoint!r}.',
-                    )
-
-            if any(
+            if response.headers is not None and any(
                 isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
                 for header in response.headers.values()
             ):
                 raise EndpointMetadataError(
                     f'Cannot use `NewHeader` in {response} , '
                     f'use `HeaderSpec` instead in {endpoint!r}',
+                )
+
+    def _validate_cookie_descriptions(
+        self,
+        responses: _AllResponses,
+        *,
+        endpoint: str,
+    ) -> None:
+        for response in responses:
+            if response.headers is not None and any(
+                header_name.lower() == 'set-cookie'
+                for header_name in response.headers
+            ):
+                raise EndpointMetadataError(
+                    f'Cannot use "Set-Cookie" header in {response}'
+                    f'use `cookies=` parameter instead in {endpoint!r}.',
                 )
 
     def _validate_http_spec(
@@ -835,17 +841,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> None:
-        if payload.headers is None:
-            return
-
-        for name in payload.headers:
-            if name.lower() == 'set-cookie':
-                raise EndpointMetadataError(
-                    f'Cannot use "Set-Cookie" header in {endpoint!r}'
-                    f'use `cookies=` parameter instead.',
-                )
-
-        if any(
+        if payload.headers is not None and any(
             isinstance(header, HeaderSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
             for header in payload.headers.values()
         ):
