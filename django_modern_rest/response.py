@@ -4,6 +4,8 @@ from http import HTTPMethod, HTTPStatus
 from typing import Any, Generic, TypeVar, overload
 
 from django.http import HttpResponse
+from django.http.request import HttpHeaders
+from django.utils.datastructures import MultiValueDict
 
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.headers import (
@@ -58,7 +60,7 @@ class APIError(Exception, Generic[_ItemT]):
         raw_data: _ItemT,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | None = None,
+        headers: HttpHeaders | None = None,
     ) -> None:
         """Create response from parts."""
         super().__init__()
@@ -162,7 +164,7 @@ def build_response(
     *,
     raw_data: Any,
     method: HTTPMethod | str,
-    headers: dict[str, str] | None = None,
+    headers: HttpHeaders | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse: ...
@@ -175,7 +177,7 @@ def build_response(
     raw_data: Any,
     status_code: HTTPStatus,
     method: None = None,
-    headers: dict[str, str] | None = None,
+    headers: HttpHeaders | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
 ) -> HttpResponse: ...
 
@@ -185,7 +187,7 @@ def build_response(  # noqa: WPS211
     *,
     raw_data: Any,
     method: HTTPMethod | str | None = None,
-    headers: dict[str, str] | None = None,
+    headers: HttpHeaders | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse:
@@ -209,14 +211,17 @@ def build_response(  # noqa: WPS211
             'Cannot pass both `method=None` and `status_code=Empty`',
         )
 
-    response_headers = {} if headers is None else headers
-    if 'Content-Type' not in response_headers:
-        response_headers['Content-Type'] = serializer.content_type
+    response_headers: MultiValueDict[str, Any] = (
+        MultiValueDict[str, Any]()
+        if headers is None
+        else MultiValueDict[str, Any](headers)
+    )
+    response_headers.setdefault('Content-Type', serializer.content_type)
 
     response = HttpResponse(
         content=serializer.serialize(raw_data),
         status=status,
-        headers=response_headers,
+        headers=HttpHeaders(response_headers),
     )
     if cookies:
         for cookie_key, new_cookie in cookies.items():

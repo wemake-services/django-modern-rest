@@ -1,6 +1,9 @@
 import dataclasses
 from typing import TYPE_CHECKING, Any, final
 
+from django.http.request import HttpHeaders
+from django.utils.datastructures import MultiValueDict
+
 if TYPE_CHECKING:
     from django_modern_rest.response import ResponseModification
     from django_modern_rest.serialization import BaseSerializer
@@ -68,13 +71,14 @@ class HeaderSpec(_BaseResponseHeader):
 def build_headers(
     modification: 'ResponseModification',
     serializer: type['BaseSerializer'],
-) -> dict[str, str]:
+) -> HttpHeaders:
     """Returns headers with values for raw data endpoints."""
-    result_headers: dict[str, Any] = {'Content-Type': serializer.content_type}
-    if not modification.headers:
-        return result_headers
-    result_headers.update({
-        header_name: response_header.value
-        for header_name, response_header in modification.headers.items()
+    result_headers: MultiValueDict[str, Any] = MultiValueDict({
+        'Content-Type': serializer.content_type,
     })
-    return result_headers
+    if modification.headers:
+        result_headers.update({
+            header_name: response_header.value
+            for header_name, response_header in modification.headers.items()
+        })
+    return HttpHeaders(result_headers)

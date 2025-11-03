@@ -11,6 +11,7 @@ from typing import (
 )
 
 from django.http import HttpResponse
+from django.http.request import HttpHeaders
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.exceptions import (
@@ -255,5 +256,5 @@ class _ValidationContext:
 
     raw_data: Any  # not empty
     status_code: HTTPStatus
-    headers: dict[str, str]
+    headers: HttpHeaders
     cookies: Mapping[str, NewCookie] | None

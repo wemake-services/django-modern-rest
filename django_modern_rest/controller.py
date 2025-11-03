@@ -10,6 +10,7 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse
+from django.http.request import HttpHeaders
 from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
@@ -181,7 +182,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         self,
         raw_data: Any,
         *,
-        headers: dict[str, str] | None = None,
+        headers: HttpHeaders | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
     ) -> HttpResponse:
@@ -209,7 +210,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | None = None,
+        headers: HttpHeaders | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> HttpResponse:
         """
