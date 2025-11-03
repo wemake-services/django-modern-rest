@@ -23,8 +23,7 @@ from django_modern_rest.serialization import (
     BaseSerializer,
 )
 from django_modern_rest.settings import (
-    DMR_DESERIALIZE_KEY,
-    DMR_SERIALIZE_KEY,
+    Settings,
     resolve_setting,
 )
 
@@ -97,7 +96,7 @@ class MsgspecSerializer(BaseSerializer):
     @classmethod
     def serialize(cls, structure: Any) -> bytes:
         """Convert any object to json bytestring."""
-        serialize = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
+        serialize = resolve_setting(Settings.serialize, import_string=True)
         return serialize(  # type: ignore[no-any-return]
             structure,
             cls.serialize_hook,
@@ -111,7 +110,7 @@ class MsgspecSerializer(BaseSerializer):
 
         TypeAdapter used for type validation is cached for further uses.
         """
-        deserialize = resolve_setting(DMR_DESERIALIZE_KEY, import_string=True)
+        deserialize = resolve_setting(Settings.deserialize, import_string=True)
         return deserialize(
             buffer,
             cls.deserialize_hook,

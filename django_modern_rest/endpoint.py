@@ -26,7 +26,7 @@ from django_modern_rest.openapi.objects import (
 from django_modern_rest.response import APIError, ResponseSpec, build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    DMR_GLOBAL_ERROR_HANDLER_KEY,
+    Settings,
     resolve_setting,
 )
 from django_modern_rest.validation import (
@@ -334,7 +334,7 @@ class Endpoint:  # noqa: WPS214
         If not class level error handling has happened.
         """
         return resolve_setting(  # type: ignore[no-any-return]
-            DMR_GLOBAL_ERROR_HANDLER_KEY,
+            Settings.global_error_handler,
             import_string=True,
         )(blueprint, self, exc)
 

@@ -51,15 +51,15 @@ def openapi_spec(
 
 def _default_config() -> OpenAPIConfig:
     from django_modern_rest.settings import (  # noqa: PLC0415
-        DMR_OPENAPI_CONFIG_KEY,
+        Settings,
         resolve_setting,
     )
 
-    config = resolve_setting(DMR_OPENAPI_CONFIG_KEY)
+    config = resolve_setting(Settings.openapi_config)
     if not isinstance(config, OpenAPIConfig):
         raise TypeError(
             'OpenAPI config is not set. Please, set the '
-            f'{DMR_OPENAPI_CONFIG_KEY!r} setting.',
+            f'{str(Settings.openapi_config)!r} setting.',
         )
     return config
 
