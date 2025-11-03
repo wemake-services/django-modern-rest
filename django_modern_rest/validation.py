@@ -40,9 +40,8 @@ from django_modern_rest.response import (
 )
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    DMR_RESPONSES_KEY,
-    DMR_VALIDATE_RESPONSES_KEY,
     MAX_CACHE_SIZE,
+    Settings,
     resolve_setting,
 )
 from django_modern_rest.types import (
@@ -273,7 +272,7 @@ def _is_validation_enabled(
     if controller.validate_responses is not None:
         return controller.validate_responses
     return resolve_setting(  # type: ignore[no-any-return]
-        DMR_VALIDATE_RESPONSES_KEY,
+        Settings.validate_responses,
     )
 
 
@@ -681,7 +680,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                     if controller_cls is None
                     else controller_cls.semantic_responses()
                 ),
-                *resolve_setting(DMR_RESPONSES_KEY),
+                *resolve_setting(Settings.responses),
             ],
         )
 

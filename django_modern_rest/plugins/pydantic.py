@@ -32,9 +32,8 @@ from django_modern_rest.serialization import (
     BaseSerializer,
 )
 from django_modern_rest.settings import (
-    DMR_DESERIALIZE_KEY,
-    DMR_SERIALIZE_KEY,
     MAX_CACHE_SIZE,
+    Settings,
     resolve_setting,
 )
 
@@ -159,7 +158,7 @@ class PydanticSerializer(BaseSerializer):
     @classmethod
     def serialize(cls, structure: Any) -> bytes:
         """Convert any object to json bytestring."""
-        serialize = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
+        serialize = resolve_setting(Settings.serialize, import_string=True)
         try:
             return serialize(  # type: ignore[no-any-return]
                 structure,
@@ -184,7 +183,7 @@ class PydanticSerializer(BaseSerializer):
 
         TypeAdapter used for type validation is cached for further uses.
         """
-        deserialize = resolve_setting(DMR_DESERIALIZE_KEY, import_string=True)
+        deserialize = resolve_setting(Settings.deserialize, import_string=True)
         return deserialize(
             buffer,
             cls.deserialize_hook,
