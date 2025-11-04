@@ -10,7 +10,6 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse
-from django.http.request import HttpHeaders
 from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
@@ -21,6 +20,7 @@ from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
+from django_modern_rest.headers import HeaderDict
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import (
     ResponseSpec,
@@ -182,7 +182,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         self,
         raw_data: Any,
         *,
-        headers: HttpHeaders | None = None,
+        headers: HeaderDict | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
     ) -> HttpResponse:
@@ -210,7 +210,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         status_code: HTTPStatus,
-        headers: HttpHeaders | None = None,
+        headers: HeaderDict | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> HttpResponse:
         """

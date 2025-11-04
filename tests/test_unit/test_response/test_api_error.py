@@ -13,6 +13,7 @@ from django_modern_rest import (
     modify,
     validate,
 )
+from django_modern_rest.headers import HeaderDict
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -96,7 +97,7 @@ class _InvalidAPIError(Controller[PydanticSerializer]):
         raise APIError(
             1,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
-            headers={'X-API': '1'},
+            headers=HeaderDict({'X-API': '1'}),
         )
 
 

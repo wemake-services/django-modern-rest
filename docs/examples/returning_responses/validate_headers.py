@@ -12,6 +12,7 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
+from django_modern_rest.headers import HeaderDict
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
@@ -44,5 +45,5 @@ class UserController(
         return self.to_response(
             self.parsed_body,
             status_code=HTTPStatus.OK,
-            headers=headers,
+            headers=HeaderDict(headers),
         )

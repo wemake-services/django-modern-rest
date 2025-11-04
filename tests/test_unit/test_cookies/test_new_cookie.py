@@ -16,6 +16,7 @@ from django_modern_rest import (
     modify,
     validate,
 )
+from django_modern_rest.headers import HeaderDict
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 
@@ -69,7 +70,7 @@ class _CookieValidateController(Controller[PydanticSerializer]):
     def get(self) -> HttpResponse:
         return self.to_response(
             [1, 2],
-            headers={'X-Session-Id': 'abc'},
+            headers=HeaderDict({'X-Session-Id': 'abc'}),
             cookies={
                 'session_id': NewCookie(value='123', max_age=1000),
                 'user_id': NewCookie(value='456', httponly=True),
