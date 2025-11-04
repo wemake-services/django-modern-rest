@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping, Set
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -12,11 +12,10 @@ from typing import (
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.exceptions import ResponseSerializationError
-from django_modern_rest.headers import (
-    NewHeader,
-)
+from django_modern_rest.headers import NewHeader
 from django_modern_rest.openapi.objects import (
     Callback,
     ExternalDocumentation,
@@ -24,10 +23,11 @@ from django_modern_rest.openapi.objects import (
     SecurityRequirement,
     Server,
 )
-from django_modern_rest.response import APIError, ResponseSpec
+from django_modern_rest.response import APIError, ResponseSpec, build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    DMR_GLOBAL_ERROR_HANDLER_KEY,
+    HttpSpec,
+    Settings,
     resolve_setting,
 )
 from django_modern_rest.validation import (
@@ -85,7 +85,7 @@ class Endpoint:  # noqa: WPS214
             controller_cls: ``Controller`` class that this endpoint
                 might belong to.
 
-        .. error::
+        .. danger::
 
             Endpoint object must not have any mutable instance state,
             because its instance is reused for all requests.
@@ -316,10 +316,12 @@ class Endpoint:  # noqa: WPS214
             controller,
             raw_data,
         )
-        return HttpResponse(
-            content=controller.serializer.serialize(validated.raw_data),
-            status=validated.status_code,
+        return build_response(
+            controller.serializer,
+            raw_data=validated.raw_data,
+            status_code=validated.status_code,
             headers=validated.headers,
+            cookies=validated.cookies,
         )
 
     def _handle_default_error(
@@ -333,7 +335,7 @@ class Endpoint:  # noqa: WPS214
         If not class level error handling has happened.
         """
         return resolve_setting(  # type: ignore[no-any-return]
-            DMR_GLOBAL_ERROR_HANDLER_KEY,
+            Settings.global_error_handler,
             import_string=True,
         )(blueprint, self, exc)
 
@@ -350,6 +352,7 @@ def validate(  # noqa: WPS234
     *responses: ResponseSpec,
     error_handler: AsyncErrorHandlerT,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -364,6 +367,7 @@ def validate(
     *responses: ResponseSpec,
     error_handler: SyncErrorHandlerT,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
@@ -377,6 +381,7 @@ def validate(
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
 ) -> Callable[
@@ -390,6 +395,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -454,6 +460,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        no_validate_http_spec: Set of http spec validation checks
+            that we disable for this endpoint.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         allow_custom_http_methods: Should we allow custom HTTP
@@ -489,6 +497,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
+            no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
             summary=summary,
@@ -579,8 +588,10 @@ def modify(
     error_handler: AsyncErrorHandlerT,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -600,8 +611,10 @@ def modify(
     error_handler: SyncErrorHandlerT,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
     description: str | None = None,
@@ -620,8 +633,10 @@ def modify(
     *,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -640,8 +655,10 @@ def modify(  # noqa: WPS211
     *,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
     summary: str | None = None,
@@ -677,13 +694,15 @@ def modify(  # noqa: WPS211
             based on the HTTP method name for default returned response.
         headers: Shows *headers* in the documentation.
             When *headers* are passed we will add them for the default response.
-            Use non-empty ``value`` parameter
-            of :data:`django_modern_rest.headers.ResponseHeadersT` object.
+        cookies: Shows *cookies* in the documentation.
+            When *cookies* are passed we will add them for the default response.
         extra_responses: List of extra responses that this endpoint can return.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        no_validate_http_spec: Set of http spec validation checks
+            that we disable for this endpoint.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         allow_custom_http_methods: Should we allow custom HTTP
@@ -711,7 +730,6 @@ def modify(  # noqa: WPS211
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
 
-
     Returns:
         The same function with ``__payload__`` payload instance.
 
@@ -724,8 +742,10 @@ def modify(  # noqa: WPS211
         payload=ModifyEndpointPayload(
             status_code=status_code,
             headers=headers,
+            cookies=cookies,
             responses=extra_responses,
             validate_responses=validate_responses,
+            no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
             summary=summary,

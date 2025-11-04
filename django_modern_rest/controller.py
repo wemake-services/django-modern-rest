@@ -1,4 +1,4 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from typing import (
     Any,
@@ -15,6 +15,7 @@ from django.views import View
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import ComponentParser
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
@@ -25,6 +26,7 @@ from django_modern_rest.response import (
     build_response,
 )
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
+from django_modern_rest.settings import HttpSpec
 from django_modern_rest.types import (
     infer_bases,
     infer_type_args,
@@ -76,6 +78,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             one big model for faster validation and better error messages.
         validator_cls: Runs controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
+        no_validate_http_spec: Set of http spec validation checks
+            that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
         responses: List of responses schemas that this controller can return.
@@ -100,12 +104,12 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         SerializerContext
     )
     validator_cls: ClassVar[type[BlueprintValidator]] = BlueprintValidator
-    # str and not HTTPMethod, because of `meta` method:
     api_endpoints: ClassVar[dict[str, Endpoint]]
+    no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     responses: ClassVar[list[ResponseSpec]] = []
     responses_from_components: ClassVar[bool] = True
-    http_methods: ClassVar[frozenset[str]] = frozenset(
+    http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
@@ -178,6 +182,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         headers: dict[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
     ) -> HttpResponse:
         """
@@ -195,6 +200,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             method=self.request.method,
             raw_data=raw_data,
             headers=headers,
+            cookies=cookies,
             status_code=status_code,
         )
 
@@ -204,6 +210,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         *,
         status_code: HTTPStatus,
         headers: dict[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert API error parts into an actual error.
@@ -218,6 +225,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             self.serializer,
             raw_data=raw_data,
             headers=headers,
+            cookies=cookies,
             status_code=status_code,
         )
 
@@ -334,6 +342,8 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             one big model for faster validation and better error messages.
         validator_cls: Runs controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
+        no_validate_http_spec: Set of http spec validation checks
+            that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
         responses: List of responses schemas that this controller can return.

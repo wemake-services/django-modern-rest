@@ -12,7 +12,7 @@
 [![codecov](https://codecov.io/gh/wemake-services/django-modern-rest/branch/master/graph/badge.svg)](https://codecov.io/gh/wemake-services/django-modern-rest)
 [![Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
-[![Ask DeepWiki](https://img.shields.io/badge/Ask_DeepWiki-blue)](https://deepwiki.com/wemake-services/django-modern-rest)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wemake-services/django-modern-rest)
 </div>
 
 ## Features
@@ -35,8 +35,8 @@
 ---------
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="100%" height="auto" />
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmakr - Dark" width="100%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="80%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmakr - Dark" width="80%" height="auto" />
 </div>
 
 <p align="center">

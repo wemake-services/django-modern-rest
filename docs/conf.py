@@ -64,12 +64,15 @@ extensions = [
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
+    'auto_pytabs.sphinx_ext',
     'sphinx_design',
     'sphinx_copybutton',
     'sphinx_contributors',
     'sphinx_tabs.tabs',
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
+    # custom extensions
+    'docs.tools.sphinx_ext',
 ]
 
 
@@ -187,12 +190,16 @@ html_context = {
     'source_type': 'github',
     'source_user': 'wemake-services',
     'source_repo': 'django-modern-rest',
+    'source_version': 'master',
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_js_files = [
+    'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
+]
 
 
 def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:

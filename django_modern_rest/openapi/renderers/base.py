@@ -26,11 +26,11 @@ def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
         JSON string representation of the schema.
     """
     from django_modern_rest.settings import (  # noqa: PLC0415
-        DMR_SERIALIZE_KEY,
+        Settings,
         resolve_setting,
     )
 
-    serialize = resolve_setting(DMR_SERIALIZE_KEY, import_string=True)
+    serialize = resolve_setting(Settings.serialize, import_string=True)
     return serialize(schema, None).decode('utf-8')  # type: ignore[no-any-return]
 
 

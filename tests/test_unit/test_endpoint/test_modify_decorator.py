@@ -232,3 +232,24 @@ def test_modify_async_endpoint_error_for_sync() -> None:
             )
             def get(self) -> int:
                 raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    'header_name',
+    [
+        'Set-Cookie',
+        'set-cookie',
+        'SET-COOKIE',
+    ],
+)
+def test_modify_with_set_cookie(header_name: str) -> None:
+    """@modify with Set-Cookie in headers= raise EndpointMetadataError."""
+    with pytest.raises(EndpointMetadataError, match=header_name):
+
+        class _SetCookieHeaderController(Controller[PydanticSerializer]):
+            @modify(
+                status_code=HTTPStatus.OK,
+                headers={header_name: NewHeader(value='session=abc123')},
+            )
+            def post(self) -> dict[str, str]:
+                return {'result': 'done'}  # pragma: no cover

@@ -1,15 +1,12 @@
+import enum
 import os
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Final
+from typing import Any, Final, final
 
 from django.utils import module_loading
 
 from django_modern_rest.openapi.config import OpenAPIConfig
-
-if TYPE_CHECKING:
-    from django_modern_rest.types import DMRSettings
-
 
 # Settings with env vars only
 # ---------------------------
@@ -23,49 +20,76 @@ MAX_CACHE_SIZE: Final = int(os.environ.get('DMR_MAX_CACHE_SIZE', '256'))
 #: Base name for `django-modern-rest` settings.
 DMR_SETTINGS: Final = 'DMR_SETTINGS'
 
-#: Names for different settings:
-DMR_SERIALIZE_KEY: Final = 'serialize'
-DMR_DESERIALIZE_KEY: Final = 'deserialize'
-DMR_VALIDATE_RESPONSES_KEY: Final = 'validate_responses'
-DMR_RESPONSES_KEY: Final = 'responses'
-DMR_GLOBAL_ERROR_HANDLER_KEY: Final = 'global_error_handler'
-DMR_OPENAPI_CONFIG_KEY: Final = 'openapi_config'
 
-#: Default json serializer.
-DMR_SERIALIZE: Final = 'django_modern_rest.internal.json.serialize'
+@final
+@enum.unique
+class Settings(enum.StrEnum):
+    """Keys for all settings."""
 
-#: Default json deserializer.
-DMR_DESERIALIZE: Final = 'django_modern_rest.internal.json.deserialize'
-
-#: Default error handler.
-DMR_GLOBAL_ERROR_HANDLER: Final = (
-    'django_modern_rest.errors.global_error_handler'
-)
-
-#: Default OpenAPI config.
-DMR_OPENAPI_CONFIG: Final = OpenAPIConfig(
-    title='Modern Rest',
-    version='0.1.0',
-)
+    serialize = 'serialize'
+    deserialize = 'deserialize'
+    no_validate_http_spec = 'no_validate_http_spec'
+    validate_responses = 'validate_responses'
+    responses = 'responses'
+    global_error_handler = 'global_error_handler'
+    openapi_config = 'openapi_config'
 
 
-# Typed defaults section
+@final
+@enum.unique
+class HttpSpec(enum.StrEnum):
+    """
+    Keys for our HTTP spec validation.
+
+    All rules can be disabled per endpoint, per blueprint, and per controller.
+    You can disable any of the validation rules we have here globally by:
+
+    .. code:: python
+
+      >>> DMR_SETTINGS = {
+      ...     Settings.no_validate_http_spec: {
+      ...         HttpSpec.empty_response_body,
+      ...     },
+      ... }
+
+    Attributes:
+        empty_request_body: Disables validation that methods
+            like ``GET`` and ``HEAD`` can't have request bodies.
+        empty_response_body: Disables validation that some status codes
+            like ``204`` must not have response bodies.
+
+    """
+
+    empty_request_body = 'empty_request_body'
+    empty_response_body = 'empty_response_body'
 
 
 #: Default settings for `django_modern_rest`.
-_DEFAULTS: Final['DMRSettings'] = {  # noqa: WPS407
-    DMR_SERIALIZE_KEY: DMR_SERIALIZE,
-    DMR_DESERIALIZE_KEY: DMR_DESERIALIZE,
-    DMR_OPENAPI_CONFIG_KEY: DMR_OPENAPI_CONFIG,
+_DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
+    Settings.serialize: 'django_modern_rest.internal.json.serialize',
+    Settings.deserialize: ('django_modern_rest.internal.json.deserialize'),
+    Settings.openapi_config: OpenAPIConfig(
+        title='Django Modern Rest',
+        version='0.1.0',
+    ),
+    # We validate some HTTP spec things by default to be strict,
+    # can be disabled:
+    Settings.no_validate_http_spec: frozenset(),
     # Means that we would run extra validation on the response object.
-    DMR_VALIDATE_RESPONSES_KEY: True,
-    DMR_RESPONSES_KEY: [],  # global responses, for response validation
-    DMR_GLOBAL_ERROR_HANDLER_KEY: DMR_GLOBAL_ERROR_HANDLER,
+    Settings.validate_responses: True,
+    Settings.responses: [],  # global responses, for response validation
+    Settings.global_error_handler: (
+        'django_modern_rest.errors.global_error_handler'
+    ),
 }
+
+assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
+    'Some Settings keys do not have default values'
+)
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
-def resolve_defaults() -> Mapping[str, Any]:
+def _resolve_defaults() -> Mapping[str, Any]:
     """
     Resolve all ``django-modern-rest`` settings with defaults.
 
@@ -80,7 +104,11 @@ def resolve_defaults() -> Mapping[str, Any]:
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
-def resolve_setting(setting_name: str, *, import_string: bool = False) -> Any:
+def resolve_setting(
+    setting_name: Settings,
+    *,
+    import_string: bool = False,
+) -> Any:
     """
     Resolves setting by *setting_name*.
 
@@ -89,9 +117,9 @@ def resolve_setting(setting_name: str, *, import_string: bool = False) -> Any:
     :func:`clear_settings_cache` before and after modifying
     Django settings to ensure the cache is invalidated properly.
     """
-    setting = resolve_defaults().get(
+    setting = _resolve_defaults().get(
         setting_name,
-        _DEFAULTS[setting_name],  # type: ignore[literal-required]
+        _DEFAULTS[setting_name],
     )
     if import_string and isinstance(setting, str):
         return module_loading.import_string(setting)
@@ -104,5 +132,5 @@ def clear_settings_cache() -> None:
 
     Useful for tests, when you modify the global settings object.
     """
-    resolve_defaults.cache_clear()
+    _resolve_defaults.cache_clear()
     resolve_setting.cache_clear()

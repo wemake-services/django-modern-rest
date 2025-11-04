@@ -20,7 +20,7 @@ from django_modern_rest import (
 from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import (
-    DMR_VALIDATE_RESPONSES_KEY,
+    Settings,
     clear_settings_cache,
 )
 from django_modern_rest.test import DMRRequestFactory
@@ -31,7 +31,7 @@ def _disable_response_validation(settings: LazySettings) -> Iterator[None]:
     clear_settings_cache()
 
     settings.DMR_SETTINGS = {
-        DMR_VALIDATE_RESPONSES_KEY: False,
+        Settings.validate_responses: False,
     }
 
     yield
