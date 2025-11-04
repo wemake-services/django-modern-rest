@@ -6,12 +6,13 @@ Controller
 
 .. autoclass:: django_modern_rest.controller.Blueprint
   :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, validator_cls
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls
+  :show-inheritance:
 
 .. autoclass:: django_modern_rest.controller.Controller
   :members:
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, validator_cls
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls
   :show-inheritance:
 
 
@@ -57,9 +58,6 @@ Response, headers and cookies
 
 Validation
 ----------
-
-.. autoclass:: django_modern_rest.validation.BlueprintValidator
-  :members:
 
 .. autoclass:: django_modern_rest.validation.ResponseValidator
 

@@ -1,22 +1,13 @@
 import dataclasses
 from collections.abc import Mapping, Set
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    TypeAlias,
-)
+from typing import TYPE_CHECKING, TypeAlias
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
-from django_modern_rest.headers import (
-    NewHeader,
-)
-from django_modern_rest.response import (
-    ResponseSpec,
-)
-from django_modern_rest.settings import (
-    HttpSpec,
-)
+from django_modern_rest.headers import NewHeader
+from django_modern_rest.response import ResponseSpec
+from django_modern_rest.settings import HttpSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects import (
