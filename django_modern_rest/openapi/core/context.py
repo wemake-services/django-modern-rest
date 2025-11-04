@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING, Any
 
+from django_modern_rest.openapi.core.registry import SchemaRegistry
 from django_modern_rest.openapi.extractors.base import BaseExtractor
 from django_modern_rest.openapi.generators.operation import OperationGenerator
+from django_modern_rest.openapi.objects.reference import Reference
+from django_modern_rest.openapi.objects.schema import Schema
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.config import OpenAPIConfig
@@ -23,21 +26,45 @@ class OpenAPIContext:
         self.config = config
         self._operation_ids: set[str] = set()
 
-        # Initialize generators once with shared context:
-        self.collected_schemas: dict[str, Any] = {}  # For collecting $defs
+        # Initialize registry and generators:
+        self.schema_registry = SchemaRegistry()
         self.operation_generator = OperationGenerator(self)
         self.schema_extractors = BaseExtractor.get_extractors()
 
-        # TODO: Looks like a hack. Can
         # Assign context to extractors so they can collect schemas
         for extractor in self.schema_extractors:
             if hasattr(extractor, 'context'):
                 extractor.context = self  # pyright: ignore[reportAttributeAccessIssue]
 
     def collect_schema(self, name: str, schema: Any) -> None:
-        """Collect a schema to be added to Components."""
-        if name not in self.collected_schemas:
-            self.collected_schemas[name] = schema
+        """
+        Collect a schema to be added to Components.
+
+        This is a convenience method that delegates to the schema registry.
+        It's kept for backward compatibility with existing extractors.
+
+        Args:
+            name: The name/identifier for the schema
+            schema: The Schema object to register (Reference objects are not
+                    registered, as they point to schemas already in the registry)
+
+        Raises:
+            TypeError: If schema is a Reference object or not a Schema object
+        """
+        if isinstance(schema, Reference):
+            raise TypeError(
+                f'Cannot register Reference object as schema. '
+                f'References point to schemas in the registry, they are not '
+                f'registered themselves. Schema name: {name!r}',
+            )
+
+        if not isinstance(schema, Schema):
+            raise TypeError(
+                f'Expected Schema object, got {type(schema).__name__}. '
+                f'Schema name: {name!r}',
+            )
+
+        self.schema_registry.register(name, schema)
 
     def get_extractor(self, type_: Any) -> BaseExtractor:
         """Get extractor by given type."""

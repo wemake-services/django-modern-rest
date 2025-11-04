@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 from django_modern_rest.metadata import EndpointMetadata
