@@ -17,13 +17,13 @@ def test_custom_blueprint_validator_cls() -> None:
         was_called: ClassVar[bool] = False
 
         @override
-        def __call__(self, blueprint: type[Blueprint[BaseSerializer]]) -> bool:
+        def __call__(self, blueprint: type[Blueprint[BaseSerializer]]) -> None:
             self.__class__.was_called = True
             return super().__call__(blueprint)
 
     @final
     class _CustomValidatorBlueprint(Blueprint[PydanticSerializer]):
-        validator_cls: ClassVar[type[BlueprintValidator]] = (
+        blueprint_validator_cls: ClassVar[type[BlueprintValidator]] = (
             _BlueprintValidatorSubclass
         )
 
@@ -39,13 +39,13 @@ def test_custom_controller_validator_cls() -> None:
         was_called: ClassVar[bool] = False
 
         @override
-        def __call__(self, blueprint: type[Blueprint[BaseSerializer]]) -> bool:
+        def __call__(self, blueprint: type[Blueprint[BaseSerializer]]) -> None:
             self.__class__.was_called = True
             return super().__call__(blueprint)
 
     @final
     class _CustomValidatorController(Controller[PydanticSerializer]):
-        validator_cls: ClassVar[type[BlueprintValidator]] = (
+        blueprint_validator_cls: ClassVar[type[BlueprintValidator]] = (
             _BlueprintValidatorSubclass
         )
 
