@@ -16,7 +16,7 @@ class SchemaRegistry:
 
     def __init__(self) -> None:
         """Initialize an empty schema registry."""
-        self._schemas: dict[str, 'Schema'] = {}
+        self._schemas: dict[str, Schema] = {}
 
     def register(self, name: str, schema: 'Schema') -> None:
         """

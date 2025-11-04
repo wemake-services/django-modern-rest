@@ -25,4 +25,4 @@ class ComponentGenerator:
     def generate(self, paths_items: Paths) -> Components:
         """Generate OpenAPI Components from path items."""
         schemas = self.context.schema_registry.all()
-        return Components(schemas=schemas if schemas else None)
+        return Components(schemas=schemas or None)
