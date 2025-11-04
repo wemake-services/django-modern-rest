@@ -38,7 +38,11 @@ Endpoint validation
 Next, when controller is being created,
 we run :class:`~django_modern_rest.endpoint.Endpoint` validation.
 
-Here we can detect all kinds of problems with how endpoints are defined.
+Here we can detect all kinds of problems with how endpoints are defined:
+
+- Invalid :func:`~django_modern_rest.endpoint.modify`
+  or :func:`~django_modern_rest.endpoint.validate` usage
+- Or invalid :class:`~django_modern_rest.settings.HttpSpec` usage
 
 HttpSpec validation
 ~~~~~~~~~~~~~~~~~~~
@@ -80,8 +84,34 @@ per-blueprint, per-controller and globally.
         :emphasize-lines: 6, 11
 
 
+.. autoclass:: django_modern_rest.validation.EndpointMetadataValidator
+
 
 Controller validation
 ---------------------
 
+The last step is the final :class:`~django_modern_rest.controller.Controller`
+validation which has everything ready:
+
+- :attr:`~django_modern_rest.controller.Controller.api_endpoints`
+- :attr:`~django_modern_rest.controller.Controller.blueprints`
+
+Here we validate:
+
+- That all ``blueprints`` have unique methods
+- That all endpoints are either sync or async
+- All per-controller and per-endpoint error handling
+
 .. autoclass:: django_modern_rest.validation.ControllerValidator
+
+
+Response validation
+-------------------
+
+The last step is to validate the response when returning
+it from the endpoint in runtime.
+We need this to make sure that API responses always match response schemas.
+
+It can be :ref:`turned off <response_validation>`.
+
+.. autoclass:: django_modern_rest.validation.ResponseValidator
