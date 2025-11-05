@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import pytest
 from django.http import HttpResponse
@@ -46,7 +46,7 @@ class _TypedDict(TypedDict):
 
 
 if sys.version_info >= (3, 12):
-    exec('type MyInt = int')
+    MyInt: TypeAlias = int
 else:
     MyInt = int
 
