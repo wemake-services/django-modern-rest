@@ -83,7 +83,9 @@ class BaseExtractor:  # noqa: WPS214
         cls._registry.append(cls)
 
     @classmethod
-    def get_extractors(cls, context: 'OpenAPIContext') -> Sequence['BaseExtractor']:
+    def get_extractors(
+        cls, context: 'OpenAPIContext'
+    ) -> Sequence['BaseExtractor']:
         """Get instances of all registered extractors with context."""
         return [extractor_cls(context) for extractor_cls in cls._registry]
 
