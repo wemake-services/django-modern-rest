@@ -69,6 +69,10 @@ class _ResponseListValidator:
         self._validate_header_descriptions(responses)
         self._validate_cookie_descriptions(responses)
         self._validate_cookie_spec_in_responses(responses)
+        if isinstance(self.payload, ModifyEndpointPayload):
+           self._validate_new_cookie_in_modify(
+               self.payload, endpoint=self.endpoint,
+            )
         self._validate_http_spec(responses)
         return self._convert_responses(responses)
 
@@ -386,7 +390,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
         )
         self._validate_new_headers(payload, endpoint=endpoint)
-        self._validate_new_cookie_in_modify(payload, endpoint=endpoint)
         modification = ResponseModification(
             return_type=return_annotation,
             headers=payload.headers,
