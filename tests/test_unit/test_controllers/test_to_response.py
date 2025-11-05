@@ -10,7 +10,6 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
-from django_modern_rest.headers import HeaderDict
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 
@@ -27,7 +26,7 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         """Tests that `.to_response` works correctly."""
         return self.to_response(
             ['a', 'b'],
-            headers=HeaderDict({'X-Custom': 'value'}),
+            headers={'X-Custom': 'value'},
             status_code=HTTPStatus.ACCEPTED,
         )
 
@@ -42,10 +41,10 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         """Tests that `.to_response` works with extra headers."""
         return self.to_response(
             ['a', 'b'],
-            headers=HeaderDict({
+            headers={
                 'X-Custom': 'value',
                 'Content-Type': 'application/json5',
-            }),
+            },
         )
 
     @validate(
@@ -71,7 +70,7 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         """Wrong body format."""
         return self.to_response(
             [1, 2],
-            headers=HeaderDict({'X-Custom': 'value'}),
+            headers={'X-Custom': 'value'},
             status_code=HTTPStatus.ACCEPTED,
         )
 
@@ -100,7 +99,7 @@ class _WrongToResponseController(Controller[PydanticSerializer]):
         """Wrong status code."""
         return self.to_response(
             ['a', 'b'],
-            headers=HeaderDict({'X-Custom': 'value'}),
+            headers={'X-Custom': 'value'},
         )
 
 

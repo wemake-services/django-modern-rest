@@ -9,7 +9,6 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
-from django_modern_rest.headers import HeaderDict
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
 
 
@@ -33,9 +32,9 @@ class SettingsController(Controller[MsgspecSerializer]):
         return self.to_response(
             None,
             status_code=HTTPStatus.NO_CONTENT,
-            headers=HeaderDict({
+            headers={
                 'Allow': ', '.join(
                     method for method in sorted(self.api_endpoints.keys())
                 ),
-            }),
+            },
         )
