@@ -43,7 +43,7 @@ package:
 
 .PHONY: readme-test
 readme-test:
-	cd django_test_app && DJANGO_SETTINGS_MODULE="server.settings" python -m doctest ../README.md
+	cd django_test_app && DJANGO_SETTINGS_MODULE="server.settings" poetry run python -m doctest ../README.md
 
 .PHONY: test
 test: lint type-check example spell-check package smoke unit readme-test
