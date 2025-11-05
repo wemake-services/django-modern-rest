@@ -70,8 +70,9 @@ class _ResponseListValidator:
         self._validate_cookie_descriptions(responses)
         self._validate_cookie_spec_in_responses(responses)
         if isinstance(self.payload, ModifyEndpointPayload):
-           self._validate_new_cookie_in_modify(
-               self.payload, endpoint=self.endpoint,
+            self._validate_new_cookie_in_modify(
+                self.payload,
+                endpoint=self.endpoint,
             )
         self._validate_http_spec(responses)
         return self._convert_responses(responses)
