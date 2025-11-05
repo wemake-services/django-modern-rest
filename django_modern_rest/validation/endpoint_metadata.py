@@ -14,6 +14,7 @@ from typing import (
 
 from django.http import HttpResponse
 
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
 )
@@ -21,7 +22,6 @@ from django_modern_rest.headers import (
     HeaderSpec,
     NewHeader,
 )
-from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.response import (
     ResponseModification,
@@ -108,7 +108,7 @@ class _ResponseListValidator:
                     f'Cannot use `NewHeader` in {response} , '
                     f'use `HeaderSpec` instead in {self.endpoint!r}',
                 )
-            
+
     def _validate_cookie_spec_in_responses(
         self,
         responses: _AllResponses,

@@ -15,8 +15,8 @@ from django_modern_rest import (
     ResponseSpec,
     modify,
 )
-from django_modern_rest.cookies import CookieSpec
 from django_modern_rest.controller import BlueprintsT
+from django_modern_rest.cookies import CookieSpec
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -67,7 +67,8 @@ def test_modify_with_header_description() -> None:
             )
             def get(self) -> int:
                 raise NotImplementedError
-            
+
+
 def test_modify_with_cookie_description() -> None:
     """Ensures `@modify` can't be used with `CookieSpec`."""
     with pytest.raises(EndpointMetadataError, match='CookieSpec'):
