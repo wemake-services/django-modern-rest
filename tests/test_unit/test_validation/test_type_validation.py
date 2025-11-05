@@ -44,10 +44,12 @@ def _build_rest(typ: Any) -> Callable[..., Any]:
 class _TypedDict(TypedDict):
     age: int
 
+
 if sys.version_info >= (3, 12):
-    exec("type MyInt = int")
+    exec('type MyInt = int')
 else:
     MyInt = int
+
 
 @pytest.mark.parametrize(
     ('typ', 'raw_data'),
@@ -65,13 +67,14 @@ else:
         (None, None),
         (Any, None),
         pytest.param(
-           MyInt, 1,
-           marks=pytest.mark.skipif(
-               sys.version_info < (3, 12),
-               reason="New type alias syntax supported only in Python 3.12+",
-           ),
-           id="type_alias",
-       ),
+            MyInt,
+            1,
+            marks=pytest.mark.skipif(
+                sys.version_info < (3, 12),
+                reason='New type alias syntax supported only in Python 3.12+',
+            ),
+            id='type_alias',
+        ),
     ],
 )
 @pytest.mark.parametrize(
