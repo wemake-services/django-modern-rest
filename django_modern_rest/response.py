@@ -7,7 +7,7 @@ from django.http import HttpResponse
 
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.headers import (
-    HeaderDict,
+    HeaderLike,
     HeaderSpec,
     NewHeader,
 )
@@ -59,7 +59,7 @@ class APIError(Exception, Generic[_ItemT]):
         raw_data: _ItemT,
         *,
         status_code: HTTPStatus,
-        headers: HeaderDict | None = None,
+        headers: HeaderLike | None = None,
     ) -> None:
         """Create response from parts."""
         super().__init__()
@@ -163,7 +163,7 @@ def build_response(
     *,
     raw_data: Any,
     method: HTTPMethod | str,
-    headers: HeaderDict | None = None,
+    headers: HeaderLike | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse: ...
@@ -176,7 +176,7 @@ def build_response(
     raw_data: Any,
     status_code: HTTPStatus,
     method: None = None,
-    headers: HeaderDict | None = None,
+    headers: HeaderLike | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
 ) -> HttpResponse: ...
 
@@ -186,7 +186,7 @@ def build_response(  # noqa: WPS211
     *,
     raw_data: Any,
     method: HTTPMethod | str | None = None,
-    headers: HeaderDict | None = None,
+    headers: HeaderLike | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse:
@@ -210,13 +210,14 @@ def build_response(  # noqa: WPS211
             'Cannot pass both `method=None` and `status_code=Empty`',
         )
 
-    headers = HeaderDict() if headers is None else headers
-    headers.setdefault('Content-Type', serializer.content_type)
+    response_headers = {} if headers is None else headers
+    if 'Content-Type' not in response_headers:
+        response_headers['Content-Type'] = serializer.content_type
 
     response = HttpResponse(
         content=serializer.serialize(raw_data),
         status=status,
-        headers=headers,
+        headers=response_headers,
     )
     if cookies:
         for cookie_key, new_cookie in cookies.items():

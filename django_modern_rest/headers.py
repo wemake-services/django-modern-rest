@@ -1,11 +1,23 @@
 import dataclasses
 from collections import UserDict
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, NoReturn, cast, final, override
+from collections.abc import Iterable, Mapping, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    NoReturn,
+    TypeAlias,
+    Union,
+    final,
+    override,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.response import ResponseModification
     from django_modern_rest.serialization import BaseSerializer
+
+HeaderLike: TypeAlias = Union['HeaderDict', dict[str, str]]
+StrOrIterstr: TypeAlias = str | Iterable[str]
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -89,8 +101,11 @@ class HeaderDict(UserDict[str, Any]):
     Dictionary-like container for HTTP headers with case-normalized keys.
 
     Header keys are automatically converted to Title-Case format (e.g.
-    ``"content-type"`` → ``"Content-Type"``). Values are stored as lists
-    of strings to allow multi-valued headers.
+    ``"content-type"`` -> ``"Content-Type"``). Values are stored as strings
+    separated by a comma to allow multi-valued headers.
+
+    Use `add(key, val)` or `extend(key, vals)`
+    to append values without replacing.
 
     Examples:
         >>> h = HeaderDict()
@@ -98,66 +113,126 @@ class HeaderDict(UserDict[str, Any]):
         >>> h['Content-Type']
         'application/json'
         >>> h['ACCEPT'] = 'text/html'
-        >>> h['accept'] += ',application/json'
+        >>> h.add('accept', 'application/json')
         >>> h['Accept']
         'text/html,application/json'
         >>> h[1]
         Traceback (most recent call last):
             ...
-        TypeError: Headers keys must be `str`
+        TypeError: Header keys must be `str`
         >>> h['x-my-header'] = 1
         Traceback (most recent call last):
             ...
-        TypeError: Headers values must be `str` or `Sequence[str]`
+        TypeError: Header values must be `str` or `Sequence[str]`
     """
+
+    _titled_keys_cache: ClassVar[dict[str, str]] = {}
+
+    @override
+    def __init__(
+        self,
+        /,
+        data: Mapping[str, StrOrIterstr]
+        | Iterable[tuple[str, StrOrIterstr]]
+        | None = None,
+        **kwargs: StrOrIterstr,
+    ) -> None:
+        """Create a HeaderDict."""
+        super().__init__()
+
+        if data:
+            for k, v in data.items() if isinstance(data, Mapping) else data:  # type: ignore
+                self.add(k, v)  # type: ignore
+
+        if kwargs:
+            for k, v in kwargs.items():
+                self.add(k, v)
 
     @override
     def __getitem__(self, key: str) -> str:
         """Return the values associated with the key case insensetively."""
-        return cast(str, super().__getitem__(self._make_key(key)))
+        return self.data[self._make_key(key)]
 
     @override
-    def __setitem__(
-        self,
-        key: str,
-        item_to_set: str | Sequence[str] | Any,
-    ) -> None:
+    def __setitem__(self, key: str, item_to_set: StrOrIterstr | Any) -> None:
         """Set values for the given header key case insensetively."""
         is_str = isinstance(item_to_set, str)
-        if not is_str and not isinstance(item_to_set, Sequence):
-            raise TypeError('Headers values must be `str` or `Sequence[str]`')
+        if not is_str and not isinstance(item_to_set, (list, tuple, Sequence)):
+            raise TypeError('Header values must be `str` or `Sequence[str]`')
         key = self._make_key(key)
-        item_to_set = (
-            [item_to_set]
-            if is_str
-            else [str(subitem) for subitem in item_to_set]  # pyright: ignore[reportUnknownVariableType,reportUnknownArgumentType]
-        )
-        return super().__setitem__(key, ','.join(item_to_set))
+        if is_str:
+            self.data[key] = item_to_set
+        else:
+            self.data[key] = ','.join(item_to_set)
 
     @override
-    def __contains__(self, key: object) -> bool:
+    def __contains__(self, key: Any) -> bool:
         """Check if key is present case insensetively."""
-        key = self._make_key(key)  # type: ignore[arg-type]  # allow this to raise
-        return super().__contains__(key)
+        return self._make_key(key) in self.data
 
     @override
     def __delitem__(self, key: str) -> None:  # noqa: WPS603
         """Delete key from headers case insensetively."""
-        return super().__delitem__(self._make_key(key))
+        self.data.pop(self._make_key(key), None)
 
     @override
-    def __or__(
-        self,
-        _: Any,
-    ) -> NoReturn:
-        raise NotImplementedError
+    def __or__(self, other: Any) -> NoReturn:  # type: ignore[override]
+        raise NotImplementedError(
+            'Union operations are not supported for HeaderDict',
+        )
 
-    __ior__ = __or__  # pyright: ignore[reportAssignmentType]
+    __ior__ = __or__  # type: ignore[assignment]
+
+    @override
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.data})'
+
+    def add(self, key: str, value: StrOrIterstr) -> None:
+        """
+        Append value(s) to the header `key`. Creates the key if missing.
+
+        - If `value` is a str, it will be split on commas and appended.
+        - If `value` is a sequence, each item will be appended.
+        """
+        key_n = self._make_key(key)
+
+        if isinstance(value, str):
+            value = value.split(',')
+        elif isinstance(value, (list, tuple, Iterable)):
+            try:
+                value = [striped for x in value if (striped := x.strip())]
+            except AttributeError as exc:
+                raise TypeError(
+                    'Header values must be `str` or `Sequence[str]`',
+                ) from exc
+        else:
+            raise TypeError('Header values must be `str` or `Sequence[str]`')
+
+        if key_n in self.data:
+            self.data[key_n] = ','.join((self.data[key_n]).split(',') + value)
+        else:
+            self.data[key_n] = ','.join(value)
+
+    @override
+    def update(
+        self,
+        pairs: Mapping[str, StrOrIterstr] | Iterable[tuple[str, StrOrIterstr]],
+        /,
+    ) -> None:
+        """Extend using an iterable of pairs appending repeated keys."""
+        for k, v in (
+            pairs.items() if isinstance(pairs, (dict, Mapping)) else pairs
+        ):  # type: ignore
+            self.add(k, v)  # type: ignore
 
     @classmethod
-    def _make_key(cls, key: str) -> str:
-        if not isinstance(key, str):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise TypeError('Headers keys must be `str`')
-        if key.istitle():
-            return key
-        return key.title()
+    def _make_key(cls, key: Any) -> str:
+        if not isinstance(key, str):
+            raise TypeError('Header keys must be `str`')
+        if key in cls._titled_keys_cache:
+            return cls._titled_keys_cache[key]
+        if not key.istitle():
+            key_titled = key.title()
+            cls._titled_keys_cache[key] = key_titled
+            key = key_titled
+        return key

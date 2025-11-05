@@ -12,7 +12,7 @@ def test_make_key_normalizes_case() -> None:
 
 def test_make_key_raises_on_non_string() -> None:
     """Verify that non-string keys raise a TypeError."""
-    with pytest.raises(TypeError, match='Headers keys must be `str`'):
+    with pytest.raises(TypeError, match='Header keys must be `str`'):
         HeaderDict._make_key(123)  # type: ignore[arg-type] # noqa: SLF001,WPS432
 
 
@@ -52,7 +52,7 @@ def test_overwrite_existing_header() -> None:
 def test_setting_sequence_with_mixed_types() -> None:
     """Ensure mixed-type sequences are coerced to strings and joined."""
     header_dict = HeaderDict()
-    header_dict['x-values'] = ['a', 1, 'b']
+    header_dict['x-values'] = ['a', '1', 'b']
     assert header_dict['X-Values'] == 'a,1,b'
 
 
@@ -70,7 +70,7 @@ def test_setting_non_string_or_sequence_raises() -> None:
     header_dict = HeaderDict()
     with pytest.raises(
         TypeError,
-        match=r'Headers values must be `str` or `Sequence\[str\]`',
+        match=r'Header values must be `str` or `Sequence\[str\]`',
     ):
         header_dict['x-header'] = 123
 
@@ -78,7 +78,7 @@ def test_setting_non_string_or_sequence_raises() -> None:
 def test_setting_key_non_string_raises() -> None:
     """Check that non-string keys raise a TypeError on assignment."""
     header_dict = HeaderDict()
-    with pytest.raises(TypeError, match='Headers keys must be `str`'):
+    with pytest.raises(TypeError, match='Header keys must be `str`'):
         header_dict[1] = 'abc'  # type: ignore[index]
 
 

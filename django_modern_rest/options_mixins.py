@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Final
 from django.http import HttpResponse
 
 from django_modern_rest.endpoint import validate
-from django_modern_rest.headers import HeaderDict, HeaderSpec
+from django_modern_rest.headers import HeaderSpec
 from django_modern_rest.response import ResponseSpec
 
 if TYPE_CHECKING:
@@ -89,5 +89,5 @@ def _meta_impl(controller: 'Controller[BaseSerializer]') -> HttpResponse:
     return controller.to_response(
         raw_data=None,
         status_code=HTTPStatus.NO_CONTENT,
-        headers=HeaderDict({'Allow': allow}),
+        headers={'Allow': allow},
     )
