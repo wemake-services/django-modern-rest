@@ -103,15 +103,9 @@ Example Workflow
 
 Let's say you have this URL configuration:
 
-.. code:: python
-
-    from django_modern_rest import Router, path
-
-    router = Router([
-        path('api/v1/users/', views.UserList.as_view()),
-        path('api/v1/posts/', views.PostList.as_view()),
-        path('api/v1/users/<int:id>/', views.UserDetail.as_view()),
-    ])
+.. literalinclude:: /examples/routing/simple_router.py
+  :caption: urls.py
+  :lines: 3-
 
 .. code-block::
   :caption: Traditional Django ``path()`` behavior
