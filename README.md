@@ -102,6 +102,7 @@ The shortest example:
 ...         """All added props have the correct runtime and static types."""
 ...         assert self.parsed_headers.consumer == 'my-api'
 ...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+
 ```
 
 And then route this controller in your `urls.py`:
@@ -116,6 +117,7 @@ And then route this controller in your `urls.py`:
 >>> urlpatterns = [
 ...     path('api/', include((router.urls, 'your_app'), namespace='api')),
 ... ]
+
 ```
 
 Done! Now you have your shiny API with 100% type
