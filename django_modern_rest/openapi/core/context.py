@@ -40,8 +40,8 @@ class OpenAPIContext:
 
         Args:
             name: The name/identifier for the schema
-            schema: The Schema object to register (Reference objects are not
-                    registered, as they point to schemas already in the registry)
+            schema: The Schema object to register .Reference objects are not
+                    registered, as they point to schemas already in the registry
 
         Raises:
             TypeError: If schema is a Reference object or not a Schema object

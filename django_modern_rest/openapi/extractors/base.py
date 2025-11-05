@@ -73,17 +73,20 @@ class BaseExtractor:  # noqa: WPS214
 
     _registry: ClassVar[_BaseSchemaExtractorRegistry] = []
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize extractor with OpenAPI context."""
-        self.context = context
-
     @override
     def __init_subclass__(cls) -> None:
         """Register subclasses schema extractors."""
         cls._registry.append(cls)
 
+    def __init__(self, context: 'OpenAPIContext') -> None:
+        """Initialize extractor with OpenAPI context."""
+        self.context = context
+
     @classmethod
-    def get_extractors(cls, context: 'OpenAPIContext') -> Sequence['BaseExtractor']:
+    def get_extractors(
+        cls,
+        context: 'OpenAPIContext',
+    ) -> Sequence['BaseExtractor']:
         """Get instances of all registered extractors with context."""
         return [extractor_cls(context) for extractor_cls in cls._registry]
 
