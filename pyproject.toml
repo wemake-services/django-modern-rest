@@ -231,6 +231,7 @@ addopts = [
   "--strict-markers",
   "--doctest-modules",
   "--doctest-glob=*.rst",
+  "--doctest-glob=README.md",
   # Output:
   "--tb=short",
   # Coverage:
