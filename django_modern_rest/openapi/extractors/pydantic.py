@@ -1,15 +1,7 @@
 from typing import Any, cast, final, get_origin
 
+import pydantic
 from typing_extensions import is_typeddict, override
-
-try:
-    import pydantic
-except ImportError:  # pragma: no cover
-    print(  # noqa: WPS421
-        'Looks like `pydantic` is not installed, '
-        "consider using `pip install 'django-modern-rest[pydantic]'`",
-    )
-    raise
 
 from django_modern_rest.components import Body
 from django_modern_rest.metadata import ComponentParserSpec
