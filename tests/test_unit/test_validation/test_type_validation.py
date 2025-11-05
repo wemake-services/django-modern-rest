@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import pytest
 from django.http import HttpResponse
@@ -13,6 +13,14 @@ from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
 
 serializers: list[Any] = [PydanticSerializer]
+
+MyInt: Any = int  # for Pyright
+
+if sys.version_info >= (3, 12):
+    exec('type MyInt = int')  # noqa: S102, WPS421
+else:  # pragma: no cover
+    MyInt: TypeAlias = int
+
 
 try:
     from django_modern_rest.plugins.msgspec import MsgspecSerializer
@@ -60,6 +68,7 @@ class _TypedDict(TypedDict):
         (_TypedDict, {'age': 1}),
         (None, None),
         (Any, None),
+        (MyInt, 52),
     ],
 )
 @pytest.mark.parametrize(
@@ -144,3 +153,11 @@ def test_invalid_data(
             raw_data,
             endpoint.metadata.responses[HTTPStatus.OK],
         )
+
+
+def test_type_alias_defined() -> None:
+    """Ensure that `MyInt` type alias is defined.
+
+    MyInt: can be either a plain `int`, or a TypeAlias (Python 3.12+).
+    """
+    assert MyInt is int or getattr(MyInt, '__value__', None) is int
