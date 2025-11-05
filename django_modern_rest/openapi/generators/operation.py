@@ -76,7 +76,7 @@ class OperationGenerator:
             schema = extractor.extract_schema(response_spec.return_type)
 
             responses[str(status_code.value)] = Response(
-                description='Success',
+                description=status_code.phrase,
                 content={
                     'application/json': MediaType(schema=schema),
                 },

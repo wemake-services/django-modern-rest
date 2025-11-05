@@ -29,12 +29,7 @@ class OpenAPIContext:
         # Initialize registry and generators:
         self.schema_registry = SchemaRegistry()
         self.operation_generator = OperationGenerator(self)
-        self.schema_extractors = BaseExtractor.get_extractors()
-
-        # Assign context to extractors so they can collect schemas
-        for extractor in self.schema_extractors:
-            if hasattr(extractor, 'context'):
-                extractor.context = self  # pyright: ignore[reportAttributeAccessIssue]
+        self.schema_extractors = BaseExtractor.get_extractors(self)
 
     def collect_schema(self, name: str, schema: Any) -> None:
         """

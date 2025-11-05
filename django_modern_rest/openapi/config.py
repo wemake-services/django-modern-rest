@@ -38,3 +38,4 @@ class OpenAPIConfig:
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
+    ref_template: str = '#/components/schemas/{model}'

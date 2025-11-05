@@ -63,10 +63,19 @@ class BaseExtractor:  # noqa: WPS214
 
     Each serializer library (pydantic, msgspec, etc.) should implement
     this interface to convert their types into OpenAPI objects.
+
+    Implementation approaches:
+        1. For libraries with JSON Schema support (e.g., Pydantic):
+           Generate JSON Schema dict and use _convert_json_schema() helper
+        2. For libraries without JSON Schema support (e.g., dataclasses):
+           Directly construct Schema/Reference objects in extract_schema()
     """
 
-    context: 'OpenAPIContext | None' = None
     _registry: ClassVar[_BaseSchemaExtractorRegistry] = []
+
+    def __init__(self, context: 'OpenAPIContext') -> None:
+        """Initialize extractor with OpenAPI context."""
+        self.context = context
 
     @override
     def __init_subclass__(cls) -> None:
@@ -74,9 +83,9 @@ class BaseExtractor:  # noqa: WPS214
         cls._registry.append(cls)
 
     @classmethod
-    def get_extractors(cls) -> Sequence['BaseExtractor']:
-        """Get instances of all registered extractors."""
-        return [extractor_cls() for extractor_cls in cls._registry]
+    def get_extractors(cls, context: 'OpenAPIContext') -> Sequence['BaseExtractor']:
+        """Get instances of all registered extractors with context."""
+        return [extractor_cls(context) for extractor_cls in cls._registry]
 
     @abc.abstractmethod
     def extract_request_body(
@@ -102,6 +111,22 @@ class BaseExtractor:  # noqa: WPS214
         self,
         json_schema: dict[str, Any],
     ) -> Schema | Reference:
+        """
+        Convert JSON Schema dict to OpenAPI Schema or Reference object.
+
+        This is a helper method for extractors that work with libraries
+        which can generate JSON Schema (e.g., Pydantic).
+
+        Note: This method is optional. Extractors for libraries that don't
+        provide JSON Schema generation (e.g., dataclasses, adaptix) should
+        directly construct Schema/Reference objects in extract_schema().
+
+        Args:
+            json_schema: A JSON Schema dictionary conforming to JSON Schema spec
+
+        Returns:
+            OpenAPI Schema object or Reference to a schema component
+        """
         ref = json_schema.get('$ref')
         if ref:
             return Reference(ref=ref)

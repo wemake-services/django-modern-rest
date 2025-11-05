@@ -66,12 +66,12 @@ class PydanticExtractor(BaseExtractor):
         """Extract OpenAPI Schema from pydantic type."""
         json_schema = pydantic.TypeAdapter(type_).json_schema(
             mode='serialization',
-            ref_template='#/components/schemas/{model}',
+            ref_template=self.context.config.ref_template,
         )
 
         # Extract and collect $defs if they exist
         defs = json_schema.pop('$defs', None)
-        if defs and self.context:
+        if defs:
             for def_name, def_schema in defs.items():
                 self.context.collect_schema(
                     def_name,
@@ -81,7 +81,7 @@ class PydanticExtractor(BaseExtractor):
         # TODO: Maybe extract to method?
         # Get the title from the schema (model name)
         title = json_schema.get('title')
-        if title and self.context:
+        if title:
             self.context.collect_schema(
                 title,
                 self._convert_json_schema(json_schema),
