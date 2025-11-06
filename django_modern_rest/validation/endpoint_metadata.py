@@ -53,7 +53,7 @@ _AllResponses = NewType('_AllResponses', list[ResponseSpec])
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class _ResponseListValidator:
+class _ResponseListValidator:  # noqa: WPS214
     """Validates responses metadata."""
 
     payload: PayloadT

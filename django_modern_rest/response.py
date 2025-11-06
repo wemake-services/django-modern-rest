@@ -149,7 +149,11 @@ class ResponseModification:
                 None
                 if self.cookies is None
                 else {
-                    cookie_key: cookie.to_spec()
+                    cookie_key: (
+                        cookie.to_spec()
+                        if isinstance(cookie, NewCookie)
+                        else cookie
+                    )
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),
