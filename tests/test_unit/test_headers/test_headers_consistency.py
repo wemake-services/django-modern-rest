@@ -13,7 +13,7 @@ def test_make_key_normalizes_case() -> None:
 def test_make_key_raises_on_non_string() -> None:
     """Verify that non-string keys raise a TypeError."""
     with pytest.raises(TypeError, match='Header keys must be `str`'):
-        HeaderDict._make_key(123)  # type: ignore[arg-type] # noqa: SLF001,WPS432
+        HeaderDict._make_key(123)  # noqa: SLF001,WPS432
 
 
 def test_case_insensitive_access() -> None:
