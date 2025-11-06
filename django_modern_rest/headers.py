@@ -228,18 +228,19 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
             for key, input_value in kwargs.items():
                 self.add(key, input_value)
 
-    @classmethod
-    def _make_key(cls, key: typing.Any) -> str:
+    def _make_key(self, key: typing.Any) -> str:
         if not isinstance(key, str):
             raise TypeError('Header keys must be `str`')
-        if key in cls._titled_keys_cache:
-            return cls._titled_keys_cache[key]  # noqa: WPS529
+        if key in self.data:
+            return key
+        if key in self._titled_keys_cache:
+            return self._titled_keys_cache[key]  # noqa: WPS529
         if not key.istitle():
             key_titled = key.title()
-            cls._titled_keys_cache[key] = key_titled
+            self._titled_keys_cache[key] = key_titled
             key = key_titled
-        if sys.intern(key) is cls._set_cookie:
-            cls._titled_keys_cache.pop(key)
+        if sys.intern(key) is self._set_cookie:
+            self._titled_keys_cache.pop(key)
             raise ValueError(
                 'Setting cookies directly via headers is forbidden, use ...',
             )

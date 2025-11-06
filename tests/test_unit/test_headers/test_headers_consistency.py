@@ -5,15 +5,16 @@ from django_modern_rest.headers import HeaderDict
 
 def test_make_key_normalizes_case() -> None:
     """Ensure header keys are normalized to Title-Case format."""
-    assert HeaderDict._make_key('content-type') == 'Content-Type'  # noqa: SLF001
-    assert HeaderDict._make_key('ACCEPT') == 'Accept'  # noqa: SLF001
-    assert HeaderDict._make_key('X-Api-Key') == 'X-Api-Key'  # noqa: SLF001
+    headers = HeaderDict()
+    assert headers._make_key('content-type') == 'Content-Type'  # noqa: SLF001
+    assert headers._make_key('ACCEPT') == 'Accept'  # noqa: SLF001
+    assert headers._make_key('X-Api-Key') == 'X-Api-Key'  # noqa: SLF001
 
 
 def test_make_key_raises_on_non_string() -> None:
     """Verify that non-string keys raise a TypeError."""
     with pytest.raises(TypeError, match='Header keys must be `str`'):
-        HeaderDict._make_key(123)  # noqa: SLF001,WPS432
+        HeaderDict()._make_key(123)  # noqa: SLF001,WPS432
 
 
 def test_case_insensitive_access() -> None:
