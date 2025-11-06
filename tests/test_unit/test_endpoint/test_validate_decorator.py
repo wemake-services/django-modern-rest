@@ -22,6 +22,7 @@ from django_modern_rest.plugins.pydantic import (
     PydanticErrorModel,
     PydanticSerializer,
 )
+from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.test import DMRRequestFactory
 
 _InnerT = TypeVar('_InnerT')
@@ -446,7 +447,9 @@ def test_validate_responses_from_blueprint() -> None:
         def post(self) -> HttpResponse:
             raise NotImplementedError
 
-    assert _Blueprint.api_endpoints['POST'].metadata.responses == snapshot({
+    controller = compose_blueprints(_Blueprint)
+
+    assert controller.api_endpoints['POST'].metadata.responses == snapshot({
         HTTPStatus.OK: ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.OK,
@@ -483,7 +486,9 @@ def test_validate_responses_from_components() -> None:
         def post(self) -> HttpResponse:
             raise NotImplementedError
 
-    assert _Blueprint.api_endpoints['POST'].metadata.responses == snapshot({
+    controller = compose_blueprints(_Blueprint)
+
+    assert controller.api_endpoints['POST'].metadata.responses == snapshot({
         HTTPStatus.OK: ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.OK,

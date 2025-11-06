@@ -4,10 +4,10 @@ from django_modern_rest.validation.blueprint import (
 from django_modern_rest.validation.controller import (
     ControllerValidator as ControllerValidator,
 )
-from django_modern_rest.validation.endpint_metadata import (
+from django_modern_rest.validation.endpoint_metadata import (
     EndpointMetadataValidator as EndpointMetadataValidator,
 )
-from django_modern_rest.validation.endpint_metadata import (
+from django_modern_rest.validation.endpoint_metadata import (
     validate_method_name as validate_method_name,
 )
 from django_modern_rest.validation.payload import (

@@ -46,7 +46,6 @@ from django_modern_rest.validation.payload import (
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint, Controller
 
-
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
@@ -57,8 +56,8 @@ class _ResponseListValidator:
     """Validates responses metadata."""
 
     payload: PayloadT
-    blueprint_cls: type['Blueprint[BaseSerializer]']
-    controller_cls: type['Controller[BaseSerializer]'] | None
+    blueprint_cls: type['Blueprint[BaseSerializer]'] | None
+    controller_cls: type['Controller[BaseSerializer]']
     endpoint: str
 
     def __call__(
@@ -170,14 +169,18 @@ def _validate_empty_response_body(
 def _is_check_enabled(
     setting: HttpSpec,
     payload_value: Set[HttpSpec] | None,
-    blueprint_cls: type['Blueprint[BaseSerializer]'],
-    controller_cls: type['Controller[BaseSerializer]'] | None,
+    blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+    controller_cls: type['Controller[BaseSerializer]'],
 ) -> bool:
     if payload_value is not None and setting in payload_value:
         return False
-    if setting in blueprint_cls.no_validate_http_spec:
+    if (
+        blueprint_cls is not None
+        and setting in blueprint_cls.no_validate_http_spec
+    ):
         return False
-    # TODO(@sobolevn): also check the same flag on controller level
+    if setting in controller_cls.no_validate_http_spec:
+        return False
     return setting not in resolve_setting(Settings.no_validate_http_spec)
 
 
@@ -199,8 +202,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
     def __call__(
         self,
         func: Callable[..., Any],
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         """Do the validation."""
         # TODO: validate that we can't specify `Set-Cookie` header.
@@ -259,22 +262,21 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         endpoint_responses: list[ResponseSpec],
         *,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
         modification: ResponseModification | None = None,
     ) -> _AllResponses:
-        modification_spec = [modification.to_spec()] if modification else []
         return cast(
             '_AllResponses',
             [
-                *modification_spec,
+                *([] if modification is None else [modification.to_spec()]),
                 *endpoint_responses,
-                *blueprint_cls.semantic_responses(),
                 *(
                     []
-                    if controller_cls is None
-                    else controller_cls.semantic_responses()
+                    if blueprint_cls is None
+                    else blueprint_cls.semantic_responses()
                 ),
+                *controller_cls.semantic_responses(),
                 *resolve_setting(Settings.responses),
             ],
         )
@@ -287,8 +289,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         func: Callable[..., Any],
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
@@ -314,7 +316,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
             validate_responses=payload.validate_responses,
             modification=None,
             error_handler=payload.error_handler,
-            component_parsers=blueprint_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            component_parsers=(
+                (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            ),
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -334,8 +338,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         func: Callable[..., Any],
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_error_handler(payload, func, endpoint=endpoint)
         self._validate_return_annotation(
@@ -377,7 +381,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=payload.error_handler,
-            component_parsers=blueprint_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            component_parsers=(
+                (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            ),
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -395,8 +401,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         method: str,
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         self._validate_return_annotation(
             return_annotation,
@@ -429,7 +435,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
             method=method,
             modification=modification,
             error_handler=None,
-            component_parsers=blueprint_cls._component_parsers,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            component_parsers=(
+                (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            ),
         )
 
     def _validate_new_headers(
@@ -454,8 +462,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         return_annotation: Any,
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponse):
             if isinstance(self.payload, ModifyEndpointPayload):

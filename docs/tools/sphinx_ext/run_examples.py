@@ -38,7 +38,7 @@ from sphinx.application import Sphinx
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
 
-_PATH_TO_TMP_EXAMPLES: Final = 'docs/_build/_tmp_example/'
+_PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 
 _AppRunArgsT: TypeAlias = dict[str, Any]
@@ -375,6 +375,9 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
             file_path.relative_to(Path.cwd()),
             run_args,
         )
+
+        if not executed_result:
+            return nodes
 
         nodes.append(
             admonition(
