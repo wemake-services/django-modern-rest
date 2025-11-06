@@ -266,7 +266,7 @@ def test_compose_no_double_validation() -> None:
         @override
         def __call__(
             self,
-            blueprint: type[Blueprint[PydanticSerializer]],
+            blueprint: type[Blueprint[BaseSerializer]],
         ) -> None:
             self.__class__.call_count += 1
             return super().__call__(blueprint)
@@ -277,7 +277,7 @@ def test_compose_no_double_validation() -> None:
         @override
         def __call__(
             self,
-            blueprint: type[Blueprint[PydanticSerializer]],
+            blueprint: type[Blueprint[BaseSerializer]],
         ) -> None:
             self.__class__.call_count += 1
             return super().__call__(blueprint)
