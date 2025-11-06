@@ -41,10 +41,7 @@ class _CorrectToResponseController(Controller[PydanticSerializer]):
         """Tests that `.to_response` works with extra headers."""
         return self.to_response(
             ['a', 'b'],
-            headers={
-                'X-Custom': 'value',
-                'Content-Type': 'application/json5',
-            },
+            headers={'X-Custom': 'value', 'Content-Type': 'application/json5'},
         )
 
     @validate(

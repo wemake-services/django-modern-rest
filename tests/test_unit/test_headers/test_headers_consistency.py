@@ -41,11 +41,14 @@ def test_overwrite_existing_header() -> None:
 def test_setting_sequence_with_mixed_types() -> None:
     """Ensure mixed-type sequences are coerced to strings and joined."""
     header_dict = HeaderDict()
-    header_dict['x-values'] = ['a', '1', 'b']
+    header_dict.add('x-values', ['a', '1', 'b'])
     assert header_dict['X-Values'] == 'a,1,b'
 
 
-@pytest.mark.parametrize('bad_header_value', [123, b'\000', object])
+@pytest.mark.parametrize(
+    'bad_header_value',
+    [123, b'bytes', object, [b'', '', b'2'], [[[]]]],
+)
 def test_setting_bad_values_raises(
     bad_header_value: Any,
 ) -> None:
@@ -75,9 +78,8 @@ def test_pop_removes_key() -> None:
     assert 'X' not in header_dict
 
 
-@pytest.mark.skip
 def test_update_merges_same_key_values() -> None:
-    """Ensure update() | merges keys into a single comma-joined value."""
+    """Ensure update() merges keys into a single comma-joined value."""
     h1 = HeaderDict()
     h1['accept'] = 'text/html'
     h2 = {'Accept': 'application/json'}

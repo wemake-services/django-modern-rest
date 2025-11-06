@@ -1,15 +1,21 @@
 import dataclasses
+import string
 import sys
 import typing
 from collections import UserDict
 from collections.abc import Iterable, Mapping
+from functools import lru_cache
 
-if typing.TYPE_CHECKING:
+from django_modern_rest.settings import MAX_CACHE_SIZE
+
+if typing.TYPE_CHECKING:  # pragma: no cover
     from django_modern_rest.response import ResponseModification
     from django_modern_rest.serialization import BaseSerializer
 
 HeaderLike: typing.TypeAlias = typing.Union['HeaderDict', dict[str, str]]
 StrOrIterstr: typing.TypeAlias = str | Iterable[str]
+
+_header_strip_chars: str = string.whitespace + ','  # noqa: WPS336
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -96,7 +102,7 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
     ``"content-type"`` -> ``"Content-Type"``). Values are stored as strings
     separated by a comma to allow multi-valued headers.
 
-    Use `add(key, val)` or `extend(key, vals)`
+    Use `add(key, val)` or `update(key, vals)`
     to append values without replacing.
 
     Examples:
@@ -118,7 +124,6 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
         TypeError: Header values must be `str` or `Iterable[str]`
     """
 
-    _titled_keys_cache: typing.ClassVar[dict[str, str]] = {}
     _set_cookie: str = sys.intern('Set-Cookie')
 
     @typing.override
@@ -188,25 +193,7 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
         - If `value` is an iterable, each item will be appended.
         """
         key = self._make_key(key)
-
-        if isinstance(input_value, str):
-            input_value = input_value.split(',')
-        elif not isinstance(input_value, bytes) and isinstance(  # type: ignore[redundant-expr,unreachable]
-            input_value,
-            (list, tuple, Iterable),
-        ):  # pyright: ignore[reportUnnecessaryIsInstance]
-            try:
-                input_value = [
-                    striped
-                    for subvalue in input_value
-                    if (striped := subvalue.strip())
-                ]
-            except AttributeError as exc:
-                raise TypeError(
-                    'Header values must be `str` or `Iterable[str]`',
-                ) from exc
-        else:
-            raise TypeError('Header values must be `str` or `Iterable[str]`')
+        input_value = self._make_value(input_value)
 
         if key in self.data:
             self.data[key] = ','.join((self.data[key]).split(',') + input_value)  # noqa: WPS529,WPS221
@@ -225,7 +212,7 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
         """Extend using an iterable of pairs appending repeated keys."""
         if pairs:
             for key, input_value in (  # pyright: ignore[reportUnknownVariableType]
-                pairs.items() if isinstance(pairs, Mapping) else pairs
+                pairs.items() if isinstance(pairs, (dict, Mapping)) else pairs
             ):
                 self.add(key, input_value)  # pyright: ignore[reportUnknownArgumentType,reportArgumentType]
 
@@ -238,15 +225,36 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
             raise TypeError('Header keys must be `str`')
         if key in self.data:
             return key
-        if key in self._titled_keys_cache:
-            return self._titled_keys_cache[key]  # noqa: WPS529
         if not key.istitle():
-            key_titled = key.title()
-            self._titled_keys_cache[key] = key_titled
-            key = key_titled
+            key = _str_title_cached(key)
         if sys.intern(key) is self._set_cookie:
-            self._titled_keys_cache.pop(key, '')
             raise ValueError(
                 'Setting cookies directly via headers is forbidden, use ...',
             )
         return typing.cast(str, key)
+
+    def _make_value(self, input_value: typing.Any) -> list[str]:
+        if isinstance(input_value, str):
+            return input_value.strip(_header_strip_chars).split(',')
+        if isinstance(input_value, bytes):
+            # bytes is Iterable, but not allowed as values
+            raise TypeError(
+                'Header values must be `str` or `Iterable[str]`',
+            )
+        if isinstance(
+            input_value,
+            (list, tuple, Iterable),
+        ):  # pyright: ignore[reportUnnecessaryIsInstance]
+            return [
+                striped
+                for subvalue in input_value  # pyright: ignore[reportUnknownVariableType]
+                if (striped := subvalue.strip())  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+            ]
+        raise TypeError(
+            'Header values must be `str` or `Iterable[str]`',
+        )
+
+
+@lru_cache(maxsize=MAX_CACHE_SIZE)
+def _str_title_cached(input_str: str) -> str:
+    return input_str.title()
