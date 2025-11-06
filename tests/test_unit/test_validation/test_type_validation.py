@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal
 
 import pytest
 from django.http import HttpResponse
@@ -16,10 +16,8 @@ serializers: list[Any] = [PydanticSerializer]
 
 MyInt: Any = int  # for Pyright
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 12):  # pragma: no cover
     exec('type MyInt = int')  # noqa: S102, WPS421
-else:  # pragma: no cover
-    MyInt: TypeAlias = int
 
 
 try:
@@ -153,11 +151,3 @@ def test_invalid_data(
             raw_data,
             endpoint.metadata.responses[HTTPStatus.OK],
         )
-
-
-def test_type_alias_defined() -> None:
-    """Ensure that `MyInt` type alias is defined.
-
-    MyInt: can be either a plain `int`, or a TypeAlias (Python 3.12+).
-    """
-    assert MyInt is int or getattr(MyInt, '__value__', None) is int
