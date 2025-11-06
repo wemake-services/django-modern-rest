@@ -150,7 +150,7 @@ class ResponseModification:
                 if self.cookies is None
                 else {
                     cookie_key: (
-                        cookie.to_spec()
+                        cookie.to_spec()  # noqa: WPS509
                         if isinstance(cookie, NewCookie)
                         else cookie
                     )
