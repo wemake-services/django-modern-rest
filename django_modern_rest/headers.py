@@ -2,7 +2,7 @@ import dataclasses
 import sys
 import typing
 from collections import UserDict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 
 if typing.TYPE_CHECKING:
     from django_modern_rest.response import ResponseModification
@@ -88,7 +88,7 @@ def build_headers(
 
 
 @typing.final
-class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
+class HeaderDict(UserDict[str, str]):  # noqa: WPS214
     """
     Dictionary-like container for HTTP headers with case-normalized keys.
 
@@ -115,7 +115,7 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
         >>> h['x-my-header'] = 1
         Traceback (most recent call last):
             ...
-        TypeError: Header values must be `str` or `Sequence[str]`
+        TypeError: Header values must be `str` or `Iterable[str]`
     """
 
     _titled_keys_cache: typing.ClassVar[dict[str, str]] = {}
@@ -138,7 +138,7 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
     @typing.override
     def __getitem__(self, key: str) -> str:
         """Return the values associated with the key case insensetively."""
-        return typing.cast(str, self.data[self._make_key(key)])
+        return self.data[self._make_key(key)]
 
     @typing.override
     def __setitem__(
@@ -148,11 +148,13 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
     ) -> None:
         """Set values for the given header key case insensetively."""
         is_str = isinstance(item_to_set, str)
-        if not is_str and not isinstance(item_to_set, (list, tuple, Sequence)):
-            raise TypeError('Header values must be `str` or `Sequence[str]`')
+        if isinstance(item_to_set, bytes) or (
+            not is_str and not isinstance(item_to_set, (list, tuple, Iterable))
+        ):
+            raise TypeError('Header values must be `str` or `Iterable[str]`')
         key = self._make_key(key)
         if is_str:
-            self.data[key] = item_to_set
+            self.data[key] = item_to_set  # type: ignore[assignment]
         else:
             self.data[key] = ','.join(item_to_set)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -178,18 +180,21 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.data})'  # noqa: WPS237
 
-    def add(self, key: str, input_value: StrOrIterstr) -> None:
+    def add(self, key: str, input_value: StrOrIterstr) -> None:  # noqa: WPS231
         """
         Append value(s) to the header `key`. Creates the key if missing.
 
         - If `value` is a str, it will be split on commas and appended.
-        - If `value` is a sequence, each item will be appended.
+        - If `value` is an iterable, each item will be appended.
         """
         key = self._make_key(key)
 
         if isinstance(input_value, str):
             input_value = input_value.split(',')
-        elif isinstance(input_value, (list, tuple, Iterable)):  # pyright: ignore[reportUnnecessaryIsInstance]
+        elif not isinstance(input_value, bytes) and isinstance(  # type: ignore[redundant-expr,unreachable]
+            input_value,
+            (list, tuple, Iterable),
+        ):  # pyright: ignore[reportUnnecessaryIsInstance]
             try:
                 input_value = [
                     striped
@@ -198,10 +203,10 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
                 ]
             except AttributeError as exc:
                 raise TypeError(
-                    'Header values must be `str` or `Sequence[str]`',
+                    'Header values must be `str` or `Iterable[str]`',
                 ) from exc
         else:
-            raise TypeError('Header values must be `str` or `Sequence[str]`')
+            raise TypeError('Header values must be `str` or `Iterable[str]`')
 
         if key in self.data:
             self.data[key] = ','.join((self.data[key]).split(',') + input_value)  # noqa: WPS529,WPS221
@@ -240,7 +245,7 @@ class HeaderDict(UserDict[str, typing.Any]):  # noqa: WPS214
             self._titled_keys_cache[key] = key_titled
             key = key_titled
         if sys.intern(key) is self._set_cookie:
-            self._titled_keys_cache.pop(key)
+            self._titled_keys_cache.pop(key, '')
             raise ValueError(
                 'Setting cookies directly via headers is forbidden, use ...',
             )
