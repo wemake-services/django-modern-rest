@@ -1,6 +1,10 @@
 from typing import Any, cast, final, get_origin
 
-import pydantic
+try:
+    import pydantic
+except ImportError:  # pragma: no cover
+    pydantic = None  # type: ignore[assignment]
+
 from typing_extensions import is_typeddict, override
 
 from django_modern_rest.components import Body
@@ -21,6 +25,9 @@ class PydanticExtractor(BaseExtractor):
     @override
     def supports_type(self, type_: Any) -> bool:
         """Check if this extractor can handle the given type."""
+        if pydantic is None:  # pragma: no cover
+            return False  # type: ignore[unreachable]
+
         # TODO: Too dirty. Need refactor
         if isinstance(type_, type) and issubclass(type_, pydantic.BaseModel):
             return True
@@ -56,6 +63,9 @@ class PydanticExtractor(BaseExtractor):
     @override
     def extract_schema(self, type_: Any) -> Schema | Reference:
         """Extract OpenAPI Schema from pydantic type."""
+        if pydantic is None:  # pragma: no cover
+            raise RuntimeError('pydantic is not installed')
+
         json_schema = pydantic.TypeAdapter(type_).json_schema(
             mode='serialization',
             ref_template=self.context.config.ref_template,

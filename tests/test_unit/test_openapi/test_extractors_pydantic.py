@@ -2,6 +2,11 @@ from typing import Any
 
 import pytest
 
+try:
+    import pydantic  # noqa: F401
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='pydantic is not installed', allow_module_level=True)
+
 from django_modern_rest.openapi import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.extractors.pydantic import PydanticExtractor

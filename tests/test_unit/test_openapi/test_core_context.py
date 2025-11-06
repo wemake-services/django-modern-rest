@@ -1,5 +1,9 @@
 import pytest
-from pydantic import BaseModel
+
+try:
+    from pydantic import BaseModel
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='pydantic is not installed', allow_module_level=True)
 
 from django_modern_rest.openapi import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
