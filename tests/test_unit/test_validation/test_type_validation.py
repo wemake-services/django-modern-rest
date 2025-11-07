@@ -14,6 +14,12 @@ from django_modern_rest.serialization import BaseSerializer
 
 serializers: list[Any] = [PydanticSerializer]
 
+MyInt: Any = int  # for Pyright
+
+if sys.version_info >= (3, 12):  # pragma: no cover
+    exec('type MyInt = int')  # noqa: S102, WPS421
+
+
 try:
     from django_modern_rest.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
@@ -60,6 +66,7 @@ class _TypedDict(TypedDict):
         (_TypedDict, {'age': 1}),
         (None, None),
         (Any, None),
+        (MyInt, 52),
     ],
 )
 @pytest.mark.parametrize(
