@@ -130,7 +130,7 @@ class ResponseModification:
     return_type: Any
     status_code: HTTPStatus
     headers: Mapping[str, NewHeader] | None
-    cookies: Mapping[str, NewCookie] | None
+    cookies: Mapping[str, NewCookie | CookieSpec] | None
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
