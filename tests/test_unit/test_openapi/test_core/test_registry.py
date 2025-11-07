@@ -3,7 +3,7 @@ from typing import Final
 import pytest
 
 from django_modern_rest.openapi.core.registry import SchemaRegistry
-from django_modern_rest.openapi.objects import OpenAPIType, Schema
+from django_modern_rest.openapi.objects import OpenAPIType, Reference, Schema
 
 _SCHEMA_NAME: Final = 'TestSchema'
 
@@ -33,3 +33,10 @@ def test_registry_register_idempotency(registry: SchemaRegistry) -> None:
 
     assert registry.all()[_SCHEMA_NAME] == schema1
     assert registry.all()[_SCHEMA_NAME] != schema2
+
+
+def test_registry_reference_skip(registry: SchemaRegistry) -> None:
+    """Ensure registry skip `Reference` objects."""
+    registry.register(_SCHEMA_NAME, Reference(ref='test'))
+
+    assert _SCHEMA_NAME not in registry

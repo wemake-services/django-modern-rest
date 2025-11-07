@@ -54,7 +54,7 @@ JSON_SCHEMA_FIELD_MAP: MappingProxyType[str, str] = MappingProxyType({
     'writeOnly': 'write_only',
 })
 
-_BaseSchemaExtractorRegistry: TypeAlias = list[type['BaseExtractor']]
+_ExtractorRegistry: TypeAlias = list[type['BaseExtractor']]
 
 
 class BaseExtractor:  # noqa: WPS214
@@ -71,7 +71,7 @@ class BaseExtractor:  # noqa: WPS214
            Directly construct Schema/Reference objects in extract_schema()
     """
 
-    _registry: ClassVar[_BaseSchemaExtractorRegistry] = []
+    _registry: ClassVar[_ExtractorRegistry] = []
 
     @override
     def __init_subclass__(cls) -> None:
@@ -83,10 +83,7 @@ class BaseExtractor:  # noqa: WPS214
         self.context = context
 
     @classmethod
-    def get_extractors(
-        cls,
-        context: 'OpenAPIContext',
-    ) -> Sequence['BaseExtractor']:
+    def all(cls, context: 'OpenAPIContext') -> Sequence['BaseExtractor']:
         """Get instances of all registered extractors with context."""
         return [extractor_cls(context) for extractor_cls in cls._registry]
 

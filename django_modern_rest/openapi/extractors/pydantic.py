@@ -75,7 +75,7 @@ class PydanticExtractor(BaseExtractor):
         defs = json_schema.pop('$defs', None)
         if defs:
             for def_name, def_schema in defs.items():
-                self.context.collect_schema(
+                self.context.schema_registry.register(
                     def_name,
                     self._convert_json_schema(def_schema),
                 )
@@ -84,7 +84,7 @@ class PydanticExtractor(BaseExtractor):
         # Get the title from the schema (model name)
         title = json_schema.get('title')
         if title:
-            self.context.collect_schema(
+            self.context.schema_registry.register(
                 title,
                 self._convert_json_schema(json_schema),
             )

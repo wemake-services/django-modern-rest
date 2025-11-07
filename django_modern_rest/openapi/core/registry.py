@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, final
 
+from django_modern_rest.openapi.objects import Reference
+
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.schema import Schema
 
@@ -18,14 +20,14 @@ class SchemaRegistry:
         """Initialize an empty schema registry."""
         self._schemas: dict[str, Schema] = {}
 
-    def register(self, name: str, schema: 'Schema') -> None:
-        """
-        Register a schema in the registry.
+    def register(self, name: str, schema: 'Schema | Reference') -> None:
+        """Register a schema in the registry."""
+        if isinstance(schema, Reference):
+            # TODO: temporary skip. In future we must provide only `Schema`
+            # type in function args.
+            return
 
-        If a schema with the same name already exists, it will not be
-        overwritten. This ensures idempotency and prevents accidental
-        schema replacement.
-        """
+        # TODO: find another way to compare schemas.
         if name not in self._schemas:
             self._schemas[name] = schema
 
@@ -36,3 +38,16 @@ class SchemaRegistry:
     def __contains__(self, name: str) -> bool:
         """Check if a schema name is in the registry."""
         return name in self._schemas
+
+
+class OperationIdRegistry:
+    """Registry for OpenAPI operation IDs."""
+
+    def __init__(self) -> None:
+        """Initialize an empty operation ids registry."""
+        self.operation_ids: set[str] = set()
+
+    def register(self, operation_id: str) -> None:
+        """Register a operation ID in the registry."""
+        # TODO: implement registration with constraint checks.
+        raise NotImplementedError
