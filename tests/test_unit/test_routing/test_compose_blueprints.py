@@ -1,8 +1,8 @@
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import ClassVar, final
 
 import pytest
-from typing_extensions import override
 
 from django_modern_rest import (
     Blueprint,
@@ -117,9 +117,16 @@ def test_compose_overlapping_controllers() -> None:
 
 def test_compose_different_serializers() -> None:
     """Ensure that controllers with different serializers can't be used."""
-    with pytest.raises(EndpointMetadataError, match='different serializer'):
+    with pytest.raises(
+        EndpointMetadataError,
+        match='blueprints with different serializer',
+    ):
         compose_blueprints(_DifferentSerializerBlueprint, _SyncBlueprint)
-    with pytest.raises(EndpointMetadataError, match='different serializer'):
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='blueprints with different serializer',
+    ):
         compose_blueprints(_SyncBlueprint, _DifferentSerializerBlueprint)
 
 
@@ -184,52 +191,58 @@ def test_compose_blueprints_with_responses() -> None:
         _SecondBlueprint,
         _ThirdBlueprint,
     )
-    assert composed.responses == []
+    assert isinstance(composed.responses, list)
     for endpoint, description in composed.api_endpoints.items():
         assert len(description.metadata.responses) == 2, endpoint
 
 
 # Tests specifically for validation edge cases and preventing duplication.
-def test_compose_validation_order_independence() -> None:
+@pytest.mark.parametrize(
+    'blueprints',
+    [
+        (_GetBlueprint, _DifferentSerializerBlueprint),
+        (_DifferentSerializerBlueprint, _GetBlueprint),
+        (_GetBlueprint, _PostBlueprint, _DifferentSerializerBlueprint),
+        (_DifferentSerializerBlueprint, _GetBlueprint, _PostBlueprint),
+    ],
+)
+def test_compose_validation_order_independence(
+    blueprints: tuple[type[Blueprint], ...],
+) -> None:
     """Ensure validation works regardless of blueprint order."""
-    with pytest.raises(EndpointMetadataError, match='different serializer'):
-        compose_blueprints(_GetBlueprint, _DifferentSerializerBlueprint)
-
-    with pytest.raises(EndpointMetadataError, match='different serializer'):
-        compose_blueprints(_DifferentSerializerBlueprint, _GetBlueprint)
-
-    with pytest.raises(EndpointMetadataError, match='different serializer'):
-        compose_blueprints(
-            _GetBlueprint,
-            _PostBlueprint,
-            _DifferentSerializerBlueprint,
-        )
-
-    with pytest.raises(EndpointMetadataError, match='different serializer'):
-        compose_blueprints(
-            _DifferentSerializerBlueprint,
-            _GetBlueprint,
-            _PostBlueprint,
-        )
+    with pytest.raises(
+        EndpointMetadataError,
+        match='blueprints with different serializer',
+    ):
+        compose_blueprints(*blueprints)
 
 
-def test_compose_validation_error_messages() -> None:
+@pytest.mark.parametrize(
+    ('blueprints', 'expected_message_part'),
+    [
+        pytest.param(
+            (_GetBlueprint, _DifferentSerializerBlueprint),
+            'blueprints with different serializer',
+        ),
+        pytest.param(
+            (_GetBlueprint, _DuplicateGetBlueprint),
+            'GET',
+        ),
+        pytest.param(
+            (_ZeroMethodsBlueprint, _GetBlueprint),
+            'at least one',
+        ),
+    ],
+)
+def test_compose_validation_error_messages(
+    blueprints: tuple[type[Blueprint], ...],
+    expected_message_part: str,
+) -> None:
     """Ensure that validation error messages are descriptive and helpful."""
     with pytest.raises(EndpointMetadataError) as exc_info:
-        compose_blueprints(_GetBlueprint, _DifferentSerializerBlueprint)
-    assert 'different serializer' in str(exc_info.value)
+        compose_blueprints(*blueprints)
 
-    # This is different from test_compose_overlapping_controllers
-    # as it tests GET instead of POST.
-    with pytest.raises(EndpointMetadataError) as exc_info:
-        compose_blueprints(_GetBlueprint, _DuplicateGetBlueprint)
-    assert 'GET' in str(exc_info.value)
-
-    # This is different from test_compose_controller_no_endpoints
-    # as it uses _ZeroMethodsBlueprint with _GetBlueprint.
-    with pytest.raises(EndpointMetadataError) as exc_info:
-        compose_blueprints(_ZeroMethodsBlueprint, _GetBlueprint)
-    assert 'at least one' in str(exc_info.value)
+    assert expected_message_part in str(exc_info.value)
 
 
 def test_compose_sync_async_no_method_conflict() -> None:
@@ -238,72 +251,83 @@ def test_compose_sync_async_no_method_conflict() -> None:
         compose_blueprints(_GetBlueprint, _PostBlueprint, _AsyncPutBlueprint)
 
 
-def test_compose_options_conflict_with_meta_mixin() -> None:
+@pytest.mark.parametrize(
+    'blueprints',
+    [
+        (_AsyncOptionsBlueprint, _AsyncGetBlueprint),
+        (_OptionsBlueprint, _GetBlueprint),
+    ],
+)
+def test_compose_options_conflict_with_meta_mixin(
+    blueprints: tuple[type[Blueprint], ...],
+) -> None:
     """Ensure that composing OptionsController with MetaMixin works."""
-    composed_async = compose_blueprints(
+    composed = compose_blueprints(
         _AsyncOptionsBlueprint,
         _AsyncGetBlueprint,
     )
 
-    assert 'OPTIONS' in composed_async.api_endpoints
-    assert 'GET' in composed_async.api_endpoints
-
-    composed_sync = compose_blueprints(
-        _OptionsBlueprint,
-        _GetBlueprint,
-    )
-
-    assert 'OPTIONS' in composed_sync.api_endpoints
-    assert 'GET' in composed_sync.api_endpoints
-
-
-def test_compose_no_double_validation() -> None:
-    """Ensure blueprints are not validated twice in compose_blueprints."""
-
-    class _TrackingValidator1(BlueprintValidator):
-        call_count: ClassVar[int] = 0
-
-        @override
-        def __call__(
-            self,
-            blueprint: type[Blueprint[BaseSerializer]],
-        ) -> None:
-            self.__class__.call_count += 1
-            return super().__call__(blueprint)
-
-    class _TrackingValidator2(BlueprintValidator):
-        call_count: ClassVar[int] = 0
-
-        @override
-        def __call__(
-            self,
-            blueprint: type[Blueprint[BaseSerializer]],
-        ) -> None:
-            self.__class__.call_count += 1
-            return super().__call__(blueprint)
-
-    class _TestBlueprint1(Blueprint[PydanticSerializer]):
-        blueprint_validator_cls: ClassVar[type[BlueprintValidator]] = (
-            _TrackingValidator1
-        )
-
-        def get(self) -> str:
-            raise NotImplementedError
-
-    class _TestBlueprint2(Blueprint[PydanticSerializer]):
-        blueprint_validator_cls: ClassVar[type[BlueprintValidator]] = (
-            _TrackingValidator2
-        )
-
-        def post(self) -> str:
-            raise NotImplementedError
-
-    initial_count1 = _TrackingValidator1.call_count
-    initial_count2 = _TrackingValidator2.call_count
-
-    composed = compose_blueprints(_TestBlueprint1, _TestBlueprint2)
-
-    assert _TrackingValidator1.call_count == initial_count1
-    assert _TrackingValidator2.call_count == initial_count2
+    assert 'OPTIONS' in composed.api_endpoints
     assert 'GET' in composed.api_endpoints
+
+
+def _make_blueprint_class(method: str, validator: type[BlueprintValidator]):
+    """Helper to create a Blueprint class with a single method."""
+    if method == 'GET':
+
+        class _Blueprint(Blueprint[PydanticSerializer]):
+            blueprint_validator_cls = validator
+
+            def get(self) -> str:
+                raise NotImplementedError
+
+    elif method == 'POST':
+
+        class _Blueprint(Blueprint[PydanticSerializer]):
+            blueprint_validator_cls = validator
+
+            def post(self) -> str:
+                raise NotImplementedError
+
+    else:
+        raise ValueError(f'Unsupported method: {method}')  # pragma: no cover
+
+    return _Blueprint
+
+
+@pytest.fixture
+def make_validated_blueprint():
+    """Factory fixture that builds a Blueprint with its own Validator."""
+
+    def _factory(method: str):
+        class _Validator(BlueprintValidator):
+            call_count: ClassVar[int] = 0
+
+            def __call__(
+                self,
+                blueprint: type[Blueprint[BaseSerializer]],
+            ) -> None:
+                self.__class__.call_count += 1
+                return super().__call__(blueprint)
+
+        blueprint_cls = _make_blueprint_class(method, _Validator)
+        return blueprint_cls, _Validator
+
+    return _factory
+
+
+def test_compose_no_double_validation(
+    make_validated_blueprint: Callable[[str], tuple[type, type]],
+) -> None:
+    """Ensure blueprints are not validated twice in compose_blueprints."""
+    pairs = [make_validated_blueprint('GET'), make_validated_blueprint('POST')]
+
+    initial_counts = tuple(validator.call_count for _, validator in pairs)
+
+    composed = compose_blueprints(*(blueprint for blueprint, _ in pairs))
+
+    assert (
+        tuple(validator.call_count for _, validator in pairs) == initial_counts
+    )
     assert 'POST' in composed.api_endpoints
+    assert 'GET' in composed.api_endpoints
