@@ -1,6 +1,5 @@
 import dataclasses
 import inspect
-import sys
 from collections.abc import Callable, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
@@ -51,7 +50,7 @@ if TYPE_CHECKING:
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
-_set_cookie_str: str = sys.intern('Set-Cookie')
+_set_cookie_str: str = str_title_cached_interned('Set-Cookie')
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
