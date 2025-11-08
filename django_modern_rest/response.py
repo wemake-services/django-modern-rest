@@ -11,6 +11,7 @@ from django_modern_rest.headers import (
     HeaderSpec,
     NewHeader,
 )
+from django_modern_rest.internal.strings import str_title_cached_interned
 from django_modern_rest.serialization import BaseSerializer
 
 _ItemT = TypeVar('_ItemT')
@@ -211,7 +212,7 @@ def build_response(  # noqa: WPS211
         )
 
     response_headers = {} if headers is None else headers
-    if 'Content-Type' not in response_headers:
+    if str_title_cached_interned('Content-Type') not in response_headers:
         response_headers['Content-Type'] = serializer.content_type
 
     response = HttpResponse(

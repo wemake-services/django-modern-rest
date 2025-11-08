@@ -1,12 +1,10 @@
 import dataclasses
 import string
-import sys
 import typing
 from collections import UserDict
 from collections.abc import Iterable, Mapping
-from functools import lru_cache
 
-from django_modern_rest.settings import MAX_CACHE_SIZE
+from django_modern_rest.internal.strings import str_title_cached_interned
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from django_modern_rest.response import ResponseModification
@@ -88,7 +86,7 @@ def build_headers(
             header_name: response_header.value
             for header_name, response_header in modification.headers.items()
         })
-    if 'Content-Type' not in result_headers:
+    if str_title_cached_interned('Content-Type') not in result_headers:
         result_headers['Content-Type'] = serializer.content_type
     return result_headers
 
@@ -114,17 +112,20 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
         >>> h.add('accept', 'application/json')
         >>> h['Accept']
         'text/html,application/json'
+        >>> h['Accept'] = 'application/json'
+        >>> h['Accept']
+        'application/json'
         >>> h[1]
         Traceback (most recent call last):
             ...
-        TypeError: Header keys must be `str`
+        TypeError: Header keys must be `str`, got `int`
         >>> h['x-my-header'] = 1
         Traceback (most recent call last):
             ...
-        TypeError: Header values must be `str` or `Iterable[str]`
+        TypeError: Header values must be `str` or `Iterable[str]`, got `int`
     """
 
-    _set_cookie: str = sys.intern('Set-Cookie')
+    _set_cookie: str = str_title_cached_interned('Set-Cookie')
 
     @typing.override
     def __init__(
@@ -149,19 +150,12 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
     def __setitem__(
         self,
         key: str,
-        item_to_set: StrOrIterstr | typing.Any,
+        input_value: StrOrIterstr | typing.Any,
     ) -> None:
         """Set values for the given header key case insensetively."""
-        is_str = isinstance(item_to_set, str)
-        if isinstance(item_to_set, bytes) or (
-            not is_str and not isinstance(item_to_set, (list, tuple, Iterable))
-        ):
-            raise TypeError('Header values must be `str` or `Iterable[str]`')
         key = self._make_key(key)
-        if is_str:
-            self.data[key] = item_to_set  # type: ignore[assignment]
-        else:
-            self.data[key] = ','.join(item_to_set)  # pyright: ignore[reportUnknownArgumentType]
+        input_value = self._make_value(input_value)
+        self.data[key] = ','.join(input_value)  # pyright: ignore[reportUnknownArgumentType]
 
     @typing.override
     def __contains__(self, key: typing.Any) -> bool:
@@ -182,7 +176,7 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
     __ior__ = __ror__ = __or__  # noqa: WPS429
 
     @typing.override
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return f'{self.__class__.__name__}({self.data})'  # noqa: WPS237
 
     def add(self, key: str, input_value: StrOrIterstr) -> None:  # noqa: WPS231
@@ -222,39 +216,43 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
 
     def _make_key(self, key: typing.Any) -> str:
         if not isinstance(key, str):
-            raise TypeError('Header keys must be `str`')
+            raise TypeError(
+                f'Header keys must be `str`, got `{type(key).__name__}`',
+            )
         if key in self.data:
             return key
-        if not key.istitle():
-            key = _str_title_cached(key)
-        if sys.intern(key) is self._set_cookie:
+        key = str_title_cached_interned(key)
+        if key is self._set_cookie:
             raise ValueError(
-                'Setting cookies directly via headers is forbidden, use ...',
+                'Setting cookies directly via headers is forbidden, '
+                'use `cookies=` parameter instead',
             )
-        return typing.cast(str, key)
+        # Note: assert isinstance is faster than typing.cast
+        assert isinstance(key, str)  # noqa: S101
+        return key
 
     def _make_value(self, input_value: typing.Any) -> list[str]:
-        if isinstance(input_value, str):
-            return input_value.strip(_header_strip_chars).split(',')
         if isinstance(input_value, bytes):
-            # bytes is Iterable, but not allowed as values
+            # bytes is iterable but not valid
             raise TypeError(
-                'Header values must be `str` or `Iterable[str]`',
+                'Header values must be `str` or `Iterable[str]`, got `bytes`',
             )
-        if isinstance(
-            input_value,
-            (list, tuple, Iterable),
-        ):  # pyright: ignore[reportUnnecessaryIsInstance]
-            return [
-                striped
-                for subvalue in input_value  # pyright: ignore[reportUnknownVariableType]
-                if (striped := subvalue.strip())  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
-            ]
+        if isinstance(input_value, str):
+            input_value = input_value.split(',')
+
+        if isinstance(input_value, (list, tuple, Iterable)):
+            try:
+                return [
+                    striped
+                    for subvalue in input_value  # pyright: ignore[reportUnknownVariableType]
+                    if (striped := subvalue.strip(_header_strip_chars))  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+                ]
+            except Exception as exc:
+                raise TypeError(
+                    'All elements of header iterable must be `str`',
+                ) from exc
+
         raise TypeError(
-            'Header values must be `str` or `Iterable[str]`',
+            'Header values must be `str` or `Iterable[str]`, '
+            f'got `{type(input_value).__name__}`',
         )
-
-
-@lru_cache(maxsize=MAX_CACHE_SIZE)
-def _str_title_cached(input_str: str) -> str:
-    return input_str.title()

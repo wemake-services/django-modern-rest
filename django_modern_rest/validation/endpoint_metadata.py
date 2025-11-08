@@ -1,5 +1,6 @@
 import dataclasses
 import inspect
+import sys
 from collections.abc import Callable, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
@@ -21,6 +22,7 @@ from django_modern_rest.headers import (
     HeaderSpec,
     NewHeader,
 )
+from django_modern_rest.internal.strings import str_title_cached_interned
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.response import (
     ResponseModification,
@@ -49,6 +51,7 @@ if TYPE_CHECKING:
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
+_set_cookie_str: str = sys.intern('Set-Cookie')
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -111,7 +114,7 @@ class _ResponseListValidator:
             if response.headers is None:
                 continue
             if any(
-                header_name.lower() == 'set-cookie'
+                str_title_cached_interned(header_name) is _set_cookie_str
                 for header_name in response.headers
             ):
                 raise EndpointMetadataError(

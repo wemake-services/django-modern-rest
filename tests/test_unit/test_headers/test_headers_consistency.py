@@ -16,33 +16,24 @@ def test_case_insensitive_access() -> None:
     assert 'content-type' in header_dict
 
 
-def test_set_and_get_single_value() -> None:
-    """Test setting and retrieving a single header value."""
+@pytest.mark.parametrize(
+    ('input_value', 'expected'),
+    [
+        ('text/html', 'text/html'),
+        ('  Foo ,  Bar ,,  Baz  ', 'Foo,Bar,Baz'),
+        (['  X  ', '\tY\r\n'], 'X,Y'),
+        (['A', 'B', ''], 'A,B'),
+        ([], ''),
+    ],
+)
+def test_make_value_normalization_cases(
+    input_value: list[str],
+    expected: str,
+) -> None:
+    """Ensure correct normalization of values."""
     header_dict = HeaderDict()
-    header_dict['accept'] = 'text/html'
-    assert header_dict['Accept'] == 'text/html'
-
-
-def test_set_sequence_of_strings() -> None:
-    """Test setting a header from a list of string values."""
-    header_dict = HeaderDict()
-    header_dict['accept'] = ['text/html', 'application/json']
-    assert header_dict['Accept'] == 'text/html,application/json'
-
-
-def test_overwrite_existing_header() -> None:
-    """Confirm that overwriting an existing header replaces its value."""
-    header_dict = HeaderDict()
-    header_dict['content-type'] = 'application/json'
-    header_dict['Content-Type'] = 'text/html'
-    assert header_dict['Content-Type'] == 'text/html'
-
-
-def test_setting_sequence_with_mixed_types() -> None:
-    """Ensure mixed-type sequences are coerced to strings and joined."""
-    header_dict = HeaderDict()
-    header_dict.add('x-values', ['a', '1', 'b'])
-    assert header_dict['X-Values'] == 'a,1,b'
+    header_dict['X-My-Header'] = input_value
+    assert header_dict['X-My-Header'] == expected
 
 
 @pytest.mark.parametrize(
@@ -55,7 +46,8 @@ def test_setting_bad_values_raises(
     """Ensure non-string and non-sequence values raise a TypeError."""
     header_dict = HeaderDict()
     with pytest.raises(TypeError):
-        header_dict['x-header'] = bad_header_value
+        header_dict['X-My-Header'] = bad_header_value
+    assert 'X-My-Header' not in header_dict
 
 
 @pytest.mark.parametrize(
