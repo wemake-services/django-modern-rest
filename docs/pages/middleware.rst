@@ -163,7 +163,8 @@ Use with ``wrap_middleware``:
 
 .. literalinclude:: /examples/middleware/rate_limit.py
   :linenos:
-  :lines: 33-
+  :lines: 33-49
+  :no-run:
 
 Wrapping Django's Built-in Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
