@@ -38,3 +38,6 @@ class SettingsController(Controller[MsgspecSerializer]):
                 ),
             },
         )
+
+
+# run: {"controller": "SettingsController", "method": "options", "url": "/api/settings/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

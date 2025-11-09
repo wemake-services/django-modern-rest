@@ -34,3 +34,6 @@ class UserController(
             self.parsed_body,
             status_code=HTTPStatus.OK,
         )
+
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

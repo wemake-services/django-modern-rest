@@ -26,3 +26,7 @@ class UserController(  # <- `Controller` definition
 
     def post(self) -> UserModel:  # <- `Endpoint` definition
         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+
+
+# run: {"controller": "UserController", "method": "get", "body": {"email": "user@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501
