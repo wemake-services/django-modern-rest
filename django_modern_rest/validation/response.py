@@ -233,16 +233,13 @@ class RawResponseValidator(ResponseValidator[Any]):
             cookies=self.metadata.modification.cookies,
         )
 
-        if isinstance(response_content, HttpResponse):
-            response = response_content
-        else:
-            response = build_response(
-                controller.serializer,
-                raw_data=all_response_data.raw_data,
-                status_code=all_response_data.status_code,
-                headers=all_response_data.headers,
-                cookies=all_response_data.cookies,
-            )
+        response = build_response(
+            controller.serializer,
+            raw_data=all_response_data.raw_data,
+            status_code=all_response_data.status_code,
+            headers=all_response_data.headers,
+            cookies=all_response_data.cookies,
+        )
 
         if not _is_validation_enabled(
             controller,
