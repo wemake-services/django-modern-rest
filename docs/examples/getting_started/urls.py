@@ -1,4 +1,5 @@
-from .views import UserController  # noqa: I001, WPS300
+# needs for run example
+from .pydantic_controller import UserController  # noqa: I001, WPS300
 
 from django.urls import include, path
 
@@ -18,3 +19,5 @@ router = Router([
 urlpatterns = [
     path('api/', include((router.urls, 'rest_app'), namespace='api')),
 ]
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "my-api"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

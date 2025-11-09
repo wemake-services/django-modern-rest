@@ -157,6 +157,7 @@ Example with rate limiting:
 .. literalinclude:: /examples/middleware/rate_limit.py
   :linenos:
   :lines: 16-30
+  :no-run:
 
 Use with ``wrap_middleware``:
 

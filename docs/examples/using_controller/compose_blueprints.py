@@ -14,3 +14,7 @@ class ComposedController(Controller[PydanticSerializer]):
         UserListBlueprint,
         UserCreateBlueprint,
     ]
+
+
+# run: {"controller": "ComposedController", "method": "get", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# run: {"controller": "ComposedController", "method": "post", "body": {"email": "user@wms.org", "age": 10}, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
