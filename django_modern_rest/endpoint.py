@@ -6,6 +6,7 @@ from typing import (
     Any,
     ClassVar,
     Never,
+    TypeAlias,
     overload,
 )
 
@@ -23,7 +24,7 @@ from django_modern_rest.openapi.objects import (
     SecurityRequirement,
     Server,
 )
-from django_modern_rest.response import APIError, ResponseSpec, build_response
+from django_modern_rest.response import APIError, ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     HttpSpec,
@@ -38,9 +39,17 @@ from django_modern_rest.validation import (
     ValidateEndpointPayload,
     validate_method_name,
 )
+from django_modern_rest.validation.response import (
+    HttpResponseValidator,
+    RawResponseValidator,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint, Controller
+
+
+HttpResponseValidatorCls: TypeAlias = type[ResponseValidator[HttpResponse]]
+RawResponseValidatorCls: TypeAlias = type[ResponseValidator[Any]]
 
 
 # TODO: make generic
@@ -55,9 +64,10 @@ class Endpoint:  # noqa: WPS214
     __slots__ = (
         '_func',
         '_method',
+        'http_response_validator',
         'is_async',
         'metadata',
-        'response_validator',
+        'raw_response_validator',
     )
 
     _func: Callable[..., Any]
@@ -65,8 +75,11 @@ class Endpoint:  # noqa: WPS214
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
     )
-    response_validator_cls: ClassVar[type[ResponseValidator]] = (
-        ResponseValidator
+    http_response_validator_cls: ClassVar[HttpResponseValidatorCls] = (
+        HttpResponseValidator
+    )
+    raw_response_validator_cls: ClassVar[RawResponseValidatorCls] = (
+        RawResponseValidator
     )
 
     def __init__(
@@ -103,10 +116,15 @@ class Endpoint:  # noqa: WPS214
         self.metadata = metadata
 
         # We need a func before any wrappers, but with metadata:
-        self.response_validator = self.response_validator_cls(
+        self.http_response_validator = self.http_response_validator_cls(
             metadata,
             controller_cls.serializer,
         )
+        self.raw_response_validator = self.raw_response_validator_cls(
+            metadata,
+            controller_cls.serializer,
+        )
+
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
 
@@ -288,8 +306,14 @@ class Endpoint:  # noqa: WPS214
         If it is already the :class:`django.http.HttpResponse` object,
         just validates it before returning.
         """
+        validator = (
+            self.http_response_validator
+            if isinstance(raw_data, HttpResponse)
+            else self.raw_response_validator
+        )
+
         try:
-            return self._validate_response(controller, raw_data)
+            return validator.validate(controller, raw_data)
         except ResponseSerializationError as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # here, because it is too late. Since `ResponseSerializationError`
@@ -300,29 +324,6 @@ class Endpoint:  # noqa: WPS214
                 payload,
                 status_code=exc.status_code,
             )
-
-    def _validate_response(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        raw_data: Any | HttpResponse,
-    ) -> HttpResponse:
-        if isinstance(raw_data, HttpResponse):
-            return self.response_validator.validate_response(
-                controller,
-                raw_data,
-            )
-
-        validated = self.response_validator.validate_modification(
-            controller,
-            raw_data,
-        )
-        return build_response(
-            controller.serializer,
-            raw_data=validated.raw_data,
-            status_code=validated.status_code,
-            headers=validated.headers,
-            cookies=validated.cookies,
-        )
 
     def _handle_default_error(
         self,

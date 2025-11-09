@@ -1,3 +1,4 @@
+import abc
 import dataclasses
 from collections.abc import Mapping, Set
 from functools import lru_cache
@@ -6,17 +7,19 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Generic,
     TypeVar,
     final,
 )
 
 from django.http import HttpResponse
+from typing_extensions import override
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import build_headers
 from django_modern_rest.metadata import EndpointMetadata
-from django_modern_rest.response import ResponseSpec
+from django_modern_rest.response import ResponseSpec, build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     MAX_CACHE_SIZE,
@@ -27,11 +30,11 @@ from django_modern_rest.settings import (
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
 
-_ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
+_ResponseContentT = TypeVar('_ResponseContentT')
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class ResponseValidator:
+class ResponseValidator(abc.ABC, Generic[_ResponseContentT]):
     """
     Response validator.
 
@@ -44,54 +47,14 @@ class ResponseValidator:
     serializer: type[BaseSerializer]
     strict_validation: ClassVar[bool] = True
 
-    def validate_response(
+    @abc.abstractmethod
+    def validate(
         self,
         controller: 'Controller[BaseSerializer]',
-        response: _ResponseT,
-    ) -> _ResponseT:
-        """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not _is_validation_enabled(
-            controller,
-            metadata_validate_responses=self.metadata.validate_responses,
-        ):
-            return response
-        schema = self._get_response_schema(response.status_code)
-        self._validate_body(response.content, schema, response=response)
-        self._validate_response_headers(response, schema)
-        self._validate_response_cookies(response, schema)
-        return response
-
-    def validate_modification(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        structured: Any,
-    ) -> '_ValidationContext':
-        """Validate *structured* data before dumping it to json."""
-        if self.metadata.modification is None:
-            method = self.metadata.method
-            raise ResponseSerializationError(
-                f'{controller} in {method} returned '
-                f'raw data of type {type(structured)} '
-                'without associated `@modify` usage.',
-            )
-
-        all_response_data = _ValidationContext(
-            raw_data=structured,
-            status_code=self.metadata.modification.status_code,
-            headers=build_headers(
-                self.metadata.modification,
-                self.serializer,
-            ),
-            cookies=self.metadata.modification.cookies,
-        )
-        if not _is_validation_enabled(
-            controller,
-            metadata_validate_responses=self.metadata.validate_responses,
-        ):
-            return all_response_data
-        schema = self._get_response_schema(all_response_data.status_code)
-        self._validate_body(structured, schema)
-        return all_response_data
+        response_content: _ResponseContentT,
+    ) -> HttpResponse:
+        """Validate response data."""
+        raise NotImplementedError
 
     def _get_response_schema(
         self,
@@ -210,6 +173,87 @@ class ResponseValidator:
                     f'Response cookie {cookie_key}={cookie_body!r} is not '
                     f'equal to {metadata_cookies[cookie_key]!r}',
                 )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class HttpResponseValidator(ResponseValidator[HttpResponse]):
+    """Validator for HttpResponse."""
+
+    @override
+    def validate(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        response_content: HttpResponse,
+    ) -> HttpResponse:
+        """Validate ``.content`` of existing ``HttpResponse`` object."""
+        if not _is_validation_enabled(
+            controller,
+            metadata_validate_responses=self.metadata.validate_responses,
+        ):
+            return response_content
+
+        schema = self._get_response_schema(response_content.status_code)
+        self._validate_body(
+            response_content.content,
+            schema,
+            response=response_content,
+        )
+        self._validate_response_headers(response_content, schema)
+        self._validate_response_cookies(response_content, schema)
+
+        return response_content
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class RawResponseValidator(ResponseValidator[Any]):
+    """Validator for raw data."""
+
+    @override
+    def validate(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        response_content: Any,
+    ) -> HttpResponse:
+        """Validate *structured* data before dumping it to json."""
+        if self.metadata.modification is None:
+            method = self.metadata.method
+            raise ResponseSerializationError(
+                f'{controller} in {method} returned '
+                f'raw data of type {type(response_content)} '
+                'without associated `@modify` usage.',
+            )
+
+        all_response_data = _ValidationContext(
+            raw_data=response_content,
+            status_code=self.metadata.modification.status_code,
+            headers=build_headers(
+                self.metadata.modification,
+                self.serializer,
+            ),
+            cookies=self.metadata.modification.cookies,
+        )
+
+        if isinstance(response_content, HttpResponse):
+            response = response_content
+        else:
+            response = build_response(
+                controller.serializer,
+                raw_data=all_response_data.raw_data,
+                status_code=all_response_data.status_code,
+                headers=all_response_data.headers,
+                cookies=all_response_data.cookies,
+            )
+
+        if not _is_validation_enabled(
+            controller,
+            metadata_validate_responses=self.metadata.validate_responses,
+        ):
+            return response
+
+        schema = self._get_response_schema(all_response_data.status_code)
+        self._validate_body(response_content, schema)
+
+        return response
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)

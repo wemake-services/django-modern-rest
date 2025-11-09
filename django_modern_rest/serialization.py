@@ -2,7 +2,7 @@ import abc
 import dataclasses
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
-from django.http import HttpHeaders, HttpRequest
+from django.http import HttpHeaders, HttpRequest, HttpResponse
 from typing_extensions import TypedDict
 
 from django_modern_rest.exceptions import (
@@ -54,6 +54,8 @@ class BaseSerializer:
             # This is impossible to reach with `msgspec`, but is needed
             # for raw `json` serialization.
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+        if isinstance(to_serialize, HttpResponse):
+            return to_serialize.content.decode()
         raise ResponseSerializationError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
