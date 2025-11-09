@@ -147,7 +147,7 @@ def _get_url_path_from_run_args(run_args: _AppRunArgsT) -> str:
     controller_name = run_args['controller'].lower()
     url: str = run_args.get(
         'url',
-        f'api/{controller_name}/',
+        f'/api/{controller_name}/',
     )
     return url
 
