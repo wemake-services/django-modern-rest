@@ -47,3 +47,7 @@ class RateLimitedController(Controller[PydanticSerializer]):
 
     def post(self) -> dict[str, str]:
         return {'message': 'Request processed'}
+
+
+# run: {"controller": "RateLimitedController", "method": "post", "url": "/api/ratelimit/"}  # noqa: ERA001, E501
+# run: {"controller": "RateLimitedController", "method": "post", "headers": {"X-Rate-Limited": "true"}, "url": "/api/ratelimit/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
