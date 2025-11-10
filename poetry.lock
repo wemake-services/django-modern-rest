@@ -144,18 +144,6 @@ files = [
 dev = ["backports.zoneinfo ; python_version < \"3.9\"", "freezegun (>=1.0,<2.0)", "jinja2 (>=3.0)", "pytest (>=6.0)", "pytest-cov", "pytz", "setuptools", "tzdata ; sys_platform == \"win32\""]
 
 [[package]]
-name = "backoff"
-version = "2.2.1"
-description = "Function decoration for backoff and retry"
-optional = false
-python-versions = ">=3.7,<4.0"
-groups = ["dev"]
-files = [
-    {file = "backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8"},
-    {file = "backoff-2.2.1.tar.gz", hash = "sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba"},
-]
-
-[[package]]
 name = "certifi"
 version = "2025.10.5"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -2229,18 +2217,17 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.4.1"
+version = "4.4.4"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.4.1-py3-none-any.whl", hash = "sha256:6b68170cef21b001cc43a244ed5aaaf62b5d6826984c8ae09a495047d47cf065"},
-    {file = "schemathesis-4.4.1.tar.gz", hash = "sha256:e248edf5e6d5a47babf70133593064104ceddf45019e2bd89b1da5150eec4c61"},
+    {file = "schemathesis-4.4.4-py3-none-any.whl", hash = "sha256:79ab2d6173bb6bad035468330f8d24830b95a6c5916fe7525e6709fd6647374c"},
+    {file = "schemathesis-4.4.4.tar.gz", hash = "sha256:04a8e495b458734e7fc61caa347a047f257db00af411d78531a318dcf7128179"},
 ]
 
 [package.dependencies]
-backoff = ">=2.1.2,<3.0"
 click = ">=8.0,<9"
 colorama = ">=0.4,<1.0"
 harfile = ">=0.4.0,<1.0"
@@ -2257,6 +2244,7 @@ pyyaml = ">=5.1,<7.0"
 requests = ">=2.22,<3"
 rich = ">=13.9.4"
 starlette-testclient = ">=0.4.1,<1"
+tenacity = ">=9.1.2,<10.0"
 typing-extensions = ">=4.12.2"
 werkzeug = ">=0.16.0,<4"
 
@@ -2670,6 +2658,22 @@ files = [
 [package.dependencies]
 requests = "*"
 starlette = ">=0.20.1"
+
+[[package]]
+name = "tenacity"
+version = "9.1.2"
+description = "Retry code until it succeeds"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138"},
+    {file = "tenacity-9.1.2.tar.gz", hash = "sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb"},
+]
+
+[package.extras]
+doc = ["reno", "sphinx"]
+test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
 name = "types-docutils"
