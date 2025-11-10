@@ -947,14 +947,14 @@ files = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.31.0"
+version = "0.31.1"
 description = "golden master/snapshot/approval testing library which puts the values right into your source code"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "inline_snapshot-0.31.0-py3-none-any.whl", hash = "sha256:8bb54ea7c5da628f53e4485aed484118ed06d7e29c686aecb952e3771b540c80"},
-    {file = "inline_snapshot-0.31.0.tar.gz", hash = "sha256:7b5ac05ad695151ae425b0f04318613a2440d3402c08d51ecc66ba6d0b434e5d"},
+    {file = "inline_snapshot-0.31.1-py3-none-any.whl", hash = "sha256:7875a73c986a03388c7e758fb5cb8a43d2c3a20328aa1d851bfb4ed536c4496f"},
+    {file = "inline_snapshot-0.31.1.tar.gz", hash = "sha256:4ea5ed70aa1d652713bbfd750606b94bd8a42483f7d3680433b3e92994495f64"},
 ]
 
 [package.dependencies]
