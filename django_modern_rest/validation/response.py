@@ -11,6 +11,7 @@ from typing import (
 )
 
 from django.http import HttpResponse
+
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import build_headers
