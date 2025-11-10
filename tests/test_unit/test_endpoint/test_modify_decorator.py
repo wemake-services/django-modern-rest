@@ -76,7 +76,7 @@ def test_modify_with_cookie_description() -> None:
         class _WrongValidate(Controller[PydanticSerializer]):
             @modify(
                 status_code=HTTPStatus.OK,
-                cookies={'session_id': CookieSpec()},
+                cookies={'test': CookieSpec(required=True)},  # type: ignore[dict-item]
             )
             def get(self) -> int:
                 raise NotImplementedError
