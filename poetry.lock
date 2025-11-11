@@ -918,19 +918,19 @@ files = [
 
 [[package]]
 name = "import-linter"
-version = "2.5.2"
+version = "2.6"
 description = "Enforces rules for the imports within and between Python packages."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "import_linter-2.5.2-py3-none-any.whl", hash = "sha256:a70b64c2451dc6b96ff9ef5af4e3f6a2c8b63532a66a3c96a7c31ca086b10003"},
-    {file = "import_linter-2.5.2.tar.gz", hash = "sha256:d8f2dc6432975cc35edc4cc0bfcf1b811f05500b377ce0c3f62729d68f46c698"},
+    {file = "import_linter-2.6-py3-none-any.whl", hash = "sha256:4e835141294b803325a619b8c789398320b81f0bde7771e0dd36f34524e51b1e"},
+    {file = "import_linter-2.6.tar.gz", hash = "sha256:60429a450eb6ebeed536f6d2b83428b026c5747ca69d029812e2f1360b136f85"},
 ]
 
 [package.dependencies]
 click = ">=6"
-grimp = ">=3.12"
+grimp = "3.13"
 typing-extensions = ">=3.10.0.0"
 
 [[package]]
