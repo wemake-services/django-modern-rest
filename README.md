@@ -22,7 +22,6 @@
 - [x] Strict schema validation of both requests and responses
 - [x] Supports `pydantic2`, but not bound to it
 - [x] Supports `msgspec`, but not bound to it
-- [x] Strict schema validation for requests and responses
 - [x] Supports async Django without any `sync_to_async` calls inside
 - [ ] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
@@ -36,7 +35,7 @@
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="80%" height="auto" />
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmakr - Dark" width="80%" height="auto" />
+  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmark - Dark" width="80%" height="auto" />
 </div>
 
 <p align="center">
@@ -60,7 +59,7 @@
 ## Installation
 
 Works for:
-- СPython 3.11+
+- CPython 3.11+
 - Django 4.2+
 
 ```bash
