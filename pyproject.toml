@@ -73,7 +73,7 @@ ruff = "^0.14"
 import-linter = "^2.5"
 slotscheck = "^0.19"
 
-pytest = "^8.4"
+pytest = ">=8.4,<10.0"
 pytest-cov = "^7.0"
 covdefaults = "^2.3"
 pytest-randomly = "^4.0"
