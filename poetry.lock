@@ -2217,14 +2217,14 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.4.4"
+version = "4.5.0"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.4.4-py3-none-any.whl", hash = "sha256:79ab2d6173bb6bad035468330f8d24830b95a6c5916fe7525e6709fd6647374c"},
-    {file = "schemathesis-4.4.4.tar.gz", hash = "sha256:04a8e495b458734e7fc61caa347a047f257db00af411d78531a318dcf7128179"},
+    {file = "schemathesis-4.5.0-py3-none-any.whl", hash = "sha256:1e00cf3782a3fe6ba243757d84dbbf66109e53d7463961b58b15a80181b06ee2"},
+    {file = "schemathesis-4.5.0.tar.gz", hash = "sha256:182303f19917bfe0aed55ea5917541a97ff3ee5def75fe413eea9b2f4850a408"},
 ]
 
 [package.dependencies]
@@ -2238,7 +2238,7 @@ hypothesis-jsonschema = ">=0.23.1,<0.24"
 jsonschema = {version = ">=4.18.0,<5.0", extras = ["format"]}
 junit-xml = ">=1.9,<2.0"
 pyrate-limiter = ">=3.0,<4.0"
-pytest = ">=8,<9"
+pytest = ">=8,<10"
 pytest-subtests = ">=0.11,<0.15.0"
 pyyaml = ">=5.1,<7.0"
 requests = ">=2.22,<3"
@@ -2251,9 +2251,9 @@ werkzeug = ">=0.16.0,<4"
 [package.extras]
 bench = ["pytest-codspeed (==4.2.0)"]
 cov = ["coverage-enable-subprocess", "coverage[toml] (>=5.3)"]
-dev = ["aiohttp (>=3.9.1,<4.0)", "coverage (>=6)", "coverage-enable-subprocess", "coverage[toml] (>=5.3)", "fastapi (>=0.86.0)", "flask (>=2.1.1,<3.0)", "hypothesis-openapi (>=0.2,<1) ; python_version >= \"3.10\"", "mkdocs-material", "mkdocstrings[python]", "pydantic (>=1.10.2)", "pytest-asyncio (>=1.0,<2.0)", "pytest-codspeed (==4.2.0)", "pytest-httpserver (>=1.0,<2.0)", "pytest-mock (>=3.7.0,<4.0)", "pytest-trio (>=0.8,<1.0)", "pytest-xdist (>=3,<4.0)", "strawberry-graphql[fastapi] (>=0.109.0)", "syrupy (>=2,<5.0)", "tomli-w (>=1.2.0)", "trustme (>=0.9.0,<1.0)"]
+dev = ["aiohttp (>=3.9.1,<4.0)", "coverage (>=6)", "coverage-enable-subprocess", "coverage[toml] (>=5.3)", "fastapi (>=0.86.0)", "flask (>=2.1.1,<3.0)", "hypothesis-openapi (>=0.2,<1) ; python_version >= \"3.10\"", "mkdocs-material", "mkdocstrings[python]", "pydantic (>=1.10.2)", "pytest-asyncio (>=1.0,<2.0)", "pytest-codspeed (==4.2.0)", "pytest-httpserver (>=1.0,<2.0)", "pytest-mock (>=3.7.0,<4.0)", "pytest-trio (>=0.8,<1.0)", "pytest-xdist (>=3,<4.0)", "strawberry-graphql[fastapi] (>=0.109.0)", "syrupy (>=4,<6.0)", "tomli-w (>=1.2.0)", "trustme (>=0.9.0,<1.0)"]
 docs = ["mkdocs-material", "mkdocstrings[python]"]
-tests = ["aiohttp (>=3.9.1,<4.0)", "coverage (>=6)", "fastapi (>=0.86.0)", "flask (>=2.1.1,<3.0)", "hypothesis-openapi (>=0.2,<1) ; python_version >= \"3.10\"", "pydantic (>=1.10.2)", "pytest-asyncio (>=1.0,<2.0)", "pytest-httpserver (>=1.0,<2.0)", "pytest-mock (>=3.7.0,<4.0)", "pytest-trio (>=0.8,<1.0)", "pytest-xdist (>=3,<4.0)", "strawberry-graphql[fastapi] (>=0.109.0)", "syrupy (>=2,<5.0)", "tomli-w (>=1.2.0)", "trustme (>=0.9.0,<1.0)"]
+tests = ["aiohttp (>=3.9.1,<4.0)", "coverage (>=6)", "fastapi (>=0.86.0)", "flask (>=2.1.1,<3.0)", "hypothesis-openapi (>=0.2,<1) ; python_version >= \"3.10\"", "pydantic (>=1.10.2)", "pytest-asyncio (>=1.0,<2.0)", "pytest-httpserver (>=1.0,<2.0)", "pytest-mock (>=3.7.0,<4.0)", "pytest-trio (>=0.8,<1.0)", "pytest-xdist (>=3,<4.0)", "strawberry-graphql[fastapi] (>=0.109.0)", "syrupy (>=4,<6.0)", "tomli-w (>=1.2.0)", "trustme (>=0.9.0,<1.0)"]
 
 [[package]]
 name = "shibuya"
