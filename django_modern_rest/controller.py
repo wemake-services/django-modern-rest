@@ -20,6 +20,7 @@ from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
+from django_modern_rest.headers import HeaderLike
 from django_modern_rest.internal.io import identity
 from django_modern_rest.response import (
     ResponseSpec,
@@ -169,7 +170,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         self,
         raw_data: Any,
         *,
-        headers: dict[str, str] | None = None,
+        headers: HeaderLike | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
     ) -> HttpResponse:
@@ -197,7 +198,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | None = None,
+        headers: HeaderLike | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> HttpResponse:
         """
