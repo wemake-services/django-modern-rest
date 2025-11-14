@@ -1,0 +1,21 @@
+# We need test repeatability.
+# We will achieve diversity by using a number of examples.
+seed = 42
+
+workers = 4  # Use exactly 4 workers
+
+# We extend the rules as the results improve.
+[phases.examples]
+enabled = false
+
+[phases.coverage]
+enabled = false
+
+[phases.fuzzing]
+enabled = false
+
+[phases.stateful]
+enabled = false
+
+[generation]
+max-examples = 1
