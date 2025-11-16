@@ -16,6 +16,45 @@ class _PaylodDescriptionController(
         raise NotImplementedError
 
 
+class _PaylodDocDescriptionController(
+    Controller[PydanticSerializer],
+):
+    @modify(
+        summary='Summary from payload.',
+        description='Description from payload.',
+    )
+    def get(self) -> list[int]:
+        """Summary from docstring.
+
+        Description from docstring.
+        """
+        raise NotImplementedError
+
+
+class _PaylodDocOnlySummaryController(
+    Controller[PydanticSerializer],
+):
+    @modify(summary='Summary from payload.')
+    def get(self) -> list[int]:
+        """Summary from docstring.
+
+        Description from docstring.
+        """
+        raise NotImplementedError
+
+
+class _PaylodDocOnlyDescriptionController(
+    Controller[PydanticSerializer],
+):
+    @modify(description='Description from payload.')
+    def get(self) -> list[int]:
+        """Summary from docstring.
+
+        Description from docstring.
+        """
+        raise NotImplementedError
+
+
 class _DocFullDescriptionController(
     Controller[PydanticSerializer],
 ):
@@ -62,6 +101,21 @@ class _RawDescriptionController(
         (
             _PaylodDescriptionController,
             'Summary from payload.',
+            'Description from payload.',
+        ),
+        (
+            _PaylodDocDescriptionController,
+            'Summary from payload.',
+            'Description from payload.',
+        ),
+        (
+            _PaylodDocOnlySummaryController,
+            'Summary from payload.',
+            None,
+        ),
+        (
+            _PaylodDocOnlyDescriptionController,
+            None,
             'Description from payload.',
         ),
         (
