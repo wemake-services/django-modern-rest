@@ -1,0 +1,20 @@
+# We need test repeatability.
+# We will achieve diversity by using a number of examples.
+seed = 42
+workers = 4  # Use exactly 4 workers
+
+# NOTE: We extend the rules as the schema generation results improve.
+[phases.examples]
+enabled = true
+
+[phases.coverage]
+enabled = true
+
+[phases.fuzzing]
+enabled = true
+
+[phases.stateful]
+enabled = true
+
+[generation]
+max-examples = 1
