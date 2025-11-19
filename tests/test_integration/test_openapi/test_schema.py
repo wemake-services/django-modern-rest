@@ -33,5 +33,4 @@ def test_schema_path_exists(case: st.Case) -> None:
     Note: This test only verifies that endpoints are reachable and does not
     validate response structure or content.
     """
-    response = case.call()
-    assert response.status_code != HTTPStatus.NOT_FOUND
+    assert case.call().status_code != HTTPStatus.NOT_FOUND
