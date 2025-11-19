@@ -1,7 +1,6 @@
 # We need test repeatability.
 # We will achieve diversity by using a number of examples.
 seed = 42
-workers = 4  # Use exactly 4 workers
 
 # NOTE: We extend the rules as the schema generation results improve.
 [phases.examples]
