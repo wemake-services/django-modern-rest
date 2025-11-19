@@ -1,5 +1,4 @@
 import dataclasses
-import string
 import typing
 from collections import UserDict
 from collections.abc import Iterable, Mapping
@@ -13,7 +12,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 HeaderLike: typing.TypeAlias = typing.Union['HeaderDict', dict[str, str]]
 StrOrIterstr: typing.TypeAlias = str | Iterable[str]
 
-_header_strip_chars: str = string.whitespace + ','  # noqa: WPS336
+# ref: https://infra.spec.whatwg.org/#ascii-whitespace
+_ASCII_WHITESPACE = '\t\n\x0c\r '  # noqa: WPS336
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -100,7 +100,7 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
     ``"content-type"`` -> ``"Content-Type"``). Values are stored as strings
     separated by a comma to allow multi-valued headers.
 
-    Use `add(key, val)` or `update(key, vals)`
+    Use `add(key, value)` or `update(values)`
     to append values without replacing.
 
     Examples:
@@ -165,7 +165,7 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
     @typing.override
     def __delitem__(self, key: str) -> None:  # noqa: WPS603
         """Delete key from headers case insensetively."""
-        self.data.pop(self._make_key(key), None)
+        self.data.pop(self._make_key(key))
 
     @typing.override
     def __or__(self, other: typing.Any) -> typing.NoReturn:
@@ -245,9 +245,9 @@ class HeaderDict(UserDict[str, str]):  # noqa: WPS214
                 return [
                     striped
                     for subvalue in input_value  # pyright: ignore[reportUnknownVariableType]
-                    if (striped := subvalue.strip(_header_strip_chars))  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+                    if (striped := subvalue.strip(_ASCII_WHITESPACE))  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
                 ]
-            except Exception as exc:
+            except (TypeError, AttributeError) as exc:
                 raise TypeError(
                     'All elements of header iterable must be `str`',
                 ) from exc
