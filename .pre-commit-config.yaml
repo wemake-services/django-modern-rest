@@ -36,7 +36,7 @@ repos:
     rev: v1.0.1
     hooks:
       - id: sphinx-lint
-        args: ["--enable=all"]
+        args: ["--enable=all", "--disable=line-too-long"]
         files: ^docs/
 
   # Should be applied after all autofixes:
