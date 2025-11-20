@@ -33,7 +33,7 @@ def test_controller_generic_subclass() -> None:
 
     assert _Final.serializer is PydanticSerializer
     assert _Final.api_endpoints == {}
-    assert _Final._existing_http_methods == {}  # noqa: SLF001
+    assert _Final._existing_http_methods == {}
 
 
 def test_controller_wrong_serializer() -> None:

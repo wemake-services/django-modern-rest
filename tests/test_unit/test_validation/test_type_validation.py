@@ -96,7 +96,7 @@ def test_valid_data(
     validator = endpoint.response_validator
 
     assert HTTPStatus.OK in endpoint.metadata.responses
-    validator._validate_body(  # noqa: SLF001
+    validator._validate_body(
         raw_data,
         endpoint.metadata.responses[HTTPStatus.OK],
     )
@@ -147,7 +147,7 @@ def test_invalid_data(
 
     assert HTTPStatus.OK in endpoint.metadata.responses
     with pytest.raises(ResponseSerializationError, match='type'):
-        validator._validate_body(  # noqa: SLF001
+        validator._validate_body(
             raw_data,
             endpoint.metadata.responses[HTTPStatus.OK],
         )
