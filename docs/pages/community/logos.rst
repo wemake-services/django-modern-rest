@@ -2,8 +2,7 @@ Logos
 =====
 
 The Modern REST logo is available for download and use in the formats below.
-Refer to the
-`MIT License <https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE>`_
+Refer to the `MIT License <https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE>`_
 for information about permission and usage of the logo.
 
 .. tabs::
