@@ -2,10 +2,8 @@ Logos
 =====
 
 The Modern REST logo is available for download and use in the formats below.
-Refer to the `MIT License`_
+Refer to the `MIT License <https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE>`_
 for information about permission and usage of the logo.
-
-.. MIT License: https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE
 
 .. tabs::
 
@@ -83,9 +81,7 @@ Font
 The Modern REST logo uses
 `Roboto Flex <https://github.com/googlefonts/roboto-flex>`_.
 Font is available under the
-`SIL Open Font License`_ v1.1.
-
-.. SIL Open Font License: https://github.com/googlefonts/roboto-flex/blob/main/OFL.txt
+`SIL Open Font License <https://github.com/googlefonts/roboto-flex/blob/main/OFL.txt> v1.1`_.
 
 Credits
 -------
