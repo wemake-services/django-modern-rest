@@ -36,7 +36,7 @@ repos:
     rev: v1.0.1
     hooks:
       - id: sphinx-lint
-        args: ["--enable=default-role"]
+        args: ["--enable=all"]
         files: ^docs/
 
   # Should be applied after all autofixes:
