@@ -81,7 +81,7 @@ Font
 The Modern REST logo uses
 `Roboto Flex <https://github.com/googlefonts/roboto-flex>`_.
 Font is available under the
-`SIL Open Font License <https://github.com/googlefonts/roboto-flex/blob/main/OFL.txt> v1.1`_.
+`SIL Open Font License v1.1 <https://github.com/googlefonts/roboto-flex/blob/main/OFL.txt>`_.
 
 Credits
 -------
