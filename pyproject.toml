@@ -85,7 +85,7 @@ dirty-equals = ">=0.10,<0.12"
 faker = ">=37.11,<39.0"
 inline-snapshot = "^0.31"
 schemathesis = "^4.3"
-polyfactory = "^2.22"
+polyfactory = ">=2.22,<4.0"
 
 httpx = "^0.28"
 
