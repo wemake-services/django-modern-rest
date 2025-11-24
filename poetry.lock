@@ -446,14 +446,14 @@ toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 
 [[package]]
 name = "dirty-equals"
-version = "0.10.0"
+version = "0.11"
 description = "Doing dirty (but extremely useful) things with equals."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "dirty_equals-0.10.0-py3-none-any.whl", hash = "sha256:bbf4a4eaafd56e371dafe2edf2265315ebd71a441b142ed801511aa33e4c3438"},
-    {file = "dirty_equals-0.10.0.tar.gz", hash = "sha256:623d7a07c5ba437f1a834c6246d1e3eb97238ca70331c61a499d9aabd757b899"},
+    {file = "dirty_equals-0.11-py3-none-any.whl", hash = "sha256:b1d7093273fc2f9be12f443a8ead954ef6daaf6746fd42ef3a5616433ee85286"},
+    {file = "dirty_equals-0.11.tar.gz", hash = "sha256:f4ac74ee88f2d11e2fa0f65eb30ee4f07105c5f86f4dc92b09eb1138775027c3"},
 ]
 
 [package.extras]
@@ -2846,4 +2846,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "6304bc19d4135393f0ce7c39badbfa60538a371ffdbb604b2b45f169f1d45b36"
+content-hash = "123da6c1bc6a4a93253e463763562e5ca0b88185d12fa727d1bd22bfb14c4a61"
