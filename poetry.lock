@@ -2677,14 +2677,14 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
 name = "types-docutils"
-version = "0.22.2.20251006"
+version = "0.22.3.20251115"
 description = "Typing stubs for docutils"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "types_docutils-0.22.2.20251006-py3-none-any.whl", hash = "sha256:1e61afdeb4fab4ae802034deea3e853ced5c9b5e1d156179000cb68c85daf384"},
-    {file = "types_docutils-0.22.2.20251006.tar.gz", hash = "sha256:c36c0459106eda39e908e9147bcff9dbd88535975cde399433c428a517b9e3b2"},
+    {file = "types_docutils-0.22.3.20251115-py3-none-any.whl", hash = "sha256:c6e53715b65395d00a75a3a8a74e352c669bc63959e65a207dffaa22f4a2ad6e"},
+    {file = "types_docutils-0.22.3.20251115.tar.gz", hash = "sha256:0f79ea6a7bd4d12d56c9f824a0090ffae0ea4204203eb0006392906850913e16"},
 ]
 
 [[package]]
