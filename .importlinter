@@ -46,7 +46,6 @@ forbidden_modules =
   pydantic
   msgspec
   # internal modules:
-  django_modern_rest_pytest
   django_test_app
 
 ignore_imports =
