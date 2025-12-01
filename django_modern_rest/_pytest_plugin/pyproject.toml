@@ -1,5 +1,5 @@
 [project]
-name = "django_modern_rest_pytest_plugin"
+name = "django_modern_rest_pytest"
 version = "0.1.0"
 package-mode = true
 
