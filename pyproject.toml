@@ -53,7 +53,7 @@ msgspec = { version = ">= 0.19", optional = true }
 pydantic = { version = "^2.12", optional = true }
 types-docutils = "^0.22.2.20251006"
 docutils = "<0.22"
-django-modern-rest-pytest-plugin = {path = "django_modern_rest/_pytest_plugin"}
+django-modern-rest-pytest = {path = "django_modern_rest/_pytest_plugin"}
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
@@ -258,7 +258,7 @@ omit = [
   "tests/test_unit/test_plugins/test_msgspec/*.py",
   # When not:
   "django_modern_rest/internal/json/msgspec.py",
-  # django-modern-rest-pytest-plugin
+  # django-modern-rest-pytest plugin
   "django_modern_rest/_pytest_plugin/**/*"
 ]
 

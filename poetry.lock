@@ -480,7 +480,7 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "django-modern-rest-pytest-plugin"
+name = "django-modern-rest-pytest"
 version = "0.1.0"
 description = ""
 optional = false
@@ -2866,4 +2866,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "bca673cf288b71ffae41834de60a1a61c2e21eea30abcb97921d6d1aa1091db9"
+content-hash = "1e72c0c93da4dce4b6eaea654757397484abc4885509a93c405396b4c092717c"
