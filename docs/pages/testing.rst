@@ -41,7 +41,7 @@ We support both:
 
 For ``pytest`` we also have a bundled plugin with 4 different fixtures:
 
-.. literalinclude:: ../../django_modern_rest_pytest.py
+.. literalinclude:: ../../django_modern_rest/_pytest_plugin/django_modern_rest_pytest/__init__.py
   :caption: django_modern_rest_pytest.py
   :linenos:
   :lines: 21-
