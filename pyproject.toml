@@ -246,7 +246,6 @@ addopts = [
   # Ignores optional deps:
   "--ignore=django_modern_rest/internal/json/msgspec.py",
   "--ignore=django_modern_rest/plugins/msgspec.py",
-  "--ignore=django_modern_rest/_pytest_plugin/**/*",
 ]
 
 
@@ -258,8 +257,6 @@ omit = [
   "tests/test_unit/test_plugins/test_msgspec/*.py",
   # When not:
   "django_modern_rest/internal/json/msgspec.py",
-  # django-modern-rest-pytest plugin
-  "django_modern_rest/_pytest_plugin/**/*"
 ]
 
 # Covdefaults: https://pypi.org/project/covdefaults
