@@ -14,7 +14,7 @@ build:
         --all-extras
         --only main --only docs
         --format=requirements.txt
-        --output=../requirements.txt
+        --output=requirements.txt
 
 python:
   install:
