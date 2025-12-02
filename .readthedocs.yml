@@ -2,7 +2,7 @@ version: 2
 
 build:
   os: ubuntu-lts-latest
-  tools: { python: "3.12" }
+  tools: {python: "3.12"}
   jobs:
     pre_create_environment:
       - asdf plugin add poetry
@@ -16,6 +16,7 @@ build:
         --without-hashes
         --format=requirements.txt
         --output=requirements.txt
+
 python:
   install:
     - requirements: requirements.txt
@@ -23,5 +24,5 @@ python:
       path: .
 
 sphinx:
-  configuration: "docs/conf.py"
+  configuration: 'docs/conf.py'
   fail_on_warning: true
