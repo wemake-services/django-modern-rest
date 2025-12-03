@@ -2236,14 +2236,14 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.6.1"
+version = "4.6.4"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.6.1-py3-none-any.whl", hash = "sha256:ac550c02196a367c961b40ac8746450797e49774c9b63778874c37c881fa096d"},
-    {file = "schemathesis-4.6.1.tar.gz", hash = "sha256:b946ac39b117fc8a46af4d567daf581fa0654e7c7366404f128f87248e112a2b"},
+    {file = "schemathesis-4.6.4-py3-none-any.whl", hash = "sha256:2b5c1ddc01bc746cc2d6bf985a18de41327d10eca676d21f0966924718a835da"},
+    {file = "schemathesis-4.6.4.tar.gz", hash = "sha256:2702d3f65ec84fd624fddeea458581f0e9981deec29d908ea858f662a355bd20"},
 ]
 
 [package.dependencies]
