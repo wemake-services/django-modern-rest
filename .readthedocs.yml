@@ -13,7 +13,6 @@ build:
       - poetry export
         --all-extras
         --only main --only docs
-        --without-hashes
         --format=requirements.txt
         --output=requirements.txt
 

@@ -44,6 +44,11 @@ classifiers = [
   "Framework :: Django :: 5.2",
 ]
 
+packages = [
+    {include = "django_modern_rest_pytest.py"}
+]
+
+
 [tool.poetry.dependencies]
 python = "^3.11"
 typing_extensions = ">=4"
@@ -53,7 +58,6 @@ msgspec = { version = ">= 0.19", optional = true }
 pydantic = { version = "^2.12", optional = true }
 types-docutils = "^0.22.2.20251006"
 docutils = "<0.22"
-django-modern-rest-pytest = {path = "django_modern_rest/_pytest_plugin"}
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
@@ -106,6 +110,13 @@ shibuya = "^2025.10"
 auto-pytabs = "^0.5"
 uvicorn = "^0.38"
 httpx = "^0.28"
+
+
+[tool.poetry.plugins."pytest11"]
+# We need this structure because otherwise `pytest` ruins the coverage report.
+# This happens because we have imports in `django_modern_rest/__init__.py`
+django_modern_rest = "django_modern_rest_pytest"
+
 
 [tool.ruff]
 # Ruff config: https://docs.astral.sh/ruff/settings
