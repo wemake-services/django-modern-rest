@@ -13,8 +13,13 @@ from typing import (
 from django.http import HttpResponse
 
 from django_modern_rest.cookies import NewCookie
-from django_modern_rest.exceptions import ResponseSerializationError
-from django_modern_rest.headers import build_headers
+from django_modern_rest.exceptions import (
+    ResponseSerializationError,
+)
+from django_modern_rest.headers import (
+    HeaderDict,
+    build_headers,
+)
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
@@ -249,5 +254,5 @@ class _ValidationContext:
 
     raw_data: Any  # not empty
     status_code: HTTPStatus
-    headers: dict[str, str]
+    headers: HeaderDict
     cookies: Mapping[str, NewCookie] | None
