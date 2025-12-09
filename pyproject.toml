@@ -65,7 +65,7 @@ msgspec = ["msgspec"]
 
 [tool.poetry.group.dev.dependencies]
 django = "^5.2"
-django-stubs = { version = "5.2.7", extras = ["compatible-mypy"] }
+django-stubs = { version = "5.2.8", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 pyright = "^1.1"
 
