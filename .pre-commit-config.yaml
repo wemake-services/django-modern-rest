@@ -43,6 +43,7 @@ repos:
     rev: v1.4.3
     hooks:
       - id: mbake-format
+        args: ["--config=.github/bake.toml"]
       - id: mbake-validate
 
   # Should be applied after all autofixes:
