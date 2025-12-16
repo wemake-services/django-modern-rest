@@ -39,6 +39,12 @@ repos:
         args: ["--enable=all", "--disable=line-too-long"]
         files: ^docs/
 
+  - repo: https://githubcom/EbodShojaei/bake
+    rev: v1.4.3
+    hooks:
+      - id: mbake-format
+      - id: mbake-validate
+
   # Should be applied after all autofixes:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
