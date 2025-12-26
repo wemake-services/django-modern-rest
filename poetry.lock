@@ -2455,14 +2455,14 @@ theme-sbt = ["sphinx-book-theme (>=1.1,<2.0)"]
 
 [[package]]
 name = "sphinx-iconify"
-version = "0.2.1"
+version = "0.3.0"
 description = "A sphinx role allowing you to embed icons from over 200,000 open-source vector icons."
 optional = false
 python-versions = ">=3.9"
 groups = ["docs"]
 files = [
-    {file = "sphinx_iconify-0.2.1-py3-none-any.whl", hash = "sha256:b226b955ab273429eee38f2060de18f26e8864773d3362813cd388cd852381ff"},
-    {file = "sphinx_iconify-0.2.1.tar.gz", hash = "sha256:4720000ab51a7ab7a4c88588f5b5d96246d304238095ffd11358a142435c7c30"},
+    {file = "sphinx_iconify-0.3.0-py3-none-any.whl", hash = "sha256:b38ca4a66767c317bea31850a6f540ef79db4394eb4792961918c2d44b4a2c3a"},
+    {file = "sphinx_iconify-0.3.0.tar.gz", hash = "sha256:7824ca694472d6babbe811e72cdcaf52b6e0ff4240e8cfda721f84f867605611"},
 ]
 
 [package.dependencies]
@@ -2846,4 +2846,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "688238b54d7ae84ce0bcd34d549f93fc162fca1428ab42036490327e848bda46"
+content-hash = "5b275add21b4b1fd33f1888dac7996ca3b41effee30b528f1ff94c61cb31f79b"
