@@ -2,11 +2,11 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -W
-SPHINXBUILD   = python -msphinx
-SPHINXPROJ    = django-modern-rest
-SOURCEDIR     = .
-BUILDDIR      = _build
+SPHINXOPTS = -W
+SPHINXBUILD = python -msphinx
+SPHINXPROJ = django-modern-rest
+SOURCEDIR = .
+BUILDDIR = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:

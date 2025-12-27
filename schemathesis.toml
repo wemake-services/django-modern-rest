@@ -2,20 +2,18 @@
 # We will achieve diversity by using a number of examples.
 seed = 42
 
-workers = 4  # Use exactly 4 workers
-
-# We extend the rules as the results improve.
+# NOTE: We extend the rules as the schema generation results improve.
 [phases.examples]
-enabled = false
+enabled = true
 
 [phases.coverage]
-enabled = false
+enabled = true
 
 [phases.fuzzing]
-enabled = false
+enabled = true
 
 [phases.stateful]
-enabled = false
+enabled = true
 
 [generation]
 max-examples = 1

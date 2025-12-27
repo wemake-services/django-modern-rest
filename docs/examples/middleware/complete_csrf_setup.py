@@ -45,3 +45,6 @@ class PublicController(Controller[PydanticSerializer]):
     def get(self) -> dict[str, str]:
         """Public endpoint that sets CSRF cookie."""
         return {'message': 'CSRF cookie set'}
+
+
+# run: {"controller": "PublicController", "method": "get", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

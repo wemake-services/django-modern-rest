@@ -5,7 +5,10 @@ from django_modern_rest.openapi.core.registry import (
     SchemaRegistry,
 )
 from django_modern_rest.openapi.extractors.base import BaseExtractor
-from django_modern_rest.openapi.generators.operation import OperationGenerator
+from django_modern_rest.openapi.generators.operation import (
+    OperationGenerator,
+    OperationIDGenerator,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.config import OpenAPIConfig
@@ -30,6 +33,7 @@ class OpenAPIContext:
         self.schema_registry = SchemaRegistry()
         self.operation_id_registry = OperationIdRegistry()
         self.operation_generator = OperationGenerator(self)
+        self.operation_id_generator = OperationIDGenerator(self)
         self.schema_extractors = BaseExtractor.all(self)
 
     def get_extractor(self, type_: Any) -> BaseExtractor:
@@ -38,4 +42,4 @@ class OpenAPIContext:
             if extractor.supports_type(type_):
                 return extractor
 
-        raise ValueError(f'No schema extractor found for type {type_}. ')
+        raise ValueError(f'No schema extractor found for type {type_}.')

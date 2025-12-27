@@ -42,3 +42,6 @@ class MathController(Controller[PydanticSerializer], Body[TwoNumbers]):
 
     def post(self) -> float:  # <- has only default error handling
         return self.parsed_body.left * self.parsed_body.right
+
+
+# run: {"controller": "MathController", "method": "get", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501

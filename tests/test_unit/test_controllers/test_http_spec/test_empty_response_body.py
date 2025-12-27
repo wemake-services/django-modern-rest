@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Any
 
 import pytest
 from django.http import HttpResponse
@@ -20,19 +19,14 @@ from django_modern_rest.settings import HttpSpec
     'status',
     [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
 )
-@pytest.mark.parametrize(
-    'base_class',
-    [Controller[PydanticSerializer], Blueprint[PydanticSerializer]],
-)
 def test_empty_response_body(
     *,
     status: HTTPStatus,
-    base_class: type[Any],
 ) -> None:
     """Ensure that some statuses must not have bodies."""
     with pytest.raises(EndpointMetadataError, match='return `None` not'):
 
-        class _Mixed(base_class):  # type: ignore[misc]
+        class _Mixed(Controller[PydanticSerializer]):
             responses = [
                 ResponseSpec(int, status_code=status),
             ]
@@ -46,18 +40,13 @@ def test_empty_response_body(
     'status',
     [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
 )
-@pytest.mark.parametrize(
-    'base_class',
-    [Controller[PydanticSerializer], Blueprint[PydanticSerializer]],
-)
-def test_empty_response_body_disabled(
+def test_empty_response_body_controller(
     *,
     status: HTTPStatus,
-    base_class: type[Any],
 ) -> None:
-    """Ensure that can be disabled on class level."""
+    """Ensure that can be disabled on controller level."""
 
-    class _Mixed(base_class):  # type: ignore[misc]
+    class _Mixed(Controller[PydanticSerializer]):
         responses = [
             ResponseSpec(int, status_code=status),
         ]
@@ -67,6 +56,41 @@ def test_empty_response_body_disabled(
             raise NotImplementedError
 
     assert _Mixed.no_validate_http_spec
+
+
+@pytest.mark.parametrize(
+    'status',
+    [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
+)
+def test_empty_response_body_blueprint(
+    *,
+    status: HTTPStatus,
+) -> None:
+    """Ensure that can be disabled on blueprint level."""
+
+    class _Blueprint(Blueprint[PydanticSerializer]):
+        responses = [
+            ResponseSpec(int, status_code=status),
+        ]
+        no_validate_http_spec = {HttpSpec.empty_response_body}
+
+        def get(self) -> str:  # needs at least one endpoint to validate
+            raise NotImplementedError
+
+    class _Mixed(Controller[PydanticSerializer]):
+        blueprints = [_Blueprint]
+
+    assert _Mixed.api_endpoints['GET'].metadata.responses
+
+    # But, controllers are not affected by `Blueprint` level:
+    with pytest.raises(EndpointMetadataError, match=str(status)):
+
+        class _BadController(Controller[PydanticSerializer]):
+            blueprints = [_Blueprint]
+
+            @modify(status_code=status)
+            def post(self) -> int:
+                raise NotImplementedError
 
 
 @pytest.mark.parametrize(

@@ -73,16 +73,16 @@ class Endpoint:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         *,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        controller_cls: type['Controller[BaseSerializer]'] | None,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """
         Create an entrypoint.
 
         Args:
             func: Entrypoint handler. An actual function to be called.
-            blueprint_cls: ``Blueprint`` class that this endpoint belongs to.
-            controller_cls: ``Controller`` class that this endpoint
+            controller_cls: ``Controller`` class that this endpoint belongs to.
+            blueprint_cls: ``Blueprint`` class that this endpoint
                 might belong to.
 
         .. danger::
@@ -105,18 +105,18 @@ class Endpoint:  # noqa: WPS214
         # We need a func before any wrappers, but with metadata:
         self.response_validator = self.response_validator_cls(
             metadata,
-            blueprint_cls.serializer,
+            controller_cls.serializer,
         )
         # We can now run endpoint's optimization:
-        blueprint_cls.serializer.optimizer.optimize_endpoint(metadata)
+        controller_cls.serializer.optimizer.optimize_endpoint(metadata)
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
-            self._func = self._async_endpoint(func)
             self.is_async = True
+            self._func = self._async_endpoint(func)
         else:
-            self._func = self._sync_endpoint(func)
             self.is_async = False
+            self._func = self._sync_endpoint(func)
 
     def __call__(
         self,
@@ -213,7 +213,7 @@ class Endpoint:  # noqa: WPS214
             active_blueprint = controller.active_blueprint
             # Parse request:
             try:
-                active_blueprint.serializer_context.parse_and_bind(
+                active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     active_blueprint,
                     active_blueprint.request,
                     *args,
@@ -251,7 +251,7 @@ class Endpoint:  # noqa: WPS214
             active_blueprint = controller.active_blueprint
             # Parse request:
             try:
-                active_blueprint.serializer_context.parse_and_bind(
+                active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     active_blueprint,
                     active_blueprint.request,
                     *args,

@@ -254,6 +254,3 @@ artifacts/
 
 # safety:
 .safety/
-
-# Build artifacts:
-docs/docs
