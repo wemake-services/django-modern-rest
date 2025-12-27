@@ -59,3 +59,19 @@ def test_convert_json_schema_with_all_of(extractor: PydanticExtractor) -> None:
     assert isinstance(schema, Schema)
     assert schema.all_of is not None
     assert len(schema.all_of) == 2
+
+
+def test_convert_json_schema_with_one_of(extractor: PydanticExtractor) -> None:
+    """Ensure _convert_json_schema handles oneOf correctly."""
+    json_schema = {
+        'oneOf': [
+            {'type': 'string'},
+            {'type': 'object', 'properties': {'name': {'type': 'string'}}},
+        ],
+    }
+
+    schema = extractor._convert_json_schema(json_schema)  # noqa: SLF001
+
+    assert isinstance(schema, Schema)
+    assert schema.one_of is not None
+    assert len(schema.one_of) == 2

@@ -203,4 +203,10 @@ class BaseExtractor:  # noqa: WPS214
                 self._convert_json_schema(schema) for schema in all_of_schemas
             ]
 
+        one_of_schemas = json_schema.get('oneOf')
+        if one_of_schemas:
+            fields['one_of'] = [
+                self._convert_json_schema(schema) for schema in one_of_schemas
+            ]
+
         return fields
