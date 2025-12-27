@@ -31,6 +31,7 @@ class Schema:
 
     all_of: 'Sequence[Reference | Schema] | None' = None
     any_of: 'Sequence[Reference | Schema] | None' = None
+    one_of: 'Sequence[Reference | Schema] | None' = None
     schema_not: 'Reference | Schema | None' = None
     schema_if: 'Reference | Schema | None' = None
     then: 'Reference | Schema | None' = None

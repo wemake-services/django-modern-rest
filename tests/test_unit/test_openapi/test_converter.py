@@ -183,6 +183,17 @@ def test_normalize_value_dict(
                 'type': 'object',
             },
         ),
+        # Nested BaseObject (one_of with Schema)
+        (
+            Schema(
+                one_of=[Schema(type=OpenAPIType.INTEGER)],
+                type=OpenAPIType.OBJECT,
+            ),
+            {
+                'oneOf': [{'type': 'integer'}],
+                'type': 'object',
+            },
+        ),
         # Mixed types in enum
         (
             Schema(
