@@ -22,14 +22,14 @@ def test_get_extractor_unsupported_type_error(
 ) -> None:
     """Ensure ValueError is raised when no extractor supports the type."""
 
-    class UnsupportedType:
+    class _UnsupportedType:
         """Test class."""
 
     with pytest.raises(
         ValueError,
         match='No schema extractor found for type',
     ):
-        context.get_extractor(UnsupportedType)
+        context.get_extractor(_UnsupportedType)
 
 
 def test_get_extractor_returns_correct_extractor(
@@ -37,10 +37,10 @@ def test_get_extractor_returns_correct_extractor(
 ) -> None:
     """Ensure get_extractor returns extractor for supported type."""
 
-    class TestModel(BaseModel):
+    class _TestModel(BaseModel):
         name: str
 
-    extractor = context.get_extractor(TestModel)
+    extractor = context.get_extractor(_TestModel)
 
     assert isinstance(extractor, BaseExtractor)
-    assert extractor.supports_type(TestModel)
+    assert extractor.supports_type(_TestModel)

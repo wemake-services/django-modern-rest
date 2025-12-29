@@ -58,6 +58,7 @@ def test_convert_json_schema_with_all_of(extractor: PydanticExtractor) -> None:
 
     assert isinstance(schema, Schema)
     assert schema.all_of is not None
+    assert isinstance(schema.all_of, list)
     assert len(schema.all_of) == 2
 
 
