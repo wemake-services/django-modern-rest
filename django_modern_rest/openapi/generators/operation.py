@@ -35,7 +35,7 @@ class OperationGenerator:
             path,
         )
         request_body = self._generate_request_body(metadata)
-        responses = self._generate_responses(metadata)
+        responses = self._generate_responses(metadata, endpoint)
         return Operation(
             tags=metadata.tags,
             summary=metadata.summary,
@@ -71,24 +71,26 @@ class OperationGenerator:
     def _generate_responses(
         self,
         metadata: EndpointMetadata,
+        endpoint: 'Endpoint',
     ) -> Responses | None:
         """Generate responses from ResponseSpecs."""
         if not metadata.responses:
             return None
 
-        responses: Responses = {}
-        for status_code, response_spec in metadata.responses.items():
-            extractor = self.context.get_extractor(response_spec.return_type)
-            schema = extractor.extract_schema(response_spec.return_type)
-
-            responses[str(status_code.value)] = Response(
+        content_type = endpoint.response_validator.serializer.content_type
+        return {
+            str(status_code.value): Response(
                 description=status_code.phrase,
                 content={
-                    'application/json': MediaType(schema=schema),
+                    content_type: MediaType(
+                        schema=self.context.get_extractor(
+                            response_spec.return_type,
+                        ).extract_schema(response_spec.return_type),
+                    ),
                 },
             )
-
-        return responses
+            for status_code, response_spec in metadata.responses.items()
+        }
 
 
 class OperationIDGenerator:
