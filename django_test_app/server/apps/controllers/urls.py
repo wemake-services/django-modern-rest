@@ -40,4 +40,9 @@ router = Router([
         views.AsyncParseHeadersController.as_view(),
         name='async_parse_headers',
     ),
+    path(
+        'one_of',
+        compose_blueprints(views.OneOfBlueprint).as_view(),
+        name='one_of_blueprint',
+    ),
 ])
