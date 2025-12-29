@@ -108,7 +108,7 @@ shibuya = "^2025.10"
 
 # Needed for our extension:
 auto-pytabs = "^0.5"
-uvicorn = "^0.38"
+uvicorn = ">=0.38,<0.41"
 httpx = "^0.28"
 
 
