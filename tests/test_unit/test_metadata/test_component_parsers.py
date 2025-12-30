@@ -4,7 +4,8 @@ import pydantic
 import pytest
 from django.http import HttpResponse
 
-from django_modern_rest import (
+from django_modern_rest import (  # noqa: WPS235
+    Blueprint,
     Body,
     Controller,
     Headers,
@@ -93,16 +94,27 @@ def test_single_component_query(
     ]
 
 
-class _MultiComponentController(  # noqa: WPS215
+class _GetBlueprint(  # noqa: WPS215
+    Query[_QueryModel],
+    Headers[_HeadersModel],
+    Path[_PathModel],
+    Blueprint[PydanticSerializer],
+):
+    """Blueprint for GET (method without Body)."""
+
+    @modify()
+    def get(self) -> list[int]:
+        raise NotImplementedError
+
+
+class _PostBlueprint(  # noqa: WPS215
     Query[_QueryModel],
     Body[_BodyModel],
     Headers[_HeadersModel],
     Path[_PathModel],
-    Controller[PydanticSerializer],
+    Blueprint[PydanticSerializer],
 ):
-    @modify()
-    def get(self) -> list[int]:
-        raise NotImplementedError
+    """Blueprint for POST/PUT (methods with Body)."""
 
     def post(self) -> list[str]:
         raise NotImplementedError
@@ -112,11 +124,26 @@ class _MultiComponentController(  # noqa: WPS215
         raise NotImplementedError
 
 
+class _MultiComponentController(Controller[PydanticSerializer]):
+    blueprints = [_GetBlueprint, _PostBlueprint]
+
+
+def test_multiple_components_get() -> None:
+    """Ensure GET endpoint has components without Body."""
+    endpoint = _MultiComponentController.api_endpoints['GET']
+    assert isinstance(endpoint.metadata.component_parsers, list)
+    assert tuple(endpoint.metadata.component_parsers) == (
+        (Query[_QueryModel], (_QueryModel,)),
+        (Headers[_HeadersModel], (_HeadersModel,)),
+        (Path[_PathModel], (_PathModel,)),
+    )
+
+
 @pytest.mark.parametrize(
     'method',
-    [HTTPMethod.GET, HTTPMethod.POST, HTTPMethod.PUT],
+    [HTTPMethod.POST, HTTPMethod.PUT],
 )
-def test_multiple_components(
+def test_multiple_components_with_body(
     *,
     method: HTTPMethod,
 ) -> None:

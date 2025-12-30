@@ -1,3 +1,4 @@
+import sys
 from http import HTTPStatus
 from typing import final
 
@@ -11,7 +12,7 @@ except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 
-from django_modern_rest import Body, Controller
+from django_modern_rest import Blueprint, Body, Controller
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
 from django_modern_rest.test import DMRRequestFactory
 
@@ -28,15 +29,32 @@ class _MsgSpecUserModel(msgspec.Struct):
     email: str
 
 
-@final
-class _UserController(Controller[MsgspecSerializer], Body[_MsgSpecUserModel]):
+class _UserGetBlueprint(Blueprint[MsgspecSerializer]):
+    """Blueprint for GET endpoint (without body)."""
+
     def get(self) -> _MsgSpecUserModel:
         return _MsgSpecUserModel(email='email@test.edu')
+
+
+class _UserPostBlueprint(
+    Blueprint[MsgspecSerializer],
+    Body[_MsgSpecUserModel],
+):
+    """Blueprint for POST endpoint (with body)."""
 
     def post(self) -> _MsgSpecUserModel:
         return _MsgSpecUserModel(email=self.parsed_body.email)
 
 
+@final
+class _UserController(Controller[MsgspecSerializer]):
+    blueprints = [_UserGetBlueprint, _UserPostBlueprint]
+
+
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='3.14 does not fully support msgspec yet',
+)
 def test_serializer_via_endpoint(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
