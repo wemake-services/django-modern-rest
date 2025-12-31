@@ -7,9 +7,11 @@ from django.http import HttpResponse
 
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.headers import (
+    HeaderLike,
     HeaderSpec,
     NewHeader,
 )
+from django_modern_rest.internal.strings import str_title_cached_interned
 from django_modern_rest.serialization import BaseSerializer
 
 _ItemT = TypeVar('_ItemT')
@@ -58,7 +60,7 @@ class APIError(Exception, Generic[_ItemT]):
         raw_data: _ItemT,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | None = None,
+        headers: HeaderLike | None = None,
     ) -> None:
         """Create response from parts."""
         super().__init__()
@@ -162,7 +164,7 @@ def build_response(
     *,
     raw_data: Any,
     method: HTTPMethod | str,
-    headers: dict[str, str] | None = None,
+    headers: HeaderLike | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse: ...
@@ -175,7 +177,7 @@ def build_response(
     raw_data: Any,
     status_code: HTTPStatus,
     method: None = None,
-    headers: dict[str, str] | None = None,
+    headers: HeaderLike | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
 ) -> HttpResponse: ...
 
@@ -185,7 +187,7 @@ def build_response(  # noqa: WPS211
     *,
     raw_data: Any,
     method: HTTPMethod | str | None = None,
-    headers: dict[str, str] | None = None,
+    headers: HeaderLike | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
 ) -> HttpResponse:
@@ -210,7 +212,7 @@ def build_response(  # noqa: WPS211
         )
 
     response_headers = {} if headers is None else headers
-    if 'Content-Type' not in response_headers:
+    if str_title_cached_interned('Content-Type') not in response_headers:
         response_headers['Content-Type'] = serializer.content_type
 
     response = HttpResponse(
