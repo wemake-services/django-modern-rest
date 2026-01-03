@@ -1,21 +1,68 @@
-from typing import Final
+from typing import Any, Final
+from unittest.mock import Mock
 
 import pytest
 
 from django_modern_rest import Controller, modify
-from django_modern_rest.openapi.config import OpenAPIConfig
+from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.openapi import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.generators.operation import OperationIDGenerator
+from django_modern_rest.openapi.generators.operation import (
+    OperationGenerator,
+    OperationIDGenerator,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 @pytest.fixture
-def generator() -> OperationIDGenerator:
+def context() -> OpenAPIContext:
+    """Create OpenAPIContext."""
+    return OpenAPIContext(config=_TEST_CONFIG)
+
+
+@pytest.fixture
+def generator(context: OpenAPIContext) -> OperationGenerator:
+    """Create OperationGenerator."""
+    return OperationGenerator(context)
+
+
+@pytest.fixture
+def id_generator(context: OpenAPIContext) -> OperationIDGenerator:
     """Create `OperationIDGenerator` instance for testing."""
-    context = OpenAPIContext(config=_TEST_CONFIG)
     return context.operation_id_generator
+
+
+@pytest.mark.parametrize(
+    ('method', 'component_parsers'),
+    [
+        ('POST', [(Mock, ())]),  # Empty tuple for type_args
+        ('GET', []),  # No component parsers
+    ],
+)
+def test_generate_with_empty_responses(
+    generator: OperationGenerator,
+    *,
+    method: str,
+    component_parsers: list[Any],
+) -> None:
+    """Ensure generate returns None when metadata is minimal."""
+    endpoint = Mock()
+    endpoint.metadata = EndpointMetadata(
+        responses={},
+        validate_responses=False,
+        method=method,
+        modification=None,
+        error_handler=None,
+        component_parsers=component_parsers,
+    )
+
+    operation = generator.generate(endpoint, path='/test/')
+
+    assert operation is not None
+    assert operation.request_body is None
+    assert operation.responses is None
 
 
 @pytest.mark.parametrize(
@@ -101,12 +148,12 @@ def generator() -> OperationIDGenerator:
     ],
 )
 def test_tokenize_path(
-    generator: OperationIDGenerator,
+    id_generator: OperationIDGenerator,
     input_path: str,
     expected_tokens: list[str],
 ) -> None:
     """Ensure that `_tokenize_path` works correctly."""
-    tokens = generator._tokenize_path(input_path)
+    tokens = id_generator._tokenize_path(input_path)
     assert tokens == expected_tokens, (
         f'Tokenization failed: '
         f'Input: {input_path!r}; '
@@ -121,14 +168,14 @@ class _ControllerWithOperationId(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_explicit_operation_id(generator: OperationIDGenerator) -> None:
+def test_explicit_operation_id(id_generator: OperationIDGenerator) -> None:
     """Ensure that explicit `operation_id` is registered and returned."""
     controller = _ControllerWithOperationId()
-    operation_id = generator.generate(
+    operation_id = id_generator.generate(
         controller.api_endpoints['GET'],
         path='whatever',
     )
-    registry = generator.context.operation_id_registry
+    registry = id_generator.context.operation_id_registry
 
     assert operation_id == 'customGetUser'
     assert 'customGetUser' in registry._operation_ids

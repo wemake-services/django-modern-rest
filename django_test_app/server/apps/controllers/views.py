@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, TypeAlias, final
+from typing import Annotated, Any, Literal, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse
@@ -49,6 +49,20 @@ class _UserOutput(_UserInput):
 @final
 class _UserPath(pydantic.BaseModel):
     user_id: int
+
+
+@final
+class _EmailUserInput(pydantic.BaseModel):
+    type: Literal['email']
+    email: str
+    age: int
+
+
+@final
+class _PhoneUserInput(pydantic.BaseModel):
+    type: Literal['phone']
+    phone: str
+    age: int
 
 
 @final
@@ -125,3 +139,20 @@ class AsyncParseHeadersController(
 ):
     async def post(self) -> _CustomHeaders:
         return self.parsed_headers
+
+
+@final
+class OneOfBlueprint(
+    Blueprint[PydanticSerializer],
+    Body[
+        Annotated[
+            _EmailUserInput | _PhoneUserInput,
+            pydantic.Field(discriminator='type'),
+        ]
+    ],
+):
+    def post(self) -> dict[str, str]:
+        payload = self.parsed_body
+        if payload.type == 'email':
+            return {'variant': 'email', 'value': payload.email}
+        return {'variant': 'phone', 'value': payload.phone}
