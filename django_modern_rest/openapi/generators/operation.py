@@ -1,7 +1,12 @@
 import re
 from typing import TYPE_CHECKING
 
+from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.openapi.objects import RequestBody
+from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.operation import Operation
+from django_modern_rest.openapi.objects.response import Response
+from django_modern_rest.openapi.objects.responses import Responses
 
 if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
@@ -29,6 +34,8 @@ class OperationGenerator:
             endpoint,
             path,
         )
+        request_body = self._generate_request_body(metadata)
+        responses = self._generate_responses(metadata, endpoint)
         return Operation(
             tags=metadata.tags,
             summary=metadata.summary,
@@ -39,8 +46,51 @@ class OperationGenerator:
             servers=metadata.servers,
             callbacks=metadata.callbacks,
             operation_id=operation_id,
-            # TODO: implement another attributes generation.
+            request_body=request_body,
+            responses=responses,
         )
+
+    def _generate_request_body(
+        self,
+        metadata: EndpointMetadata,
+    ) -> RequestBody | None:
+        """Generate request body from Body component."""
+        if not metadata.component_parsers:
+            return None
+
+        for _, type_args in metadata.component_parsers:
+            if type_args:
+                sample_type = type_args[0]
+                extractor = self.context.get_extractor(sample_type)
+                return extractor.extract_request_body(
+                    metadata.component_parsers,
+                )
+
+        return None
+
+    def _generate_responses(
+        self,
+        metadata: EndpointMetadata,
+        endpoint: 'Endpoint',
+    ) -> Responses | None:
+        """Generate responses from ResponseSpecs."""
+        if not metadata.responses:
+            return None
+
+        content_type = endpoint.response_validator.serializer.content_type
+        return {
+            str(status_code.value): Response(
+                description=status_code.phrase,
+                content={
+                    content_type: MediaType(
+                        schema=self.context.get_extractor(
+                            response_spec.return_type,
+                        ).extract_schema(response_spec.return_type),
+                    ),
+                },
+            )
+            for status_code, response_spec in metadata.responses.items()
+        }
 
 
 class OperationIDGenerator:
