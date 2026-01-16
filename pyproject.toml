@@ -189,6 +189,7 @@ ignore = [
   "PLR6301", # do not require classmethod / staticmethod when self not used
   "PLC0414", # do not raise on `as` re-exports
   "TRY003",  # long exception messages from `tryceratops`
+  "RUF067",  # wps handles `__init__.py` logic better
 ]
 external = [ "WPS" ]
 
