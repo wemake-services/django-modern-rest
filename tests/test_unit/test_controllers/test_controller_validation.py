@@ -8,9 +8,13 @@ from django_modern_rest import (
     Blueprint,
     Body,
     Controller,
+    Cookies,
+    Headers,
     Path,
+    Query,
     ResponseSpec,
 )
+from django_modern_rest.components import ComponentParser
 from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
@@ -393,3 +397,34 @@ def test_no_double_parsing() -> None:
             Path[dict[str, str]],
         ):
             blueprints = [_BadBlueprint]
+
+
+@pytest.mark.parametrize(
+    'component_parser',
+    [
+        Body[dict[str, str]],
+        Query[dict[str, str]],
+        Path[dict[str, int]],
+        Headers[dict[str, str]],
+        Cookies[dict[str, str]],
+    ],
+)
+def test_blueprints_no_controller_parsing(
+    component_parser: type[ComponentParser],
+) -> None:
+    """Ensure controllers with blueprints cannot have component parsers."""
+
+    class _CleanBlueprint(Blueprint[PydanticSerializer]):
+        def get(self) -> str:
+            raise NotImplementedError
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='has blueprints but also has component parsers',
+    ):
+
+        class _BadController(
+            Controller[PydanticSerializer],
+            component_parser,  # type: ignore[valid-type, misc]
+        ):
+            blueprints: ClassVar[BlueprintsT] = [_CleanBlueprint]
