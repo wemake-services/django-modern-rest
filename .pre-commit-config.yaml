@@ -29,7 +29,7 @@ repos:
     rev: v0.14.11
     hooks:
       - id: ruff-check
-        args: ["--fix"]
+        args: ["--exit-non-zero-on-fix"]
       - id: ruff-format
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
