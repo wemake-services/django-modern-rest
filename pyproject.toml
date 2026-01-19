@@ -104,7 +104,7 @@ sphinx-copybutton = "^0.5"
 sphinx-design = "^0.6"
 sphinxcontrib-mermaid = "^1.0"
 myst-parser = "^4.0"
-shibuya = "^2025.10"
+shibuya = ">=2025.10,<2027.0"
 
 # Needed for our extension:
 auto-pytabs = "^0.5"
