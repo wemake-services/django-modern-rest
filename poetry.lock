@@ -2269,14 +2269,14 @@ tests = ["aiohttp (>=3.9.1,<4.0)", "coverage (>=6)", "fastapi (>=0.86.0)", "flas
 
 [[package]]
 name = "shibuya"
-version = "2025.12.19"
+version = "2026.1.9"
 description = "A clean, responsive, and customizable Sphinx documentation theme with light/dark mode."
 optional = false
 python-versions = ">=3.10"
 groups = ["docs"]
 files = [
-    {file = "shibuya-2025.12.19-py3-none-any.whl", hash = "sha256:f6262059311322d352bb28f844892f5b72518f2760196a9eb3e58f4f475c7908"},
-    {file = "shibuya-2025.12.19.tar.gz", hash = "sha256:8ff6d87a4aad301170dae94cf790f179da9e04e3b32fc6138b46263b74d76564"},
+    {file = "shibuya-2026.1.9-py3-none-any.whl", hash = "sha256:b58a3cc6e5619c71d00fcf0be4a3060c87040c2a62a1b3f1a93a6a41ca8eaf45"},
+    {file = "shibuya-2026.1.9.tar.gz", hash = "sha256:b389f10fd9c07b048e940f32d1e1ac096a2d49736389173ac771b37a10b51fdf"},
 ]
 
 [package.dependencies]
@@ -2846,4 +2846,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "cd5ce48ddcfc125b45721e17a406fb0ea50e5367e747aec47436a2831fa4a9fc"
+content-hash = "c38bfdc8393908405970e4ee92d1f75dad2a308666c9c7bfb114b276d952c603"
