@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import final
 
 from django.http.request import HttpRequest
@@ -100,7 +101,11 @@ class ResponseNegotiator:
         """
         if request.headers.get('Accept') is None:
             return self._default
-        renderer_type = request.get_preferred_type(self._renderer_keys)
+        try:
+            renderer_type = request.get_preferred_type(self._renderer_keys)
+        except AttributeError:  # pragma: no cover
+            # This is a backport of django's 5.2 feature to older djangos.
+            renderer_type = _get_preferred_type(request, self._renderer_keys)
         if renderer_type is None:
             expected = self._renderer_keys
             raise ResponseSerializationError(
@@ -144,3 +149,31 @@ class ResponseValidationNegotiator:
             response.headers['Content-Type'],
             self._default,
         )
+
+
+def _get_preferred_type(  # pragma: no cover
+    request: HttpRequest,
+    media_types: Sequence[str],
+) -> str | None:
+    """
+    This is a backport of django's feature from 5.2 to older djangos.
+
+    All credits go to the original django's authors.
+    """
+    if not media_types or not request.accepted_types:
+        return None
+
+    desired_types = [
+        (accepted_type, media_type)
+        for media_type in media_types
+        if (accepted_type := request.accepted_type(media_type)) is not None
+    ]
+
+    if not desired_types:
+        return None
+
+    # Of the desired media types, select the one which is preferred.
+    return min(
+        desired_types,
+        key=lambda typ: request.accepted_types.index(typ[0]),
+    )[1]
