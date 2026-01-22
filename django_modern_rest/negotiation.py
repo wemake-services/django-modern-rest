@@ -1,7 +1,8 @@
+import operator
 from collections.abc import Sequence
 from typing import final
 
-from django.http.request import HttpRequest
+from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 
 from django_modern_rest.exceptions import (
@@ -166,7 +167,7 @@ def _get_preferred_type(  # pragma: no cover
     desired_types = [
         (accepted_type, media_type)
         for media_type in media_types
-        if (accepted_type := request.accepted_type(media_type)) is not None
+        if (accepted_type := _accepted_type(request, media_type)) is not None
     ]
 
     if not desired_types:
@@ -177,3 +178,27 @@ def _get_preferred_type(  # pragma: no cover
         desired_types,
         key=lambda typ: request.accepted_types.index(typ[0]),
     )[1]
+
+
+def _accepted_type(  # pragma: no cover
+    request: HttpRequest,
+    media_type: str,
+) -> MediaType | None:
+    """
+    This is a backport of django's feature from 5.2 to older djangos.
+
+    All credits go to the original django's authors.
+    """
+    media = MediaType(media_type)
+    return next(
+        (
+            accepted_type
+            for accepted_type in sorted(
+                request.accepted_types,
+                key=operator.attrgetter('specificity', 'quality'),
+                reverse=True,
+            )
+            if media.match(accepted_type)  # type: ignore[arg-type]
+        ),
+        None,
+    )
