@@ -10,7 +10,7 @@ To install them you would need to run `install` command:
 poetry install --all-extras --all-groups
 ```
 
-To activate your `virtualenv` 
+To activate your `virtualenv`
 run `eval "$(poetry env activate)"`
 or `source .venv/bin/activate`.
 
