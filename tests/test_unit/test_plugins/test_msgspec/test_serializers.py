@@ -30,9 +30,6 @@ class _MsgSpecUserModel(msgspec.Struct):
 
 @final
 class _UserController(Controller[MsgspecSerializer], Body[_MsgSpecUserModel]):
-    def get(self) -> _MsgSpecUserModel:
-        return _MsgSpecUserModel(email='email@test.edu')
-
     def post(self) -> _MsgSpecUserModel:
         return _MsgSpecUserModel(email=self.parsed_body.email)
 

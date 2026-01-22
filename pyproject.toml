@@ -257,7 +257,7 @@ addopts = [
   # Ignores typesafety tests:
   "--ignore=typesafety/assert_type",
   # Ignores optional deps:
-  "--ignore=django_modern_rest/plugins/msgspec/*.py",
+  "--ignore=django_modern_rest/plugins/msgspec",
 ]
 
 
