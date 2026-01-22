@@ -13,19 +13,24 @@ from typing import (
 from django.http import HttpResponse
 
 from django_modern_rest.cookies import NewCookie
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.envs import MAX_CACHE_SIZE
+from django_modern_rest.exceptions import (
+    ResponseSerializationError,
+)
 from django_modern_rest.headers import build_headers
 from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.negotiation import ResponseValidationNegotiator
 from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    MAX_CACHE_SIZE,
     Settings,
     resolve_setting,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.renderers import Renderer
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
@@ -42,10 +47,13 @@ class ResponseValidator:
     # Public API:
     metadata: 'EndpointMetadata'
     serializer: type[BaseSerializer]
+
+    # Public class-level API:
     strict_validation: ClassVar[bool] = True
 
     def validate_response(
         self,
+        endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
@@ -56,13 +64,23 @@ class ResponseValidator:
         ):
             return response
         schema = self._get_response_schema(response.status_code)
-        self._validate_body(response.content, schema, response=response)
+        parser_cls = ResponseValidationNegotiator(
+            endpoint.metadata,
+            controller.serializer,
+        )(response)
+
+        structured = self.serializer.deserialize(
+            response.content,
+            parser_cls=parser_cls,
+        )
+        self._validate_body(structured, schema)
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
         return response
 
     def validate_modification(
         self,
+        endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         structured: Any,
     ) -> '_ValidationContext':
@@ -75,14 +93,16 @@ class ResponseValidator:
                 'without associated `@modify` usage.',
             )
 
+        renderer_class = endpoint.response_negotiator(controller.request)
         all_response_data = _ValidationContext(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
             headers=build_headers(
                 self.metadata.modification,
-                self.serializer,
+                renderer_class,
             ),
             cookies=self.metadata.modification.cookies,
+            renderer_cls=renderer_class,
         )
         if not _is_validation_enabled(
             controller,
@@ -110,10 +130,8 @@ class ResponseValidator:
 
     def _validate_body(
         self,
-        structured: Any | bytes,
+        structured: Any,
         schema: ResponseSpec,
-        *,
-        response: HttpResponse | None = None,
     ) -> None:
         """
         Does structured validation based on the provided schema.
@@ -121,15 +139,11 @@ class ResponseValidator:
         Args:
             structured: data to be validated.
             schema: exact response description schema to be a validator.
-            response: possible ``HttpResponse`` instance for validation.
 
         Raises:
             ResponseSerializationError: When validation fails.
 
         """
-        if response:
-            structured = self.serializer.deserialize(structured)
-
         try:
             self.serializer.from_python(
                 structured,
@@ -251,3 +265,4 @@ class _ValidationContext:
     status_code: HTTPStatus
     headers: dict[str, str]
     cookies: Mapping[str, NewCookie] | None
+    renderer_cls: type['Renderer']

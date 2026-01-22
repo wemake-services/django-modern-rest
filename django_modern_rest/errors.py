@@ -92,5 +92,9 @@ def global_error_handler(
     """
     if isinstance(exc, SerializationError):
         payload = {'detail': exc.args[0]}
-        return controller.to_error(payload, status_code=exc.status_code)
+        return controller.to_error(
+            payload,
+            status_code=exc.status_code,
+            renderer_cls=next(iter(endpoint.metadata.renderer_types.values())),
+        )
     raise exc

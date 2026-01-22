@@ -52,7 +52,7 @@ def test_serializer_via_endpoint(
     response = _UserController.as_view()(post_request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED, f'post: {response=}'
+    assert response.status_code == HTTPStatus.CREATED, response.content
 
 
 @pytest.mark.skipif(

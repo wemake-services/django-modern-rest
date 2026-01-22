@@ -55,5 +55,6 @@ def test_responses_are_not_added(
     response = _WrongController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content)['detail']

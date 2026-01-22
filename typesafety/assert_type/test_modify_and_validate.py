@@ -47,6 +47,7 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
 class _CorrectValidateController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        description='Test get endpoint',
     )
     def get(self) -> HttpResponse:
         return HttpResponse()

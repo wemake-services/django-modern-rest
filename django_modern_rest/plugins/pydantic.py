@@ -26,21 +26,16 @@ import pydantic_core
 from pydantic.config import ExtraValues
 from typing_extensions import override
 
+from django_modern_rest.envs import MAX_CACHE_SIZE
 from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.parsers import Parser, Raw
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.serialization import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )
-from django_modern_rest.settings import (
-    MAX_CACHE_SIZE,
-    Settings,
-    resolve_setting,
-)
 
 if TYPE_CHECKING:
-    from django_modern_rest.internal.json import (
-        FromJson,
-    )
     from django_modern_rest.metadata import EndpointMetadata
 
 
@@ -152,15 +147,19 @@ class PydanticSerializer(BaseSerializer):
     from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': True,
     }
-    from_json_strict: ClassVar[bool] = True
+    deserialize_strict: ClassVar[bool] = True
 
     @override
     @classmethod
-    def serialize(cls, structure: Any) -> bytes:
-        """Convert any object to json bytestring."""
-        serialize = resolve_setting(Settings.serialize, import_string=True)
+    def serialize(
+        cls,
+        structure: Any,
+        *,
+        renderer_cls: type[Renderer],
+    ) -> bytes:
+        """Convert any object to raw bytestring."""
         try:
-            return serialize(  # type: ignore[no-any-return]
+            return renderer_cls.render(
                 structure,
                 cls.serialize_hook,
             )
@@ -170,24 +169,24 @@ class PydanticSerializer(BaseSerializer):
     @override
     @classmethod
     def serialize_hook(cls, to_serialize: Any) -> Any:
-        """Customize how some objects are serialized into json."""
+        """Customize how some objects are serialized into simple objects."""
         if isinstance(to_serialize, pydantic.BaseModel):
             return to_serialize.model_dump(**cls.model_dump_kwargs)
         return super().serialize_hook(to_serialize)
 
     @override
     @classmethod
-    def deserialize(cls, buffer: 'FromJson') -> Any:
-        """
-        Convert string or bytestring to simple python object.
-
-        TypeAdapter used for type validation is cached for further uses.
-        """
-        deserialize = resolve_setting(Settings.deserialize, import_string=True)
-        return deserialize(
+    def deserialize(
+        cls,
+        buffer: Raw,
+        *,
+        parser_cls: type[Parser],
+    ) -> Any:
+        """Convert string or bytestring to simple python object."""
+        return parser_cls.parse(
             buffer,
             cls.deserialize_hook,
-            strict=cls.from_json_strict,
+            strict=cls.deserialize_strict,
         )
 
     @override

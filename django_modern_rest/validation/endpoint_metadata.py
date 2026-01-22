@@ -14,29 +14,19 @@ from typing import (
 
 from django.http import HttpResponse
 
-from django_modern_rest.exceptions import (
-    EndpointMetadataError,
-)
-from django_modern_rest.headers import (
-    HeaderSpec,
-    NewHeader,
-)
+from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.headers import HeaderSpec, NewHeader
 from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.parsers import Parser
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import (
     ResponseModification,
     ResponseSpec,
     infer_status_code,
 )
 from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.settings import (
-    HttpSpec,
-    Settings,
-    resolve_setting,
-)
-from django_modern_rest.types import (
-    is_safe_subclass,
-    parse_return_annotation,
-)
+from django_modern_rest.settings import HttpSpec, Settings, resolve_setting
+from django_modern_rest.types import is_safe_subclass, parse_return_annotation
 from django_modern_rest.validation.payload import (
     ModifyEndpointPayload,
     PayloadT,
@@ -319,6 +309,16 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
+            parser_types=self._build_parser_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+            ),
+            renderer_types=self._build_renderer_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+            ),
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -384,6 +384,16 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
+            parser_types=self._build_parser_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+            ),
+            renderer_types=self._build_renderer_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+            ),
             summary=payload.summary,
             description=payload.description,
             tags=payload.tags,
@@ -438,7 +448,59 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
+            parser_types=self._build_parser_types(
+                None,
+                blueprint_cls,
+                controller_cls,
+            ),
+            renderer_types=self._build_renderer_types(
+                None,
+                blueprint_cls,
+                controller_cls,
+            ),
         )
+
+    def _build_parser_types(
+        self,
+        payload: PayloadT,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, type[Parser]]:
+        payload_types = () if payload is None else (payload.parser_types or ())
+        blueprint_types = (
+            () if blueprint_cls is None else blueprint_cls.parser_types
+        )
+        return {
+            typ.content_type: typ
+            for typ in (
+                *controller_cls.parser_types,
+                *blueprint_types,
+                *payload_types,
+                *resolve_setting(Settings.parser_types, import_string=True),
+            )
+        }
+
+    def _build_renderer_types(
+        self,
+        payload: PayloadT,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, type[Renderer]]:
+        payload_types = (
+            () if payload is None else (payload.renderer_types or ())
+        )
+        blueprint_types = (
+            () if blueprint_cls is None else blueprint_cls.renderer_types
+        )
+        return {
+            typ.content_type: typ
+            for typ in (
+                *controller_cls.renderer_types,
+                *blueprint_types,
+                *payload_types,
+                *resolve_setting(Settings.renderer_types, import_string=True),
+            )
+        }
 
     def _validate_new_headers(
         self,

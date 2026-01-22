@@ -1,4 +1,5 @@
 import abc
+import json
 from collections.abc import Callable
 from typing import Any, ClassVar, TypeAlias
 
@@ -20,18 +21,14 @@ def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
     the schema to JSON format.
 
     Args:
-        schema: Converted OpenAPI schema to serialize.
+        schema: Converted OpenAPI schema to be serialized.
 
     Returns:
         JSON string representation of the schema.
-    """
-    from django_modern_rest.settings import (  # noqa: PLC0415
-        Settings,
-        resolve_setting,
-    )
 
-    serialize = resolve_setting(Settings.serialize, import_string=True)
-    return serialize(schema, None).decode('utf-8')  # type: ignore[no-any-return]
+    """
+    # TODO: use `msgspec` if available
+    return json.dumps(schema)
 
 
 class BaseRenderer:
