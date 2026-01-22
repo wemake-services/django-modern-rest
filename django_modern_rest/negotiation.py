@@ -7,7 +7,6 @@ from django_modern_rest.exceptions import (
     RequestSerializationError,
     ResponseSerializationError,
 )
-from django_modern_rest.internal.preferred_type import get_preferred_type
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
@@ -101,11 +100,7 @@ class ResponseNegotiator:
         """
         if request.headers.get('Accept') is None:
             return self._default
-        try:
-            renderer_type = request.get_preferred_type(self._renderer_keys)
-        except AttributeError:  # pragma: no cover
-            # This is a backport of django's 5.2 feature to older djangos.
-            renderer_type = get_preferred_type(request, self._renderer_keys)
+        renderer_type = request.get_preferred_type(self._renderer_keys)
         if renderer_type is None:
             expected = self._renderer_keys
             raise ResponseSerializationError(

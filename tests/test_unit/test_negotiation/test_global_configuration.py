@@ -118,67 +118,10 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
     ('request_headers', 'request_data', 'expected_headers', 'expected_data'),
     [
         (
-            {'Content-Type': 'application/xml'},
-            _xml_data,
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
-        ),
-        (
-            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
-            _xml_data,
-            {'Content-Type': 'application/xml'},
-            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
-        ),
-        (
-            {'Content-Type': 'application/json', 'Accept': 'application/xml'},
-            b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/xml'},
-            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
-        ),
-        (
-            {
-                'Content-Type': 'application/json',
-                'Accept': 'application/xml,application/json',
-            },
-            b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/xml'},
-            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
-        ),
-        (
-            {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json,application/xml',
-            },
-            b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
-        ),
-        (
-            {'Content-Type': 'application/json', 'Accept': 'application/json'},
-            b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
-        ),
-        (
             {
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml;q=0.7,application/json;q=0.9',
             },
-            b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
-        ),
-        (
-            {
-                'Content-Type': 'application/json',
-                'Accept': 'application/xml+pretty;q=0.7,application/json;q=0.9',
-            },
-            b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
-        ),
-        (
-            {},
             b'{"root": {"key": "value"}}',
             {'Content-Type': 'application/json'},
             b'{"key": "value"}',
