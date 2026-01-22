@@ -49,8 +49,12 @@ class EndpointMetadata:
         component_parsers: List of component parser specifications
             from the controller. Each spec is a tuple
             of (ComponentParser class, type args).
-        parser_types: ...
-        renderer_types: ...
+        parser_types: List of types to be used for this endpoint
+            to parse incoming request's body. All types must be subtypes
+            of :class:`~django_modern_rest.parsers.Parser`.
+        renderer_types: List of types to be used for this endpoint
+            to render response's body. All types must be subtypes
+            of :class:`~django_modern_rest.renderers.Renderer`.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.

@@ -1,4 +1,3 @@
-import sys
 from http import HTTPStatus
 from typing import final
 
@@ -38,10 +37,6 @@ class _UserController(Controller[MsgspecSerializer], Body[_MsgSpecUserModel]):
         return _MsgSpecUserModel(email=self.parsed_body.email)
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 def test_serializer_via_endpoint(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
@@ -55,10 +50,6 @@ def test_serializer_via_endpoint(
     assert response.status_code == HTTPStatus.CREATED, response.content
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 @pytest.mark.parametrize(
     ('err', 'is_raise'),
     [

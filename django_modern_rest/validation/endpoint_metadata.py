@@ -12,6 +12,7 @@ from typing import (
     cast,
 )
 
+from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponse
 
 from django_modern_rest.exceptions import EndpointMetadataError
@@ -242,6 +243,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             return self._from_raw_data(
                 return_annotation,
                 method,
+                func,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
                 controller_cls=controller_cls,
@@ -271,7 +273,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             ],
         )
 
-    def _from_validate(  # noqa: WPS211
+    def _from_validate(  # noqa: WPS211, WPS210
         self,
         payload: ValidateEndpointPayload,
         return_annotation: Any,
@@ -300,6 +302,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
             endpoint=endpoint,
         )(all_responses)
+        summary, description = resolve_description(func, payload)
         return EndpointMetadata(
             responses=responses,
             method=method,
@@ -319,8 +322,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 blueprint_cls,
                 controller_cls,
             ),
-            summary=payload.summary,
-            description=payload.description,
+            summary=summary,
+            description=description,
             tags=payload.tags,
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
@@ -330,7 +333,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_modify(  # noqa: WPS211
+    def _from_modify(  # noqa: WPS211, WPS210
         self,
         payload: ModifyEndpointPayload,
         return_annotation: Any,
@@ -375,6 +378,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
             endpoint=endpoint,
         )(all_responses)
+        summary, description = resolve_description(func, payload)
         return EndpointMetadata(
             responses=responses,
             validate_responses=payload.validate_responses,
@@ -394,8 +398,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 blueprint_cls,
                 controller_cls,
             ),
-            summary=payload.summary,
-            description=payload.description,
+            summary=summary,
+            description=description,
             tags=payload.tags,
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
@@ -405,10 +409,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_raw_data(
+    def _from_raw_data(  # noqa: WPS211, WPS210
         self,
         return_annotation: Any,
         method: str,
+        func: Callable[..., Any],
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
@@ -439,6 +444,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
             endpoint=endpoint,
         )(all_responses)
+        summary, description = resolve_description(func)
         return EndpointMetadata(
             responses=responses,
             validate_responses=None,
@@ -458,6 +464,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 blueprint_cls,
                 controller_cls,
             ),
+            summary=summary,
+            description=description,
         )
 
     def _build_parser_types(
@@ -576,9 +584,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 f'Cannot pass async `error_handler` to sync {endpoint}',
             )
 
-    # TODO: Does we need extract methods for summary and
-    # description from endpoint.__doc__?
-
 
 def validate_method_name(
     func_name: str,
@@ -601,3 +606,36 @@ def validate_method_name(
         raise EndpointMetadataError(
             f'{func_name} is not a valid HTTP method name',
         ) from None
+
+
+def resolve_description(
+    func: Callable[..., Any],
+    payload: ValidateEndpointPayload | ModifyEndpointPayload | None = None,
+) -> tuple[str | None, str | None]:
+    """Resolve summary and description for an endpoint.
+
+    Returns a (summary, description) tuple based on the following priority:
+    1. If payload is provided and has non-None , returns those.
+    2. If func has no docstring, returns payload values (or None if no payload).
+    3. Otherwise extracts values from func.__doc__ via parse_docstring();
+       empty strings are converted to None.
+    """
+    if payload is not None:
+        if payload.summary is not None or payload.description is not None:
+            return payload.summary, payload.description
+
+        if func.__doc__ is None:
+            return payload.summary, payload.description
+
+    summary: str | None
+    description: str | None
+
+    summary, description, _ = parse_docstring(func.__doc__ or '')
+
+    if not summary:
+        summary = None
+
+    if not description:
+        description = None
+
+    return summary, description
