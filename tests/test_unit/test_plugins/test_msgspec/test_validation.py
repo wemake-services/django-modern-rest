@@ -1,5 +1,4 @@
 import json
-import sys
 from http import HTTPMethod, HTTPStatus
 from typing import final
 
