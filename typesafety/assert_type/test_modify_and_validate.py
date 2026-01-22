@@ -119,6 +119,6 @@ class _WrongValidateController(Controller[PydanticSerializer]):
     def patch(self) -> JsonResponse:
         return JsonResponse([])
 
-    @validate()  # type: ignore[call-overload, misc]
+    @validate()  # type: ignore[call-overload, untyped-decorator]
     async def delete(self) -> HttpResponse:
         return JsonResponse([])
