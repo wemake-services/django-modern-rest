@@ -4,12 +4,7 @@ from http import HTTPStatus
 from typing import Annotated, final
 
 import pytest
-
-try:
-    import msgspec
-except ImportError:  # pragma: no cover
-    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
-
+import msgspec
 from django.http import HttpResponse
 from faker import Faker
 
@@ -45,10 +40,6 @@ class _ComponentController(
         return f'{first_name} {last_name}'
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 def test_msgspec_components(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
