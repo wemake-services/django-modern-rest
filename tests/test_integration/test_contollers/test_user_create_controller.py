@@ -96,6 +96,6 @@ def test_user_list_view(dmr_client: DMRClient) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == [
-        {'email': 'first@mail.ru', 'age': 1},
-        {'email': 'second@mail.ru', 'age': 2},
+        {'email': 'first@example.org', 'age': 1},
+        {'email': 'second@example.org', 'age': 2},
     ]

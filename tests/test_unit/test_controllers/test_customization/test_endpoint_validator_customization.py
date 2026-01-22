@@ -39,11 +39,18 @@ class _CustomResponseValidator(ResponseValidator):
     @override
     def validate_response(
         self,
+        endpoint: Endpoint,
         controller: Controller[BaseSerializer],
         response: _ResponseT,
+        **kwargs: Any,
     ) -> _ResponseT:
         self.__class__.was_called = True
-        return super().validate_response(controller, response)
+        return super().validate_response(
+            endpoint,
+            controller,
+            response,
+            **kwargs,
+        )
 
 
 @final

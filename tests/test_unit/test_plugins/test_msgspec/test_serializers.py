@@ -30,9 +30,6 @@ class _MsgSpecUserModel(msgspec.Struct):
 
 @final
 class _UserController(Controller[MsgspecSerializer], Body[_MsgSpecUserModel]):
-    def get(self) -> _MsgSpecUserModel:
-        return _MsgSpecUserModel(email='email@test.edu')
-
     def post(self) -> _MsgSpecUserModel:
         return _MsgSpecUserModel(email=self.parsed_body.email)
 
@@ -47,7 +44,7 @@ def test_serializer_via_endpoint(
     response = _UserController.as_view()(post_request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED, f'post: {response=}'
+    assert response.status_code == HTTPStatus.CREATED, response.content
 
 
 @pytest.mark.parametrize(

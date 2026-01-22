@@ -73,8 +73,8 @@ class UserCreateBlueprint(  # noqa: WPS215
 class UserListBlueprint(Blueprint[PydanticSerializer]):
     def get(self) -> list[_UserInput]:
         return [
-            _UserInput(email='first@mail.ru', age=1),
-            _UserInput(email='second@mail.ru', age=2),
+            _UserInput(email='first@example.org', age=1),
+            _UserInput(email='second@example.org', age=2),
         ]
 
 

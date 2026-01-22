@@ -1,19 +1,20 @@
 import abc
-import dataclasses
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
-from django.http import HttpHeaders, HttpRequest
+from django.http import HttpHeaders
 from typing_extensions import TypedDict
 
 from django_modern_rest.exceptions import (
     RequestSerializationError,
     ResponseSerializationError,
 )
+from django_modern_rest.parsers import Parser, Raw
+from django_modern_rest.renderers import Renderer
 
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
     from django_modern_rest.controller import Blueprint
-    from django_modern_rest.internal.json import FromJson
+    from django_modern_rest.endpoint import Endpoint
     from django_modern_rest.metadata import EndpointMetadata
 
 _ModelT = TypeVar('_ModelT')
@@ -31,12 +32,14 @@ class BaseSerializer:
     optimizer: ClassVar[type['BaseEndpointOptimizer']]
     response_parsing_error_model: ClassVar[Any]
 
-    # API that have defaults:
-    content_type: ClassVar[str] = 'application/json'
-
     @classmethod
     @abc.abstractmethod
-    def serialize(cls, structure: Any) -> bytes:
+    def serialize(
+        cls,
+        structure: Any,
+        *,
+        renderer_cls: type[Renderer],
+    ) -> bytes:
         """Convert structured data to json bytestring."""
         raise NotImplementedError
 
@@ -61,7 +64,12 @@ class BaseSerializer:
 
     @classmethod
     @abc.abstractmethod
-    def deserialize(cls, buffer: 'FromJson') -> Any:
+    def deserialize(
+        cls,
+        buffer: Raw,
+        *,
+        parser_cls: type[Parser],
+    ) -> Any:
         """Convert json bytestring to structured data."""
         raise NotImplementedError
 
@@ -145,7 +153,7 @@ class BaseEndpointOptimizer:
         """
 
 
-@dataclasses.dataclass(slots=True)
+# TODO: make generic on `blueprint_cls`?
 class SerializerContext:
     """Parse and bind request components for a controller.
 
@@ -158,19 +166,23 @@ class SerializerContext:
     strict_validation: ClassVar[bool] = False
 
     # Protected API:
+    _specs: _ComponentParserSpec
+    _combined_model: Any
 
-    blueprint_cls: 'type[Blueprint[BaseSerializer]]'
-    _specs: _ComponentParserSpec = dataclasses.field(init=False)
-    _combined_model: Any = dataclasses.field(init=False)
+    __slots__ = ('_blueprint_cls', '_combined_model', '_specs')
 
-    def __post_init__(self) -> None:
+    def __init__(
+        self,
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
+    ) -> None:
         """Eagerly build context for a given controller and serializer."""
-        specs, type_map = self._build_type_map(self.blueprint_cls)
+        self._blueprint_cls = blueprint_cls
+        specs, type_map = _build_type_map(self._blueprint_cls)
         self._specs = specs
 
         # Name is not really important,
         # we use `@` to identify that it is generated:
-        name_prefix = self.blueprint_cls.__qualname__
+        name_prefix = self._blueprint_cls.__qualname__
         combined_name = f'_{name_prefix}@ContextModel'
 
         self._combined_model = TypedDict(  # type: ignore[misc]
@@ -181,10 +193,8 @@ class SerializerContext:
 
     def parse_and_bind(
         self,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
     ) -> None:
         """
         Collect, validate, and bind component data to the controller.
@@ -197,47 +207,30 @@ class SerializerContext:
         if not self._specs:
             return
 
-        context = self._collect_context(blueprint, request, *args, **kwargs)
+        context = self._collect_context(endpoint, blueprint)
         validated = self._validate_context(context)
         self._bind_parsed(blueprint, validated)
 
-    def _build_type_map(
-        self,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-    ) -> _TypeMapResult:
-        """Build mapping name -> model and return specs and type_map."""
-        specs: _ComponentParserSpec = {}
-        type_map: dict[str, Any] = {}
-        parsers = blueprint_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-
-        for component_cls, type_args in parsers:
-            type_map[component_cls.context_name] = type_args[0]
-            specs[component_cls] = type_args[0]
-        return specs, type_map
-
     def _collect_context(
         self,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
         context: dict[str, Any] = {}
         for component, submodel in self._specs.items():
             raw = component.provide_context_data(
+                endpoint,
                 blueprint,
-                submodel,  # just the one for the exact key
-                request,
-                *args,
-                **kwargs,
+                field_model=submodel,  # just the one for the exact key
+                combined_model=self._combined_model,
             )
             context[component.context_name] = raw
         return context
 
     def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
-        serializer = self.blueprint_cls.serializer
+        serializer = self._blueprint_cls.serializer
         try:
             return serializer.from_python(  # type: ignore[no-any-return]
                 context,
@@ -257,3 +250,21 @@ class SerializerContext:
         """Bind parsed values back to the blueprint instance."""
         for name, parsed_value in validated.items():
             setattr(blueprint, name, parsed_value)
+
+
+def _build_type_map(
+    blueprint_cls: type['Blueprint[BaseSerializer]'],
+) -> _TypeMapResult:
+    """
+    Build the type parsing spec.
+
+    Called during import-time.
+    """
+    specs: _ComponentParserSpec = {}
+    type_map: dict[str, Any] = {}
+    parsers = blueprint_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+
+    for component_cls, type_args in parsers:
+        type_map[component_cls.context_name] = type_args[0]
+        specs[component_cls] = type_args[0]
+    return specs, type_map
