@@ -1,10 +1,14 @@
 import json
-import sys
 from http import HTTPStatus
 from typing import Annotated, final
 
 import pytest
-import msgspec
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
 from django.http import HttpResponse
 from faker import Faker
 
