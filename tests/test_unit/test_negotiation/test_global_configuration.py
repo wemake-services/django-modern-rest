@@ -1,7 +1,7 @@
 import json
 from collections.abc import Callable, Iterator
 from http import HTTPStatus
-from typing import Any, ClassVar, final
+from typing import Annotated, Any, ClassVar, final
 
 import pydantic
 import pytest
@@ -17,6 +17,11 @@ from django_modern_rest import (
     Body,
     Controller,
     modify,
+)
+from django_modern_rest.negotiation import (
+    ContentType,
+    content_negotiation,
+    request_parser,
 )
 from django_modern_rest.parsers import DeserializeFunc, JsonParser, Parser, Raw
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -118,6 +123,48 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
     ('request_headers', 'request_data', 'expected_headers', 'expected_data'),
     [
         (
+            {'Content-Type': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/json'},
+            b'{"key": "value"}',
+        ),
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/xml'},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml,application/json',
+            },
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json,application/xml',
+            },
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key": "value"}',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key": "value"}',
+        ),
+        (
             {
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml;q=0.7,application/json;q=0.9',
@@ -125,6 +172,27 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
             b'{"root": {"key": "value"}}',
             {'Content-Type': 'application/json'},
             b'{"key": "value"}',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml+pretty;q=0.7,application/json;q=0.9',
+            },
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key": "value"}',
+        ),
+        (
+            {},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key": "value"}',
+        ),
+        (
+            {'Accept': 'application/xml,application/json'},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
     ],
 )
@@ -147,6 +215,9 @@ def test_per_controller_customization(
         renderer_types = [JsonRenderer]
 
         def post(self) -> dict[str, str]:
+            parser_cls = request_parser(self.request)
+            assert parser_cls
+            assert parser_cls.content_type == request.content_type
             return self.parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parser_types) == 2
@@ -237,3 +308,199 @@ def test_per_endpoint_customization(
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == request_data['root']
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'request_data', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+            b'"value"',
+        ),
+    ],
+)
+def test_conditional_content_type(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    request_data: Any,
+    expected_headers: dict[str, str],
+    expected_data: Any,
+) -> None:
+    """Ensures conditional content types work correctly."""
+
+    @final
+    class _Controller(
+        Controller[PydanticSerializer],
+        Body[_RequestModel],
+    ):
+        parser_types = [JsonParser]
+        renderer_types = [JsonRenderer]
+
+        def post(
+            self,
+        ) -> Annotated[
+            dict[str, str] | str,
+            content_negotiation({
+                ContentType.json: str,
+                ContentType.xml: dict[str, str],
+            }),
+        ]:
+            if self.request.accepts(ContentType.json):
+                return self.parsed_body.root['key']
+            return self.parsed_body.root
+
+    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 2
+
+    request = dmr_rf.generic(
+        'POST',
+        '/whatever/',
+        headers=request_headers,
+        data=request_data,
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == expected_headers
+    assert response.content == expected_data
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'request_data', 'expected_headers'),
+    [
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+        ),
+    ],
+)
+def test_wrong_conditional_content_type(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    request_data: Any,
+    expected_headers: dict[str, str],
+) -> None:
+    """Ensures conditional content validation works correctly."""
+
+    @final
+    class _Controller(
+        Controller[PydanticSerializer],
+        Body[_RequestModel],
+    ):
+        parser_types = [JsonParser]
+        renderer_types = [JsonRenderer]
+
+        def post(
+            self,
+        ) -> Annotated[
+            dict[str, str] | str,
+            content_negotiation({
+                # Won't be matched:
+                ContentType.json: dict[str, str],
+                ContentType.xml: str,
+            }),
+        ]:
+            # ERROR! Type to content logic is reversed:
+            if self.request.accepts(ContentType.json):
+                return self.parsed_body.root['key']
+            return self.parsed_body.root
+
+    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 2
+
+    request = dmr_rf.generic(
+        'POST',
+        '/whatever/',
+        headers=request_headers,
+        data=request_data,
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == expected_headers, request_headers
+    assert b'Input should be a valid' in response.content
+
+
+def test_missing_conditional_content_type(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures conditional content might not have missing parts."""
+
+    @final
+    class _Controller(Controller[PydanticSerializer]):
+        parser_types = [JsonParser]
+        renderer_types = [JsonRenderer]
+
+        def get(
+            self,
+        ) -> Annotated[
+            dict[str, str] | str,
+            content_negotiation({
+                # Missing `json`:
+                ContentType.xml: str,
+                ContentType.form_data: dict[str, str],
+            }),
+        ]:
+            return 'string'
+
+    assert len(_Controller.api_endpoints['GET'].metadata.parser_types) == 2
+    assert len(_Controller.api_endpoints['GET'].metadata.renderer_types) == 2
+
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, Content-Type application/json '
+                    'is not listed in content_types={<ContentType.xml: '
+                    "'application/xml'>: <class 'str'>, "
+                    "<ContentType.form_data: 'multipart/form-data'>: "
+                    'dict[str, str]}'
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'Content-Type application/json '
+                        'is not listed in content_types={<ContentType.xml: '
+                        "'application/xml'>: <class 'str'>, "
+                        "<ContentType.form_data: 'multipart/form-data'>: "
+                        'dict[str, str]}'
+                    ),
+                },
+            },
+        ],
+    })

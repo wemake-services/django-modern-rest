@@ -21,6 +21,7 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
+from django_modern_rest.negotiation import request_renderer
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import (
@@ -195,7 +196,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
-            renderer_cls=renderer_cls,
+            renderer_cls=renderer_cls or request_renderer(self.request),
         )
 
     def to_error(
@@ -222,7 +223,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
-            renderer_cls=renderer_cls,
+            renderer_cls=renderer_cls or request_renderer(self.request),
         )
 
     def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:

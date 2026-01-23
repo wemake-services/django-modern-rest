@@ -4,10 +4,12 @@ from functools import lru_cache
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     Any,
     ClassVar,
     TypeVar,
     final,
+    get_origin,
 )
 
 from django.http import HttpResponse
@@ -18,8 +20,9 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.headers import build_headers
+from django_modern_rest.internal.negotiation import ContentNegotiation
 from django_modern_rest.metadata import EndpointMetadata
-from django_modern_rest.negotiation import ResponseValidationNegotiator
+from django_modern_rest.negotiation import response_validation_negotiator
 from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
@@ -64,16 +67,21 @@ class ResponseValidator:
         ):
             return response
         schema = self._get_response_schema(response.status_code)
-        parser_cls = ResponseValidationNegotiator(
+        parser_cls = response_validation_negotiator(
+            controller.request,
+            response,
             endpoint.metadata,
-            controller.serializer,
-        )(response)
+        )
 
         structured = self.serializer.deserialize(
             response.content,
             parser_cls=parser_cls,
         )
-        self._validate_body(structured, schema)
+        self._validate_body(
+            structured,
+            schema,
+            content_type=parser_cls.content_type,
+        )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
         return response
@@ -110,7 +118,11 @@ class ResponseValidator:
         ):
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
-        self._validate_body(structured, schema)
+        self._validate_body(
+            structured,
+            schema,
+            content_type=renderer_class.content_type,
+        )
         return all_response_data
 
     def _get_response_schema(
@@ -132,6 +144,8 @@ class ResponseValidator:
         self,
         structured: Any,
         schema: ResponseSpec,
+        *,
+        content_type: str | None = None,
     ) -> None:
         """
         Does structured validation based on the provided schema.
@@ -139,15 +153,37 @@ class ResponseValidator:
         Args:
             structured: data to be validated.
             schema: exact response description schema to be a validator.
+            content_type: content type that is used for this body.
 
         Raises:
             ResponseSerializationError: When validation fails.
 
         """
+        if (
+            content_type
+            and get_origin(schema.return_type) is Annotated
+            and schema.return_type.__metadata__
+            and isinstance(
+                schema.return_type.__metadata__[0],
+                ContentNegotiation,
+            )
+        ):
+            content_types = schema.return_type.__metadata__[0].computed
+            if content_type not in content_types:
+                raise ResponseSerializationError(
+                    self.serializer.error_serialize(
+                        f'Content-Type {content_type} is not '
+                        f'listed in {content_types=}',
+                    ),
+                )
+            model = content_types[content_type]
+        else:
+            model = schema.return_type
+
         try:
             self.serializer.from_python(
                 structured,
-                schema.return_type,
+                model,
                 strict=self.strict_validation,
             )
         except self.serializer.validation_error as exc:
