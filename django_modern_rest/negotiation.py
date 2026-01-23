@@ -196,7 +196,7 @@ class ContentType(enum.StrEnum):
 
 def content_negotiation(
     mapping: Mapping[ContentType, Any],
-) -> '_ContentNegotiation':
+) -> _ContentNegotiation:
     """
     Create conditional validation for different content types.
 
