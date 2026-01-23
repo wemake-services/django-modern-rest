@@ -12,6 +12,14 @@ Negotiation API
 
 .. autoclass:: django_modern_rest.negotiation.ResponseNegotiator
 
+.. autoclass:: django_modern_rest.negotiation.ContentType
+
+.. autofunction:: django_modern_rest.negotiation.content_negotiation
+
+.. autofunction:: django_modern_rest.negotiation.request_parser
+
+.. autofunction:: django_modern_rest.negotiation.request_renderer
+
 
 Parser API
 ----------

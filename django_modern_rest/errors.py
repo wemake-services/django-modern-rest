@@ -90,11 +90,15 @@ def global_error_handler(
         in the very end. Unless, you want to disable original error handling.
 
     """
+    from django_modern_rest.negotiation import request_renderer  # noqa: PLC0415
+
     if isinstance(exc, SerializationError):
-        payload = {'detail': exc.args[0]}
+        renderer_cls = request_renderer(
+            controller.request,
+        ) or endpoint.response_negotiator(controller.request)
         return controller.to_error(
-            payload,
+            {'detail': exc.args[0]},
             status_code=exc.status_code,
-            renderer_cls=next(iter(endpoint.metadata.renderer_types.values())),
+            renderer_cls=renderer_cls,
         )
     raise exc

@@ -1,11 +1,17 @@
-from typing import final
+import enum
+from collections.abc import Mapping
+from typing import Any, final
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBase
 
 from django_modern_rest.exceptions import (
+    EndpointMetadataError,
     RequestSerializationError,
     ResponseSerializationError,
+)
+from django_modern_rest.internal.negotiation import (
+    ContentNegotiation as _ContentNegotiation,
 )
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.parsers import Parser
@@ -46,6 +52,11 @@ class RequestNegotiator:
             Parser class for this request.
 
         """
+        parser_cls = self._decide(request)
+        request._dmr_parser_cls = parser_cls  # type: ignore[attr-defined]  # noqa: SLF001
+        return parser_cls
+
+    def _decide(self, request: HttpRequest) -> type[Parser]:
         if request.content_type is None:
             return self._default
         parser_type = self._parser_types.get(request.content_type)
@@ -98,6 +109,11 @@ class ResponseNegotiator:
             Renderer class for this response.
 
         """
+        renderer_cls = self._decide(request)
+        request._dmr_renderer_cls = renderer_cls  # type: ignore[attr-defined]  # noqa: SLF001
+        return renderer_cls
+
+    def _decide(self, request: HttpRequest) -> type[Renderer]:
         if request.headers.get('Accept') is None:
             return self._default
         renderer_type = request.get_preferred_type(self._renderer_keys)
@@ -113,8 +129,40 @@ class ResponseNegotiator:
         return self._renderer_types[renderer_type]
 
 
-@final
-class ResponseValidationNegotiator:
+def request_parser(request: HttpRequest) -> type[Parser] | None:
+    """
+    Get parser_cls used to parse this request.
+
+    .. note::
+
+        Since request parsing is only used when there's
+        a :class:`django_modern_rest.components.Body` component,
+        there might be no parser.
+
+    """
+    return getattr(request, '_dmr_parser_cls', None)
+
+
+def request_renderer(request: HttpRequest) -> type[Renderer] | None:
+    """
+    Get parser_cls used to parse this request.
+
+    .. note::
+
+        Since request rendering is only used when using raw endpoints,
+        there might be no request renderer. Also, renderer is chosen late
+        in the life-cycle of the request handling, so there might not be
+        a request renderer *yet*.
+
+    """
+    return getattr(request, '_dmr_renderer_cls', None)
+
+
+def response_validation_negotiator(
+    request: HttpRequest,
+    response: HttpResponseBase,
+    metadata: EndpointMetadata,
+) -> type[Parser]:
     """
     Special type that we use to re-parse our own response body.
 
@@ -122,25 +170,44 @@ class ResponseValidationNegotiator:
     It should not be used in production directly.
     Think of it as an internal validation helper.
     """
+    parser_types = metadata.parser_types
+    renderer_type = request_renderer(request)
+    if renderer_type is None:
+        content_type = response.headers['Content-Type']
+    else:
+        content_type = renderer_type.content_type
 
-    __slots__ = ('_default', '_parser_types', '_serializer')
+    return parser_types.get(
+        content_type,
+        next(iter(parser_types.values())),
+    )
 
-    def __init__(
-        self,
-        metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
-    ) -> None:
-        """Called when this object is needed."""
-        self._serializer = serializer
-        self._parser_types = metadata.parser_types
-        # The first parser is the default one:
-        self._default = next(iter(self._parser_types.values()))
 
-    def __call__(self, response: HttpResponseBase) -> type[Parser]:
-        """Find a correct parser to load response body."""
-        # It might be an incorrect response object with incorrect `Content-Type`
-        # header or something.
-        return self._parser_types.get(
-            response.headers['Content-Type'],
-            self._default,
+@final
+@enum.unique
+class ContentType(enum.StrEnum):
+    """Enumeration of content types."""
+
+    json = 'application/json'
+    xml = 'application/xml'
+    x_www_form_urlencoded = 'application/x-www-form-urlencoded'
+    form_data = 'multipart/form-data'
+
+
+def content_negotiation(
+    mapping: Mapping[ContentType, Any],
+) -> _ContentNegotiation:
+    """
+    Create conditional validation for different content types.
+
+    It is rather usual to see a requirement like:
+    - If this method returns ``json`` then we should follow schema1
+    - If this methods returns ``xml`` then we should follow schema2
+
+    """
+    if len(mapping) <= 1:
+        raise EndpointMetadataError(
+            'content_negotiation must be called with a mapping of length >= 2, '
+            f'got {mapping}',
         )
+    return _ContentNegotiation(tuple(mapping.items()))

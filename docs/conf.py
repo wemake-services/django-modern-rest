@@ -113,6 +113,7 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.decorators._ReturnT'),
     (PY_CLASS, 'django_modern_rest.decorators._ViewT'),
     (PY_CLASS, 'django_modern_rest.decorators._TypeT'),
+    (PY_CLASS, 'django_modern_rest.internal.negotiation.ContentNegotiation'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
