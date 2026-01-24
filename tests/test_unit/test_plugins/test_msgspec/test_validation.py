@@ -157,7 +157,9 @@ def test_msgspec_returns_validated(
 
 @final
 class _ByNameModel(msgspec.Struct):
-    first_name: str = msgspec.field(name='firstName')
+    first_name: str = msgspec.field(  # pyrefly: ignore[unbound-name]
+        name='firstName',
+    )
 
 
 @final

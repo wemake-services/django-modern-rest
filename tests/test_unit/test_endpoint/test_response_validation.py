@@ -286,7 +286,7 @@ def test_double_validation_with_validate(
 class _ModifyWithValidationController(
     Controller[PydanticSerializer],
 ):
-    @modify(
+    @modify(  # pyrefly: ignore[deprecated]
         status_code=HTTPStatus.OK,
         validate_responses=True,
     )
@@ -311,7 +311,7 @@ def test_double_validation_modify_with_validation(
 class _ModifyWithValidationRawDataController(
     Controller[PydanticSerializer],
 ):
-    @modify(
+    @modify(  # pyrefly: ignore[deprecated]
         status_code=HTTPStatus.OK,
         validate_responses=True,
     )
@@ -336,7 +336,7 @@ def test_double_validation_modify_raw_data(
 class _ModifyNoValidationController(
     Controller[PydanticSerializer],
 ):
-    @modify(
+    @modify(  # pyrefly: ignore[deprecated]
         status_code=HTTPStatus.OK,
         validate_responses=False,
     )

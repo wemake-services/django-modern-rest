@@ -38,6 +38,10 @@ repos:
     hooks:
       - id: pyrefly-check
         pass_filenames: false
+        additional_dependencies:
+          - "django>=5.2,<6.0"
+          - "django-stubs[compatible-mypy]==5.2.9"
+          - "typing-extensions>=4"
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
     rev: v1.0.2

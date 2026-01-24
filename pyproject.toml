@@ -117,7 +117,10 @@ django_modern_rest = "django_modern_rest_pytest"
 
 
 [tool.pyrefly]
-project-excludes = ["**/benchmarks/"]
+project-excludes = [
+  "**/benchmarks/",
+  "**/docs/"
+]
 ignore-missing-imports = ["*"]
 
 

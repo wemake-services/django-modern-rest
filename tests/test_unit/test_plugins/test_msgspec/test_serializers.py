@@ -53,7 +53,7 @@ def test_serializer_via_endpoint(
         ('', False),
         (Exception(), True),
         (_ForTestError(), True),
-        (msgspec.ValidationError(), False),
+        (msgspec.ValidationError(), False),  # pyrefly: ignore[unbound-name]
         (_ForTestMsgSpecError(), False),
         (1, True),
     ],
