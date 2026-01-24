@@ -13,7 +13,6 @@ from inline_snapshot import snapshot
 from django_modern_rest import (
     Body,
     Controller,
-    modify,
 )
 from django_modern_rest.parsers import JsonParser
 from django_modern_rest.plugins.pydantic import PydanticSerializer
