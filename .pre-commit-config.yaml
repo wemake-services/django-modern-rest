@@ -38,7 +38,6 @@ repos:
     hooks:
       - id: pyrefly-check
         pass_filenames: false
-        language: system
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
     rev: v1.0.2
