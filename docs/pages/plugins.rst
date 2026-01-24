@@ -23,3 +23,27 @@ for the :term:`controller` definition.
       .. code:: python
 
         from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+
+Customizing serializers
+-----------------------
+
+TODO
+
+
+Endpoint optimizers
+-------------------
+
+TODO
+
+
+Utility types
+-------------
+
+TODO
+
+
+Writing a custom plugin
+------------------------
+
+TODO

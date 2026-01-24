@@ -38,10 +38,8 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP",
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
   "Framework :: Django",
-  "Framework :: Django :: 4.2",
-  "Framework :: Django :: 5.0",
-  "Framework :: Django :: 5.1",
   "Framework :: Django :: 5.2",
+  "Framework :: Django :: 6.0",
 ]
 
 packages = [
@@ -52,12 +50,10 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 typing_extensions = ">=4"
-django = ">=4.2,<6.0"
+django = ">=5.2,<6.0"
 
 msgspec = { version = ">= 0.19", optional = true }
 pydantic = { version = "^2.12", optional = true }
-types-docutils = "^0.22.2.20251006"
-docutils = "<0.22"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
@@ -65,7 +61,7 @@ msgspec = ["msgspec"]
 
 [tool.poetry.group.dev.dependencies]
 django = "^5.2"
-django-stubs = { version = "5.2.8", extras = ["compatible-mypy"] }
+django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 pyright = "^1.1"
 
@@ -75,7 +71,7 @@ ruff = "^0.14"
 import-linter = "^2.5"
 slotscheck = "^0.19"
 
-pytest = ">=8.4,<10.0"
+pytest = "^9.0"
 pytest-cov = "^7.0"
 covdefaults = "^2.3"
 pytest-randomly = "^4.0"
@@ -83,13 +79,14 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 pytest-custom-exit-code = "^0.3"
 pytest-freezer = "^0.4"
-dirty-equals = ">=0.10,<0.12"
-faker = ">=37.11,<41.0"
+dirty-equals = "^0.11"
+faker = "^40.1"
 inline-snapshot = "^0.31"
 schemathesis = "^4.3"
-polyfactory = ">=2.22,<4.0"
+polyfactory = "^3.2"
 
 httpx = "^0.28"
+xmltodict = "^1.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -97,18 +94,18 @@ optional = true
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8.2"
 sphinx-autodoc-typehints = "^3.0"
-sphinx-iconify = ">=0.2,<0.4"
+sphinx-iconify = "^0.3"
 sphinx-tabs = "^3.4"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
 sphinx-design = "^0.6"
-sphinxcontrib-mermaid = "^1.0"
-myst-parser = "^4.0"
-shibuya = "^2025.10"
+sphinxcontrib-mermaid = "^2.0"
+myst-parser = "^5.0"
+shibuya = "^2025.1"
 
 # Needed for our extension:
 auto-pytabs = "^0.5"
-uvicorn = ">=0.38,<0.41"
+uvicorn = "^0.40"
 httpx = "^0.28"
 
 
@@ -256,21 +253,11 @@ addopts = [
   # Ignores typesafety tests:
   "--ignore=typesafety/assert_type",
   # Ignores optional deps:
-  "--ignore=django_modern_rest/internal/json/msgspec.py",
-  "--ignore=django_modern_rest/plugins/msgspec.py",
+  "--ignore=django_modern_rest/plugins/msgspec",
 ]
 
 
 [tool.coverage.run]
-# Coverage settings: https://coverage.readthedocs.io
-omit = [
-  # When msgspec is installed:
-  "django_modern_rest/internal/json/raw.py",
-  "tests/test_unit/test_plugins/test_msgspec/*.py",
-  # When not:
-  "django_modern_rest/internal/json/msgspec.py",
-]
-
 # Covdefaults: https://pypi.org/project/covdefaults
 plugins = ["covdefaults"]
 

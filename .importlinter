@@ -21,6 +21,7 @@ layers =
   validation
   components
   response
+  plugins
   serialization
   # DTOs:
   headers | cookies
@@ -28,6 +29,7 @@ layers =
   internal
   settings
   exceptions
+  envs
 
 ignore_imports =
   # Mixin validation:
@@ -54,8 +56,9 @@ ignore_imports =
   django_modern_rest.plugins.pydantic -> pydantic
   # Msgspec plugin:
   django_modern_rest.plugins.msgspec -> msgspec
+  django_modern_rest.plugins.msgspec.* -> msgspec
   # Optional json support from msgspec:
-  django_modern_rest.internal.json.msgspec -> msgspec
+  django_modern_rest.settings -> msgspec
 
 
 [importlinter:contract:plugins-independence]

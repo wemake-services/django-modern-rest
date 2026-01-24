@@ -55,31 +55,14 @@ JSON Parsing
   It is recommended to always install ``msgspec``
   with ``'django-modern-rest[msgspec]'`` extra for better performance.
 
-.. data:: django_modern_rest.settings.Settings.serialize
+.. data:: django_modern_rest.settings.Settings.parser_types
 
-  Default: ``'django_modern_rest.internal.json.serialize'``
+  Default: :class:`django_modern_rest.parsers.JsonParser` or
+  :class:`django_modern_rest.plugins.msgspec.MsgspecJsonParser` if installed.
 
-  String or callable object that will serialize and objects to json for you.
-
-  By default uses ``json`` module for serialization
-  if ``msgspec`` is not installed.
-  And uses ``msgspec.json`` if ``msgspec`` is installed.
-
-  Custom configuration example, let's say you want to always use ``ujson``:
-
-  .. code-block:: python
-    :caption: settings.py
-
-    >>> DMR_SETTINGS = {Settings.serialize: 'path.to.your.ujson.serialize'}
-
-  See :class:`~django_modern_rest.internal.json.Serialize` for the callback type.
-
-
-.. data:: django_modern_rest.settings.Settings.deserialize
-
-  Default: ``'django_modern_rest.internal.json.deserialize'``
-
-  String or callable object that will deserialize and objects from json for you.
+  A list of subtypes of :class:`~django_modern_rest.parsers.Parser`
+  to serialize data from the requested text format,
+  like json or xml, into python object.
 
   By default uses ``json`` module for deserialization
   if ``msgspec`` is not installed.
@@ -90,10 +73,28 @@ JSON Parsing
   .. code-block:: python
     :caption: settings.py
 
-    >>> DMR_SETTINGS = {Settings.deserialize: 'path.to.your.ujson.deserialize'}
+    >>> from django_modern_rest.parsers import JsonParser
+    >>> DMR_SETTINGS = {Settings.parser_types: [JsonParser]}
 
-  See :class:`~django_modern_rest.internal.json.Deserialize`
-  for the callback type.
+.. data:: django_modern_rest.settings.Settings.renderer_types
+
+  Default: :class:`django_modern_rest.renderers.JsonRenderer` or
+  :class:`django_modern_rest.plugins.msgspec.MsgspecJsonRenderer` if installed.
+
+  A list of subtypes of :class:`~django_modern_rest.renderers.Renderer`
+  to serialize python objects to the requested text format, like json or xml.
+
+  By default uses ``json`` module for serialization
+  if ``msgspec`` is not installed.
+  And uses ``msgspec.json`` if ``msgspec`` is installed which are faster.
+
+  Custom configuration example, let's say you want to always use ``ujson``:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from django_modern_rest.renderers import JsonRenderer
+    >>> DMR_SETTINGS = {Settings.renderer_types: [JsonRenderer]}
 
 
 Response handling

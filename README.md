@@ -20,6 +20,7 @@
 - [x] [Blazingly fast](https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html)
 - [x] Fully typed and checked with `mypy` and `pyright` in strict modes
 - [x] Strict schema validation of both requests and responses
+- [x] Supports `django>=5.2`
 - [x] Supports `pydantic2`, but not bound to it
 - [x] Supports `msgspec`, but not bound to it
 - [x] Supports async Django without any `sync_to_async` calls inside
@@ -29,6 +30,7 @@
 - [x] 100% test coverage
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
 - [x] Great docs
+- [x] No AI slop
 - [x] No emojis 🌚️️
 
 ---------
@@ -60,7 +62,7 @@
 
 Works for:
 - CPython 3.11+
-- Django 4.2+
+- Django 5.2+
 
 ```bash
 pip install django-modern-rest
