@@ -12,7 +12,7 @@ def test_http_method_not_allowed() -> None:
     """Ensure that old django method on a controller does not work."""
     controller = _Custom()
 
-    with pytest.raises(
+    with pytest.raises(  # pyrefly: ignore[no-matching-overload]
         (DeprecationWarning, NotImplementedError),
         match='handle_method_not_allowed',
     ):
@@ -23,7 +23,7 @@ def test_controller_options() -> None:
     """Ensure that old OPTIONS django method on a controller does not work."""
     controller = _Custom()
 
-    with pytest.raises(
+    with pytest.raises(  # pyrefly: ignore[no-matching-overload]
         (DeprecationWarning, NotImplementedError),
         match='meta',
     ):

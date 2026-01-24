@@ -20,7 +20,7 @@ class RequestIdController(Controller[PydanticSerializer]):
     responses: ClassVar[list[ResponseSpec]] = add_request_id_json.responses
 
     # Use request with request_id field
-    request: _RequestWithID
+    request: _RequestWithID  # pyrefly: ignore[bad-override]
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns request_id from modified request."""

@@ -9,11 +9,11 @@ def test_validate_components_type_params() -> None:
     """Ensure that we need at least one type param for component."""
     for component_cls in (Headers, Body, Query):
         with pytest.raises(TypeError):
-            component_cls[*()]  # pyright: ignore[reportInvalidTypeArguments]
+            component_cls[*()]  # pyright: ignore[reportInvalidTypeArguments]  # pyrefly: ignore[not-a-type]
 
     for component_cls in (Headers, Body, Query):
-        with pytest.raises(TypeError):
-            component_cls[int, str]  # pyright: ignore[reportInvalidTypeArguments]
+        with pytest.raises(TypeError):  # pyrefly: ignore[no-matching-overload]
+            component_cls[int, str]  # pyright: ignore[reportInvalidTypeArguments]  # pyrefly: ignore[bad-specialization]
 
 
 def test_validate_headers_zero_params() -> None:

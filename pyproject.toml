@@ -87,6 +87,7 @@ polyfactory = "^3.2"
 
 httpx = "^0.28"
 xmltodict = "^1.0"
+pyrefly = "^0.49.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -113,6 +114,11 @@ httpx = "^0.28"
 # We need this structure because otherwise `pytest` ruins the coverage report.
 # This happens because we have imports in `django_modern_rest/__init__.py`
 django_modern_rest = "django_modern_rest_pytest"
+
+
+[tool.pyrefly]
+project-excludes = ["**/benchmarks/"]
+ignore-missing-imports = ["*"]
 
 
 [tool.ruff]

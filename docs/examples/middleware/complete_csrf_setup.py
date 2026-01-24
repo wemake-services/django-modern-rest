@@ -12,7 +12,7 @@ from examples.middleware.csrf_protect_json import csrf_protect_json
 
 # CSRF cookie for GET requests
 @wrap_middleware(
-    ensure_csrf_cookie,
+    ensure_csrf_cookie,  # pyrefly: ignore[bad-argument-type]
     ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,

@@ -402,6 +402,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         """
         super().setup(request, *args, **kwargs)
         # Controller is created once per request, so we can assign attributes.
+        # pyrefly: ignore[no-matching-overload]
         blueprint = self._blueprint_per_method.get(
             request.method,  # type: ignore[arg-type]
         )
@@ -575,7 +576,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
 
     @classproperty
     @override
-    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
+    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
         return cls._is_async is True
 

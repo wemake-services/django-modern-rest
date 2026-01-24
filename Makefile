@@ -14,6 +14,7 @@ lint:
 
 .PHONY: type-check
 type-check:
+	poetry run pyrefly check --summarize-errors
 	poetry run mypy .
 	poetry run pyright
 

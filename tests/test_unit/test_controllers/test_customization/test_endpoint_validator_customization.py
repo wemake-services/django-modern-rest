@@ -82,4 +82,5 @@ def test_endpoint_response_validator(dmr_rf: DMRRequestFactory) -> None:
 
     request = dmr_rf.get('/whatever/')
     _CustomController.as_view()(request)
+    # pyrefly: ignore[unnecessary-comparison]
     assert _CustomResponseValidator.was_called is True

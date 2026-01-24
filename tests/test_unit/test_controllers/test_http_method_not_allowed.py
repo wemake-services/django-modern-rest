@@ -16,6 +16,7 @@ def test_http_method_not_allowed(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that `http_method_not_allowed` is not allowed to be called."""
     request = dmr_rf.get('/whatever/')
 
+    # pyrefly: ignore[bad-argument-type,no-matching-overload]
     with pytest.raises(
         (DeprecationWarning, NotImplementedError),
         match='handle_method_not_allowed',

@@ -362,15 +362,20 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
     def run(self) -> list[Node]:
         """Execute code examples and display results."""
         file_path = Path(self.env.relfn2path(self.arguments[0])[1])
+        nodes: list[Node]
+
         if not self._need_to_run(file_path):
-            return cast(list[Node], super().run())
+            nodes = super().run()
+            return nodes
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            return cast(list[Node], super().run())
+            nodes = super().run()
+            return nodes
+
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = cast(list[Node], super().run())
+        nodes = super().run()
 
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),

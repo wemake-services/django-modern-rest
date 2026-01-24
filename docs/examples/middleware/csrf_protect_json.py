@@ -11,7 +11,7 @@ from django_modern_rest.response import build_response
 
 
 @wrap_middleware(
-    csrf_protect,
+    csrf_protect,  # pyrefly: ignore[bad-argument-type]
     ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.FORBIDDEN,
