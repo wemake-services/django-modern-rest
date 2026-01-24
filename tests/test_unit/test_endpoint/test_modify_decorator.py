@@ -60,7 +60,7 @@ def test_modify_with_header_description() -> None:
     with pytest.raises(EndpointMetadataError, match='HeaderSpec'):
 
         class _WrongValidate(Controller[PydanticSerializer]):
-            @modify(
+            @modify(  # pyrefly: ignore[no-matching-overload]
                 status_code=HTTPStatus.OK,
                 headers={'Authorization': HeaderSpec()},  # type: ignore[dict-item]
             )

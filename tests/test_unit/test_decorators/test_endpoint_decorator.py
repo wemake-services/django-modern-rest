@@ -19,7 +19,9 @@ from django_modern_rest.test import DMRRequestFactory
 
 @final
 class _MyController(Controller[PydanticSerializer]):
-    @endpoint_decorator(login_required())
+    @endpoint_decorator(  # pyrefly: ignore[bad-specialization]
+        login_required(),  # pyrefly: ignore[bad-argument-type]
+    )
     @modify(
         extra_responses=[
             ResponseSpec(

@@ -29,7 +29,7 @@ class _RequestWithID(HttpRequest):
 
 
 @wrap_middleware(
-    csrf_protect,
+    csrf_protect,  # pyrefly: ignore[bad-argument-type]
     ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.FORBIDDEN,
@@ -44,7 +44,7 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
 
 
 @wrap_middleware(
-    ensure_csrf_cookie,
+    ensure_csrf_cookie,  # pyrefly: ignore[bad-argument-type]
     ResponseSpec(
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
@@ -187,7 +187,7 @@ class RequestIdController(Controller[PydanticSerializer]):
 
     responses: ClassVar[list[ResponseSpec]] = add_request_id_json.responses
 
-    request: _RequestWithID
+    request: _RequestWithID  # pyrefly: ignore[bad-override]
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns request_id from modified request."""
@@ -212,7 +212,11 @@ class LoginRequiredController(Controller[PydanticSerializer]):
         """GET endpoint that requires Django authentication."""
         # Access Django's authenticated user
         user = self.request.user
-        username = user.username if user.is_authenticated else 'anonymous'
+        username = (
+            user.username  # pyrefly: ignore[missing-attribute]
+            if user.is_authenticated
+            else 'anonymous'
+        )
 
         return {
             'username': username,

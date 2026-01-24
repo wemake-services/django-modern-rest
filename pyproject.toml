@@ -87,6 +87,7 @@ polyfactory = "^3.2"
 
 httpx = "^0.28"
 xmltodict = "^1.0"
+pyrefly = "^0.49.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -302,6 +303,15 @@ exclude = ["django_modern_rest/internal/json/msgspec.py"]
 strict = ["django_modern_rest/**/*"]
 venvPath = "."
 venv = ".venv"
+
+
+[tool.pyrefly]
+enable-ignores = ["pyrefly"]
+project-excludes = [
+  "**/django_test_app",
+  "**/benchmarks",
+]
+ignore-missing-imports = ["*"]
 
 
 [tool.codespell]
