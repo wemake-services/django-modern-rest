@@ -17,36 +17,37 @@ from django_modern_rest.settings import (
 
 
 @pytest.fixture(autouse=True)
-def _setup_parser_and_renderer(settings: LazySettings) -> Iterator[None]:
+def _clear_settings() -> Iterator[None]:
     clear_settings_cache()
-
-    settings.DMR_SETTINGS = {
-        Settings.parser_types: [],
-        Settings.renderer_types: [],
-    }
 
     yield
 
     clear_settings_cache()
 
 
-def test_empty_parser_type() -> None:
+def test_empty_parser_type(settings: LazySettings) -> None:
     """Ensure that always has to be at least one parser type."""
+    settings.DMR_SETTINGS = {
+        Settings.parser_types: [],
+        Settings.renderer_types: [JsonRenderer],
+    }
+
     with pytest.raises(EndpointMetadataError, match='parser type'):
 
         class _Controller(Controller[PydanticSerializer]):
-            renderer_types = [JsonRenderer]
-
             def post(self) -> dict[str, str]:
                 raise NotImplementedError
 
 
-def test_empty_renderer_type() -> None:
+def test_empty_renderer_type(settings: LazySettings) -> None:
     """Ensure that always has to be at least one renderer type."""
+    settings.DMR_SETTINGS = {
+        Settings.parser_types: [JsonParser],
+        Settings.renderer_types: [],
+    }
+
     with pytest.raises(EndpointMetadataError, match='renderer type'):
 
         class _Controller(Controller[PydanticSerializer]):
-            parser_types = [JsonParser]
-
             def post(self) -> dict[str, str]:
                 raise NotImplementedError

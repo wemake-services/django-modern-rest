@@ -486,20 +486,24 @@ class EndpointMetadataValidator:  # noqa: WPS214
         blueprint_types = (
             () if blueprint_cls is None else blueprint_cls.parser_types
         )
-        parser_types = {
+        settings_types = resolve_setting(
+            Settings.parser_types,
+            import_string=True,
+        )
+        if not settings_types:
+            raise EndpointMetadataError(
+                f'{endpoint!r} must have at least one parser type '
+                'configured in settings',
+            )
+        return {
             typ.content_type: typ
             for typ in (
                 *controller_cls.parser_types,
                 *blueprint_types,
                 *payload_types,
-                *resolve_setting(Settings.parser_types, import_string=True),
+                *settings_types,
             )
         }
-        if not parser_types:
-            raise EndpointMetadataError(
-                f'{endpoint!r} must have at least one parser type',
-            )
-        return parser_types
 
     def _build_renderer_types(
         self,
@@ -515,20 +519,24 @@ class EndpointMetadataValidator:  # noqa: WPS214
         blueprint_types = (
             () if blueprint_cls is None else blueprint_cls.renderer_types
         )
-        renderer_types = {
+        settings_types = resolve_setting(
+            Settings.renderer_types,
+            import_string=True,
+        )
+        if not settings_types:
+            raise EndpointMetadataError(
+                f'{endpoint!r} must have at least one renderer type '
+                'configured in settings',
+            )
+        return {
             typ.content_type: typ
             for typ in (
                 *controller_cls.renderer_types,
                 *blueprint_types,
                 *payload_types,
-                *resolve_setting(Settings.renderer_types, import_string=True),
+                *settings_types,
             )
         }
-        if not renderer_types:
-            raise EndpointMetadataError(
-                f'{endpoint!r} must have at least one renderer type',
-            )
-        return renderer_types
 
     def _validate_new_headers(
         self,
