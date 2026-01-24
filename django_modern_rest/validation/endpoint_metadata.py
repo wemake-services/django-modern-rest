@@ -316,11 +316,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 payload,
                 blueprint_cls,
                 controller_cls,
+                endpoint=endpoint,
             ),
             renderer_types=self._build_renderer_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
+                endpoint=endpoint,
             ),
             summary=summary,
             description=description,
@@ -392,11 +394,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 payload,
                 blueprint_cls,
                 controller_cls,
+                endpoint=endpoint,
             ),
             renderer_types=self._build_renderer_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
+                endpoint=endpoint,
             ),
             summary=summary,
             description=description,
@@ -458,11 +462,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 None,
                 blueprint_cls,
                 controller_cls,
+                endpoint=endpoint,
             ),
             renderer_types=self._build_renderer_types(
                 None,
                 blueprint_cls,
                 controller_cls,
+                endpoint=endpoint,
             ),
             summary=summary,
             description=description,
@@ -473,18 +479,29 @@ class EndpointMetadataValidator:  # noqa: WPS214
         payload: PayloadT,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        endpoint: str,
     ) -> dict[str, type[Parser]]:
         payload_types = () if payload is None else (payload.parser_types or ())
         blueprint_types = (
             () if blueprint_cls is None else blueprint_cls.parser_types
         )
+        settings_types = resolve_setting(
+            Settings.parser_types,
+            import_string=True,
+        )
+        if not settings_types:
+            raise EndpointMetadataError(
+                f'{endpoint!r} must have at least one parser type '
+                'configured in settings',
+            )
         return {
             typ.content_type: typ
             for typ in (
                 *controller_cls.parser_types,
                 *blueprint_types,
                 *payload_types,
-                *resolve_setting(Settings.parser_types, import_string=True),
+                *settings_types,
             )
         }
 
@@ -493,6 +510,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         payload: PayloadT,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        endpoint: str,
     ) -> dict[str, type[Renderer]]:
         payload_types = (
             () if payload is None else (payload.renderer_types or ())
@@ -500,13 +519,22 @@ class EndpointMetadataValidator:  # noqa: WPS214
         blueprint_types = (
             () if blueprint_cls is None else blueprint_cls.renderer_types
         )
+        settings_types = resolve_setting(
+            Settings.renderer_types,
+            import_string=True,
+        )
+        if not settings_types:
+            raise EndpointMetadataError(
+                f'{endpoint!r} must have at least one renderer type '
+                'configured in settings',
+            )
         return {
             typ.content_type: typ
             for typ in (
                 *controller_cls.renderer_types,
                 *blueprint_types,
                 *payload_types,
-                *resolve_setting(Settings.renderer_types, import_string=True),
+                *settings_types,
             )
         }
 

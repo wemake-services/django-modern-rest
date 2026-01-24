@@ -214,6 +214,8 @@ def build_response(  # noqa: WPS210, WPS211
         )
 
     if renderer_cls is None:
+        # IndexError here can't happen, because we validate
+        # that all endpoints have at least one configured type in settings.
         renderer_cls = resolve_setting(
             Settings.renderer_types,
             import_string=True,

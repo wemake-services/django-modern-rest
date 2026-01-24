@@ -13,7 +13,6 @@ from inline_snapshot import snapshot
 from django_modern_rest import (
     Body,
     Controller,
-    modify,
 )
 from django_modern_rest.parsers import JsonParser
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -30,8 +29,8 @@ def _clear_parser_and_renderer(settings: LazySettings) -> Iterator[None]:
     clear_settings_cache()
 
     settings.DMR_SETTINGS = {
-        Settings.parser_types: [],
-        Settings.renderer_types: [],
+        Settings.parser_types: [JsonParser],
+        Settings.renderer_types: [JsonRenderer],
     }
 
     yield
@@ -46,7 +45,6 @@ def test_empty_request_data(
 
     @final
     class _Controller(Controller[PydanticSerializer], Body[None]):
-        @modify(parser_types=[JsonParser], renderer_types=[JsonRenderer])
         def post(self) -> str:
             return 'none handled'
 
@@ -77,7 +75,6 @@ def test_wrong_request_data(
 
     @final
     class _Controller(Controller[PydanticSerializer], Body[None]):
-        @modify(parser_types=[JsonParser], renderer_types=[JsonRenderer])
         def post(self) -> str:
             raise NotImplementedError
 
@@ -135,7 +132,6 @@ def test_complex_request_data(
 
     @final
     class _Controller(Controller[PydanticSerializer], Body[_RequestModel]):
-        @modify(parser_types=[JsonParser], renderer_types=[JsonRenderer])
         def post(self) -> _RequestModel:
             return self.parsed_body
 
