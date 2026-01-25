@@ -64,6 +64,7 @@ django = "^5.2"
 django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 pyright = "^1.1"
+pyrefly = "^0.49"
 
 codespell = "^2.4"
 wemake-python-styleguide = "^1.4"
@@ -302,6 +303,12 @@ exclude = ["django_modern_rest/internal/json/msgspec.py"]
 strict = ["django_modern_rest/**/*"]
 venvPath = "."
 venv = ".venv"
+
+
+[tool.pyrefly]
+enable-ignores = ["pyrefly"]
+ignore-missing-imports = ["*"]
+project-includes = ["django_modern_rest", "typesafety"]
 
 
 [tool.codespell]

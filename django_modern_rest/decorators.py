@@ -88,7 +88,7 @@ def wrap_middleware(
             return dispatch_decorator(csrf_exempt)(cls)
 
         return DecoratorWithResponses(
-            decorator=decorator,
+            decorator=decorator,  # pyrefly: ignore [bad-argument-type]
             responses=all_descriptions,
         )
 
