@@ -18,7 +18,7 @@
 ## Features
 
 - [x] [Blazingly fast](https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html)
-- [x] Fully typed and checked with `mypy` and `pyright` in strict modes
+- [x] Fully typed and checked with `mypy`, `pyright`, and `pyrefly` in strict modes
 - [x] Strict schema validation of both requests and responses
 - [x] Supports `django>=5.2`
 - [x] Supports `pydantic2`, but not bound to it
