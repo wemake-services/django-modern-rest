@@ -154,7 +154,7 @@ def clear_settings_cache() -> None:  # noqa: C901
             _get_cached_type_adapter,  # pyright: ignore[reportPrivateUsage]
         )
     except ImportError:  # pragma: no cover
-        pass
+        pass  # noqa: WPS420
     else:
         _get_cached_type_adapter.cache_clear()
 
@@ -163,7 +163,7 @@ def clear_settings_cache() -> None:  # noqa: C901
             _get_serializer,  # pyright: ignore[reportPrivateUsage]
         )
     except ImportError:  # pragma: no cover
-        pass
+        pass  # noqa: WPS420
     else:
         _get_serializer.cache_clear()
 
@@ -172,7 +172,7 @@ def clear_settings_cache() -> None:  # noqa: C901
             _get_deserializer,  # pyright: ignore[reportPrivateUsage]
         )
     except ImportError:  # pragma: no cover
-        pass
+        pass  # noqa: WPS420
     else:
         _get_deserializer.cache_clear()
 
