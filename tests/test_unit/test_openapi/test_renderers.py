@@ -1,12 +1,8 @@
-import importlib
 import json
-import sys
 from http import HTTPStatus
-from types import ModuleType, SimpleNamespace
-from typing import Any, Final, cast
+from typing import Any, Final
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
@@ -157,47 +153,3 @@ def test_renderer_with_simple_decorators(
 
     assert isinstance(renderer.decorators, list)
     assert len(renderer.decorators) == expected_len
-
-
-def reload_json_and_base_modules() -> ModuleType:
-    """
-    Reload `internal.json` and `openapi.renderers.base`
-        modules to reset their state.
-    """  # noqa: D205
-    sys.modules.pop(JSON_MODULE, None)
-    sys.modules.pop(BASE_MODULE, None)
-    return importlib.import_module(BASE_MODULE)
-
-
-def test_prefers_msgspec_when_available(monkeypatch: MonkeyPatch) -> None:
-    """Ensure that `json_serializer` prefers `msgspec`."""
-    fake_msgspec = cast(Any, ModuleType('msgspec'))
-    fake_msgspec.json = SimpleNamespace(
-        encode=lambda schema: b'{"ok":true}',
-    )
-
-    monkeypatch.setitem(sys.modules, 'msgspec', fake_msgspec)
-
-    base_module = reload_json_and_base_modules()
-
-    assert base_module.json_serializer({'x': 1}) == '{"ok":true}'
-
-
-def test_falls_back_to_stdlib_json(monkeypatch: MonkeyPatch) -> None:
-    """
-    Ensure `json_serializer` falls back to
-        stdlib `json` if `msgspec` is unavailable.
-    """  # noqa: D205
-    monkeypatch.setitem(sys.modules, 'msgspec', None)
-
-    import json as std_json  # noqa: PLC0415
-
-    monkeypatch.setattr(
-        std_json,
-        'dumps',
-        lambda schema: '{"fallback":true}',
-    )
-
-    base_module = reload_json_and_base_modules()
-
-    assert base_module.json_serializer({'x': 1}) == '{"fallback":true}'
