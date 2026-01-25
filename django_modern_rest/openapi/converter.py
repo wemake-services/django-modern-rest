@@ -3,6 +3,8 @@ from dataclasses import Field, fields, is_dataclass
 from enum import Enum
 from typing import Any, ClassVar, Protocol, TypeAlias, cast, final
 
+from django_modern_rest.openapi.types import FieldDefinition
+
 
 class SchemaObject(Protocol):
     """Type that represents the `dataclass` object."""
@@ -62,21 +64,22 @@ def normalize_key(key: str) -> str:
     return key
 
 
-# pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false
-def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
-    """
-    Normalize a value for OpenAPI schema.
+def _convert_field_definition(
+    field_def: FieldDefinition,
+    converter: '_ConverterFunc',
+) -> ConvertedSchema:
+    # Just convert the 'extra_data' dictionary,
+    # which holds the OpenAPI schema properties
+    return cast(
+        ConvertedSchema,
+        normalize_value(field_def.extra_data, converter),
+    )
 
-    Handles:
-    - BaseObject instances (convert to schema dict)
-    - Lists and sequences (process elements recursively)
-    - Mappings (process keys and values recursively)
-    - Primitive values (return as-is)
-    - None values (should be filtered out by caller)
-    """
-    if is_dataclass(to_normalize):
-        return converter(cast(SchemaObject, to_normalize))
 
+def _normalize_container_or_basic(
+    to_normalize: Any,
+    converter: '_ConverterFunc',
+) -> Any:
     if isinstance(to_normalize, list):
         return [
             normalize_value(list_item, converter) for list_item in to_normalize
@@ -92,6 +95,28 @@ def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
         return to_normalize.value
 
     return to_normalize
+
+
+# pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false
+def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
+    """
+    Normalize a value for OpenAPI schema.
+
+    Handles:
+    - FieldDefinition instances (convert to schema dict)
+    - BaseObject instances (convert to schema dict)
+    - Lists and sequences (process elements recursively)
+    - Mappings (process keys and values recursively)
+    - Primitive values (return as-is)
+    - None values (should be filtered out by caller)
+    """
+    if isinstance(to_normalize, FieldDefinition):
+        return _convert_field_definition(to_normalize, converter)
+
+    if is_dataclass(to_normalize):
+        return converter(cast(SchemaObject, to_normalize))
+
+    return _normalize_container_or_basic(to_normalize, converter)
 
 
 @final
