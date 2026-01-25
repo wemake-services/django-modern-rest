@@ -23,12 +23,12 @@ def _wrap_bytes_dumper(dumper: Callable[[ConvertedSchema], bytes]) -> _Dumper:
     return wrapper
 
 
-try:  # noqa: WPS229
+try:
     import msgspec
-
-    _json_dumps: _Dumper = _wrap_bytes_dumper(msgspec.json.encode)
 except ImportError:  # pragma: no cover
-    _json_dumps = json.dumps
+    _json_dumps: _Dumper = json.dumps
+else:
+    _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
 
 
 def json_dumps(schema: ConvertedSchema) -> SerializedSchema:
