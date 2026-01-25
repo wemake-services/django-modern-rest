@@ -65,6 +65,7 @@ ignore_imports =
   django_modern_rest.plugins.msgspec.* -> msgspec
   # Optional json support from msgspec:
   django_modern_rest.settings -> msgspec
+  django_modern_rest.internal.json -> msgspec
 
 
 [importlinter:contract:plugins-independence]
