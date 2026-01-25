@@ -81,7 +81,7 @@ def _pick_url(case: Literal['best', 'avg', 'worst']) -> str:
         case 'worst':
             return 'api/no-such-path/'
         case other:
-            assert_never(other)  # pyrefly: ignore[bad-argument-type]
+            assert_never(other)
 
 
 def _bench(resolve: Callable[[str], Any], url: str, repeat: int) -> None:

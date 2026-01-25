@@ -361,29 +361,16 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
 
     def run(self) -> list[Node]:
         """Execute code examples and display results."""
-        file_path = Path(
-            self.env.relfn2path(  # pyrefly: ignore[missing-attribute,bad-argument-type]  # noqa: E501
-                self.arguments[0],  # pyrefly: ignore[missing-attribute]
-            )[1],
-        )
+        file_path = Path(self.env.relfn2path(self.arguments[0])[1])
         if not self._need_to_run(file_path):
-            return cast(  # pyrefly: ignore[redundant-cast]
-                list[Node],
-                super().run(),
-            )
+            return cast(list[Node], super().run())
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            return cast(  # pyrefly: ignore[redundant-cast]
-                list[Node],
-                super().run(),
-            )
+            return cast(list[Node], super().run())
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = cast(  # pyrefly: ignore[redundant-cast]
-            list[Node],
-            super().run(),
-        )
+        nodes = cast(list[Node], super().run())
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
             run_args,
@@ -410,13 +397,8 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         return nodes
 
     def _need_to_run(self, file_path: Path) -> bool:
-        language = self.options.get(  # pyrefly: ignore[missing-attribute]
-            'language',
-            '',
-        )
-        no_run_in_options = (
-            'no-run' in self.options  # pyrefly: ignore[missing-attribute]
-        )
+        language = self.options.get('language', '')
+        no_run_in_options = 'no-run' in self.options
         not_python_file = language != 'python' and file_path.suffix != '.py'
         return not (not_python_file or no_run_in_options)
 
@@ -442,9 +424,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
             ).replace('/', '_')
         )
 
-        self.arguments[0] = (  # pyrefly: ignore[missing-attribute]
-            f'/{tmp_file.relative_to(docs_dir)!s}'
-        )
+        self.arguments[0] = f'/{tmp_file.relative_to(docs_dir)!s}'
         tmp_file.write_text(clean_content)
 
 

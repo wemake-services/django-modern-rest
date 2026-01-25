@@ -111,14 +111,11 @@ def _run_bench(
 
     assert 'Non-2xx responses:' not in process.stdout, process.stdout
     assert 'Failed requests:        0' in process.stdout, process.stdout
-    tpr = re.search(  # pyrefly: ignore[missing-attribute]
+    tpr = re.search(
         r'Time per request:\s+([\d.]+)\s+\[ms\]\s+\(mean\)',
         process.stdout,
     ).group(1)
-    rps = re.search(  # pyrefly: ignore[missing-attribute]
-        r'Requests per second:\s+([\d.]+)',
-        process.stdout,
-    ).group(1)
+    rps = re.search(r'Requests per second:\s+([\d.]+)', process.stdout).group(1)
     if float(tpr) >= 50:
         raise RuntimeError(process.stdout)
     return float(rps), float(tpr)
@@ -152,11 +149,7 @@ def run_benchmark() -> None:
                         local_timings[0] + per_endpoint[0],
                         local_timings[1] + per_endpoint[1],
                     )
-                timings.append([
-                    app,
-                    is_async,
-                    *local_timings,  # pyrefly: ignore[not-iterable]
-                ])
+                timings.append([app, is_async, *local_timings])
             finally:
                 process.terminate()
                 try:

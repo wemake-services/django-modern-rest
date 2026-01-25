@@ -9,7 +9,6 @@ lint:
 	poetry run ruff check --exit-non-zero-on-fix
 	poetry run ruff format --check --diff
 	poetry run flake8 .
-	poetry run pyrefly check .
 	poetry run slotscheck --no-strict-imports -v -m django_modern_rest
 	poetry run lint-imports
 
@@ -17,6 +16,7 @@ lint:
 type-check:
 	poetry run mypy .
 	poetry run pyright
+	poetry run pyrefly check
 
 .PHONY: spell-check
 spell-check:

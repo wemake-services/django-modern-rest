@@ -60,32 +60,26 @@ class ChartJSDirective(SphinxDirective):
     has_content = True
 
     @override
-    def run(self) -> list[nodes.Node]:  # pyrefly: ignore[bad-override]
+    def run(self) -> list[nodes.Node]:
         """Process the directive."""
-        if not self.content:  # pyrefly: ignore[missing-attribute]
+        if not self.content:
             return []
 
-        json_content = '\n'.join(  # pyrefly: ignore[no-matching-overload]
-            self.content,
-        )
+        json_content = '\n'.join(self.content)
         try:
             chart_config = json.loads(json_content)
         except json.JSONDecodeError as exc:
-            error = self.state_machine.reporter.error(  # pyrefly: ignore[missing-attribute]  # noqa: E501
+            error = self.state_machine.reporter.error(
                 f'Invalid JSON in chartjs directive: {exc}',
                 nodes.literal_block(json_content, json_content),
-                line=self.lineno,  # pyrefly: ignore[missing-attribute]
+                line=self.lineno,
             )
             return [error]
 
         node = ChartJSNode()
         node['chart_id'] = f'chartjs-{abs(hash(json_content))}'
         node['chart_config'] = json.dumps(chart_config)
-        node['title'] = (
-            self.arguments[0]  # pyrefly: ignore[bad-index]
-            if self.arguments  # pyrefly: ignore[missing-attribute]
-            else ''
-        )
+        node['title'] = self.arguments[0] if self.arguments else ''
         return [node]
 
 
