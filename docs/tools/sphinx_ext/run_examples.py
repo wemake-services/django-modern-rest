@@ -371,6 +371,7 @@ class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
         self._create_tmp_example_file(file_path, clean_content)
 
         nodes = cast(list[Node], super().run())
+
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
             run_args,

@@ -73,7 +73,7 @@ class _CustomController(Controller[PydanticSerializer]):
 
 def test_endpoint_metadata_validator() -> None:
     """Ensures custom endpoint metadata validator is called."""
-    assert _CustomEndpointMetadataValidator.was_called
+    assert _CustomEndpointMetadataValidator.was_called is True
 
 
 def test_endpoint_response_validator(dmr_rf: DMRRequestFactory) -> None:
@@ -82,4 +82,4 @@ def test_endpoint_response_validator(dmr_rf: DMRRequestFactory) -> None:
 
     request = dmr_rf.get('/whatever/')
     _CustomController.as_view()(request)
-    assert _CustomResponseValidator.was_called
+    assert _CustomResponseValidator.was_called is True
