@@ -32,9 +32,6 @@ _TEST_SCHEMA: Final[ConvertedSchema] = {  # noqa: WPS407
     },
 }
 
-JSON_MODULE: Final = 'django_modern_rest.internal.json'
-BASE_MODULE: Final = 'django_modern_rest.openapi.renderers.base'
-
 
 def test_json_serializer_basic_functionality() -> None:
     """Ensure that `json_serializer` converts schema to JSON string."""
