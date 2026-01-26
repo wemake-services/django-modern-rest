@@ -1,17 +1,28 @@
 import enum
-import os
 from collections.abc import Mapping
 from functools import lru_cache
 from typing import Any, Final, final
 
 from django.utils import module_loading
 
+from django_modern_rest.envs import MAX_CACHE_SIZE
+from django_modern_rest.internal.cache import (
+    clear_settings_cache as clear_settings_cache,
+)
 from django_modern_rest.openapi.config import OpenAPIConfig
 
-# Settings with env vars only
-# ---------------------------
-
-MAX_CACHE_SIZE: Final = int(os.environ.get('DMR_MAX_CACHE_SIZE', '256'))
+try:
+    import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
+except ImportError:  # pragma: no cover
+    _default_parser_types = ['django_modern_rest.parsers.JsonParser']
+    _default_renderer_types = ['django_modern_rest.renderers.JsonRenderer']
+else:  # pragma: no cover
+    _default_parser_types = [
+        'django_modern_rest.plugins.msgspec.MsgspecJsonParser',
+    ]
+    _default_renderer_types = [
+        'django_modern_rest.plugins.msgspec.MsgspecJsonRenderer',
+    ]
 
 
 # Settings with `settings.py`
@@ -26,8 +37,8 @@ DMR_SETTINGS: Final = 'DMR_SETTINGS'
 class Settings(enum.StrEnum):
     """Keys for all settings."""
 
-    serialize = 'serialize'
-    deserialize = 'deserialize'
+    parser_types = 'parser_types'
+    renderer_types = 'renderer_types'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     responses = 'responses'
@@ -66,8 +77,8 @@ class HttpSpec(enum.StrEnum):
 
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
-    Settings.serialize: 'django_modern_rest.internal.json.serialize',
-    Settings.deserialize: ('django_modern_rest.internal.json.deserialize'),
+    Settings.parser_types: _default_parser_types,
+    Settings.renderer_types: _default_renderer_types,
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
         version='0.1.0',
@@ -121,16 +132,15 @@ def resolve_setting(
         setting_name,
         _DEFAULTS[setting_name],
     )
-    if import_string and isinstance(setting, str):
-        return module_loading.import_string(setting)
-    return setting
-
-
-def clear_settings_cache() -> None:
-    """
-    Clears settings cache for all functions in this module.
-
-    Useful for tests, when you modify the global settings object.
-    """
-    _resolve_defaults.cache_clear()
-    resolve_setting.cache_clear()
+    if import_string:
+        if isinstance(setting, str):
+            return module_loading.import_string(setting)
+        if isinstance(setting, list) and all(
+            isinstance(list_item, str)
+            for list_item in setting  # pyright: ignore[reportUnknownVariableType]
+        ):
+            return [
+                module_loading.import_string(list_item)  # pyright: ignore[reportUnknownArgumentType]
+                for list_item in setting  # pyright: ignore[reportUnknownVariableType]
+            ]
+    return setting  # pyright: ignore[reportUnknownVariableType]

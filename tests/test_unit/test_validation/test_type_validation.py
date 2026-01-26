@@ -14,6 +14,12 @@ from django_modern_rest.serialization import BaseSerializer
 
 serializers: list[Any] = [PydanticSerializer]
 
+MyInt: Any = int  # for Pyright
+
+if sys.version_info >= (3, 12):  # pragma: no cover
+    exec('type MyInt = int')  # noqa: S102, WPS421
+
+
 try:
     from django_modern_rest.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
@@ -54,12 +60,15 @@ class _TypedDict(TypedDict):
         (frozenset[int], frozenset((1, 2))),
         (bytes, b'abc'),
         (str, 'abc'),
+        (str | int, ''),
+        (str | int, 0),
         (tuple[int, str], (1, 'a')),
         (tuple[int, ...], (1, 2, 3, 4)),
         (tuple[int, ...], ()),
         (_TypedDict, {'age': 1}),
         (None, None),
         (Any, None),
+        (MyInt, 52),
     ],
 )
 @pytest.mark.parametrize(
@@ -89,7 +98,7 @@ def test_valid_data(
     validator = endpoint.response_validator
 
     assert HTTPStatus.OK in endpoint.metadata.responses
-    validator._validate_body(  # noqa: SLF001
+    validator._validate_body(
         raw_data,
         endpoint.metadata.responses[HTTPStatus.OK],
     )
@@ -104,6 +113,7 @@ def test_valid_data(
         (frozenset[int], frozenset((1, object()))),
         (bytes, 'abc'),
         (str, b'abc'),
+        (str | int, None),
         (tuple[int, str], ('a', 1)),
         (tuple[int, ...], ('a')),
         (_TypedDict, {}),
@@ -140,7 +150,7 @@ def test_invalid_data(
 
     assert HTTPStatus.OK in endpoint.metadata.responses
     with pytest.raises(ResponseSerializationError, match='type'):
-        validator._validate_body(  # noqa: SLF001
+        validator._validate_body(
             raw_data,
             endpoint.metadata.responses[HTTPStatus.OK],
         )

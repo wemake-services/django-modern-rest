@@ -16,7 +16,7 @@ from django_modern_rest.test import DMRAsyncClient, DMRClient
         reverse('api:controllers:async_parse_headers'),
     ],
 )
-def test_parse_headers_error(dmr_client: DMRClient, *, url: str) -> None:
+def test_parse_headers_error_sync(dmr_client: DMRClient, *, url: str) -> None:
     """Ensure errors during parsing headers are caught."""
     response = dmr_client.post(
         url,

@@ -7,13 +7,16 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     NewType,
     assert_never,
     cast,
 )
 
+from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponse
 
+from django_modern_rest.components import Body
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
@@ -22,22 +25,17 @@ from django_modern_rest.headers import (
     HeaderSpec,
     NewHeader,
 )
-from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.metadata import ComponentParserSpec, EndpointMetadata
+from django_modern_rest.parsers import Parser
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import (
     ResponseModification,
     ResponseSpec,
     infer_status_code,
 )
 from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.settings import (
-    HttpSpec,
-    Settings,
-    resolve_setting,
-)
-from django_modern_rest.types import (
-    is_safe_subclass,
-    parse_return_annotation,
-)
+from django_modern_rest.settings import HttpSpec, Settings, resolve_setting
+from django_modern_rest.types import is_safe_subclass, parse_return_annotation
 from django_modern_rest.validation.payload import (
     ModifyEndpointPayload,
     PayloadT,
@@ -50,6 +48,17 @@ if TYPE_CHECKING:
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
+
+#: HTTP methods that should not have a request body according to HTTP spec.
+#: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
+#: See RFC 7231 for more details.
+_HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
+    'GET',
+    'HEAD',
+    'DELETE',
+    'CONNECT',
+    'TRACE',
+))
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -208,6 +217,34 @@ def _validate_empty_response_body(
             )
 
 
+def _validate_empty_request_body(
+    method: str,
+    component_parsers: list[ComponentParserSpec],
+    *,
+    endpoint: str,
+) -> None:
+    """Validate that methods without body don't use Body component.
+
+    According to HTTP spec, methods like GET, HEAD, DELETE, CONNECT, TRACE
+    should not have a request body. If a controller uses Body component
+    with these methods, an EndpointMetadataError will be raised.
+    """
+    if method.upper() not in _HTTP_METHODS_WITHOUT_BODY:
+        return
+
+    has_body = any(
+        is_safe_subclass(component_cls, Body)
+        for component_cls, _ in component_parsers
+    )
+    if has_body:
+        raise EndpointMetadataError(
+            f'HTTP method {method.upper()!r} cannot have a request body, '
+            f'but endpoint {endpoint!r} uses Body component. '
+            f'Either remove Body component or use a different HTTP method '
+            f'like POST, PUT, or PATCH.',
+        )
+
+
 def _is_check_enabled(
     setting: HttpSpec,
     payload_value: Set[HttpSpec] | None,
@@ -270,6 +307,14 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         func.__name__ = method  # we can change it :)
         endpoint = str(func)
+
+        self._validate_request_http_spec(
+            method,
+            endpoint=endpoint,
+            blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
+        )
+
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
@@ -294,6 +339,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             return self._from_raw_data(
                 return_annotation,
                 method,
+                func,
                 endpoint=endpoint,
                 blueprint_cls=blueprint_cls,
                 controller_cls=controller_cls,
@@ -323,7 +369,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             ],
         )
 
-    def _from_validate(  # noqa: WPS211
+    def _from_validate(  # noqa: WPS211, WPS210
         self,
         payload: ValidateEndpointPayload,
         return_annotation: Any,
@@ -352,6 +398,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
             endpoint=endpoint,
         )(all_responses)
+        summary, description = resolve_description(func, payload)
         return EndpointMetadata(
             responses=responses,
             method=method,
@@ -361,8 +408,20 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            summary=payload.summary,
-            description=payload.description,
+            parser_types=self._build_parser_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+                endpoint=endpoint,
+            ),
+            renderer_types=self._build_renderer_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+                endpoint=endpoint,
+            ),
+            summary=summary,
+            description=description,
             tags=payload.tags,
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
@@ -372,7 +431,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_modify(  # noqa: WPS211
+    def _from_modify(  # noqa: WPS211, WPS210
         self,
         payload: ModifyEndpointPayload,
         return_annotation: Any,
@@ -417,6 +476,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
             endpoint=endpoint,
         )(all_responses)
+        summary, description = resolve_description(func, payload)
         return EndpointMetadata(
             responses=responses,
             validate_responses=payload.validate_responses,
@@ -426,8 +486,20 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            summary=payload.summary,
-            description=payload.description,
+            parser_types=self._build_parser_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+                endpoint=endpoint,
+            ),
+            renderer_types=self._build_renderer_types(
+                payload,
+                blueprint_cls,
+                controller_cls,
+                endpoint=endpoint,
+            ),
+            summary=summary,
+            description=description,
             tags=payload.tags,
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
@@ -437,10 +509,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_raw_data(
+    def _from_raw_data(  # noqa: WPS211, WPS210
         self,
         return_annotation: Any,
         method: str,
+        func: Callable[..., Any],
         *,
         endpoint: str,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
@@ -471,6 +544,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             controller_cls=controller_cls,
             endpoint=endpoint,
         )(all_responses)
+        summary, description = resolve_description(func)
         return EndpointMetadata(
             responses=responses,
             validate_responses=None,
@@ -480,7 +554,85 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
+            parser_types=self._build_parser_types(
+                None,
+                blueprint_cls,
+                controller_cls,
+                endpoint=endpoint,
+            ),
+            renderer_types=self._build_renderer_types(
+                None,
+                blueprint_cls,
+                controller_cls,
+                endpoint=endpoint,
+            ),
+            summary=summary,
+            description=description,
         )
+
+    def _build_parser_types(
+        self,
+        payload: PayloadT,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        endpoint: str,
+    ) -> dict[str, type[Parser]]:
+        payload_types = () if payload is None else (payload.parser_types or ())
+        blueprint_types = (
+            () if blueprint_cls is None else blueprint_cls.parser_types
+        )
+        settings_types = resolve_setting(
+            Settings.parser_types,
+            import_string=True,
+        )
+        if not settings_types:
+            raise EndpointMetadataError(
+                f'{endpoint!r} must have at least one parser type '
+                'configured in settings',
+            )
+        return {
+            typ.content_type: typ
+            for typ in (
+                *controller_cls.parser_types,
+                *blueprint_types,
+                *payload_types,
+                *settings_types,
+            )
+        }
+
+    def _build_renderer_types(
+        self,
+        payload: PayloadT,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        endpoint: str,
+    ) -> dict[str, type[Renderer]]:
+        payload_types = (
+            () if payload is None else (payload.renderer_types or ())
+        )
+        blueprint_types = (
+            () if blueprint_cls is None else blueprint_cls.renderer_types
+        )
+        settings_types = resolve_setting(
+            Settings.renderer_types,
+            import_string=True,
+        )
+        if not settings_types:
+            raise EndpointMetadataError(
+                f'{endpoint!r} must have at least one renderer type '
+                'configured in settings',
+            )
+        return {
+            typ.content_type: typ
+            for typ in (
+                *controller_cls.renderer_types,
+                *blueprint_types,
+                *payload_types,
+                *settings_types,
+            )
+        }
 
     def _validate_new_headers(
         self,
@@ -537,6 +689,32 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 'it requires `@modify` decorator instead of `@validate`',
             )
 
+    def _validate_request_http_spec(
+        self,
+        method: str,
+        *,
+        endpoint: str,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        """Validate HTTP spec rules for request."""
+        payload_items = (
+            None if self.payload is None else self.payload.no_validate_http_spec
+        )
+        if _is_check_enabled(
+            HttpSpec.empty_request_body,
+            payload_items,
+            blueprint_cls,
+            controller_cls,
+        ):
+            source = blueprint_cls or controller_cls
+            component_parsers = source._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            _validate_empty_request_body(
+                method,
+                component_parsers,
+                endpoint=endpoint,
+            )
+
     def _validate_error_handler(
         self,
         payload: ValidateEndpointPayload | ModifyEndpointPayload,
@@ -555,9 +733,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'Cannot pass async `error_handler` to sync {endpoint}',
             )
-
-    # TODO: Does we need extract methods for summary and
-    # description from endpoint.__doc__?
 
 
 def validate_method_name(
@@ -581,3 +756,36 @@ def validate_method_name(
         raise EndpointMetadataError(
             f'{func_name} is not a valid HTTP method name',
         ) from None
+
+
+def resolve_description(
+    func: Callable[..., Any],
+    payload: ValidateEndpointPayload | ModifyEndpointPayload | None = None,
+) -> tuple[str | None, str | None]:
+    """Resolve summary and description for an endpoint.
+
+    Returns a (summary, description) tuple based on the following priority:
+    1. If payload is provided and has non-None , returns those.
+    2. If func has no docstring, returns payload values (or None if no payload).
+    3. Otherwise extracts values from func.__doc__ via parse_docstring();
+       empty strings are converted to None.
+    """
+    if payload is not None:
+        if payload.summary is not None or payload.description is not None:
+            return payload.summary, payload.description
+
+        if func.__doc__ is None:
+            return payload.summary, payload.description
+
+    summary: str | None
+    description: str | None
+
+    summary, description, _ = parse_docstring(func.__doc__ or '')
+
+    if not summary:
+        summary = None
+
+    if not description:
+        description = None
+
+    return summary, description

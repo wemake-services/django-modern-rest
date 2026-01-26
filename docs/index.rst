@@ -174,6 +174,7 @@ Here are our amazing people who made this project possible.
   pages/components.rst
   pages/plugins.rst
   pages/validation.rst
+  pages/negotiation.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst

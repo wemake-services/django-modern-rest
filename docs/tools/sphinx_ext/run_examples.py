@@ -147,7 +147,7 @@ def _get_url_path_from_run_args(run_args: _AppRunArgsT) -> str:
     controller_name = run_args['controller'].lower()
     url: str = run_args.get(
         'url',
-        f'api/{controller_name}/',
+        f'/api/{controller_name}/',
     )
     return url
 
@@ -288,11 +288,13 @@ def _build_curl_request(
 ) -> tuple[_CurlArgsT, _CurlCleanArgsT]:
     args = [
         'curl',
-        '--fail-with-body',
         '-v',
         '-s',
         f'http://127.0.0.1:{port}{url_path}',
     ]
+    if run_args.pop('fail-with-body', True):
+        args.append('--fail-with-body')
+
     clean_args = ['curl', f'http://127.0.0.1:8000{url_path}']
 
     _add_curl_flags(args, clean_args, run_args)
@@ -319,9 +321,8 @@ def _add_method(
     run_args: _AppRunArgsT,
 ) -> None:
     method = run_args.get('method', 'get').upper()
-    if method != 'GET':
-        args.extend(['-X', method])
-        clean_args.extend(['-X', method])
+    args.extend(['-X', method])
+    clean_args.extend(['-X', method])
 
 
 def _add_body_and_content_type(

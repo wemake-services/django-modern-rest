@@ -90,7 +90,7 @@ class DMRAsyncRequestFactory(_DMRMixin, AsyncRequestFactory):
 
     if TYPE_CHECKING:  # noqa: WPS604
 
-        def wrap(self, thing: _ThingT) -> Awaitable[_ThingT]:  # pyright: ignore[reportReturnType]
+        def wrap(self, thing: _ThingT) -> Awaitable[_ThingT]:  # pyright: ignore[reportReturnType]  # pyrefly: ignore [bad-return]
             """Does nothing."""
 
     else:

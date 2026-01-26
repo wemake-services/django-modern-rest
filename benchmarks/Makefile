@@ -2,7 +2,6 @@
 bench:
 	python run_benchmark.py
 
-
 .PHONY: bench-resolver
 bench-resolver:
 	hyperfine --warmup 1 --shell=none -L impl django,dmr --show-output \

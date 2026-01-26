@@ -6,11 +6,10 @@ from typing import Any, Generic, TypeVar, overload
 from django.http import HttpResponse
 
 from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.headers import (
-    HeaderSpec,
-    NewHeader,
-)
+from django_modern_rest.headers import HeaderSpec, NewHeader
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.settings import Settings, resolve_setting
 
 _ItemT = TypeVar('_ItemT')
 
@@ -169,6 +168,7 @@ def build_response(
     headers: dict[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
+    renderer_cls: type[Renderer] | None = None,
 ) -> HttpResponse: ...
 
 
@@ -181,10 +181,11 @@ def build_response(
     method: None = None,
     headers: dict[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
+    renderer_cls: type[Renderer] | None = None,
 ) -> HttpResponse: ...
 
 
-def build_response(  # noqa: WPS211
+def build_response(  # noqa: WPS210, WPS211
     serializer: type[BaseSerializer],
     *,
     raw_data: Any,
@@ -192,6 +193,7 @@ def build_response(  # noqa: WPS211
     headers: dict[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
+    renderer_cls: type[Renderer] | None = None,
 ) -> HttpResponse:
     """
     Utility that returns the actual `HttpResponse` object from its parts.
@@ -201,6 +203,7 @@ def build_response(  # noqa: WPS211
 
     Do not use directly, prefer using
     :meth:`~django_modern_rest.controller.Controller.to_response` method.
+    Unless you are using a lower-level API. Like in middlewares, for example.
 
     You have to provide either *method* or *status_code*.
     """
@@ -210,15 +213,25 @@ def build_response(  # noqa: WPS211
         status = infer_status_code(method)
     else:
         raise ValueError(
-            'Cannot pass both `method=None` and `status_code=Empty`',
+            f'Cannot pass {method=!r} and {status_code=!r} '
+            'to build_response at the same time',
         )
 
+    if renderer_cls is None:
+        # IndexError here can't happen, because we validate
+        # that all endpoints have at least one configured type in settings.
+        renderer_cls = resolve_setting(
+            Settings.renderer_types,
+            import_string=True,
+        )[0]
+        # Needed for type checking:
+        assert renderer_cls is not None  # noqa: S101
+
     response_headers = {} if headers is None else headers
-    if 'Content-Type' not in response_headers:
-        response_headers['Content-Type'] = serializer.content_type
+    response_headers['Content-Type'] = renderer_cls.content_type
 
     response = HttpResponse(
-        content=serializer.serialize(raw_data),
+        content=serializer.serialize(raw_data, renderer_cls=renderer_cls),
         status=status,
         headers=response_headers,
     )

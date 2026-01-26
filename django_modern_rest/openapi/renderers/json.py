@@ -6,7 +6,7 @@ from typing_extensions import override
 from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.openapi.renderers.base import (
     BaseRenderer,
-    SchemaSerialier,
+    SchemaSerializer,
     json_serializer,
 )
 
@@ -23,7 +23,7 @@ class JsonRenderer(BaseRenderer):
     default_path: ClassVar[str] = 'openapi.json/'
     default_name: ClassVar[str] = 'json'
     content_type: ClassVar[str] = 'application/json'
-    serializer: SchemaSerialier = staticmethod(json_serializer)  # noqa: WPS421
+    serializer: SchemaSerializer = staticmethod(json_serializer)  # noqa: WPS421
 
     @override
     def render(

@@ -46,14 +46,14 @@ def test_body_parse_wrong_content_type(rf: RequestFactory) -> None:
                 'type': 'value_error',
                 'loc': [],
                 'msg': (
-                    'Value error, Cannot parse request body with content '
-                    "type 'application/xml', expected 'application/json'"
+                    'Value error, Cannot parse request body with content type '
+                    "'application/xml', expected=['application/json']"
                 ),
                 'input': '',
                 'ctx': {
                     'error': (
-                        'Cannot parse request body with content '
-                        "type 'application/xml', expected 'application/json'"
+                        'Cannot parse request body with content type '
+                        "'application/xml', expected=['application/json']"
                     ),
                 },
             },
@@ -87,6 +87,7 @@ async def test_body_parse_wrong_content_type_async(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == snapshot({
         'detail': ([
             {
@@ -113,6 +114,7 @@ def test_body_parse_invalid_json(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == snapshot({
         'detail': ([
             {

@@ -29,6 +29,7 @@ class DecoratorWithResponses:
 
     def __call__(self, klass: _TypeT) -> _TypeT:
         """Apply the decorator to the class."""
+        # pyrefly: ignore [bad-argument-type, bad-return]
         return self.decorator(klass)  # pyright: ignore[reportReturnType]
 
 

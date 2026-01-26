@@ -65,7 +65,7 @@ Let's pass custom error handling to a single endpoint:
   :lines: 17-
 
 In this example we add error handling defined as ``division_error``
-to ``get`` endpoint (which serves as a division operation),
+to ``patch`` endpoint (which serves as a division operation),
 while keeping ``post`` endpoint (which serves as a multiply operation)
 without a custom error handler.
 Because :exc:`ZeroDivisionError` can't happen in ``post``.

@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Awaitable, Callable, Mapping, Set
+from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -14,8 +14,11 @@ from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.exceptions import (
+    ResponseSerializationError,
+)
 from django_modern_rest.headers import NewHeader
+from django_modern_rest.negotiation import RequestNegotiator, ResponseNegotiator
 from django_modern_rest.openapi.objects import (
     Callback,
     ExternalDocumentation,
@@ -23,6 +26,8 @@ from django_modern_rest.openapi.objects import (
     SecurityRequirement,
     Server,
 )
+from django_modern_rest.parsers import Parser
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import APIError, ResponseSpec, build_response
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
@@ -57,6 +62,8 @@ class Endpoint:  # noqa: WPS214
         '_method',
         'is_async',
         'metadata',
+        'request_negotiator',
+        'response_negotiator',
         'response_validator',
     )
 
@@ -64,6 +71,12 @@ class Endpoint:  # noqa: WPS214
 
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
+    )
+    request_negotiator_cls: ClassVar[type[RequestNegotiator]] = (
+        RequestNegotiator
+    )
+    response_negotiator_cls: ClassVar[type[ResponseNegotiator]] = (
+        ResponseNegotiator
     )
     response_validator_cls: ClassVar[type[ResponseValidator]] = (
         ResponseValidator
@@ -101,6 +114,14 @@ class Endpoint:  # noqa: WPS214
         )
         func.__metadata__ = metadata  # type: ignore[attr-defined]
         self.metadata = metadata
+        self.request_negotiator = self.request_negotiator_cls(
+            self.metadata,
+            controller_cls.serializer,
+        )
+        self.response_negotiator = self.response_negotiator_cls(
+            self.metadata,
+            controller_cls.serializer,
+        )
 
         # We need a func before any wrappers, but with metadata:
         self.response_validator = self.response_validator_cls(
@@ -214,10 +235,8 @@ class Endpoint:  # noqa: WPS214
             # Parse request:
             try:
                 active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                    self,
                     active_blueprint,
-                    active_blueprint.request,
-                    *args,
-                    **kwargs,
                 )
             except Exception as exc:
                 return self._make_http_response(
@@ -252,10 +271,8 @@ class Endpoint:  # noqa: WPS214
             # Parse request:
             try:
                 active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                    self,
                     active_blueprint,
-                    active_blueprint.request,
-                    *args,
-                    **kwargs,
                 )
             except Exception as exc:
                 return self._make_http_response(
@@ -289,7 +306,10 @@ class Endpoint:  # noqa: WPS214
         just validates it before returning.
         """
         try:
-            return self._validate_response(controller, raw_data)
+            return self._validate_response(
+                controller,
+                raw_data,
+            )
         except ResponseSerializationError as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # here, because it is too late. Since `ResponseSerializationError`
@@ -308,11 +328,13 @@ class Endpoint:  # noqa: WPS214
     ) -> HttpResponse:
         if isinstance(raw_data, HttpResponse):
             return self.response_validator.validate_response(
+                self,
                 controller,
                 raw_data,
             )
 
         validated = self.response_validator.validate_modification(
+            self,
             controller,
             raw_data,
         )
@@ -322,6 +344,7 @@ class Endpoint:  # noqa: WPS214
             status_code=validated.status_code,
             headers=validated.headers,
             cookies=validated.cookies,
+            renderer_cls=validated.renderer_cls,
         )
 
     def _handle_default_error(
@@ -354,6 +377,17 @@ def validate(  # noqa: WPS234
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponse]]],
     Callable[_ParamT, Awaitable[HttpResponse]],
@@ -369,6 +403,17 @@ def validate(
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
     Callable[_ParamT, HttpResponse],
@@ -384,6 +429,17 @@ def validate(
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
+    summary: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    security: list[SecurityRequirement] | None = None,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
     Callable[_ParamT, _ResponseT],
@@ -398,6 +454,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -467,6 +525,12 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
+        parser_types: List of types to be used for this endpoint
+            to parse incoming request's body. All types must be subtypes
+            of :class:`~django_modern_rest.parsers.Parser`.
+        renderer_types: List of types to be used for this endpoint
+            to render response's body. All types must be subtypes
+            of :class:`~django_modern_rest.renderers.Renderer`.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -500,6 +564,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
+            parser_types=parser_types,
+            renderer_types=renderer_types,
             summary=summary,
             description=description,
             tags=tags,
@@ -593,6 +659,8 @@ def modify(
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -616,6 +684,8 @@ def modify(
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -639,6 +709,8 @@ def modify(
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -661,6 +733,8 @@ def modify(  # noqa: WPS211
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
+    parser_types: Sequence[type[Parser]] | None = None,
+    renderer_types: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -708,6 +782,12 @@ def modify(  # noqa: WPS211
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
+        parser_types: List of types to be used for this endpoint
+            to parse incoming request's body. All types must be subtypes
+            of :class:`~django_modern_rest.parsers.Parser`.
+        renderer_types: List of types to be used for this endpoint
+            to render response's body. All types must be subtypes
+            of :class:`~django_modern_rest.renderers.Renderer`.
         summary: A short summary of what the operation does.
 
         description: A verbose explanation of the operation behavior.
@@ -748,6 +828,8 @@ def modify(  # noqa: WPS211
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
+            parser_types=parser_types,
+            renderer_types=renderer_types,
             summary=summary,
             description=description,
             tags=tags,
