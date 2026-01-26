@@ -96,3 +96,15 @@ See our
 `project template <https://github.com/wemake-services/wemake-django-template>`_
 to learn how typing works, how ``mypy`` is configured,
 how ``django-stubs`` is used.
+
+
+Pagination
+----------
+
+TODO
+
+
+django-filters
+--------------
+
+TODO

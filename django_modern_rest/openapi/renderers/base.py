@@ -4,10 +4,13 @@ from typing import Any, ClassVar, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
 
+from django_modern_rest.internal.json import (
+    SerializedSchema as SerializedSchema,
+)
+from django_modern_rest.internal.json import json_dumps
 from django_modern_rest.openapi.converter import ConvertedSchema
 
-SerializedSchema: TypeAlias = str
-SchemaSerialier: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
+SchemaSerializer: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
 _CallableAny: TypeAlias = Callable[..., Any]
 _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 
@@ -20,18 +23,13 @@ def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
     the schema to JSON format.
 
     Args:
-        schema: Converted OpenAPI schema to serialize.
+        schema: Converted OpenAPI schema to be serialized.
 
     Returns:
         JSON string representation of the schema.
-    """
-    from django_modern_rest.settings import (  # noqa: PLC0415
-        Settings,
-        resolve_setting,
-    )
 
-    serialize = resolve_setting(Settings.serialize, import_string=True)
-    return serialize(schema, None).decode('utf-8')  # type: ignore[no-any-return]
+    """
+    return json_dumps(schema)
 
 
 class BaseRenderer:
@@ -60,7 +58,7 @@ class BaseRenderer:
     default_path: ClassVar[str]
     default_name: ClassVar[str]
     content_type: ClassVar[str]
-    serializer: SchemaSerialier
+    serializer: SchemaSerializer
 
     def __init__(
         self,

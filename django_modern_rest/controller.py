@@ -21,6 +21,9 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
+from django_modern_rest.negotiation import request_renderer
+from django_modern_rest.parsers import Parser
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import (
     ResponseSpec,
     build_response,
@@ -113,6 +116,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
+    parser_types: Sequence[type[Parser]] = ()
+    renderer_types: Sequence[type[Renderer]] = ()
 
     # Instance public API:
     request: HttpRequest
@@ -172,6 +177,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         headers: dict[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
+        renderer_cls: type[Renderer] | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert response parts into an actual response.
@@ -190,6 +196,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
+            renderer_cls=renderer_cls or request_renderer(self.request),
         )
 
     def to_error(
@@ -199,6 +206,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         status_code: HTTPStatus,
         headers: dict[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
+        renderer_cls: type[Renderer] | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert API error parts into an actual error.
@@ -215,6 +223,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
+            renderer_cls=renderer_cls or request_renderer(self.request),
         )
 
     def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
@@ -393,7 +402,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         """
         super().setup(request, *args, **kwargs)
         # Controller is created once per request, so we can assign attributes.
-        blueprint = self._blueprint_per_method.get(
+        blueprint = self._blueprint_per_method.get(  # pyrefly: ignore[no-matching-overload]  # noqa: E501
             request.method,  # type: ignore[arg-type]
         )
         if blueprint:
@@ -566,7 +575,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
 
     @classproperty
     @override
-    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]
+    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
         return cls._is_async is True
 

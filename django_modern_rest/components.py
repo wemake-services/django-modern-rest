@@ -1,7 +1,6 @@
 import abc
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
-from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.exceptions import (
@@ -13,6 +12,7 @@ from django_modern_rest.serialization import BaseSerializer
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint
+    from django_modern_rest.endpoint import Endpoint
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -27,18 +27,15 @@ class ComponentParser:
     # Public API:
     context_name: ClassVar[str]
 
-    # Internal API:
-    __is_base_type__: ClassVar[bool] = True
-
     @classmethod
     @abc.abstractmethod
     def provide_context_data(
         cls,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        model: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
+        *,
+        field_model: Any,
+        combined_model: Any,
     ) -> Any:
         """
         Return unstructured raw value for serializer.from_python().
@@ -102,13 +99,13 @@ class Query(ComponentParser, Generic[_QueryT]):
     @classmethod
     def provide_context_data(
         cls,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        model: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
+        *,
+        field_model: Any,
+        combined_model: Any,
     ) -> Any:
-        return request.GET
+        return blueprint.request.GET
 
 
 class Body(ComponentParser, Generic[_BodyT]):
@@ -132,7 +129,7 @@ class Body(ComponentParser, Generic[_BodyT]):
         ...     Controller[PydanticSerializer],
         ... ): ...
 
-    Will parse a body like ``{'email': 'user@mail.ru', 'age': 18}`` into
+    Will parse a body like ``{'email': 'user@example.org', 'age': 18}`` into
     ``UserCreateInput`` model.
 
     You can access parsed body as ``self.parsed_body`` attribute.
@@ -145,26 +142,22 @@ class Body(ComponentParser, Generic[_BodyT]):
     @classmethod
     def provide_context_data(
         cls,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        model: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
+        *,
+        field_model: Any,
+        combined_model: Any,
     ) -> Any:
-        serializer = blueprint.serializer
-        if request.content_type != serializer.content_type:
-            raise RequestSerializationError(
-                serializer.error_serialize(
-                    'Cannot parse request body '
-                    f'with content type {request.content_type!r}, '
-                    f'expected {serializer.content_type!r}',
-                ),
-            )
+        parser_cls = endpoint.request_negotiator(blueprint.request)
+
         try:
-            return serializer.deserialize(request.body)
+            return blueprint.serializer.deserialize(
+                blueprint.request.body,
+                parser_cls=parser_cls,
+            )
         except DataParsingError as exc:
             raise RequestSerializationError(
-                serializer.error_serialize(str(exc)),
+                blueprint.serializer.error_serialize(str(exc)),
             ) from exc
 
 
@@ -201,13 +194,13 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     @classmethod
     def provide_context_data(
         cls,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        model: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
+        *,
+        field_model: Any,
+        combined_model: Any,
     ) -> Any:
-        return request.headers
+        return blueprint.request.headers
 
 
 class Path(ComponentParser, Generic[_PathT]):
@@ -270,18 +263,18 @@ class Path(ComponentParser, Generic[_PathT]):
     @classmethod
     def provide_context_data(
         cls,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        model: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
+        *,
+        field_model: Any,
+        combined_model: Any,
     ) -> Any:
-        if args:
+        if blueprint.args:
             raise RequestSerializationError(
-                f'Path {cls} with {model=} does not allow '
-                f'unnamed path parameters {args=}',
+                f'Path {cls} with {field_model=} does not allow '
+                f'unnamed path parameters {blueprint.args=}',
             )
-        return kwargs
+        return blueprint.kwargs
 
 
 class Cookies(ComponentParser, Generic[_CookiesT]):
@@ -323,10 +316,10 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
     @classmethod
     def provide_context_data(
         cls,
+        endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
-        model: Any,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
+        *,
+        field_model: Any,
+        combined_model: Any,
     ) -> Any:
-        return request.COOKIES
+        return blueprint.request.COOKIES
