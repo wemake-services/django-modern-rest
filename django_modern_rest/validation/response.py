@@ -16,9 +16,7 @@ from django.http import HttpResponse
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.exceptions import (
-    ResponseSerializationError,
-)
+from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import ContentNegotiation
 from django_modern_rest.metadata import EndpointMetadata
