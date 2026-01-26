@@ -129,7 +129,7 @@ class ResponseModification:
     return_type: Any
     status_code: HTTPStatus
     headers: Mapping[str, NewHeader] | None
-    cookies: Mapping[str, NewCookie | CookieSpec] | None
+    cookies: Mapping[str, NewCookie] | None
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
@@ -148,11 +148,7 @@ class ResponseModification:
                 None
                 if self.cookies is None
                 else {
-                    cookie_key: (
-                        cookie.to_spec()  # noqa: WPS509
-                        if isinstance(cookie, NewCookie)
-                        else cookie
-                    )
+                    cookie_key: cookie.to_spec()
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),

@@ -18,13 +18,8 @@ from django.http import HttpResponse
 
 from django_modern_rest.components import Body
 from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.exceptions import (
-    EndpointMetadataError,
-)
-from django_modern_rest.headers import (
-    HeaderSpec,
-    NewHeader,
-)
+from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.headers import HeaderSpec, NewHeader
 from django_modern_rest.metadata import ComponentParserSpec, EndpointMetadata
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
@@ -77,12 +72,6 @@ class _ResponseListValidator:  # noqa: WPS214
         self._validate_unique_responses(responses)
         self._validate_header_descriptions(responses)
         self._validate_cookie_descriptions(responses)
-        self._validate_cookie_spec_in_responses(responses)
-        if isinstance(self.payload, ModifyEndpointPayload):
-            self._validate_new_cookie_in_modify(
-                self.payload,
-                endpoint=self.endpoint,
-            )
         self._validate_http_spec(responses)
         return self._convert_responses(responses)
 
@@ -103,23 +92,26 @@ class _ResponseListValidator:  # noqa: WPS214
                 )
             unique.setdefault(response.status_code, response)
 
-    def _validate_header_descriptions(
+    def _validate_header_descriptions(  # noqa: WPS231
         self,
         responses: _AllResponses,
     ) -> None:
         for response in responses:
             if response.headers is None:
                 continue
-            if any(
-                isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
-                for header in response.headers.values()
-            ):
-                raise EndpointMetadataError(
-                    f'Cannot use `NewHeader` in {response} , '
-                    f'use `HeaderSpec` instead in {self.endpoint!r}',
-                )
+            for header_name, header in response.headers.items():
+                if header_name.lower() == 'set-cookie':
+                    raise EndpointMetadataError(
+                        f'Cannot use "Set-Cookie" header in {response}, use '
+                        f'`cookies=` parameter instead in {self.endpoint!r}',
+                    )
+                if isinstance(header, NewHeader):  # type: ignore[unreachable]
+                    raise EndpointMetadataError(
+                        f'Cannot use `NewHeader` in {response} , use '
+                        f'`HeaderSpec` instead in {self.endpoint!r}',
+                    )
 
-    def _validate_cookie_spec_in_responses(
+    def _validate_cookie_descriptions(
         self,
         responses: _AllResponses,
     ) -> None:
@@ -127,47 +119,12 @@ class _ResponseListValidator:  # noqa: WPS214
             if response.cookies is None:
                 continue
             if any(
-                isinstance(cookie, NewCookie)
-                # pyright: ignore[reportUnnecessaryIsInstance]
+                isinstance(cookie, NewCookie)  # pyright: ignore[reportUnnecessaryIsInstance]
                 for cookie in response.cookies.values()
             ):
                 raise EndpointMetadataError(
                     f'Cannot use `NewCookie` in {response} , '
                     f'use `CookieSpec` instead in {self.endpoint!r}',
-                )
-
-    def _validate_new_cookie_in_modify(
-        self,
-        payload: ModifyEndpointPayload,
-        *,
-        endpoint: str,
-    ) -> None:
-        if payload.cookies is not None and any(
-            isinstance(cookie, CookieSpec)
-            # pyright: ignore[reportUnnecessaryIsInstance]
-            for cookie in payload.cookies.values()
-        ):
-            raise EndpointMetadataError(
-                f'Since {endpoint!r} returns raw data, '
-                f'it is not possible to use `CookieSpec` '
-                'because there are no existing headers to describe. Use '
-                '`NewCookie` to add new cookies to the response',
-            )
-
-    def _validate_cookie_descriptions(
-        self,
-        responses: _AllResponses,
-    ) -> None:
-        for response in responses:
-            if response.headers is None:
-                continue
-            if any(
-                header_name.lower() == 'set-cookie'
-                for header_name in response.headers
-            ):
-                raise EndpointMetadataError(
-                    f'Cannot use "Set-Cookie" header in {response}'
-                    f'use `cookies=` parameter instead in {self.endpoint!r}',
                 )
 
     def _validate_http_spec(
@@ -449,7 +406,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
-        self._validate_new_headers(payload, endpoint=endpoint)
+        self._validate_new_http_parts(payload, endpoint=endpoint)
         modification = ResponseModification(
             return_type=return_annotation,
             headers=payload.headers,
@@ -634,7 +591,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             )
         }
 
-    def _validate_new_headers(
+    def _validate_new_http_parts(
         self,
         payload: ModifyEndpointPayload,
         *,
@@ -649,6 +606,16 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response',
+            )
+        if payload.cookies is not None and any(
+            isinstance(cookie, CookieSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for cookie in payload.cookies.values()
+        ):
+            raise EndpointMetadataError(
+                f'Since {endpoint!r} returns raw data, '
+                f'it is not possible to use `CookieSpec` '
+                'because there are no existing cookies to describe. Use '
+                '`NewCookie` to add new cookies to the response',
             )
 
     def _validate_return_annotation(

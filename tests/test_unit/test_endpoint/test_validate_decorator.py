@@ -16,6 +16,7 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import (
@@ -518,6 +519,22 @@ def test_validate_with_set_cookie_header(header_name: str) -> None:
                     return_type=dict,
                     status_code=HTTPStatus.OK,
                     headers={header_name: HeaderSpec(required=True)},
+                ),
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError
+
+
+def test_validate_with_new_cookie() -> None:
+    """Ensures `@validate` can't be used with `NewCookie`."""
+    with pytest.raises(EndpointMetadataError, match='NewCookie'):
+
+        class _WrongValidate(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(
+                    return_type=int,
+                    status_code=HTTPStatus.OK,
+                    cookies={'test': NewCookie(value='a')},  # type: ignore[dict-item]
                 ),
             )
             def get(self) -> HttpResponse:
