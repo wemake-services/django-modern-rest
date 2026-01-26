@@ -1,4 +1,3 @@
-import sys
 from http import HTTPStatus
 from typing import final
 
@@ -51,10 +50,6 @@ class _UserController(Controller[MsgspecSerializer]):
     blueprints = [_UserGetBlueprint, _UserPostBlueprint]
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 def test_serializer_via_endpoint(
     dmr_rf: DMRRequestFactory,
     faker: Faker,

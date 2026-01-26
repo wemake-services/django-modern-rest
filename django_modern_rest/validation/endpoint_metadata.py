@@ -10,7 +10,6 @@ from typing import (
     NewType,
     assert_never,
     cast,
-    get_origin,
 )
 
 from django.contrib.admindocs.utils import parse_docstring
@@ -32,7 +31,6 @@ from django_modern_rest.response import (
 )
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
-    HTTP_METHODS_WITHOUT_BODY,
     HttpSpec,
     Settings,
     resolve_setting,
@@ -53,6 +51,17 @@ if TYPE_CHECKING:
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
+
+#: HTTP methods that should not have a request body according to HTTP spec.
+#: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
+#: See RFC 7231 for more details.
+_HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
+    'GET',
+    'HEAD',
+    'DELETE',
+    'CONNECT',
+    'TRACE',
+))
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -182,11 +191,11 @@ def _validate_empty_request_body(
     should not have a request body. If a controller uses Body component
     with these methods, an EndpointMetadataError will be raised.
     """
-    if method.upper() not in HTTP_METHODS_WITHOUT_BODY:
+    if method.upper() not in _HTTP_METHODS_WITHOUT_BODY:
         return
 
     has_body = any(
-        (get_origin(component_cls) or component_cls) is Body
+        is_safe_subclass(component_cls, Body)
         for component_cls, _ in component_parsers
     )
     if has_body:

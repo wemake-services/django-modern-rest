@@ -64,18 +64,6 @@ class HttpSpec(enum.StrEnum):
     empty_response_body = 'empty_response_body'
 
 
-#: HTTP methods that should not have a request body according to HTTP spec.
-#: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
-#: See RFC 7231 for more details.
-HTTP_METHODS_WITHOUT_BODY: Final[frozenset[str]] = frozenset((
-    'GET',
-    'HEAD',
-    'DELETE',
-    'CONNECT',
-    'TRACE',
-))
-
-
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.serialize: 'django_modern_rest.internal.json.serialize',

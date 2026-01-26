@@ -1,5 +1,4 @@
 import json
-import sys
 from http import HTTPStatus
 from typing import Annotated, final
 
@@ -45,10 +44,6 @@ class _ComponentController(
         return f'{first_name} {last_name}'
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 def test_msgspec_components(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
