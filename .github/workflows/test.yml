@@ -21,6 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.11', '3.12', '3.13', '3.14', '3.14t']
+        include:
+          - python-version: '3.14t'
+            force_free_gil: true
 
     steps:
     - uses: actions/checkout@v6
@@ -46,6 +49,8 @@ jobs:
         poetry install --all-extras --all-groups
 
     - name: Run checks
+      env:
+        PYTHON_GIL: ${{ matrix.force_free_gil && '0' || '1' }}
       run: make test
 
     # Upload coverage to codecov: https://codecov.io/
