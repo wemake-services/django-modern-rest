@@ -7,6 +7,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     NewType,
     assert_never,
     cast,
@@ -15,9 +16,15 @@ from typing import (
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponse
 
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.components import Body
+from django_modern_rest.exceptions import (
+    EndpointMetadataError,
+)
+from django_modern_rest.headers import (
+    HeaderSpec,
+    NewHeader,
+)
+from django_modern_rest.metadata import ComponentParserSpec, EndpointMetadata
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import (
@@ -40,6 +47,17 @@ if TYPE_CHECKING:
 #: NewType for better typing safety, don't forget to resolve all responses
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
+
+#: HTTP methods that should not have a request body according to HTTP spec.
+#: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
+#: See RFC 7231 for more details.
+_HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
+    'GET',
+    'HEAD',
+    'DELETE',
+    'CONNECT',
+    'TRACE',
+))
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -157,6 +175,34 @@ def _validate_empty_response_body(
             )
 
 
+def _validate_empty_request_body(
+    method: str,
+    component_parsers: list[ComponentParserSpec],
+    *,
+    endpoint: str,
+) -> None:
+    """Validate that methods without body don't use Body component.
+
+    According to HTTP spec, methods like GET, HEAD, DELETE, CONNECT, TRACE
+    should not have a request body. If a controller uses Body component
+    with these methods, an EndpointMetadataError will be raised.
+    """
+    if method.upper() not in _HTTP_METHODS_WITHOUT_BODY:
+        return
+
+    has_body = any(
+        is_safe_subclass(component_cls, Body)
+        for component_cls, _ in component_parsers
+    )
+    if has_body:
+        raise EndpointMetadataError(
+            f'HTTP method {method.upper()!r} cannot have a request body, '
+            f'but endpoint {endpoint!r} uses Body component. '
+            f'Either remove Body component or use a different HTTP method '
+            f'like POST, PUT, or PATCH.',
+        )
+
+
 def _is_check_enabled(
     setting: HttpSpec,
     payload_value: Set[HttpSpec] | None,
@@ -219,6 +265,14 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         func.__name__ = method  # we can change it :)
         endpoint = str(func)
+
+        self._validate_request_http_spec(
+            method,
+            endpoint=endpoint,
+            blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
+        )
+
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
@@ -591,6 +645,32 @@ class EndpointMetadataValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'{endpoint!r} returns raw data, '
                 'it requires `@modify` decorator instead of `@validate`',
+            )
+
+    def _validate_request_http_spec(
+        self,
+        method: str,
+        *,
+        endpoint: str,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        """Validate HTTP spec rules for request."""
+        payload_items = (
+            None if self.payload is None else self.payload.no_validate_http_spec
+        )
+        if _is_check_enabled(
+            HttpSpec.empty_request_body,
+            payload_items,
+            blueprint_cls,
+            controller_cls,
+        ):
+            source = blueprint_cls or controller_cls
+            component_parsers = source._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            _validate_empty_request_body(
+                method,
+                component_parsers,
+                endpoint=endpoint,
             )
 
     def _validate_error_handler(

@@ -380,7 +380,7 @@ def test_no_double_parsing() -> None:
     """Ensure we can't have parsing in both controller and blueprint."""
 
     class _BadBlueprint(Blueprint[PydanticSerializer], Body[dict[str, str]]):
-        def get(self) -> str:
+        def post(self) -> str:
             raise NotImplementedError
 
     with pytest.raises(
