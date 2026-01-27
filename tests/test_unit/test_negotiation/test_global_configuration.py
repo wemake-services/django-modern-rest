@@ -20,7 +20,7 @@ from django_modern_rest import (
 )
 from django_modern_rest.negotiation import (
     ContentType,
-    content_negotiation,
+    conditional_type,
     request_parser,
 )
 from django_modern_rest.parsers import DeserializeFunc, JsonParser, Parser, Raw
@@ -349,7 +349,7 @@ def test_conditional_content_type(
             self,
         ) -> Annotated[
             dict[str, str] | str,
-            content_negotiation({
+            conditional_type({
                 ContentType.json: str,
                 ContentType.xml: dict[str, str],
             }),
@@ -412,7 +412,7 @@ def test_wrong_conditional_content_type(
             self,
         ) -> Annotated[
             dict[str, str] | str,
-            content_negotiation({
+            conditional_type({
                 # Won't be matched:
                 ContentType.json: dict[str, str],
                 ContentType.xml: str,
@@ -455,7 +455,7 @@ def test_missing_conditional_content_type(
             self,
         ) -> Annotated[
             dict[str, str] | str,
-            content_negotiation({
+            conditional_type({
                 # Missing `json`:
                 ContentType.xml: str,
                 ContentType.form_data: dict[str, str],

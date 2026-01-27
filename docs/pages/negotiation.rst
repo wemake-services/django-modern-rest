@@ -1,8 +1,7 @@
 Content negotiation
 ===================
 
-``django_modern_rest`` supports content negotiation by default.
-As well as writing custom parsers and renderers.
+``django_modern_rest`` supports content negotiation.
 
 We have two abstractions to do that:
 
@@ -19,16 +18,16 @@ We have two abstractions to do that:
 
 By default ``json`` parser and renderer are configured
 to use ``msgspec`` if it is installed (recommended).
-Or to fallback to pure-python implementation if it is not installed.
+We fallback to pure-python implementation if ``msgspec`` is not installed.
 
 
 How parser and renderer are selected
 ------------------------------------
 
 We select :class:`~django_modern_rest.parsers.Parser` subtype
-if there's a :class:`~django_modern_rest.components.Body` to parse.
+if there's a :class:`~django_modern_rest.components.Body` component to parse.
 Otherwise, for performance reasons, no parser is selected
-and body is not parsed.
+and body is not parsed at all.
 
 Here's how we select a parser, when it is needed:
 
@@ -39,7 +38,7 @@ Here's how we select a parser, when it is needed:
 3. If there's a ``Content-Type`` header,
    we try to exactly match known parsers based on their
    :attr:`~django_modern_rest.parsers.Parser.content_type` attribute
-4. If no parser fits the requested content type, we raise
+4. If no parser fits the request's content type, we raise
    :exc:`~django_modern_rest.exceptions.RequestSerializationError`
 
 We select :class:`~django_modern_rest.renderers.Renderer` subtype
@@ -94,14 +93,14 @@ going back to the less specific:
       .. literalinclude:: /examples/negotiation/per_blueprint.py
         :caption: views.py
         :linenos:
-        :emphasize-lines: 38-39
+        :emphasize-lines: 36-37
 
     .. tab:: per controller
 
       .. literalinclude:: /examples/negotiation/per_controller.py
         :caption: views.py
         :linenos:
-        :emphasize-lines: 37-38
+        :emphasize-lines: 35-36
 
     .. tab:: per settings
 
@@ -128,6 +127,18 @@ And here's how our test ``xml`` parser and renderer are defined:
    :linenos:
 
 
+Using different schemes for different content types
+---------------------------------------------------
+
+Sometimes we have to return different schemes based on the content type.
+To do that we utilize :data:`typing.Annotated`
+and :func:`django_modern_rest.negotiation.conditional_type`:
+
+.. literalinclude:: /examples/negotiation/conditional_types.py
+   :caption: views.py
+   :linenos:
+
+
 Negotiation API
 ---------------
 
@@ -140,7 +151,7 @@ Negotiation API
 .. autoclass:: django_modern_rest.negotiation.ContentType
   :members:
 
-.. autofunction:: django_modern_rest.negotiation.content_negotiation
+.. autofunction:: django_modern_rest.negotiation.conditional_type
 
 .. autofunction:: django_modern_rest.negotiation.request_parser
 
