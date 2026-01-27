@@ -143,6 +143,12 @@ and :func:`django_modern_rest.negotiation.conditional_type`:
    :language: python
    :linenos:
 
+Dependening on the content type - your schema will be fully validated.
+In the example above, it would be an error to return something other
+than ``list[str]`` for ``json`` content type, and it would also
+be an error to return anything other than ``dict[str, str]``
+for ``xml`` content type.
+
 
 Negotiation API
 ---------------
