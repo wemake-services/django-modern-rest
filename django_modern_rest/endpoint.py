@@ -377,8 +377,8 @@ def validate(  # noqa: WPS234
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -403,8 +403,8 @@ def validate(
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -429,8 +429,8 @@ def validate(
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -454,8 +454,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -525,10 +525,10 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
-        parser_types: List of types to be used for this endpoint
+        parsers: List of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderer_types: List of types to be used for this endpoint
+        renderers: List of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
         summary: A short summary of what the operation does.
@@ -564,8 +564,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
-            parser_types=parser_types,
-            renderer_types=renderer_types,
+            parsers=parsers,
+            renderers=renderers,
             summary=summary,
             description=description,
             tags=tags,
@@ -659,8 +659,8 @@ def modify(
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -684,8 +684,8 @@ def modify(
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -709,8 +709,8 @@ def modify(
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -733,8 +733,8 @@ def modify(  # noqa: WPS211
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
     allow_custom_http_methods: bool = False,
-    parser_types: Sequence[type[Parser]] | None = None,
-    renderer_types: Sequence[type[Renderer]] | None = None,
+    parsers: Sequence[type[Parser]] | None = None,
+    renderers: Sequence[type[Renderer]] | None = None,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -782,10 +782,10 @@ def modify(  # noqa: WPS211
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
-        parser_types: List of types to be used for this endpoint
+        parsers: List of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderer_types: List of types to be used for this endpoint
+        renderers: List of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
         summary: A short summary of what the operation does.
@@ -828,8 +828,8 @@ def modify(  # noqa: WPS211
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             allow_custom_http_methods=allow_custom_http_methods,
-            parser_types=parser_types,
-            renderer_types=renderer_types,
+            parsers=parsers,
+            renderers=renderers,
             summary=summary,
             description=description,
             tags=tags,

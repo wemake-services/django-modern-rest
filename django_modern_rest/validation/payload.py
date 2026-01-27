@@ -39,8 +39,8 @@ class _BasePayload:
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
     allow_custom_http_methods: bool = False
     no_validate_http_spec: Set[HttpSpec] | None = None
-    parser_types: Sequence[type[Parser]] | None = None
-    renderer_types: Sequence[type[Renderer]] | None = None
+    parsers: Sequence[type[Parser]] | None = None
+    renderers: Sequence[type[Renderer]] | None = None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

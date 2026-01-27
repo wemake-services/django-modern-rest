@@ -217,7 +217,7 @@ def build_response(  # noqa: WPS210, WPS211
         # IndexError here can't happen, because we validate
         # that all endpoints have at least one configured type in settings.
         renderer_cls = resolve_setting(
-            Settings.renderer_types,
+            Settings.renderers,
             import_string=True,
         )[0]
         # Needed for type checking:

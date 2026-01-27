@@ -49,10 +49,10 @@ class EndpointMetadata:
         component_parsers: List of component parser specifications
             from the controller. Each spec is a tuple
             of (ComponentParser class, type args).
-        parser_types: List of types to be used for this endpoint
+        parsers: List of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderer_types: List of types to be used for this endpoint
+        renderers: List of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
         summary: A short summary of what the operation does.
@@ -92,8 +92,8 @@ class EndpointMetadata:
     modification: ResponseModification | None
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
     component_parsers: list[ComponentParserSpec]
-    parser_types: dict[str, type['Parser']]
-    renderer_types: dict[str, type['Renderer']]
+    parsers: dict[str, type['Parser']]
+    renderers: dict[str, type['Renderer']]
 
     # OpenAPI documentation fields:
     summary: str | None = None

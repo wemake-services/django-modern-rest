@@ -33,8 +33,8 @@ class _UserBlueprint(
     Body[_UserDocument[_UserInputData]],
     Blueprint[PydanticSerializer],
 ):
-    parser_types = (XmlParser,)
-    renderer_types = (XmlRenderer,)
+    parsers = (XmlParser,)
+    renderers = (XmlRenderer,)
 
     def post(self) -> _UserDocument[_UserOutputData]:
         return _UserDocument(

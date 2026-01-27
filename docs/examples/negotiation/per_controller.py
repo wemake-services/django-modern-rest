@@ -32,8 +32,8 @@ class UserController(
     Body[_UserDocument[_UserInputData]],
     Controller[PydanticSerializer],
 ):
-    parser_types = (XmlParser,)
-    renderer_types = (XmlRenderer,)
+    parsers = (XmlParser,)
+    renderers = (XmlRenderer,)
 
     def post(self) -> _UserDocument[_UserOutputData]:
         return _UserDocument(
