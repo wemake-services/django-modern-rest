@@ -21,12 +21,11 @@ from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Final, TypeAlias, cast, final
+from typing import Any, ClassVar, Final, TypeAlias, cast, final, override
 
 import httpx
 import uvicorn
 import xmltodict
-from sphinx.directives.code import LiteralInclude
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
@@ -35,6 +34,7 @@ from docutils.nodes import Node, admonition, literal_block, title
 from docutils.parsers.rst import directives
 from sphinx.addnodes import highlightlang
 from sphinx.application import Sphinx
+from sphinx.directives.code import LiteralInclude as _LiteralInclude
 
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
@@ -364,26 +364,27 @@ def _add_headers(
 
 
 @final
-class LiteralInclude(LiteralInclude):
+class LiteralInclude(_LiteralInclude):
     """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
-        **LiteralInclude.option_spec,
+        **_LiteralInclude.option_spec,
         'no-run': directives.flag,
     }
 
+    @override
     def run(self) -> list[Node]:
         """Execute code examples and display results."""
         file_path = Path(self.env.relfn2path(self.arguments[0])[1])
         if not self._need_to_run(file_path):
-            return cast(list[Node], super().run())
+            return super().run()
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            return cast(list[Node], super().run())
+            return super().run()
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = cast(list[Node], super().run())
+        nodes = super().run()
 
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
