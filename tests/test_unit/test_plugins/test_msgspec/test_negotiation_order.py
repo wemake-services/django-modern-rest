@@ -2,7 +2,13 @@ import json
 from http import HTTPStatus
 from typing import final
 
-import pydantic
+import pytest
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
 from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
@@ -10,11 +16,11 @@ from inline_snapshot import snapshot
 from django_modern_rest import Body, Controller, modify
 from django_modern_rest.negotiation import request_parser, request_renderer
 from django_modern_rest.parsers import JsonParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.plugins.msgspec import MsgspecSerializer
 from django_modern_rest.renderers import JsonRenderer
 
 
-class _RequestModel(pydantic.BaseModel):
+class _RequestModel(msgspec.Struct):
     root: dict[str, str]
 
 
@@ -24,7 +30,7 @@ def test_parser_order(rf: RequestFactory) -> None:
 
     @final
     class _Controller(
-        Controller[PydanticSerializer],
+        Controller[MsgspecSerializer],
         Body[_RequestModel],
     ):
         @modify(parsers=[JsonParser], renderers=[JsonRenderer])
