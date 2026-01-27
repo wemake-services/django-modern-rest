@@ -92,6 +92,7 @@ going back to the less specific:
 
       .. literalinclude:: /examples/negotiation/per_blueprint.py
         :caption: views.py
+        :language: python
         :linenos:
         :emphasize-lines: 36-37
 
@@ -99,6 +100,7 @@ going back to the less specific:
 
       .. literalinclude:: /examples/negotiation/per_controller.py
         :caption: views.py
+        :language: python
         :linenos:
         :emphasize-lines: 35-36
 
@@ -106,6 +108,7 @@ going back to the less specific:
 
       .. literalinclude:: /examples/negotiation/settings.py
         :caption: settings.py
+        :language: python
         :linenos:
         :emphasize-lines: 5-6
 
@@ -124,6 +127,7 @@ And here's how our test ``xml`` parser and renderer are defined:
 
 .. literalinclude:: /examples/negotiation/negotiation.py
    :caption: negotiation.py
+   :language: python
    :linenos:
 
 
@@ -136,6 +140,7 @@ and :func:`django_modern_rest.negotiation.conditional_type`:
 
 .. literalinclude:: /examples/negotiation/conditional_types.py
    :caption: views.py
+   :language: python
    :linenos:
 
 

@@ -26,7 +26,7 @@ from typing import Any, ClassVar, Final, TypeAlias, cast, final
 import httpx
 import uvicorn
 import xmltodict
-from auto_pytabs.sphinx_ext import LiteralIncludeOverride
+from sphinx.directives.code import LiteralInclude
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
@@ -364,11 +364,11 @@ def _add_headers(
 
 
 @final
-class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
+class LiteralInclude(LiteralInclude):
     """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
-        **LiteralIncludeOverride.option_spec,
+        **LiteralInclude.option_spec,
         'no-run': directives.flag,
     }
 

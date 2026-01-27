@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from auto_pytabs.sphinx_ext import CodeBlockOverride
 from sphinx.application import Sphinx
 
 from tools.sphinx_ext import chartjs, run_examples
@@ -13,7 +12,6 @@ def _register_directives(app: Sphinx) -> None:
         run_examples.LiteralInclude,
         override=True,
     )
-    app.add_directive('code-block', CodeBlockOverride, override=True)
     app.add_directive('chartjs', chartjs.ChartJSDirective)
 
 

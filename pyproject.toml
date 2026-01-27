@@ -43,7 +43,7 @@ classifiers = [
 ]
 
 packages = [
-    {include = "django_modern_rest_pytest.py"}
+  { include = "django_modern_rest_pytest.py" }
 ]
 
 
