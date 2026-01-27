@@ -72,8 +72,8 @@ def _setup_parser_and_renderer(settings: LazySettings) -> Iterator[None]:
     clear_settings_cache()
 
     settings.DMR_SETTINGS = {
-        Settings.parser_types: [_XMLParser],
-        Settings.renderer_types: [_XMLRenderer],
+        Settings.parsers: [_XMLParser],
+        Settings.renderers: [_XMLRenderer],
     }
 
     yield
@@ -211,8 +211,8 @@ def test_per_controller_customization(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parser_types = [JsonParser]
-        renderer_types = [JsonRenderer]
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
 
         def post(self) -> dict[str, str]:
             parser_cls = request_parser(self.request)
@@ -220,10 +220,8 @@ def test_per_controller_customization(
             assert parser_cls.content_type == request.content_type
             return self.parsed_body.root
 
-    assert len(_BothController.api_endpoints['POST'].metadata.parser_types) == 2
-    assert (
-        len(_BothController.api_endpoints['POST'].metadata.renderer_types) == 2
-    )
+    assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
     request = dmr_rf.generic(
         'POST',
@@ -247,8 +245,8 @@ def test_per_blueprint_customization(
 
     @final
     class _Blueprint(Blueprint[PydanticSerializer], Body[_RequestModel]):
-        parser_types = [JsonParser]
-        renderer_types = [JsonRenderer]
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
 
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
@@ -257,10 +255,8 @@ def test_per_blueprint_customization(
     class _BothController(Controller[PydanticSerializer]):
         blueprints = [_Blueprint]
 
-    assert len(_BothController.api_endpoints['POST'].metadata.parser_types) == 2
-    assert (
-        len(_BothController.api_endpoints['POST'].metadata.renderer_types) == 2
-    )
+    assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
     request_data = {'root': {'key': 'value'}}
 
@@ -285,14 +281,12 @@ def test_per_endpoint_customization(
 
     @final
     class _BothController(Controller[PydanticSerializer], Body[_RequestModel]):
-        @modify(parser_types=[JsonParser], renderer_types=[JsonRenderer])
+        @modify(parsers=[JsonParser], renderers=[JsonRenderer])
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
 
-    assert len(_BothController.api_endpoints['POST'].metadata.parser_types) == 2
-    assert (
-        len(_BothController.api_endpoints['POST'].metadata.renderer_types) == 2
-    )
+    assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
     request_data = {'root': {'key': 'value'}}
 
@@ -342,8 +336,8 @@ def test_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parser_types = [JsonParser]
-        renderer_types = [JsonRenderer]
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
 
         def post(
             self,
@@ -358,8 +352,8 @@ def test_conditional_content_type(
                 return self.parsed_body.root['key']
             return self.parsed_body.root
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 2
-    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
 
     request = dmr_rf.generic(
         'POST',
@@ -405,8 +399,8 @@ def test_wrong_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parser_types = [JsonParser]
-        renderer_types = [JsonRenderer]
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
 
         def post(
             self,
@@ -423,8 +417,8 @@ def test_wrong_conditional_content_type(
                 return self.parsed_body.root['key']
             return self.parsed_body.root
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 2
-    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
 
     request = dmr_rf.generic(
         'POST',
@@ -448,8 +442,8 @@ def test_missing_conditional_content_type(
 
     @final
     class _Controller(Controller[PydanticSerializer]):
-        parser_types = [JsonParser]
-        renderer_types = [JsonRenderer]
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
 
         def get(
             self,
@@ -463,8 +457,8 @@ def test_missing_conditional_content_type(
         ]:
             return 'string'
 
-    assert len(_Controller.api_endpoints['GET'].metadata.parser_types) == 2
-    assert len(_Controller.api_endpoints['GET'].metadata.renderer_types) == 2
+    assert len(_Controller.api_endpoints['GET'].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints['GET'].metadata.renderers) == 2
 
     request = dmr_rf.get(
         '/whatever/',

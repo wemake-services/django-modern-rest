@@ -29,8 +29,8 @@ def _clear_parser_and_renderer(settings: LazySettings) -> Iterator[None]:
     clear_settings_cache()
 
     settings.DMR_SETTINGS = {
-        Settings.parser_types: [JsonParser],
-        Settings.renderer_types: [JsonRenderer],
+        Settings.parsers: [JsonParser],
+        Settings.renderers: [JsonRenderer],
     }
 
     yield
@@ -48,8 +48,8 @@ def test_empty_request_data(
         def post(self) -> str:
             return 'none handled'
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 1
-    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
 
     request = dmr_rf.post(
         '/whatever/',
@@ -78,8 +78,8 @@ def test_wrong_request_data(
         def post(self) -> str:
             raise NotImplementedError
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 1
-    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
 
     request = dmr_rf.post(
         '/whatever/',
@@ -135,8 +135,8 @@ def test_complex_request_data(
         def post(self) -> _RequestModel:
             return self.parsed_body
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parser_types) == 1
-    assert len(_Controller.api_endpoints['POST'].metadata.renderer_types) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
 
     request_data = {'user': {'username': faker.name()}}
 

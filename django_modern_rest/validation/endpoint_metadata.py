@@ -365,13 +365,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parser_types=self._build_parser_types(
+            parsers=self._build_parser_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderer_types=self._build_renderer_types(
+            renderers=self._build_renderer_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
@@ -443,13 +443,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parser_types=self._build_parser_types(
+            parsers=self._build_parser_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderer_types=self._build_renderer_types(
+            renderers=self._build_renderer_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
@@ -511,13 +511,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parser_types=self._build_parser_types(
+            parsers=self._build_parser_types(
                 None,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderer_types=self._build_renderer_types(
+            renderers=self._build_renderer_types(
                 None,
                 blueprint_cls,
                 controller_cls,
@@ -535,12 +535,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> dict[str, type[Parser]]:
-        payload_types = () if payload is None else (payload.parser_types or ())
-        blueprint_types = (
-            () if blueprint_cls is None else blueprint_cls.parser_types
-        )
+        payload_types = () if payload is None else (payload.parsers or ())
+        blueprint_types = () if blueprint_cls is None else blueprint_cls.parsers
         settings_types = resolve_setting(
-            Settings.parser_types,
+            Settings.parsers,
             import_string=True,
         )
         if not settings_types:
@@ -549,12 +547,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 'configured in settings',
             )
         return {
+            # TODO: fix the ordering.
             typ.content_type: typ
             for typ in (
-                *controller_cls.parser_types,
+                *settings_types,
+                *controller_cls.parsers,
                 *blueprint_types,
                 *payload_types,
-                *settings_types,
             )
         }
 
@@ -566,14 +565,12 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> dict[str, type[Renderer]]:
-        payload_types = (
-            () if payload is None else (payload.renderer_types or ())
-        )
+        payload_types = () if payload is None else (payload.renderers or ())
         blueprint_types = (
-            () if blueprint_cls is None else blueprint_cls.renderer_types
+            () if blueprint_cls is None else blueprint_cls.renderers
         )
         settings_types = resolve_setting(
-            Settings.renderer_types,
+            Settings.renderers,
             import_string=True,
         )
         if not settings_types:
@@ -584,10 +581,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         return {
             typ.content_type: typ
             for typ in (
-                *controller_cls.renderer_types,
+                *settings_types,
+                *controller_cls.renderers,
                 *blueprint_types,
                 *payload_types,
-                *settings_types,
             )
         }
 

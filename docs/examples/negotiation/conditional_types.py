@@ -22,8 +22,8 @@ class ExampleController(
     Controller[PydanticSerializer],
     Body[_RequestModel],
 ):
-    parser_types = (XmlParser,)
-    renderer_types = (XmlRenderer,)
+    parsers = (XmlParser,)
+    renderers = (XmlRenderer,)
 
     def post(
         self,

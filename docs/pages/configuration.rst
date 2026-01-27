@@ -55,7 +55,7 @@ JSON Parsing
   It is recommended to always install ``msgspec``
   with ``'django-modern-rest[msgspec]'`` extra for better performance.
 
-.. data:: django_modern_rest.settings.Settings.parser_types
+.. data:: django_modern_rest.settings.Settings.parsers
 
   Default: :class:`django_modern_rest.parsers.JsonParser` or
   :class:`django_modern_rest.plugins.msgspec.MsgspecJsonParser` if installed.
@@ -74,9 +74,9 @@ JSON Parsing
     :caption: settings.py
 
     >>> from django_modern_rest.parsers import JsonParser
-    >>> DMR_SETTINGS = {Settings.parser_types: [JsonParser]}
+    >>> DMR_SETTINGS = {Settings.parsers: [JsonParser]}
 
-.. data:: django_modern_rest.settings.Settings.renderer_types
+.. data:: django_modern_rest.settings.Settings.renderers
 
   Default: :class:`django_modern_rest.renderers.JsonRenderer` or
   :class:`django_modern_rest.plugins.msgspec.MsgspecJsonRenderer` if installed.
@@ -94,7 +94,7 @@ JSON Parsing
     :caption: settings.py
 
     >>> from django_modern_rest.renderers import JsonRenderer
-    >>> DMR_SETTINGS = {Settings.renderer_types: [JsonRenderer]}
+    >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer]}
 
 
 Response handling

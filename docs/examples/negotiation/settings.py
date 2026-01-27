@@ -2,6 +2,7 @@ from django_modern_rest.settings import Settings
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
 DMR_SETTINGS = {  # noqa: WPS407
-    Settings.parser_types: [XmlParser],
-    Settings.renderer_types: [XmlRenderer],
+    # You can also use string fully qualified names to import them:
+    Settings.parsers: [XmlParser],
+    Settings.renderers: [XmlRenderer],
 }

@@ -28,8 +28,8 @@ def _clear_settings() -> Iterator[None]:
 def test_empty_parser_type(settings: LazySettings) -> None:
     """Ensure that always has to be at least one parser type."""
     settings.DMR_SETTINGS = {
-        Settings.parser_types: [],
-        Settings.renderer_types: [JsonRenderer],
+        Settings.parsers: [],
+        Settings.renderers: [JsonRenderer],
     }
 
     with pytest.raises(EndpointMetadataError, match='parser type'):
@@ -42,8 +42,8 @@ def test_empty_parser_type(settings: LazySettings) -> None:
 def test_empty_renderer_type(settings: LazySettings) -> None:
     """Ensure that always has to be at least one renderer type."""
     settings.DMR_SETTINGS = {
-        Settings.parser_types: [JsonParser],
-        Settings.renderer_types: [],
+        Settings.parsers: [JsonParser],
+        Settings.renderers: [],
     }
 
     with pytest.raises(EndpointMetadataError, match='renderer type'):

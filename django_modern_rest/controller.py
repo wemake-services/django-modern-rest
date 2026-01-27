@@ -118,8 +118,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
-    parser_types: ClassVar[_Parsers] = ()
-    renderer_types: ClassVar[_Renderers] = ()
+    parsers: ClassVar[_Parsers] = ()
+    renderers: ClassVar[_Renderers] = ()
 
     # Instance public API:
     request: HttpRequest
