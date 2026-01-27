@@ -40,9 +40,10 @@ class XmlRenderer(Renderer):
         to_serialize: Any,
         serializer: Callable[[Any], Any],
     ) -> bytes:
+        preprocessor = cls._wrap_serializer(serializer)
         raw_data = xmltodict.unparse(
-            serializer(to_serialize),
-            preprocessor=cls._wrap_serializer(serializer),
+            preprocessor('', to_serialize)[1],
+            preprocessor=preprocessor,
         )
         assert isinstance(raw_data, str)
         return raw_data.encode('utf8')

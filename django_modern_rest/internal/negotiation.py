@@ -13,7 +13,7 @@ class ContentNegotiation:
     Internal type that we use as a metadata.
 
     Public API is to use
-    :func:`django_modern_rest.negotiation.content_negotiation` instead of this.
+    :func:`django_modern_rest.negotiation.conditional_type` instead of this.
     """
 
     original: tuple[tuple['ContentType', Any], ...]

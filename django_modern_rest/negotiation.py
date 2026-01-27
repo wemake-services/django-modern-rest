@@ -203,7 +203,7 @@ class ContentType(enum.StrEnum):
     form_data = 'multipart/form-data'
 
 
-def content_negotiation(
+def conditional_type(
     mapping: Mapping[ContentType, Any],
 ) -> _ContentNegotiation:
     """
@@ -216,7 +216,7 @@ def content_negotiation(
     """
     if len(mapping) <= 1:
         raise EndpointMetadataError(
-            'content_negotiation must be called with a mapping of length >= 2, '
+            'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
     return _ContentNegotiation(tuple(mapping.items()))
