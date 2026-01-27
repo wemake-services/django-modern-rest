@@ -394,17 +394,20 @@ def test_blueprints_no_controller_parsing(
 ) -> None:
     """Ensure controllers with blueprints cannot have component parsers."""
 
-    class _CleanBlueprint(Blueprint[PydanticSerializer]):
+    class _CleanBlueprint(
+        Blueprint[PydanticSerializer],
+        component_parser,  # type: ignore[misc]
+    ):
         def get(self) -> str:
             raise NotImplementedError
 
     with pytest.raises(
         EndpointMetadataError,
-        match='has blueprints but also has component parsers',
+        match='Cannot have component parsers in both',
     ):
 
         class _BadController(
             Controller[PydanticSerializer],
-            component_parser,
+            component_parser,  # type: ignore[misc]
         ):
             blueprints: ClassVar[BlueprintsT] = [_CleanBlueprint]
