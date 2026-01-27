@@ -52,6 +52,8 @@ _ComponentParserSpec: TypeAlias = tuple[
     type[ComponentParser],
     tuple[Any, ...],
 ]
+_Parsers: TypeAlias = Sequence[type[Parser]]
+_Renderers: TypeAlias = Sequence[type[Renderer]]
 
 
 class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
@@ -116,8 +118,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
-    parser_types: Sequence[type[Parser]] = ()
-    renderer_types: Sequence[type[Renderer]] = ()
+    parser_types: ClassVar[_Parsers] = ()
+    renderer_types: ClassVar[_Renderers] = ()
 
     # Instance public API:
     request: HttpRequest

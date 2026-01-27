@@ -186,7 +186,16 @@ def response_validation_negotiator(
 @final
 @enum.unique
 class ContentType(enum.StrEnum):
-    """Enumeration of content types."""
+    """
+    Enumeration of frequently used content types.
+
+    Attributes:
+        json: ``'application/json'`` format.
+        xml: ``'application/xml'`` format.
+        x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
+        form_data: ``'multipart/form-data'`` format.
+
+    """
 
     json = 'application/json'
     xml = 'application/xml'
