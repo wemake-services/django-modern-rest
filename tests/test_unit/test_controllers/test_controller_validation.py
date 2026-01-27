@@ -399,7 +399,7 @@ def test_blueprints_no_controller_parsing(
         Blueprint[PydanticSerializer],
         component_parser,  # type: ignore[misc]
     ):
-        def get(self) -> str:
+        def post(self) -> str:
             raise NotImplementedError
 
     with pytest.raises(
