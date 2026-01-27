@@ -61,7 +61,7 @@ Here's how we select a renderer:
 .. important::
 
   Settings always must have one parser and one renderer types defined,
-  because utils like :func:`django_modern_rest.responses.build_response`
+  because utils like :func:`django_modern_rest.response.build_response`
   fallback to settings-defined types only, because they don't have
   an access to the current endpoint.
 
