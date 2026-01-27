@@ -102,12 +102,15 @@ sphinx-copybutton = "^0.5"
 sphinx-design = "^0.6"
 sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
-shibuya = ">=2025.1,<2027.0"
+shibuya = "^2026.1"
 
 # Needed for our extension:
 auto-pytabs = "^0.5"
 uvicorn = "^0.40"
 httpx = "^0.28"
+
+# Needed for examples:
+xmltodict = "^1.0"
 
 
 [tool.poetry.plugins."pytest11"]
