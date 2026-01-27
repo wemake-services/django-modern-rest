@@ -11,7 +11,7 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.internal.negotiation import (
-    ContentNegotiation as _ContentNegotiation,
+    ConditionalType as _ConditionalType,
 )
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.parsers import Parser
@@ -179,7 +179,7 @@ def response_validation_negotiator(
 
     return parser_types.get(
         content_type,
-        next(iter(parser_types.values())),
+        next(reversed(parser_types.values())),
     )
 
 
@@ -205,7 +205,7 @@ class ContentType(enum.StrEnum):
 
 def conditional_type(
     mapping: Mapping[ContentType, Any],
-) -> _ContentNegotiation:
+) -> _ConditionalType:
     """
     Create conditional validation for different content types.
 
@@ -219,4 +219,4 @@ def conditional_type(
             'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
-    return _ContentNegotiation(tuple(mapping.items()))
+    return _ConditionalType(tuple(mapping.items()))
