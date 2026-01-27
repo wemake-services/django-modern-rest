@@ -25,7 +25,7 @@ class _CookieModifyController(Controller[PydanticSerializer]):
     @modify(
         cookies={
             'session_id': NewCookie(value='123'),
-            'user_id': NewCookie(value='456', httponly=True),
+            'Session_Id': NewCookie(value='456', httponly=True),
         },
         headers={'X-Session-Id': NewHeader(value='abc')},
     )
@@ -47,8 +47,8 @@ def test_add_new_cookies(dmr_rf: DMRRequestFactory) -> None:
         'X-Session-Id': 'abc',  # header is preserved
     }
     assert response.cookies.output() == snapshot("""\
-Set-Cookie: session_id=123; Path=/; SameSite=lax\r
-Set-Cookie: user_id=456; HttpOnly; Path=/; SameSite=lax\
+Set-Cookie: Session_Id=456; HttpOnly; Path=/; SameSite=lax\r
+Set-Cookie: session_id=123; Path=/; SameSite=lax\
 """)
 
 
@@ -176,6 +176,40 @@ class _WrongCookieController(Controller[PydanticSerializer]):
             status_code=HTTPStatus.OK,
         )
 
+    @validate(
+        ResponseSpec(
+            list[int],
+            status_code=HTTPStatus.OK,
+            cookies={
+                'Session_Id': CookieSpec(),
+            },
+        ),
+    )
+    def patch(self) -> HttpResponse:
+        return self.to_response(
+            [1, 2],
+            cookies={
+                'session_id': NewCookie(value='123'),  # wrong case
+            },
+        )
+
+    @validate(
+        ResponseSpec(
+            list[int],
+            status_code=HTTPStatus.OK,
+            cookies={
+                'session_id': CookieSpec(),
+            },
+        ),
+    )
+    def delete(self) -> HttpResponse:
+        return self.to_response(
+            [1, 2],
+            cookies={
+                'Session_Id': NewCookie(value='123'),  # wrong case
+            },
+        )
+
 
 @pytest.mark.parametrize(
     'method',
@@ -183,6 +217,8 @@ class _WrongCookieController(Controller[PydanticSerializer]):
         HTTPMethod.GET,
         HTTPMethod.POST,
         HTTPMethod.PUT,
+        HTTPMethod.PATCH,
+        HTTPMethod.DELETE,
     ],
 )
 def test_validate_cookies(
