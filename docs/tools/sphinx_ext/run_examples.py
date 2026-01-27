@@ -21,7 +21,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Final, TypeAlias, cast, final, override
+from typing import Any, ClassVar, Final, TypeAlias, cast, final
 
 import httpx
 import uvicorn
@@ -35,6 +35,7 @@ from docutils.parsers.rst import directives
 from sphinx.addnodes import highlightlang
 from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
+from typing_extensions import override
 
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
