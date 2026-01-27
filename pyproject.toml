@@ -306,7 +306,6 @@ venv = ".venv"
 
 
 [tool.pyrefly]
-enable-ignores = ["pyrefly"]
 ignore-missing-imports = ["*"]
 project-includes = ["django_modern_rest", "typesafety"]
 

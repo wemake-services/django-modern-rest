@@ -25,6 +25,7 @@ from typing import Any, ClassVar, Final, TypeAlias, cast, final
 
 import httpx
 import uvicorn
+import xmltodict
 from auto_pytabs.sphinx_ext import LiteralIncludeOverride
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
@@ -330,11 +331,23 @@ def _add_body_and_content_type(
     clean_args: list[str],
     run_args: _AppRunArgsT,
 ) -> None:
-    if 'body' in run_args:
-        body_data = json.dumps(run_args.get('body', {}))
-        args.extend(['-d', body_data])
-        clean_args.extend(['-d', body_data])
+    if 'body' not in run_args:
+        return
 
+    content_type = run_args.get('headers', {}).get(
+        'Content-Type',
+        None,
+    )
+    if content_type == 'application/json' or content_type is None:
+        body_data = json.dumps(run_args['body'])
+    elif content_type == 'application/xml':
+        body_data = xmltodict.unparse(run_args['body'], full_document=False)
+    else:
+        raise RuntimeError(f'{content_type} is not supported')
+
+    args.extend(['-d', body_data])
+    clean_args.extend(['-d', body_data])
+    if content_type is None:
         args.extend(['-H', 'Content-Type: application/json'])
         clean_args.extend(['-H', 'Content-Type: application/json'])
 
