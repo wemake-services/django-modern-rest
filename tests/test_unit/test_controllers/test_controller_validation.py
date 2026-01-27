@@ -390,11 +390,12 @@ def test_no_endpoints_with_error_handler() -> None:
     ],
 )
 def test_blueprints_no_controller_parsing(
+    *,
     component_parser: type[Any],
 ) -> None:
     """Ensure controllers with blueprints cannot have component parsers."""
 
-    class _CleanBlueprint(
+    class _Blueprint(
         Blueprint[PydanticSerializer],
         component_parser,  # type: ignore[misc]
     ):
@@ -410,4 +411,4 @@ def test_blueprints_no_controller_parsing(
             Controller[PydanticSerializer],
             component_parser,  # type: ignore[misc]
         ):
-            blueprints: ClassVar[BlueprintsT] = [_CleanBlueprint]
+            blueprints: ClassVar[BlueprintsT] = [_Blueprint]

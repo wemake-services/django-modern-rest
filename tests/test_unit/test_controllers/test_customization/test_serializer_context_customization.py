@@ -27,6 +27,6 @@ def test_custom_serializer_context_cls() -> None:
         is _SerializerContextSubclass
     )
     assert isinstance(
-        _CustomSerializerContextController._serializer_context,  # noqa: SLF001
+        _CustomSerializerContextController._serializer_context,
         _SerializerContextSubclass,
     )

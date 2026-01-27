@@ -1,6 +1,4 @@
-import sys
 from http import HTTPStatus
-from typing import final
 
 import pytest
 from django.http import HttpResponse
@@ -29,19 +27,16 @@ class _MsgSpecUserModel(msgspec.Struct):
     email: str
 
 
-@final
-class _UserController(Controller[MsgspecSerializer], Body[_MsgSpecUserModel]):
-    def get(self) -> _MsgSpecUserModel:
-        return _MsgSpecUserModel(email='email@test.edu')
+class _UserController(
+    Controller[MsgspecSerializer],
+    Body[_MsgSpecUserModel],
+):
+    """Blueprint for POST endpoint (with body)."""
 
     def post(self) -> _MsgSpecUserModel:
         return _MsgSpecUserModel(email=self.parsed_body.email)
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 def test_serializer_via_endpoint(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
@@ -52,13 +47,9 @@ def test_serializer_via_endpoint(
     response = _UserController.as_view()(post_request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED, f'post: {response=}'
+    assert response.status_code == HTTPStatus.CREATED, response.content
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason='3.14 does not fully support msgspec yet',
-)
 @pytest.mark.parametrize(
     ('err', 'is_raise'),
     [

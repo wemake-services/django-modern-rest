@@ -16,7 +16,7 @@ Benchmarks do not test real performance, they test ideas of performance.
 
 ## Assumptions
 
-- We test only the API part, because ``django-modern-rest`` does not include
+- We test only the API part, because `django-modern-rest` does not include
   any database features, we want to make sure that the part that
   we are covering is measured, not something else
 - We test the minimal possible app
@@ -25,7 +25,7 @@ Benchmarks do not test real performance, they test ideas of performance.
 - We test both sync (`gunicorn`)
   and async (`uvicorn`) version if the requested mode is supported
   (yes, DRF, we are looking at you)
-- But, we don't compare sync to async and vice a versa,
+- But, we don't compare sync to async and vice versa,
   because they have different logic, different deploy strategies, etc
 
 
@@ -89,7 +89,7 @@ ab -c 20 -n 1000 -l -p payload.json \
 
 ## Feature benchmarks
 
-We also benchmark several our features that can be used independenly.
+We also benchmark several our features that can be used independently.
 
 Pre-requirements:
 - [`hyperfine`](https://github.com/sharkdp/hyperfine)

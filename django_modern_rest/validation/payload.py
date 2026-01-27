@@ -1,11 +1,13 @@
 import dataclasses
-from collections.abc import Mapping, Set
+from collections.abc import Mapping, Sequence, Set
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.headers import NewHeader
+from django_modern_rest.parsers import Parser
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import ResponseSpec
 from django_modern_rest.settings import HttpSpec
 
@@ -37,6 +39,8 @@ class _BasePayload:
     error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
     allow_custom_http_methods: bool = False
     no_validate_http_spec: Set[HttpSpec] | None = None
+    parser_types: Sequence[type[Parser]] | None = None
+    renderer_types: Sequence[type[Renderer]] | None = None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

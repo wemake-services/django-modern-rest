@@ -49,13 +49,13 @@ def test_invalid_request_body(rf: RequestFactory, faker: Faker) -> None:
                 'loc': [],
                 'msg': (
                     'Value error, Cannot parse request body with content type '
-                    "'multipart/form-data', expected 'application/json'"
+                    "'multipart/form-data', expected=['application/json']"
                 ),
                 'input': '',
                 'ctx': {
                     'error': (
                         'Cannot parse request body with content type '
-                        "'multipart/form-data', expected 'application/json'"
+                        "'multipart/form-data', expected=['application/json']"
                     ),
                 },
             },

@@ -7,7 +7,7 @@ from typing_extensions import override
 from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.openapi.renderers.base import (
     BaseRenderer,
-    SchemaSerialier,
+    SchemaSerializer,
     json_serializer,
 )
 
@@ -26,7 +26,7 @@ class SwaggerRenderer(BaseRenderer):
     default_name: ClassVar[str] = 'swagger'
     content_type: ClassVar[str] = 'text/html'
     template_name: ClassVar[str] = 'django_modern_rest/swagger.html'
-    serializer: SchemaSerialier = staticmethod(json_serializer)  # noqa: WPS421
+    serializer: SchemaSerializer = staticmethod(json_serializer)  # noqa: WPS421
 
     @override
     def render(

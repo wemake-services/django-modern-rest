@@ -103,15 +103,9 @@ Example Workflow
 
 Let's say you have this URL configuration:
 
-.. code:: python
-
-    from django_modern_rest import Router, path
-
-    router = Router([
-        path('api/v1/users/', views.UserList.as_view()),
-        path('api/v1/posts/', views.PostList.as_view()),
-        path('api/v1/users/<int:id>/', views.UserDetail.as_view()),
-    ])
+.. literalinclude:: /examples/routing/simple_router.py
+  :caption: urls.py
+  :lines: 3-
 
 .. code-block::
   :caption: Traditional Django ``path()`` behavior
@@ -198,9 +192,9 @@ Performance Impact
 
 Benchmark results on MacBook Pro M4 Pro:
 
-- **Best case**: 8–9% faster (match found in first few URL patterns)
-- **Average case**: 8–9% faster (match found in middle of URL patterns list)
-- **Worst case**: 23–31% faster (404 Not Found, all patterns checked)
+- **Best case**: 9% faster (match found in first few URL patterns)
+- **Average case**: 13% faster (match found in middle of URL patterns list)
+- **Worst case**: 31% faster (404 Not Found, all patterns checked)
 
 The prefix-based optimization dramatically reduces regex operations:
 

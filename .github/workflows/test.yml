@@ -20,10 +20,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.11', '3.12', '3.13', '3.14', '3.14t']
+        include:
+          - python-version: '3.14t'
+            force_free_gil: true
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
 
@@ -46,6 +49,8 @@ jobs:
         poetry install --all-extras --all-groups
 
     - name: Run checks
+      env:
+        PYTHON_GIL: ${{ matrix.force_free_gil && '0' || '1' }}
       run: make test
 
     # Upload coverage to codecov: https://codecov.io/
@@ -56,19 +61,17 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
 
-  build-older-django:
+  test-django-versions:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.13']
         django-version:
-          - 'Django~=4.2.0'
-          - 'Django~=5.0.0'
-          - 'Django~=5.1.0'
+          - 'Django~=6.0.0'
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
 
@@ -103,7 +106,7 @@ jobs:
         python-version: ['3.13', '3.14t']
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
 
@@ -128,7 +131,7 @@ jobs:
     - name: Run checks
       run: |
         make smoke example
-        poetry run pytest --cov-fail-under=75
+        poetry run pytest --cov-fail-under=90
 
 
   build-no-pydantic:
@@ -139,7 +142,7 @@ jobs:
         python-version: ['3.13']
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
 
@@ -172,10 +175,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.11', '3.14']
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
 

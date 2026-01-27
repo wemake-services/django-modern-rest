@@ -6,31 +6,17 @@ from typing import (
     NotRequired,
 )
 
-try:
-    import msgspec
-except ImportError:  # pragma: no cover
-    print(  # noqa: WPS421
-        'Looks like `msgspec` is not installed, '
-        "consider using `pip install 'django-modern-rest[msgspec]'`",
-    )
-    raise
-
-
+import msgspec
 from typing_extensions import TypedDict, override
 
+from django_modern_rest.parsers import Parser, Raw
+from django_modern_rest.renderers import Renderer
 from django_modern_rest.serialization import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )
-from django_modern_rest.settings import (
-    Settings,
-    resolve_setting,
-)
 
 if TYPE_CHECKING:
-    from django_modern_rest.internal.json import (
-        FromJson,
-    )
     from django_modern_rest.metadata import EndpointMetadata
 
 
@@ -89,32 +75,28 @@ class MsgspecSerializer(BaseSerializer):
     response_parsing_error_model: ClassVar[Any] = MsgspecErrorModel
 
     # Custom API:
-    from_json_strict: ClassVar[bool] = True
+    deserialize_strict: ClassVar[bool] = True
     convert_kwargs: ClassVar[MsgspecConvertOptions] = {}
 
     @override
     @classmethod
-    def serialize(cls, structure: Any) -> bytes:
-        """Convert any object to json bytestring."""
-        serialize = resolve_setting(Settings.serialize, import_string=True)
-        return serialize(  # type: ignore[no-any-return]
-            structure,
-            cls.serialize_hook,
-        )
+    def serialize(
+        cls,
+        structure: Any,
+        *,
+        renderer_cls: type[Renderer],
+    ) -> bytes:
+        """Convert any object to a raw bytestring."""
+        return renderer_cls.render(structure, cls.serialize_hook)
 
     @override
     @classmethod
-    def deserialize(cls, buffer: 'FromJson') -> Any:
-        """
-        Convert string or bytestring to simple python object.
-
-        TypeAdapter used for type validation is cached for further uses.
-        """
-        deserialize = resolve_setting(Settings.deserialize, import_string=True)
-        return deserialize(
+    def deserialize(cls, buffer: Raw, *, parser_cls: type[Parser]) -> Any:
+        """Convert string or bytestring to simple python object."""
+        return parser_cls.parse(
             buffer,
             cls.deserialize_hook,
-            strict=cls.from_json_strict,
+            strict=cls.deserialize_strict,
         )
 
     @override

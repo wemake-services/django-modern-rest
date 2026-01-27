@@ -21,8 +21,8 @@ class UserController(  # <- `Controller` definition
     Body[UserCreateModel],  # <- Using `Component` with a model
 ):
     @modify(headers={'X-Default': NewHeader(value='1')})  # <- extra `Metadata`
-    def get(self) -> UserModel:  # <- `Endpoint` definition
-        return UserModel(uid=uuid.uuid4(), email='default@email.com')
-
     def post(self) -> UserModel:  # <- `Endpoint` definition
         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501

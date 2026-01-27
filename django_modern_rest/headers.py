@@ -2,8 +2,8 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
+    from django_modern_rest.renderers import Renderer
     from django_modern_rest.response import ResponseModification
-    from django_modern_rest.serialization import BaseSerializer
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -67,10 +67,10 @@ class HeaderSpec(_BaseResponseHeader):
 
 def build_headers(
     modification: 'ResponseModification',
-    serializer: type['BaseSerializer'],
+    renderer_cls: type['Renderer'],
 ) -> dict[str, str]:
     """Returns headers with values for raw data endpoints."""
-    result_headers: dict[str, Any] = {'Content-Type': serializer.content_type}
+    result_headers: dict[str, Any] = {'Content-Type': renderer_cls.content_type}
     if not modification.headers:
         return result_headers
     result_headers.update({
