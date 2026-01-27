@@ -154,6 +154,50 @@ def test_validate_correct_headers(
     assert json.loads(response.content) == []
 
 
+class _CasedHeadersController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            return_type=list[str],
+            status_code=HTTPStatus.OK,
+            headers={'X-Custom': HeaderSpec()},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return HttpResponse(b'[]', headers={'x-custom': 'abc'})
+
+    @validate(
+        ResponseSpec(
+            return_type=list[str],
+            status_code=HTTPStatus.OK,
+            headers={'x-custom': HeaderSpec()},
+        ),
+    )
+    def post(self) -> HttpResponse:
+        return HttpResponse(b'[]', headers={'X-Custom': 'abc'})
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.GET,
+        HTTPMethod.POST,
+    ],
+)
+def test_validate_headers_case(
+    dmr_rf: DMRRequestFactory,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Ensures that headers are case insensitive."""
+    request = dmr_rf.generic(str(method), '/whatever/')
+
+    response = _CasedHeadersController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == []
+
+
 class _MismatchingMetadata(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(int, status_code=HTTPStatus.OK),
