@@ -8,7 +8,10 @@ from django_modern_rest import (
     Blueprint,
     Body,
     Controller,
+    Cookies,
+    Headers,
     Path,
+    Query,
     ResponseSpec,
 )
 from django_modern_rest.controller import BlueprintsT
@@ -376,20 +379,36 @@ def test_no_endpoints_with_error_handler() -> None:
             raise NotImplementedError
 
 
-def test_no_double_parsing() -> None:
-    """Ensure we can't have parsing in both controller and blueprint."""
+@pytest.mark.parametrize(
+    'component_parser',
+    [
+        Body[dict[str, str]],
+        Query[dict[str, str]],
+        Path[dict[str, int]],
+        Headers[dict[str, str]],
+        Cookies[dict[str, str]],
+    ],
+)
+def test_blueprints_no_controller_parsing(
+    *,
+    component_parser: type[Any],
+) -> None:
+    """Ensure controllers with blueprints cannot have component parsers."""
 
-    class _BadBlueprint(Blueprint[PydanticSerializer], Body[dict[str, str]]):
+    class _Blueprint(
+        Blueprint[PydanticSerializer],
+        component_parser,  # type: ignore[misc]
+    ):
         def post(self) -> str:
             raise NotImplementedError
 
     with pytest.raises(
         EndpointMetadataError,
-        match='put parsing into blueprints',
+        match='Cannot have component parsers in both',
     ):
 
         class _BadController(
             Controller[PydanticSerializer],
-            Path[dict[str, str]],
+            component_parser,  # type: ignore[misc]
         ):
-            blueprints = [_BadBlueprint]
+            blueprints: ClassVar[BlueprintsT] = [_Blueprint]
