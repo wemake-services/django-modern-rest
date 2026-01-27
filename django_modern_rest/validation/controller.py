@@ -58,16 +58,15 @@ class ControllerValidator:
         if not controller.blueprints:
             return
 
-        if controller._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-            raise EndpointMetadataError(
-                f'{controller=} has blueprints but also has component parsers. '
-                'Controllers with blueprints must not have any parsing. '
-                'If you need parsed data, put parsing into blueprints instead.',
-            )
-
         controller_methods = controller._existing_http_methods.keys()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
         endpoints: set[str] = set()
         for blueprint in controller.blueprints:
+            if controller._component_parsers and blueprint._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                raise EndpointMetadataError(
+                    f'Cannot have component parsers in both {controller=} '
+                    f'and {blueprint=}, only one of them can have them, '
+                    'we recommend to put parsing into blueprints',
+                )
             if controller.serializer is not blueprint.serializer:
                 raise EndpointMetadataError(
                     'Composing blueprints with different serializer types '
