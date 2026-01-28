@@ -73,7 +73,7 @@ def _process_kwarg_field(
         return None
 
     openapi_key = field_def.metadata.get('openapi_key')
-    if not openapi_key:
+    if openapi_key is None:
         openapi_key = normalize_key(field_def.name)
 
     kwarg_value = getattr(kwarg, field_def.name)

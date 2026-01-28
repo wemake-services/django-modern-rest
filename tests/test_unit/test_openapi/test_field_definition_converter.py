@@ -1,24 +1,27 @@
 from unittest.mock import Mock
 
+from faker import Faker
+
 from django_modern_rest.openapi.converter import (
     normalize_value,
 )
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 
-def test_fd_conversion_with_kwarg_def() -> None:
+def test_fd_conversion_with_kwarg_def(faker: Faker) -> None:
     """Test FieldDefinition conversion including KwargDefinition."""
     mock_converter = Mock()
-    default_val = 42
+    default_val = faker.random_int()
+    exclusive_minimum = faker.random_int()
 
     fd = FieldDefinition(
         name='test',
         extra_data={
-            'exclusiveMinimum': 5,
+            'exclusiveMinimum': exclusive_minimum,
             'examples': [{'key': 'value'}],
         },
         kwarg_definition=KwargDefinition(
-            gt=5,
+            gt=exclusive_minimum,
             title='Test',
             default=default_val,
             schema_extra={'x-custom': 'value'},
@@ -28,7 +31,7 @@ def test_fd_conversion_with_kwarg_def() -> None:
     normalized = normalize_value(fd, mock_converter)
 
     assert normalized == {
-        'exclusiveMinimum': 5,
+        'exclusiveMinimum': exclusive_minimum,
         'examples': [{'key': 'value'}],
         'title': 'Test',
         'default': default_val,
