@@ -1,13 +1,17 @@
 from collections.abc import Callable, Iterator
 from dataclasses import Field, fields, is_dataclass
 from enum import Enum
-from typing import Any, TypeAlias, cast, final
+from typing import Any, ClassVar, Protocol, TypeAlias, cast, final
 
-from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
-from django_modern_rest.types import Empty
+
+class SchemaObject(Protocol):
+    """Type that represents the `dataclass` object."""
+
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]  # noqa: WPS234
+
 
 ConvertedSchema: TypeAlias = dict[str, Any]
-_ConverterFunc: TypeAlias = Callable[[Any], ConvertedSchema]
+_ConverterFunc: TypeAlias = Callable[[SchemaObject], ConvertedSchema]
 _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
@@ -58,67 +62,21 @@ def normalize_key(key: str) -> str:
     return key
 
 
-def _process_kwarg_field(
-    kwarg: KwargDefinition,
-    field_def: Field[Any],
-) -> tuple[str, Any] | None:
-    skipped_fields = {
-        'schema_extra',
-        'schema_component_key',
-        'include_in_schema',
-        'default',
-    }
+# pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false
+def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
+    """
+    Normalize a value for OpenAPI schema.
 
-    if field_def.name in skipped_fields:
-        return None
+    Handles:
+    - BaseObject instances (convert to schema dict)
+    - Lists and sequences (process elements recursively)
+    - Mappings (process keys and values recursively)
+    - Primitive values (return as-is)
+    - None values (should be filtered out by caller)
+    """
+    if is_dataclass(to_normalize):
+        return converter(cast(SchemaObject, to_normalize))
 
-    openapi_key = field_def.metadata.get('openapi_key')
-    if openapi_key is None:
-        openapi_key = normalize_key(field_def.name)
-
-    kwarg_value = getattr(kwarg, field_def.name)
-    if kwarg_value is not None:
-        return openapi_key, kwarg_value
-
-    return None
-
-
-def _convert_kwarg_definition(kwarg: KwargDefinition) -> ConvertedSchema:
-    schema: ConvertedSchema = {}
-
-    for field_def in fields(kwarg):
-        field_mapping = _process_kwarg_field(kwarg, field_def)
-        if field_mapping:
-            schema[field_mapping[0]] = field_mapping[1]
-
-    if kwarg.default is not Empty:
-        schema['default'] = kwarg.default
-
-    if kwarg.schema_extra:
-        schema.update(kwarg.schema_extra)
-
-    return schema
-
-
-def _convert_field_definition(
-    field_def: FieldDefinition,
-    converter: '_ConverterFunc',
-) -> ConvertedSchema:
-    kwarg_schema = {}
-    if field_def.kwarg_definition:
-        kwarg_schema = _convert_kwarg_definition(field_def.kwarg_definition)
-
-    extra_schema = cast(
-        ConvertedSchema,
-        normalize_value(field_def.extra_data, converter),
-    )
-    return {**kwarg_schema, **extra_schema}
-
-
-def _normalize_container_or_basic(
-    to_normalize: Any,
-    converter: '_ConverterFunc',
-) -> Any:
     if isinstance(to_normalize, list):
         return [
             normalize_value(list_item, converter) for list_item in to_normalize
@@ -134,28 +92,6 @@ def _normalize_container_or_basic(
         return to_normalize.value
 
     return to_normalize
-
-
-# pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false
-def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
-    """
-    Normalize a value for OpenAPI schema.
-
-    Handles:
-    - FieldDefinition instances (convert to schema dict)
-    - Dataclass instances (convert to schema dict)
-    - Lists and sequences (process elements recursively)
-    - Mappings (process keys and values recursively)
-    - Primitive values (return as-is)
-    - None values (should be filtered out by caller)
-    """
-    if isinstance(to_normalize, FieldDefinition):
-        return _convert_field_definition(to_normalize, converter)
-
-    if is_dataclass(to_normalize):
-        return converter(to_normalize)
-
-    return _normalize_container_or_basic(to_normalize, converter)
 
 
 @final
@@ -175,7 +111,7 @@ class SchemaConverter:
     _normalize_value: _NormalizeValueFunc = staticmethod(normalize_value)  # noqa: WPS421
 
     @classmethod
-    def convert(cls, schema_obj: Any) -> ConvertedSchema:
+    def convert(cls, schema_obj: SchemaObject) -> ConvertedSchema:
         """Convert the object to OpenAPI schema dictionary."""
         schema: ConvertedSchema = {}
 
@@ -193,5 +129,5 @@ class SchemaConverter:
 
     # Private API:
     @classmethod
-    def _iter_fields(cls, schema_obj: Any) -> Iterator[Field[Any]]:
+    def _iter_fields(cls, schema_obj: SchemaObject) -> Iterator[Field[Any]]:
         yield from fields(schema_obj)

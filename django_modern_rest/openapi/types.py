@@ -3,11 +3,9 @@
 # under MIT license.
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Final
+from typing import Any
 
 from django_modern_rest.types import Empty, EmptyObj
-
-_METADATA_OPENAPI_KEY: Final = 'openapi_key'
 
 
 @dataclass(frozen=True)
@@ -25,19 +23,15 @@ class KwargDefinition:
     const: bool | None = field(default=None)
     gt: float | None = field(
         default=None,
-        metadata={_METADATA_OPENAPI_KEY: 'exclusiveMinimum'},
     )
     ge: float | None = field(
         default=None,
-        metadata={_METADATA_OPENAPI_KEY: 'minimum'},
     )
     lt: float | None = field(
         default=None,
-        metadata={_METADATA_OPENAPI_KEY: 'exclusiveMaximum'},
     )
     le: float | None = field(
         default=None,
-        metadata={_METADATA_OPENAPI_KEY: 'maximum'},
     )
     multiple_of: float | None = field(default=None)
     min_items: int | None = field(default=None)

@@ -1,9 +1,10 @@
 import json
 from collections.abc import Callable
-from typing import Any, TypeAlias
+from typing import TypeAlias
+
+from django_modern_rest.openapi.converter import ConvertedSchema
 
 SerializedSchema: TypeAlias = str
-ConvertedSchema: TypeAlias = dict[str, Any]
 
 _Dumper: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
 
