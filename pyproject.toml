@@ -93,7 +93,7 @@ xmltodict = "^1.0"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8.2"
+sphinx = ">=8.2,<10.0"
 sphinx-autodoc-typehints = "^3.0"
 sphinx-iconify = "^0.3"
 sphinx-tabs = "^3.4"
