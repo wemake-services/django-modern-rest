@@ -6,6 +6,9 @@ from typing import Any, Final, final
 from django.utils import module_loading
 
 from django_modern_rest.envs import MAX_CACHE_SIZE
+from django_modern_rest.internal.cache import (
+    clear_settings_cache as clear_settings_cache,
+)
 from django_modern_rest.openapi.config import OpenAPIConfig
 
 try:
@@ -34,8 +37,8 @@ DMR_SETTINGS: Final = 'DMR_SETTINGS'
 class Settings(enum.StrEnum):
     """Keys for all settings."""
 
-    parser_types = 'parser_types'
-    renderer_types = 'renderer_types'
+    parsers = 'parsers'
+    renderers = 'renderers'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     responses = 'responses'
@@ -74,8 +77,8 @@ class HttpSpec(enum.StrEnum):
 
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
-    Settings.parser_types: _default_parser_types,
-    Settings.renderer_types: _default_renderer_types,
+    Settings.parsers: _default_parser_types,
+    Settings.renderers: _default_renderer_types,
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
         version='0.1.0',
@@ -141,14 +144,3 @@ def resolve_setting(
                 for list_item in setting  # pyright: ignore[reportUnknownVariableType]
             ]
     return setting  # pyright: ignore[reportUnknownVariableType]
-
-
-def clear_settings_cache() -> None:
-    """
-    Clears settings cache for all functions in this module.
-
-    Useful for tests, when you modify the global settings object.
-    """
-    # TODO: clean all caches
-    _resolve_defaults.cache_clear()
-    resolve_setting.cache_clear()

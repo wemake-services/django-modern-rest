@@ -24,8 +24,12 @@ class Parser:
 
     __slots__ = ()
 
-    # Must be defined in all subclasses:
     content_type: ClassVar[str]
+    """
+    Content-Type that this parser works with.
+
+    Must be defined for all subclasses.
+    """
 
     @classmethod
     @abc.abstractmethod
@@ -71,6 +75,7 @@ class JsonParser(Parser):
     __slots__ = ()
 
     content_type: ClassVar[str] = 'application/json'
+    """Works with ``json`` only."""
 
     @override
     @classmethod
@@ -99,11 +104,7 @@ class JsonParser(Parser):
 
         """
         try:
-            return json.loads(
-                to_deserialize,
-                strict=strict,
-                # TODO: support `deserializer`
-            )
+            return json.loads(to_deserialize, strict=strict)
         except (ValueError, TypeError) as exc:
             if to_deserialize == b'':
                 return None

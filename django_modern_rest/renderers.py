@@ -16,8 +16,12 @@ class Renderer:
 
     __slots__ = ()
 
-    # Must be defined in all subclasses:
     content_type: ClassVar[str]
+    """
+    Content-Type that this renderer works with.
+
+    Must be defined for all subclasses.
+    """
 
     @classmethod
     @abc.abstractmethod
@@ -65,7 +69,9 @@ class JsonRenderer(Renderer):
     __slots__ = ()
 
     content_type: ClassVar[str] = 'application/json'
-    encoder_cls: ClassVar[type[DjangoJSONEncoder]] = _DMREncoder
+    """Works with ``json`` only."""
+
+    _encoder_cls: ClassVar[type[DjangoJSONEncoder]] = _DMREncoder
 
     @override
     @classmethod
@@ -89,6 +95,6 @@ class JsonRenderer(Renderer):
         # We don't really care about raw json implementation. It is a fallback.
         return json.dumps(
             to_serialize,
-            cls=_DMREncoder,
+            cls=cls._encoder_cls,
             serializer=serializer,
         ).encode('utf8')

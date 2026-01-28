@@ -25,7 +25,7 @@ from typing import Any, ClassVar, Final, TypeAlias, cast, final
 
 import httpx
 import uvicorn
-from auto_pytabs.sphinx_ext import LiteralIncludeOverride
+import xmltodict
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
@@ -34,6 +34,8 @@ from docutils.nodes import Node, admonition, literal_block, title
 from docutils.parsers.rst import directives
 from sphinx.addnodes import highlightlang
 from sphinx.application import Sphinx
+from sphinx.directives.code import LiteralInclude as _LiteralInclude
+from typing_extensions import override
 
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
@@ -330,11 +332,23 @@ def _add_body_and_content_type(
     clean_args: list[str],
     run_args: _AppRunArgsT,
 ) -> None:
-    if 'body' in run_args:
-        body_data = json.dumps(run_args.get('body', {}))
-        args.extend(['-d', body_data])
-        clean_args.extend(['-d', body_data])
+    if 'body' not in run_args:
+        return
 
+    content_type = run_args.get('headers', {}).get(
+        'Content-Type',
+        None,
+    )
+    if content_type == 'application/json' or content_type is None:
+        body_data = json.dumps(run_args['body'])
+    elif content_type == 'application/xml':
+        body_data = xmltodict.unparse(run_args['body'], full_document=False)
+    else:
+        raise RuntimeError(f'{content_type} is not supported')
+
+    args.extend(['-d', body_data])
+    clean_args.extend(['-d', body_data])
+    if content_type is None:
         args.extend(['-H', 'Content-Type: application/json'])
         clean_args.extend(['-H', 'Content-Type: application/json'])
 
@@ -351,26 +365,27 @@ def _add_headers(
 
 
 @final
-class LiteralInclude(LiteralIncludeOverride):  # type: ignore[misc]
+class LiteralInclude(_LiteralInclude):
     """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
-        **LiteralIncludeOverride.option_spec,
+        **_LiteralInclude.option_spec,
         'no-run': directives.flag,
     }
 
+    @override
     def run(self) -> list[Node]:
         """Execute code examples and display results."""
         file_path = Path(self.env.relfn2path(self.arguments[0])[1])
         if not self._need_to_run(file_path):
-            return cast(list[Node], super().run())
+            return super().run()
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            return cast(list[Node], super().run())
+            return super().run()
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = cast(list[Node], super().run())
+        nodes = super().run()
 
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),

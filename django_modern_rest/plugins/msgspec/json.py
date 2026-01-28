@@ -49,9 +49,9 @@ class MsgspecJsonParser(Parser):
             ).decode(to_deserialize)
         except msgspec.DecodeError as exc:
             # Corner case: when deserializing an empty body,
-            # return `null` instead.
+            # return `None` instead.
             # We do this here, because we don't want
-            # a penalty for all posiive cases.
+            # a penalty for all positive cases.
             if to_deserialize == b'':
                 return None
             raise DataParsingError(str(exc)) from exc

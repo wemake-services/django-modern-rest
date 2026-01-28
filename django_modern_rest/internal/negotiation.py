@@ -8,15 +8,15 @@ if TYPE_CHECKING:
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
-class ContentNegotiation:
+class ConditionalType:
     """
     Internal type that we use as a metadata.
 
     Public API is to use
-    :func:`django_modern_rest.negotiation.content_negotiation` instead of this.
+    :func:`django_modern_rest.negotiation.conditional_type` instead of this.
     """
 
-    original: tuple[tuple['ContentType', Any], ...]
+    _original: tuple[tuple['ContentType', Any], ...]
     computed: Mapping[str, Any] = dataclasses.field(
         hash=False,
         init=False,
@@ -27,7 +27,7 @@ class ContentNegotiation:
         Post process passed objects.
 
         What we do here:
-        1. We have to have `_ContentNegotiation` hashable, so it can be cached
+        1. We have to have `_ConditionalType` hashable, so it can be cached
         2. We pass dict as pairs of tuples
         3. Then we pre-compute the dict back
 
@@ -35,4 +35,4 @@ class ContentNegotiation:
         Because objects will be rather small.
         It is Python after all!
         """
-        object.__setattr__(self, 'computed', dict(self.original))
+        object.__setattr__(self, 'computed', dict(self._original))

@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 import pytest
 from django.http import HttpResponse
@@ -28,8 +27,12 @@ class _MsgSpecUserModel(msgspec.Struct):
     email: str
 
 
-@final
-class _UserController(Controller[MsgspecSerializer], Body[_MsgSpecUserModel]):
+class _UserController(
+    Controller[MsgspecSerializer],
+    Body[_MsgSpecUserModel],
+):
+    """Blueprint for POST endpoint (with body)."""
+
     def post(self) -> _MsgSpecUserModel:
         return _MsgSpecUserModel(email=self.parsed_body.email)
 

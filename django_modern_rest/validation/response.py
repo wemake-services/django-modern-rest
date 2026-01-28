@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Mapping, Set
+from collections.abc import Mapping
 from functools import lru_cache
 from http import HTTPStatus
 from typing import (
@@ -16,11 +16,9 @@ from django.http import HttpResponse
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.exceptions import (
-    ResponseSerializationError,
-)
+from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import build_headers
-from django_modern_rest.internal.negotiation import ContentNegotiation
+from django_modern_rest.internal.negotiation import ConditionalType
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.negotiation import response_validation_negotiator
 from django_modern_rest.response import ResponseSpec
@@ -165,7 +163,7 @@ class ResponseValidator:
             and schema.return_type.__metadata__
             and isinstance(
                 schema.return_type.__metadata__[0],
-                ContentNegotiation,
+                ConditionalType,
             )
         ):
             content_types = schema.return_type.__metadata__[0].computed
@@ -191,21 +189,20 @@ class ResponseValidator:
                 self.serializer.error_serialize(exc),
             ) from None
 
-    def _validate_response_headers(
+    def _validate_response_headers(  # noqa: WPS210
         self,
         response: HttpResponse,
         schema: ResponseSpec,
     ) -> None:
         """Validates response headers against provided metadata."""
-        if schema.headers is None:
-            metadata_headers: Set[str] = set()
-        else:
-            metadata_headers = schema.headers.keys()
+        response_headers = {header.lower() for header in response.headers}
+        metadata_headers = {header.lower() for header in (schema.headers or ())}
+        if schema.headers is not None:
             missing_required_headers = {
-                header
+                header.lower()
                 for header, response_header in schema.headers.items()
                 if response_header.required
-            } - response.headers.keys()
+            } - response_headers
             if missing_required_headers:
                 raise ResponseSerializationError(
                     'Response has missing required '
@@ -213,9 +210,9 @@ class ResponseValidator:
                 )
 
         extra_response_headers = (
-            response.headers.keys()
+            response_headers
             - metadata_headers
-            - {'Content-Type'}  # it is added automatically
+            - {'content-type'}  # it is added automatically
         )
         if extra_response_headers:
             raise ResponseSerializationError(
@@ -229,6 +226,7 @@ class ResponseValidator:
         schema: ResponseSpec,
     ) -> None:
         """Validates response cookies against provided metadata."""
+        # NOTE: unlike http headers, cookies are case sensitive.
         metadata_cookies = schema.cookies or {}
 
         # Find missing cookies:

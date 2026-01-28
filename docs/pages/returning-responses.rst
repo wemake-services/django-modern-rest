@@ -124,6 +124,11 @@ If you need headers with not static, but dynamic values, use "real endpoints"
 and pass ``headers`` dict to
 :meth:`~django_modern_rest.controller.Controller.to_response` method.
 
+.. important::
+
+  Header definitions are case insensitive according to the HTTP spec.
+  ``Session`` and ``session`` is the same header.
+
 
 Describing cookies
 ------------------
@@ -162,6 +167,12 @@ with "real endpoints". As well as describing the expected cookies with
 
   All cookie parts are validated by default. Except ``expires`` field,
   because it is relative to the current time.
+
+
+.. important::
+
+  Coookie definitions are case sensitive according to the HTTP spec.
+  ``Session`` and ``session`` are two different cookies.
 
 
 .. _response_validation:

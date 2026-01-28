@@ -11,7 +11,7 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.internal.negotiation import (
-    ContentNegotiation as _ContentNegotiation,
+    ConditionalType as _ConditionalType,
 )
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.parsers import Parser
@@ -22,7 +22,7 @@ from django_modern_rest.serialization import BaseSerializer
 class RequestNegotiator:
     """Selects a correct parser type for a request."""
 
-    __slots__ = ('_default', '_parser_types', '_serializer')
+    __slots__ = ('_default', '_parsers', '_serializer')
 
     def __init__(
         self,
@@ -31,9 +31,9 @@ class RequestNegotiator:
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
-        self._parser_types = metadata.parser_types
-        # The first parser is the default one:
-        self._default = next(iter(self._parser_types.values()))
+        self._parsers = metadata.parsers
+        # The last configured parser is the most specific one:
+        self._default = next(reversed(self._parsers.values()))
 
     def __call__(self, request: HttpRequest) -> type[Parser]:
         """
@@ -59,9 +59,9 @@ class RequestNegotiator:
     def _decide(self, request: HttpRequest) -> type[Parser]:
         if request.content_type is None:
             return self._default
-        parser_type = self._parser_types.get(request.content_type)
+        parser_type = self._parsers.get(request.content_type)
         if parser_type is None:
-            expected = list(self._parser_types.keys())
+            expected = list(self._parsers.keys())
             raise RequestSerializationError(
                 self._serializer.error_serialize(
                     'Cannot parse request body '
@@ -75,7 +75,7 @@ class RequestNegotiator:
 class ResponseNegotiator:
     """Selects a correct renderer for a response body."""
 
-    __slots__ = ('_default', '_renderer_keys', '_renderer_types', '_serializer')
+    __slots__ = ('_default', '_renderer_keys', '_renderers', '_serializer')
 
     def __init__(
         self,
@@ -84,10 +84,10 @@ class ResponseNegotiator:
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
-        self._renderer_types = metadata.renderer_types
-        self._renderer_keys = list(self._renderer_types.keys())
-        # The first renderer is the default one:
-        self._default = next(iter(self._renderer_types.values()))
+        self._renderers = metadata.renderers
+        self._renderer_keys = list(self._renderers.keys())
+        # The last configured parser is the most specific one:
+        self._default = next(reversed(self._renderers.values()))
 
     def __call__(self, request: HttpRequest) -> type[Renderer]:
         """
@@ -126,7 +126,7 @@ class ResponseNegotiator:
                     f'{expected=!r}',
                 ),
             )
-        return self._renderer_types[renderer_type]
+        return self._renderers[renderer_type]
 
 
 def request_parser(request: HttpRequest) -> type[Parser] | None:
@@ -170,7 +170,7 @@ def response_validation_negotiator(
     It should not be used in production directly.
     Think of it as an internal validation helper.
     """
-    parser_types = metadata.parser_types
+    parser_types = metadata.parsers
     renderer_type = request_renderer(request)
     if renderer_type is None:
         content_type = response.headers['Content-Type']
@@ -179,14 +179,23 @@ def response_validation_negotiator(
 
     return parser_types.get(
         content_type,
-        next(iter(parser_types.values())),
+        next(reversed(parser_types.values())),
     )
 
 
 @final
 @enum.unique
 class ContentType(enum.StrEnum):
-    """Enumeration of content types."""
+    """
+    Enumeration of frequently used content types.
+
+    Attributes:
+        json: ``'application/json'`` format.
+        xml: ``'application/xml'`` format.
+        x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
+        form_data: ``'multipart/form-data'`` format.
+
+    """
 
     json = 'application/json'
     xml = 'application/xml'
@@ -194,9 +203,9 @@ class ContentType(enum.StrEnum):
     form_data = 'multipart/form-data'
 
 
-def content_negotiation(
+def conditional_type(
     mapping: Mapping[ContentType, Any],
-) -> _ContentNegotiation:
+) -> _ConditionalType:
     """
     Create conditional validation for different content types.
 
@@ -207,7 +216,7 @@ def content_negotiation(
     """
     if len(mapping) <= 1:
         raise EndpointMetadataError(
-            'content_negotiation must be called with a mapping of length >= 2, '
+            'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
-    return _ContentNegotiation(tuple(mapping.items()))
+    return _ConditionalType(tuple(mapping.items()))

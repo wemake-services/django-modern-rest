@@ -43,7 +43,7 @@ classifiers = [
 ]
 
 packages = [
-    {include = "django_modern_rest_pytest.py"}
+  { include = "django_modern_rest_pytest.py" }
 ]
 
 
@@ -64,6 +64,7 @@ django = "^5.2"
 django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 pyright = "^1.1"
+pyrefly = "^0.49"
 
 codespell = "^2.4"
 wemake-python-styleguide = "^1.4"
@@ -98,15 +99,18 @@ sphinx-iconify = "^0.3"
 sphinx-tabs = "^3.4"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
-sphinx-design = "^0.6"
+sphinx-design = ">=0.6,<0.8"
 sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
-shibuya = "^2025.1"
+shibuya = "^2026.1"
 
 # Needed for our extension:
 auto-pytabs = "^0.5"
 uvicorn = "^0.40"
 httpx = "^0.28"
+
+# Needed for examples:
+xmltodict = "^1.0"
 
 
 [tool.poetry.plugins."pytest11"]
@@ -302,6 +306,11 @@ exclude = ["django_modern_rest/internal/json/msgspec.py"]
 strict = ["django_modern_rest/**/*"]
 venvPath = "."
 venv = ".venv"
+
+
+[tool.pyrefly]
+ignore-missing-imports = ["*"]
+project-includes = ["django_modern_rest", "typesafety"]
 
 
 [tool.codespell]

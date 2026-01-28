@@ -34,6 +34,12 @@ layers =
 ignore_imports =
   # Mixin validation:
   django_modern_rest.validation.* -> django_modern_rest.options_mixins
+  # Settings can clear cache:
+  django_modern_rest.settings -> django_modern_rest.internal.cache
+  # Internal cache can import anything:
+  django_modern_rest.internal.cache -> django_modern_rest.plugins.msgspec.json
+  django_modern_rest.internal.cache -> django_modern_rest.plugins.pydantic
+  django_modern_rest.internal.cache -> django_modern_rest.validation.response
 
 
 [importlinter:contract:no-optional-deps]
@@ -59,6 +65,7 @@ ignore_imports =
   django_modern_rest.plugins.msgspec.* -> msgspec
   # Optional json support from msgspec:
   django_modern_rest.settings -> msgspec
+  django_modern_rest.internal.json -> msgspec
 
 
 [importlinter:contract:plugins-independence]

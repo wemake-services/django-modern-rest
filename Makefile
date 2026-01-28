@@ -16,6 +16,7 @@ lint:
 type-check:
 	poetry run mypy .
 	poetry run pyright
+	poetry run pyrefly check
 
 .PHONY: spell-check
 spell-check:

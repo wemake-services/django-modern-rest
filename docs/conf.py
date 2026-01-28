@@ -64,7 +64,6 @@ extensions = [
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
-    'auto_pytabs.sphinx_ext',
     'sphinx_design',
     'sphinx_copybutton',
     'sphinx_contributors',
@@ -113,7 +112,7 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.decorators._ReturnT'),
     (PY_CLASS, 'django_modern_rest.decorators._ViewT'),
     (PY_CLASS, 'django_modern_rest.decorators._TypeT'),
-    (PY_CLASS, 'django_modern_rest.internal.negotiation.ContentNegotiation'),
+    (PY_CLASS, 'django_modern_rest.internal.negotiation.ConditionalType'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),

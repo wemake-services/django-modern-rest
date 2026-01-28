@@ -7,6 +7,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     NewType,
     assert_never,
     cast,
@@ -15,9 +16,11 @@ from typing import (
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponse
 
+from django_modern_rest.components import Body
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.metadata import ComponentParserSpec, EndpointMetadata
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import (
@@ -41,9 +44,20 @@ if TYPE_CHECKING:
 #: before passing them to validation.
 _AllResponses = NewType('_AllResponses', list[ResponseSpec])
 
+#: HTTP methods that should not have a request body according to HTTP spec.
+#: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
+#: See RFC 7231 for more details.
+_HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
+    'GET',
+    'HEAD',
+    'DELETE',
+    'CONNECT',
+    'TRACE',
+))
+
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class _ResponseListValidator:
+class _ResponseListValidator:  # noqa: WPS214
     """Validates responses metadata."""
 
     payload: PayloadT
@@ -78,36 +92,39 @@ class _ResponseListValidator:
                 )
             unique.setdefault(response.status_code, response)
 
-    def _validate_header_descriptions(
+    def _validate_header_descriptions(  # noqa: WPS231
         self,
         responses: _AllResponses,
     ) -> None:
         for response in responses:
             if response.headers is None:
                 continue
-            if any(
-                isinstance(header, NewHeader)  # pyright: ignore[reportUnnecessaryIsInstance]
-                for header in response.headers.values()
-            ):
-                raise EndpointMetadataError(
-                    f'Cannot use `NewHeader` in {response} , '
-                    f'use `HeaderSpec` instead in {self.endpoint!r}',
-                )
+            for header_name, header in response.headers.items():
+                if header_name.lower() == 'set-cookie':
+                    raise EndpointMetadataError(
+                        f'Cannot use "Set-Cookie" header in {response}, use '
+                        f'`cookies=` parameter instead in {self.endpoint!r}',
+                    )
+                if isinstance(header, NewHeader):  # type: ignore[unreachable]
+                    raise EndpointMetadataError(
+                        f'Cannot use `NewHeader` in {response} , use '
+                        f'`HeaderSpec` instead in {self.endpoint!r}',
+                    )
 
     def _validate_cookie_descriptions(
         self,
         responses: _AllResponses,
     ) -> None:
         for response in responses:
-            if response.headers is None:
+            if response.cookies is None:
                 continue
             if any(
-                header_name.lower() == 'set-cookie'
-                for header_name in response.headers
+                isinstance(cookie, NewCookie)  # pyright: ignore[reportUnnecessaryIsInstance]
+                for cookie in response.cookies.values()
             ):
                 raise EndpointMetadataError(
-                    f'Cannot use "Set-Cookie" header in {response}'
-                    f'use `cookies=` parameter instead in {self.endpoint!r}',
+                    f'Cannot use `NewCookie` in {response} , '
+                    f'use `CookieSpec` instead in {self.endpoint!r}',
                 )
 
     def _validate_http_spec(
@@ -155,6 +172,34 @@ def _validate_empty_response_body(
                 f'from an endpoint {endpoint!r} '
                 f'with status code {response.status_code}',
             )
+
+
+def _validate_empty_request_body(
+    method: str,
+    component_parsers: list[ComponentParserSpec],
+    *,
+    endpoint: str,
+) -> None:
+    """Validate that methods without body don't use Body component.
+
+    According to HTTP spec, methods like GET, HEAD, DELETE, CONNECT, TRACE
+    should not have a request body. If a controller uses Body component
+    with these methods, an EndpointMetadataError will be raised.
+    """
+    if method.upper() not in _HTTP_METHODS_WITHOUT_BODY:
+        return
+
+    has_body = any(
+        is_safe_subclass(component_cls, Body)
+        for component_cls, _ in component_parsers
+    )
+    if has_body:
+        raise EndpointMetadataError(
+            f'HTTP method {method.upper()!r} cannot have a request body, '
+            f'but endpoint {endpoint!r} uses Body component. '
+            f'Either remove Body component or use a different HTTP method '
+            f'like POST, PUT, or PATCH.',
+        )
 
 
 def _is_check_enabled(
@@ -219,6 +264,14 @@ class EndpointMetadataValidator:  # noqa: WPS214
         )
         func.__name__ = method  # we can change it :)
         endpoint = str(func)
+
+        self._validate_request_http_spec(
+            method,
+            endpoint=endpoint,
+            blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
+        )
+
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
@@ -312,13 +365,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parser_types=self._build_parser_types(
+            parsers=self._build_parser_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderer_types=self._build_renderer_types(
+            renderers=self._build_renderer_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
@@ -353,7 +406,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
-        self._validate_new_headers(payload, endpoint=endpoint)
+        self._validate_new_http_parts(payload, endpoint=endpoint)
         modification = ResponseModification(
             return_type=return_annotation,
             headers=payload.headers,
@@ -390,13 +443,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parser_types=self._build_parser_types(
+            parsers=self._build_parser_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderer_types=self._build_renderer_types(
+            renderers=self._build_renderer_types(
                 payload,
                 blueprint_cls,
                 controller_cls,
@@ -458,13 +511,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parser_types=self._build_parser_types(
+            parsers=self._build_parser_types(
                 None,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderer_types=self._build_renderer_types(
+            renderers=self._build_renderer_types(
                 None,
                 blueprint_cls,
                 controller_cls,
@@ -482,12 +535,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> dict[str, type[Parser]]:
-        payload_types = () if payload is None else (payload.parser_types or ())
-        blueprint_types = (
-            () if blueprint_cls is None else blueprint_cls.parser_types
-        )
+        payload_types = () if payload is None else (payload.parsers or ())
+        blueprint_types = () if blueprint_cls is None else blueprint_cls.parsers
         settings_types = resolve_setting(
-            Settings.parser_types,
+            Settings.parsers,
             import_string=True,
         )
         if not settings_types:
@@ -496,12 +547,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 'configured in settings',
             )
         return {
+            # TODO: fix the ordering.
             typ.content_type: typ
             for typ in (
-                *controller_cls.parser_types,
+                *settings_types,
+                *controller_cls.parsers,
                 *blueprint_types,
                 *payload_types,
-                *settings_types,
             )
         }
 
@@ -513,14 +565,12 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> dict[str, type[Renderer]]:
-        payload_types = (
-            () if payload is None else (payload.renderer_types or ())
-        )
+        payload_types = () if payload is None else (payload.renderers or ())
         blueprint_types = (
-            () if blueprint_cls is None else blueprint_cls.renderer_types
+            () if blueprint_cls is None else blueprint_cls.renderers
         )
         settings_types = resolve_setting(
-            Settings.renderer_types,
+            Settings.renderers,
             import_string=True,
         )
         if not settings_types:
@@ -531,14 +581,14 @@ class EndpointMetadataValidator:  # noqa: WPS214
         return {
             typ.content_type: typ
             for typ in (
-                *controller_cls.renderer_types,
+                *settings_types,
+                *controller_cls.renderers,
                 *blueprint_types,
                 *payload_types,
-                *settings_types,
             )
         }
 
-    def _validate_new_headers(
+    def _validate_new_http_parts(
         self,
         payload: ModifyEndpointPayload,
         *,
@@ -553,6 +603,16 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response',
+            )
+        if payload.cookies is not None and any(
+            isinstance(cookie, CookieSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for cookie in payload.cookies.values()
+        ):
+            raise EndpointMetadataError(
+                f'Since {endpoint!r} returns raw data, '
+                f'it is not possible to use `CookieSpec` '
+                'because there are no existing cookies to describe. Use '
+                '`NewCookie` to add new cookies to the response',
             )
 
     def _validate_return_annotation(
@@ -591,6 +651,32 @@ class EndpointMetadataValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'{endpoint!r} returns raw data, '
                 'it requires `@modify` decorator instead of `@validate`',
+            )
+
+    def _validate_request_http_spec(
+        self,
+        method: str,
+        *,
+        endpoint: str,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        """Validate HTTP spec rules for request."""
+        payload_items = (
+            None if self.payload is None else self.payload.no_validate_http_spec
+        )
+        if _is_check_enabled(
+            HttpSpec.empty_request_body,
+            payload_items,
+            blueprint_cls,
+            controller_cls,
+        ):
+            source = blueprint_cls or controller_cls
+            component_parsers = source._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            _validate_empty_request_body(
+                method,
+                component_parsers,
+                endpoint=endpoint,
             )
 
     def _validate_error_handler(

@@ -16,6 +16,7 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import (
@@ -150,6 +151,50 @@ def test_validate_correct_headers(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == []
+
+
+class _CasedHeadersController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            return_type=list[str],
+            status_code=HTTPStatus.OK,
+            headers={'X-Custom': HeaderSpec()},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return HttpResponse(b'[]', headers={'x-custom': 'abc'})
+
+    @validate(
+        ResponseSpec(
+            return_type=list[str],
+            status_code=HTTPStatus.OK,
+            headers={'x-custom': HeaderSpec()},
+        ),
+    )
+    def post(self) -> HttpResponse:
+        return HttpResponse(b'[]', headers={'X-Custom': 'abc'})
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.GET,
+        HTTPMethod.POST,
+    ],
+)
+def test_validate_headers_case(
+    dmr_rf: DMRRequestFactory,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Ensures that headers are case insensitive."""
+    request = dmr_rf.generic(str(method), '/whatever/')
+
+    response = _CasedHeadersController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == []
 
 
@@ -518,6 +563,22 @@ def test_validate_with_set_cookie_header(header_name: str) -> None:
                     return_type=dict,
                     status_code=HTTPStatus.OK,
                     headers={header_name: HeaderSpec(required=True)},
+                ),
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError
+
+
+def test_validate_with_new_cookie() -> None:
+    """Ensures `@validate` can't be used with `NewCookie`."""
+    with pytest.raises(EndpointMetadataError, match='NewCookie'):
+
+        class _WrongValidate(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(
+                    return_type=int,
+                    status_code=HTTPStatus.OK,
+                    cookies={'test': NewCookie(value='a')},  # type: ignore[dict-item]
                 ),
             )
             def get(self) -> HttpResponse:
