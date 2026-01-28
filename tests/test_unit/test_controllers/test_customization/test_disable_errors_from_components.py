@@ -14,7 +14,7 @@ from django_modern_rest.test import DMRRequestFactory
 class _WrongController(Controller[PydanticSerializer]):
     """All return types of these methods are not correct."""
 
-    responses_from_components = False
+    enable_semantic_responses = False
 
     def get(self) -> str:
         return 1  # type: ignore[return-value]

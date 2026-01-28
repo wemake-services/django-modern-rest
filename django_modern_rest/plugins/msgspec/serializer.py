@@ -72,7 +72,7 @@ class MsgspecSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = msgspec.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = MsgspecEndpointOptimizer
-    response_parsing_error_model: ClassVar[Any] = MsgspecErrorModel
+    default_error_model: ClassVar[Any] = MsgspecErrorModel
 
     # Custom API:
     deserialize_strict: ClassVar[bool] = True

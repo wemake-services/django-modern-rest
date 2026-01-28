@@ -136,7 +136,7 @@ class PydanticSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
-    response_parsing_error_model: ClassVar[Any] = PydanticErrorModel
+    default_error_model: ClassVar[Any] = PydanticErrorModel
 
     # Custom API:
 

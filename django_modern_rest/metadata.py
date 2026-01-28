@@ -19,11 +19,11 @@ if TYPE_CHECKING:
         Callback,
         ExternalDocumentation,
         Reference,
-        SecurityRequirement,
         Server,
     )
     from django_modern_rest.parsers import Parser
     from django_modern_rest.renderers import Renderer
+    from django_modern_rest.security.base import AsyncAuth, SyncAuth
 
 ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
 
@@ -94,6 +94,7 @@ class EndpointMetadata:
     component_parsers: list[ComponentParserSpec]
     parsers: dict[str, type['Parser']]
     renderers: dict[str, type['Renderer']]
+    auth: list['SyncAuth | AsyncAuth'] | None
 
     # OpenAPI documentation fields:
     summary: str | None = None
@@ -101,7 +102,6 @@ class EndpointMetadata:
     tags: list[str] | None = None
     operation_id: str | None = None
     deprecated: bool = False
-    security: list['SecurityRequirement'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
     callbacks: 'dict[str, Callback | Reference] | None' = None
     servers: list['Server'] | None = None

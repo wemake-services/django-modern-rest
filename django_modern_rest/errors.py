@@ -7,7 +7,10 @@ from typing import (
 
 from django.http import HttpResponse
 
-from django_modern_rest.exceptions import SerializationError
+from django_modern_rest.exceptions import (
+    NotAuthenticatedError,
+    SerializationError,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint
@@ -92,7 +95,7 @@ def global_error_handler(
     """
     from django_modern_rest.negotiation import request_renderer  # noqa: PLC0415
 
-    if isinstance(exc, SerializationError):
+    if isinstance(exc, (SerializationError, NotAuthenticatedError)):
         renderer_cls = request_renderer(
             controller.request,
         ) or endpoint.response_negotiator(controller.request)
