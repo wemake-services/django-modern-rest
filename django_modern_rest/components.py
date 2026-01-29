@@ -26,6 +26,12 @@ class ComponentParser:
 
     # Public API:
     context_name: ClassVar[str]
+    """
+    All subtypes must provide a unique name that will be used to parse context.
+
+    We use a single context for all parsing, this component
+    will live under a dict field with this name.
+    """
 
     @classmethod
     @abc.abstractmethod
@@ -59,7 +65,7 @@ class ComponentParser:
         return [
             ResponseSpec(
                 # We do this for runtime validation, not static type check:
-                serializer.response_parsing_error_model,
+                serializer.default_error_model,
                 status_code=RequestSerializationError.status_code,
             ),
         ]

@@ -9,12 +9,14 @@ from typing import (
     overload,
 )
 
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.exceptions import (
+    NotAuthenticatedError,
     ResponseSerializationError,
 )
 from django_modern_rest.headers import NewHeader
@@ -23,12 +25,12 @@ from django_modern_rest.openapi.objects import (
     Callback,
     ExternalDocumentation,
     Reference,
-    SecurityRequirement,
     Server,
 )
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import APIError, ResponseSpec, build_response
+from django_modern_rest.response import APIError, ResponseSpec
+from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (
     HttpSpec,
@@ -185,7 +187,7 @@ class Endpoint:  # noqa: WPS214
             return controller.handle_error(self, exc)
         except Exception:
             # And the last option is to handle error globally:
-            return self._handle_default_error(active_blueprint, exc)
+            return self._global_error_handler(active_blueprint, exc)
 
     async def handle_async_error(
         self,
@@ -220,31 +222,30 @@ class Endpoint:  # noqa: WPS214
             return await controller.handle_async_error(self, exc)
         except Exception:
             # And the last option is to handle error globally:
-            return self._handle_default_error(active_blueprint, exc)
+            return self._global_error_handler(active_blueprint, exc)
 
     def _async_endpoint(
         self,
         func: Callable[..., Any],
     ) -> Callable[..., Awaitable[HttpResponse]]:
+        # NOTE: if you change something here, also change in `_sync_endpoint`
         async def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
             active_blueprint = controller.active_blueprint
-            # Parse request:
-            try:
+            try:  # noqa: WPS229
+                # Run checks:
+                await self._run_async_checks(controller)
+
+                # Parse request:
                 active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     self,
                     active_blueprint,
                 )
-            except Exception as exc:
-                return self._make_http_response(
-                    controller,
-                    await self.handle_async_error(controller, exc),
-                )
-            # Return response:
-            try:
+
+                # Return response:
                 func_result = await func(active_blueprint)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
                 func_result = active_blueprint.to_error(
@@ -262,25 +263,25 @@ class Endpoint:  # noqa: WPS214
         self,
         func: Callable[..., Any],
     ) -> Callable[..., HttpResponse]:
+        # NOTE: if you change something here, also change in `_async_endpoint`
         def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponse:
             active_blueprint = controller.active_blueprint
-            # Parse request:
-            try:
+
+            try:  # noqa: WPS229
+                # Run checks:
+                self._run_checks(controller)
+
+                # Parse request:
                 active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     self,
                     active_blueprint,
                 )
-            except Exception as exc:
-                return self._make_http_response(
-                    controller,
-                    self.handle_error(controller, exc),
-                )
-            # Return response:
-            try:
+
+                # Return response:
                 func_result = func(active_blueprint)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
                 func_result = active_blueprint.to_error(
@@ -294,6 +295,39 @@ class Endpoint:  # noqa: WPS214
 
         return decorator
 
+    def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
+        # Run auth checks:
+        if self.metadata.auth is None:
+            return
+        for auth in self.metadata.auth:
+            assert isinstance(auth, SyncAuth)  # noqa: S101
+            try:
+                user = auth(self, controller)
+            except PermissionDenied:
+                raise NotAuthenticatedError from None
+            else:
+                if user is not None:
+                    return
+        raise NotAuthenticatedError
+
+    async def _run_async_checks(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        # Run auth checks:
+        if self.metadata.auth is None:
+            return
+        for auth in self.metadata.auth:
+            assert isinstance(auth, AsyncAuth)  # noqa: S101
+            try:
+                user = await auth(self, controller)  # noqa: WPS476
+            except PermissionDenied:
+                raise NotAuthenticatedError from None
+            else:
+                if user is not None:
+                    return
+        raise NotAuthenticatedError
+
     def _make_http_response(
         self,
         controller: 'Controller[BaseSerializer]',
@@ -306,18 +340,14 @@ class Endpoint:  # noqa: WPS214
         just validates it before returning.
         """
         try:
-            return self._validate_response(
-                controller,
-                raw_data,
-            )
+            return self._validate_response(controller, raw_data)
         except ResponseSerializationError as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # here, because it is too late. Since `ResponseSerializationError`
-            # happened mostly because the return
+            # happened most likely because the return
             # schema validation was not successful.
-            payload = {'detail': exc.args[0]}
             return controller.to_error(
-                payload,
+                {'detail': exc.args[0]},
                 status_code=exc.status_code,
             )
 
@@ -338,16 +368,15 @@ class Endpoint:  # noqa: WPS214
             controller,
             raw_data,
         )
-        return build_response(
-            controller.serializer,
-            raw_data=validated.raw_data,
+        return controller.to_response(
+            validated.raw_data,
             status_code=validated.status_code,
             headers=validated.headers,
             cookies=validated.cookies,
             renderer_cls=validated.renderer_cls,
         )
 
-    def _handle_default_error(
+    def _global_error_handler(
         self,
         blueprint: 'Blueprint[BaseSerializer]',
         exc: Exception,
@@ -379,12 +408,13 @@ def validate(  # noqa: WPS234
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -405,12 +435,13 @@ def validate(
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -431,12 +462,13 @@ def validate(
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -456,12 +488,13 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -525,20 +558,27 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
-        parsers: List of types to be used for this endpoint
+        parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderers: List of types to be used for this endpoint
+        renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
+        auth: Sequence of auth instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`django_modern_rest.security.SyncAuth`.
+            Async endpoints must use instances
+            of :class:`django_modern_rest.security.AsyncAuth`.
+            Set it to ``None`` to disable auth of this endpoint.
+        enable_semantic_responses: If set to ``True`` also produces
+            pre-defined responses from components
+            to be contained in the endpoint's schema.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
-        security: A declaration of which security mechanisms can be used
-            for this operation.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
@@ -566,12 +606,13 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             allow_custom_http_methods=allow_custom_http_methods,
             parsers=parsers,
             renderers=renderers,
+            auth=auth,
+            enable_semantic_responses=enable_semantic_responses,
             summary=summary,
             description=description,
             tags=tags,
             operation_id=operation_id,
             deprecated=deprecated,
-            security=security,
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,
@@ -661,12 +702,13 @@ def modify(
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -686,12 +728,13 @@ def modify(
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -711,12 +754,13 @@ def modify(
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -735,12 +779,13 @@ def modify(  # noqa: WPS211
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
+    auth: Sequence[AsyncAuth | SyncAuth] | None = (),
+    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
-    security: list[SecurityRequirement] | None = None,
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
@@ -782,24 +827,27 @@ def modify(  # noqa: WPS211
         allow_custom_http_methods: Should we allow custom HTTP
             methods for this endpoint. By "custom" we mean ones that
             are not in :class:`http.HTTPMethod` enum.
-        parsers: List of types to be used for this endpoint
+        parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderers: List of types to be used for this endpoint
+        renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
+        auth: Sequence of auth instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`django_modern_rest.security.SyncAuth`.
+            Async endpoints must use instances
+            of :class:`django_modern_rest.security.AsyncAuth`.
+            Set it to ``None`` to disable auth of this endpoint.
+        enable_semantic_responses: If set to ``True`` also produces
+            pre-defined responses from components
+            to be contained in the endpoint's schema.
         summary: A short summary of what the operation does.
-
         description: A verbose explanation of the operation behavior.
-
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
         operation_id: Unique string used to identify the operation.
-
         deprecated: Declares this operation to be deprecated.
-
-        security: A declaration of which security mechanisms can be used
-            for this operation.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
@@ -830,12 +878,13 @@ def modify(  # noqa: WPS211
             allow_custom_http_methods=allow_custom_http_methods,
             parsers=parsers,
             renderers=renderers,
+            auth=auth,
+            enable_semantic_responses=enable_semantic_responses,
             summary=summary,
             description=description,
             tags=tags,
             operation_id=operation_id,
             deprecated=deprecated,
-            security=security,
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,

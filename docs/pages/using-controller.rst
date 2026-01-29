@@ -187,7 +187,7 @@ If you need granual control, you can change anything.
 
 Here are feature that you can enable or disable easily:
 
-- :attr:`~django_modern_rest.controller.Controller.responses_from_components`
+- :attr:`~django_modern_rest.controller.Controller.enable_semantic_responses`
   set it to ``False`` to disable automatic responses metadata
   generation for component parsers, can be useful
   when you create your own exceptions handlers

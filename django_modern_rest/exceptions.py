@@ -51,3 +51,14 @@ class RequestSerializationError(SerializationError):
 @final
 class ResponseSerializationError(SerializationError):
     """Raised when we fail to parse some response part."""
+
+
+@final
+class NotAuthenticatedError(Exception):
+    """Raised when we fail to authenticate a user."""
+
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.UNAUTHORIZED
+
+    def __init__(self, msg: str = 'Not authenticated') -> None:
+        """Provides default error message."""
+        super().__init__(msg)

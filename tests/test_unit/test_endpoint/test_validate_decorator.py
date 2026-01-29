@@ -510,14 +510,14 @@ def test_validate_responses_from_blueprint() -> None:
     })
 
 
-def test_validate_responses_from_components() -> None:
-    """Ensures `@validate` has right `responses_from_components` metadata."""
+def test_validate_enable_semantic_responses() -> None:
+    """Ensures `@validate` has right `enable_semantic_responses` metadata."""
 
     class _Blueprint(
         Blueprint[PydanticSerializer],
         Body[list[str]],
     ):
-        responses_from_components = False
+        enable_semantic_responses = False
         responses: ClassVar[list[ResponseSpec]] = [
             ResponseSpec(
                 dict[str, str],

@@ -103,9 +103,10 @@ sphinx-design = ">=0.6,<0.8"
 sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
+# TODO: remove whe `sphinx-tabs` is fixed:
+docutils = "0.21.2"
 
 # Needed for our extension:
-auto-pytabs = "^0.5"
 uvicorn = "^0.40"
 httpx = "^0.28"
 

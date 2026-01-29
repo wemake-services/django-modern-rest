@@ -108,26 +108,6 @@ files = [
 ]
 
 [[package]]
-name = "auto-pytabs"
-version = "0.5.0"
-description = "Automatically generate code examples for different Python versions in mkdocs or Sphinx based documentations"
-optional = false
-python-versions = "<4.0,>=3.8"
-groups = ["docs"]
-files = [
-    {file = "auto_pytabs-0.5.0-py3-none-any.whl", hash = "sha256:e59fb6d2f8b41b05d0906a322dd4bb1a86749d429483ec10036587de3657dcc8"},
-    {file = "auto_pytabs-0.5.0.tar.gz", hash = "sha256:30087831c8be5b2314e663efd06c96b84c096572a060a492540f586362cc4326"},
-]
-
-[package.dependencies]
-ruff = ">=0.4"
-
-[package.extras]
-markdown = ["markdown (>=3.2.1)"]
-mkdocs = ["mkdocs (>=1.4.2,<2)"]
-sphinx = ["sphinx (>=4)"]
-
-[[package]]
 name = "babel"
 version = "2.17.0"
 description = "Internationalization utilities"
@@ -817,14 +797,14 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "hypothesis"
-version = "6.151.2"
+version = "6.151.4"
 description = "The property-based testing library for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "hypothesis-6.151.2-py3-none-any.whl", hash = "sha256:909d2b5f0dc80640561bb2c3859f3c56a52ed8d1cc589e5e6450362ced8c31a0"},
-    {file = "hypothesis-6.151.2.tar.gz", hash = "sha256:fc91f88a77074b31c7ab871eebab3d2e0210fd3095f1d1ecbd9440c1c6bc06d9"},
+    {file = "hypothesis-6.151.4-py3-none-any.whl", hash = "sha256:a1cf7e0fdaa296d697a68ff3c0b3912c0050f07aa37e7d2ff33a966749d1d9b4"},
+    {file = "hypothesis-6.151.4.tar.gz", hash = "sha256:658a62da1c3ccb36746ac2f7dc4bb1a6e76bd314e0dc54c4e1aaba2503d5545c"},
 ]
 
 [package.dependencies]
@@ -2315,7 +2295,7 @@ version = "0.14.14"
 description = "An extremely fast Python linter and code formatter, written in Rust."
 optional = false
 python-versions = ">=3.7"
-groups = ["dev", "docs"]
+groups = ["dev"]
 files = [
     {file = "ruff-0.14.14-py3-none-linux_armv6l.whl", hash = "sha256:7cfe36b56e8489dee8fbc777c61959f60ec0f1f11817e8f2415f429552846aed"},
     {file = "ruff-0.14.14-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:6006a0082336e7920b9573ef8a7f52eec837add1265cc74e04ea8a4368cd704c"},
@@ -2340,14 +2320,14 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.9.4"
+version = "4.9.5"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.9.4-py3-none-any.whl", hash = "sha256:cd9e16f9d29ec2b192942108ccf321d20f794e1b8fb4ed4bdc9d0537b896344e"},
-    {file = "schemathesis-4.9.4.tar.gz", hash = "sha256:5125e29d0c0911ecd59bac39125eed9067c3558f6bf7581a33f84779a927878b"},
+    {file = "schemathesis-4.9.5-py3-none-any.whl", hash = "sha256:2eb5942ca683b8c52295de946d3316921a7546dc742b58b847bad6eda419beb0"},
+    {file = "schemathesis-4.9.5.tar.gz", hash = "sha256:c7e0236f98e89f87743b3be18261052c1040858253f50239f829be623347f40c"},
 ]
 
 [package.dependencies]
@@ -2478,22 +2458,22 @@ sphinxcontrib-serializinghtml = ">=1.1.9"
 
 [[package]]
 name = "sphinx-autodoc-typehints"
-version = "3.5.2"
+version = "3.6.1"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 optional = false
 python-versions = ">=3.11"
 groups = ["docs"]
 files = [
-    {file = "sphinx_autodoc_typehints-3.5.2-py3-none-any.whl", hash = "sha256:0accd043619f53c86705958e323b419e41667917045ac9215d7be1b493648d8c"},
-    {file = "sphinx_autodoc_typehints-3.5.2.tar.gz", hash = "sha256:5fcd4a3eb7aa89424c1e2e32bedca66edc38367569c9169a80f4b3e934171fdb"},
+    {file = "sphinx_autodoc_typehints-3.6.1-py3-none-any.whl", hash = "sha256:dd818ba31d4c97f219a8c0fcacef280424f84a3589cedcb73003ad99c7da41ca"},
+    {file = "sphinx_autodoc_typehints-3.6.1.tar.gz", hash = "sha256:fa0b686ae1b85965116c88260e5e4b82faec3687c2e94d6a10f9b36c3743e2fe"},
 ]
 
 [package.dependencies]
-sphinx = ">=8.2.3"
+sphinx = ">=9.0.4"
 
 [package.extras]
 docs = ["furo (>=2025.9.25)"]
-testing = ["covdefaults (>=2.3)", "coverage (>=7.10.7)", "defusedxml (>=0.7.1)", "diff-cover (>=9.7.1)", "pytest (>=8.4.2)", "pytest-cov (>=7)", "sphobjinv (>=2.3.1.3)", "typing-extensions (>=4.15)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.13)", "defusedxml (>=0.7.1)", "diff-cover (>=9.7.2)", "pytest (>=9.0.2)", "pytest-cov (>=7)", "sphobjinv (>=2.3.1.3)", "typing-extensions (>=4.15)"]
 
 [[package]]
 name = "sphinx-contributors"
@@ -2968,4 +2948,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "0230e12460cfdbc6631790c001c98385c77a39480e4ecff14b9c89ec702effab"
+content-hash = "87145a4bc33d2e22e48ecc338b824a0fd73348fea1719ee5d13d696dc0791c80"

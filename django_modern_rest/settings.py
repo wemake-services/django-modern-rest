@@ -39,6 +39,7 @@ class Settings(enum.StrEnum):
 
     parsers = 'parsers'
     renderers = 'renderers'
+    auth = 'auth'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     responses = 'responses'
@@ -79,6 +80,7 @@ class HttpSpec(enum.StrEnum):
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: _default_parser_types,
     Settings.renderers: _default_renderer_types,
+    Settings.auth: [],
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
         version='0.1.0',

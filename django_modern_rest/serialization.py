@@ -30,7 +30,7 @@ class BaseSerializer:
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
     optimizer: ClassVar[type['BaseEndpointOptimizer']]
-    response_parsing_error_model: ClassVar[Any]
+    default_error_model: ClassVar[Any]
 
     @classmethod
     @abc.abstractmethod

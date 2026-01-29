@@ -34,7 +34,11 @@ class OperationGenerator:
             summary=metadata.summary,
             description=metadata.description,
             deprecated=metadata.deprecated,
-            security=metadata.security,
+            security=(
+                None
+                if metadata.auth is None
+                else [auth.security_requirement for auth in metadata.auth]
+            ),
             external_docs=metadata.external_docs,
             servers=metadata.servers,
             callbacks=metadata.callbacks,
