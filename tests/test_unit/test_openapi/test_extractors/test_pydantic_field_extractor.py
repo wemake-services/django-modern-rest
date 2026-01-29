@@ -1,12 +1,12 @@
-from typing import Any, Final, final
+from typing import Any, Final, Literal, final
 
 import pytest
 from pydantic import BaseModel, Field
 
-from django_modern_rest.openapi.extractors.pydantic_extractor import (
+from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
+from django_modern_rest.plugins.pydantic import (
     PydanticFieldExtractor,
 )
-from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 _EXAMPLE_NAME: Final = 'John Doe'
 _MIN_LENGTH: Final = 2
@@ -18,6 +18,9 @@ _DESCRIPTION: Final = 'User full name'
 @final
 class _SimpleModel(BaseModel):
     name: str
+    status: Literal['active', 'pending']
+    tags: list[str]
+    metadata: dict[str, Any]
 
 
 @final
@@ -35,49 +38,32 @@ class _DetailedModel(BaseModel):
 @final
 class _NestedModel(BaseModel):
     child: _SimpleModel
-
-
-@pytest.fixture
-def extractor() -> PydanticFieldExtractor:
-    """Fixture for PydanticFieldExtractor."""
-    return PydanticFieldExtractor()
+    generic_field: list[_DetailedModel]
 
 
 @pytest.mark.parametrize(
-    'model_cls',
+    ('source', 'expected'),
     [
-        _SimpleModel,
-        _DetailedModel,
-        _NestedModel,
+        (_SimpleModel, True),
+        (_DetailedModel, True),
+        (_NestedModel, True),
+        (int, False),
+        ('string', False),
+        (dict, False),
     ],
 )
-def test_is_supported_true(
-    extractor: PydanticFieldExtractor,
-    model_cls: type[BaseModel],
+def test_is_supported(
+    source: Any,
+    *,
+    expected: bool,
 ) -> None:
-    """Ensure is_supported returns True for Pydantic models."""
-    assert extractor.is_supported(model_cls)
+    """Ensure is_supported returns correct results for various types."""
+    assert PydanticFieldExtractor().is_supported(source) is expected
 
 
-@pytest.mark.parametrize(
-    'unsupported_type',
-    [
-        int,
-        'string',
-        dict,
-    ],
-)
-def test_is_supported_false(
-    extractor: PydanticFieldExtractor,
-    unsupported_type: Any,
-) -> None:
-    """Ensure is_supported returns False for non-Pydantic types."""
-    assert not extractor.is_supported(unsupported_type)
-
-
-def test_extract_with_kwargs(extractor: PydanticFieldExtractor) -> None:
+def test_extract_with_kwargs() -> None:
     """Ensure extractors extract kwargs from fields."""
-    definitions = extractor.extract_fields(_DetailedModel)
+    definitions = PydanticFieldExtractor().extract_fields(_DetailedModel)
 
     assert len(definitions) == 1
     definition = definitions[0]
@@ -92,9 +78,7 @@ def test_extract_with_kwargs(extractor: PydanticFieldExtractor) -> None:
     assert kwargs.examples == [{'name': _EXAMPLE_NAME}]
 
 
-def test_extract_with_default_and_schema_extra(
-    extractor: PydanticFieldExtractor,
-) -> None:
+def test_extract_with_default_and_schema_extra() -> None:
     """Ensure extractors handle default values and json_schema_extra."""
     extra_schema = {'example': 'data'}
     default_val = 18
@@ -105,10 +89,40 @@ def test_extract_with_default_and_schema_extra(
             json_schema_extra=extra_schema,  # type: ignore[arg-type]
         )
 
-    definitions = extractor.extract_fields(_ModelWithDefault)
+    definitions = PydanticFieldExtractor().extract_fields(_ModelWithDefault)
     assert len(definitions) == 1
     definition = definitions[0]
 
     assert definition.default == default_val
     assert definition.kwarg_definition is not None
     assert definition.kwarg_definition.schema_extra == extra_schema
+
+
+def test_extract_simple_types() -> None:
+    """Ensure complex types like Literal and generics are extracted."""
+    definitions = PydanticFieldExtractor().extract_fields(_SimpleModel)
+
+    fields_map = {
+        field_def.name: field_def.annotation for field_def in definitions
+    }
+
+    assert fields_map == {
+        'name': str,
+        'status': Literal['active', 'pending'],
+        'tags': list[str],
+        'metadata': dict[str, Any],
+    }
+
+
+def test_extract_nested_generics() -> None:
+    """Ensure nested generic models are extracted."""
+    definitions = PydanticFieldExtractor().extract_fields(_NestedModel)
+
+    fields_map = {
+        field_def.name: field_def.annotation for field_def in definitions
+    }
+
+    assert fields_map == {
+        'child': _SimpleModel,
+        'generic_field': list[_DetailedModel],
+    }

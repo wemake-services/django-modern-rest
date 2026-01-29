@@ -1,21 +1,12 @@
 from dataclasses import fields
 from typing import Any, cast
 
+import pydantic
+import pydantic_core
 from typing_extensions import override
 
 from django_modern_rest.openapi.extractors.base import BaseFieldExtractor
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
-
-try:
-    import pydantic
-except ImportError:  # pragma: no cover
-    print(  # noqa: WPS421
-        'Looks like `pydantic` is not installed, '
-        "consider using `pip install 'django-modern-rest[pydantic]'`",
-    )
-    raise
-
-import pydantic_core
 
 
 class PydanticFieldExtractor(BaseFieldExtractor['type[pydantic.BaseModel]']):
@@ -25,9 +16,10 @@ class PydanticFieldExtractor(BaseFieldExtractor['type[pydantic.BaseModel]']):
     @override
     def is_supported(cls, source: Any) -> bool:
         """Check if the source is a Pydantic model."""
-        if not isinstance(source, type):
-            return False
-        return issubclass(source, pydantic.BaseModel)
+        return isinstance(source, type) and issubclass(
+            source,
+            pydantic.BaseModel,
+        )
 
     @override
     def extract_fields(

@@ -60,7 +60,7 @@ forbidden_modules =
 ignore_imports =
   # Pydantic plugin:
   django_modern_rest.plugins.pydantic -> pydantic
-  django_modern_rest.openapi.extractors.pydantic_extractor -> pydantic
+  django_modern_rest.plugins.pydantic.* -> pydantic
   # Msgspec plugin:
   django_modern_rest.plugins.msgspec -> msgspec
   django_modern_rest.plugins.msgspec.* -> msgspec
