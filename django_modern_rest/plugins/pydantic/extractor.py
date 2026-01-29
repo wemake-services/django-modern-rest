@@ -9,7 +9,7 @@ from django_modern_rest.openapi.extractors.base import BaseFieldExtractor
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 
-class PydanticFieldExtractor(BaseFieldExtractor['type[pydantic.BaseModel]']):
+class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
     """Extract field definitions from Pydantic models."""
 
     @classmethod
@@ -47,7 +47,7 @@ class PydanticFieldExtractor(BaseFieldExtractor['type[pydantic.BaseModel]']):
     def _create_field_definition(
         self,
         name: str,
-        field_info: 'pydantic.fields.FieldInfo',
+        field_info: pydantic.fields.FieldInfo,
     ) -> FieldDefinition:
         kwarg_definition = self._create_kwarg_definition(field_info)
 
@@ -68,7 +68,7 @@ class PydanticFieldExtractor(BaseFieldExtractor['type[pydantic.BaseModel]']):
 
     def _create_kwarg_definition(
         self,
-        field_info: 'pydantic.fields.FieldInfo',
+        field_info: pydantic.fields.FieldInfo,
     ) -> KwargDefinition:
         kwargs: dict[str, Any] = {}
         for kwarg_field in fields(KwargDefinition):
@@ -95,7 +95,7 @@ class PydanticFieldExtractor(BaseFieldExtractor['type[pydantic.BaseModel]']):
 
     def _get_from_metadata(
         self,
-        field_info: 'pydantic.fields.FieldInfo',
+        field_info: pydantic.fields.FieldInfo,
         name: str,
     ) -> Any:
         for metadata_item in field_info.metadata:
