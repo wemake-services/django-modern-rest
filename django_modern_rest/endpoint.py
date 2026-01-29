@@ -238,18 +238,14 @@ class Endpoint:  # noqa: WPS214
             try:  # noqa: WPS229
                 # Run checks:
                 await self._run_async_checks(controller)
+
                 # Parse request:
                 active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     self,
                     active_blueprint,
                 )
-            except Exception as exc:
-                return self._make_http_response(
-                    controller,
-                    await self.handle_async_error(controller, exc),
-                )
-            # Return response:
-            try:
+
+                # Return response:
                 func_result = await func(active_blueprint)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
                 func_result = active_blueprint.to_error(
@@ -278,18 +274,14 @@ class Endpoint:  # noqa: WPS214
             try:  # noqa: WPS229
                 # Run checks:
                 self._run_checks(controller)
+
                 # Parse request:
                 active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     self,
                     active_blueprint,
                 )
-            except Exception as exc:
-                return self._make_http_response(
-                    controller,
-                    self.handle_error(controller, exc),
-                )
-            # Return response:
-            try:
+
+                # Return response:
                 func_result = func(active_blueprint)
             except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
                 func_result = active_blueprint.to_error(

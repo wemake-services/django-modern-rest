@@ -20,6 +20,11 @@ class APIError(Exception, Generic[_ItemT]):
 
     Does perform the regular response validation.
 
+    You can use APIError everywhere:
+    - In endpoints
+    - In components when parsing something
+    - In auth if you want to change the response code
+
     Usage:
 
     .. code:: python
