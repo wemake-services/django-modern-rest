@@ -59,7 +59,7 @@ class ComponentParser:
         return [
             ResponseSpec(
                 # We do this for runtime validation, not static type check:
-                serializer.response_parsing_error_model,
+                serializer.default_error_model,
                 status_code=RequestSerializationError.status_code,
             ),
         ]

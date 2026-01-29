@@ -28,6 +28,7 @@ from django_modern_rest.response import (
     ResponseSpec,
     build_response,
 )
+from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
 from django_modern_rest.types import (
@@ -90,11 +91,23 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
-        responses_from_components: Should we automatically add response schemas
+        enable_semantic_responses: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
         http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
+        parsers: Sequence of types to be used for this controller
+            to parse incoming request's body. All types must be subtypes
+            of :class:`~django_modern_rest.parsers.Parser`.
+        renderers: Sequence of types to be used for this controller
+            to render response's body. All types must be subtypes
+            of :class:`~django_modern_rest.renderers.Renderer`.
+        auth: Sequence of auth instances to be used for this controller.
+            Sync controllers must use instances
+            of :class:`django_modern_rest.security.SyncAuth`.
+            Async controllers must use instances
+            of :class:`django_modern_rest.security.AsyncAuth`.
+            Set it to ``None`` to disable auth of this controller.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -113,13 +126,14 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     responses: ClassVar[list[ResponseSpec]] = []
-    responses_from_components: ClassVar[bool] = True
+    enable_semantic_responses: ClassVar[bool] = True
     http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
     parsers: ClassVar[_Parsers] = ()
     renderers: ClassVar[_Renderers] = ()
+    auth: ClassVar[Sequence[SyncAuth | AsyncAuth] | None] = ()
 
     # Instance public API:
     request: HttpRequest
@@ -258,17 +272,17 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Returns all user-defined responses in layers above endpoint itself.
 
         Optionally responses can be turned off with falsy
-        :attr:`responses_from_components` attribute
+        :attr:`enable_semantic_responses` attribute
         on a blueprint or a controller.
         We call it once per blueprint
         and once per controller when creating endpoint.
         """
-        if not cls.responses_from_components:
+        if not cls.enable_semantic_responses:
             return cls.responses
 
-        # Get the responses that were provided by the user.
+        # Get the responses that were provided by components.
         existing_codes = {response.status_code for response in cls.responses}
-        extra_responses = [
+        extra_responses = {
             response
             for component, model in cls._component_parsers
             for response in component.provide_responses(
@@ -277,8 +291,17 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             )
             # If some response already exists, do not override it.
             if response.status_code not in existing_codes
-        ]
-        return [*cls.responses, *set(extra_responses)]
+        }
+
+        # Get the responses from the auth specs.
+        auth_responses = {
+            response
+            for auth in (cls.auth or ())
+            for response in auth.provide_responses(cls.serializer)
+            # If some response already exists, do not override it.
+            if response.status_code not in existing_codes
+        }
+        return [*cls.responses, *extra_responses, *auth_responses]
 
     # Protected API:
 
@@ -336,7 +359,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
-        responses_from_components: Should we automatically add response schemas
+        enable_semantic_responses: Should we automatically add response schemas
             from components like :class:`django_modern_rest.components.Headers`
             into the :attr:`responses`?
         http_methods: Set of names to be treated as names for endpoints.
@@ -350,7 +373,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     """
 
     # Public class-level API:
-    blueprints: ClassVar[BlueprintsT] = []
+    blueprints: ClassVar[BlueprintsT] = ()
     controller_validator_cls: ClassVar[type[ControllerValidator]] = (
         ControllerValidator
     )
@@ -548,9 +571,8 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             'define your own `meta` method instead',
         )
 
-    @classmethod
     def handle_method_not_allowed(
-        cls,
+        self,
         method: str,
     ) -> HttpResponse:
         """
@@ -561,10 +583,10 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         # This method cannot call `self.to_response`, because it does not have
         # an endpoint associated with it. We switch to lower level
         # `build_response` primitive
-        allowed_methods = sorted(cls.api_endpoints.keys())
-        return cls._maybe_wrap(
+        allowed_methods = sorted(self.api_endpoints.keys())
+        return self._maybe_wrap(
             build_response(
-                cls.serializer,
+                self.serializer,
                 raw_data={
                     'detail': (
                         f'Method {method!r} is not allowed, '
@@ -572,6 +594,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
                     ),
                 },
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+                renderer_cls=request_renderer(self.request),
             ),
         )
 
