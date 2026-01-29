@@ -26,6 +26,12 @@ class ComponentParser:
 
     # Public API:
     context_name: ClassVar[str]
+    """
+    All subtypes must provide a unique name that will be used to parse context.
+
+    We use a single context for all parsing, this component
+    will live under a dict field with this name.
+    """
 
     @classmethod
     @abc.abstractmethod
