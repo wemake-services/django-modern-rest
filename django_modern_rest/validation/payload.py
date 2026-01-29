@@ -43,7 +43,7 @@ class _BasePayload:
     no_validate_http_spec: Set[HttpSpec] | None = None
     parsers: Sequence[type[Parser]] | None = None
     renderers: Sequence[type[Renderer]] | None = None
-    auth: Sequence['SyncAuth | AsyncAuth'] | None = ()
+    auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
     enable_semantic_responses: bool = True
     responses: list[ResponseSpec] | None = None
 

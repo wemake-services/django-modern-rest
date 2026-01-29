@@ -116,7 +116,7 @@ async def test_async_session_auth_failure(
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
 def test_schema(
-    typ: type[DjangoSessionSyncAuth | DjangoSessionAsyncAuth],
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for django session auth."""
     instance = typ()

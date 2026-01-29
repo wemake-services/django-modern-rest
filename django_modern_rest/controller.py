@@ -133,7 +133,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     )
     parsers: ClassVar[_Parsers] = ()
     renderers: ClassVar[_Renderers] = ()
-    auth: ClassVar[Sequence[SyncAuth | AsyncAuth] | None] = ()
+    auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
 
     # Instance public API:
     request: HttpRequest
