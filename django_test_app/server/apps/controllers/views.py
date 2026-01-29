@@ -7,7 +7,7 @@ from typing import Any, TypeAlias, final
 import pydantic
 from django.http import HttpResponse
 
-from django_modern_rest import (
+from django_modern_rest import (  # noqa: WPS235
     Blueprint,
     Body,
     Controller,
@@ -15,9 +15,11 @@ from django_modern_rest import (
     Path,
     Query,
     ResponseSpec,
+    modify,
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from server.apps.controllers.auth import HttpBasicAsync, HttpBasicSync
 
 _CallableAny: TypeAlias = Callable[..., Any]
 
@@ -114,6 +116,8 @@ class ParseHeadersController(
     Headers[_CustomHeaders],
     Controller[PydanticSerializer],
 ):
+    auth = (HttpBasicSync(),)
+
     def post(self) -> _CustomHeaders:
         return self.parsed_headers
 
@@ -123,5 +127,6 @@ class AsyncParseHeadersController(
     Headers[_CustomHeaders],
     Controller[PydanticSerializer],
 ):
+    @modify(auth=[HttpBasicAsync()])
     async def post(self) -> _CustomHeaders:
         return self.parsed_headers

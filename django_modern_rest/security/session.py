@@ -23,7 +23,7 @@ class _DjangoSessionAuth:
 
     @property
     def security_scheme(self) -> Components:
-        """"""
+        """Provides a security schema definition."""
         return Components(
             security_schemes={
                 self.security_scheme_name: SecurityScheme(
@@ -37,7 +37,7 @@ class _DjangoSessionAuth:
 
     @property
     def security_requirement(self) -> SecurityRequirement:
-        """"""
+        """Provides a security schema usage requirement."""
         return {self.security_scheme_name: []}
 
     def _authenticate(
@@ -51,6 +51,16 @@ class _DjangoSessionAuth:
 
 
 class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
+    """
+    Reuses Django's regular session auth for the API.
+
+    This class is used for sync endpoints.
+
+    See also:
+        https://docs.djangoproject.com/en/6.0/topics/auth/
+
+    """
+
     __slots__ = ()
 
     @override
@@ -59,10 +69,21 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> Any | None:
+        """Does check for the existing request user."""
         return self._authenticate(endpoint, controller)
 
 
 class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
+    """
+    Reuses Django's regular session auth for the API.
+
+    This class is used for async endpoints.
+
+    See also:
+        https://docs.djangoproject.com/en/6.0/topics/auth/
+
+    """
+
     __slots__ = ()
 
     @override
@@ -71,4 +92,5 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> Any | None:
+        """Does check for the existing request user."""
         return self._authenticate(endpoint, controller)

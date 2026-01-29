@@ -20,20 +20,20 @@ if TYPE_CHECKING:
     from django_modern_rest.metadata import EndpointMetadata
 
 
-class MsgspecErrorDetails(TypedDict):
-    """Base schema for msgspec error detail."""
-
-    type: str
-    loc: list[int | str]
-    msg: str
-
-
 class MsgspecConvertOptions(TypedDict):
     """Custom serializer API options, taken by `msgpec.convert`."""
 
     from_attributes: NotRequired[bool]
     builtin_types: NotRequired[Iterable[type] | None]
     str_keys: NotRequired[bool]
+
+
+class MsgspecErrorDetails(TypedDict):
+    """Base schema for msgspec error detail."""
+
+    type: str
+    loc: list[int | str]
+    msg: str
 
 
 class MsgspecErrorModel(TypedDict):

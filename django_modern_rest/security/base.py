@@ -20,18 +20,22 @@ class _BaseAuth:
     @property
     @abstractmethod
     def security_scheme(self) -> Components:
-        """"""
+        """Provides a security schema definition."""
 
     @property
     @abstractmethod
     def security_requirement(self) -> SecurityRequirement:
-        """"""
+        """Provides a security schema usage requirement."""
 
     def provide_responses(
         self,
         serializer: type['BaseSerializer'],
     ) -> list[ResponseSpec]:
-        """"""
+        """
+        Provides extra responses.
+
+        Is active when ``enable_semantic_responses`` in endpoint is ``True``.
+        """
         return [
             ResponseSpec(
                 # We do this for runtime validation, not static type check:
@@ -42,6 +46,8 @@ class _BaseAuth:
 
 
 class SyncAuth(_BaseAuth):
+    """Sync auth base class for sync endpoints."""
+
     __slots__ = ()
 
     @abstractmethod
@@ -49,10 +55,21 @@ class SyncAuth(_BaseAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None: ...
+    ) -> Any | None:
+        """
+        Put your auth business logic here.
+
+        Return ``None`` if login attempt failed and we need
+        to try another authes.
+        Raise :exc:`django.core.exception.PermissionDenied`
+        to immediately fail the login without trying other authes.
+        Return any other value if the auth succeeded.
+        """
 
 
 class AsyncAuth(_BaseAuth):
+    """Async auth base class for async endpoints."""
+
     __slots__ = ()
 
     @abstractmethod
@@ -60,4 +77,13 @@ class AsyncAuth(_BaseAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None: ...
+    ) -> Any | None:
+        """
+        Put your auth business logic here.
+
+        Return ``None`` if login attempt failed and we need
+        to try another authes.
+        Raise :exc:`django.core.exception.PermissionDenied`
+        to immediately fail the login without trying other authes.
+        Return any other value if the auth succeeded.
+        """

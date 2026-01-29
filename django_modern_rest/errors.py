@@ -75,7 +75,7 @@ def global_error_handler(
        ... ) -> HttpResponse:
        ...     if isinstance(exc, ZeroDivisionError):
        ...         return controller.to_error(
-       ...             {'details': 'inf!'},
+       ...             {'details': 'inf!'},  # TODO: replace with new API
        ...             status_code=HTTPStatus.NOT_IMPLEMENTED,
        ...         )
        ...     # Call the original handler to handle default errors:
@@ -99,8 +99,15 @@ def global_error_handler(
         renderer_cls = request_renderer(
             controller.request,
         ) or endpoint.response_negotiator(controller.request)
+        # TODO: unify, all errors must be the same
+        payload = (
+            controller.serializer.error_serialize(exc.args[0])
+            if isinstance(exc, NotAuthenticatedError)
+            else exc.args[0]
+        )
         return controller.to_error(
-            {'detail': exc.args[0]},
+            # TODO: validate error response's schema
+            {'detail': payload},
             status_code=exc.status_code,
             renderer_cls=renderer_cls,
         )

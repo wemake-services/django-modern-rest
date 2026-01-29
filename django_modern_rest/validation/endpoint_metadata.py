@@ -607,7 +607,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             )
         }
 
-    def _build_auth(
+    def _build_auth(  # noqa: WPS231
         self,
         payload: PayloadT,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
@@ -634,13 +634,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
             isinstance(auth_instance, base_type) for auth_instance in auth
         ):
             raise EndpointMetadataError(
-                f'All auth instances must be subtypes of {base_type} '
+                f'All auth instances must be subtypes of {base_type!r} '
                 f'for {endpoint=}',
             )
         # We are doing this as late as possible to still
         # have the full validation logic even if some value is None.
         if (
-            (payload and payload.auth is None)
+            (payload and payload.auth is None)  # noqa: WPS222
             or (blueprint_cls and blueprint_cls.auth is None)
             or controller_cls.auth is None
             or settings_auth is None

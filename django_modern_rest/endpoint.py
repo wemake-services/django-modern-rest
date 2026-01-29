@@ -235,7 +235,7 @@ class Endpoint:  # noqa: WPS214
             **kwargs: Any,
         ) -> HttpResponse:
             active_blueprint = controller.active_blueprint
-            try:
+            try:  # noqa: WPS229
                 # Run checks:
                 await self._run_async_checks(controller)
                 # Parse request:
@@ -275,7 +275,7 @@ class Endpoint:  # noqa: WPS214
         ) -> HttpResponse:
             active_blueprint = controller.active_blueprint
 
-            try:
+            try:  # noqa: WPS229
                 # Run checks:
                 self._run_checks(controller)
                 # Parse request:
@@ -312,11 +312,11 @@ class Endpoint:  # noqa: WPS214
             try:
                 user = auth(self, controller)
             except PermissionDenied:
-                raise NotAuthenticatedError('Not authenticated') from None
+                raise NotAuthenticatedError from None
             else:
                 if user is not None:
                     return
-        raise NotAuthenticatedError('Not authenticated')
+        raise NotAuthenticatedError
 
     async def _run_async_checks(
         self,
@@ -328,13 +328,13 @@ class Endpoint:  # noqa: WPS214
         for auth in self.metadata.auth:
             assert isinstance(auth, AsyncAuth)  # noqa: S101
             try:
-                user = await auth(self, controller)
+                user = await auth(self, controller)  # noqa: WPS476
             except PermissionDenied:
-                raise NotAuthenticatedError('Not authenticated') from None
+                raise NotAuthenticatedError from None
             else:
                 if user is not None:
                     return
-        raise NotAuthenticatedError('Not authenticated')
+        raise NotAuthenticatedError
 
     def _make_http_response(
         self,
@@ -348,18 +348,14 @@ class Endpoint:  # noqa: WPS214
         just validates it before returning.
         """
         try:
-            return self._validate_response(
-                controller,
-                raw_data,
-            )
+            return self._validate_response(controller, raw_data)
         except ResponseSerializationError as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # here, because it is too late. Since `ResponseSerializationError`
             # happened most likely because the return
             # schema validation was not successful.
-            payload = {'detail': exc.args[0]}
             return controller.to_error(
-                payload,
+                {'detail': exc.args[0]},
                 status_code=exc.status_code,
             )
 
@@ -582,6 +578,9 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Async endpoints must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this endpoint.
+        enable_semantic_responses: If set to ``True`` also produces
+            pre-defined responses from components
+            to be contained in the endpoint's schema.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -848,6 +847,9 @@ def modify(  # noqa: WPS211
             Async endpoints must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this endpoint.
+        enable_semantic_responses: If set to ``True`` also produces
+            pre-defined responses from components
+            to be contained in the endpoint's schema.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.

@@ -6,6 +6,7 @@ from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
 
+from django_modern_rest.security.http import basic_auth
 from django_modern_rest.test import DMRAsyncClient, DMRClient
 
 
@@ -21,7 +22,10 @@ def test_parse_headers_error_sync(dmr_client: DMRClient, *, url: str) -> None:
     response = dmr_client.post(
         url,
         data='{}',
-        headers={'Content-Type': 'application/xml'},
+        headers={
+            'Content-Type': 'application/xml',
+            'Authorization': basic_auth('test', 'pass'),
+        },
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
@@ -36,6 +40,7 @@ def test_parse_headers_error_sync(dmr_client: DMRClient, *, url: str) -> None:
                     'Cookie': '',
                     'Content-Length': '2',
                     'Content-Type': 'application/xml',
+                    'Authorization': 'Basic dGVzdDpwYXNz',
                 },
             },
         ],
@@ -59,7 +64,10 @@ async def test_parse_headers_error_async(
     response = await dmr_async_client.post(
         url,
         data='{}',
-        headers={'Content-Type': 'application/xml'},
+        headers={
+            'Content-Type': 'application/xml',
+            'Authorization': basic_auth('test', 'pass'),
+        },
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
@@ -74,6 +82,7 @@ async def test_parse_headers_error_async(
                     'Host': 'testserver',
                     'Content-Length': '2',
                     'Content-Type': 'application/xml',
+                    'Authorization': 'Basic dGVzdDpwYXNz',
                     'Cookie': '',
                 },
             },
@@ -86,7 +95,11 @@ def test_parse_headers_ignored_content_type(dmr_client: DMRClient) -> None:
     response = dmr_client.post(
         reverse('api:controllers:parse_headers'),
         data='{}',
-        headers={'Content-Type': 'application/xml', 'X-API-Token': '123'},
+        headers={
+            'Content-Type': 'application/xml',
+            'X-API-Token': '123',
+            'Authorization': basic_auth('test', 'pass'),
+        },
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.content
@@ -102,7 +115,11 @@ async def test_parse_headers_ignored_async_content_type(
     response = await dmr_async_client.post(
         reverse('api:controllers:async_parse_headers'),
         data='{}',
-        headers={'Content-Type': 'application/xml', 'X-API-Token': '123'},
+        headers={
+            'Content-Type': 'application/xml',
+            'X-API-Token': '123',
+            'Authorization': basic_auth('test', 'pass', prefix=''),
+        },
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.content

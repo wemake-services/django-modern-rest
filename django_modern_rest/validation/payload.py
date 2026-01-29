@@ -51,7 +51,12 @@ class _BasePayload:
         self,
         serializer: type['BaseSerializer'],
     ) -> list[ResponseSpec]:
-        """"""
+        """
+        Return all possible responses for this endpoint.
+
+        It might include responses from components
+        if *enable_semantic_responses* is ``True``.
+        """
         responses = self.responses or []
         if not self.enable_semantic_responses:
             return responses
@@ -71,7 +76,7 @@ class _BasePayload:
 class ValidateEndpointPayload(_BasePayload):
     """Payload created by ``@validate``."""
 
-    responses: list[ResponseSpec]
+    responses: list[ResponseSpec]  # pyright: ignore[reportGeneralTypeIssues]
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

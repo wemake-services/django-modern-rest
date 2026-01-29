@@ -19,7 +19,7 @@ layers =
   options_mixins
   endpoint
   validation
-  components
+  components | security
   response
   plugins
   serialization
