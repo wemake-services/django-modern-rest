@@ -25,6 +25,3 @@ from django_modern_rest.plugins.pydantic.serializer import (
 from django_modern_rest.plugins.pydantic.serializer import (
     PydanticSerializer as PydanticSerializer,
 )
-from django_modern_rest.plugins.pydantic.serializer import (
-    _get_cached_type_adapter as _get_cached_type_adapter,  # pyright:ignore[reportPrivateUsage]
-)
