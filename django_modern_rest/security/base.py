@@ -61,7 +61,7 @@ class SyncAuth(_BaseAuth):
 
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exception.PermissionDenied`
+        Raise :exc:`django.core.exceptions.PermissionDenied`
         to immediately fail the login without trying other authes.
         Return any other value if the auth succeeded.
         """
@@ -83,7 +83,7 @@ class AsyncAuth(_BaseAuth):
 
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exception.PermissionDenied`
+        Raise :exc:`django.core.exceptions.PermissionDenied`
         to immediately fail the login without trying other authes.
         Return any other value if the auth succeeded.
         """
