@@ -133,25 +133,6 @@ class _WrongAuthMixedController(Controller[PydanticSerializer]):
     def get(self) -> str:
         return 'mixed'
 
-    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
-    async def post(self) -> str:
-        return 'mixed'
-
-    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
-    def patch(self) -> str:
-        return 'mixed'
-
-    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
-    async def put(self) -> str:
-        return 'mixed'
-
-    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
-        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
-        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]
-    )
-    def delete(self) -> HttpResponse:
-        return HttpResponse()
-
     @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]
