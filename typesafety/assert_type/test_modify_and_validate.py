@@ -12,6 +12,10 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.security import (
+    DjangoSessionAsyncAuth,
+    DjangoSessionSyncAuth,
+)
 
 
 class _Model(pydantic.BaseModel):
@@ -122,3 +126,35 @@ class _WrongValidateController(Controller[PydanticSerializer]):
     @validate()  # type: ignore[call-overload, untyped-decorator]
     async def delete(self) -> HttpResponse:
         return JsonResponse([])
+
+
+class _WrongAuthMixedController(Controller[PydanticSerializer]):
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
+    def get(self) -> str:
+        return 'mixed'
+
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
+    async def post(self) -> str:
+        return 'mixed'
+
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
+    def patch(self) -> str:
+        return 'mixed'
+
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
+    async def put(self) -> str:
+        return 'mixed'
+
+    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]
+    )
+    def delete(self) -> HttpResponse:
+        return HttpResponse()
+
+    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]
+    )
+    async def meta(self) -> HttpResponse:
+        return HttpResponse()
