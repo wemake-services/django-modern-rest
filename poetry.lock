@@ -108,26 +108,6 @@ files = [
 ]
 
 [[package]]
-name = "auto-pytabs"
-version = "0.5.0"
-description = "Automatically generate code examples for different Python versions in mkdocs or Sphinx based documentations"
-optional = false
-python-versions = "<4.0,>=3.8"
-groups = ["docs"]
-files = [
-    {file = "auto_pytabs-0.5.0-py3-none-any.whl", hash = "sha256:e59fb6d2f8b41b05d0906a322dd4bb1a86749d429483ec10036587de3657dcc8"},
-    {file = "auto_pytabs-0.5.0.tar.gz", hash = "sha256:30087831c8be5b2314e663efd06c96b84c096572a060a492540f586362cc4326"},
-]
-
-[package.dependencies]
-ruff = ">=0.4"
-
-[package.extras]
-markdown = ["markdown (>=3.2.1)"]
-mkdocs = ["mkdocs (>=1.4.2,<2)"]
-sphinx = ["sphinx (>=4)"]
-
-[[package]]
 name = "babel"
 version = "2.17.0"
 description = "Internationalization utilities"
@@ -521,14 +501,14 @@ typing-extensions = "*"
 
 [[package]]
 name = "docutils"
-version = "0.22.4"
+version = "0.21.2"
 description = "Docutils -- Python Documentation Utilities"
 optional = false
 python-versions = ">=3.9"
 groups = ["docs"]
 files = [
-    {file = "docutils-0.22.4-py3-none-any.whl", hash = "sha256:d0013f540772d1420576855455d050a2180186c91c15779301ac2ccb3eeb68de"},
-    {file = "docutils-0.22.4.tar.gz", hash = "sha256:4db53b1fde9abecbb74d91230d32ab626d94f6badfc575d6db9194a49df29968"},
+    {file = "docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2"},
+    {file = "docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f"},
 ]
 
 [[package]]
@@ -2315,7 +2295,7 @@ version = "0.14.14"
 description = "An extremely fast Python linter and code formatter, written in Rust."
 optional = false
 python-versions = ">=3.7"
-groups = ["dev", "docs"]
+groups = ["dev"]
 files = [
     {file = "ruff-0.14.14-py3-none-linux_armv6l.whl", hash = "sha256:7cfe36b56e8489dee8fbc777c61959f60ec0f1f11817e8f2415f429552846aed"},
     {file = "ruff-0.14.14-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:6006a0082336e7920b9573ef8a7f52eec837add1265cc74e04ea8a4368cd704c"},
@@ -2968,4 +2948,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "0230e12460cfdbc6631790c001c98385c77a39480e4ecff14b9c89ec702effab"
+content-hash = "87145a4bc33d2e22e48ecc338b824a0fd73348fea1719ee5d13d696dc0791c80"
