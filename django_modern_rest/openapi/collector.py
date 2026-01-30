@@ -1,12 +1,13 @@
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
+    from django_modern_rest.serialization import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
 
@@ -24,7 +25,7 @@ class ControllerMapping(NamedTuple):
     """
 
     path: str
-    controller: 'Controller[Any]'
+    controller: 'Controller[BaseSerializer]'
 
 
 def _process_pattern(
@@ -32,7 +33,7 @@ def _process_pattern(
     base_path: str = '',
 ) -> ControllerMapping:
     path = _join_paths(base_path, str(url_pattern.pattern))
-    controller: Controller[Any] = url_pattern.callback.view_class  # type: ignore[attr-defined]
+    controller: Controller[BaseSerializer] = url_pattern.callback.view_class  # type: ignore[attr-defined]
     normalized = _normalize_path(path)
     return ControllerMapping(path=normalized, controller=controller)
 

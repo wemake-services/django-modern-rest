@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, final
+from typing import final
 
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
@@ -14,6 +14,7 @@ from django_modern_rest.openapi.collector import (
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import Router, compose_blueprints
+from django_modern_rest.serialization import BaseSerializer
 
 
 @final
@@ -177,7 +178,7 @@ def test_join_paths(
 )
 def test_process_pattern_with_different_views(
     path_str: str,
-    view_class: type[Controller[Any]],
+    view_class: type[Controller[BaseSerializer]],
 ) -> None:
     """Ensure that `_process_pattern` processes different types correctly."""
     pattern = path(path_str, view_class.as_view())

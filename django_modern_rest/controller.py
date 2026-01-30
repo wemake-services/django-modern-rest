@@ -242,19 +242,28 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             renderer_cls=renderer_cls or request_renderer(self.request),
         )
 
-    def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
+    def handle_error(
+        self,
+        endpoint: Endpoint,
+        controller: 'Controller[_SerializerT_co]',
+        exc: Exception,
+    ) -> HttpResponse:
         """
         Return error response if possible. Sync case.
 
         Override this method to add custom error handling for sync execution.
         By default - does nothing, only re-raises the passed error.
         Won't be called when using async endpoints.
+
+        You can access active blueprint
+        via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
         raise exc
 
     async def handle_async_error(
         self,
         endpoint: Endpoint,
+        controller: 'Controller[_SerializerT_co]',
         exc: Exception,
     ) -> HttpResponse:
         """
@@ -263,6 +272,9 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Override this method to add custom error handling for async execution.
         By default - does nothing, only re-raises the passed error.
         Won't be called when using sync endpoints.
+
+        You can access active blueprint
+        via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
         raise exc
 
@@ -433,7 +445,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         if blueprint:
             instance = blueprint()
             instance.setup(request, *args, **kwargs)
-            # We validate that serializers match:
+            # We validate that serializers match during import time:
             self.blueprint = instance  # type: ignore[assignment]
         else:
             self.blueprint = None

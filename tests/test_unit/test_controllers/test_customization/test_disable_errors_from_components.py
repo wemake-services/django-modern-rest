@@ -10,6 +10,7 @@ from django_modern_rest import Controller, ResponseSpec, modify, validate
 from django_modern_rest.components import Body
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security import DjangoSessionSyncAuth
+from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.test import DMRRequestFactory
 
 
@@ -136,7 +137,7 @@ class _ValidateDisable(Controller[PydanticSerializer], Body[list[int]]):
 def test_responses_are_not_added_modify(
     dmr_rf: DMRRequestFactory,
     *,
-    controller: type[Controller[Any]],
+    controller: type[Controller[BaseSerializer]],
     request_kwargs: dict[str, Any],
     user: User | AnonymousUser,
     response_status: HTTPStatus,

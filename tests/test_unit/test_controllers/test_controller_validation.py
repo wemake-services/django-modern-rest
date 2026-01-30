@@ -115,6 +115,7 @@ def test_sync_controller_async_error_handler() -> None:
             async def handle_async_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> Any:
                 raise NotImplementedError
@@ -135,6 +136,7 @@ def test_async_controller_sync_error_handler() -> None:
             def handle_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> Any:
                 raise NotImplementedError
@@ -151,6 +153,7 @@ def test_sync_controller_sync_error_handler() -> None:
         def handle_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -167,6 +170,7 @@ def test_async_controller_async_error_handler() -> None:
         async def handle_async_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -183,6 +187,7 @@ def test_sync_blueprint_async_error_handler() -> None:
         async def handle_async_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -205,6 +210,7 @@ def test_async_blueprint_sync_error_handler() -> None:
         def handle_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -227,6 +233,7 @@ def test_sync_blueprint_sync_error_handler() -> None:
         def handle_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -243,6 +250,7 @@ def test_async_blueprint_async_error_handler() -> None:
         async def handle_async_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -267,6 +275,7 @@ def test_async_bp_with_sync_handler_fails() -> None:
             def handle_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> Any:
                 raise NotImplementedError
@@ -288,6 +297,7 @@ def test_sync_bp_with_async_handler_fails() -> None:
             async def handle_async_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> Any:
                 raise NotImplementedError
@@ -305,6 +315,7 @@ def test_async_bp_with_async_handler_ok() -> None:
         async def handle_async_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -322,6 +333,7 @@ def test_sync_bp_with_sync_handler_ok() -> None:
         def handle_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -335,6 +347,7 @@ def test_bp_no_endpoints_with_async_error_handler() -> None:
         async def handle_async_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -348,6 +361,7 @@ def test_no_endpoints_with_async_error_handler() -> None:
         async def handle_async_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -361,6 +375,7 @@ def test_bp_no_endpoints_with_error_handler() -> None:
         def handle_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
@@ -374,6 +389,7 @@ def test_no_endpoints_with_error_handler() -> None:
         def handle_error(
             self,
             endpoint: Endpoint,
+            controller: Controller[PydanticSerializer],
             exc: Exception,
         ) -> Any:
             raise NotImplementedError

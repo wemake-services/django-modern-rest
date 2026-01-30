@@ -112,6 +112,7 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
         password: str,
     ) -> Any | None:
         """Override this method to provide an actual user/password check."""
+        raise NotImplementedError
 
 
 class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
@@ -156,6 +157,7 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
         password: str,
     ) -> Any | None:
         """Override this method to provide an actual user/password check."""
+        raise NotImplementedError
 
 
 def basic_auth(username: str, password: str, *, prefix: str = 'Basic ') -> str:

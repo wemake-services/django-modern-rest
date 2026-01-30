@@ -5,14 +5,9 @@ import httpx
 from django.http import HttpResponse
 from typing_extensions import override
 
-from django_modern_rest import (
-    Controller,
-    ResponseSpec,
-)
+from django_modern_rest import Controller, ResponseSpec
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.plugins.pydantic import (
-    PydanticSerializer,
-)
+from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 class ProxyController(Controller[PydanticSerializer]):
@@ -35,6 +30,7 @@ class ProxyController(Controller[PydanticSerializer]):
     async def handle_async_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         # Will handle errors in all endpoints.

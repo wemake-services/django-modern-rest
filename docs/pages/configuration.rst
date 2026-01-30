@@ -194,9 +194,6 @@ Error handling
     >>> DMR_SETTINGS = {Settings.global_error_handler: 'path.to.your.handler'}
 
 
-.. autofunction:: django_modern_rest.errors.global_error_handler
-
-
 HTTP Spec validation
 --------------------
 
@@ -226,7 +223,6 @@ HTTP Spec validation
   :members:
 
 
-
 Environment variables
 ---------------------
 
@@ -246,8 +242,8 @@ Environment variables
   Increase if you have a lot of different return types.
 
 
-Misc
-----
+API Reference
+-------------
 
 .. autofunction:: django_modern_rest.settings.resolve_setting
 
