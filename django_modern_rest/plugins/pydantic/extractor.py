@@ -1,15 +1,16 @@
 from dataclasses import fields
 from typing import Any, cast
 
-import pydantic
-import pydantic_core
+from pydantic import BaseModel
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 from typing_extensions import override
 
 from django_modern_rest.openapi.extractors.base import BaseFieldExtractor
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 
-class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
+class PydanticFieldExtractor(BaseFieldExtractor[type[BaseModel]]):
     """Extract field definitions from Pydantic models."""
 
     @classmethod
@@ -18,13 +19,13 @@ class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
         """Check if the source is a Pydantic model."""
         return isinstance(source, type) and issubclass(
             source,
-            pydantic.BaseModel,
+            BaseModel,
         )
 
     @override
     def extract_fields(
         self,
-        source: 'type[pydantic.BaseModel]',
+        source: type[BaseModel],
     ) -> list[FieldDefinition]:
         """
         Extract fields from a Pydantic model.
@@ -47,12 +48,12 @@ class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
     def _create_field_definition(
         self,
         name: str,
-        field_info: pydantic.fields.FieldInfo,
+        field_info: FieldInfo,
     ) -> FieldDefinition:
         kwarg_definition = self._create_kwarg_definition(field_info)
 
         default = field_info.default
-        if default == pydantic_core.PydanticUndefined:
+        if default == PydanticUndefined:
             default = None
 
         return FieldDefinition(
@@ -68,7 +69,7 @@ class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
 
     def _create_kwarg_definition(
         self,
-        field_info: pydantic.fields.FieldInfo,
+        field_info: FieldInfo,
     ) -> KwargDefinition:
         kwargs: dict[str, Any] = {}
         for kwarg_field in fields(KwargDefinition):
@@ -81,7 +82,7 @@ class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
                 )
 
             if kwarg_value is not None:
-                if kwarg_value == pydantic_core.PydanticUndefined:
+                if kwarg_value == PydanticUndefined:
                     kwarg_value = None
                 kwargs[kwarg_field.name] = kwarg_value
 
@@ -95,7 +96,7 @@ class PydanticFieldExtractor(BaseFieldExtractor[type[pydantic.BaseModel]]):
 
     def _get_from_metadata(
         self,
-        field_info: pydantic.fields.FieldInfo,
+        field_info: FieldInfo,
         name: str,
     ) -> Any:
         for metadata_item in field_info.metadata:
