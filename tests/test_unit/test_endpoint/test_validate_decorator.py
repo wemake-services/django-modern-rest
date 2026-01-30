@@ -441,13 +441,14 @@ def test_validate_sync_error_handler_for_async() -> None:
             def endpoint_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> HttpResponse:
                 raise NotImplementedError
 
-            @validate(
+            @validate(  # type: ignore[arg-type]
                 ResponseSpec(list[int], status_code=HTTPStatus.OK),
-                error_handler=wrap_handler(endpoint_error),  # type: ignore[arg-type]
+                error_handler=wrap_handler(endpoint_error),
             )
             async def post(self) -> HttpResponse:
                 raise NotImplementedError
