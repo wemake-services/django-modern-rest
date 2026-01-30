@@ -46,9 +46,8 @@ As usual, all settings go to ``settings.py`` file in your Django project.
     >>> DMR_SETTINGS = {Settings.responses: []}
 
 
-
-JSON Parsing
-------------
+Content negotiation
+-------------------
 
 .. note::
 
@@ -174,7 +173,8 @@ Error handling
 
   Default: ``'django_modern_rest.errors.global_error_handler'``
 
-  String or a function to globally handle all errors in the application.
+  Globally handle all errors in the application.
+  You can use real object or string path for the object to be imported.
   Here's our error handling hieracy:
 
   1. Per-endpoint with
@@ -192,6 +192,28 @@ Error handling
     :caption: settings.py
 
     >>> DMR_SETTINGS = {Settings.global_error_handler: 'path.to.your.handler'}
+
+
+Authentication
+--------------
+
+.. data:: django_modern_rest.settings.Settings.auth
+
+  Default: ``[]``
+
+  Configure authentication rules for the whole API.
+  You can use real objects or string paths for the objects to be imported.
+
+  To enable auth for all endpoints you can use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.auth: [
+    ...         'django_modern_rest.security.DjangoSessionSyncAuth',
+    ...     ],
+    ... }
 
 
 HTTP Spec validation

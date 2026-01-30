@@ -626,6 +626,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             *payload_auth,  # pyrefly: ignore[not-iterable]
             *blueprint_auth,  # pyrefly: ignore[not-iterable]
             *(controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
+            # TODO: maybe we should wrap auth handlers in global settings
+            # in `sync_to_async` and `async_to_sync`?
             *(settings_auth or ()),  # pyrefly: ignore[not-iterable]
         ]
         # Validate that auth matches the sync / async endpoints:
