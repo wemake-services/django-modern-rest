@@ -38,7 +38,7 @@ ignore_imports =
   django_modern_rest.settings -> django_modern_rest.internal.cache
   # Internal cache can import anything:
   django_modern_rest.internal.cache -> django_modern_rest.plugins.msgspec.json
-  django_modern_rest.internal.cache -> django_modern_rest.plugins.pydantic
+  django_modern_rest.internal.cache -> django_modern_rest.plugins.pydantic.serializer
   django_modern_rest.internal.cache -> django_modern_rest.validation.response
 
 
@@ -60,13 +60,13 @@ forbidden_modules =
 ignore_imports =
   # Pydantic plugin:
   django_modern_rest.plugins.pydantic -> pydantic
+  django_modern_rest.plugins.pydantic.* -> pydantic
   # Msgspec plugin:
   django_modern_rest.plugins.msgspec -> msgspec
   django_modern_rest.plugins.msgspec.* -> msgspec
   # Optional json support from msgspec:
   django_modern_rest.settings -> msgspec
   django_modern_rest.internal.json -> msgspec
-
 
 [importlinter:contract:plugins-independence]
 name = All plugins must be independent
