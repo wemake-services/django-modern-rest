@@ -5,7 +5,7 @@ def clear_settings_cache() -> None:  # noqa: C901
     Useful for tests, when you modify the global settings object.
     """
     try:
-        from django_modern_rest.plugins.pydantic import (  # noqa: PLC0415
+        from django_modern_rest.plugins.pydantic.serializer import (  # noqa: PLC0415
             _get_cached_type_adapter,  # pyright: ignore[reportPrivateUsage]
         )
     except ImportError:  # pragma: no cover

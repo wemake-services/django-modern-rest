@@ -623,10 +623,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         settings_auth = resolve_setting(Settings.auth)
 
         auth = [
-            *payload_auth,
-            *blueprint_auth,
-            *(controller_cls.auth or ()),
-            *(settings_auth or ()),
+            *payload_auth,  # pyrefly: ignore[not-iterable]
+            *blueprint_auth,  # pyrefly: ignore[not-iterable]
+            *(controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
+            *(settings_auth or ()),  # pyrefly: ignore[not-iterable]
         ]
         # Validate that auth matches the sync / async endpoints:
         base_type = AsyncAuth if inspect.iscoroutinefunction(func) else SyncAuth

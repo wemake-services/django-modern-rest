@@ -44,6 +44,7 @@ class FieldDefinition:
     """Definition of a field in the OpenAPI."""
 
     name: str
+    annotation: Any
     default: Any = None
     extra_data: dict[str, Any] = field(default_factory=dict)  # pyright: ignore[reportUnknownVariableType]
     kwarg_definition: KwargDefinition | None = None

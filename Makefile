@@ -1,11 +1,20 @@
 SHELL := /usr/bin/env bash
 
+.DEFAULT_GOAL := help
+
+.PHONY: help
+help: ## Show the help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Available targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
 .PHONY: format
-format:
+format: ## Format code with ruff
 	ruff format && ruff check && ruff format
 
 .PHONY: lint
-lint:
+lint: ## Run linting checks (ruff, flake8, slotscheck, lint-imports)
 	poetry run ruff check --exit-non-zero-on-fix
 	poetry run ruff format --check --diff
 	poetry run flake8 .
@@ -13,34 +22,33 @@ lint:
 	poetry run lint-imports
 
 .PHONY: type-check
-type-check:
+type-check: ## Run type checking (mypy, pyright, pyrefly)
 	poetry run mypy .
 	poetry run pyright
 	poetry run pyrefly check
 
 .PHONY: spell-check
-spell-check:
+spell-check: ## Run spell checking with codespell
 	poetry run codespell django_modern_rest tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: unit
-unit:
+unit: ## Run unit tests with pytest
 	poetry run pytest --inline-snapshot=disable
 
 .PHONY: smoke
-smoke:
-# Checks that it is possible to import the base package without django.setup
+smoke: ## Run smoke tests (check package can be imported without django.setup)
 	poetry run python -c 'from django_modern_rest import Controller'
 
 .PHONY: example
-example:
+example: ## Run mypy and pytest on example code
 	cd django_test_app && poetry run mypy --config-file mypy.ini
 	PYTHONPATH='docs/' poetry run pytest -o addopts='' \
 	  --suppress-no-test-exit-code \
 	  docs/examples/testing/polyfactory_usage.py
 
 .PHONY: package
-package:
+package: ## Check package dependencies with pip
 	poetry run pip check
 
 .PHONY: test
-test: lint type-check example spell-check package smoke unit
+test: lint type-check example spell-check package smoke unit ## Run all checks (lint, type-check, example, spell-check, package, smoke, unit)

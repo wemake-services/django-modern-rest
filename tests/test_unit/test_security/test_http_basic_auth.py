@@ -9,7 +9,9 @@ from django_modern_rest.security.http import (
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
-def test_schema(typ: type[HttpBasicSyncAuth | HttpBasicAsyncAuth]) -> None:
+def test_schema(
+    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
+) -> None:
     """Ensures that security scheme is correct for http basic auth."""
     instance = typ()
     scheme = instance.security_scheme
