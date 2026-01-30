@@ -104,7 +104,7 @@ sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
 # TODO: remove whe `sphinx-tabs` is fixed:
-docutils = "0.21.2"
+docutils = "0.22.4"
 
 # Needed for our extension:
 uvicorn = "^0.40"
