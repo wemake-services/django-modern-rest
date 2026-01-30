@@ -21,11 +21,13 @@ class _BaseAuth:
     @abstractmethod
     def security_scheme(self) -> Components:
         """Provides a security schema definition."""
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def security_requirement(self) -> SecurityRequirement:
         """Provides a security schema usage requirement."""
+        raise NotImplementedError
 
     def provide_responses(
         self,

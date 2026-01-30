@@ -18,6 +18,7 @@ from django_modern_rest import (
 )
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import (
     PydanticErrorModel,
@@ -444,9 +445,9 @@ def test_validate_sync_error_handler_for_async() -> None:
             ) -> HttpResponse:
                 raise NotImplementedError
 
-            @validate(  # type: ignore[arg-type]
+            @validate(
                 ResponseSpec(list[int], status_code=HTTPStatus.OK),
-                error_handler=endpoint_error,
+                error_handler=wrap_handler(endpoint_error),  # type: ignore[arg-type]
             )
             async def post(self) -> HttpResponse:
                 raise NotImplementedError
@@ -460,13 +461,14 @@ def test_validate_async_endpoint_error_for_sync() -> None:
             async def async_endpoint_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> HttpResponse:
                 raise NotImplementedError
 
             @validate(  # type: ignore[arg-type]
                 ResponseSpec(list[int], status_code=HTTPStatus.OK),
-                error_handler=async_endpoint_error,
+                error_handler=wrap_handler(async_endpoint_error),
             )
             def get(self) -> HttpResponse:
                 raise NotImplementedError

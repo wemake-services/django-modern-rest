@@ -16,6 +16,7 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.errors import wrap_handler
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.test import (
@@ -39,14 +40,16 @@ class _AsyncValidateErrorHandlerController(Controller[PydanticSerializer]):
     async def async_endpoint_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
+        assert self is controller
         return self.to_error(str(exc), status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
         ResponseSpec(list[int], status_code=HTTPStatus.OK),
         ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
-        error_handler=async_endpoint_error,
+        error_handler=wrap_handler(async_endpoint_error),
     )
     async def get(self) -> HttpResponse:
         raise ValueError('Error message')
@@ -56,14 +59,16 @@ class _AsyncValidateErrorHandlerBlueprint(Blueprint[PydanticSerializer]):
     async def async_endpoint_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
+        assert self is controller.active_blueprint
         return self.to_error(str(exc), status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
         ResponseSpec(list[int], status_code=HTTPStatus.OK),
         ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
-        error_handler=async_endpoint_error,
+        error_handler=wrap_handler(async_endpoint_error),
     )
     async def get(self) -> HttpResponse:
         raise ValueError('Error message')
@@ -97,15 +102,17 @@ class _ErrorHandlerValidationController(Controller[PydanticSerializer]):
     async def async_endpoint_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
+        assert self is controller
         # Not `str`:
         return self.to_error(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @validate(
         ResponseSpec(list[int], status_code=HTTPStatus.OK),
         ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
-        error_handler=async_endpoint_error,
+        error_handler=wrap_handler(async_endpoint_error),
     )
     async def get(self) -> HttpResponse:
         raise ValueError('Error message')
@@ -145,8 +152,10 @@ class _ModifyComplexHandler(Controller[PydanticSerializer]):
     def endpoint_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
+        assert self is controller
         if isinstance(exc, ValueError):
             return self.to_error(
                 'Endpoint',
@@ -156,27 +165,33 @@ class _ModifyComplexHandler(Controller[PydanticSerializer]):
 
     @modify(
         status_code=HTTPStatus.OK,
-        error_handler=endpoint_error,
+        error_handler=wrap_handler(endpoint_error),
     )
     def get(self) -> int:
         raise ValueError
 
     @modify(
         status_code=HTTPStatus.OK,
-        error_handler=endpoint_error,
+        error_handler=wrap_handler(endpoint_error),
     )
     def post(self) -> int:
         raise ZeroDivisionError
 
     @modify(
         status_code=HTTPStatus.OK,
-        error_handler=endpoint_error,
+        error_handler=wrap_handler(endpoint_error),
     )
     def put(self) -> int:
         raise RuntimeError('from put')
 
     @override
-    def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
+    def handle_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        assert self is controller
         if isinstance(exc, ZeroDivisionError):
             return self.to_error(
                 'Controller',
@@ -225,8 +240,10 @@ class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
     async def endpoint_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
+        assert self is controller
         if isinstance(exc, ValueError):
             return self.to_error(
                 'Endpoint',
@@ -236,21 +253,21 @@ class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
 
     @modify(
         status_code=HTTPStatus.OK,
-        error_handler=endpoint_error,
+        error_handler=wrap_handler(endpoint_error),
     )
     async def get(self) -> int:
         raise ValueError
 
     @modify(
         status_code=HTTPStatus.OK,
-        error_handler=endpoint_error,
+        error_handler=wrap_handler(endpoint_error),
     )
     async def post(self) -> int:
         raise ZeroDivisionError
 
     @modify(
         status_code=HTTPStatus.OK,
-        error_handler=endpoint_error,
+        error_handler=wrap_handler(endpoint_error),
     )
     async def put(self) -> int:
         raise RuntimeError('from put')
@@ -259,8 +276,10 @@ class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
     async def handle_async_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
+        assert self is controller
         if isinstance(exc, ZeroDivisionError):
             return self.to_error(
                 'Controller',

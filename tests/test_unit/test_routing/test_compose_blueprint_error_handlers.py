@@ -17,8 +17,8 @@ from django_modern_rest import (
 )
 from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.errors import wrap_handler
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import clear_settings_cache
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -32,13 +32,17 @@ class _ErrorHandlingBlueprint(Blueprint[PydanticSerializer], Body[_ErrorBody]):
     def error_handler(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, ValueError):
             return self.to_response('endpoint', status_code=HTTPStatus.OK)
         raise exc
 
-    @modify(error_handler=error_handler, status_code=HTTPStatus.OK)
+    @modify(
+        error_handler=wrap_handler(error_handler),
+        status_code=HTTPStatus.OK,
+    )
     def post(self) -> str:  # noqa: WPS238
         if self.parsed_body.error == 0:
             raise ValueError
@@ -51,7 +55,12 @@ class _ErrorHandlingBlueprint(Blueprint[PydanticSerializer], Body[_ErrorBody]):
         raise RuntimeError('unhandled')
 
     @override
-    def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
+    def handle_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
         if isinstance(exc, TypeError):
             return self.to_response('blueprint', status_code=HTTPStatus.OK)
         raise exc
@@ -61,7 +70,12 @@ class _ErrorHandlingController(Controller[PydanticSerializer]):
     blueprints: ClassVar[BlueprintsT] = [_ErrorHandlingBlueprint]
 
     @override
-    def handle_error(self, endpoint: Endpoint, exc: Exception) -> HttpResponse:
+    def handle_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
         if isinstance(exc, KeyError):
             return self.to_response('controller', status_code=HTTPStatus.OK)
         raise exc
@@ -71,8 +85,8 @@ class _ErrorHandlingController(Controller[PydanticSerializer]):
 
 
 def _global_handle_error(
-    controller: Controller[BaseSerializer],
     endpoint: Endpoint,
+    controller: Controller[PydanticSerializer],
     exc: Exception,
 ) -> HttpResponse:
     if isinstance(exc, IndexError):
@@ -133,13 +147,17 @@ class _AsyncErrorHandlingBlueprint(
     async def error_handler(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, ValueError):
             return self.to_response('endpoint', status_code=HTTPStatus.OK)
         raise exc
 
-    @modify(error_handler=error_handler, status_code=HTTPStatus.OK)
+    @modify(
+        error_handler=wrap_handler(error_handler),
+        status_code=HTTPStatus.OK,
+    )
     async def post(self) -> str:  # noqa: WPS238
         if self.parsed_body.error == 0:
             raise ValueError
@@ -155,6 +173,7 @@ class _AsyncErrorHandlingBlueprint(
     async def handle_async_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, TypeError):
@@ -169,6 +188,7 @@ class _AsyncErrorHandlingController(Controller[PydanticSerializer]):
     async def handle_async_error(
         self,
         endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, KeyError):

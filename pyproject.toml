@@ -104,6 +104,7 @@ sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
 # TODO: remove whe `sphinx-tabs` is fixed:
+# https://github.com/executablebooks/sphinx-tabs/issues/212
 docutils = "0.21.2"
 
 # Needed for our extension:
@@ -280,6 +281,8 @@ exclude = [
   "django_test_app/",
   # We don't care about benchmark code:
   "benchmarks/",
+  # We don't care about built docs:
+  "docs/_build/",
 ]
 
 enable_error_code = [

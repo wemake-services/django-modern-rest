@@ -164,30 +164,39 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom error handling.
         """
-        active_blueprint = controller.active_blueprint
+        # NOTE: if you change something here,
+        # also change in `handle_async_error`
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return self.metadata.error_handler(  # type: ignore[return-value]
-                    active_blueprint,
                     self,
+                    controller,
                     exc,
                 )
             except Exception:  # noqa: S110
-                # We don't use `suppress` instead of `expect / pass` for speed.
+                # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
         if controller.blueprint:
             try:
-                return controller.blueprint.handle_error(self, exc)
+                return controller.blueprint.handle_error(
+                    self,
+                    controller,
+                    exc,
+                )
             except Exception:  # noqa: S110
                 pass  # noqa: WPS420
         # Per-endpoint error handler and per-blueprint handlers didn't work.
         # Now, try the per-controller one.
         try:
-            return controller.handle_error(self, exc)
+            return controller.handle_error(
+                self,
+                controller,
+                exc,
+            )
         except Exception:
             # And the last option is to handle error globally:
-            return self._global_error_handler(active_blueprint, exc)
+            return self._global_error_handler(controller, exc)
 
     async def handle_async_error(
         self,
@@ -199,13 +208,13 @@ class Endpoint:  # noqa: WPS214
 
         Override this method to add custom async error handling.
         """
-        active_blueprint = controller.active_blueprint
+        # NOTE: if you change something here, also change in `handle_error`
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
                 return await self.metadata.error_handler(  # type: ignore[no-any-return, misc]
-                    active_blueprint,
                     self,
+                    controller,
                     exc,
                 )
             except Exception:  # noqa: S110
@@ -213,16 +222,24 @@ class Endpoint:  # noqa: WPS214
                 pass  # noqa: WPS420
         if controller.blueprint:
             try:
-                return await controller.blueprint.handle_async_error(self, exc)
+                return await controller.blueprint.handle_async_error(
+                    self,
+                    controller,
+                    exc,
+                )
             except Exception:  # noqa: S110
                 pass  # noqa: WPS420
         # Per-endpoint error handler and per-blueprint handlers didn't work.
         # Now, try the per-controller one.
         try:
-            return await controller.handle_async_error(self, exc)
+            return await controller.handle_async_error(
+                self,
+                controller,
+                exc,
+            )
         except Exception:
             # And the last option is to handle error globally:
-            return self._global_error_handler(active_blueprint, exc)
+            return self._global_error_handler(controller, exc)
 
     def _async_endpoint(
         self,
@@ -378,7 +395,7 @@ class Endpoint:  # noqa: WPS214
 
     def _global_error_handler(
         self,
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         exc: Exception,
     ) -> HttpResponse:
         """
@@ -389,7 +406,7 @@ class Endpoint:  # noqa: WPS214
         return resolve_setting(  # type: ignore[no-any-return]
             Settings.global_error_handler,
             import_string=True,
-        )(blueprint, self, exc)
+        )(self, controller, exc)
 
 
 _ParamT = ParamSpec('_ParamT')
@@ -692,6 +709,7 @@ class _ModifyAnyCallable(Protocol):
 @overload
 def modify(
     *,
+    # TODO: make error handlers generic?
     error_handler: AsyncErrorHandlerT,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,

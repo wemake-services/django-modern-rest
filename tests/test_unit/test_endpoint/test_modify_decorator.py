@@ -18,6 +18,7 @@ from django_modern_rest import (
 from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.cookies import CookieSpec
 from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
@@ -216,13 +217,14 @@ def test_modify_sync_error_handler_for_async() -> None:
             def endpoint_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> HttpResponse:
                 raise NotImplementedError
 
             @modify(  # type: ignore[deprecated]
                 status_code=HTTPStatus.OK,
-                error_handler=endpoint_error,
+                error_handler=wrap_handler(endpoint_error),
             )
             async def post(self) -> int:
                 raise NotImplementedError
@@ -236,13 +238,14 @@ def test_modify_async_endpoint_error_for_sync() -> None:
             async def async_endpoint_error(
                 self,
                 endpoint: Endpoint,
+                controller: Controller[PydanticSerializer],
                 exc: Exception,
             ) -> HttpResponse:
                 raise NotImplementedError
 
             @modify(  # type: ignore[type-var]
                 status_code=HTTPStatus.OK,
-                error_handler=async_endpoint_error,
+                error_handler=wrap_handler(async_endpoint_error),
             )
             def get(self) -> int:
                 raise NotImplementedError

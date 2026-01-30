@@ -1,8 +1,11 @@
+import inspect
 from collections.abc import Awaitable, Callable
+from functools import wraps
 from typing import (
     TYPE_CHECKING,
     Any,
     TypeAlias,
+    overload,
 )
 
 from django.http import HttpResponse
@@ -13,26 +16,91 @@ from django_modern_rest.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint
+    from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import Endpoint
-
+    from django_modern_rest.serialization import BaseSerializer
 
 #: Error handler type for sync callbacks.
 SyncErrorHandlerT: TypeAlias = Callable[
-    [Any, 'Endpoint', Exception],  # this is not `Any`, but mypy can't do better
+    ['Endpoint', 'Controller[BaseSerializer]', Exception],  # noqa: WPS226
     HttpResponse,
 ]
 
 #: Error handler type for async callbacks.
 AsyncErrorHandlerT: TypeAlias = Callable[
-    [Any, 'Endpoint', Exception],  # this is not `Any`, but mypy can't do better
+    ['Endpoint', 'Controller[BaseSerializer]', Exception],
     Awaitable[HttpResponse],
 ]
 
 
+_MethodSyncHandler: TypeAlias = Callable[
+    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # but mypy can't do better:
+    ['Any', 'Endpoint', 'Controller[Any]', Exception],
+    HttpResponse,
+]
+
+_MethodAsyncHandler: TypeAlias = Callable[
+    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # but mypy can't do better:
+    ['Any', 'Endpoint', 'Controller[Any]', Exception],
+    Awaitable[HttpResponse],
+]
+
+
+@overload
+def wrap_handler(method: _MethodSyncHandler) -> SyncErrorHandlerT: ...
+
+
+@overload
+def wrap_handler(method: _MethodAsyncHandler) -> AsyncErrorHandlerT: ...
+
+
+def wrap_handler(
+    method: _MethodSyncHandler | _MethodAsyncHandler,
+) -> SyncErrorHandlerT | AsyncErrorHandlerT:
+    """
+    Utility function to wrap controller / blueprint methods.
+
+    It is used to wrap an existing controller method
+    and pass it as ``error_handler=`` argument to an endpoint.
+    """
+    if inspect.iscoroutinefunction(method):
+
+        @wraps(method)
+        async def decorator(  # noqa: WPS430  # pyright: ignore[reportRedeclaration]
+            endpoint: 'Endpoint',
+            controller: 'Controller[BaseSerializer]',
+            exc: Exception,
+        ) -> HttpResponse:
+            return await method(  # type: ignore[no-any-return]
+                controller.active_blueprint,
+                endpoint,
+                controller,
+                exc,
+            )
+
+    else:
+
+        @wraps(method)  # pyrefly: ignore[bad-argument-type]
+        def decorator(  # noqa: WPS430
+            endpoint: 'Endpoint',
+            controller: 'Controller[BaseSerializer]',
+            exc: Exception,
+        ) -> HttpResponse:
+            return method(  # type: ignore[return-value]
+                controller.active_blueprint,
+                endpoint,
+                controller,
+                exc,
+            )
+
+    return decorator
+
+
 def global_error_handler(
-    controller: 'Blueprint[Any]',
     endpoint: 'Endpoint',
+    controller: 'Controller[BaseSerializer]',
     exc: Exception,
 ) -> HttpResponse:
     """
@@ -44,18 +112,23 @@ def global_error_handler(
        :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
        and :meth:`~django_modern_rest.endpoint.Endpoint.handle_async_error`
        methods
-    2. This global handler, specified via the configuration
+    2. Per blueprint handlers
+    3. Per controller handlers
+    4. This global handler, specified via the configuration
 
     If some exception cannot be handled, it is just reraised.
 
     Args:
-        controller: Controller instance that *endpoint* belongs to.
         endpoint: Endpoint where error happened.
+        controller: Controller instance that *endpoint* belongs to.
         exc: Exception instance that happened.
 
     Returns:
         :class:`~django.http.HttpResponse` with proper response for this error.
         Or raise *exc* back.
+
+    You can access active blueprint
+    via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
 
     Here's an example that will produce ``{'detail': 'inf'}``
     for any :exc:`ZeroDivisionError` in your application:
