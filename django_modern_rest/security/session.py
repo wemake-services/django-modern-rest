@@ -40,7 +40,7 @@ class _DjangoSessionAuth:
         """Provides a security schema usage requirement."""
         return {self.security_scheme_name: []}
 
-    def _authenticate(
+    def authenticate(
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
@@ -70,7 +70,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         controller: 'Controller[BaseSerializer]',
     ) -> Any | None:
         """Does check for the existing request user."""
-        return self._authenticate(endpoint, controller)
+        return self.authenticate(endpoint, controller)
 
 
 class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
@@ -93,4 +93,4 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         controller: 'Controller[BaseSerializer]',
     ) -> Any | None:
         """Does check for the existing request user."""
-        return self._authenticate(endpoint, controller)
+        return self.authenticate(endpoint, controller)
