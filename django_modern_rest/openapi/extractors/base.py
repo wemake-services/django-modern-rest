@@ -1,15 +1,25 @@
 from abc import abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+
+from typing_extensions import override
 
 from django_modern_rest.openapi.types import FieldDefinition
 
 _SourceT = TypeVar('_SourceT')
+_RegistryT: TypeAlias = list['type[FieldExtractor[Any]]']
 
 
-class BaseFieldExtractor(Generic[_SourceT]):
+class FieldExtractor(Generic[_SourceT]):
     """Base class for field definitions extractors."""
 
     __slots__ = ()
+
+    registry: ClassVar[_RegistryT] = []
+
+    @override
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls.registry.append(cls)
 
     @classmethod
     @abstractmethod
