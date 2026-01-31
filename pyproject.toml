@@ -80,6 +80,7 @@ pytest-django = "^4.8"
 pytest-asyncio = "^1.2"
 pytest-custom-exit-code = "^0.3"
 pytest-freezer = "^0.4"
+pytest-freethreaded = {version = "^0.1.0", python = ">3.13"}
 dirty-equals = "^0.11"
 faker = "^40.1"
 inline-snapshot = "^0.31"
