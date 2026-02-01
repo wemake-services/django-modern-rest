@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import ClassVar
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect
@@ -32,7 +31,7 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
 class MyController(Controller[PydanticSerializer]):
     """Example controller using CSRF protection middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = csrf_protect_json.responses
+    responses = csrf_protect_json.responses
 
     def post(self) -> dict[str, str]:
         return {'message': 'ok'}

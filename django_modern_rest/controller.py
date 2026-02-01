@@ -122,7 +122,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     )
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
-    responses: ClassVar[list[ResponseSpec]] = []  # TODO: sequence?
+    responses: ClassVar[Sequence[ResponseSpec]] = []
     http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
@@ -275,7 +275,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raise exc
 
     @classmethod
-    def semantic_responses(cls) -> list[ResponseSpec]:
+    def semantic_responses(cls) -> Sequence[ResponseSpec]:
         """Returns smartly inferenced responses from components/auth/etc."""
         # Get the responses that were provided by components.
         existing_codes = {response.status_code for response in cls.responses}
@@ -289,16 +289,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             # If some response already exists, do not override it.
             if response.status_code not in existing_codes
         }
-
-        # Get the responses from the auth specs.
-        auth_responses = {
-            response
-            for auth in (cls.auth or ())
-            for response in auth.provide_responses(cls.serializer)
-            # If some response already exists, do not override it.
-            if response.status_code not in existing_codes
-        }
-        return [*cls.responses, *extra_responses, *auth_responses]
+        return [*cls.responses, *extra_responses]
 
     # Protected API:
 

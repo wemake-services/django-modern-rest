@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import ClassVar
 
 from django.http import HttpRequest, HttpResponse
 
@@ -43,7 +42,7 @@ def rate_limit_json(response: HttpResponse) -> HttpResponse:
 class RateLimitedController(Controller[PydanticSerializer]):
     """Example controller with custom rate limit middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = rate_limit_json.responses
+    responses = rate_limit_json.responses
 
     def post(self) -> dict[str, str]:
         return {'message': 'Request processed'}

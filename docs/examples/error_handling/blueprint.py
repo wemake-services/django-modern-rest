@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import ClassVar
 
 import httpx
 from django.http import HttpResponse
@@ -11,10 +10,10 @@ from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 class ProxyBlueprint(Blueprint[PydanticSerializer]):
-    responses: ClassVar[list[ResponseSpec]] = [
+    responses = (
         # Custom schema that we can return when `HTTPError` happens:
         ResponseSpec(str, status_code=HTTPStatus.FAILED_DEPENDENCY),
-    ]
+    )
 
     async def get(self) -> None:
         async with self._client() as client:

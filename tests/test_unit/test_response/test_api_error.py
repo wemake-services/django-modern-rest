@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 import pytest
 from django.http import HttpResponse
@@ -135,9 +135,7 @@ def test_api_error_invalid(
 
 
 class _ControllerLevelAPIError(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseSpec]] = [
-        ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
-    ]
+    responses = (ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),)
 
     def get(self) -> str:
         """Type mismatch, but works."""

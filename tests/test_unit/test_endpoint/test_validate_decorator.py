@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import ClassVar, Generic, Literal, TypeVar, final
+from typing import Generic, Literal, TypeVar, final
 
 import pytest
 from django.http import HttpResponse
@@ -219,18 +219,17 @@ def test_validate_over_regular_data(dmr_rf: DMRRequestFactory) -> None:
 
 
 def test_validate_required_for_responses() -> None:
-    """Ensures `@validate` is required for `HttpResponse` returns."""
+    """Ensures `responses` are required for `HttpResponse` returns."""
     with pytest.raises(EndpointMetadataError, match='@validate'):
 
-        class _NoDecorator(Controller[PydanticSerializer]):
+        class _NoDecoratorAnd(Controller[PydanticSerializer]):
+            # No `@validate` and no `responses=`:
             def get(self) -> HttpResponse:
                 raise NotImplementedError
 
 
 class _NoExplicitDecorator(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseSpec]] = [
-        ResponseSpec(list[int], status_code=HTTPStatus.OK),
-    ]
+    responses = (ResponseSpec(list[int], status_code=HTTPStatus.OK),)
 
     def get(self) -> HttpResponse:  # valid
         return self.to_response([1, 2])
@@ -482,12 +481,12 @@ def test_validate_responses_from_blueprint() -> None:
         Blueprint[PydanticSerializer],
         Body[list[str]],
     ):
-        responses: ClassVar[list[ResponseSpec]] = [
+        responses = (
             ResponseSpec(
                 dict[str, str],
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             ),
-        ]
+        )
 
         @validate(
             ResponseSpec(list[int], status_code=HTTPStatus.OK),
@@ -520,12 +519,12 @@ def test_validate_enable_semantic_responses() -> None:
         Blueprint[PydanticSerializer],
         Body[list[str]],
     ):
-        responses: ClassVar[list[ResponseSpec]] = [
+        responses = (
             ResponseSpec(
                 dict[str, str],
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             ),
-        ]
+        )
 
         @validate(
             ResponseSpec(list[int], status_code=HTTPStatus.OK),

@@ -55,10 +55,10 @@ def test_controller_duplicate_responses() -> None:
     ):
 
         class _MixedController(Controller[PydanticSerializer]):
-            responses: ClassVar[list[ResponseSpec]] = [
+            responses = (
                 ResponseSpec(int, status_code=HTTPStatus.FORBIDDEN),
                 ResponseSpec(str, status_code=HTTPStatus.FORBIDDEN),
-            ]
+            )
 
             def get(self) -> str:  # needs at least one endpoint to validate
                 raise NotImplementedError

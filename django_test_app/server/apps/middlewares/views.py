@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import ClassVar, Final, final
+from typing import Final, final
 
 import pydantic
 from django.contrib.auth.decorators import login_required
@@ -120,7 +120,7 @@ class _UserInput(pydantic.BaseModel):
 class CsrfTokenController(Controller[PydanticSerializer]):
     """Controller to obtain CSRF token."""
 
-    responses: ClassVar[list[ResponseSpec]] = ensure_csrf_cookie_json.responses
+    responses = ensure_csrf_cookie_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that ensures CSRF cookie is set."""
@@ -134,7 +134,7 @@ class CsrfProtectedController(
     Controller[PydanticSerializer],
 ):
     # Just add responses from middleware
-    responses: ClassVar[list[ResponseSpec]] = csrf_protect_json.responses
+    responses = csrf_protect_json.responses
 
     def post(self) -> _UserInput:
         return self.parsed_body
@@ -147,7 +147,7 @@ class AsyncCsrfProtectedController(
     Controller[PydanticSerializer],
 ):
     # Just add responses from middleware
-    responses: ClassVar[list[ResponseSpec]] = csrf_protect_json.responses
+    responses = csrf_protect_json.responses
 
     async def post(self) -> _UserInput:
         return self.parsed_body
@@ -158,7 +158,7 @@ class AsyncCsrfProtectedController(
 class CustomHeaderController(Controller[PydanticSerializer]):
     """Controller with custom header middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = custom_header_json.responses
+    responses = custom_header_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that returns simple data."""
@@ -173,7 +173,7 @@ class RateLimitedController(
 ):
     """Controller with rate limiting middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = rate_limit_json.responses
+    responses = rate_limit_json.responses
 
     def post(self) -> _UserInput:
         """POST endpoint with rate limiting."""
@@ -185,7 +185,7 @@ class RateLimitedController(
 class RequestIdController(Controller[PydanticSerializer]):
     """Controller that uses request_id added by middleware."""
 
-    responses: ClassVar[list[ResponseSpec]] = add_request_id_json.responses
+    responses = add_request_id_json.responses
 
     request: _RequestWithID
 
@@ -206,7 +206,7 @@ class LoginRequiredController(Controller[PydanticSerializer]):
     Converts 302 redirect to JSON 401 response for REST API compatibility.
     """
 
-    responses: ClassVar[list[ResponseSpec]] = login_required_json.responses
+    responses = login_required_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that requires Django authentication."""
