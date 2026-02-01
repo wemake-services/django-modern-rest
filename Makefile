@@ -14,7 +14,7 @@ format: ## Format code with ruff
 	ruff format && ruff check && ruff format
 
 .PHONY: lint
-lint: ## Run linting checks (ruff, flake8, slotscheck, lint-imports)
+lint: ## Run linting checks
 	poetry run ruff check --exit-non-zero-on-fix
 	poetry run ruff format --check --diff
 	poetry run flake8 .
@@ -22,13 +22,13 @@ lint: ## Run linting checks (ruff, flake8, slotscheck, lint-imports)
 	poetry run lint-imports
 
 .PHONY: type-check
-type-check: ## Run type checking (mypy, pyright, pyrefly)
+type-check: ## Run all type checkers we support
 	poetry run mypy .
 	poetry run pyright
 	poetry run pyrefly check
 
 .PHONY: spell-check
-spell-check: ## Run spell checking with codespell
+spell-check: ## Run spell checking
 	poetry run codespell django_modern_rest tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: unit
@@ -36,7 +36,7 @@ unit: ## Run unit tests with pytest
 	poetry run pytest --inline-snapshot=disable
 
 .PHONY: smoke
-smoke: ## Run smoke tests (check package can be imported without django.setup)
+smoke: ## Run smoke tests (check that package can be imported without `django.setup`)
 	poetry run python -c 'from django_modern_rest import Controller'
 
 .PHONY: example
@@ -51,4 +51,4 @@ package: ## Check package dependencies with pip
 	poetry run pip check
 
 .PHONY: test
-test: lint type-check example spell-check package smoke unit ## Run all checks (lint, type-check, example, spell-check, package, smoke, unit)
+test: lint type-check example spell-check package smoke unit ## Run all checks
