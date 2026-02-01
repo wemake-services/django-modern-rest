@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 try:
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 @pytest.fixture
 def dmr_client() -> 'DMRClient':
     """Customized version of :class:`django.test.Client`."""
-    from django_modern_rest.test import DMRClient  # noqa: PLC0415
+    from django_modern_rest.test import DMRClient
 
     return DMRClient()
 
@@ -29,7 +30,7 @@ def dmr_client() -> 'DMRClient':
 @pytest.fixture
 def dmr_async_client() -> 'DMRAsyncClient':
     """Customized version of :class:`django.test.AsyncClient`."""
-    from django_modern_rest.test import DMRAsyncClient  # noqa: PLC0415
+    from django_modern_rest.test import DMRAsyncClient
 
     return DMRAsyncClient()
 
@@ -37,7 +38,7 @@ def dmr_async_client() -> 'DMRAsyncClient':
 @pytest.fixture
 def dmr_rf() -> 'DMRRequestFactory':
     """Customized version of :class:`django.test.RequestFactory`."""
-    from django_modern_rest.test import DMRRequestFactory  # noqa: PLC0415
+    from django_modern_rest.test import DMRRequestFactory
 
     return DMRRequestFactory()
 
@@ -45,6 +46,16 @@ def dmr_rf() -> 'DMRRequestFactory':
 @pytest.fixture
 def dmr_async_rf() -> 'DMRAsyncRequestFactory':
     """Customized version of :class:`django.test.AsyncRequestFactory`."""
-    from django_modern_rest.test import DMRAsyncRequestFactory  # noqa: PLC0415
+    from django_modern_rest.test import DMRAsyncRequestFactory
 
     return DMRAsyncRequestFactory()
+
+
+@pytest.fixture
+def dmr_clean_settings() -> Iterator[None]:
+    """Cleans settings caches before and after the test."""
+    from django_modern_rest.settings import clear_settings_cache
+
+    clear_settings_cache()
+    yield
+    clear_settings_cache()

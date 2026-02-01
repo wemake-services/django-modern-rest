@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import final
 
 import pytest
+from django.conf import LazySettings
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 from inline_snapshot import snapshot
@@ -14,6 +15,7 @@ from django_modern_rest.security import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
+from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -97,6 +99,52 @@ async def test_async_session_auth_failure(
     request.user = AnonymousUser()
 
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': 'Value error, Not authenticated',
+                'input': '',
+                'ctx': {'error': 'Not authenticated'},
+            },
+        ],
+    })
+
+
+def test_global_settings_override(
+    settings: LazySettings,
+    dmr_clean_settings: None,
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensure that you can override global `[]` auth value from settings."""
+    settings.DMR_SETTINGS = {
+        Settings.auth: [],
+    }
+
+    class _Controller(Controller[PydanticSerializer]):
+        @modify(auth=[DjangoSessionSyncAuth()])
+        def get(self) -> str:
+            return 'authed'
+
+    request = dmr_rf.get('/whatever/')
+    request.user = User()
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == 'authed'
+
+    request = dmr_rf.get('/whatever/')
+    request.user = AnonymousUser()
+
+    response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}

@@ -148,7 +148,7 @@ def global_error_handler(
        ... ) -> HttpResponse:
        ...     if isinstance(exc, ZeroDivisionError):
        ...         return controller.to_error(
-       ...             {'details': 'inf!'},  # TODO: replace with new API
+       ...             {'detail': 'inf!'},  # TODO: replace with new API
        ...             status_code=HTTPStatus.NOT_IMPLEMENTED,
        ...         )
        ...     # Call the original handler to handle default errors:

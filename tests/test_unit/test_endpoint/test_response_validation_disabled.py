@@ -1,5 +1,4 @@
 import json
-from collections.abc import Iterator
 from http import HTTPMethod, HTTPStatus
 from typing import ClassVar, final
 
@@ -19,24 +18,18 @@ from django_modern_rest import (
 )
 from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.settings import (
-    Settings,
-    clear_settings_cache,
-)
+from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
 
 
 @pytest.fixture(autouse=True)
-def _disable_response_validation(settings: LazySettings) -> Iterator[None]:
-    clear_settings_cache()
-
+def _disable_response_validation(
+    settings: LazySettings,
+    dmr_clean_settings: None,
+) -> None:
     settings.DMR_SETTINGS = {
         Settings.validate_responses: False,
     }
-
-    yield
-
-    clear_settings_cache()
 
 
 @final

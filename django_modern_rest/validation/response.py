@@ -23,10 +23,7 @@ from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.negotiation import response_validation_negotiator
 from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.settings import (
-    Settings,
-    resolve_setting,
-)
+from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller

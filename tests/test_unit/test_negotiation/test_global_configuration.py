@@ -1,5 +1,5 @@
 import json
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import Annotated, Any, ClassVar, final
 
@@ -26,10 +26,7 @@ from django_modern_rest.negotiation import (
 from django_modern_rest.parsers import DeserializeFunc, JsonParser, Parser, Raw
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.renderers import JsonRenderer, Renderer
-from django_modern_rest.settings import (
-    Settings,
-    clear_settings_cache,
-)
+from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
 
 
@@ -68,17 +65,14 @@ class _XMLRenderer(Renderer):
 
 
 @pytest.fixture(autouse=True)
-def _setup_parser_and_renderer(settings: LazySettings) -> Iterator[None]:
-    clear_settings_cache()
-
+def _setup_parser_and_renderer(
+    settings: LazySettings,
+    dmr_clean_settings: None,
+) -> None:
     settings.DMR_SETTINGS = {
         Settings.parsers: [_XMLParser],
         Settings.renderers: [_XMLRenderer],
     }
-
-    yield
-
-    clear_settings_cache()
 
 
 class _RequestModel(pydantic.BaseModel):

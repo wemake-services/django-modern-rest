@@ -39,12 +39,12 @@ We support both:
 - And `pytest-django <https://pytest-django.readthedocs.io/en/latest>`_
   styled tests
 
-For ``pytest`` we also have a bundled plugin with 4 different fixtures:
+For ``pytest`` we also have a bundled plugin with several different fixtures:
 
 .. literalinclude:: ../../django_modern_rest_pytest.py
   :caption: django_modern_rest_pytest.py
   :linenos:
-  :lines: 21-
+  :lines: 22-
 
 No need to configure anything, just use these fixtures by names in your tests.
 

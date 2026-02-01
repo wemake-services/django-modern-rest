@@ -45,6 +45,11 @@ class _DjangoSessionAuth:
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> Any | None:
+        """
+        Override this method to provide other authentication logic.
+
+        For example: checking that user is active / staff / superuser.
+        """
         if controller.request.user.is_authenticated:
             return controller.request.user
         return None

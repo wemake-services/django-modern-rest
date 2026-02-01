@@ -1,6 +1,15 @@
 OpenAPI
 =======
 
+Semantic schema generation
+--------------------------
+
+TODO: explain how responses are fetched from components and auth
+
+
+API Reference
+-------------
+
 .. autoclass:: django_modern_rest.openapi.objects.Callback
    :members:
 
