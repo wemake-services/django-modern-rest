@@ -1,6 +1,6 @@
 import dataclasses
 import inspect
-from collections.abc import Callable, Set
+from collections.abc import Callable, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import (
@@ -304,33 +304,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
             )
         assert_never(self.payload)
 
-    def _resolve_all_responses(
-        self,
-        payload: PayloadT,
-        *,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
-        modification: ResponseModification | None = None,
-    ) -> _AllResponses:
-        return cast(
-            '_AllResponses',
-            [
-                *([] if modification is None else [modification.to_spec()]),
-                *(
-                    payload.semantic_responses(controller_cls.serializer)
-                    if payload
-                    else []
-                ),
-                *(
-                    []
-                    if blueprint_cls is None
-                    else blueprint_cls.semantic_responses()
-                ),
-                *controller_cls.semantic_responses(),
-                *resolve_setting(Settings.responses),
-            ],
-        )
-
     def _from_validate(  # noqa: WPS211, WPS210
         self,
         payload: ValidateEndpointPayload,
@@ -349,10 +322,18 @@ class EndpointMetadataValidator:  # noqa: WPS214
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
+        auth = self._build_auth(
+            payload,
+            blueprint_cls,
+            controller_cls,
+            endpoint=endpoint,
+            func=func,
+        )
         all_responses = self._resolve_all_responses(
             payload,
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
+            auth=auth,
         )
         responses = self.response_list_validator_cls(
             payload=payload,
@@ -382,13 +363,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 controller_cls,
                 endpoint=endpoint,
             ),
-            auth=self._build_auth(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-                func=func,
-            ),
+            auth=auth,
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -428,11 +403,19 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 else payload.status_code
             ),
         )
+        auth = self._build_auth(
+            payload,
+            blueprint_cls,
+            controller_cls,
+            endpoint=endpoint,
+            func=func,
+        )
         all_responses = self._resolve_all_responses(
             payload,
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
             modification=modification,
+            auth=auth,
         )
         responses = self.response_list_validator_cls(
             payload=payload,
@@ -462,13 +445,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 controller_cls,
                 endpoint=endpoint,
             ),
-            auth=self._build_auth(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-                func=func,
-            ),
+            auth=auth,
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -502,11 +479,19 @@ class EndpointMetadataValidator:  # noqa: WPS214
             headers=None,
             cookies=None,
         )
+        auth = self._build_auth(
+            None,
+            blueprint_cls,
+            controller_cls,
+            endpoint=endpoint,
+            func=func,
+        )
         all_responses = self._resolve_all_responses(
             payload=None,
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
             modification=modification,
+            auth=auth,
         )
         responses = self.response_list_validator_cls(
             payload=None,
@@ -536,15 +521,36 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 controller_cls,
                 endpoint=endpoint,
             ),
-            auth=self._build_auth(
-                None,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-                func=func,
-            ),
+            auth=auth,
             summary=summary,
             description=description,
+        )
+
+    def _resolve_all_responses(
+        self,
+        payload: PayloadT,
+        *,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+        auth: list[SyncAuth | AsyncAuth] | None,
+        modification: ResponseModification | None = None,
+    ) -> _AllResponses:
+        auth_responses = {
+            response
+            for auth in (auth or [])
+            for response in auth.provide_responses(controller_cls.serializer)
+        }
+
+        return cast(
+            '_AllResponses',
+            [
+                *auth_responses,
+                *([] if modification is None else [modification.to_spec()]),
+                *((payload.responses or []) if payload else []),
+                *(blueprint_cls.semantic_responses() if blueprint_cls else []),
+                *controller_cls.semantic_responses(),
+                *resolve_setting(Settings.responses),
+            ],
         )
 
     def _build_parser_types(
@@ -620,7 +626,26 @@ class EndpointMetadataValidator:  # noqa: WPS214
         blueprint_auth = (
             () if blueprint_cls is None else (blueprint_cls.auth or ())
         )
-        settings_auth = resolve_setting(Settings.auth)
+        settings_auth: list[SyncAuth | AsyncAuth] | None = resolve_setting(
+            Settings.auth,
+            import_string=True,
+        )
+        if not isinstance(settings_auth, Sequence):
+            raise EndpointMetadataError(
+                'Settings.auth must be a list of auth instances '
+                'of a list of strings to import auth classes '
+                'to be instantiated. '
+                f'Got: {settings_auth!r}',
+            )
+        settings_auth = [
+            # Settings might specify paths to auth classes.
+            (
+                setting
+                if isinstance(setting, (SyncAuth, AsyncAuth))  # type: ignore[redundant-expr]
+                else setting()
+            )
+            for setting in settings_auth
+        ]
 
         auth = [
             *payload_auth,  # pyrefly: ignore[not-iterable]
@@ -633,7 +658,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         # Validate that auth matches the sync / async endpoints:
         base_type = AsyncAuth if inspect.iscoroutinefunction(func) else SyncAuth
         if not all(
-            isinstance(auth_instance, base_type) for auth_instance in auth
+            isinstance(auth_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for auth_instance in auth
         ):
             raise EndpointMetadataError(
                 f'All auth instances must be subtypes of {base_type!r} '
@@ -645,7 +671,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
             (payload and payload.auth is None)  # noqa: WPS222
             or (blueprint_cls and blueprint_cls.auth is None)
             or controller_cls.auth is None
-            or settings_auth is None
             # Empty auth list means that no auth is configured
             # and it is just None.
             or not auth
@@ -696,10 +721,15 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 )
             # We can't reach this point with `None`, it is processed before.
             assert isinstance(self.payload, ValidateEndpointPayload)  # noqa: S101
+            # TODO(@sobolevn): this seems wrong.
+            # There might be semantic responses.
+            # This validation can pass without us noticing.
+            # I also don't like that it calls `_resolve_all_responses` twice.
             if not self._resolve_all_responses(
                 self.payload,
                 blueprint_cls=blueprint_cls,
                 controller_cls=controller_cls,
+                auth=None,
             ):
                 raise EndpointMetadataError(
                     f'{endpoint!r} returns HttpResponse '

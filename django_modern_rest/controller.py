@@ -91,9 +91,6 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
-        enable_semantic_responses: Should we automatically add response schemas
-            from components like :class:`django_modern_rest.components.Headers`
-            into the :attr:`responses`?
         http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
         parsers: Sequence of types to be used for this controller
@@ -125,8 +122,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     )
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
-    responses: ClassVar[list[ResponseSpec]] = []
-    enable_semantic_responses: ClassVar[bool] = True
+    responses: ClassVar[list[ResponseSpec]] = []  # TODO: sequence?
     http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
@@ -280,18 +276,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
 
     @classmethod
     def semantic_responses(cls) -> list[ResponseSpec]:
-        """
-        Returns all user-defined responses in layers above endpoint itself.
-
-        Optionally responses can be turned off with falsy
-        :attr:`enable_semantic_responses` attribute
-        on a blueprint or a controller.
-        We call it once per blueprint
-        and once per controller when creating endpoint.
-        """
-        if not cls.enable_semantic_responses:
-            return cls.responses
-
+        """Returns smartly inferenced responses from components/auth/etc."""
         # Get the responses that were provided by components.
         existing_codes = {response.status_code for response in cls.responses}
         extra_responses = {
@@ -371,9 +356,6 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
-        enable_semantic_responses: Should we automatically add response schemas
-            from components like :class:`django_modern_rest.components.Headers`
-            into the :attr:`responses`?
         http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
         request: Current :class:`~django.http.HttpRequest` instance.

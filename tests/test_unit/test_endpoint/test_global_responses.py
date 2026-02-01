@@ -1,5 +1,4 @@
 import json
-from collections.abc import Iterator
 from http import HTTPStatus
 from typing import final
 
@@ -13,20 +12,19 @@ from django_modern_rest import (
     ResponseSpec,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.settings import clear_settings_cache
 from django_modern_rest.test import DMRRequestFactory
 
 
 @pytest.fixture(autouse=True)
-def _set_global_responses(settings: LazySettings) -> Iterator[None]:
-    clear_settings_cache()
+def _set_global_responses(
+    settings: LazySettings,
+    dmr_clean_settings: None,
+) -> None:
     settings.DMR_SETTINGS = {
         'responses': [
             ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
         ],
     }
-    yield
-    clear_settings_cache()
 
 
 def test_global_responses(dmr_rf: DMRRequestFactory) -> None:

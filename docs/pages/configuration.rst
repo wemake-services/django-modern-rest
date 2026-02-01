@@ -202,9 +202,23 @@ Authentication
   Default: ``[]``
 
   Configure authentication rules for the whole API.
-  You can use real objects or string paths for the objects to be imported.
 
   To enable auth for all endpoints you can use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from django_modern_rest.security import DjangoSessionSyncAuth
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.auth: [
+    ...         DjangoSessionSyncAuth(),
+    ...     ],
+    ... }
+
+  However, you might not have a way to import auth classes in settings.
+  For example, when their modules contain model imports.
+  For this case we also support specifying string paths to auth classes.
 
   .. code-block:: python
     :caption: settings.py
@@ -214,6 +228,10 @@ Authentication
     ...         'django_modern_rest.security.DjangoSessionSyncAuth',
     ...     ],
     ... }
+
+  .. note::
+
+    All auth classes must support initialization without parameters.
 
 
 HTTP Spec validation

@@ -33,11 +33,7 @@ class _BaseAuth:
         self,
         serializer: type['BaseSerializer'],
     ) -> list[ResponseSpec]:
-        """
-        Provides extra responses.
-
-        Is active when ``enable_semantic_responses`` in endpoint is ``True``.
-        """
+        """Provides responses that can happen when user is not authed."""
         return [
             ResponseSpec(
                 # We do this for runtime validation, not static type check:
@@ -48,7 +44,12 @@ class _BaseAuth:
 
 
 class SyncAuth(_BaseAuth):
-    """Sync auth base class for sync endpoints."""
+    """
+    Sync auth base class for sync endpoints.
+
+    All auth must support initialization without any required parameters.
+    Auth can have non-required parameters with defaults.
+    """
 
     __slots__ = ()
 
@@ -73,7 +74,12 @@ class SyncAuth(_BaseAuth):
 
 
 class AsyncAuth(_BaseAuth):
-    """Async auth base class for async endpoints."""
+    """
+    Async auth base class for async endpoints.
+
+    All auth must support initialization without any required parameters.
+    Auth can have non-required parameters with defaults.
+    """
 
     __slots__ = ()
 

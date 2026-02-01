@@ -25,6 +25,7 @@ class _HttpBasicAuth:
 
     def __init__(self, header: str = 'Authorization') -> None:
         """Header name can be customized."""
+        # Having init with defaults is fine.
         self._header = header
 
     @property

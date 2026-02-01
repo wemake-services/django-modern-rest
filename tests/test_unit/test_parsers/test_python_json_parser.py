@@ -1,5 +1,4 @@
 import json
-from collections.abc import Iterator
 from http import HTTPStatus
 from typing import final
 
@@ -17,25 +16,19 @@ from django_modern_rest import (
 from django_modern_rest.parsers import JsonParser
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.renderers import JsonRenderer
-from django_modern_rest.settings import (
-    Settings,
-    clear_settings_cache,
-)
+from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
 
 
 @pytest.fixture(autouse=True)
-def _clear_parser_and_renderer(settings: LazySettings) -> Iterator[None]:
-    clear_settings_cache()
-
+def _clear_parser_and_renderer(
+    settings: LazySettings,
+    dmr_clean_settings: None,
+) -> None:
     settings.DMR_SETTINGS = {
         Settings.parsers: [JsonParser],
         Settings.renderers: [JsonRenderer],
     }
-
-    yield
-
-    clear_settings_cache()
 
 
 def test_empty_request_data(

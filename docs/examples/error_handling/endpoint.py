@@ -20,8 +20,7 @@ def division_error(  # <- we define an error handler
     exc: Exception,
 ) -> HttpResponse:
     if isinstance(exc, ZeroDivisionError):
-        # This response's schema was automatically added
-        # by `enable_semantic_responses = True` setting:
+        # This response's schema was automatically added by `Body`:
         return controller.to_error(
             {'detail': controller.serializer.error_serialize(str(exc))},
             status_code=HTTPStatus.BAD_REQUEST,

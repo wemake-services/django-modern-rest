@@ -426,7 +426,6 @@ def validate(  # noqa: WPS234
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -453,7 +452,6 @@ def validate(
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -480,7 +478,6 @@ def validate(
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -506,7 +503,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -587,9 +583,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Async endpoints must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this endpoint.
-        enable_semantic_responses: If set to ``True`` also produces
-            pre-defined responses from components
-            to be contained in the endpoint's schema.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -624,7 +617,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             parsers=parsers,
             renderers=renderers,
             auth=auth,
-            enable_semantic_responses=enable_semantic_responses,
             summary=summary,
             description=description,
             tags=tags,
@@ -721,7 +713,6 @@ def modify(
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -747,7 +738,6 @@ def modify(
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -773,7 +763,6 @@ def modify(
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -798,7 +787,6 @@ def modify(  # noqa: WPS211
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    enable_semantic_responses: bool = True,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -857,9 +845,6 @@ def modify(  # noqa: WPS211
             Async endpoints must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this endpoint.
-        enable_semantic_responses: If set to ``True`` also produces
-            pre-defined responses from components
-            to be contained in the endpoint's schema.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -897,7 +882,6 @@ def modify(  # noqa: WPS211
             parsers=parsers,
             renderers=renderers,
             auth=auth,
-            enable_semantic_responses=enable_semantic_responses,
             summary=summary,
             description=description,
             tags=tags,

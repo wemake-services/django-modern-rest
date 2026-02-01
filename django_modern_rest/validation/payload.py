@@ -20,7 +20,6 @@ if TYPE_CHECKING:
         Server,
     )
     from django_modern_rest.security.base import AsyncAuth, SyncAuth
-    from django_modern_rest.serialization import BaseSerializer
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
@@ -44,45 +43,20 @@ class _BasePayload:
     parsers: Sequence[type[Parser]] | None = None
     renderers: Sequence[type[Renderer]] | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
-    enable_semantic_responses: bool = True
-    responses: list[ResponseSpec] | None = None
-
-    def semantic_responses(
-        self,
-        serializer: type['BaseSerializer'],
-    ) -> list[ResponseSpec]:
-        """
-        Return all possible responses for this endpoint.
-
-        It might include responses from components
-        if *enable_semantic_responses* is ``True``.
-        """
-        responses = self.responses or []
-        if not self.enable_semantic_responses:
-            return responses
-
-        existing_codes = {response.status_code for response in responses}
-        auth_responses = {
-            response
-            for auth in (self.auth or ())
-            for response in auth.provide_responses(serializer)
-            # If some response already exists, do not override it.
-            if response.status_code not in existing_codes
-        }
-        return [*responses, *auth_responses]
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ValidateEndpointPayload(_BasePayload):
     """Payload created by ``@validate``."""
 
-    responses: list[ResponseSpec]  # pyright: ignore[reportGeneralTypeIssues]
+    responses: list[ResponseSpec]
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
 
+    responses: list[ResponseSpec] | None
     status_code: HTTPStatus | None
     headers: Mapping[str, NewHeader] | None
     cookies: Mapping[str, NewCookie] | None

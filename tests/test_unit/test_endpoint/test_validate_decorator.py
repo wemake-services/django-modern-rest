@@ -520,7 +520,6 @@ def test_validate_enable_semantic_responses() -> None:
         Blueprint[PydanticSerializer],
         Body[list[str]],
     ):
-        enable_semantic_responses = False
         responses: ClassVar[list[ResponseSpec]] = [
             ResponseSpec(
                 dict[str, str],
@@ -544,6 +543,10 @@ def test_validate_enable_semantic_responses() -> None:
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
+        HTTPStatus.BAD_REQUEST: ResponseSpec(
+            return_type=PydanticErrorModel,
+            status_code=HTTPStatus.BAD_REQUEST,
         ),
     })
 
