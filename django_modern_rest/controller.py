@@ -362,7 +362,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     controller_validator_cls: ClassVar[type[ControllerValidator]] = (
         ControllerValidator
     )
-    api_endpoints: ClassVar[dict[str, Endpoint]]
+    api_endpoints: ClassVar[Mapping[str, Endpoint]]
 
     # Public instance API:
     blueprint: Blueprint[_SerializerT_co] | None
