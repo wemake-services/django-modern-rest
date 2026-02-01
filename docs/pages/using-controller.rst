@@ -193,7 +193,7 @@ If you need granual control, you can change anything.
 - :attr:`~django_modern_rest.controller.Controller.serializer_context_cls`
   to customize how model for serialization of incoming data is created
 
-Check out our :doc:`API <public-api>` for the advanced features.
+Check out our :doc:`API <deep-dive/public-api>` for the advanced features.
 
 
 Next up
