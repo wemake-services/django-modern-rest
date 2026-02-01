@@ -16,7 +16,6 @@ from django_modern_rest import (
     modify,
     validate,
 )
-from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
@@ -268,7 +267,7 @@ class _NonValidatedBlueprint(Blueprint[PydanticSerializer]):
 class _BlueprintOverController(Controller[PydanticSerializer]):
     validate_responses: ClassVar[bool | None] = True  # blueprint overrides
 
-    blueprints: ClassVar[BlueprintsT] = [_NonValidatedBlueprint]
+    blueprints = (_NonValidatedBlueprint,)
 
 
 def test_override_blueprint_over_controller(
@@ -297,7 +296,7 @@ class _ValidatedBlueprint(Blueprint[PydanticSerializer]):
 class _EndpointOverBlueprint(Controller[PydanticSerializer]):
     validate_responses: ClassVar[bool | None] = False  # overridden
 
-    blueprints: ClassVar[BlueprintsT] = [_ValidatedBlueprint]
+    blueprints = (_ValidatedBlueprint,)
 
 
 def test_override_endpoint_over_blueprint(

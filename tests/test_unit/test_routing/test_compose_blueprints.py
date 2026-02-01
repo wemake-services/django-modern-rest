@@ -9,7 +9,6 @@ from django_modern_rest import (
     Blueprint,
     Controller,
 )
-from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
 from django_modern_rest.plugins.pydantic import (
@@ -174,9 +173,7 @@ def test_compose_with_existing_endpoint() -> None:
     with pytest.raises(EndpointMetadataError, match='POST'):
 
         class MyController(Controller[PydanticSerializer]):
-            blueprints: ClassVar[BlueprintsT] = [
-                _SyncBlueprint,
-            ]
+            blueprints = (_SyncBlueprint,)
 
             def post(self) -> list[int]:
                 raise NotImplementedError

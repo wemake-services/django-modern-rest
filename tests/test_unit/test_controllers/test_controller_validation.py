@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, ClassVar
+from typing import Any
 
 import pytest
 from typing_extensions import override
@@ -14,7 +14,6 @@ from django_modern_rest import (
     Query,
     ResponseSpec,
 )
-from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
@@ -267,9 +266,7 @@ def test_async_bp_with_sync_handler_fails() -> None:
     ):
 
         class _BadController(Controller[PydanticSerializer]):
-            blueprints: ClassVar[BlueprintsT] = [
-                _AsyncBlueprint,
-            ]
+            blueprints = (_AsyncBlueprint,)
 
             @override
             def handle_error(
@@ -289,9 +286,7 @@ def test_sync_bp_with_async_handler_fails() -> None:
     ):
 
         class _BadController(Controller[PydanticSerializer]):
-            blueprints: ClassVar[BlueprintsT] = [
-                _SyncBlueprint,
-            ]
+            blueprints = (_SyncBlueprint,)
 
             @override
             async def handle_async_error(
@@ -307,9 +302,7 @@ def test_async_bp_with_async_handler_ok() -> None:
     """Ensure controllers with async blueprints can use async error handler."""
 
     class _GoodController(Controller[PydanticSerializer]):
-        blueprints: ClassVar[BlueprintsT] = [
-            _AsyncBlueprint,
-        ]
+        blueprints = (_AsyncBlueprint,)
 
         @override
         async def handle_async_error(
@@ -325,9 +318,7 @@ def test_sync_bp_with_sync_handler_ok() -> None:
     """Ensure controllers with sync blueprints can use sync error handler."""
 
     class _GoodController(Controller[PydanticSerializer]):
-        blueprints: ClassVar[BlueprintsT] = [
-            _SyncBlueprint,
-        ]
+        blueprints = (_SyncBlueprint,)
 
         @override
         def handle_error(
@@ -427,4 +418,4 @@ def test_blueprints_no_controller_parsing(
             Controller[PydanticSerializer],
             component_parser,  # type: ignore[misc]
         ):
-            blueprints: ClassVar[BlueprintsT] = [_Blueprint]
+            blueprints = (_Blueprint,)

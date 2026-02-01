@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import ClassVar, final
+from typing import final
 
 import pydantic
 import pytest
@@ -14,7 +14,6 @@ from django_modern_rest import (
     Controller,
     modify,
 )
-from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -65,7 +64,7 @@ class _ErrorHandlingBlueprint(Blueprint[PydanticSerializer], Body[_ErrorBody]):
 
 
 class _ErrorHandlingController(Controller[PydanticSerializer]):
-    blueprints: ClassVar[BlueprintsT] = [_ErrorHandlingBlueprint]
+    blueprints = (_ErrorHandlingBlueprint,)
 
     @override
     def handle_error(
@@ -177,7 +176,7 @@ class _AsyncErrorHandlingBlueprint(
 
 
 class _AsyncErrorHandlingController(Controller[PydanticSerializer]):
-    blueprints: ClassVar[BlueprintsT] = [_AsyncErrorHandlingBlueprint]
+    blueprints = (_AsyncErrorHandlingBlueprint,)
 
     @override
     async def handle_async_error(
