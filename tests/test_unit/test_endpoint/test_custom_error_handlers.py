@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import ClassVar, final
+from typing import final
 
 import pydantic
 import pytest
@@ -145,9 +145,7 @@ async def test_validate_error_handler_validation(
 
 
 class _ModifyComplexHandler(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseSpec]] = [
-        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
-    ]
+    responses = (ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),)
 
     def endpoint_error(
         self,
@@ -233,9 +231,7 @@ def test_modify_global_handler(dmr_rf: DMRRequestFactory) -> None:
 
 
 class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
-    responses: ClassVar[list[ResponseSpec]] = [
-        ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),
-    ]
+    responses = (ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),)
 
     async def endpoint_error(
         self,

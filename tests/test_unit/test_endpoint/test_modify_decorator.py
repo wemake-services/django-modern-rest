@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import ClassVar, final
+from typing import final
 
 import pytest
 from django.http import HttpResponse
@@ -15,7 +15,6 @@ from django_modern_rest import (
     ResponseSpec,
     modify,
 )
-from django_modern_rest.controller import BlueprintsT
 from django_modern_rest.cookies import CookieSpec
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
@@ -102,24 +101,24 @@ def test_modify_deduplicate_statuses() -> None:
     """Ensures `@modify` same duplicate status codes."""
 
     class _Blueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseSpec]] = [
+        responses = (
             # From components:
             ResponseSpec(int, status_code=HTTPStatus.OK),
             ResponseSpec(
                 dict[str, str],
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             ),
-        ]
+        )
 
         def post(self) -> str:
             raise NotImplementedError
 
     class _DeduplicateStatuses(Controller[PydanticSerializer]):
-        blueprints: ClassVar[BlueprintsT] = [_Blueprint]
-        responses: ClassVar[list[ResponseSpec]] = [
+        blueprints = (_Blueprint,)
+        responses = (
             # From components:
             ResponseSpec(int, status_code=HTTPStatus.OK),
-        ]
+        )
 
         @modify(
             extra_responses=[

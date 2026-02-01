@@ -186,25 +186,19 @@ def test_compose_blueprints_with_responses() -> None:
     """Ensure that composed controller do not share responses."""
 
     class _FirstBlueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseSpec]] = [
-            ResponseSpec(int, status_code=HTTPStatus.CREATED),
-        ]
+        responses = (ResponseSpec(int, status_code=HTTPStatus.CREATED),)
 
         def get(self) -> list[int]:
             raise NotImplementedError
 
     class _SecondBlueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseSpec]] = [
-            ResponseSpec(str, status_code=HTTPStatus.ACCEPTED),
-        ]
+        responses = (ResponseSpec(str, status_code=HTTPStatus.ACCEPTED),)
 
         def put(self) -> list[int]:
             raise NotImplementedError
 
     class _ThirdBlueprint(Blueprint[PydanticSerializer]):
-        responses: ClassVar[list[ResponseSpec]] = [
-            ResponseSpec(None, status_code=HTTPStatus.NO_CONTENT),
-        ]
+        responses = (ResponseSpec(None, status_code=HTTPStatus.NO_CONTENT),)
 
         def patch(self) -> list[int]:
             raise NotImplementedError

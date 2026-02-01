@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import ClassVar, final
+from typing import final
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -41,7 +41,7 @@ class LoginRequiredController(Controller[PydanticSerializer]):
     Converts 302 redirect to JSON 401 response for REST API compatibility.
     """
 
-    responses: ClassVar[list[ResponseSpec]] = login_required_json.responses
+    responses = login_required_json.responses
 
     def get(self) -> dict[str, str]:
         """GET endpoint that requires Django authentication."""

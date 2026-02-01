@@ -526,30 +526,48 @@ class EndpointMetadataValidator:  # noqa: WPS214
             description=description,
         )
 
-    def _resolve_all_responses(
+    def _resolve_all_responses(  # noqa: WPS211
         self,
         payload: PayloadT,
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
-        auth: list[SyncAuth | AsyncAuth] | None,
         modification: ResponseModification | None = None,
+        auth: list[SyncAuth | AsyncAuth] | None = None,
+        with_semantic: bool = True,
     ) -> _AllResponses:
-        auth_responses = {
-            response
-            for auth in (auth or [])
-            for response in auth.provide_responses(controller_cls.serializer)
-        }
+        if with_semantic:
+            auth_responses: set[ResponseSpec] = {
+                response
+                for auth in (auth or [])
+                for response in auth.provide_responses(
+                    controller_cls.serializer,
+                )
+            }
+            blueprint_responses: Sequence[ResponseSpec] = (
+                blueprint_cls.semantic_responses() if blueprint_cls else []
+            )
+            controller_responses: Sequence[ResponseSpec] = (
+                controller_cls.semantic_responses()
+            )
+        else:
+            auth_responses = set()
+            blueprint_responses = (
+                blueprint_cls.responses if blueprint_cls else []
+            )
+            controller_responses = controller_cls.responses
 
         return cast(
             '_AllResponses',
             [
+                # Implicit semantic responses has the least priority:
                 *auth_responses,
-                *([] if modification is None else [modification.to_spec()]),
-                *((payload.responses or []) if payload else []),
-                *(blueprint_cls.semantic_responses() if blueprint_cls else []),
-                *controller_cls.semantic_responses(),
+                # Then it goes up in regular order: from settings to endpoints.
                 *resolve_setting(Settings.responses),
+                *controller_responses,
+                *blueprint_responses,
+                *((payload.responses or []) if payload else []),
+                *([] if modification is None else [modification.to_spec()]),
             ],
         )
 
@@ -721,15 +739,11 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 )
             # We can't reach this point with `None`, it is processed before.
             assert isinstance(self.payload, ValidateEndpointPayload)  # noqa: S101
-            # TODO(@sobolevn): this seems wrong.
-            # There might be semantic responses.
-            # This validation can pass without us noticing.
-            # I also don't like that it calls `_resolve_all_responses` twice.
             if not self._resolve_all_responses(
                 self.payload,
                 blueprint_cls=blueprint_cls,
                 controller_cls=controller_cls,
-                auth=None,
+                with_semantic=False,
             ):
                 raise EndpointMetadataError(
                     f'{endpoint!r} returns HttpResponse '
