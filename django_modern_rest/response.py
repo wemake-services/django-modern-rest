@@ -1,15 +1,17 @@
 import dataclasses
 from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from typing import Any, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 from django.http import HttpResponse
 
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import Settings, resolve_setting
+
+if TYPE_CHECKING:
+    from django_modern_rest.renderers import Renderer
+    from django_modern_rest.serialization import BaseSerializer
 
 _ItemT = TypeVar('_ItemT')
 
@@ -90,6 +92,7 @@ class ResponseSpec:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
+        description: Text comment about what this response represents.
 
     We use this structure to validate responses and render them in OpenAPI.
     """
@@ -105,8 +108,9 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+    description: str | None = None
 
-    # TODO: description, examples, etc
+    # TODO: examples and other metadata
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -162,39 +166,39 @@ class ResponseModification:
 
 @overload
 def build_response(
-    serializer: type[BaseSerializer],
+    serializer: type['BaseSerializer'],
     *,
     raw_data: Any,
     method: HTTPMethod | str,
     headers: dict[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
-    renderer_cls: type[Renderer] | None = None,
+    renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse: ...
 
 
 @overload
 def build_response(
-    serializer: type[BaseSerializer],
+    serializer: type['BaseSerializer'],
     *,
     raw_data: Any,
     status_code: HTTPStatus,
     method: None = None,
     headers: dict[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
-    renderer_cls: type[Renderer] | None = None,
+    renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse: ...
 
 
 def build_response(  # noqa: WPS210, WPS211
-    serializer: type[BaseSerializer],
+    serializer: type['BaseSerializer'],
     *,
     raw_data: Any,
     method: HTTPMethod | str | None = None,
     headers: dict[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
-    renderer_cls: type[Renderer] | None = None,
+    renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse:
     """
     Utility that returns the actual `HttpResponse` object from its parts.

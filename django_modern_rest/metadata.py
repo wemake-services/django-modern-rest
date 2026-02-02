@@ -1,20 +1,16 @@
 import dataclasses
+from abc import abstractmethod
+from collections.abc import Mapping
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Any,
     TypeAlias,
-    final,
-)
-
-from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
-from django_modern_rest.response import (
-    ResponseModification,
-    ResponseSpec,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
+    from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
     from django_modern_rest.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -23,12 +19,48 @@ if TYPE_CHECKING:
     )
     from django_modern_rest.parsers import Parser
     from django_modern_rest.renderers import Renderer
+    from django_modern_rest.response import (
+        ResponseModification,
+        ResponseSpec,
+    )
     from django_modern_rest.security.base import AsyncAuth, SyncAuth
+    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.settings import HttpSpec
 
 ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
 
 
-@final
+class ResponseSpecProvider:
+    """Base abstract class to provide extra response schemas."""
+
+    __slots__ = ()
+
+    @classmethod
+    @abstractmethod
+    def provide_response_specs(
+        cls,
+        serializer: type['BaseSerializer'],
+        existing_responses: Mapping[HTTPStatus, 'ResponseSpec'],
+    ) -> list['ResponseSpec']:
+        """
+        Provide custom response specs.
+
+        Will be called to inject response specs from different components
+        into the resulting endpoint metadata.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def _add_new_response(
+        cls,
+        response: 'ResponseSpec',
+        existing_responses: Mapping[HTTPStatus, 'ResponseSpec'],
+    ) -> list['ResponseSpec']:
+        if response.status_code in existing_responses:
+            return []
+        return [response]
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class EndpointMetadata:
     """
@@ -37,6 +69,7 @@ class EndpointMetadata:
     Attributes:
         responses: Mapping of HTTP method to response description.
             All possible responses that this API can return.
+            Used for OpenAPI spec generation and for response validation.
         method: String name of an HTTP method for this endpoint.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
@@ -55,6 +88,15 @@ class EndpointMetadata:
         renderers: List of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
+        auth: list of auth instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`django_modern_rest.security.SyncAuth`.
+            Async endpoints must use instances
+            of :class:`django_modern_rest.security.AsyncAuth`.
+            When set it to ``None`` it means that auth
+            is disabled for this endpoint.
+        no_validate_http_spec: Set of checks that user wants
+            to disable for validation in this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -86,15 +128,16 @@ class EndpointMetadata:
 
     """
 
-    responses: dict[HTTPStatus, ResponseSpec]
+    responses: dict[HTTPStatus, 'ResponseSpec']
     validate_responses: bool | None
     method: str
-    modification: ResponseModification | None
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None
+    modification: 'ResponseModification | None'
+    error_handler: 'SyncErrorHandlerT | AsyncErrorHandlerT | None'
     component_parsers: list[ComponentParserSpec]
     parsers: dict[str, type['Parser']]
     renderers: dict[str, type['Renderer']]
     auth: list['SyncAuth | AsyncAuth'] | None
+    no_validate_http_spec: frozenset['HttpSpec']
 
     # OpenAPI documentation fields:
     summary: str | None = None
@@ -103,5 +146,25 @@ class EndpointMetadata:
     operation_id: str | None = None
     deprecated: bool = False
     external_docs: 'ExternalDocumentation | None' = None
-    callbacks: 'dict[str, Callback | Reference] | None' = None
+    callbacks: dict[str, 'Callback | Reference'] | None = None
     servers: list['Server'] | None = None
+
+    def response_spec_providers(self) -> list[type[ResponseSpecProvider]]:
+        """
+        Determine: from where we should collect response schemas.
+
+        Override this method in your own metadata classes
+        if you want more or less response spec providers.
+
+        For example: you can add some custom field to
+        :class:`~django_modern_rest.controller.Controller` like ``checks=``.
+        And you can subclass ``EndpointMetadata``
+        to also contain ``checks`` field and override this method
+        to also include response specs from this field.
+        """
+        return [
+            *[spec[0] for spec in self.component_parsers],
+            *self.parsers.values(),
+            *self.renderers.values(),
+            *[type(auth) for auth in (self.auth or [])],
+        ]

@@ -1,11 +1,17 @@
 import abc
 import json
-from collections.abc import Callable
-from typing import Any, ClassVar, TypeAlias
+from collections.abc import Callable, Mapping
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 from typing_extensions import override
 
 from django_modern_rest.exceptions import DataParsingError
+from django_modern_rest.metadata import ResponseSpecProvider
+from django_modern_rest.response import ResponseSpec
+
+if TYPE_CHECKING:
+    from django_modern_rest.serialization import BaseSerializer
 
 #: Types that are possible to load json from.
 Raw: TypeAlias = str | bytes | bytearray
@@ -15,7 +21,7 @@ Raw: TypeAlias = str | bytes | bytearray
 DeserializeFunc: TypeAlias = Callable[[type[Any], Any], Any]
 
 
-class Parser:
+class Parser(ResponseSpecProvider):
     """
     Base class for all parsers.
 
@@ -57,6 +63,16 @@ class Parser:
             Simple python object with primitive parts.
 
         """
+
+    @override
+    @classmethod
+    def provide_response_specs(
+        cls,
+        serializer: type['BaseSerializer'],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
+        """Provides responses that can happen when data can't be parsed."""
+        return []
 
 
 class JsonParser(Parser):
@@ -109,3 +125,19 @@ class JsonParser(Parser):
             if to_deserialize == b'':
                 return None
             raise DataParsingError(str(exc)) from exc
+
+    @override
+    @classmethod
+    def provide_response_specs(
+        cls,
+        serializer: type['BaseSerializer'],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
+        """Provides responses that can happen when data can't be parsed."""
+        return cls._add_new_response(
+            ResponseSpec(
+                return_type=serializer.default_error_model,
+                status_code=HTTPStatus.BAD_REQUEST,
+            ),
+            existing_responses,
+        )

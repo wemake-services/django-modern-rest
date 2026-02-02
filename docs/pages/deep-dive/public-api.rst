@@ -32,6 +32,9 @@ Endpoint
 Response, headers and cookies
 -----------------------------
 
+.. autoclass:: django_modern_rest.metadata.ResponseSpecProvider
+  :members:
+
 .. autoclass:: django_modern_rest.response.ResponseSpec
   :members:
 

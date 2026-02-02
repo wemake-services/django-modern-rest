@@ -1,7 +1,12 @@
 from abc import abstractmethod
+from collections.abc import Mapping
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
 
+from typing_extensions import override
+
 from django_modern_rest.exceptions import NotAuthenticatedError
+from django_modern_rest.metadata import ResponseSpecProvider
 from django_modern_rest.openapi.objects.components import Components
 from django_modern_rest.openapi.objects.security_requirement import (
     SecurityRequirement,
@@ -14,7 +19,7 @@ if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
 
-class _BaseAuth:
+class _BaseAuth(ResponseSpecProvider):
     __slots__ = ()
 
     @property
@@ -29,18 +34,22 @@ class _BaseAuth:
         """Provides a security schema usage requirement."""
         raise NotImplementedError
 
-    def provide_responses(
-        self,
+    @override
+    @classmethod
+    def provide_response_specs(
+        cls,
         serializer: type['BaseSerializer'],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
-        return [
+        return cls._add_new_response(
             ResponseSpec(
                 # We do this for runtime validation, not static type check:
                 serializer.default_error_model,
                 status_code=NotAuthenticatedError.status_code,
             ),
-        ]
+            existing_responses,
+        )
 
 
 class SyncAuth(_BaseAuth):

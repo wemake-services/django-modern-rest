@@ -274,23 +274,6 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         """
         raise exc
 
-    @classmethod
-    def semantic_responses(cls) -> Sequence[ResponseSpec]:
-        """Returns smartly inferenced responses from components/auth/etc."""
-        # Get the responses that were provided by components.
-        existing_codes = {response.status_code for response in cls.responses}
-        extra_responses = {
-            response
-            for component, model in cls._component_parsers
-            for response in component.provide_responses(
-                cls.serializer,
-                model,
-            )
-            # If some response already exists, do not override it.
-            if response.status_code not in existing_codes
-        }
-        return [*cls.responses, *extra_responses]
-
     # Protected API:
 
     @classmethod

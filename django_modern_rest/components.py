@@ -1,4 +1,6 @@
 import abc
+from collections.abc import Mapping
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from typing_extensions import override
@@ -7,6 +9,7 @@ from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
 )
+from django_modern_rest.metadata import ResponseSpecProvider
 from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 
@@ -21,7 +24,7 @@ _PathT = TypeVar('_PathT')
 _CookiesT = TypeVar('_CookiesT')
 
 
-class ComponentParser:
+class ComponentParser(ResponseSpecProvider):
     """Base abstract provider for request components."""
 
     # Public API:
@@ -50,11 +53,12 @@ class ComponentParser:
         """
         raise NotImplementedError
 
+    @override
     @classmethod
-    def provide_responses(
+    def provide_response_specs(
         cls,
         serializer: type[BaseSerializer],
-        model: Any,
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """
         Return a list of extra responses that this component produces.
@@ -62,13 +66,14 @@ class ComponentParser:
         For example, when parsing something, we always have an option
         to fail a parsing, if some request does not fit our model.
         """
-        return [
+        return cls._add_new_response(
             ResponseSpec(
                 # We do this for runtime validation, not static type check:
                 serializer.default_error_model,
                 status_code=RequestSerializationError.status_code,
             ),
-        ]
+            existing_responses,
+        )
 
 
 class Query(ComponentParser, Generic[_QueryT]):

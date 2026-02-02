@@ -20,6 +20,7 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.headers import NewHeader
+from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.negotiation import RequestNegotiator, ResponseNegotiator
 from django_modern_rest.openapi.objects import (
     Callback,
@@ -38,6 +39,7 @@ from django_modern_rest.settings import (
     resolve_setting,
 )
 from django_modern_rest.validation import (
+    EndpointMetadataBuilder,
     EndpointMetadataValidator,
     ModifyEndpointPayload,
     PayloadT,
@@ -71,6 +73,9 @@ class Endpoint:  # noqa: WPS214
 
     _func: Callable[..., Any]
 
+    metadata_builder_cls: ClassVar[type[EndpointMetadataBuilder]] = (
+        EndpointMetadataBuilder
+    )
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
     )
@@ -106,11 +111,27 @@ class Endpoint:  # noqa: WPS214
             because its instance is reused for all requests.
 
         """
-        payload: PayloadT = getattr(func, '__payload__', None)
-        # We need to add metadata to functions that don't have it,
+        # We need to add payloads to functions that don't have it,
         # since decorator is optional:
-        metadata = self.metadata_validator_cls(payload=payload)(
+        payload: PayloadT = getattr(func, '__payload__', None)
+        # We add metadata in two steps:
+        # 1. We construct metadata with no responses yet.
+        #    We only do basic validation at this point: structure, types, etc.
+        #    No semantics validation / etc.
+        # 2. When metadata is ready, we collect all the responses from all
+        #    of the components that support it. Including custom ones.
+        #    Then we enrich metadata with collected responses and use it.
+        # Done!
+        metadata = self.metadata_builder_cls(
+            payload=payload,
+        )(
             func,
+            blueprint_cls=blueprint_cls,
+            controller_cls=controller_cls,
+        )
+        self.metadata_validator_cls(metadata=metadata)(
+            func,
+            payload=payload,
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
@@ -460,6 +481,7 @@ def validate(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> Callable[
     [Callable[_ParamT, HttpResponse]],
     Callable[_ParamT, HttpResponse],
@@ -486,6 +508,7 @@ def validate(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
     Callable[_ParamT, _ResponseT],
@@ -511,6 +534,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponse]]],
@@ -582,7 +606,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             of :class:`django_modern_rest.security.SyncAuth`.
             Async endpoints must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
-            Set it to ``None`` to disable auth of this endpoint.
+            Set it to ``None`` to disable auth for this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -598,6 +622,9 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         servers: An alternative servers array to service this operation.
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
+        metadata_cls: Subclass of
+            :class:`django_modern_rest.metadata.EndpointMetadata` that will
+            be used to populate endpoint's metadata.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -625,6 +652,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,
+            metadata_cls=metadata_cls,
         ),
     )
 
@@ -721,6 +749,7 @@ def modify(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> _ModifyAsyncCallable: ...
 
 
@@ -746,6 +775,7 @@ def modify(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> _ModifySyncCallable: ...
 
 
@@ -771,6 +801,7 @@ def modify(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> _ModifyAnyCallable: ...
 
 
@@ -795,6 +826,7 @@ def modify(  # noqa: WPS211
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -844,7 +876,7 @@ def modify(  # noqa: WPS211
             of :class:`django_modern_rest.security.SyncAuth`.
             Async endpoints must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
-            Set it to ``None`` to disable auth of this endpoint.
+            Set it to ``None`` to disable auth for this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -860,6 +892,9 @@ def modify(  # noqa: WPS211
         servers: An alternative servers array to service this operation.
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
+        metadata_cls: Subclass of
+            :class:`django_modern_rest.metadata.EndpointMetadata` that will
+            be used to populate endpoint's metadata.
 
     Returns:
         The same function with ``__payload__`` payload instance.
@@ -890,6 +925,7 @@ def modify(  # noqa: WPS211
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,
+            metadata_cls=metadata_cls,
         ),
     )
 

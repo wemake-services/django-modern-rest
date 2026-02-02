@@ -1,13 +1,20 @@
 import abc
 import json
-from collections.abc import Callable
-from typing import Any, ClassVar
+from collections.abc import Callable, Mapping
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
+from django_modern_rest.metadata import ResponseSpecProvider
 
-class Renderer:
+if TYPE_CHECKING:
+    from django_modern_rest.response import ResponseSpec
+    from django_modern_rest.serialization import BaseSerializer
+
+
+class Renderer(ResponseSpecProvider):
     """
     Base class for all renderer types.
 
@@ -31,6 +38,16 @@ class Renderer:
         serializer: Callable[[Any], Any],
     ) -> bytes:
         """Function to be called on object serialization."""
+
+    @override
+    @classmethod
+    def provide_response_specs(
+        cls,
+        serializer: type['BaseSerializer'],
+        existing_responses: Mapping[HTTPStatus, 'ResponseSpec'],
+    ) -> list['ResponseSpec']:
+        """Provides responses that can happen when data can't be rendered."""
+        return []
 
 
 class _DMREncoder(DjangoJSONEncoder):

@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
 #: Error handler type for sync callbacks.
+# TODO: normalize type aliases names, maybe remove `T`?
 SyncErrorHandlerT: TypeAlias = Callable[
     ['Endpoint', 'Controller[BaseSerializer]', Exception],  # noqa: WPS226
     HttpResponse,
