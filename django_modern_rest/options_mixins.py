@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from django_modern_rest.endpoint import validate
 from django_modern_rest.headers import HeaderSpec
-from django_modern_rest.response import ResponseSpec
+from django_modern_rest.metadata import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller

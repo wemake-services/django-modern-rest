@@ -23,7 +23,7 @@ How it works
 with pre-configured middleware. It takes:
 
 1. A middleware function or class
-2. One or more :class:`~django_modern_rest.response.ResponseSpec` objects
+2. One or more :class:`~django_modern_rest.metadata.ResponseSpec` objects
 3. Returns a decorator factory that takes a response converter function
 
 The created decorator:

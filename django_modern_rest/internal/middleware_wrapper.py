@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 from django.http import HttpRequest, HttpResponse
 
 if TYPE_CHECKING:
-    from django_modern_rest.response import ResponseSpec
+    from django_modern_rest.metadata import ResponseSpec
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny: TypeAlias = Callable[..., Any]

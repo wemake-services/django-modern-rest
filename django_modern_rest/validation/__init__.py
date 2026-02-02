@@ -5,6 +5,9 @@ from django_modern_rest.validation.controller import (
     ControllerValidator as ControllerValidator,
 )
 from django_modern_rest.validation.endpoint_metadata import (
+    EndpointMetadataBuilder as EndpointMetadataBuilder,
+)
+from django_modern_rest.validation.endpoint_metadata import (
     EndpointMetadataValidator as EndpointMetadataValidator,
 )
 from django_modern_rest.validation.endpoint_metadata import (

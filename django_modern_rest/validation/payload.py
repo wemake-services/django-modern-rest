@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, TypeAlias
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
 from django_modern_rest.headers import NewHeader
+from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import ResponseSpec
 from django_modern_rest.settings import HttpSpec
 
 if TYPE_CHECKING:
@@ -43,6 +43,9 @@ class _BasePayload:
     parsers: Sequence[type[Parser]] | None = None
     renderers: Sequence[type[Renderer]] | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
+
+    # Context:
+    metadata_cls: type[EndpointMetadata] = EndpointMetadata
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

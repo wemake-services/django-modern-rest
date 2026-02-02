@@ -21,13 +21,11 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
+from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.negotiation import request_renderer
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import (
-    ResponseSpec,
-    build_response,
-)
+from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
@@ -273,23 +271,6 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
         raise exc
-
-    @classmethod
-    def semantic_responses(cls) -> Sequence[ResponseSpec]:
-        """Returns smartly inferenced responses from components/auth/etc."""
-        # Get the responses that were provided by components.
-        existing_codes = {response.status_code for response in cls.responses}
-        extra_responses = {
-            response
-            for component, model in cls._component_parsers
-            for response in component.provide_responses(
-                cls.serializer,
-                model,
-            )
-            # If some response already exists, do not override it.
-            if response.status_code not in existing_codes
-        }
-        return [*cls.responses, *extra_responses]
 
     # Protected API:
 
