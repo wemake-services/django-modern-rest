@@ -14,7 +14,7 @@ from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from django_modern_rest.cookies import NewCookie
-from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
+from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.exceptions import (
     NotAuthenticatedError,
     ResponseSerializationError,
@@ -42,7 +42,7 @@ from django_modern_rest.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
     ModifyEndpointPayload,
-    PayloadT,
+    Payload,
     ResponseValidator,
     ValidateEndpointPayload,
     validate_method_name,
@@ -113,7 +113,7 @@ class Endpoint:  # noqa: WPS214
         """
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
-        payload: PayloadT = getattr(func, '__payload__', None)
+        payload: Payload = getattr(func, '__payload__', None)
         # We add metadata in two steps:
         # 1. We construct metadata with no responses yet.
         #    We only do basic validation at this point: structure, types, etc.
@@ -440,7 +440,7 @@ def validate(  # noqa: WPS234
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
-    error_handler: AsyncErrorHandlerT,
+    error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
@@ -466,7 +466,7 @@ def validate(
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
-    error_handler: SyncErrorHandlerT,
+    error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     allow_custom_http_methods: bool = False,
@@ -521,7 +521,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
+    error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,
@@ -730,7 +730,7 @@ class _ModifyAnyCallable(Protocol):
 def modify(
     *,
     # TODO: make error handlers generic?
-    error_handler: AsyncErrorHandlerT,
+    error_handler: AsyncErrorHandler,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
@@ -756,7 +756,7 @@ def modify(
 @overload
 def modify(
     *,
-    error_handler: SyncErrorHandlerT,
+    error_handler: SyncErrorHandler,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
@@ -813,7 +813,7 @@ def modify(  # noqa: WPS211
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None,
+    error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     allow_custom_http_methods: bool = False,
     parsers: Sequence[type[Parser]] | None = None,
     renderers: Sequence[type[Renderer]] | None = None,

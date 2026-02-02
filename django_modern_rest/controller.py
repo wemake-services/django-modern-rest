@@ -290,10 +290,10 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
 
 
 #: Type that we expect for a single blueprint composition.
-_BlueprintT: TypeAlias = type[Blueprint[BaseSerializer]]
+_BlueprintCls: TypeAlias = type[Blueprint[BaseSerializer]]
 
 #: Type for blueprints composition.
-_BlueprintsT: TypeAlias = Sequence[_BlueprintT]
+_Blueprints: TypeAlias = Sequence[_BlueprintCls]
 
 
 class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
@@ -339,7 +339,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     """
 
     # Public class-level API:
-    blueprints: ClassVar[_BlueprintsT] = ()
+    blueprints: ClassVar[_Blueprints] = ()
     controller_validator_cls: ClassVar[type[ControllerValidator]] = (
         ControllerValidator
     )
@@ -349,7 +349,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     blueprint: Blueprint[_SerializerT_co] | None
 
     # Protected API:
-    _blueprint_per_method: ClassVar[Mapping[str, _BlueprintT]]
+    _blueprint_per_method: ClassVar[Mapping[str, _BlueprintCls]]
     _is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
 
     @override

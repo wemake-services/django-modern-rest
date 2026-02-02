@@ -4,7 +4,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
 
 from django_modern_rest.cookies import NewCookie
-from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
+from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.headers import NewHeader
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.parsers import Parser
@@ -37,7 +37,7 @@ class _BasePayload:
 
     # Common fields:
     validate_responses: bool | None = None
-    error_handler: SyncErrorHandlerT | AsyncErrorHandlerT | None = None
+    error_handler: SyncErrorHandler | AsyncErrorHandler | None = None
     allow_custom_http_methods: bool = False
     no_validate_http_spec: Set[HttpSpec] | None = None
     parsers: Sequence[type[Parser]] | None = None
@@ -66,4 +66,4 @@ class ModifyEndpointPayload(_BasePayload):
 
 
 #: Alias for different payload types:
-PayloadT: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
+Payload: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None

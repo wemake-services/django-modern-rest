@@ -11,7 +11,7 @@ from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.test import DMRRequestFactory
 from django_modern_rest.validation import (
     EndpointMetadataValidator,
-    PayloadT,
+    Payload,
     ResponseValidator,
 )
 from django_modern_rest.validation.response import _ResponseT
@@ -25,7 +25,7 @@ class _CustomEndpointMetadataValidator(EndpointMetadataValidator):
     def __call__(
         self,
         func: Callable[..., Any],
-        payload: PayloadT,
+        payload: Payload,
         *,
         blueprint_cls: type[Blueprint[BaseSerializer]] | None,
         controller_cls: type[Controller[BaseSerializer]],
