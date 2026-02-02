@@ -12,7 +12,7 @@ from django_modern_rest.internal.middleware_wrapper import (
     ResponseConverter,
     do_wrap_dispatch,
 )
-from django_modern_rest.response import ResponseSpec
+from django_modern_rest.metadata import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint

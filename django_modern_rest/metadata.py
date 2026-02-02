@@ -6,11 +6,14 @@ from typing import (
     TYPE_CHECKING,
     Any,
     TypeAlias,
+    final,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
+    from django_modern_rest.cookies import CookieSpec, NewCookie
     from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
+    from django_modern_rest.headers import HeaderSpec, NewHeader
     from django_modern_rest.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -19,15 +22,104 @@ if TYPE_CHECKING:
     )
     from django_modern_rest.parsers import Parser
     from django_modern_rest.renderers import Renderer
-    from django_modern_rest.response import (
-        ResponseModification,
-        ResponseSpec,
-    )
     from django_modern_rest.security.base import AsyncAuth, SyncAuth
     from django_modern_rest.serialization import BaseSerializer
     from django_modern_rest.settings import HttpSpec
 
 ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True)
+class ResponseSpec:
+    """
+    Represents a single API response specification.
+
+    Args:
+        return_type: Shows *return_type* in the documentation
+            as returned model schema.
+            We validate *return_type* to match the returned response content
+            by default, but it can be turned off.
+        status_code: Shows *status_code* in the documentation.
+            We validate *status_code* to match the specified
+            one when ``HttpResponse`` is returned.
+        headers: Shows *headers* in the documentation.
+            When passed, we validate that all given required headers are present
+            in the final response.
+        cookies: Shows *cookies* in the documentation.
+            When passed, we validate that all given required cookies are present
+            in the final response.
+        description: Text comment about what this response represents.
+
+    We use this structure to validate responses and render them in OpenAPI.
+    """
+
+    # `type[T]` limits some type annotations, like `Literal[1]`:
+    return_type: Any
+    status_code: HTTPStatus = dataclasses.field(kw_only=True)
+    headers: Mapping[str, HeaderSpec] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    cookies: Mapping[str, CookieSpec] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    description: str | None = None
+
+    # TODO: examples and other metadata
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class ResponseModification:
+    """
+    Represents a single API modification.
+
+    Args:
+        return_type: Shows *return_type* in the documentation
+            as returned model schema.
+            We validate *return_type* to match the returned response content
+            by default, but it can be turned off.
+        status_code: Shows *status_code* in the documentation.
+            We validate *status_code* to match the specified
+            one when ``HttpResponse`` is returned.
+        headers: Shows *headers* in the documentation.
+            Headers passed here will be added to the final response.
+        cookies: Shows *cookies* in the documentation.
+            Cookies passed here will be added to the final response.
+
+    We use this structure to modify the default response.
+    """
+
+    # `type[T]` limits some type annotations, like `Literal[1]`:
+    return_type: Any
+    status_code: HTTPStatus
+    headers: Mapping[str, 'NewHeader'] | None
+    cookies: Mapping[str, 'NewCookie'] | None
+
+    def to_spec(self) -> ResponseSpec:
+        """Convert response modification to response description."""
+        return ResponseSpec(
+            return_type=self.return_type,
+            status_code=self.status_code,
+            headers=(
+                None
+                if self.headers is None
+                else {
+                    header_name: header.to_spec()
+                    for header_name, header in self.headers.items()
+                }
+            ),
+            cookies=(
+                None
+                if self.cookies is None
+                else {
+                    cookie_key: cookie.to_spec()
+                    for cookie_key, cookie in self.cookies.items()
+                }
+            ),
+        )
 
 
 class ResponseSpecProvider:
@@ -40,8 +132,8 @@ class ResponseSpecProvider:
     def provide_response_specs(
         cls,
         serializer: type['BaseSerializer'],
-        existing_responses: Mapping[HTTPStatus, 'ResponseSpec'],
-    ) -> list['ResponseSpec']:
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
         """
         Provide custom response specs.
 
@@ -53,9 +145,9 @@ class ResponseSpecProvider:
     @classmethod
     def _add_new_response(
         cls,
-        response: 'ResponseSpec',
-        existing_responses: Mapping[HTTPStatus, 'ResponseSpec'],
-    ) -> list['ResponseSpec']:
+        response: ResponseSpec,
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
         if response.status_code in existing_responses:
             return []
         return [response]
@@ -128,10 +220,10 @@ class EndpointMetadata:
 
     """
 
-    responses: dict[HTTPStatus, 'ResponseSpec']
+    responses: dict[HTTPStatus, ResponseSpec]
     validate_responses: bool | None
     method: str
-    modification: 'ResponseModification | None'
+    modification: ResponseModification | None
     error_handler: 'SyncErrorHandlerT | AsyncErrorHandlerT | None'
     component_parsers: list[ComponentParserSpec]
     parsers: dict[str, type['Parser']]

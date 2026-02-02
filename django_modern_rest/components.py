@@ -9,8 +9,7 @@ from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
 )
-from django_modern_rest.metadata import ResponseSpecProvider
-from django_modern_rest.response import ResponseSpec
+from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 from django_modern_rest.serialization import BaseSerializer
 
 if TYPE_CHECKING:

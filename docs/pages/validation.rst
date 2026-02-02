@@ -84,6 +84,8 @@ per-blueprint, per-controller and globally.
         :emphasize-lines: 6, 11
 
 
+.. autoclass:: django_modern_rest.validation.endpoint_metadata.EndpointMetadataBuilder
+
 .. autoclass:: django_modern_rest.validation.EndpointMetadataValidator
 
 

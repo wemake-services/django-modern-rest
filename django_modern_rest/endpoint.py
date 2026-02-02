@@ -20,7 +20,7 @@ from django_modern_rest.exceptions import (
     ResponseSerializationError,
 )
 from django_modern_rest.headers import NewHeader
-from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.negotiation import RequestNegotiator, ResponseNegotiator
 from django_modern_rest.openapi.objects import (
     Callback,
@@ -30,7 +30,7 @@ from django_modern_rest.openapi.objects import (
 )
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import APIError, ResponseSpec
+from django_modern_rest.response import APIError
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import (

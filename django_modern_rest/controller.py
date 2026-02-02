@@ -21,13 +21,11 @@ from django_modern_rest.exceptions import (
     UnsolvableAnnotationsError,
 )
 from django_modern_rest.internal.io import identity
+from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.negotiation import request_renderer
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import (
-    ResponseSpec,
-    build_response,
-)
+from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec

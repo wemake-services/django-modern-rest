@@ -10,7 +10,7 @@ from typing_extensions import override
 from django_modern_rest.metadata import ResponseSpecProvider
 
 if TYPE_CHECKING:
-    from django_modern_rest.response import ResponseSpec
+    from django_modern_rest.metadata import ResponseSpec
     from django_modern_rest.serialization import BaseSerializer
 
 

@@ -35,10 +35,10 @@ Response, headers and cookies
 .. autoclass:: django_modern_rest.metadata.ResponseSpecProvider
   :members:
 
-.. autoclass:: django_modern_rest.response.ResponseSpec
+.. autoclass:: django_modern_rest.metadata.ResponseSpec
   :members:
 
-.. autoclass:: django_modern_rest.response.ResponseModification
+.. autoclass:: django_modern_rest.metadata.ResponseModification
   :members:
 
 .. autoexception:: django_modern_rest.response.APIError

@@ -18,14 +18,14 @@ from django_modern_rest.components import Body
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.metadata import EndpointMetadata
-from django_modern_rest.parsers import Parser
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import (
+from django_modern_rest.metadata import (
+    EndpointMetadata,
     ResponseModification,
     ResponseSpec,
-    infer_status_code,
 )
+from django_modern_rest.parsers import Parser
+from django_modern_rest.renderers import Renderer
+from django_modern_rest.response import infer_status_code
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import HttpSpec, Settings, resolve_setting

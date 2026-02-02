@@ -103,7 +103,7 @@ Response handling
 
   Default: ``[]``
 
-  The list of global :class:`~django_modern_rest.response.ResponseSpec`
+  The list of global :class:`~django_modern_rest.metadata.ResponseSpec`
   object that will be added to all endpoints' metadata
   as a possible response schema.
 

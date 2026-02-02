@@ -6,12 +6,11 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import override
 
 from django_modern_rest.exceptions import NotAuthenticatedError
-from django_modern_rest.metadata import ResponseSpecProvider
+from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 from django_modern_rest.openapi.objects.components import Components
 from django_modern_rest.openapi.objects.security_requirement import (
     SecurityRequirement,
 )
-from django_modern_rest.response import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
