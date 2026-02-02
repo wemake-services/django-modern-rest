@@ -29,7 +29,7 @@ class SchemaRegistry:
 
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
-        self._schemas: dict[str, Schema] = {}
+        self.schemas: dict[str, Schema] = {}
         self._type_map: dict[Any, str] = {}
 
     def register(
@@ -41,18 +41,29 @@ class SchemaRegistry:
         """Register Schema in registry."""
         registered_name = self._type_map.get(source_type)
         if registered_name is not None:
-            raise ValueError(
-                f'Type {source_type!r} is already registered.',
-            )
+            return self._make_reference(registered_name)
 
-        if name in self._schemas:
-            raise ValueError(
-                f'Schema name {name!r} is already used by another type.',
-            )
-
-        self._schemas[name] = schema
+        name = self._get_unique_name(name)
+        self.schemas[name] = schema
         self._type_map[source_type] = name
         return self._make_reference(name)
 
+    def get_reference(self, source_type: Any) -> Reference | None:
+        """Get registered reference."""
+        name = self._type_map.get(source_type)
+        if name:
+            return self._make_reference(name)
+        return None
+
     def _make_reference(self, name: str) -> Reference:
         return Reference(ref=f'#/components/schemas/{name}')
+
+    def _get_unique_name(self, name: str) -> str:
+        # TODO: Make sure it's enough.
+        # A likely place to refactor later
+        counter = 1
+        original_name = name
+        while name in self.schemas:
+            name = f'{original_name}{counter}'
+            counter += 1
+        return name

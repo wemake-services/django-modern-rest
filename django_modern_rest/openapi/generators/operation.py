@@ -1,10 +1,13 @@
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_args
 
+from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.operation import Operation
+from django_modern_rest.openapi.objects.request_body import RequestBody
 
 if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.metadata import ComponentParserSpec
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
@@ -29,6 +32,8 @@ class OperationGenerator:
             endpoint,
             path,
         )
+        request_body = self._generate_request_body(metadata.component_parsers)
+        # TODO: responses and parameters
         return Operation(
             tags=metadata.tags,
             summary=metadata.summary,
@@ -43,8 +48,23 @@ class OperationGenerator:
             servers=metadata.servers,
             callbacks=metadata.callbacks,
             operation_id=operation_id,
-            # TODO: implement another attributes generation.
+            request_body=request_body,
+            # TODO: responses
         )
+
+    def _generate_request_body(
+        self,
+        parsers: 'list[ComponentParserSpec]',
+    ) -> RequestBody | None:
+        for parser, _ in parsers:
+            parser_type = get_args(parser)[0]
+            reference = self.context.schema_generator.generate(parser_type)
+            # TODO: Do not hardcode. Neew content negotiations.
+            return RequestBody(
+                content={'application/json': MediaType(schema=reference)},
+                required=True,
+            )
+        return None
 
 
 class OperationIDGenerator:

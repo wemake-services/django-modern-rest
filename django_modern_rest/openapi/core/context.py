@@ -5,6 +5,7 @@ from django_modern_rest.openapi.generators.operation import (
     OperationGenerator,
     OperationIDGenerator,
 )
+from django_modern_rest.openapi.generators.schema import SchemaGenerator
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.config import OpenAPIConfig
@@ -30,3 +31,4 @@ class OpenAPIContext:
 
         self.operation_generator = OperationGenerator(self)
         self.operation_id_generator = OperationIDGenerator(self)
+        self.schema_generator = SchemaGenerator()
