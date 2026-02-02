@@ -1923,6 +1923,22 @@ docs = ["sphinx", "sphinx_rtd_theme"]
 testing = ["Django", "django-configurations (>=2.0)"]
 
 [[package]]
+name = "pytest-freethreaded"
+version = "0.1.0"
+description = "pytest plugin for running parallel tests"
+optional = false
+python-versions = ">=3.13"
+groups = ["dev"]
+markers = "python_version >= \"3.14\""
+files = [
+    {file = "pytest_freethreaded-0.1.0-py3-none-any.whl", hash = "sha256:5f2beb6026857f274162d0aa131fe605b8c6d2a3b0c2d35a2af14721959398f1"},
+    {file = "pytest_freethreaded-0.1.0.tar.gz", hash = "sha256:9cb4f412db3abb5a8ffdcb29a2d42e058c41f16437c0a1815101651b485dcf45"},
+]
+
+[package.dependencies]
+pytest = "*"
+
+[[package]]
 name = "pytest-freezer"
 version = "0.4.9"
 description = "Pytest plugin providing a fixture interface for spulec/freezegun"
@@ -2949,4 +2965,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "87145a4bc33d2e22e48ecc338b824a0fd73348fea1719ee5d13d696dc0791c80"
+content-hash = "5f23ef72a3bede7c99e96b31ae275a8194ec87b2f9226bf952241838fa7bd0ed"
