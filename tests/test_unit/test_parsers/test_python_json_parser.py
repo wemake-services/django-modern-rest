@@ -1,6 +1,5 @@
 import json
 from http import HTTPStatus
-from typing import final
 
 import pydantic
 import pytest
@@ -31,18 +30,35 @@ def _clear_parser_and_renderer(
     }
 
 
+def test_native_json_metadata() -> None:
+    """Ensures that metadata is correct."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.responses.keys() == {HTTPStatus.OK}
+    assert len(metadata.parsers) == 1
+    assert len(metadata.renderers) == 1
+
+
 def test_empty_request_data(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures we can send empty bytes to our json parser."""
 
-    @final
     class _Controller(Controller[PydanticSerializer], Body[None]):
         def post(self) -> str:
             return 'none handled'
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
-    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
+    metadata = _Controller.api_endpoints['POST'].metadata
+    assert metadata.responses.keys() == {
+        HTTPStatus.CREATED,
+        HTTPStatus.BAD_REQUEST,
+    }
+    assert len(metadata.parsers) == 1
+    assert len(metadata.renderers) == 1
 
     request = dmr_rf.post(
         '/whatever/',
@@ -66,7 +82,6 @@ def test_wrong_request_data(
 ) -> None:
     """Ensures we can send wrong bytes to our json parser."""
 
-    @final
     class _Controller(Controller[PydanticSerializer], Body[None]):
         def post(self) -> str:
             raise NotImplementedError
@@ -123,7 +138,6 @@ def test_complex_request_data(
 ) -> None:
     """Ensures we can change per-endpoint parsers and renderers."""
 
-    @final
     class _Controller(Controller[PydanticSerializer], Body[_RequestModel]):
         def post(self) -> _RequestModel:
             return self.parsed_body

@@ -124,19 +124,3 @@ class JsonParser(Parser):
             if to_deserialize == b'':
                 return None
             raise DataParsingError(str(exc)) from exc
-
-    @override
-    @classmethod
-    def provide_response_specs(
-        cls,
-        serializer: type['BaseSerializer'],
-        existing_responses: Mapping[HTTPStatus, ResponseSpec],
-    ) -> list[ResponseSpec]:
-        """Provides responses that can happen when data can't be parsed."""
-        return cls._add_new_response(
-            ResponseSpec(
-                return_type=serializer.default_error_model,
-                status_code=HTTPStatus.BAD_REQUEST,
-            ),
-            existing_responses,
-        )
