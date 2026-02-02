@@ -12,7 +12,7 @@ from typing import (
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
     from django_modern_rest.cookies import CookieSpec, NewCookie
-    from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
+    from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
     from django_modern_rest.headers import HeaderSpec, NewHeader
     from django_modern_rest.openapi.objects import (
         Callback,
@@ -224,7 +224,7 @@ class EndpointMetadata:
     validate_responses: bool | None
     method: str
     modification: ResponseModification | None
-    error_handler: 'SyncErrorHandlerT | AsyncErrorHandlerT | None'
+    error_handler: 'SyncErrorHandler | AsyncErrorHandler | None'
     component_parsers: list[ComponentParserSpec]
     parsers: dict[str, type['Parser']]
     renderers: dict[str, type['Renderer']]

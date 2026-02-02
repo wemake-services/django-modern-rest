@@ -32,13 +32,13 @@ from django_modern_rest.settings import HttpSpec, Settings, resolve_setting
 from django_modern_rest.types import is_safe_subclass, parse_return_annotation
 from django_modern_rest.validation.payload import (
     ModifyEndpointPayload,
-    PayloadT,
+    Payload,
     ValidateEndpointPayload,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint, Controller
-    from django_modern_rest.errors import AsyncErrorHandlerT, SyncErrorHandlerT
+    from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 
 #: HTTP methods that should not have a request body according to HTTP spec.
 #: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
@@ -179,7 +179,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     Metadata will NOT be considered ready after running this process.
     """
 
-    payload: PayloadT
+    payload: Payload
 
     def __call__(
         self,
@@ -431,7 +431,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_parser_types(
         self,
-        payload: PayloadT,
+        payload: Payload,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
         *,
@@ -460,7 +460,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_renderer_types(
         self,
-        payload: PayloadT,
+        payload: Payload,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
         *,
@@ -491,7 +491,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_auth(  # noqa: WPS231
         self,
-        payload: PayloadT,
+        payload: Payload,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
         *,
@@ -560,7 +560,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         func: Callable[..., Any],
         *,
         endpoint: str,
-    ) -> 'SyncErrorHandlerT | AsyncErrorHandlerT | None':
+    ) -> 'SyncErrorHandler | AsyncErrorHandler | None':
         if payload.error_handler is None:
             return None
         if inspect.iscoroutinefunction(func):
@@ -576,7 +576,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_no_validate_http_spec(
         self,
-        payload: PayloadT,
+        payload: Payload,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> frozenset[HttpSpec]:
@@ -669,9 +669,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if is_safe_subclass(return_annotation, HttpResponse):
             if isinstance(self.payload, ModifyEndpointPayload):
                 raise EndpointMetadataError(
-                    # TODO: better error message, `@validate` is not required
                     f'{endpoint!r} returns HttpResponse '
-                    'it requires `@validate` decorator instead of `@modify`',
+                    'it cannot be used with `@modify`. '
+                    'Maybe you meant `@validate`?',
                 )
             # We can't reach this point with `None`, it is processed before.
             assert isinstance(self.payload, ValidateEndpointPayload)  # noqa: S101
@@ -717,7 +717,7 @@ class EndpointMetadataValidator:
     def __call__(
         self,
         func: Callable[..., Any],
-        payload: PayloadT,
+        payload: Payload,
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -745,7 +745,7 @@ class EndpointMetadataValidator:
 
     def _resolve_all_responses(
         self,
-        payload: PayloadT,
+        payload: Payload,
         *,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -811,7 +811,7 @@ class EndpointMetadataValidator:
 
 
 def _build_responses(
-    payload: PayloadT,
+    payload: Payload,
     *,
     blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
     controller_cls: type['Controller[BaseSerializer]'],

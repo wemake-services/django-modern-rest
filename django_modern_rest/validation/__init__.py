@@ -17,7 +17,7 @@ from django_modern_rest.validation.payload import (
     ModifyEndpointPayload as ModifyEndpointPayload,
 )
 from django_modern_rest.validation.payload import (
-    PayloadT as PayloadT,
+    Payload as Payload,
 )
 from django_modern_rest.validation.payload import (
     ValidateEndpointPayload as ValidateEndpointPayload,

@@ -6,7 +6,7 @@ from typing_extensions import override
 from django_modern_rest.openapi.types import FieldDefinition
 
 _SourceT = TypeVar('_SourceT')
-_RegistryT: TypeAlias = list['type[FieldExtractor[Any]]']
+_Registry: TypeAlias = list['type[FieldExtractor[Any]]']
 
 
 class FieldExtractor(Generic[_SourceT]):
@@ -14,7 +14,7 @@ class FieldExtractor(Generic[_SourceT]):
 
     __slots__ = ()
 
-    registry: ClassVar[_RegistryT] = []
+    registry: ClassVar[_Registry] = []
 
     @override
     def __init_subclass__(cls) -> None:

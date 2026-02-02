@@ -43,7 +43,7 @@ if platform.system() in {'Darwin', 'Linux'}:
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 
-_AppRunArgsT: TypeAlias = dict[str, Any]
+_AppRunArgs: TypeAlias = dict[str, Any]
 
 logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
@@ -68,7 +68,7 @@ def _get_available_port() -> int:
 class _AppBuilder:
     """Builds a Django application from configuration."""
 
-    def __init__(self, file_path: Path, config: _AppRunArgsT) -> None:
+    def __init__(self, file_path: Path, config: _AppRunArgs) -> None:
         """Initialize application builder with file path and configuration."""
         self.file_path = file_path
         self.config = config
@@ -145,7 +145,7 @@ class _AppBuilder:
         sys.modules['url_conf'] = url_conf_module
 
 
-def _get_url_path_from_run_args(run_args: _AppRunArgsT) -> str:
+def _get_url_path_from_run_args(run_args: _AppRunArgs) -> str:
     controller_name = run_args['controller'].lower()
     url: str = run_args.get(
         'url',
@@ -155,7 +155,7 @@ def _get_url_path_from_run_args(run_args: _AppRunArgsT) -> str:
 
 
 @contextmanager
-def _run_app(path: Path, config: _AppRunArgsT) -> Iterator[int]:
+def _run_app(path: Path, config: _AppRunArgs) -> Iterator[int]:
     """Start a Django app on an available port."""
     restart_duration = 0.2
     port = _get_available_port()
@@ -198,7 +198,7 @@ def _wait_for_app_startup(port: int) -> None:
     raise _StartupError(f'App failed to come online on port {port}')
 
 
-def _extract_run_args(file_content: str) -> tuple[str, list[_AppRunArgsT]]:
+def _extract_run_args(file_content: str) -> tuple[str, list[_AppRunArgs]]:
     """Extract run args from a python file.
 
     Return the file content stripped of the run comments
@@ -218,7 +218,7 @@ def _extract_run_args(file_content: str) -> tuple[str, list[_AppRunArgsT]]:
     return '\n'.join(new_lines), run_configs
 
 
-def _exec_examples(app_file: Path, run_configs: list[_AppRunArgsT]) -> str:
+def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
     """
     Start a server with the example application, run the specified requests.
 
@@ -243,7 +243,7 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgsT]) -> str:
 
 def _process_single_example(
     app_file: Path,
-    run_args: _AppRunArgsT,
+    run_args: _AppRunArgs,
     port: int,
     url_path: str,
 ) -> str:
@@ -279,15 +279,15 @@ def _process_single_example(
     return '\n'.join((f'$ {clean_args_string}', *stdout))
 
 
-_CurlArgsT: TypeAlias = list[str]
-_CurlCleanArgsT: TypeAlias = list[str]
+_CurlArgs: TypeAlias = list[str]
+_CurlCleanArgs: TypeAlias = list[str]
 
 
 def _build_curl_request(
-    run_args: _AppRunArgsT,
+    run_args: _AppRunArgs,
     port: int,
     url_path: str,
-) -> tuple[_CurlArgsT, _CurlCleanArgsT]:
+) -> tuple[_CurlArgs, _CurlCleanArgs]:
     args = [
         'curl',
         '-v',
@@ -310,7 +310,7 @@ def _build_curl_request(
 def _add_curl_flags(
     args: list[str],
     clean_args: list[str],
-    run_args: _AppRunArgsT,
+    run_args: _AppRunArgs,
 ) -> None:
     curl_extra_args = run_args.get('curl_args', [])
     args.extend(curl_extra_args)
@@ -320,7 +320,7 @@ def _add_curl_flags(
 def _add_method(
     args: list[str],
     clean_args: list[str],
-    run_args: _AppRunArgsT,
+    run_args: _AppRunArgs,
 ) -> None:
     method = run_args.get('method', 'get').upper()
     args.extend(['-X', method])
@@ -330,7 +330,7 @@ def _add_method(
 def _add_body_and_content_type(
     args: list[str],
     clean_args: list[str],
-    run_args: _AppRunArgsT,
+    run_args: _AppRunArgs,
 ) -> None:
     if 'body' not in run_args:
         return
@@ -356,7 +356,7 @@ def _add_body_and_content_type(
 def _add_headers(
     args: list[str],
     clean_args: list[str],
-    run_args: _AppRunArgsT,
+    run_args: _AppRunArgs,
 ) -> None:
     header_flag = '-H'
     for header_name, header_value in run_args.get('headers', {}).items():
@@ -421,7 +421,7 @@ class LiteralInclude(_LiteralInclude):
     def _execute_code(
         self,
         file_path: Path,
-    ) -> tuple[str, list[_AppRunArgsT]]:
+    ) -> tuple[str, list[_AppRunArgs]]:
         file_content = file_path.read_text(encoding='utf-8')
         return _extract_run_args(file_content)
 
