@@ -57,11 +57,11 @@ class ResponseSpec:
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus = dataclasses.field(kw_only=True)
-    headers: Mapping[str, HeaderSpec] | None = dataclasses.field(
+    headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
-    cookies: Mapping[str, CookieSpec] | None = dataclasses.field(
+    cookies: Mapping[str, 'CookieSpec'] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
