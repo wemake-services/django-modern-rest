@@ -10,12 +10,12 @@ from django_modern_rest import (
     Controller,
 )
 from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
 from django_modern_rest.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
 )
-from django_modern_rest.response import ResponseSpec
 from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.serialization import (
     BaseEndpointOptimizer,

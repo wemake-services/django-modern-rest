@@ -103,7 +103,7 @@ sphinx-design = ">=0.6,<0.8"
 sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
-# TODO: remove whe `sphinx-tabs` is fixed:
+# TODO: remove when `sphinx-tabs` is fixed:
 # https://github.com/executablebooks/sphinx-tabs/issues/212
 docutils = "0.21.2"
 

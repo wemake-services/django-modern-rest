@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
-_BlueprintT: TypeAlias = type['Blueprint[_SerializerT]']
+_BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
 _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
@@ -40,9 +40,9 @@ class Router:
 def compose_blueprints(
     # This seems like a strange design at first, but it actually allows:
     # at least two pos-only controllers and then any amount of extra ones.
-    first_blueprint: '_BlueprintT[_SerializerT]',
+    first_blueprint: '_BlueprintCls[_SerializerT]',
     /,
-    *extra: '_BlueprintT[_SerializerT]',
+    *extra: '_BlueprintCls[_SerializerT]',
     meta_mixin: type['MetaMixin | AsyncMetaMixin'] | None = None,
 ) -> type['Controller[_SerializerT]']:
     """
@@ -81,7 +81,7 @@ def compose_blueprints(
 
 
 def _body_builder(
-    blueprints: list['_BlueprintT[_SerializerT]'],
+    blueprints: list['_BlueprintCls[_SerializerT]'],
 ) -> Callable[[dict[str, Any]], object]:
     def factory(ns: dict[str, Any]) -> object:
         ns['blueprints'] = blueprints

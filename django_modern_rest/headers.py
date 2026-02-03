@@ -2,8 +2,8 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
+    from django_modern_rest.metadata import ResponseModification
     from django_modern_rest.renderers import Renderer
-    from django_modern_rest.response import ResponseModification
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -15,18 +15,11 @@ class _BaseResponseHeader:
     https://spec.openapis.org/oas/v3.1.0#parameterObject for doc purposes.
 
     Attributes:
-        value: Optional value that can be added to the response headers.
         description: Documentation, why this header is needed and what it does.
-        required: Whether this header is required or optional.
         deprecated: Whethere this header is deprecated.
         example: Documentation, what can be given as values in this header.
 
     """
-
-    # TODO: re-enable schema, examples, content
-    # TODO: make `examples` and `example` validation
-    # TODO: make sure that we can't set fields like `explode`
-    # to other values except default
 
     description: str | None = None
     deprecated: bool = False

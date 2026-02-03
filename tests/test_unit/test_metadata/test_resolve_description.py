@@ -140,7 +140,7 @@ class _RawDescriptionController(
         ),
     ],
 )
-def test_metadata_resolve_description(
+def test_metadata_description(
     *,
     controller: Controller[PydanticSerializer],
     expected_summary: str | None,

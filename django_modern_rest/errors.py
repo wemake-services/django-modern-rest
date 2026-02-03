@@ -21,13 +21,14 @@ if TYPE_CHECKING:
     from django_modern_rest.serialization import BaseSerializer
 
 #: Error handler type for sync callbacks.
-SyncErrorHandlerT: TypeAlias = Callable[
+# TODO: normalize type aliases names, maybe remove `T`?
+SyncErrorHandler: TypeAlias = Callable[
     ['Endpoint', 'Controller[BaseSerializer]', Exception],  # noqa: WPS226
     HttpResponse,
 ]
 
 #: Error handler type for async callbacks.
-AsyncErrorHandlerT: TypeAlias = Callable[
+AsyncErrorHandler: TypeAlias = Callable[
     ['Endpoint', 'Controller[BaseSerializer]', Exception],
     Awaitable[HttpResponse],
 ]
@@ -49,16 +50,16 @@ _MethodAsyncHandler: TypeAlias = Callable[
 
 
 @overload
-def wrap_handler(method: _MethodSyncHandler) -> SyncErrorHandlerT: ...
+def wrap_handler(method: _MethodSyncHandler) -> SyncErrorHandler: ...
 
 
 @overload
-def wrap_handler(method: _MethodAsyncHandler) -> AsyncErrorHandlerT: ...
+def wrap_handler(method: _MethodAsyncHandler) -> AsyncErrorHandler: ...
 
 
 def wrap_handler(
     method: _MethodSyncHandler | _MethodAsyncHandler,
-) -> SyncErrorHandlerT | AsyncErrorHandlerT:
+) -> SyncErrorHandler | AsyncErrorHandler:
     """
     Utility function to wrap controller / blueprint methods.
 

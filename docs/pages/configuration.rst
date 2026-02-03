@@ -103,7 +103,7 @@ Response handling
 
   Default: ``[]``
 
-  The list of global :class:`~django_modern_rest.response.ResponseSpec`
+  The list of global :class:`~django_modern_rest.metadata.ResponseSpec`
   object that will be added to all endpoints' metadata
   as a possible response schema.
 
@@ -114,7 +114,7 @@ Response handling
 
     >>> from http import HTTPStatus
     >>> from typing_extensions import TypedDict
-    >>> from django_modern_rest.response import ResponseSpec
+    >>> from django_modern_rest import ResponseSpec
 
     >>> class Error(TypedDict):
     ...     detail: str

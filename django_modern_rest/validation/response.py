@@ -19,9 +19,8 @@ from django_modern_rest.envs import MAX_CACHE_SIZE
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import ConditionalType
-from django_modern_rest.metadata import EndpointMetadata
+from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.negotiation import response_validation_negotiator
-from django_modern_rest.response import ResponseSpec
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import Settings, resolve_setting
 
