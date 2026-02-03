@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 from django_modern_rest.openapi.generators.schema import SchemaGenerator
 from django_modern_rest.openapi.objects.reference import Reference
+from django_modern_rest.plugins import pydantic  # noqa: F401
 
 
 class _TestModel(BaseModel):
