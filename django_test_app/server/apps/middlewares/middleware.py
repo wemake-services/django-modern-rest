@@ -33,7 +33,9 @@ def rate_limit_middleware(
         if request.headers.get('X-Rate-Limited') == 'true':
             return build_response(
                 PydanticSerializer,
-                raw_data={'detail': 'Rate limit exceeded'},
+                raw_data=PydanticSerializer.error_serialize(
+                    'Rate limit exceeded',
+                ),
                 status_code=HTTPStatus.TOO_MANY_REQUESTS,
             )
         return get_response(request)

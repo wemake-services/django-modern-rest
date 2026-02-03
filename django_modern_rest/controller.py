@@ -17,9 +17,8 @@ from typing_extensions import deprecated, override
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.exceptions import (
-    UnsolvableAnnotationsError,
-)
+from django_modern_rest.errors import ErrorType
+from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.internal.io import identity
 from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.negotiation import request_renderer
@@ -29,10 +28,7 @@ from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serialization import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
-from django_modern_rest.types import (
-    infer_bases,
-    infer_type_args,
-)
+from django_modern_rest.types import infer_bases, infer_type_args
 from django_modern_rest.validation import (
     BlueprintValidator,
     ControllerValidator,
@@ -550,15 +546,17 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         # an endpoint associated with it. We switch to lower level
         # `build_response` primitive
         allowed_methods = sorted(self.api_endpoints.keys())
+        # NOTE: this response is not validated, so be careful with the spec!
         return self._maybe_wrap(
             build_response(
                 self.serializer,
-                raw_data={
-                    'detail': (
+                raw_data=self.serializer.error_serialize(
+                    (
                         f'Method {method!r} is not allowed, '
                         f'allowed: {allowed_methods!r}'
                     ),
-                },
+                    error_type=ErrorType.not_allowed,
+                ),
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
                 renderer_cls=request_renderer(self.request),
             ),

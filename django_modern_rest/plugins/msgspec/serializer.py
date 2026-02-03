@@ -9,6 +9,7 @@ from typing import (
 import msgspec
 from typing_extensions import TypedDict, override
 
+from django_modern_rest.errors import ErrorType
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.serialization import (
@@ -26,20 +27,6 @@ class MsgspecConvertOptions(TypedDict):
     from_attributes: NotRequired[bool]
     builtin_types: NotRequired[Iterable[type] | None]
     str_keys: NotRequired[bool]
-
-
-class MsgspecErrorDetails(TypedDict):
-    """Base schema for msgspec error detail."""
-
-    type: str
-    loc: list[int | str]
-    msg: str
-
-
-class MsgspecErrorModel(TypedDict):
-    """Error response schema for serialization errors."""
-
-    detail: list[MsgspecErrorDetails]
 
 
 class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
@@ -72,7 +59,6 @@ class MsgspecSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = msgspec.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = MsgspecEndpointOptimizer
-    default_error_model: ClassVar[Any] = MsgspecErrorModel
 
     # Custom API:
     deserialize_strict: ClassVar[bool] = True
@@ -140,19 +126,16 @@ class MsgspecSerializer(BaseSerializer):
     def error_serialize(
         cls,
         error: Exception | str,
-    ) -> list[MsgspecErrorDetails]:
-        """
-        Convert serialization or deserialization error to json format.
-
-        Args:
-            error: A serialization exception like a validation error or
-                a ``django_modern_rest.exceptions.DataParsingError``.
-
-        Returns:
-            Simple python object - exception converted to json.
-        """
-        if isinstance(error, (msgspec.ValidationError, str)):
-            return [{'type': 'value_error', 'loc': [], 'msg': str(error)}]
-        raise NotImplementedError(
-            f'Cannot serialize {error!r} of type {type(error)} to json safely',
+        *,
+        loc: str | None = None,
+        error_type: str | ErrorType | None = None,
+    ) -> Any:  # `Any`, so we can subclass and change it.
+        """Convert error to the common format."""
+        if isinstance(error, msgspec.ValidationError):
+            error = str(error)
+            error_type = ErrorType.value_error
+        return super().error_serialize(
+            error,
+            loc=loc,
+            error_type=error_type,
         )

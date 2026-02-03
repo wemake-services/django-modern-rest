@@ -135,10 +135,9 @@ async def test_validate_error_handler_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'string_type',
-                'loc': [],
                 'msg': 'Input should be a valid string',
-                'input': 1,
+                'loc': [],
+                'type': 'value_error',
             },
         ],
     })

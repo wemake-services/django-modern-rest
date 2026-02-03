@@ -21,10 +21,7 @@ from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import (
-    PydanticErrorModel,
-    PydanticSerializer,
-)
+from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.test import DMRRequestFactory
 
@@ -107,7 +104,7 @@ def test_validate_wrong_headers(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert isinstance(json.loads(response.content)['detail'], str)
+    assert json.loads(response.content)['detail']
 
 
 class _CorrectHeadersController(Controller[PydanticSerializer]):
@@ -216,7 +213,17 @@ def test_validate_over_regular_data(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert '@modify' in json.loads(response.content)['detail']
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "<class 'test_validate_decorator._MismatchingMetadata'> "
+                    "in 'get' returned raw data of type <class 'int'> "
+                    'without associated `@modify` usage.'
+                ),
+            },
+        ],
+    })
 
 
 def test_validate_required_for_responses() -> None:
@@ -258,10 +265,9 @@ def test_no_validate_for_responses(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': [0],
+                'type': 'value_error',
             },
         ],
     })
@@ -377,10 +383,9 @@ def test_validate_type_dict_response(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'string_type',
-                'loc': ['user'],
                 'msg': 'Input should be a valid string',
-                'input': 1,
+                'loc': ['user'],
+                'type': 'value_error',
             },
         ],
     })
@@ -422,13 +427,7 @@ def test_validate_literal_response(dmr_rf: DMRRequestFactory) -> None:
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
         'detail': [
-            {
-                'type': 'literal_error',
-                'loc': [],
-                'msg': 'Input should be 1',
-                'input': 2,
-                'ctx': {'expected': '1'},
-            },
+            {'msg': 'Input should be 1', 'loc': [], 'type': 'value_error'},
         ],
     })
 
@@ -498,26 +497,22 @@ def test_validate_responses_from_blueprint() -> None:
     controller = compose_blueprints(_Blueprint)
 
     assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticErrorModel,
-            status_code=HTTPStatus.BAD_REQUEST,
+        HTTPStatus.OK: ResponseSpec(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
         ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.default_error_model,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.BAD_REQUEST: ResponseSpec(
+            return_type=PydanticSerializer.error_model,
+            status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticSerializer.default_error_model,
-            status_code=HTTPStatus.BAD_REQUEST,
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=PydanticSerializer.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
     })
@@ -546,26 +541,22 @@ def test_validate_enable_semantic_responses() -> None:
     controller = compose_blueprints(_Blueprint)
 
     assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticErrorModel,
-            status_code=HTTPStatus.BAD_REQUEST,
+        HTTPStatus.OK: ResponseSpec(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
         ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.default_error_model,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.BAD_REQUEST: ResponseSpec(
+            return_type=PydanticSerializer.error_model,
+            status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticSerializer.default_error_model,
-            status_code=HTTPStatus.BAD_REQUEST,
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=PydanticSerializer.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
     })

@@ -20,9 +20,9 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
     """Convert CSRF failure responses to JSON."""
     return build_response(
         PydanticSerializer,
-        raw_data={
-            'detail': 'CSRF verification failed. Request aborted.',
-        },
+        raw_data=PydanticSerializer.error_serialize(
+            'CSRF verification failed. Request aborted.',
+        ),
         status_code=HTTPStatus(response.status_code),
     )
 

@@ -38,7 +38,9 @@ class _RequestWithID(HttpRequest):
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
     return build_response(
         PydanticSerializer,
-        raw_data={'detail': 'CSRF verification failed. Request aborted.'},
+        raw_data=PydanticSerializer.error_serialize(
+            'CSRF verification failed. Request aborted.',
+        ),
         status_code=HTTPStatus.FORBIDDEN,
     )
 
@@ -104,7 +106,9 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
     if response.status_code == HTTPStatus.FOUND:
         return build_response(
             PydanticSerializer,
-            raw_data={'detail': 'Authentication credentials were not provided'},
+            raw_data=PydanticSerializer.error_serialize(
+                'Authentication credentials were not provided',
+            ),
             status_code=HTTPStatus.UNAUTHORIZED,
         )
     return response

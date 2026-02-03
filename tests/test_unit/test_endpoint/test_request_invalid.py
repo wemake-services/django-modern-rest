@@ -43,23 +43,15 @@ def test_invalid_request_body(rf: RequestFactory, faker: Faker) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': ([
+        'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Value error, Cannot parse request body with content type '
+                    'Cannot parse request body with content type '
                     "'multipart/form-data', expected=['application/json']"
                 ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Cannot parse request body with content type '
-                        "'multipart/form-data', expected=['application/json']"
-                    ),
-                },
+                'type': 'value_error',
             },
-        ]),
+        ],
     })
 
 
