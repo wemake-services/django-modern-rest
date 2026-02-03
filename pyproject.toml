@@ -88,6 +88,7 @@ polyfactory = "^3.2"
 
 httpx = "^0.28"
 xmltodict = "^1.0"
+types-xmltodict = "^1.0.1.20260113"
 
 [tool.poetry.group.docs]
 optional = true

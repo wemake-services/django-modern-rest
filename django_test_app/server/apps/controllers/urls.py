@@ -40,4 +40,9 @@ router = Router([
         views.AsyncParseHeadersController.as_view(),
         name='async_parse_headers',
     ),
+    path(
+        'negotiation',
+        views.ContentNegotiationController.as_view(),
+        name='negotiation',
+    ),
 ])

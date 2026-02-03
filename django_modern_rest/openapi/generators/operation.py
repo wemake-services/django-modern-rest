@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, get_args
 from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.operation import Operation
 from django_modern_rest.openapi.objects.request_body import RequestBody
+from django_modern_rest.parsers import Parser
 
 if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
@@ -32,7 +33,10 @@ class OperationGenerator:
             endpoint,
             path,
         )
-        request_body = self._generate_request_body(metadata.component_parsers)
+        request_body = self._generate_request_body(
+            metadata.component_parsers,
+            metadata.parsers,
+        )
         # TODO: responses and parameters
         return Operation(
             tags=metadata.tags,
@@ -55,13 +59,16 @@ class OperationGenerator:
     def _generate_request_body(
         self,
         parsers: 'list[ComponentParserSpec]',
+        request_parsers: 'dict[str, type[Parser]]',
     ) -> RequestBody | None:
         for parser, _ in parsers:
             parser_type = get_args(parser)[0]
             reference = self.context.schema_generator.generate(parser_type)
-            # TODO: Do not hardcode. Neew content negotiations.
             return RequestBody(
-                content={'application/json': MediaType(schema=reference)},
+                content={
+                    req_parser.content_type: MediaType(schema=reference)
+                    for req_parser in request_parsers.values()
+                },
                 required=True,
             )
         return None
