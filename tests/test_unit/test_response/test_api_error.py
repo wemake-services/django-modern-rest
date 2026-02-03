@@ -147,7 +147,11 @@ def test_valid_api_error_contoller_level(
 ) -> None:
     """Ensures validation can validate api errors on controllers."""
     endpoint = _ControllerLevelAPIError.api_endpoints['GET']
-    assert len(endpoint.metadata.responses) == 2
+    assert endpoint.metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.PAYMENT_REQUIRED,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/')
 

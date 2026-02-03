@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import final
 
 import pytest
+from dirty_equals import IsStr
 from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
@@ -136,6 +137,11 @@ def test_modify_deduplicate_statuses() -> None:
             return_type=int,
             status_code=HTTPStatus.OK,
         ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=PydanticSerializer.default_error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
     assert endpoints['POST'].metadata.responses == snapshot({
         HTTPStatus.CREATED: ResponseSpec(
@@ -149,6 +155,11 @@ def test_modify_deduplicate_statuses() -> None:
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=PydanticSerializer.default_error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
         ),
     })
 

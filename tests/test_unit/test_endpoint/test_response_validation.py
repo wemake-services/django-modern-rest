@@ -125,12 +125,10 @@ def test_validate_status_code(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content) == snapshot({
-        'detail': (
-            'Returned status_code=200 is not specified in the list '
-            'of allowed codes {<HTTPStatus.CREATED: 201>}'
-        ),
-    })
+    assert (
+        'Returned status_code=200 is not specified'
+        in json.loads(response.content)['detail']
+    )
 
 
 _ListOfInts: TypeAlias = list[int]

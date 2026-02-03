@@ -7,8 +7,8 @@ from django.http.response import HttpResponseBase
 
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
+    NotAcceptableError,
     RequestSerializationError,
-    ResponseSerializationError,
 )
 from django_modern_rest.internal.negotiation import (
     ConditionalType as _ConditionalType,
@@ -43,6 +43,9 @@ class RequestNegotiator:
 
         Called in runtime.
         Must work for O(1) because of that.
+
+        Must set ``_dmr_parser_cls`` request attribute
+        if the negotiation is successful.
 
         Raises:
             RequestSerializationError: when ``Content-Type`` request
@@ -93,7 +96,7 @@ class ResponseNegotiator:
         """
         Negotiates which parser to use for parsing this request.
 
-        Based on ``Content-Type`` header.
+        Based on ``Accept`` header.
 
         Called in runtime.
         Must work for O(1) because of that.
@@ -101,9 +104,11 @@ class ResponseNegotiator:
         We use :meth:`django.http.HttpRequest.get_preferred_type` inside.
         So, we have exactly the same negotiation rules as django has.
 
+        Must set ``_dmr_renderer_cls`` request attribute
+        if the negotiation is successful.
+
         Raises:
-            ResponseSerializationError: when ``Accept`` request
-                header is not supported.
+            NotAcceptableError: when ``Accept`` request header is not supported.
 
         Returns:
             Renderer class for this response.
@@ -119,7 +124,7 @@ class ResponseNegotiator:
         renderer_type = request.get_preferred_type(self._renderer_keys)
         if renderer_type is None:
             expected = self._renderer_keys
-            raise ResponseSerializationError(
+            raise NotAcceptableError(
                 self._serializer.error_serialize(
                     'Cannot serialize response body '
                     f'with accepted types {request.accepted_types!r}, '
@@ -173,10 +178,15 @@ def response_validation_negotiator(
     parser_types = metadata.parsers
     renderer_type = request_renderer(request)
     if renderer_type is None:
+        # We can fail to find `request_renderer` when `Accept` header
+        # is broken / missing / incorrect.
+        # Then, we fallback to the types we know.
         content_type = response.headers['Content-Type']
     else:
         content_type = renderer_type.content_type
 
+    # Our last resort is to get the default renderer type.
+    # It is always present.
     return parser_types.get(
         content_type,
         next(reversed(parser_types.values())),

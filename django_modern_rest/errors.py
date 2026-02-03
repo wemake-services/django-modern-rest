@@ -11,6 +11,7 @@ from typing import (
 from django.http import HttpResponse
 
 from django_modern_rest.exceptions import (
+    NotAcceptableError,
     NotAuthenticatedError,
     SerializationError,
 )
@@ -169,10 +170,11 @@ def global_error_handler(
     """
     from django_modern_rest.negotiation import request_renderer  # noqa: PLC0415
 
-    if isinstance(exc, (SerializationError, NotAuthenticatedError)):
-        renderer_cls = request_renderer(
-            controller.request,
-        ) or endpoint.response_negotiator(controller.request)
+    if isinstance(
+        exc,
+        (SerializationError, NotAuthenticatedError, NotAcceptableError),
+    ):
+        renderer_cls = request_renderer(controller.request)
         # TODO: unify, all errors must be the same
         payload = (
             controller.serializer.error_serialize(exc.args[0])
@@ -185,4 +187,4 @@ def global_error_handler(
             status_code=exc.status_code,
             renderer_cls=renderer_cls,
         )
-    raise exc
+    raise  # noqa: PLE0704

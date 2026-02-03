@@ -38,7 +38,10 @@ def test_native_json_metadata() -> None:
             raise NotImplementedError
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
     assert len(metadata.parsers) == 1
     assert len(metadata.renderers) == 1
 
@@ -56,6 +59,7 @@ def test_empty_request_data(
     assert metadata.responses.keys() == {
         HTTPStatus.CREATED,
         HTTPStatus.BAD_REQUEST,
+        HTTPStatus.NOT_ACCEPTABLE,
     }
     assert len(metadata.parsers) == 1
     assert len(metadata.renderers) == 1

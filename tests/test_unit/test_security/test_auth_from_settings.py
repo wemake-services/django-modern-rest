@@ -50,7 +50,11 @@ def test_sync_basic_auth_success(
             return 'authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK, HTTPStatus.UNAUTHORIZED}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get(
         '/whatever/',
@@ -85,7 +89,11 @@ def test_sync_basic_auth_failure(
             raise NotImplementedError
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK, HTTPStatus.UNAUTHORIZED}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/', headers=request_headers)
 
@@ -118,7 +126,10 @@ def test_sync_auth_override_endpoint(
             return 'not authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/')
 
@@ -142,7 +153,10 @@ def test_sync_auth_override_controller(
             return 'not authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/')
 

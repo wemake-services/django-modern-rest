@@ -54,6 +54,13 @@ class ResponseSerializationError(SerializationError):
 
 
 @final
+class NotAcceptableError(Exception):
+    """Raised when client provides wrong ``Accept`` header."""
+
+    status_code = HTTPStatus.NOT_ACCEPTABLE
+
+
+@final
 class NotAuthenticatedError(Exception):
     """Raised when we fail to authenticate a user."""
 

@@ -3,6 +3,7 @@ from http import HTTPMethod, HTTPStatus
 from typing import Generic, Literal, TypeVar, final
 
 import pytest
+from dirty_equals import IsStr
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
@@ -509,6 +510,16 @@ def test_validate_responses_from_blueprint() -> None:
             return_type=PydanticErrorModel,
             status_code=HTTPStatus.BAD_REQUEST,
         ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=PydanticSerializer.default_error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.BAD_REQUEST: ResponseSpec(
+            return_type=PydanticSerializer.default_error_model,
+            status_code=HTTPStatus.BAD_REQUEST,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
 
 
@@ -546,6 +557,16 @@ def test_validate_enable_semantic_responses() -> None:
         HTTPStatus.BAD_REQUEST: ResponseSpec(
             return_type=PydanticErrorModel,
             status_code=HTTPStatus.BAD_REQUEST,
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=PydanticSerializer.default_error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.BAD_REQUEST: ResponseSpec(
+            return_type=PydanticSerializer.default_error_model,
+            status_code=HTTPStatus.BAD_REQUEST,
+            description=IsStr(),  # type: ignore[arg-type]
         ),
     })
 
