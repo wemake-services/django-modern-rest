@@ -71,6 +71,10 @@ class Parser(ResponseSpecProvider):
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when data can't be parsed."""
+        # We don't provide parser errors by default, because parser only works
+        # when there are active components. But, components already provide
+        # required response specs. This method is only useful
+        # for custom user-defined errors.
         return []
 
 

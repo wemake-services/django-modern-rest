@@ -9,6 +9,7 @@ from django.test import RequestFactory
 from inline_snapshot import snapshot
 
 from django_modern_rest import Body, Controller
+from django_modern_rest.errors import ErrorType
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -104,13 +105,9 @@ def test_body_parse_invalid_json(dmr_rf: DMRRequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    'JSON is malformed: object keys must be strings (byte 1)'
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
+    # This test is executed with both `msgspec` and `json` parsers,
+    # so we can't use `snapshot()` here:
+    assert (
+        json.loads(response.content)['detail'][0]['type']
+        == ErrorType.value_error
+    )

@@ -18,7 +18,7 @@ from django_modern_rest import (
 )
 from django_modern_rest.cookies import CookieSpec
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import ErrorModel, wrap_handler
+from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
@@ -138,7 +138,7 @@ def test_modify_deduplicate_statuses() -> None:
             status_code=HTTPStatus.OK,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=ErrorModel,
+            return_type=PydanticSerializer.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
@@ -157,7 +157,7 @@ def test_modify_deduplicate_statuses() -> None:
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=ErrorModel,
+            return_type=PydanticSerializer.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),

@@ -19,7 +19,7 @@ from django_modern_rest import (
 )
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import ErrorModel, wrap_handler
+from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import compose_blueprints
@@ -506,12 +506,12 @@ def test_validate_responses_from_blueprint() -> None:
             status_code=HTTPStatus.OK,
         ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=ErrorModel,
+            return_type=PydanticSerializer.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=ErrorModel,
+            return_type=PydanticSerializer.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
@@ -550,12 +550,12 @@ def test_validate_enable_semantic_responses() -> None:
             status_code=HTTPStatus.OK,
         ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=ErrorModel,
+            return_type=PydanticSerializer.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=ErrorModel,
+            return_type=PydanticSerializer.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
