@@ -10,7 +10,7 @@ from typing_extensions import TypedDict
 from django_modern_rest import Controller, ResponseSpec, validate
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 serializers: list[Any] = [PydanticSerializer]
 

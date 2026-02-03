@@ -72,13 +72,13 @@ Validation
 Serialization
 -------------
 
-.. autoclass:: django_modern_rest.serialization.BaseSerializer
+.. autoclass:: django_modern_rest.serializer.BaseSerializer
   :members:
 
-.. autoclass:: django_modern_rest.serialization.BaseEndpointOptimizer
+.. autoclass:: django_modern_rest.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: django_modern_rest.serialization.SerializerContext
+.. autoclass:: django_modern_rest.serializer.SerializerContext
 
 
 Routing

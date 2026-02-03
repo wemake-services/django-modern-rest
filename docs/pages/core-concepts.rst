@@ -36,7 +36,7 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
     It is used for request parsing, response validation, and OpenAPI schema.
 
   Serializer
-    :class:`~django_modern_rest.serialization.BaseSerializer` subclass
+    :class:`~django_modern_rest.serializer.BaseSerializer` subclass
     that knows how to load and dump raw data into models.
     We have 2 bundled serializers in :doc:`plugins <plugins>`\ :
     for ``pydantic`` and ``msgspec``, you can write your

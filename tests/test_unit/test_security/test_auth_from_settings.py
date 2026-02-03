@@ -12,7 +12,7 @@ from django_modern_rest import Controller, modify
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security.http import HttpBasicSyncAuth, basic_auth
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
 

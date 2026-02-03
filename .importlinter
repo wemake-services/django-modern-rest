@@ -23,7 +23,7 @@ layers =
   negotiation
   response
   plugins
-  serialization
+  serializer
   # DTOs:
   headers | cookies
   types

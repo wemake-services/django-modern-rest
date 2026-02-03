@@ -17,7 +17,7 @@ from typing_extensions import override
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint, Controller
     from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 _BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']

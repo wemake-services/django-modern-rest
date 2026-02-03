@@ -10,7 +10,7 @@ from django_modern_rest.exceptions import (
     RequestSerializationError,
 )
 from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint

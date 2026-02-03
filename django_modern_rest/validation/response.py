@@ -24,7 +24,7 @@ from django_modern_rest.negotiation import (
     request_renderer,
     response_validation_negotiator,
 )
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:

@@ -30,7 +30,7 @@ from django_modern_rest.envs import MAX_CACHE_SIZE
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.serialization import (
+from django_modern_rest.serializer import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )
