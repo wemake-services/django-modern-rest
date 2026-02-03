@@ -123,6 +123,12 @@ Exceptions
 .. autoexception:: django_modern_rest.exceptions.ResponseSerializationError
   :members:
 
+.. autoexception:: django_modern_rest.exceptions.NotAcceptableError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.NotAuthenticatedError
+  :members:
+
 
 Utilities
 ---------

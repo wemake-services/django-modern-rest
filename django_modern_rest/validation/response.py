@@ -20,7 +20,10 @@ from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import ConditionalType
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
-from django_modern_rest.negotiation import response_validation_negotiator
+from django_modern_rest.negotiation import (
+    request_renderer,
+    response_validation_negotiator,
+)
 from django_modern_rest.serialization import BaseSerializer
 from django_modern_rest.settings import Settings, resolve_setting
 
@@ -95,7 +98,9 @@ class ResponseValidator:
                 'without associated `@modify` usage.',
             )
 
-        renderer_class = endpoint.response_negotiator(controller.request)
+        renderer_class = request_renderer(controller.request)
+        # Renderer class is present at this point, 100%
+        assert renderer_class is not None  # noqa: S101
         all_response_data = _ValidationContext(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
@@ -131,7 +136,7 @@ class ResponseValidator:
         allowed = set(self.metadata.responses.keys())
         raise ResponseSerializationError(
             f'Returned {status_code=} is not specified '
-            f'in the list of allowed codes {allowed}',
+            f'in the list of allowed codes {allowed!r}',
         )
 
     def _validate_body(

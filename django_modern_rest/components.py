@@ -67,9 +67,9 @@ class ComponentParser(ResponseSpecProvider):
         """
         return cls._add_new_response(
             ResponseSpec(
-                # We do this for runtime validation, not static type check:
                 serializer.default_error_model,
                 status_code=RequestSerializationError.status_code,
+                description='Raised when request components cannot be parsed',
             ),
             existing_responses,
         )

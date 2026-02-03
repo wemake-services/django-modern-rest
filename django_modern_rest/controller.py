@@ -252,7 +252,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         You can access active blueprint
         via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
-        raise exc
+        raise  # noqa: PLE0704
 
     async def handle_async_error(
         self,
@@ -270,7 +270,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         You can access active blueprint
         via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
-        raise exc
+        raise  # noqa: PLE0704
 
     # Protected API:
 

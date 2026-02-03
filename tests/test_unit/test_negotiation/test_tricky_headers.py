@@ -15,6 +15,92 @@ from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
 
 
+@final
+class _UncalledController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError  # must not be called
+
+
+def test_wrong_accept_header(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures we raise an error when `Accept` header is wrong."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Accept': 'wrong',
+        },
+    )
+
+    response = _UncalledController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, Cannot serialize response body '
+                    'with accepted types [<MediaType: wrong>], '
+                    "expected=['application/json']"
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'Cannot serialize response body '
+                        'with accepted types [<MediaType: wrong>], '
+                        "expected=['application/json']"
+                    ),
+                },
+            },
+        ],
+    })
+
+
+def test_wrong_accept_header_with_content_type(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures we raise an error when `Accept` header is wrong."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Content-Type': 'application/json',
+            'Accept': 'wrong',
+        },
+    )
+
+    response = _UncalledController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'type': 'value_error',
+                'loc': [],
+                'msg': (
+                    'Value error, Cannot serialize response body '
+                    'with accepted types [<MediaType: wrong>], '
+                    "expected=['application/json']"
+                ),
+                'input': '',
+                'ctx': {
+                    'error': (
+                        'Cannot serialize response body '
+                        'with accepted types [<MediaType: wrong>], '
+                        "expected=['application/json']"
+                    ),
+                },
+            },
+        ],
+    })
+
+
+@final
 class _RequestModel(pydantic.BaseModel):
     username: str
 
@@ -26,47 +112,6 @@ class _UsernameController(
 ):
     def post(self) -> str:
         return self.parsed_body.username
-
-
-def test_wrong_accept_header(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures we raise an error when `Accept` header is wrong."""
-    request = dmr_rf.post(
-        '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/javascript',
-        },
-        data=json.dumps({'username': 'sobolevn'}),
-    )
-
-    response = _UsernameController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': (
-                    'Value error, Cannot serialize response body with '
-                    'accepted types [<MediaType: application/javascript>], '
-                    "expected=['application/json']"
-                ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Cannot serialize response body with '
-                        'accepted types [<MediaType: application/javascript>], '
-                        "expected=['application/json']"
-                    ),
-                },
-            },
-        ],
-    })
 
 
 def test_no_content_type_header(

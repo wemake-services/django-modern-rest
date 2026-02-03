@@ -274,6 +274,9 @@ class Endpoint:  # noqa: WPS214
         ) -> HttpResponse:
             active_blueprint = controller.active_blueprint
             try:  # noqa: WPS229
+                # Negotiate response:
+                self.response_negotiator(controller.request)
+
                 # Run checks:
                 await self._run_async_checks(controller)
 
@@ -310,6 +313,9 @@ class Endpoint:  # noqa: WPS214
             active_blueprint = controller.active_blueprint
 
             try:  # noqa: WPS229
+                # Negotiate response:
+                self.response_negotiator(controller.request)
+
                 # Run checks:
                 self._run_checks(controller)
 
