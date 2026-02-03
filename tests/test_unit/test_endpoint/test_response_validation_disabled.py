@@ -160,10 +160,9 @@ def test_override_endpoint_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': [0],
+                'type': 'value_error',
             },
         ],
     })
@@ -215,10 +214,9 @@ def test_override_controller_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': [0],
+                'type': 'value_error',
             },
         ],
     })
@@ -246,10 +244,9 @@ def test_override_endpoint_over_controller(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': [0],
+                'type': 'value_error',
             },
         ],
     })
@@ -312,10 +309,9 @@ def test_override_endpoint_over_blueprint(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': [0],
+                'type': 'value_error',
             },
         ],
     })

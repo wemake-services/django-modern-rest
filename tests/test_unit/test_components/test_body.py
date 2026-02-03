@@ -4,7 +4,6 @@ from typing import final
 
 import pydantic
 import pytest
-from dirty_equals import IsStr
 from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
@@ -41,23 +40,15 @@ def test_body_parse_wrong_content_type(rf: RequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert json.loads(response.content) == snapshot({
-        'detail': ([
+        'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Value error, Cannot parse request body with content type '
+                    'Cannot parse request body with content type '
                     "'application/xml', expected=['application/json']"
                 ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Cannot parse request body with content type '
-                        "'application/xml', expected=['application/json']"
-                    ),
-                },
+                'type': 'value_error',
             },
-        ]),
+        ],
     })
 
 
@@ -89,17 +80,15 @@ async def test_body_parse_wrong_content_type_async(
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == snapshot({
-        'detail': ([
+        'detail': [
             {
+                'msg': (
+                    'Cannot parse request body with content type '
+                    "'application/xml', expected=['application/json']"
+                ),
                 'type': 'value_error',
-                'loc': [],
-                'msg': IsStr,
-                'input': '',
-                'ctx': {
-                    'error': IsStr,
-                },
             },
-        ]),
+        ],
     })
 
 
@@ -116,15 +105,12 @@ def test_body_parse_invalid_json(dmr_rf: DMRRequestFactory) -> None:
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == snapshot({
-        'detail': ([
+        'detail': [
             {
+                'msg': (
+                    'JSON is malformed: object keys must be strings (byte 1)'
+                ),
                 'type': 'value_error',
-                'loc': [],
-                'msg': IsStr,
-                'input': '',
-                'ctx': {
-                    'error': IsStr,
-                },
             },
-        ]),
+        ],
     })

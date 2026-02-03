@@ -40,21 +40,11 @@ def test_wrong_accept_header(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Value error, Cannot serialize response body '
-                    'with accepted types [<MediaType: wrong>], '
-                    "expected=['application/json']"
+                    'Cannot serialize response body with accepted types '
+                    "[<MediaType: wrong>], supported=['application/json']"
                 ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Cannot serialize response body '
-                        'with accepted types [<MediaType: wrong>], '
-                        "expected=['application/json']"
-                    ),
-                },
+                'type': 'value_error',
             },
         ],
     })
@@ -80,21 +70,11 @@ def test_wrong_accept_header_with_content_type(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Value error, Cannot serialize response body '
-                    'with accepted types [<MediaType: wrong>], '
-                    "expected=['application/json']"
+                    'Cannot serialize response body with accepted '
+                    "types [<MediaType: wrong>], supported=['application/json']"
                 ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Cannot serialize response body '
-                        'with accepted types [<MediaType: wrong>], '
-                        "expected=['application/json']"
-                    ),
-                },
+                'type': 'value_error',
             },
         ],
     })

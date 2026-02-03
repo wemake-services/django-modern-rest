@@ -8,7 +8,9 @@ from django.http import HttpResponse
 from typing_extensions import TypedDict
 
 from django_modern_rest import Controller, ResponseSpec, validate
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.exceptions import (
+    ValidationError,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.serialization import BaseSerializer
 
@@ -149,7 +151,7 @@ def test_invalid_data(
     validator = endpoint.response_validator
 
     assert HTTPStatus.OK in endpoint.metadata.responses
-    with pytest.raises(ResponseSerializationError, match='type'):
+    with pytest.raises(ValidationError, match='type'):
         validator._validate_body(
             raw_data,
             endpoint.metadata.responses[HTTPStatus.OK],

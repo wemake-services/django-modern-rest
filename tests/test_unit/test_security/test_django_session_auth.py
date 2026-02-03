@@ -54,15 +54,7 @@ def test_sync_session_auth_failure(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 
@@ -104,15 +96,7 @@ async def test_async_session_auth_failure(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 
@@ -150,15 +134,7 @@ def test_global_settings_override(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 

@@ -3,7 +3,6 @@ from http import HTTPStatus
 from typing import final
 
 import pydantic
-from dirty_equals import IsStr
 from django.http import HttpResponse
 from django.test import RequestFactory
 from faker import Faker
@@ -69,19 +68,17 @@ def test_cookie_parsing_error(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'missing',
-                'loc': ['parsed_cookies', 'session_id'],
                 'msg': 'Field required',
-                'input': {'user_id': IsStr},
+                'loc': ['parsed_cookies', 'session_id'],
+                'type': 'value_error',
             },
             {
-                'type': 'int_parsing',
-                'loc': ['parsed_cookies', 'user_id'],
                 'msg': (
                     'Input should be a valid integer, '
                     'unable to parse string as an integer'
                 ),
-                'input': IsStr,
+                'loc': ['parsed_cookies', 'user_id'],
+                'type': 'value_error',
             },
         ],
     })

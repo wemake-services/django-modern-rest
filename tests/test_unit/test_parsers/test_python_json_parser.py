@@ -110,19 +110,11 @@ def test_wrong_request_data(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Value error, Expecting property name enclosed in '
-                    'double quotes: line 1 column 2 (char 1)'
+                    'Expecting property name enclosed in double quotes: '
+                    'line 1 column 2 (char 1)'
                 ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Expecting property name enclosed in '
-                        'double quotes: line 1 column 2 (char 1)'
-                    ),
-                },
+                'type': 'value_error',
             },
         ],
     })

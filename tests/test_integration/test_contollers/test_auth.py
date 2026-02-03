@@ -46,15 +46,7 @@ def test_invalid_auth(
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 
@@ -96,13 +88,5 @@ def test_invalid_basic_auth(
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
