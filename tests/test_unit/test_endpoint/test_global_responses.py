@@ -1,4 +1,5 @@
 import json
+import sys
 from http import HTTPStatus
 from typing import final
 
@@ -57,6 +58,10 @@ def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    if sys.version_info < (3, 13):  # pragma: no cover
+        # `HTTPStatus.UNPROCESSABLE_CONTENT` was renamed from
+        # `HTTPStatus.UNPROCESSABLE_ENTITY` in 3.13
+        return
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
