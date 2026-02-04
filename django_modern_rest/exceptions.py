@@ -1,5 +1,8 @@
 from http import HTTPStatus
-from typing import Any, ClassVar, final
+from typing import TYPE_CHECKING, ClassVar, final
+
+if TYPE_CHECKING:
+    from django_modern_rest.errors import ErrorDetail
 
 
 @final
@@ -53,9 +56,17 @@ class ValidationError(Exception):
     from different serializers.
     """
 
-    def __init__(self, msg: Any, *, status_code: HTTPStatus) -> None:
+    def __init__(
+        self,
+        payload: list['ErrorDetail'],
+        *,
+        status_code: HTTPStatus,
+    ) -> None:
         """Set required status code attribute."""
-        super().__init__(msg)
+        # No empty items are allowed:
+        assert payload  # noqa: S101
+        super().__init__(payload)
+        self.payload = payload
         self.status_code = status_code
 
 

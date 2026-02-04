@@ -6,13 +6,13 @@ Controller
 
 .. autoclass:: django_modern_rest.controller.Blueprint
   :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
   :show-inheritance:
 
 .. autoclass:: django_modern_rest.controller.Controller
   :members:
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
   :show-inheritance:
 
 

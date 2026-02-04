@@ -10,11 +10,11 @@ from django_modern_rest.exceptions import (
     RequestSerializationError,
 )
 from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
-from django_modern_rest.serializer import BaseSerializer
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint
+    from django_modern_rest.controller import Blueprint, Controller
     from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.serializer import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -56,7 +56,7 @@ class ComponentParser(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type[BaseSerializer],
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """
@@ -67,7 +67,7 @@ class ComponentParser(ResponseSpecProvider):
         """
         return cls._add_new_response(
             ResponseSpec(
-                serializer.error_model,
+                controller_cls.error_model,
                 status_code=RequestSerializationError.status_code,
                 description='Raised when request components cannot be parsed',
             ),

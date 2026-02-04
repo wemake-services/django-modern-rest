@@ -11,6 +11,7 @@ from typing import (
 
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
+    from django_modern_rest.controller import Controller
     from django_modern_rest.cookies import CookieSpec, NewCookie
     from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
     from django_modern_rest.headers import HeaderSpec, NewHeader
@@ -131,7 +132,10 @@ class ResponseSpecProvider:
     @abstractmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
+        # Response spec can't be different inside different blueprints.
+        # It would be a nightmare to manage.
+        # So, controller is the unit of change.
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """

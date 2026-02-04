@@ -761,7 +761,7 @@ class EndpointMetadataValidator:
         }
         for provider in self.metadata.response_spec_providers():
             responses = provider.provide_response_specs(
-                controller_cls.serializer,
+                controller_cls,
                 existing_responses,
             )
             all_responses.extend(responses)

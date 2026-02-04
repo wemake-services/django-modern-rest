@@ -4,13 +4,10 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
 from typing_extensions import TypedDict
 
-from django_modern_rest.errors import ErrorDetail, ErrorModel, ErrorType
+from django_modern_rest.errors import ErrorDetail
 from django_modern_rest.exceptions import (
-    NotAcceptableError,
-    NotAuthenticatedError,
     RequestSerializationError,
     ResponseSerializationError,
-    SerializationError,
     ValidationError,
 )
 from django_modern_rest.parsers import Parser, Raw
@@ -31,9 +28,6 @@ class BaseSerializer:
     """Abstract base class for data serialization."""
 
     __slots__ = ()
-
-    # Default API:
-    error_model: ClassVar[Any] = ErrorModel
 
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
@@ -62,6 +56,7 @@ class BaseSerializer:
             # This is impossible to reach with `msgspec`, but is needed
             # for raw `json` serialization.
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+        # TODO: convert to an internal error
         raise ResponseSerializationError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
@@ -125,52 +120,24 @@ class BaseSerializer:
         raise NotImplementedError
 
     @classmethod
-    def error_serialize(
+    @abc.abstractmethod
+    def serialize_validation_error(
         cls,
-        error: Exception | str,
-        *,
-        loc: str | None = None,
-        error_type: str | ErrorType | None = None,
-    ) -> Any:
+        exc: Exception,
+    ) -> list[ErrorDetail]:
         """
-        Convert error to the common format.
+        Convert specific serializer's validation errors into simple python data.
 
         Args:
-            error: A serialization exception like a validation error or
-                a ``django_modern_rest.exceptions.DataParsingError``.
-            loc: Location where this error happened.
-                Like "headers" or "field_name".
-            error_type: Optional type of the error for extra metadata.
+            exc: A serialization exception to be serialized into simpler type.
+                For example, pydantic has
+                a complex :exc:`pydantic_core.ValidationError` type.
+                That can't be converted to a simpler error message easily.
 
         Returns:
             Simple python object - exception converted to json.
         """
-        # NOTE: keep this in sync with `_default_handled_excs`
-        if isinstance(error, ValidationError):
-            return error.args[0]
-
-        if isinstance(
-            error,
-            (SerializationError, NotAuthenticatedError, NotAcceptableError),
-        ):
-            error_type = (
-                ErrorType.security
-                if isinstance(error, NotAuthenticatedError)
-                else ErrorType.value_error
-            )
-            error = str(error.args[0])
-
-        if isinstance(error, str):
-            msg: ErrorDetail = {'msg': error}
-            if loc is not None:
-                msg.update({'loc': [loc]})
-            if error_type is not None:
-                msg.update({'type': str(error_type)})
-            return {'detail': [msg]}
-
-        raise NotImplementedError(
-            f'Cannot serialize {error!r} of type {type(error)} safely',
-        )
+        raise NotImplementedError
 
 
 class BaseEndpointOptimizer:
@@ -278,7 +245,7 @@ class SerializerContext:
             )
         except serializer.validation_error as exc:
             raise ValidationError(
-                serializer.error_serialize(exc),
+                serializer.serialize_validation_error(exc),
                 status_code=HTTPStatus.BAD_REQUEST,
             ) from None
 

@@ -37,13 +37,13 @@ class _BaseAuth(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
         return cls._add_new_response(
             ResponseSpec(
-                serializer.error_model,
+                controller_cls.error_model,
                 status_code=NotAuthenticatedError.status_code,
                 description='Raised when auth was not successful',
             ),

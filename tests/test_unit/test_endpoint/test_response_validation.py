@@ -132,6 +132,7 @@ def test_validate_status_code(
                     'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
                     '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
                 ),
+                'type': 'value_error',
             },
         ],
     })
@@ -191,12 +192,12 @@ def test_weak_type_response_validation(
         'detail': [
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [0],
+                'loc': ['0'],
                 'type': 'value_error',
             },
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [1],
+                'loc': ['1'],
                 'type': 'value_error',
             },
         ],

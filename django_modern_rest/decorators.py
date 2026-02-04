@@ -48,19 +48,23 @@ def wrap_middleware(
         >>> from django_modern_rest import Controller, ResponseSpec
         >>> from django_modern_rest.response import build_response
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
-        >>> from django_modern_rest.errors import ErrorType
+        >>> from django_modern_rest.errors import (
+        ...     ErrorType,
+        ...     ErrorModel,
+        ...     format_error,
+        ... )
 
         >>> @wrap_middleware(
         ...     csrf_protect,
         ...     ResponseSpec(
-        ...         return_type=dict[str, str],
+        ...         return_type=ErrorModel,
         ...         status_code=HTTPStatus.FORBIDDEN,
         ...     ),
         ... )
         ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
         ...     return build_response(
         ...         PydanticSerializer,
-        ...         raw_data=PydanticSerializer.error_serialize(
+        ...         raw_data=format_error(
         ...             'CSRF verification failed. Request aborted.',
         ...             error_type=ErrorType.user_msg,
         ...         ),

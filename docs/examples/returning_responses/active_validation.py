@@ -27,7 +27,7 @@ class UserController(
             # Notice that this response is never documented in the spec,
             # so, it will raise an error when validation is enabled (default).
             raise APIError(
-                self.serializer.error_serialize(
+                self.format_error(
                     'Wrong API consumer',
                     error_type=ErrorType.user_msg,
                 ),

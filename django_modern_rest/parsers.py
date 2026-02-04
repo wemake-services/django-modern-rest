@@ -10,6 +10,7 @@ from django_modern_rest.exceptions import DataParsingError
 from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
+    from django_modern_rest.controller import Controller
     from django_modern_rest.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
@@ -67,7 +68,7 @@ class Parser(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when data can't be parsed."""

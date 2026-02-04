@@ -345,7 +345,7 @@ class _ComplexAPIError(Controller[PydanticSerializer]):
     )
     def get(self) -> str:
         raise APIError(
-            self.serializer.error_serialize(
+            self.format_error(
                 'test',
                 loc='api',
                 error_type=ErrorType.user_msg,

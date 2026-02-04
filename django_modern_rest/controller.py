@@ -17,7 +17,7 @@ from typing_extensions import deprecated, override
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import ErrorType
+from django_modern_rest.errors import ErrorModel, ErrorType, format_error
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.internal.io import identity
 from django_modern_rest.metadata import ResponseSpec
@@ -99,6 +99,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             Async controllers must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
+        error_model: Schema type that represents
+            and validates common error responses.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -124,6 +126,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     parsers: ClassVar[_Parsers] = ()
     renderers: ClassVar[_Renderers] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    error_model: ClassVar[Any] = ErrorModel
 
     # Instance public API:
     request: HttpRequest
@@ -231,6 +234,29 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             status_code=status_code,
             renderer_cls=renderer_cls or request_renderer(self.request),
         )
+
+    def format_error(
+        self,
+        error: str | Exception,
+        *,
+        loc: str | None = None,
+        error_type: str | ErrorType | None = None,
+    ) -> Any:  # `Any`, so we can change the return type in subclasses.
+        """
+        Convert error to the common format.
+
+        Args:
+            error: A serialization exception like a validation error or
+                a ``django_modern_rest.exceptions.DataParsingError``.
+            loc: Location where this error happened.
+                Like "headers" or "field_name".
+            error_type: Optional type of the error for extra metadata.
+
+        Returns:
+            Simple python object - exception converted to a common format.
+
+        """
+        return format_error(error, loc=loc, error_type=error_type)
 
     def handle_error(
         self,
@@ -550,7 +576,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         return self._maybe_wrap(
             build_response(
                 self.serializer,
-                raw_data=self.serializer.error_serialize(
+                raw_data=self.format_error(
                     (
                         f'Method {method!r} is not allowed, '
                         f'allowed: {allowed_methods!r}'

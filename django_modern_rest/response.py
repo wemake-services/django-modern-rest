@@ -36,6 +36,7 @@ class APIError(Exception, Generic[_ItemT]):
         ...     ResponseSpec,
         ...     modify,
         ... )
+        >>> from django_modern_rest.errors import ErrorType
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
 
         >>> class UserController(Controller[PydanticSerializer]):
@@ -50,7 +51,10 @@ class APIError(Exception, Generic[_ItemT]):
         ...     def get(self, user_id: int) -> str:
         ...         if user_id < 0:
         ...             raise APIError(
-        ...                 'There are no users with ids < 0',
+        ...                 self.format_error(
+        ...                     'There are no users with ids < 0',
+        ...                     error_type=ErrorType.user_msg,
+        ...                 ),
         ...                 status_code=HTTPStatus.NOT_FOUND,
         ...             )
         ...         return f'{user_id}@example.com'  # email

@@ -475,6 +475,7 @@ def test_missing_conditional_content_type(
                     "in supported content types ['application/xml', "
                     "'multipart/form-data']"
                 ),
+                'type': 'value_error',
             },
         ],
     })
