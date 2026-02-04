@@ -23,7 +23,7 @@ from django_modern_rest import (  # noqa: WPS235
     validate,
 )
 from django_modern_rest.exceptions import (
-    ResponseSerializationError,
+    InternalServerError,
 )
 from django_modern_rest.negotiation import ContentType, conditional_type
 from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
@@ -202,7 +202,7 @@ class XmlRenderer(Renderer):
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
             try:  # noqa: SIM105
                 xml_value = serializer(xml_value)
-            except ResponseSerializationError:
+            except InternalServerError:
                 pass  # noqa: WPS420
             return xml_key, xml_value
 
