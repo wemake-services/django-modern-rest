@@ -6,9 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 from typing_extensions import override
 
-from django_modern_rest.exceptions import (
-    DataParsingError,
-)
+from django_modern_rest.exceptions import DataParsingError
 from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:

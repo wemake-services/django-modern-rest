@@ -5,7 +5,6 @@ from typing import (
     Any,
     ClassVar,
     Literal,
-    NotRequired,
     TypeAlias,
     Union,
     final,
@@ -27,6 +26,7 @@ from pydantic.config import ExtraValues
 from typing_extensions import override
 
 from django_modern_rest.envs import MAX_CACHE_SIZE
+from django_modern_rest.errors import ErrorType
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
@@ -93,31 +93,6 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
             _get_cached_type_adapter(response.return_type)
 
 
-class PydanticErrorDetails(TypedDict):
-    """
-    Base schema for pydantic error detail.
-
-    We can't use ``pydantic_core.ErrorDetails``,
-    because it has ``loc`` typed as ``tuple``
-    and in runtime it is ``list``.
-    Since we use ``strict=True`` for responses,
-    this fails during the validation.
-    """
-
-    type: str
-    loc: list[int | str]
-    msg: str
-    input: NotRequired[Any]
-    ctx: NotRequired[dict[str, Any]]
-    url: NotRequired[str]
-
-
-class PydanticErrorModel(TypedDict):
-    """Error response schema for serialization errors."""
-
-    detail: list[PydanticErrorDetails]
-
-
 class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
@@ -136,7 +111,6 @@ class PydanticSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
-    default_error_model: ClassVar[Any] = PydanticErrorModel
 
     # Custom API:
 
@@ -229,33 +203,33 @@ class PydanticSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def error_serialize(cls, error: Exception | str) -> Any:
-        """
-        Convert serialization or deserialization error to json format.
-
-        Args:
-            error: A serialization exception like a validation error or
-                a ``django_modern_rest.exceptions.DataParsingError``.
-
-        Returns:
-            Simple python object - exception converted to json.
-        """
-        if isinstance(error, str):
-            error = pydantic.ValidationError.from_exception_data(
-                error,
-                [
-                    {
-                        'type': 'value_error',
-                        'loc': (),
-                        'input': '',
-                        'ctx': {'error': error},
-                    },
-                ],
-            )
+    def error_serialize(
+        cls,
+        error: Exception | str,
+        *,
+        loc: str | None = None,
+        error_type: str | ErrorType | None = None,
+    ) -> Any:  # `Any`, so we can subclass and change it.
+        """Convert error to the common format."""
         if isinstance(error, pydantic.ValidationError):
-            return error.errors(include_url=False)
-        raise NotImplementedError(
-            f'Cannot serialize {error!r} of type {type(error)} to json safely',
+            return {
+                'detail': [
+                    {
+                        'msg': error['msg'],
+                        'loc': list(error['loc']),
+                        'type': str(ErrorType.value_error),
+                    }
+                    for error in error.errors(
+                        include_url=False,
+                        include_context=False,
+                        include_input=False,
+                    )
+                ],
+            }
+        return super().error_serialize(
+            error,
+            loc=loc,
+            error_type=error_type,
         )
 
 

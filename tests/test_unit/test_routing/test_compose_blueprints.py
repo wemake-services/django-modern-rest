@@ -52,7 +52,7 @@ class _ZeroMethodsBlueprint(Blueprint[PydanticSerializer]):
 @final
 class _DifferentSerializer(BaseSerializer):  # type: ignore[misc]
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
-    default_error_model = dict
+    error_model = dict
 
 
 @final

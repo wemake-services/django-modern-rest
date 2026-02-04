@@ -5,6 +5,7 @@ from typing import final
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
+from inline_snapshot import snapshot
 
 from django_modern_rest import (
     APIError,
@@ -56,7 +57,17 @@ def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert '401' in json.loads(response.content)['detail']
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Returned status_code=401 is not specified '
+                    'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
+                    '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
+                ),
+            },
+        ],
+    })
 
 
 def test_global_responses_implicit_validate(dmr_rf: DMRRequestFactory) -> None:

@@ -4,6 +4,7 @@ from typing import ClassVar, final
 import msgspec
 
 from django_modern_rest import APIError, Body, Controller, Headers
+from django_modern_rest.errors import ErrorType
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
 
 
@@ -29,7 +30,10 @@ class UserController(
             # Notice that this response is never documented in the spec,
             # but, it won't raise a validation error, because validation is off
             raise APIError(
-                {'detail': 'Wrong API consumer'},
+                self.serializer.error_serialize(
+                    'Wrong API consumer',
+                    error_type=ErrorType.user_msg,
+                ),
                 status_code=HTTPStatus.NOT_ACCEPTABLE,
             )
         # This response will be documented by default:

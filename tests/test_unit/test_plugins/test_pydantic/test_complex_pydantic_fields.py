@@ -133,11 +133,9 @@ def test_complex_pydantic_in_arbitrary_types(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'is_instance_of',
-                'loc': ['parsed_body', 'user'],
                 'msg': 'Input should be an instance of _User',
-                'input': 1,
-                'ctx': {'class': '_User'},
+                'loc': ['parsed_body', 'user'],
+                'type': 'value_error',
             },
         ],
     })
@@ -162,10 +160,14 @@ def test_complex_pydantic_out_arbitrary_types(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
-        'detail': (
-            'Unable to serialize unknown type: '
-            "<class 'test_complex_pydantic_fields._User'>"
-        ),
+        'detail': [
+            {
+                'msg': (
+                    'Unable to serialize unknown type: '
+                    "<class 'test_complex_pydantic_fields._User'>"
+                ),
+            },
+        ],
     })
 
 

@@ -20,8 +20,5 @@ from django_modern_rest.plugins.pydantic.serializer import (
     PydanticEndpointOptimizer as PydanticEndpointOptimizer,
 )
 from django_modern_rest.plugins.pydantic.serializer import (
-    PydanticErrorModel as PydanticErrorModel,
-)
-from django_modern_rest.plugins.pydantic.serializer import (
     PydanticSerializer as PydanticSerializer,
 )

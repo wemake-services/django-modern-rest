@@ -58,32 +58,24 @@ def test_user_create_view_multiple_errors(
     assert response.json() == snapshot({
         'detail': [
             {
-                'type': 'missing',
+                'msg': 'Field required',
                 'loc': ['parsed_query', 'q'],
-                'msg': 'Field required',
-                'input': {},
+                'type': 'value_error',
             },
             {
-                'type': 'missing',
+                'msg': 'Field required',
                 'loc': ['parsed_headers', 'X-API-Token'],
-                'msg': 'Field required',
-                'input': {
-                    'Cookie': '',
-                    'Content-Length': '2',
-                    'Content-Type': 'application/json',
-                },
+                'type': 'value_error',
             },
             {
-                'type': 'missing',
+                'msg': 'Field required',
                 'loc': ['parsed_body', 'email'],
-                'msg': 'Field required',
-                'input': {},
+                'type': 'value_error',
             },
             {
-                'type': 'missing',
-                'loc': ['parsed_body', 'age'],
                 'msg': 'Field required',
-                'input': {},
+                'loc': ['parsed_body', 'age'],
+                'type': 'value_error',
             },
         ],
     })

@@ -107,15 +107,7 @@ def test_sync_permission_denied(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 
@@ -141,13 +133,5 @@ async def test_async_permission_denied(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })

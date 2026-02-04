@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import ClassVar, final
+from typing import Any, ClassVar, final
 
 
 @final
@@ -39,6 +39,24 @@ class SerializationError(Exception):
 
     #: Child classes can customize this attribute:
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+@final
+class ValidationError(Exception):
+    """
+    Raised when we cannot properly validate request or response models.
+
+    It should be only raised when serializer raise
+    its internal validation error.
+
+    It is an universal way of handling validation errors
+    from different serializers.
+    """
+
+    def __init__(self, msg: Any, *, status_code: HTTPStatus) -> None:
+        """Set required status code attribute."""
+        super().__init__(msg)
+        self.status_code = status_code
 
 
 @final

@@ -16,7 +16,10 @@ from django.http import HttpResponse
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.exceptions import (
+    ResponseSerializationError,
+    ValidationError,
+)
 from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import ConditionalType
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
@@ -93,8 +96,8 @@ class ResponseValidator:
         if self.metadata.modification is None:
             method = self.metadata.method
             raise ResponseSerializationError(
-                f'{controller} in {method} returned '
-                f'raw data of type {type(structured)} '
+                f'{type(controller)!r} in {method!r} returned '
+                f'raw data of type {type(structured)!r} '
                 'without associated `@modify` usage.',
             )
 
@@ -169,11 +172,10 @@ class ResponseValidator:
         ):
             content_types = schema.return_type.__metadata__[0].computed
             if content_type not in content_types:
+                hint = [str(ct) for ct in content_types]
                 raise ResponseSerializationError(
-                    self.serializer.error_serialize(
-                        f'Content-Type {content_type} is not '
-                        f'listed in {content_types=}',
-                    ),
+                    f'Content-Type {content_type!r} is not '
+                    f'listed in supported content types {hint!r}',
                 )
             model = content_types[content_type]
         else:
@@ -186,8 +188,9 @@ class ResponseValidator:
                 strict=self.strict_validation,
             )
         except self.serializer.validation_error as exc:
-            raise ResponseSerializationError(
+            raise ValidationError(
                 self.serializer.error_serialize(exc),
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             ) from None
 
     def _validate_response_headers(  # noqa: WPS210

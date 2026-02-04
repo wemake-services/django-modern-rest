@@ -26,7 +26,9 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
     if response.status_code == HTTPStatus.FOUND:
         return build_response(
             PydanticSerializer,
-            raw_data={'detail': 'Authentication credentials were not provided'},
+            raw_data=PydanticSerializer.error_serialize(
+                'Authentication credentials were not provided',
+            ),
             status_code=HTTPStatus.UNAUTHORIZED,
         )
     return response

@@ -43,9 +43,9 @@ class _BaseAuth(ResponseSpecProvider):
         """Provides responses that can happen when user is not authed."""
         return cls._add_new_response(
             ResponseSpec(
-                # We do this for runtime validation, not static type check:
-                serializer.default_error_model,
+                serializer.error_model,
                 status_code=NotAuthenticatedError.status_code,
+                description='Raised when auth was not successful',
             ),
             existing_responses,
         )

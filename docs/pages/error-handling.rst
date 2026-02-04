@@ -136,6 +136,25 @@ We do the same as in blueprint's example to show that they are very similar.
 The main difference is the priority and scope.
 
 
+Customizing error messages
+--------------------------
+
+All error messages, including pre-defined ones, can be easily customized
+on a per-controller basis.
+
+.. literalinclude:: /examples/error_handling/custom_error_messages.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :lines: 13-
+
+To do so, you would need to subclass a serializer and customize
+:attr:`~django_modern_rest.serialization.BaseSerializer.error_model`.
+
+See :class:`~django_modern_rest.errors.ErrorModel`
+for the default error model schema.
+
+
 Going further
 -------------
 
@@ -191,3 +210,12 @@ API Reference
 .. autofunction:: django_modern_rest.errors.global_error_handler
 
 .. autofunction:: django_modern_rest.errors.wrap_handler
+
+.. autoclass:: django_modern_rest.errors.ErrorType
+  :members:
+
+.. autoclass:: django_modern_rest.errors.ErrorModel
+  :members:
+
+.. autoclass:: django_modern_rest.errors.ErrorDetail
+  :members:

@@ -67,7 +67,7 @@ class ComponentParser(ResponseSpecProvider):
         """
         return cls._add_new_response(
             ResponseSpec(
-                serializer.default_error_model,
+                serializer.error_model,
                 status_code=RequestSerializationError.status_code,
                 description='Raised when request components cannot be parsed',
             ),
@@ -166,9 +166,7 @@ class Body(ComponentParser, Generic[_BodyT]):
                 parser_cls=parser_cls,
             )
         except DataParsingError as exc:
-            raise RequestSerializationError(
-                blueprint.serializer.error_serialize(str(exc)),
-            ) from exc
+            raise RequestSerializationError(str(exc)) from None
 
 
 class Headers(ComponentParser, Generic[_HeadersT]):

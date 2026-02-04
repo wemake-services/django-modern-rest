@@ -50,7 +50,7 @@ class Renderer(ResponseSpecProvider):
         return cls._add_new_response(
             # When we face wrong `Accept` header, we raise 406 error:
             ResponseSpec(
-                return_type=serializer.default_error_model,
+                return_type=serializer.error_model,
                 status_code=NotAcceptableError.status_code,
                 description=(
                     'Raised when provided `Accept` header cannot be satisfied'

@@ -77,7 +77,7 @@ def test_validate_response(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content)['detail']
+    assert json.loads(response.content)['detail'][0]['type'] == 'value_error'
 
 
 def test_validate_response_text(
@@ -93,10 +93,9 @@ def test_validate_response_text(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'string_type',
-                'loc': [],
                 'msg': 'Input should be a valid string',
-                'input': 1,
+                'loc': [],
+                'type': 'value_error',
             },
         ],
     })
@@ -125,10 +124,17 @@ def test_validate_status_code(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert (
-        'Returned status_code=200 is not specified'
-        in json.loads(response.content)['detail']
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Returned status_code=200 is not specified '
+                    'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
+                    '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
+                ),
+            },
+        ],
+    })
 
 
 _ListOfInts: TypeAlias = list[int]
@@ -184,16 +190,14 @@ def test_weak_type_response_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': '1',
+                'loc': [0],
+                'type': 'value_error',
             },
             {
-                'type': 'int_type',
-                'loc': [1],
                 'msg': 'Input should be a valid integer',
-                'input': '2',
+                'loc': [1],
+                'type': 'value_error',
             },
         ],
     })

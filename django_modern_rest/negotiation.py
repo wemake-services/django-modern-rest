@@ -66,11 +66,9 @@ class RequestNegotiator:
         if parser_type is None:
             expected = list(self._parsers.keys())
             raise RequestSerializationError(
-                self._serializer.error_serialize(
-                    'Cannot parse request body '
-                    f'with content type {request.content_type!r}, '
-                    f'{expected=!r}',
-                ),
+                'Cannot parse request body '
+                f'with content type {request.content_type!r}, '
+                f'{expected=!r}',
             )
         return parser_type
 
@@ -123,13 +121,11 @@ class ResponseNegotiator:
             return self._default
         renderer_type = request.get_preferred_type(self._renderer_keys)
         if renderer_type is None:
-            expected = self._renderer_keys
+            supported = self._renderer_keys
             raise NotAcceptableError(
-                self._serializer.error_serialize(
-                    'Cannot serialize response body '
-                    f'with accepted types {request.accepted_types!r}, '
-                    f'{expected=!r}',
-                ),
+                'Cannot serialize response body '
+                f'with accepted types {request.accepted_types!r}, '
+                f'{supported=!r}',
             )
         return self._renderers[renderer_type]
 
