@@ -7,7 +7,7 @@ from django.urls import URLPattern, URLResolver
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
 

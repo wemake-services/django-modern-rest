@@ -3,6 +3,7 @@ from http import HTTPMethod, HTTPStatus
 from typing import Generic, Literal, TypeVar, final
 
 import pytest
+from dirty_equals import IsStr
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
@@ -20,10 +21,7 @@ from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import (
-    PydanticErrorModel,
-    PydanticSerializer,
-)
+from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import compose_blueprints
 from django_modern_rest.test import DMRRequestFactory
 
@@ -106,7 +104,7 @@ def test_validate_wrong_headers(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert isinstance(json.loads(response.content)['detail'], str)
+    assert json.loads(response.content)['detail']
 
 
 class _CorrectHeadersController(Controller[PydanticSerializer]):
@@ -214,8 +212,10 @@ def test_validate_over_regular_data(dmr_rf: DMRRequestFactory) -> None:
     response = _MismatchingMetadata.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert '@modify' in json.loads(response.content)['detail']
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
+    })
 
 
 def test_validate_required_for_responses() -> None:
@@ -257,10 +257,9 @@ def test_no_validate_for_responses(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': ['0'],
+                'type': 'value_error',
             },
         ],
     })
@@ -376,10 +375,9 @@ def test_validate_type_dict_response(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'string_type',
-                'loc': ['user'],
                 'msg': 'Input should be a valid string',
-                'input': 1,
+                'loc': ['user'],
+                'type': 'value_error',
             },
         ],
     })
@@ -421,13 +419,7 @@ def test_validate_literal_response(dmr_rf: DMRRequestFactory) -> None:
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
         'detail': [
-            {
-                'type': 'literal_error',
-                'loc': [],
-                'msg': 'Input should be 1',
-                'input': 2,
-                'ctx': {'expected': '1'},
-            },
+            {'msg': 'Input should be 1', 'loc': [], 'type': 'value_error'},
         ],
     })
 
@@ -497,17 +489,23 @@ def test_validate_responses_from_blueprint() -> None:
     controller = compose_blueprints(_Blueprint)
 
     assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
+        HTTPStatus.OK: ResponseSpec(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
+        ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticErrorModel,
+            return_type=controller.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=controller.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
         ),
     })
 
@@ -535,17 +533,23 @@ def test_validate_enable_semantic_responses() -> None:
     controller = compose_blueprints(_Blueprint)
 
     assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=dict[str, str],
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
+        HTTPStatus.OK: ResponseSpec(
+            return_type=list[int],
+            status_code=HTTPStatus.OK,
+        ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticErrorModel,
+            return_type=controller.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=controller.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
         ),
     })
 

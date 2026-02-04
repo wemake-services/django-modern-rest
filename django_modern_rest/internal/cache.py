@@ -31,12 +31,6 @@ def clear_settings_cache() -> None:  # noqa: C901
     else:
         _get_deserializer.cache_clear()
 
-    from django_modern_rest.validation.response import (  # noqa: PLC0415
-        _is_validation_enabled,  # pyright: ignore[reportPrivateUsage]
-    )
-
-    _is_validation_enabled.cache_clear()
-
     from django_modern_rest.settings import (  # noqa: PLC0415
         _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
         resolve_setting,

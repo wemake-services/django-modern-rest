@@ -7,7 +7,7 @@ from django_modern_rest import Body, Controller, modify
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 
 class TwoNumbers(pydantic.BaseModel):
@@ -25,7 +25,7 @@ class MathController(Controller[PydanticSerializer], Body[TwoNumbers]):
         if isinstance(exc, ZeroDivisionError):
             # This response's schema was automatically added by `Body`:
             return controller.to_error(
-                {'detail': controller.serializer.error_serialize(str(exc))},
+                controller.format_error(str(exc)),
                 status_code=HTTPStatus.BAD_REQUEST,
             )
         # Reraise unfamiliar errors to let someone

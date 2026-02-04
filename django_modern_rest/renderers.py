@@ -7,11 +7,16 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
-from django_modern_rest.metadata import ResponseSpecProvider
+from django_modern_rest.exceptions import NotAcceptableError
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import ResponseSpec
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.controller import Controller
+    from django_modern_rest.serializer import BaseSerializer
 
 
 class Renderer(ResponseSpecProvider):
@@ -43,11 +48,22 @@ class Renderer(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
-        existing_responses: Mapping[HTTPStatus, 'ResponseSpec'],
-    ) -> list['ResponseSpec']:
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
         """Provides responses that can happen when data can't be rendered."""
-        return []
+        return cls._add_new_response(
+            # When we face wrong `Accept` header, we raise 406 error:
+            ResponseSpec(
+                return_type=controller_cls.error_model,
+                status_code=NotAcceptableError.status_code,
+                description=(
+                    'Raised when provided `Accept` header cannot be satisfied'
+                ),
+            ),
+            existing_responses,
+        )
 
 
 class _DMREncoder(DjangoJSONEncoder):

@@ -185,9 +185,47 @@ The same error handling logic can be represented as a diagram:
       Error ---->|No| Success[Successful response];
 
 
+.. _customizing-error-messages:
+
+Customizing error messages
+--------------------------
+
+All error messages, including pre-defined ones, can be easily customized
+on a per-controller basis.
+
+.. literalinclude:: /examples/error_handling/custom_error_messages.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :lines: 11-
+
+To do so, you would need to change:
+
+1. :attr:`~django_modern_rest.controller.Blueprint.error_model` attribute for
+   all controllers and blueprints that will be using this error message schema
+2. :meth:`~django_modern_rest.controller.Blueprint.format_error` method
+   to provide custom runtime error formatting
+
+See :class:`~django_modern_rest.errors.ErrorModel`
+for the default error model schema.
+And :func:`~django_modern_rest.errors.format_error`
+for the default error formatting.
+
+
 API Reference
 -------------
 
 .. autofunction:: django_modern_rest.errors.global_error_handler
 
 .. autofunction:: django_modern_rest.errors.wrap_handler
+
+.. autoclass:: django_modern_rest.errors.ErrorType
+  :members:
+
+.. autoclass:: django_modern_rest.errors.ErrorModel
+  :members:
+
+.. autoclass:: django_modern_rest.errors.ErrorDetail
+  :members:
+
+.. autofunction:: django_modern_rest.errors.format_error

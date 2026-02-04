@@ -16,7 +16,7 @@ from django_modern_rest.metadata import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 
@@ -48,20 +48,26 @@ def wrap_middleware(
         >>> from django_modern_rest import Controller, ResponseSpec
         >>> from django_modern_rest.response import build_response
         >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from django_modern_rest.errors import (
+        ...     ErrorType,
+        ...     ErrorModel,
+        ...     format_error,
+        ... )
 
         >>> @wrap_middleware(
         ...     csrf_protect,
         ...     ResponseSpec(
-        ...         return_type=dict[str, str],
+        ...         return_type=ErrorModel,
         ...         status_code=HTTPStatus.FORBIDDEN,
         ...     ),
         ... )
         ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
         ...     return build_response(
         ...         PydanticSerializer,
-        ...         raw_data={
-        ...             'detail': 'CSRF verification failed. Request aborted.'
-        ...         },
+        ...         raw_data=format_error(
+        ...             'CSRF verification failed. Request aborted.',
+        ...             error_type=ErrorType.user_msg,
+        ...         ),
         ...         status_code=HTTPStatus(response.status_code),
         ...     )
 
@@ -73,6 +79,7 @@ def wrap_middleware(
         ...
         ...     def post(self) -> dict[str, str]:
         ...         return {'message': 'ok'}
+
     """
 
     def factory(

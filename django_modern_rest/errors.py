@@ -1,27 +1,143 @@
+import enum
 import inspect
 from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import (
     TYPE_CHECKING,
     Any,
+    Final,
+    NotRequired,
     TypeAlias,
+    final,
     overload,
 )
 
 from django.http import HttpResponse
+from typing_extensions import TypedDict
 
 from django_modern_rest.exceptions import (
+    InternalServerError,
+    NotAcceptableError,
     NotAuthenticatedError,
-    SerializationError,
+    RequestSerializationError,
+    ResponseSchemaError,
+    ValidationError,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
+
+
+@final
+@enum.unique
+class ErrorType(enum.StrEnum):
+    """
+    Collection of all possible error types that we use in DMR.
+
+    Attributes:
+        value_error: Raised when we can't parse something.
+        not_allowed: Raised when using unsupported http method. 405 alias.
+        security: Raised when security related error happens.
+        user_msg: Raised for custom errors from users.
+
+    """
+
+    value_error = 'value_error'
+    not_allowed = 'not_allowed'
+    security = 'security'
+    user_msg = 'user_msg'
+
+
+class ErrorDetail(TypedDict):
+    """Base schema for error details description."""
+
+    msg: str
+    type: NotRequired[str]
+    loc: NotRequired[list[int | str]]
+
+
+class ErrorModel(TypedDict):
+    """
+    Default error response schema.
+
+    Can be customized.
+    See :ref:`customizing-error-messages` for more details.
+    """
+
+    detail: list[ErrorDetail]
+
+
+def format_error(  # noqa: C901, WPS231
+    error: str | Exception,
+    *,
+    loc: str | None = None,
+    error_type: str | ErrorType | None = None,
+) -> ErrorModel:
+    """
+    Convert error to the common format.
+
+    Default implementation.
+
+    Args:
+        error: A serialization exception like a validation error or
+            a ``django_modern_rest.exceptions.DataParsingError``.
+        loc: Location where this error happened.
+            Like "headers" or "field_name".
+        error_type: Optional type of the error for extra metadata.
+
+    Returns:
+        Simple python object - exception converted to a common format.
+
+    """
+    from django.conf import settings  # noqa: PLC0415
+
+    # NOTE: keep this in sync with `_default_handled_excs`
+    if isinstance(error, ValidationError):
+        return {'detail': error.payload}
+
+    if isinstance(
+        error,
+        (
+            RequestSerializationError,
+            ResponseSchemaError,
+            NotAcceptableError,
+            NotAuthenticatedError,
+        ),
+    ):
+        error_type = (
+            ErrorType.security
+            if isinstance(error, NotAuthenticatedError)
+            else ErrorType.value_error
+        )
+        error = str(error.args[0])
+
+    if isinstance(error, str):
+        msg: ErrorDetail = {'msg': error}
+        if loc is not None:
+            msg.update({'loc': [loc]})
+        if error_type is not None:
+            msg.update({'type': str(error_type)})
+        return {'detail': [msg]}
+
+    if isinstance(error, InternalServerError):
+        return {
+            'detail': [
+                {
+                    'msg': str(error)
+                    if settings.DEBUG
+                    else InternalServerError.default_message,
+                },
+            ],
+        }
+
+    raise NotImplementedError(
+        f'Cannot format error {error!r} of type {type(error)} safely',
+    )
+
 
 #: Error handler type for sync callbacks.
-# TODO: normalize type aliases names, maybe remove `T`?
 SyncErrorHandler: TypeAlias = Callable[
     ['Endpoint', 'Controller[BaseSerializer]', Exception],  # noqa: WPS226
     HttpResponse,
@@ -99,6 +215,17 @@ def wrap_handler(
     return decorator
 
 
+# NOTE: keep this in sync with `format_error()`
+_default_handled_excs: Final = (
+    RequestSerializationError,
+    ResponseSchemaError,  # can only happen if validation is enabled
+    NotAuthenticatedError,
+    NotAcceptableError,
+    ValidationError,
+    InternalServerError,
+)
+
+
 def global_error_handler(
     endpoint: 'Endpoint',
     controller: 'Controller[BaseSerializer]',
@@ -131,7 +258,8 @@ def global_error_handler(
     You can access active blueprint
     via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
 
-    Here's an example that will produce ``{'detail': 'inf'}``
+    Here's an example that will produce
+    ``{'detail': [{'msg': 'inf', 'type': 'user_msg'}]}``
     for any :exc:`ZeroDivisionError` in your application:
 
     .. code:: python
@@ -140,7 +268,7 @@ def global_error_handler(
        >>> from django.http import HttpResponse
        >>> from django_modern_rest.controller import Controller
        >>> from django_modern_rest.endpoint import Endpoint
-       >>> from django_modern_rest.errors import global_error_handler
+       >>> from django_modern_rest.errors import global_error_handler, ErrorType
 
        >>> def custom_error_handler(
        ...     controller: Controller,
@@ -149,7 +277,10 @@ def global_error_handler(
        ... ) -> HttpResponse:
        ...     if isinstance(exc, ZeroDivisionError):
        ...         return controller.to_error(
-       ...             {'detail': 'inf!'},  # TODO: replace with new API
+       ...             controller.format_error(
+       ...                 'inf',
+       ...                 error_type=ErrorType.user_msg,
+       ...             ),
        ...             status_code=HTTPStatus.NOT_IMPLEMENTED,
        ...         )
        ...     # Call the original handler to handle default errors:
@@ -167,22 +298,9 @@ def global_error_handler(
         in the very end. Unless, you want to disable original error handling.
 
     """
-    from django_modern_rest.negotiation import request_renderer  # noqa: PLC0415
-
-    if isinstance(exc, (SerializationError, NotAuthenticatedError)):
-        renderer_cls = request_renderer(
-            controller.request,
-        ) or endpoint.response_negotiator(controller.request)
-        # TODO: unify, all errors must be the same
-        payload = (
-            controller.serializer.error_serialize(exc.args[0])
-            if isinstance(exc, NotAuthenticatedError)
-            else exc.args[0]
-        )
+    if isinstance(exc, _default_handled_excs):
         return controller.to_error(
-            # TODO: validate error response's schema
-            {'detail': payload},
+            controller.format_error(exc),
             status_code=exc.status_code,
-            renderer_cls=renderer_cls,
         )
-    raise exc
+    raise  # noqa: PLE0704

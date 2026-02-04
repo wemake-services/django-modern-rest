@@ -36,27 +36,6 @@ class _MyPydanticModel(pydantic.BaseModel):
     email: str
 
 
-@final
-class _WrongController(Controller[PydanticSerializer]):
-    """All return types of these methods are not correct."""
-
-    def get(self) -> _MyPydanticModel:
-        """Does not respect an annotation type."""
-        return 1  # type: ignore[return-value]
-
-    @validate(
-        ResponseSpec(return_type=list[int], status_code=HTTPStatus.OK),
-    )
-    def post(self) -> HttpResponse:
-        """Does not respect a `return_type` validator."""
-        return HttpResponse(b'1')
-
-    @modify(status_code=HTTPStatus.OK)
-    def put(self) -> list[int]:
-        """Does not respect the annotation with `@modify`."""
-        return 1  # type: ignore[return-value]
-
-
 @pytest.mark.parametrize(
     'method',
     [
@@ -71,6 +50,27 @@ def test_validate_response_disabled(
     method: HTTPMethod,
 ) -> None:
     """Ensures that response validation can be disabled."""
+
+    @final
+    class _WrongController(Controller[PydanticSerializer]):
+        """All return types of these methods are not correct."""
+
+        def get(self) -> _MyPydanticModel:
+            """Does not respect an annotation type."""
+            return 1  # type: ignore[return-value]
+
+        @validate(
+            ResponseSpec(return_type=list[int], status_code=HTTPStatus.OK),
+        )
+        def post(self) -> HttpResponse:
+            """Does not respect a `return_type` validator."""
+            return HttpResponse(b'1')
+
+        @modify(status_code=HTTPStatus.OK)
+        def put(self) -> list[int]:
+            """Does not respect the annotation with `@modify`."""
+            return 1  # type: ignore[return-value]
+
     request = dmr_rf.generic(str(method), '/whatever/')
 
     response = _WrongController.as_view()(request)
@@ -80,23 +80,23 @@ def test_validate_response_disabled(
     assert json.loads(response.content) == 1
 
 
-@final
-class _WrongStatusCodeController(Controller[PydanticSerializer]):
-    @validate(
-        ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.CREATED,
-        ),
-    )
-    def get(self) -> HttpResponse:
-        """Does not respect a `status_code` validator."""
-        return HttpResponse(b'[]', status=HTTPStatus.OK)
-
-
 def test_validate_status_code(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that response status_code validation works."""
+
+    @final
+    class _WrongStatusCodeController(Controller[PydanticSerializer]):
+        @validate(
+            ResponseSpec(
+                return_type=list[int],
+                status_code=HTTPStatus.CREATED,
+            ),
+        )
+        def get(self) -> HttpResponse:
+            """Does not respect a `status_code` validator."""
+            return HttpResponse(b'[]', status=HTTPStatus.OK)
+
     request = dmr_rf.get('/whatever/')
 
     response = _WrongStatusCodeController.as_view()(request)
@@ -106,24 +106,24 @@ def test_validate_status_code(
     assert json.loads(response.content) == []
 
 
-@final
-class _WrongHeadersController(Controller[PydanticSerializer]):
-    @validate(
-        ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.CREATED,
-            headers={'X-Token': HeaderSpec()},
-        ),
-    )
-    def post(self) -> HttpResponse:
-        """Does not respect a `headers` validator."""
-        return self.to_response([])
-
-
 def test_validate_headers(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that response status_code validation works."""
+
+    @final
+    class _WrongHeadersController(Controller[PydanticSerializer]):
+        @validate(
+            ResponseSpec(
+                return_type=list[int],
+                status_code=HTTPStatus.CREATED,
+                headers={'X-Token': HeaderSpec()},
+            ),
+        )
+        def post(self) -> HttpResponse:
+            """Does not respect a `headers` validator."""
+            return self.to_response([])
+
     request = dmr_rf.post('/whatever/')
 
     response = _WrongHeadersController.as_view()(request)
@@ -160,10 +160,9 @@ def test_override_endpoint_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': ['0'],
+                'type': 'value_error',
             },
         ],
     })
@@ -215,10 +214,9 @@ def test_override_controller_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': ['0'],
+                'type': 'value_error',
             },
         ],
     })
@@ -246,10 +244,9 @@ def test_override_endpoint_over_controller(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': ['0'],
+                'type': 'value_error',
             },
         ],
     })
@@ -312,10 +309,9 @@ def test_override_endpoint_over_blueprint(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_type',
-                'loc': [0],
                 'msg': 'Input should be a valid integer',
-                'input': 'a',
+                'loc': ['0'],
+                'type': 'value_error',
             },
         ],
     })

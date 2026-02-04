@@ -50,5 +50,10 @@ def test_no_explicit_head_method(dmr_rf: DMRRequestFactory) -> None:
 
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     assert json.loads(response.content) == snapshot({
-        'detail': "Method 'HEAD' is not allowed, allowed: ['GET']",
+        'detail': [
+            {
+                'msg': "Method 'HEAD' is not allowed, allowed: ['GET']",
+                'type': 'not_allowed',
+            },
+        ],
     })

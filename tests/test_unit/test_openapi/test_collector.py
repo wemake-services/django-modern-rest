@@ -14,7 +14,7 @@ from django_modern_rest.openapi.collector import (
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.routing import Router, compose_blueprints
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 
 @final

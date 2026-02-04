@@ -4,6 +4,7 @@ from typing import Any, Final, TypedDict
 import pytest
 from django.urls import reverse
 from faker import Faker
+from inline_snapshot import snapshot
 
 from django_modern_rest.test import DMRAsyncClient, DMRClient
 
@@ -149,7 +150,9 @@ def test_rate_limit_middleware_blocked(
         response.content
     )
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {'detail': 'Rate limit exceeded'}
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Rate limit exceeded'}],
+    })
 
 
 def test_request_id_middleware(dmr_client: DMRClient) -> None:
@@ -211,9 +214,9 @@ def _assert_csrf_forbidden_response(response: Any) -> None:
     """Assert that response is CSRF forbidden."""
     assert response.status_code == HTTPStatus.FORBIDDEN, response.content
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {
-        'detail': 'CSRF verification failed. Request aborted.',
-    }
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'CSRF verification failed. Request aborted.'}],
+    })
 
 
 def test_login_required_unauthenticated(dmr_client: DMRClient) -> None:
@@ -221,9 +224,9 @@ def test_login_required_unauthenticated(dmr_client: DMRClient) -> None:
     response = dmr_client.get(reverse(_LOGIN_REQUIRED_ENDPOINT))
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {
-        'detail': 'Authentication credentials were not provided',
-    }
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Authentication credentials were not provided'}],
+    })
 
 
 def test_login_required_authenticated(

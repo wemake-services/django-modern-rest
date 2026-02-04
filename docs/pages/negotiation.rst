@@ -55,7 +55,7 @@ Here's how we select a renderer:
    we use :meth:`django.http.HttpRequest.get_preferred_type` method
    to match the best accepted type, based on order, weights, etc
 4. If no renderer fits for the accepted content types, we raise
-   :exc:`~django_modern_rest.exceptions.ResponseSerializationError`
+   :exc:`~django_modern_rest.exceptions.ResponseSchemaError`
 
 .. important::
 
@@ -94,7 +94,7 @@ going back to the less specific:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 36-37
+        :emphasize-lines: 35-36
 
     .. tab:: per controller
 
@@ -110,7 +110,7 @@ going back to the less specific:
         :caption: settings.py
         :language: python
         :linenos:
-        :emphasize-lines: 5-6
+        :emphasize-lines: 6-7
 
 You can also modify
 :attr:`django_modern_rest.endpoint.Endpoint.request_negotiator_cls`

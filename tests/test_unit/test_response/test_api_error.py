@@ -4,6 +4,7 @@ from typing import Any, Generic, TypeVar
 
 import pytest
 from django.http import HttpResponse
+from inline_snapshot import snapshot
 from typing_extensions import override
 
 from django_modern_rest import (
@@ -17,13 +18,14 @@ from django_modern_rest import (
 )
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.endpoint import Endpoint
+from django_modern_rest.errors import ErrorModel, ErrorType
 from django_modern_rest.openapi.objects.components import Components
 from django_modern_rest.openapi.objects.security_requirement import (
     SecurityRequirement,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security import AsyncAuth, SyncAuth
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -147,7 +149,11 @@ def test_valid_api_error_contoller_level(
 ) -> None:
     """Ensures validation can validate api errors on controllers."""
     endpoint = _ControllerLevelAPIError.api_endpoints['GET']
-    assert len(endpoint.metadata.responses) == 2
+    assert endpoint.metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.PAYMENT_REQUIRED,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/')
 
@@ -329,3 +335,35 @@ async def test_raise_api_error_in_async_auth(
     assert (
         json.loads(response.content) == auth[0].error_message  # type: ignore[union-attr]
     )
+
+
+class _ComplexAPIError(Controller[PydanticSerializer]):
+    @modify(
+        extra_responses=[
+            ResponseSpec(ErrorModel, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ],
+    )
+    def get(self) -> str:
+        raise APIError(
+            self.format_error(
+                'test',
+                loc='api',
+                error_type=ErrorType.user_msg,
+            ),
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        )
+
+
+def test_valid_complex_api_error(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures validation can validate api errors."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _ComplexAPIError.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'test', 'loc': ['api'], 'type': 'user_msg'}],
+    })

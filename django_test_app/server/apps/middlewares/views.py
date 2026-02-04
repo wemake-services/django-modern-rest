@@ -6,12 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
-from django_modern_rest import (
-    Body,
-    Controller,
-    ResponseSpec,
-)
+from django_modern_rest import Body, Controller, ResponseSpec
 from django_modern_rest.decorators import wrap_middleware
+from django_modern_rest.errors import format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 from server.apps.middlewares.middleware import (
@@ -38,7 +35,7 @@ class _RequestWithID(HttpRequest):
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
     return build_response(
         PydanticSerializer,
-        raw_data={'detail': 'CSRF verification failed. Request aborted.'},
+        raw_data=format_error('CSRF verification failed. Request aborted.'),
         status_code=HTTPStatus.FORBIDDEN,
     )
 
@@ -104,7 +101,9 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
     if response.status_code == HTTPStatus.FOUND:
         return build_response(
             PydanticSerializer,
-            raw_data={'detail': 'Authentication credentials were not provided'},
+            raw_data=format_error(
+                'Authentication credentials were not provided',
+            ),
             status_code=HTTPStatus.UNAUTHORIZED,
         )
     return response

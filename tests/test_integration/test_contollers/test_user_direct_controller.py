@@ -105,6 +105,6 @@ def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
         data={'email': email, 'age': faker.unique.random_int()},
     )
 
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.json()
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['detail']

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
-
-from inline_snapshot import snapshot
 
 if TYPE_CHECKING:
     from django.http import HttpResponse
@@ -45,8 +44,7 @@ def test_solvable_response_annotations() -> None:
             raise NotImplementedError
 
     endpoint = MyController.api_endpoints['GET']
-    assert str(endpoint.response_validator.metadata.responses) == snapshot(
-        '{<HTTPStatus.OK: 200>: ResponseSpec(return_type=list[int], '
-        'status_code=<HTTPStatus.OK: 200>, headers=None, cookies=None, '
-        'description=None)}',
-    )
+    assert endpoint.response_validator.metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }

@@ -1,9 +1,11 @@
 from http import HTTPStatus
 
+from dirty_equals import IsStr
 from inline_snapshot import snapshot
 
 from django_modern_rest import (
     Blueprint,
+    Body,
     Controller,
     ResponseSpec,
     modify,
@@ -57,6 +59,11 @@ def test_collected_responses() -> None:
             return_type=int,
             status_code=HTTPStatus.ACCEPTED,
         ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=_Controller.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
     assert _Controller.api_endpoints['GET'].metadata.responses == snapshot({
         HTTPStatus.OK: ResponseSpec(return_type=str, status_code=HTTPStatus.OK),
@@ -67,5 +74,40 @@ def test_collected_responses() -> None:
         HTTPStatus.ACCEPTED: ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.ACCEPTED,
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=_Controller.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+    })
+
+
+class _ControllerWithParsing(
+    Controller[PydanticSerializer],
+    Body[dict[str, str]],
+):
+    def post(self) -> str:
+        raise NotImplementedError
+
+
+def test_collected_responses_with_parsing() -> None:
+    """Ensures that component parsers add correct metadata."""
+    assert _ControllerWithParsing.api_endpoints[
+        'POST'
+    ].metadata.responses == snapshot({
+        HTTPStatus.CREATED: ResponseSpec(
+            return_type=str,
+            status_code=HTTPStatus.CREATED,
+        ),
+        HTTPStatus.BAD_REQUEST: ResponseSpec(
+            return_type=_ControllerWithParsing.error_model,
+            status_code=HTTPStatus.BAD_REQUEST,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=_ControllerWithParsing.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
         ),
     })

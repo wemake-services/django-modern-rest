@@ -5,6 +5,7 @@ from typing import Any, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
 
+from django_modern_rest.errors import format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 
@@ -33,7 +34,7 @@ def rate_limit_middleware(
         if request.headers.get('X-Rate-Limited') == 'true':
             return build_response(
                 PydanticSerializer,
-                raw_data={'detail': 'Rate limit exceeded'},
+                raw_data=format_error('Rate limit exceeded'),
                 status_code=HTTPStatus.TOO_MANY_REQUESTS,
             )
         return get_response(request)
