@@ -8,7 +8,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
 from django_modern_rest.exceptions import NotAcceptableError
-from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -44,6 +48,7 @@ class Renderer(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:

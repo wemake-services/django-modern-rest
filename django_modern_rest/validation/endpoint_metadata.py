@@ -260,7 +260,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return payload.metadata_cls(
             responses={},
             method=method,
-            validate_responses=payload.validate_responses,
+            validate_responses=self._build_validate_responses(
+                payload,
+                blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
+            ),
             modification=None,
             error_handler=self._build_error_handler(
                 payload,
@@ -329,7 +333,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         summary, description = self._build_description(func, payload)
         return payload.metadata_cls(
             responses={},
-            validate_responses=payload.validate_responses,
+            validate_responses=self._build_validate_responses(
+                payload,
+                blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
+            ),
             method=method,
             modification=modification,
             error_handler=self._build_error_handler(
@@ -394,7 +402,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         summary, description = self._build_description(func)
         return EndpointMetadata(
             responses={},
-            validate_responses=None,
+            validate_responses=self._build_validate_responses(
+                None,
+                blueprint_cls=blueprint_cls,
+                controller_cls=controller_cls,
+            ),
             method=method,
             modification=modification,
             error_handler=None,
@@ -553,6 +565,22 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         ):
             return None
         return auth
+
+    def _build_validate_responses(
+        self,
+        payload: Payload,
+        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> bool:
+        if payload and payload.validate_responses is not None:
+            return payload.validate_responses
+        if blueprint_cls and blueprint_cls.validate_responses is not None:
+            return blueprint_cls.validate_responses
+        if controller_cls.validate_responses is not None:
+            return controller_cls.validate_responses
+        return resolve_setting(  # type: ignore[no-any-return]
+            Settings.validate_responses,
+        )
 
     def _build_error_handler(
         self,
@@ -761,6 +789,7 @@ class EndpointMetadataValidator:
         }
         for provider in self.metadata.response_spec_providers():
             responses = provider.provide_response_specs(
+                self.metadata,
                 controller_cls,
                 existing_responses,
             )
