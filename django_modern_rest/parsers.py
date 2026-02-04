@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 from typing_extensions import override
 
 from django_modern_rest.exceptions import DataParsingError
-from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -68,6 +72,7 @@ class Parser(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:

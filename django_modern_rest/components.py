@@ -9,7 +9,11 @@ from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
 )
-from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint, Controller
@@ -56,6 +60,7 @@ class ComponentParser(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
+        metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
