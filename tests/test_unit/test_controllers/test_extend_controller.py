@@ -5,7 +5,7 @@ import pytest
 from django_modern_rest import Controller
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 

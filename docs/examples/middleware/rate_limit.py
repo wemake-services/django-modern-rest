@@ -5,6 +5,7 @@ from django.http import HttpRequest, HttpResponse
 
 from django_modern_rest import Controller, ResponseSpec
 from django_modern_rest.decorators import wrap_middleware
+from django_modern_rest.errors import ErrorModel, format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 
@@ -18,7 +19,7 @@ def rate_limit_middleware(
         if request.headers.get('X-Rate-Limited') == 'true':
             return build_response(
                 PydanticSerializer,
-                raw_data={'detail': 'Rate limit exceeded'},
+                raw_data=format_error('Rate limit exceeded'),
                 status_code=HTTPStatus.TOO_MANY_REQUESTS,
             )
         return get_response(request)
@@ -29,7 +30,7 @@ def rate_limit_middleware(
 @wrap_middleware(
     rate_limit_middleware,
     ResponseSpec(
-        return_type=dict[str, str],
+        return_type=ErrorModel,
         status_code=HTTPStatus.TOO_MANY_REQUESTS,
     ),
 )

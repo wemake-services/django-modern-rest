@@ -6,7 +6,11 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import override
 
 from django_modern_rest.exceptions import NotAuthenticatedError
-from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 from django_modern_rest.openapi.objects.components import Components
 from django_modern_rest.openapi.objects.security_requirement import (
     SecurityRequirement,
@@ -15,7 +19,7 @@ from django_modern_rest.openapi.objects.security_requirement import (
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 
 class _BaseAuth(ResponseSpecProvider):
@@ -37,15 +41,16 @@ class _BaseAuth(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
         return cls._add_new_response(
             ResponseSpec(
-                # We do this for runtime validation, not static type check:
-                serializer.default_error_model,
+                controller_cls.error_model,
                 status_code=NotAuthenticatedError.status_code,
+                description='Raised when auth was not successful',
             ),
             existing_responses,
         )

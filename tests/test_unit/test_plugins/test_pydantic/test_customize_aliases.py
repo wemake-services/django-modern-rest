@@ -5,6 +5,7 @@ from typing import Any, ClassVar, final
 import pydantic
 from django.http import HttpResponse
 from faker import Faker
+from inline_snapshot import snapshot
 
 from django_modern_rest import Body, Controller
 from django_modern_rest.plugins.pydantic import (
@@ -128,5 +129,8 @@ def test_not_serializable_response(
     response = _UnserializableController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
+    })

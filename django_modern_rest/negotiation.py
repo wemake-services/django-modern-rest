@@ -7,8 +7,8 @@ from django.http.response import HttpResponseBase
 
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
+    NotAcceptableError,
     RequestSerializationError,
-    ResponseSerializationError,
 )
 from django_modern_rest.internal.negotiation import (
     ConditionalType as _ConditionalType,
@@ -16,7 +16,7 @@ from django_modern_rest.internal.negotiation import (
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 
 class RequestNegotiator:
@@ -44,6 +44,9 @@ class RequestNegotiator:
         Called in runtime.
         Must work for O(1) because of that.
 
+        Must set ``_dmr_parser_cls`` request attribute
+        if the negotiation is successful.
+
         Raises:
             RequestSerializationError: when ``Content-Type`` request
                 header is not supported.
@@ -63,11 +66,9 @@ class RequestNegotiator:
         if parser_type is None:
             expected = list(self._parsers.keys())
             raise RequestSerializationError(
-                self._serializer.error_serialize(
-                    'Cannot parse request body '
-                    f'with content type {request.content_type!r}, '
-                    f'{expected=!r}',
-                ),
+                'Cannot parse request body '
+                f'with content type {request.content_type!r}, '
+                f'{expected=!r}',
             )
         return parser_type
 
@@ -93,7 +94,7 @@ class ResponseNegotiator:
         """
         Negotiates which parser to use for parsing this request.
 
-        Based on ``Content-Type`` header.
+        Based on ``Accept`` header.
 
         Called in runtime.
         Must work for O(1) because of that.
@@ -101,9 +102,11 @@ class ResponseNegotiator:
         We use :meth:`django.http.HttpRequest.get_preferred_type` inside.
         So, we have exactly the same negotiation rules as django has.
 
+        Must set ``_dmr_renderer_cls`` request attribute
+        if the negotiation is successful.
+
         Raises:
-            ResponseSerializationError: when ``Accept`` request
-                header is not supported.
+            NotAcceptableError: when ``Accept`` request header is not supported.
 
         Returns:
             Renderer class for this response.
@@ -118,13 +121,11 @@ class ResponseNegotiator:
             return self._default
         renderer_type = request.get_preferred_type(self._renderer_keys)
         if renderer_type is None:
-            expected = self._renderer_keys
-            raise ResponseSerializationError(
-                self._serializer.error_serialize(
-                    'Cannot serialize response body '
-                    f'with accepted types {request.accepted_types!r}, '
-                    f'{expected=!r}',
-                ),
+            supported = self._renderer_keys
+            raise NotAcceptableError(
+                'Cannot serialize response body '
+                f'with accepted types {request.accepted_types!r}, '
+                f'{supported=!r}',
             )
         return self._renderers[renderer_type]
 
@@ -173,10 +174,15 @@ def response_validation_negotiator(
     parser_types = metadata.parsers
     renderer_type = request_renderer(request)
     if renderer_type is None:
+        # We can fail to find `request_renderer` when `Accept` header
+        # is broken / missing / incorrect.
+        # Then, we fallback to the types we know.
         content_type = response.headers['Content-Type']
     else:
         content_type = renderer_type.content_type
 
+    # Our last resort is to get the default renderer type.
+    # It is always present.
     return parser_types.get(
         content_type,
         next(reversed(parser_types.values())),

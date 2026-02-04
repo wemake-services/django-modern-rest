@@ -1,6 +1,5 @@
 import dataclasses
 from collections.abc import Mapping
-from functools import lru_cache
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -15,14 +14,19 @@ from typing import (
 from django.http import HttpResponse
 
 from django_modern_rest.cookies import NewCookie
-from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.exceptions import (
+    InternalServerError,
+    ResponseSchemaError,
+    ValidationError,
+)
 from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import ConditionalType
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
-from django_modern_rest.negotiation import response_validation_negotiator
-from django_modern_rest.serialization import BaseSerializer
-from django_modern_rest.settings import Settings, resolve_setting
+from django_modern_rest.negotiation import (
+    request_renderer,
+    response_validation_negotiator,
+)
+from django_modern_rest.serializer import BaseSerializer
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -55,10 +59,7 @@ class ResponseValidator:
         response: _ResponseT,
     ) -> _ResponseT:
         """Validate ``.content`` of existing ``HttpResponse`` object."""
-        if not _is_validation_enabled(
-            controller,
-            metadata_validate_responses=self.metadata.validate_responses,
-        ):
+        if not self.metadata.validate_responses:
             return response
         schema = self._get_response_schema(response.status_code)
         parser_cls = response_validation_negotiator(
@@ -88,14 +89,17 @@ class ResponseValidator:
     ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
+            # Happens in cases when `@validate` returns raw data:
             method = self.metadata.method
-            raise ResponseSerializationError(
-                f'{controller} in {method} returned '
-                f'raw data of type {type(structured)} '
+            raise InternalServerError(
+                f'{type(controller)!r} in {method!r} returned '
+                f'raw data of type {type(structured)!r} '
                 'without associated `@modify` usage.',
             )
 
-        renderer_class = endpoint.response_negotiator(controller.request)
+        renderer_class = request_renderer(controller.request)
+        # Renderer class is present at this point, 100%
+        assert renderer_class is not None  # noqa: S101
         all_response_data = _ValidationContext(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
@@ -106,10 +110,7 @@ class ResponseValidator:
             cookies=self.metadata.modification.cookies,
             renderer_cls=renderer_class,
         )
-        if not _is_validation_enabled(
-            controller,
-            metadata_validate_responses=self.metadata.validate_responses,
-        ):
+        if not self.metadata.validate_responses:
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(
@@ -129,9 +130,9 @@ class ResponseValidator:
             return schema
 
         allowed = set(self.metadata.responses.keys())
-        raise ResponseSerializationError(
+        raise ResponseSchemaError(
             f'Returned {status_code=} is not specified '
-            f'in the list of allowed codes {allowed}',
+            f'in the list of allowed codes {allowed!r}',
         )
 
     def _validate_body(
@@ -150,7 +151,7 @@ class ResponseValidator:
             content_type: content type that is used for this body.
 
         Raises:
-            ResponseSerializationError: When validation fails.
+            ResponseSchemaError: When validation fails.
 
         """
         if (
@@ -164,11 +165,10 @@ class ResponseValidator:
         ):
             content_types = schema.return_type.__metadata__[0].computed
             if content_type not in content_types:
-                raise ResponseSerializationError(
-                    self.serializer.error_serialize(
-                        f'Content-Type {content_type} is not '
-                        f'listed in {content_types=}',
-                    ),
+                hint = [str(ct) for ct in content_types]
+                raise ResponseSchemaError(
+                    f'Content-Type {content_type!r} is not '
+                    f'listed in supported content types {hint!r}',
                 )
             model = content_types[content_type]
         else:
@@ -181,8 +181,9 @@ class ResponseValidator:
                 strict=self.strict_validation,
             )
         except self.serializer.validation_error as exc:
-            raise ResponseSerializationError(
-                self.serializer.error_serialize(exc),
+            raise ValidationError(
+                self.serializer.serialize_validation_error(exc),
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             ) from None
 
     def _validate_response_headers(  # noqa: WPS210
@@ -200,7 +201,7 @@ class ResponseValidator:
                 if response_header.required
             } - response_headers
             if missing_required_headers:
-                raise ResponseSerializationError(
+                raise ResponseSchemaError(
                     'Response has missing required '
                     f'{missing_required_headers!r} headers',
                 )
@@ -211,7 +212,7 @@ class ResponseValidator:
             - {'content-type'}  # it is added automatically
         )
         if extra_response_headers:
-            raise ResponseSerializationError(
+            raise ResponseSchemaError(
                 'Response has extra undescribed '
                 f'{extra_response_headers!r} headers',
             )
@@ -232,7 +233,7 @@ class ResponseValidator:
             if response_cookie.required
         } - response.cookies.keys()
         if missing_required_cookies:
-            raise ResponseSerializationError(
+            raise ResponseSchemaError(
                 'Response has missing required '
                 f'{missing_required_cookies!r} cookie',
             )
@@ -242,7 +243,7 @@ class ResponseValidator:
             response.cookies.keys() - metadata_cookies.keys()
         )
         if extra_response_cookies:
-            raise ResponseSerializationError(
+            raise ResponseSchemaError(
                 'Response has extra undescribed '
                 f'{extra_response_cookies!r} cookies',
             )
@@ -250,40 +251,10 @@ class ResponseValidator:
         # Find not fully described cookies:
         for cookie_key, cookie_body in response.cookies.items():
             if not metadata_cookies[cookie_key].is_equal(cookie_body):
-                raise ResponseSerializationError(
+                raise ResponseSchemaError(
                     f'Response cookie {cookie_key}={cookie_body!r} is not '
                     f'equal to {metadata_cookies[cookie_key]!r}',
                 )
-
-
-@lru_cache(maxsize=MAX_CACHE_SIZE)
-def _is_validation_enabled(
-    controller: 'Controller[BaseSerializer]',
-    *,
-    metadata_validate_responses: bool | None,
-) -> bool:
-    """
-    Should we run response validation?
-
-    Priority:
-    - We first return any directly specified *validate_responses*
-        argument to endpoint itself
-    - Second is *validate_responses* on the blueprint, if it exists
-    - Then we return *validate_responses* from controller if specified
-    - Lastly we return the default value from settings
-    """
-    if metadata_validate_responses is not None:
-        return metadata_validate_responses
-    if (
-        controller.blueprint
-        and controller.blueprint.validate_responses is not None
-    ):
-        return controller.blueprint.validate_responses
-    if controller.validate_responses is not None:
-        return controller.validate_responses
-    return resolve_setting(  # type: ignore[no-any-return]
-        Settings.validate_responses,
-    )
 
 
 @final

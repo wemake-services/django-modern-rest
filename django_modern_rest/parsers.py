@@ -7,10 +7,15 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 from typing_extensions import override
 
 from django_modern_rest.exceptions import DataParsingError
-from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 
 if TYPE_CHECKING:
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.controller import Controller
+    from django_modern_rest.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
 Raw: TypeAlias = str | bytes | bytearray
@@ -67,10 +72,15 @@ class Parser(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when data can't be parsed."""
+        # We don't provide parser errors by default, because parser only works
+        # when there are active components. But, components already provide
+        # required response specs. This method is only useful
+        # for custom user-defined errors.
         return []
 
 

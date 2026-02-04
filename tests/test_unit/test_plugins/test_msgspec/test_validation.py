@@ -80,12 +80,11 @@ def test_msgspec_model_controller_invalid_input(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Object missing required field `first_name` '
-                    '- at `$.parsed_body`'
+                    'Object missing required field `first_name`'
+                    ' - at `$.parsed_body`'
                 ),
+                'type': 'value_error',
             },
         ],
     })
@@ -105,11 +104,10 @@ def test_msgspec_model_controller_invalid_types(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
                     'Expected `str`, got `int` - at `$.parsed_body.first_name`'
                 ),
+                'type': 'value_error',
             },
         ],
     })

@@ -17,9 +17,8 @@ from typing_extensions import deprecated, override
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.exceptions import (
-    UnsolvableAnnotationsError,
-)
+from django_modern_rest.errors import ErrorModel, ErrorType, format_error
+from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.internal.io import identity
 from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.negotiation import request_renderer
@@ -27,12 +26,9 @@ from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serialization import BaseSerializer, SerializerContext
+from django_modern_rest.serializer import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
-from django_modern_rest.types import (
-    infer_bases,
-    infer_type_args,
-)
+from django_modern_rest.types import infer_bases, infer_type_args
 from django_modern_rest.validation import (
     BlueprintValidator,
     ControllerValidator,
@@ -74,7 +70,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             the attribute in the controller class.
             Because it is already passed to many other places.
             To customize it: create a new class,
-            subclass :class:`~django_modern_rest.serialization.BaseSerializer`,
+            subclass :class:`~django_modern_rest.serializer.BaseSerializer`,
             and pass the new type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
             We combine all components like
@@ -103,6 +99,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             Async controllers must use instances
             of :class:`django_modern_rest.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
+        error_model: Schema type that represents
+            and validates common error responses.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -128,6 +126,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     parsers: ClassVar[_Parsers] = ()
     renderers: ClassVar[_Renderers] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    error_model: ClassVar[Any] = ErrorModel
 
     # Instance public API:
     request: HttpRequest
@@ -236,6 +235,29 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             renderer_cls=renderer_cls or request_renderer(self.request),
         )
 
+    def format_error(
+        self,
+        error: str | Exception,
+        *,
+        loc: str | None = None,
+        error_type: str | ErrorType | None = None,
+    ) -> Any:  # `Any`, so we can change the return type in subclasses.
+        """
+        Convert error to the common format.
+
+        Args:
+            error: A serialization exception like a validation error or
+                a ``django_modern_rest.exceptions.DataParsingError``.
+            loc: Location where this error happened.
+                Like "headers" or "field_name".
+            error_type: Optional type of the error for extra metadata.
+
+        Returns:
+            Simple python object - exception converted to a common format.
+
+        """
+        return format_error(error, loc=loc, error_type=error_type)
+
     def handle_error(
         self,
         endpoint: Endpoint,
@@ -252,7 +274,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         You can access active blueprint
         via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
-        raise exc
+        raise  # noqa: PLE0704
 
     async def handle_async_error(
         self,
@@ -270,7 +292,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         You can access active blueprint
         via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
         """
-        raise exc
+        raise  # noqa: PLE0704
 
     # Protected API:
 
@@ -311,7 +333,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             the attribute in the controller class.
             Because it is already passed to many other places.
             To customize it: create a new class,
-            subclass :class:`~django_modern_rest.serialization.BaseSerializer`,
+            subclass :class:`~django_modern_rest.serializer.BaseSerializer`,
             and pass the new type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
             We combine all components like
@@ -550,15 +572,17 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         # an endpoint associated with it. We switch to lower level
         # `build_response` primitive
         allowed_methods = sorted(self.api_endpoints.keys())
+        # NOTE: this response is not validated, so be careful with the spec!
         return self._maybe_wrap(
             build_response(
                 self.serializer,
-                raw_data={
-                    'detail': (
+                raw_data=self.format_error(
+                    (
                         f'Method {method!r} is not allowed, '
                         f'allowed: {allowed_methods!r}'
                     ),
-                },
+                    error_type=ErrorType.not_allowed,
+                ),
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
                 renderer_cls=request_renderer(self.request),
             ),

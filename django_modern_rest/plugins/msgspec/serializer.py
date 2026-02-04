@@ -9,9 +9,10 @@ from typing import (
 import msgspec
 from typing_extensions import TypedDict, override
 
+from django_modern_rest.errors import ErrorDetail, ErrorType
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.serialization import (
+from django_modern_rest.serializer import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )
@@ -26,20 +27,6 @@ class MsgspecConvertOptions(TypedDict):
     from_attributes: NotRequired[bool]
     builtin_types: NotRequired[Iterable[type] | None]
     str_keys: NotRequired[bool]
-
-
-class MsgspecErrorDetails(TypedDict):
-    """Base schema for msgspec error detail."""
-
-    type: str
-    loc: list[int | str]
-    msg: str
-
-
-class MsgspecErrorModel(TypedDict):
-    """Error response schema for serialization errors."""
-
-    detail: list[MsgspecErrorDetails]
 
 
 class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
@@ -72,7 +59,6 @@ class MsgspecSerializer(BaseSerializer):
     # Required API:
     validation_error: ClassVar[type[Exception]] = msgspec.ValidationError
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = MsgspecEndpointOptimizer
-    default_error_model: ClassVar[Any] = MsgspecErrorModel
 
     # Custom API:
     deserialize_strict: ClassVar[bool] = True
@@ -137,22 +123,13 @@ class MsgspecSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def error_serialize(
+    def serialize_validation_error(
         cls,
-        error: Exception | str,
-    ) -> list[MsgspecErrorDetails]:
-        """
-        Convert serialization or deserialization error to json format.
-
-        Args:
-            error: A serialization exception like a validation error or
-                a ``django_modern_rest.exceptions.DataParsingError``.
-
-        Returns:
-            Simple python object - exception converted to json.
-        """
-        if isinstance(error, (msgspec.ValidationError, str)):
-            return [{'type': 'value_error', 'loc': [], 'msg': str(error)}]
+        exc: Exception,
+    ) -> list[ErrorDetail]:
+        """Serialize validation error."""
+        if isinstance(exc, msgspec.ValidationError):
+            return [{'msg': str(exc), 'type': str(ErrorType.value_error)}]
         raise NotImplementedError(
-            f'Cannot serialize {error!r} of type {type(error)} to json safely',
+            f'Cannot serialize exception {exc!r} of type {type(exc)} safely',
         )

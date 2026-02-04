@@ -1,12 +1,14 @@
 import abc
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
-from django.http import HttpHeaders
 from typing_extensions import TypedDict
 
+from django_modern_rest.errors import ErrorDetail
 from django_modern_rest.exceptions import (
+    InternalServerError,
     RequestSerializationError,
-    ResponseSerializationError,
+    ValidationError,
 )
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
@@ -23,14 +25,13 @@ _TypeMapResult: TypeAlias = tuple[_ComponentParserSpec, dict[str, Any]]
 
 
 class BaseSerializer:
-    """Abstract base class for JSON serialization."""
+    """Abstract base class for data serialization."""
 
     __slots__ = ()
 
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
     optimizer: ClassVar[type['BaseEndpointOptimizer']]
-    default_error_model: ClassVar[Any]
 
     @classmethod
     @abc.abstractmethod
@@ -51,13 +52,11 @@ class BaseSerializer:
         Only add types that are common for all potential plugins here.
         Should be called inside :meth:`serialize`.
         """
-        if isinstance(to_serialize, HttpHeaders):
-            return dict(to_serialize)
         if isinstance(to_serialize, (set, frozenset)):  # pragma: no cover
             # This is impossible to reach with `msgspec`, but is needed
             # for raw `json` serialization.
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-        raise ResponseSerializationError(
+        raise InternalServerError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
         )
@@ -121,17 +120,23 @@ class BaseSerializer:
 
     @classmethod
     @abc.abstractmethod
-    def error_serialize(cls, error: Exception | str) -> Any:
+    def serialize_validation_error(
+        cls,
+        exc: Exception,
+    ) -> list[ErrorDetail]:
         """
-        Convert serialization or deserialization error to json format.
+        Convert specific serializer's validation errors into simple python data.
 
         Args:
-            error: A serialization exception like a validation error or
-                a ``django_modern_rest.exceptions.DataParsingError``.
+            exc: A serialization exception to be serialized into simpler type.
+                For example, pydantic has
+                a complex :exc:`pydantic_core.ValidationError` type.
+                That can't be converted to a simpler error message easily.
 
         Returns:
             Simple python object - exception converted to json.
         """
+        raise NotImplementedError
 
 
 class BaseEndpointOptimizer:
@@ -238,8 +243,9 @@ class SerializerContext:
                 strict=self.strict_validation,
             )
         except serializer.validation_error as exc:
-            raise RequestSerializationError(
-                serializer.error_serialize(exc),
+            raise ValidationError(
+                serializer.serialize_validation_error(exc),
+                status_code=HTTPStatus.BAD_REQUEST,
             ) from None
 
     def _bind_parsed(

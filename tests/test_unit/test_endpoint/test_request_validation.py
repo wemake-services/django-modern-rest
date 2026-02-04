@@ -86,10 +86,9 @@ def test_validate_pydantic_request_body(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'missing',
-                'loc': ['parsed_body', 'age'],
                 'msg': 'Field required',
-                'input': {},
+                'loc': ['parsed_body', 'age'],
+                'type': 'value_error',
             },
         ],
     })
@@ -106,10 +105,9 @@ def test_validate_typed_dict_request_body(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'missing',
-                'loc': ['parsed_body', 'name'],
                 'msg': 'Field required',
-                'input': {},
+                'loc': ['parsed_body', 'name'],
+                'type': 'value_error',
             },
         ],
     })
@@ -138,13 +136,12 @@ def test_validate_request_headers(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'int_parsing',
-                'loc': ['parsed_headers', 'X-Timestamp'],
                 'msg': (
                     'Input should be a valid integer, '
                     'unable to parse string as an integer'
                 ),
-                'input': 'not-int',
+                'loc': ['parsed_headers', 'X-Timestamp'],
+                'type': 'value_error',
             },
         ],
     })

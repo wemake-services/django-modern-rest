@@ -16,8 +16,10 @@ from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.exceptions import (
+    InternalServerError,
     NotAuthenticatedError,
-    ResponseSerializationError,
+    ResponseSchemaError,
+    ValidationError,
 )
 from django_modern_rest.headers import NewHeader
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
@@ -32,7 +34,7 @@ from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import APIError
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import (
     HttpSpec,
     Settings,
@@ -274,6 +276,9 @@ class Endpoint:  # noqa: WPS214
         ) -> HttpResponse:
             active_blueprint = controller.active_blueprint
             try:  # noqa: WPS229
+                # Negotiate response:
+                self.response_negotiator(controller.request)
+
                 # Run checks:
                 await self._run_async_checks(controller)
 
@@ -310,6 +315,9 @@ class Endpoint:  # noqa: WPS214
             active_blueprint = controller.active_blueprint
 
             try:  # noqa: WPS229
+                # Negotiate response:
+                self.response_negotiator(controller.request)
+
                 # Run checks:
                 self._run_checks(controller)
 
@@ -379,13 +387,18 @@ class Endpoint:  # noqa: WPS214
         """
         try:
             return self._validate_response(controller, raw_data)
-        except ResponseSerializationError as exc:
+        except (
+            ResponseSchemaError,
+            ValidationError,
+            InternalServerError,
+        ) as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
-            # here, because it is too late. Since `ResponseSerializationError`
+            # in exception handlers here,
+            # because it is too late. Since `ResponseSchemaError`
             # happened most likely because the return
             # schema validation was not successful.
             return controller.to_error(
-                {'detail': exc.args[0]},
+                controller.format_error(exc),
                 status_code=exc.status_code,
             )
 

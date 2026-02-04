@@ -17,7 +17,7 @@ from django_modern_rest.plugins.pydantic import (
     PydanticSerializer,
 )
 from django_modern_rest.routing import compose_blueprints
-from django_modern_rest.serialization import (
+from django_modern_rest.serializer import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )
@@ -52,6 +52,7 @@ class _ZeroMethodsBlueprint(Blueprint[PydanticSerializer]):
 @final
 class _DifferentSerializer(BaseSerializer):  # type: ignore[misc]
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
+    error_model = dict
 
 
 @final
@@ -207,7 +208,9 @@ def test_compose_blueprints_with_responses() -> None:
     )
     assert isinstance(composed.responses, list)
     for endpoint, description in composed.api_endpoints.items():
-        assert len(description.metadata.responses) == 2, endpoint
+        assert len(description.metadata.responses) == 3, endpoint
+        assert HTTPStatus.NOT_ACCEPTABLE in description.metadata.responses
+        assert HTTPStatus.OK in description.metadata.responses
 
 
 # Tests specifically for validation edge cases and preventing duplication.

@@ -12,7 +12,7 @@ from django_modern_rest import Controller, modify
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security.http import HttpBasicSyncAuth, basic_auth
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
 
@@ -50,7 +50,11 @@ def test_sync_basic_auth_success(
             return 'authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK, HTTPStatus.UNAUTHORIZED}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get(
         '/whatever/',
@@ -85,7 +89,11 @@ def test_sync_basic_auth_failure(
             raise NotImplementedError
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK, HTTPStatus.UNAUTHORIZED}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/', headers=request_headers)
 
@@ -95,15 +103,7 @@ def test_sync_basic_auth_failure(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 
@@ -118,7 +118,10 @@ def test_sync_auth_override_endpoint(
             return 'not authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/')
 
@@ -142,7 +145,10 @@ def test_sync_auth_override_controller(
             return 'not authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.responses.keys() == {HTTPStatus.OK}
+    assert metadata.responses.keys() == {
+        HTTPStatus.OK,
+        HTTPStatus.NOT_ACCEPTABLE,
+    }
 
     request = dmr_rf.get('/whatever/')
 

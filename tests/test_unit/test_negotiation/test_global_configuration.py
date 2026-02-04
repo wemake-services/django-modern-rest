@@ -470,25 +470,12 @@ def test_missing_conditional_content_type(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'type': 'value_error',
-                'loc': [],
                 'msg': (
-                    'Value error, Content-Type application/json '
-                    'is not listed in content_types={<ContentType.xml: '
-                    "'application/xml'>: <class 'str'>, "
-                    "<ContentType.form_data: 'multipart/form-data'>: "
-                    'dict[str, str]}'
+                    "Content-Type 'application/json' is not listed "
+                    "in supported content types ['application/xml', "
+                    "'multipart/form-data']"
                 ),
-                'input': '',
-                'ctx': {
-                    'error': (
-                        'Content-Type application/json '
-                        'is not listed in content_types={<ContentType.xml: '
-                        "'application/xml'>: <class 'str'>, "
-                        "<ContentType.form_data: 'multipart/form-data'>: "
-                        'dict[str, str]}'
-                    ),
-                },
+                'type': 'value_error',
             },
         ],
     })

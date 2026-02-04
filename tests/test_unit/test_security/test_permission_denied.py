@@ -20,7 +20,7 @@ from django_modern_rest.security.http import (
     HttpBasicAsyncAuth,
     HttpBasicSyncAuth,
 )
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -107,15 +107,7 @@ def test_sync_permission_denied(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
 
@@ -141,13 +133,5 @@ async def test_async_permission_denied(
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'type': 'value_error',
-                'loc': [],
-                'msg': 'Value error, Not authenticated',
-                'input': '',
-                'ctx': {'error': 'Not authenticated'},
-            },
-        ],
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })

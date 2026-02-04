@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, get_args
 
 from django_modern_rest.components import ComponentParser
 from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.types import infer_bases
 
 if TYPE_CHECKING:

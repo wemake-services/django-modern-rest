@@ -9,12 +9,16 @@ from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
 )
-from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint
+    from django_modern_rest.controller import Blueprint, Controller
     from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.serializer import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -56,7 +60,8 @@ class ComponentParser(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type[BaseSerializer],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """
@@ -67,9 +72,9 @@ class ComponentParser(ResponseSpecProvider):
         """
         return cls._add_new_response(
             ResponseSpec(
-                # We do this for runtime validation, not static type check:
-                serializer.default_error_model,
+                controller_cls.error_model,
                 status_code=RequestSerializationError.status_code,
+                description='Raised when request components cannot be parsed',
             ),
             existing_responses,
         )
@@ -166,9 +171,7 @@ class Body(ComponentParser, Generic[_BodyT]):
                 parser_cls=parser_cls,
             )
         except DataParsingError as exc:
-            raise RequestSerializationError(
-                blueprint.serializer.error_serialize(str(exc)),
-            ) from exc
+            raise RequestSerializationError(str(exc)) from None
 
 
 class Headers(ComponentParser, Generic[_HeadersT]):

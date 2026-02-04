@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 import xmltodict
 from typing_extensions import override
 
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.exceptions import InternalServerError
 from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
 from django_modern_rest.renderers import Renderer
 
@@ -56,7 +56,7 @@ class XmlRenderer(Renderer):
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
             try:  # noqa: SIM105
                 xml_value = serializer(xml_value)
-            except ResponseSerializationError:
+            except InternalServerError:
                 pass  # noqa: WPS420
             return xml_key, xml_value
 

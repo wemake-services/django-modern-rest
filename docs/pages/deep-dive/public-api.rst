@@ -6,13 +6,13 @@ Controller
 
 .. autoclass:: django_modern_rest.controller.Blueprint
   :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
   :show-inheritance:
 
 .. autoclass:: django_modern_rest.controller.Controller
   :members:
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
   :show-inheritance:
 
 
@@ -72,13 +72,13 @@ Validation
 Serialization
 -------------
 
-.. autoclass:: django_modern_rest.serialization.BaseSerializer
+.. autoclass:: django_modern_rest.serializer.BaseSerializer
   :members:
 
-.. autoclass:: django_modern_rest.serialization.BaseEndpointOptimizer
+.. autoclass:: django_modern_rest.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: django_modern_rest.serialization.SerializerContext
+.. autoclass:: django_modern_rest.serializer.SerializerContext
 
 
 Routing
@@ -114,13 +114,22 @@ Exceptions
 .. autoexception:: django_modern_rest.exceptions.DataParsingError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.SerializationError
-  :members:
-
 .. autoexception:: django_modern_rest.exceptions.RequestSerializationError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.ResponseSerializationError
+.. autoexception:: django_modern_rest.exceptions.ResponseSchemaError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.ValidationError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.NotAcceptableError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.NotAuthenticatedError
+  :members:
+
+.. autoexception:: django_modern_rest.exceptions.InternalServerError
   :members:
 
 
