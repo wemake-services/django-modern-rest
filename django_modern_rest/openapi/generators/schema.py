@@ -27,6 +27,7 @@ from uuid import UUID
 from django_modern_rest.openapi.core.registry import SchemaRegistry
 from django_modern_rest.openapi.extractors import FieldExtractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+from django_modern_rest.openapi.objects.parameter import Parameter
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
@@ -103,7 +104,7 @@ class SchemaGenerator:
         self.registry = SchemaRegistry()
 
     def generate(self, source_type: Any) -> Reference:
-        """Get or creage Reference for source_type."""
+        """Get or create Reference for source_type."""
         existing_ref = self.registry.get_reference(source_type)
         if existing_ref:
             return existing_ref
@@ -124,9 +125,37 @@ class SchemaGenerator:
             name=source_type.__name__,
         )
 
+    def generate_parameters(
+        self,
+        source_type: Any,
+        param_in: str,
+    ) -> list[Parameter | Reference]:
+        """Generate parameters from source type."""
+        extractor = _find_extractor(source_type)
+
+        params_list: list[Parameter | Reference] = []
+        for field in extractor.extract_fields(source_type):
+            required = field.extra_data.get('is_required', False)
+
+            if param_in == 'path':
+                required = True
+
+            params_list.append(
+                Parameter(
+                    name=field.name,
+                    param_in=param_in,
+                    schema=self.get_schema(field.annotation),
+                    description=None
+                    if field.kwarg_definition is None
+                    else field.kwarg_definition.description,
+                    required=required,
+                ),
+            )
+        return params_list
+
     def get_schema(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
-        simple_schema = self._get_from_type_map(
+        simple_schema = _get_schema_from_type_map(
             annotation,
         ) or self.registry.get_reference(annotation)
         if simple_schema:
@@ -171,18 +200,6 @@ class SchemaGenerator:
                 required.append(field_definition.name)
         return props, required
 
-    def _get_from_type_map(self, annotation: Any) -> Schema | None:
-        type_schema = _TYPE_MAP.get(annotation)
-        if type_schema:
-            return type_schema
-
-        if isinstance(annotation, type):
-            for base in annotation.mro():
-                base_schema = _TYPE_MAP.get(base)
-                if base_schema:
-                    return base_schema
-        return None
-
     def _apply_kwarg_definition(
         self,
         schema: Schema | Reference,
@@ -216,6 +233,19 @@ class SchemaGenerator:
 
             updates[schema_field] = kwarg_value
         return updates
+
+
+def _get_schema_from_type_map(annotation: Any) -> Schema | None:
+    type_schema = _TYPE_MAP.get(annotation)
+    if type_schema:
+        return type_schema
+
+    if isinstance(annotation, type):
+        for base in annotation.mro():
+            base_schema = _TYPE_MAP.get(base)
+            if base_schema:
+                return base_schema
+    return None
 
 
 def _handle_generic_types(

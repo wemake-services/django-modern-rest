@@ -1,10 +1,13 @@
 import re
 from http import HTTPStatus
+from types import MappingProxyType
 from typing import TYPE_CHECKING, get_args
 
 from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.operation import Operation
+from django_modern_rest.openapi.objects.parameter import Parameter
+from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.request_body import RequestBody
 from django_modern_rest.openapi.objects.response import Response
 from django_modern_rest.openapi.objects.responses import Responses
@@ -14,6 +17,14 @@ if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
     from django_modern_rest.metadata import ComponentParserSpec
     from django_modern_rest.openapi.core.context import OpenAPIContext
+
+
+_CONTEXT_TO_IN = MappingProxyType({
+    'parsed_query': 'query',
+    'parsed_path': 'path',
+    'parsed_headers': 'header',
+    'parsed_cookies': 'cookie',
+})
 
 
 class OperationGenerator:
@@ -45,6 +56,8 @@ class OperationGenerator:
             metadata.responses,
             metadata.parsers,
         )
+        params_list = self._generate_parameters(metadata.component_parsers)
+
         return Operation(
             tags=metadata.tags,
             summary=metadata.summary,
@@ -61,7 +74,29 @@ class OperationGenerator:
             operation_id=operation_id,
             request_body=request_body,
             responses=responses,
+            parameters=params_list,
         )
+
+    def _generate_parameters(
+        self,
+        parsers: 'list[ComponentParserSpec]',
+    ) -> list[Parameter | Reference] | None:
+        params_list: list[Parameter | Reference] = []
+
+        for parser_cls, parser_args in parsers:
+            param_in = _CONTEXT_TO_IN.get(parser_cls.context_name)
+
+            if not param_in or not parser_args:
+                continue
+
+            params_list.extend(
+                self.context.schema_generator.generate_parameters(
+                    parser_args[0],
+                    param_in,
+                ),
+            )
+
+        return params_list or None
 
     def _generate_request_body(
         self,
@@ -69,6 +104,10 @@ class OperationGenerator:
         request_parsers: 'dict[str, type[Parser]]',
     ) -> RequestBody | None:
         for parser, _ in parsers:
+            # TODO: Do we need enum for context name?
+            if parser.context_name != 'parsed_body':
+                continue
+
             parser_type = get_args(parser)[0]
             reference = self.context.schema_generator.get_schema(parser_type)
             return RequestBody(
