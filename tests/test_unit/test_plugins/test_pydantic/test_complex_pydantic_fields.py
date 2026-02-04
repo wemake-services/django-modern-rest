@@ -6,6 +6,7 @@ from typing import Any, ClassVar, final
 
 import pydantic
 import pytest
+from django.conf import LazySettings
 from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
@@ -149,7 +150,7 @@ class _ArbitraryTypesOutputController(
         return _ArbitraryTypesModel(user=_User())
 
 
-def test_complex_pydantic_out_arbitrary_types(
+def test_pydantic_arbitrary_types(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures by arbitrary types in pydantic produce clear errors."""
@@ -158,7 +159,26 @@ def test_complex_pydantic_out_arbitrary_types(
     response = _ArbitraryTypesOutputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
+    })
+
+
+def test_pydantic_arbitrary_types_debug(
+    dmr_rf: DMRRequestFactory,
+    settings: LazySettings,
+) -> None:
+    """Ensures by arbitrary types in pydantic produce clear errors in debug."""
+    settings.DEBUG = True
+    request = dmr_rf.post('/whatever/', data={})
+
+    response = _ArbitraryTypesOutputController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
@@ -166,7 +186,6 @@ def test_complex_pydantic_out_arbitrary_types(
                     'Unable to serialize unknown type: '
                     "<class 'test_complex_pydantic_fields._User'>"
                 ),
-                'type': 'value_error',
             },
         ],
     })
@@ -189,8 +208,10 @@ def test_complex_pydantic_out_object(
     response = _ObjectOutputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content)['detail']
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
+    })
 
 
 @pytest.mark.parametrize(

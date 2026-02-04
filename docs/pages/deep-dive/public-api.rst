@@ -132,6 +132,9 @@ Exceptions
 .. autoexception:: django_modern_rest.exceptions.NotAuthenticatedError
   :members:
 
+.. autoexception:: django_modern_rest.exceptions.InternalServerError
+  :members:
+
 
 Utilities
 ---------

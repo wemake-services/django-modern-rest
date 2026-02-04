@@ -17,7 +17,9 @@ from typing_extensions import TypedDict, override
 
 from django_modern_rest.envs import MAX_CACHE_SIZE
 from django_modern_rest.errors import ErrorDetail, ErrorType
-from django_modern_rest.exceptions import ResponseSerializationError
+from django_modern_rest.exceptions import (
+    InternalServerError,
+)
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.serializer import (
@@ -128,8 +130,7 @@ class PydanticSerializer(BaseSerializer):
                 cls.serialize_hook,
             )
         except pydantic_core.PydanticSerializationError as exc:
-            # TODO: convert to an internal error?
-            raise ResponseSerializationError(str(exc)) from None
+            raise InternalServerError(str(exc)) from None
 
     @override
     @classmethod

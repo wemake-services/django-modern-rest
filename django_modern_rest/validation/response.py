@@ -17,6 +17,7 @@ from django.http import HttpResponse
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.envs import MAX_CACHE_SIZE
 from django_modern_rest.exceptions import (
+    InternalServerError,
     ResponseSerializationError,
     ValidationError,
 )
@@ -94,9 +95,9 @@ class ResponseValidator:
     ) -> '_ValidationContext':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
+            # Happens in cases when `@validate` returns raw data:
             method = self.metadata.method
-            # TODO: convert to an internal error, not a response
-            raise ResponseSerializationError(
+            raise InternalServerError(
                 f'{type(controller)!r} in {method!r} returned '
                 f'raw data of type {type(structured)!r} '
                 'without associated `@modify` usage.',

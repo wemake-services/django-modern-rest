@@ -212,18 +212,9 @@ def test_validate_over_regular_data(dmr_rf: DMRRequestFactory) -> None:
     response = _MismatchingMetadata.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    "<class 'test_validate_decorator._MismatchingMetadata'> "
-                    "in 'get' returned raw data of type <class 'int'> "
-                    'without associated `@modify` usage.'
-                ),
-                'type': 'value_error',
-            },
-        ],
+        'detail': [{'msg': 'Internal server error'}],
     })
 
 
