@@ -125,23 +125,23 @@ def test_validate_status_code(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    if sys.version_info < (3, 13):  # pragma: no cover
+    if sys.version_info >= (3, 13):  # pragma: no cover
         # `HTTPStatus.UNPROCESSABLE_CONTENT` was renamed from
         # `HTTPStatus.UNPROCESSABLE_ENTITY` in 3.13
-        return
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    'Returned status_code=200 is not specified '
-                    'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
-                    '<HTTPStatus.NOT_ACCEPTABLE: 406>, '
-                    '<HTTPStatus.UNPROCESSABLE_CONTENT: 422>}'
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
+        assert json.loads(response.content) == snapshot({
+            'detail': [
+                {
+                    'msg': (
+                        'Returned status_code=200 is not specified '
+                        'in the list of allowed codes '
+                        '{<HTTPStatus.CREATED: 201>, '
+                        '<HTTPStatus.NOT_ACCEPTABLE: 406>, '
+                        '<HTTPStatus.UNPROCESSABLE_CONTENT: 422>}'
+                    ),
+                    'type': 'value_error',
+                },
+            ],
+        })
 
 
 _ListOfInts: TypeAlias = list[int]
