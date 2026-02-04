@@ -18,7 +18,7 @@ from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.exceptions import (
     InternalServerError,
     NotAuthenticatedError,
-    ResponseSerializationError,
+    ResponseSchemaError,
     ValidationError,
 )
 from django_modern_rest.headers import NewHeader
@@ -388,13 +388,13 @@ class Endpoint:  # noqa: WPS214
         try:
             return self._validate_response(controller, raw_data)
         except (
-            ResponseSerializationError,
+            ResponseSchemaError,
             ValidationError,
             InternalServerError,
         ) as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # in exception handlers here,
-            # because it is too late. Since `ResponseSerializationError`
+            # because it is too late. Since `ResponseSchemaError`
             # happened most likely because the return
             # schema validation was not successful.
             return controller.to_error(

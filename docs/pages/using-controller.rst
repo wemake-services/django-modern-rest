@@ -33,7 +33,7 @@ There will be several things that ``django-modern-rest`` will do for you here:
    All other endpoints would have ``200`` as the default
 4. All this metadata will be used to validate responses from this endpoint.
    Returning ``[]`` from ``post`` would trigger
-   :exc:`~django_modern_rest.exceptions.ResponseSerializationError`,
+   :exc:`~django_modern_rest.exceptions.ResponseSchemaError`,
    unless :ref:`response_validation` is explicitly turned off
 5. The same metadata will be used to render OpenAPI spec
 

@@ -19,7 +19,8 @@ from django_modern_rest.exceptions import (
     InternalServerError,
     NotAcceptableError,
     NotAuthenticatedError,
-    SerializationError,
+    RequestSerializationError,
+    ResponseSchemaError,
     ValidationError,
 )
 
@@ -98,7 +99,12 @@ def format_error(  # noqa: C901, WPS231
 
     if isinstance(
         error,
-        (SerializationError, NotAuthenticatedError, NotAcceptableError),
+        (
+            RequestSerializationError,
+            ResponseSchemaError,
+            NotAcceptableError,
+            NotAuthenticatedError,
+        ),
     ):
         error_type = (
             ErrorType.security
@@ -211,7 +217,8 @@ def wrap_handler(
 
 # NOTE: keep this in sync with `format_error()`
 _default_handled_excs: Final = (
-    SerializationError,
+    RequestSerializationError,
+    ResponseSchemaError,  # can only happen if validation is enabled
     NotAuthenticatedError,
     NotAcceptableError,
     ValidationError,

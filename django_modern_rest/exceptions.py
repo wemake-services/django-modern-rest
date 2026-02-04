@@ -46,17 +46,6 @@ class InternalServerError(Exception):
     status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-class SerializationError(Exception):
-    """
-    Base class for all parsing and serialization errors.
-
-    Do not use it directly, prefer exact exceptions for requests and responses.
-    """
-
-    #: Child classes can customize this attribute:
-    status_code: ClassVar[HTTPStatus] = HTTPStatus.UNPROCESSABLE_ENTITY
-
-
 @final
 class ValidationError(Exception):
     """
@@ -84,15 +73,22 @@ class ValidationError(Exception):
 
 
 @final
-class RequestSerializationError(SerializationError):
+class RequestSerializationError(Exception):
     """Raised when we fail to parse some request part."""
 
-    status_code = HTTPStatus.BAD_REQUEST
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.BAD_REQUEST
 
 
 @final
-class ResponseSerializationError(SerializationError):
-    """Raised when we fail to parse some response part."""
+class ResponseSchemaError(Exception):
+    """
+    Raised when we fail to validate some response part.
+
+    Can only happen when response validation is enabled.
+    Does not show up in the response schema if validation is disabled.
+    """
+
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @final

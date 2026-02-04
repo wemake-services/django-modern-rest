@@ -55,7 +55,7 @@ Here's how we select a renderer:
    we use :meth:`django.http.HttpRequest.get_preferred_type` method
    to match the best accepted type, based on order, weights, etc
 4. If no renderer fits for the accepted content types, we raise
-   :exc:`~django_modern_rest.exceptions.ResponseSerializationError`
+   :exc:`~django_modern_rest.exceptions.ResponseSchemaError`
 
 .. important::
 
