@@ -1,9 +1,13 @@
 import re
+from http import HTTPStatus
 from typing import TYPE_CHECKING, get_args
 
+from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.operation import Operation
 from django_modern_rest.openapi.objects.request_body import RequestBody
+from django_modern_rest.openapi.objects.response import Response
+from django_modern_rest.openapi.objects.responses import Responses
 from django_modern_rest.parsers import Parser
 
 if TYPE_CHECKING:
@@ -37,7 +41,10 @@ class OperationGenerator:
             metadata.component_parsers,
             metadata.parsers,
         )
-        # TODO: responses and parameters
+        responses = self._generate_responses(
+            metadata.responses,
+            metadata.parsers,
+        )
         return Operation(
             tags=metadata.tags,
             summary=metadata.summary,
@@ -53,7 +60,7 @@ class OperationGenerator:
             callbacks=metadata.callbacks,
             operation_id=operation_id,
             request_body=request_body,
-            # TODO: responses
+            responses=responses,
         )
 
     def _generate_request_body(
@@ -63,7 +70,7 @@ class OperationGenerator:
     ) -> RequestBody | None:
         for parser, _ in parsers:
             parser_type = get_args(parser)[0]
-            reference = self.context.schema_generator.generate(parser_type)
+            reference = self.context.schema_generator.get_schema(parser_type)
             return RequestBody(
                 content={
                     req_parser.content_type: MediaType(schema=reference)
@@ -72,6 +79,26 @@ class OperationGenerator:
                 required=True,
             )
         return None
+
+    def _generate_responses(
+        self,
+        responses: dict[HTTPStatus, ResponseSpec],
+        request_parsers: 'dict[str, type[Parser]]',
+    ) -> Responses:
+        return {
+            str(status_code.value): Response(
+                description=status_code.phrase,
+                content={
+                    req_parser.content_type: MediaType(
+                        schema=self.context.schema_generator.get_schema(
+                            response_spec.return_type,
+                        ),
+                    )
+                    for req_parser in request_parsers.values()
+                },
+            )
+            for status_code, response_spec in responses.items()
+        }
 
 
 class OperationIDGenerator:

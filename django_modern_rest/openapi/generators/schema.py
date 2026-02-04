@@ -19,11 +19,11 @@ from ipaddress import (
 from pathlib import Path
 from re import Pattern
 from types import MappingProxyType, NoneType, UnionType
-from typing import Any, Final, Union, get_args, get_origin
+from typing import Annotated, Any, Final, Union, get_args, get_origin
 from uuid import UUID
 
 from django_modern_rest.openapi.core.registry import SchemaRegistry
-from django_modern_rest.openapi.extractors.base import FieldExtractor
+from django_modern_rest.openapi.extractors import FieldExtractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
@@ -87,7 +87,7 @@ class SchemaGenerator:
         field_definitions = extractor.extract_fields(source_type)
 
         props = {
-            field_definition.name: self._get_schema_for_type(
+            field_definition.name: self.get_schema(
                 field_definition.annotation,
             )
             for field_definition in field_definitions
@@ -103,6 +103,29 @@ class SchemaGenerator:
             name=source_type.__name__,
         )
 
+    def get_schema(self, annotation: Any) -> Schema | Reference:
+        """Get schema for a type."""
+        simple_schema = self._get_from_type_map(
+            annotation,
+        ) or self.registry.get_reference(annotation)
+        if simple_schema:
+            return simple_schema
+
+        origin = get_origin(annotation) or annotation
+
+        if origin is Annotated:
+            return self.get_schema(get_args(annotation)[0])
+
+        generic_schema = _handle_generic_types(
+            self,
+            origin,
+            get_args(annotation),
+        )
+        if generic_schema:
+            return generic_schema
+
+        return self.generate(annotation)
+
     def _get_from_type_map(self, annotation: Any) -> Schema | None:
         type_schema = _TYPE_MAP.get(annotation)
         if type_schema:
@@ -115,56 +138,61 @@ class SchemaGenerator:
                     return base_schema
         return None
 
-    def _get_schema_for_type(self, annotation: Any) -> Schema | Reference:
-        simple_schema = self._get_from_type_map(
-            annotation,
-        ) or self.registry.get_reference(annotation)
-        if simple_schema:
-            return simple_schema
 
-        origin = get_origin(annotation) or annotation
-        args = get_args(annotation)
+def _handle_generic_types(
+    generator: SchemaGenerator,
+    origin: Any,
+    args: tuple[Any, ...],
+) -> Schema | Reference | None:
+    if origin is UnionType or origin is Union:
+        return _handle_union(generator, args)
 
-        if origin is UnionType or origin is Union:
-            return self._handle_union(args)
+    if isinstance(origin, type) and issubclass(origin, Mapping):
+        return _handle_mapping(generator, args)
 
-        if isinstance(origin, type) and issubclass(origin, Mapping):
-            return self._handle_mapping(args)
+    if (
+        isinstance(origin, type)
+        and issubclass(origin, Sequence)
+        and origin not in {str, bytes, bytearray}
+    ):
+        return _handle_sequence(generator, args)
 
-        if (
-            isinstance(origin, type)
-            and issubclass(origin, Sequence)
-            and origin not in {str, bytes, bytearray}
-        ):
-            return self._handle_sequence(args)
+    return None
 
-        return self.generate(annotation)
 
-    def _handle_union(self, args: tuple[Any, ...]) -> Schema | Reference:
-        real_args = [arg for arg in args if arg not in {NoneType, type(None)}]
+def _handle_union(
+    generator: SchemaGenerator,
+    args: tuple[Any, ...],
+) -> Schema | Reference:
+    real_args = [arg for arg in args if arg not in {NoneType, type(None)}]
 
-        if not real_args:
-            return _TYPE_MAP[NoneType]
+    if len(real_args) == 1:
+        return generator.get_schema(real_args[0])
 
-        if len(real_args) == 1:
-            return self._get_schema_for_type(real_args[0])
+    return Schema(
+        one_of=[generator.get_schema(arg) for arg in real_args],
+    )
 
-        return Schema(
-            any_of=[self._get_schema_for_type(arg) for arg in real_args],
-        )
 
-    def _handle_mapping(self, args: tuple[Any, ...]) -> Schema:
-        value_type = args[1] if len(args) >= 2 else Any
-        return Schema(
-            type=OpenAPIType.OBJECT,
-            additional_properties=self._get_schema_for_type(value_type),
-        )
+def _handle_mapping(
+    generator: SchemaGenerator,
+    args: tuple[Any, ...],
+) -> Schema:
+    value_type = args[1] if len(args) >= 2 else Any
+    return Schema(
+        type=OpenAPIType.OBJECT,
+        additional_properties=generator.get_schema(value_type),
+    )
 
-    def _handle_sequence(self, args: tuple[Any, ...]) -> Schema:
-        items_schema = None
-        if args:
-            items_schema = self._get_schema_for_type(args[0])
-        return Schema(type=OpenAPIType.ARRAY, items=items_schema)
+
+def _handle_sequence(
+    generator: SchemaGenerator,
+    args: tuple[Any, ...],
+) -> Schema:
+    items_schema = None
+    if args:
+        items_schema = generator.get_schema(args[0])
+    return Schema(type=OpenAPIType.ARRAY, items=items_schema)
 
 
 def _find_extractor(source_type: Any) -> FieldExtractor[Any]:

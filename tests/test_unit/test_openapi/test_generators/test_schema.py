@@ -1,7 +1,11 @@
 import pytest
 from pydantic import BaseModel
 
-from django_modern_rest.openapi.generators.schema import SchemaGenerator
+from django_modern_rest.openapi.generators.schema import (
+    SchemaGenerator,
+    _handle_sequence,
+)
+from django_modern_rest.openapi.objects.enums import OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.plugins import pydantic  # noqa: F401
 
@@ -42,3 +46,13 @@ def test_schema_generator_caching() -> None:
 
     assert ref1.ref == ref2.ref
     assert len(generator.registry.schemas) == 1
+
+
+def test_handle_sequence_without_args() -> None:
+    """Ensure _handle_sequence handles bare sequence types."""
+    generator = SchemaGenerator()
+
+    schema = _handle_sequence(generator, ())
+
+    assert schema.type == OpenAPIType.ARRAY
+    assert schema.items is None
