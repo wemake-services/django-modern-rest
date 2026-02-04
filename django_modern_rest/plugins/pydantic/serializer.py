@@ -10,23 +10,13 @@ from typing import (
     final,
 )
 
-from typing_extensions import TypedDict
-
-try:
-    import pydantic
-except ImportError:  # pragma: no cover
-    print(  # noqa: WPS421
-        'Looks like `pydantic` is not installed, '
-        "consider using `pip install 'django-modern-rest[pydantic]'`",
-    )
-    raise
-
+import pydantic
 import pydantic_core
 from pydantic.config import ExtraValues
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.errors import ErrorType
+from django_modern_rest.errors import ErrorDetail, ErrorType
 from django_modern_rest.exceptions import ResponseSerializationError
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
@@ -138,6 +128,7 @@ class PydanticSerializer(BaseSerializer):
                 cls.serialize_hook,
             )
         except pydantic_core.PydanticSerializationError as exc:
+            # TODO: convert to an internal error?
             raise ResponseSerializationError(str(exc)) from None
 
     @override
@@ -203,33 +194,26 @@ class PydanticSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def error_serialize(
+    def serialize_validation_error(
         cls,
-        error: Exception | str,
-        *,
-        loc: str | None = None,
-        error_type: str | ErrorType | None = None,
-    ) -> Any:  # `Any`, so we can subclass and change it.
-        """Convert error to the common format."""
-        if isinstance(error, pydantic.ValidationError):
-            return {
-                'detail': [
-                    {
-                        'msg': error['msg'],
-                        'loc': list(error['loc']),
-                        'type': str(ErrorType.value_error),
-                    }
-                    for error in error.errors(
-                        include_url=False,
-                        include_context=False,
-                        include_input=False,
-                    )
-                ],
-            }
-        return super().error_serialize(
-            error,
-            loc=loc,
-            error_type=error_type,
+        exc: Exception,
+    ) -> list[ErrorDetail]:
+        """Serialize validation error."""
+        if isinstance(exc, pydantic.ValidationError):
+            return [
+                {
+                    'msg': error['msg'],
+                    'loc': [str(loc) for loc in error['loc']],
+                    'type': str(ErrorType.value_error),
+                }
+                for error in exc.errors(
+                    include_url=False,
+                    include_context=False,
+                    include_input=False,
+                )
+            ]
+        raise NotImplementedError(
+            f'Cannot serialize exception {exc!r} of type {type(exc)} safely',
         )
 
 

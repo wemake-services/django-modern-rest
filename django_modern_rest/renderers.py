@@ -11,6 +11,7 @@ from django_modern_rest.exceptions import NotAcceptableError
 from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
+    from django_modern_rest.controller import Controller
     from django_modern_rest.serialization import BaseSerializer
 
 
@@ -43,14 +44,14 @@ class Renderer(ResponseSpecProvider):
     @classmethod
     def provide_response_specs(
         cls,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when data can't be rendered."""
         return cls._add_new_response(
             # When we face wrong `Accept` header, we raise 406 error:
             ResponseSpec(
-                return_type=serializer.error_model,
+                return_type=controller_cls.error_model,
                 status_code=NotAcceptableError.status_code,
                 description=(
                     'Raised when provided `Accept` header cannot be satisfied'

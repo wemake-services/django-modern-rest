@@ -221,6 +221,7 @@ def test_validate_over_regular_data(dmr_rf: DMRRequestFactory) -> None:
                     "in 'get' returned raw data of type <class 'int'> "
                     'without associated `@modify` usage.'
                 ),
+                'type': 'value_error',
             },
         ],
     })
@@ -266,7 +267,7 @@ def test_no_validate_for_responses(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [0],
+                'loc': ['0'],
                 'type': 'value_error',
             },
         ],
@@ -506,12 +507,12 @@ def test_validate_responses_from_blueprint() -> None:
             status_code=HTTPStatus.OK,
         ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=controller.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=controller.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
@@ -550,12 +551,12 @@ def test_validate_enable_semantic_responses() -> None:
             status_code=HTTPStatus.OK,
         ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=controller.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=controller.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),

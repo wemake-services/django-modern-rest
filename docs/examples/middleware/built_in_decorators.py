@@ -6,6 +6,7 @@ from django.http import HttpResponse
 
 from django_modern_rest import Controller, ResponseSpec
 from django_modern_rest.decorators import wrap_middleware
+from django_modern_rest.errors import ErrorModel, format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 
@@ -13,8 +14,8 @@ from django_modern_rest.response import build_response
 @wrap_middleware(
     login_required,
     ResponseSpec(
-        return_type=dict[str, str],
-        status_code=HTTPStatus.FOUND,
+        return_type=ErrorModel,
+        status_code=HTTPStatus.UNAUTHORIZED,
     ),
     ResponseSpec(  # Uses for proxy authed response with HTTPStatus.OK
         return_type=dict[str, str],
@@ -26,7 +27,7 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
     if response.status_code == HTTPStatus.FOUND:
         return build_response(
             PydanticSerializer,
-            raw_data=PydanticSerializer.error_serialize(
+            raw_data=format_error(
                 'Authentication credentials were not provided',
             ),
             status_code=HTTPStatus.UNAUTHORIZED,

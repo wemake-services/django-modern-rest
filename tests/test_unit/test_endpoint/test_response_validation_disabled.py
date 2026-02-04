@@ -161,7 +161,7 @@ def test_override_endpoint_validation(
         'detail': [
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [0],
+                'loc': ['0'],
                 'type': 'value_error',
             },
         ],
@@ -215,7 +215,7 @@ def test_override_controller_validation(
         'detail': [
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [0],
+                'loc': ['0'],
                 'type': 'value_error',
             },
         ],
@@ -245,7 +245,7 @@ def test_override_endpoint_over_controller(
         'detail': [
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [0],
+                'loc': ['0'],
                 'type': 'value_error',
             },
         ],
@@ -310,7 +310,7 @@ def test_override_endpoint_over_blueprint(
         'detail': [
             {
                 'msg': 'Input should be a valid integer',
-                'loc': [0],
+                'loc': ['0'],
                 'type': 'value_error',
             },
         ],

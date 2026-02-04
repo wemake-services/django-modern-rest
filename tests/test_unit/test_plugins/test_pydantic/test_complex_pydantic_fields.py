@@ -166,6 +166,7 @@ def test_complex_pydantic_out_arbitrary_types(
                     'Unable to serialize unknown type: '
                     "<class 'test_complex_pydantic_fields._User'>"
                 ),
+                'type': 'value_error',
             },
         ],
     })
