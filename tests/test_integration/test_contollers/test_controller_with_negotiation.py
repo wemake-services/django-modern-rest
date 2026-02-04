@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from django_modern_rest.negotiation import ContentType
 
-_URL: Final = reverse('api:controllers:negotiation')
+_URL: Final = reverse('api:negotiations:negotiation')
 _XML_DATA = '<root><key>value</key></root>'
 
 

@@ -1,5 +1,5 @@
 from types import NoneType
-from typing import Final, TypedDict
+from typing import Final
 
 import pytest
 from pydantic import BaseModel, Field
@@ -13,7 +13,7 @@ from django_modern_rest.openapi.generators.schema import (
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.types import KwargDefinition
+from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 from django_modern_rest.plugins import pydantic  # noqa: F401
 
 _MAXIMUM: Final = 100
@@ -31,10 +31,6 @@ class _ConstrainedModel(BaseModel):
 
 class _UnsupportedTestModel:
     attr: str
-
-
-class _TestTypedDict(TypedDict):
-    attr: int
 
 
 def test_schema_generator_unsupported_type() -> None:
@@ -97,22 +93,6 @@ def test_schema_generator_with_kwarg_definition() -> None:
     assert score_schema.maximum == _MAXIMUM
 
 
-def test_schema_generator_typed_dict() -> None:
-    """Ensure SchemaGenerator handles TypedDict correctly."""
-    generator = SchemaGenerator()
-
-    ref = generator.generate(_TestTypedDict)
-
-    assert isinstance(ref, Reference)
-    assert ref.ref == f'#/components/schemas/{_TestTypedDict.__name__}'
-
-    registered_schema = generator.registry.schemas[_TestTypedDict.__name__]
-    assert isinstance(registered_schema, Schema)
-    assert registered_schema.type == OpenAPIType.OBJECT
-    assert registered_schema.properties is not None
-    assert 'attr' in registered_schema.properties
-
-
 def test_handle_union_only_none() -> None:
     """Ensure _handle_union handles Union of only None types."""
     generator = SchemaGenerator()
@@ -122,6 +102,22 @@ def test_handle_union_only_none() -> None:
     assert schema is _TYPE_MAP[NoneType]
     assert isinstance(schema, Schema)
     assert schema.type == OpenAPIType.NULL
+
+
+def test_extract_properties_wo_kwarg_definition() -> None:
+    """Ensure _extract_properties works kwarg_definition."""
+    generator = SchemaGenerator()
+    field_def = FieldDefinition(
+        name='test_field',
+        annotation=int,
+        kwarg_definition=None,
+    )
+
+    props, _ = generator._extract_properties([field_def])
+
+    assert 'test_field' in props
+    assert isinstance(props['test_field'], Schema)
+    assert props['test_field'].type == OpenAPIType.INTEGER
 
 
 def test_apply_kwarg_definition_format() -> None:

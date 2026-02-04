@@ -1,7 +1,7 @@
 import re
 from http import HTTPStatus
 from types import MappingProxyType
-from typing import TYPE_CHECKING, get_args
+from typing import TYPE_CHECKING, Final, get_args
 
 from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.openapi.objects.media_type import MediaType
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
-_CONTEXT_TO_IN = MappingProxyType({
+_CONTEXT_TO_IN: Final = MappingProxyType({
     'parsed_query': 'query',
     'parsed_path': 'path',
     'parsed_headers': 'header',
