@@ -114,13 +114,10 @@ Exceptions
 .. autoexception:: django_modern_rest.exceptions.DataParsingError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.SerializationError
-  :members:
-
 .. autoexception:: django_modern_rest.exceptions.RequestSerializationError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.ResponseSerializationError
+.. autoexception:: django_modern_rest.exceptions.ResponseSchemaError
   :members:
 
 .. autoexception:: django_modern_rest.exceptions.ValidationError

@@ -18,7 +18,7 @@ from django_modern_rest.cookies import NewCookie
 from django_modern_rest.envs import MAX_CACHE_SIZE
 from django_modern_rest.exceptions import (
     InternalServerError,
-    ResponseSerializationError,
+    ResponseSchemaError,
     ValidationError,
 )
 from django_modern_rest.headers import build_headers
@@ -139,7 +139,7 @@ class ResponseValidator:
             return schema
 
         allowed = set(self.metadata.responses.keys())
-        raise ResponseSerializationError(
+        raise ResponseSchemaError(
             f'Returned {status_code=} is not specified '
             f'in the list of allowed codes {allowed!r}',
         )
@@ -160,7 +160,7 @@ class ResponseValidator:
             content_type: content type that is used for this body.
 
         Raises:
-            ResponseSerializationError: When validation fails.
+            ResponseSchemaError: When validation fails.
 
         """
         if (
@@ -175,7 +175,7 @@ class ResponseValidator:
             content_types = schema.return_type.__metadata__[0].computed
             if content_type not in content_types:
                 hint = [str(ct) for ct in content_types]
-                raise ResponseSerializationError(
+                raise ResponseSchemaError(
                     f'Content-Type {content_type!r} is not '
                     f'listed in supported content types {hint!r}',
                 )
@@ -210,7 +210,7 @@ class ResponseValidator:
                 if response_header.required
             } - response_headers
             if missing_required_headers:
-                raise ResponseSerializationError(
+                raise ResponseSchemaError(
                     'Response has missing required '
                     f'{missing_required_headers!r} headers',
                 )
@@ -221,7 +221,7 @@ class ResponseValidator:
             - {'content-type'}  # it is added automatically
         )
         if extra_response_headers:
-            raise ResponseSerializationError(
+            raise ResponseSchemaError(
                 'Response has extra undescribed '
                 f'{extra_response_headers!r} headers',
             )
@@ -242,7 +242,7 @@ class ResponseValidator:
             if response_cookie.required
         } - response.cookies.keys()
         if missing_required_cookies:
-            raise ResponseSerializationError(
+            raise ResponseSchemaError(
                 'Response has missing required '
                 f'{missing_required_cookies!r} cookie',
             )
@@ -252,7 +252,7 @@ class ResponseValidator:
             response.cookies.keys() - metadata_cookies.keys()
         )
         if extra_response_cookies:
-            raise ResponseSerializationError(
+            raise ResponseSchemaError(
                 'Response has extra undescribed '
                 f'{extra_response_cookies!r} cookies',
             )
@@ -260,7 +260,7 @@ class ResponseValidator:
         # Find not fully described cookies:
         for cookie_key, cookie_body in response.cookies.items():
             if not metadata_cookies[cookie_key].is_equal(cookie_body):
-                raise ResponseSerializationError(
+                raise ResponseSchemaError(
                     f'Response cookie {cookie_key}={cookie_body!r} is not '
                     f'equal to {metadata_cookies[cookie_key]!r}',
                 )
