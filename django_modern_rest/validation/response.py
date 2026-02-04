@@ -95,6 +95,7 @@ class ResponseValidator:
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
             method = self.metadata.method
+            # TODO: convert to an internal error, not a response
             raise ResponseSerializationError(
                 f'{type(controller)!r} in {method!r} returned '
                 f'raw data of type {type(structured)!r} '
@@ -189,7 +190,7 @@ class ResponseValidator:
             )
         except self.serializer.validation_error as exc:
             raise ValidationError(
-                self.serializer.error_serialize(exc),
+                self.serializer.serialize_validation_error(exc),
                 status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             ) from None
 

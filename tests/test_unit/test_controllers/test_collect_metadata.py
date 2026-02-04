@@ -60,7 +60,7 @@ def test_collected_responses() -> None:
             status_code=HTTPStatus.ACCEPTED,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=_Controller.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
@@ -76,7 +76,7 @@ def test_collected_responses() -> None:
             status_code=HTTPStatus.ACCEPTED,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=_Controller.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
@@ -101,12 +101,12 @@ def test_collected_responses_with_parsing() -> None:
             status_code=HTTPStatus.CREATED,
         ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=_ControllerWithParsing.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=_ControllerWithParsing.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),

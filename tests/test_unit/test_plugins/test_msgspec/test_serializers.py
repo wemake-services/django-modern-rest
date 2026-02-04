@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Any
 
 import pytest
 from django.http import HttpResponse
@@ -53,21 +54,21 @@ def test_serializer_via_endpoint(
 @pytest.mark.parametrize(
     ('err', 'is_raise'),
     [
-        ('', False),
-        (Exception(), True),
-        (_ForTestError(), True),
         (msgspec.ValidationError(), False),
         (_ForTestMsgSpecError(), False),
+        ('', True),
+        (Exception(), True),
+        (_ForTestError(), True),
         (1, True),
     ],
 )
 def test_serialize_errors_types(
-    err: str | Exception,
+    err: Any,
     is_raise: bool,  # noqa: FBT001
 ) -> None:
     """Ensures that MsgspecSerializer can serialize errors."""
     if is_raise:
         with pytest.raises(NotImplementedError):
-            MsgspecSerializer().error_serialize(err)
+            MsgspecSerializer().serialize_validation_error(err)
     else:
-        assert MsgspecSerializer().error_serialize(err)
+        assert MsgspecSerializer().serialize_validation_error(err)

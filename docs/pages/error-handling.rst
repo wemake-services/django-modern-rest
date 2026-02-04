@@ -136,25 +136,6 @@ We do the same as in blueprint's example to show that they are very similar.
 The main difference is the priority and scope.
 
 
-Customizing error messages
---------------------------
-
-All error messages, including pre-defined ones, can be easily customized
-on a per-controller basis.
-
-.. literalinclude:: /examples/error_handling/custom_error_messages.py
-  :caption: views.py
-  :language: python
-  :linenos:
-  :lines: 13-
-
-To do so, you would need to subclass a serializer and customize
-:attr:`~django_modern_rest.serialization.BaseSerializer.error_model`.
-
-See :class:`~django_modern_rest.errors.ErrorModel`
-for the default error model schema.
-
-
 Going further
 -------------
 
@@ -204,6 +185,33 @@ The same error handling logic can be represented as a diagram:
       Error ---->|No| Success[Successful response];
 
 
+.. _customizing-error-messages:
+
+Customizing error messages
+--------------------------
+
+All error messages, including pre-defined ones, can be easily customized
+on a per-controller basis.
+
+.. literalinclude:: /examples/error_handling/custom_error_messages.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :lines: 11-
+
+To do so, you would need to change:
+
+1. :attr:`~django_modern_rest.controller.Blueprint.error_model` attribute for
+   all controllers and blueprints that will be using this error message schema
+2. :meth:`~django_modern_rest.controller.Blueprint.format_error` method
+   to provide custom runtime error formatting
+
+See :class:`~django_modern_rest.errors.ErrorModel`
+for the default error model schema.
+And :func:`~django_modern_rest.errors.format_error`
+for the default error formatting.
+
+
 API Reference
 -------------
 
@@ -219,3 +227,5 @@ API Reference
 
 .. autoclass:: django_modern_rest.errors.ErrorDetail
   :members:
+
+.. autofunction:: django_modern_rest.errors.format_error

@@ -393,11 +393,7 @@ class Endpoint:  # noqa: WPS214
             # happened most likely because the return
             # schema validation was not successful.
             return controller.to_error(
-                (
-                    controller.serializer.error_serialize(exc.args[0])
-                    if isinstance(exc, ResponseSerializationError)
-                    else exc.args[0]
-                ),
+                controller.format_error(exc),
                 status_code=exc.status_code,
             )
 

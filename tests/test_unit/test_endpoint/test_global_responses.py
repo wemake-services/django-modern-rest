@@ -65,6 +65,7 @@ def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
                     'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
                     '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
                 ),
+                'type': 'value_error',
             },
         ],
     })

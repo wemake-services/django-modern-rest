@@ -1,65 +1,65 @@
 from http import HTTPStatus
 from typing import final
 
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict
 
 from django_modern_rest import APIError, Body, Controller, ResponseSpec, modify
-from django_modern_rest.errors import ErrorType
+from django_modern_rest.errors import ErrorType, format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
 @final
 class _ErrorDetail(TypedDict):
-    msg: str
+    message: str
 
 
 @final
-class ErrorModel(TypedDict):
-    detail: list[_ErrorDetail]
+class CustomErrorModel(TypedDict):
+    errors: list[_ErrorDetail]
 
 
-@final
-class CustomPydanticSerializer(PydanticSerializer):
-    error_model = ErrorModel
+class _CustomErrorMixin:
+    error_model = CustomErrorModel
 
-    @override
-    @classmethod
-    def error_serialize(
-        cls,
+    def format_error(
+        self,
         error: str | Exception,
         *,
         loc: str | None = None,
         error_type: str | ErrorType | None = None,
-    ) -> ErrorModel:
-        response = super().error_serialize(
+    ) -> CustomErrorModel:
+        default = format_error(
             error,
             loc=loc,
             error_type=error_type,
         )
         return {
-            'detail': [{'msg': detail['msg']} for detail in response['detail']],
+            'errors': [
+                {'message': detail['msg']} for detail in default['detail']
+            ],
         }
 
 
 @final
 class ApiController(
-    Controller[CustomPydanticSerializer],
+    _CustomErrorMixin,
+    Controller[PydanticSerializer],
     Body[dict[str, str]],
 ):
     @modify(
         extra_responses=[
             ResponseSpec(
-                return_type=CustomPydanticSerializer.error_model,
+                return_type=CustomErrorModel,
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             ),
         ],
     )
     def post(self) -> str:
         raise APIError(
-            self.serializer.error_serialize('Nope!'),
+            self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         )
 
 
-# run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
-# run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/",  "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "fail-with-body": false}  # noqa: ERA001, E501

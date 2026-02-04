@@ -60,19 +60,61 @@ class ErrorModel(TypedDict):
     """
     Default error response schema.
 
-    Can be customized. To do that:
-
-    1. Subclass the needed serailizer
-    2. Define new error model
-    3. Set ``error_model`` of your custom serializer to this new schema
-    4. Override
-       :meth:`django_modern_rest.serialization.BaseSerializer.error_serialize`
-       method
-
-    Done!
+    Can be customized.
+    See :ref:`customizing-error-messages` for more details.
     """
 
     detail: list[ErrorDetail]
+
+
+def format_error(
+    error: str | Exception,
+    *,
+    loc: str | None = None,
+    error_type: str | ErrorType | None = None,
+) -> ErrorModel:
+    """
+    Convert error to the common format.
+
+    Default implementation.
+
+    Args:
+        error: A serialization exception like a validation error or
+            a ``django_modern_rest.exceptions.DataParsingError``.
+        loc: Location where this error happened.
+            Like "headers" or "field_name".
+        error_type: Optional type of the error for extra metadata.
+
+    Returns:
+        Simple python object - exception converted to a common format.
+
+    """
+    # NOTE: keep this in sync with `_default_handled_excs`
+    if isinstance(error, ValidationError):
+        return {'detail': error.payload}
+
+    if isinstance(
+        error,
+        (SerializationError, NotAuthenticatedError, NotAcceptableError),
+    ):
+        error_type = (
+            ErrorType.security
+            if isinstance(error, NotAuthenticatedError)
+            else ErrorType.value_error
+        )
+        error = str(error.args[0])
+
+    if isinstance(error, str):
+        msg: ErrorDetail = {'msg': error}
+        if loc is not None:
+            msg.update({'loc': [loc]})
+        if error_type is not None:
+            msg.update({'type': str(error_type)})
+        return {'detail': [msg]}
+
+    raise NotImplementedError(
+        f'Cannot format error {error!r} of type {type(error)} safely',
+    )
 
 
 #: Error handler type for sync callbacks.
@@ -153,7 +195,7 @@ def wrap_handler(
     return decorator
 
 
-# NOTE: keep this in sync with `BaseSerializer.error_serialize`
+# NOTE: keep this in sync with `format_error()`
 _default_handled_excs: Final = (
     SerializationError,
     NotAuthenticatedError,
@@ -213,7 +255,7 @@ def global_error_handler(
        ... ) -> HttpResponse:
        ...     if isinstance(exc, ZeroDivisionError):
        ...         return controller.to_error(
-       ...             controller.serializer.error_serialize(
+       ...             controller.format_error(
        ...                 'inf',
        ...                 error_type=ErrorType.user_msg,
        ...             ),
@@ -236,7 +278,7 @@ def global_error_handler(
     """
     if isinstance(exc, _default_handled_excs):
         return controller.to_error(
-            controller.serializer.error_serialize(exc),
+            controller.format_error(exc),
             status_code=exc.status_code,
         )
     raise  # noqa: PLE0704

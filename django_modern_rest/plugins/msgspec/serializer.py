@@ -9,7 +9,7 @@ from typing import (
 import msgspec
 from typing_extensions import TypedDict, override
 
-from django_modern_rest.errors import ErrorType
+from django_modern_rest.errors import ErrorDetail, ErrorType
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.serialization import (
@@ -123,19 +123,13 @@ class MsgspecSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def error_serialize(
+    def serialize_validation_error(
         cls,
-        error: Exception | str,
-        *,
-        loc: str | None = None,
-        error_type: str | ErrorType | None = None,
-    ) -> Any:  # `Any`, so we can subclass and change it.
-        """Convert error to the common format."""
-        if isinstance(error, msgspec.ValidationError):
-            error = str(error)
-            error_type = ErrorType.value_error
-        return super().error_serialize(
-            error,
-            loc=loc,
-            error_type=error_type,
+        exc: Exception,
+    ) -> list[ErrorDetail]:
+        """Serialize validation error."""
+        if isinstance(exc, msgspec.ValidationError):
+            return [{'msg': str(exc), 'type': str(ErrorType.value_error)}]
+        raise NotImplementedError(
+            f'Cannot serialize exception {exc!r} of type {type(exc)} safely',
         )

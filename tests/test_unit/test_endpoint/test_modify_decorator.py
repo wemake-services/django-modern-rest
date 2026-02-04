@@ -138,7 +138,7 @@ def test_modify_deduplicate_statuses() -> None:
             status_code=HTTPStatus.OK,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=_DeduplicateStatuses.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
@@ -157,7 +157,7 @@ def test_modify_deduplicate_statuses() -> None:
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=PydanticSerializer.error_model,
+            return_type=_DeduplicateStatuses.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
