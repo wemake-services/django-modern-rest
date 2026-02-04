@@ -208,8 +208,9 @@ def test_compose_blueprints_with_responses() -> None:
     )
     assert isinstance(composed.responses, list)
     for endpoint, description in composed.api_endpoints.items():
-        assert len(description.metadata.responses) == 3, endpoint
+        assert len(description.metadata.responses) == 4, endpoint
         assert HTTPStatus.NOT_ACCEPTABLE in description.metadata.responses
+        assert HTTPStatus.UNPROCESSABLE_ENTITY in description.metadata.responses
         assert HTTPStatus.OK in description.metadata.responses
 
 

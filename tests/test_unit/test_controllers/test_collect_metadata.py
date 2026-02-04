@@ -64,6 +64,11 @@ def test_collected_responses() -> None:
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_ControllerWithParsing.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
     assert _Controller.api_endpoints['GET'].metadata.responses == snapshot({
         HTTPStatus.OK: ResponseSpec(return_type=str, status_code=HTTPStatus.OK),
@@ -78,6 +83,11 @@ def test_collected_responses() -> None:
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
             return_type=_Controller.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_ControllerWithParsing.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             description=IsStr(),  # type: ignore[arg-type]
         ),
     })
@@ -104,6 +114,37 @@ def test_collected_responses_with_parsing() -> None:
             return_type=_ControllerWithParsing.error_model,
             status_code=HTTPStatus.BAD_REQUEST,
             description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
+            return_type=_ControllerWithParsing.error_model,
+            status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_ControllerWithParsing.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+    })
+
+
+class _ControllerWithoutValidation(
+    Controller[PydanticSerializer],
+):
+    validate_responses = False
+
+    def post(self) -> str:
+        raise NotImplementedError
+
+
+def test_collected_responses_without_validation() -> None:
+    """Ensures that response validation adds correct metadata."""
+    assert _ControllerWithoutValidation.api_endpoints[
+        'POST'
+    ].metadata.responses == snapshot({
+        HTTPStatus.CREATED: ResponseSpec(
+            return_type=str,
+            status_code=HTTPStatus.CREATED,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
             return_type=_ControllerWithParsing.error_model,

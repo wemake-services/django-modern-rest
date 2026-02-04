@@ -1,4 +1,5 @@
 import json
+import sys
 from http import HTTPStatus
 from typing import final
 
@@ -57,18 +58,23 @@ def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    'Returned status_code=401 is not specified '
-                    'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
-                    '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
+    if sys.version_info >= (3, 13):  # pragma: no cover
+        # `HTTPStatus.UNPROCESSABLE_CONTENT` was renamed from
+        # `HTTPStatus.UNPROCESSABLE_ENTITY` in 3.13
+        assert json.loads(response.content) == snapshot({
+            'detail': [
+                {
+                    'msg': (
+                        'Returned status_code=401 is not specified '
+                        'in the list of allowed codes '
+                        '{<HTTPStatus.CREATED: 201>, '
+                        '<HTTPStatus.NOT_ACCEPTABLE: 406>, '
+                        '<HTTPStatus.UNPROCESSABLE_CONTENT: 422>}'
+                    ),
+                    'type': 'value_error',
+                },
+            ],
+        })
 
 
 def test_global_responses_implicit_validate(dmr_rf: DMRRequestFactory) -> None:

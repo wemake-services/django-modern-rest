@@ -153,6 +153,7 @@ def test_valid_api_error_contoller_level(
         HTTPStatus.OK,
         HTTPStatus.PAYMENT_REQUIRED,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
 
     request = dmr_rf.get('/whatever/')

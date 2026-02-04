@@ -507,6 +507,11 @@ def test_validate_responses_from_blueprint() -> None:
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=controller.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
 
 
@@ -549,6 +554,11 @@ def test_validate_enable_semantic_responses() -> None:
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
             return_type=controller.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=controller.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             description=IsStr(),  # type: ignore[arg-type]
         ),
     })

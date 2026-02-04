@@ -99,6 +99,11 @@ def test_error_message_controller_customization(
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_CustomErrorModel,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
 
     request = dmr_rf.post('/whatever/', data={})
@@ -167,6 +172,11 @@ def test_error_message_blueprint_customization(
         HTTPStatus.UNAUTHORIZED: ResponseSpec(
             return_type=_CustomErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_CustomErrorModel,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             description=IsStr(),  # type: ignore[arg-type]
         ),
     })
