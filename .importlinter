@@ -40,7 +40,6 @@ ignore_imports =
   # Internal cache can import anything:
   django_modern_rest.internal.cache -> django_modern_rest.plugins.msgspec.json
   django_modern_rest.internal.cache -> django_modern_rest.plugins.pydantic.serializer
-  django_modern_rest.internal.cache -> django_modern_rest.validation.response
 
 
 [importlinter:contract:no-optional-deps]
