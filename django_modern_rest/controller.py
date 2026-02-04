@@ -26,7 +26,7 @@ from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serialization import BaseSerializer, SerializerContext
+from django_modern_rest.serializer import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
 from django_modern_rest.types import infer_bases, infer_type_args
 from django_modern_rest.validation import (
@@ -70,7 +70,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             the attribute in the controller class.
             Because it is already passed to many other places.
             To customize it: create a new class,
-            subclass :class:`~django_modern_rest.serialization.BaseSerializer`,
+            subclass :class:`~django_modern_rest.serializer.BaseSerializer`,
             and pass the new type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
             We combine all components like
@@ -333,7 +333,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             the attribute in the controller class.
             Because it is already passed to many other places.
             To customize it: create a new class,
-            subclass :class:`~django_modern_rest.serialization.BaseSerializer`,
+            subclass :class:`~django_modern_rest.serializer.BaseSerializer`,
             and pass the new type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
             We combine all components like

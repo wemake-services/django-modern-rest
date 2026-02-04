@@ -12,7 +12,7 @@ from django_modern_rest.exceptions import (
     ValidationError,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 serializers: list[Any] = [PydanticSerializer]
 

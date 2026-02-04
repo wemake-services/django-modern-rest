@@ -25,7 +25,7 @@ from django_modern_rest.exceptions import (
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
     from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 
 @final

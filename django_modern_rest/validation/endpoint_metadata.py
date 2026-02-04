@@ -27,7 +27,7 @@ from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import infer_status_code
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import HttpSpec, Settings, resolve_setting
 from django_modern_rest.types import is_safe_subclass, parse_return_annotation
 from django_modern_rest.validation.payload import (

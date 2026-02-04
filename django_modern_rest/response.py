@@ -9,7 +9,7 @@ from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
     from django_modern_rest.renderers import Renderer
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 _ItemT = TypeVar('_ItemT')
 

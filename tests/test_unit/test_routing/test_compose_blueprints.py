@@ -17,7 +17,7 @@ from django_modern_rest.plugins.pydantic import (
     PydanticSerializer,
 )
 from django_modern_rest.routing import compose_blueprints
-from django_modern_rest.serialization import (
+from django_modern_rest.serializer import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )

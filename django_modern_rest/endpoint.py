@@ -33,7 +33,7 @@ from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
 from django_modern_rest.response import APIError
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import (
     HttpSpec,
     Settings,

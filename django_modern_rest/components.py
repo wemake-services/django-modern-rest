@@ -14,7 +14,7 @@ from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint, Controller
     from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')

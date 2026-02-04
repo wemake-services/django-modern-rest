@@ -12,7 +12,7 @@ from django_modern_rest.metadata import ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 
 class Renderer(ResponseSpecProvider):

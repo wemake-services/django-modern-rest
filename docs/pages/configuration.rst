@@ -275,7 +275,7 @@ Environment variables
 
   - To create json encoders and decoders only once
   - To create type validation objects
-    in :class:`~django_modern_rest.serialization.BaseEndpointOptimizer`
+    in :class:`~django_modern_rest.serializer.BaseEndpointOptimizer`
 
   You can control the size / memory usage with this setting.
 

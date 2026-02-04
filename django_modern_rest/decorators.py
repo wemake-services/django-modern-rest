@@ -16,7 +16,7 @@ from django_modern_rest.metadata import ResponseSpec
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Blueprint
-    from django_modern_rest.serialization import BaseSerializer
+    from django_modern_rest.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 

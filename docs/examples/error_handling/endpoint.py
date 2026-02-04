@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django_modern_rest import Body, Controller, modify
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 
 
 class TwoNumbers(pydantic.BaseModel):

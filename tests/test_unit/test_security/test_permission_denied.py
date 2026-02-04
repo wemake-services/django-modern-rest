@@ -20,7 +20,7 @@ from django_modern_rest.security.http import (
     HttpBasicAsyncAuth,
     HttpBasicSyncAuth,
 )
-from django_modern_rest.serialization import BaseSerializer
+from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
