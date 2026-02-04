@@ -6,6 +6,11 @@ Semantic schema generation
 
 TODO: explain how responses are fetched from components and auth
 
+Each endpoint might always return ``500`` status code,
+it is not listed by default.
+If you want to list this response, consider adding
+it to the default list of response specs in controller / settings.
+
 
 API Reference
 -------------

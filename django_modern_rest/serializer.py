@@ -6,8 +6,8 @@ from typing_extensions import TypedDict
 
 from django_modern_rest.errors import ErrorDetail
 from django_modern_rest.exceptions import (
+    InternalServerError,
     RequestSerializationError,
-    ResponseSerializationError,
     ValidationError,
 )
 from django_modern_rest.parsers import Parser, Raw
@@ -56,8 +56,7 @@ class BaseSerializer:
             # This is impossible to reach with `msgspec`, but is needed
             # for raw `json` serialization.
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-        # TODO: convert to an internal error
-        raise ResponseSerializationError(
+        raise InternalServerError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
         )

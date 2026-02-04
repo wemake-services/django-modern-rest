@@ -16,6 +16,7 @@ from django.http import HttpResponse
 from typing_extensions import TypedDict
 
 from django_modern_rest.exceptions import (
+    InternalServerError,
     NotAcceptableError,
     NotAuthenticatedError,
     SerializationError,
@@ -67,7 +68,7 @@ class ErrorModel(TypedDict):
     detail: list[ErrorDetail]
 
 
-def format_error(
+def format_error(  # noqa: C901, WPS231
     error: str | Exception,
     *,
     loc: str | None = None,
@@ -89,6 +90,8 @@ def format_error(
         Simple python object - exception converted to a common format.
 
     """
+    from django.conf import settings  # noqa: PLC0415
+
     # NOTE: keep this in sync with `_default_handled_excs`
     if isinstance(error, ValidationError):
         return {'detail': error.payload}
@@ -111,6 +114,17 @@ def format_error(
         if error_type is not None:
             msg.update({'type': str(error_type)})
         return {'detail': [msg]}
+
+    if isinstance(error, InternalServerError):
+        return {
+            'detail': [
+                {
+                    'msg': str(error)
+                    if settings.DEBUG
+                    else InternalServerError.default_message,
+                },
+            ],
+        }
 
     raise NotImplementedError(
         f'Cannot format error {error!r} of type {type(error)} safely',
@@ -201,6 +215,7 @@ _default_handled_excs: Final = (
     NotAuthenticatedError,
     NotAcceptableError,
     ValidationError,
+    InternalServerError,
 )
 
 

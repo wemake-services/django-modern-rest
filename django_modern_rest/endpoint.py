@@ -16,6 +16,7 @@ from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.exceptions import (
+    InternalServerError,
     NotAuthenticatedError,
     ResponseSerializationError,
     ValidationError,
@@ -386,7 +387,11 @@ class Endpoint:  # noqa: WPS214
         """
         try:
             return self._validate_response(controller, raw_data)
-        except (ResponseSerializationError, ValidationError) as exc:
+        except (
+            ResponseSerializationError,
+            ValidationError,
+            InternalServerError,
+        ) as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
             # in exception handlers here,
             # because it is too late. Since `ResponseSerializationError`
