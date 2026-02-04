@@ -53,6 +53,7 @@ class Schema:
     maximum: float | None = None
     exclusive_maximum: float | None = None
     minimum: float | None = None
+    exclusive_minimum: float | None = None
     max_length: int | None = None
     min_length: int | None = None
     pattern: str | None = None

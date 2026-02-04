@@ -64,6 +64,17 @@ class _UserPath(pydantic.BaseModel):
 
 
 @final
+class _ConstrainedUserSchema(pydantic.BaseModel):
+    username: str = pydantic.Field(
+        min_length=3,
+        max_length=20,  # noqa: WPS432
+        pattern=r'^[a-z0-9_]+$',
+    )
+    age: int = pydantic.Field(ge=18, le=100)  # noqa: WPS432
+    score: float = pydantic.Field(gt=0, lt=1.5)  # noqa: WPS432
+
+
+@final
 class UserCreateBlueprint(  # noqa: WPS215
     Query[_QueryData],
     Headers[_CustomHeaders],
@@ -224,3 +235,12 @@ class ContentNegotiationController(
         if self.request.accepts(ContentType.json):
             return list(self.parsed_body.root.values())
         return self.parsed_body.root
+
+
+@final
+class ConstrainedUserController(
+    Body[_ConstrainedUserSchema],
+    Controller[PydanticSerializer],
+):
+    def post(self) -> _ConstrainedUserSchema:
+        return self.parsed_body

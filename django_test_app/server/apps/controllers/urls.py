@@ -45,4 +45,9 @@ router = Router([
         views.ContentNegotiationController.as_view(),
         name='negotiation',
     ),
+    path(
+        'constrained-user',
+        views.ConstrainedUserController.as_view(),
+        name='constrained_user_create',
+    ),
 ])

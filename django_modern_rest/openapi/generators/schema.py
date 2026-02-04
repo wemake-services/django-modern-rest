@@ -1,3 +1,5 @@
+import contextlib
+import dataclasses
 from collections import OrderedDict, defaultdict, deque
 from collections.abc import (
     Iterable,
@@ -27,6 +29,7 @@ from django_modern_rest.openapi.extractors import FieldExtractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
+from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 _SCHEMA_ARRAY: Final = Schema(type=OpenAPIType.ARRAY)
 
@@ -68,6 +71,29 @@ _TYPE_MAP: Final = MappingProxyType({
     timedelta: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DURATION),
 })
 
+_KWARG_TO_SCHEMA_MAP: Final = MappingProxyType({
+    'content_encoding': 'content_encoding',
+    'default': 'default',
+    'title': 'title',
+    'description': 'description',
+    'const': 'const',
+    'gt': 'exclusive_minimum',
+    'ge': 'minimum',
+    'lt': 'exclusive_maximum',
+    'le': 'maximum',
+    'multiple_of': 'multiple_of',
+    'min_items': 'min_items',
+    'max_items': 'max_items',
+    'min_length': 'min_length',
+    'max_length': 'max_length',
+    'pattern': 'pattern',
+    'format': 'format',
+    'enum': 'enum',
+    'read_only': 'read_only',
+    'examples': 'examples',
+    'external_docs': 'external_docs',
+})
+
 
 class SchemaGenerator:
     """Generate FieldDefinition from dtos."""
@@ -82,20 +108,15 @@ class SchemaGenerator:
         if existing_ref:
             return existing_ref
 
-        extractor = _find_extractor(source_type)
-
-        field_definitions = extractor.extract_fields(source_type)
-
-        props = {
-            field_definition.name: self.get_schema(
-                field_definition.annotation,
-            )
-            for field_definition in field_definitions
-        }
+        field_definitions = _find_extractor(source_type).extract_fields(
+            source_type,
+        )
+        props, required = self._extract_properties(field_definitions)
 
         schema = Schema(
             type=OpenAPIType.OBJECT,
             properties=props,
+            required=required or None,
         )
         return self.registry.register(
             source_type=source_type,
@@ -126,6 +147,30 @@ class SchemaGenerator:
 
         return self.generate(annotation)
 
+    def _extract_properties(
+        self,
+        field_definitions: list[FieldDefinition],
+    ) -> tuple[dict[str, Schema | Reference], list[str]]:
+        props: dict[str, Schema | Reference] = {}
+        required: list[str] = []
+
+        for field_definition in field_definitions:
+            schema = self.get_schema(
+                field_definition.annotation,
+            )
+
+            if field_definition.kwarg_definition:
+                schema = self._apply_kwarg_definition(
+                    schema,
+                    field_definition.kwarg_definition,
+                )
+
+            props[field_definition.name] = schema
+
+            if field_definition.extra_data.get('is_required'):
+                required.append(field_definition.name)
+        return props, required
+
     def _get_from_type_map(self, annotation: Any) -> Schema | None:
         type_schema = _TYPE_MAP.get(annotation)
         if type_schema:
@@ -137,6 +182,40 @@ class SchemaGenerator:
                 if base_schema:
                     return base_schema
         return None
+
+    def _apply_kwarg_definition(
+        self,
+        schema: Schema | Reference,
+        kwarg_definition: KwargDefinition,
+    ) -> Schema | Reference:
+        if isinstance(schema, Reference):
+            # TODO: handle Reference wrapping with allOf?
+            return schema
+
+        updates = self._get_kwarg_update(schema, kwarg_definition)
+
+        if not updates:
+            return schema
+
+        return dataclasses.replace(schema, **updates)
+
+    def _get_kwarg_update(
+        self,
+        schema: Schema,
+        kwarg_definition: KwargDefinition,
+    ) -> dict[str, Any]:
+        updates: dict[str, Any] = {}
+        for kwarg_field, schema_field in _KWARG_TO_SCHEMA_MAP.items():
+            kwarg_value = getattr(kwarg_definition, kwarg_field)
+            if kwarg_value is None:
+                continue
+
+            if kwarg_field == 'format':
+                with contextlib.suppress(ValueError):
+                    kwarg_value = OpenAPIFormat(kwarg_value)
+
+            updates[schema_field] = kwarg_value
+        return updates
 
 
 def _handle_generic_types(
@@ -165,6 +244,8 @@ def _handle_union(
     args: tuple[Any, ...],
 ) -> Schema | Reference:
     real_args = [arg for arg in args if arg not in {NoneType, type(None)}]
+    if not real_args:
+        return _TYPE_MAP[NoneType]
 
     if len(real_args) == 1:
         return generator.get_schema(real_args[0])
