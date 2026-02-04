@@ -142,6 +142,11 @@ def test_modify_deduplicate_statuses() -> None:
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_DeduplicateStatuses.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
     assert endpoints['POST'].metadata.responses == snapshot({
         HTTPStatus.CREATED: ResponseSpec(
@@ -159,6 +164,11 @@ def test_modify_deduplicate_statuses() -> None:
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
             return_type=_DeduplicateStatuses.error_model,
             status_code=HTTPStatus.NOT_ACCEPTABLE,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
+        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
+            return_type=_DeduplicateStatuses.error_model,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             description=IsStr(),  # type: ignore[arg-type]
         ),
     })

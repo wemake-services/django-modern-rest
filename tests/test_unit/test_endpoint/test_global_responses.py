@@ -63,7 +63,8 @@ def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
                 'msg': (
                     'Returned status_code=401 is not specified '
                     'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
-                    '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
+                    '<HTTPStatus.NOT_ACCEPTABLE: 406>, '
+                    '<HTTPStatus.UNPROCESSABLE_CONTENT: 422>}'
                 ),
                 'type': 'value_error',
             },

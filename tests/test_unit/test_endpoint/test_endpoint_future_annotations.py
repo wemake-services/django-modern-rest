@@ -44,7 +44,9 @@ def test_solvable_response_annotations() -> None:
             raise NotImplementedError
 
     endpoint = MyController.api_endpoints['GET']
-    assert endpoint.response_validator.metadata.responses.keys() == {
-        HTTPStatus.OK,
-        HTTPStatus.NOT_ACCEPTABLE,
-    }
+    assert (
+        endpoint.response_validator.metadata.responses[
+            HTTPStatus.OK
+        ].return_type
+        == _RegularAlias
+    )

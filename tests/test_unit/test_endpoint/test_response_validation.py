@@ -130,7 +130,8 @@ def test_validate_status_code(
                 'msg': (
                     'Returned status_code=200 is not specified '
                     'in the list of allowed codes {<HTTPStatus.CREATED: 201>, '
-                    '<HTTPStatus.NOT_ACCEPTABLE: 406>}'
+                    '<HTTPStatus.NOT_ACCEPTABLE: 406>, '
+                    '<HTTPStatus.UNPROCESSABLE_CONTENT: 422>}'
                 ),
                 'type': 'value_error',
             },

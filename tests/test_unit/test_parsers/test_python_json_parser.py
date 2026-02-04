@@ -41,6 +41,7 @@ def test_native_json_metadata() -> None:
     assert metadata.responses.keys() == {
         HTTPStatus.OK,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
     assert len(metadata.parsers) == 1
     assert len(metadata.renderers) == 1
@@ -60,6 +61,7 @@ def test_empty_request_data(
         HTTPStatus.CREATED,
         HTTPStatus.BAD_REQUEST,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
     assert len(metadata.parsers) == 1
     assert len(metadata.renderers) == 1
