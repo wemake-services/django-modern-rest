@@ -38,7 +38,7 @@ class ParameterGenerator:
                 continue
 
             params_list.extend(
-                self.generate_from_type(
+                self._generate_from_type(
                     parser_args[0],
                     param_in,
                 ),
@@ -46,12 +46,11 @@ class ParameterGenerator:
 
         return params_list or None
 
-    def generate_from_type(
+    def _generate_from_type(
         self,
         source_type: Any,
         param_in: str,
     ) -> list[Parameter | Reference]:
-        """Generate parameters from source type."""
         extractor = find_extractor(source_type)
 
         params_list: list[Parameter | Reference] = []
