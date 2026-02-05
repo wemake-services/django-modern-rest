@@ -4,7 +4,8 @@ from typing import Final
 import pytest
 from pydantic import BaseModel, Field
 
-from django_modern_rest.openapi.core.registry import SchemaRegistry
+from django_modern_rest.openapi.config import OpenAPIConfig
+from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.generators.schema import (
     _TYPE_MAP,
     SchemaGenerator,
@@ -18,6 +19,7 @@ from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 from django_modern_rest.plugins import pydantic  # noqa: F401
 
 _MAXIMUM: Final = 100
+_CONFIG: Final = OpenAPIConfig(title='Test config', version='0.1')
 
 
 class _TestModel(BaseModel):
@@ -36,14 +38,14 @@ class _UnsupportedTestModel:
 
 def test_schema_generator_unsupported_type() -> None:
     """Ensure SchemaGenerator raises error."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
     with pytest.raises(ValueError, match=r'Field extractor for .* not found'):
         generator.generate(_UnsupportedTestModel)
 
 
 def test_schema_generator_works() -> None:
     """Ensure SchemaGenerator generate reference."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
 
     ref = generator.generate(_TestModel)
 
@@ -54,7 +56,7 @@ def test_schema_generator_works() -> None:
 
 def test_schema_generator_caching() -> None:
     """Ensure SchemaGenerator cache reference."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
 
     ref1 = generator.generate(_TestModel)
     ref2 = generator.generate(_TestModel)
@@ -67,7 +69,7 @@ def test_schema_generator_caching() -> None:
 
 def test_handle_sequence_without_args() -> None:
     """Ensure _handle_sequence handles bare sequence types."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
 
     schema = _handle_sequence(generator, ())
 
@@ -77,7 +79,7 @@ def test_handle_sequence_without_args() -> None:
 
 def test_schema_generator_with_kwarg_definition() -> None:
     """Ensure SchemaGenerator applies KwargDefinition."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
 
     generator.generate(_ConstrainedModel)
     schema = generator.registry.schemas[_ConstrainedModel.__name__]
@@ -98,7 +100,7 @@ def test_schema_generator_with_kwarg_definition() -> None:
 
 def test_handle_union_only_none() -> None:
     """Ensure _handle_union handles Union of only None types."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
 
     schema = _handle_union(generator, (NoneType, type(None)))
 
@@ -109,7 +111,7 @@ def test_handle_union_only_none() -> None:
 
 def test_extract_properties_wo_kwarg_definition() -> None:
     """Ensure _extract_properties works kwarg_definition."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
     field_def = FieldDefinition(
         name='test_field',
         annotation=int,
@@ -125,7 +127,7 @@ def test_extract_properties_wo_kwarg_definition() -> None:
 
 def test_apply_kwarg_definition_format() -> None:
     """Ensure _apply_kwarg_definition handles format correctly."""
-    generator = SchemaGenerator(SchemaRegistry())
+    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
     schema = Schema(type=OpenAPIType.STRING)
     kwarg_def = KwargDefinition(format='ipv4')
 

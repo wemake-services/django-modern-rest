@@ -54,17 +54,16 @@ class OpenAPIContext:
         self.config = config
 
         # Initialize registries
-        schema_registry = SchemaRegistry()
         self.registries = RegistryContainer(
             operation_id=OperationIdRegistry(),
-            schema=schema_registry,
+            schema=SchemaRegistry(),
         )
 
         # Initialize generators
         self.generators = GeneratorContainer(
             operation=OperationGenerator(self),
             operation_id=OperationIDGenerator(self),
-            schema=SchemaGenerator(schema_registry),
+            schema=SchemaGenerator(self),
             parameter=ParameterGenerator(self),
             request_body=RequestBodyGenerator(self),
             response=ResponseGenerator(self),

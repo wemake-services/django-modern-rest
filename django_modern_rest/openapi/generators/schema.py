@@ -21,15 +21,25 @@ from ipaddress import (
 from pathlib import Path
 from re import Pattern
 from types import MappingProxyType, NoneType, UnionType
-from typing import Annotated, Any, Final, Union, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Final,
+    Union,
+    get_args,
+    get_origin,
+)
 from uuid import UUID
 
-from django_modern_rest.openapi.core.registry import SchemaRegistry
 from django_modern_rest.openapi.extractors.finder import find_extractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.core.context import OpenAPIContext
 
 _SCHEMA_ARRAY: Final = Schema(type=OpenAPIType.ARRAY)
 
@@ -102,9 +112,9 @@ _KWARG_TO_SCHEMA_MAP: Final = MappingProxyType({
 class SchemaGenerator:
     """Generate FieldDefinition from dtos."""
 
-    def __init__(self, registry: SchemaRegistry) -> None:
+    def __init__(self, context: 'OpenAPIContext') -> None:
         """Init empty registry."""
-        self.registry = registry
+        self.registry = context.registries.schema
 
     def generate(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
