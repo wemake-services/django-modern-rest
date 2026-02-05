@@ -54,6 +54,7 @@ def test_sync_basic_auth_success(
         HTTPStatus.OK,
         HTTPStatus.UNAUTHORIZED,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
 
     request = dmr_rf.get(
@@ -93,6 +94,7 @@ def test_sync_basic_auth_failure(
         HTTPStatus.OK,
         HTTPStatus.UNAUTHORIZED,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
 
     request = dmr_rf.get('/whatever/', headers=request_headers)
@@ -121,6 +123,7 @@ def test_sync_auth_override_endpoint(
     assert metadata.responses.keys() == {
         HTTPStatus.OK,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
 
     request = dmr_rf.get('/whatever/')
@@ -148,6 +151,7 @@ def test_sync_auth_override_controller(
     assert metadata.responses.keys() == {
         HTTPStatus.OK,
         HTTPStatus.NOT_ACCEPTABLE,
+        HTTPStatus.UNPROCESSABLE_ENTITY,
     }
 
     request = dmr_rf.get('/whatever/')

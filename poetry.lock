@@ -500,6 +500,28 @@ django = "*"
 typing-extensions = "*"
 
 [[package]]
+name = "dnspython"
+version = "2.8.0"
+description = "DNS toolkit"
+optional = true
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "extra == \"pydantic\""
+files = [
+    {file = "dnspython-2.8.0-py3-none-any.whl", hash = "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af"},
+    {file = "dnspython-2.8.0.tar.gz", hash = "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f"},
+]
+
+[package.extras]
+dev = ["black (>=25.1.0)", "coverage (>=7.0)", "flake8 (>=7)", "hypercorn (>=0.17.0)", "mypy (>=1.17)", "pylint (>=3)", "pytest (>=8.4)", "pytest-cov (>=6.2.0)", "quart-trio (>=0.12.0)", "sphinx (>=8.2.0)", "sphinx-rtd-theme (>=3.0.0)", "twine (>=6.1.0)", "wheel (>=0.45.0)"]
+dnssec = ["cryptography (>=45)"]
+doh = ["h2 (>=4.2.0)", "httpcore (>=1.0.0)", "httpx (>=0.28.0)"]
+doq = ["aioquic (>=1.2.0)"]
+idna = ["idna (>=3.10)"]
+trio = ["trio (>=0.30)"]
+wmi = ["wmi (>=1.5.1) ; platform_system == \"Windows\""]
+
+[[package]]
 name = "docutils"
 version = "0.21.2"
 description = "Docutils -- Python Documentation Utilities"
@@ -510,6 +532,23 @@ files = [
     {file = "docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2"},
     {file = "docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f"},
 ]
+
+[[package]]
+name = "email-validator"
+version = "2.3.0"
+description = "A robust email address syntax and deliverability validation library."
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"pydantic\""
+files = [
+    {file = "email_validator-2.3.0-py3-none-any.whl", hash = "sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4"},
+    {file = "email_validator-2.3.0.tar.gz", hash = "sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426"},
+]
+
+[package.dependencies]
+dnspython = ">=2.0.0"
+idna = ">=2.0.0"
 
 [[package]]
 name = "executing"
@@ -830,14 +869,14 @@ zoneinfo = ["tzdata (>=2025.3) ; sys_platform == \"win32\" or sys_platform == \"
 
 [[package]]
 name = "hypothesis-graphql"
-version = "0.11.1"
+version = "0.12.0"
 description = "Hypothesis strategies for GraphQL queries"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "hypothesis_graphql-0.11.1-py3-none-any.whl", hash = "sha256:a6968f703bcdc31fbe1b26be69185aa2c824eb3b478057a66aa85967c81cadca"},
-    {file = "hypothesis_graphql-0.11.1.tar.gz", hash = "sha256:bd49ab6804a3f488ecab2e39c20dba6dfc2101525c6742f5831cfa9eff95285a"},
+    {file = "hypothesis_graphql-0.12.0-py3-none-any.whl", hash = "sha256:d200d3d4320e772248075f13c656f4b1de01e7f0f5e7d9fd6fea7da759b325f3"},
+    {file = "hypothesis_graphql-0.12.0.tar.gz", hash = "sha256:15f5f69b6e0b9ad889f59d340e091d7d481471373eb6a8a8591d126aa56e7700"},
 ]
 
 [package.dependencies]
@@ -871,11 +910,12 @@ version = "3.11"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev", "docs"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "idna-3.11-py3-none-any.whl", hash = "sha256:771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea"},
     {file = "idna-3.11.tar.gz", hash = "sha256:795dafcc9c04ed0c1fb032c2aa73654d8e8c5023a7df64a53f39190ada629902"},
 ]
+markers = {main = "extra == \"pydantic\""}
 
 [package.extras]
 all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
@@ -1585,6 +1625,7 @@ files = [
 
 [package.dependencies]
 annotated-types = ">=0.6.0"
+email-validator = {version = ">=2.0.0", optional = true, markers = "extra == \"email\""}
 pydantic-core = "2.41.5"
 typing-extensions = ">=4.14.1"
 typing-inspection = ">=0.4.2"
@@ -2748,14 +2789,14 @@ starlette = ">=0.20.1"
 
 [[package]]
 name = "tenacity"
-version = "9.1.2"
+version = "9.1.3"
 description = "Retry code until it succeeds"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138"},
-    {file = "tenacity-9.1.2.tar.gz", hash = "sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb"},
+    {file = "tenacity-9.1.3-py3-none-any.whl", hash = "sha256:51171cfc6b8a7826551e2f029426b10a6af189c5ac6986adcd7eb36d42f17954"},
+    {file = "tenacity-9.1.3.tar.gz", hash = "sha256:a6724c947aa717087e2531f883bde5c9188f603f6669a9b8d54eb998e604c12a"},
 ]
 
 [package.extras]
@@ -2960,4 +3001,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "e9354cb6db84134f230150d9a07217785d343ce2cc2eff8d50af5390a6d7461c"
+content-hash = "ec07f95655e9f2c2b6ec4acb64471a089cc28d1f5363e332f59a0c7ca3a37216"
