@@ -1,30 +1,11 @@
 import re
-from http import HTTPStatus
-from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, get_args
+from typing import TYPE_CHECKING
 
-from django_modern_rest.metadata import ResponseSpec
-from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.operation import Operation
-from django_modern_rest.openapi.objects.parameter import Parameter
-from django_modern_rest.openapi.objects.reference import Reference
-from django_modern_rest.openapi.objects.request_body import RequestBody
-from django_modern_rest.openapi.objects.response import Response
-from django_modern_rest.openapi.objects.responses import Responses
-from django_modern_rest.parsers import Parser
 
 if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.metadata import ComponentParserSpec
     from django_modern_rest.openapi.core.context import OpenAPIContext
-
-
-_CONTEXT_TO_IN: Final = MappingProxyType({
-    'parsed_query': 'query',
-    'parsed_path': 'path',
-    'parsed_headers': 'header',
-    'parsed_cookies': 'cookie',
-})
 
 
 class OperationGenerator:
@@ -44,19 +25,21 @@ class OperationGenerator:
     def generate(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
         metadata = endpoint.metadata
-        operation_id = self.context.operation_id_generator.generate(
+        operation_id = self.context.generators.operation_id.generate(
             endpoint,
             path,
         )
-        request_body = self._generate_request_body(
+        request_body = self.context.generators.request_body.generate(
             metadata.component_parsers,
             metadata.parsers,
         )
-        responses = self._generate_responses(
+        responses = self.context.generators.response.generate(
             metadata.responses,
             metadata.parsers,
         )
-        params_list = self._generate_parameters(metadata.component_parsers)
+        params_list = self.context.generators.parameter.generate(
+            metadata.component_parsers,
+        )
 
         return Operation(
             tags=metadata.tags,
@@ -76,68 +59,6 @@ class OperationGenerator:
             responses=responses,
             parameters=params_list,
         )
-
-    def _generate_parameters(
-        self,
-        parsers: 'list[ComponentParserSpec]',
-    ) -> list[Parameter | Reference] | None:
-        params_list: list[Parameter | Reference] = []
-
-        for parser_cls, parser_args in parsers:
-            param_in = _CONTEXT_TO_IN.get(parser_cls.context_name)
-
-            if not param_in or not parser_args:
-                continue
-
-            params_list.extend(
-                self.context.schema_generator.generate_parameters(
-                    parser_args[0],
-                    param_in,
-                ),
-            )
-
-        return params_list or None
-
-    def _generate_request_body(
-        self,
-        parsers: 'list[ComponentParserSpec]',
-        request_parsers: 'dict[str, type[Parser]]',
-    ) -> RequestBody | None:
-        for parser, _ in parsers:
-            # TODO: Do we need enum for context name?
-            if parser.context_name != 'parsed_body':
-                continue
-
-            parser_type = get_args(parser)[0]
-            reference = self.context.schema_generator.get_schema(parser_type)
-            return RequestBody(
-                content={
-                    req_parser.content_type: MediaType(schema=reference)
-                    for req_parser in request_parsers.values()
-                },
-                required=True,
-            )
-        return None
-
-    def _generate_responses(
-        self,
-        responses: dict[HTTPStatus, ResponseSpec],
-        request_parsers: 'dict[str, type[Parser]]',
-    ) -> Responses:
-        return {
-            str(status_code.value): Response(
-                description=status_code.phrase,
-                content={
-                    req_parser.content_type: MediaType(
-                        schema=self.context.schema_generator.get_schema(
-                            response_spec.return_type,
-                        ),
-                    )
-                    for req_parser in request_parsers.values()
-                },
-            )
-            for status_code, response_spec in responses.items()
-        }
 
 
 class OperationIDGenerator:
@@ -168,7 +89,7 @@ class OperationIDGenerator:
         operation_id = endpoint.metadata.operation_id
 
         if operation_id is not None:
-            self.context.operation_id_registry.register(operation_id)
+            self.context.registries.operation_id.register(operation_id)
             return operation_id
 
         # Generate operation_id from path and method
@@ -176,7 +97,7 @@ class OperationIDGenerator:
         method = endpoint.metadata.method.lower()
         operation_id = self._build_operation_id(method, tokens)
 
-        self.context.operation_id_registry.register(operation_id)
+        self.context.registries.operation_id.register(operation_id)
         return operation_id
 
     def _tokenize_path(self, path: str) -> list[str]:  # noqa: WPS210

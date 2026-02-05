@@ -25,9 +25,8 @@ from typing import Annotated, Any, Final, Union, get_args, get_origin
 from uuid import UUID
 
 from django_modern_rest.openapi.core.registry import SchemaRegistry
-from django_modern_rest.openapi.extractors import FieldExtractor
+from django_modern_rest.openapi.extractors.finder import find_extractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
-from django_modern_rest.openapi.objects.parameter import Parameter
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
@@ -99,61 +98,11 @@ _KWARG_TO_SCHEMA_MAP: Final = MappingProxyType({
 class SchemaGenerator:
     """Generate FieldDefinition from dtos."""
 
-    def __init__(self) -> None:
+    def __init__(self, registry: SchemaRegistry) -> None:
         """Init empty registry."""
-        self.registry = SchemaRegistry()
+        self.registry = registry
 
-    def generate(self, source_type: Any) -> Reference:
-        """Get or create Reference for source_type."""
-        existing_ref = self.registry.get_reference(source_type)
-        if existing_ref:
-            return existing_ref
-
-        field_definitions = _find_extractor(source_type).extract_fields(
-            source_type,
-        )
-        props, required = self._extract_properties(field_definitions)
-
-        schema = Schema(
-            type=OpenAPIType.OBJECT,
-            properties=props,
-            required=required or None,
-        )
-        return self.registry.register(
-            source_type=source_type,
-            schema=schema,
-            name=source_type.__name__,
-        )
-
-    def generate_parameters(
-        self,
-        source_type: Any,
-        param_in: str,
-    ) -> list[Parameter | Reference]:
-        """Generate parameters from source type."""
-        extractor = _find_extractor(source_type)
-
-        params_list: list[Parameter | Reference] = []
-        for field in extractor.extract_fields(source_type):
-            required = field.extra_data.get('is_required', False)
-
-            if param_in == 'path':
-                required = True
-
-            params_list.append(
-                Parameter(
-                    name=field.name,
-                    param_in=param_in,
-                    schema=self.get_schema(field.annotation),
-                    description=None
-                    if field.kwarg_definition is None
-                    else field.kwarg_definition.description,
-                    required=required,
-                ),
-            )
-        return params_list
-
-    def get_schema(self, annotation: Any) -> Schema | Reference:
+    def generate(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
         simple_schema = _get_schema_from_type_map(
             annotation,
@@ -164,7 +113,7 @@ class SchemaGenerator:
         origin = get_origin(annotation) or annotation
 
         if origin is Annotated:
-            return self.get_schema(get_args(annotation)[0])
+            return self.generate(get_args(annotation)[0])
 
         generic_schema = _handle_generic_types(
             self,
@@ -174,7 +123,23 @@ class SchemaGenerator:
         if generic_schema:
             return generic_schema
 
-        return self.generate(annotation)
+        return self._generate_reference(annotation)
+
+    def _generate_reference(self, source_type: Any) -> Reference:
+        field_definitions = find_extractor(
+            source_type,
+        ).extract_fields(source_type)
+        props, required = self._extract_properties(field_definitions)
+
+        return self.registry.register(
+            source_type=source_type,
+            schema=Schema(
+                type=OpenAPIType.OBJECT,
+                properties=props,
+                required=required or None,
+            ),
+            name=source_type.__name__,
+        )
 
     def _extract_properties(
         self,
@@ -184,7 +149,7 @@ class SchemaGenerator:
         required: list[str] = []
 
         for field_definition in field_definitions:
-            schema = self.get_schema(
+            schema = self.generate(
                 field_definition.annotation,
             )
 
@@ -278,10 +243,10 @@ def _handle_union(
         return _TYPE_MAP[NoneType]
 
     if len(real_args) == 1:
-        return generator.get_schema(real_args[0])
+        return generator.generate(real_args[0])
 
     return Schema(
-        one_of=[generator.get_schema(arg) for arg in real_args],
+        one_of=[generator.generate(arg) for arg in real_args],
     )
 
 
@@ -292,7 +257,7 @@ def _handle_mapping(
     value_type = args[1] if len(args) >= 2 else Any
     return Schema(
         type=OpenAPIType.OBJECT,
-        additional_properties=generator.get_schema(value_type),
+        additional_properties=generator.generate(value_type),
     )
 
 
@@ -302,12 +267,5 @@ def _handle_sequence(
 ) -> Schema:
     items_schema = None
     if args:
-        items_schema = generator.get_schema(args[0])
+        items_schema = generator.generate(args[0])
     return Schema(type=OpenAPIType.ARRAY, items=items_schema)
-
-
-def _find_extractor(source_type: Any) -> FieldExtractor[Any]:
-    for extractor in FieldExtractor.registry:
-        if extractor.is_supported(source_type):
-            return extractor()
-    raise ValueError(f'Field extractor for {source_type} not found')

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
@@ -26,6 +26,8 @@ class OperationIdRegistry:
 
 class SchemaRegistry:
     """Registry for Schemas."""
+
+    schema_prefix: ClassVar[str] = '#/components/schemas/'
 
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
@@ -56,7 +58,7 @@ class SchemaRegistry:
         return None
 
     def _make_reference(self, name: str) -> Reference:
-        return Reference(ref=f'#/components/schemas/{name}')
+        return Reference(ref=f'{self.schema_prefix}{name}')
 
     def _get_unique_name(self, name: str) -> str:
         # TODO: Make sure it's enough.
