@@ -52,8 +52,8 @@ python = "^3.11"
 typing_extensions = ">=4"
 django = ">=5.2,<6.0"
 
-msgspec = { version = ">= 0.19", optional = true }
-pydantic = { version = "^2.12", optional = true, extras = ["email-validator"] }
+msgspec = { version = ">=0.19", optional = true }
+pydantic = { version = "^2.12", optional = true, extras = ["email"] }
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
