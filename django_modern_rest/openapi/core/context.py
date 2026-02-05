@@ -5,16 +5,14 @@ from django_modern_rest.openapi.core.registry import (
     OperationIdRegistry,
     SchemaRegistry,
 )
-from django_modern_rest.openapi.generators.operation import (
+from django_modern_rest.openapi.generators import (
     OperationGenerator,
     OperationIDGenerator,
-)
-from django_modern_rest.openapi.generators.parameter import ParameterGenerator
-from django_modern_rest.openapi.generators.request_body import (
+    ParameterGenerator,
     RequestBodyGenerator,
+    ResponseGenerator,
+    SchemaGenerator,
 )
-from django_modern_rest.openapi.generators.response import ResponseGenerator
-from django_modern_rest.openapi.generators.schema import SchemaGenerator
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.config import OpenAPIConfig
