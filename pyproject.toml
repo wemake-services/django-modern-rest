@@ -63,6 +63,7 @@ msgspec = ["msgspec"]
 django = "^5.2"
 django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
+types-xmltodict = "^1.0"
 pyright = "^1.1"
 pyrefly = ">=0.49,<0.51"
 

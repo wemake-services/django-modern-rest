@@ -15,7 +15,7 @@ _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 def generator() -> OperationIDGenerator:
     """Create `OperationIDGenerator` instance for testing."""
     context = OpenAPIContext(config=_TEST_CONFIG)
-    return context.operation_id_generator
+    return context.generators.operation_id
 
 
 @pytest.mark.parametrize(
@@ -128,7 +128,7 @@ def test_explicit_operation_id(generator: OperationIDGenerator) -> None:
         controller.api_endpoints['GET'],
         path='whatever',
     )
-    registry = generator.context.operation_id_registry
+    registry = generator.context.registries.operation_id
 
     assert operation_id == 'customGetUser'
     assert 'customGetUser' in registry._operation_ids

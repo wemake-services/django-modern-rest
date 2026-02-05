@@ -40,4 +40,9 @@ router = Router([
         views.AsyncParseHeadersController.as_view(),
         name='async_parse_headers',
     ),
+    path(
+        'constrained-user',
+        views.ConstrainedUserController.as_view(),
+        name='constrained_user_create',
+    ),
 ])
