@@ -1,3 +1,6 @@
+# Parts of the code is taken from
+# https://github.com/litestar-org/litestar/blob/main/litestar/_openapi/schema_generation/schema.py
+# under MIT license.
 import contextlib
 import dataclasses
 from collections import OrderedDict, defaultdict, deque
