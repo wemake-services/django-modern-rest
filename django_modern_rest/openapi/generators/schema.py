@@ -33,6 +33,7 @@ from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 _SCHEMA_ARRAY: Final = Schema(type=OpenAPIType.ARRAY)
 
+# TODO: Possible place for refactoring.
 _TYPE_MAP: Final = MappingProxyType({
     Decimal: Schema(type=OpenAPIType.NUMBER),
     defaultdict: Schema(type=OpenAPIType.OBJECT),
@@ -71,6 +72,9 @@ _TYPE_MAP: Final = MappingProxyType({
     timedelta: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DURATION),
 })
 
+# TODO: We need to move this to the FieldExtractor
+# (and maybe replace the dictionary with something else)
+# for the possibility of redefinition in plugins.
 _KWARG_TO_SCHEMA_MAP: Final = MappingProxyType({
     'content_encoding': 'content_encoding',
     'default': 'default',
