@@ -22,6 +22,7 @@ from django_modern_rest.test import DMRRequestFactory
 @final
 class _BodyModel(pydantic.BaseModel):
     uid: uuid.UUID
+    email: pydantic.EmailStr
     created_at: dt.datetime
     elapsed: dt.timedelta
     url: pydantic.HttpUrl
@@ -44,6 +45,7 @@ def test_complex_pydantic_serialization(
     """Ensures by default all complex fields work."""
     request_data = {
         'uid': uuid.uuid4(),
+        'email': faker.email(),
         'created_at': faker.future_datetime(),
         'elapsed': faker.time_delta(),
         'url': faker.url(),
@@ -84,6 +86,7 @@ def test_pydantic_round_trip_json_field(
     """Ensures by round trip json field works."""
     request_data = {
         'uid': uuid.uuid4(),
+        'email': faker.email(),
         'created_at': faker.future_datetime(),
         'elapsed': faker.time_delta(),
         'url': faker.url(),
