@@ -34,9 +34,7 @@ class _HttpBasicAuth(HttpBasicSyncAuth):
 @pytest.fixture(autouse=True)
 def _setup_auth(settings: LazySettings, dmr_clean_settings: None) -> None:
     settings.DMR_SETTINGS = {
-        Settings.auth: [
-            'tests.test_unit.test_security.test_auth_from_settings._HttpBasicAuth',
-        ],
+        Settings.auth: [_HttpBasicAuth()],
     }
 
 

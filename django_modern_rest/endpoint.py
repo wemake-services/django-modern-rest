@@ -9,7 +9,6 @@ from typing import (
     overload,
 )
 
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
@@ -342,36 +341,26 @@ class Endpoint:  # noqa: WPS214
         return decorator
 
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
-        # Run auth checks:
+        # Run sync auth checks:
         if self.metadata.auth is None:
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, SyncAuth)  # noqa: S101
-            try:
-                user = auth(self, controller)
-            except PermissionDenied:
-                raise NotAuthenticatedError from None
-            else:
-                if user is not None:
-                    return
+            if auth(self, controller) is not None:
+                return
         raise NotAuthenticatedError
 
     async def _run_async_checks(
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> None:
-        # Run auth checks:
+        # Run async auth checks:
         if self.metadata.auth is None:
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, AsyncAuth)  # noqa: S101
-            try:
-                user = await auth(self, controller)  # noqa: WPS476
-            except PermissionDenied:
-                raise NotAuthenticatedError from None
-            else:
-                if user is not None:
-                    return
+            if (await auth(self, controller)) is not None:  # noqa: WPS476
+                return
         raise NotAuthenticatedError
 
     def _make_http_response(

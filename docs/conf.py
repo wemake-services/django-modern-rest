@@ -81,6 +81,7 @@ intersphinx_mapping = {
     'django': ('https://docs.djangoproject.com/en/stable/', None),
     'pydantic': ('https://docs.pydantic.dev/latest/', None),
     'msgspec': ('https://jcristharif.com/msgspec/', None),
+    'jwt': ('https://pyjwt.readthedocs.io/en/latest/', None),
 }
 
 # Napoleon:
@@ -119,6 +120,8 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.internal.negotiation.ConditionalType'),
     (PY_CLASS, 'django_modern_rest.controller._SerializerT_co'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
+    # Unsolvable imports:
+    (PY_CLASS, 'AbstractBaseUser'),
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (PY_CLASS, 'django.urls.resolvers.URLResolver'),
@@ -130,6 +133,8 @@ nitpick_ignore = [
     (PY_CLASS, 'Reference'),
     (PY_CLASS, 'Paths'),
     (PY_CLASS, 'Responses'),
+    # Looks like a bug:
+    (PY_CLASS, 'dict[str'),
 ]
 
 qualname_overrides = {

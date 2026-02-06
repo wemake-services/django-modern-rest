@@ -72,6 +72,7 @@ There are several included extras:
 - `'django-modern-rest[msgspec]'` provides `msgspec` support
   and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
+- `'django-modern-rest[jwt]'` provides `pyjwt` auth support
 
 
 ## Example

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from base64 import b64decode, b64encode
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote
 
 from typing_extensions import override
@@ -19,14 +19,17 @@ if TYPE_CHECKING:
 
 
 class _HttpBasicAuth:
-    __slots__ = ('_header',)
+    __slots__ = ('header', 'security_scheme_name')
 
-    security_scheme_name: ClassVar[str] = 'http_basic'
-
-    def __init__(self, header: str = 'Authorization') -> None:
-        """Header name can be customized."""
-        # Having init with defaults is fine.
-        self._header = header
+    def __init__(
+        self,
+        *,
+        security_scheme_name: str = 'http_basic',
+        header: str = 'Authorization',
+    ) -> None:
+        """Apply possible customizations."""
+        self.security_scheme_name = security_scheme_name
+        self.header = header
 
     @property
     def security_scheme(self) -> Components:
@@ -35,7 +38,7 @@ class _HttpBasicAuth:
             security_schemes={
                 self.security_scheme_name: SecurityScheme(
                     type='http',
-                    name=self._header,
+                    name=self.header,
                     security_scheme_in='header',
                     scheme='basic',
                     description='Http Basic auth',
@@ -52,7 +55,7 @@ class _HttpBasicAuth:
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> tuple[str, str] | None:
-        header = controller.request.headers.get(self._header)
+        header = controller.request.headers.get(self.header)
         if not header:
             return None
 

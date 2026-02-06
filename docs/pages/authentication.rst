@@ -43,3 +43,23 @@ HTTP Basic Auth API
   :inherited-members:
 
 .. autofunction:: django_modern_rest.security.http.basic_auth
+
+
+JWT API
+-------
+
+.. important::
+
+  To use ``jwt`` you must install ``django-modern-rest[jwt]`` extra.
+
+
+.. autoclass:: django_modern_rest.security.jwt.JWTToken
+  :members:
+
+.. autoclass:: django_modern_rest.security.jwt.JWTSyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: django_modern_rest.security.jwt.JWTAsyncAuth
+  :members:
+  :inherited-members:

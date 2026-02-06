@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
 from typing_extensions import override
@@ -17,9 +17,10 @@ if TYPE_CHECKING:
 
 
 class _DjangoSessionAuth:
-    __slots__ = ()
+    __slots__ = ('security_scheme_name',)
 
-    security_scheme_name: ClassVar[str] = 'django_session'
+    def __init__(self, security_scheme_name: str = 'django_session') -> None:
+        self.security_scheme_name = security_scheme_name
 
     @property
     def security_scheme(self) -> Components:
@@ -48,10 +49,12 @@ class _DjangoSessionAuth:
         """
         Override this method to provide other authentication logic.
 
-        For example: checking that user is active / staff / superuser.
+        For example: checking that user is staff / superuser.
         """
-        if controller.request.user.is_authenticated:
-            return controller.request.user
+        # It is always sync, because no IO ever happens here.
+        user = controller.request.user
+        if user.is_authenticated and user.is_active:
+            return user
         return None
 
 
