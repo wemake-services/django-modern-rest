@@ -23,6 +23,7 @@ layers =
   negotiation
   response
   plugins
+  openapi
   serializer
   # DTOs:
   headers | cookies
@@ -40,7 +41,10 @@ ignore_imports =
   # Internal cache can import anything:
   django_modern_rest.internal.cache -> django_modern_rest.plugins.msgspec.json
   django_modern_rest.internal.cache -> django_modern_rest.plugins.pydantic.serializer
-
+  # Settings can initialize default OpenAPI config:
+  django_modern_rest.settings -> django_modern_rest.openapi.config
+  # Openapi can use our optimizing `path`:
+  django_modern_rest.openapi.spec -> django_modern_rest.routing
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins
@@ -73,8 +77,50 @@ ignore_imports =
   django_modern_rest.internal.json -> msgspec
 
 [importlinter:contract:plugins-independence]
-name = All plugins must be independent
+name = All `plugins` must be independent
 type = independence
 
 modules =
   django_modern_rest.plugins.*
+
+
+[importlinter:openapi:layers]
+name = Layered architecture of OpenAPI schema generation
+type = layers
+
+containers =
+  django_modern_rest.openapi
+
+layers =
+  spec
+  views | core
+  renderers
+  converter | generators
+  extractors | collector | config
+  types
+  objects
+
+[importlinter:openapi:generators-independence]
+name = All OpenAPI `generators` must be independent
+type = independence
+
+modules =
+  django_modern_rest.openapi.generators.*
+
+[importlinter:openapi:renderers-independence]
+name = All OpenAPI `renderers` must be independent
+type = independence
+
+modules =
+  django_modern_rest.openapi.objects.*
+
+[importlinter:openapi:objects-independence]
+name = All OpenAPI `objects` must be independent
+type = independence
+
+modules =
+  django_modern_rest.openapi.renderers.*
+
+ignore_imports =
+  # Allow import base render class:
+  django_modern_rest.openapi.renderers.* -> django_modern_rest.openapi.renderers.base

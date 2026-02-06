@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from django.urls import URLPattern
 
@@ -9,14 +10,17 @@ from django_modern_rest.openapi.converter import (
 )
 from django_modern_rest.openapi.core.builder import OpenApiBuilder
 from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.renderers import BaseRenderer
 from django_modern_rest.openapi.views import OpenAPIView
-from django_modern_rest.routing import Router, path
+from django_modern_rest.routing import path
+
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.renderers import BaseRenderer
+    from django_modern_rest.routing import Router
 
 
 def openapi_spec(
-    router: Router,
-    renderers: Sequence[BaseRenderer],
+    router: 'Router',
+    renderers: 'Sequence[BaseRenderer]',
     config: OpenAPIConfig | None = None,
     app_name: str = 'openapi',
     namespace: str = 'docs',
@@ -64,7 +68,7 @@ def _default_config() -> OpenAPIConfig:
     return config
 
 
-def _build_schema(config: OpenAPIConfig, router: Router) -> ConvertedSchema:
+def _build_schema(config: OpenAPIConfig, router: 'Router') -> ConvertedSchema:
     # TODO: refactor
     context = OpenAPIContext(config=config)
     schema = OpenApiBuilder(context).build(router)

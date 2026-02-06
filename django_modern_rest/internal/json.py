@@ -1,15 +1,16 @@
 import json
 from collections.abc import Callable
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
-from django_modern_rest.openapi.converter import ConvertedSchema
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.converter import ConvertedSchema
 
 SerializedSchema: TypeAlias = str
 
-_Dumper: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
+_Dumper: TypeAlias = Callable[['ConvertedSchema'], SerializedSchema]
 
 
-def _wrap_bytes_dumper(dumper: Callable[[ConvertedSchema], bytes]) -> _Dumper:
+def _wrap_bytes_dumper(dumper: Callable[['ConvertedSchema'], bytes]) -> _Dumper:
     """
     Wrap a bytes-returning JSON dumper to always return a UTF-8 string.
 
@@ -17,7 +18,7 @@ def _wrap_bytes_dumper(dumper: Callable[[ConvertedSchema], bytes]) -> _Dumper:
     to a single `str`-based interface expected by `json_dumps`.
     """
 
-    def wrapper(schema: ConvertedSchema) -> SerializedSchema:
+    def wrapper(schema: 'ConvertedSchema') -> SerializedSchema:
         return dumper(schema).decode('utf-8')
 
     return wrapper
@@ -31,7 +32,7 @@ else:
     _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
 
 
-def json_dumps(schema: ConvertedSchema) -> SerializedSchema:
+def json_dumps(schema: 'ConvertedSchema') -> SerializedSchema:
     """
     Serialize `ConvertedSchema` to decoded JSON string.
 
