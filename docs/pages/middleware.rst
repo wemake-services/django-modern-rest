@@ -39,6 +39,8 @@ Let's create a simple middleware decorator for CSRF protection:
 
 .. literalinclude:: /examples/middleware/csrf_protect_json.py
     :linenos:
+    :language: python
+
 
 In this example:
 
@@ -56,6 +58,7 @@ Here's an example of a rate limiting middleware:
 
 .. literalinclude:: /examples/middleware/rate_limit.py
     :linenos:
+    :language: python
 
 Multiple Response Descriptions
 ------------------------------
@@ -64,6 +67,7 @@ You can specify multiple response descriptions for different status codes:
 
 .. literalinclude:: /examples/middleware/multi_status.py
   :linenos:
+  :language: python
 
 Async Controllers
 -----------------
@@ -72,6 +76,7 @@ Async Controllers
 
 .. literalinclude:: /examples/middleware/async_controller.py
   :linenos:
+  :language: python
 
 The middleware will automatically detect whether the controller is async
 and handle it appropriately.
@@ -107,6 +112,7 @@ the next middleware in the chain or the final view function.
 
 .. literalinclude:: /examples/middleware/get_response.py
   :linenos:
+  :language: python
 
 Phase 1: Process Request (before get_response)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,11 +126,13 @@ Before calling ``get_response``, you can:
 
 .. literalinclude:: /examples/middleware/add_request_id.py
   :linenos:
+  :language: python
 
 Now your controller can access ``self.request.request_id``:
 
 .. literalinclude:: /examples/middleware/usage_add_request_id.py
   :linenos:
+  :language: python
 
 Phase 2: Process Response (after get_response)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,6 +146,7 @@ After calling ``get_response``, you can:
 
 .. literalinclude:: /examples/middleware/custom_header.py
   :linenos:
+  :language: python
 
 Short-Circuiting: Returning Without Calling get_response
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,6 +167,7 @@ Example with rate limiting:
   :linenos:
   :lines: 16-30
   :no-run:
+  :language: python
 
 Use with ``wrap_middleware``:
 
@@ -165,6 +175,7 @@ Use with ``wrap_middleware``:
   :linenos:
   :lines: 33-49
   :no-run:
+  :language: python
 
 Wrapping Django's Built-in Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -175,6 +186,7 @@ redirect, but you can convert it to a JSON 401 response:
 
 .. literalinclude:: /examples/middleware/built_in_decorators.py
   :linenos:
+  :language: python
 
 Visual Flow
 ~~~~~~~~~~~
@@ -218,3 +230,4 @@ Here's a complete example showing how to set up CSRF protection for a REST API:
 
 .. literalinclude:: /examples/middleware/complete_csrf_setup.py
   :linenos:
+  :language: python

@@ -3,26 +3,7 @@
 # under MIT license.
 import contextlib
 import dataclasses
-from collections import OrderedDict, defaultdict, deque
-from collections.abc import (
-    Iterable,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-from datetime import date, datetime, time, timedelta
-from decimal import Decimal
-from ipaddress import (
-    IPv4Address,
-    IPv4Interface,
-    IPv4Network,
-    IPv6Address,
-    IPv6Interface,
-    IPv6Network,
-)
-from pathlib import Path
-from re import Pattern
+from collections.abc import Mapping, Sequence
 from types import MappingProxyType, NoneType, UnionType
 from typing import (
     TYPE_CHECKING,
@@ -33,57 +14,17 @@ from typing import (
     get_args,
     get_origin,
 )
-from uuid import UUID
 
 from django_modern_rest.openapi.extractors.finder import find_extractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
+from django_modern_rest.openapi.type_mapping import TypeMapper
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
-_SCHEMA_ARRAY: Final = Schema(type=OpenAPIType.ARRAY)
-
-# TODO: Possible place for refactoring.
-_TYPE_MAP: Final = MappingProxyType({
-    Decimal: Schema(type=OpenAPIType.NUMBER),
-    defaultdict: Schema(type=OpenAPIType.OBJECT),
-    deque: _SCHEMA_ARRAY,
-    dict: Schema(type=OpenAPIType.OBJECT),
-    frozenset: _SCHEMA_ARRAY,
-    IPv4Address: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.IPV4),
-    IPv4Interface: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.IPV4),
-    IPv4Network: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.IPV4),
-    IPv6Address: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.IPV6),
-    IPv6Interface: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.IPV6),
-    IPv6Network: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.IPV6),
-    Iterable: _SCHEMA_ARRAY,  # pyright: ignore[reportArgumentType]
-    list: _SCHEMA_ARRAY,
-    Mapping: Schema(type=OpenAPIType.OBJECT),
-    MutableMapping: Schema(type=OpenAPIType.OBJECT),
-    MutableSequence: _SCHEMA_ARRAY,
-    None: Schema(type=OpenAPIType.NULL),
-    NoneType: Schema(type=OpenAPIType.NULL),
-    OrderedDict: Schema(type=OpenAPIType.OBJECT),
-    Path: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.URI),
-    Pattern: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.REGEX),
-    Sequence: _SCHEMA_ARRAY,
-    set: _SCHEMA_ARRAY,
-    tuple: _SCHEMA_ARRAY,
-    UUID: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.UUID),
-    bool: Schema(type=OpenAPIType.BOOLEAN),
-    bytearray: Schema(type=OpenAPIType.STRING),
-    bytes: Schema(type=OpenAPIType.STRING),
-    date: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DATE),
-    datetime: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DATE_TIME),
-    float: Schema(type=OpenAPIType.NUMBER),
-    int: Schema(type=OpenAPIType.INTEGER),
-    str: Schema(type=OpenAPIType.STRING),
-    time: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DURATION),
-    timedelta: Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DURATION),
-})
 
 # TODO: We need to move this to the FieldExtractor
 # (and maybe replace the dictionary with something else)
@@ -218,16 +159,7 @@ class SchemaGenerator:
 
 
 def _get_schema_from_type_map(annotation: Any) -> Schema | None:
-    type_schema = _TYPE_MAP.get(annotation)
-    if type_schema:
-        return type_schema
-
-    if isinstance(annotation, type):
-        for base in annotation.mro():
-            base_schema = _TYPE_MAP.get(base)
-            if base_schema:
-                return base_schema
-    return None
+    return TypeMapper.get_schema(annotation)
 
 
 def _handle_generic_types(
@@ -257,7 +189,8 @@ def _handle_union(
 ) -> Schema | Reference:
     real_args = [arg for arg in args if arg not in {NoneType, type(None)}]
     if not real_args:
-        return _TYPE_MAP[NoneType]
+        # We know that NoneType is registered in TypeMapper
+        return TypeMapper.get_schema(NoneType)  # type: ignore[return-value]
 
     if len(real_args) == 1:
         return generator.generate(real_args[0])

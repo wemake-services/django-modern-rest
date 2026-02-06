@@ -216,18 +216,7 @@ Authentication
     ...     ],
     ... }
 
-  However, you might not have a way to import auth classes in settings.
-  For example, when their modules contain model imports.
-  For this case we also support specifying string paths to auth classes.
-
-  .. code-block:: python
-    :caption: settings.py
-
-    >>> DMR_SETTINGS = {
-    ...     Settings.auth: [
-    ...         'django_modern_rest.security.DjangoSessionSyncAuth',
-    ...     ],
-    ... }
+  All auth types must be importable in settings.
 
   .. note::
 
