@@ -12,7 +12,7 @@ from django_modern_rest.security.jwt import JWTAsyncAuth, JWTSyncAuth
 @final
 class _UserOutput(pydantic.BaseModel):
     username: str
-    email: pydantic.EmailStr
+    email: str
     is_active: bool
 
 
