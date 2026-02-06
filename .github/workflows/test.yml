@@ -126,7 +126,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
-        poetry install --extras=pydantic
+        poetry install --extras=pydantic --extras=jwt
 
     - name: Run checks
       run: |
@@ -162,7 +162,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
-        poetry install --extras=msgspec
+        poetry install --extras=msgspec --extras=jwt
 
     - name: Run checks
       run: |

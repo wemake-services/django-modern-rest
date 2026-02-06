@@ -54,10 +54,13 @@ django = ">=5.2,<6.0"
 
 msgspec = { version = ">=0.19", optional = true }
 pydantic = { version = "^2.12", optional = true, extras = ["email"] }
+pyjwt = { version = ">=2.11", optional = true }
+cryptography = { version = ">=46.0", optional = true }
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
 msgspec = ["msgspec"]
+jwt = ["pyjwt", "cryptography"]
 
 [tool.poetry.group.dev.dependencies]
 django = "^5.2"

@@ -514,26 +514,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         blueprint_auth = (
             () if blueprint_cls is None else (blueprint_cls.auth or ())
         )
-        settings_auth: list[SyncAuth | AsyncAuth] | None = resolve_setting(
+        settings_auth: list[SyncAuth | AsyncAuth] = resolve_setting(
             Settings.auth,
-            import_string=True,
         )
-        if not isinstance(settings_auth, Sequence):
+        if not isinstance(settings_auth, Sequence):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise EndpointMetadataError(
-                'Settings.auth must be a list of auth instances '
-                'of a list of strings to import auth classes '
-                'to be instantiated. '
+                'Settings.auth must be a list of auth instances. '
                 f'Got: {settings_auth!r}',
             )
-        settings_auth = [
-            # Settings might specify paths to auth classes.
-            (
-                setting
-                if isinstance(setting, (SyncAuth, AsyncAuth))  # type: ignore[redundant-expr]
-                else setting()
-            )
-            for setting in settings_auth
-        ]
 
         auth = [
             *payload_auth,  # pyrefly: ignore[not-iterable]

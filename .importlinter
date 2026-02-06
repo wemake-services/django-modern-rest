@@ -53,6 +53,7 @@ forbidden_modules =
   # optinal deps:
   pydantic
   msgspec
+  jwt
   # internal modules:
   django_modern_rest_pytest
   django_test_app
@@ -64,6 +65,9 @@ ignore_imports =
   # Msgspec plugin:
   django_modern_rest.plugins.msgspec -> msgspec
   django_modern_rest.plugins.msgspec.* -> msgspec
+  # jwt auth:
+  django_modern_rest.security.jwt -> jwt
+  django_modern_rest.security.jwt.* -> jwt
   # Optional json support from msgspec:
   django_modern_rest.settings -> msgspec
   django_modern_rest.internal.json -> msgspec

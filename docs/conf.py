@@ -81,6 +81,7 @@ intersphinx_mapping = {
     'django': ('https://docs.djangoproject.com/en/stable/', None),
     'pydantic': ('https://docs.pydantic.dev/latest/', None),
     'msgspec': ('https://jcristharif.com/msgspec/', None),
+    'jwt': ('https://pyjwt.readthedocs.io/en/latest/', None),
 }
 
 # Napoleon:

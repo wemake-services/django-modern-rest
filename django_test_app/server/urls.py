@@ -20,6 +20,7 @@ from django.urls import include, path
 
 from django_modern_rest.routing import Router
 from server.apps.controllers import urls as controllers_urls
+from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
 from server.apps.openapi.urls import build_spec
@@ -44,6 +45,13 @@ router = Router([
         include(
             (controllers_urls.router.urls, 'controllers'),
             namespace='controllers',
+        ),
+    ),
+    path(
+        'jwt_auth/',
+        include(
+            (jwt_auth_urls.router.urls, 'jwt_auth'),
+            namespace='jwt_auth',
         ),
     ),
 ])
