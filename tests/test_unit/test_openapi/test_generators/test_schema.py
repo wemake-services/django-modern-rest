@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.generators.schema import (
-    _TYPE_MAP,
     SchemaGenerator,
     _handle_sequence,
     _handle_union,
@@ -15,6 +14,7 @@ from django_modern_rest.openapi.generators.schema import (
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
+from django_modern_rest.openapi.type_mapping import TypeMapper
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 from django_modern_rest.plugins import pydantic  # noqa: F401
 
@@ -104,7 +104,7 @@ def test_handle_union_only_none() -> None:
 
     schema = _handle_union(generator, (NoneType, type(None)))
 
-    assert schema is _TYPE_MAP[NoneType]
+    assert schema is TypeMapper.get_schema(NoneType)
     assert isinstance(schema, Schema)
     assert schema.type == OpenAPIType.NULL
 
