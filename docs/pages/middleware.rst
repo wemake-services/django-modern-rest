@@ -146,7 +146,7 @@ After calling ``get_response``, you can:
 
 .. literalinclude:: /examples/middleware/custom_header.py
   :linenos:
-   :language: python
+  :language: python
 
 Short-Circuiting: Returning Without Calling get_response
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
