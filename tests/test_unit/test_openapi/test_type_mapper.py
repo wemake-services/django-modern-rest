@@ -26,7 +26,8 @@ def test_type_mapper_register_works() -> None:
     """Ensure TypeMapper register new Schema."""
     TypeMapper.register(_TestClass, _TEST_SCHEMA)
 
-    assert _TestClass in TypeMapper._type_map
+    schema = TypeMapper.get_schema(_TestClass)
+    assert schema == _TEST_SCHEMA
 
 
 def test_type_mapper_register_raise_error() -> None:

@@ -115,7 +115,7 @@ class TypeMapper:
                 f'Type {source_type!r} is already registered. '
                 'Use override() to replace.',
             )
-        cls._type_map[source_type] = schema
+        cls.override(source_type, schema)
 
     @classmethod
     def override(cls, source_type: Any, schema: Schema) -> None:
