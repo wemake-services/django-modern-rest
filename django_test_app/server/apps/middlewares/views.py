@@ -28,7 +28,7 @@ class _RequestWithID(HttpRequest):
 @wrap_middleware(
     csrf_protect,
     ResponseSpec(
-        return_type=dict[str, str],
+        return_type=dict[str, list[dict[str, str]]],
         status_code=HTTPStatus.FORBIDDEN,
     ),
 )
