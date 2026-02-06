@@ -191,3 +191,23 @@ def test_token_issuer(issuer: str | list[str] | None) -> None:
     )
 
     assert token.iss == iss
+
+
+def test_token_encode_includes_custom_headers() -> None:
+    """Ensure that custom headers can be provided and work."""
+    token = JWTToken(
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        sub='whatever',
+    )
+    custom_headers = {'kid': 'key-id'}
+    encoded = token.encode(
+        secret=secrets.token_hex(),
+        algorithm='HS256',
+        headers=custom_headers,
+    )
+    header = jwt.get_unverified_header(encoded)
+
+    assert 'alg' in header
+    assert header['alg'] == 'HS256'
+    assert 'kid' in header
+    assert header['kid'] == custom_headers['kid']
