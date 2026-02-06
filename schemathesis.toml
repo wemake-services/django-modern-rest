@@ -23,6 +23,7 @@ max-examples = 100
 # Docs: https://schemathesis.readthedocs.io/en/stable/reference/checks
 
 # Disable all checks by default, then enable specific ones below.
+# We will expand the checks as we implement the openapi schemageneration.
 enabled = false
 
 # Catches server-side errors (5xx status codes).
