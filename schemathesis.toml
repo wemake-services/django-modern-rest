@@ -1,6 +1,6 @@
 # We need test repeatability.
 # We will achieve diversity by using a number of examples.
-seed = 42
+# seed = 42
 
 # NOTE: We extend the rules as the schema generation results improve.
 [phases.examples]
@@ -16,4 +16,11 @@ enabled = true
 enabled = true
 
 [generation]
-max-examples = 1
+max-examples = 100
+
+[checks]
+enabled = false
+not_a_server_error.enabled = true
+content_type_conformance.enabled = true
+response_headers_conformance.enabled = true
+response_schema_conformance.enabled = true

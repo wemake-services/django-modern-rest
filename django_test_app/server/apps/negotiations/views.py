@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import Annotated, Any, ClassVar, TypeAlias, final
+from xml.parsers import expat
 
 import pydantic
 import xmltodict
@@ -13,6 +14,7 @@ from django_modern_rest import (  # noqa: WPS235
 )
 from django_modern_rest.exceptions import (
     InternalServerError,
+    RequestSerializationError,
 )
 from django_modern_rest.negotiation import ContentType, conditional_type
 from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
@@ -39,7 +41,10 @@ class XmlParser(Parser):
         *,
         strict: bool = True,
     ) -> Any:
-        return xmltodict.parse(to_deserialize, process_namespaces=True)
+        try:
+            return xmltodict.parse(to_deserialize, process_namespaces=True)
+        except expat.ExpatError as exc:
+            raise RequestSerializationError(str(exc)) from None
 
 
 @final
