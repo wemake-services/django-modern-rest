@@ -1,13 +1,41 @@
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.core.registry import OperationIdRegistry
-from django_modern_rest.openapi.generators.operation import (
+from django_modern_rest.openapi.core.registry import (
+    OperationIdRegistry,
+    SchemaRegistry,
+)
+from django_modern_rest.openapi.generators import (
     OperationGenerator,
     OperationIDGenerator,
+    ParameterGenerator,
+    RequestBodyGenerator,
+    ResponseGenerator,
+    SchemaGenerator,
 )
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.config import OpenAPIConfig
+
+
+@dataclass(slots=True, frozen=True)
+class RegistryContainer:
+    """Container for registries."""
+
+    operation_id: OperationIdRegistry
+    schema: SchemaRegistry
+
+
+@dataclass(slots=True, frozen=True)
+class GeneratorContainer:
+    """Container for generators."""
+
+    operation: OperationGenerator
+    operation_id: OperationIDGenerator
+    schema: SchemaGenerator
+    parameter: ParameterGenerator
+    request_body: RequestBodyGenerator
+    response: ResponseGenerator
 
 
 class OpenAPIContext:
@@ -25,8 +53,18 @@ class OpenAPIContext:
         """Initialize the OpenAPI context."""
         self.config = config
 
-        # Initialize generators once with shared context:
-        self.operation_id_registry = OperationIdRegistry()
+        # Initialize registries
+        self.registries = RegistryContainer(
+            operation_id=OperationIdRegistry(),
+            schema=SchemaRegistry(),
+        )
 
-        self.operation_generator = OperationGenerator(self)
-        self.operation_id_generator = OperationIDGenerator(self)
+        # Initialize generators
+        self.generators = GeneratorContainer(
+            operation=OperationGenerator(self),
+            operation_id=OperationIDGenerator(self),
+            schema=SchemaGenerator(self),
+            parameter=ParameterGenerator(self),
+            request_body=RequestBodyGenerator(self),
+            response=ResponseGenerator(self),
+        )

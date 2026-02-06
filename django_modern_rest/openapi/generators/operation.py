@@ -25,10 +25,22 @@ class OperationGenerator:
     def generate(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
         metadata = endpoint.metadata
-        operation_id = self.context.operation_id_generator.generate(
+        operation_id = self.context.generators.operation_id.generate(
             endpoint,
             path,
         )
+        request_body = self.context.generators.request_body.generate(
+            metadata.component_parsers,
+            metadata.parsers,
+        )
+        responses = self.context.generators.response.generate(
+            metadata.responses,
+            metadata.parsers,
+        )
+        params_list = self.context.generators.parameter.generate(
+            metadata.component_parsers,
+        )
+
         return Operation(
             tags=metadata.tags,
             summary=metadata.summary,
@@ -43,7 +55,9 @@ class OperationGenerator:
             servers=metadata.servers,
             callbacks=metadata.callbacks,
             operation_id=operation_id,
-            # TODO: implement another attributes generation.
+            request_body=request_body,
+            responses=responses,
+            parameters=params_list,
         )
 
 
@@ -75,7 +89,7 @@ class OperationIDGenerator:
         operation_id = endpoint.metadata.operation_id
 
         if operation_id is not None:
-            self.context.operation_id_registry.register(operation_id)
+            self.context.registries.operation_id.register(operation_id)
             return operation_id
 
         # Generate operation_id from path and method
@@ -83,7 +97,7 @@ class OperationIDGenerator:
         method = endpoint.metadata.method.lower()
         operation_id = self._build_operation_id(method, tokens)
 
-        self.context.operation_id_registry.register(operation_id)
+        self.context.registries.operation_id.register(operation_id)
         return operation_id
 
     def _tokenize_path(self, path: str) -> list[str]:  # noqa: WPS210

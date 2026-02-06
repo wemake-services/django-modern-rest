@@ -23,6 +23,7 @@ from server.apps.controllers import urls as controllers_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
+from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.urls import build_spec
 
 router = Router([
@@ -45,6 +46,13 @@ router = Router([
         include(
             (controllers_urls.router.urls, 'controllers'),
             namespace='controllers',
+        ),
+    ),
+    path(
+        'negotiations/',
+        include(
+            (negotiations_urls.router.urls, 'negotiations'),
+            namespace='negotiations',
         ),
     ),
     path(

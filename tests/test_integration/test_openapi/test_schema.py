@@ -1,4 +1,3 @@
-from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final
 
 import pytest
@@ -24,13 +23,6 @@ def api_schema(db: Any) -> 'OpenApiSchema':
 
 
 @schema.parametrize()
-def test_schema_path_exists(case: st.Case) -> None:
-    """
-    Verify that all API paths defined in the OpenAPI schema are exists.
-
-    Validate that each endpoint path from the schema can be called successfully,
-    ensuring the schema correctly represents the available API routes.
-    Note: This test only verifies that endpoints are reachable and does not
-    validate response structure or content.
-    """
-    assert case.call().status_code != HTTPStatus.NOT_FOUND
+def test_schemathesis(case: st.Case) -> None:
+    """Ensure that API implementation matches the OpenAPI schema."""
+    case.call_and_validate()

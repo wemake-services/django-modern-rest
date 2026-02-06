@@ -53,24 +53,33 @@ def test_schema_register_returns_refs() -> None:
     registry = SchemaRegistry()
     reference = registry.register(_TestClass, _TestClass.__name__, Schema())
 
-    assert len(registry._schemas) == 1
+    assert len(registry.schemas) == 1
     assert len(registry._type_map) == 1
     assert reference.ref == f'#/components/schemas/{_TestClass.__name__}'
 
 
-def test_schema_register_raise_errors() -> None:
-    """Ensure SchemaRegistry raises errors."""
+def test_schema_register_existing_type() -> None:
+    """Ensure registering an existing type returns the existing reference."""
     registry = SchemaRegistry()
     registry.register(_TestClass, _TestClass.__name__, Schema())
 
-    with pytest.raises(
-        ValueError,
-        match=('already registered'),
-    ):
-        registry.register(_TestClass, _TestClass.__name__, Schema())
+    reference = registry.register(_TestClass, _TestClass.__name__, Schema())
 
-    with pytest.raises(
-        ValueError,
-        match=('is already used'),
-    ):
-        registry.register(_OtherTestClass, _TestClass.__name__, Schema())
+    assert reference.ref == f'#/components/schemas/{_TestClass.__name__}'
+    assert len(registry.schemas) == 1
+
+
+def test_schema_register_name_collision() -> None:
+    """Ensure name collision is handled by appending a counter."""
+    registry = SchemaRegistry()
+    registry.register(_TestClass, _TestClass.__name__, Schema())
+
+    reference = registry.register(
+        _OtherTestClass,
+        _TestClass.__name__,
+        Schema(),
+    )
+
+    assert reference.ref == f'#/components/schemas/{_TestClass.__name__}1'
+    assert len(registry.schemas) == 2
+    assert _TestClass.__name__ in registry.schemas

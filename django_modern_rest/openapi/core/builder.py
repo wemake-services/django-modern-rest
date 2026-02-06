@@ -2,8 +2,10 @@ from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.collector import controller_collector
 from django_modern_rest.openapi.core.merger import ConfigMerger
-from django_modern_rest.openapi.generators.component import ComponentGenerator
-from django_modern_rest.openapi.generators.path_item import PathItemGenerator
+from django_modern_rest.openapi.generators import (
+    ComponentGenerator,
+    PathItemGenerator,
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext

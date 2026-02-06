@@ -1,0 +1,39 @@
+from typing import TYPE_CHECKING, get_args
+
+from django_modern_rest.openapi.objects.media_type import MediaType
+from django_modern_rest.openapi.objects.request_body import RequestBody
+
+if TYPE_CHECKING:
+    from django_modern_rest.metadata import ComponentParserSpec
+    from django_modern_rest.openapi.core.context import OpenAPIContext
+    from django_modern_rest.parsers import Parser
+
+
+class RequestBodyGenerator:
+    """Generator for OpenAPI RequestBody objects."""
+
+    def __init__(self, context: 'OpenAPIContext') -> None:
+        """Initialize the RequestBody Generator."""
+        self.context = context
+
+    def generate(
+        self,
+        parsers: 'list[ComponentParserSpec]',
+        request_parsers: 'dict[str, type[Parser]]',
+    ) -> RequestBody | None:
+        """Generate request body from parsers."""
+        for parser, _ in parsers:
+            # TODO: Do we need enum for context name?
+            if parser.context_name != 'parsed_body':
+                continue
+
+            parser_type = get_args(parser)[0]
+            reference = self.context.generators.schema.generate(parser_type)
+            return RequestBody(
+                content={
+                    req_parser.content_type: MediaType(schema=reference)
+                    for req_parser in request_parsers.values()
+                },
+                required=True,
+            )
+        return None

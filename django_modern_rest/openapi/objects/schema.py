@@ -31,6 +31,7 @@ class Schema:
 
     all_of: 'Sequence[Reference | Schema] | None' = None
     any_of: 'Sequence[Reference | Schema] | None' = None
+    one_of: 'Sequence[Reference | Schema] | None' = None
     schema_not: 'Reference | Schema | None' = None
     schema_if: 'Reference | Schema | None' = None
     then: 'Reference | Schema | None' = None
@@ -52,6 +53,7 @@ class Schema:
     maximum: float | None = None
     exclusive_maximum: float | None = None
     minimum: float | None = None
+    exclusive_minimum: float | None = None
     max_length: int | None = None
     min_length: int | None = None
     pattern: str | None = None
