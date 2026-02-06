@@ -16,11 +16,23 @@ enabled = true
 enabled = true
 
 [generation]
+# Limit the number of generated examples per API operation to keep tests fast.
 max-examples = 100
 
 [checks]
+# Docs: https://schemathesis.readthedocs.io/en/stable/reference/checks
+
+# Disable all checks by default, then enable specific ones below.
 enabled = false
+
+# Catches server-side errors (5xx status codes).
 not_a_server_error.enabled = true
+
+# Validates the Content-Type header matches the schema.
 content_type_conformance.enabled = true
+
+# Ensures response header values match their JSON Schema definitions.
 response_headers_conformance.enabled = true
+
+# Validates the response body against its JSON Schema definition.
 response_schema_conformance.enabled = true
