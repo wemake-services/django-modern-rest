@@ -133,6 +133,8 @@ nitpick_ignore = [
     (PY_CLASS, 'Reference'),
     (PY_CLASS, 'Paths'),
     (PY_CLASS, 'Responses'),
+    # Looks like a bug:
+    (PY_CLASS, 'dict[str'),
 ]
 
 qualname_overrides = {
