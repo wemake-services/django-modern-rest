@@ -120,6 +120,8 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.internal.negotiation.ConditionalType'),
     (PY_CLASS, 'django_modern_rest.controller._SerializerT_co'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
+    # Unsolvable imports:
+    (PY_CLASS, 'AbstractBaseUser'),
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (PY_CLASS, 'django.urls.resolvers.URLResolver'),
