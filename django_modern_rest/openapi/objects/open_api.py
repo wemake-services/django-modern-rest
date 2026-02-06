@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, final
 
-from django_modern_rest.openapi.objects.components import Components
-
 if TYPE_CHECKING:
+    from django_modern_rest.openapi.objects.components import Components
     from django_modern_rest.openapi.objects.external_documentation import (
         ExternalDocumentation,
     )
