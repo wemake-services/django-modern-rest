@@ -13,17 +13,29 @@ files = [
 ]
 
 [[package]]
+name = "annotated-doc"
+version = "0.0.4"
+description = "Document parameters, class attributes, return types, and variables inline, with Annotated."
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "annotated_doc-0.0.4-py3-none-any.whl", hash = "sha256:571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320"},
+    {file = "annotated_doc-0.0.4.tar.gz", hash = "sha256:fbcda96e87e9c92ad167c2e53839e57503ecfda18804ea28102353485033faa4"},
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 description = "Reusable constraint types to use with typing.Annotated"
-optional = true
+optional = false
 python-versions = ">=3.8"
-groups = ["main"]
-markers = "extra == \"pydantic\""
+groups = ["main", "dev"]
 files = [
     {file = "annotated_types-0.7.0-py3-none-any.whl", hash = "sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53"},
     {file = "annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89"},
 ]
+markers = {main = "extra == \"pydantic\""}
 
 [[package]]
 name = "anyio"
@@ -738,14 +750,14 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [[package]]
 name = "faker"
-version = "40.1.2"
+version = "40.4.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "faker-40.1.2-py3-none-any.whl", hash = "sha256:93503165c165d330260e4379fd6dc07c94da90c611ed3191a0174d2ab9966a42"},
-    {file = "faker-40.1.2.tar.gz", hash = "sha256:b76a68163aa5f171d260fc24827a8349bc1db672f6a665359e8d0095e8135d30"},
+    {file = "faker-40.4.0-py3-none-any.whl", hash = "sha256:486d43c67ebbb136bc932406418744f9a0bdf2c07f77703ea78b58b77e9aa443"},
+    {file = "faker-40.4.0.tar.gz", hash = "sha256:76f8e74a3df28c3e2ec2caafa956e19e37a132fdc7ea067bc41783affcfee364"},
 ]
 
 [package.dependencies]
@@ -753,6 +765,30 @@ tzdata = {version = "*", markers = "platform_system == \"Windows\""}
 
 [package.extras]
 tzdata = ["tzdata"]
+
+[[package]]
+name = "fastapi"
+version = "0.128.4"
+description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "fastapi-0.128.4-py3-none-any.whl", hash = "sha256:9321282cee605fd2075ccbc95c0f2e549d675c59de4a952bba202cd1730ac66b"},
+    {file = "fastapi-0.128.4.tar.gz", hash = "sha256:d6a2cc4c0edfbb2499f3fdec55ba62e751ee58a6354c50f85ed0dabdfbcfeb60"},
+]
+
+[package.dependencies]
+annotated-doc = ">=0.0.2"
+pydantic = ">=2.7.0"
+starlette = ">=0.40.0,<1.0.0"
+typing-extensions = ">=4.8.0"
+typing-inspection = ">=0.4.2"
+
+[package.extras]
+all = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.8)", "httpx (>=0.23.0,<1.0.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=3.1.5)", "orjson (>=3.9.3)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.18)", "pyyaml (>=5.3.1)", "ujson (>=5.8.0)", "uvicorn[standard] (>=0.12.0)"]
+standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.8)", "httpx (>=0.23.0,<1.0.0)", "jinja2 (>=3.1.5)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.18)", "uvicorn[standard] (>=0.12.0)"]
+standard-no-fastapi-cloud-cli = ["email-validator (>=2.0.0)", "fastapi-cli[standard-no-fastapi-cloud-cli] (>=0.0.8)", "httpx (>=0.23.0,<1.0.0)", "jinja2 (>=3.1.5)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.18)", "uvicorn[standard] (>=0.12.0)"]
 
 [[package]]
 name = "flake8"
@@ -1105,21 +1141,23 @@ files = [
 
 [[package]]
 name = "import-linter"
-version = "2.9"
-description = "Enforces rules for the imports within and between Python packages."
+version = "2.10"
+description = "Lint your Python architecture"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "import_linter-2.9-py3-none-any.whl", hash = "sha256:06403ede04c975cda2ea9050498c16b2021c0261b5cedf47c6c5d8725894b1a2"},
-    {file = "import_linter-2.9.tar.gz", hash = "sha256:0d7da2a9bb0a534171a592795bd46c8cca86bd6dc6e6e665fa95ba4ed5024215"},
+    {file = "import_linter-2.10-py3-none-any.whl", hash = "sha256:cc2ddd7ec0145cbf83f3b25391d2a5dbbf138382aaf80708612497fa6ebc8f60"},
+    {file = "import_linter-2.10.tar.gz", hash = "sha256:c6a5057d2dbd32e1854c4d6b60e90dfad459b7ab5356230486d8521f25872963"},
 ]
 
 [package.dependencies]
 click = ">=6"
+fastapi = "*"
 grimp = ">=3.14"
 rich = ">=14.2.0"
 typing-extensions = ">=3.10.0.0"
+uvicorn = "*"
 
 [[package]]
 name = "iniconfig"
@@ -1229,6 +1267,48 @@ webcolors = {version = ">=1.11", optional = true, markers = "extra == \"format\"
 [package.extras]
 format = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3987", "uri-template", "webcolors (>=1.11)"]
 format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "rfc3987-syntax (>=1.1.0)", "uri-template", "webcolors (>=24.6.0)"]
+
+[[package]]
+name = "jsonschema-rs"
+version = "0.41.0"
+description = "A high-performance JSON Schema validator for Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:27040d98be3cffc91e44d9b0fab2a0e3a2e4a28f8851d462aeee65e2be3693a7"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:8bc55dd4044e34879a914fd1d0e821617752699e291ed617705626d767291152"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:0f6bfd0ab3b5713b54a4f8b04dbdb55b34cf04de3a2a77e8a8c637b2ea3af8f3"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cef690c39f8d673be30ce84811c106de330a211f8e9d14d790187de6c52cd572"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:ea10a9db481e11a809c61ed7665b175eb3f2f55b5027b464fd8dd67b531a8352"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:65d52c23d75ef5fc8c4c5e2ce9d6c7eed7f30058a50d8bf2643f81d9b3e7cd91"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:e8b795f376f5e923e8f2fe5acdde0084130b86b166a9f2311e301e8d91c03933"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-win32.whl", hash = "sha256:aa98c6f164fbe2ef5b27bc4001aa278bf80aa945da82d4ec51658c8e99ac4f02"},
+    {file = "jsonschema_rs-0.41.0-cp310-abi3-win_amd64.whl", hash = "sha256:090f3cce991e1680616ddac03c98d5a740d8b76f3608d0e1bf7d47168476a7dc"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-macosx_10_12_x86_64.whl", hash = "sha256:957f21f9459d94e8cce71c2eef609d8952a0ea6db0d16c1ead81b12732a49188"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:50a0bcb1fe057892acfa37e8016af5e88a38d66de17217fd8e72a35e64754796"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:90a7ae5203796fe22f10e18e5c3d92d3794c3ab8002a4c6cc394495889a6920e"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:316f8122a706ba327af57f18ac014ed84c1f247fcfa1be83cbbf43e3efa107f1"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:2eeceb8a12b82d52335f94192759dfe5ca031721ff8a2a195fbc546f85070929"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:73ddffb5cf6211738bf364d2a45e7b8c64c47c83089e8b4a29c7a6621f211d08"},
+    {file = "jsonschema_rs-0.41.0-cp313-cp313t-win_amd64.whl", hash = "sha256:7e3539add04fdd6cabab23f57bf49a99daeef966a064680b6583a9b30be144cc"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:f1e28e1cdcdfef805a343736626959cd793013e6ed20e34c8c241587609c175f"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:506c4751e1e383e0e15681fb5dda3ec08e664f1334ec1f7295b3300719967525"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:68b787cb6f651d5e9da56f54af91d7f8f5d2ba38342960b3e7941569bcda6567"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:589feafe805a7cd574d38d3a943baa722dd6308c0decb375d0a3cbe5a735cf6f"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:fcfb6a0dbf2170dddef684f6cec274e4d2a41c6cb53c6ebc1d95290911364719"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:8a19255561e94f58ad5cf24ffa187744c6fdedac97289979df993c1e7549b903"},
+    {file = "jsonschema_rs-0.41.0-cp314-cp314t-win_amd64.whl", hash = "sha256:0da65af06cc35e741d1d8295e8cf79c652c6715434e7113ae866bff4d3257590"},
+    {file = "jsonschema_rs-0.41.0-pp311-pypy311_pp73-macosx_10_12_x86_64.whl", hash = "sha256:81d62d2ac059c204fb6a254f1e573fe788f47a38574ed5ca1d5392c5ac84091a"},
+    {file = "jsonschema_rs-0.41.0-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:537fb4eb6466e7b6ad4323f9fe918f171eb061ed0915c47d1439514c7dd8506b"},
+    {file = "jsonschema_rs-0.41.0-pp311-pypy311_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:91464c8aae93c9416c6636ce2ca9e053b9d82756e54a3cbf15e45c24171eaade"},
+    {file = "jsonschema_rs-0.41.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:3a2506b81ccd7647cda170519c70567f198b26c22fecd72df4658426c20ac11d"},
+    {file = "jsonschema_rs-0.41.0.tar.gz", hash = "sha256:8f58b5208f368b8abe39191030f33af0309a084469a06bc8a399f83120613ce3"},
+]
+
+[package.extras]
+bench = ["fastjsonschema (>=2.20.0)", "jsonschema (>=4.23.0)", "pytest-benchmark (>=4.0.0)"]
+tests = ["flask (>=2.2.5)", "hypothesis (>=6.79.4)", "pytest (>=7.4.4)"]
 
 [[package]]
 name = "jsonschema-specifications"
@@ -1798,14 +1878,14 @@ files = [
 name = "pydantic"
 version = "2.12.5"
 description = "Data validation using Python type hints"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"pydantic\""
+groups = ["main", "dev"]
 files = [
     {file = "pydantic-2.12.5-py3-none-any.whl", hash = "sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d"},
     {file = "pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49"},
 ]
+markers = {main = "extra == \"pydantic\""}
 
 [package.dependencies]
 annotated-types = ">=0.6.0"
@@ -1822,10 +1902,9 @@ timezone = ["tzdata ; python_version >= \"3.9\" and platform_system == \"Windows
 name = "pydantic-core"
 version = "2.41.5"
 description = "Core functionality for Pydantic validation and serialization"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"pydantic\""
+groups = ["main", "dev"]
 files = [
     {file = "pydantic_core-2.41.5-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:77b63866ca88d804225eaa4af3e664c5faf3568cea95360d21f4725ab6e07146"},
     {file = "pydantic_core-2.41.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:dfa8a0c812ac681395907e71e1274819dec685fec28273a28905df579ef137e2"},
@@ -1949,6 +2028,7 @@ files = [
     {file = "pydantic_core-2.41.5-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:56121965f7a4dc965bff783d70b907ddf3d57f6eba29b6d2e5dabfaf07799c51"},
     {file = "pydantic_core-2.41.5.tar.gz", hash = "sha256:08daa51ea16ad373ffd5e7606252cc32f07bc72b28284b6bc9c6df804816476e"},
 ]
+markers = {main = "extra == \"pydantic\""}
 
 [package.dependencies]
 typing-extensions = ">=4.14.1"
@@ -2007,6 +2087,9 @@ files = [
     {file = "pyjwt-2.11.0-py3-none-any.whl", hash = "sha256:94a6bde30eb5c8e04fee991062b534071fd1439ef58d2adc9ccb823e7bcd0469"},
     {file = "pyjwt-2.11.0.tar.gz", hash = "sha256:35f95c1f0fbe5d5ba6e43f00271c275f7a1a4db1dab27bf708073b75318ea623"},
 ]
+
+[package.dependencies]
+cryptography = {version = ">=3.4.0", optional = true, markers = "extra == \"crypto\""}
 
 [package.extras]
 crypto = ["cryptography (>=3.4.0)"]
@@ -2564,14 +2647,14 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.9.5"
+version = "4.10.0"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.9.5-py3-none-any.whl", hash = "sha256:2eb5942ca683b8c52295de946d3316921a7546dc742b58b847bad6eda419beb0"},
-    {file = "schemathesis-4.9.5.tar.gz", hash = "sha256:c7e0236f98e89f87743b3be18261052c1040858253f50239f829be623347f40c"},
+    {file = "schemathesis-4.10.0-py3-none-any.whl", hash = "sha256:ee8cde97aa5954003b4b21c0e1c8142394cf503c1740ed0fcd54fe13cf160452"},
+    {file = "schemathesis-4.10.0.tar.gz", hash = "sha256:9eedca55fdd909cbdcb203caccc8c5016d76dc8bad9fb70e6c38f40d691415c4"},
 ]
 
 [package.dependencies]
@@ -2580,9 +2663,10 @@ colorama = ">=0.4,<1.0"
 harfile = ">=0.4.0,<1.0"
 httpx = ">=0.22.0,<1.0"
 hypothesis = ">=6.108.0,<7"
-hypothesis-graphql = ">=0.11.1,<1"
+hypothesis-graphql = ">=0.12.0,<1"
 hypothesis-jsonschema = ">=0.23.1,<0.24"
 jsonschema = {version = ">=4.18.0,<5.0", extras = ["format"]}
+jsonschema-rs = ">=0.41.0"
 junit-xml = ">=1.9,<2.0"
 pyrate-limiter = ">=3.0,<4.0"
 pytest = ">=8,<10"
@@ -2992,14 +3076,14 @@ starlette = ">=0.20.1"
 
 [[package]]
 name = "tenacity"
-version = "9.1.3"
+version = "9.1.4"
 description = "Retry code until it succeeds"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "tenacity-9.1.3-py3-none-any.whl", hash = "sha256:51171cfc6b8a7826551e2f029426b10a6af189c5ac6986adcd7eb36d42f17954"},
-    {file = "tenacity-9.1.3.tar.gz", hash = "sha256:a6724c947aa717087e2531f883bde5c9188f603f6669a9b8d54eb998e604c12a"},
+    {file = "tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55"},
+    {file = "tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a"},
 ]
 
 [package.extras]
@@ -3059,14 +3143,14 @@ markers = {docs = "python_version < \"3.13\""}
 name = "typing-inspection"
 version = "0.4.2"
 description = "Runtime typing introspection tools"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"pydantic\""
+groups = ["main", "dev"]
 files = [
     {file = "typing_inspection-0.4.2-py3-none-any.whl", hash = "sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7"},
     {file = "typing_inspection-0.4.2.tar.gz", hash = "sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464"},
 ]
+markers = {main = "extra == \"pydantic\""}
 
 [package.dependencies]
 typing-extensions = ">=4.12.0"
@@ -3123,7 +3207,7 @@ version = "0.40.0"
 description = "The lightning-fast ASGI server."
 optional = false
 python-versions = ">=3.10"
-groups = ["docs"]
+groups = ["dev", "docs"]
 files = [
     {file = "uvicorn-0.40.0-py3-none-any.whl", hash = "sha256:c6c8f55bc8bf13eb6fa9ff87ad62308bbbc33d0b67f84293151efe87e0d5f2ee"},
     {file = "uvicorn-0.40.0.tar.gz", hash = "sha256:839676675e87e73694518b5574fd0f24c9d97b46bea16df7b8c05ea1a51071ea"},
@@ -3199,11 +3283,11 @@ files = [
 test = ["pytest", "pytest-cov"]
 
 [extras]
-jwt = ["cryptography", "pyjwt"]
+jwt = ["pyjwt"]
 msgspec = ["msgspec"]
 pydantic = ["pydantic"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "66052262b5ec76b4fa7ce59684ef7b4e7bd738ddc3569b702f9cdb7a793418c2"
+content-hash = "c3cd5faa12a5056aabdd780de11c264e2ed941f7debcd0779cd4d95fce971151"
