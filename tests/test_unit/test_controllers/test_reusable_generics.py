@@ -41,11 +41,15 @@ def test_several_layers(generic_type: list[Any]) -> None:
     ):
         """Intermediate controller type."""
 
+    assert _BaseController.is_abstract
+
     class ReusableController(
         _RegularType,
         _BaseController[_SerializerT, _ModelT],
     ):
         """Some framework can provide such a type."""
+
+    assert ReusableController.is_abstract
 
     class OurController(
         ReusableController[PydanticSerializer, _BodyModel],  # type: ignore[type-var]
@@ -53,6 +57,7 @@ def test_several_layers(generic_type: list[Any]) -> None:
         def post(self) -> str:
             raise NotImplementedError
 
+    assert not OurController.is_abstract
     assert OurController.serializer is PydanticSerializer
     metadata = OurController.api_endpoints['POST'].metadata
     assert len(metadata.component_parsers) == 1
@@ -72,6 +77,7 @@ def test_several_layers(generic_type: list[Any]) -> None:
         def post(self) -> str:
             raise NotImplementedError
 
+    assert not FinalController.is_abstract
     assert FinalController.serializer is PydanticSerializer
     metadata = FinalController.api_endpoints['POST'].metadata
     assert len(metadata.component_parsers) == 1
@@ -87,20 +93,27 @@ def test_generic_blueprint() -> None:
     ):
         """Base blueprint to be reused."""
 
+    assert _ReusableBlueprint.is_abstract
+
     class _ImplementedBlueprint(
         _ReusableBlueprint[_SerializerT, _OtherT],
     ):
         def post(self) -> str:
             raise NotImplementedError
 
+    assert _ImplementedBlueprint.is_abstract
+
     class ExposedBlueprint(
         _ImplementedBlueprint[_ExtraT, _BodyModel],  # type: ignore[type-var]
     ):
         """Does nothing, just messes up some type vars."""
 
+    assert ExposedBlueprint.is_abstract
+
     class OurBlueprint(ExposedBlueprint[PydanticSerializer]):
         """Ready to be used."""
 
+    assert not OurBlueprint.is_abstract
     assert OurBlueprint.serializer is PydanticSerializer
     controller = compose_blueprints(OurBlueprint)
     metadata = controller.api_endpoints['POST'].metadata
@@ -171,6 +184,7 @@ def test_pep695_type_params() -> None:
     )
 
     controller = ns['OurController']
+    assert not controller.is_abstract
     assert controller.serializer is PydanticSerializer
     metadata = controller.api_endpoints['POST'].metadata
     assert len(metadata.component_parsers) == 1

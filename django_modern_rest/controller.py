@@ -103,6 +103,9 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             Set it to ``None`` to disable auth of this controller.
         error_model: Schema type that represents
             and validates common error responses.
+        is_abstract: Whether or not this controller is abstract.
+            We consider controller "abstract" when it does not have
+            exact serializer type.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -129,6 +132,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     renderers: ClassVar[_Renderers] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     error_model: ClassVar[Any] = ErrorModel
+    is_abstract: ClassVar[bool] = True
 
     # Instance public API:
     request: HttpRequest
@@ -156,13 +160,13 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
                 'at least 1 type arg must be provided',
             )
         if isinstance(type_args[0], TypeVar):
-            # TODO: make controllers explicitly abstract
             return  # This is a generic subclass of a controller.
         if not issubclass(type_args[0], BaseSerializer):
             raise UnsolvableAnnotationsError(
                 f'Type arg {type_args[0]} is not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
+        cls.is_abstract = False
         cls.serializer = type_args[0]
         cls._component_parsers = cls._component_parsers_builder_cls(
             cls,

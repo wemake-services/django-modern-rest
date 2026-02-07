@@ -16,6 +16,7 @@ from typing_extensions import override
 from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
+    UnsolvableAnnotationsError,
 )
 from django_modern_rest.metadata import (
     EndpointMetadata,
@@ -69,18 +70,38 @@ class ComponentParserBuilder:
 
     def __call__(self) -> list[ComponentParserSpec]:
         """Run the building process, infer type vars if needed."""
+        self._validate_args(self._find_components(use_origin=False))
         components = self._find_components()
         return self._resolve_type_vars(components)
 
-    def _find_components(self) -> list[type['ComponentParser']]:
+    def _find_components(
+        self,
+        *,
+        use_origin: bool = True,
+    ) -> list[type['ComponentParser']]:
         return [
             orig
             for base in self._blueprint_cls.__mro__
-            for orig in infer_bases(base, ComponentParser)
+            for orig in infer_bases(
+                base,
+                ComponentParser,
+                use_origin=use_origin,
+            )
             # When type is a subclass of `Blueprint`, it means that
             # a component parser type was already mixed in.
             if not is_safe_subclass(orig, self._ignore_cls)
         ]
+
+    def _validate_args(self, components: list[type['ComponentParser']]) -> None:
+        for component_cls in components:
+            if component_cls is ComponentParser:
+                continue
+
+            if not get_args(component_cls):
+                raise UnsolvableAnnotationsError(
+                    f'Component {component_cls!r} in {self._blueprint_cls!r} '
+                    'must have at least 1 type argument, given 0',
+                )
 
     def _resolve_type_vars(
         self,
