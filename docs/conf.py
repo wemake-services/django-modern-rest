@@ -82,6 +82,10 @@ intersphinx_mapping = {
     'pydantic': ('https://docs.pydantic.dev/latest/', None),
     'msgspec': ('https://jcristharif.com/msgspec/', None),
     'jwt': ('https://pyjwt.readthedocs.io/en/latest/', None),
+    'typing_extensions': (
+        'https://typing-extensions.readthedocs.io/en/stable/',
+        None,
+    ),
 }
 
 # Napoleon:
@@ -118,6 +122,8 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.decorators._ViewT'),
     (PY_CLASS, 'django_modern_rest.decorators._TypeT'),
     (PY_CLASS, 'django_modern_rest.internal.negotiation.ConditionalType'),
+    (PY_CLASS, 'django_modern_rest.security.jwt.views._ObtainTokensT'),
+    (PY_CLASS, 'django_modern_rest.security.jwt.views._TokensResponseT'),
     (PY_CLASS, 'django_modern_rest.controller._SerializerT_co'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Unsolvable imports:

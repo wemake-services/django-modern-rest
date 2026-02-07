@@ -1,8 +1,17 @@
 Authentication
 ==============
 
+Enabling auth
+-------------
+
 Disabling auth
---------------
+~~~~~~~~~~~~~~
+
+TODO
+
+
+Reusing pre-existing views
+--------------------------
 
 TODO
 
@@ -63,3 +72,20 @@ JWT API
 .. autoclass:: django_modern_rest.security.jwt.JWTAsyncAuth
   :members:
   :inherited-members:
+
+Pre-defined views to fetch JWT tokens
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensSyncController
+  :members: post, login, make_response_payload, create_token, make_token_headers, convert_auth_payload
+
+.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensAsyncController
+  :members: post, login, make_response_payload, create_token, make_token_headers, convert_auth_payload
+
+.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensPayload
+  :members:
+  :show-inheritance:
+
+.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensResponse
+  :members:
+  :show-inheritance:
