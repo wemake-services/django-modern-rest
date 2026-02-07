@@ -50,7 +50,7 @@ example: ## Run mypy and pytest on example code
 	  docs/examples/testing/polyfactory_usage.py
 
 .PHONY: run-example
-run-example:  ## Run example app
+run-example: ## Run example app
 	cd django_test_app && poetry run python manage.py runserver
 
 .PHONY: package
