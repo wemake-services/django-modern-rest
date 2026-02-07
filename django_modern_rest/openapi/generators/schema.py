@@ -15,6 +15,8 @@ from typing import (
     get_origin,
 )
 
+from typing_extensions import is_typeddict
+
 from django_modern_rest.openapi.extractors.finder import find_extractor
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
@@ -167,6 +169,9 @@ def _handle_generic_types(
     origin: Any,
     args: tuple[Any, ...],
 ) -> Schema | Reference | None:
+    if is_typeddict(origin):
+        return None
+
     if origin is UnionType or origin is Union:
         return _handle_union(generator, args)
 

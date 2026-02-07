@@ -22,6 +22,8 @@ from types import NoneType
 from typing import Any, ClassVar, Final
 from uuid import UUID
 
+from typing_extensions import is_typeddict
+
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.schema import Schema
 
@@ -96,6 +98,9 @@ class TypeMapper:
     @classmethod
     def get_schema(cls, annotation: Any) -> Schema | None:
         """Get schema for a type."""
+        if is_typeddict(annotation):
+            return None
+
         type_schema = cls._type_map.get(annotation)
         if type_schema:
             return type_schema

@@ -1,4 +1,5 @@
-from typing import Final
+from decimal import Decimal
+from typing import Any, Final, TypedDict
 
 import pytest
 
@@ -11,15 +12,33 @@ class _TestClass:
     attr: int
 
 
+class _TestTypedDict(TypedDict):
+    attr: int
+
+
+class _SubDecimal(Decimal):
+    """Test SubDecimal class."""
+
+
 _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
 
 
-def test_type_mapper_get_type() -> None:
+@pytest.mark.parametrize(
+    ('source_type', 'schema_type'),
+    [
+        (int, OpenAPIType.INTEGER),
+        (_SubDecimal, OpenAPIType.NUMBER),
+    ],
+)
+def test_type_mapper_get_schema(
+    source_type: Any,
+    schema_type: OpenAPIType,
+) -> None:
     """Ensure TypeMapper get_type works."""
-    int_schema = TypeMapper.get_schema(int)
+    schema = TypeMapper.get_schema(source_type)
 
-    assert int_schema is not None
-    assert int_schema.type == OpenAPIType.INTEGER
+    assert schema is not None
+    assert schema.type == schema_type
 
 
 def test_type_mapper_register_works() -> None:
@@ -43,3 +62,9 @@ def test_type_mapper_override() -> None:
     int_schema = TypeMapper.get_schema(int)
 
     assert int_schema == _TEST_SCHEMA
+
+
+def test_type_mapper_typeddict() -> None:
+    """Ensure TypeMapper returns None for TypedDict."""
+    schema = TypeMapper.get_schema(_TestTypedDict)
+    assert schema is None
