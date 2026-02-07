@@ -49,6 +49,10 @@ example: ## Run mypy and pytest on example code
 	  --suppress-no-test-exit-code \
 	  docs/examples/testing/polyfactory_usage.py
 
+.PHONY: run-example
+run-example:  ## Run example app
+	cd django_test_app && poetry run python manage.py runserver
+
 .PHONY: package
 package: ## Check package dependencies with pip
 	poetry run pip check

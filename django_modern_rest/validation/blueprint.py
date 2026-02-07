@@ -49,6 +49,7 @@ class BlueprintValidator:
         self,
         blueprint: type['Blueprint[BaseSerializer]'],
     ) -> None:
+        # TODO: fix
         possible_violations = infer_bases(
             blueprint,
             ComponentParser,

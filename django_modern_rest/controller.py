@@ -6,7 +6,6 @@ from typing import (
     Generic,
     TypeAlias,
     TypeVar,
-    get_args,
 )
 
 from django.http import HttpRequest, HttpResponse
@@ -14,13 +13,18 @@ from django.utils.functional import cached_property, classproperty
 from django.views import View
 from typing_extensions import deprecated, override
 
-from django_modern_rest.components import ComponentParser
+from django_modern_rest.components import (
+    ComponentParserBuilder,
+    ComponentParserSpec,
+)
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType, format_error
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.internal.io import identity
-from django_modern_rest.metadata import ResponseSpec
+from django_modern_rest.metadata import (
+    ResponseSpec,
+)
 from django_modern_rest.negotiation import request_renderer
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
@@ -28,7 +32,9 @@ from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serializer import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
-from django_modern_rest.types import infer_bases, infer_type_args
+from django_modern_rest.types import (
+    infer_type_args,
+)
 from django_modern_rest.validation import (
     BlueprintValidator,
     ControllerValidator,
@@ -43,10 +49,6 @@ _SerializerT_co = TypeVar(
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 _EndpointFunc: TypeAlias = Callable[..., Any]
-_ComponentParserSpec: TypeAlias = tuple[
-    type[ComponentParser],
-    tuple[Any, ...],
-]
 _Parsers: TypeAlias = Sequence[type[Parser]]
 _Renderers: TypeAlias = Sequence[type[Renderer]]
 
@@ -137,7 +139,10 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
 
     # Internal API:
     _serializer_context: ClassVar[SerializerContext]
-    _component_parsers: ClassVar[list[_ComponentParserSpec]]
+    _component_parsers_builder_cls: ClassVar[type[ComponentParserBuilder]] = (
+        ComponentParserBuilder
+    )
+    _component_parsers: ClassVar[list[ComponentParserSpec]]
     _existing_http_methods: ClassVar[dict[str, _EndpointFunc]]
 
     @override
@@ -145,12 +150,13 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         """Build blueprint class from different parts."""
         super().__init_subclass__()
         type_args = infer_type_args(cls, Blueprint)
-        if len(type_args) != 1:
+        if not type_args:
             raise UnsolvableAnnotationsError(
                 f'Type args {type_args} are not correct for {cls}, '
-                'only 1 type arg must be provided',
+                'at least 1 type arg must be provided',
             )
         if isinstance(type_args[0], TypeVar):
+            # TODO: make controllers explicitly abstract
             return  # This is a generic subclass of a controller.
         if not issubclass(type_args[0], BaseSerializer):
             raise UnsolvableAnnotationsError(
@@ -158,10 +164,10 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
                 'it must be a BaseSerializer subclass',
             )
         cls.serializer = type_args[0]
-        cls._component_parsers = [
-            (subclass, get_args(subclass))
-            for subclass in infer_bases(cls, ComponentParser)
-        ]
+        cls._component_parsers = cls._component_parsers_builder_cls(
+            cls,
+            Blueprint,
+        )()
         cls._serializer_context = cls.serializer_context_cls(cls)
         cls._existing_http_methods = cls._find_existing_http_methods()
         cls.blueprint_validator_cls()(cls)

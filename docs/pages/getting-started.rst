@@ -31,11 +31,16 @@ Works for:
             pip install django-modern-rest
 
 
-Available extras:
+Extras for different serializers:
 
 - ``'django-modern-rest[pydantic]'`` for ``pydantic`` support
 - ``'django-modern-rest[msgspec]'`` for ``msgspec`` support
   and the fastest ``json`` parsing
+
+Extras for different features:
+
+- ``'django-modern-rest[jwt]'`` for
+  `jwt <https://pyjwt.readthedocs.io>`_ support
 
 
 .. important::
