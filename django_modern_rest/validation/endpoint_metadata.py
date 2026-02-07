@@ -29,7 +29,11 @@ from django_modern_rest.response import infer_status_code
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import HttpSpec, Settings, resolve_setting
-from django_modern_rest.types import is_safe_subclass, parse_return_annotation
+from django_modern_rest.types import (
+    infer_annotation,
+    is_safe_subclass,
+    parse_return_annotation,
+)
 from django_modern_rest.validation.payload import (
     ModifyEndpointPayload,
     Payload,
@@ -188,7 +192,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> EndpointMetadata:
         """Do the validation."""
-        return_annotation = parse_return_annotation(func)
+        return_annotation = infer_annotation(
+            parse_return_annotation(func),
+            blueprint_cls or controller_cls,
+        )
         if self.payload is None and is_safe_subclass(
             return_annotation,
             HttpResponse,

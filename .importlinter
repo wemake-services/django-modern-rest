@@ -19,7 +19,7 @@ layers =
   options_mixins
   endpoint
   validation
-  components | security
+  components
   negotiation
   response
   plugins

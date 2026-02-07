@@ -1,10 +1,76 @@
+import datetime as dt
 from typing import final
 
 import pydantic
+from typing_extensions import override
 
 from django_modern_rest import Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security.jwt import JWTAsyncAuth, JWTSyncAuth
+from django_modern_rest.security.jwt.views import (
+    ObtainTokensAsyncController,
+    ObtainTokensPayload,
+    ObtainTokensResponse,
+    ObtainTokensSyncController,
+)
+
+
+class ObtainAccessAndRefreshSyncController(
+    ObtainTokensSyncController[
+        PydanticSerializer,
+        ObtainTokensPayload,
+        ObtainTokensResponse,
+    ],
+):
+    @override
+    def make_response_payload(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_token(
+                expiration=now + self.expiration,
+                token_type='access',  # noqa: S106
+            ),
+            'refresh_token': self.create_token(
+                expiration=now + self.refresh_expiration,
+                token_type='refresh',  # noqa: S106
+            ),
+        }
+
+    @override
+    def convert_auth_payload(
+        self,
+        payload: ObtainTokensPayload,
+    ) -> ObtainTokensPayload:
+        return payload
+
+
+class ObtainAccessAndRefreshAsyncController(
+    ObtainTokensAsyncController[
+        PydanticSerializer,
+        ObtainTokensPayload,
+        ObtainTokensResponse,
+    ],
+):
+    @override
+    async def make_response_payload(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_token(
+                expiration=now + self.expiration,
+                token_type='access',  # noqa: S106
+            ),
+            'refresh_token': self.create_token(
+                expiration=now + self.refresh_expiration,
+                token_type='refresh',  # noqa: S106
+            ),
+        }
+
+    @override
+    def convert_auth_payload(
+        self,
+        payload: ObtainTokensPayload,
+    ) -> ObtainTokensPayload:
+        return payload
 
 
 @final

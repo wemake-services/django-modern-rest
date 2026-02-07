@@ -79,7 +79,6 @@ def test_valid_auth(
     url: str,
 ) -> None:
     """Ensures that correct jwt auth works."""
-    # TODO: test full cycle, without manual token creation
     token = JWTToken(
         sub=str(user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
