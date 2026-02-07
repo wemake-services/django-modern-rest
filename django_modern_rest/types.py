@@ -40,7 +40,6 @@ def infer_type_args(
 
     Will return ``(MyModel, )`` for ``Query`` as *given_type*.
     """
-    # TODO: fix
     return tuple(
         arg
         for base_class in infer_bases(orig_cls, given_type)
