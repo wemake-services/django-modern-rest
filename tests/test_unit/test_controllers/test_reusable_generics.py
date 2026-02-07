@@ -144,7 +144,7 @@ def test_pep695_type_params() -> None:
             ): ...
             """,
         ),
-        globals=ns,
+        ns,
     )
 
     exec(  # noqa: S102, WPS421
@@ -154,7 +154,7 @@ def test_pep695_type_params() -> None:
             ): ...
             """,
         ),
-        globals=ns,
+        ns,
     )
 
     exec(  # noqa: S102, WPS421
@@ -167,7 +167,7 @@ def test_pep695_type_params() -> None:
                     raise NotImplementedError
             """,
         ),
-        globals=ns,
+        ns,
     )
 
     controller = ns['OurController']
