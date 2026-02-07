@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, get_args
+from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects.media_type import MediaType
 from django_modern_rest.openapi.objects.request_body import RequestBody
@@ -22,12 +22,12 @@ class RequestBodyGenerator:
         request_parsers: 'dict[str, type[Parser]]',
     ) -> RequestBody | None:
         """Generate request body from parsers."""
-        for parser, _ in parsers:
+        for parser, model in parsers:
             # TODO: Do we need enum for context name?
             if parser.context_name != 'parsed_body':
                 continue
 
-            parser_type = get_args(parser)[0]
+            parser_type = model[0]
             reference = self.context.generators.schema.generate(parser_type)
             return RequestBody(
                 content={

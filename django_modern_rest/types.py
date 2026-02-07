@@ -96,6 +96,14 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
     return return_annotation
 
 
+def infer_annotation(annotation: Any, context: type[Any]) -> Any:
+    """Infers annotation in the class definition context."""
+    if not isinstance(annotation, TypeVar):
+        return annotation  # It is already infered
+
+    return TypeVarInference(annotation, context)()[annotation]
+
+
 def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
     """Possibly unwraps subscribed class before checking for subclassing."""
     if annotation is None:
@@ -125,24 +133,24 @@ def resolve_orig_bases(typ: type[Any]) -> Iterator[type[Any]]:
 class TypeVarInference:
     """Inferences type variables to the applied real type values."""
 
-    __slots__ = ('_class_to_infer', '_context')
+    __slots__ = ('_context', '_to_infer')
 
     _max_depth: ClassVar[int] = 15
 
     def __init__(
         self,
-        class_to_infer: type[Any],
+        to_infer: type[Any] | TypeVar,
         context: type[Any],
     ) -> None:
         """
         Prepare the inference.
 
         Args:
-            class_to_infer: class which needs type vars to be resolved.
+            to_infer: class or type var which needs to be infered.
             context: its usage in inheritance with real type values provided.
 
         """
-        self._class_to_infer = class_to_infer
+        self._to_infer = to_infer
         self._context = context
 
     def __call__(self) -> dict[TypeVar, Any]:
@@ -154,24 +162,29 @@ class TypeVarInference:
             It can still be a type variable, if no real values are provided.
 
         """
-        # We match type params by name, because they can be a bit different,
-        # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
-        # This also ignore variance and stuff.
-        type_map = {
-            type_param.__name__: type_arg
-            for type_param, type_arg in zip(
-                self._class_to_infer.__parameters__,
-                get_args(self._class_to_infer),
-                strict=True,
-            )
-            if isinstance(type_param, TypeVar)
-        }
+        if isinstance(self._to_infer, TypeVar):
+            type_map = {self._to_infer.__name__: self._to_infer}
+            parameters = (self._to_infer,)
+        else:
+            # We match type params by name, because they can be a bit different,
+            # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
+            # This also ignore variance and stuff.
+            type_map = {
+                type_param.__name__: type_arg
+                for type_param, type_arg in zip(
+                    self._to_infer.__parameters__,
+                    get_args(self._to_infer),
+                    strict=True,
+                )
+                if isinstance(type_param, TypeVar)
+            }
+            parameters = self._to_infer.__parameters__
 
         orig_bases = resolve_orig_bases(self._context)
         for base in reversed(list(orig_bases)):
             # We apply type params in the "reversed mro order".
             self._apply_base_type_params(base, type_map)
-        return self._infer(type_map)
+        return self._infer(type_map, parameters)
 
     def _apply_base_type_params(
         self,
@@ -198,9 +211,14 @@ class TypeVarInference:
                 if isinstance(type_arg, TypeVar):
                     type_map.update({type_arg.__name__: type_arg})
 
-    def _infer(self, type_map: dict[str, Any]) -> dict[TypeVar, Any]:
+    def _infer(
+        self,
+        type_map: dict[str, Any],
+        parameters: tuple[TypeVar, ...],
+    ) -> dict[TypeVar, Any]:
         inferenced: dict[TypeVar, Any] = {}
-        for type_param in self._class_to_infer.__parameters__:
+        type_param: Any
+        for type_param in parameters:
             orig_type_param = type_param
             iterations = 0
             while isinstance(type_param, TypeVar):
@@ -209,7 +227,7 @@ class TypeVarInference:
                 if iterations >= self._max_depth:
                     raise UnsolvableAnnotationsError(
                         f'Cannot solve type annotations for {type_param!r}. '
-                        f'Is definition for {self._class_to_infer!r} generic? '
+                        f'Is definition for {self._to_infer!r} generic? '
                         'It must be concrete',
                     )
             inferenced.update({orig_type_param: type_param})
