@@ -1,6 +1,9 @@
 from http import HTTPStatus
 
+import jwt
 import pytest
+from dirty_equals import IsNumber
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from faker import Faker
@@ -57,7 +60,7 @@ def user(faker: Faker, password: str) -> User:
 def test_correct_auth_params(
     dmr_client: DMRClient,
     user: User,
-    password: password,
+    password: str,
     *,
     url: str,
     check_url: str,
@@ -74,8 +77,26 @@ def test_correct_auth_params(
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     response_body = response.json()
-    assert response_body['access_token']
-    assert response_body['refresh_token']
+    assert jwt.decode(
+        response_body['access_token'],
+        key=settings.SECRET_KEY,
+        algorithms=['HS256'],
+    ) == {
+        'sub': str(user.pk),
+        'exp': IsNumber(),
+        'iat': IsNumber(),
+        'extras': {'type': 'access'},
+    }
+    assert jwt.decode(
+        response_body['refresh_token'],
+        key=settings.SECRET_KEY,
+        algorithms=['HS256'],
+    ) == {
+        'sub': str(user.pk),
+        'exp': IsNumber(),
+        'iat': IsNumber(),
+        'extras': {'type': 'refresh'},
+    }
 
     # Assert that it roundtrips to the auth-protected controller:
     token = response_body[token_type]
@@ -122,7 +143,7 @@ def test_correct_auth_params(
 def test_wrong_auth_params(
     dmr_client: DMRClient,
     user: User,
-    password: password,
+    password: str,
     *,
     url: str,
     auth_params: dict[str, str | None],
@@ -171,7 +192,6 @@ def test_wrong_auth_params(
 def test_wrong_auth_structure(
     dmr_client: DMRClient,
     user: User,
-    password: password,
     *,
     url: str,
     auth_params: dict[str, str],

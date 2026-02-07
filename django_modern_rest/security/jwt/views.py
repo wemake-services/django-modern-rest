@@ -2,7 +2,7 @@ import datetime as dt
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
@@ -21,18 +21,30 @@ _SerializerT = TypeVar(
     bound=BaseSerializer,
 )
 
+_TokenType: TypeAlias = Literal['access', 'refresh']
+
 
 class ObtainTokensPayload(TypedDict):
+    """
+    Payload for default version of a jwt request body.
+
+    Is also used as kwargs for :func:`django.contrib.auth.authenticate`.
+    """
+
     username: str
     password: str
 
 
-class TokensResponse(TypedDict):
+class ObtainTokensResponse(TypedDict):
+    """Default response type for refresh token endpoint."""
+
     access_token: str
     refresh_token: str
 
 
 class _BaseTokenSettings:
+    """Collection of jwt settings that can be applied to any jwt controller."""
+
     audiences: ClassVar[str | Sequence[str] | None] = None
     issuer: ClassVar[str | None] = None
     require_claims: ClassVar[Sequence[str] | None] = None
@@ -44,10 +56,12 @@ class _BaseTokenSettings:
 
 
 class _BaseObtainTokensSettings(_BaseTokenSettings):
-    refresh_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=30)
+    """Settings that can be applied to controllers with refresh tokens."""
+
+    refresh_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=10)
 
 
-class _BaseController(
+class _BaseTokenController(
     _BaseObtainTokensSettings,
     Controller[_SerializerT],
     Body[_ObtainTokensT],
@@ -55,9 +69,11 @@ class _BaseController(
     def create_token(
         self,
         expiration: dt.datetime | None = None,
-        token_type: str | None = None,
+        token_type: _TokenType | None = None,
     ) -> str:
-        assert self.request.user.is_authenticated
+        """Create correct jwt token of a give *expiration* and *type*."""
+        # This is for mypy only:
+        assert self.request.user.is_authenticated  # noqa: S101
         return self.token_cls(
             str(self.request.user.pk),
             exp=expiration or (dt.datetime.now(dt.UTC) + self.expiration),
@@ -72,13 +88,30 @@ class _BaseController(
         )
 
     def make_token_headers(self) -> dict[str, Any] | None:
-        return None
+        """Create jwt token headers, does nothing by default."""
+
+    @abstractmethod
+    def convert_auth_payload(
+        self,
+        payload: _ObtainTokensT,
+    ) -> ObtainTokensPayload:
+        """
+        Convert your custom payload to kwargs that django supports.
+
+        See :func:`django.contrib.auth.authenticate` docs
+        on which kwargs it supports.
+
+        Basically it needs ``username`` and ``password`` strings.
+        """
+        raise NotImplementedError
 
 
 class ObtainTokensSyncController(
-    _BaseController[_SerializerT, _ObtainTokensT],
+    _BaseTokenController[_SerializerT, _ObtainTokensT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
+    """Sync controller to get access and refresh tokens."""
+
     @modify(
         status_code=HTTPStatus.OK,
         extra_responses=[
@@ -89,23 +122,32 @@ class ObtainTokensSyncController(
         ],
     )
     def post(self) -> _TokensResponseT:
+        """By default tokens are acquired on post."""
         return self.login()
 
     def login(self) -> _TokensResponseT:
-        user = authenticate(self.request, **self.parsed_body)
+        """Perform the sync login routine for user."""
+        user = authenticate(
+            self.request,
+            **self.convert_auth_payload(self.parsed_body),
+        )
         if user is None:
             raise NotAuthenticatedError
         self.request.user = user
         return self.make_response_payload()
 
     @abstractmethod
-    def make_response_payload(self) -> _TokensResponseT: ...
+    def make_response_payload(self) -> _TokensResponseT:
+        """Abstract method to create a response payload."""
+        raise NotImplementedError
 
 
 class ObtainTokensAsyncController(
-    _BaseController[_SerializerT, _ObtainTokensT],
+    _BaseTokenController[_SerializerT, _ObtainTokensT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
+    """Async controller to get access and refresh tokens."""
+
     @modify(
         status_code=HTTPStatus.OK,
         extra_responses=[
@@ -116,14 +158,21 @@ class ObtainTokensAsyncController(
         ],
     )
     async def post(self) -> _TokensResponseT:
+        """By default tokens are acquired on post."""
         return await self.login()
 
     async def login(self) -> _TokensResponseT:
-        user = await aauthenticate(self.request, **self.parsed_body)
+        """Perform the async login routine for user."""
+        user = await aauthenticate(
+            self.request,
+            **self.convert_auth_payload(self.parsed_body),
+        )
         if user is None:
             raise NotAuthenticatedError
         self.request.user = user
         return await self.make_response_payload()
 
     @abstractmethod
-    async def make_response_payload(self) -> _TokensResponseT: ...
+    async def make_response_payload(self) -> _TokensResponseT:
+        """Abstract method to create a response payload."""
+        raise NotImplementedError

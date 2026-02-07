@@ -99,7 +99,7 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
 def infer_annotation(annotation: Any, context: type[Any]) -> Any:
     """Infers annotation in the class definition context."""
     if not isinstance(annotation, TypeVar):
-        return annotation  # It is already infered
+        return annotation  # It is already inferred
 
     return TypeVarInference(annotation, context)()[annotation]
 
@@ -115,19 +115,6 @@ def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
         )
     except TypeError:
         return False
-
-
-def resolve_orig_bases(typ: type[Any]) -> Iterator[type[Any]]:
-    """Resolves ~full mro but with ``__orig_bases__`` instead of just bases."""
-    orig_bases = getattr(typ, '__orig_bases__', None)
-    if orig_bases is None:
-        orig_bases = getattr(get_origin(typ), '__orig_bases__', [])
-    for base in orig_bases:
-        if get_origin(base) is Generic:
-            continue
-
-        yield base
-        yield from resolve_orig_bases(base)
 
 
 class TypeVarInference:
@@ -146,7 +133,7 @@ class TypeVarInference:
         Prepare the inference.
 
         Args:
-            to_infer: class or type var which needs to be infered.
+            to_infer: class or type var which needs to be inferred.
             context: its usage in inheritance with real type values provided.
 
         """
@@ -164,7 +151,7 @@ class TypeVarInference:
         """
         if isinstance(self._to_infer, TypeVar):
             type_map = {self._to_infer.__name__: self._to_infer}
-            parameters = (self._to_infer,)
+            type_parameters = (self._to_infer,)
         else:
             # We match type params by name, because they can be a bit different,
             # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
@@ -178,13 +165,24 @@ class TypeVarInference:
                 )
                 if isinstance(type_param, TypeVar)
             }
-            parameters = self._to_infer.__parameters__
+            type_parameters = self._to_infer.__parameters__
 
-        orig_bases = resolve_orig_bases(self._context)
-        for base in reversed(list(orig_bases)):
+        for base in reversed(list(self._resolve_orig_bases(self._context))):
             # We apply type params in the "reversed mro order".
             self._apply_base_type_params(base, type_map)
-        return self._infer(type_map, parameters)
+        return self._infer(type_map, type_parameters)
+
+    def _resolve_orig_bases(self, typ: type[Any]) -> Iterator[type[Any]]:
+        """Resolves ~full mro but with ``__orig_bases__`` instead of bases."""
+        orig_bases = getattr(typ, '__orig_bases__', None)
+        if orig_bases is None:
+            orig_bases = getattr(get_origin(typ), '__orig_bases__', [])
+        for base in orig_bases:
+            if get_origin(base) is Generic:
+                continue
+
+            yield base
+            yield from self._resolve_orig_bases(base)
 
     def _apply_base_type_params(
         self,
@@ -214,11 +212,11 @@ class TypeVarInference:
     def _infer(
         self,
         type_map: dict[str, Any],
-        parameters: tuple[TypeVar, ...],
+        type_parameters: tuple[TypeVar, ...],
     ) -> dict[TypeVar, Any]:
         inferenced: dict[TypeVar, Any] = {}
         type_param: Any
-        for type_param in parameters:
+        for type_param in type_parameters:
             orig_type_param = type_param
             iterations = 0
             while isinstance(type_param, TypeVar):
