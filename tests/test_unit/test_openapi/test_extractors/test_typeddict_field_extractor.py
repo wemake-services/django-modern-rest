@@ -46,8 +46,8 @@ def test_typed_dict_extractor_fields(
     assert field_map['age'].extra_data['is_required'] is expected_required
 
 
-def test_extract_fields_value_error() -> None:
-    """Ensure extract_fields handles ValueError from get_type_hints."""
+def test_extract_fields_broken_annotations() -> None:
+    """Ensure extract_fields handles errors from get_type_hints."""
     extractor = TypedDictExtractor()
 
     _BrokenAnnotations.__annotations__ = 'not a dict'  # type: ignore[assignment]

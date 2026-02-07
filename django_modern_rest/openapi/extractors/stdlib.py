@@ -21,7 +21,7 @@ class TypedDictExtractor(FieldExtractor[type[dict[str, Any]]]):
     ) -> list[FieldDefinition]:
         try:
             type_hints = get_type_hints(source)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, AttributeError):
             return []
 
         required_keys, optional_keys = self._get_keys(source)
