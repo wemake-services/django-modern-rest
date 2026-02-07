@@ -2,9 +2,7 @@ from typing import final
 
 import pydantic
 
-from django_modern_rest import (  # noqa: WPS235
-    Controller,
-)
+from django_modern_rest import Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security.jwt import JWTAsyncAuth, JWTSyncAuth
 

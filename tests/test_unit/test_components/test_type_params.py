@@ -1,7 +1,19 @@
+from typing import Any
+
 import pytest
 
-from django_modern_rest import Body, Controller, Headers, Query
-from django_modern_rest.exceptions import EndpointMetadataError
+from django_modern_rest import (
+    Blueprint,
+    Body,
+    Controller,
+    Cookies,
+    Headers,
+    Path,
+    Query,
+)
+from django_modern_rest.exceptions import (
+    UnsolvableAnnotationsError,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
@@ -16,37 +28,45 @@ def test_validate_components_type_params() -> None:
             component_cls[int, str]  # pyright: ignore[reportInvalidTypeArguments]
 
 
-def test_validate_headers_zero_params() -> None:
+@pytest.mark.parametrize(
+    'component',
+    [
+        Headers,
+        Query,
+        Body,
+        Cookies,
+        Path,
+    ],
+)
+@pytest.mark.parametrize(
+    'base',
+    [
+        Controller[PydanticSerializer],
+        Blueprint[PydanticSerializer],
+    ],
+)
+def test_validate_component_zero_params(
+    base: type[Any],
+    component: type[Any],
+) -> None:
     """Ensure that we need at least one type param for component."""
-    with pytest.raises(EndpointMetadataError, match='_WrongHeaders'):
+    with pytest.raises(UnsolvableAnnotationsError, match='given 0'):
 
-        class _WrongHeaders(
-            Headers,  # type: ignore[type-arg]
-            Controller[PydanticSerializer],
+        class _Wrong(
+            base,  # type: ignore[misc]
+            component,  # type: ignore[misc]
         ):
             def get(self) -> dict[str, str]:
                 raise NotImplementedError
 
+    class ExtraLayer(component):  # type: ignore[misc]
+        """Just to create an extra layer between controller and a component."""
 
-def test_validate_body_zero_params() -> None:
-    """Ensure that we need at least one type param for component."""
-    with pytest.raises(EndpointMetadataError, match='_WrongBody'):
+    with pytest.raises(UnsolvableAnnotationsError, match='given 0'):
 
-        class _WrongBody(
-            Body,  # type: ignore[type-arg]
-            Controller[PydanticSerializer],
-        ):
-            def get(self) -> dict[str, str]:
-                raise NotImplementedError
-
-
-def test_validate_query_zero_params() -> None:
-    """Ensure that we need at least one type param for component."""
-    with pytest.raises(EndpointMetadataError, match='_WrongQuery'):
-
-        class _WrongQuery(
-            Query,  # type: ignore[type-arg]
-            Controller[PydanticSerializer],
+        class _WrongWithLayer(
+            ExtraLayer,
+            base,  # type: ignore[misc]
         ):
             def get(self) -> dict[str, str]:
                 raise NotImplementedError

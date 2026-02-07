@@ -50,7 +50,7 @@ JWT API
 
 .. important::
 
-  To use ``jwt`` you must install ``django-modern-rest[jwt]`` extra.
+  To use ``jwt`` you must install ``'django-modern-rest[jwt]'`` extra.
 
 
 .. autoclass:: django_modern_rest.security.jwt.JWTToken

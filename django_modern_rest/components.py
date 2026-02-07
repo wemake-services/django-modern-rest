@@ -1,18 +1,32 @@
 import abc
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    TypeAlias,
+    TypeVar,
+    get_args,
+)
 
 from typing_extensions import override
 
 from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
+    UnsolvableAnnotationsError,
 )
 from django_modern_rest.metadata import (
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
+)
+from django_modern_rest.types import (
+    TypeVarInference,
+    infer_bases,
+    is_safe_subclass,
 )
 
 if TYPE_CHECKING:
@@ -25,6 +39,90 @@ _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
 _PathT = TypeVar('_PathT')
 _CookiesT = TypeVar('_CookiesT')
+
+
+ComponentParserSpec: TypeAlias = tuple[
+    type['ComponentParser'],
+    tuple[Any, ...],
+]
+
+
+class ComponentParserBuilder:
+    """
+    Find the component parser types in the MRO and find model types for them.
+
+    Validates that component parsers can't have
+    type vars as models at this point.
+    """
+
+    __slots__ = ('_blueprint_cls', '_ignore_cls')
+
+    type_var_inference_cls: ClassVar[type[TypeVarInference]] = TypeVarInference
+
+    def __init__(
+        self,
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
+        ignore_cls: type['Blueprint[BaseSerializer]'],
+    ) -> None:
+        """Initialize the builder."""
+        self._blueprint_cls = blueprint_cls
+        self._ignore_cls = ignore_cls
+
+    def __call__(self) -> list[ComponentParserSpec]:
+        """Run the building process, infer type vars if needed."""
+        self._validate_args(self._find_components(use_origin=False))
+        components = self._find_components()
+        return self._resolve_type_vars(components)
+
+    def _find_components(
+        self,
+        *,
+        use_origin: bool = True,
+    ) -> list[type['ComponentParser']]:
+        return [
+            orig
+            for base in self._blueprint_cls.__mro__
+            for orig in infer_bases(
+                base,
+                ComponentParser,
+                use_origin=use_origin,
+            )
+            # When type is a subclass of `Blueprint`, it means that
+            # a component parser type was already mixed in.
+            if not is_safe_subclass(orig, self._ignore_cls)
+        ]
+
+    def _validate_args(self, components: list[type['ComponentParser']]) -> None:
+        for component_cls in components:
+            if component_cls is ComponentParser:
+                continue
+
+            if not get_args(component_cls):
+                raise UnsolvableAnnotationsError(
+                    f'Component {component_cls!r} in {self._blueprint_cls!r} '
+                    'must have at least 1 type argument, given 0',
+                )
+
+    def _resolve_type_vars(
+        self,
+        components: list[type['ComponentParser']],
+    ) -> list[ComponentParserSpec]:
+        return [self._resolve_component(component) for component in components]
+
+    def _resolve_component(
+        self,
+        component: type['ComponentParser'],
+    ) -> ComponentParserSpec:
+        type_params = getattr(component, '__parameters__', None)
+        if not type_params:
+            # Component is not generic, just return whatever it has.
+            return (component, get_args(component))
+
+        type_map = self.type_var_inference_cls(component, self._blueprint_cls)()
+        return (
+            component,
+            tuple(type_map[type_param] for type_param in type_params),
+        )
 
 
 class ComponentParser(ResponseSpecProvider):
