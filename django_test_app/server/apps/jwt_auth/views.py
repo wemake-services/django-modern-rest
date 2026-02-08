@@ -23,25 +23,25 @@ class ObtainAccessAndRefreshSyncController(
     ],
 ):
     @override
-    def make_response_payload(self) -> ObtainTokensResponse:
-        now = dt.datetime.now(dt.UTC)
-        return {
-            'access_token': self.create_token(
-                expiration=now + self.expiration,
-                token_type='access',  # noqa: S106
-            ),
-            'refresh_token': self.create_token(
-                expiration=now + self.refresh_expiration,
-                token_type='refresh',  # noqa: S106
-            ),
-        }
-
-    @override
     def convert_auth_payload(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
         return payload
+
+    @override
+    def make_response_payload(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_jwt_token(
+                expiration=now + self.jwt_expiration,
+                token_type='access',  # noqa: S106
+            ),
+            'refresh_token': self.create_jwt_token(
+                expiration=now + self.jwt_refresh_expiration,
+                token_type='refresh',  # noqa: S106
+            ),
+        }
 
 
 class ObtainAccessAndRefreshAsyncController(
@@ -52,25 +52,25 @@ class ObtainAccessAndRefreshAsyncController(
     ],
 ):
     @override
-    async def make_response_payload(self) -> ObtainTokensResponse:
-        now = dt.datetime.now(dt.UTC)
-        return {
-            'access_token': self.create_token(
-                expiration=now + self.expiration,
-                token_type='access',  # noqa: S106
-            ),
-            'refresh_token': self.create_token(
-                expiration=now + self.refresh_expiration,
-                token_type='refresh',  # noqa: S106
-            ),
-        }
-
-    @override
     def convert_auth_payload(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
         return payload
+
+    @override
+    async def make_response_payload(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_jwt_token(
+                expiration=now + self.jwt_expiration,
+                token_type='access',  # noqa: S106
+            ),
+            'refresh_token': self.create_jwt_token(
+                expiration=now + self.jwt_refresh_expiration,
+                token_type='refresh',  # noqa: S106
+            ),
+        }
 
 
 @final

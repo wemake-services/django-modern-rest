@@ -45,20 +45,19 @@ class ObtainTokensResponse(TypedDict):
 class _BaseTokenSettings:
     """Collection of jwt settings that can be applied to any jwt controller."""
 
-    audiences: ClassVar[str | Sequence[str] | None] = None
-    issuer: ClassVar[str | None] = None
-    require_claims: ClassVar[Sequence[str] | None] = None
-    algorithm: ClassVar[str] = 'HS256'
-    expiration: ClassVar[dt.timedelta] = dt.timedelta(days=1)
-    secret: ClassVar[str | None] = None
+    jwt_audiences: ClassVar[str | Sequence[str] | None] = None
+    jwt_issuer: ClassVar[str | None] = None
+    jwt_algorithm: ClassVar[str] = 'HS256'
+    jwt_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=1)
+    jwt_secret: ClassVar[str | None] = None
     jwt_id: ClassVar[str | None] = None
-    token_cls: ClassVar[type[JWTToken]] = JWTToken
+    jwt_token_cls: ClassVar[type[JWTToken]] = JWTToken
 
 
 class _BaseObtainTokensSettings(_BaseTokenSettings):
     """Settings that can be applied to controllers with refresh tokens."""
 
-    refresh_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=10)
+    jwt_refresh_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=10)
 
 
 class _BaseTokenController(
@@ -66,29 +65,32 @@ class _BaseTokenController(
     Controller[_SerializerT],
     Body[_ObtainTokensT],
 ):
-    def create_token(
+    def create_jwt_token(  # noqa: WPS211
         self,
+        *,
+        subject: str | None = None,
+        issuer: str | None = None,
+        audiences: str | Sequence[str] | None = None,
         expiration: dt.datetime | None = None,
+        jwt_id: str | None = None,
         token_type: _TokenType | None = None,
+        secret: str | None = None,
+        algorithm: str | None = None,
+        token_headers: dict[str, Any] | None = None,
     ) -> str:
         """Create correct jwt token of a give *expiration* and *type*."""
-        # This is for mypy only:
-        assert self.request.user.is_authenticated  # noqa: S101
-        return self.token_cls(
-            str(self.request.user.pk),
-            exp=expiration or (dt.datetime.now(dt.UTC) + self.expiration),
-            iss=self.issuer,
-            aud=self.audiences,
-            jti=self.jwt_id,
+        return self.jwt_token_cls(
+            sub=subject or str(self.request.user.pk),
+            exp=expiration or (dt.datetime.now(dt.UTC) + self.jwt_expiration),
+            iss=issuer or self.jwt_issuer,
+            aud=audiences or self.jwt_audiences,
+            jti=jwt_id or self.jwt_id,
             extras={'type': token_type} if token_type else {},
         ).encode(
-            secret=self.secret or settings.SECRET_KEY,
-            algorithm=self.algorithm,
-            headers=self.make_token_headers(),
+            secret=secret or self.jwt_secret or settings.SECRET_KEY,
+            algorithm=algorithm or self.jwt_algorithm,
+            headers=token_headers,
         )
-
-    def make_token_headers(self) -> dict[str, Any] | None:
-        """Create jwt token headers, does nothing by default."""
 
     @abstractmethod
     def convert_auth_payload(
@@ -110,17 +112,34 @@ class ObtainTokensSyncController(
     _BaseTokenController[_SerializerT, _ObtainTokensT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
-    """Sync controller to get access and refresh tokens."""
+    """
+    Sync controller to get access and refresh tokens.
 
-    @modify(
-        status_code=HTTPStatus.OK,
-        extra_responses=[
-            ResponseSpec(
-                return_type=ErrorModel,
-                status_code=HTTPStatus.UNAUTHORIZED,
-            ),
-        ],
+    Attributes:
+        jwt_audiences: String or sequence of string of audiences for JWT token.
+        jwt_issuer: String of who issued this JWT token.
+        jwt_algorithm: Default algorithm to use for token signing.
+        jwt_expiration: Default access token expiration timedelta.
+        jwt_refresh_expiration: Default refresh token expiration timedelta.
+        jwt_secret: Alternative token secret for signing.
+            By default uses ``secret.SECRET_KEY``
+        jwt_id: Unique JWT token id.
+        jwt_token_cls: Possible custom JWT token class.
+
+    See also:
+        https://pyjwt.readthedocs.io/en/stable
+        for all the JWT terms and options explanation.
+
+    """
+
+    responses = (
+        ResponseSpec(
+            return_type=ErrorModel,
+            status_code=HTTPStatus.UNAUTHORIZED,
+        ),
     )
+
+    @modify(status_code=HTTPStatus.OK)
     def post(self) -> _TokensResponseT:
         """By default tokens are acquired on post."""
         return self.login()
@@ -146,17 +165,34 @@ class ObtainTokensAsyncController(
     _BaseTokenController[_SerializerT, _ObtainTokensT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
-    """Async controller to get access and refresh tokens."""
+    """
+    Async controller to get access and refresh tokens.
 
-    @modify(
-        status_code=HTTPStatus.OK,
-        extra_responses=[
-            ResponseSpec(
-                return_type=ErrorModel,
-                status_code=HTTPStatus.UNAUTHORIZED,
-            ),
-        ],
+    Attributes:
+        jwt_audiences: String or sequence of string of audiences for JWT token.
+        jwt_issuer: String of who issued this JWT token.
+        jwt_algorithm: Default algorithm to use for token signing.
+        jwt_expiration: Default token expiration timedelta.
+        jwt_refresh_expiration: Default refresh token expiration timedelta.
+        jwt_secret: Alternative token secret for signing.
+            By default uses ``secret.SECRET_KEY``
+        jwt_id: Unique JWT token id.
+        jwt_token_cls: Possible custom JWT token class.
+
+    See also:
+        https://pyjwt.readthedocs.io/en/stable
+        for all the JWT terms and options explanation.
+
+    """
+
+    responses = (
+        ResponseSpec(
+            return_type=ErrorModel,
+            status_code=HTTPStatus.UNAUTHORIZED,
+        ),
     )
+
+    @modify(status_code=HTTPStatus.OK)
     async def post(self) -> _TokensResponseT:
         """By default tokens are acquired on post."""
         return await self.login()

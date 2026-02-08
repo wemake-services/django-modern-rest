@@ -52,8 +52,8 @@ class _DjangoSessionAuth:
         For example: checking that user is staff / superuser.
         """
         # It is always sync, because no IO ever happens here.
-        user = controller.request.user
-        if user.is_authenticated and user.is_active:
+        user = getattr(controller.request, 'user', None)
+        if user and user.is_authenticated and user.is_active:
             return user
         return None
 
