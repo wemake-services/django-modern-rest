@@ -67,12 +67,13 @@ class APIError(Exception, Generic[_ItemT]):
         *,
         status_code: HTTPStatus,
         headers: dict[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
     ) -> None:
-        """Create response from parts."""
         super().__init__()
         self.raw_data = raw_data
         self.status_code = status_code
         self.headers = headers
+        self.cookies = cookies
 
 
 @overload
