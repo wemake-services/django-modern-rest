@@ -147,6 +147,8 @@ Things that you can customize:
 - Request body format
 - Response body format
 - JWT settings
+- JWT token class to be :class:`~django_modern_rest.security.jwt.JWTToken`
+  subclass with custom logic
 - Error messages, see :ref:`customizing-error-messages`
 - Error handling, see :doc:`error-handling`
 - Response status code and any other regular controller or endpoint features
@@ -157,6 +159,11 @@ Here's an example with a lot more customizations:
   :caption: views.py
   :linenos:
   :language: python
+
+This example also provides issuer and audience in the token,
+so it can be used together with ``accepted_issuers`` and ``accepted_audiences``
+configurations of :attr:`django_modern_rest.security.jwt.JWTSyncAuth`
+to additionally validate ``aud`` and ``iss`` JWT token claims.
 
 We want to be sure that this class is at the same time:
 

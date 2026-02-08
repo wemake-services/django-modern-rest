@@ -148,8 +148,8 @@ class JWTToken:
         algorithm: str,
         *,
         leeway: int = 0,  # seconds
-        audience: str | Sequence[str] | None = None,
-        issuer: str | Sequence[str] | None = None,
+        accepted_audiences: str | Sequence[str] | None = None,
+        accepted_issuers: str | Sequence[str] | None = None,
         require_claims: Sequence[str] | None = None,
         verify_exp: bool = True,
         verify_iat: bool = True,
@@ -168,8 +168,8 @@ class JWTToken:
             algorithm: The algorithm used to encode the JWT.
             leeway: Number of potential seconds as a clock error
                 for expired tokens.
-            audience: Verify the audience when decoding the token.
-            issuer: Verify the issuer when decoding the token.
+            accepted_audiences: Verify the audience when decoding the token.
+            accepted_issuers: Verify the issuer when decoding the token.
             require_claims: Verify that the given claims
                 are present in the token.
             verify_exp: Verify that the value of the ``exp`` (*expiration*)
@@ -199,8 +199,8 @@ class JWTToken:
 
         """
         options = cls._build_options(
-            audience=audience,
-            issuer=issuer,
+            audience=accepted_audiences,
+            issuer=accepted_issuers,
             require_claims=require_claims,
             verify_exp=verify_exp,
             verify_nbf=verify_exp,
@@ -213,8 +213,8 @@ class JWTToken:
                 encoded_token=encoded_token,
                 secret=secret,
                 algorithms=[algorithm],
-                audience=audience,
-                issuer=issuer,
+                audience=accepted_audiences,
+                issuer=accepted_issuers,
                 leeway=leeway,
                 options=options,
             )
