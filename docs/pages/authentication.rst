@@ -227,10 +227,10 @@ Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensSyncController
-  :members: post, login, make_response_payload, create_jwt_token, convert_auth_payload
+  :members: post, login, make_response_payload, create_jwt_token, convert_auth_payload, make_jwt_id
 
 .. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensAsyncController
-  :members: post, login, make_response_payload, create_jwt_token, convert_auth_payload
+  :members: post, login, make_response_payload, create_jwt_token, convert_auth_payload, make_jwt_id
 
 .. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensPayload
   :members:

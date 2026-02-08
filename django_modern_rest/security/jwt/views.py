@@ -1,4 +1,5 @@
 import datetime as dt
+import uuid
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
@@ -50,7 +51,6 @@ class _BaseTokenSettings:
     jwt_algorithm: ClassVar[str] = 'HS256'
     jwt_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=1)
     jwt_secret: ClassVar[str | None] = None
-    jwt_id: ClassVar[str | None] = None
     jwt_token_cls: ClassVar[type[JWTToken]] = JWTToken
 
 
@@ -84,13 +84,17 @@ class _BaseTokenController(
             exp=expiration or (dt.datetime.now(dt.UTC) + self.jwt_expiration),
             iss=issuer or self.jwt_issuer,
             aud=audiences or self.jwt_audiences,
-            jti=jwt_id or self.jwt_id,
+            jti=jwt_id or self.make_jwt_id(),
             extras={'type': token_type} if token_type else {},
         ).encode(
             secret=secret or self.jwt_secret or settings.SECRET_KEY,
             algorithm=algorithm or self.jwt_algorithm,
             headers=token_headers,
         )
+
+    def make_jwt_id(self) -> str | None:
+        """Create unique token's jwt id."""
+        return uuid.uuid4().hex
 
     @abstractmethod
     def convert_auth_payload(
@@ -123,7 +127,6 @@ class ObtainTokensSyncController(
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
             By default uses ``secret.SECRET_KEY``
-        jwt_id: Unique JWT token id.
         jwt_token_cls: Possible custom JWT token class.
 
     See also:
@@ -176,7 +179,6 @@ class ObtainTokensAsyncController(
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
             By default uses ``secret.SECRET_KEY``
-        jwt_id: Unique JWT token id.
         jwt_token_cls: Possible custom JWT token class.
 
     See also:
