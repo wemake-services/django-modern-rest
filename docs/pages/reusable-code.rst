@@ -18,6 +18,8 @@ Python REST frameworks is code re-usability.
 What does ``django-modern-rest`` offer instead?
 
 
+.. _reusable-controllers:
+
 Reusable controllers
 --------------------
 
