@@ -69,6 +69,7 @@ class APIError(Exception, Generic[_ItemT]):
         headers: dict[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> None:
+        """Create API error with data, status, headers, and cookies."""
         super().__init__()
         self.raw_data = raw_data
         self.status_code = status_code
