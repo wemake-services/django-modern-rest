@@ -51,6 +51,7 @@ Example:
 
 .. literalinclude:: /examples/core_concepts/glossary.py
   :caption: views.py
+  :language: python
   :linenos:
   :lines: 10-
 

@@ -11,6 +11,7 @@ Let's say you have these models that you already work with:
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/models.py
   :caption: models.py
+  :language: python
   :linenos:
 
 Now, let's create an API that will work with your models.
@@ -28,6 +29,7 @@ This problem happened to me too many times.
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/serializers.py
   :caption: serializers.py
+  :language: python
   :linenos:
 
 .. important::
@@ -45,6 +47,7 @@ Now, let's create a service to build your model instances:
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/services.py
   :caption: services.py
+  :language: python
   :linenos:
 
 Here's how the final :class:`~django_modern_rest.controller.Controller`
@@ -52,6 +55,7 @@ would look like:
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/views.py
   :caption: views.py
+  :language: python
   :linenos:
 
 Now you have your REST API that returns fully typed model responses

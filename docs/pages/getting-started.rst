@@ -76,6 +76,7 @@ Quick example:
 
       .. literalinclude:: /examples/getting_started/msgspec_controller.py
         :caption: views.py
+        :language: python
         :linenos:
         :emphasize-lines: 7, 24
 
@@ -83,6 +84,7 @@ Quick example:
 
       .. literalinclude:: /examples/getting_started/pydantic_controller.py
         :caption: views.py
+        :language: python
         :linenos:
         :emphasize-lines: 7, 24
 
@@ -108,6 +110,7 @@ Now, let's add our API to the list of URLs:
 
 .. literalinclude:: /examples/getting_started/urls.py
   :caption: urls.py
+  :language: python
   :linenos:
   :lines: 3-
 

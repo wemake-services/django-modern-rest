@@ -105,6 +105,7 @@ Let's say you have this URL configuration:
 
 .. literalinclude:: /examples/routing/simple_router.py
   :caption: urls.py
+  :language: python
   :lines: 3-
 
 .. code-block::
