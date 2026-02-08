@@ -218,7 +218,7 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
     ) -> 'AbstractBaseUser':
         """Run all auth pipeline."""
         user = self.get_user(token)
-        self.check_user(user)
+        self.check_auth(user, token)
         self.set_request_user(request, user)
         return user
 
@@ -235,8 +235,8 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
 
-    def check_user(self, user: 'AbstractBaseUser') -> None:
-        """Run extra checks on the user, raise if something is wrong."""
+    def check_auth(self, user: 'AbstractBaseUser', token: JWTToken) -> None:
+        """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError
 
@@ -265,7 +265,7 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     ) -> 'AbstractBaseUser':
         """Run all auth pipeline."""
         user = await self.get_user(token)
-        await self.check_user(user)
+        await self.check_auth(user, token)
         self.set_request_user(request, user)
         return user
 
@@ -282,7 +282,11 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
 
-    async def check_user(self, user: 'AbstractBaseUser') -> None:
-        """Run extra checks on the user, raise if something is wrong."""
+    async def check_auth(
+        self,
+        user: 'AbstractBaseUser',
+        token: JWTToken,
+    ) -> None:
+        """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError

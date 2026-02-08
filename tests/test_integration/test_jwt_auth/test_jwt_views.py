@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import jwt
 import pytest
-from dirty_equals import IsNumber
+from dirty_equals import IsNumber, IsStr
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -77,26 +77,31 @@ def test_correct_auth_params(
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     response_body = response.json()
-    assert jwt.decode(
+    access = jwt.decode(
         response_body['access_token'],
         key=settings.SECRET_KEY,
         algorithms=['HS256'],
-    ) == {
+    )
+    assert access == {
         'sub': str(user.pk),
         'exp': IsNumber(),
         'iat': IsNumber(),
+        'jti': IsStr(),
         'extras': {'type': 'access'},
     }
-    assert jwt.decode(
+    refresh = jwt.decode(
         response_body['refresh_token'],
         key=settings.SECRET_KEY,
         algorithms=['HS256'],
-    ) == {
+    )
+    assert refresh == {
         'sub': str(user.pk),
         'exp': IsNumber(),
         'iat': IsNumber(),
+        'jti': IsStr(),
         'extras': {'type': 'refresh'},
     }
+    assert access['jti'] != refresh['jti']
 
     # Assert that it roundtrips to the auth-protected controller:
     token = response_body[token_type]
