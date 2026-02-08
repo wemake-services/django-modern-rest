@@ -55,7 +55,7 @@ class SessionAsyncController(
 
     @override
     async def make_api_response(self) -> DjangoSessionResponse:
-        return {_USER_ID: str(self.request.user.pk)}
+        return {_USER_ID: str((await self.request.auser()).pk)}
 
 
 @final
@@ -71,4 +71,4 @@ class UserAsyncController(Controller[PydanticSerializer]):
     auth = (DjangoSessionAsyncAuth(),)
 
     async def get(self) -> DjangoSessionResponse:
-        return {_USER_ID: str(self.request.user.pk)}
+        return {_USER_ID: str((await self.request.auser()).pk)}

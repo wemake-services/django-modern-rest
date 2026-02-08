@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any
 
-from asgiref.sync import sync_to_async
 from django.conf import settings
 from typing_extensions import override
 
@@ -113,10 +112,10 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
 
         For example: checking that user is staff / superuser.
         """
-        user = getattr(controller.request, 'user', None)
-        # Workaround for Django bug:
-        # https://code.djangoproject.com/ticket/31920
-        has_user = await sync_to_async(bool)(user)
-        if has_user and user.is_authenticated and user.is_active:  # type: ignore[union-attr]
+        auser = getattr(controller.request, 'auser', None)
+        if auser is None:
+            return None
+        user = await auser()
+        if user.is_authenticated and user.is_active:
             return user
         return None
