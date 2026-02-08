@@ -65,7 +65,7 @@ class _BaseTokenController(
     Controller[_SerializerT],
     Body[_ObtainTokensT],
 ):
-    def create_jwt_token(
+    def create_jwt_token(  # noqa: WPS211
         self,
         *,
         subject: str | None = None,
