@@ -51,7 +51,7 @@ There are 4 ways to provide auth classes for an endpoint:
 
 .. tabs::
 
-    .. tab:: per enpoint
+    .. tab:: per endpoint
 
       .. literalinclude:: /examples/auth/per_endpoint.py
         :caption: views.py
@@ -89,7 +89,7 @@ Providing several auth instances means that at least one of them must succeed.
 Disabling auth
 ~~~~~~~~~~~~~~
 
-It is a common pratice to define a global auth protocol
+It is a common practice to define a global auth protocol
 in settings and then disable auth per specific endpoints
 like ``/registration`` and ``/login``.
 
