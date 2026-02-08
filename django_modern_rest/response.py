@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 from django.http import HttpResponse
 
-from django_modern_rest.cookies import NewCookie
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
@@ -81,8 +81,8 @@ def build_response(
     *,
     raw_data: Any,
     method: HTTPMethod | str,
-    headers: dict[str, str] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    headers: Mapping[str, str] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     status_code: HTTPStatus | None = None,
     renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse: ...
@@ -95,8 +95,8 @@ def build_response(
     raw_data: Any,
     status_code: HTTPStatus,
     method: None = None,
-    headers: dict[str, str] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    headers: Mapping[str, str] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse: ...
 
@@ -106,8 +106,8 @@ def build_response(  # noqa: WPS210, WPS211
     *,
     raw_data: Any,
     method: HTTPMethod | str | None = None,
-    headers: dict[str, str] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    headers: Mapping[str, str] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     status_code: HTTPStatus | None = None,
     renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse:
@@ -143,8 +143,10 @@ def build_response(  # noqa: WPS210, WPS211
         # Needed for type checking:
         assert renderer_cls is not None  # noqa: S101
 
-    response_headers = {} if headers is None else headers
-    response_headers['Content-Type'] = renderer_cls.content_type
+    response_headers = {
+        **({} if headers is None else headers),
+        'Content-Type': renderer_cls.content_type,
+    }
 
     response = HttpResponse(
         content=serializer.serialize(raw_data, renderer_cls=renderer_cls),
@@ -152,8 +154,8 @@ def build_response(  # noqa: WPS210, WPS211
         headers=response_headers,
     )
     if cookies:
-        for cookie_key, new_cookie in cookies.items():
-            response.set_cookie(cookie_key, **new_cookie.as_dict())
+        for cookie_key, cookie in cookies.items():
+            cookie.process_response(response, cookie_key)
     return response
 
 

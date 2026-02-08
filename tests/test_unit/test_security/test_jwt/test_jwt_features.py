@@ -21,8 +21,8 @@ from django_modern_rest.test import DMRRequestFactory
 def user(faker: Faker) -> User:
     """Create fake user for tests."""
     return User.objects.create_user(
-        faker.user_name(),
-        faker.email(),
+        faker.unique.user_name(),
+        faker.unique.email(),
         faker.password(),
     )
 

@@ -96,21 +96,6 @@ class _BaseTokenController(
         """Create unique token's jwt id."""
         return uuid.uuid4().hex
 
-    @abstractmethod
-    def convert_auth_payload(
-        self,
-        payload: _ObtainTokensT,
-    ) -> ObtainTokensPayload:
-        """
-        Convert your custom payload to kwargs that django supports.
-
-        See :func:`django.contrib.auth.authenticate` docs
-        on which kwargs it supports.
-
-        Basically it needs ``username`` and ``password`` strings.
-        """
-        raise NotImplementedError
-
 
 class ObtainTokensSyncController(
     _BaseTokenController[_SerializerT, _ObtainTokensT],
@@ -156,10 +141,25 @@ class ObtainTokensSyncController(
         if user is None:
             raise NotAuthenticatedError
         self.request.user = user
-        return self.make_response_payload()
+        return self.make_api_response()
 
     @abstractmethod
-    def make_response_payload(self) -> _TokensResponseT:
+    def convert_auth_payload(
+        self,
+        payload: _ObtainTokensT,
+    ) -> ObtainTokensPayload:
+        """
+        Convert your custom payload to kwargs that django supports.
+
+        See :func:`django.contrib.auth.authenticate` docs
+        on which kwargs it supports.
+
+        Basically it needs ``username`` and ``password`` strings.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def make_api_response(self) -> _TokensResponseT:
         """Abstract method to create a response payload."""
         raise NotImplementedError
 
@@ -203,14 +203,29 @@ class ObtainTokensAsyncController(
         """Perform the async login routine for user."""
         user = await aauthenticate(
             self.request,
-            **self.convert_auth_payload(self.parsed_body),
+            **(await self.convert_auth_payload(self.parsed_body)),
         )
         if user is None:
             raise NotAuthenticatedError
         self.request.user = user
-        return await self.make_response_payload()
+        return await self.make_api_response()
 
     @abstractmethod
-    async def make_response_payload(self) -> _TokensResponseT:
+    async def convert_auth_payload(
+        self,
+        payload: _ObtainTokensT,
+    ) -> ObtainTokensPayload:
+        """
+        Convert your custom payload to kwargs that django supports.
+
+        See :func:`django.contrib.auth.authenticate` docs
+        on which kwargs it supports.
+
+        Basically it needs ``username`` and ``password`` strings.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def make_api_response(self) -> _TokensResponseT:
         """Abstract method to create a response payload."""
         raise NotImplementedError

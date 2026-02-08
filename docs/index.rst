@@ -176,13 +176,21 @@ Here are our amazing people who made this project possible.
   pages/validation.rst
   pages/negotiation.rst
   pages/reusable-code.rst
-  pages/authentication.rst
   pages/openapi.rst
   pages/integrations.rst
   pages/micro-framework.rst
   pages/sse.rst
   pages/testing.rst
 
+
+.. toctree::
+  :caption: Auth
+  :hidden:
+
+  pages/auth/common.rst
+  pages/auth/http-basic.rst
+  pages/auth/django-session.rst
+  pages/auth/jwt.rst
 
 .. toctree::
   :caption: Deep Dive

@@ -13,7 +13,7 @@ from typing import (
 
 from django.http import HttpResponse
 
-from django_modern_rest.cookies import NewCookie
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.exceptions import (
     InternalServerError,
     ResponseSchemaError,
@@ -265,5 +265,5 @@ class _ValidationContext:
     raw_data: Any  # not empty
     status_code: HTTPStatus
     headers: dict[str, str]
-    cookies: Mapping[str, NewCookie] | None
+    cookies: Mapping[str, NewCookie | CookieSpec] | None
     renderer_cls: type['Renderer']

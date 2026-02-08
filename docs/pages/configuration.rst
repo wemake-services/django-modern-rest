@@ -208,7 +208,7 @@ Authentication
   .. code-block:: python
     :caption: settings.py
 
-    >>> from django_modern_rest.security import DjangoSessionSyncAuth
+    >>> from django_modern_rest.security.django_session import DjangoSessionSyncAuth
 
     >>> DMR_SETTINGS = {
     ...     Settings.auth: [

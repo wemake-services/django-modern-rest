@@ -22,8 +22,8 @@ def password(faker: Faker) -> str:
 def user(faker: Faker, password: str) -> User:
     """Create fake user for tests."""
     return User.objects.create_user(
-        faker.user_name(),
-        faker.email(),
+        faker.unique.user_name(),
+        faker.unique.email(),
         password,
     )
 

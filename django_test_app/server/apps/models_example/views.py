@@ -1,9 +1,6 @@
 from typing import final
 
-from django_modern_rest import (
-    Body,
-    Controller,
-)
+from django_modern_rest import Body, Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from server.apps.models_example.serializers import UserCreateSchema, UserSchema
 from server.apps.models_example.services import user_create_service

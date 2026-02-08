@@ -169,6 +169,8 @@ We also support setting and validating response cookies.
 
 You can use :class:`~django_modern_rest.cookies.NewCookie`
 to add new cookies with statically known values to "raw endpoints".
+Or :class:`~django_modern_rest.cookies.CookieSpec` with both types
+of endpoints to describe response cookies.
 
 .. literalinclude:: /examples/returning_responses/modify_cookies.py
   :caption: views.py
@@ -178,7 +180,8 @@ to add new cookies with statically known values to "raw endpoints".
   :emphasize-lines: 12
 
 And you can set any cookies to :attr:`django.http.HttpResponse.cookies`
-with "real endpoints". As well as describing the expected cookies with
+with "real endpoints". Since we have strict schemas,
+it is required to describe the set cookies with
 :class:`~django_modern_rest.cookies.CookieSpec`:
 
 .. literalinclude:: /examples/returning_responses/validate_cookies.py
@@ -188,12 +191,10 @@ with "real endpoints". As well as describing the expected cookies with
   :lines: 19-
   :emphasize-lines: 14-17, 24-26
 
-
 .. note::
 
   All cookie parts are validated by default. Except ``expires`` field,
   because it is relative to the current time.
-
 
 .. important::
 

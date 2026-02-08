@@ -169,3 +169,15 @@ Plugins
 .. autoclass:: django_modern_rest.plugins.pydantic.PydanticSerializer
 
 .. autoclass:: django_modern_rest.plugins.msgspec.MsgspecSerializer
+
+
+Auth
+----
+
+.. autoclass:: django_modern_rest.security.SyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: django_modern_rest.security.AsyncAuth
+  :members:
+  :inherited-members:

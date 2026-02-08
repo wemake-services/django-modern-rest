@@ -11,7 +11,7 @@ from inline_snapshot import snapshot
 from django_modern_rest import Controller, modify
 from django_modern_rest.openapi.objects.components import Components
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security import (
+from django_modern_rest.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
@@ -66,13 +66,17 @@ class _AsyncController(Controller[PydanticSerializer]):
         return 'authed'
 
 
+async def _resolve(user: User) -> User:  # noqa: RUF029
+    return user
+
+
 @pytest.mark.asyncio
 async def test_async_session_auth_success(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that async controllers work with django session auth."""
     request = dmr_async_rf.get('/whatever/')
-    request.user = User()
+    request.auser = lambda: _resolve(User())
 
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
