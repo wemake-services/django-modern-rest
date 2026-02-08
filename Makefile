@@ -42,6 +42,7 @@ smoke: ## Run smoke tests (check that package can be imported without `django.se
 	poetry run python -c 'from django_modern_rest import settings'
 	# Checks that auth can be imported from settings without `.setup()` call:
 	poetry run python -c 'from django_modern_rest.security import *'
+	poetry run python -c 'from django_modern_rest.security.django_session import *'
 	poetry run python -c 'from django_modern_rest.security.jwt import *'
 
 .PHONY: example

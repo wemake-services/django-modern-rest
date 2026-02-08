@@ -20,6 +20,7 @@ from django.urls import include, path
 
 from django_modern_rest.routing import Router
 from server.apps.controllers import urls as controllers_urls
+from server.apps.django_session_auth import urls as django_session_auth_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
@@ -28,7 +29,7 @@ from server.apps.openapi.urls import build_spec
 
 router = Router([
     path(
-        'model_examples/',
+        'model-examples/',
         include(
             (models_example_urls.router.urls, 'models_example'),
             namespace='model_examples',
@@ -56,10 +57,17 @@ router = Router([
         ),
     ),
     path(
-        'jwt_auth/',
+        'jwt-auth/',
         include(
             (jwt_auth_urls.router.urls, 'jwt_auth'),
             namespace='jwt_auth',
+        ),
+    ),
+    path(
+        'django-session-auth/',
+        include(
+            (django_session_auth_urls.router.urls, 'django_session_auth'),
+            namespace='django_session_auth',
         ),
     ),
 ])

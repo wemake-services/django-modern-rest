@@ -12,7 +12,7 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security import (
+from django_modern_rest.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )

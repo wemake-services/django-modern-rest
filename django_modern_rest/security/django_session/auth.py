@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from typing_extensions import override
 
@@ -41,22 +42,6 @@ class _DjangoSessionAuth:
         """Provides a security schema usage requirement."""
         return {self.security_scheme_name: []}
 
-    def authenticate(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
-        """
-        Override this method to provide other authentication logic.
-
-        For example: checking that user is staff / superuser.
-        """
-        # It is always sync, because no IO ever happens here.
-        user = getattr(controller.request, 'user', None)
-        if user and user.is_authenticated and user.is_active:
-            return user
-        return None
-
 
 class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
     """
@@ -80,6 +65,21 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         """Does check for the existing request user."""
         return self.authenticate(endpoint, controller)
 
+    def authenticate(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> Any | None:
+        """
+        Override this method to provide other authentication logic.
+
+        For example: checking that user is staff / superuser.
+        """
+        user = getattr(controller.request, 'user', None)
+        if user and user.is_authenticated and user.is_active:
+            return user
+        return None
+
 
 class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
     """
@@ -101,4 +101,22 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         controller: 'Controller[BaseSerializer]',
     ) -> Any | None:
         """Does check for the existing request user."""
-        return self.authenticate(endpoint, controller)
+        return await self.authenticate(endpoint, controller)
+
+    async def authenticate(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> Any | None:
+        """
+        Override this method to provide other authentication logic.
+
+        For example: checking that user is staff / superuser.
+        """
+        user = getattr(controller.request, 'user', None)
+        # Workaround for Django bug:
+        # https://code.djangoproject.com/ticket/31920
+        has_user = await sync_to_async(bool)(user)
+        if has_user and user.is_authenticated and user.is_active:  # type: ignore[union-attr]
+            return user
+        return None

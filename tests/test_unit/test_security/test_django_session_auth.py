@@ -11,7 +11,7 @@ from inline_snapshot import snapshot
 from django_modern_rest import Controller, modify
 from django_modern_rest.openapi.objects.components import Components
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security import (
+from django_modern_rest.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )

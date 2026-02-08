@@ -2,7 +2,7 @@ from typing import final
 
 from django_modern_rest import Controller, modify
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security import (
+from django_modern_rest.security.django_session import (
     DjangoSessionSyncAuth,
 )
 

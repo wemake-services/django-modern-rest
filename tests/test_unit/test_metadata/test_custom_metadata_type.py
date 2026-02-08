@@ -15,7 +15,7 @@ from django_modern_rest import (
 )
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpecProvider
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security import DjangoSessionSyncAuth
+from django_modern_rest.security.django_session import DjangoSessionSyncAuth
 from django_modern_rest.test import DMRRequestFactory
 
 

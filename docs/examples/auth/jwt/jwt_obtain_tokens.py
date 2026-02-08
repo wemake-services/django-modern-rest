@@ -26,7 +26,7 @@ class ObtainAccessAndRefreshSyncController(
         return payload
 
     @override
-    def make_response_payload(self) -> ObtainTokensResponse:
+    def make_api_response(self) -> ObtainTokensResponse:
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(

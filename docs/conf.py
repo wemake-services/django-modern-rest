@@ -124,6 +124,11 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.internal.negotiation.ConditionalType'),
     (PY_CLASS, 'django_modern_rest.security.jwt.views._ObtainTokensT'),
     (PY_CLASS, 'django_modern_rest.security.jwt.views._TokensResponseT'),
+    (
+        PY_CLASS,
+        'django_modern_rest.security.django_session.views._RequestModelT',
+    ),
+    (PY_CLASS, 'django_modern_rest.security.django_session.views._ResponseT'),
     (PY_CLASS, 'django_modern_rest.controller._SerializerT_co'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Unsolvable imports:

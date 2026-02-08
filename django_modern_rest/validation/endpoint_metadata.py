@@ -15,7 +15,7 @@ from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponse
 
 from django_modern_rest.components import Body
-from django_modern_rest.cookies import CookieSpec, NewCookie
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.headers import HeaderSpec, NewHeader
 from django_modern_rest.metadata import (
@@ -669,16 +669,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response',
-            )
-        if payload.cookies is not None and any(
-            isinstance(cookie, CookieSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
-            for cookie in payload.cookies.values()
-        ):
-            raise EndpointMetadataError(
-                f'Since {endpoint!r} returns raw data, '
-                f'it is not possible to use `CookieSpec` '
-                'because there are no existing cookies to describe. Use '
-                '`NewCookie` to add new cookies to the response',
             )
 
     def _validate_return_annotation(

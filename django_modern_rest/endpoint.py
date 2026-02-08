@@ -12,7 +12,7 @@ from typing import (
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
-from django_modern_rest.cookies import NewCookie
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.exceptions import (
     InternalServerError,
@@ -735,7 +735,7 @@ def modify(
     error_handler: AsyncErrorHandler,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -761,7 +761,7 @@ def modify(
     error_handler: SyncErrorHandler,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -786,7 +786,7 @@ def modify(
     *,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -811,7 +811,7 @@ def modify(  # noqa: WPS211
     *,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader] | None = None,
-    cookies: Mapping[str, NewCookie] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
