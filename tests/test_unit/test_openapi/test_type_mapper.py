@@ -27,6 +27,9 @@ _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
     ('source_type', 'schema_type'),
     [
         (int, OpenAPIType.INTEGER),
+        (float, OpenAPIType.NUMBER),
+        (str, OpenAPIType.STRING),
+        (bool, OpenAPIType.BOOLEAN),
         (_SubDecimal, OpenAPIType.NUMBER),
     ],
 )
