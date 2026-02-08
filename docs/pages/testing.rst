@@ -43,6 +43,7 @@ For ``pytest`` we also have a bundled plugin with several different fixtures:
 
 .. literalinclude:: ../../django_modern_rest_pytest.py
   :caption: django_modern_rest_pytest.py
+  :language: python
   :linenos:
   :lines: 22-
 
@@ -65,6 +66,7 @@ Let's say you have this code for you controller, using ``pydantic`` models:
 
 .. literalinclude:: /examples/testing/pydantic_controller.py
   :caption: views.py
+  :language: python
   :linenos:
   :lines: 10-
 
@@ -72,6 +74,7 @@ Let's reuse the models for data generation in tests!
 
 .. literalinclude:: /examples/testing/polyfactory_usage.py
   :caption: test_user_create.py
+  :language: python
   :linenos:
   :lines: 9-
 

@@ -65,6 +65,7 @@ per-blueprint, per-controller and globally.
 
       .. literalinclude:: /examples/validation/httpspec/right_way.py
         :caption: views.py
+        :language: python
         :linenos:
 
     .. tab:: Per endpoint

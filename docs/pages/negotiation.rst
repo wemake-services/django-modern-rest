@@ -85,6 +85,7 @@ going back to the less specific:
 
       .. literalinclude:: /examples/negotiation/per_endpoint.py
         :caption: views.py
+        :language: python
         :linenos:
         :emphasize-lines: 35
 

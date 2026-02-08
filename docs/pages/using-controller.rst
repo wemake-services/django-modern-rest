@@ -126,6 +126,7 @@ Here's an example:
 
 .. literalinclude:: /examples/using_controller/blueprints.py
   :caption: views.py
+  :language: python
   :linenos:
   :lines: 13-
 
@@ -136,6 +137,7 @@ First, they need to be composed into a controller:
 
 .. literalinclude:: /examples/using_controller/compose_blueprints.py
   :caption: views.py
+  :language: python
   :linenos:
   :lines: 12-
 
@@ -172,6 +174,7 @@ Here's an example of a custom ``meta`` implementation:
 
 .. literalinclude:: /examples/using_controller/custom_meta.py
   :caption: views.py
+  :language: python
   :linenos:
 
 
