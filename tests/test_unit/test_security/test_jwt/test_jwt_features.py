@@ -52,7 +52,7 @@ _ISSUER: Final = 'wemake-services/django-modern-rest'
 
 @final
 class _IssuerController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(issuer=_ISSUER)])
+    @modify(auth=[JWTSyncAuth(accepted_issuers=_ISSUER)])
     def get(self) -> str:
         return 'authed'
 
@@ -93,7 +93,7 @@ _AUDIENCE: Final = ('dev', 'qa')
 
 @final
 class _AudienceController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(audience=_AUDIENCE)])
+    @modify(auth=[JWTSyncAuth(accepted_audiences=_AUDIENCE)])
     def get(self) -> str:
         return 'authed'
 

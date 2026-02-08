@@ -116,7 +116,7 @@ def test_strict_audience_validation() -> None:
             'whatever',
             secret='whatever',  # noqa: S106
             algorithm='HS256',
-            audience=['multiple', 'values'],
+            accepted_audiences=['multiple', 'values'],
             strict_audience=True,
         )
 
@@ -135,7 +135,7 @@ def test_strict_audience_single_value() -> None:
         encoded,
         secret=secret,
         algorithm='HS256',
-        audience=audience,
+        accepted_audiences=audience,
         strict_audience=True,
     )
 
@@ -187,7 +187,7 @@ def test_token_issuer(issuer: str | list[str] | None) -> None:
         encoded,
         secret=secret,
         algorithm='HS256',
-        issuer=issuer,
+        accepted_issuers=issuer,
     )
 
     assert token.iss == iss

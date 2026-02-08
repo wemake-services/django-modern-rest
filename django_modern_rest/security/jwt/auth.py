@@ -29,12 +29,12 @@ if TYPE_CHECKING:
 
 class _BaseJWTAuth:  # noqa: WPS214, WPS230
     __slots__ = (
+        'accepted_audiences',
+        'accepted_issuers',
         'algorithm',
-        'audience',
         'auth_header',
         'auth_scheme',
         'enforce_minimum_key_length',
-        'issuer',
         'leeway',
         'require_claims',
         'secret',
@@ -60,8 +60,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         secret: str | None = None,
         token_cls: type[JWTToken] = JWTToken,
         leeway: int = 0,  # seconds
-        audience: str | Sequence[str] | None = None,
-        issuer: str | Sequence[str] | None = None,
+        accepted_audiences: str | Sequence[str] | None = None,
+        accepted_issuers: str | Sequence[str] | None = None,
         require_claims: Sequence[str] | None = None,
         verify_expiry: bool = True,
         verify_issued_at: bool = True,
@@ -97,8 +97,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         self.secret: str = secret or settings.SECRET_KEY
         self.token_cls = token_cls
         self.leeway = leeway
-        self.audience = audience
-        self.issuer = issuer
+        self.accepted_audiences = accepted_audiences
+        self.accepted_issuers = accepted_issuers
         self.require_claims = require_claims
         self.verify_expiry = verify_expiry
         self.verify_issued_at = verify_issued_at
@@ -160,8 +160,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
             secret=self.secret,
             algorithm=self.algorithm,
             leeway=self.leeway,
-            audience=self.audience,
-            issuer=self.issuer,
+            accepted_audiences=self.accepted_audiences,
+            accepted_issuers=self.accepted_issuers,
             require_claims=self.require_claims,
             verify_exp=self.verify_expiry,
             verify_iat=self.verify_issued_at,
