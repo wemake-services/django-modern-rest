@@ -17,6 +17,7 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.components import ComponentParser
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType
 from django_modern_rest.openapi.objects.components import Components
@@ -34,7 +35,11 @@ class _ValidAPIError(Controller[PydanticSerializer]):
         ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
     )
     def get(self) -> HttpResponse:
-        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
+        raise APIError(
+            1,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': NewCookie(value='get_123')},
+        )
 
     @modify(
         status_code=HTTPStatus.OK,
@@ -43,11 +48,19 @@ class _ValidAPIError(Controller[PydanticSerializer]):
         ],
     )
     def post(self) -> str:
-        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
+        raise APIError(
+            1,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': NewCookie(value='get_123')},
+        )
 
     @modify(status_code=HTTPStatus.PAYMENT_REQUIRED)
     def put(self) -> int:
-        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
+        raise APIError(
+            1,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': NewCookie(value='get_123')},
+        )
 
 
 @pytest.mark.parametrize(
@@ -71,6 +84,7 @@ def test_valid_api_error(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
     assert json.loads(response.content) == 1
+    assert response.cookies['error_id'].value == 'get_123'
 
 
 class _InvalidAPIError(Controller[PydanticSerializer]):
