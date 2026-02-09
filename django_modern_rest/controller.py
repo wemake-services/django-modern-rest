@@ -17,7 +17,7 @@ from django_modern_rest.components import (
     ComponentParserBuilder,
     ComponentParserSpec,
 )
-from django_modern_rest.cookies import CookieSpec, NewCookie
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType, format_error
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
@@ -194,7 +194,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         raw_data: Any,
         *,
         headers: Mapping[str, str] | None = None,
-        cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
         renderer_cls: type[Renderer] | None = None,
     ) -> HttpResponse:
@@ -224,7 +224,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         *,
         status_code: HTTPStatus,
         headers: Mapping[str, str] | None = None,
-        cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
         renderer_cls: type[Renderer] | None = None,
     ) -> HttpResponse:
         """

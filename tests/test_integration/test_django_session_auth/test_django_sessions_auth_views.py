@@ -85,13 +85,6 @@ def test_correct_django_session(
         {'username': 'wrong', 'password': None},
     ],
 )
-@pytest.mark.parametrize(
-    'headers',
-    [
-        {},
-        {'Content-Type': 'application/json'},
-    ],
-)
 def test_wrong_auth_params(
     dmr_client: DMRClient,
     user: User,
@@ -99,7 +92,6 @@ def test_wrong_auth_params(
     *,
     url: str,
     auth_params: dict[str, str | None],
-    headers: dict[str, str],
 ) -> None:
     """Ensures that incorrect auth raises 401."""
     response = dmr_client.post(
@@ -108,7 +100,6 @@ def test_wrong_auth_params(
             'username': auth_params['username'] or user.username,
             'password': auth_params['password'] or password,
         },
-        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content

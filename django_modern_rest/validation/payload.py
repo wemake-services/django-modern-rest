@@ -3,7 +3,10 @@ from collections.abc import Mapping, Sequence, Set
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
 
-from django_modern_rest.cookies import CookieSpec, NewCookie
+from django_modern_rest.cookies import (
+    CookieSpec,
+    NewCookie,
+)
 from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.headers import NewHeader
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
@@ -63,7 +66,8 @@ class ModifyEndpointPayload(_BasePayload):
     status_code: HTTPStatus | None
     headers: Mapping[str, NewHeader] | None
     # Cookies can be set via a middleware after a response itself is formed.
-    # We need a way to describe this. That's why `CookieSpec` is allowed.
+    # We need a way to describe this.
+    # That's why `CookieSpec` is allowed.
     cookies: Mapping[str, NewCookie | CookieSpec] | None
 
 

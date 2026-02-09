@@ -4,7 +4,7 @@
 
 import dataclasses
 from http.cookies import Morsel, SimpleCookie
-from typing import Any, ClassVar, Literal, final
+from typing import Any, ClassVar, Literal, final, Literal
 
 from django.http import HttpResponse
 from typing_extensions import override
@@ -52,6 +52,12 @@ class CookieSpec(_BaseCookie):
         description: Description of the response cookie header
             for OpenAPI documentation.
         required: Defines that this cookie can be missing in some cases.
+        schema_only: Is true, when cookie is only used for schema purposes,
+            without any runtime validation. This might be useful, when
+            this cookie will be set after our framework's validation.
+            For example,
+            by :class:`django.contrib.sessions.middleware.SessionMiddleware`
+            or by HTTP proxy.
 
     .. seealso::
 
@@ -63,10 +69,14 @@ class CookieSpec(_BaseCookie):
     _extra_fields: ClassVar[frozenset[str]] = frozenset((
         'description',
         'required',
+        'schema_only',
     ))
+
+    is_actionable: ClassVar[Literal[False]] = False
 
     description: str | None = None
     required: bool = True
+    schema_only: bool = False
 
     def is_equal(self, other: Morsel[str]) -> bool:
         """Compare this object with ``SimpleCookie`` like object."""
@@ -116,6 +126,8 @@ class NewCookie(_BaseCookie):
         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
 
     """
+
+    is_actionable: ClassVar[Literal[True]] = True
 
     value: str  # noqa: WPS110
 

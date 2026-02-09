@@ -12,7 +12,10 @@ from typing import (
 if TYPE_CHECKING:
     from django_modern_rest.components import ComponentParser
     from django_modern_rest.controller import Controller
-    from django_modern_rest.cookies import CookieSpec, NewCookie
+    from django_modern_rest.cookies import (
+        CookieSpec,
+        NewCookie,
+    )
     from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
     from django_modern_rest.headers import HeaderSpec, NewHeader
     from django_modern_rest.openapi.objects import (
@@ -120,6 +123,18 @@ class ResponseModification:
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),
+        )
+
+    def actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
+        """Returns an optional mapping of cookies that should be added."""
+        return (
+            None
+            if self.cookies is None
+            else {
+                cookie_key: cookie
+                for cookie_key, cookie in self.cookies.items()
+                if cookie.is_actionable
+            }
         )
 
 

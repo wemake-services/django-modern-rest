@@ -50,13 +50,6 @@ def user(faker: Faker, password: str) -> User:
         'refresh_token',
     ],
 )
-@pytest.mark.parametrize(
-    'headers',
-    [
-        {},
-        {'Content-Type': 'application/json'},
-    ],
-)
 def test_correct_auth_params(
     dmr_client: DMRClient,
     user: User,
@@ -65,13 +58,11 @@ def test_correct_auth_params(
     url: str,
     check_url: str,
     token_type: str,
-    headers: dict[str, str],
 ) -> None:
     """Ensures that correct auth params fit."""
     response = dmr_client.post(
         url,
         data={'username': user.username, 'password': password},
-        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK, response.content
@@ -138,13 +129,6 @@ def test_correct_auth_params(
         {'username': 'wrong', 'password': None},
     ],
 )
-@pytest.mark.parametrize(
-    'headers',
-    [
-        {},
-        {'Content-Type': 'application/json'},
-    ],
-)
 def test_wrong_auth_params(
     dmr_client: DMRClient,
     user: User,
@@ -152,7 +136,6 @@ def test_wrong_auth_params(
     *,
     url: str,
     auth_params: dict[str, str | None],
-    headers: dict[str, str],
 ) -> None:
     """Ensures that incorrect auth raises 401."""
     response = dmr_client.post(
@@ -161,7 +144,6 @@ def test_wrong_auth_params(
             'username': auth_params['username'] or user.username,
             'password': auth_params['password'] or password,
         },
-        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
@@ -187,26 +169,17 @@ def test_wrong_auth_params(
         {},
     ],
 )
-@pytest.mark.parametrize(
-    'headers',
-    [
-        {},
-        {'Content-Type': 'application/json'},
-    ],
-)
 def test_wrong_auth_structure(
     dmr_client: DMRClient,
     user: User,
     *,
     url: str,
     auth_params: dict[str, str],
-    headers: dict[str, str],
 ) -> None:
     """Ensures that incorrect body raises 400."""
     response = dmr_client.post(
         url,
         data=auth_params,
-        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content

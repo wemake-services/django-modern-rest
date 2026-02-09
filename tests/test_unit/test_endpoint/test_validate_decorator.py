@@ -9,6 +9,7 @@ from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from django_modern_rest import (
+    APIError,
     Blueprint,
     Body,
     Controller,
@@ -17,7 +18,7 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
-from django_modern_rest.cookies import NewCookie
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
@@ -602,3 +603,66 @@ def test_validate_with_new_cookie() -> None:
             )
             def get(self) -> HttpResponse:
                 raise NotImplementedError
+
+
+class _SchemaOnlyController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+            cookies={'test': CookieSpec(schema_only=True)},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(1, status_code=HTTPStatus.OK)
+
+
+def test_validate_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` validates `CookieSpec` respects `schema_only`."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 1
+    assert response.cookies == {}
+
+
+class _SchemaOnlyWrongController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+            cookies={'test': CookieSpec(schema_only=True)},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        raise APIError(
+            1,
+            status_code=HTTPStatus.OK,
+            cookies={'test': NewCookie(value='value')},
+        )
+
+
+def test_validate_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` validates `CookieSpec` respects `schema_only`."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyWrongController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
+        response.content
+    )
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.cookies == {}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': "Response has extra undescribed real {'test'} cookies",
+                'type': 'value_error',
+            },
+        ],
+    })

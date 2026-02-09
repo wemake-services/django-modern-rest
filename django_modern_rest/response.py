@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 from django.http import HttpResponse
 
-from django_modern_rest.cookies import CookieSpec, NewCookie
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
@@ -84,7 +84,7 @@ def build_response(
     raw_data: Any,
     method: HTTPMethod | str,
     headers: Mapping[str, str] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
     renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse: ...
@@ -98,7 +98,7 @@ def build_response(
     status_code: HTTPStatus,
     method: None = None,
     headers: Mapping[str, str] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse: ...
 
@@ -109,7 +109,7 @@ def build_response(  # noqa: WPS210, WPS211
     raw_data: Any,
     method: HTTPMethod | str | None = None,
     headers: Mapping[str, str] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
     renderer_cls: type['Renderer'] | None = None,
 ) -> HttpResponse:
