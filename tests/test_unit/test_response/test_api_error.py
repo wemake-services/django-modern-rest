@@ -32,10 +32,8 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 class _ValidAPIError(Controller[PydanticSerializer]):
     @validate(
-        ResponseSpec(
-            return_type=int,
-                        status_code=HTTPStatus.PAYMENT_REQUIRED),
-            cookies={'error_id': CookieSpec()},
+        ResponseSpec(return_type=int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        cookies={'error_id': CookieSpec()},
     )
     def get(self) -> HttpResponse:
         raise APIError(
