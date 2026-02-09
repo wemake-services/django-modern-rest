@@ -129,6 +129,7 @@ nitpick_ignore = [
         'django_modern_rest.security.django_session.views._RequestModelT',
     ),
     (PY_CLASS, 'django_modern_rest.security.django_session.views._ResponseT'),
+    (PY_CLASS, 'django_modern_rest.pagination._ModelT'),
     (PY_CLASS, 'django_modern_rest.controller._SerializerT_co'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
     # Unsolvable imports:
