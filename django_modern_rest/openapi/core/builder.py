@@ -1,11 +1,6 @@
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.collector import controller_collector
-from django_modern_rest.openapi.core.merger import ConfigMerger
-from django_modern_rest.openapi.generators import (
-    ComponentGenerator,
-    PathItemGenerator,
-)
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
@@ -25,17 +20,15 @@ class OpenApiBuilder:
 
     def __init__(self, context: 'OpenAPIContext') -> None:
         """Initialize the builder with OpenAPI context."""
-        self._config_merger = ConfigMerger(context)
-        self._path_generator = PathItemGenerator(context)
-        self._component_generator = ComponentGenerator(context)
+        self.context = context
 
     def build(self, router: 'Router') -> 'OpenAPI':
         """Build complete OpenAPI specification from a router."""
         paths_items: Paths = {}
 
         for controller in controller_collector(router.urls):
-            path_item = self._path_generator.generate(controller)
+            path_item = self.context.generators.path_item.generate(controller)
             paths_items[controller.path] = path_item
 
-        components = self._component_generator.generate(paths_items)
-        return self._config_merger.merge(paths_items, components)
+        components = self.context.generators.component.generate(paths_items)
+        return self.context.config_merger.merge(paths_items, components)

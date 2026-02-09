@@ -18,7 +18,7 @@ _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 def test_returns_correct_structure() -> None:
-    """Ensure that `openapi_spec` returns correct tuple structure."""
+    """Ensure that ``openapi_spec`` returns correct tuple structure."""
     urlpatterns, app_name, namespace = openapi_spec(
         router=Router([]),  # noqa: WPS204
         renderers=[JsonRenderer()],
@@ -77,7 +77,7 @@ def test_custom_app_and_namespace(
     app_name: str,
     namespace: str,
 ) -> None:
-    """Ensure that custom `app_name` and `namespace` are returned."""
+    """Ensure that custom ``app_name`` and ``namespace`` are returned."""
     _, returned_app_name, returned_namespace = openapi_spec(
         router=Router([]),
         renderers=[JsonRenderer()],
@@ -91,7 +91,7 @@ def test_custom_app_and_namespace(
 
 
 def test_with_none_config_uses_default(dmr_clean_settings: None) -> None:
-    """Ensure that `None` config triggers default config loading."""
+    """Ensure that ``None`` config triggers default config loading."""
     urlpatterns, app_name, namespace = openapi_spec(
         router=Router([]),
         renderers=[JsonRenderer()],
@@ -107,7 +107,7 @@ def test_default_config_raises_when_wrong_type(
     dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
-    """Ensure that `TypeError` is raised when config is not `OpenAPIConfig`."""
+    """Ensure that ``TypeError`` raised with wrong config type."""
     settings.DMR_SETTINGS = {
         'openapi_config': 'not-an-object',
     }
@@ -136,7 +136,7 @@ def test_empty_renderers_list() -> None:
 
 
 def test_decorated_view_with_csrf_exempt() -> None:
-    """Ensure that csrf_exempt decorator is applied to view."""
+    """Ensure that ``csrf_exempt`` decorator is applied to view."""
     urlpatterns, _, _ = openapi_spec(
         router=Router([]),
         renderers=[JsonRenderer(decorators=[csrf_exempt])],

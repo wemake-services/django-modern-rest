@@ -34,7 +34,7 @@ _TEST_SCHEMA: Final[ConvertedSchema] = {  # noqa: WPS407
 
 
 def test_json_serializer_basic_functionality() -> None:
-    """Ensure that `json_serializer` converts schema to JSON string."""
+    """Ensure that ``json_serializer`` converts schema to JSON string."""
     serialized = json_serializer(_TEST_SCHEMA)
 
     assert isinstance(serialized, str)
@@ -96,7 +96,7 @@ def test_renderer_default_names(
 
 
 def test_json_renderer_render_method(dmr_rf: DMRRequestFactory) -> None:
-    """Ensure that `JsonRenderer.render` returns correct JSON response."""
+    """Ensure that ``JsonRenderer.render`` returns correct JSON response."""
     renderer = JsonRenderer()
     request = dmr_rf.get('/test/')
 
