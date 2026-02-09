@@ -17,6 +17,7 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.components import ComponentParser
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType
 from django_modern_rest.openapi.objects.components import Components
@@ -31,7 +32,10 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 class _ValidAPIError(Controller[PydanticSerializer]):
     @validate(
-        ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        ),
     )
     def get(self) -> HttpResponse:
         raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
@@ -39,7 +43,10 @@ class _ValidAPIError(Controller[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.OK,
         extra_responses=[
-            ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+            ResponseSpec(
+                return_type=int,
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            ),
         ],
     )
     def post(self) -> str:
@@ -368,3 +375,37 @@ def test_valid_complex_api_error(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'test', 'loc': ['api'], 'type': 'user_msg'}],
     })
+
+
+class _CookieAPIError(Controller[PydanticSerializer]):
+    responses = (
+        ResponseSpec(
+            int,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': CookieSpec()},
+        ),
+    )
+
+    def get(self) -> str:
+        """Type mismatch, but works."""
+        raise APIError(
+            1,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': NewCookie(value='value')},
+        )
+
+
+def test_api_error_with_cookies(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures validation can validate api errors."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _CookieAPIError.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED, response.content
+    assert json.loads(response.content) == 1
+    assert response.cookies.output() == snapshot(
+        'Set-Cookie: error_id=value; Path=/; SameSite=lax',
+    )
