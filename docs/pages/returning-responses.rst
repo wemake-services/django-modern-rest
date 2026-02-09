@@ -148,6 +148,17 @@ If you need headers with not static, but dynamic values, use "real endpoints"
 and pass ``headers`` dict to
 :meth:`~django_modern_rest.controller.Controller.to_response` method.
 
+The last important thing about headers
+is :attr:`~django_modern_rest.headers.HeaderSpec.schema_only` attribute.
+It is used to describe headers that:
+
+1. Will be set in the response by someone else outside the framework,
+   like HTTP proxy or Django's own middleware.
+   See :class:`django.contrib.sessions.middleware.SessionMiddleware`
+   as a notable example
+2. Will be validated to be **NOT** present in the response from our framework.
+   Since it is designed to be added later, it should not be already present
+
 .. important::
 
   Header definitions are case insensitive according to the HTTP spec.

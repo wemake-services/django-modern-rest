@@ -661,18 +661,18 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         endpoint: str,
     ) -> None:
         if payload.headers is not None and any(
-            isinstance(header, HeaderSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
+            isinstance(header, HeaderSpec) and not header.schema_only
             for header in payload.headers.values()
         ):
             raise EndpointMetadataError(
                 f'Since {endpoint!r} returns raw data, '
                 f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
-                '`NewHeader` to add new headers to the response',
+                '`NewHeader` to add new headers to the response. '
+                'Or add `schema_only=True` to `HeaderSpec`',
             )
         if payload.cookies is not None and any(
-            isinstance(cookie, CookieSpec)  # pyright: ignore[reportUnnecessaryIsInstance]
-            and not cookie.schema_only
+            isinstance(cookie, CookieSpec) and not cookie.schema_only
             for cookie in payload.cookies.values()
         ):
             raise EndpointMetadataError(

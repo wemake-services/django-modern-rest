@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 
 from django_modern_rest import (
     Controller,
+    CookieSpec,
     HeaderSpec,
     NewHeader,
     ResponseSpec,
@@ -45,6 +46,14 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
 
     @modify(description='Test PUT endpoint')  # no args
     async def put(self) -> int:
+        return 1
+
+    @modify(headers={'X-Custom': HeaderSpec(schema_only=True)})
+    def delete(self) -> int:
+        return 1
+
+    @modify(cookies={'X-Custom': CookieSpec(schema_only=True)})
+    def trace(self) -> int:
         return 1
 
 
@@ -89,10 +98,6 @@ class _WrongModifyController(Controller[PydanticSerializer]):
     @modify()  # type: ignore[deprecated]
     def put(self) -> HttpResponse:
         return HttpResponse()
-
-    @modify(headers={'X-Custom': HeaderSpec()})  # type: ignore[dict-item]
-    def patch(self) -> int:
-        return 1
 
 
 class _WrongValidateController(Controller[PydanticSerializer]):
