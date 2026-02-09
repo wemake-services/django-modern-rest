@@ -12,7 +12,10 @@ from typing import (
 from django.http import HttpResponse
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
-from django_modern_rest.cookies import CookieSpec, NewCookie
+from django_modern_rest.cookies import (
+    CookieSpec,
+    NewCookie,
+)
 from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
 from django_modern_rest.exceptions import (
     InternalServerError,

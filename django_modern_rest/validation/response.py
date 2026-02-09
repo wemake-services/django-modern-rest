@@ -13,7 +13,9 @@ from typing import (
 
 from django.http import HttpResponse
 
-from django_modern_rest.cookies import CookieSpec, NewCookie
+from django_modern_rest.cookies import (
+    NewCookie,
+)
 from django_modern_rest.exceptions import (
     InternalServerError,
     ResponseSchemaError,
@@ -107,7 +109,7 @@ class ResponseValidator:
                 self.metadata.modification,
                 renderer_class,
             ),
-            cookies=self.metadata.modification.cookies,
+            cookies=self.metadata.modification.actionable_cookies(),
             renderer_cls=renderer_class,
         )
         if not self.metadata.validate_responses:
@@ -230,7 +232,7 @@ class ResponseValidator:
         missing_required_cookies = {
             cookie
             for cookie, response_cookie in metadata_cookies.items()
-            if response_cookie.required
+            if response_cookie.required and not response_cookie.schema_only
         } - response.cookies.keys()
         if missing_required_cookies:
             raise ResponseSchemaError(
@@ -239,12 +241,14 @@ class ResponseValidator:
             )
 
         # Find extra cookies:
-        extra_response_cookies = (
-            response.cookies.keys() - metadata_cookies.keys()
-        )
+        extra_response_cookies = response.cookies.keys() - {
+            cookie
+            for cookie, response_cookie in metadata_cookies.items()
+            if not response_cookie.schema_only
+        }
         if extra_response_cookies:
             raise ResponseSchemaError(
-                'Response has extra undescribed '
+                'Response has extra undescribed real '
                 f'{extra_response_cookies!r} cookies',
             )
 
@@ -265,5 +269,5 @@ class _ValidationContext:
     raw_data: Any  # not empty
     status_code: HTTPStatus
     headers: dict[str, str]
-    cookies: Mapping[str, NewCookie | CookieSpec] | None
+    cookies: Mapping[str, NewCookie] | None
     renderer_cls: type['Renderer']

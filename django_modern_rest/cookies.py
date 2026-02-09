@@ -6,9 +6,6 @@ import dataclasses
 from http.cookies import Morsel, SimpleCookie
 from typing import Any, ClassVar, Literal, final
 
-from django.http import HttpResponse
-from typing_extensions import override
-
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _BaseCookie:
@@ -21,15 +18,6 @@ class _BaseCookie:
     secure: bool | None = None
     httponly: bool | None = None
     samesite: Literal['lax', 'strict', 'none'] = 'lax'
-
-    def process_response(self, response: HttpResponse, cookie_key: str) -> None:
-        """
-        Processes response.
-
-        Does nothing by default,
-        but :class:`django_modern_rest.cookies.NewCookie`
-        sets new cookies to response.
-        """
 
 
 @final
@@ -52,6 +40,12 @@ class CookieSpec(_BaseCookie):
         description: Description of the response cookie header
             for OpenAPI documentation.
         required: Defines that this cookie can be missing in some cases.
+        schema_only: Is true, when cookie is only used for schema purposes,
+            without any runtime validation. This might be useful, when
+            this cookie will be set after our framework's validation.
+            For example,
+            by :class:`django.contrib.sessions.middleware.SessionMiddleware`
+            or by HTTP proxy.
 
     .. seealso::
 
@@ -63,10 +57,14 @@ class CookieSpec(_BaseCookie):
     _extra_fields: ClassVar[frozenset[str]] = frozenset((
         'description',
         'required',
+        'schema_only',
     ))
+
+    is_actionable: ClassVar[Literal[False]] = False
 
     description: str | None = None
     required: bool = True
+    schema_only: bool = False
 
     def is_equal(self, other: Morsel[str]) -> bool:
         """Compare this object with ``SimpleCookie`` like object."""
@@ -117,6 +115,8 @@ class NewCookie(_BaseCookie):
 
     """
 
+    is_actionable: ClassVar[Literal[True]] = True
+
     value: str  # noqa: WPS110
 
     def to_spec(self) -> CookieSpec:
@@ -128,8 +128,3 @@ class NewCookie(_BaseCookie):
     def as_dict(self) -> dict[str, Any]:
         """Converts to a dictionary ."""
         return dataclasses.asdict(self)
-
-    @override
-    def process_response(self, response: HttpResponse, cookie_key: str) -> None:
-        """Sets new cookie to a response."""
-        response.set_cookie(cookie_key, **self.as_dict())

@@ -11,7 +11,9 @@ from inline_snapshot import snapshot
 from django_modern_rest import (
     Blueprint,
     Controller,
+    CookieSpec,
     HeaderSpec,
+    NewCookie,
     NewHeader,
     ResponseSpec,
     modify,
@@ -20,6 +22,8 @@ from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import wrap_handler
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.response import APIError
+from django_modern_rest.test import DMRRequestFactory
 
 
 @final
@@ -67,6 +71,78 @@ def test_modify_with_header_description() -> None:
             )
             def get(self) -> int:
                 raise NotImplementedError
+
+
+def test_modify_with_cookie_description() -> None:
+    """Ensures `@modify` can't be used with `CookieSpec` without schema_only."""
+    with pytest.raises(EndpointMetadataError, match='CookieSpec'):
+
+        class _WrongModify(Controller[PydanticSerializer]):
+            @modify(
+                cookies={'test': CookieSpec()},
+            )
+            def get(self) -> int:
+                raise NotImplementedError
+
+
+class _SchemaOnlyCookieController(Controller[PydanticSerializer]):
+    @modify(
+        cookies={'test': CookieSpec(schema_only=True)},
+    )
+    def get(self) -> int:
+        return 1
+
+
+def test_modify_with_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@modify` can be used with `CookieSpec` with schema_only."""
+    metadata = _SchemaOnlyCookieController.api_endpoints['GET'].metadata
+    assert metadata.responses[HTTPStatus.OK].cookies == {
+        'test': CookieSpec(schema_only=True),
+    }
+
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyCookieController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 1
+    assert response.cookies == {}
+
+
+class _SchemaOnlyWrongController(Controller[PydanticSerializer]):
+    @modify(
+        cookies={'test': CookieSpec(schema_only=True)},
+    )
+    def get(self) -> int:
+        raise APIError(
+            1,
+            status_code=HTTPStatus.OK,
+            cookies={'test': NewCookie(value='value')},
+        )
+
+
+def test_modify_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@modify` validates `CookieSpec` respects `schema_only`."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyWrongController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
+        response.content
+    )
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.cookies == {}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': "Response has extra undescribed real {'test'} cookies",
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 def test_modify_duplicate_statuses() -> None:
