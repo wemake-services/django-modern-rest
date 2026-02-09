@@ -17,7 +17,7 @@ from django_modern_rest import (
     validate,
 )
 from django_modern_rest.components import ComponentParser
-from django_modern_rest.cookies import NewCookie
+from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType
 from django_modern_rest.openapi.objects.components import Components
@@ -32,7 +32,10 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 class _ValidAPIError(Controller[PydanticSerializer]):
     @validate(
-        ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+        ResponseSpec(
+            return_type=int,
+                        status_code=HTTPStatus.PAYMENT_REQUIRED),
+            cookies={'error_id': CookieSpec()},
     )
     def get(self) -> HttpResponse:
         raise APIError(
@@ -84,7 +87,7 @@ def test_valid_api_error(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
     assert json.loads(response.content) == 1
-    assert response.cookies['error_id'].value == 'get_123'
+    assert response.cookies.output() == snapshot()
 
 
 class _InvalidAPIError(Controller[PydanticSerializer]):
