@@ -2,13 +2,19 @@ from collections.abc import Callable
 from typing import Any, ClassVar, final
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
 from django_modern_rest.openapi.converter import ConvertedSchema
 from django_modern_rest.openapi.renderers import BaseRenderer
 
 
+@method_decorator(
+    ensure_csrf_cookie,  # pyrefly: ignore[bad-argument-type]
+    name='dispatch',
+)
 @final
 class OpenAPIView(View):
     """
