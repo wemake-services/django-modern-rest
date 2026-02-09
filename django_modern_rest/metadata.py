@@ -127,8 +127,8 @@ class ResponseModification:
 
     def actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
         """Returns an optional mapping of cookies that should be added."""
-        return (
-            None
+        return (  # pyright: ignore[reportReturnType]
+            None  # pyrefly: ignore[bad-return]
             if self.cookies is None
             else {
                 cookie_key: cookie
