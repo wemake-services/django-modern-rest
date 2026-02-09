@@ -97,8 +97,8 @@ def test_constrained_user_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure constrained endpoint works correctly."""
     request_data = {
         'username': faker.bothify('???###').lower(),
-        'age': faker.random_int(min=18, max=100),  # noqa: WPS432
-        'score': faker.pyfloat(min_value=1, max_value=1.5),  # noqa: WPS432
+        'age': faker.random_int(min=18, max=50),  # noqa: WPS432
+        'score': faker.pyfloat(min_value=1, max_value=5),  # noqa: WPS432
     }
     response = dmr_client.post(
         reverse('api:controllers:constrained_user_create'),
