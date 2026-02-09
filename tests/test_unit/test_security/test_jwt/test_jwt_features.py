@@ -13,8 +13,8 @@ from freezegun.api import FrozenDateTimeFactory
 
 from django_modern_rest import Controller, modify
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.jwt import JWTSyncAuth, JWTToken
-from django_modern_rest.test import DMRRequestFactory
+from django_modern_rest.security.jwt import JWTAsyncAuth, JWTSyncAuth, JWTToken
+from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @pytest.fixture
@@ -217,12 +217,13 @@ def test_leeway_exp(
 
 @final
 class _CustomHeaderController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(auth_header='X-Api-Auth', auth_scheme='JWT')])
-    def get(self) -> str:
+    @modify(auth=[JWTAsyncAuth(auth_header='X-Api-Auth', auth_scheme='JWT')])
+    async def get(self) -> str:
         return 'authed'
 
 
-@pytest.mark.django_db
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize(
     ('header', 'prefix', 'response_code'),
     [
@@ -232,8 +233,8 @@ class _CustomHeaderController(Controller[PydanticSerializer]):
         ('Authorization', 'Bearer ', HTTPStatus.UNAUTHORIZED),
     ],
 )
-def test_custom_jwt_header(
-    dmr_rf: DMRRequestFactory,
+async def test_custom_jwt_header(
+    dmr_async_rf: DMRAsyncRequestFactory,
     build_user_token: _TokenBuilder,
     *,
     header: str,
@@ -242,14 +243,16 @@ def test_custom_jwt_header(
 ) -> None:
     """Ensures that custom header works."""
     token = build_user_token()
-    request = dmr_rf.get(
+    request = dmr_async_rf.get(
         '/whatever/',
         headers={
             header: prefix + token,
         },
     )
 
-    response = _CustomHeaderController.as_view()(request)
+    response = await dmr_async_rf.wrap(
+        _CustomHeaderController.as_view()(request),
+    )
 
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
