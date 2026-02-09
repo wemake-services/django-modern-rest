@@ -22,6 +22,13 @@ _MAXIMUM: Final = 100
 _CONFIG: Final = OpenAPIConfig(title='Test config', version='0.1')
 
 
+@pytest.fixture
+def generator() -> SchemaGenerator:
+    """Create `SchemaGenerator` instance for testing."""
+    context = OpenAPIContext(config=_CONFIG)
+    return context.generators.schema
+
+
 class _TestModel(BaseModel):
     id: int
     name: str
@@ -36,17 +43,14 @@ class _UnsupportedTestModel:
     attr: str
 
 
-def test_schema_generator_unsupported_type() -> None:
-    """Ensure SchemaGenerator raises error."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
+def test_schema_generator_unsupported_type(generator: SchemaGenerator) -> None:
+    """Ensure `SchemaGenerator` raises error."""
     with pytest.raises(ValueError, match=r'Field extractor for .* not found'):
         generator.generate(_UnsupportedTestModel)
 
 
-def test_schema_generator_works() -> None:
-    """Ensure SchemaGenerator generate reference."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
-
+def test_schema_generator_works(generator: SchemaGenerator) -> None:
+    """Ensure `SchemaGenerator` generate reference."""
     ref = generator.generate(_TestModel)
 
     assert isinstance(ref, Reference)
@@ -54,10 +58,8 @@ def test_schema_generator_works() -> None:
     assert _TestModel.__name__ in generator.registry.schemas
 
 
-def test_schema_generator_caching() -> None:
-    """Ensure SchemaGenerator cache reference."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
-
+def test_schema_generator_caching(generator: SchemaGenerator) -> None:
+    """Ensure `SchemaGenerator` cache reference."""
     ref1 = generator.generate(_TestModel)
     ref2 = generator.generate(_TestModel)
 
@@ -67,20 +69,18 @@ def test_schema_generator_caching() -> None:
     assert len(generator.registry.schemas) == 1
 
 
-def test_handle_sequence_without_args() -> None:
-    """Ensure _handle_sequence handles bare sequence types."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
-
+def test_handle_sequence_without_args(generator: SchemaGenerator) -> None:
+    """Ensure `_handle_sequence` handles bare sequence types."""
     schema = _handle_sequence(generator, ())
 
     assert schema.type == OpenAPIType.ARRAY
     assert schema.items is None
 
 
-def test_schema_generator_with_kwarg_definition() -> None:
-    """Ensure SchemaGenerator applies KwargDefinition."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
-
+def test_schema_generator_with_kwarg_definition(
+    generator: SchemaGenerator,
+) -> None:
+    """Ensure `SchemaGenerator` applies `KwargDefinition`."""
     generator.generate(_ConstrainedModel)
     schema = generator.registry.schemas[_ConstrainedModel.__name__]
 
@@ -98,10 +98,8 @@ def test_schema_generator_with_kwarg_definition() -> None:
     assert score_schema.maximum == _MAXIMUM
 
 
-def test_handle_union_only_none() -> None:
-    """Ensure _handle_union handles Union of only None types."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
-
+def test_handle_union_only_none(generator: SchemaGenerator) -> None:
+    """Ensure `_handle_union` handles `Union` of only `None` types."""
     schema = _handle_union(generator, (NoneType, type(None)))
 
     assert schema is TypeMapper.get_schema(NoneType)
@@ -109,15 +107,15 @@ def test_handle_union_only_none() -> None:
     assert schema.type == OpenAPIType.NULL
 
 
-def test_extract_properties_wo_kwarg_definition() -> None:
-    """Ensure _extract_properties works kwarg_definition."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
+def test_extract_properties_wo_kwarg_definition(
+    generator: SchemaGenerator,
+) -> None:
+    """Ensure `_extract_properties` works `kwarg_definition`."""
     field_def = FieldDefinition(
         name='test_field',
         annotation=int,
         kwarg_definition=None,
     )
-
     props, _ = generator._extract_properties([field_def])
 
     assert 'test_field' in props
@@ -125,13 +123,12 @@ def test_extract_properties_wo_kwarg_definition() -> None:
     assert props['test_field'].type == OpenAPIType.INTEGER
 
 
-def test_apply_kwarg_definition_format() -> None:
-    """Ensure _apply_kwarg_definition handles format correctly."""
-    generator = SchemaGenerator(OpenAPIContext(_CONFIG))
-    schema = Schema(type=OpenAPIType.STRING)
-    kwarg_def = KwargDefinition(format='ipv4')
-
-    updated_schema = generator._apply_kwarg_definition(schema, kwarg_def)
+def test_apply_kwarg_definition_format(generator: SchemaGenerator) -> None:
+    """Ensure `_apply_kwarg_definition` handles format correctly."""
+    updated_schema = generator._apply_kwarg_definition(
+        Schema(type=OpenAPIType.STRING),
+        KwargDefinition(format='ipv4'),
+    )
 
     assert isinstance(updated_schema, Schema)
     assert updated_schema.format == OpenAPIFormat.IPV4

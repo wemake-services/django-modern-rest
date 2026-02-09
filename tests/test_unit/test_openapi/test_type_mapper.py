@@ -8,6 +8,12 @@ from django_modern_rest.openapi.objects.schema import Schema
 from django_modern_rest.openapi.type_mapping import TypeMapper
 
 
+@pytest.fixture
+def type_mapper() -> type[TypeMapper]:
+    """Fixtutre for `TypeMapper` class."""
+    return TypeMapper
+
+
 class _TestClass:
     attr: int
 
@@ -17,7 +23,7 @@ class _TestTypedDict(TypedDict):
 
 
 class _SubDecimal(Decimal):
-    """Test SubDecimal class."""
+    """Test `SubDecimal` class."""
 
 
 _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
@@ -36,38 +42,39 @@ _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
 def test_type_mapper_get_schema(
     source_type: Any,
     schema_type: OpenAPIType,
+    *,
+    type_mapper: TypeMapper,
 ) -> None:
-    """Ensure TypeMapper get_type works."""
-    schema = TypeMapper.get_schema(source_type)
+    """Ensure `TypeMapper` `get_type` works."""
+    schema = type_mapper.get_schema(source_type)
 
     assert schema is not None
     assert schema.type == schema_type
 
 
-def test_type_mapper_register_works() -> None:
-    """Ensure TypeMapper register new Schema."""
-    TypeMapper.register(_TestClass, _TEST_SCHEMA)
+def test_type_mapper_register_works(type_mapper: TypeMapper) -> None:
+    """Ensure `TypeMapper` register new `Schema`."""
+    type_mapper.register(_TestClass, _TEST_SCHEMA)
 
-    schema = TypeMapper.get_schema(_TestClass)
+    schema = type_mapper.get_schema(_TestClass)
     assert schema == _TEST_SCHEMA
 
 
-def test_type_mapper_register_raise_error() -> None:
-    """Ensure TypeMapper raise error if register available Schema."""
+def test_type_mapper_register_raise_error(type_mapper: TypeMapper) -> None:
+    """Ensure `TypeMapper` raise error if register available `Schema`."""
     with pytest.raises(ValueError, match='already registered'):
-        TypeMapper.register(int, _TEST_SCHEMA)
+        type_mapper.register(int, _TEST_SCHEMA)
 
 
-def test_type_mapper_override() -> None:
-    """Ensure TypeMapper.override works."""
-    TypeMapper.override(int, _TEST_SCHEMA)
+def test_type_mapper_override(type_mapper: TypeMapper) -> None:
+    """Ensure `TypeMapper`.override works."""
+    type_mapper.override(int, _TEST_SCHEMA)
 
-    int_schema = TypeMapper.get_schema(int)
-
+    int_schema = type_mapper.get_schema(int)
     assert int_schema == _TEST_SCHEMA
 
 
-def test_type_mapper_typeddict() -> None:
-    """Ensure TypeMapper returns None for TypedDict."""
-    schema = TypeMapper.get_schema(_TestTypedDict)
+def test_type_mapper_typeddict(type_mapper: TypeMapper) -> None:
+    """Ensure `TypeMapper` returns None for `TypedDict`."""
+    schema = type_mapper.get_schema(_TestTypedDict)
     assert schema is None

@@ -15,6 +15,12 @@ _ALIAS: Final = 'fullName'
 _DESCRIPTION: Final = 'User full name'
 
 
+@pytest.fixture
+def extractor() -> PydanticFieldExtractor:
+    """Fixtutre for generating `PydanticFieldExtractor` instance."""
+    return PydanticFieldExtractor()
+
+
 @final
 class _SimpleModel(BaseModel):
     name: str
@@ -56,14 +62,15 @@ def test_is_supported(
     source: Any,
     *,
     expected: bool,
+    extractor: PydanticFieldExtractor,
 ) -> None:
-    """Ensure is_supported returns correct results for various types."""
-    assert PydanticFieldExtractor().is_supported(source) is expected
+    """Ensure `is_supported` returns correct results for various types."""
+    assert extractor.is_supported(source) is expected
 
 
-def test_extract_with_kwargs() -> None:
-    """Ensure extractors extract kwargs from fields."""
-    definitions = PydanticFieldExtractor().extract_fields(_DetailedModel)
+def test_extract_with_kwargs(extractor: PydanticFieldExtractor) -> None:
+    """Ensure extractors extract `kwargs` from fields."""
+    definitions = extractor.extract_fields(_DetailedModel)
 
     assert len(definitions) == 1
     definition = definitions[0]
@@ -78,8 +85,10 @@ def test_extract_with_kwargs() -> None:
     assert kwargs.examples == [{'name': _EXAMPLE_NAME}]
 
 
-def test_extract_with_default_and_schema_extra() -> None:
-    """Ensure extractors handle default values and json_schema_extra."""
+def test_extract_with_default_and_schema_extra(
+    extractor: PydanticFieldExtractor,
+) -> None:
+    """Ensure extractors handle `default` values and `json_schema_extra`."""
     extra_schema = {'example': 'data'}
     default_val = 18
 
@@ -89,7 +98,7 @@ def test_extract_with_default_and_schema_extra() -> None:
             json_schema_extra=extra_schema,  # type: ignore[arg-type]
         )
 
-    definitions = PydanticFieldExtractor().extract_fields(_ModelWithDefault)
+    definitions = extractor.extract_fields(_ModelWithDefault)
     assert len(definitions) == 1
     definition = definitions[0]
 
@@ -98,9 +107,9 @@ def test_extract_with_default_and_schema_extra() -> None:
     assert definition.kwarg_definition.schema_extra == extra_schema
 
 
-def test_extract_simple_types() -> None:
-    """Ensure complex types like Literal and generics are extracted."""
-    definitions = PydanticFieldExtractor().extract_fields(_SimpleModel)
+def test_extract_simple_types(extractor: PydanticFieldExtractor) -> None:
+    """Ensure complex types like `Literal` and generics are extracted."""
+    definitions = extractor.extract_fields(_SimpleModel)
 
     fields_map = {
         field_def.name: field_def.annotation for field_def in definitions
@@ -114,9 +123,9 @@ def test_extract_simple_types() -> None:
     }
 
 
-def test_extract_nested_generics() -> None:
+def test_extract_nested_generics(extractor: PydanticFieldExtractor) -> None:
     """Ensure nested generic models are extracted."""
-    definitions = PydanticFieldExtractor().extract_fields(_NestedModel)
+    definitions = extractor.extract_fields(_NestedModel)
 
     fields_map = {
         field_def.name: field_def.annotation for field_def in definitions

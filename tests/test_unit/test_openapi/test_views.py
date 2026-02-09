@@ -31,7 +31,7 @@ def test_get_with_valid_renderer(dmr_rf: DMRRequestFactory) -> None:
 
 
 def test_invalid_renderer_raises_error(dmr_rf: DMRRequestFactory) -> None:
-    """Ensure that GET request raises TypeError when renderer is invalid."""
+    """Ensure that GET request raises `TypeError` when renderer is invalid."""
     view_cls = OpenAPIView
     view_cls.renderer = 'not a renderer'  # type: ignore[assignment]
     view_cls.schema = _TEST_SCHEMA

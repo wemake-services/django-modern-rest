@@ -17,7 +17,7 @@ class _OtherTestClass:
 
 @pytest.fixture
 def registry() -> OperationIdRegistry:
-    """Create OperationIdRegistry instance for testing."""
+    """Create `OperationIdRegistry` instance for testing."""
     return OperationIdRegistry()
 
 
@@ -37,7 +37,7 @@ def test_multiple_unique_operation_ids(registry: OperationIdRegistry) -> None:
 def test_duplicate_operation_id_raises_error(
     registry: OperationIdRegistry,
 ) -> None:
-    """Test that registering a duplicate operation ID raises ValueError."""
+    """Test that registering a duplicate operation IDs raises `ValueError`."""
     operation_id = 'getUsers'
     registry.register(operation_id)
 
@@ -49,7 +49,7 @@ def test_duplicate_operation_id_raises_error(
 
 
 def test_schema_register_returns_refs() -> None:
-    """Ensure SchemaRegistry correctly store class and return Reference."""
+    """Ensure SchemaRegistry correctly store class and return `Reference`."""
     registry = SchemaRegistry()
     reference = registry.register(_TestClass, _TestClass.__name__, Schema())
 
@@ -62,7 +62,6 @@ def test_schema_register_existing_type() -> None:
     """Ensure registering an existing type returns the existing reference."""
     registry = SchemaRegistry()
     registry.register(_TestClass, _TestClass.__name__, Schema())
-
     reference = registry.register(_TestClass, _TestClass.__name__, Schema())
 
     assert reference.ref == f'#/components/schemas/{_TestClass.__name__}'
@@ -73,7 +72,6 @@ def test_schema_register_name_collision() -> None:
     """Ensure name collision is handled by appending a counter."""
     registry = SchemaRegistry()
     registry.register(_TestClass, _TestClass.__name__, Schema())
-
     reference = registry.register(
         _OtherTestClass,
         _TestClass.__name__,

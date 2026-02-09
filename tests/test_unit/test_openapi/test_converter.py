@@ -18,7 +18,7 @@ from django_modern_rest.openapi.objects import (
 
 @pytest.fixture
 def converter() -> type[SchemaConverter]:
-    """Fixtutre for converter class."""
+    """Fixtutre for `SchemaConverter` class."""
     return SchemaConverter
 
 

@@ -136,7 +136,7 @@ def test_empty_renderers_list() -> None:
 
 
 def test_decorated_view_with_csrf_exempt() -> None:
-    """Ensure that csrf_exempt decorator is applied to view."""
+    """Ensure that `csrf_exempt` decorator is applied to view."""
     urlpatterns, _, _ = openapi_spec(
         router=Router([]),
         renderers=[JsonRenderer(decorators=[csrf_exempt])],

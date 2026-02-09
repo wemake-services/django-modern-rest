@@ -189,7 +189,7 @@ def test_process_pattern_with_different_views(
 
 
 def test_controller_collector_with_router() -> None:
-    """Test the main controller_collector function with a Router."""
+    """Test the main `controller_collector` function with a `Router`."""
     patterns: Sequence[URLPattern | URLResolver] = [
         path('direct/', _GetController.as_view()),
         path('nested/', include([path('inner/', _PostController.as_view())])),
