@@ -32,8 +32,7 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 class _ValidAPIError(Controller[PydanticSerializer]):
     @validate(
-        ResponseSpec(return_type=int, status_code=HTTPStatus.PAYMENT_REQUIRED),
-        cookies={'error_id': CookieSpec()},
+        ResponseSpec(return_type=int, status_code=HTTPStatus.PAYMENT_REQUIRED, cookies={'error_id': CookieSpec()}),
     )
     def get(self) -> HttpResponse:
         raise APIError(
@@ -45,7 +44,7 @@ class _ValidAPIError(Controller[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.OK,
         extra_responses=[
-            ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
+            ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED, cookies={'error_id': CookieSpec()}),
         ],
     )
     def post(self) -> str:
@@ -55,7 +54,7 @@ class _ValidAPIError(Controller[PydanticSerializer]):
             cookies={'error_id': NewCookie(value='get_123')},
         )
 
-    @modify(status_code=HTTPStatus.PAYMENT_REQUIRED)
+    @modify(status_code=HTTPStatus.PAYMENT_REQUIRED, cookies={'error_id': CookieSpec()})
     def put(self) -> int:
         raise APIError(
             1,
