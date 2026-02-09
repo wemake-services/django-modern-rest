@@ -208,7 +208,7 @@ class Query(ComponentParser, Generic[_QueryT]):
 
         When working with ``msgspec`` as your serializer,
         be careful, because
-        :class:`django.http.request.QueryDict` always returns a list
+        :class:`django.http.QueryDict` always returns a list
         for each key. And ``msgspec`` won't automatically convert
         a single item list to a regular value.
 
