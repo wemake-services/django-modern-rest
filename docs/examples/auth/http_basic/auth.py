@@ -19,7 +19,7 @@ class HttpBasicAsync(HttpBasicAsyncAuth):
         username: str,
         password: str,
     ) -> Any | None:
-        # Define `HTTP_BASIC_USENAME` and `HTTP_BASIC_PASSWORD`
+        # Define `HTTP_BASIC_USERNAME` and `HTTP_BASIC_PASSWORD`
         # in your settings.py file:
         if (
             username == settings.HTTP_BASIC_USENAME
