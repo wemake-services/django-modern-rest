@@ -294,6 +294,7 @@ class Endpoint:  # noqa: WPS214
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
                     status_code=exc.status_code,
                     headers=exc.headers,
+                    cookies=exc.cookies,
                 )
             except Exception as exc:
                 func_result = await self.handle_async_error(controller, exc)
@@ -333,6 +334,7 @@ class Endpoint:  # noqa: WPS214
                     exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
                     status_code=exc.status_code,
                     headers=exc.headers,
+                    cookies=exc.cookies,
                 )
             except Exception as exc:
                 func_result = self.handle_error(controller, exc)

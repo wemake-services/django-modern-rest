@@ -35,43 +35,26 @@ class _ValidAPIError(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
-            cookies={'error_id': CookieSpec()},
         ),
     )
     def get(self) -> HttpResponse:
-        raise APIError(
-            1,
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-            cookies={'error_id': NewCookie(value='get_123')},
-        )
+        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
     @modify(
         status_code=HTTPStatus.OK,
         extra_responses=[
             ResponseSpec(
-                int,
+                return_type=int,
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
-                cookies={'error_id': CookieSpec()},
             ),
         ],
     )
     def post(self) -> str:
-        raise APIError(
-            1,
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-            cookies={'error_id': NewCookie(value='get_123')},
-        )
+        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
-    @modify(
-        status_code=HTTPStatus.PAYMENT_REQUIRED,
-        cookies={'error_id': CookieSpec()},
-    )
+    @modify(status_code=HTTPStatus.PAYMENT_REQUIRED)
     def put(self) -> int:
-        raise APIError(
-            1,
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-            cookies={'error_id': NewCookie(value='get_123')},
-        )
+        raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
 
 @pytest.mark.parametrize(
@@ -95,7 +78,6 @@ def test_valid_api_error(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
     assert json.loads(response.content) == 1
-    assert response.cookies.output() == snapshot()
 
 
 class _InvalidAPIError(Controller[PydanticSerializer]):
@@ -393,3 +375,37 @@ def test_valid_complex_api_error(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'test', 'loc': ['api'], 'type': 'user_msg'}],
     })
+
+
+class _CookieAPIError(Controller[PydanticSerializer]):
+    responses = (
+        ResponseSpec(
+            int,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': CookieSpec()},
+        ),
+    )
+
+    def get(self) -> str:
+        """Type mismatch, but works."""
+        raise APIError(
+            1,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+            cookies={'error_id': NewCookie(value='value')},
+        )
+
+
+def test_api_error_with_cookies(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures validation can validate api errors."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _CookieAPIError.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED, response.content
+    assert json.loads(response.content) == 1
+    assert response.cookies.output() == snapshot(
+        'Set-Cookie: error_id=value; Path=/; SameSite=lax',
+    )
