@@ -24,7 +24,7 @@ _CONFIG: Final = OpenAPIConfig(title='Test config', version='0.1')
 
 @pytest.fixture
 def generator() -> SchemaGenerator:
-    """Create `SchemaGenerator` instance for testing."""
+    """Create ``SchemaGenerator`` instance for testing."""
     context = OpenAPIContext(config=_CONFIG)
     return context.generators.schema
 
@@ -44,13 +44,13 @@ class _UnsupportedTestModel:
 
 
 def test_schema_generator_unsupported_type(generator: SchemaGenerator) -> None:
-    """Ensure `SchemaGenerator` raises error."""
+    """Ensure ``SchemaGenerator`` raises error."""
     with pytest.raises(ValueError, match=r'Field extractor for .* not found'):
         generator.generate(_UnsupportedTestModel)
 
 
 def test_schema_generator_works(generator: SchemaGenerator) -> None:
-    """Ensure `SchemaGenerator` generate reference."""
+    """Ensure ``SchemaGenerator`` generate reference."""
     ref = generator.generate(_TestModel)
 
     assert isinstance(ref, Reference)
@@ -59,7 +59,7 @@ def test_schema_generator_works(generator: SchemaGenerator) -> None:
 
 
 def test_schema_generator_caching(generator: SchemaGenerator) -> None:
-    """Ensure `SchemaGenerator` cache reference."""
+    """Ensure ``SchemaGenerator`` cache reference."""
     ref1 = generator.generate(_TestModel)
     ref2 = generator.generate(_TestModel)
 
@@ -70,7 +70,7 @@ def test_schema_generator_caching(generator: SchemaGenerator) -> None:
 
 
 def test_handle_sequence_without_args(generator: SchemaGenerator) -> None:
-    """Ensure `_handle_sequence` handles bare sequence types."""
+    """Ensure ``_handle_sequence`` handles bare sequence types."""
     schema = _handle_sequence(generator, ())
 
     assert schema.type == OpenAPIType.ARRAY
@@ -80,7 +80,7 @@ def test_handle_sequence_without_args(generator: SchemaGenerator) -> None:
 def test_schema_generator_with_kwarg_definition(
     generator: SchemaGenerator,
 ) -> None:
-    """Ensure `SchemaGenerator` applies `KwargDefinition`."""
+    """Ensure ``SchemaGenerator`` applies ``KwargDefinition``."""
     generator.generate(_ConstrainedModel)
     schema = generator.registry.schemas[_ConstrainedModel.__name__]
 
@@ -99,7 +99,7 @@ def test_schema_generator_with_kwarg_definition(
 
 
 def test_handle_union_only_none(generator: SchemaGenerator) -> None:
-    """Ensure `_handle_union` handles `Union` of only `None` types."""
+    """Ensure ``_handle_union`` handles ``Union`` of only ``None`` types."""
     schema = _handle_union(generator, (NoneType, type(None)))
 
     assert schema is TypeMapper.get_schema(NoneType)
@@ -110,7 +110,7 @@ def test_handle_union_only_none(generator: SchemaGenerator) -> None:
 def test_extract_properties_wo_kwarg_definition(
     generator: SchemaGenerator,
 ) -> None:
-    """Ensure `_extract_properties` works `kwarg_definition`."""
+    """Ensure ``_extract_properties`` works ``kwarg_definition``."""
     field_def = FieldDefinition(
         name='test_field',
         annotation=int,
@@ -124,7 +124,7 @@ def test_extract_properties_wo_kwarg_definition(
 
 
 def test_apply_kwarg_definition_format(generator: SchemaGenerator) -> None:
-    """Ensure `_apply_kwarg_definition` handles format correctly."""
+    """Ensure ``_apply_kwarg_definition`` handles format correctly."""
     updated_schema = generator._apply_kwarg_definition(
         Schema(type=OpenAPIType.STRING),
         KwargDefinition(format='ipv4'),

@@ -10,7 +10,7 @@ from django_modern_rest.openapi.type_mapping import TypeMapper
 
 @pytest.fixture
 def type_mapper() -> type[TypeMapper]:
-    """Fixtutre for `TypeMapper` class."""
+    """Fixtutre for ``TypeMapper`` class."""
     return TypeMapper
 
 
@@ -23,7 +23,7 @@ class _TestTypedDict(TypedDict):
 
 
 class _SubDecimal(Decimal):
-    """Test `SubDecimal` class."""
+    """Test ``SubDecimal`` class."""
 
 
 _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
@@ -45,7 +45,7 @@ def test_type_mapper_get_schema(
     *,
     type_mapper: TypeMapper,
 ) -> None:
-    """Ensure `TypeMapper` `get_type` works."""
+    """Ensure ``TypeMapper.get_schema`` works."""
     schema = type_mapper.get_schema(source_type)
 
     assert schema is not None
@@ -53,7 +53,7 @@ def test_type_mapper_get_schema(
 
 
 def test_type_mapper_register_works(type_mapper: TypeMapper) -> None:
-    """Ensure `TypeMapper` register new `Schema`."""
+    """Ensure ``TypeMapper`` register new ``Schema``."""
     type_mapper.register(_TestClass, _TEST_SCHEMA)
 
     schema = type_mapper.get_schema(_TestClass)
@@ -61,13 +61,13 @@ def test_type_mapper_register_works(type_mapper: TypeMapper) -> None:
 
 
 def test_type_mapper_register_raise_error(type_mapper: TypeMapper) -> None:
-    """Ensure `TypeMapper` raise error if register available `Schema`."""
+    """Ensure ``TypeMapper`` raise error if register available ``Schema``."""
     with pytest.raises(ValueError, match='already registered'):
         type_mapper.register(int, _TEST_SCHEMA)
 
 
 def test_type_mapper_override(type_mapper: TypeMapper) -> None:
-    """Ensure `TypeMapper`.override works."""
+    """Ensure ``TypeMapper.override`` works."""
     type_mapper.override(int, _TEST_SCHEMA)
 
     int_schema = type_mapper.get_schema(int)
@@ -75,6 +75,6 @@ def test_type_mapper_override(type_mapper: TypeMapper) -> None:
 
 
 def test_type_mapper_typeddict(type_mapper: TypeMapper) -> None:
-    """Ensure `TypeMapper` returns None for `TypedDict`."""
+    """Ensure ``TypeMapper`` returns ``None`` for ``TypedDict``."""
     schema = type_mapper.get_schema(_TestTypedDict)
     assert schema is None

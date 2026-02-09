@@ -8,12 +8,12 @@ from django_modern_rest.openapi.extractors.stdlib import TypedDictExtractor
 
 @pytest.fixture
 def extractor() -> TypedDictExtractor:
-    """Fixtutre for generating extractor instance."""
+    """Fixtutre for generating ``TypedDictExtractor`` instance."""
     return TypedDictExtractor()
 
 
 class _BrokenAnnotations:
-    """We change __annotations__ here."""
+    """We change ``__annotations__`` here."""
 
 
 class _TestTypedDict(TypedDict):
@@ -61,7 +61,7 @@ def test_typed_dict_extractor_fields(
     expected_required: bool,
     extractor: TypedDictExtractor,
 ) -> None:
-    """Ensure TypedDictExtractor extracts fields correctly."""
+    """Ensure ``TypedDictExtractor`` extracts fields correctly."""
     fields = extractor.extract_fields(dict_class)
 
     assert len(fields) == 2
@@ -78,19 +78,19 @@ def test_typed_dict_extractor_fields(
 def test_extract_fields_broken_annotations(
     extractor: TypedDictExtractor,
 ) -> None:
-    """Ensure extract_fields handles errors from get_type_hints."""
+    """Ensure ``extract_fields`` handles errors from ``get_type_hints``."""
     _BrokenAnnotations.__annotations__ = 'not a dict'  # type: ignore[assignment]
 
     assert extractor.extract_fields(_BrokenAnnotations) == []  # type: ignore[arg-type]
 
 
 def test_extract_fields_type_error(extractor: TypedDictExtractor) -> None:
-    """Ensure extract_fields handles TypeError from get_type_hints."""
+    """Handle ``TypeError`` from ``get_type_hints`` in ``extract_fields``."""
     assert extractor.extract_fields(1) == []  # type: ignore[arg-type]
 
 
 def test_typed_dict_inheritance(extractor: TypedDictExtractor) -> None:
-    """Ensure TypedDictExtractor extracts fields from inherited TypedDicts."""
+    """Ensure extractor extracts fields from inherited ``TypedDicts``."""
     fields = extractor.extract_fields(_Child)  # type: ignore[arg-type]
 
     assert len(fields) == 2
@@ -103,7 +103,7 @@ def test_typed_dict_inheritance(extractor: TypedDictExtractor) -> None:
 def test_typed_dict_required_not_required(
     extractor: TypedDictExtractor,
 ) -> None:
-    """Ensure TypedDictExtractor handles Required and NotRequired."""
+    """Ensure extractor handles ``Required`` and ``NotRequired``."""
     fields = extractor.extract_fields(_Mixed)  # type: ignore[arg-type]
 
     field_map = {field.name: field for field in fields}
@@ -117,7 +117,7 @@ def test_typed_dict_required_not_required(
 
 
 def test_typed_dict_readonly(extractor: TypedDictExtractor) -> None:
-    """Ensure TypedDictExtractor handles ReadOnly."""
+    """Ensure extractor handles ``ReadOnly``."""
 
     class _ReadOnly(TypedDict):
         readonly_field: ReadOnly[int]
@@ -138,7 +138,7 @@ def test_typed_dict_extra(
     *,
     extractor: TypedDictExtractor,
 ) -> None:
-    """Ensure TypedDictExtractor work with extra items (PEP 728)."""
+    """Ensure ``TypedDictExtractor`` work with extra items (PEP 728)."""
     fields = extractor.extract_fields(extra_type_dict)
 
     assert len(fields) == 1

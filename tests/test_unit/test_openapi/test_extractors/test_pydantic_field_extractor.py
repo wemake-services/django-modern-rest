@@ -17,7 +17,7 @@ _DESCRIPTION: Final = 'User full name'
 
 @pytest.fixture
 def extractor() -> PydanticFieldExtractor:
-    """Fixtutre for generating `PydanticFieldExtractor` instance."""
+    """Fixtutre for generating ``PydanticFieldExtractor`` instance."""
     return PydanticFieldExtractor()
 
 
@@ -64,7 +64,7 @@ def test_is_supported(
     expected: bool,
     extractor: PydanticFieldExtractor,
 ) -> None:
-    """Ensure `is_supported` returns correct results for various types."""
+    """Ensure ``is_supported`` returns correct results for various types."""
     assert extractor.is_supported(source) is expected
 
 
@@ -88,7 +88,7 @@ def test_extract_with_kwargs(extractor: PydanticFieldExtractor) -> None:
 def test_extract_with_default_and_schema_extra(
     extractor: PydanticFieldExtractor,
 ) -> None:
-    """Ensure extractors handle `default` values and `json_schema_extra`."""
+    """Ensure extractors handle ``default`` values and ``json_schema_extra``."""
     extra_schema = {'example': 'data'}
     default_val = 18
 
@@ -108,7 +108,7 @@ def test_extract_with_default_and_schema_extra(
 
 
 def test_extract_simple_types(extractor: PydanticFieldExtractor) -> None:
-    """Ensure complex types like `Literal` and generics are extracted."""
+    """Ensure complex types like ``Literal`` and generics are extracted."""
     definitions = extractor.extract_fields(_SimpleModel)
 
     fields_map = {

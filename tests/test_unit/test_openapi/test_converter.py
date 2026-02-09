@@ -18,7 +18,7 @@ from django_modern_rest.openapi.objects import (
 
 @pytest.fixture
 def converter() -> type[SchemaConverter]:
-    """Fixtutre for `SchemaConverter` class."""
+    """Fixtutre for ``SchemaConverter`` class."""
     return SchemaConverter
 
 
@@ -49,7 +49,7 @@ def converter() -> type[SchemaConverter]:
     ],
 )
 def test_normalize_key(input_key: str, expected_output: str) -> None:
-    """Ensure that `_normalize_key` converts field names to OpenAPI keys."""
+    """Ensure that ``_normalize_key`` converts field names to OpenAPI keys."""
     assert normalize_key(input_key) == expected_output
 
 
@@ -83,7 +83,7 @@ def test_normalize_value_primitives(
     *,
     converter: SchemaConverter,
 ) -> None:
-    """Ensure that `_normalize_value` returns primitive values as-is."""
+    """Ensure that ``_normalize_value`` returns primitive values as-is."""
     assert normalize_value(input_value, converter.convert) == expected_output
 
 
@@ -105,7 +105,7 @@ def test_normalize_value_list(
     *,
     converter: SchemaConverter,
 ) -> None:
-    """Ensure that `_normalize_value` processes list recursively."""
+    """Ensure that ``_normalize_value`` processes list recursively."""
     normalized = normalize_value(input_value, converter.convert)
     assert normalized == expected_output
 
@@ -125,7 +125,7 @@ def test_normalize_value_dict(
     *,
     converter: SchemaConverter,
 ) -> None:
-    """Ensure that `_normalize_value` processes dict recursively."""
+    """Ensure that ``_normalize_value`` processes dict recursively."""
     normalized = normalize_value(input_value, converter.convert)
     assert normalized == expected_output
 
@@ -213,5 +213,5 @@ def test_normalize_value_base_objects(
     *,
     converter: SchemaConverter,
 ) -> None:
-    """Ensure that `_normalize_value` calls to_schema() correctly."""
+    """Ensure that ``_normalize_value`` calls ``to_schema()`` correctly."""
     assert normalize_value(input_value, converter.convert) == expected_output

@@ -13,7 +13,7 @@ _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 @pytest.fixture
 def generator() -> OperationIDGenerator:
-    """Create `OperationIDGenerator` instance for testing."""
+    """Create ``OperationIDGenerator`` instance for testing."""
     context = OpenAPIContext(config=_TEST_CONFIG)
     return context.generators.operation_id
 
@@ -105,7 +105,7 @@ def test_tokenize_path(
     input_path: str,
     expected_tokens: list[str],
 ) -> None:
-    """Ensure that `_tokenize_path` works correctly."""
+    """Ensure that ``_tokenize_path`` works correctly."""
     tokens = generator._tokenize_path(input_path)
     assert tokens == expected_tokens, (
         f'Tokenization failed: '
@@ -122,7 +122,7 @@ class _ControllerWithOperationId(Controller[PydanticSerializer]):
 
 
 def test_explicit_operation_id(generator: OperationIDGenerator) -> None:
-    """Ensure that explicit `operation_id` is registered and returned."""
+    """Ensure that explicit ``operation_id`` is registered and returned."""
     controller = _ControllerWithOperationId()
     operation_id = generator.generate(
         controller.api_endpoints['GET'],

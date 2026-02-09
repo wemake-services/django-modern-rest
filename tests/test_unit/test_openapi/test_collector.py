@@ -123,7 +123,7 @@ def test_normalize_path(
     input_path: str,
     expected_output: str,
 ) -> None:
-    """Ensure that `_normalize_path` correctly normalizes patterns."""
+    """Ensure that ``_normalize_path`` correctly normalizes patterns."""
     normalized = _normalize_path(input_path)
     assert normalized == expected_output, (
         f'Path normalization failed: '
@@ -163,7 +163,7 @@ def test_join_paths(
     pattern_path: str,
     expected: str,
 ) -> None:
-    """Ensure that `_join_paths` correctly combines base and pattern paths."""
+    """Ensure that ``_join_paths`` correctly combines base and pattern paths."""
     assert _join_paths(base_path, pattern_path) == expected
 
 
@@ -180,7 +180,7 @@ def test_process_pattern_with_different_views(
     path_str: str,
     view_class: type[Controller[BaseSerializer]],
 ) -> None:
-    """Ensure that `_process_pattern` processes different types correctly."""
+    """Ensure that ``_process_pattern`` processes different types correctly."""
     pattern = path(path_str, view_class.as_view())
     controller_mapping = _process_pattern(pattern, '/api/')
 
@@ -189,7 +189,7 @@ def test_process_pattern_with_different_views(
 
 
 def test_controller_collector_with_router() -> None:
-    """Test the main `controller_collector` function with a `Router`."""
+    """Test the main ``controller_collector`` function with a ``Router``."""
     patterns: Sequence[URLPattern | URLResolver] = [
         path('direct/', _GetController.as_view()),
         path('nested/', include([path('inner/', _PostController.as_view())])),
