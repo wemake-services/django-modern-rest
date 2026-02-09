@@ -3,12 +3,10 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
-    Annotated,
     Any,
     ClassVar,
     TypeVar,
     final,
-    get_origin,
 )
 
 from django.http import HttpResponse
@@ -20,11 +18,13 @@ from django_modern_rest.exceptions import (
     ValidationError,
 )
 from django_modern_rest.headers import build_headers
-from django_modern_rest.internal.negotiation import ConditionalType
+from django_modern_rest.internal.negotiation import (
+    response_validation_negotiator,
+)
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.negotiation import (
+    get_conditional_types,
     request_renderer,
-    response_validation_negotiator,
 )
 from django_modern_rest.serializer import BaseSerializer
 
@@ -65,6 +65,7 @@ class ResponseValidator:
         parser_cls = response_validation_negotiator(
             controller.request,
             response,
+            request_renderer(controller.request),
             endpoint.metadata,
         )
 
@@ -154,25 +155,20 @@ class ResponseValidator:
             ResponseSchemaError: When validation fails.
 
         """
-        if (
-            content_type
-            and get_origin(schema.return_type) is Annotated
-            and schema.return_type.__metadata__
-            and isinstance(
-                schema.return_type.__metadata__[0],
-                ConditionalType,
+        model = schema.return_type
+        if content_type:
+            content_types = get_conditional_types(
+                content_type,
+                schema.return_type,
             )
-        ):
-            content_types = schema.return_type.__metadata__[0].computed
-            if content_type not in content_types:
-                hint = [str(ct) for ct in content_types]
-                raise ResponseSchemaError(
-                    f'Content-Type {content_type!r} is not '
-                    f'listed in supported content types {hint!r}',
-                )
-            model = content_types[content_type]
-        else:
-            model = schema.return_type
+            if content_types:
+                if content_type not in content_types:
+                    hint = [str(ct) for ct in content_types]
+                    raise ResponseSchemaError(
+                        f'Content-Type {content_type!r} is not '
+                        f'listed in supported content types {hint!r}',
+                    )
+                model = content_types[content_type]
 
         try:
             self.serializer.from_python(

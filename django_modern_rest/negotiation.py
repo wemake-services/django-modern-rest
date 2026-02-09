@@ -1,9 +1,8 @@
 import enum
 from collections.abc import Mapping
-from typing import Any, final
+from typing import Annotated, Any, final, get_origin
 
 from django.http.request import HttpRequest
-from django.http.response import HttpResponseBase
 
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
@@ -159,36 +158,6 @@ def request_renderer(request: HttpRequest) -> type[Renderer] | None:
     return getattr(request, '_dmr_renderer_cls', None)
 
 
-def response_validation_negotiator(
-    request: HttpRequest,
-    response: HttpResponseBase,
-    metadata: EndpointMetadata,
-) -> type[Parser]:
-    """
-    Special type that we use to re-parse our own response body.
-
-    We do this only when response validation is active.
-    It should not be used in production directly.
-    Think of it as an internal validation helper.
-    """
-    parser_types = metadata.parsers
-    renderer_type = request_renderer(request)
-    if renderer_type is None:
-        # We can fail to find `request_renderer` when `Accept` header
-        # is broken / missing / incorrect.
-        # Then, we fallback to the types we know.
-        content_type = response.headers['Content-Type']
-    else:
-        content_type = renderer_type.content_type
-
-    # Our last resort is to get the default renderer type.
-    # It is always present.
-    return parser_types.get(
-        content_type,
-        next(reversed(parser_types.values())),
-    )
-
-
 @final
 @enum.unique
 class ContentType(enum.StrEnum):
@@ -226,3 +195,26 @@ def conditional_type(
             f'got {mapping}',
         )
     return _ConditionalType(tuple(mapping.items()))
+
+
+def get_conditional_types(
+    content_type: str | None,
+    return_type: Any,
+) -> Mapping[str, Any] | None:
+    """
+    Returns possible conditional types.
+
+    Conditional types are defined with :data:`typing.Annotated`
+    and :func:`django_modern_rest.negotiation.conditional_type` helper.
+    """
+    if (
+        content_type
+        and get_origin(return_type) is Annotated
+        and return_type.__metadata__
+        and isinstance(
+            return_type.__metadata__[0],
+            _ConditionalType,
+        )
+    ):
+        return return_type.__metadata__[0].computed
+    return None
