@@ -203,6 +203,19 @@ class Query(ComponentParser, Generic[_QueryT]):
     into ``ProductQuery`` model.
 
     You can access parsed query as ``self.parsed_query`` attribute.
+
+    .. note::
+
+        When working with ``msgspec`` as your serializer,
+        be careful, because
+        :class:`django.http.QueryDict` always returns a list
+        for each key. And ``msgspec`` won't automatically convert
+        a single item list to a regular value.
+
+        Use
+        ``Annotated[list[YourType], msgspec.Meta(min_length=1, max_length=1)]``
+        instead of regular values.
+
     """
 
     parsed_query: _QueryT
