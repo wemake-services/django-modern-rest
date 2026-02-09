@@ -4,7 +4,7 @@
 
 import dataclasses
 from http.cookies import Morsel, SimpleCookie
-from typing import Any, ClassVar, Literal, final, Literal
+from typing import Any, ClassVar, Literal, final
 
 from django.http import HttpResponse
 from typing_extensions import override
