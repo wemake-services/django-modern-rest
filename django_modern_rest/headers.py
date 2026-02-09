@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
 
 if TYPE_CHECKING:
     from django_modern_rest.metadata import ResponseModification
@@ -13,12 +13,6 @@ class _BaseResponseHeader:
 
     It will be later transformed into
     https://spec.openapis.org/oas/v3.1.0#parameterObject for doc purposes.
-
-    Attributes:
-        description: Documentation, why this header is needed and what it does.
-        deprecated: Whethere this header is deprecated.
-        example: Documentation, what can be given as values in this header.
-
     """
 
     description: str | None = None
@@ -34,7 +28,16 @@ class NewHeader(_BaseResponseHeader):
 
     This class is used to add new entries to response's headers.
     Is not used for validation.
+
+    Attributes:
+        description: Documentation, why this header is needed and what it does.
+        deprecated: Whethere this header is deprecated.
+        example: Documentation, what can be given as values in this header.
+        value: value to be set in this new header.
+
     """
+
+    is_actionable: ClassVar[Literal[True]] = True
 
     value: str  # noqa: WPS110
 
@@ -53,9 +56,29 @@ class HeaderSpec(_BaseResponseHeader):
 
     This class is used to describe the existing reality.
     Used for validation that all ``required`` headers are present.
+
+    Attributes:
+        description: Documentation, why this header is needed and what it does.
+        deprecated: Whethere this header is deprecated.
+        example: Documentation, what can be given as values in this header.
+        required: Whether or not this header can be missing.
+        schema_only: Is true, when header is only used for schema purposes,
+            without any runtime validation. This might be useful, when
+            this header will be set after our framework's validation.
+            For example,
+            by :class:`django.contrib.sessions.middleware.SessionMiddleware`
+            or by HTTP proxy.
+
     """
 
+    is_actionable: ClassVar[Literal[False]] = False
+
     required: bool = True
+    schema_only: bool = False
+
+    def to_spec(self) -> 'HeaderSpec':
+        """Needed for API compat with `NewHeader`."""
+        return self
 
 
 def build_headers(
@@ -64,10 +87,11 @@ def build_headers(
 ) -> dict[str, str]:
     """Returns headers with values for raw data endpoints."""
     result_headers: dict[str, Any] = {'Content-Type': renderer_cls.content_type}
-    if not modification.headers:
+    headers = modification.actionable_headers()
+    if not headers:
         return result_headers
     result_headers.update({
         header_name: response_header.value
-        for header_name, response_header in modification.headers.items()
+        for header_name, response_header in headers.items()
     })
     return result_headers

@@ -310,6 +310,69 @@ def test_validate_raises_on_new_header() -> None:
                 raise NotImplementedError
 
 
+class _SchemaOnlyHeaderController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+            headers={'test': HeaderSpec(schema_only=True)},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(1, status_code=HTTPStatus.OK)
+
+
+def test_validate_header_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` validates `HeaderSpec` respects `schema_only`."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyHeaderController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 1
+    assert response.cookies == {}
+
+
+class _SchemaOnlyHeaderWrongController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            return_type=int,
+            status_code=HTTPStatus.OK,
+            headers={'test': HeaderSpec(schema_only=True)},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        raise APIError(
+            1,
+            status_code=HTTPStatus.OK,
+            headers={'test': 'value'},
+        )
+
+
+def test_validate_wrong_header_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` validates `HeaderSpec` respects `schema_only`."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyHeaderWrongController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
+        response.content
+    )
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.cookies == {}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': "Response has extra real undescribed {'test'} headers",
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 class _EmptyResponseController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(
@@ -605,7 +668,7 @@ def test_validate_with_new_cookie() -> None:
                 raise NotImplementedError
 
 
-class _SchemaOnlyController(Controller[PydanticSerializer]):
+class _SchemaOnlyCookieController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(
             return_type=int,
@@ -621,7 +684,7 @@ def test_validate_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     """Ensures `@validate` validates `CookieSpec` respects `schema_only`."""
     request = dmr_rf.get('/whatever/')
 
-    response = _SchemaOnlyController.as_view()(request)
+    response = _SchemaOnlyCookieController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
@@ -630,7 +693,7 @@ def test_validate_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     assert response.cookies == {}
 
 
-class _SchemaOnlyWrongController(Controller[PydanticSerializer]):
+class _SchemaOnlyCookieWrongController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(
             return_type=int,
@@ -650,7 +713,7 @@ def test_validate_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     """Ensures `@validate` validates `CookieSpec` respects `schema_only`."""
     request = dmr_rf.get('/whatever/')
 
-    response = _SchemaOnlyWrongController.as_view()(request)
+    response = _SchemaOnlyCookieWrongController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
@@ -661,7 +724,7 @@ def test_validate_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': "Response has extra undescribed real {'test'} cookies",
+                'msg': "Response has extra real undescribed {'test'} cookies",
                 'type': 'value_error',
             },
         ],

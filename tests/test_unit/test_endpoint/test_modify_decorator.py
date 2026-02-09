@@ -67,10 +67,70 @@ def test_modify_with_header_description() -> None:
         class _WrongValidate(Controller[PydanticSerializer]):
             @modify(
                 status_code=HTTPStatus.OK,
-                headers={'Authorization': HeaderSpec()},  # type: ignore[dict-item]
+                headers={'Authorization': HeaderSpec()},
             )
             def get(self) -> int:
                 raise NotImplementedError
+
+
+class _SchemaOnlyHeaderController(Controller[PydanticSerializer]):
+    @modify(
+        headers={'test': HeaderSpec(schema_only=True)},
+    )
+    def get(self) -> int:
+        return 1
+
+
+def test_modify_with_header_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@modify` can be used with `HeaderSpec` with schema_only."""
+    metadata = _SchemaOnlyHeaderController.api_endpoints['GET'].metadata
+    assert metadata.responses[HTTPStatus.OK].headers == {
+        'test': HeaderSpec(schema_only=True),
+    }
+
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyHeaderController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 1
+    assert response.cookies == {}
+
+
+class _SchemaOnlyHeaderWrongController(Controller[PydanticSerializer]):
+    @modify(
+        headers={'test': HeaderSpec(schema_only=True)},
+    )
+    def get(self) -> int:
+        raise APIError(
+            1,
+            status_code=HTTPStatus.OK,
+            headers={'test': 'value'},
+        )
+
+
+def test_modify_wrong_header_schema_only(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@modify` validates `HeaderSpec` respects `schema_only`."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SchemaOnlyHeaderWrongController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
+        response.content
+    )
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.cookies == {}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': "Response has extra real undescribed {'test'} headers",
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 def test_modify_with_cookie_description() -> None:
@@ -111,7 +171,7 @@ def test_modify_with_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     assert response.cookies == {}
 
 
-class _SchemaOnlyWrongController(Controller[PydanticSerializer]):
+class _SchemaOnlyCookieWrongController(Controller[PydanticSerializer]):
     @modify(
         cookies={'test': CookieSpec(schema_only=True)},
     )
@@ -127,7 +187,7 @@ def test_modify_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     """Ensures `@modify` validates `CookieSpec` respects `schema_only`."""
     request = dmr_rf.get('/whatever/')
 
-    response = _SchemaOnlyWrongController.as_view()(request)
+    response = _SchemaOnlyCookieWrongController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
@@ -138,7 +198,7 @@ def test_modify_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': "Response has extra undescribed real {'test'} cookies",
+                'msg': "Response has extra real undescribed {'test'} cookies",
                 'type': 'value_error',
             },
         ],
@@ -258,7 +318,6 @@ def test_modify_modified_in_responses() -> None:
                     ResponseSpec(
                         str,
                         status_code=HTTPStatus.OK,
-                        headers={'Accept': HeaderSpec()},
                     ),
                 ],
             )

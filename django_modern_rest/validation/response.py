@@ -13,9 +13,7 @@ from typing import (
 
 from django.http import HttpResponse
 
-from django_modern_rest.cookies import (
-    NewCookie,
-)
+from django_modern_rest.cookies import NewCookie
 from django_modern_rest.exceptions import (
     InternalServerError,
     ResponseSchemaError,
@@ -195,12 +193,16 @@ class ResponseValidator:
     ) -> None:
         """Validates response headers against provided metadata."""
         response_headers = {header.lower() for header in response.headers}
-        metadata_headers = {header.lower() for header in (schema.headers or ())}
+        metadata_headers = {
+            header.lower()
+            for header, response_header in (schema.headers or {}).items()
+            if not response_header.schema_only
+        }
         if schema.headers is not None:
             missing_required_headers = {
                 header.lower()
                 for header, response_header in schema.headers.items()
-                if response_header.required
+                if response_header.required and not response_header.schema_only
             } - response_headers
             if missing_required_headers:
                 raise ResponseSchemaError(
@@ -215,7 +217,7 @@ class ResponseValidator:
         )
         if extra_response_headers:
             raise ResponseSchemaError(
-                'Response has extra undescribed '
+                'Response has extra real undescribed '
                 f'{extra_response_headers!r} headers',
             )
 
@@ -248,7 +250,7 @@ class ResponseValidator:
         }
         if extra_response_cookies:
             raise ResponseSchemaError(
-                'Response has extra undescribed real '
+                'Response has extra real undescribed '
                 f'{extra_response_cookies!r} cookies',
             )
 
