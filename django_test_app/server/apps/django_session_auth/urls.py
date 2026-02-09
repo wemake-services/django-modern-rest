@@ -24,9 +24,4 @@ router = Router([
         views.UserAsyncController.as_view(),
         name='user_session_async',
     ),
-    path(
-        'users-paginated/',
-        views.PaginatedUsersController.as_view(),
-        name='users_paginated',
-    ),
 ])

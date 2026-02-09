@@ -8,19 +8,22 @@ _ModelT = TypeVar('_ModelT')
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class Page(Generic[_ModelT]):
     """
-    Default page model.
+    Default page model for serialization.
 
     Can be used when using pagination with ``django_modern_rest``.
     """
 
     number: int
+    # Does not support `_SupportsPagination` type,
+    # explicit type cast to `list` or `tuple` is required,
+    # because it is hard to serialize complex `_SupportsPagination` protocol.
     object_list: Sequence[_ModelT]
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class Paginated(Generic[_ModelT]):
     """
-    Helper type to help serializer the default ``Paginator`` object.
+    Helper type to serialize the default ``Paginator`` object.
 
     Django already ships a pagination system, we don't want to replicate it.
     So, we only provide metadata.
