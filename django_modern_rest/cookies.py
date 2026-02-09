@@ -6,9 +6,6 @@ import dataclasses
 from http.cookies import Morsel, SimpleCookie
 from typing import Any, ClassVar, Literal, final
 
-from django.http import HttpResponse
-from typing_extensions import override
-
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _BaseCookie:
