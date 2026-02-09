@@ -22,15 +22,6 @@ class _BaseCookie:
     httponly: bool | None = None
     samesite: Literal['lax', 'strict', 'none'] = 'lax'
 
-    def process_response(self, response: HttpResponse, cookie_key: str) -> None:
-        """
-        Processes response.
-
-        Does nothing by default,
-        but :class:`django_modern_rest.cookies.NewCookie`
-        sets new cookies to response.
-        """
-
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -140,8 +131,3 @@ class NewCookie(_BaseCookie):
     def as_dict(self) -> dict[str, Any]:
         """Converts to a dictionary ."""
         return dataclasses.asdict(self)
-
-    @override
-    def process_response(self, response: HttpResponse, cookie_key: str) -> None:
-        """Sets new cookie to a response."""
-        response.set_cookie(cookie_key, **self.as_dict())

@@ -157,7 +157,7 @@ def build_response(  # noqa: WPS210, WPS211
     )
     if cookies:
         for cookie_key, cookie in cookies.items():
-            cookie.process_response(response, cookie_key)
+            response.set_cookie(cookie_key, **cookie.as_dict())
     return response
 
 
