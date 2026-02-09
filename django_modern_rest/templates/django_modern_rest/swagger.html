@@ -28,7 +28,11 @@
         plugins: [
           SwaggerUIBundle.plugins.DownloadUrl
         ],
-        layout: "StandaloneLayout"
+        layout: "StandaloneLayout",
+        requestInterceptor: (req) => {
+          req.headers['X-CSRFToken'] = '{{ csrf_token }}';
+          return req;
+        }
       });
     };
   </script>
