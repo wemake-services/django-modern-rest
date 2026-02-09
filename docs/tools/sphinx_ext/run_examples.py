@@ -291,16 +291,17 @@ def _build_curl_request(
     port: int,
     url_path: str,
 ) -> tuple[_CurlArgs, _CurlCleanArgs]:
+    query = run_args.pop('query', '')
     args = [
         'curl',
         '-v',
         '-s',
-        f'http://127.0.0.1:{port}{url_path}',
+        f'http://127.0.0.1:{port}{url_path}{query}',
     ]
     if run_args.pop('fail-with-body', True):
         args.append('--fail-with-body')
 
-    clean_args = ['curl', f'http://127.0.0.1:8000{url_path}']
+    clean_args = ['curl', f'http://127.0.0.1:8000{url_path}{query}']
 
     _add_curl_flags(args, clean_args, run_args)
     _add_method(args, clean_args, run_args)

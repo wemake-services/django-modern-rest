@@ -105,7 +105,26 @@ how ``django-stubs`` is used.
 Pagination
 ----------
 
-TODO
+We don't ship our own pagination.
+We (as our main design goal suggests) provide support
+for any existing pagination plugin for Django.
+Including builtin :class:`django.core.paginator.Paginator`.
+
+To do so, we only provide metadata for the default pagination:
+
+.. literalinclude:: /examples/integrations/pagination.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+If you are using a different pagination system, you can define
+your own metadata / models and use them with our framework.
+
+.. autoclass:: django_modern_rest.pagination.Paginated
+  :members:
+
+.. autoclass:: django_modern_rest.pagination.Page
+  :members:
 
 
 django-filters
