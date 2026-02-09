@@ -169,6 +169,8 @@ Negotiation API
 
 .. autofunction:: django_modern_rest.negotiation.request_renderer
 
+.. autofunction:: django_modern_rest.negotiation.get_conditional_types
+
 
 Parser API
 ----------
