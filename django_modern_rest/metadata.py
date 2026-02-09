@@ -88,7 +88,7 @@ class ResponseModification:
         headers: Shows *headers* in the documentation.
             Headers passed here will be added to the final response.
         cookies: Shows *cookies* in the documentation.
-            Cookies passed here will be added to the final response.
+            New cookies passed here will be added to the final response.
 
     We use this structure to modify the default response.
     """
@@ -97,7 +97,7 @@ class ResponseModification:
     return_type: Any
     status_code: HTTPStatus
     headers: Mapping[str, 'NewHeader'] | None
-    cookies: Mapping[str, 'NewCookie'] | None
+    cookies: Mapping[str, 'NewCookie | CookieSpec'] | None
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""

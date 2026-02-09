@@ -10,7 +10,10 @@ if TYPE_CHECKING:
     from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 _OPENAPI_URL: Final = reverse('openapi:json')
-schema = st.pytest.from_fixture('api_schema')
+schema = st.pytest.from_fixture('api_schema').exclude(
+    # This example must be readable, not correct:
+    path='/model-examples/user',
+)
 
 
 # NOTE: The `db` fixture is required to enable database access.

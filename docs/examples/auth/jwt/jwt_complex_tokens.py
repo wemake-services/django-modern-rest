@@ -45,7 +45,7 @@ class ObtainAccessAndRefreshSyncController(
         return {'username': payload['email'], 'password': payload['password']}
 
     @override
-    def make_response_payload(self) -> _ResponseModel:
+    def make_api_response(self) -> _ResponseModel:
         now = dt.datetime.now(dt.UTC)
         access = self.create_jwt_token(
             expiration=now + self.jwt_expiration,

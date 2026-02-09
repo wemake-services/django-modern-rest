@@ -30,7 +30,7 @@ class ObtainAccessAndRefreshSyncController(
         return payload
 
     @override
-    def make_response_payload(self) -> ObtainTokensResponse:
+    def make_api_response(self) -> ObtainTokensResponse:
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(
@@ -52,14 +52,14 @@ class ObtainAccessAndRefreshAsyncController(
     ],
 ):
     @override
-    def convert_auth_payload(
+    async def convert_auth_payload(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
         return payload
 
     @override
-    async def make_response_payload(self) -> ObtainTokensResponse:
+    async def make_api_response(self) -> ObtainTokensResponse:
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(
