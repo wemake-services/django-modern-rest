@@ -191,6 +191,17 @@ it is required to describe the set cookies with
   :lines: 19-
   :emphasize-lines: 14-17, 24-26
 
+The last important thing about cookies
+is :attr:`~django_modern_rest.cookies.CookieSpec.schema_only` attribute.
+It is used to describe cookies that:
+
+1. Will be set in the response by someone else outside the framework,
+   like HTTP proxy or Django's own middleware.
+   See :class:`django.contrib.sessions.middleware.SessionMiddleware`
+   as a notable example
+2. Will be validated to be **NOT** present in the response from our framework.
+   Since it is designed to be added later, it should not be already present
+
 .. note::
 
   All cookie parts are validated by default. Except ``expires`` field,
