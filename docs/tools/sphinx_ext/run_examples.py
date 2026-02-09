@@ -94,6 +94,9 @@ class _AppBuilder:
             ],
             MIDDLEWARE=[],
             USE_TZ=True,
+            # Needed for HTTP Basic auth example:
+            HTTP_BASIC_USERNAME='admin',
+            HTTP_BASIC_PASSWORD='pass',  # noqa: S106
         )
 
     def _build_app(self) -> ASGIHandler:
