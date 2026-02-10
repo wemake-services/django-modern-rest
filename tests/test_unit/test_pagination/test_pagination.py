@@ -2,7 +2,9 @@
 
 import json
 from http import HTTPStatus
-from typing import Final, NotRequired, TypedDict, final
+from typing import Final, NotRequired, final
+
+from typing_extensions import TypedDict
 
 import pydantic
 import pytest
