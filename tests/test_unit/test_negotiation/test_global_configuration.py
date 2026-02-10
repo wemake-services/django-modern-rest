@@ -214,8 +214,8 @@ def test_per_controller_customization(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def post(self) -> dict[str, str]:
             parser_cls = request_parser(self.request)
@@ -248,8 +248,8 @@ def test_per_blueprint_customization(
 
     @final
     class _Blueprint(Blueprint[PydanticSerializer], Body[_RequestModel]):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
@@ -284,7 +284,10 @@ def test_per_endpoint_customization(
 
     @final
     class _BothController(Controller[PydanticSerializer], Body[_RequestModel]):
-        @modify(parsers=[JsonParser], renderers=[JsonRenderer])
+        @modify(
+            parsers=[_XMLParser, JsonParser],
+            renderers=[_XMLRenderer, JsonRenderer],
+        )
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
 
@@ -339,8 +342,8 @@ def test_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def post(
             self,
@@ -402,8 +405,8 @@ def test_wrong_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def post(
             self,
@@ -445,8 +448,8 @@ def test_missing_conditional_content_type(
 
     @final
     class _Controller(Controller[PydanticSerializer]):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def get(
             self,
@@ -530,8 +533,8 @@ def test_conditional_body_model(
             ]
         ],
     ):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def post(self) -> dict[str, str]:
             if isinstance(self.parsed_body, _RequestModel):
@@ -623,8 +626,8 @@ def test_conditional_body_model_wrong(
             ]
         ],
     ):
-        parsers = [JsonParser]
-        renderers = [JsonRenderer]
+        parsers = [_XMLParser, JsonParser]
+        renderers = [_XMLRenderer, JsonRenderer]
 
         def post(self) -> dict[str, str]:
             raise NotImplementedError

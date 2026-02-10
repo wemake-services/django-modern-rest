@@ -18,6 +18,25 @@ from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.renderers import Renderer
 
+# Used for different test setups:
+try:  # pragma: no cover
+    from django_modern_rest.plugins.msgspec import (
+        MsgspecJsonParser as JsonParser,
+    )
+except ImportError:  # pragma: no cover
+    from django_modern_rest.parsers import (  # type: ignore[assignment]
+        JsonParser,
+    )
+
+try:  # pragma: no cover
+    from django_modern_rest.plugins.msgspec import (
+        MsgspecJsonRenderer as JsonRenderer,
+    )
+except ImportError:  # pragma: no cover
+    from django_modern_rest.renderers import (  # type: ignore[assignment]
+        JsonRenderer,
+    )
+
 _CallableAny: TypeAlias = Callable[..., Any]
 
 
@@ -91,8 +110,8 @@ class ContentNegotiationController(
     Controller[PydanticSerializer],
     Body[_RequestModel],
 ):
-    parsers = (XmlParser,)
-    renderers = (XmlRenderer,)
+    parsers = (JsonParser, XmlParser)
+    renderers = (JsonRenderer, XmlRenderer)
 
     def post(
         self,

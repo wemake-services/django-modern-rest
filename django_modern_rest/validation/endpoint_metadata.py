@@ -456,26 +456,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> dict[str, type[Parser]]:
-        payload_types = () if payload is None else (payload.parsers or ())
-        blueprint_types = () if blueprint_cls is None else blueprint_cls.parsers
+        if payload and payload.parsers:
+            return {typ.content_type: typ for typ in payload.parsers}
+        if blueprint_cls and blueprint_cls.parsers:
+            return {typ.content_type: typ for typ in blueprint_cls.parsers}
+        if controller_cls.parsers:
+            return {typ.content_type: typ for typ in controller_cls.parsers}
         settings_types = resolve_setting(
             Settings.parsers,
             import_string=True,
         )
         if not settings_types:
+            # This is the last place we look at, it must be present:
             raise EndpointMetadataError(
                 f'{endpoint!r} must have at least one parser type '
                 'configured in settings',
             )
-        return {
-            typ.content_type: typ
-            for typ in (
-                *settings_types,
-                *controller_cls.parsers,
-                *blueprint_types,
-                *payload_types,
-            )
-        }
+        return {typ.content_type: typ for typ in settings_types}
 
     def _build_renderer_types(
         self,
@@ -485,28 +482,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         *,
         endpoint: str,
     ) -> dict[str, type[Renderer]]:
-        payload_types = () if payload is None else (payload.renderers or ())
-        blueprint_types = (
-            () if blueprint_cls is None else blueprint_cls.renderers
-        )
+        if payload and payload.renderers:
+            return {typ.content_type: typ for typ in payload.renderers}
+        if blueprint_cls and blueprint_cls.renderers:
+            return {typ.content_type: typ for typ in blueprint_cls.renderers}
+        if controller_cls.renderers:
+            return {typ.content_type: typ for typ in controller_cls.renderers}
         settings_types = resolve_setting(
             Settings.renderers,
             import_string=True,
         )
         if not settings_types:
+            # This is the last place we look at, it must be present:
             raise EndpointMetadataError(
                 f'{endpoint!r} must have at least one renderer type '
                 'configured in settings',
             )
-        return {
-            typ.content_type: typ
-            for typ in (
-                *settings_types,
-                *controller_cls.renderers,
-                *blueprint_types,
-                *payload_types,
-            )
-        }
+        return {typ.content_type: typ for typ in settings_types}
 
     def _build_auth(  # noqa: WPS231
         self,
