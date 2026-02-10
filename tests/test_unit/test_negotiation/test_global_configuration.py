@@ -493,7 +493,7 @@ def test_wrong_conditional_content_type(
     assert len(_Controller.api_endpoints[str(method)].metadata.renderers) == 2
 
     request = dmr_rf.generic(
-        'POST',
+        str(method),
         '/whatever/',
         headers=request_headers,
         data=request_data,
