@@ -210,7 +210,6 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
         blueprint: Blueprint[BaseSerializer],
         *,
         field_model: Any,
-        combined_model: Any,
     ) -> Any:
         raise APIError(cls.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 

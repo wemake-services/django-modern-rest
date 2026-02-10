@@ -282,7 +282,7 @@ class Endpoint:  # noqa: WPS214
                 await self._run_async_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     self,
                     active_blueprint,
                 )
@@ -322,7 +322,7 @@ class Endpoint:  # noqa: WPS214
                 self._run_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context.parse_and_bind(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
                     self,
                     active_blueprint,
                 )

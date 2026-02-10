@@ -23,6 +23,7 @@ from django_modern_rest.metadata import (
     ResponseSpec,
     ResponseSpecProvider,
 )
+from django_modern_rest.negotiation import get_conditional_types
 from django_modern_rest.types import (
     TypeVarInference,
     infer_bases,
@@ -145,12 +146,16 @@ class ComponentParser(ResponseSpecProvider):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-        combined_model: Any,
-    ) -> Any:
+    ) -> Any | tuple[Any, ...]:
         """
-        Return unstructured raw value for serializer.from_python().
+        Return unstructured raw values for ``serializer.from_python()``.
 
-        Implement body JSON decoding / content-type checks here if needed.
+        It must return the same number of elements that has type vars.
+        Basically, each type var is a model.
+        Each element in a tuple is the corresponding data for that model.
+
+        When this method returns not a tuple and there's only one type variable,
+        it also works.
         """
         raise NotImplementedError
 
@@ -176,6 +181,19 @@ class ComponentParser(ResponseSpecProvider):
             ),
             existing_responses,
         )
+
+    @classmethod
+    def conditional_types(cls, model: Any) -> Mapping[str, Any]:
+        """
+        Provide conditional parsing types based on content type.
+
+        Some components parser might define different input models
+        based on the request's content type.
+
+        This method must return a mapping of content_type to the model.
+        If this component support this.
+        """
+        return {}
 
 
 class Query(ComponentParser, Generic[_QueryT]):
@@ -229,7 +247,6 @@ class Query(ComponentParser, Generic[_QueryT]):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-        combined_model: Any,
     ) -> Any:
         return blueprint.request.GET
 
@@ -272,7 +289,6 @@ class Body(ComponentParser, Generic[_BodyT]):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-        combined_model: Any,
     ) -> Any:
         parser_cls = endpoint.request_negotiator(blueprint.request)
 
@@ -283,6 +299,19 @@ class Body(ComponentParser, Generic[_BodyT]):
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None
+
+    @override
+    @classmethod
+    def conditional_types(cls, model: Any) -> Mapping[str, Any]:
+        """
+        Provide conditional parsing types based on content type.
+
+        Body model can be conditional based on a content_type.
+        If :data:`typing.Annotated` is passed together
+        with :func:`django_modern_rest.negotiation.conditional_type`
+        we treat the body as conditional. Otherwise, returns an empty dict.
+        """
+        return get_conditional_types(model) or {}
 
 
 class Headers(ComponentParser, Generic[_HeadersT]):
@@ -322,7 +351,6 @@ class Headers(ComponentParser, Generic[_HeadersT]):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-        combined_model: Any,
     ) -> Any:
         return blueprint.request.headers
 
@@ -391,7 +419,6 @@ class Path(ComponentParser, Generic[_PathT]):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-        combined_model: Any,
     ) -> Any:
         if blueprint.args:
             raise RequestSerializationError(
@@ -444,6 +471,5 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-        combined_model: Any,
     ) -> Any:
         return blueprint.request.COOKIES

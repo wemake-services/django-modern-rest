@@ -33,12 +33,17 @@ Here's how we select a parser, when it is needed:
 
 1. We look at the ``Content-Type`` header
 2. If it is not provided, we take the default parser,
-   which is the last specified parser type for the endpoint,
+   which is the first specified parser type for the endpoint,
    aka the most specific one
 3. If there's a ``Content-Type`` header,
    we try to exactly match known parsers based on their
-   :attr:`~django_modern_rest.parsers.Parser.content_type` attribute
-4. If no parser fits the request's content type, we raise
+   :attr:`~django_modern_rest.parsers.Parser.content_type` attribute.
+   This is a positive path optimization
+4. If there's no direct match, we now include parsers
+   that have ``*`` pattern in supported content types.
+   We match them in order based on ``'specificity', 'quality'``,
+   the first match wins
+5. If no parser fits the request's content type, we raise
    :exc:`~django_modern_rest.exceptions.RequestSerializationError`
 
 We select :class:`~django_modern_rest.renderers.Renderer` subtype
@@ -59,7 +64,8 @@ Here's how we select a renderer:
 
 .. important::
 
-  Settings always must have one parser and one renderer types defined,
+  Settings always must have one parser
+  and one renderer types defined at all times,
   because utils like :func:`django_modern_rest.response.build_response`
   fallback to settings-defined types only, because they don't have
   an access to the current endpoint.
@@ -113,12 +119,19 @@ going back to the less specific:
         :linenos:
         :emphasize-lines: 6-7
 
+First parsers / renders definition found, starting from the top,
+will win and be used for the endpoint.
+
 You can also modify
 :attr:`django_modern_rest.endpoint.Endpoint.request_negotiator_cls`
 and :attr:`django_modern_rest.endpoint.Endpoint.response_negotiator_cls`
 to completely change the negotiation logic to fit your needs.
 
 This is possible on per-controller level.
+
+.. note::
+
+  We require to have at least one parser / renderer type for each endpoint.
 
 
 Writing custom parsers and renderers
@@ -135,20 +148,39 @@ And here's how our test ``xml`` parser and renderer are defined:
 Using different schemes for different content types
 ---------------------------------------------------
 
-Sometimes we have to return different schemes based on the content type.
-To do that we utilize :data:`typing.Annotated`
+Sometimes we have to accept different schemes based on the content type.
+`According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
+:class:`~django_modern_rest.components.Body`
+should support different content types.
+
+We utilize :data:`typing.Annotated`
 and :func:`django_modern_rest.negotiation.conditional_type`:
 
-.. literalinclude:: /examples/negotiation/conditional_types.py
+.. literalinclude:: /examples/negotiation/conditional_body_types.py
    :caption: views.py
    :language: python
    :linenos:
 
-Depending on the content type - your schema will be fully validated.
+We strictly validate that each content type will have its own unique model.
+As the last example shows, it is impossible to send ``_XMLRequestModel``
+with ``Content-Type: application/json`` header.
+
+The same works for return types as well:
+
+.. literalinclude:: /examples/negotiation/conditional_return_types.py
+   :caption: views.py
+   :language: python
+   :linenos:
+
+Depending on the content type - your return schema
+will be fully validated as well.
 In the example above, it would be an error to return something other
 than ``list[str]`` for ``json`` content type, and it would also
 be an error to return anything other than ``dict[str, str]``
 for ``xml`` content type.
+
+You can combine conditional bodies and conditional return types
+in a type-safe and fully OpenAPI-compatible way.
 
 
 Negotiation API

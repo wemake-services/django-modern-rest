@@ -4,6 +4,10 @@ from typing import Generic, TypeVar
 import pydantic
 
 from django_modern_rest import Blueprint, Body, Controller
+from django_modern_rest.plugins.msgspec import (
+    MsgspecJsonParser,
+    MsgspecJsonRenderer,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
@@ -32,8 +36,8 @@ class _UserBlueprint(
     Body[_UserDocument[_UserInputData]],
     Blueprint[PydanticSerializer],
 ):
-    parsers = (XmlParser,)
-    renderers = (XmlRenderer,)
+    parsers = (MsgspecJsonParser, XmlParser)
+    renderers = (MsgspecJsonRenderer, XmlRenderer)
 
     def post(self) -> _UserDocument[_UserOutputData]:
         return _UserDocument(
