@@ -33,12 +33,17 @@ Here's how we select a parser, when it is needed:
 
 1. We look at the ``Content-Type`` header
 2. If it is not provided, we take the default parser,
-   which is the last specified parser type for the endpoint,
+   which is the first specified parser type for the endpoint,
    aka the most specific one
 3. If there's a ``Content-Type`` header,
    we try to exactly match known parsers based on their
-   :attr:`~django_modern_rest.parsers.Parser.content_type` attribute
-4. If no parser fits the request's content type, we raise
+   :attr:`~django_modern_rest.parsers.Parser.content_type` attribute.
+   This is a positive path optimization
+4. If there's no direct match, we now include parsers
+   that have ``*`` pattern in supported content types.
+   We match them in order based on ``'specificity', 'quality'``,
+   the first match wins
+5. If no parser fits the request's content type, we raise
    :exc:`~django_modern_rest.exceptions.RequestSerializationError`
 
 We select :class:`~django_modern_rest.renderers.Renderer` subtype
@@ -59,7 +64,8 @@ Here's how we select a renderer:
 
 .. important::
 
-  Settings always must have one parser and one renderer types defined,
+  Settings always must have one parser
+  and one renderer types defined at all times,
   because utils like :func:`django_modern_rest.response.build_response`
   fallback to settings-defined types only, because they don't have
   an access to the current endpoint.
