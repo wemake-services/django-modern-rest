@@ -32,4 +32,5 @@ class Paginated(Generic[_ModelT]):
 
     count: int
     num_pages: int
+    per_page: int
     page: Page[_ModelT]

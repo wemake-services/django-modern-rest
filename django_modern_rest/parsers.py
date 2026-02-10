@@ -94,6 +94,7 @@ class JsonParser(Parser):
 
         It is not recommended to be used directly.
         It is slow and has less features.
+        We won't add any complex objects support to this parser.
 
     """
 

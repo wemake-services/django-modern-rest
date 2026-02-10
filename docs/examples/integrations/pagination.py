@@ -37,6 +37,7 @@ class UsersController(
         return Paginated(
             count=paginator.count,
             num_pages=paginator.num_pages,
+            per_page=paginator.per_page,
             page=Page(
                 number=page,
                 object_list=list(paginator.page(page).object_list),
