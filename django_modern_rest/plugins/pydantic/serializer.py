@@ -160,7 +160,7 @@ class PydanticSerializer(BaseSerializer):
         unstructured: Any,
         model: Any,
         *,
-        strict: bool,
+        strict: bool | None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
@@ -187,7 +187,7 @@ class PydanticSerializer(BaseSerializer):
         # during the optimizer stage, so it will be very fast to use in runtime.
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
-            strict=strict or None,
+            strict=strict,
             **cls.from_python_kwargs,
         )
 
