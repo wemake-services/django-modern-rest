@@ -146,11 +146,16 @@ class ComponentParser(ResponseSpecProvider):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-    ) -> Any:
+    ) -> Any | tuple[Any, ...]:
         """
-        Return unstructured raw value for serializer.from_python().
+        Return unstructured raw values for ``serializer.from_python()``.
 
-        Implement body JSON decoding / content-type checks here if needed.
+        It must return the same number of elements that has type vars.
+        Basically, each type var is a model.
+        Each element in a tuple is the corresponding data for that model.
+
+        When this method returns not a tuple and there's only one type variable,
+        it also works.
         """
         raise NotImplementedError
 

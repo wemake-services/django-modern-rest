@@ -243,10 +243,11 @@ class SerializerContext:
             component_cls,
             type_args,
         ) in blueprint_cls._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-            type_map[component_cls.context_name] = type_args[0]
-            specs[component_cls] = type_args[0]
+            type_args = type_args[0] if len(type_args) == 1 else type_args  # noqa: PLW2901
+            type_map[component_cls.context_name] = type_args
+            specs[component_cls] = type_args
             for content_type, model in component_cls.conditional_types(
-                type_args[0],
+                type_args,
             ).items():
                 content_type_overrides[content_type].update({
                     component_cls.context_name: model,
