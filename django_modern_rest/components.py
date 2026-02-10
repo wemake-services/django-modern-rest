@@ -302,9 +302,9 @@ class Body(ComponentParser, Generic[_BodyT]):
         Provide conditional parsing types based on content type.
 
         Body model can be conditional based on a content_type.
-
-        This method must return a mapping of content_type to the model.
-        If this component support this.
+        If :data:`typing.Annotated` is passed together
+        with :func:`django_modern_rest.negotiation.conditional_type`
+        we treat the body as conditional. Otherwise, returns an empty dict.
         """
         return get_conditional_types(model) or {}
 
