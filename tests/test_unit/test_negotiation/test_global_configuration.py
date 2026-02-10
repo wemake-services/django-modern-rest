@@ -2,6 +2,7 @@ import json
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import Annotated, Any, ClassVar, final
+from xml.parsers import expat
 
 import pydantic
 import pytest
@@ -18,6 +19,7 @@ from django_modern_rest import (
     Controller,
     modify,
 )
+from django_modern_rest.exceptions import RequestSerializationError
 from django_modern_rest.negotiation import (
     ContentType,
     conditional_type,
@@ -44,7 +46,14 @@ class _XMLParser(Parser):
         *,
         strict: bool = True,
     ) -> Any:
-        return xmltodict.parse(to_deserialize, process_namespaces=True)
+        try:
+            return xmltodict.parse(
+                to_deserialize,
+                process_namespaces=True,
+                force_list={'detail'},
+            )
+        except expat.ExpatError as exc:
+            raise RequestSerializationError(str(exc)) from None
 
 
 class _XMLRenderer(Renderer):
@@ -479,3 +488,159 @@ def test_missing_conditional_content_type(
             },
         ],
     })
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'request_data', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'"value"',
+            {'Content-Type': 'application/json'},
+            b'{"key": "value"}',
+        ),
+    ],
+)
+def test_conditional_body_model(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    request_data: Any,
+    expected_headers: dict[str, str],
+    expected_data: Any,
+) -> None:
+    """Ensures conditional body models work correctly."""
+
+    @final
+    class _Controller(
+        Controller[PydanticSerializer],
+        Body[
+            Annotated[
+                _RequestModel | str,
+                conditional_type({
+                    ContentType.json: str,
+                    ContentType.xml: _RequestModel,
+                }),
+            ]
+        ],
+    ):
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
+
+        def post(self) -> dict[str, str]:
+            if isinstance(self.parsed_body, _RequestModel):
+                return self.parsed_body.root
+            return {'key': self.parsed_body}
+
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
+
+    request = dmr_rf.generic(
+        'POST',
+        '/whatever/',
+        headers=request_headers,
+        data=request_data,
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == expected_headers
+    assert response.content == expected_data
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'request_data', 'expected_headers'),
+    [
+        # xml data with json structure:
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<item>String</item>',
+            {'Content-Type': 'application/xml'},
+        ),
+        # json data with xml structure:
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'{"root": {"key": "value"}}',
+            {'Content-Type': 'application/json'},
+        ),
+        # Mixed up data and content types:
+        (
+            {'Content-Type': 'application/xml'},
+            b'{"key": "value"}',
+            {'Content-Type': 'application/json'},
+        ),
+        (
+            {'Content-Type': 'application/json'},
+            _xml_data,
+            {'Content-Type': 'application/json'},
+        ),
+        # Just wrong json data:
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'1',
+            {'Content-Type': 'application/json'},
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'[]',
+            {'Content-Type': 'application/json'},
+        ),
+        # Just wrong xml data:
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<item>1</item>',
+            {'Content-Type': 'application/xml'},
+        ),
+    ],
+)
+def test_conditional_body_model_wrong(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    request_data: Any,
+    expected_headers: dict[str, str],
+) -> None:
+    """Ensures conditional body models validates correctly."""
+
+    @final
+    class _Controller(
+        Controller[PydanticSerializer],
+        Body[
+            Annotated[
+                _RequestModel | dict[str, str],
+                conditional_type({
+                    ContentType.json: dict[str, str],
+                    ContentType.xml: _RequestModel,
+                }),
+            ]
+        ],
+    ):
+        parsers = [JsonParser]
+        renderers = [JsonRenderer]
+
+        def post(self) -> dict[str, str]:
+            raise NotImplementedError
+
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
+
+    request = dmr_rf.generic(
+        'POST',
+        '/whatever/',
+        headers=request_headers,
+        data=request_data,
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == expected_headers

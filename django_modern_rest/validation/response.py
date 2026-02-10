@@ -27,6 +27,7 @@ from django_modern_rest.negotiation import (
     request_renderer,
 )
 from django_modern_rest.serializer import BaseSerializer
+from django_modern_rest.types import EmptyObj
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -141,7 +142,7 @@ class ResponseValidator:
         structured: Any,
         schema: ResponseSpec,
         *,
-        content_type: str | None = None,
+        content_type: str,
     ) -> None:
         """
         Does structured validation based on the provided schema.
@@ -155,20 +156,17 @@ class ResponseValidator:
             ResponseSchemaError: When validation fails.
 
         """
-        model = schema.return_type
-        if content_type:
-            content_types = get_conditional_types(
-                content_type,
-                schema.return_type,
-            )
-            if content_types:
-                if content_type not in content_types:
-                    hint = [str(ct) for ct in content_types]
-                    raise ResponseSchemaError(
-                        f'Content-Type {content_type!r} is not '
-                        f'listed in supported content types {hint!r}',
-                    )
-                model = content_types[content_type]
+        content_types = get_conditional_types(schema.return_type)
+        if content_types:
+            model = content_types.get(content_type, EmptyObj)
+            if model is EmptyObj:
+                hint = [str(ct) for ct in content_types]
+                raise ResponseSchemaError(
+                    f'Content-Type {content_type!r} is not '
+                    f'listed in supported content types {hint!r}',
+                )
+        else:
+            model = schema.return_type
 
         try:
             self.serializer.from_python(

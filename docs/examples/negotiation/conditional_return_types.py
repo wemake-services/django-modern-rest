@@ -2,14 +2,8 @@ from typing import Annotated
 
 import pydantic
 
-from django_modern_rest import (
-    Body,
-    Controller,
-)
-from django_modern_rest.negotiation import (
-    ContentType,
-    conditional_type,
-)
+from django_modern_rest import Body, Controller
+from django_modern_rest.negotiation import ContentType, conditional_type
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
