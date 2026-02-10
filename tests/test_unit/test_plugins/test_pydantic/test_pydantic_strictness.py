@@ -79,7 +79,7 @@ class _DefaultOutputController(Controller[PydanticSerializer]):
         return {'output_value': '1'}  # type: ignore[return-value]
 
 
-def test_default_output_strictness(dmr_rf: DMRRequestFactory) -> None:
+def test_default_output_is_strict(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that default output validation is strict."""
     request = dmr_rf.post('/whatever/')
     response = _DefaultOutputController.as_view()(request)
