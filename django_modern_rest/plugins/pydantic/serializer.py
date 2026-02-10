@@ -187,7 +187,7 @@ class PydanticSerializer(BaseSerializer):
         # during the optimizer stage, so it will be very fast to use in runtime.
         return _get_cached_type_adapter(model).validate_python(
             unstructured,
-            strict=strict,
+            strict=strict or None,
             **cls.from_python_kwargs,
         )
 
