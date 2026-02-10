@@ -4,13 +4,12 @@ import json
 from http import HTTPStatus
 from typing import Final, NotRequired, final
 
-from typing_extensions import TypedDict
-
 import pydantic
 import pytest
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from inline_snapshot import snapshot
+from typing_extensions import TypedDict
 
 from django_modern_rest import Controller, Query
 from django_modern_rest.pagination import Page, Paginated
