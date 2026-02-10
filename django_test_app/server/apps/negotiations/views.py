@@ -15,9 +15,12 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.negotiation import ContentType, conditional_type
 from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
+from django_modern_rest.plugins.msgspec import (
+    MsgspecJsonParser,
+    MsgspecJsonRenderer,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 
 _CallableAny: TypeAlias = Callable[..., Any]
 

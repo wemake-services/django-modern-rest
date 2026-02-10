@@ -4,6 +4,10 @@ import pydantic
 
 from django_modern_rest import Body, Controller
 from django_modern_rest.negotiation import ContentType, conditional_type
+from django_modern_rest.plugins.msgspec import (
+    MsgspecJsonParser,
+    MsgspecJsonRenderer,
+)
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
@@ -16,8 +20,8 @@ class ExampleController(
     Controller[PydanticSerializer],
     Body[_RequestModel],
 ):
-    parsers = (XmlParser,)
-    renderers = (XmlRenderer,)
+    parsers = (MsgspecJsonParser, XmlParser)
+    renderers = (MsgspecJsonRenderer, XmlRenderer)
 
     def post(
         self,
