@@ -2,33 +2,47 @@
 
 import json
 from http import HTTPStatus
-from typing import Final, NotRequired, final
+from typing import Annotated, Final, NotRequired, TypeAlias, TypeVar, final
 
-import pydantic
 import pytest
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
+try:
+    # These tests do not work with raw python renderer.
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
 from django_modern_rest import Controller, Query
 from django_modern_rest.pagination import Page, Paginated
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.plugins.msgspec import MsgspecSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final
-class _User(pydantic.BaseModel):
+class _User(msgspec.Struct):
     """Sample user model for testing."""
 
     email: str
 
 
+_ItemT = TypeVar('_ItemT')
+
+_SingleItem: TypeAlias = Annotated[
+    _ItemT,
+    msgspec.Meta(min_length=1, max_length=1),
+]
+_IntQuery: TypeAlias = list[int]
+
+
 class _PageQuery(TypedDict):
     """Query parameters for pagination."""
 
-    page_size: NotRequired[int]
-    page: NotRequired[int]
+    page_size: NotRequired[_SingleItem[_IntQuery]]
+    page: NotRequired[_SingleItem[_IntQuery]]
 
 
 _USERS: Final = (
@@ -42,15 +56,15 @@ _USERS: Final = (
 
 @final
 class _PaginatedUsersController(
-    Controller[PydanticSerializer],
+    Controller[MsgspecSerializer],
     Query[_PageQuery],
 ):
     """Controller with pagination support."""
 
     def get(self) -> Paginated[_User]:
         """Return paginated list of users."""
-        page = self.parsed_query.get('page', 1)
-        page_size = self.parsed_query.get('page_size', 2)
+        page = self.parsed_query.get('page', [1])[0]
+        page_size = self.parsed_query.get('page_size', [2])[0]
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(
@@ -66,15 +80,15 @@ class _PaginatedUsersController(
 
 @final
 class _AsyncPaginatedUsersController(
-    Controller[PydanticSerializer],
+    Controller[MsgspecSerializer],
     Query[_PageQuery],
 ):
     """Async controller with pagination support."""
 
     async def get(self) -> Paginated[_User]:
         """Return paginated list of users."""
-        page = self.parsed_query.get('page', 1)
-        page_size = self.parsed_query.get('page_size', 2)
+        page = self.parsed_query.get('page', [1])[0]
+        page_size = self.parsed_query.get('page_size', [2])[0]
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(
@@ -213,7 +227,7 @@ async def test_pagination_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
 
 
 @final
-class _EmptyPaginatedController(Controller[PydanticSerializer]):
+class _EmptyPaginatedController(Controller[MsgspecSerializer]):
     """Controller with empty pagination."""
 
     def get(self) -> Paginated[_User]:
@@ -237,7 +251,7 @@ def test_pagination_empty_dataset(dmr_rf: DMRRequestFactory) -> None:
     response = _EmptyPaginatedController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == snapshot({
         'count': 0,
         'num_pages': 1,
