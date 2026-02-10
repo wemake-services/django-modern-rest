@@ -92,7 +92,7 @@ class MsgspecSerializer(BaseSerializer):
         unstructured: Any,
         model: Any,
         *,
-        strict: bool,
+        strict: bool | None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
@@ -116,7 +116,7 @@ class MsgspecSerializer(BaseSerializer):
         return msgspec.convert(
             unstructured,
             model,
-            strict=strict,
+            strict=strict or False,
             dec_hook=cls.deserialize_hook,
             **cls.convert_kwargs,
         )

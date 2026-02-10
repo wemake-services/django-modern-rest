@@ -102,7 +102,7 @@ class BaseSerializer:
         unstructured: Any,
         model: Any,
         *,
-        strict: bool,
+        strict: bool | None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
@@ -173,7 +173,7 @@ class SerializerContext:
     """
 
     # Public API:
-    strict_validation: ClassVar[bool] = False
+    strict_validation: ClassVar[bool | None] = None
 
     # Protected API:
     _specs: _ComponentParserSpec
