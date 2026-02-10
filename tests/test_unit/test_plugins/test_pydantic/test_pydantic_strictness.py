@@ -73,9 +73,9 @@ class _OutputModel(pydantic.BaseModel):
 @final
 class _DefaultOutputController(Controller[PydanticSerializer]):
     def post(self) -> _OutputModel:
-        # Returning a string "1" for an int field.
-        # If strict=True (default for output), this should fail.
-        # If strict=False, this would coerce to 1.
+        # Returning a string '1' for an int field.
+        # If `strict=True` (default for output), this should fail.
+        # If `strict=False`, this would coerce to 1.
         return {'output_value': '1'}  # type: ignore[return-value]
 
 
@@ -177,7 +177,7 @@ class _ConfigStrictController(
     Body[_ConfigStrictModel],
 ):
     def post(self) -> _ConfigStrictModel:
-        return self.parsed_body  # pragma: no cover
+        raise NotImplementedError
 
 
 def test_model_config_strictness(dmr_rf: DMRRequestFactory) -> None:

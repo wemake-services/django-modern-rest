@@ -56,9 +56,9 @@ class _OutputModel(msgspec.Struct):
 @final
 class _DefaultOutputController(Controller[MsgspecSerializer]):
     def post(self) -> _OutputModel:
-        # Returning a string "1" for an int field.
-        # If strict=True (default for output), this should fail.
-        # If strict=False, this would coerce to 1.
+        # Returning a string '1' for an int field.
+        # If `strict=True` (default for output), this should fail.
+        # If `strict=False`, this would coerce to 1.
         return {'output_value': '1'}  # type: ignore[return-value]
 
 
