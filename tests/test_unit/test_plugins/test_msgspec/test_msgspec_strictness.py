@@ -35,13 +35,17 @@ class _DefaultInputController(
 
 def test_default_input_strictness_lax(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that default input validation is lax (allows coercion)."""
-    request_data = {'lax_field': '1', 'strict_field': 1}
-    request = dmr_rf.post('/whatever/', data=request_data)
+    request = dmr_rf.post(
+        '/whatever/',
+        data={'lax_field': '1', 'strict_field': 1},
+    )
     response = _DefaultInputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
-    assert json.loads(response.content)['lax_field'] == 1
+    assert json.loads(response.content) == snapshot(
+        {'lax_field': 1, 'strict_field': 1},
+    )
 
 
 @final
@@ -88,13 +92,15 @@ class _ExplicitStrictInputController(
     serializer_context_cls = _StrictContext
 
     def post(self) -> _InputModel:
-        return self.parsed_body  # pragma: no cover
+        raise NotImplementedError
 
 
 def test_explicit_input_strictness(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that user can enable strict validation for inputs."""
-    request_data = {'lax_field': '1', 'strict_field': 1}
-    request = dmr_rf.post('/whatever/', data=request_data)
+    request = dmr_rf.post(
+        '/whatever/',
+        data={'lax_field': '1', 'strict_field': 1},
+    )
     response = _ExplicitStrictInputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
@@ -129,12 +135,14 @@ class _ExplicitLaxInputController(
 
 def test_explicit_input_laxness(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that user can enable lax validation for inputs."""
-    request_data = {'lax_field': '1', 'strict_field': '1'}
-    request = dmr_rf.post('/whatever/', data=request_data)
+    request = dmr_rf.post(
+        '/whatever/',
+        data={'lax_field': '1', 'strict_field': '1'},
+    )
     response = _ExplicitLaxInputController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
-    response_content = json.loads(response.content)
-    assert response_content['lax_field'] == 1
-    assert response_content['strict_field'] == 1
+    assert json.loads(response.content) == snapshot(
+        {'lax_field': 1, 'strict_field': 1},
+    )
