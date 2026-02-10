@@ -198,8 +198,7 @@ def conditional_type(
 
 
 def get_conditional_types(
-    content_type: str | None,
-    return_type: Any,
+    model: Any,
 ) -> Mapping[str, Any] | None:
     """
     Returns possible conditional types.
@@ -208,13 +207,12 @@ def get_conditional_types(
     and :func:`django_modern_rest.negotiation.conditional_type` helper.
     """
     if (
-        content_type
-        and get_origin(return_type) is Annotated
-        and return_type.__metadata__
+        get_origin(model) is Annotated
+        and model.__metadata__
         and isinstance(
-            return_type.__metadata__[0],
+            model.__metadata__[0],
             _ConditionalType,
         )
     ):
-        return return_type.__metadata__[0].computed
+        return model.__metadata__[0].computed
     return None

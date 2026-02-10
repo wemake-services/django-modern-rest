@@ -1,4 +1,5 @@
 import abc
+from collections import defaultdict
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
@@ -20,8 +21,13 @@ if TYPE_CHECKING:
     from django_modern_rest.metadata import EndpointMetadata
 
 _ModelT = TypeVar('_ModelT')
-_ComponentParserSpec = dict[type['ComponentParser'], Any]
-_TypeMapResult: TypeAlias = tuple[_ComponentParserSpec, dict[str, Any]]
+_ComponentParserSpec: TypeAlias = dict[type['ComponentParser'], Any]
+_ContentTypeOverrides: TypeAlias = dict[str, dict[str, Any]]
+_TypeMapResult: TypeAlias = tuple[
+    _ComponentParserSpec,
+    dict[str, Any],
+    _ContentTypeOverrides,
+]
 
 
 class BaseSerializer:
@@ -158,7 +164,6 @@ class BaseEndpointOptimizer:
         """
 
 
-# TODO: make generic on `blueprint_cls`?
 class SerializerContext:
     """Parse and bind request components for a controller.
 
@@ -172,9 +177,15 @@ class SerializerContext:
 
     # Protected API:
     _specs: _ComponentParserSpec
-    _combined_model: Any
+    _default_combined_model: Any
+    _conditional_combined_models: dict[str, Any]
 
-    __slots__ = ('_blueprint_cls', '_combined_model', '_specs')
+    __slots__ = (
+        '_blueprint_cls',
+        '_conditional_combined_models',
+        '_default_combined_model',
+        '_specs',
+    )
 
     def __init__(
         self,
@@ -182,21 +193,20 @@ class SerializerContext:
     ) -> None:
         """Eagerly build context for a given controller and serializer."""
         self._blueprint_cls = blueprint_cls
-        specs, type_map = _build_type_map(self._blueprint_cls)
-        self._specs = specs
-
-        # Name is not really important,
-        # we use `@` to identify that it is generated:
-        name_prefix = self._blueprint_cls.__qualname__
-        combined_name = f'_{name_prefix}@ContextModel'
-
-        self._combined_model = TypedDict(  # type: ignore[misc]
-            combined_name,  # pyright: ignore[reportArgumentType]
-            type_map,
-            total=True,
+        specs, type_map, content_mapping = self._build_type_map(
+            self._blueprint_cls,
         )
+        self._specs = specs
+        default_combined_model, conditional_combined_models = (
+            self._build_combined_models(
+                type_map,
+                content_mapping,
+            )
+        )
+        self._default_combined_model = default_combined_model
+        self._conditional_combined_models = conditional_combined_models
 
-    def parse_and_bind(
+    def __call__(
         self,
         endpoint: 'Endpoint',
         blueprint: 'Blueprint[BaseSerializer]',
@@ -213,8 +223,64 @@ class SerializerContext:
             return
 
         context = self._collect_context(endpoint, blueprint)
-        validated = self._validate_context(context)
+        validated = self._validate_context(context, blueprint)
         self._bind_parsed(blueprint, validated)
+
+    def _build_type_map(  # noqa: WPS210
+        self,
+        blueprint_cls: type['Blueprint[BaseSerializer]'],
+    ) -> _TypeMapResult:
+        """
+        Build the type parsing spec.
+
+        Called during import-time.
+        """
+        specs: _ComponentParserSpec = {}
+        type_map: dict[str, Any] = {}
+        content_type_overrides: _ContentTypeOverrides = defaultdict(dict)
+
+        for (
+            component_cls,
+            type_args,
+        ) in blueprint_cls._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            type_map[component_cls.context_name] = type_args[0]
+            specs[component_cls] = type_args[0]
+            for content_type, model in component_cls.conditional_types(
+                type_args[0],
+            ).items():
+                content_type_overrides[content_type].update({
+                    component_cls.context_name: model,
+                })
+        return specs, type_map, content_type_overrides
+
+    def _build_combined_models(
+        self,
+        type_map: dict[str, Any],
+        content_type_overrides: _ContentTypeOverrides,
+    ) -> tuple[Any, dict[str, Any]]:
+        # Name is not really important,
+        # we use `@` to identify that it is generated:
+        name_prefix = self._blueprint_cls.__qualname__  # pyright: ignore[reportUnusedVariable]
+
+        default_model = TypedDict(  # type: ignore[misc]
+            f'_{name_prefix}@ContextModel',  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[invalid-argument]
+            type_map,
+            total=True,
+        )
+        if not content_type_overrides:
+            return default_model, {}
+
+        content_mapping: dict[str, Any] = {}
+        for content_type, overrides in content_type_overrides.items():  # pyright: ignore[reportUnusedVariable]
+            content_mapping[content_type] = TypedDict(  # type: ignore[operator]
+                f'_{name_prefix}@ContextModel#{content_type}',
+                {
+                    **type_map,  # pyright: ignore[reportGeneralTypeIssues]
+                    **overrides,  # pyright: ignore[reportGeneralTypeIssues]
+                },
+                total=True,
+            )
+        return default_model, content_mapping
 
     def _collect_context(
         self,
@@ -227,19 +293,31 @@ class SerializerContext:
             raw = component.provide_context_data(
                 endpoint,
                 blueprint,
-                field_model=submodel,  # just the one for the exact key
-                combined_model=self._combined_model,
+                field_model=submodel,  # just the exact field for the exact key
             )
             context[component.context_name] = raw
         return context
 
-    def _validate_context(self, context: dict[str, Any]) -> dict[str, Any]:
+    def _validate_context(
+        self,
+        context: dict[str, Any],
+        blueprint: 'Blueprint[BaseSerializer]',
+    ) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
         serializer = self._blueprint_cls.serializer
+        content_type = blueprint.request.headers.get('Content-Type')
+        model = (
+            self._default_combined_model
+            if content_type is None
+            else self._conditional_combined_models.get(
+                content_type,
+                self._default_combined_model,
+            )
+        )
         try:
             return serializer.from_python(  # type: ignore[no-any-return]
                 context,
-                self._combined_model,
+                model,
                 strict=self.strict_validation,
             )
         except serializer.validation_error as exc:
@@ -256,21 +334,3 @@ class SerializerContext:
         """Bind parsed values back to the blueprint instance."""
         for name, parsed_value in validated.items():
             setattr(blueprint, name, parsed_value)
-
-
-def _build_type_map(
-    blueprint_cls: type['Blueprint[BaseSerializer]'],
-) -> _TypeMapResult:
-    """
-    Build the type parsing spec.
-
-    Called during import-time.
-    """
-    specs: _ComponentParserSpec = {}
-    type_map: dict[str, Any] = {}
-    parsers = blueprint_cls._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-
-    for component_cls, type_args in parsers:
-        type_map[component_cls.context_name] = type_args[0]
-        specs[component_cls] = type_args[0]
-    return specs, type_map

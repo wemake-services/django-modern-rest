@@ -103,6 +103,7 @@ def test_valid_data(
     validator._validate_body(
         raw_data,
         endpoint.metadata.responses[HTTPStatus.OK],
+        content_type='application/json',
     )
 
 
@@ -155,4 +156,5 @@ def test_invalid_data(
         validator._validate_body(
             raw_data,
             endpoint.metadata.responses[HTTPStatus.OK],
+            content_type='application/json',
         )

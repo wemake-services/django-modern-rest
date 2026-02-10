@@ -135,20 +135,39 @@ And here's how our test ``xml`` parser and renderer are defined:
 Using different schemes for different content types
 ---------------------------------------------------
 
-Sometimes we have to return different schemes based on the content type.
-To do that we utilize :data:`typing.Annotated`
+Sometimes we have to accept different schemes based on the content type.
+`According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
+:class:`~django_modern_rest.components.Body`
+should support different content types.
+
+We utilize :data:`typing.Annotated`
 and :func:`django_modern_rest.negotiation.conditional_type`:
 
-.. literalinclude:: /examples/negotiation/conditional_types.py
+.. literalinclude:: /examples/negotiation/conditional_body_types.py
    :caption: views.py
    :language: python
    :linenos:
 
-Depending on the content type - your schema will be fully validated.
+We strictly validate that each content type will have its own unique model.
+As the last example shows, it is impossible to send ``_XMLRequestModel``
+with ``Content-Type: application/json`` header.
+
+The same works for return types as well:
+
+.. literalinclude:: /examples/negotiation/conditional_return_types.py
+   :caption: views.py
+   :language: python
+   :linenos:
+
+Depending on the content type - your return schema
+will be fully validated as well.
 In the example above, it would be an error to return something other
 than ``list[str]`` for ``json`` content type, and it would also
 be an error to return anything other than ``dict[str, str]``
 for ``xml`` content type.
+
+You can combine conditional bodies and conditional return types
+in a type-safe and fully OpenAPI-compatible way.
 
 
 Negotiation API

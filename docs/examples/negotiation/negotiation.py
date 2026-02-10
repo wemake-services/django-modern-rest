@@ -1,10 +1,14 @@
 from collections.abc import Callable
 from typing import Any, ClassVar
+from xml.parsers import expat
 
 import xmltodict
 from typing_extensions import override
 
-from django_modern_rest.exceptions import InternalServerError
+from django_modern_rest.exceptions import (
+    InternalServerError,
+    RequestSerializationError,
+)
 from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
 from django_modern_rest.renderers import Renderer
 
@@ -25,7 +29,10 @@ class XmlParser(Parser):
         *,
         strict: bool = True,
     ) -> Any:
-        return xmltodict.parse(to_deserialize, process_namespaces=True)
+        try:
+            return xmltodict.parse(to_deserialize, process_namespaces=True)
+        except expat.ExpatError as exc:
+            raise RequestSerializationError(str(exc)) from None
 
 
 class XmlRenderer(Renderer):

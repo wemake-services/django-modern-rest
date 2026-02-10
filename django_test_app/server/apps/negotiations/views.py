@@ -8,10 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import override
 
-from django_modern_rest import (  # noqa: WPS235
-    Body,
-    Controller,
-)
+from django_modern_rest import Body, Controller
 from django_modern_rest.exceptions import (
     InternalServerError,
     RequestSerializationError,
