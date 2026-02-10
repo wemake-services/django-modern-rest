@@ -2,7 +2,13 @@ import json
 from http import HTTPStatus
 from typing import final
 
-import msgspec
+import pytest
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
