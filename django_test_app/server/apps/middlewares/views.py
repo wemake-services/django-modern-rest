@@ -11,6 +11,7 @@ from django_modern_rest.decorators import wrap_middleware
 from django_modern_rest.errors import format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
+from django_modern_rest.serializer import SerializerContext
 from server.apps.middlewares.middleware import (
     add_request_id_middleware,
     custom_header_middleware,
@@ -109,6 +110,10 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
     return response
 
 
+class _StrictSerializerContext(SerializerContext):
+    strict_validation = True
+
+
 class _UserInput(pydantic.BaseModel):
     email: str
     age: int
@@ -172,6 +177,7 @@ class RateLimitedController(
 ):
     """Controller with rate limiting middleware."""
 
+    serializer_context_cls = _StrictSerializerContext
     responses = rate_limit_json.responses
 
     def post(self) -> _UserInput:

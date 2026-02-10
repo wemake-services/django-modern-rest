@@ -1,39 +1,21 @@
-# We need test repeatability.
-# We will achieve diversity by using a number of examples.
-seed = 42
-
-# NOTE: We extend the rules as the schema generation results improve.
-[phases.examples]
-enabled = true
-
-[phases.coverage]
-enabled = true
-
-[phases.fuzzing]
-enabled = true
-
-[phases.stateful]
-enabled = true
-
+# TODO: We extend the rules as the schema generation results improve.
 [generation]
 # Limit the number of generated examples per API operation to keep tests fast.
-max-examples = 100
+max-examples = 200
 
 [checks]
 # Docs: https://schemathesis.readthedocs.io/en/stable/reference/checks
-
-# Disable all checks by default, then enable specific ones below.
 # We will expand the checks as we implement the openapi schemageneration.
-enabled = false
+enabled = true
 
-# Catches server-side errors (5xx status codes).
-not_a_server_error.enabled = true
+# Verifies the response status code is documented in the schema for the operation
+status_code_conformance.enabled = false
 
-# Validates the Content-Type header matches the schema.
-content_type_conformance.enabled = true
+# Verifies the API accepts valid request data.
+positive_data_acceptance.enabled = false
 
-# Ensures response header values match their JSON Schema definitions.
-response_headers_conformance.enabled = true
+# Verifies the API rejects requests when required headers are missing.
+missing_required_header.enabled = false
 
-# Validates the response body against its JSON Schema definition.
-response_schema_conformance.enabled = true
+# Verifies the API properly rejects HTTP methods not defined for an endpoint.
+unsupported_method.enabled = false
