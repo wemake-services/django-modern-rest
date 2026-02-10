@@ -1,6 +1,6 @@
 import json
 from collections.abc import Callable
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 from typing import Annotated, Any, ClassVar, final
 from xml.parsers import expat
 
@@ -17,7 +17,9 @@ from django_modern_rest import (
     Blueprint,
     Body,
     Controller,
+    ResponseSpec,
     modify,
+    validate,
 )
 from django_modern_rest.exceptions import RequestSerializationError
 from django_modern_rest.negotiation import (
@@ -327,6 +329,13 @@ def test_per_endpoint_customization(
         ),
     ],
 )
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.POST,
+        HTTPMethod.PUT,
+    ],
+)
 def test_conditional_content_type(
     dmr_rf: DMRRequestFactory,
     *,
@@ -334,6 +343,7 @@ def test_conditional_content_type(
     request_data: Any,
     expected_headers: dict[str, str],
     expected_data: Any,
+    method: HTTPMethod,
 ) -> None:
     """Ensures conditional content types work correctly."""
 
@@ -358,11 +368,34 @@ def test_conditional_content_type(
                 return self.parsed_body.root['key']
             return self.parsed_body.root
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
-    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
+        @validate(
+            ResponseSpec(
+                return_type=Annotated[
+                    dict[str, str] | str,
+                    conditional_type({
+                        ContentType.json: str,
+                        ContentType.xml: dict[str, str],
+                    }),
+                ],
+                status_code=HTTPStatus.CREATED,
+            ),
+        )
+        def put(self) -> HttpResponse:
+            if self.request.accepts(ContentType.json):
+                return self.to_response(
+                    self.parsed_body.root['key'],
+                    status_code=HTTPStatus.CREATED,
+                )
+            return self.to_response(
+                self.parsed_body.root,
+                status_code=HTTPStatus.CREATED,
+            )
+
+    assert len(_Controller.api_endpoints[str(method)].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints[str(method)].metadata.renderers) == 2
 
     request = dmr_rf.generic(
-        'POST',
+        str(method),
         '/whatever/',
         headers=request_headers,
         data=request_data,
@@ -391,12 +424,20 @@ def test_conditional_content_type(
         ),
     ],
 )
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.POST,
+        HTTPMethod.PUT,
+    ],
+)
 def test_wrong_conditional_content_type(
     dmr_rf: DMRRequestFactory,
     *,
     request_headers: dict[str, str],
     request_data: Any,
     expected_headers: dict[str, str],
+    method: HTTPMethod,
 ) -> None:
     """Ensures conditional content validation works correctly."""
 
@@ -423,8 +464,33 @@ def test_wrong_conditional_content_type(
                 return self.parsed_body.root['key']
             return self.parsed_body.root
 
-    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
-    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
+        @validate(
+            ResponseSpec(
+                return_type=Annotated[
+                    dict[str, str] | str,
+                    conditional_type({
+                        # Won't be matched:
+                        ContentType.json: dict[str, str],
+                        ContentType.xml: str,
+                    }),
+                ],
+                status_code=HTTPStatus.CREATED,
+            ),
+        )
+        def put(self) -> HttpResponse:
+            # ERROR! Type to content logic is reversed:
+            if self.request.accepts(ContentType.json):
+                return self.to_response(
+                    self.parsed_body.root['key'],
+                    status_code=HTTPStatus.CREATED,
+                )
+            return self.to_response(
+                self.parsed_body.root,
+                status_code=HTTPStatus.CREATED,
+            )
+
+    assert len(_Controller.api_endpoints[str(method)].metadata.parsers) == 2
+    assert len(_Controller.api_endpoints[str(method)].metadata.renderers) == 2
 
     request = dmr_rf.generic(
         'POST',
