@@ -1,8 +1,9 @@
 import enum
+import operator
 from collections.abc import Mapping
 from typing import Annotated, Any, final, get_origin
 
-from django.http.request import HttpRequest
+from django.http.request import HttpRequest, MediaType
 
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
@@ -21,7 +22,13 @@ from django_modern_rest.serializer import BaseSerializer
 class RequestNegotiator:
     """Selects a correct parser type for a request."""
 
-    __slots__ = ('_default', '_parsers', '_serializer')
+    __slots__ = (
+        '_default',
+        '_exact_parsers',
+        '_media_by_precedence',
+        '_parsers',
+        '_serializer',
+    )
 
     def __init__(
         self,
@@ -31,6 +38,21 @@ class RequestNegotiator:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
         self._parsers = metadata.parsers
+        self._exact_parsers = {
+            content_type: parser_cls
+            for content_type, parser_cls in self._parsers.items()
+            if '*' not in content_type
+        }
+        # Compute precedence in advance:
+        self._media_by_precedence = sorted(
+            (
+                media_type
+                for parser in self._parsers.values()
+                if (media_type := MediaType(parser.content_type)).quality != 0
+            ),
+            key=operator.attrgetter('specificity', 'quality'),
+            reverse=True,
+        )
         # The last configured parser is the most specific one:
         self._default = next(reversed(self._parsers.values()))
 
@@ -61,15 +83,24 @@ class RequestNegotiator:
     def _decide(self, request: HttpRequest) -> type[Parser]:
         if request.content_type is None:
             return self._default
-        parser_type = self._parsers.get(request.content_type)
-        if parser_type is None:
-            expected = list(self._parsers.keys())
-            raise RequestSerializationError(
-                'Cannot parse request body '
-                f'with content type {request.content_type!r}, '
-                f'{expected=!r}',
-            )
-        return parser_type
+        # Try the exact match first, since it is faster, O(1):
+        parser_type = self._exact_parsers.get(request.content_type)
+        if parser_type is not None:
+            # Do not allow invalid content types to be matched exactly.
+            return parser_type
+
+        # Now, try to find parser types based on `*/*` patterns, O(n):
+        for media in self._media_by_precedence:
+            if media.match(request.content_type):
+                return self._parsers[str(media)]
+
+        # No parsers found, raise an error:
+        expected = list(self._parsers.keys())
+        raise RequestSerializationError(
+            'Cannot parse request body '
+            f'with content type {request.content_type!r}, '
+            f'{expected=!r}',
+        )
 
 
 class ResponseNegotiator:
