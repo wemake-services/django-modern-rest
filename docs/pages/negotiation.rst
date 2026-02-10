@@ -113,12 +113,19 @@ going back to the less specific:
         :linenos:
         :emphasize-lines: 6-7
 
+First parsers / renders definition found, starting from the top,
+will win and be used for the endpoint.
+
 You can also modify
 :attr:`django_modern_rest.endpoint.Endpoint.request_negotiator_cls`
 and :attr:`django_modern_rest.endpoint.Endpoint.response_negotiator_cls`
 to completely change the negotiation logic to fit your needs.
 
 This is possible on per-controller level.
+
+.. note::
+
+  We require to have at least one parser / renderer type for each endpoint.
 
 
 Writing custom parsers and renderers
