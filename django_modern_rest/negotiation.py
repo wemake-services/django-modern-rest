@@ -1,5 +1,4 @@
 import enum
-import operator
 from collections.abc import Mapping
 from typing import Annotated, Any, final, get_origin
 
@@ -50,7 +49,7 @@ class RequestNegotiator:
                 for parser in self._parsers.values()
                 if (media_type := MediaType(parser.content_type)).quality != 0
             ),
-            key=operator.attrgetter('specificity', 'quality'),
+            key=lambda media: (media.specificity, media.quality),  # noqa: WPS617
             reverse=True,
         )
         # The last configured parser is the most specific one:
