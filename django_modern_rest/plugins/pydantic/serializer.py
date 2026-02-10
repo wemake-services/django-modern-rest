@@ -160,7 +160,7 @@ class PydanticSerializer(BaseSerializer):
         unstructured: Any,
         model: Any,
         *,
-        strict: bool,
+        strict: bool | None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
