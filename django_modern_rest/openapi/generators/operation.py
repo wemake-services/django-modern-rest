@@ -1,3 +1,4 @@
+import dataclasses
 import re
 from typing import TYPE_CHECKING
 
@@ -8,36 +9,35 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class OperationGenerator:
     """
     Generator for OpenAPI Operation objects.
 
-    The Operation Generator is responsible for creating OpenAPI Operation
+    The ``Operation`` Generator is responsible for creating OpenAPI
     objects that describe individual API operations (HTTP methods like GET,
     POST, etc.) for a specific endpoint. It extracts metadata from the
     endpoint and generates a complete Operation specification.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the Operation Generator."""
-        self.context = context
+    _context: 'OpenAPIContext'
 
     def __call__(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
         metadata = endpoint.metadata
-        operation_id = self.context.generators.operation_id(
+        operation_id = self._context.generators.operation_id(
             endpoint,
             path,
         )
-        request_body = self.context.generators.request_body(
+        request_body = self._context.generators.request_body(
             metadata.component_parsers,
             metadata.parsers,
         )
-        responses = self.context.generators.response(
+        responses = self._context.generators.response(
             metadata.responses,
             metadata.parsers,
         )
-        params_list = self.context.generators.parameter(
+        params_list = self._context.generators.parameter(
             metadata.component_parsers,
         )
 
@@ -61,35 +61,34 @@ class OperationGenerator:
         )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class OperationIDGenerator:
     """
     Generator for unique OpenAPI operation IDs.
 
     The Operation ID Generator is responsible for creating unique
     operation IDs for OpenAPI operations.
-    It uses the explicit `operation_id` from endpoint metadata if available,
+    It uses the explicit ``operation_id`` from endpoint metadata if available,
     otherwise generates one from the HTTP method and path following
-    `RFC 3986` specifications.
+    ``RFC 3986`` specifications.
     All generated operation IDs are registered in the registry to ensure
     uniqueness across the OpenAPI specification.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the Operation ID Generator."""
-        self.context = context
+    _context: 'OpenAPIContext'
 
     def __call__(self, endpoint: 'Endpoint', path: str) -> str:
         """
         Generate a unique operation ID for an OpenAPI operation.
 
-        Uses the explicit operation_id from endpoint metadata if available,
+        Uses the explicit ``operation_id`` from endpoint metadata if available,
         otherwise generates one from the HTTP method and path. The operation ID
         is registered in the registry to ensure uniqueness.
         """
         operation_id = endpoint.metadata.operation_id
 
         if operation_id is not None:
-            self.context.registries.operation_id.register(operation_id)
+            self._context.registries.operation_id.register(operation_id)
             return operation_id
 
         # Generate operation_id from path and method
@@ -97,7 +96,7 @@ class OperationIDGenerator:
         method = endpoint.metadata.method.lower()
         operation_id = self._build_operation_id(method, tokens)
 
-        self.context.registries.operation_id.register(operation_id)
+        self._context.registries.operation_id.register(operation_id)
         return operation_id
 
     def _tokenize_path(self, path: str) -> list[str]:  # noqa: WPS210

@@ -128,7 +128,7 @@ def test_explicit_operation_id(generator: OperationIDGenerator) -> None:
         controller.api_endpoints['GET'],
         path='whatever',
     )
-    registry = generator.context.registries.operation_id
+    registry = generator._context.registries.operation_id
 
     assert operation_id == 'customGetUser'
     assert 'customGetUser' in registry._operation_ids

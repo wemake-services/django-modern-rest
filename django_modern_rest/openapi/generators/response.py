@@ -1,3 +1,4 @@
+import dataclasses
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -11,12 +12,11 @@ if TYPE_CHECKING:
     from django_modern_rest.parsers import Parser
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class ResponseGenerator:
-    """Generator for OpenAPI Response objects."""
+    """Generator for OpenAPI ``Response`` objects."""
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the Response Generator."""
-        self.context = context
+    _context: 'OpenAPIContext'
 
     def __call__(
         self,
@@ -29,7 +29,7 @@ class ResponseGenerator:
                 description=status_code.phrase,
                 content={
                     req_parser.content_type: MediaType(
-                        schema=self.context.generators.schema(
+                        schema=self._context.generators.schema(
                             response_spec.return_type,
                         ),
                     )
