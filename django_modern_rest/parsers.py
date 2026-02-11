@@ -157,9 +157,8 @@ class MultiPartParser(SupportsFileParsing, Parser):
     content_type: ClassVar[str] = 'multipart/form-data'
     """Works with multipart data."""
 
-    # TODO: test and document this
     @override
-    def parse(  # pragma: no cover
+    def parse(
         self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
