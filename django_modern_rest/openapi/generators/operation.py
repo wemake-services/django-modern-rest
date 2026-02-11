@@ -1,3 +1,4 @@
+import dataclasses
 import re
 from typing import TYPE_CHECKING
 
@@ -8,19 +9,18 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class OperationGenerator:
     """
     Generator for OpenAPI Operation objects.
 
-    The Operation Generator is responsible for creating OpenAPI Operation
+    The ``Operation`` Generator is responsible for creating OpenAPI
     objects that describe individual API operations (HTTP methods like GET,
     POST, etc.) for a specific endpoint. It extracts metadata from the
     endpoint and generates a complete Operation specification.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the Operation Generator."""
-        self.context = context
+    context: 'OpenAPIContext'
 
     def __call__(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
@@ -61,28 +61,27 @@ class OperationGenerator:
         )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class OperationIDGenerator:
     """
     Generator for unique OpenAPI operation IDs.
 
     The Operation ID Generator is responsible for creating unique
     operation IDs for OpenAPI operations.
-    It uses the explicit `operation_id` from endpoint metadata if available,
+    It uses the explicit ``operation_id`` from endpoint metadata if available,
     otherwise generates one from the HTTP method and path following
-    `RFC 3986` specifications.
+    ``RFC 3986`` specifications.
     All generated operation IDs are registered in the registry to ensure
     uniqueness across the OpenAPI specification.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the Operation ID Generator."""
-        self.context = context
+    context: 'OpenAPIContext'
 
     def __call__(self, endpoint: 'Endpoint', path: str) -> str:
         """
         Generate a unique operation ID for an OpenAPI operation.
 
-        Uses the explicit operation_id from endpoint metadata if available,
+        Uses the explicit ``operation_id`` from endpoint metadata if available,
         otherwise generates one from the HTTP method and path. The operation ID
         is registered in the registry to ensure uniqueness.
         """

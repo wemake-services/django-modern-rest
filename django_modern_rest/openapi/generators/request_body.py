@@ -1,3 +1,4 @@
+import dataclasses
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects.media_type import MediaType
@@ -9,12 +10,11 @@ if TYPE_CHECKING:
     from django_modern_rest.parsers import Parser
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class RequestBodyGenerator:
-    """Generator for OpenAPI RequestBody objects."""
+    """Generator for OpenAPI ``RequestBody`` objects."""
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the RequestBody Generator."""
-        self.context = context
+    context: 'OpenAPIContext'
 
     def __call__(
         self,

@@ -1,3 +1,4 @@
+import dataclasses
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Final
 
@@ -17,12 +18,11 @@ _CONTEXT_TO_IN: Final = MappingProxyType({
 })
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class ParameterGenerator:
-    """Generator for OpenAPI Parameter objects."""
+    """Generator for OpenAPI ``Parameter`` objects."""
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the Parameter Generator."""
-        self.context = context
+    context: 'OpenAPIContext'
 
     def __call__(
         self,
