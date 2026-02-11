@@ -14,11 +14,11 @@ from django_modern_rest.openapi.config import OpenAPIConfig
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
-    from django_modern_rest.parsers import JsonParser
-    from django_modern_rest.renderers import JsonRenderer
+    from django_modern_rest.parsers import JsonParser, Parser
+    from django_modern_rest.renderers import JsonRenderer, Renderer
 
-    _default_parsers = [JsonParser()]
-    _default_renderers = [JsonRenderer()]
+    _default_parsers: list[Parser] = [JsonParser()]
+    _default_renderers: list[Renderer] = [JsonRenderer()]
 else:  # pragma: no cover
     from django_modern_rest.plugins.msgspec import (
         MsgspecJsonParser,
