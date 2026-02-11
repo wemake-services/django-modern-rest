@@ -55,7 +55,7 @@ class RequestNegotiator:
         # The last configured parser is the most specific one:
         self._default = next(reversed(self._parsers.values()))
 
-    def __call__(self, request: HttpRequest) -> type[Parser]:
+    def __call__(self, request: HttpRequest) -> Parser:
         """
         Negotiates which parser to use for parsing this request.
 
@@ -75,11 +75,11 @@ class RequestNegotiator:
             Parser class for this request.
 
         """
-        parser_cls = self._decide(request)
-        request._dmr_parser_cls = parser_cls  # type: ignore[attr-defined]  # noqa: SLF001
-        return parser_cls
+        parser = self._decide(request)
+        request._dmr_parser = parser  # type: ignore[attr-defined]  # noqa: SLF001
+        return parser
 
-    def _decide(self, request: HttpRequest) -> type[Parser]:
+    def _decide(self, request: HttpRequest) -> Parser:
         if request.content_type is None:
             return self._default
         # Try the exact match first, since it is faster, O(1):
@@ -119,7 +119,7 @@ class ResponseNegotiator:
         # The last configured parser is the most specific one:
         self._default = next(reversed(self._renderers.values()))
 
-    def __call__(self, request: HttpRequest) -> type[Renderer]:
+    def __call__(self, request: HttpRequest) -> Renderer:
         """
         Negotiates which parser to use for parsing this request.
 
@@ -141,11 +141,11 @@ class ResponseNegotiator:
             Renderer class for this response.
 
         """
-        renderer_cls = self._decide(request)
-        request._dmr_renderer_cls = renderer_cls  # type: ignore[attr-defined]  # noqa: SLF001
-        return renderer_cls
+        renderer = self._decide(request)
+        request._dmr_renderer = renderer  # type: ignore[attr-defined]  # noqa: SLF001
+        return renderer
 
-    def _decide(self, request: HttpRequest) -> type[Renderer]:
+    def _decide(self, request: HttpRequest) -> Renderer:
         if request.headers.get('Accept') is None:
             return self._default
         renderer_type = request.get_preferred_type(self._renderer_keys)
@@ -159,9 +159,9 @@ class ResponseNegotiator:
         return self._renderers[renderer_type]
 
 
-def request_parser(request: HttpRequest) -> type[Parser] | None:
+def request_parser(request: HttpRequest) -> Parser | None:
     """
-    Get parser_cls used to parse this request.
+    Get parser used to parse this request.
 
     .. note::
 
@@ -170,12 +170,12 @@ def request_parser(request: HttpRequest) -> type[Parser] | None:
         there might be no parser.
 
     """
-    return getattr(request, '_dmr_parser_cls', None)
+    return getattr(request, '_dmr_parser', None)
 
 
-def request_renderer(request: HttpRequest) -> type[Renderer] | None:
+def request_renderer(request: HttpRequest) -> Renderer | None:
     """
-    Get parser_cls used to parse this request.
+    Get parser used to parse this request.
 
     .. note::
 
@@ -185,7 +185,7 @@ def request_renderer(request: HttpRequest) -> type[Renderer] | None:
         a request renderer *yet*.
 
     """
-    return getattr(request, '_dmr_renderer_cls', None)
+    return getattr(request, '_dmr_renderer', None)
 
 
 @final

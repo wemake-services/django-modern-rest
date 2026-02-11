@@ -33,7 +33,7 @@ def test_parser_order(rf: RequestFactory) -> None:
         Controller[MsgspecSerializer],
         Body[_RequestModel],
     ):
-        @modify(parsers=[JsonParser], renderers=[JsonRenderer])
+        @modify(parsers=[JsonParser()], renderers=[JsonRenderer()])
         def post(self) -> dict[str, str]:
             nonlocal real_request  # noqa: WPS420
             real_request = self.request
@@ -50,8 +50,8 @@ def test_parser_order(rf: RequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert real_request
-    assert request_parser(real_request) is JsonParser
-    assert request_renderer(real_request) is JsonRenderer
+    assert isinstance(request_parser(real_request), JsonParser)
+    assert isinstance(request_renderer(real_request), JsonRenderer)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.content == snapshot(b'{"a": "b"}')

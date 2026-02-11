@@ -83,10 +83,10 @@ class HeaderSpec(_BaseResponseHeader):
 
 def build_headers(
     modification: 'ResponseModification',
-    renderer_cls: type['Renderer'],
+    renderer: 'Renderer',
 ) -> dict[str, str]:
     """Returns headers with values for raw data endpoints."""
-    result_headers: dict[str, Any] = {'Content-Type': renderer_cls.content_type}
+    result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
     headers = modification.actionable_headers()
     if not headers:
         return result_headers

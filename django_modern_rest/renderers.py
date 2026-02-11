@@ -38,10 +38,9 @@ class Renderer(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
-    @classmethod
     @abc.abstractmethod
     def render(
-        cls,
+        self,
         to_serialize: Any,
         serializer: Callable[[Any], Any],
     ) -> bytes:
@@ -124,17 +123,21 @@ class JsonRenderer(Renderer):
 
     """
 
-    __slots__ = ()
+    __slots__ = ('_encoder_cls',)
 
     content_type: ClassVar[str] = 'application/json'
     """Works with ``json`` only."""
 
-    _encoder_cls: ClassVar[type[DjangoJSONEncoder]] = _DMREncoder
+    def __init__(
+        self,
+        encoder_cls: type[DjangoJSONEncoder] = _DMREncoder,
+    ) -> None:
+        """Init the renderer with all defaults."""
+        self._encoder_cls = encoder_cls
 
     @override
-    @classmethod
     def render(
-        cls,
+        self,
         to_serialize: Any,
         serializer: Callable[[Any], Any],
     ) -> bytes:
@@ -153,6 +156,6 @@ class JsonRenderer(Renderer):
         # We don't really care about raw json implementation. It is a fallback.
         return json.dumps(
             to_serialize,
-            cls=cls._encoder_cls,
+            cls=self._encoder_cls,
             serializer=serializer,
         ).encode('utf8')

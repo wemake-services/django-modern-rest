@@ -86,7 +86,7 @@ def build_response(
     headers: Mapping[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
-    renderer_cls: type['Renderer'] | None = None,
+    renderer: 'Renderer | None' = None,
 ) -> HttpResponse: ...
 
 
@@ -99,7 +99,7 @@ def build_response(
     method: None = None,
     headers: Mapping[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
-    renderer_cls: type['Renderer'] | None = None,
+    renderer: 'Renderer | None' = None,
 ) -> HttpResponse: ...
 
 
@@ -111,7 +111,7 @@ def build_response(  # noqa: WPS210, WPS211
     headers: Mapping[str, str] | None = None,
     cookies: Mapping[str, NewCookie] | None = None,
     status_code: HTTPStatus | None = None,
-    renderer_cls: type['Renderer'] | None = None,
+    renderer: 'Renderer | None' = None,
 ) -> HttpResponse:
     """
     Utility that returns the actual `HttpResponse` object from its parts.
@@ -135,23 +135,22 @@ def build_response(  # noqa: WPS210, WPS211
             'to build_response at the same time',
         )
 
-    if renderer_cls is None:
+    if renderer is None:
         # IndexError here can't happen, because we validate
         # that all endpoints have at least one configured type in settings.
-        renderer_cls = resolve_setting(
+        renderer = resolve_setting(
             Settings.renderers,
-            import_string=True,
         )[0]
         # Needed for type checking:
-        assert renderer_cls is not None  # noqa: S101
+        assert renderer is not None  # noqa: S101
 
     response_headers = {
         **({} if headers is None else headers),
-        'Content-Type': renderer_cls.content_type,
+        'Content-Type': renderer.content_type,
     }
 
     response = HttpResponse(
-        content=serializer.serialize(raw_data, renderer_cls=renderer_cls),
+        content=serializer.serialize(raw_data, renderer=renderer),
         status=status,
         headers=response_headers,
     )

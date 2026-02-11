@@ -119,11 +119,11 @@ class PydanticSerializer(BaseSerializer):
         cls,
         structure: Any,
         *,
-        renderer_cls: type[Renderer],
+        renderer: Renderer,
     ) -> bytes:
         """Convert any object to raw bytestring."""
         try:
-            return renderer_cls.render(
+            return renderer.render(
                 structure,
                 cls.serialize_hook,
             )
@@ -144,10 +144,10 @@ class PydanticSerializer(BaseSerializer):
         cls,
         buffer: Raw,
         *,
-        parser_cls: type[Parser],
+        parser: Parser,
     ) -> Any:
         """Convert string or bytestring to simple python object."""
-        return parser_cls.parse(
+        return parser.parse(
             buffer,
             cls.deserialize_hook,
             strict=cls.deserialize_strict,

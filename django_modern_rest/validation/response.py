@@ -63,7 +63,7 @@ class ResponseValidator:
         if not self.metadata.validate_responses:
             return response
         schema = self._get_response_schema(response.status_code)
-        parser_cls = response_validation_negotiator(
+        parser = response_validation_negotiator(
             controller.request,
             response,
             request_renderer(controller.request),
@@ -72,12 +72,12 @@ class ResponseValidator:
 
         structured = self.serializer.deserialize(
             response.content,
-            parser_cls=parser_cls,
+            parser=parser,
         )
         self._validate_body(
             structured,
             schema,
-            content_type=parser_cls.content_type,
+            content_type=parser.content_type,
         )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
@@ -99,18 +99,18 @@ class ResponseValidator:
                 'without associated `@modify` usage.',
             )
 
-        renderer_class = request_renderer(controller.request)
-        # Renderer class is present at this point, 100%
-        assert renderer_class is not None  # noqa: S101
+        renderer = request_renderer(controller.request)
+        # Renderer is present at this point, 100%
+        assert renderer is not None  # noqa: S101
         all_response_data = _ValidationContext(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
             headers=build_headers(
                 self.metadata.modification,
-                renderer_class,
+                renderer,
             ),
             cookies=self.metadata.modification.actionable_cookies(),
-            renderer_cls=renderer_class,
+            renderer=renderer,
         )
         if not self.metadata.validate_responses:
             return all_response_data
@@ -118,7 +118,7 @@ class ResponseValidator:
         self._validate_body(
             structured,
             schema,
-            content_type=renderer_class.content_type,
+            content_type=renderer.content_type,
         )
         return all_response_data
 
@@ -266,4 +266,4 @@ class _ValidationContext:
     status_code: HTTPStatus
     headers: dict[str, str]
     cookies: Mapping[str, NewCookie] | None
-    renderer_cls: type['Renderer']
+    renderer: 'Renderer'

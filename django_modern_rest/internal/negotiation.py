@@ -47,9 +47,9 @@ class ConditionalType:
 def response_validation_negotiator(
     request: HttpRequest,
     response: HttpResponseBase,
-    renderer_type: type['Renderer'] | None,
+    renderer: 'Renderer | None',
     metadata: 'EndpointMetadata',
-) -> type['Parser']:
+) -> 'Parser':
     """
     Special type that we use to re-parse our own response body.
 
@@ -57,18 +57,18 @@ def response_validation_negotiator(
     It should not be used in production directly.
     Think of it as an internal validation helper.
     """
-    parser_types = metadata.parsers
-    if renderer_type is None:
+    parsers = metadata.parsers
+    if renderer is None:
         # We can fail to find `request_renderer` when `Accept` header
         # is broken / missing / incorrect.
         # Then, we fallback to the types we know.
         content_type = response.headers['Content-Type']
     else:
-        content_type = renderer_type.content_type
+        content_type = renderer.content_type
 
     # Our last resort is to get the default renderer type.
     # It is always present.
-    return parser_types.get(
+    return parsers.get(
         content_type,
-        next(reversed(parser_types.values())),
+        next(reversed(parsers.values())),
     )

@@ -14,15 +14,19 @@ from django_modern_rest.openapi.config import OpenAPIConfig
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
-    _default_parser_types = ['django_modern_rest.parsers.JsonParser']
-    _default_renderer_types = ['django_modern_rest.renderers.JsonRenderer']
+    from django_modern_rest.parsers import JsonParser, Parser
+    from django_modern_rest.renderers import JsonRenderer, Renderer
+
+    _default_parsers: list[Parser] = [JsonParser()]
+    _default_renderers: list[Renderer] = [JsonRenderer()]
 else:  # pragma: no cover
-    _default_parser_types = [
-        'django_modern_rest.plugins.msgspec.MsgspecJsonParser',
-    ]
-    _default_renderer_types = [
-        'django_modern_rest.plugins.msgspec.MsgspecJsonRenderer',
-    ]
+    from django_modern_rest.plugins.msgspec import (
+        MsgspecJsonParser,
+        MsgspecJsonRenderer,
+    )
+
+    _default_parsers = [MsgspecJsonParser()]
+    _default_renderers = [MsgspecJsonRenderer()]
 
 
 # Settings with `settings.py`
@@ -78,8 +82,8 @@ class HttpSpec(enum.StrEnum):
 
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
-    Settings.parsers: _default_parser_types,
-    Settings.renderers: _default_renderer_types,
+    Settings.parsers: _default_parsers,
+    Settings.renderers: _default_renderers,
     Settings.auth: [],
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
@@ -134,15 +138,6 @@ def resolve_setting(
         setting_name,
         _DEFAULTS[setting_name],
     )
-    if import_string:
-        if isinstance(setting, str):
-            return module_loading.import_string(setting)
-        if isinstance(setting, list) and all(
-            isinstance(list_item, str)
-            for list_item in setting  # pyright: ignore[reportUnknownVariableType]
-        ):
-            return [
-                module_loading.import_string(list_item)  # pyright: ignore[reportUnknownArgumentType]
-                for list_item in setting  # pyright: ignore[reportUnknownVariableType]
-            ]
+    if import_string and isinstance(setting, str):
+        return module_loading.import_string(setting)
     return setting  # pyright: ignore[reportUnknownVariableType]

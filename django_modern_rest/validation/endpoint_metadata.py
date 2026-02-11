@@ -455,21 +455,18 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'],
         *,
         endpoint: str,
-    ) -> dict[str, type[Parser]]:
+    ) -> dict[str, Parser]:
         if payload and payload.parsers:
             return {typ.content_type: typ for typ in payload.parsers}
         if blueprint_cls and blueprint_cls.parsers:
             return {typ.content_type: typ for typ in blueprint_cls.parsers}
         if controller_cls.parsers:
             return {typ.content_type: typ for typ in controller_cls.parsers}
-        settings_types = resolve_setting(
-            Settings.parsers,
-            import_string=True,
-        )
+        settings_types = resolve_setting(Settings.parsers)
         if not settings_types:
             # This is the last place we look at, it must be present:
             raise EndpointMetadataError(
-                f'{endpoint!r} must have at least one parser type '
+                f'{endpoint!r} must have at least one parser '
                 'configured in settings',
             )
         return {typ.content_type: typ for typ in settings_types}
@@ -481,21 +478,18 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'],
         *,
         endpoint: str,
-    ) -> dict[str, type[Renderer]]:
+    ) -> dict[str, Renderer]:
         if payload and payload.renderers:
             return {typ.content_type: typ for typ in payload.renderers}
         if blueprint_cls and blueprint_cls.renderers:
             return {typ.content_type: typ for typ in blueprint_cls.renderers}
         if controller_cls.renderers:
             return {typ.content_type: typ for typ in controller_cls.renderers}
-        settings_types = resolve_setting(
-            Settings.renderers,
-            import_string=True,
-        )
+        settings_types = resolve_setting(Settings.renderers)
         if not settings_types:
             # This is the last place we look at, it must be present:
             raise EndpointMetadataError(
-                f'{endpoint!r} must have at least one renderer type '
+                f'{endpoint!r} must have at least one renderer '
                 'configured in settings',
             )
         return {typ.content_type: typ for typ in settings_types}

@@ -31,8 +31,8 @@ class ExampleController(
         ],
     ],
 ):
-    parsers = (MsgspecJsonParser, XmlParser)
-    renderers = (MsgspecJsonRenderer, XmlRenderer)
+    parsers = (MsgspecJsonParser(), XmlParser())
+    renderers = (MsgspecJsonRenderer(), XmlRenderer())
 
     def post(self) -> dict[str, str]:
         if isinstance(self.parsed_body, _XMLRequestModel):
