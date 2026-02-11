@@ -218,9 +218,9 @@ def test_per_controller_customization(
         renderers = [_XMLRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
-            parser_cls = request_parser(self.request)
-            assert parser_cls
-            assert parser_cls.content_type == request.content_type
+            parser = request_parser(self.request)
+            assert parser
+            assert parser.content_type == request.content_type
             return self.parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2

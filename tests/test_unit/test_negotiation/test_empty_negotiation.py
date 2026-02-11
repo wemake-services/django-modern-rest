@@ -11,7 +11,7 @@ from django_modern_rest.renderers import JsonRenderer
 from django_modern_rest.settings import Settings
 
 
-def test_empty_parser_type(
+def test_empty_parsers(
     settings: LazySettings,
     dmr_clean_settings: None,
 ) -> None:
@@ -28,7 +28,7 @@ def test_empty_parser_type(
                 raise NotImplementedError
 
 
-def test_empty_renderer_type(
+def test_empty_renderers(
     settings: LazySettings,
     dmr_clean_settings: None,
 ) -> None:

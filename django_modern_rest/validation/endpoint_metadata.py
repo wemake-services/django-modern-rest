@@ -281,13 +281,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parsers=self._build_parser_types(
+            parsers=self._build_parsers(
                 payload,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderers=self._build_renderer_types(
+            renderers=self._build_renderers(
                 payload,
                 blueprint_cls,
                 controller_cls,
@@ -355,13 +355,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parsers=self._build_parser_types(
+            parsers=self._build_parsers(
                 payload,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderers=self._build_renderer_types(
+            renderers=self._build_renderers(
                 payload,
                 blueprint_cls,
                 controller_cls,
@@ -420,13 +420,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             component_parsers=(
                 (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parsers=self._build_parser_types(
+            parsers=self._build_parsers(
                 None,
                 blueprint_cls,
                 controller_cls,
                 endpoint=endpoint,
             ),
-            renderers=self._build_renderer_types(
+            renderers=self._build_renderers(
                 None,
                 blueprint_cls,
                 controller_cls,
@@ -448,7 +448,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             description=description,
         )
 
-    def _build_parser_types(
+    def _build_parsers(
         self,
         payload: Payload,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
@@ -471,7 +471,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         return {typ.content_type: typ for typ in settings_types}
 
-    def _build_renderer_types(
+    def _build_renderers(
         self,
         payload: Payload,
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,

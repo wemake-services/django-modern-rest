@@ -38,8 +38,8 @@ class RequestNegotiator:
         self._serializer = serializer
         self._parsers = metadata.parsers
         self._exact_parsers = {
-            content_type: parser_cls
-            for content_type, parser_cls in self._parsers.items()
+            content_type: parser
+            for content_type, parser in self._parsers.items()
             if '*' not in content_type
         }
         # Compute precedence in advance:
@@ -64,7 +64,7 @@ class RequestNegotiator:
         Called in runtime.
         Must work for O(1) because of that.
 
-        Must set ``_dmr_parser_cls`` request attribute
+        Must set ``_dmr_parser`` request attribute
         if the negotiation is successful.
 
         Raises:
@@ -131,7 +131,7 @@ class ResponseNegotiator:
         We use :meth:`django.http.HttpRequest.get_preferred_type` inside.
         So, we have exactly the same negotiation rules as django has.
 
-        Must set ``_dmr_renderer_cls`` request attribute
+        Must set ``_dmr_renderer`` request attribute
         if the negotiation is successful.
 
         Raises:
