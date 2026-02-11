@@ -3,6 +3,7 @@ from collections import defaultdict
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
+from django.http import HttpRequest
 from typing_extensions import TypedDict
 
 from django_modern_rest.errors import ErrorDetail
@@ -74,6 +75,7 @@ class BaseSerializer:
         buffer: Raw,
         *,
         parser: Parser,
+        request: HttpRequest,
     ) -> Any:
         """Convert json bytestring to structured data."""
         raise NotImplementedError

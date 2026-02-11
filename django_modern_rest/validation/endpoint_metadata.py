@@ -753,6 +753,7 @@ class EndpointMetadataValidator:
         )
         # After that we can do some other validation:
         self._validate_request_http_spec(endpoint=endpoint)
+        self._validate_components()
 
     def _resolve_all_responses(
         self,
@@ -781,6 +782,10 @@ class EndpointMetadataValidator:
                 response.status_code: response for response in responses
             })
         return all_responses
+
+    def _validate_components(self) -> None:
+        for component, _model in self.metadata.component_parsers:
+            component.validate(self.metadata)
 
     def _validate_request_http_spec(
         self,

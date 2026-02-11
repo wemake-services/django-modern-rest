@@ -17,16 +17,16 @@ except ImportError:  # pragma: no cover
     from django_modern_rest.parsers import JsonParser, Parser
     from django_modern_rest.renderers import JsonRenderer, Renderer
 
-    _default_parsers: list[Parser] = [JsonParser()]
-    _default_renderers: list[Renderer] = [JsonRenderer()]
+    default_parsers: list[Parser] = [JsonParser()]
+    default_renderers: list[Renderer] = [JsonRenderer()]
 else:  # pragma: no cover
     from django_modern_rest.plugins.msgspec import (
         MsgspecJsonParser,
         MsgspecJsonRenderer,
     )
 
-    _default_parsers = [MsgspecJsonParser()]
-    _default_renderers = [MsgspecJsonRenderer()]
+    default_parsers = [MsgspecJsonParser()]
+    default_renderers = [MsgspecJsonRenderer()]
 
 
 # Settings with `settings.py`
@@ -82,8 +82,8 @@ class HttpSpec(enum.StrEnum):
 
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
-    Settings.parsers: _default_parsers,
-    Settings.renderers: _default_renderers,
+    Settings.parsers: default_parsers,
+    Settings.renderers: default_renderers,
     Settings.auth: [],
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',

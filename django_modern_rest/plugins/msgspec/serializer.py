@@ -7,6 +7,7 @@ from typing import (
 )
 
 import msgspec
+from django.http import HttpRequest
 from typing_extensions import TypedDict, override
 
 from django_modern_rest.errors import ErrorDetail, ErrorType
@@ -77,12 +78,19 @@ class MsgspecSerializer(BaseSerializer):
 
     @override
     @classmethod
-    def deserialize(cls, buffer: Raw, *, parser: Parser) -> Any:
+    def deserialize(
+        cls,
+        buffer: Raw,
+        *,
+        parser: Parser,
+        request: HttpRequest,
+    ) -> Any:
         """Convert string or bytestring to simple python object."""
         return parser.parse(
             buffer,
             cls.deserialize_hook,
             strict=cls.deserialize_strict,
+            request=request,
         )
 
     @override

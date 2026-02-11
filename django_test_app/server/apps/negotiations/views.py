@@ -4,6 +4,7 @@ from xml.parsers import expat
 
 import pydantic
 import xmltodict
+from django.http import HttpRequest
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import override
@@ -54,6 +55,7 @@ class XmlParser(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         try:

@@ -1,12 +1,10 @@
 from typing import Any, ClassVar, final
 
 import pytest
+from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest import (
-    Body,
-    Controller,
-)
+from django_modern_rest import Body, Controller
 from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRRequestFactory
@@ -23,6 +21,7 @@ class _MainStar(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
@@ -39,6 +38,7 @@ class _SubStar(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
@@ -55,6 +55,7 @@ class _AllStar(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
@@ -71,6 +72,7 @@ class _JsonExact(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)

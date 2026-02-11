@@ -3,6 +3,7 @@ from typing import Any, ClassVar
 from xml.parsers import expat
 
 import xmltodict
+from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.exceptions import (
@@ -27,6 +28,7 @@ class XmlParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         strict: bool = True,
+        request: HttpRequest,
     ) -> Any:
         try:
             return xmltodict.parse(to_deserialize, process_namespaces=True)

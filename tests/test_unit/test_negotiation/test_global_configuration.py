@@ -8,7 +8,7 @@ import pydantic
 import pytest
 import xmltodict
 from django.conf import LazySettings
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import override
@@ -45,6 +45,7 @@ class _XMLParser(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         try:

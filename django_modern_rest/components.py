@@ -13,9 +13,13 @@ from typing import (
 
 from typing_extensions import override
 
-from django_modern_rest.django import convert_multi_value_dict
+from django_modern_rest.django import (
+    convert_multi_value_dict,
+    exctract_files_metadata,
+)
 from django_modern_rest.exceptions import (
     DataParsingError,
+    EndpointMetadataError,
     RequestSerializationError,
     UnsolvableAnnotationsError,
 )
@@ -25,6 +29,9 @@ from django_modern_rest.metadata import (
     ResponseSpecProvider,
 )
 from django_modern_rest.negotiation import get_conditional_types
+from django_modern_rest.parsers import (
+    SupportsFileParsing,
+)
 from django_modern_rest.types import (
     TypeVarInference,
     infer_bases,
@@ -41,6 +48,7 @@ _BodyT = TypeVar('_BodyT')
 _HeadersT = TypeVar('_HeadersT')
 _PathT = TypeVar('_PathT')
 _CookiesT = TypeVar('_CookiesT')
+_FileMetadataT = TypeVar('_FileMetadataT')
 
 
 ComponentParserSpec: TypeAlias = tuple[
@@ -196,6 +204,14 @@ class ComponentParser(ResponseSpecProvider):
         """
         return {}
 
+    @classmethod
+    def validate(cls, metadata: EndpointMetadata) -> None:
+        """
+        Validates that the component is correctly defined.
+
+        By default does nothing.
+        """
+
 
 class Query(ComponentParser, Generic[_QueryT]):
     """
@@ -242,6 +258,9 @@ class Query(ComponentParser, Generic[_QueryT]):
         ...
         ...     query: list[str]
         ...     reversed: bool
+
+    This will parse a query like ``?query=text&query=match&reversed=1``
+    into the provided model.
 
     We don't inference this value in any way, it is up to users to set.
     Inspecting annotations is hard and produce a lot of errors.
@@ -312,6 +331,7 @@ class Body(ComponentParser, Generic[_BodyT]):
             return blueprint.serializer.deserialize(
                 blueprint.request.body,
                 parser=parser,
+                request=blueprint.request,
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None
@@ -489,3 +509,62 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
         field_model: Any,
     ) -> Any:
         return blueprint.request.COOKIES
+
+
+class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
+    """
+    Parses files metadata from :attr:`django.http.HttpRequest.FILES`.
+
+    Django handles files itself natively, we don't need to do anything
+    in ``django_modern_rest``. But, we need a way to represent the metadata.
+
+    This class is designed to validate file metadata.
+
+    TODO: add example
+
+    You can access parsed cookies as ``self.parsed_file_metadata`` attribute.
+
+    .. seealso::
+
+        https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cookie
+
+    """
+
+    parsed_file_metadata: _FileMetadataT
+    context_name: ClassVar[str] = 'parsed_file_metadata'
+
+    @override
+    @classmethod
+    def provide_context_data(
+        cls,
+        endpoint: 'Endpoint',
+        blueprint: 'Blueprint[BaseSerializer]',
+        *,
+        field_model: Any,
+    ) -> Mapping[str, Any]:
+        force_list: frozenset[str] = getattr(
+            field_model,
+            '__dmr_force_list__',
+            frozenset(),
+        )
+        return exctract_files_metadata(blueprint.request.FILES, force_list)
+
+    @override
+    @classmethod
+    def validate(cls, metadata: EndpointMetadata) -> None:
+        """
+        Validates that the component is correctly defined.
+
+        This component requires at least one
+        :class:`django_modern_rest.parsers.SupportsFileParser` instance
+        to be present in parsers.
+        """
+        if not any(
+            isinstance(parser, SupportsFileParsing)
+            for parser in metadata.parsers.values()
+        ):
+            hint = list(metadata.parsers.keys())
+            raise EndpointMetadataError(
+                f'Class {cls!r} requires at least one parser '
+                f'that can parse files, found: {hint}',
+            )
