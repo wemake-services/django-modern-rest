@@ -73,6 +73,7 @@ class ResponseValidator:
         structured = self.serializer.deserialize(
             response.content,
             parser=parser,
+            request=controller.request,
         )
         self._validate_body(
             structured,

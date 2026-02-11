@@ -1,5 +1,6 @@
 from django_modern_rest.components import Body as Body
 from django_modern_rest.components import Cookies as Cookies
+from django_modern_rest.components import FileMetadata as FileMetadata
 from django_modern_rest.components import Headers as Headers
 from django_modern_rest.components import Path as Path
 from django_modern_rest.components import Query as Query

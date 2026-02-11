@@ -12,6 +12,7 @@ from typing import (
 
 import pydantic
 import pydantic_core
+from django.http import HttpRequest
 from pydantic.config import ExtraValues
 from typing_extensions import TypedDict, override
 
@@ -145,12 +146,14 @@ class PydanticSerializer(BaseSerializer):
         buffer: Raw,
         *,
         parser: Parser,
+        request: HttpRequest,
     ) -> Any:
         """Convert string or bytestring to simple python object."""
         return parser.parse(
             buffer,
             cls.deserialize_hook,
             strict=cls.deserialize_strict,
+            request=request,
         )
 
     @override

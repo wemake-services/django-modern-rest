@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
+from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.exceptions import DataParsingError
@@ -47,6 +48,7 @@ class Parser(ResponseSpecProvider):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         """
@@ -55,6 +57,7 @@ class Parser(ResponseSpecProvider):
         Args:
             to_deserialize: Value to deserialize.
             deserializer: Hook to convert types that are not natively supported.
+            request: Django's original request with all the details.
             strict: Whether type coercion rules should be strict.
                 Setting to ``False`` enables a wider set of coercion rules
                 from string to non-string types for all values.
@@ -108,6 +111,7 @@ class JsonParser(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         """
@@ -116,6 +120,7 @@ class JsonParser(Parser):
         Args:
             to_deserialize: Value to decode.
             deserializer: Hook to convert types that are not natively supported.
+            request: Django's original request with all the details.
             strict: Whether type coercion rules should be strict.
                 Setting to ``False`` enables a wider set of coercion rules
                 from string to non-string types for all values.
@@ -133,3 +138,35 @@ class JsonParser(Parser):
             if to_deserialize == b'':
                 return None
             raise DataParsingError(str(exc)) from exc
+
+
+class SupportsFileParsing:
+    """Mixin class for parsers that can parse files."""
+
+
+class MultiPartParser(SupportsFileParsing, Parser):
+    """
+    Parses multipart form data.
+
+    In reallity this is a quite tricky parser.
+    Since, Django already parses ``multipart/form-data`` content natively,
+    there's no reason to duplicate its work.
+    So, we return original Django's content.
+    """
+
+    content_type: ClassVar[str] = 'multipart/form-data'
+    """Works with multipart data."""
+
+    # TODO: test and document this
+    @override
+    def parse(  # pragma: no cover
+        self,
+        to_deserialize: Raw,
+        deserializer: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+        strict: bool = True,
+    ) -> Any:
+        """Returns parsed multipart form data."""
+        # It is already parsed.
+        return request.POST

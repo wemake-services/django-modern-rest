@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import Any, ClassVar
 
 import msgspec
+from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.envs import MAX_CACHE_SIZE
@@ -22,6 +23,7 @@ class MsgspecJsonParser(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
+        request: HttpRequest,
         strict: bool = True,
     ) -> Any:
         """
@@ -30,6 +32,7 @@ class MsgspecJsonParser(Parser):
         Args:
             to_deserialize: Value to deserialize.
             deserializer: Hook to convert types that are not natively supported.
+            request: Django's original request with all the details.
             strict: Whether type coercion rules should be strict.
                 Setting to ``False`` enables a wider set of coercion rules
                 from string to non-string types for all values.
