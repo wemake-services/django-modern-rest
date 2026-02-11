@@ -1,3 +1,4 @@
+import dataclasses
 from typing import TYPE_CHECKING, TypedDict
 
 from django_modern_rest.openapi.objects import PathItem
@@ -20,26 +21,25 @@ class _PathItemKwargs(TypedDict, total=False):
     trace: 'Operation'
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class PathItemGenerator:
     """
     Generator for OpenAPI PathItem objects.
 
-    The PathItem Generator is responsible for creating PathItem objects
+    The ``PathItem`` Generator is responsible for creating objects
     that represent a single API endpoint with its possible HTTP operations.
-    It takes a controller mapping and generates a PathItem containing all
+    It takes a controller mapping and generates a ``PathItem`` containing all
     the operations (GET, POST, PUT, DELETE, etc.) defined for that endpoint.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the PathItem Generator."""
-        self.context = context
+    _context: 'OpenAPIContext'
 
     def __call__(self, mapping: 'ControllerMapping') -> PathItem:
-        """Generate an OpenAPI PathItem from a controller mapping."""
+        """Generate an OpenAPI ``PathItem`` from a controller mapping."""
         kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
-            operation = self.context.generators.operation(
+            operation = self._context.generators.operation(
                 endpoint,
                 mapping.path,
             )
