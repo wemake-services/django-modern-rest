@@ -243,6 +243,9 @@ class Query(ComponentParser, Generic[_QueryT]):
         ...     query: list[str]
         ...     reversed: bool
 
+    This will parse a query like ``?query=text&query=match&reversed=1``
+    into the provided model.
+
     We don't inference this value in any way, it is up to users to set.
     Inspecting annotations is hard and produce a lot of errors.
     """
