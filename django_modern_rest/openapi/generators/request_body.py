@@ -19,7 +19,7 @@ class RequestBodyGenerator:
     def __call__(
         self,
         parsers: 'list[ComponentParserSpec]',
-        request_parsers: 'dict[str, type[Parser]]',
+        request_parsers: 'dict[str, Parser]',
     ) -> RequestBody | None:
         """Generate request body from parsers."""
         for parser, model in parsers:

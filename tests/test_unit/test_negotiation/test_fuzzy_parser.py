@@ -18,15 +18,14 @@ class _MainStar(Parser):
     content_type: ClassVar[str] = '*/whatever'
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
         strict: bool = True,
     ) -> Any:
-        raise RuntimeError(cls.__name__)
+        raise RuntimeError(type(self).__name__)
 
 
 class _SubStar(Parser):
@@ -35,15 +34,14 @@ class _SubStar(Parser):
     content_type: ClassVar[str] = 'application/*'
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
         strict: bool = True,
     ) -> Any:
-        raise RuntimeError(cls.__name__)
+        raise RuntimeError(type(self).__name__)
 
 
 class _AllStar(Parser):
@@ -52,15 +50,14 @@ class _AllStar(Parser):
     content_type: ClassVar[str] = '*/*'
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
         strict: bool = True,
     ) -> Any:
-        raise RuntimeError(cls.__name__)
+        raise RuntimeError(type(self).__name__)
 
 
 class _JsonExact(Parser):
@@ -69,15 +66,14 @@ class _JsonExact(Parser):
     content_type: ClassVar[str] = 'application/json'
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
         strict: bool = True,
     ) -> Any:
-        raise RuntimeError(cls.__name__)
+        raise RuntimeError(type(self).__name__)
 
 
 @pytest.mark.parametrize(
@@ -94,10 +90,10 @@ class _JsonExact(Parser):
 @pytest.mark.parametrize(
     'parser_types',
     [
-        [_MainStar, _JsonExact, _AllStar, _SubStar],
-        [_SubStar, _MainStar, _JsonExact, _AllStar],
-        [_SubStar, _MainStar, _AllStar, _JsonExact],
-        [_JsonExact, _SubStar, _MainStar, _AllStar],
+        [_MainStar(), _JsonExact(), _AllStar(), _SubStar()],
+        [_SubStar(), _MainStar(), _JsonExact(), _AllStar()],
+        [_SubStar(), _MainStar(), _AllStar(), _JsonExact()],
+        [_JsonExact(), _SubStar(), _MainStar(), _AllStar()],
     ],
 )
 def test_correct_parser_selected(
@@ -105,7 +101,7 @@ def test_correct_parser_selected(
     *,
     headers: dict[str, str],
     match: str,
-    parser_types: list[type[Parser]],
+    parser_types: list[Parser],
 ) -> None:
     """Ensures we can select correct fuzzy parsers."""
 

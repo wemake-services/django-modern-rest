@@ -17,9 +17,8 @@ class MsgspecJsonParser(Parser):
     content_type: ClassVar[str] = 'application/json'
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
@@ -63,9 +62,8 @@ class MsgspecJsonRenderer(Renderer):
     content_type: ClassVar[str] = 'application/json'
 
     @override
-    @classmethod
     def render(
-        cls,
+        self,
         to_serialize: Any,
         serializer: Callable[[Any], Any] | None = None,
     ) -> bytes:

@@ -203,11 +203,11 @@ class EndpointMetadata:
         component_parsers: List of component parser specifications
             from the controller. Each spec is a tuple
             of (ComponentParser class, type args).
-        parsers: List of types to be used for this endpoint
-            to parse incoming request's body. All types must be subtypes
+        parsers: List of instances to be used for this endpoint
+            to parse incoming request's body. All instances must be of subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderers: List of types to be used for this endpoint
-            to render response's body. All types must be subtypes
+        renderers: List of instances to be used for this endpoint
+            to render response's body. All instances must be of subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
         auth: list of auth instances to be used for this endpoint.
             Sync endpoints must use instances
@@ -255,8 +255,8 @@ class EndpointMetadata:
     modification: ResponseModification | None
     error_handler: 'SyncErrorHandler | AsyncErrorHandler | None'
     component_parsers: list[ComponentParserSpec]
-    parsers: dict[str, type['Parser']]
-    renderers: dict[str, type['Renderer']]
+    parsers: dict[str, 'Parser']
+    renderers: dict[str, 'Renderer']
     auth: list['SyncAuth | AsyncAuth'] | None
     no_validate_http_spec: frozenset['HttpSpec']
 
@@ -285,7 +285,7 @@ class EndpointMetadata:
         """
         return [
             *[spec[0] for spec in self.component_parsers],
-            *self.parsers.values(),
-            *self.renderers.values(),
+            *[type(parser) for parser in self.parsers.values()],
+            *[type(renderer) for renderer in self.renderers.values()],
             *[type(auth) for auth in (self.auth or [])],
         ]

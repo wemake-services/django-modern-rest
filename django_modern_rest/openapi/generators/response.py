@@ -21,7 +21,7 @@ class ResponseGenerator:
     def __call__(
         self,
         responses: dict[HTTPStatus, 'ResponseSpec'],
-        request_parsers: 'dict[str, type[Parser]]',
+        request_parsers: 'dict[str, Parser]',
     ) -> Responses:
         """Generate responses from response specs."""
         return {

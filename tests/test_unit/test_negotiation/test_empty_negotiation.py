@@ -21,7 +21,7 @@ def test_empty_parser_type(
         Settings.renderers: [JsonRenderer],
     }
 
-    with pytest.raises(EndpointMetadataError, match='parser type'):
+    with pytest.raises(EndpointMetadataError, match='at least one parser'):
 
         class _Controller(Controller[PydanticSerializer]):
             def post(self) -> dict[str, str]:
@@ -34,11 +34,11 @@ def test_empty_renderer_type(
 ) -> None:
     """Ensure that always has to be at least one renderer type."""
     settings.DMR_SETTINGS = {
-        Settings.parsers: [JsonParser],
+        Settings.parsers: [JsonParser()],
         Settings.renderers: [],
     }
 
-    with pytest.raises(EndpointMetadataError, match='renderer type'):
+    with pytest.raises(EndpointMetadataError, match='at least one renderer'):
 
         class _Controller(Controller[PydanticSerializer]):
             def post(self) -> dict[str, str]:

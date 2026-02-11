@@ -49,8 +49,6 @@ _SerializerT_co = TypeVar(
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 _EndpointFunc: TypeAlias = Callable[..., Any]
-_Parsers: TypeAlias = Sequence[type[Parser]]
-_Renderers: TypeAlias = Sequence[type[Renderer]]
 
 
 class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
@@ -89,11 +87,11 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             key in the settings.
         http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
-        parsers: Sequence of types to be used for this controller
-            to parse incoming request's body. All types must be subtypes
+        parsers: Sequence of parsers to be used for this controller
+            to parse incoming request's body. All instances must be of subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
-        renderers: Sequence of types to be used for this controller
-            to render response's body. All types must be subtypes
+        renderers: Sequence of renderers to be used for this controller
+            to render response's body. All instances must be of subtypes
             of :class:`~django_modern_rest.renderers.Renderer`.
         auth: Sequence of auth instances to be used for this controller.
             Sync controllers must use instances
@@ -128,8 +126,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
-    parsers: ClassVar[_Parsers] = ()
-    renderers: ClassVar[_Renderers] = ()
+    parsers: ClassVar[Sequence[Parser]] = ()
+    renderers: ClassVar[Sequence[Renderer]] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
@@ -196,7 +194,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
         status_code: HTTPStatus | None = None,
-        renderer_cls: type[Renderer] | None = None,
+        renderer: Renderer | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert response parts into an actual response.
@@ -215,7 +213,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
-            renderer_cls=renderer_cls or request_renderer(self.request),
+            renderer=renderer or request_renderer(self.request),
         )
 
     def to_error(
@@ -225,7 +223,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         status_code: HTTPStatus,
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
-        renderer_cls: type[Renderer] | None = None,
+        renderer: Renderer | None = None,
     ) -> HttpResponse:
         """
         Helpful method to convert API error parts into an actual error.
@@ -242,7 +240,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
-            renderer_cls=renderer_cls or request_renderer(self.request),
+            renderer=renderer or request_renderer(self.request),
         )
 
     def format_error(
@@ -594,7 +592,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
                     error_type=ErrorType.not_allowed,
                 ),
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                renderer_cls=request_renderer(self.request),
+                renderer=request_renderer(self.request),
             ),
         )
 

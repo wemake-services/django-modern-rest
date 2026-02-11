@@ -306,12 +306,12 @@ class Body(ComponentParser, Generic[_BodyT]):
         *,
         field_model: Any,
     ) -> Any:
-        parser_cls = endpoint.request_negotiator(blueprint.request)
+        parser = endpoint.request_negotiator(blueprint.request)
 
         try:
             return blueprint.serializer.deserialize(
                 blueprint.request.body,
-                parser_cls=parser_cls,
+                parser=parser,
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None

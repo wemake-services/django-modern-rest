@@ -70,16 +70,16 @@ class MsgspecSerializer(BaseSerializer):
         cls,
         structure: Any,
         *,
-        renderer_cls: type[Renderer],
+        renderer: Renderer,
     ) -> bytes:
         """Convert any object to a raw bytestring."""
-        return renderer_cls.render(structure, cls.serialize_hook)
+        return renderer.render(structure, cls.serialize_hook)
 
     @override
     @classmethod
-    def deserialize(cls, buffer: Raw, *, parser_cls: type[Parser]) -> Any:
+    def deserialize(cls, buffer: Raw, *, parser: Parser) -> Any:
         """Convert string or bytestring to simple python object."""
-        return parser_cls.parse(
+        return parser.parse(
             buffer,
             cls.deserialize_hook,
             strict=cls.deserialize_strict,

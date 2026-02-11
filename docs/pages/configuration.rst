@@ -59,7 +59,8 @@ Content negotiation
   Default: :class:`django_modern_rest.parsers.JsonParser` or
   :class:`django_modern_rest.plugins.msgspec.MsgspecJsonParser` if installed.
 
-  A list of subtypes of :class:`~django_modern_rest.parsers.Parser`
+  A list of instances of subtypes
+  of :class:`~django_modern_rest.parsers.Parser`
   to serialize data from the requested text format,
   like json or xml, into python object.
 
@@ -73,14 +74,15 @@ Content negotiation
     :caption: settings.py
 
     >>> from django_modern_rest.parsers import JsonParser
-    >>> DMR_SETTINGS = {Settings.parsers: [JsonParser]}
+    >>> DMR_SETTINGS = {Settings.parsers: [JsonParser()]}
 
 .. data:: django_modern_rest.settings.Settings.renderers
 
   Default: :class:`django_modern_rest.renderers.JsonRenderer` or
   :class:`django_modern_rest.plugins.msgspec.MsgspecJsonRenderer` if installed.
 
-  A list of subtypes of :class:`~django_modern_rest.renderers.Renderer`
+  A list of instances of subtypes
+  of :class:`~django_modern_rest.renderers.Renderer`
   to serialize python objects to the requested text format, like json or xml.
 
   By default uses ``json`` module for serialization
@@ -93,7 +95,7 @@ Content negotiation
     :caption: settings.py
 
     >>> from django_modern_rest.renderers import JsonRenderer
-    >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer]}
+    >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer()]}
 
 
 Response handling

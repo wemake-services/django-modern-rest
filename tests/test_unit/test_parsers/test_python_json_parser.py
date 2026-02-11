@@ -25,8 +25,8 @@ def _clear_parser_and_renderer(
     dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
-        Settings.parsers: [JsonParser],
-        Settings.renderers: [JsonRenderer],
+        Settings.parsers: [JsonParser()],
+        Settings.renderers: [JsonRenderer()],
     }
 
 

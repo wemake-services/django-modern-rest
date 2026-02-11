@@ -20,8 +20,8 @@ class ExampleController(
     Controller[PydanticSerializer],
     Body[_RequestModel],
 ):
-    parsers = (MsgspecJsonParser, XmlParser)
-    renderers = (MsgspecJsonRenderer, XmlRenderer)
+    parsers = (MsgspecJsonParser(), XmlParser())
+    renderers = (MsgspecJsonRenderer(), XmlRenderer())
 
     def post(
         self,

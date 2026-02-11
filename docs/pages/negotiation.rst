@@ -5,12 +5,14 @@ Content negotiation
 
 We have two abstractions to do that:
 
-- Parsers: subtypes of :class:`~django_modern_rest.parsers.Parser` type
+- Parsers: instances of subtypes
+  of :class:`~django_modern_rest.parsers.Parser` type
   that parses request body based on
   `Content-Type <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type>`_
   header into python primitives
 
-- Renderers: subtypes of :class:`~django_modern_rest.renderers.Renderer` type
+- Renderers: instances of subtypes
+  of :class:`~django_modern_rest.renderers.Renderer` type
   that renders python primitives into a requested format
   based on the
   `Accept <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept>`_
@@ -24,7 +26,7 @@ We fallback to pure-python implementation if ``msgspec`` is not installed.
 How parser and renderer are selected
 ------------------------------------
 
-We select :class:`~django_modern_rest.parsers.Parser` subtype
+We select a :class:`~django_modern_rest.parsers.Parser` instance
 if there's a :class:`~django_modern_rest.components.Body` component to parse.
 Otherwise, for performance reasons, no parser is selected
 and body is not parsed at all.
@@ -33,7 +35,7 @@ Here's how we select a parser, when it is needed:
 
 1. We look at the ``Content-Type`` header
 2. If it is not provided, we take the default parser,
-   which is the first specified parser type for the endpoint,
+   which is the first specified parser for the endpoint,
    aka the most specific one
 3. If there's a ``Content-Type`` header,
    we try to exactly match known parsers based on their
@@ -46,29 +48,29 @@ Here's how we select a parser, when it is needed:
 5. If no parser fits the request's content type, we raise
    :exc:`~django_modern_rest.exceptions.RequestSerializationError`
 
-We select :class:`~django_modern_rest.renderers.Renderer` subtype
-for all responses (including error responses).
-We do that at the very end of the request/response cycle.
+We select :class:`~django_modern_rest.renderers.Renderer` instance
+for all responses (including error responses), before performing any logic.
+If the selection fails, we don't even try to run the endpoint.
 
 Here's how we select a renderer:
 
 1. We look at ``Accept`` header
 2. If it is not provided, we take the default renderer,
-   which is the last specified renderer type for the endpoint,
+   which is the first specified renderer for the endpoint,
    aka the most specific one
 3. If there's an ``Accept`` header,
    we use :meth:`django.http.HttpRequest.get_preferred_type` method
-   to match the best accepted type, based on order, weights, etc
+   to match the best accepted type, based on ``'specificity', 'quality'``,
+   the first match wins
 4. If no renderer fits for the accepted content types, we raise
    :exc:`~django_modern_rest.exceptions.ResponseSchemaError`
 
 .. important::
 
   Settings always must have one parser
-  and one renderer types defined at all times,
+  and one renderer defined at all times,
   because utils like :func:`django_modern_rest.response.build_response`
-  fallback to settings-defined types only, because they don't have
-  an access to the current endpoint.
+  fallbacks to settings-defined renderers in some error cases.
 
 
 Customizing negotiation process
@@ -128,10 +130,6 @@ and :attr:`django_modern_rest.endpoint.Endpoint.response_negotiator_cls`
 to completely change the negotiation logic to fit your needs.
 
 This is possible on per-controller level.
-
-.. note::
-
-  We require to have at least one parser / renderer type for each endpoint.
 
 
 Writing custom parsers and renderers

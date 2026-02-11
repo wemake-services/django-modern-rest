@@ -38,12 +38,16 @@ unit: ## Run unit tests with pytest
 .PHONY: smoke
 smoke: ## Run smoke tests (check that package can be imported without `django.setup`)
 	poetry run python -c 'from django_modern_rest import Controller'
-	# Settings itself can be imported with `.setup()`:
-	poetry run python -c 'from django_modern_rest import settings'
+	# Checks that renderers and parsers can be imported
+	# from settings without `.setup()` call:
+	poetry run python -c 'from django_modern_rest.renderers import *'
+	poetry run python -c 'from django_modern_rest.parsers import *'
 	# Checks that auth can be imported from settings without `.setup()` call:
 	poetry run python -c 'from django_modern_rest.security import *'
 	poetry run python -c 'from django_modern_rest.security.django_session import *'
 	poetry run python -c 'from django_modern_rest.security.jwt import *'
+	# Settings itself can be imported with `.setup()`:
+	poetry run python -c 'from django_modern_rest import settings'
 
 .PHONY: example
 example: ## Run mypy and pytest on example code

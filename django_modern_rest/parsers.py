@@ -41,10 +41,9 @@ class Parser(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
-    @classmethod
     @abc.abstractmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
@@ -104,9 +103,8 @@ class JsonParser(Parser):
     """Works with ``json`` only."""
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,

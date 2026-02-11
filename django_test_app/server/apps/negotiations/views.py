@@ -49,9 +49,8 @@ class XmlParser(Parser):
     content_type: ClassVar[str] = 'application/xml'
 
     @override
-    @classmethod
     def parse(
-        cls,
+        self,
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
@@ -70,13 +69,12 @@ class XmlRenderer(Renderer):
     content_type: ClassVar[str] = 'application/xml'
 
     @override
-    @classmethod
     def render(
-        cls,
+        self,
         to_serialize: Any,
         serializer: Callable[[Any], Any],
     ) -> bytes:
-        preprocessor = cls._wrap_serializer(serializer)
+        preprocessor = self._wrap_serializer(serializer)
         raw_data = xmltodict.unparse(
             preprocessor('', to_serialize)[1],
             preprocessor=preprocessor,
@@ -84,9 +82,8 @@ class XmlRenderer(Renderer):
         assert isinstance(raw_data, str)  # noqa: S101
         return raw_data.encode('utf8')
 
-    @classmethod
     def _wrap_serializer(
-        cls,
+        self,
         serializer: Callable[[Any], Any],
     ) -> Callable[[str, Any], tuple[str, Any]]:
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
@@ -110,8 +107,8 @@ class ContentNegotiationController(
     Controller[PydanticSerializer],
     Body[_RequestModel],
 ):
-    parsers = (JsonParser, XmlParser)
-    renderers = (JsonRenderer, XmlRenderer)
+    parsers = (JsonParser(), XmlParser())
+    renderers = (JsonRenderer(), XmlRenderer())
 
     def post(
         self,

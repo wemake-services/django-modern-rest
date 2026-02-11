@@ -40,8 +40,8 @@ class _BasePayload:
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None
     allow_custom_http_methods: bool = False
     no_validate_http_spec: Set[HttpSpec] | None = None
-    parsers: Sequence[type[Parser]] | None = None
-    renderers: Sequence[type[Renderer]] | None = None
+    parsers: Sequence[Parser] | None = None
+    renderers: Sequence[Renderer] | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
 
     # Context:

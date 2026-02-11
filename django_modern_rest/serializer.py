@@ -45,7 +45,7 @@ class BaseSerializer:
         cls,
         structure: Any,
         *,
-        renderer_cls: type[Renderer],
+        renderer: Renderer,
     ) -> bytes:
         """Convert structured data to json bytestring."""
         raise NotImplementedError
@@ -73,7 +73,7 @@ class BaseSerializer:
         cls,
         buffer: Raw,
         *,
-        parser_cls: type[Parser],
+        parser: Parser,
     ) -> Any:
         """Convert json bytestring to structured data."""
         raise NotImplementedError
