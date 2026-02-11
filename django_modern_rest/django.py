@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from django.utils.datastructures import MultiValueDict
+from django.utils.datastructures import MultiValueDict
 
 
 def convert_multi_value_dict(
