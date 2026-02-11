@@ -34,7 +34,7 @@ from django_modern_rest.settings import Settings
 from django_modern_rest.test import DMRRequestFactory
 
 
-class _XMLParser(Parser):
+class _XmlParser(Parser):
     __slots__ = ()
 
     content_type: ClassVar[str] = 'application/xml'
@@ -58,7 +58,7 @@ class _XMLParser(Parser):
             raise RequestSerializationError(str(exc)) from None
 
 
-class _XMLRenderer(Renderer):
+class _XmlRenderer(Renderer):
     __slots__ = ()
 
     content_type: ClassVar[str] = 'application/xml'
@@ -73,6 +73,11 @@ class _XMLRenderer(Renderer):
         assert isinstance(raw_data, str)
         return raw_data.encode('utf8')
 
+    @property
+    @override
+    def validation_parser(self) -> _XmlParser:
+        return _XmlParser()
+
 
 @pytest.fixture(autouse=True)
 def _setup_parser_and_renderer(
@@ -80,8 +85,8 @@ def _setup_parser_and_renderer(
     dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
-        Settings.parsers: [_XMLParser()],
-        Settings.renderers: [_XMLRenderer()],
+        Settings.parsers: [_XmlParser()],
+        Settings.renderers: [_XmlRenderer()],
     }
 
 
@@ -215,8 +220,8 @@ def test_per_controller_customization(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             parser = request_parser(self.request)
@@ -249,8 +254,8 @@ def test_per_blueprint_customization(
 
     @final
     class _Blueprint(Blueprint[PydanticSerializer], Body[_RequestModel]):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
@@ -286,8 +291,8 @@ def test_per_endpoint_customization(
     @final
     class _BothController(Controller[PydanticSerializer], Body[_RequestModel]):
         @modify(
-            parsers=[_XMLParser(), JsonParser()],
-            renderers=[_XMLRenderer(), JsonRenderer()],
+            parsers=[_XmlParser(), JsonParser()],
+            renderers=[_XmlRenderer(), JsonRenderer()],
         )
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
@@ -351,8 +356,8 @@ def test_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
@@ -445,8 +450,8 @@ def test_wrong_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
@@ -513,8 +518,8 @@ def test_missing_conditional_content_type(
 
     @final
     class _Controller(Controller[PydanticSerializer]):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def get(
             self,
@@ -598,8 +603,8 @@ def test_conditional_body_model(
             ]
         ],
     ):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             if isinstance(self.parsed_body, _RequestModel):
@@ -691,8 +696,8 @@ def test_conditional_body_model_wrong(
             ]
         ],
     ):
-        parsers = [_XMLParser(), JsonParser()]
-        renderers = [_XMLRenderer(), JsonRenderer()]
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             raise NotImplementedError

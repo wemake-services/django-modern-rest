@@ -1,15 +1,16 @@
 from collections.abc import Callable
+from http import HTTPStatus
 from typing import Annotated, Any, ClassVar, TypeAlias, final
 from xml.parsers import expat
 
 import pydantic
 import xmltodict
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import override
 
-from django_modern_rest import Body, Controller
+from django_modern_rest import Body, Controller, ResponseSpec, validate
 from django_modern_rest.exceptions import (
     InternalServerError,
     RequestSerializationError,
@@ -84,6 +85,11 @@ class XmlRenderer(Renderer):
         assert isinstance(raw_data, str)  # noqa: S101
         return raw_data.encode('utf8')
 
+    @property
+    @override
+    def validation_parser(self) -> XmlParser:
+        return XmlParser()
+
     def _wrap_serializer(
         self,
         serializer: Callable[[Any], Any],
@@ -124,3 +130,26 @@ class ContentNegotiationController(
         if self.request.accepts(ContentType.json):
             return list(self.parsed_body.root.values())
         return self.parsed_body.root
+
+    @validate(
+        ResponseSpec(
+            return_type=Annotated[
+                dict[str, str] | list[str],
+                conditional_type({
+                    ContentType.json: list[str],
+                    ContentType.xml: dict[str, str],
+                }),
+            ],
+            status_code=HTTPStatus.CREATED,
+        ),
+    )
+    def put(self) -> HttpResponse:
+        if self.request.accepts(ContentType.json):
+            return self.to_response(
+                list(self.parsed_body.root.values()),
+                status_code=HTTPStatus.CREATED,
+            )
+        return self.to_response(
+            self.parsed_body.root,
+            status_code=HTTPStatus.CREATED,
+        )

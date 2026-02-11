@@ -15,7 +15,6 @@ from django_modern_rest import Controller, FileMetadata
 from django_modern_rest.exceptions import EndpointMetadataError
 from django_modern_rest.parsers import MultiPartParser
 from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.settings import default_parsers
 from django_modern_rest.test import DMRRequestFactory
 
 
@@ -36,8 +35,7 @@ class _FileController(
     FileMetadata[_UploadedFiles],
     Controller[PydanticSerializer],
 ):
-    # TODO: rework how validation searches parsers.
-    parsers = (MultiPartParser(), *default_parsers)
+    parsers = (MultiPartParser(),)
 
     def post(self) -> _UploadedFiles:
         for content_key in self.parsed_file_metadata.model_fields_set:
@@ -153,7 +151,7 @@ class _MultipleFilesController(
     FileMetadata[_MultipleFiles],
     Controller[PydanticSerializer],
 ):
-    parsers = (MultiPartParser(), *default_parsers)
+    parsers = (MultiPartParser(),)
 
     def post(self) -> _MultipleFiles:
         for content_key in self.parsed_file_metadata.model_fields_set:

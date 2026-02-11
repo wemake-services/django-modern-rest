@@ -82,6 +82,12 @@ class MsgspecJsonRenderer(Renderer):
         """
         return _get_serializer(serializer).encode(to_serialize)
 
+    @property
+    @override
+    def validation_parser(self) -> MsgspecJsonParser:
+        """Msgspec can parse this."""
+        return MsgspecJsonParser()
+
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_serializer(

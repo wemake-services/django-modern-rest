@@ -55,6 +55,11 @@ class XmlRenderer(Renderer):
         assert isinstance(raw_data, str)
         return raw_data.encode('utf8')
 
+    @property
+    @override
+    def validation_parser(self) -> XmlParser:
+        return XmlParser()
+
     def _wrap_serializer(
         self,
         serializer: Callable[[Any], Any],

@@ -58,17 +58,18 @@ def response_validation_negotiator(
     Think of it as an internal validation helper.
     """
     parsers = metadata.parsers
-    if renderer is None:
-        # We can fail to find `request_renderer` when `Accept` header
-        # is broken / missing / incorrect.
-        # Then, we fallback to the types we know.
-        content_type = response.headers['Content-Type']
-    else:
-        content_type = renderer.content_type
+    if renderer is not None:
+        return renderer.validation_parser
+
+    # `renderer` can be `None` when `Accept` header
+    # is broken / missing / incorrect.
+    # Then, we fallback to the types we know.
+    content_type = response.headers['Content-Type']
 
     # Our last resort is to get the default renderer type.
     # It is always present.
     return parsers.get(
         content_type,
-        next(reversed(parsers.values())),
+        # If nothing works, fallback to the default parser:
+        next(iter(parsers.values())),
     )

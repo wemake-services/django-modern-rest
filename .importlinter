@@ -25,7 +25,6 @@ layers =
   plugins
   openapi
   serializer
-  # DTOs:
   headers | cookies
   types
   internal

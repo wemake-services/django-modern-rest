@@ -16,6 +16,7 @@ from django_modern_rest.metadata import (
     ResponseSpec,
     ResponseSpecProvider,
 )
+from django_modern_rest.parsers import JsonParser, Parser
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -45,6 +46,19 @@ class Renderer(ResponseSpecProvider):
         serializer: Callable[[Any], Any],
     ) -> bytes:
         """Function to be called on object serialization."""
+
+    @property
+    @abc.abstractmethod
+    def validation_parser(self) -> Parser:
+        """
+        Returns a parser that can parse what this renderer rendered.
+
+        Why? Because when ``validate_responses`` is ``True``,
+        we parse the response body once again to see if it fits the schema.
+
+        That's why all renderers must know how to unparse its results.
+        """
+        raise NotImplementedError
 
     @override
     @classmethod
@@ -159,3 +173,9 @@ class JsonRenderer(Renderer):
             cls=self._encoder_cls,
             serializer=serializer,
         ).encode('utf8')
+
+    @property
+    @override
+    def validation_parser(self) -> JsonParser:
+        """Regular json parser can parse this."""
+        return JsonParser()
