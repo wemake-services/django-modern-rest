@@ -16,7 +16,7 @@ class RequestBodyGenerator:
         """Initialize the RequestBody Generator."""
         self.context = context
 
-    def generate(
+    def __call__(
         self,
         parsers: 'list[ComponentParserSpec]',
         request_parsers: 'dict[str, type[Parser]]',
@@ -28,7 +28,7 @@ class RequestBodyGenerator:
                 continue
 
             parser_type = model[0]
-            reference = self.context.generators.schema.generate(parser_type)
+            reference = self.context.generators.schema(parser_type)
             return RequestBody(
                 content={
                     req_parser.content_type: MediaType(schema=reference)

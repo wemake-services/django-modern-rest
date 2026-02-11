@@ -124,7 +124,7 @@ class _ControllerWithOperationId(Controller[PydanticSerializer]):
 def test_explicit_operation_id(generator: OperationIDGenerator) -> None:
     """Ensure that explicit ``operation_id`` is registered and returned."""
     controller = _ControllerWithOperationId()
-    operation_id = generator.generate(
+    operation_id = generator(
         controller.api_endpoints['GET'],
         path='whatever',
     )

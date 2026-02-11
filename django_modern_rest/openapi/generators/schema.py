@@ -62,7 +62,7 @@ class SchemaGenerator:
         """Init empty registry."""
         self.registry = context.registries.schema
 
-    def generate(self, annotation: Any) -> Schema | Reference:
+    def __call__(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
         simple_schema = _get_schema_from_type_map(
             annotation,
@@ -73,7 +73,7 @@ class SchemaGenerator:
         origin = get_origin(annotation) or annotation
 
         if origin is Annotated:
-            return self.generate(get_args(annotation)[0])
+            return self(get_args(annotation)[0])
 
         generic_schema = _handle_generic_types(
             self,
@@ -109,9 +109,7 @@ class SchemaGenerator:
         required: list[str] = []
 
         for field_definition in field_definitions:
-            schema = self.generate(
-                field_definition.annotation,
-            )
+            schema = self(field_definition.annotation)
 
             if field_definition.kwarg_definition:
                 schema = self._apply_kwarg_definition(
@@ -198,10 +196,10 @@ def _handle_union(
         return TypeMapper.get_schema(NoneType)  # type: ignore[return-value]
 
     if len(real_args) == 1:
-        return generator.generate(real_args[0])
+        return generator(real_args[0])
 
     return Schema(
-        one_of=[generator.generate(arg) for arg in real_args],
+        one_of=[generator(arg) for arg in real_args],
     )
 
 
@@ -212,7 +210,7 @@ def _handle_mapping(
     value_type = args[1] if len(args) >= 2 else Any
     return Schema(
         type=OpenAPIType.OBJECT,
-        additional_properties=generator.generate(value_type),
+        additional_properties=generator(value_type),
     )
 
 
@@ -222,5 +220,5 @@ def _handle_sequence(
 ) -> Schema:
     items_schema = None
     if args:
-        items_schema = generator.generate(args[0])
+        items_schema = generator(args[0])
     return Schema(type=OpenAPIType.ARRAY, items=items_schema)

@@ -18,7 +18,7 @@ class ResponseGenerator:
         """Initialize the Response Generator."""
         self.context = context
 
-    def generate(
+    def __call__(
         self,
         responses: dict[HTTPStatus, 'ResponseSpec'],
         request_parsers: 'dict[str, type[Parser]]',
@@ -29,7 +29,7 @@ class ResponseGenerator:
                 description=status_code.phrase,
                 content={
                     req_parser.content_type: MediaType(
-                        schema=self.context.generators.schema.generate(
+                        schema=self.context.generators.schema(
                             response_spec.return_type,
                         ),
                     )

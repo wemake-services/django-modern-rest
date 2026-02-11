@@ -46,12 +46,12 @@ class _UnsupportedTestModel:
 def test_schema_generator_unsupported_type(generator: SchemaGenerator) -> None:
     """Ensure ``SchemaGenerator`` raises error."""
     with pytest.raises(ValueError, match=r'Field extractor for .* not found'):
-        generator.generate(_UnsupportedTestModel)
+        generator(_UnsupportedTestModel)
 
 
 def test_schema_generator_works(generator: SchemaGenerator) -> None:
     """Ensure ``SchemaGenerator`` generate reference."""
-    ref = generator.generate(_TestModel)
+    ref = generator(_TestModel)
 
     assert isinstance(ref, Reference)
     assert ref.ref == f'#/components/schemas/{_TestModel.__name__}'
@@ -60,8 +60,8 @@ def test_schema_generator_works(generator: SchemaGenerator) -> None:
 
 def test_schema_generator_caching(generator: SchemaGenerator) -> None:
     """Ensure ``SchemaGenerator`` cache reference."""
-    ref1 = generator.generate(_TestModel)
-    ref2 = generator.generate(_TestModel)
+    ref1 = generator(_TestModel)
+    ref2 = generator(_TestModel)
 
     assert isinstance(ref1, Reference)
     assert isinstance(ref2, Reference)
@@ -81,7 +81,7 @@ def test_schema_generator_with_kwarg_definition(
     generator: SchemaGenerator,
 ) -> None:
     """Ensure ``SchemaGenerator`` applies ``KwargDefinition``."""
-    generator.generate(_ConstrainedModel)
+    generator(_ConstrainedModel)
     schema = generator.registry.schemas[_ConstrainedModel.__name__]
 
     assert schema.properties is not None

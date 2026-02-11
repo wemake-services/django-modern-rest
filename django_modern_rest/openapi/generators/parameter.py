@@ -24,7 +24,7 @@ class ParameterGenerator:
         """Initialize the Parameter Generator."""
         self.context = context
 
-    def generate(
+    def __call__(
         self,
         parsers: 'list[ComponentParserSpec]',
     ) -> list[Parameter | Reference] | None:
@@ -64,7 +64,7 @@ class ParameterGenerator:
                 Parameter(
                     name=field.name,
                     param_in=param_in,
-                    schema=self.context.generators.schema.generate(
+                    schema=self.context.generators.schema(
                         field.annotation,
                     ),
                     description=None
