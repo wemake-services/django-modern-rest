@@ -137,6 +137,7 @@ nitpick_ignore = [
     # Undocumented in Django:
     (PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (PY_CLASS, 'django.urls.resolvers.URLResolver'),
+    (PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
     # OpenAPI types used in TYPE_CHECKING blocks:
     (PY_CLASS, 'SecurityRequirement'),
     (PY_CLASS, 'ExternalDocumentation'),

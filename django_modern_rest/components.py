@@ -13,6 +13,7 @@ from typing import (
 
 from typing_extensions import override
 
+from django_modern_rest.django import convert_multi_value_dict
 from django_modern_rest.exceptions import (
     DataParsingError,
     RequestSerializationError,
@@ -222,18 +223,28 @@ class Query(ComponentParser, Generic[_QueryT]):
 
     You can access parsed query as ``self.parsed_query`` attribute.
 
-    .. note::
+    Internally query is represented
+    as :class:`django.utils.datastructures.MultiValueDict` in Django.
+    It supports several values for a single key.
 
-        When working with ``msgspec`` as your serializer,
-        be careful, because
-        :class:`django.http.QueryDict` always returns a list
-        for each key. And ``msgspec`` won't automatically convert
-        a single item list to a regular value.
+    Users can customize how they want their values:
+    as single values or as lists of values.
+    To do so, use ``__dmr_force_list__`` optional attribute.
+    Set it to :class:`frozenset` of values that need to be lists.
+    All other values will be regular single values:
 
-        Use
-        ``Annotated[list[YourType], msgspec.Meta(min_length=1, max_length=1)]``
-        instead of regular values.
+    .. code:: python
 
+        >>> class SearchQuery(pydantic.BaseModel):
+        ...     __dmr_force_list__: ClassVar[frozenset[str]] = frozenset((
+        ...         'query',
+        ...     ))
+        ...
+        ...     query: list[str]
+        ...     reversed: bool
+
+    We don't inference this value in any way, it is up to users to set.
+    Inspecting annotations is hard and produce a lot of errors.
     """
 
     parsed_query: _QueryT
@@ -247,8 +258,13 @@ class Query(ComponentParser, Generic[_QueryT]):
         blueprint: 'Blueprint[BaseSerializer]',
         *,
         field_model: Any,
-    ) -> Any:
-        return blueprint.request.GET
+    ) -> dict[str, Any]:
+        force_list: frozenset[str] = getattr(
+            field_model,
+            '__dmr_force_list__',
+            frozenset(),
+        )
+        return convert_multi_value_dict(blueprint.request.GET, force_list)
 
 
 class Body(ComponentParser, Generic[_BodyT]):

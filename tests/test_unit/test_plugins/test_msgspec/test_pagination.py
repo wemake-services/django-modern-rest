@@ -2,7 +2,7 @@
 
 import json
 from http import HTTPStatus
-from typing import Annotated, Final, NotRequired, TypeAlias, TypeVar, final
+from typing import Final, NotRequired, final
 
 import pytest
 from django.core.paginator import Paginator
@@ -29,20 +29,11 @@ class _User(msgspec.Struct):
     email: str
 
 
-_ItemT = TypeVar('_ItemT')
-
-_SingleItem: TypeAlias = Annotated[
-    _ItemT,
-    msgspec.Meta(min_length=1, max_length=1),
-]
-_IntQuery: TypeAlias = list[int]
-
-
 class _PageQuery(TypedDict):
     """Query parameters for pagination."""
 
-    page_size: NotRequired[_SingleItem[_IntQuery]]
-    page: NotRequired[_SingleItem[_IntQuery]]
+    page_size: NotRequired[int]
+    page: NotRequired[int]
 
 
 _USERS: Final = (
@@ -63,8 +54,8 @@ class _PaginatedUsersController(
 
     def get(self) -> Paginated[_User]:
         """Return paginated list of users."""
-        page = self.parsed_query.get('page', [1])[0]
-        page_size = self.parsed_query.get('page_size', [2])[0]
+        page = self.parsed_query.get('page', 1)
+        page_size = self.parsed_query.get('page_size', 2)
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(
@@ -87,8 +78,8 @@ class _AsyncPaginatedUsersController(
 
     async def get(self) -> Paginated[_User]:
         """Return paginated list of users."""
-        page = self.parsed_query.get('page', [1])[0]
-        page_size = self.parsed_query.get('page_size', [2])[0]
+        page = self.parsed_query.get('page', 1)
+        page_size = self.parsed_query.get('page_size', 2)
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(
