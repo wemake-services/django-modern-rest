@@ -181,3 +181,9 @@ Auth
 .. autoclass:: django_modern_rest.security.AsyncAuth
   :members:
   :inherited-members:
+
+
+Django helpers
+--------------
+
+.. autofunction:: django_modern_rest.django.convert_multi_value_dict
