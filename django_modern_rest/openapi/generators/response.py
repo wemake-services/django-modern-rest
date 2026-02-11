@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class ResponseGenerator:
     """Generator for OpenAPI ``Response`` objects."""
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(
         self,
@@ -29,7 +29,7 @@ class ResponseGenerator:
                 description=status_code.phrase,
                 content={
                     req_parser.content_type: MediaType(
-                        schema=self.context.generators.schema(
+                        schema=self._context.generators.schema(
                             response_spec.return_type,
                         ),
                     )

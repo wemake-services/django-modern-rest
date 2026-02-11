@@ -22,7 +22,7 @@ _CONTEXT_TO_IN: Final = MappingProxyType({
 class ParameterGenerator:
     """Generator for OpenAPI ``Parameter`` objects."""
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(
         self,
@@ -64,7 +64,7 @@ class ParameterGenerator:
                 Parameter(
                     name=field.name,
                     param_in=param_in,
-                    schema=self.context.generators.schema(
+                    schema=self._context.generators.schema(
                         field.annotation,
                     ),
                     description=None

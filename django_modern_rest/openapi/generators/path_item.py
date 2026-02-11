@@ -32,14 +32,14 @@ class PathItemGenerator:
     the operations (GET, POST, PUT, DELETE, etc.) defined for that endpoint.
     """
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(self, mapping: 'ControllerMapping') -> PathItem:
         """Generate an OpenAPI ``PathItem`` from a controller mapping."""
         kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
-            operation = self.context.generators.operation(
+            operation = self._context.generators.operation(
                 endpoint,
                 mapping.path,
             )

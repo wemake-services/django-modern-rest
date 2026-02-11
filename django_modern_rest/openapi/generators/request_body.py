@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class RequestBodyGenerator:
     """Generator for OpenAPI ``RequestBody`` objects."""
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(
         self,
@@ -28,7 +28,7 @@ class RequestBodyGenerator:
                 continue
 
             parser_type = model[0]
-            reference = self.context.generators.schema(parser_type)
+            reference = self._context.generators.schema(parser_type)
             return RequestBody(
                 content={
                     req_parser.content_type: MediaType(schema=reference)

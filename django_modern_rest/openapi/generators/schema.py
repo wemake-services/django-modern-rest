@@ -59,13 +59,13 @@ _KWARG_TO_SCHEMA_MAP: Final = MappingProxyType({
 class SchemaGenerator:
     """Generate ``FieldDefinition`` from dtos."""
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
         simple_schema = _get_schema_from_type_map(
             annotation,
-        ) or self.context.registries.schema.get_reference(annotation)
+        ) or self._context.registries.schema.get_reference(annotation)
         if simple_schema:
             return simple_schema
 
@@ -90,7 +90,7 @@ class SchemaGenerator:
         ).extract_fields(source_type)
         props, required = self._extract_properties(field_definitions)
 
-        return self.context.registries.schema.register(
+        return self._context.registries.schema.register(
             source_type=source_type,
             schema=Schema(
                 type=OpenAPIType.OBJECT,

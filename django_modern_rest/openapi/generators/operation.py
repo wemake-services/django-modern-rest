@@ -20,24 +20,24 @@ class OperationGenerator:
     endpoint and generates a complete Operation specification.
     """
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
         metadata = endpoint.metadata
-        operation_id = self.context.generators.operation_id(
+        operation_id = self._context.generators.operation_id(
             endpoint,
             path,
         )
-        request_body = self.context.generators.request_body(
+        request_body = self._context.generators.request_body(
             metadata.component_parsers,
             metadata.parsers,
         )
-        responses = self.context.generators.response(
+        responses = self._context.generators.response(
             metadata.responses,
             metadata.parsers,
         )
-        params_list = self.context.generators.parameter(
+        params_list = self._context.generators.parameter(
             metadata.component_parsers,
         )
 
@@ -75,7 +75,7 @@ class OperationIDGenerator:
     uniqueness across the OpenAPI specification.
     """
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(self, endpoint: 'Endpoint', path: str) -> str:
         """
@@ -88,7 +88,7 @@ class OperationIDGenerator:
         operation_id = endpoint.metadata.operation_id
 
         if operation_id is not None:
-            self.context.registries.operation_id.register(operation_id)
+            self._context.registries.operation_id.register(operation_id)
             return operation_id
 
         # Generate operation_id from path and method
@@ -96,7 +96,7 @@ class OperationIDGenerator:
         method = endpoint.metadata.method.lower()
         operation_id = self._build_operation_id(method, tokens)
 
-        self.context.registries.operation_id.register(operation_id)
+        self._context.registries.operation_id.register(operation_id)
         return operation_id
 
     def _tokenize_path(self, path: str) -> list[str]:  # noqa: WPS210

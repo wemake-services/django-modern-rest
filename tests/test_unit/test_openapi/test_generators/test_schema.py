@@ -55,7 +55,7 @@ def test_schema_generator_works(generator: SchemaGenerator) -> None:
 
     assert isinstance(ref, Reference)
     assert ref.ref == f'#/components/schemas/{_TestModel.__name__}'
-    assert _TestModel.__name__ in generator.context.registries.schema.schemas
+    assert _TestModel.__name__ in generator._context.registries.schema.schemas
 
 
 def test_schema_generator_caching(generator: SchemaGenerator) -> None:
@@ -66,7 +66,7 @@ def test_schema_generator_caching(generator: SchemaGenerator) -> None:
     assert isinstance(ref1, Reference)
     assert isinstance(ref2, Reference)
     assert ref1.ref == ref2.ref
-    assert len(generator.context.registries.schema.schemas) == 1
+    assert len(generator._context.registries.schema.schemas) == 1
 
 
 def test_handle_sequence_without_args(generator: SchemaGenerator) -> None:
@@ -82,7 +82,7 @@ def test_schema_generator_with_kwarg_definition(
 ) -> None:
     """Ensure ``SchemaGenerator`` applies ``KwargDefinition``."""
     generator(_ConstrainedModel)
-    registry = generator.context.registries.schema
+    registry = generator._context.registries.schema
     schema = registry.schemas[_ConstrainedModel.__name__]
 
     assert schema.properties is not None

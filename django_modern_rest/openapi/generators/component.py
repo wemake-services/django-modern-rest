@@ -20,8 +20,8 @@ class ComponentGenerator:
     that can be referenced throughout the OpenAPI specification.
     """
 
-    context: 'OpenAPIContext'
+    _context: 'OpenAPIContext'
 
     def __call__(self, paths_items: Paths) -> Components:
         """Generate OpenAPI Components from path items."""
-        return Components(schemas=self.context.registries.schema.schemas)
+        return Components(schemas=self._context.registries.schema.schemas)
