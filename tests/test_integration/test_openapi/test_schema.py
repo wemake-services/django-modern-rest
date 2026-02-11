@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 _OPENAPI_URL: Final = reverse('openapi:json')
 schema = st.pytest.from_fixture('api_schema').exclude(
     # This example must be readable, not correct:
-    path='/model-examples/user',
+    path=reverse('api:model_examples:user_model_create'),
 )
 
 

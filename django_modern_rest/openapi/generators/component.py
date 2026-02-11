@@ -22,7 +22,7 @@ class ComponentGenerator:
         """Initialize the Components Generator."""
         self.context = context
 
-    def generate(self, paths_items: Paths) -> Components:
+    def __call__(self, paths_items: Paths) -> Components:
         """Generate OpenAPI Components from path items."""
         return Components(
             schemas=self.context.registries.schema.schemas,

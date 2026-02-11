@@ -27,8 +27,8 @@ class OpenApiBuilder:
         paths_items: Paths = {}
 
         for controller in controller_collector(router.urls):
-            path_item = self.context.generators.path_item.generate(controller)
+            path_item = self.context.generators.path_item(controller)
             paths_items[controller.path] = path_item
 
-        components = self.context.generators.component.generate(paths_items)
+        components = self.context.generators.component(paths_items)
         return self.context.config_merger.merge(paths_items, components)

@@ -22,22 +22,22 @@ class OperationGenerator:
         """Initialize the Operation Generator."""
         self.context = context
 
-    def generate(self, endpoint: 'Endpoint', path: str) -> Operation:
+    def __call__(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
         metadata = endpoint.metadata
-        operation_id = self.context.generators.operation_id.generate(
+        operation_id = self.context.generators.operation_id(
             endpoint,
             path,
         )
-        request_body = self.context.generators.request_body.generate(
+        request_body = self.context.generators.request_body(
             metadata.component_parsers,
             metadata.parsers,
         )
-        responses = self.context.generators.response.generate(
+        responses = self.context.generators.response(
             metadata.responses,
             metadata.parsers,
         )
-        params_list = self.context.generators.parameter.generate(
+        params_list = self.context.generators.parameter(
             metadata.component_parsers,
         )
 
@@ -78,7 +78,7 @@ class OperationIDGenerator:
         """Initialize the Operation ID Generator."""
         self.context = context
 
-    def generate(self, endpoint: 'Endpoint', path: str) -> str:
+    def __call__(self, endpoint: 'Endpoint', path: str) -> str:
         """
         Generate a unique operation ID for an OpenAPI operation.
 

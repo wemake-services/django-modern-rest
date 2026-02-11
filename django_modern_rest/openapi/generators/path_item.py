@@ -34,12 +34,12 @@ class PathItemGenerator:
         """Initialize the PathItem Generator."""
         self.context = context
 
-    def generate(self, mapping: 'ControllerMapping') -> PathItem:
+    def __call__(self, mapping: 'ControllerMapping') -> PathItem:
         """Generate an OpenAPI PathItem from a controller mapping."""
         kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
-            operation = self.context.generators.operation.generate(
+            operation = self.context.generators.operation(
                 endpoint,
                 mapping.path,
             )
