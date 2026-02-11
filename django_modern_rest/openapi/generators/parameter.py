@@ -31,8 +31,8 @@ class ParameterGenerator:
         """Generate parameters from parsers."""
         params_list: list[Parameter | Reference] = []
 
-        for parser_cls, parser_args in parsers:
-            param_in = _CONTEXT_TO_IN.get(parser_cls.context_name)
+        for parser, parser_args in parsers:
+            param_in = _CONTEXT_TO_IN.get(parser.context_name)
 
             if not param_in or not parser_args:
                 continue
