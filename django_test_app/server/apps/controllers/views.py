@@ -60,8 +60,8 @@ class _ConstrainedUserSchema(pydantic.BaseModel):
         max_length=20,  # noqa: WPS432
         pattern=r'^[a-z0-9_]+$',
     )
-    age: int = pydantic.Field(ge=18, le=100)  # noqa: WPS432
-    score: float = pydantic.Field(gt=0, le=10)  # noqa: WPS432
+    age: int = pydantic.Field(ge=18, le=100, strict=True)  # noqa: WPS432
+    score: float = pydantic.Field(gt=0, le=10, strict=True)  # noqa: WPS432
 
 
 @final
