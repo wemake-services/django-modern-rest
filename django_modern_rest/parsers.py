@@ -8,6 +8,7 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from django_modern_rest.exceptions import DataParsingError
+from django_modern_rest.internal.django import parse_as_post
 from django_modern_rest.metadata import (
     EndpointMetadata,
     ResponseSpec,
@@ -141,10 +142,63 @@ class JsonParser(Parser):
 
 
 class SupportsFileParsing:
-    """Mixin class for parsers that can parse files."""
+    """
+    Mixin class for parsers that can parse files.
+
+    We require parsers that can parse files to populate
+    :attr:`django.http.HttpRequest.FILES` and to not return anything.
+    """
+
+    @abc.abstractmethod
+    def parse(
+        self,
+        to_deserialize: Raw,
+        deserializer: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+        strict: bool = True,
+    ) -> None:
+        """Populate ``request.FILES`` if possible."""
 
 
-class MultiPartParser(SupportsFileParsing, Parser):
+class SupportsDjangoDefaultParsing:
+    """
+    Mark for parsers that support default Django's parsing.
+
+    By default Django can parse `multipart/form-data`
+    and `application/x-www-form-urlencoded` in a very specific way.
+    Django only parses :attr:`django.http.HttpRequest.POST`
+    and :attr:`django.http.HttpRequest.FILES`
+    when it receives a real ``POST`` request.
+    Which does not really work for us.
+    We need more methods to be able to send the same content.
+
+    So, parsers that extends this type must:
+    1. Return default parsed objects when method is ``POST``
+    2. Parse similar HTTP methods the same way Django does for ``POST``
+
+    Contract: ``parse()`` method must return ``None``, but populate
+    :attr:`django.http.HttpRequest.POST`
+    and :attr:`django.http.HttpRequest.FILES` if they were missing.
+    """
+
+    @abc.abstractmethod
+    def parse(
+        self,
+        to_deserialize: Raw,
+        deserializer: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+        strict: bool = True,
+    ) -> None:
+        """Populate ``request.POST`` and ``request.FILES`` if possible."""
+
+
+class MultiPartParser(
+    SupportsFileParsing,
+    SupportsDjangoDefaultParsing,
+    Parser,
+):
     """
     Parses multipart form data.
 
@@ -165,7 +219,26 @@ class MultiPartParser(SupportsFileParsing, Parser):
         *,
         request: HttpRequest,
         strict: bool = True,
-    ) -> Any:
+    ) -> None:
         """Returns parsed multipart form data."""
-        # It is already parsed.
-        return request.POST
+        # Circular import:
+        from django_modern_rest.settings import (  # noqa: PLC0415
+            Settings,
+            resolve_setting,
+        )
+
+        if (
+            not getattr(request, '_dmr_parsed_as_post', False)
+            and request.method
+            and (
+                request.method.upper()
+                in resolve_setting(Settings.django_treat_as_post)
+            )
+        ):
+            # By default django only parses `POST` methods.
+            # This is a long-standing feature, not a bug.
+            # https://code.djangoproject.com/ticket/12635
+            # So, we trick django to parse non-POST method as real POST methods.
+            parse_as_post(request)
+
+        # It is already parsed by Django itself, no need to return anything.

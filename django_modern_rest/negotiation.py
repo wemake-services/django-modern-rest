@@ -53,7 +53,7 @@ class RequestNegotiator:
             reverse=True,
         )
         # The last configured parser is the most specific one:
-        self._default = next(reversed(self._parsers.values()))
+        self._default = next(iter(self._parsers.values()))
 
     def __call__(self, request: HttpRequest) -> Parser:
         """
@@ -75,6 +75,10 @@ class RequestNegotiator:
             Parser class for this request.
 
         """
+        parser = request_parser(request)  # Does it already exist?
+        if parser is not None:
+            return parser
+
         parser = self._decide(request)
         request._dmr_parser = parser  # type: ignore[attr-defined]  # noqa: SLF001
         return parser
@@ -117,7 +121,7 @@ class ResponseNegotiator:
         self._renderers = metadata.renderers
         self._renderer_keys = list(self._renderers.keys())
         # The last configured parser is the most specific one:
-        self._default = next(reversed(self._renderers.values()))
+        self._default = next(iter(self._renderers.values()))
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
@@ -198,14 +202,14 @@ class ContentType(enum.StrEnum):
         json: ``'application/json'`` format.
         xml: ``'application/xml'`` format.
         x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
-        form_data: ``'multipart/form-data'`` format.
+        multipart_form_data: ``'multipart/form-data'`` format.
 
     """
 
     json = 'application/json'
     xml = 'application/xml'
     x_www_form_urlencoded = 'application/x-www-form-urlencoded'
-    form_data = 'multipart/form-data'
+    multipart_form_data = 'multipart/form-data'
 
 
 def conditional_type(
