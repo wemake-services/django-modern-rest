@@ -51,3 +51,6 @@ class FileAndJsonController(
             receipt=self.parsed_file_metadata.receipt,
             rules=self.parsed_file_metadata.rules,
         )
+
+
+# run: {"controller": "FileAndJsonController", "url": "/api/users/", "method": "put", "headers": {"Content-Type": "multipart/form-data"}, "files": {"receipt": "receipt.txt", "rules": "rules.txt"}, "body": {"user": "{\"user_id\": 1, \"user_email\": \"example@mail.com\"}"}}  # noqa: ERA001, E501
