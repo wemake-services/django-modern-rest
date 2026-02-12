@@ -134,8 +134,8 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
         (
             {'Content-Type': 'application/xml'},
             _xml_data,
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
         (
             {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
@@ -194,8 +194,8 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
         (
             {},
             b'{"root": {"key": "value"}}',
-            {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
         (
             {'Accept': 'application/xml,application/json'},
@@ -279,8 +279,8 @@ def test_per_blueprint_customization(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == request_data['root']
+    assert response.headers == {'Content-Type': 'application/xml'}
+    assert b'<key>value</key>' in response.content
 
 
 def test_per_endpoint_customization(
@@ -312,8 +312,8 @@ def test_per_endpoint_customization(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == request_data['root']
+    assert response.headers == {'Content-Type': 'application/xml'}
+    assert b'<key>value</key>' in response.content
 
 
 @pytest.mark.parametrize(
@@ -528,7 +528,7 @@ def test_missing_conditional_content_type(
             conditional_type({
                 # Missing `json`:
                 ContentType.xml: str,
-                ContentType.form_data: dict[str, str],
+                ContentType.multipart_form_data: dict[str, str],
             }),
         ]:
             return 'string'
@@ -648,12 +648,12 @@ def test_conditional_body_model(
         (
             {'Content-Type': 'application/xml'},
             b'{"key": "value"}',
-            {'Content-Type': 'application/json'},
+            {'Content-Type': 'application/xml'},
         ),
         (
             {'Content-Type': 'application/json'},
             _xml_data,
-            {'Content-Type': 'application/json'},
+            {'Content-Type': 'application/xml'},
         ),
         # Just wrong json data:
         (

@@ -254,6 +254,36 @@ HTTP Spec validation
   :members:
 
 
+Hacks
+-----
+
+.. data:: django_modern_rest.settings.Settings.django_treat_as_post
+
+  Default: ``frozenset({'PUT', 'PATCH'})``
+
+  By default Django only populates
+  :attr:`django.http.HttpRequest.POST`
+  and :attr:`django.http.HttpRequest.FILES`
+  for ``POST`` requests.
+
+  Some parsers like :class:`~django_modern_rest.parsers.MultiPartParser`
+  require ``.POST`` and ``.FILES`` to be set to work with
+  :class:`~django_modern_rest.components.Body`
+  and :class:`~django_modern_rest.components.FileMetadata`.
+
+  However, we build REST APIs where more methods are in use, not just ``POST``.
+  So, we use this setting to populate ``.POST`` and ``.FILES``
+  when parser is a subtype of either
+  :class:`~django_modern_rest.parsers.SupportsFileParsing`
+  or :class:`~django_modern_rest.parsers.SupportsDjangoDefaultParsing`
+  and we work with components that require request body.
+
+  .. note::
+
+    This is a really advanced setting. If you are not creating
+    your own components or your own parsers - do not change it.
+
+
 Environment variables
 ---------------------
 

@@ -53,9 +53,55 @@ Parsing cookies
 
 .. autoclass:: django_modern_rest.components.Cookies
 
+Parsing files
+~~~~~~~~~~~~~
 
-Base API
---------
+There are several way of how users can send files to a REST API:
+
+1. Via ``multipart/form-data`` requests.
+   It supports passing multiple files at once,
+   it also supports sending other body parameters together with the files.
+   It is the best option for 95% of cases. This way requires our
+   :class:`~django_modern_rest.parsers.MultiPartParser` to be used
+2. Via direct requests with a single file and a concrete content-type metadata
+3. Via base64 encoded strings inside a json / xml files.
+   Is only suitable for really small files
+
+We support all three options.
+The first option is officially supported.
+The second option is not supported yet, but can be, even by user-code only.
+While the third way has no specific support,
+but is possible to be implemented by users directly.
+
+.. autoclass:: django_modern_rest.components.FileMetadata
+
+
+.. rubric:: Sending files with extra body parameters
+
+It might be required to send some files as ``multipart/form-data``
+together with some extra information, like ``user_id``.
+
+This is also supported:
+
+.. literalinclude:: /examples/components/files_with_body.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. rubric:: Sending files with json as a body parameter
+
+You can send complex data together with files as ``multipart/form-data``.
+To do so, you would need to encode json as a string
+and attach it to a form data field.
+
+.. literalinclude:: /examples/components/files_with_json_body.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+
+API Reference
+-------------
 
 .. autoclass:: django_modern_rest.components.ComponentParser
    :members:

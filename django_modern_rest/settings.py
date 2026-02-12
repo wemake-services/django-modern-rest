@@ -1,7 +1,8 @@
 import enum
+import importlib
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import Any, Final, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
 
@@ -11,19 +12,26 @@ from django_modern_rest.internal.cache import (
 )
 from django_modern_rest.openapi.config import OpenAPIConfig
 
+if TYPE_CHECKING:
+    from django_modern_rest.parsers import Parser
+    from django_modern_rest.renderers import Renderer
+
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
-    from django_modern_rest.parsers import JsonParser, Parser
-    from django_modern_rest.renderers import JsonRenderer, Renderer
-
-    default_parsers: list[Parser] = [JsonParser()]
-    default_renderers: list[Renderer] = [JsonRenderer()]
+    # We do that so `lint-imports` won't trigger :)
+    default_parsers: list['Parser'] = [
+        importlib.import_module('django_modern_rest.parsers').JsonParser(),
+    ]
+    default_renderers: list['Renderer'] = [
+        importlib.import_module('django_modern_rest.renderers').JsonRenderer(),
+    ]
 else:  # pragma: no cover
-    from django_modern_rest.plugins.msgspec import (
-        MsgspecJsonParser,
-        MsgspecJsonRenderer,
-    )
+    # We do that so `lint-imports` won't trigger :)
+    plugin = importlib.import_module('django_modern_rest.plugins.msgspec')
+    MsgspecJsonParser = plugin.MsgspecJsonParser
+    MsgspecJsonRenderer = plugin.MsgspecJsonRenderer
+    del plugin  # noqa: WPS420
 
     default_parsers = [MsgspecJsonParser()]
     default_renderers = [MsgspecJsonRenderer()]
@@ -49,6 +57,7 @@ class Settings(enum.StrEnum):
     responses = 'responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
+    django_treat_as_post = 'django_treat_as_post'
 
 
 @final
@@ -98,6 +107,8 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.global_error_handler: (
         'django_modern_rest.errors.global_error_handler'
     ),
+    # Settings for middleware:
+    Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
 }
 
 assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101

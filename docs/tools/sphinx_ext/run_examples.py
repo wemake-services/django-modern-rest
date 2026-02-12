@@ -1,7 +1,8 @@
 """
 This file contains code adapted from Litestar.
 
-See: https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples.py.
+See:
+https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples.py
 """
 
 from __future__ import annotations
