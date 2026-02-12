@@ -35,7 +35,7 @@ class _OutputPayload(pydantic.BaseModel):
 
 
 @final
-class _FileAndBodyController(
+class FileAndBodyController(
     Controller[PydanticSerializer],
     Body[_BodyPayload],
     FileMetadata[_UploadedFiles],
@@ -51,3 +51,6 @@ class _FileAndBodyController(
             receipt=self.parsed_file_metadata.receipt,
             rules=self.parsed_file_metadata.rules,
         )
+
+
+# run: {"controller": "FileAndBodyController", "url": "/api/users/", "method": "post", "headers": {"Content-Type": "multipart/form-data"}, "files": {"receipt": "receipt.txt", "rules": "rules.txt"}, "body": {"user_id": 1, "user_email": "example@mail.com"}}  # noqa: ERA001, E501
