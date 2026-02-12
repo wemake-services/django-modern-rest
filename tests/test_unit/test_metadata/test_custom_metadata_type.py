@@ -4,6 +4,7 @@ from http import HTTPMethod, HTTPStatus
 import pytest
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.middleware.csrf import get_token
 from typing_extensions import override
 
 from django_modern_rest import (
@@ -54,6 +55,9 @@ def test_no_extras_metadata(
     assert metadata.responses.keys() == {HTTPStatus.OK}
 
     request = dmr_rf.generic(str(method), '/whatever/', data={})
+    csrf_token = get_token(request)
+    request.META['HTTP_X_CSRFTOKEN'] = csrf_token
+    request.COOKIES['csrftoken'] = csrf_token
     request.user = User()
 
     response = _NoExtrasController.as_view()(request)

@@ -107,3 +107,14 @@ class NotAuthenticatedError(Exception):
     def __init__(self, msg: str = 'Not authenticated') -> None:
         """Provides default error message."""
         super().__init__(msg)
+
+
+@final
+class PermissionDeniedError(Exception):
+    """Raised when user does not have permission to perform action."""
+
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.FORBIDDEN
+
+    def __init__(self, msg: str = 'Permission denied') -> None:
+        """Provides default error message."""
+        super().__init__(msg)

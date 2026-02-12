@@ -37,7 +37,7 @@ class _CustomHeaders(pydantic.BaseModel):
 
 class _UserInput(pydantic.BaseModel):
     email: str
-    age: int
+    age: int = pydantic.Field(strict=True)
 
 
 @final
