@@ -169,6 +169,11 @@ class ResponseValidator:
         else:
             model = schema.return_type
 
+        # This does not happen by default in strict mode,
+        # but we use `b''` or `''` as empty or `None` body:
+        if model is None and structured in {'', b''}:
+            structured = None
+
         try:
             self.serializer.from_python(
                 structured,

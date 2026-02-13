@@ -14,3 +14,4 @@ from django_modern_rest.headers import HeaderSpec as HeaderSpec
 from django_modern_rest.headers import NewHeader as NewHeader
 from django_modern_rest.metadata import ResponseSpec as ResponseSpec
 from django_modern_rest.response import APIError as APIError
+from django_modern_rest.response import APIRedirectError as APIRedirectError

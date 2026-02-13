@@ -44,6 +44,9 @@ Response, headers and cookies
 .. autoexception:: django_modern_rest.response.APIError
   :members:
 
+.. autoexception:: django_modern_rest.response.APIRedirectError
+  :members:
+
 .. autofunction:: django_modern_rest.response.build_response
 
 .. autoclass:: django_modern_rest.headers.HeaderSpec

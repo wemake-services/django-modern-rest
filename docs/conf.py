@@ -118,6 +118,7 @@ nitpick_ignore = [
     (PY_CLASS, 'AsyncErrorHandler'),
     (PY_CLASS, '_MethodSyncHandler'),
     (PY_CLASS, '_MethodAsyncHandler'),
+    (PY_CLASS, '_StrOrPromise'),
     (PY_CLASS, 'django_modern_rest.decorators._ReturnT'),
     (PY_CLASS, 'django_modern_rest.decorators._ViewT'),
     (PY_CLASS, 'django_modern_rest.decorators._TypeT'),
@@ -146,14 +147,15 @@ nitpick_ignore = [
     (PY_CLASS, 'Reference'),
     (PY_CLASS, 'Paths'),
     (PY_CLASS, 'Responses'),
-    # Looks like a bug:
-    (PY_CLASS, 'dict[str'),
 ]
 
 qualname_overrides = {
     # Django documents these classes under re-exported path names:
     'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
     'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
+    'django.http.response.HttpResponseRedirect': (
+        'django:django.http.HttpResponseRedirect'
+    ),
     'django.http.response.HttpResponseBase': (
         'django:django.http.HttpResponseBase'
     ),

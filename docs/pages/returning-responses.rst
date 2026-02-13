@@ -224,6 +224,25 @@ It is used to describe cookies that:
   ``Session`` and ``session`` are two different cookies.
 
 
+Redirects
+---------
+
+We support returning redirects from API endpoins with
+:class:`~django_modern_rest.response.APIRedirectError` custom exception:
+
+.. literalinclude:: /examples/returning_responses/redirect_error.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+And default Django's :class:`django.http.HttpResponseRedirect`:
+
+.. literalinclude:: /examples/returning_responses/redirect_response.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+
 .. _response_validation:
 
 Response validation
