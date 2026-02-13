@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 from django.http import HttpRequest, HttpResponse
 
 if TYPE_CHECKING:
+    from django_modern_rest import Controller
     from django_modern_rest.metadata import ResponseSpec
+    from django_modern_rest.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny: TypeAlias = Callable[..., Any]
@@ -52,13 +54,13 @@ def create_sync_dispatch(
     """Create synchronous dispatch wrapper."""
 
     def dispatch(  # noqa: WPS430
-        self: Any,
+        self: 'Controller[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        if request.method not in self.api_endpoints:
-            return self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return]
+        if request.method and request.method not in self.api_endpoints:
+            return self.handle_method_not_allowed(request.method)
 
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
@@ -81,13 +83,13 @@ def create_async_dispatch(
     """Create asynchronous dispatch wrapper."""
 
     async def dispatch(  # noqa: WPS430
-        self: Any,
+        self: 'Controller[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        if request.method not in self.api_endpoints:
-            return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return]
+        if request.method and request.method not in self.api_endpoints:
+            return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return, misc]
 
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
