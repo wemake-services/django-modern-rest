@@ -17,9 +17,9 @@ _ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 
 def json_serializer(schema: ConvertedSchema) -> SerializedSchema:
     """
-    Serialize `ConvertedSchema` to decoded JSON string.
+    Serialize ``ConvertedSchema`` to decoded JSON string.
 
-    Uses the configured serializer from `DMR` settings to convert
+    Uses the configured serializer from DMR settings to convert
     the schema to JSON format.
 
     Args:

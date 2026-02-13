@@ -51,10 +51,7 @@ class OpenAPIContext:
     generation process. Provides access to different generators.
     """
 
-    def __init__(
-        self,
-        config: 'OpenAPIConfig',
-    ) -> None:
+    def __init__(self, config: 'OpenAPIConfig') -> None:
         """Initialize the OpenAPI context."""
         self.config = config
         self.config_merger = ConfigMerger(self)

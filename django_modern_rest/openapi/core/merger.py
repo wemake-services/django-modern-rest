@@ -1,3 +1,4 @@
+import dataclasses
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects import (
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class ConfigMerger:
     """
     Merges OpenAPI configuration with generated paths and components.
@@ -20,15 +22,9 @@ class ConfigMerger:
     a complete OpenAPI specification object.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the merger with OpenAPI context."""
-        self.context = context
+    context: 'OpenAPIContext'
 
-    def merge(
-        self,
-        paths: Paths,
-        components: Components,
-    ) -> OpenAPI:
+    def __call__(self, paths: Paths, components: Components) -> OpenAPI:
         """Merge paths and components with configuration."""
         config = self.context.config
         return OpenAPI(
