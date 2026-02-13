@@ -30,7 +30,7 @@ def test_head_method(dmr_rf: DMRRequestFactory) -> None:
     response = cast(HttpResponse, _HeadController.as_view()(request))
 
     assert response.status_code == HTTPStatus.OK
-    assert response.content == b'null'
+    assert response.content == b''
 
 
 class _GetController(Controller[PydanticSerializer]):

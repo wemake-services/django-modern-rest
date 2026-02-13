@@ -1,4 +1,3 @@
-import json
 from http import HTTPStatus
 from typing import final
 
@@ -44,7 +43,7 @@ def test_meta_sync(dmr_rf: DMRRequestFactory) -> None:
         'Allow': 'OPTIONS, POST, PUT',
         'Content-Type': 'application/json',
     }
-    assert json.loads(response.content) is None
+    assert response.content == b''
 
 
 @final
@@ -80,4 +79,4 @@ async def test_meta_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
         'Allow': 'DELETE, GET, OPTIONS',
         'Content-Type': 'application/json',
     }
-    assert json.loads(response.content) is None
+    assert response.content == b''

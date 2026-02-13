@@ -395,7 +395,7 @@ def test_validate_empty_response(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.NO_CONTENT
-    assert json.loads(response.content) is None
+    assert response.content == b''
 
 
 class _TypedDictResponse(TypedDict):

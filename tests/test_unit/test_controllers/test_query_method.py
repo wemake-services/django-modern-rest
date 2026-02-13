@@ -30,4 +30,4 @@ def test_query_method(dmr_rf: DMRRequestFactory) -> None:
     response = cast(HttpResponse, _QueryController.as_view()(request))
 
     assert response.status_code == HTTPStatus.OK
-    assert response.content == b'null'
+    assert response.content == b''

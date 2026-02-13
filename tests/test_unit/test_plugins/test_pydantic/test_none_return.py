@@ -1,4 +1,3 @@
-import json
 from http import HTTPStatus
 from typing import final
 
@@ -26,4 +25,4 @@ def test_pydantic_none_return(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.NO_CONTENT
-    assert json.loads(response.content) is None
+    assert response.content == b''

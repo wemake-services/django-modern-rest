@@ -31,7 +31,7 @@ from django_modern_rest.openapi.objects import (
 )
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import APIError
+from django_modern_rest.response import APIError, APIRedirectError
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.settings import (
@@ -289,12 +289,12 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = await func(active_blueprint)
-            except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
+            except (APIError, APIRedirectError) as exc:
                 func_result = active_blueprint.to_error(
-                    exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
+                    exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
-                    cookies=exc.cookies,
+                    cookies=getattr(exc, 'cookies', None),
                 )
             except Exception as exc:
                 func_result = await self.handle_async_error(controller, exc)
@@ -329,12 +329,12 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = func(active_blueprint)
-            except APIError as exc:  # pyright: ignore[reportUnknownVariableType]
+            except (APIError, APIRedirectError) as exc:
                 func_result = active_blueprint.to_error(
-                    exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
+                    exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
-                    cookies=exc.cookies,
+                    cookies=getattr(exc, 'cookies', None),
                 )
             except Exception as exc:
                 func_result = self.handle_error(controller, exc)
