@@ -23,6 +23,7 @@ from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
 from typing import Any, ClassVar, Final, TypeAlias, cast, final
+from urllib.parse import urlencode
 
 import httpx
 import uvicorn
@@ -352,6 +353,10 @@ def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
         clean_args.extend(['-d', body_data])
     elif content_type == 'application/xml':
         body_data = xmltodict.unparse(run_args['body'], full_document=False)
+        args.extend(['-d', body_data])
+        clean_args.extend(['-d', body_data])
+    elif content_type == 'application/x-www-form-urlencoded':
+        body_data = urlencode(run_args['body'])
         args.extend(['-d', body_data])
         clean_args.extend(['-d', body_data])
     elif content_type == 'multipart/form-data':

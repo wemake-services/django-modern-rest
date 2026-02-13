@@ -57,13 +57,11 @@ class _DMRMixin:  # noqa: WPS338
             *args,
             **kwargs,
         ):
-            if isinstance(self, AsyncRequestFactory):
+            if isinstance(self, AsyncRequestFactory) or content_type is None:
                 content_type = (kwargs.get('headers', {}) or {}).get(
                     'Content-Type',
                     self.default_content_type,
                 )
-            elif content_type is None:
-                content_type = self.default_content_type
             return super().generic(
                 method,
                 path,

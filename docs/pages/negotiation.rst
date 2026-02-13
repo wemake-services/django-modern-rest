@@ -235,6 +235,9 @@ Existing parsers and renderers
 .. autoclass:: django_modern_rest.parsers.MultiPartParser
   :members:
 
+.. autoclass:: django_modern_rest.parsers.FormUrlEncodedParser
+  :members:
+
 
 Advanced API
 ------------

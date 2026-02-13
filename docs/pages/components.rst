@@ -43,6 +43,21 @@ Parsing request body
 
 .. autoclass:: django_modern_rest.components.Body
 
+Body can be anything: json, xml,
+``application/x-www-form-urlencoded``, or ``multipart/form-data``.
+
+It depends on the :class:`~django_modern_rest.parsers.Parser`
+that is being used for the endpoint.
+
+Here's an example how one can send ``application/x-www-form-urlencoded``
+form data to an API endpoint with the help
+of :class:`~django_modern_rest.parsers.FormUrlEncodedParser`:
+
+.. literalinclude:: /examples/components/form_body.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
 Parsing path parameters
 ~~~~~~~~~~~~~~~~~~~~~~~
 

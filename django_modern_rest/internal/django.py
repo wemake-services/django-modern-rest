@@ -39,7 +39,7 @@ from typing import Any, Final, TypeAlias
 from django.core.exceptions import TooManyFilesSent
 from django.core.files.uploadedfile import UploadedFile
 from django.http.multipartparser import MultiPartParser, MultiPartParserError
-from django.http.request import HttpRequest
+from django.http.request import HttpRequest, QueryDict
 from django.utils.datastructures import MultiValueDict
 
 from django_modern_rest.exceptions import RequestSerializationError
@@ -106,8 +106,19 @@ def parse_as_post(request: HttpRequest) -> None:
         request._dmr_parsed_as_post = True  # type: ignore[attr-defined]
         return
 
-    # TODO: support `application/x-www-form-urlencoded`
-    raise NotImplementedError
+    # Django only supports two content types natively,
+    # so others should not be passed:
+    assert request.content_type == 'application/x-www-form-urlencoded'  # noqa: S101
+    # According to RFC 1866, the "application/x-www-form-urlencoded"
+    # content type does not have a charset and should be always treated
+    # as UTF-8.
+    if request.encoding is not None and request.encoding.lower() != 'utf-8':
+        raise RequestSerializationError(
+            "HTTP requests with the 'application/x-www-form-urlencoded' "
+            'content type must be UTF-8 encoded.',
+        )
+    request._post = QueryDict(request.body, encoding='utf-8')  # type: ignore[attr-defined]
+    request._files = MultiValueDict()  # type: ignore[attr-defined]
 
 
 _FileMetadata: TypeAlias = dict[str, Any]
