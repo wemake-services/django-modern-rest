@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 from django.http import HttpRequest, HttpResponse
 
 if TYPE_CHECKING:
+    from django_modern_rest import Controller
     from django_modern_rest.metadata import ResponseSpec
+    from django_modern_rest.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny: TypeAlias = Callable[..., Any]
@@ -45,18 +47,21 @@ def apply_converter(
 
 
 def create_sync_dispatch(
-    original_dispatch: Callable[..., Any],
+    original_dispatch: _CallableAny,
     middleware: MiddlewareDecorator,
     converter: _ConverterSpec,
-) -> Callable[..., HttpResponse]:
+) -> _CallableAny:
     """Create synchronous dispatch wrapper."""
 
     def dispatch(  # noqa: WPS430
-        self: Any,
+        self: 'Controller[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        if request.method and request.method not in self.api_endpoints:
+            return self.handle_method_not_allowed(request.method)
+
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
@@ -71,18 +76,21 @@ def create_sync_dispatch(
 
 
 def create_async_dispatch(
-    original_dispatch: Callable[..., Any],
+    original_dispatch: _CallableAny,
     middleware: MiddlewareDecorator,
     converter: _ConverterSpec,
-) -> Callable[..., Any]:
+) -> _CallableAny:
     """Create asynchronous dispatch wrapper."""
 
     async def dispatch(  # noqa: WPS430
-        self: Any,
+        self: 'Controller[BaseSerializer]',
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        if request.method and request.method not in self.api_endpoints:
+            return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return, misc]
+
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,

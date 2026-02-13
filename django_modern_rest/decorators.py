@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from django.http import HttpResponseBase
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 
 from django_modern_rest.internal.middleware_wrapper import (
     DecoratorWithResponses,
@@ -92,7 +91,7 @@ def wrap_middleware(
 
         def decorator(cls: _TypeT) -> _TypeT:
             do_wrap_dispatch(cls, middleware, converter_spec)
-            return dispatch_decorator(csrf_exempt)(cls)
+            return cls
 
         return DecoratorWithResponses(
             decorator=decorator,  # pyrefly: ignore [bad-argument-type]
