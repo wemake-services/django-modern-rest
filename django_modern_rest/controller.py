@@ -8,9 +8,10 @@ from typing import (
     TypeVar,
 )
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.utils.functional import cached_property, classproperty
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import deprecated, override
 
 from django_modern_rest.components import (
@@ -413,6 +414,18 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             for canonical in blueprint._existing_http_methods  # noqa: SLF001
         }
         cls._is_async = cls.controller_validator_cls()(cls)
+
+    @override
+    @classmethod
+    def as_view(cls, **initkwargs: Any) -> Callable[..., HttpResponseBase]:
+        """
+        Returns a view function for the class-based view.
+
+        This override applies CSRF exemption to the view. Session-based
+        authentication will still be explicitly validated for CSRF,
+        while all other authentication methods will be CSRF-exempt.
+        """
+        return csrf_exempt(super().as_view(**initkwargs))
 
     @override
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
