@@ -4,10 +4,15 @@ from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
+from django.core.exceptions import BadRequest, TooManyFilesSent
 from django.http import HttpRequest
+from django.http.multipartparser import MultiPartParserError
 from typing_extensions import override
 
-from django_modern_rest.exceptions import DataParsingError
+from django_modern_rest.exceptions import (
+    DataParsingError,
+    RequestSerializationError,
+)
 from django_modern_rest.internal.django import parse_as_post
 from django_modern_rest.metadata import (
     EndpointMetadata,
@@ -241,4 +246,65 @@ class MultiPartParser(
             # So, we trick django to parse non-POST method as real POST methods.
             parse_as_post(request)
 
+        try:
+            # We need to force django to evaluate the request's body now.
+            # So, any errors that will happen will happen here.
+            request.POST, request.FILES  # noqa: B018  # pyright: ignore[reportUnusedExpression]
+        except (MultiPartParserError, TooManyFilesSent) as exc:
+            raise RequestSerializationError(str(exc)) from None
+        # It is already parsed by Django itself, no need to return anything.
+
+
+class FormUrlEncodedParser(
+    SupportsDjangoDefaultParsing,
+    Parser,
+):
+    """
+    Parses www urlencoded forms.
+
+    In reallity this is a quite tricky parser.
+    Since, Django already parses ``application/x-www-form-urlencoded``
+    content natively, there's no reason to duplicate its work.
+    So, we return original Django's content.
+    """
+
+    content_type: ClassVar[str] = 'application/x-www-form-urlencoded'
+    """Works with urlencoded forms."""
+
+    @override
+    def parse(
+        self,
+        to_deserialize: Raw,
+        deserializer: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+        strict: bool = True,
+    ) -> None:
+        """Returns parsed form data."""
+        # Circular import:
+        from django_modern_rest.settings import (  # noqa: PLC0415
+            Settings,
+            resolve_setting,
+        )
+
+        if (
+            not getattr(request, '_dmr_parsed_as_post', False)
+            and request.method
+            and (
+                request.method.upper()
+                in resolve_setting(Settings.django_treat_as_post)
+            )
+        ):
+            # By default django only parses `POST` methods.
+            # This is a long-standing feature, not a bug.
+            # https://code.djangoproject.com/ticket/12635
+            # So, we trick django to parse non-POST method as real POST methods.
+            parse_as_post(request)
+
+        try:
+            # We need to force django to evaluate the request's body now.
+            # So, any errors that will happen will happen here.
+            request.POST  # noqa: B018
+        except BadRequest as exc:
+            raise RequestSerializationError(str(exc)) from None
         # It is already parsed by Django itself, no need to return anything.

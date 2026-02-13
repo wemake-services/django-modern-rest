@@ -28,7 +28,7 @@ def test_multipart_correct_request(
     rf: RequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures we can send empty bytes to our json parser."""
+    """Ensures we can send valid body to our parser."""
     request_data = {'username': faker.name(), 'age': faker.pyint()}
     request = rf.post(
         '/whatever/',
@@ -47,7 +47,7 @@ def test_multipart_empty_request(
     rf: RequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures we can send empty bytes to our json parser."""
+    """Ensures we can send empty bytes to our parser."""
     request = rf.post(
         '/whatever/',
         data={},

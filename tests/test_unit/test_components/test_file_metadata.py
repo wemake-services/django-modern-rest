@@ -4,6 +4,7 @@ from typing import ClassVar, Literal, final
 
 import pydantic
 import pytest
+from django.conf import LazySettings
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory
@@ -352,6 +353,57 @@ def test_send_files_with_body_invalid(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {'msg': 'Invalid content length: -1', 'type': 'value_error'},
+        ],
+    })
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.POST,
+        HTTPMethod.PUT,
+        HTTPMethod.PATCH,
+    ],
+)
+def test_file_metadata_too_many_files(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+    settings: LazySettings,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Ensures we can limit the number of files in the settings."""
+    settings.DATA_UPLOAD_MAX_NUMBER_FILES = 1
+
+    rules = faker.name().encode('utf8')
+    receipt = faker.name().encode('utf8')
+    request = dmr_rf.generic(
+        str(method),
+        '/whatever/',
+        dmr_rf._encode_data(
+            {
+                'receipt': SimpleUploadedFile('receipt.txt', receipt),
+                'rules': SimpleUploadedFile('rules.txt', rules),
+            },
+            MULTIPART_CONTENT,
+        ),
+        headers={'Content-Type': MULTIPART_CONTENT},
+    )
+
+    response = _FileAndBodyController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'The number of files exceeded '
+                    'settings.DATA_UPLOAD_MAX_NUMBER_FILES.'
+                ),
+                'type': 'value_error',
+            },
         ],
     })
 
