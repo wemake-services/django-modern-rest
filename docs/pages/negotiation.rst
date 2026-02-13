@@ -27,9 +27,10 @@ How parser and renderer are selected
 ------------------------------------
 
 We select a :class:`~django_modern_rest.parsers.Parser` instance
-if there's a :class:`~django_modern_rest.components.Body` component to parse.
-Otherwise, for performance reasons, no parser is selected
-and body is not parsed at all.
+if there's a :class:`~django_modern_rest.components.Body`
+or :class:`~django_modern_rest.components.FileMetadata` components to parse.
+Otherwise, for performance reasons, no parser is selected at all.
+Nothing to parse - no parser is selected.
 
 Here's how we select a parser, when it is needed:
 
@@ -229,4 +230,17 @@ Existing parsers and renderers
   :members:
 
 .. autoclass:: django_modern_rest.renderers.JsonRenderer
+  :members:
+
+.. autoclass:: django_modern_rest.parsers.MultiPartParser
+  :members:
+
+
+Advanced API
+------------
+
+.. autoclass:: django_modern_rest.parsers.SupportsFileParsing
+  :members:
+
+.. autoclass:: django_modern_rest.parsers.SupportsDjangoDefaultParsing
   :members:

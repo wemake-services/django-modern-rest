@@ -13,15 +13,15 @@ from typing import (
 
 from typing_extensions import override
 
-from django_modern_rest.django import (
-    convert_multi_value_dict,
-    exctract_files_metadata,
-)
 from django_modern_rest.exceptions import (
     DataParsingError,
     EndpointMetadataError,
     RequestSerializationError,
     UnsolvableAnnotationsError,
+)
+from django_modern_rest.internal.django import (
+    convert_multi_value_dict,
+    exctract_files_metadata,
 )
 from django_modern_rest.metadata import (
     EndpointMetadata,
@@ -30,6 +30,7 @@ from django_modern_rest.metadata import (
 )
 from django_modern_rest.negotiation import get_conditional_types
 from django_modern_rest.parsers import (
+    SupportsDjangoDefaultParsing,
     SupportsFileParsing,
 )
 from django_modern_rest.types import (
@@ -210,6 +211,7 @@ class ComponentParser(ResponseSpecProvider):
         Validates that the component is correctly defined.
 
         By default does nothing.
+        Runs in import time.
         """
 
 
@@ -315,6 +317,10 @@ class Body(ComponentParser, Generic[_BodyT]):
 
     parsed_body: _BodyT
     context_name: ClassVar[str] = 'parsed_body'
+    django_default_content_types: ClassVar[frozenset[str]] = frozenset((
+        'multipart/form-data',
+        'application/x-www-form-urlencoded',
+    ))
 
     @override
     @classmethod
@@ -326,6 +332,16 @@ class Body(ComponentParser, Generic[_BodyT]):
         field_model: Any,
     ) -> Any:
         parser = endpoint.request_negotiator(blueprint.request)
+        if isinstance(parser, SupportsDjangoDefaultParsing):
+            # Special case, since this is the default content type
+            # for Django's request body, it is already parsed.
+            # No double work will be done:
+            parser.parse(
+                b'',  # it does not matter what to send here.
+                deserializer=blueprint.serializer.deserialize_hook,
+                request=blueprint.request,
+            )
+            return blueprint.request.POST
 
         try:
             return blueprint.serializer.deserialize(
@@ -516,17 +532,70 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     Parses files metadata from :attr:`django.http.HttpRequest.FILES`.
 
     Django handles files itself natively, we don't need to do anything
-    in ``django_modern_rest``. But, we need a way to represent the metadata.
+    in ``django_modern_rest``. Everything just works, including all
+    Django's advanced file features like customizing the storage backends.
 
-    This class is designed to validate file metadata.
+    But, we need a way to represent and validate the metadata.
 
-    TODO: add example
+    This class is designed to do just that: validate files' metadata.
 
-    You can access parsed cookies as ``self.parsed_file_metadata`` attribute.
+    .. code:: python
+
+        >>> from typing import Literal
+        >>> import pydantic
+        >>> from django_modern_rest import Controller, FileMetadata
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from django_modern_rest.parsers import MultiPartParser
+
+        >>> class TextFile(pydantic.BaseModel):
+        ...     # Will validate that all files are text files
+        ...     # and are less than 1000 bytes in size:
+        ...     name: str
+        ...     content_type: Literal['text/plain']
+        ...     size: int = pydantic.Field(lt=1000)
+
+        >>> class ContractPayload(pydantic.BaseModel):
+        ...     receipt: TextFile
+        ...     contract: TextFile
+
+        >>> class ContractController(
+        ...     FileMetadata[ContractPayload],
+        ...     Controller[PydanticSerializer],
+        ... ):
+        ...     parsers = (MultiPartParser(),)
+        ...
+        ...     def post(self) -> str:
+        ...         return 'Valid files!'
+
+    What attributes are available to be validated?
+    See :class:`django.core.files.uploadedfile.UploadedFile`
+    for the full list of metadata attributes.
+
+    Users can customize how they want their file metadata values:
+    as single values or as lists of values.
+    To do so, use ``__dmr_force_list__`` optional attribute.
+    Set it to :class:`frozenset` of file keys that need to be lists.
+    All other values will be regular single values:
+
+    .. code:: python
+
+        >>> class ContractPayload(pydantic.BaseModel):
+        ...     __dmr_force_list__: ClassVar[frozenset[str]] = frozenset((
+        ...         'receipts',
+        ...     ))
+        ...
+        ...     receipts: list[TextFile]
+        ...     contract: TextFile
+
+    This will parse a ``multipart/form-data`` request with potentially multiple
+    receipts and a single contract files.
+
+    You can access parsed files' metadata
+    as ``self.parsed_file_metadata`` attribute.
 
     .. seealso::
 
-        https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cookie
+        https://docs.djangoproject.com/en/6.0/topics/http/file-uploads/
 
     """
 
@@ -542,6 +611,25 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         *,
         field_model: Any,
     ) -> Mapping[str, Any]:
+        parser = endpoint.request_negotiator(blueprint.request)
+        if not isinstance(parser, SupportsFileParsing):
+            raise RequestSerializationError(
+                f'Trying to parse files with {type(parser).__name__!r} '
+                'that does not support SupportsFileParsing protocol',
+            )
+
+        # NOTE: double parsing does not happen.
+        # Cases:
+        # 1. `Body[]` exists: we set the parsing results on first request
+        #    parsing and reuse it
+        # 2. It is a single component: we reuse `request.FILES`
+        #    when it is possible.
+        parser.parse(
+            b'',  # it does not matter what to send here.
+            deserializer=blueprint.serializer.deserialize_hook,
+            request=blueprint.request,
+        )
+
         force_list: frozenset[str] = getattr(
             field_model,
             '__dmr_force_list__',
@@ -558,6 +646,8 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         This component requires at least one
         :class:`django_modern_rest.parsers.SupportsFileParser` instance
         to be present in parsers.
+
+        Runs in import time.
         """
         if not any(
             isinstance(parser, SupportsFileParsing)

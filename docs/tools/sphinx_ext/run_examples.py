@@ -1,7 +1,8 @@
 """
 This file contains code adapted from Litestar.
 
-See: https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples.py.
+See:
+https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples.py
 """
 
 from __future__ import annotations
@@ -251,7 +252,7 @@ def _process_single_example(
     url_path: str,
 ) -> str:
     """Process a single example configuration."""
-    args, clean_args = _build_curl_request(run_args, port, url_path)
+    args, clean_args = _build_curl_request(app_file, run_args, port, url_path)
 
     proc = subprocess.run(  # noqa: PLW1510, S603
         args,
@@ -287,6 +288,7 @@ _CurlCleanArgs: TypeAlias = list[str]
 
 
 def _build_curl_request(
+    app_file: Path,
     run_args: _AppRunArgs,
     port: int,
     url_path: str,
@@ -305,7 +307,7 @@ def _build_curl_request(
 
     _add_curl_flags(args, clean_args, run_args)
     _add_method(args, clean_args, run_args)
-    _add_body_and_content_type(args, clean_args, run_args)
+    _add_body_and_content_type(app_file, args, clean_args, run_args)
     _add_headers(args, clean_args, run_args)
 
     return args, clean_args
@@ -331,7 +333,8 @@ def _add_method(
     clean_args.extend(['-X', method])
 
 
-def _add_body_and_content_type(
+def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
+    app_file: Path,
     args: list[str],
     clean_args: list[str],
     run_args: _AppRunArgs,
@@ -345,13 +348,24 @@ def _add_body_and_content_type(
     )
     if content_type == 'application/json' or content_type is None:
         body_data = json.dumps(run_args['body'])
+        args.extend(['-d', body_data])
+        clean_args.extend(['-d', body_data])
     elif content_type == 'application/xml':
         body_data = xmltodict.unparse(run_args['body'], full_document=False)
+        args.extend(['-d', body_data])
+        clean_args.extend(['-d', body_data])
+    elif content_type == 'multipart/form-data':
+        for body_key, body_value in run_args.get('body', {}).items():
+            body_args = ['-F', f'{body_key}={body_value}']
+            args.extend(body_args)
+            clean_args.extend(body_args)
+        for body_key, body_value in run_args.get('files', {}).items():
+            clean_args.extend(['-F', f'{body_key}=@{body_value}'])
+            body_value = str(app_file.parent / body_value)  # noqa: PLW2901
+            args.extend(['-F', f'{body_key}=@{body_value}'])
     else:
         raise RuntimeError(f'{content_type} is not supported')
 
-    args.extend(['-d', body_data])
-    clean_args.extend(['-d', body_data])
     if content_type is None:
         args.extend(['-H', 'Content-Type: application/json'])
         clean_args.extend(['-H', 'Content-Type: application/json'])

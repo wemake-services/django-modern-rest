@@ -1,40 +1,30 @@
-def clear_settings_cache() -> None:  # noqa: C901
+import importlib
+
+
+def clear_settings_cache() -> None:
     """
     Clears settings cache for all functions in this module.
 
     Useful for tests, when you modify the global settings object.
     """
-    try:
-        from django_modern_rest.plugins.pydantic.serializer import (  # noqa: PLC0415
-            _get_cached_type_adapter,  # pyright: ignore[reportPrivateUsage]
-        )
-    except ImportError:  # pragma: no cover
-        pass  # noqa: WPS420
-    else:
-        _get_cached_type_adapter.cache_clear()
+    to_import = {
+        'django_modern_rest.plugins.pydantic.serializer': [
+            '_get_cached_type_adapter',
+        ],
+        'django_modern_rest.plugins.msgspec.json': [
+            '_get_serializer',
+            '_get_deserializer',
+        ],
+        'django_modern_rest.settings': [
+            '_resolve_defaults',
+            'resolve_setting',
+        ],
+    }
 
-    try:
-        from django_modern_rest.plugins.msgspec.json import (  # noqa: PLC0415
-            _get_serializer,  # pyright: ignore[reportPrivateUsage]
-        )
-    except ImportError:  # pragma: no cover
-        pass  # noqa: WPS420
-    else:
-        _get_serializer.cache_clear()
-
-    try:
-        from django_modern_rest.plugins.msgspec.json import (  # noqa: PLC0415
-            _get_deserializer,  # pyright: ignore[reportPrivateUsage]
-        )
-    except ImportError:  # pragma: no cover
-        pass  # noqa: WPS420
-    else:
-        _get_deserializer.cache_clear()
-
-    from django_modern_rest.settings import (  # noqa: PLC0415
-        _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
-        resolve_setting,
-    )
-
-    _resolve_defaults.cache_clear()
-    resolve_setting.cache_clear()
+    for module, cached in to_import.items():
+        try:
+            mod_object = importlib.import_module(module)
+        except ImportError:  # pragma: no cover
+            continue
+        for cached_item in cached:
+            getattr(mod_object, cached_item).cache_clear()
