@@ -465,7 +465,6 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         if endpoint is not None:
             # TODO: support `StreamingHttpResponse`
             # TODO: support `FileResponse`
-            # TODO: support redirects
             return endpoint(self, *args, **kwargs)
         # This return is very special,
         # since it does not have an attached endpoint.

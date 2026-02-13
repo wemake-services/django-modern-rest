@@ -3,6 +3,7 @@ from http import HTTPMethod, HTTPStatus
 from typing import Any, Generic, TypeVar
 
 import pytest
+from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
@@ -408,3 +409,9 @@ def test_api_error_with_cookies(
     assert response.cookies.output() == snapshot(
         'Set-Cookie: error_id=value; Path=/; SameSite=lax',
     )
+
+
+def test_api_error_redirect_status() -> None:
+    """Ensures that we can't create APIError with redirect status code."""
+    with pytest.raises(DisallowedRedirect, match='APIRedirectError'):
+        APIError('whatever', status_code=HTTPStatus.FOUND)

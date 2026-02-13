@@ -66,9 +66,10 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
-    description: str | None = None
-
-    # TODO: examples and other metadata
+    description: str | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
 
 
 @final

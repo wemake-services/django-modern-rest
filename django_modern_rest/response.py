@@ -1,17 +1,26 @@
 from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, overload
+from urllib.parse import urlsplit
 
+from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
+from django.utils.encoding import iri_to_uri
+from django.utils.http import MAX_URL_REDIRECT_LENGTH
+from typing_extensions import TypeVar
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from django_modern_rest.renderers import Renderer
     from django_modern_rest.serializer import BaseSerializer
 
-_ItemT = TypeVar('_ItemT')
+_ItemT = TypeVar('_ItemT', default=Any)
 
 
 class APIError(Exception, Generic[_ItemT]):
@@ -48,16 +57,14 @@ class APIError(Exception, Generic[_ItemT]):
         ...             ),
         ...         ],
         ...     )
-        ...     def get(self, user_id: int) -> str:
-        ...         if user_id < 0:
-        ...             raise APIError(
-        ...                 self.format_error(
-        ...                     'There are no users with ids < 0',
-        ...                     error_type=ErrorType.user_msg,
-        ...                 ),
-        ...                 status_code=HTTPStatus.NOT_FOUND,
-        ...             )
-        ...         return f'{user_id}@example.com'  # email
+        ...     def get(self) -> str:
+        ...         raise APIError(
+        ...             self.format_error(
+        ...                 'This API endpoint is not implemented yet',
+        ...                 error_type=ErrorType.user_msg,
+        ...             ),
+        ...             status_code=HTTPStatus.NOT_FOUND,
+        ...         )
 
     """
 
@@ -70,11 +77,99 @@ class APIError(Exception, Generic[_ItemT]):
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> None:
         """Create response from parts."""
+        if HTTPStatus.MULTIPLE_CHOICES <= status_code < HTTPStatus.BAD_REQUEST:
+            raise DisallowedRedirect(
+                'APIError should not be used with redirects, '
+                'use APIRedirectError instead '
+                f'with status code {status_code!s}',
+            )
+
         super().__init__()
         self.raw_data = raw_data
         self.status_code = status_code
         self.headers = headers
         self.cookies = cookies
+
+
+class APIRedirectError(Exception):
+    """
+    Special class to fast return redirects from API.
+
+    We model this class closely
+    to match :class:`django.http.HttpResponseRedirect`.
+
+    Usage:
+
+    .. code:: python
+
+        >>> from http import HTTPStatus
+        >>> from django_modern_rest import (
+        ...     APIRedirectError,
+        ...     Controller,
+        ...     ResponseSpec,
+        ...     modify,
+        ...     HeaderSpec,
+        ... )
+        >>> from django_modern_rest.errors import ErrorType
+        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+
+        >>> class UserController(Controller[PydanticSerializer]):
+        ...     @modify(
+        ...         extra_responses=[
+        ...             ResponseSpec(
+        ...                 None,
+        ...                 status_code=HTTPStatus.FOUND,
+        ...                 headers={'Location': HeaderSpec()},
+        ...             ),
+        ...         ],
+        ...     )
+        ...     def get(self) -> str:
+        ...         # This API endpoint is deprecated, use new one:
+        ...         raise APIRedirectError(
+        ...             '/api/new/users/',
+        ...             status_code=HTTPStatus.FOUND,
+        ...         )
+
+
+    """
+
+    # Django allows `ftp` redirects, but we don't:
+    allowed_schemes: ClassVar[frozenset[str]] = frozenset(('http', 'https'))
+
+    def __init__(
+        self,
+        redirect_to: '_StrOrPromise',
+        *,
+        status_code: HTTPStatus = HTTPStatus.FOUND,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        """Create redirect response from parts."""
+        redirect_to = str(redirect_to)
+        # This code is taken from Django's `HttpResponseRedirect`:
+        if len(redirect_to) > MAX_URL_REDIRECT_LENGTH:
+            raise DisallowedRedirect(
+                f'Unsafe redirect exceeding {MAX_URL_REDIRECT_LENGTH} '
+                'characters',
+            )
+        parsed = urlsplit(redirect_to)
+        if parsed.scheme and parsed.scheme not in self.allowed_schemes:
+            raise DisallowedRedirect(
+                f'Unsafe redirect to URL with protocol {parsed.scheme!r}',
+            )
+        # End
+        if (
+            status_code >= HTTPStatus.BAD_REQUEST
+            or status_code < HTTPStatus.MULTIPLE_CHOICES
+        ):
+            raise DisallowedRedirect(
+                'APIRedirectError might be used only with 3xx statuses, '
+                f'given: {status_code!s}',
+            )
+        super().__init__()
+        self.redirect_to = redirect_to
+        self.status_code = status_code
+        self.headers = {'Location': iri_to_uri(redirect_to), **(headers or {})}
+        self.raw_data = None  # empty response body by default
 
 
 @overload
@@ -150,7 +245,11 @@ def build_response(  # noqa: WPS210, WPS211
     }
 
     response = HttpResponse(
-        content=serializer.serialize(raw_data, renderer=renderer),
+        content=(
+            b''
+            if raw_data is None
+            else serializer.serialize(raw_data, renderer=renderer)
+        ),
         status=status,
         headers=response_headers,
     )
