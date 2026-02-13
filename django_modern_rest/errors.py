@@ -108,7 +108,7 @@ def format_error(  # noqa: C901, WPS231
     ):
         error_type = (
             ErrorType.security
-            if isinstance(error, (NotAuthenticatedError))
+            if isinstance(error, NotAuthenticatedError)
             else ErrorType.value_error
         )
         error = str(error.args[0])
