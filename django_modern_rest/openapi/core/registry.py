@@ -25,7 +25,7 @@ class OperationIdRegistry:
 
 
 class SchemaRegistry:
-    """Registry for Schemas."""
+    """Registry for ``Schemas``."""
 
     schema_prefix: ClassVar[str] = '#/components/schemas/'
 

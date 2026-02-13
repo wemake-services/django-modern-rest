@@ -1,5 +1,4 @@
 import dataclasses
-from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.objects.media_type import MediaType
@@ -7,9 +6,8 @@ from django_modern_rest.openapi.objects.response import Response
 from django_modern_rest.openapi.objects.responses import Responses
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import ResponseSpec
+    from django_modern_rest.metadata import EndpointMetadata
     from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.parsers import Parser
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -18,11 +16,7 @@ class ResponseGenerator:
 
     _context: 'OpenAPIContext'
 
-    def __call__(
-        self,
-        responses: dict[HTTPStatus, 'ResponseSpec'],
-        request_parsers: 'dict[str, Parser]',
-    ) -> Responses:
+    def __call__(self, metadata: 'EndpointMetadata') -> Responses:
         """Generate responses from response specs."""
         return {
             str(status_code.value): Response(
@@ -33,8 +27,8 @@ class ResponseGenerator:
                             response_spec.return_type,
                         ),
                     )
-                    for req_parser in request_parsers.values()
+                    for req_parser in metadata.parsers.values()
                 },
             )
-            for status_code, response_spec in responses.items()
+            for status_code, response_spec in metadata.responses.items()
         }

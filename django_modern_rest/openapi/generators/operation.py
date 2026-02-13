@@ -6,6 +6,7 @@ from django_modern_rest.openapi.objects.operation import Operation
 
 if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
+    from django_modern_rest.metadata import EndpointMetadata
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
@@ -25,21 +26,10 @@ class OperationGenerator:
     def __call__(self, endpoint: 'Endpoint', path: str) -> Operation:
         """Generate an OpenAPI Operation from an endpoint."""
         metadata = endpoint.metadata
-        operation_id = self._context.generators.operation_id(
-            endpoint,
-            path,
-        )
-        request_body = self._context.generators.request_body(
-            metadata.component_parsers,
-            metadata.parsers,
-        )
-        responses = self._context.generators.response(
-            metadata.responses,
-            metadata.parsers,
-        )
-        params_list = self._context.generators.parameter(
-            metadata.component_parsers,
-        )
+        operation_id = self._context.generators.operation_id(metadata, path)
+        request_body = self._context.generators.request_body(metadata)
+        responses = self._context.generators.response(metadata)
+        params_list = self._context.generators.parameter(metadata)
 
         return Operation(
             tags=metadata.tags,
@@ -77,7 +67,7 @@ class OperationIDGenerator:
 
     _context: 'OpenAPIContext'
 
-    def __call__(self, endpoint: 'Endpoint', path: str) -> str:
+    def __call__(self, metadata: 'EndpointMetadata', path: str) -> str:
         """
         Generate a unique operation ID for an OpenAPI operation.
 
@@ -85,7 +75,7 @@ class OperationIDGenerator:
         otherwise generates one from the HTTP method and path. The operation ID
         is registered in the registry to ensure uniqueness.
         """
-        operation_id = endpoint.metadata.operation_id
+        operation_id = metadata.operation_id
 
         if operation_id is not None:
             self._context.registries.operation_id.register(operation_id)
@@ -93,7 +83,7 @@ class OperationIDGenerator:
 
         # Generate operation_id from path and method
         tokens = self._tokenize_path(path)
-        method = endpoint.metadata.method.lower()
+        method = metadata.method.lower()
         operation_id = self._build_operation_id(method, tokens)
 
         self._context.registries.operation_id.register(operation_id)

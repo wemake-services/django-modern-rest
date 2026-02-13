@@ -1,3 +1,4 @@
+import dataclasses
 from typing import TYPE_CHECKING
 
 from django_modern_rest.openapi.collector import controller_collector
@@ -8,6 +9,7 @@ if TYPE_CHECKING:
     from django_modern_rest.routing import Router
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class OpenApiBuilder:
     """
     Builds OpenAPI specification.
@@ -18,17 +20,15 @@ class OpenApiBuilder:
     everything together with the configuration.
     """
 
-    def __init__(self, context: 'OpenAPIContext') -> None:
-        """Initialize the builder with OpenAPI context."""
-        self.context = context
+    _context: 'OpenAPIContext'
 
-    def build(self, router: 'Router') -> 'OpenAPI':
+    def __call__(self, router: 'Router') -> 'OpenAPI':
         """Build complete OpenAPI specification from a router."""
         paths_items: Paths = {}
 
         for controller in controller_collector(router.urls):
-            path_item = self.context.generators.path_item(controller)
+            path_item = self._context.generators.path_item(controller)
             paths_items[controller.path] = path_item
 
-        components = self.context.generators.component(paths_items)
-        return self.context.config_merger.merge(paths_items, components)
+        components = self._context.generators.component(paths_items)
+        return self._context.config_merger(paths_items, components)

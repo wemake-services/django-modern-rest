@@ -7,7 +7,7 @@ from django_modern_rest.openapi.objects.parameter import Parameter
 from django_modern_rest.openapi.objects.reference import Reference
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import ComponentParserSpec
+    from django_modern_rest.metadata import EndpointMetadata
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 _CONTEXT_TO_IN: Final = MappingProxyType({
@@ -26,12 +26,12 @@ class ParameterGenerator:
 
     def __call__(
         self,
-        parsers: 'list[ComponentParserSpec]',
+        metadata: 'EndpointMetadata',
     ) -> list[Parameter | Reference] | None:
         """Generate parameters from parsers."""
         params_list: list[Parameter | Reference] = []
 
-        for parser, parser_args in parsers:
+        for parser, parser_args in metadata.component_parsers:
             param_in = _CONTEXT_TO_IN.get(parser.context_name)
 
             if not param_in or not parser_args:

@@ -71,5 +71,5 @@ def _default_config() -> OpenAPIConfig:
 def _build_schema(config: OpenAPIConfig, router: 'Router') -> ConvertedSchema:
     # TODO: refactor
     context = OpenAPIContext(config=config)
-    schema = OpenApiBuilder(context).build(router)
+    schema = OpenApiBuilder(context)(router)
     return SchemaConverter.convert(schema)
