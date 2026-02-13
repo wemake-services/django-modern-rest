@@ -1,7 +1,7 @@
 # TODO: We extend the rules as the schema generation results improve.
 [generation]
 # Limit the number of generated examples per API operation to keep tests fast.
-max-examples = 5
+max-examples = 200
 
 [checks]
 # Docs: https://schemathesis.readthedocs.io/en/stable/reference/checks
