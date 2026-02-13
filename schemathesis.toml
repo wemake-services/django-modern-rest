@@ -16,6 +16,3 @@ positive_data_acceptance.enabled = false
 
 # Verifies the API rejects requests when required headers are missing.
 missing_required_header.enabled = false
-
-# Verifies the API properly rejects HTTP methods not defined for an endpoint.
-unsupported_method.enabled = false

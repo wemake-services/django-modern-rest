@@ -45,10 +45,10 @@ def apply_converter(
 
 
 def create_sync_dispatch(
-    original_dispatch: Callable[..., Any],
+    original_dispatch: _CallableAny,
     middleware: MiddlewareDecorator,
     converter: _ConverterSpec,
-) -> Callable[..., HttpResponse]:
+) -> _CallableAny:
     """Create synchronous dispatch wrapper."""
 
     def dispatch(  # noqa: WPS430
@@ -57,6 +57,9 @@ def create_sync_dispatch(
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        if request.method not in self.api_endpoints:
+            return self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return]
+
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
@@ -71,10 +74,10 @@ def create_sync_dispatch(
 
 
 def create_async_dispatch(
-    original_dispatch: Callable[..., Any],
+    original_dispatch: _CallableAny,
     middleware: MiddlewareDecorator,
     converter: _ConverterSpec,
-) -> Callable[..., Any]:
+) -> _CallableAny:
     """Create asynchronous dispatch wrapper."""
 
     async def dispatch(  # noqa: WPS430
@@ -83,6 +86,9 @@ def create_async_dispatch(
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
+        if request.method not in self.api_endpoints:
+            return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return]
+
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,

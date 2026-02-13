@@ -605,6 +605,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
                     error_type=ErrorType.not_allowed,
                 ),
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+                headers={'Allow': ', '.join(allowed_methods)},
                 renderer=request_renderer(self.request),
             ),
         )
