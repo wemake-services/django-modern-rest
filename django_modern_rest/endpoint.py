@@ -289,9 +289,9 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = await func(active_blueprint)
-            except (APIError, APIRedirectError) as exc:  # pyright: ignore[reportUnknownVariableType]
+            except (APIError, APIRedirectError) as exc:
                 func_result = active_blueprint.to_error(
-                    exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
+                    exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
@@ -329,9 +329,9 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = func(active_blueprint)
-            except (APIError, APIRedirectError) as exc:  # pyright: ignore[reportUnknownVariableType]
+            except (APIError, APIRedirectError) as exc:
                 func_result = active_blueprint.to_error(
-                    exc.raw_data,  # pyright: ignore[reportUnknownMemberType]
+                    exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),

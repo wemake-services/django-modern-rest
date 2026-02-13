@@ -1,23 +1,26 @@
 from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, overload
 from urllib.parse import urlsplit
 
 from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
 from django.utils.encoding import iri_to_uri
 from django.utils.http import MAX_URL_REDIRECT_LENGTH
+from typing_extensions import TypeVar
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
-    from django.utils.functional import _StrOrPromise
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
 
     from django_modern_rest.renderers import Renderer
     from django_modern_rest.serializer import BaseSerializer
 
-_ItemT = TypeVar('_ItemT')
+_ItemT = TypeVar('_ItemT', default=Any)
 
 
 class APIError(Exception, Generic[_ItemT]):
