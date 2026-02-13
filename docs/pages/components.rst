@@ -51,7 +51,7 @@ that is being used for the endpoint.
 
 Here's an example how one can send ``application/x-www-form-urlencoded``
 form data to an API endpoint with the help
-of :class:`~django_modern_rest.parser.FormUrlEncodedParser`:
+of :class:`~django_modern_rest.parsers.FormUrlEncodedParser`:
 
 .. literalinclude:: /examples/components/form_body.py
   :caption: views.py
