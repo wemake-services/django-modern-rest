@@ -61,10 +61,6 @@ class DjangoSessionSyncController(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
         ),
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.FORBIDDEN,
-        ),
     )
 
     @modify(
@@ -124,10 +120,6 @@ class DjangoSessionAsyncController(
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.FORBIDDEN,
         ),
     )
 

@@ -9,7 +9,6 @@ from typing_extensions import override
 
 from django_modern_rest.exceptions import (
     NotAuthenticatedError,
-    PermissionDeniedError,
 )
 from django_modern_rest.metadata import (
     EndpointMetadata,
@@ -21,6 +20,7 @@ from django_modern_rest.openapi.objects.security_requirement import (
     SecurityRequirement,
 )
 from django_modern_rest.openapi.objects.security_scheme import SecurityScheme
+from django_modern_rest.response import APIError
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
@@ -42,13 +42,11 @@ class _EnsureCsrfToken(CsrfViewMiddleware):
         return reason
 
 
-def _enforce_csrf(request: HttpRequest) -> None:
-    """Perform CSRF validation using ``_CheckCSRF``."""
+def _get_csrf_failure_reason(request: HttpRequest) -> str | None:
+    """Perform CSRF validation using ``_EnsureCsrfToken``."""
     check = _EnsureCsrfToken(lambda _: None)  # type: ignore[arg-type]
     check.process_request(request)
-    reason = check.process_view(request, None, (), {})  # type: ignore[arg-type]
-    if reason:
-        raise PermissionDeniedError(f'CSRF Failed: {reason}')
+    return check.process_view(request, None, (), {})  # type: ignore[arg-type, return-value]
 
 
 class _DjangoSessionAuth(ResponseSpecProvider):
@@ -100,13 +98,21 @@ class _DjangoSessionAuth(ResponseSpecProvider):
             cls._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
-                    status_code=PermissionDeniedError.status_code,
+                    status_code=HTTPStatus.FORBIDDEN,
                     description='Raised when CSRF check failed',
                 ),
                 existing_responses,
             ),
         )
         return specs
+
+    def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
+        reason = _get_csrf_failure_reason(controller.request)
+        if reason:
+            raise APIError(
+                controller.format_error(f'CSRF Failed: {reason}'),
+                status_code=HTTPStatus.FORBIDDEN,
+            )
 
 
 class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
@@ -145,7 +151,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         if not user or not user.is_authenticated or not user.is_active:
             return None
 
-        _enforce_csrf(controller.request)
+        self._ensure_csrf(controller)
         return user
 
 
@@ -188,5 +194,5 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         if not user.is_authenticated or not user.is_active:
             return None
 
-        _enforce_csrf(controller.request)
+        self._ensure_csrf(controller)
         return user

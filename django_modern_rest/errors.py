@@ -19,7 +19,6 @@ from django_modern_rest.exceptions import (
     InternalServerError,
     NotAcceptableError,
     NotAuthenticatedError,
-    PermissionDeniedError,
     RequestSerializationError,
     ResponseSchemaError,
     ValidationError,
@@ -105,12 +104,11 @@ def format_error(  # noqa: C901, WPS231
             ResponseSchemaError,
             NotAcceptableError,
             NotAuthenticatedError,
-            PermissionDeniedError,
         ),
     ):
         error_type = (
             ErrorType.security
-            if isinstance(error, (NotAuthenticatedError, PermissionDeniedError))
+            if isinstance(error, (NotAuthenticatedError))
             else ErrorType.value_error
         )
         error = str(error.args[0])
@@ -222,7 +220,6 @@ _default_handled_excs: Final = (
     RequestSerializationError,
     ResponseSchemaError,  # can only happen if validation is enabled
     NotAuthenticatedError,
-    PermissionDeniedError,
     NotAcceptableError,
     ValidationError,
     InternalServerError,

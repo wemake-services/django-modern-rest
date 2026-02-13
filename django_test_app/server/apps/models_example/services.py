@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from server.apps.models_example import serializers
 from server.apps.models_example.models import Role, Tag, User
@@ -10,15 +10,16 @@ class UniqueEmailError(Exception):
 
 def user_create_service(user_schema: serializers.UserCreateSchema) -> User:
     """This is a function just for the demo purpose, it is usually a class."""
-    if User.objects.filter(email=user_schema.email).exists():
-        raise UniqueEmailError
-
     with transaction.atomic():
         role = Role.objects.create(name=user_schema.role.name)
-        user = User.objects.create(
-            email=user_schema.email,
-            role_id=role.pk,
-        )
+
+        try:
+            user = User.objects.create(
+                email=user_schema.email,
+                role_id=role.pk,
+            )
+        except IntegrityError:
+            raise UniqueEmailError from None
 
         # Handle m2m:
         tags = Tag.objects.bulk_create([
