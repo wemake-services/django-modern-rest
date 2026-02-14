@@ -27,7 +27,6 @@ class XmlParser(Parser):
         to_deserialize: Raw,
         deserializer: DeserializeFunc | None = None,
         *,
-        strict: bool = True,
         request: HttpRequest,
     ) -> Any:
         try:

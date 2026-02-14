@@ -62,7 +62,6 @@ class MsgspecSerializer(BaseSerializer):
     optimizer: ClassVar[type[BaseEndpointOptimizer]] = MsgspecEndpointOptimizer
 
     # Custom API:
-    deserialize_strict: ClassVar[bool] = True
     convert_kwargs: ClassVar[MsgspecConvertOptions] = {}
 
     @override
@@ -89,7 +88,6 @@ class MsgspecSerializer(BaseSerializer):
         return parser.parse(
             buffer,
             cls.deserialize_hook,
-            strict=cls.deserialize_strict,
             request=request,
         )
 

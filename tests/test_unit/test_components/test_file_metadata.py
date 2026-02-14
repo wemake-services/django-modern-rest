@@ -419,7 +419,6 @@ class _WrongBodyParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> None:
         raise NotImplementedError
 
@@ -435,7 +434,6 @@ class _FakeParser(SupportsFileParsing, Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> None:
         raise NotImplementedError
 
