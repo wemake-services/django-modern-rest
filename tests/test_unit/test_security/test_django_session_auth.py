@@ -152,5 +152,8 @@ def test_schema(
 
     assert isinstance(scheme, Components)
     assert scheme.security_schemes
-    assert len(scheme.security_schemes) == 1
-    assert instance.security_requirement == snapshot({'django_session': []})
+    assert len(scheme.security_schemes) == 2
+    assert instance.security_requirement == snapshot({
+        'django_session': [],
+        'csrf': [],
+    })

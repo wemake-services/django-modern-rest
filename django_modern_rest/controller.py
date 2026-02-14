@@ -352,6 +352,8 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         blueprint_validator_cls: Runs blueprint validation on definition.
         controller_validator_cls: Runs full controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
+        csrf_exempt: Should this controller be exempted from the CSRF check?
+            Is ``True`` by default.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
@@ -375,6 +377,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         ControllerValidator
     )
     api_endpoints: ClassVar[Mapping[str, Endpoint]]
+    csrf_exempt: ClassVar[bool] = True
 
     # Public instance API:
     blueprint: Blueprint[_SerializerT_co] | None
@@ -425,7 +428,11 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
         """
-        return csrf_exempt(super().as_view(**initkwargs))
+        return (
+            csrf_exempt(super().as_view(**initkwargs))
+            if cls.csrf_exempt
+            else super().as_view(**initkwargs)
+        )
 
     @override
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
