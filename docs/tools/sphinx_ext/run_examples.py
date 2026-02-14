@@ -7,6 +7,7 @@ https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples
 
 from __future__ import annotations
 
+import ast
 import importlib
 import json
 import logging
@@ -56,7 +57,6 @@ if platform.system() in {'Darwin', 'Linux'}:
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
-_RGX_LINES_FROM: Final = re.compile(r'^\s*(\d+)\s*-\s*$')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 
 _AppRunArgs: TypeAlias = dict[str, Any]
@@ -453,6 +453,46 @@ def _add_headers(
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
 
 
+def _find_imports_block_end_line(file_content: str) -> int:
+    try:
+        parsed = ast.parse(file_content)
+    except SyntaxError:
+        return 0
+
+    statements = parsed.body
+    start_index = 0
+    if (
+        statements
+        and isinstance(statements[0], ast.Expr)
+        and isinstance(statements[0].value, ast.Constant)
+        and isinstance(statements[0].value.value, str)
+    ):
+        start_index = 1
+
+    last_import_line = 0
+    for statement in statements[start_index:]:
+        if not isinstance(statement, (ast.Import, ast.ImportFrom)):
+            break
+        last_import_line = max(
+            last_import_line,
+            statement.end_lineno or statement.lineno,
+        )
+    return last_import_line
+
+
+def _extend_with_trailing_blank_lines(
+    source_lines: list[str],
+    last_import_line: int,
+) -> int:
+    hidden_until_line = last_import_line
+    while (
+        hidden_until_line < len(source_lines)
+        and not source_lines[hidden_until_line].strip()
+    ):
+        hidden_until_line += 1
+    return hidden_until_line
+
+
 @final
 class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     """Extended `.. literalinclude` directive with code execution capability."""
@@ -529,7 +569,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     ) -> list[Node]:
         original_lines = self.options.get('lines')
         should_expand_literalinclude = (
-            imports_data is not None and original_lines
+            imports_data is not None and original_lines is not None
         )
         if should_expand_literalinclude:
             self.options.pop('lines', None)
@@ -585,25 +625,23 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         wrapper += spoiler_node
 
     def _extract_hidden_lines(self, file_path: Path) -> tuple[list[str], int]:
-        match = _RGX_LINES_FROM.match(self.options.get('lines', ''))
-        if not match:
+        file_content = file_path.read_text(encoding='utf-8')
+        source_lines = file_content.splitlines()
+        last_import_line = _find_imports_block_end_line(file_content)
+        if last_import_line <= 0:
             return [], 1
 
-        start_line = int(match.group(1))
-        if start_line <= 1:
-            return [], start_line
-
-        hidden_lines = file_path.read_text(encoding='utf-8').splitlines()[
-            : start_line - 1
-        ]
+        hidden_until_line = _extend_with_trailing_blank_lines(
+            source_lines,
+            last_import_line,
+        )
+        hidden_lines = source_lines[:hidden_until_line]
 
         hidden_lines = [
             line for line in hidden_lines if not _RGX_RUN_COMMENT.match(line)
         ]
 
-        while hidden_lines and not hidden_lines[-1].strip():
-            hidden_lines.pop()
-        return hidden_lines, start_line
+        return hidden_lines, hidden_until_line + 1
 
     def _create_imports_spoiler_node(
         self,
@@ -625,13 +663,9 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         if isinstance(custom_title, str):
             return custom_title
 
-        import_lines_count = len(
-            [line for line in hidden_lines if line.strip()],
-        )
-        lines_word = 'line' if import_lines_count == 1 else 'lines'
-        return (
-            f'Show imports... {import_lines_count} import {lines_word} hidden'
-        )
+        hidden_lines_count = len(hidden_lines)
+        lines_word = 'line' if hidden_lines_count == 1 else 'lines'
+        return f'Show imports... {hidden_lines_count} {lines_word} hidden'
 
     def _need_to_run(self, file_path: Path) -> bool:
         language = self.options.get('language', '')
