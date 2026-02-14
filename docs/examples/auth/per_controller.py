@@ -1,11 +1,8 @@
-from typing import final
-
 from django_modern_rest import Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security.jwt import JWTAsyncAuth
 
 
-@final
 class APIController(Controller[PydanticSerializer]):
     auth = (JWTAsyncAuth(),)
 

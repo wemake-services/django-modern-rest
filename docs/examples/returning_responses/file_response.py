@@ -1,6 +1,6 @@
 import pathlib
 from http import HTTPStatus
-from typing import Final, final
+from typing import Final
 
 from django.http import FileResponse
 
@@ -11,7 +11,6 @@ from django_modern_rest.plugins.pydantic import PydanticSerializer
 _FILEPATH: Final = pathlib.Path('examples/components/receipt.txt')
 
 
-@final
 class FileController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(

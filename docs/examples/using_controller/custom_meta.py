@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 from django.http import HttpResponse
 
@@ -12,7 +11,6 @@ from django_modern_rest import (
 from django_modern_rest.plugins.msgspec import MsgspecSerializer
 
 
-@final
 class SettingsController(Controller[MsgspecSerializer]):
     def get(self) -> str:
         return 'default get setting'

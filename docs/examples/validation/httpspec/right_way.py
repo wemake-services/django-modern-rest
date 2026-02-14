@@ -1,11 +1,9 @@
 from http import HTTPStatus
-from typing import final
 
 from django_modern_rest import Controller, modify
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
-@final
 class JobController(Controller[PydanticSerializer]):
     @modify(status_code=HTTPStatus.NO_CONTENT)
     def post(self) -> None:

@@ -7,7 +7,6 @@ if sys.version_info >= (3, 14):
 
 import json  # type: ignore[unreachable, unused-ignore]
 from http import HTTPStatus
-from typing import final
 
 from dirty_equals import IsUUID
 from django.http import HttpResponse
@@ -17,7 +16,6 @@ from django_modern_rest.test import DMRRequestFactory
 from examples.testing.pydantic_controller import UserController, UserCreateModel
 
 
-@final
 class UserCreateModelFactory(ModelFactory[UserCreateModel]):
     """Will create structured random request data for you."""
 

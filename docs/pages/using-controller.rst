@@ -128,7 +128,6 @@ Here's an example:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 13-
 
 Unlike controllers, they can't be used in routing directly.
 First, they need to be composed into a controller:
@@ -139,7 +138,6 @@ First, they need to be composed into a controller:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 12-
 
 - Via :func:`~django_modern_rest.routing.compose_blueprints` function.
   See our :doc:`routing` guide for more details.

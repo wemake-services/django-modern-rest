@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -35,7 +34,6 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
     return response
 
 
-@final
 @login_required_json
 class LoginRequiredController(Controller[PydanticSerializer]):
     """Controller that uses Django's login_required decorator.

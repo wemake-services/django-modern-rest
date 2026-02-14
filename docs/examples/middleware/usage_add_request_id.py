@@ -1,5 +1,3 @@
-from typing import final
-
 from django.http import HttpRequest
 from project.app.middleware import add_request_id_json  # Don't forget to change
 
@@ -7,12 +5,10 @@ from django_modern_rest import Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
-@final
 class _RequestWithID(HttpRequest):
     request_id: str
 
 
-@final
 @add_request_id_json
 class RequestIdController(Controller[PydanticSerializer]):
     """Controller that uses request_id added by middleware."""

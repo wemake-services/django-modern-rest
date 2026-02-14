@@ -140,10 +140,10 @@ class ResponseValidator:
         if schema is not None:
             return schema
 
-        allowed = set(self.metadata.responses.keys())
+        allowed = list(map(int, self.metadata.responses.keys()))
         raise ResponseSchemaError(
-            f'Returned {status_code=} is not specified '
-            f'in the list of allowed codes {allowed!r}',
+            f'Returned status code {status_code} is not specified '
+            f'in the list of allowed status codes: {allowed!r}',
         )
 
     def _validate_body(

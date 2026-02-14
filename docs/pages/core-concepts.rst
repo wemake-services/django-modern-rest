@@ -53,7 +53,6 @@ Example:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 10-
 
 
 Async vs Sync

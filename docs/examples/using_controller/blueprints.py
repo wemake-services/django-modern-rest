@@ -1,5 +1,4 @@
 import uuid
-from typing import final
 
 import pydantic
 
@@ -15,12 +14,10 @@ class _UserInput(pydantic.BaseModel):
     age: int
 
 
-@final
 class _UserOutput(_UserInput):
     uid: uuid.UUID
 
 
-@final
 class UserCreateBlueprint(
     Body[_UserInput],  # <- needs a request body
     Blueprint[PydanticSerializer],
@@ -33,7 +30,6 @@ class UserCreateBlueprint(
         )
 
 
-@final
 class UserListBlueprint(
     # Does not need a request body.
     Blueprint[PydanticSerializer],

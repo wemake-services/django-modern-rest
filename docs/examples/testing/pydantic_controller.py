@@ -1,5 +1,4 @@
 import uuid
-from typing import final
 
 import pydantic
 
@@ -16,7 +15,6 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-@final
 class UserController(
     Controller[PydanticSerializer],
     Body[UserCreateModel],
