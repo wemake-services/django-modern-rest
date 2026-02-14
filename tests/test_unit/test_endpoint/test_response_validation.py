@@ -5,7 +5,7 @@ from typing import ClassVar, TypeAlias, final
 
 import pydantic
 import pytest
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBase
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
@@ -404,3 +404,25 @@ def test_double_validation_raw_dict_return(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.content) == {'username': 'admin'}
+
+
+@final
+class _UnsupportedResponseController(Controller[PydanticSerializer]):
+    @validate(ResponseSpec(None, status_code=HTTPStatus.OK))
+    def get(self) -> HttpResponseBase:
+        return HttpResponseBase()
+
+
+def test_return_unsupported_response(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that retuning unsupported responses errors out."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _UnsupportedResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
+    })

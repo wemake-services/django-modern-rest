@@ -42,6 +42,7 @@ class _FileSyncController(Controller[PydanticSerializer]):
         )
 
 
+@pytest.mark.django_db
 def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
     """Ensures we can return files from a sync endpoint."""
     request = dmr_rf.get('/whatever/')

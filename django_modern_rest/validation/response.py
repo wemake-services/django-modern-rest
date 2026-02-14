@@ -80,7 +80,7 @@ class ResponseValidator:
         elif isinstance(response, FileResponse):
             structured = Binary()
         else:
-            raise ResponseSchemaError(
+            raise InternalServerError(
                 f'Unsupported response type {type(response)!r}',
             )
         self._validate_body(
