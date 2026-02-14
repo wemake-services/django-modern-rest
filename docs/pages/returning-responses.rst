@@ -243,6 +243,29 @@ And default Django's :class:`django.http.HttpResponseRedirect`:
   :linenos:
 
 
+Files
+-----
+
+We support file and other binary responses.
+
+.. warning::
+
+  Returning files via Python and Django in particular
+  is very performance inefficient.
+  It should not be used for anything serious.
+
+  Instead return files with S3-like systems or at least on a proxy-server level.
+
+To do so, you should mark your
+:class:`~django_modern_rest.metadata.ResponseSpec`
+with a :class:`~django_modern_rest.metadata.Binary` marker:
+
+.. literalinclude:: /examples/returning_responses/file_response.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+
 .. _response_validation:
 
 Response validation

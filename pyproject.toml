@@ -91,6 +91,7 @@ polyfactory = "^3.2"
 
 httpx = "^0.28"
 xmltodict = "^1.0"
+aiofiles = "^25.1"
 
 [tool.poetry.group.docs]
 optional = true

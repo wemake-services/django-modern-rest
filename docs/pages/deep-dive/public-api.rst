@@ -41,6 +41,9 @@ Response, headers and cookies
 .. autoclass:: django_modern_rest.metadata.ResponseModification
   :members:
 
+.. autoclass:: django_modern_rest.metadata.Binary
+  :members:
+
 .. autoexception:: django_modern_rest.response.APIError
   :members:
 
