@@ -27,8 +27,3 @@ class User(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    @property
-    def tag_list(self) -> list[Tag]:
-        """Needed for serialization only."""
-        return list(self.tags.all())
