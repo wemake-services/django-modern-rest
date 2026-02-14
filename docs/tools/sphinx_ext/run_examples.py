@@ -22,7 +22,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Final, TypeAlias, cast, final
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast, final
 from urllib.parse import urlencode
 
 import httpx
@@ -32,18 +32,32 @@ from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
 from django.views import View
-from docutils.nodes import Node, admonition, literal_block, title
+from docutils.nodes import (
+    Element,
+    General,
+    Node,
+    Text,
+    admonition,
+    container,
+    literal_block,
+    title,
+)
 from docutils.parsers.rst import directives
 from sphinx.addnodes import highlightlang
 from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+if TYPE_CHECKING:
+    from sphinx.writers.html5 import HTML5Translator
+
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
+_RGX_LINES_FROM: Final = re.compile(r'^\s*(\d+)\s*-\s*$')
+_RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 
 _AppRunArgs: TypeAlias = dict[str, Any]
 
@@ -54,6 +68,58 @@ ignore_missing_output: Final = True
 @final
 class _StartupError(RuntimeError):
     """Raised when application fails to start."""
+
+
+@final
+class _ImportsSpoiler(General, Element):
+    """Imports toggle container node."""
+
+
+@final
+class _ImportsSpoilerSummary(General, Element):
+    """Imports toggle control node."""
+
+
+def _visit_imports_spoiler(
+    self: HTML5Translator,
+    node: _ImportsSpoiler,
+) -> None:
+    classes = ' '.join(['imports-spoiler', *node.get('classes', [])])
+    imports_from_line = int(node.get('imports_from_line', 1))
+    self.body.append(
+        (
+            f'<div class="{classes}" '
+            f'data-imports-from-line="{imports_from_line}">\n'
+        ),
+    )
+
+
+def _depart_imports_spoiler(
+    self: HTML5Translator,
+    node: _ImportsSpoiler,
+) -> None:
+    self.body.append('</div>\n')
+
+
+def _visit_imports_spoiler_summary(
+    self: HTML5Translator,
+    node: _ImportsSpoilerSummary,
+) -> None:
+    collapsed_title = node.get('collapsed_title', 'Show imports')
+    self.body.append(
+        (
+            '<button type="button" class="imports-spoiler-toggle" '
+            f'data-collapsed-title="{collapsed_title}" '
+            'data-expanded-title="Hide imports">'
+        ),
+    )
+
+
+def _depart_imports_spoiler_summary(
+    self: HTML5Translator,
+    node: _ImportsSpoilerSummary,
+) -> None:
+    self.body.append('</button>\n')
 
 
 def _get_available_port() -> int:
@@ -388,27 +454,33 @@ def _add_headers(
 
 
 @final
-class LiteralInclude(_LiteralInclude):
+class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
         **_LiteralInclude.option_spec,
         'no-run': directives.flag,
+        'imports-spoiler-title': directives.unchanged,
+        'no-imports-spoiler': directives.flag,
     }
 
     @override
-    def run(self) -> list[Node]:
+    def run(self) -> list[Node]:  # noqa: WPS210
         """Execute code examples and display results."""
         file_path = Path(self.env.relfn2path(self.arguments[0])[1])
+        imports_data = self._get_imports_data(file_path)
         if not self._need_to_run(file_path):
-            return super().run()
+            rendered_nodes = self._render_literalinclude_nodes(imports_data)
+            return self._inject_imports_spoiler(rendered_nodes, imports_data)
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            return super().run()
+            rendered_nodes = self._render_literalinclude_nodes(imports_data)
+            return self._inject_imports_spoiler(rendered_nodes, imports_data)
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = super().run()
+        rendered_nodes = self._render_literalinclude_nodes(imports_data)
+        nodes = self._inject_imports_spoiler(rendered_nodes, imports_data)
 
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
@@ -435,6 +507,132 @@ class LiteralInclude(_LiteralInclude):
         )
         return nodes
 
+    def _get_imports_data(
+        self,
+        file_path: Path,
+    ) -> tuple[_ImportsSpoiler, int] | None:
+        if 'no-imports-spoiler' in self.options:
+            return None
+
+        hidden_lines, start_line = self._extract_hidden_lines(file_path)
+        if not hidden_lines:
+            return None
+
+        return (
+            self._create_imports_spoiler_node(hidden_lines, start_line),
+            start_line,
+        )
+
+    def _render_literalinclude_nodes(
+        self,
+        imports_data: tuple[_ImportsSpoiler, int] | None,
+    ) -> list[Node]:
+        original_lines = self.options.get('lines')
+        should_expand_literalinclude = (
+            imports_data is not None and original_lines
+        )
+        if should_expand_literalinclude:
+            self.options.pop('lines', None)
+            rendered_nodes = _LiteralInclude.run(self)
+            if original_lines is not None:
+                self.options['lines'] = original_lines
+            return rendered_nodes
+        return _LiteralInclude.run(self)
+
+    def _inject_imports_spoiler(
+        self,
+        rendered_nodes: list[Node],
+        imports_data: tuple[_ImportsSpoiler, int] | None,
+    ) -> list[Node]:
+        if imports_data is None or not rendered_nodes:
+            return rendered_nodes
+
+        spoiler_node, _ = imports_data
+        first_node = rendered_nodes[0]
+
+        if isinstance(
+            first_node,
+            container,
+        ) and 'literal-block-wrapper' in first_node.get('classes', []):
+            if 'imports-inline-enabled' not in first_node['classes']:
+                first_node['classes'].append('imports-inline-enabled')
+            self._insert_spoiler_before_literal_block(first_node, spoiler_node)
+            return rendered_nodes
+
+        if isinstance(first_node, literal_block):
+            wrapper = container(
+                '',
+                literal_block=True,
+                classes=['literal-block-wrapper', 'imports-inline-enabled'],
+            )
+            wrapper += spoiler_node
+            wrapper += first_node
+            rendered_nodes[0] = wrapper
+            return rendered_nodes
+
+        rendered_nodes.insert(0, spoiler_node)
+        return rendered_nodes
+
+    def _insert_spoiler_before_literal_block(
+        self,
+        wrapper: container,
+        spoiler_node: _ImportsSpoiler,
+    ) -> None:
+        for index, child in enumerate(wrapper.children):
+            if isinstance(child, literal_block):
+                wrapper.insert(index, spoiler_node)
+                return
+        wrapper += spoiler_node
+
+    def _extract_hidden_lines(self, file_path: Path) -> tuple[list[str], int]:
+        match = _RGX_LINES_FROM.match(self.options.get('lines', ''))
+        if not match:
+            return [], 1
+
+        start_line = int(match.group(1))
+        if start_line <= 1:
+            return [], start_line
+
+        hidden_lines = file_path.read_text(encoding='utf-8').splitlines()[
+            : start_line - 1
+        ]
+
+        hidden_lines = [
+            line for line in hidden_lines if not _RGX_RUN_COMMENT.match(line)
+        ]
+
+        while hidden_lines and not hidden_lines[-1].strip():
+            hidden_lines.pop()
+        return hidden_lines, start_line
+
+    def _create_imports_spoiler_node(
+        self,
+        hidden_lines: list[str],
+        start_line: int,
+    ) -> _ImportsSpoiler:
+        node = _ImportsSpoiler(classes=['imports-inline-spoiler'])
+        node['imports_from_line'] = start_line
+
+        summary_text = self._get_imports_summary_text(hidden_lines)
+        summary_node = _ImportsSpoilerSummary()
+        summary_node['collapsed_title'] = summary_text
+        summary_node += Text(summary_text)
+        node += summary_node
+        return node
+
+    def _get_imports_summary_text(self, hidden_lines: list[str]) -> str:
+        custom_title = self.options.get('imports-spoiler-title')
+        if isinstance(custom_title, str):
+            return custom_title
+
+        import_lines_count = len(
+            [line for line in hidden_lines if line.strip()],
+        )
+        lines_word = 'line' if import_lines_count == 1 else 'lines'
+        return (
+            f'Show imports... {import_lines_count} import {lines_word} hidden'
+        )
+
     def _need_to_run(self, file_path: Path) -> bool:
         language = self.options.get('language', '')
         no_run_in_options = 'no-run' in self.options
@@ -456,7 +654,7 @@ class LiteralInclude(_LiteralInclude):
         cwd = Path.cwd()
         docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
         tmp_file = (
-            cwd
+            docs_dir
             / _PATH_TO_TMP_EXAMPLES
             / str(
                 file_path.relative_to(docs_dir),
@@ -471,3 +669,16 @@ def setup(app: Sphinx) -> None:
     """Register Sphinx extension directives."""
     tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
+    app.add_node(
+        _ImportsSpoiler,
+        html=(_visit_imports_spoiler, _depart_imports_spoiler),
+    )
+    app.add_node(
+        _ImportsSpoilerSummary,
+        html=(
+            _visit_imports_spoiler_summary,
+            _depart_imports_spoiler_summary,
+        ),
+    )
+    app.add_css_file('css/literalinclude-imports.css')
+    app.add_js_file('js/literalinclude-imports.js')
