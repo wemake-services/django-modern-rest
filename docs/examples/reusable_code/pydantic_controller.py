@@ -1,10 +1,7 @@
-from typing import final
-
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from examples.reusable_code.reusable_controller import ReusableController
 
 
-@final
 class PydanticController(ReusableController[PydanticSerializer]):
     """This controller will use pydantic for serialization."""
 

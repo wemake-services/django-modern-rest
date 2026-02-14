@@ -1,5 +1,3 @@
-from typing import final
-
 import pydantic
 
 from django_modern_rest import Body, Controller, NewCookie, modify
@@ -10,7 +8,6 @@ class UserModel(pydantic.BaseModel):
     email: str
 
 
-@final
 class UserController(
     Controller[PydanticSerializer],
     Body[UserModel],

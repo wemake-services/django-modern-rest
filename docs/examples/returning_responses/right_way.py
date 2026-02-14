@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 import msgspec
 
@@ -23,7 +22,6 @@ class HeaderModel(msgspec.Struct):
     consumer: str = msgspec.field(name='X-API-Consumer')
 
 
-@final
 class UserController(
     Controller[MsgspecSerializer],
     Body[UserModel],
@@ -33,7 +31,7 @@ class UserController(
         extra_responses=[
             ResponseSpec(
                 ErrorModel,
-                status_code=HTTPStatus.NOT_ACCEPTABLE,
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
             ),
         ],
     )
@@ -46,7 +44,7 @@ class UserController(
                     'Wrong API consumer',
                     error_type=ErrorType.user_msg,
                 ),
-                status_code=HTTPStatus.NOT_ACCEPTABLE,
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
         # This response will be documented by default:
         return self.parsed_body

@@ -49,4 +49,4 @@ class UserController(
         )
 
 
-# run: {"controller": "UserController", "method": "post", "url": "/api/user/", "headers": {"Content-Type": "application/xml", "Accept": "application/xml"}, "body": {"user": {"email": "user@example.com", "profile": {"age": 28}}}}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "url": "/api/user/", "headers": {"Content-Type": "application/xml", "Accept": "application/json"}, "body": {"user": {"email": "user@example.com", "profile": {"age": 28}}}}  # noqa: ERA001, E501

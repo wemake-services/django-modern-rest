@@ -1,5 +1,4 @@
 import uuid
-from typing import final
 
 import pydantic
 
@@ -19,7 +18,6 @@ class HeaderModel(pydantic.BaseModel):
     consumer: str = pydantic.Field(alias='X-API-Consumer')
 
 
-@final
 class UserController(
     Controller[PydanticSerializer],
     Body[UserCreateModel],

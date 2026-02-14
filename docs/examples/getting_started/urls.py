@@ -1,10 +1,7 @@
-# needs for run example
-from .pydantic_controller import UserController  # noqa: I001, WPS300
-
 from django.urls import include, path
 
 from django_modern_rest.routing import Router
-
+from examples.getting_started.pydantic_controller import UserController
 
 # Router is just a collection of regular Django urls:
 router = Router([

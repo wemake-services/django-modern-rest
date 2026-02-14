@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Final, final
+from typing import Final
 
 from django.http import HttpResponse
 
@@ -20,7 +20,6 @@ _RedirectSpec: Final = ResponseSpec(
 )
 
 
-@final
 class UserController(Controller[PydanticSerializer]):
     @validate(_RedirectSpec)
     def get(self) -> HttpResponse:

@@ -1,5 +1,4 @@
 import uuid
-from typing import final
 
 import msgspec
 
@@ -19,7 +18,6 @@ class HeaderModel(msgspec.Struct):
     consumer: str = msgspec.field(name='X-API-Consumer')
 
 
-@final
 class UserController(
     Controller[MsgspecSerializer],
     Body[UserCreateModel],

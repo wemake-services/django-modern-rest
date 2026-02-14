@@ -78,7 +78,7 @@ Quick example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 7, 24
+        :emphasize-lines: 6, 22
 
     .. tab:: pydantic
 
@@ -86,7 +86,7 @@ Quick example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 7, 24
+        :emphasize-lines: 6, 22
 
 In this example:
 
@@ -112,7 +112,6 @@ Now, let's add our API to the list of URLs:
   :caption: urls.py
   :language: python
   :linenos:
-  :lines: 3-
 
 Basically - that's it! Your first ``django-modern-rest`` API is ready.
 Next, you can learn:

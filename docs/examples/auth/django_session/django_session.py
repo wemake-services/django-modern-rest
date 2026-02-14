@@ -1,5 +1,3 @@
-from typing import final
-
 from typing_extensions import override
 
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -10,7 +8,6 @@ from django_modern_rest.security.django_session.views import (
 )
 
 
-@final
 class SessionSyncController(
     DjangoSessionSyncController[
         PydanticSerializer,

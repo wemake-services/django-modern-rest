@@ -73,7 +73,6 @@ Let's pass custom error handling to a single endpoint:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 12-
 
 In this example we add error handling defined as ``division_error``
 to ``patch`` endpoint (which serves as a division operation),
@@ -92,7 +91,6 @@ as handlers. Like so:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 13-
 
 
 Customizing blueprint error handler
@@ -104,7 +102,6 @@ Let's create custom error handling for the all endpoints in a blueprint:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 13-
 
 In this example we define ``async_error_handler`` for both endpoints.
 All ``httpx.HTTPError`` errors that can happen in both endpoints
@@ -130,7 +127,6 @@ Let's create custom error handling for the whole controller:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 13-
 
 We do the same as in blueprint's example to show that they are very similar.
 The main difference is the priority and scope.
@@ -197,7 +193,6 @@ on a per-controller basis.
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 11-
 
 To do so, you would need to change:
 

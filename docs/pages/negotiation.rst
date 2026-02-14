@@ -104,7 +104,7 @@ going back to the less specific:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 35-36
+        :emphasize-lines: 39-40
 
     .. tab:: per controller
 
@@ -112,7 +112,7 @@ going back to the less specific:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 35-36
+        :emphasize-lines: 39-40
 
     .. tab:: per settings
 

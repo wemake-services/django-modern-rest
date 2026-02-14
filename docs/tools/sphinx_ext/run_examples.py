@@ -23,7 +23,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast, final
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
 import httpx
@@ -65,17 +65,14 @@ logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
 
 
-@final
 class _StartupError(RuntimeError):
     """Raised when application fails to start."""
 
 
-@final
 class _ImportsSpoiler(General, Element):
     """Imports toggle container node."""
 
 
-@final
 class _ImportsSpoilerSummary(General, Element):
     """Imports toggle control node."""
 
@@ -132,7 +129,6 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
-@final
 class _AppBuilder:
     """Builds a Django application from configuration."""
 
@@ -493,7 +489,6 @@ def _extend_with_trailing_blank_lines(
     return hidden_until_line
 
 
-@final
 class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     """Extended `.. literalinclude` directive with code execution capability."""
 

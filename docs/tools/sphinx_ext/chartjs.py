@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Final, final
+from typing import TYPE_CHECKING, Final
 
 from docutils import nodes
 from sphinx.application import Sphinx
@@ -34,12 +34,10 @@ _SCRIPT: Final = """
 """
 
 
-@final
 class ChartJSNode(nodes.General, nodes.Element):
     """Custom node for Chart.js diagrams."""
 
 
-@final
 class ChartJSDirective(SphinxDirective):
     """Directive for embedding Chart.js diagrams.
 
