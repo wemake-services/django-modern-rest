@@ -3,16 +3,16 @@ from typing import Final
 import pytest
 
 from django_modern_rest import Controller, modify
+from django_modern_rest.openapi.builders import OperationIDBuilder
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.generators.operation import OperationIDGenerator
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 @pytest.fixture
-def generator() -> OperationIDGenerator:
+def generator() -> OperationIDBuilder:
     """Create ``OperationIDGenerator`` instance for testing."""
     context = OpenAPIContext(config=_TEST_CONFIG)
     return context.generators.operation_id
@@ -101,7 +101,7 @@ def generator() -> OperationIDGenerator:
     ],
 )
 def test_tokenize_path(
-    generator: OperationIDGenerator,
+    generator: OperationIDBuilder,
     input_path: str,
     expected_tokens: list[str],
 ) -> None:
@@ -121,7 +121,7 @@ class _ControllerWithOperationId(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_explicit_operation_id(generator: OperationIDGenerator) -> None:
+def test_explicit_operation_id(generator: OperationIDBuilder) -> None:
     """Ensure that explicit ``operation_id`` is registered and returned."""
     controller = _ControllerWithOperationId()
     operation_id = generator(

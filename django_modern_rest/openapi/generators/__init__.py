@@ -1,12 +1,6 @@
 from django_modern_rest.openapi.generators.component import (
     ComponentGenerator as ComponentGenerator,
 )
-from django_modern_rest.openapi.generators.operation import (
-    OperationGenerator as OperationGenerator,
-)
-from django_modern_rest.openapi.generators.operation import (
-    OperationIDGenerator as OperationIDGenerator,
-)
 from django_modern_rest.openapi.generators.parameter import (
     ParameterGenerator as ParameterGenerator,
 )

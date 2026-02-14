@@ -2,48 +2,48 @@ import dataclasses
 import re
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.objects.operation import Operation
+from django_modern_rest.openapi.objects import Operation
 
 if TYPE_CHECKING:
-    from django_modern_rest.endpoint import Endpoint
     from django_modern_rest.metadata import EndpointMetadata
     from django_modern_rest.openapi.core.context import OpenAPIContext
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class OperationGenerator:
+class OperationBuilder:
     """
-    Generator for OpenAPI Operation objects.
+    Build for OpenAPI Operation objects.
 
-    The ``Operation`` Generator is responsible for creating OpenAPI
+    The ``Operation`` builder is responsible for creating OpenAPI
     objects that describe individual API operations (HTTP methods like GET,
     POST, etc.) for a specific endpoint. It extracts metadata from the
     endpoint and generates a complete Operation specification.
     """
 
-    _context: 'OpenAPIContext'
+    metadata: 'EndpointMetadata'
 
-    def __call__(self, endpoint: 'Endpoint', path: str) -> Operation:
-        """Generate an OpenAPI Operation from an endpoint."""
-        metadata = endpoint.metadata
-        operation_id = self._context.generators.operation_id(metadata, path)
-        request_body = self._context.generators.request_body(metadata)
-        responses = self._context.generators.response(metadata)
-        params_list = self._context.generators.parameter(metadata)
+    # NOTE: We are currently maintaining `context` for backward compatibility.
+    # In future, we must encapsulate it.
+    def __call__(self, context: 'OpenAPIContext', path: str) -> Operation:
+        """Builde an OpenAPI Operation from an endpoint."""
+        operation_id = context.generators.operation_id(self.metadata, path)
+        request_body = context.generators.request_body(self.metadata)
+        responses = context.generators.response(self.metadata)
+        params_list = context.generators.parameter(self.metadata)
 
         return Operation(
-            tags=metadata.tags,
-            summary=metadata.summary,
-            description=metadata.description,
-            deprecated=metadata.deprecated,
+            tags=self.metadata.tags,
+            summary=self.metadata.summary,
+            description=self.metadata.description,
+            deprecated=self.metadata.deprecated,
             security=(
                 None
-                if metadata.auth is None
-                else [auth.security_requirement for auth in metadata.auth]
+                if self.metadata.auth is None
+                else [auth.security_requirement for auth in self.metadata.auth]
             ),
-            external_docs=metadata.external_docs,
-            servers=metadata.servers,
-            callbacks=metadata.callbacks,
+            external_docs=self.metadata.external_docs,
+            servers=self.metadata.servers,
+            callbacks=self.metadata.callbacks,
             operation_id=operation_id,
             request_body=request_body,
             responses=responses,
@@ -52,11 +52,11 @@ class OperationGenerator:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class OperationIDGenerator:
+class OperationIDBuilder:
     """
-    Generator for unique OpenAPI operation IDs.
+    Builder for unique OpenAPI operation IDs.
 
-    The Operation ID Generator is responsible for creating unique
+    The Operation ID builder is responsible for creating unique
     operation IDs for OpenAPI operations.
     It uses the explicit ``operation_id`` from endpoint metadata if available,
     otherwise generates one from the HTTP method and path following

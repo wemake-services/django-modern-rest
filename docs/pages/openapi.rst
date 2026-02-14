@@ -12,8 +12,8 @@ If you want to list this response, consider adding
 it to the default list of response specs in controller / settings.
 
 
-API Reference
--------------
+Objects
+-------
 
 .. autoclass:: django_modern_rest.openapi.objects.Callback
    :members:
@@ -109,4 +109,35 @@ API Reference
    :members:
 
 .. autoclass:: django_modern_rest.openapi.objects.XML
+   :members:
+
+
+Core
+----
+
+.. autoclass:: django_modern_rest.openapi.core.builder.OpenApiBuilder
+   :members:
+
+.. autoclass:: django_modern_rest.openapi.core.context.OpenAPIContext
+   :members:
+
+.. autoclass:: django_modern_rest.openapi.core.merger.ConfigMerger
+   :members:
+
+.. autoclass:: django_modern_rest.openapi.core.registry.OperationIdRegistry
+   :members:
+
+.. autoclass:: django_modern_rest.openapi.core.registry.SchemaRegistry
+   :members:
+
+.. autoclass:: django_modern_rest.openapi.config.OpenAPIConfig
+   :members:
+
+Builders
+--------
+
+.. autoclass:: django_modern_rest.openapi.builders.OperationBuilder
+   :members:
+
+.. autoclass:: django_modern_rest.openapi.builders.OperationIDBuilder
    :members:
