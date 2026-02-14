@@ -17,7 +17,7 @@ class RoleSchema(pydantic.BaseModel):
 class UserCreateSchema(pydantic.BaseModel):
     email: str
     role: RoleSchema
-    tag_list: list[TagSchema]
+    tags: list[TagSchema]
 
 
 @final

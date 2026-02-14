@@ -70,8 +70,6 @@ class BaseSerializer:
         Should be called inside :meth:`serialize`.
         """
         if isinstance(to_serialize, (set, frozenset)):
-            # This is impossible to reach with `msgspec`, but is needed
-            # for raw `json` serialization.
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         raise InternalServerError(
             f'Value {to_serialize} of type {type(to_serialize)} '

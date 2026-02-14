@@ -136,7 +136,7 @@ def test_complex_request_data(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures we can change per-endpoint parsers and renderers."""
+    """Ensures we that complex data can be in models."""
 
     class _Controller(Controller[PydanticSerializer], Body[_RequestModel]):
         def post(self) -> _RequestModel:
@@ -177,3 +177,32 @@ def test_complex_request_data(
         request_data['user']['tags'],
     )
     assert response_data['user']['groups'] == request_data['user']['groups']
+
+
+def test_complex_direct_return_data(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures that complex data can directly be returned."""
+
+    class _Controller(Controller[PydanticSerializer], Body[frozenset[str]]):
+        def post(self) -> frozenset[str]:
+            return self.parsed_body
+
+    assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
+    assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
+
+    request_data = [faker.unique.name(), faker.unique.name()]
+
+    request = dmr_rf.post(
+        '/whatever/',
+        data=json.dumps(request_data),
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+
+    assert sorted(json.loads(response.content)) == sorted(request_data)

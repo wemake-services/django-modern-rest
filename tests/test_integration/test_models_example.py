@@ -17,7 +17,7 @@ def test_user_create_models_example(
     request_data = {
         'email': faker.email(),
         'role': {'name': faker.name()},
-        'tag_list': [{'name': faker.name()}, {'name': faker.name()}],
+        'tags': [{'name': faker.name()}, {'name': faker.name()}],
     }
     response = dmr_client.post(
         reverse('api:models_example:user_model_create'),
