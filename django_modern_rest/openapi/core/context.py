@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from django_modern_rest.openapi.builders import (
+    OperationIDBuilder,
+)
 from django_modern_rest.openapi.core.merger import ConfigMerger
 from django_modern_rest.openapi.core.registry import (
     OperationIdRegistry,
@@ -8,8 +11,6 @@ from django_modern_rest.openapi.core.registry import (
 )
 from django_modern_rest.openapi.generators import (
     ComponentGenerator,
-    OperationGenerator,
-    OperationIDGenerator,
     ParameterGenerator,
     PathItemGenerator,
     RequestBodyGenerator,
@@ -33,8 +34,7 @@ class RegistryContainer:
 class GeneratorContainer:
     """Container for generators."""
 
-    operation: OperationGenerator
-    operation_id: OperationIDGenerator
+    operation_id: OperationIDBuilder
     schema: SchemaGenerator
     parameter: ParameterGenerator
     request_body: RequestBodyGenerator
@@ -64,8 +64,7 @@ class OpenAPIContext:
 
         # Initialize generators
         self.generators = GeneratorContainer(
-            operation=OperationGenerator(self),
-            operation_id=OperationIDGenerator(self),
+            operation_id=OperationIDBuilder(self),
             schema=SchemaGenerator(self),
             parameter=ParameterGenerator(self),
             request_body=RequestBodyGenerator(self),

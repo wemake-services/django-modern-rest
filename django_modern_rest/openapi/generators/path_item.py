@@ -39,10 +39,7 @@ class PathItemGenerator:
         kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
-            operation = self._context.generators.operation(
-                endpoint,
-                mapping.path,
-            )
+            operation = endpoint.operation_builder(self._context, mapping.path)
             kwargs[method.lower()] = operation  # type: ignore[literal-required]
 
         return PathItem(**kwargs)

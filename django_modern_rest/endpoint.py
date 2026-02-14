@@ -23,6 +23,7 @@ from django_modern_rest.exceptions import (
 from django_modern_rest.headers import HeaderSpec, NewHeader
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.negotiation import RequestNegotiator, ResponseNegotiator
+from django_modern_rest.openapi.builders import OperationBuilder
 from django_modern_rest.openapi.objects import (
     Callback,
     ExternalDocumentation,
@@ -67,6 +68,7 @@ class Endpoint:  # noqa: WPS214
         '_method',
         'is_async',
         'metadata',
+        'operation_builder',
         'request_negotiator',
         'response_negotiator',
         'response_validator',
@@ -89,6 +91,7 @@ class Endpoint:  # noqa: WPS214
     response_validator_cls: ClassVar[type[ResponseValidator]] = (
         ResponseValidator
     )
+    operation_builder_cls: ClassVar[type[OperationBuilder]] = OperationBuilder
 
     def __init__(
         self,
@@ -154,6 +157,9 @@ class Endpoint:  # noqa: WPS214
         )
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
+
+        # Also, we build openapi `Operation` object:
+        self.operation_builder = self.operation_builder_cls(metadata)
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
