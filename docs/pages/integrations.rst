@@ -63,6 +63,25 @@ and can work with :class:`~django.db.models.query.QuerySet`
 and :class:`~django.db.models.Model` instances.
 
 
+CSRF
+----
+
+Django supports
+`Cross Site Request Forgery <https://docs.djangoproject.com/en/6.0/ref/csrf/>`_
+protection.
+
+By default we exempt all controllers from CSRF checks, unless:
+
+1. :attr:`~django_modern_rest.controller.Controller.csrf_exempt`
+   is set to ``False`` for a specific controller
+2. Endpoints protected by
+   :class:`~django_modern_rest.security.django_session.DjangoSessionSyncAuth`
+   or
+   :class:`~django_modern_rest.security.django_session.DjangoSessionAsyncAuth`
+   will require CSRF as well. Because using Django sessions
+   without CSRF is not secure
+
+
 Bring your own DI
 -----------------
 

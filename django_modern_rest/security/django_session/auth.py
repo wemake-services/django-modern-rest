@@ -50,10 +50,15 @@ def _get_csrf_failure_reason(request: HttpRequest) -> str | None:
 
 
 class _DjangoSessionAuth(ResponseSpecProvider):
-    __slots__ = ('security_scheme_name',)
+    __slots__ = ('csrf_scheme_name', 'security_scheme_name')
 
-    def __init__(self, security_scheme_name: str = 'django_session') -> None:
+    def __init__(
+        self,
+        security_scheme_name: str = 'django_session',
+        csrf_scheme_name: str = 'csrf',
+    ) -> None:
         self.security_scheme_name = security_scheme_name
+        self.csrf_scheme_name = csrf_scheme_name
 
     @property
     def security_scheme(self) -> Components:
@@ -66,13 +71,20 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                     security_scheme_in='cookie',
                     description='Reusing standard Django auth flow for API',
                 ),
+                # TODO: this is not right if `CSRF_USE_SESSIONS` is used:
+                self.csrf_scheme_name: SecurityScheme(
+                    type='apiKey',
+                    name=settings.CSRF_COOKIE_NAME,
+                    security_scheme_in='cookie',
+                    description='CSRF protection',
+                ),
             },
         )
 
     @property
     def security_requirement(self) -> SecurityRequirement:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: []}
+        return {self.security_scheme_name: [], self.csrf_scheme_name: []}
 
     @override
     @classmethod
@@ -83,9 +95,8 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
-        specs: list[ResponseSpec] = []
-        specs.extend(
-            cls._add_new_response(
+        return [
+            *cls._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=NotAuthenticatedError.status_code,
@@ -93,9 +104,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                 ),
                 existing_responses,
             ),
-        )
-        specs.extend(
-            cls._add_new_response(
+            *cls._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=HTTPStatus.FORBIDDEN,
@@ -103,8 +112,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                 ),
                 existing_responses,
             ),
-        )
-        return specs
+        ]
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         reason = _get_csrf_failure_reason(controller.request)
