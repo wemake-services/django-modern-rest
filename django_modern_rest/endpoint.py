@@ -9,7 +9,7 @@ from typing import (
     overload,
 )
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBase
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from django_modern_rest.cookies import CookieSpec, NewCookie
@@ -174,7 +174,7 @@ class Endpoint:  # noqa: WPS214
         controller: 'Controller[BaseSerializer]',
         *args: Any,
         **kwargs: Any,
-    ) -> HttpResponse:
+    ) -> HttpResponseBase:
         """Run the endpoint and return the response."""
         return self._func(  # type: ignore[no-any-return]
             controller,
@@ -186,7 +186,7 @@ class Endpoint:  # noqa: WPS214
         self,
         controller: 'Controller[BaseSerializer]',
         exc: Exception,
-    ) -> HttpResponse:
+    ) -> HttpResponseBase:
         """
         Return error response if possible.
 
@@ -272,13 +272,13 @@ class Endpoint:  # noqa: WPS214
     def _async_endpoint(
         self,
         func: Callable[..., Any],
-    ) -> Callable[..., Awaitable[HttpResponse]]:
+    ) -> Callable[..., Awaitable[HttpResponseBase]]:
         # NOTE: if you change something here, also change in `_sync_endpoint`
         async def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
-        ) -> HttpResponse:
+        ) -> HttpResponseBase:
             active_blueprint = controller.active_blueprint
             try:  # noqa: WPS229
                 # Negotiate response:
@@ -311,13 +311,13 @@ class Endpoint:  # noqa: WPS214
     def _sync_endpoint(
         self,
         func: Callable[..., Any],
-    ) -> Callable[..., HttpResponse]:
+    ) -> Callable[..., HttpResponseBase]:
         # NOTE: if you change something here, also change in `_async_endpoint`
         def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
-        ) -> HttpResponse:
+        ) -> HttpResponseBase:
             active_blueprint = controller.active_blueprint
 
             try:  # noqa: WPS229
@@ -375,7 +375,7 @@ class Endpoint:  # noqa: WPS214
         self,
         controller: 'Controller[BaseSerializer]',
         raw_data: Any | HttpResponse,
-    ) -> HttpResponse:
+    ) -> HttpResponseBase:
         """
         Returns the actual ``HttpResponse`` object after optional validation.
 
@@ -402,9 +402,9 @@ class Endpoint:  # noqa: WPS214
     def _validate_response(
         self,
         controller: 'Controller[BaseSerializer]',
-        raw_data: Any | HttpResponse,
-    ) -> HttpResponse:
-        if isinstance(raw_data, HttpResponse):
+        raw_data: Any | HttpResponseBase,
+    ) -> HttpResponseBase:
+        if isinstance(raw_data, HttpResponseBase):
             return self.response_validator.validate_response(
                 self,
                 controller,
@@ -442,7 +442,10 @@ class Endpoint:  # noqa: WPS214
 
 _ParamT = ParamSpec('_ParamT')
 _ReturnT = TypeVar('_ReturnT')
-_ResponseT = TypeVar('_ResponseT', bound=HttpResponse | Awaitable[HttpResponse])
+_ResponseT = TypeVar(
+    '_ResponseT',
+    bound=HttpResponseBase | Awaitable[HttpResponseBase],
+)
 
 
 @overload
@@ -466,8 +469,8 @@ def validate(  # noqa: WPS234
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
 ) -> Callable[
-    [Callable[_ParamT, Awaitable[HttpResponse]]],
-    Callable[_ParamT, Awaitable[HttpResponse]],
+    [Callable[_ParamT, Awaitable[HttpResponseBase]]],
+    Callable[_ParamT, Awaitable[HttpResponseBase]],
 ]: ...
 
 
@@ -493,8 +496,8 @@ def validate(
     servers: list[Server] | None = None,
     metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> Callable[
-    [Callable[_ParamT, HttpResponse]],
-    Callable[_ParamT, HttpResponse],
+    [Callable[_ParamT, HttpResponseBase]],
+    Callable[_ParamT, HttpResponseBase],
 ]: ...
 
 
@@ -547,12 +550,12 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     metadata_cls: type[EndpointMetadata] = EndpointMetadata,
 ) -> (
     Callable[
-        [Callable[_ParamT, Awaitable[HttpResponse]]],
-        Callable[_ParamT, Awaitable[HttpResponse]],
+        [Callable[_ParamT, Awaitable[HttpResponseBase]]],
+        Callable[_ParamT, Awaitable[HttpResponseBase]],
     ]
     | Callable[
-        [Callable[_ParamT, HttpResponse]],
-        Callable[_ParamT, HttpResponse],
+        [Callable[_ParamT, HttpResponseBase]],
+        Callable[_ParamT, HttpResponseBase],
     ]
 ):
     """

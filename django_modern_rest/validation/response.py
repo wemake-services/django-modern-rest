@@ -9,7 +9,7 @@ from typing import (
     final,
 )
 
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse, HttpResponseBase
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.exceptions import (
@@ -26,6 +26,7 @@ from django_modern_rest.negotiation import (
     get_conditional_types,
     request_renderer,
 )
+from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.types import EmptyObj
 
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
     from django_modern_rest.endpoint import Endpoint
     from django_modern_rest.renderers import Renderer
 
-_ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
+_ResponseT = TypeVar('_ResponseT', bound=HttpResponseBase)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -59,7 +60,7 @@ class ResponseValidator:
         controller: 'Controller[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
-        """Validate ``.content`` of existing ``HttpResponse`` object."""
+        """Validate response based on provided schema."""
         if not self.metadata.validate_responses:
             return response
         schema = self._get_response_schema(response.status_code)
@@ -70,11 +71,18 @@ class ResponseValidator:
             endpoint.metadata,
         )
 
-        structured = self.serializer.deserialize(
-            response.content,
-            parser=parser,
-            request=controller.request,
-        )
+        if isinstance(response, HttpResponse):
+            structured = self.serializer.deserialize(
+                response.content,
+                parser=parser,
+                request=controller.request,
+            )
+        elif isinstance(response, FileResponse):
+            structured = Binary()
+        else:
+            raise InternalServerError(
+                f'Unsupported response type {type(response)!r}',
+            )
         self._validate_body(
             structured,
             schema,
@@ -183,7 +191,7 @@ class ResponseValidator:
 
     def _validate_response_headers(  # noqa: WPS210
         self,
-        response: HttpResponse,
+        response: HttpResponseBase,
         schema: ResponseSpec,
     ) -> None:
         """Validates response headers against provided metadata."""
@@ -218,7 +226,7 @@ class ResponseValidator:
 
     def _validate_response_cookies(  # noqa: WPS210
         self,
-        response: HttpResponse,
+        response: HttpResponseBase,
         schema: ResponseSpec,
     ) -> None:
         """Validates response cookies against provided metadata."""
