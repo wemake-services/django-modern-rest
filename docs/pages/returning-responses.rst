@@ -258,7 +258,7 @@ We support file and other binary responses.
 
 To do so, you should mark your
 :class:`~django_modern_rest.metadata.ResponseSpec`
-with a :class:`~django_modern_rest.metadata.Binary` marker:
+with a :class:`~django_modern_rest.openapi.markers.Binary` marker:
 
 .. literalinclude:: /examples/returning_responses/file_response.py
   :caption: views.py

@@ -21,11 +21,12 @@ from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import (
     response_validation_negotiator,
 )
-from django_modern_rest.metadata import Binary, EndpointMetadata, ResponseSpec
+from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
 from django_modern_rest.negotiation import (
     get_conditional_types,
     request_renderer,
 )
+from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.types import EmptyObj
 

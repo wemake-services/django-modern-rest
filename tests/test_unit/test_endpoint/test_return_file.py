@@ -7,7 +7,7 @@ import pytest
 from django.http import FileResponse
 
 from django_modern_rest import Controller, HeaderSpec, ResponseSpec, validate
-from django_modern_rest.metadata import Binary
+from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory

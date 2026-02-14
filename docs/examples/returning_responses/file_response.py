@@ -5,7 +5,7 @@ from typing import Final, final
 from django.http import FileResponse
 
 from django_modern_rest import Controller, HeaderSpec, ResponseSpec, validate
-from django_modern_rest.metadata import Binary
+from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 _FILEPATH: Final = pathlib.Path('examples/components/receipt.txt')

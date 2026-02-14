@@ -21,7 +21,6 @@ if TYPE_CHECKING:
         Reference,
         Server,
     )
-    from django_modern_rest.openapi.objects.schema import Schema
     from django_modern_rest.parsers import Parser
     from django_modern_rest.renderers import Renderer
     from django_modern_rest.security.base import AsyncAuth, SyncAuth
@@ -147,26 +146,6 @@ class ResponseModification:
                 if cookie.is_actionable
             }
         )
-
-
-@final
-@dataclasses.dataclass(slots=True, frozen=True)
-class Binary:
-    """Special type that indicates that response returns binary data."""
-
-    @classmethod
-    def schema(cls) -> 'Schema':
-        """Returns the openapi schema that this object represents."""
-        # Avoid circular imports:
-        from django_modern_rest.openapi.objects.enums import (  # noqa: PLC0415
-            OpenAPIFormat,
-            OpenAPIType,
-        )
-        from django_modern_rest.openapi.objects.schema import (  # noqa: PLC0415
-            Schema,
-        )
-
-        return Schema(format=OpenAPIFormat.BINARY, type=OpenAPIType.STRING)
 
 
 class ResponseSpecProvider:

@@ -133,6 +133,7 @@ Core
 .. autoclass:: django_modern_rest.openapi.config.OpenAPIConfig
    :members:
 
+
 Builders
 --------
 
@@ -141,3 +142,10 @@ Builders
 
 .. autoclass:: django_modern_rest.openapi.builders.OperationIDBuilder
    :members:
+
+
+User objects
+------------
+
+.. autoclass:: django_modern_rest.openapi.markers.Binary
+  :members:
