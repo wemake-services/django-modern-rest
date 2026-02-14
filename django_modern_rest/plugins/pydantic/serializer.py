@@ -112,7 +112,6 @@ class PydanticSerializer(BaseSerializer):
     from_python_kwargs: ClassVar[FromPythonKwargs] = {
         'by_alias': True,
     }
-    deserialize_strict: ClassVar[bool] = True
 
     @override
     @classmethod
@@ -152,7 +151,6 @@ class PydanticSerializer(BaseSerializer):
         return parser.parse(
             buffer,
             cls.deserialize_hook,
-            strict=cls.deserialize_strict,
             request=request,
         )
 

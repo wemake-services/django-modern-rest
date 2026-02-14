@@ -124,6 +124,8 @@ def test_wrong_request_data(
 
 class _UserModel(pydantic.BaseModel):
     username: str
+    tags: set[str]
+    groups: frozenset[str]
 
 
 class _RequestModel(pydantic.BaseModel):
@@ -143,7 +145,13 @@ def test_complex_request_data(
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
     assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
 
-    request_data = {'user': {'username': faker.name()}}
+    request_data = {
+        'user': {
+            'username': faker.name(),
+            'tags': [faker.unique.name(), faker.unique.name()],
+            'groups': [faker.name()],
+        },
+    }
 
     request = dmr_rf.post(
         '/whatever/',
@@ -159,4 +167,13 @@ def test_complex_request_data(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == request_data
+
+    response_data = json.loads(response.content)
+    # All this work to be sure that `set` field order is ignored:
+    assert len(response_data) == 1
+    assert len(response_data['user']) == len(request_data['user'])
+    assert response_data['user']['username'] == request_data['user']['username']
+    assert sorted(response_data['user']['tags']) == sorted(
+        request_data['user']['tags'],
+    )
+    assert response_data['user']['groups'] == request_data['user']['groups']

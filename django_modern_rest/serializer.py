@@ -32,7 +32,17 @@ _TypeMapResult: TypeAlias = tuple[
 
 
 class BaseSerializer:
-    """Abstract base class for data serialization."""
+    """
+    Abstract base class for data serialization.
+
+    Attributes:
+        validation_error: Exception type that is used for validation errors.
+            Required to be set in subclasses.
+        optimizer: Endpoint optimizer.
+            Type that pre-compiles / creates / caches models in import time.
+            Required to be set in subclasses.
+
+    """
 
     __slots__ = ()
 
@@ -59,7 +69,7 @@ class BaseSerializer:
         Only add types that are common for all potential plugins here.
         Should be called inside :meth:`serialize`.
         """
-        if isinstance(to_serialize, (set, frozenset)):  # pragma: no cover
+        if isinstance(to_serialize, (set, frozenset)):
             # This is impossible to reach with `msgspec`, but is needed
             # for raw `json` serialization.
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
@@ -172,6 +182,13 @@ class SerializerContext:
     This context collects raw data for all registered components, validates
     the combined payload in a single call using a cached TypedDict model,
     and then binds the parsed values back to the controller.
+
+    Attributes:
+        strict_validation: Whether or not to validate payloads in strict mode.
+            Strict mode in some serializers does
+            not allow implicit type conversions.
+            Defaults to ``None``. Which means that we decide
+            on a per-field and then on a per-model basis.
     """
 
     # Public API:

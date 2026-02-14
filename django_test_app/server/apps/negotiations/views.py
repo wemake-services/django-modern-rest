@@ -57,7 +57,6 @@ class XmlParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         try:
             return xmltodict.parse(to_deserialize, process_namespaces=True)
