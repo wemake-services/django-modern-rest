@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, final
+from typing import Any, final
 
 import pytest
 from django.http import HttpRequest
@@ -13,7 +13,7 @@ from django_modern_rest.test import DMRRequestFactory
 class _MainStar(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = '*/whatever'
+    content_type = '*/whatever'
 
     @override
     def parse(
@@ -29,7 +29,7 @@ class _MainStar(Parser):
 class _SubStar(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/*'
+    content_type = 'application/*'
 
     @override
     def parse(
@@ -45,7 +45,7 @@ class _SubStar(Parser):
 class _AllStar(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = '*/*'
+    content_type = '*/*'
 
     @override
     def parse(
@@ -61,7 +61,7 @@ class _AllStar(Parser):
 class _JsonExact(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
 
     @override
     def parse(

@@ -266,8 +266,11 @@ class _ValidateController(Controller[PydanticSerializer]):
     def get(self) -> HttpResponse:
         return HttpResponse(
             json.dumps(
-                _ModelWithFieldValidator(username='admin').model_dump(),
+                _ModelWithFieldValidator(username='admin').model_dump(
+                    mode='json',
+                ),
             ),
+            content_type='application/json',
         )
 
 
@@ -418,4 +421,37 @@ def test_return_unsupported_response(
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Internal server error'}],
+    })
+
+
+@final
+class _WrongContentTypeController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(list[int], status_code=HTTPStatus.OK),
+    )
+    def get(self) -> HttpResponse:
+        return HttpResponse(b'[1, 2]')
+
+
+def test_validates_wrong_content_type(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that returning wrong content types is not allowed."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _WrongContentTypeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "Response content type 'text/html; charset=utf-8' "
+                    'is not listed as a possible to be returned '
+                    "['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
     })

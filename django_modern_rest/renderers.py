@@ -2,7 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
@@ -16,7 +16,11 @@ from django_modern_rest.metadata import (
     ResponseSpec,
     ResponseSpecProvider,
 )
-from django_modern_rest.parsers import JsonParser, Parser
+from django_modern_rest.parsers import (
+    JsonParser,
+    Parser,
+    _NoOpParser,  # pyright: ignore[reportPrivateUsage]
+)
 
 if TYPE_CHECKING:
     from django_modern_rest.controller import Controller
@@ -32,7 +36,7 @@ class Renderer(ResponseSpecProvider):
 
     __slots__ = ()
 
-    content_type: ClassVar[str]
+    content_type: str
     """
     Content-Type that this renderer works with.
 
@@ -139,7 +143,7 @@ class JsonRenderer(Renderer):
 
     __slots__ = ('_encoder_cls',)
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
     """Works with ``json`` only."""
 
     def __init__(
@@ -179,3 +183,41 @@ class JsonRenderer(Renderer):
     def validation_parser(self) -> JsonParser:
         """Regular json parser can parse this."""
         return JsonParser()
+
+
+class FileRenderer(Renderer):
+    """
+    Renders any file.
+
+    Works with any files and any content types.
+
+    .. warning::
+
+        Works with any content type by default,
+        so it must be an only renderer for the endpoint.
+
+    """
+
+    __slots__ = ('content_type',)
+
+    def __init__(self, content_type: str = '*/*') -> None:
+        """Users can customize content types that this renderer works with."""
+        self.content_type = content_type
+
+    @override
+    def render(
+        self,
+        to_serialize: Any,
+        serializer: Callable[[Any], Any],
+    ) -> bytes:
+        """Render a file."""
+        raise NotImplementedError(
+            'FileRenderer.render() must not be called, '
+            'instead return a FileResponse directly',
+        )
+
+    @property
+    @override
+    def validation_parser(self) -> _NoOpParser:
+        """Since there's nothing to parse, we return a no-op."""
+        return _NoOpParser(self.content_type)

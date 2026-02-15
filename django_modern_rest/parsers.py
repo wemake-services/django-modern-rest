@@ -2,7 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias, final
 
 from django.core.exceptions import BadRequest, TooManyFilesSent
 from django.http import HttpRequest
@@ -41,7 +41,7 @@ class Parser(ResponseSpecProvider):
 
     __slots__ = ()
 
-    content_type: ClassVar[str]
+    content_type: str
     """
     Content-Type that this parser works with.
 
@@ -104,7 +104,7 @@ class JsonParser(Parser):
 
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
     """Works with ``json`` only."""
 
     @override
@@ -207,7 +207,7 @@ class MultiPartParser(
     So, we return original Django's content.
     """
 
-    content_type: ClassVar[str] = 'multipart/form-data'
+    content_type = 'multipart/form-data'
     """Works with multipart data."""
 
     @override
@@ -261,7 +261,7 @@ class FormUrlEncodedParser(
     So, we return original Django's content.
     """
 
-    content_type: ClassVar[str] = 'application/x-www-form-urlencoded'
+    content_type = 'application/x-www-form-urlencoded'
     """Works with urlencoded forms."""
 
     @override
@@ -300,3 +300,21 @@ class FormUrlEncodedParser(
         except BadRequest as exc:
             raise RequestSerializationError(str(exc)) from None
         # It is already parsed by Django itself, no need to return anything.
+
+
+@final
+class _NoOpParser(Parser):  # pyright: ignore[reportUnusedClass]
+    __slots__ = ('content_type',)
+
+    def __init__(self, content_type: str) -> None:
+        self.content_type = content_type
+
+    @override
+    def parse(
+        self,
+        to_deserialize: Raw,
+        deserializer: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+    ) -> Any:
+        raise NotImplementedError('NoOpParser.parse() should not be used')

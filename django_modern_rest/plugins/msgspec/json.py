@@ -15,8 +15,8 @@ from django_modern_rest.renderers import Renderer
 class MsgspecJsonParser(Parser):
     """Parsers json bodies using ``msgspec``."""
 
-    content_type: ClassVar[str] = 'application/json'
-    deserialize_strict: ClassVar[bool] = True
+    content_type = 'application/json'
+    strict: ClassVar[bool] = True
 
     @override
     def parse(
@@ -44,7 +44,7 @@ class MsgspecJsonParser(Parser):
         try:
             return _get_deserializer(
                 deserializer,
-                strict=self.deserialize_strict,
+                strict=self.strict,
             ).decode(to_deserialize)
         except msgspec.DecodeError as exc:
             # Corner case: when deserializing an empty body,
@@ -59,7 +59,7 @@ class MsgspecJsonParser(Parser):
 class MsgspecJsonRenderer(Renderer):
     """Renders json bodies using ``msgspec``."""
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
 
     @override
     def render(

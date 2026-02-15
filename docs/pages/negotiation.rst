@@ -66,6 +66,22 @@ Here's how we select a renderer:
 4. If no renderer fits for the accepted content types, we raise
    :exc:`~django_modern_rest.exceptions.ResponseSchemaError`
 
+.. note::
+
+  When constructing response manually, like:
+
+  .. code-block:: python
+
+    >>> from django.http import HttpResponse
+    >>> response = HttpResponse(b'[]')
+
+  The renderer is selected as usual, but no actual rendering is done.
+  However, all other validation works as expected.
+
+  But, when using :meth:`~django_modern_rest.controller.Controller.to_response`
+  method, renderer will be executed.
+  So, it is a preferred method for regular responses.
+
 .. important::
 
   Settings always must have one parser
@@ -220,22 +236,31 @@ Renderer API
 Existing parsers and renderers
 ------------------------------
 
+Parsers
+~~~~~~~
+
 .. autoclass:: django_modern_rest.plugins.msgspec.MsgspecJsonParser
   :members:
 
-.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecJsonRenderer
-  :members:
-
 .. autoclass:: django_modern_rest.parsers.JsonParser
-  :members:
-
-.. autoclass:: django_modern_rest.renderers.JsonRenderer
   :members:
 
 .. autoclass:: django_modern_rest.parsers.MultiPartParser
   :members:
 
 .. autoclass:: django_modern_rest.parsers.FormUrlEncodedParser
+  :members:
+
+Renderers
+~~~~~~~~~
+
+.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecJsonRenderer
+  :members:
+
+.. autoclass:: django_modern_rest.renderers.JsonRenderer
+  :members:
+
+.. autoclass:: django_modern_rest.renderers.FormUrlEncodedParser
   :members:
 
 
