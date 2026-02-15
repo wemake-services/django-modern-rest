@@ -2,6 +2,7 @@ import enum
 import inspect
 from collections.abc import Awaitable, Callable
 from functools import wraps
+from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -12,7 +13,8 @@ from typing import (
     overload,
 )
 
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.views.defaults import page_not_found
 from typing_extensions import TypedDict
 
 from django_modern_rest.exceptions import (
@@ -41,13 +43,14 @@ class ErrorType(enum.StrEnum):
         not_allowed: Raised when using unsupported http method. 405 alias.
         security: Raised when security related error happens.
         user_msg: Raised for custom errors from users.
-
+        user_msg: Raised when we can't find controller.
     """
 
     value_error = 'value_error'
     not_allowed = 'not_allowed'
     security = 'security'
     user_msg = 'user_msg'
+    not_found = 'not_found'
 
 
 class ErrorDetail(TypedDict):
@@ -304,3 +307,31 @@ def global_error_handler(
             status_code=exc.status_code,
         )
     raise  # noqa: PLE0704
+
+
+def build_404_handler(  # noqa: WPS114
+    prefix: str,
+    /,
+    *prefixes: str,
+) -> Callable[[HttpRequest, Exception], HttpResponse]:
+    """
+    Create a 404 handler that returns a JSON response.
+
+    All prefixes are normalized to start with a leading slash. If the
+    request path matches any of them, a JSON 404 response is returned.
+    Otherwise, Django's default ``page_not_found`` handler is used.
+    """
+    all_prefixes = [f'/{pref.strip("/")}' for pref in (prefix, *prefixes)]
+
+    def _factory(request: HttpRequest, exception: Exception) -> HttpResponse:  # noqa: WPS430
+        if any(request.path.startswith(prefix) for prefix in all_prefixes):
+            return JsonResponse(
+                format_error(
+                    'Page not found',
+                    error_type=ErrorType.not_found,
+                ),
+                status=HTTPStatus.NOT_FOUND,
+            )
+        return page_not_found(request, exception)
+
+    return _factory
