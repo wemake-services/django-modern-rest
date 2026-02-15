@@ -21,6 +21,7 @@ from django_modern_rest.test import DMRRequestFactory
 class _MyController(Controller[PydanticSerializer]):
     @endpoint_decorator(login_required())
     @modify(
+        validate_responses=False,  # we need this, because of the content-type
         extra_responses=[
             ResponseSpec(
                 None,

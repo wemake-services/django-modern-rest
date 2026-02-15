@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any
 from xml.parsers import expat
 
 import xmltodict
@@ -19,7 +19,7 @@ from django_modern_rest.renderers import Renderer
 class XmlParser(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/xml'
+    content_type = 'application/xml'
 
     @override
     def parse(
@@ -38,7 +38,7 @@ class XmlParser(Parser):
 class XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/xml'
+    content_type = 'application/xml'
 
     @override
     def render(

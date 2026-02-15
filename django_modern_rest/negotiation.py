@@ -2,7 +2,7 @@ import enum
 from collections.abc import Mapping
 from typing import Annotated, Any, final, get_origin
 
-from django.http.request import HttpRequest, MediaType
+from django.http.request import HttpRequest
 
 from django_modern_rest.exceptions import (
     EndpointMetadataError,
@@ -11,6 +11,9 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.internal.negotiation import (
     ConditionalType as _ConditionalType,
+)
+from django_modern_rest.internal.negotiation import (
+    media_by_precedence,
 )
 from django_modern_rest.metadata import EndpointMetadata
 from django_modern_rest.parsers import Parser
@@ -43,15 +46,7 @@ class RequestNegotiator:
             if '*' not in content_type
         }
         # Compute precedence in advance:
-        self._media_by_precedence = sorted(
-            (
-                media_type
-                for parser in self._parsers.values()
-                if (media_type := MediaType(parser.content_type)).quality != 0
-            ),
-            key=lambda media: (media.specificity, media.quality),  # noqa: WPS617
-            reverse=True,
-        )
+        self._media_by_precedence = media_by_precedence(self._parsers.keys())
         # The last configured parser is the most specific one:
         self._default = next(iter(self._parsers.values()))
 

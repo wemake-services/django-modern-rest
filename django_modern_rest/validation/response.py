@@ -9,7 +9,7 @@ from typing import (
     final,
 )
 
-from django.http import FileResponse, HttpResponse, HttpResponseBase
+from django.http import HttpResponse, HttpResponseBase
 
 from django_modern_rest.cookies import NewCookie
 from django_modern_rest.exceptions import (
@@ -19,6 +19,7 @@ from django_modern_rest.exceptions import (
 )
 from django_modern_rest.headers import build_headers
 from django_modern_rest.internal.negotiation import (
+    media_by_precedence,
     response_validation_negotiator,
 )
 from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
@@ -26,7 +27,6 @@ from django_modern_rest.negotiation import (
     get_conditional_types,
     request_renderer,
 )
-from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.serializer import BaseSerializer
 from django_modern_rest.types import EmptyObj
 
@@ -72,16 +72,22 @@ class ResponseValidator:
         )
 
         if isinstance(response, HttpResponse):
+            # When we have a regular response, we deserialize
+            # its content, it is quite clear.
             structured = self.serializer.deserialize(
                 response.content,
                 parser=parser,
                 request=controller.request,
             )
-        elif isinstance(response, FileResponse):
-            structured = Binary()
         else:
-            raise InternalServerError(
-                f'Unsupported response type {type(response)!r}',
+            # But, when we are dealing with `FileResponse`
+            # or any other streaming response type,
+            # there's nothing really to deserialize.
+            # So, we end up working with some specific markers / abstractions.
+            structured = self.serializer.deserialize_response(
+                response,
+                parser=parser,
+                request=controller.request,
             )
         self._validate_body(
             structured,
@@ -90,6 +96,7 @@ class ResponseValidator:
         )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
+        self._validate_content_type(response, endpoint.metadata)
         return response
 
     def validate_modification(
@@ -264,6 +271,27 @@ class ResponseValidator:
                     f'Response cookie {cookie_key}={cookie_body!r} is not '
                     f'equal to {metadata_cookies[cookie_key]!r}',
                 )
+
+    def _validate_content_type(
+        self,
+        response: HttpResponseBase,
+        metadata: EndpointMetadata,
+    ) -> None:
+        """
+        We need to be sure that returned response has listed content type.
+
+        Because real endpoints can return a response manually,
+        and any content type might be set.
+        """
+        content_type = response.headers['Content-Type']
+        media_types = metadata.renderers.keys()
+        for media in media_by_precedence(media_types):
+            if media.match(content_type):
+                return
+        raise ResponseSchemaError(
+            f'Response content type {content_type!r} is not '
+            f'listed as a possible to be returned {list(media_types)!r}',
+        )
 
 
 @final

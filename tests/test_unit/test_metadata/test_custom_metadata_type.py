@@ -37,7 +37,7 @@ class _NoExtrasController(
         metadata_cls=_NoExtrasMetadata,
     )
     def post(self) -> HttpResponse:
-        return HttpResponse(b'"abc"')
+        return HttpResponse(b'"abc"', content_type='application/json')
 
     @modify(metadata_cls=_NoExtrasMetadata)
     def put(self) -> str:

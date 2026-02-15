@@ -23,8 +23,8 @@ layers =
   negotiation
   response
   plugins
-  openapi
   serializer
+  openapi
   headers | cookies
   types
   internal

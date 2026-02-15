@@ -10,6 +10,7 @@ from django_modern_rest import Controller, HeaderSpec, ResponseSpec, validate
 from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.renderers import FileRenderer
 from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -32,6 +33,7 @@ class _FileSyncController(Controller[PydanticSerializer]):
                 'Content-Disposition': HeaderSpec(),
             },
         ),
+        renderers=[FileRenderer()],
     )
     def get(self) -> FileResponse:
         return FileResponse(
@@ -64,6 +66,8 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
 
 @final
 class _FileAsyncController(Controller[PydanticSerializer]):
+    renderers = (FileRenderer('text/plain'),)
+
     @validate(
         ResponseSpec(
             Binary,

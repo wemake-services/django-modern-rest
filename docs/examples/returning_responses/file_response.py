@@ -7,6 +7,7 @@ from django.http import FileResponse
 from django_modern_rest import Controller, HeaderSpec, ResponseSpec, validate
 from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.renderers import FileRenderer
 
 _FILEPATH: Final = pathlib.Path('examples/components/receipt.txt')
 
@@ -21,6 +22,7 @@ class FileController(Controller[PydanticSerializer]):
                 'Content-Disposition': HeaderSpec(),
             },
         ),
+        renderers=[FileRenderer('text/plain')],
     )
     def get(self) -> FileResponse:
         return FileResponse(

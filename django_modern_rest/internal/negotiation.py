@@ -1,8 +1,8 @@
 import dataclasses
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, final
 
-from django.http import HttpRequest
+from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 
 if TYPE_CHECKING:
@@ -72,4 +72,17 @@ def response_validation_negotiator(
         content_type,
         # If nothing works, fallback to the default parser:
         next(iter(parsers.values())),
+    )
+
+
+def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
+    """Return sorted content types based on specificity and quality."""
+    return sorted(
+        (
+            media_type
+            for content_type in content_types
+            if (media_type := MediaType(content_type)).quality != 0
+        ),
+        key=lambda media: (media.specificity, media.quality),  # noqa: WPS617
+        reverse=True,
     )

@@ -3,7 +3,7 @@ from collections import defaultdict
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
-from django.http import HttpRequest
+from django.http import FileResponse, HttpRequest, HttpResponseBase
 from typing_extensions import TypedDict
 
 from django_modern_rest.errors import ErrorDetail
@@ -12,6 +12,7 @@ from django_modern_rest.exceptions import (
     RequestSerializationError,
     ValidationError,
 )
+from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
 
@@ -89,6 +90,17 @@ class BaseSerializer:
         raise NotImplementedError
 
     @classmethod
+    def deserialize_response(
+        cls,
+        response: HttpResponseBase,
+        *,
+        parser: Parser,
+        request: HttpRequest,
+    ) -> Any:
+        """Deserialize non-HttpResponse response subclass."""
+        return deserialize_response(response)
+
+    @classmethod
     def deserialize_hook(
         cls,
         target_type: type[Any],
@@ -153,6 +165,15 @@ class BaseSerializer:
             Simple python object - exception converted to json.
         """
         raise NotImplementedError
+
+
+def deserialize_response(response: HttpResponseBase) -> Any:
+    """Deserialize complex response subtypes."""
+    if isinstance(response, FileResponse):
+        return Binary()
+    raise InternalServerError(
+        f'Unsupported response type {type(response)!r}',
+    )
 
 
 class BaseEndpointOptimizer:
