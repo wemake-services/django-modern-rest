@@ -133,6 +133,8 @@ nitpick_ignore = [
     (PY_CLASS, 'django_modern_rest.pagination._ModelT'),
     (PY_CLASS, 'django_modern_rest.controller._SerializerT_co'),
     ('py:obj', 'django_modern_rest.controller._SerializerT_co'),
+    # Explicitly protected names:
+    (PY_CLASS, 'django_modern_rest.parsers._NoOpParser'),
     # Unsolvable imports:
     (PY_CLASS, 'AbstractBaseUser'),
     # Undocumented in Django:
