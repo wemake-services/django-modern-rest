@@ -465,6 +465,36 @@ class Path(ComponentParser, Generic[_PathT]):
 
     @override
     @classmethod
+    def provide_response_specs(
+        cls,
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
+        """
+        Return a list of extra responses that this component produces.
+
+        Path component implies that we are looking for something.
+        So, it is natural to have 404 in the specification.
+        """
+        return [
+            *super().provide_response_specs(
+                metadata,
+                controller_cls,
+                existing_responses,
+            ),
+            *cls._add_new_response(
+                ResponseSpec(
+                    controller_cls.error_model,
+                    status_code=HTTPStatus.NOT_FOUND,
+                    description='Raised when path parameters do not match',
+                ),
+                existing_responses,
+            ),
+        ]
+
+    @override
+    @classmethod
     def provide_context_data(
         cls,
         endpoint: 'Endpoint',

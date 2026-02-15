@@ -8,9 +8,6 @@ max-examples = 100
 # We will expand the checks as we implement the openapi schemageneration.
 enabled = true
 
-# Verifies the response status code is documented in the schema for the operation
-status_code_conformance.enabled = false
-
 # Verifies the API accepts valid request data.
 positive_data_acceptance.enabled = false
 
