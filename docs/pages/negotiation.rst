@@ -260,7 +260,7 @@ Renderers
 .. autoclass:: django_modern_rest.renderers.JsonRenderer
   :members:
 
-.. autoclass:: django_modern_rest.renderers.FormUrlEncodedParser
+.. autoclass:: django_modern_rest.renderers.FileRenderer
   :members:
 
 
