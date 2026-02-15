@@ -44,6 +44,7 @@ class ErrorType(enum.StrEnum):
         security: Raised when security related error happens.
         user_msg: Raised for custom errors from users.
         not_found: Raised when we can't find controller.
+
     """
 
     value_error = 'value_error'
