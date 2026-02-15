@@ -43,7 +43,7 @@ class ErrorType(enum.StrEnum):
         not_allowed: Raised when using unsupported http method. 405 alias.
         security: Raised when security related error happens.
         user_msg: Raised for custom errors from users.
-        user_msg: Raised when we can't find controller.
+        not_found: Raised when we can't find controller.
     """
 
     value_error = 'value_error'

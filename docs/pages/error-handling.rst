@@ -207,12 +207,37 @@ And :func:`~django_modern_rest.errors.format_error`
 for the default error formatting.
 
 
+Handling 404 errors
+-------------------
+
+By default, Django returns HTML 404 pages.
+This is not what we want for API endpoints.
+Instead, we want to return JSON responses with proper error structure.
+
+To achieve this, you can use
+:func:`~django_modern_rest.errors.build_404_handler` helper.
+It will create a handler that returns JSON for specific path prefixes,
+and falls back to Django's default handler for everything else.
+
+Here is how you can use it in your root ``urls.py``:
+
+.. code-block:: python
+
+  from django_modern_rest.errors import build_404_handler
+
+  # ... your urlpatterns ...
+
+  handler404 = build_404_handler('api/')
+
+
 API Reference
 -------------
 
 .. autofunction:: django_modern_rest.errors.global_error_handler
 
 .. autofunction:: django_modern_rest.errors.wrap_handler
+
+.. autofunction:: django_modern_rest.errors.build_404_handler
 
 .. autoclass:: django_modern_rest.errors.ErrorType
   :members:
