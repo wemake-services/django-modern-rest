@@ -123,7 +123,7 @@ class SchemaGenerator:
                 properties=props,
                 required=required or None,
             ),
-            name=source_type.__name__,
+            name=self._get_schema_name(source_type),
         )
 
     def _extract_properties(
@@ -181,6 +181,13 @@ class SchemaGenerator:
 
             updates[schema_field] = kwarg_value
         return updates
+
+    def _get_schema_name(self, source_type: Any) -> str:
+        name = source_type.__name__
+        if hasattr(source_type, '__dmr_schema_name__'):
+            name = source_type.__dmr_schema_name__
+
+        return str(name)
 
 
 def _get_schema_from_type_map(annotation: Any) -> Schema | None:
