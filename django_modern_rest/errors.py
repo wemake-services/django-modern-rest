@@ -322,10 +322,11 @@ def build_404_handler(  # noqa: WPS114
     request path matches any of them, a JSON 404 response is returned.
     Otherwise, Django's default ``page_not_found`` handler is used.
     """
-    all_prefixes = [f'/{pref.strip("/")}' for pref in (prefix, *prefixes)]
+    combined = (prefix, *prefixes)
+    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
 
     def _factory(request: HttpRequest, exception: Exception) -> HttpResponse:  # noqa: WPS430
-        if any(request.path.startswith(prefix) for prefix in all_prefixes):
+        if request.path.startswith(all_prefixes):
             return JsonResponse(
                 format_error(
                     'Page not found',
