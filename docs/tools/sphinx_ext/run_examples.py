@@ -77,6 +77,10 @@ class _ImportsSpoilerSummary(General, Element):
     """Imports toggle control node."""
 
 
+class _GithubSourceLink(General, Element):
+    """GitHub source link node."""
+
+
 def _visit_imports_spoiler(
     self: HTML5Translator,
     node: _ImportsSpoiler,
@@ -117,6 +121,24 @@ def _depart_imports_spoiler_summary(
     node: _ImportsSpoilerSummary,
 ) -> None:
     self.body.append('</button>\n')
+
+
+def _visit_github_source_link(
+    self: HTML5Translator,
+    node: _GithubSourceLink,
+) -> None:
+    github_url = node.get('github_url', '')
+    self.body.append(
+        f'<a href="{github_url}" class="github-source-link" '
+        'target="_blank" rel="noopener noreferrer">[source]</a>\n',
+    )
+
+
+def _depart_github_source_link(
+    self: HTML5Translator,
+    node: _GithubSourceLink,
+) -> None:
+    self.body.append('')
 
 
 def _get_available_port() -> int:
@@ -505,17 +527,14 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         file_path = Path(self.env.relfn2path(self.arguments[0])[1])
         imports_data = self._get_imports_data(file_path)
         if not self._need_to_run(file_path):
-            rendered_nodes = self._render_literalinclude_nodes(imports_data)
-            return self._inject_imports_spoiler(rendered_nodes, imports_data)
+            return self._generate_nodes(file_path, imports_data)
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            rendered_nodes = self._render_literalinclude_nodes(imports_data)
-            return self._inject_imports_spoiler(rendered_nodes, imports_data)
+            return self._generate_nodes(file_path, imports_data)
         self._create_tmp_example_file(file_path, clean_content)
 
-        rendered_nodes = self._render_literalinclude_nodes(imports_data)
-        nodes = self._inject_imports_spoiler(rendered_nodes, imports_data)
+        nodes = self._generate_nodes(file_path, imports_data)
 
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
@@ -541,6 +560,15 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
             ),
         )
         return nodes
+
+    def _generate_nodes(
+        self,
+        file_path: Path,
+        imports_data: tuple[_ImportsSpoiler, int] | None,
+    ) -> list[Node]:
+        nodes = self._render_literalinclude_nodes(imports_data)
+        nodes = self._inject_imports_spoiler(nodes, imports_data)
+        return self._inject_source_link(nodes, file_path)
 
     def _get_imports_data(
         self,
@@ -585,13 +613,13 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         spoiler_node, _ = imports_data
         first_node = rendered_nodes[0]
 
-        if isinstance(
-            first_node,
-            container,
-        ) and 'literal-block-wrapper' in first_node.get('classes', []):
-            if 'imports-inline-enabled' not in first_node['classes']:
-                first_node['classes'].append('imports-inline-enabled')
-            self._insert_spoiler_before_literal_block(first_node, spoiler_node)
+        if self._is_literal_block_wrapper(first_node):
+            wrapper_node = cast(container, first_node)
+            self._add_wrapper_class(wrapper_node, 'imports-inline-enabled')
+            self._insert_spoiler_before_literal_block(
+                wrapper_node,
+                spoiler_node,
+            )
             return rendered_nodes
 
         if isinstance(first_node, literal_block):
@@ -662,6 +690,92 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         lines_word = 'line' if hidden_lines_count == 1 else 'lines'
         return f'Show imports... {hidden_lines_count} {lines_word} hidden'
 
+    def _build_github_url(self, file_path: Path) -> str:
+        """Build GitHub URL for the source file."""
+        docs_dir = self._get_docs_dir()
+        relative_path = self._get_source_relative_path(file_path, docs_dir)
+        return f'{self._get_source_base_url()}/{relative_path.as_posix()}'
+
+    def _get_docs_dir(self) -> Path:
+        cwd = Path.cwd()
+        return cwd if cwd.name == 'docs' else cwd / 'docs'
+
+    def _get_source_relative_path(
+        self,
+        file_path: Path,
+        docs_dir: Path,
+    ) -> Path:
+        if file_path.is_relative_to(docs_dir):
+            return Path('docs') / file_path.relative_to(docs_dir)
+        return file_path
+
+    def _get_source_base_url(self) -> str:
+        html_context = self.env.app.config.html_context
+        source_user = html_context.get('source_user', 'wemake-services')
+        source_repo = html_context.get('source_repo', 'django-modern-rest')
+        source_version = html_context.get('source_version', 'master')
+        return (
+            f'https://github.com/{source_user}/{source_repo}/'
+            f'blob/{source_version}'
+        )
+
+    def _inject_source_link(
+        self,
+        rendered_nodes: list[Node],
+        file_path: Path,
+    ) -> list[Node]:
+        """Inject GitHub source link into rendered nodes."""
+        if not rendered_nodes:
+            return rendered_nodes
+
+        github_url = self._build_github_url(file_path)
+        github_link_node = _GithubSourceLink()
+        github_link_node['github_url'] = github_url
+
+        first_node = rendered_nodes[0]
+        if self._is_literal_block_wrapper(first_node):
+            wrapper_node = cast(container, first_node)
+            self._add_wrapper_class(wrapper_node, 'github-link-enabled')
+            self._insert_source_link(
+                wrapper_node,
+                github_link_node,
+            )
+            return rendered_nodes
+
+        if isinstance(first_node, literal_block):
+            wrapper = container(
+                '',
+                literal_block=True,
+                classes=['literal-block-wrapper', 'github-link-enabled'],
+            )
+            self._insert_source_link(wrapper, github_link_node)
+            wrapper += first_node
+            rendered_nodes[0] = wrapper
+            return rendered_nodes
+
+        rendered_nodes.insert(0, github_link_node)
+        return rendered_nodes
+
+    def _is_literal_block_wrapper(self, node: Node) -> bool:
+        return isinstance(node, container) and (
+            'literal-block-wrapper' in node.get('classes', [])
+        )
+
+    def _add_wrapper_class(self, wrapper: container, class_name: str) -> None:
+        if class_name not in wrapper['classes']:
+            wrapper['classes'].append(class_name)
+
+    def _insert_source_link(
+        self,
+        wrapper: container,
+        github_link_node: _GithubSourceLink,
+    ) -> None:
+        for index, child in enumerate(wrapper.children):
+            if isinstance(child, literal_block):
+                wrapper.insert(index, github_link_node)
+                return
+        wrapper.insert(0, github_link_node)
+
     def _need_to_run(self, file_path: Path) -> bool:
         language = self.options.get('language', '')
         no_run_in_options = 'no-run' in self.options
@@ -708,6 +822,10 @@ def setup(app: Sphinx) -> None:
             _visit_imports_spoiler_summary,
             _depart_imports_spoiler_summary,
         ),
+    )
+    app.add_node(
+        _GithubSourceLink,
+        html=(_visit_github_source_link, _depart_github_source_link),
     )
     app.add_css_file('css/literalinclude-imports.css')
     app.add_js_file('js/literalinclude-imports.js')
