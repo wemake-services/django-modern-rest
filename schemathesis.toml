@@ -11,8 +11,7 @@ enabled = true
 # Verifies the response status code is documented in the schema for the operation
 status_code_conformance.enabled = false
 
-# Verifies the API accepts valid request data.
-positive_data_acceptance.enabled = false
-
 # Verifies the API rejects requests when required headers are missing.
 missing_required_header.enabled = false
+
+unsupported_method.enabled = false

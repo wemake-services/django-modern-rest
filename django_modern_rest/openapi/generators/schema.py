@@ -220,11 +220,15 @@ def _handle_union(
         # We know that NoneType is registered in TypeMapper
         return TypeMapper.get_schema(NoneType)  # type: ignore[return-value]
 
-    if len(real_args) == 1:
-        return generator(real_args[0])
+    schemas = [generator(arg) for arg in real_args]
 
-    return Schema(
-        one_of=[generator(arg) for arg in real_args],
+    if len(real_args) != len(args):
+        schemas.append(Schema(type=OpenAPIType.NULL))
+
+    return (
+        Schema(any_of=schemas)
+        if len(real_args) == 1
+        else Schema(one_of=schemas)
     )
 
 

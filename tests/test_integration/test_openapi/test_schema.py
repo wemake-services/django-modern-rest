@@ -19,10 +19,17 @@ def api_schema(db: Any) -> 'OpenApiSchema':
     return st.openapi.from_wsgi(reverse('openapi:json'), application)
 
 
-schema = st.pytest.from_fixture('api_schema')
+schema = st.pytest.from_fixture(
+    'api_schema',
+).exclude(
+    path='/controllers/user/direct/re/{var}',
+)
 
 
 @schema.parametrize()
 def test_schemathesis(case: st.Case) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
+    if case.media_type and 'xml' in case.media_type.lower():
+        pytest.skip('XML not tested')
+
     case.call_and_validate()

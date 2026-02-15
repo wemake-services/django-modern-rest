@@ -10,6 +10,7 @@ from django_modern_rest.test import DMRClient
 
 _URL: Final = reverse('api:negotiations:negotiation')
 _XML_DATA = '<root><key>value</key></root>'
+_INVALID_XML_DATA = '<root><key>value</root>'
 
 
 @pytest.mark.parametrize('method', [HTTPMethod.POST, HTTPMethod.PUT])
@@ -78,3 +79,23 @@ def test_negotiation_json_to_xml(
     response_content = response.content.decode('utf-8')
     assert '<key>value</key>' in response_content
     assert response['Content-Type'] == ContentType.xml
+
+
+@pytest.mark.parametrize('method', [HTTPMethod.POST, HTTPMethod.PUT])
+def test_negotiation_invalid_xml(
+    dmr_client: DMRClient,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Test sending invalid XML."""
+    response = dmr_client.generic(
+        str(method),
+        _URL,
+        data=_INVALID_XML_DATA,
+        headers={
+            'Content-Type': str(ContentType.xml),
+            'Accept': str(ContentType.json),
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content

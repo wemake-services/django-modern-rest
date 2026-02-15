@@ -29,6 +29,14 @@ class _QueryData(pydantic.BaseModel):
     query: str = pydantic.Field(alias='q')
     start_from: dt.datetime | None = None
 
+    @pydantic.field_validator('start_from', mode='before')
+    @classmethod
+    def validate_start_from(
+        cls,
+        start_from_value: dt.datetime | None,
+    ) -> dt.datetime | None:
+        return None if start_from_value == 'null' else start_from_value
+
 
 @final
 class _CustomHeaders(pydantic.BaseModel):

@@ -62,7 +62,7 @@ class ParameterGenerator:
 
             params_list.append(
                 Parameter(
-                    name=field.name,
+                    name=field.extra_data.get('alias') or field.name,
                     param_in=param_in,
                     schema=self._context.generators.schema(
                         field.annotation,
