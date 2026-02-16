@@ -2,7 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias, final
 
 from django.core.exceptions import BadRequest, TooManyFilesSent
 from django.http import HttpRequest
@@ -41,7 +41,7 @@ class Parser(ResponseSpecProvider):
 
     __slots__ = ()
 
-    content_type: ClassVar[str]
+    content_type: str
     """
     Content-Type that this parser works with.
 
@@ -55,7 +55,6 @@ class Parser(ResponseSpecProvider):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         """
         Deserialize a raw string/bytes/bytearray into an object.
@@ -64,9 +63,6 @@ class Parser(ResponseSpecProvider):
             to_deserialize: Value to deserialize.
             deserializer: Hook to convert types that are not natively supported.
             request: Django's original request with all the details.
-            strict: Whether type coercion rules should be strict.
-                Setting to ``False`` enables a wider set of coercion rules
-                from string to non-string types for all values.
 
         Raises:
             DataParsingError: If error decoding ``obj``.
@@ -108,7 +104,7 @@ class JsonParser(Parser):
 
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
     """Works with ``json`` only."""
 
     @override
@@ -118,7 +114,6 @@ class JsonParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         """
         Decode a JSON string/bytes/bytearray into an object.
@@ -127,9 +122,6 @@ class JsonParser(Parser):
             to_deserialize: Value to decode.
             deserializer: Hook to convert types that are not natively supported.
             request: Django's original request with all the details.
-            strict: Whether type coercion rules should be strict.
-                Setting to ``False`` enables a wider set of coercion rules
-                from string to non-string types for all values.
 
         Raises:
             DataParsingError: If error decoding ``obj``.
@@ -139,8 +131,12 @@ class JsonParser(Parser):
 
         """
         try:
-            return json.loads(to_deserialize, strict=strict)
+            return json.loads(to_deserialize)
         except (ValueError, TypeError) as exc:
+            # Corner case: when deserializing an empty body,
+            # return `None` instead.
+            # We do this here, because we don't want
+            # a penalty for all positive cases.
             if to_deserialize == b'':
                 return None
             raise DataParsingError(str(exc)) from exc
@@ -161,7 +157,6 @@ class SupportsFileParsing:
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> None:
         """Populate ``request.FILES`` if possible."""
 
@@ -194,7 +189,6 @@ class SupportsDjangoDefaultParsing:
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> None:
         """Populate ``request.POST`` and ``request.FILES`` if possible."""
 
@@ -213,7 +207,7 @@ class MultiPartParser(
     So, we return original Django's content.
     """
 
-    content_type: ClassVar[str] = 'multipart/form-data'
+    content_type = 'multipart/form-data'
     """Works with multipart data."""
 
     @override
@@ -223,7 +217,6 @@ class MultiPartParser(
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> None:
         """Returns parsed multipart form data."""
         # Circular import:
@@ -268,7 +261,7 @@ class FormUrlEncodedParser(
     So, we return original Django's content.
     """
 
-    content_type: ClassVar[str] = 'application/x-www-form-urlencoded'
+    content_type = 'application/x-www-form-urlencoded'
     """Works with urlencoded forms."""
 
     @override
@@ -278,7 +271,6 @@ class FormUrlEncodedParser(
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> None:
         """Returns parsed form data."""
         # Circular import:
@@ -308,3 +300,21 @@ class FormUrlEncodedParser(
         except BadRequest as exc:
             raise RequestSerializationError(str(exc)) from None
         # It is already parsed by Django itself, no need to return anything.
+
+
+@final
+class _NoOpParser(Parser):  # pyright: ignore[reportUnusedClass]
+    __slots__ = ('content_type',)
+
+    def __init__(self, content_type: str) -> None:
+        self.content_type = content_type
+
+    @override
+    def parse(
+        self,
+        to_deserialize: Raw,
+        deserializer: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+    ) -> Any:
+        raise NotImplementedError('NoOpParser.parse() should not be used')

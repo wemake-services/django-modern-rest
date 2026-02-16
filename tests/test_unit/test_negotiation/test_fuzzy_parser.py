@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, final
+from typing import Any, final
 
 import pytest
 from django.http import HttpRequest
@@ -13,7 +13,7 @@ from django_modern_rest.test import DMRRequestFactory
 class _MainStar(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = '*/whatever'
+    content_type = '*/whatever'
 
     @override
     def parse(
@@ -22,7 +22,6 @@ class _MainStar(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
@@ -30,7 +29,7 @@ class _MainStar(Parser):
 class _SubStar(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/*'
+    content_type = 'application/*'
 
     @override
     def parse(
@@ -39,7 +38,6 @@ class _SubStar(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
@@ -47,7 +45,7 @@ class _SubStar(Parser):
 class _AllStar(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = '*/*'
+    content_type = '*/*'
 
     @override
     def parse(
@@ -56,7 +54,6 @@ class _AllStar(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
@@ -64,7 +61,7 @@ class _AllStar(Parser):
 class _JsonExact(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
 
     @override
     def parse(
@@ -73,7 +70,6 @@ class _JsonExact(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 

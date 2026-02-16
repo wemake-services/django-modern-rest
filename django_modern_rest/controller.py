@@ -460,7 +460,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> HttpResponse:
+    ) -> HttpResponseBase:
         """
         Find an endpoint that serves this HTTP method and call it.
 

@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 import pydantic
 from django.http import HttpResponse
@@ -16,7 +15,6 @@ class UserModel(pydantic.BaseModel):
     email: str
 
 
-@final
 class UserController(
     Controller[PydanticSerializer],
     Body[UserModel],

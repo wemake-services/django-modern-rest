@@ -1,11 +1,10 @@
 import json
-import sys
 from http import HTTPMethod, HTTPStatus
 from typing import ClassVar, TypeAlias, final
 
 import pydantic
 import pytest
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBase
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
@@ -125,23 +124,17 @@ def test_validate_status_code(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    if sys.version_info >= (3, 13):  # pragma: no cover
-        # `HTTPStatus.UNPROCESSABLE_CONTENT` was renamed from
-        # `HTTPStatus.UNPROCESSABLE_ENTITY` in 3.13
-        assert json.loads(response.content) == snapshot({
-            'detail': [
-                {
-                    'msg': (
-                        'Returned status_code=200 is not specified '
-                        'in the list of allowed codes '
-                        '{<HTTPStatus.CREATED: 201>, '
-                        '<HTTPStatus.NOT_ACCEPTABLE: 406>, '
-                        '<HTTPStatus.UNPROCESSABLE_CONTENT: 422>}'
-                    ),
-                    'type': 'value_error',
-                },
-            ],
-        })
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Returned status code 200 is not specified '
+                    'in the list of allowed status codes: [201, 422, 406]'
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 _ListOfInts: TypeAlias = list[int]
@@ -273,8 +266,11 @@ class _ValidateController(Controller[PydanticSerializer]):
     def get(self) -> HttpResponse:
         return HttpResponse(
             json.dumps(
-                _ModelWithFieldValidator(username='admin').model_dump(),
+                _ModelWithFieldValidator(username='admin').model_dump(
+                    mode='json',
+                ),
             ),
+            content_type='application/json',
         )
 
 
@@ -404,3 +400,58 @@ def test_double_validation_raw_dict_return(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.content) == {'username': 'admin'}
+
+
+@final
+class _UnsupportedResponseController(Controller[PydanticSerializer]):
+    @validate(ResponseSpec(None, status_code=HTTPStatus.OK))
+    def get(self) -> HttpResponseBase:
+        return HttpResponseBase()
+
+
+def test_return_unsupported_response(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that retuning unsupported responses errors out."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _UnsupportedResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
+    })
+
+
+@final
+class _WrongContentTypeController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(list[int], status_code=HTTPStatus.OK),
+    )
+    def get(self) -> HttpResponse:
+        return HttpResponse(b'[1, 2]')
+
+
+def test_validates_wrong_content_type(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that returning wrong content types is not allowed."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _WrongContentTypeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "Response content type 'text/html; charset=utf-8' "
+                    'is not listed as a possible to be returned '
+                    "['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })

@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 from typing_extensions import TypedDict
 
@@ -8,12 +7,10 @@ from django_modern_rest.errors import ErrorType, format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 
 
-@final
 class _ErrorDetail(TypedDict):
     message: str
 
 
-@final
 class CustomErrorModel(TypedDict):
     errors: list[_ErrorDetail]
 
@@ -40,7 +37,6 @@ class _CustomErrorMixin:
         }
 
 
-@final
 class ApiController(
     _CustomErrorMixin,
     Controller[PydanticSerializer],

@@ -74,7 +74,7 @@ per-blueprint, per-controller and globally.
         :language: python
         :caption: views.py
         :linenos:
-        :emphasize-lines: 6, 13
+        :emphasize-lines: 11
 
     .. tab:: Per blueprint or controller
 
@@ -82,7 +82,7 @@ per-blueprint, per-controller and globally.
         :language: python
         :caption: views.py
         :linenos:
-        :emphasize-lines: 6, 11
+        :emphasize-lines: 9
 
 
 .. autoclass:: django_modern_rest.validation.endpoint_metadata.EndpointMetadataBuilder

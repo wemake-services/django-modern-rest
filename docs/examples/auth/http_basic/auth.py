@@ -1,4 +1,4 @@
-from typing import Any, final
+from typing import Any
 
 from django.conf import settings
 from typing_extensions import override
@@ -9,7 +9,6 @@ from django_modern_rest.security.http import HttpBasicAsyncAuth
 from django_modern_rest.serializer import BaseSerializer
 
 
-@final
 class HttpBasicAsync(HttpBasicAsyncAuth):
     @override
     async def authenticate(

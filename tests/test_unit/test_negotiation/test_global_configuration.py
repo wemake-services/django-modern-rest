@@ -1,7 +1,7 @@
 import json
 from collections.abc import Callable
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, ClassVar, final
+from typing import Annotated, Any, final
 from xml.parsers import expat
 
 import pydantic
@@ -37,7 +37,7 @@ from django_modern_rest.test import DMRRequestFactory
 class _XmlParser(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/xml'
+    content_type = 'application/xml'
 
     @override
     def parse(
@@ -46,7 +46,6 @@ class _XmlParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         try:
             return xmltodict.parse(
@@ -61,7 +60,7 @@ class _XmlParser(Parser):
 class _XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/xml'
+    content_type = 'application/xml'
 
     @override
     def render(

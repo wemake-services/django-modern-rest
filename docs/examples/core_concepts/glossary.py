@@ -1,5 +1,4 @@
 import uuid
-from typing import final
 
 import msgspec
 
@@ -15,7 +14,6 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-@final
 class UserController(  # <- `Controller` definition
     Controller[MsgspecSerializer],  # <- Passing `Serializer`
     Body[UserCreateModel],  # <- Using `Component` with a model

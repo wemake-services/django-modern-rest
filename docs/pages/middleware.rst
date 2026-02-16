@@ -165,14 +165,6 @@ Example with rate limiting:
 
 .. literalinclude:: /examples/middleware/rate_limit.py
   :linenos:
-  :lines: 13-27
-  :language: python
-
-Use with ``wrap_middleware``:
-
-.. literalinclude:: /examples/middleware/rate_limit.py
-  :linenos:
-  :lines: 30-49
   :language: python
 
 Wrapping Django's Built-in Decorators

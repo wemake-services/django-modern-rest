@@ -1,0 +1,72 @@
+.literal-block-wrapper.imports-inline-enabled,
+.literal-block-wrapper.github-link-enabled {
+  position: relative;
+}
+
+.literal-block-wrapper.github-link-enabled .github-source-link {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.75rem;
+  z-index: 1;
+  color: var(--color-foreground-secondary, #b7bec8);
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-style: italic;
+  user-select: none;
+}
+
+.literal-block-wrapper.imports-inline-enabled .imports-inline-spoiler {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.literal-block-wrapper.imports-inline-enabled
+  .imports-inline-spoiler
+  .imports-spoiler-toggle {
+  display: block;
+  user-select: none;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  color: var(--color-foreground-secondary, #b7bec8);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-style: italic;
+  padding: 0.25rem 0.75rem 0.35rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.literal-block-wrapper.imports-inline-enabled
+  .imports-inline-spoiler
+  .imports-spoiler-toggle:focus {
+  outline: none;
+}
+
+.literal-block-wrapper.imports-inline-enabled
+  .imports-inline-spoiler
+  .imports-spoiler-toggle::before {
+  content: '▸';
+  margin-right: 0.35rem;
+}
+
+.literal-block-wrapper.imports-inline-enabled.imports-expanded
+  .imports-inline-spoiler
+  .imports-spoiler-toggle::before {
+  content: '▾';
+}
+
+.literal-block-wrapper.imports-inline-enabled .highlight pre {
+  border-radius: 0;
+}
+
+.literal-block-wrapper.imports-inline-enabled:not(.imports-expanded)
+  .highlight
+  pre
+  > span.imports-hidden-line {
+  display: none;
+}

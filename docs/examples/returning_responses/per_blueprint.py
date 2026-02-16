@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import ClassVar, final
 
 import msgspec
 
@@ -16,14 +15,13 @@ class HeaderModel(msgspec.Struct):
     consumer: str = msgspec.field(name='X-API-Consumer')
 
 
-@final
 class UserBlueprint(
     Blueprint[MsgspecSerializer],
     Body[UserModel],
     Headers[HeaderModel],
 ):
     # Now, we won't validate all endpoints in this blueprint:
-    validate_responses: ClassVar[bool | None] = False
+    validate_responses = False
 
     def post(self) -> UserModel:
         if self.parsed_headers.consumer != 'my-api':
@@ -34,7 +32,7 @@ class UserBlueprint(
                     'Wrong API consumer',
                     error_type=ErrorType.user_msg,
                 ),
-                status_code=HTTPStatus.NOT_ACCEPTABLE,
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
         # This response will be documented by default:
         return self.parsed_body

@@ -23,7 +23,7 @@ def user_create_service(user_schema: serializers.UserCreateSchema) -> User:
 
         # Handle m2m:
         tags = Tag.objects.bulk_create([
-            Tag(name=tag.name) for tag in user_schema.tag_list
+            Tag(name=tag.name) for tag in user_schema.tags
         ])
         user.tags.set(tags)
     return user

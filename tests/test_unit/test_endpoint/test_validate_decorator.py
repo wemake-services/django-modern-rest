@@ -37,11 +37,14 @@ class _CustomResponse(HttpResponse, Generic[_InnerT]):
 class _CustomResponseController(Controller[PydanticSerializer]):
     @validate(ResponseSpec(return_type=str, status_code=HTTPStatus.OK))
     def get(self) -> _CustomResponse[str]:
-        return _CustomResponse[str](b'"abc"')
+        return _CustomResponse[str](b'"abc"', content_type='application/json')
 
     @validate(ResponseSpec(return_type=str, status_code=HTTPStatus.OK))
     def post(self) -> _CustomResponse[_InnerT]:  # pyright: ignore[reportInvalidTypeVarUse]
-        return _CustomResponse[_InnerT](b'"abc"')
+        return _CustomResponse[_InnerT](
+            b'"abc"',
+            content_type='application/json',
+        )
 
 
 @pytest.mark.parametrize(
@@ -118,7 +121,11 @@ class _CorrectHeadersController(Controller[PydanticSerializer]):
     )
     def get(self) -> HttpResponse:
         """Has has matching response headers."""
-        return HttpResponse(b'[]', headers={'X-Custom': 'abc'})
+        return HttpResponse(
+            b'[]',
+            headers={'X-Custom': 'abc'},
+            content_type='application/json',
+        )
 
     @validate(
         ResponseSpec(
@@ -129,7 +136,7 @@ class _CorrectHeadersController(Controller[PydanticSerializer]):
     )
     def post(self) -> HttpResponse:
         """Has optional header description."""
-        return HttpResponse(b'[]')
+        return self.to_response([], status_code=HTTPStatus.OK)
 
 
 @pytest.mark.parametrize(
@@ -150,7 +157,7 @@ def test_validate_correct_headers(
     response = _CorrectHeadersController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == []
 
 
@@ -163,7 +170,11 @@ class _CasedHeadersController(Controller[PydanticSerializer]):
         ),
     )
     def get(self) -> HttpResponse:
-        return HttpResponse(b'[]', headers={'x-custom': 'abc'})
+        return HttpResponse(
+            b'[]',
+            headers={'x-custom': 'abc'},
+            content_type='application/json',
+        )
 
     @validate(
         ResponseSpec(
@@ -173,7 +184,11 @@ class _CasedHeadersController(Controller[PydanticSerializer]):
         ),
     )
     def post(self) -> HttpResponse:
-        return HttpResponse(b'[]', headers={'X-Custom': 'abc'})
+        return self.to_response(
+            [],
+            headers={'X-Custom': 'abc'},
+            status_code=HTTPStatus.OK,
+        )
 
 
 @pytest.mark.parametrize(

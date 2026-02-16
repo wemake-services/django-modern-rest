@@ -1,4 +1,4 @@
-from typing import TypedDict, final
+from typing import TypedDict
 
 from django_modern_rest import Body, Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
@@ -9,7 +9,6 @@ class _RequestModel(TypedDict):
     username: str
 
 
-@final
 class UsernameController(
     Body[_RequestModel],
     Controller[PydanticSerializer],

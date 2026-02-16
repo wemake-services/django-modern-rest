@@ -45,7 +45,6 @@ For ``pytest`` we also have a bundled plugin with several different fixtures:
   :caption: django_modern_rest_pytest.py
   :language: python
   :linenos:
-  :lines: 22-
 
 No need to configure anything, just use these fixtures by names in your tests.
 
@@ -68,7 +67,6 @@ Let's say you have this code for you controller, using ``pydantic`` models:
   :caption: views.py
   :language: python
   :linenos:
-  :lines: 10-
 
 Let's reuse the models for data generation in tests!
 
@@ -76,7 +74,6 @@ Let's reuse the models for data generation in tests!
   :caption: test_user_create.py
   :language: python
   :linenos:
-  :lines: 9-
 
 Which will make your tests simple, fast,
 and will help you find unexpected corner cases.

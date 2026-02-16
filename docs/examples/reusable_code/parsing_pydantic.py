@@ -1,23 +1,18 @@
-from typing import final
-
 from typing_extensions import TypedDict, override
 
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from examples.reusable_code.reusable_parsing import ReusableController
 
 
-@final
 class _RequestModel(TypedDict):
     first_name: str
     last_name: str
 
 
-@final
 class _ResponseBody(TypedDict):
     full_name: str
 
 
-@final
 class PydanticController(
     ReusableController[PydanticSerializer, _RequestModel, _ResponseBody],
 ):

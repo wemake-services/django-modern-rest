@@ -1,4 +1,4 @@
-from typing import Final, NotRequired, TypedDict, final
+from typing import Final, NotRequired, TypedDict
 
 import pydantic
 from django.core.paginator import Paginator
@@ -24,7 +24,6 @@ _USERS: Final = (
 )
 
 
-@final
 class UsersController(
     Controller[PydanticSerializer],
     Query[_PageQuery],

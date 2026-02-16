@@ -12,7 +12,7 @@ from typing import (
 )
 
 from django.contrib.admindocs.utils import parse_docstring
-from django.http import HttpResponse
+from django.http import HttpResponseBase
 
 from django_modern_rest.components import Body
 from django_modern_rest.cookies import CookieSpec, NewCookie
@@ -198,7 +198,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         if self.payload is None and is_safe_subclass(
             return_annotation,
-            HttpResponse,
+            HttpResponseBase,
         ):
             object.__setattr__(
                 self,
@@ -677,10 +677,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
-        if is_safe_subclass(return_annotation, HttpResponse):
+        if is_safe_subclass(return_annotation, HttpResponseBase):
             if isinstance(self.payload, ModifyEndpointPayload):
                 raise EndpointMetadataError(
-                    f'{endpoint!r} returns HttpResponse '
+                    f'{endpoint!r} returns HttpResponseBase '
                     'it cannot be used with `@modify`. '
                     'Maybe you meant `@validate`?',
                 )

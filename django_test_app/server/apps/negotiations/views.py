@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Annotated, Any, ClassVar, TypeAlias, final
+from typing import Annotated, Any, TypeAlias, final
 from xml.parsers import expat
 
 import pydantic
@@ -48,7 +48,7 @@ _CallableAny: TypeAlias = Callable[..., Any]
 class XmlParser(Parser):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/xml'
+    content_type = 'application/xml'
 
     @override
     def parse(
@@ -57,7 +57,6 @@ class XmlParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         try:
             return xmltodict.parse(to_deserialize, process_namespaces=True)
@@ -69,7 +68,7 @@ class XmlParser(Parser):
 class XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type: ClassVar[str] = 'application/xml'
+    content_type = 'application/xml'
 
     @override
     def render(

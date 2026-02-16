@@ -18,6 +18,7 @@ Including another URLconf
 
 from django.urls import include, path
 
+from django_modern_rest.errors import build_404_handler
 from django_modern_rest.routing import Router
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
@@ -76,3 +77,5 @@ urlpatterns = [
     path('api/', include((router.urls, 'server'), namespace='api')),
     path('docs/', build_spec(router)),
 ]
+
+handler404 = build_404_handler('api/')

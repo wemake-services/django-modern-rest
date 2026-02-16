@@ -15,7 +15,8 @@ from django_modern_rest.renderers import Renderer
 class MsgspecJsonParser(Parser):
     """Parsers json bodies using ``msgspec``."""
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
+    strict: ClassVar[bool] = True
 
     @override
     def parse(
@@ -24,7 +25,6 @@ class MsgspecJsonParser(Parser):
         deserializer: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        strict: bool = True,
     ) -> Any:
         """
         Deserialize a raw JSON string/bytes/bytearray into an object.
@@ -33,9 +33,6 @@ class MsgspecJsonParser(Parser):
             to_deserialize: Value to deserialize.
             deserializer: Hook to convert types that are not natively supported.
             request: Django's original request with all the details.
-            strict: Whether type coercion rules should be strict.
-                Setting to ``False`` enables a wider set of coercion rules
-                from string to non-string types for all values.
 
         Raises:
             DataParsingError: If error decoding ``obj``.
@@ -47,7 +44,7 @@ class MsgspecJsonParser(Parser):
         try:
             return _get_deserializer(
                 deserializer,
-                strict=strict,
+                strict=self.strict,
             ).decode(to_deserialize)
         except msgspec.DecodeError as exc:
             # Corner case: when deserializing an empty body,
@@ -62,7 +59,7 @@ class MsgspecJsonParser(Parser):
 class MsgspecJsonRenderer(Renderer):
     """Renders json bodies using ``msgspec``."""
 
-    content_type: ClassVar[str] = 'application/json'
+    content_type = 'application/json'
 
     @override
     def render(

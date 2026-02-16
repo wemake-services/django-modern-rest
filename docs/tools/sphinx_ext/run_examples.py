@@ -7,6 +7,7 @@ https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples
 
 from __future__ import annotations
 
+import ast
 import importlib
 import json
 import logging
@@ -22,7 +23,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Final, TypeAlias, cast, final
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
 import httpx
@@ -32,18 +33,31 @@ from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
 from django.views import View
-from docutils.nodes import Node, admonition, literal_block, title
+from docutils.nodes import (
+    Element,
+    General,
+    Node,
+    Text,
+    admonition,
+    container,
+    literal_block,
+    title,
+)
 from docutils.parsers.rst import directives
 from sphinx.addnodes import highlightlang
 from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+if TYPE_CHECKING:
+    from sphinx.writers.html5 import HTML5Translator
+
 if platform.system() in {'Darwin', 'Linux'}:
     multiprocessing.set_start_method('fork', force=True)
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
+_RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 
 _AppRunArgs: TypeAlias = dict[str, Any]
 
@@ -51,9 +65,80 @@ logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
 
 
-@final
 class _StartupError(RuntimeError):
     """Raised when application fails to start."""
+
+
+class _ImportsSpoiler(General, Element):
+    """Imports toggle container node."""
+
+
+class _ImportsSpoilerSummary(General, Element):
+    """Imports toggle control node."""
+
+
+class _GithubSourceLink(General, Element):
+    """GitHub source link node."""
+
+
+def _visit_imports_spoiler(
+    self: HTML5Translator,
+    node: _ImportsSpoiler,
+) -> None:
+    classes = ' '.join(['imports-spoiler', *node.get('classes', [])])
+    imports_from_line = int(node.get('imports_from_line', 1))
+    self.body.append(
+        (
+            f'<div class="{classes}" '
+            f'data-imports-from-line="{imports_from_line}">\n'
+        ),
+    )
+
+
+def _depart_imports_spoiler(
+    self: HTML5Translator,
+    node: _ImportsSpoiler,
+) -> None:
+    self.body.append('</div>\n')
+
+
+def _visit_imports_spoiler_summary(
+    self: HTML5Translator,
+    node: _ImportsSpoilerSummary,
+) -> None:
+    collapsed_title = node.get('collapsed_title', 'Show imports')
+    self.body.append(
+        (
+            '<button type="button" class="imports-spoiler-toggle" '
+            f'data-collapsed-title="{collapsed_title}" '
+            'data-expanded-title="Hide imports">'
+        ),
+    )
+
+
+def _depart_imports_spoiler_summary(
+    self: HTML5Translator,
+    node: _ImportsSpoilerSummary,
+) -> None:
+    self.body.append('</button>\n')
+
+
+def _visit_github_source_link(
+    self: HTML5Translator,
+    node: _GithubSourceLink,
+) -> None:
+    github_url = node.get('github_url', '')
+    self.body.append(
+        f'<a href="{github_url}" class="github-source-link" '
+        'target="_blank" rel="noopener noreferrer">[source]</a>\n',
+    )
+
+
+def _depart_github_source_link(
+    self: HTML5Translator,
+    node: _GithubSourceLink,
+) -> None:
+    self.body.append('')
 
 
 def _get_available_port() -> int:
@@ -66,7 +151,6 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
-@final
 class _AppBuilder:
     """Builds a Django application from configuration."""
 
@@ -387,28 +471,70 @@ def _add_headers(
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
 
 
-@final
-class LiteralInclude(_LiteralInclude):
+def _find_imports_block_end_line(file_content: str) -> int:
+    try:
+        parsed = ast.parse(file_content)
+    except SyntaxError:
+        return 0
+
+    statements = parsed.body
+    start_index = 0
+    if (
+        statements
+        and isinstance(statements[0], ast.Expr)
+        and isinstance(statements[0].value, ast.Constant)
+        and isinstance(statements[0].value.value, str)
+    ):
+        start_index = 1
+
+    last_import_line = 0
+    for statement in statements[start_index:]:
+        if not isinstance(statement, (ast.Import, ast.ImportFrom)):
+            break
+        last_import_line = max(
+            last_import_line,
+            statement.end_lineno or statement.lineno,
+        )
+    return last_import_line
+
+
+def _extend_with_trailing_blank_lines(
+    source_lines: list[str],
+    last_import_line: int,
+) -> int:
+    hidden_until_line = last_import_line
+    while (
+        hidden_until_line < len(source_lines)
+        and not source_lines[hidden_until_line].strip()
+    ):
+        hidden_until_line += 1
+    return hidden_until_line
+
+
+class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     """Extended `.. literalinclude` directive with code execution capability."""
 
     option_spec: ClassVar = {
         **_LiteralInclude.option_spec,
         'no-run': directives.flag,
+        'imports-spoiler-title': directives.unchanged,
+        'no-imports-spoiler': directives.flag,
     }
 
     @override
-    def run(self) -> list[Node]:
+    def run(self) -> list[Node]:  # noqa: WPS210
         """Execute code examples and display results."""
         file_path = Path(self.env.relfn2path(self.arguments[0])[1])
+        imports_data = self._get_imports_data(file_path)
         if not self._need_to_run(file_path):
-            return super().run()
+            return self._generate_nodes(file_path, imports_data)
 
         clean_content, run_args = self._execute_code(file_path)
         if not run_args:
-            return super().run()
+            return self._generate_nodes(file_path, imports_data)
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = super().run()
+        nodes = self._generate_nodes(file_path, imports_data)
 
         executed_result = _exec_examples(
             file_path.relative_to(Path.cwd()),
@@ -435,6 +561,221 @@ class LiteralInclude(_LiteralInclude):
         )
         return nodes
 
+    def _generate_nodes(
+        self,
+        file_path: Path,
+        imports_data: tuple[_ImportsSpoiler, int] | None,
+    ) -> list[Node]:
+        nodes = self._render_literalinclude_nodes(imports_data)
+        nodes = self._inject_imports_spoiler(nodes, imports_data)
+        return self._inject_source_link(nodes, file_path)
+
+    def _get_imports_data(
+        self,
+        file_path: Path,
+    ) -> tuple[_ImportsSpoiler, int] | None:
+        if 'no-imports-spoiler' in self.options:
+            return None
+
+        hidden_lines, start_line = self._extract_hidden_lines(file_path)
+        if not hidden_lines:
+            return None
+
+        return (
+            self._create_imports_spoiler_node(hidden_lines, start_line),
+            start_line,
+        )
+
+    def _render_literalinclude_nodes(
+        self,
+        imports_data: tuple[_ImportsSpoiler, int] | None,
+    ) -> list[Node]:
+        original_lines = self.options.get('lines')
+        should_expand_literalinclude = (
+            imports_data is not None and original_lines is not None
+        )
+        if should_expand_literalinclude:
+            self.options.pop('lines', None)
+            rendered_nodes = _LiteralInclude.run(self)
+            if original_lines is not None:
+                self.options['lines'] = original_lines
+            return rendered_nodes
+        return _LiteralInclude.run(self)
+
+    def _inject_imports_spoiler(
+        self,
+        rendered_nodes: list[Node],
+        imports_data: tuple[_ImportsSpoiler, int] | None,
+    ) -> list[Node]:
+        if imports_data is None or not rendered_nodes:
+            return rendered_nodes
+
+        spoiler_node, _ = imports_data
+        first_node = rendered_nodes[0]
+
+        if self._is_literal_block_wrapper(first_node):
+            wrapper_node = cast(container, first_node)
+            self._add_wrapper_class(wrapper_node, 'imports-inline-enabled')
+            self._insert_spoiler_before_literal_block(
+                wrapper_node,
+                spoiler_node,
+            )
+            return rendered_nodes
+
+        if isinstance(first_node, literal_block):
+            wrapper = container(
+                '',
+                literal_block=True,
+                classes=['literal-block-wrapper', 'imports-inline-enabled'],
+            )
+            wrapper += spoiler_node
+            wrapper += first_node
+            rendered_nodes[0] = wrapper
+            return rendered_nodes
+
+        rendered_nodes.insert(0, spoiler_node)
+        return rendered_nodes
+
+    def _insert_spoiler_before_literal_block(
+        self,
+        wrapper: container,
+        spoiler_node: _ImportsSpoiler,
+    ) -> None:
+        for index, child in enumerate(wrapper.children):
+            if isinstance(child, literal_block):
+                wrapper.insert(index, spoiler_node)
+                return
+        wrapper += spoiler_node
+
+    def _extract_hidden_lines(self, file_path: Path) -> tuple[list[str], int]:
+        file_content = file_path.read_text(encoding='utf-8')
+        source_lines = file_content.splitlines()
+        last_import_line = _find_imports_block_end_line(file_content)
+        if last_import_line <= 0:
+            return [], 1
+
+        hidden_until_line = _extend_with_trailing_blank_lines(
+            source_lines,
+            last_import_line,
+        )
+        hidden_lines = source_lines[:hidden_until_line]
+
+        hidden_lines = [
+            line for line in hidden_lines if not _RGX_RUN_COMMENT.match(line)
+        ]
+
+        return hidden_lines, hidden_until_line + 1
+
+    def _create_imports_spoiler_node(
+        self,
+        hidden_lines: list[str],
+        start_line: int,
+    ) -> _ImportsSpoiler:
+        node = _ImportsSpoiler(classes=['imports-inline-spoiler'])
+        node['imports_from_line'] = start_line
+
+        summary_text = self._get_imports_summary_text(hidden_lines)
+        summary_node = _ImportsSpoilerSummary()
+        summary_node['collapsed_title'] = summary_text
+        summary_node += Text(summary_text)
+        node += summary_node
+        return node
+
+    def _get_imports_summary_text(self, hidden_lines: list[str]) -> str:
+        custom_title = self.options.get('imports-spoiler-title')
+        if isinstance(custom_title, str):
+            return custom_title
+
+        hidden_lines_count = len(hidden_lines)
+        lines_word = 'line' if hidden_lines_count == 1 else 'lines'
+        return f'Show imports... {hidden_lines_count} {lines_word} hidden'
+
+    def _build_github_url(self, file_path: Path) -> str:
+        """Build GitHub URL for the source file."""
+        docs_dir = self._get_docs_dir()
+        relative_path = self._get_source_relative_path(file_path, docs_dir)
+        return f'{self._get_source_base_url()}/{relative_path.as_posix()}'
+
+    def _get_docs_dir(self) -> Path:
+        cwd = Path.cwd()
+        return cwd if cwd.name == 'docs' else cwd / 'docs'
+
+    def _get_source_relative_path(
+        self,
+        file_path: Path,
+        docs_dir: Path,
+    ) -> Path:
+        if file_path.is_relative_to(docs_dir):
+            return Path('docs') / file_path.relative_to(docs_dir)
+        return file_path
+
+    def _get_source_base_url(self) -> str:
+        html_context = self.env.app.config.html_context
+        source_user = html_context.get('source_user', 'wemake-services')
+        source_repo = html_context.get('source_repo', 'django-modern-rest')
+        source_version = html_context.get('source_version', 'master')
+        return (
+            f'https://github.com/{source_user}/{source_repo}/'
+            f'blob/{source_version}'
+        )
+
+    def _inject_source_link(
+        self,
+        rendered_nodes: list[Node],
+        file_path: Path,
+    ) -> list[Node]:
+        """Inject GitHub source link into rendered nodes."""
+        if not rendered_nodes:
+            return rendered_nodes
+
+        github_url = self._build_github_url(file_path)
+        github_link_node = _GithubSourceLink()
+        github_link_node['github_url'] = github_url
+
+        first_node = rendered_nodes[0]
+        if self._is_literal_block_wrapper(first_node):
+            wrapper_node = cast(container, first_node)
+            self._add_wrapper_class(wrapper_node, 'github-link-enabled')
+            self._insert_source_link(
+                wrapper_node,
+                github_link_node,
+            )
+            return rendered_nodes
+
+        if isinstance(first_node, literal_block):
+            wrapper = container(
+                '',
+                literal_block=True,
+                classes=['literal-block-wrapper', 'github-link-enabled'],
+            )
+            self._insert_source_link(wrapper, github_link_node)
+            wrapper += first_node
+            rendered_nodes[0] = wrapper
+            return rendered_nodes
+
+        rendered_nodes.insert(0, github_link_node)
+        return rendered_nodes
+
+    def _is_literal_block_wrapper(self, node: Node) -> bool:
+        return isinstance(node, container) and (
+            'literal-block-wrapper' in node.get('classes', [])
+        )
+
+    def _add_wrapper_class(self, wrapper: container, class_name: str) -> None:
+        if class_name not in wrapper['classes']:
+            wrapper['classes'].append(class_name)
+
+    def _insert_source_link(
+        self,
+        wrapper: container,
+        github_link_node: _GithubSourceLink,
+    ) -> None:
+        for index, child in enumerate(wrapper.children):
+            if isinstance(child, literal_block):
+                wrapper.insert(index, github_link_node)
+                return
+        wrapper.insert(0, github_link_node)
+
     def _need_to_run(self, file_path: Path) -> bool:
         language = self.options.get('language', '')
         no_run_in_options = 'no-run' in self.options
@@ -456,7 +797,7 @@ class LiteralInclude(_LiteralInclude):
         cwd = Path.cwd()
         docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
         tmp_file = (
-            cwd
+            docs_dir
             / _PATH_TO_TMP_EXAMPLES
             / str(
                 file_path.relative_to(docs_dir),
@@ -471,3 +812,20 @@ def setup(app: Sphinx) -> None:
     """Register Sphinx extension directives."""
     tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
+    app.add_node(
+        _ImportsSpoiler,
+        html=(_visit_imports_spoiler, _depart_imports_spoiler),
+    )
+    app.add_node(
+        _ImportsSpoilerSummary,
+        html=(
+            _visit_imports_spoiler_summary,
+            _depart_imports_spoiler_summary,
+        ),
+    )
+    app.add_node(
+        _GithubSourceLink,
+        html=(_visit_github_source_link, _depart_github_source_link),
+    )
+    app.add_css_file('css/literalinclude-imports.css')
+    app.add_js_file('js/literalinclude-imports.js')

@@ -1,11 +1,8 @@
-from typing import final
-
 from django_modern_rest import Blueprint, Controller
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.security.jwt import JWTSyncAuth
 
 
-@final
 class MyBlueprint(Blueprint[PydanticSerializer]):
     # Has auth:
     auth = (JWTSyncAuth(),)
@@ -14,7 +11,6 @@ class MyBlueprint(Blueprint[PydanticSerializer]):
         return 'authed'
 
 
-@final
 class APIController(Controller[PydanticSerializer]):
     blueprints = (MyBlueprint,)
 

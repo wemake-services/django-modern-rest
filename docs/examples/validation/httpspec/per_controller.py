@@ -1,12 +1,10 @@
 from http import HTTPStatus
-from typing import final
 
 from django_modern_rest import Controller, modify
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.settings import HttpSpec
 
 
-@final
 class JobController(Controller[PydanticSerializer]):
     no_validate_http_spec = frozenset((HttpSpec.empty_response_body,))
 

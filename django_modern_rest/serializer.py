@@ -3,7 +3,7 @@ from collections import defaultdict
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
-from django.http import HttpRequest
+from django.http import FileResponse, HttpRequest, HttpResponseBase
 from typing_extensions import TypedDict
 
 from django_modern_rest.errors import ErrorDetail
@@ -12,6 +12,7 @@ from django_modern_rest.exceptions import (
     RequestSerializationError,
     ValidationError,
 )
+from django_modern_rest.openapi.markers import Binary
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
 
@@ -32,7 +33,17 @@ _TypeMapResult: TypeAlias = tuple[
 
 
 class BaseSerializer:
-    """Abstract base class for data serialization."""
+    """
+    Abstract base class for data serialization.
+
+    Attributes:
+        validation_error: Exception type that is used for validation errors.
+            Required to be set in subclasses.
+        optimizer: Endpoint optimizer.
+            Type that pre-compiles / creates / caches models in import time.
+            Required to be set in subclasses.
+
+    """
 
     __slots__ = ()
 
@@ -59,9 +70,7 @@ class BaseSerializer:
         Only add types that are common for all potential plugins here.
         Should be called inside :meth:`serialize`.
         """
-        if isinstance(to_serialize, (set, frozenset)):  # pragma: no cover
-            # This is impossible to reach with `msgspec`, but is needed
-            # for raw `json` serialization.
+        if isinstance(to_serialize, (set, frozenset)):
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         raise InternalServerError(
             f'Value {to_serialize} of type {type(to_serialize)} '
@@ -79,6 +88,17 @@ class BaseSerializer:
     ) -> Any:
         """Convert json bytestring to structured data."""
         raise NotImplementedError
+
+    @classmethod
+    def deserialize_response(
+        cls,
+        response: HttpResponseBase,
+        *,
+        parser: Parser,
+        request: HttpRequest,
+    ) -> Any:
+        """Deserialize non-HttpResponse response subclass."""
+        return deserialize_response(response)
 
     @classmethod
     def deserialize_hook(
@@ -147,6 +167,15 @@ class BaseSerializer:
         raise NotImplementedError
 
 
+def deserialize_response(response: HttpResponseBase) -> Any:
+    """Deserialize complex response subtypes."""
+    if isinstance(response, FileResponse):
+        return Binary()
+    raise InternalServerError(
+        f'Unsupported response type {type(response)!r}',
+    )
+
+
 class BaseEndpointOptimizer:
     """
     Plugins might often need to run some specific preparations for endpoints.
@@ -172,6 +201,13 @@ class SerializerContext:
     This context collects raw data for all registered components, validates
     the combined payload in a single call using a cached TypedDict model,
     and then binds the parsed values back to the controller.
+
+    Attributes:
+        strict_validation: Whether or not to validate payloads in strict mode.
+            Strict mode in some serializers does
+            not allow implicit type conversions.
+            Defaults to ``None``. Which means that we decide
+            on a per-field and then on a per-model basis.
     """
 
     # Public API:
