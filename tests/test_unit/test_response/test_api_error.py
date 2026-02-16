@@ -433,7 +433,7 @@ def test_path_component_responses() -> None:
             HTTPStatus.OK,
             HTTPStatus.BAD_REQUEST,
             HTTPStatus.NOT_FOUND,
-            HTTPStatus.UNPROCESSABLE_CONTENT,
+            HTTPStatus.UNPROCESSABLE_ENTITY,
             HTTPStatus.NOT_ACCEPTABLE,
         ],
     )
