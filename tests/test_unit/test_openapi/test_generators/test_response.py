@@ -11,6 +11,7 @@ from django_modern_rest.headers import HeaderSpec, NewHeader
 from django_modern_rest.openapi.config import OpenAPIConfig
 from django_modern_rest.openapi.core.context import OpenAPIContext
 from django_modern_rest.openapi.generators.response import ResponseGenerator
+from django_modern_rest.openapi.mappers import TypeMapper
 from django_modern_rest.openapi.objects import (
     Header,
     Reference,
@@ -19,7 +20,6 @@ from django_modern_rest.openapi.objects import (
 )
 from django_modern_rest.openapi.objects.enums import OpenAPIType
 from django_modern_rest.openapi.objects.media_type import MediaType
-from django_modern_rest.openapi.type_mapping import TypeMapper
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.renderers import FileRenderer, JsonRenderer
 
@@ -146,7 +146,7 @@ def test_response_generator_cookie_with_reference(
     """Ensure that cookies with reference schemas are handled."""
     # We manually remove str from TypeMapper to force SchemaGenerator
     # to look into the registry.
-    TypeMapper._type_map.pop(str)
+    TypeMapper._mapping.pop(str)
     string_ref = 'StringRef'
     context.registries.schema.register(
         source_type=str,
