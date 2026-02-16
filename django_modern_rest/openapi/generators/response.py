@@ -12,7 +12,7 @@ from django_modern_rest.openapi.objects.schema import Schema
 if TYPE_CHECKING:
     from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
     from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.parsers import Parser
+    from django_modern_rest.renderers import Renderer
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -25,7 +25,7 @@ class ResponseGenerator:
         """Generate responses from response specs."""
         return {
             str(status_code.value): self._generate_response(
-                metadata.parsers,
+                metadata.renderers,
                 response_spec,
             )
             for status_code, response_spec in metadata.responses.items()
@@ -33,7 +33,7 @@ class ResponseGenerator:
 
     def _generate_response(
         self,
-        parsers: 'dict[str, Parser]',
+        renderers: dict[str, 'Renderer'],
         response_spec: 'ResponseSpec',
     ) -> Response:
         headers: dict[str, Header | Reference] = {}
@@ -62,11 +62,11 @@ class ResponseGenerator:
             description=HTTPStatus(response_spec.status_code).phrase,
             headers=headers or None,
             content={
-                parser.content_type: MediaType(
+                renderer.content_type: MediaType(
                     schema=self._context.generators.schema(
                         response_spec.return_type,
                     ),
                 )
-                for parser in parsers.values()
+                for renderer in renderers.values()
             },
         )

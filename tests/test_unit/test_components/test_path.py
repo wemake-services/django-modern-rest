@@ -3,10 +3,10 @@ from typing import final
 
 import pydantic
 from django.http import HttpResponse
-from django.test import RequestFactory
 
 from django_modern_rest import Controller, Path
 from django_modern_rest.plugins.pydantic import PydanticSerializer
+from django_modern_rest.test import DMRRequestFactory
 
 
 @final
@@ -23,9 +23,9 @@ class _PathController(
         raise NotImplementedError
 
 
-def test_path_unnamed_parameters_raises(rf: RequestFactory) -> None:
+def test_path_unnamed_parameters_raises(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that unnamed path parameters (args) are not allowed."""
-    request = rf.get('/users/1')
+    request = dmr_rf.get('/users/1')
 
     # Simulate calling the view with unnamed path parameter '1'
     response = _PathController.as_view()(request, '1')

@@ -5,6 +5,7 @@ import pytest
 from django.test import SimpleTestCase
 from django.urls import reverse
 from faker import Faker
+from inline_snapshot import snapshot
 from typing_extensions import override
 
 from django_modern_rest.test import DMRAsyncClient, DMRClient
@@ -107,7 +108,7 @@ def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
 
     assert response.status_code == HTTPStatus.OK, response.json()
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {
+    assert response.json() == snapshot({
         'email': email,
         'age': user_id,
-    }
+    })
