@@ -25,8 +25,8 @@ class Header:
     """
 
     schema: 'Schema | Reference | None' = None
-    name: Literal[''] = ''
-    param_in: Literal['header'] = 'header'
+    name: Literal[''] | None = None
+    param_in: Literal['header'] | None = None
     description: str | None = None
     required: bool = False
     deprecated: bool = False
