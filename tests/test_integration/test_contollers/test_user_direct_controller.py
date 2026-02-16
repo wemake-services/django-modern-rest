@@ -5,6 +5,7 @@ import pytest
 from django.test import SimpleTestCase
 from django.urls import reverse
 from faker import Faker
+from inline_snapshot import snapshot
 from typing_extensions import override
 
 from django_modern_rest.test import DMRAsyncClient, DMRClient
@@ -96,7 +97,7 @@ class ClientWorksWithRegularTest(SimpleTestCase):
 
 
 def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
-    """Ensure that path unnamed path parameters are not allowed."""
+    """Ensure that re_path with named groups is allowed."""
     email = faker.email()
     user_id = faker.unique.random_int()
 
@@ -105,6 +106,9 @@ def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
         data={'email': email, 'age': faker.unique.random_int()},
     )
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.json()
+    assert response.status_code == HTTPStatus.OK, response.json()
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json()['detail']
+    assert response.json() == snapshot({
+        'email': email,
+        'age': user_id,
+    })

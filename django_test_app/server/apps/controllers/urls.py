@@ -21,7 +21,7 @@ router = Router([
         name='user_update',
     ),
     re_path(
-        r'user/direct/re/(\d+)',
+        r'user/direct/re/(?P<user_id>\d+)$',
         compose_blueprints(views.UserUpdateBlueprint).as_view(),
         name='user_update_direct_re',
     ),
