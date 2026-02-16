@@ -183,11 +183,9 @@ class SchemaGenerator:
         return updates
 
     def _get_schema_name(self, source_type: Any) -> str:
-        name = source_type.__name__
-        if hasattr(source_type, '__dmr_schema_name__'):
-            name = source_type.__dmr_schema_name__
-
-        return str(name)
+        return str(
+            getattr(source_type, '__dmr_schema_name__', source_type.__name__),
+        )
 
 
 def _get_schema_from_type_map(annotation: Any) -> Schema | None:
