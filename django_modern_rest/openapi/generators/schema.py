@@ -27,15 +27,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import contextlib
 import dataclasses
 from collections.abc import Mapping, Sequence
-from types import MappingProxyType, NoneType, UnionType
+from types import NoneType, UnionType
 from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
-    Final,
     Union,
     get_args,
     get_origin,
@@ -44,41 +42,15 @@ from typing import (
 from typing_extensions import is_typeddict
 
 from django_modern_rest.openapi.extractors.finder import find_extractor
-from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+from django_modern_rest.openapi.mappers import TypeMapper
+from django_modern_rest.openapi.objects.enums import OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.type_mapping import TypeMapper
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.core.context import OpenAPIContext
-
-
-# TODO: We need to move this to the FieldExtractor
-# (and maybe replace the dictionary with something else)
-# for the possibility of redefinition in plugins.
-_KWARG_TO_SCHEMA_MAP: Final = MappingProxyType({
-    'content_encoding': 'content_encoding',
-    'default': 'default',
-    'title': 'title',
-    'description': 'description',
-    'const': 'const',
-    'gt': 'exclusive_minimum',
-    'ge': 'minimum',
-    'lt': 'exclusive_maximum',
-    'le': 'maximum',
-    'multiple_of': 'multiple_of',
-    'min_items': 'min_items',
-    'max_items': 'max_items',
-    'min_length': 'min_length',
-    'max_length': 'max_length',
-    'pattern': 'pattern',
-    'format': 'format',
-    'enum': 'enum',
-    'read_only': 'read_only',
-    'examples': 'examples',
-    'external_docs': 'external_docs',
-})
+    from django_modern_rest.openapi.mappers import KwargMapper
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -111,10 +83,11 @@ class SchemaGenerator:
         return self._generate_reference(annotation)
 
     def _generate_reference(self, source_type: Any) -> Reference:
-        field_definitions = find_extractor(
-            source_type,
-        ).extract_fields(source_type)
-        props, required = self._extract_properties(field_definitions)
+        extractor = find_extractor(source_type)
+        props, required = self._extract_properties(
+            extractor.extract_fields(source_type),
+            extractor.mapper_cls(),
+        )
 
         return self._context.registries.schema.register(
             source_type=source_type,
@@ -129,6 +102,7 @@ class SchemaGenerator:
     def _extract_properties(
         self,
         field_definitions: list[FieldDefinition],
+        mapper: 'KwargMapper',
     ) -> tuple[dict[str, Schema | Reference], list[str]]:
         props: dict[str, Schema | Reference] = {}
         required: list[str] = []
@@ -140,6 +114,7 @@ class SchemaGenerator:
                 schema = self._apply_kwarg_definition(
                     schema,
                     field_definition.kwarg_definition,
+                    mapper,
                 )
 
             props[field_definition.name] = schema
@@ -152,35 +127,18 @@ class SchemaGenerator:
         self,
         schema: Schema | Reference,
         kwarg_definition: KwargDefinition,
+        mapper: 'KwargMapper',
     ) -> Schema | Reference:
         if isinstance(schema, Reference):
             # TODO: handle Reference wrapping with allOf?
             return schema
 
-        updates = self._get_kwarg_update(schema, kwarg_definition)
+        updates = mapper(schema, kwarg_definition)
 
         if not updates:
             return schema
 
         return dataclasses.replace(schema, **updates)
-
-    def _get_kwarg_update(
-        self,
-        schema: Schema,
-        kwarg_definition: KwargDefinition,
-    ) -> dict[str, Any]:
-        updates: dict[str, Any] = {}
-        for kwarg_field, schema_field in _KWARG_TO_SCHEMA_MAP.items():
-            kwarg_value = getattr(kwarg_definition, kwarg_field)
-            if kwarg_value is None:
-                continue
-
-            if kwarg_field == 'format':
-                with contextlib.suppress(ValueError):
-                    kwarg_value = OpenAPIFormat(kwarg_value)
-
-            updates[schema_field] = kwarg_value
-        return updates
 
     def _get_schema_name(self, source_type: Any) -> str:
         return str(

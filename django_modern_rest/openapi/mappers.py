@@ -1,3 +1,4 @@
+import contextlib
 from collections import OrderedDict, defaultdict, deque
 from collections.abc import (
     Iterable,
@@ -19,7 +20,12 @@ from ipaddress import (
 from pathlib import Path
 from re import Pattern
 from types import NoneType
-from typing import Any, ClassVar, Final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+)
 from uuid import UUID
 
 from typing_extensions import is_typeddict
@@ -27,13 +33,83 @@ from typing_extensions import is_typeddict
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.schema import Schema
 
+if TYPE_CHECKING:
+    from django_modern_rest.openapi.types import KwargDefinition
+
+
 _SCHEMA_ARRAY: Final = Schema(type=OpenAPIType.ARRAY)
+
+
+class KwargMapper:
+    """
+    Class for mapping ``KwargDefinition`` to OpenAPI ``Schema``.
+
+    This class is responsible for converting model-specific constraints
+    into OpenAPI-compliant schema attributes.
+    """
+
+    __slots__ = ()
+
+    # Public API:
+    mapping: ClassVar[Mapping[str, str]] = {
+        'content_encoding': 'content_encoding',
+        'default': 'default',
+        'title': 'title',
+        'description': 'description',
+        'const': 'const',
+        'gt': 'exclusive_minimum',
+        'ge': 'minimum',
+        'lt': 'exclusive_maximum',
+        'le': 'maximum',
+        'multiple_of': 'multiple_of',
+        'min_items': 'min_items',
+        'max_items': 'max_items',
+        'min_length': 'min_length',
+        'max_length': 'max_length',
+        'pattern': 'pattern',
+        'format': 'format',
+        'enum': 'enum',
+        'read_only': 'read_only',
+        'examples': 'examples',
+        'external_docs': 'external_docs',
+    }
+
+    def __call__(
+        self,
+        schema: 'Schema',
+        kwarg_definition: 'KwargDefinition',
+    ) -> dict[str, Any]:
+        """
+        Extract updates for the schema from the kwarg definition.
+
+        Args:
+            schema: The schema object to be updated.
+            kwarg_definition: Data container with constraints.
+
+        """
+        updates: dict[str, Any] = {}
+        for kwarg_field, schema_field in self.mapping.items():
+            kwarg_value = getattr(kwarg_definition, kwarg_field)
+            if kwarg_value is None:
+                continue
+
+            if kwarg_field == 'format':
+                with contextlib.suppress(ValueError):
+                    kwarg_value = OpenAPIFormat(kwarg_value)
+
+            updates[schema_field] = kwarg_value
+
+        if kwarg_definition.schema_extra:
+            updates.update(kwarg_definition.schema_extra)
+
+        return updates
 
 
 class TypeMapper:
     """Class to map Python types to OpenAPI schemas."""
 
-    _type_map: ClassVar[dict[Any, Schema]] = {
+    # Private API:
+    _mapping: ClassVar[dict[Any, Schema]] = {
         Decimal: Schema(type=OpenAPIType.NUMBER),
         defaultdict: Schema(type=OpenAPIType.OBJECT),
         deque: _SCHEMA_ARRAY,
@@ -101,13 +177,13 @@ class TypeMapper:
         if is_typeddict(annotation):
             return None
 
-        type_schema = cls._type_map.get(annotation)
+        type_schema = cls._mapping.get(annotation)
         if type_schema:
             return type_schema
 
         if isinstance(annotation, type):
             for base in annotation.mro():
-                base_schema = cls._type_map.get(base)
+                base_schema = cls._mapping.get(base)
                 if base_schema:
                     return base_schema
         return None
@@ -115,7 +191,7 @@ class TypeMapper:
     @classmethod
     def register(cls, source_type: Any, schema: Schema) -> None:
         """Register a schema for a type."""
-        if source_type in cls._type_map:
+        if source_type in cls._mapping:
             raise ValueError(
                 f'Type {source_type!r} is already registered. '
                 'Use override() to replace.',
@@ -129,4 +205,4 @@ class TypeMapper:
 
         Overwriting any existing registration.
         """
-        cls._type_map[source_type] = schema
+        cls._mapping[source_type] = schema
