@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 from django_modern_rest import Body, Controller, ResponseSpec
 from django_modern_rest.decorators import wrap_middleware
-from django_modern_rest.errors import format_error
+from django_modern_rest.errors import ErrorModel, format_error
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.response import build_response
 from server.apps.middlewares.middleware import (
@@ -94,6 +94,10 @@ def add_request_id_json(response: HttpResponse) -> HttpResponse:
     ResponseSpec(  # Uses for proxy authed response with HTTPStatus.OK
         return_type=dict[str, str],
         status_code=HTTPStatus.OK,
+    ),
+    ResponseSpec(
+        return_type=ErrorModel,
+        status_code=HTTPStatus.UNAUTHORIZED,
     ),
 )
 def login_required_json(response: HttpResponse) -> HttpResponse:
