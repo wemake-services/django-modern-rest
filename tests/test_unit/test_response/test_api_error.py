@@ -17,7 +17,7 @@ from django_modern_rest import (
     modify,
     validate,
 )
-from django_modern_rest.components import ComponentParser
+from django_modern_rest.components import ComponentParser, Path
 from django_modern_rest.cookies import CookieSpec, NewCookie
 from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType
@@ -415,3 +415,25 @@ def test_api_error_redirect_status() -> None:
     """Ensures that we can't create APIError with redirect status code."""
     with pytest.raises(DisallowedRedirect, match='APIRedirectError'):
         APIError('whatever', status_code=HTTPStatus.FOUND)
+
+
+class _PathResponseController(
+    Controller[PydanticSerializer],
+    Path[dict[str, str]],
+):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_path_component_responses() -> None:
+    """Ensures that ``Path`` component adds 404 to the response spec."""
+    endpoint = _PathResponseController.api_endpoints['GET']
+    assert list(endpoint.metadata.responses.keys()) == snapshot(
+        [
+            HTTPStatus.OK,
+            HTTPStatus.BAD_REQUEST,
+            HTTPStatus.NOT_FOUND,
+            HTTPStatus.UNPROCESSABLE_ENTITY,
+            HTTPStatus.NOT_ACCEPTABLE,
+        ],
+    )
