@@ -1,8 +1,15 @@
 from abc import abstractmethod
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import (
+    Any,
+    ClassVar,
+    Generic,
+    TypeAlias,
+    TypeVar,
+)
 
 from typing_extensions import override
 
+from django_modern_rest.openapi.mappers import KwargMapper
 from django_modern_rest.openapi.types import FieldDefinition
 
 _SourceT = TypeVar('_SourceT')
@@ -14,7 +21,9 @@ class FieldExtractor(Generic[_SourceT]):
 
     __slots__ = ()
 
+    # Public API:
     registry: ClassVar[_Registry] = []
+    mapper_cls: ClassVar[type[KwargMapper]] = KwargMapper
 
     @override
     def __init_subclass__(cls) -> None:

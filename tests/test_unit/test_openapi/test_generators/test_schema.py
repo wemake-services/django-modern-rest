@@ -11,10 +11,10 @@ from django_modern_rest.openapi.generators.schema import (
     _handle_sequence,
     _handle_union,
 )
+from django_modern_rest.openapi.mappers import KwargMapper, TypeMapper
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.type_mapping import TypeMapper
 from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
 from django_modern_rest.plugins import pydantic  # noqa: F401
 
@@ -121,7 +121,10 @@ def test_extract_properties_wo_kwarg_definition(
         annotation=int,
         kwarg_definition=None,
     )
-    props, _ = generator._extract_properties([field_def])
+    props, _ = generator._extract_properties(
+        [field_def],
+        KwargMapper(),
+    )
 
     assert 'test_field' in props
     assert isinstance(props['test_field'], Schema)
@@ -133,6 +136,7 @@ def test_apply_kwarg_definition_format(generator: SchemaGenerator) -> None:
     updated_schema = generator._apply_kwarg_definition(
         Schema(type=OpenAPIType.STRING),
         KwargDefinition(format='ipv4'),
+        KwargMapper(),
     )
 
     assert isinstance(updated_schema, Schema)

@@ -3,15 +3,22 @@ from typing import Any, Final, TypedDict
 
 import pytest
 
-from django_modern_rest.openapi.objects.enums import OpenAPIType
+from django_modern_rest.openapi.mappers import KwargMapper, TypeMapper
+from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.type_mapping import TypeMapper
+from django_modern_rest.openapi.types import KwargDefinition
 
 
 @pytest.fixture
 def type_mapper() -> type[TypeMapper]:
     """Fixtutre for ``TypeMapper`` class."""
     return TypeMapper
+
+
+@pytest.fixture
+def kwarg_mapper() -> KwargMapper:
+    """Fixtutre for ``KwargMapper`` class."""
+    return KwargMapper()
 
 
 class _TestClass:
@@ -78,3 +85,33 @@ def test_type_mapper_typeddict(type_mapper: TypeMapper) -> None:
     """Ensure ``TypeMapper`` returns ``None`` for ``TypedDict``."""
     schema = type_mapper.get_schema(_TestTypedDict)
     assert schema is None
+
+
+def test_kwarg_mapper_call(kwarg_mapper: KwargMapper) -> None:
+    """Ensure ``KwargMapper`` works."""
+    kwarg_def = KwargDefinition(
+        title='Test Title',
+        description='Test Description',
+        default='Test Default',
+        format='email',
+        schema_extra={'x-extra': 'value'},
+    )
+    schema = Schema(type=OpenAPIType.STRING)
+
+    assert kwarg_mapper(schema, kwarg_def) == {
+        'title': 'Test Title',
+        'description': 'Test Description',
+        'default': 'Test Default',
+        'format': OpenAPIFormat.EMAIL,
+        'x-extra': 'value',
+    }
+
+
+def test_kwarg_mapper_invalid_format(kwarg_mapper: KwargMapper) -> None:
+    """Ensure ``KwargMapper`` ignores invalid format."""
+    updates = kwarg_mapper(
+        Schema(type=OpenAPIType.STRING),
+        KwargDefinition(format='invalid-format'),
+    )
+
+    assert updates['format'] == 'invalid-format'
