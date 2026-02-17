@@ -76,7 +76,7 @@ Here's how we select a renderer:
     >>> response = HttpResponse(b'[]')
 
   The renderer is selected as usual, but no actual rendering is done.
-  However, all other validation works as expected. Which means that eventhough
+  However, all other validation works as expected. Which means that even though
   renderer is not actually used, its metadata is still required
   to validate the response content type.
 
