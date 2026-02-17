@@ -203,7 +203,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 'payload',
                 ValidateEndpointPayload(responses=[]),
             )
-        allowed_http_methods = frozenset((
+        allowed_http_methods: frozenset[str] = frozenset((
             *(
                 self.blueprint_cls.allowed_http_methods
                 if self.blueprint_cls
