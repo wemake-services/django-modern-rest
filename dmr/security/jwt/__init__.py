@@ -11,6 +11,6 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from django_modern_rest.security.jwt.auth import JWTAsyncAuth as JWTAsyncAuth
-from django_modern_rest.security.jwt.auth import JWTSyncAuth as JWTSyncAuth
-from django_modern_rest.security.jwt.token import JWTToken as JWTToken
+from dmr.security.jwt.auth import JWTAsyncAuth as JWTAsyncAuth
+from dmr.security.jwt.auth import JWTSyncAuth as JWTSyncAuth
+from dmr.security.jwt.token import JWTToken as JWTToken

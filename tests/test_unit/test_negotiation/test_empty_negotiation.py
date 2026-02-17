@@ -1,14 +1,14 @@
 import pytest
 from django.conf import LazySettings
 
-from django_modern_rest import (
+from dmr import (
     Controller,
 )
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.parsers import JsonParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import JsonRenderer
-from django_modern_rest.settings import Settings
+from dmr.exceptions import EndpointMetadataError
+from dmr.parsers import JsonParser
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import JsonRenderer
+from dmr.settings import Settings
 
 
 def test_empty_parsers(

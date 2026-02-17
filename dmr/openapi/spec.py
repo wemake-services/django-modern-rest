@@ -3,19 +3,19 @@ from typing import TYPE_CHECKING
 
 from django.urls import URLPattern
 
-from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.converter import (
+from dmr.openapi.config import OpenAPIConfig
+from dmr.openapi.converter import (
     ConvertedSchema,
     SchemaConverter,
 )
-from django_modern_rest.openapi.core.builder import OpenApiBuilder
-from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.views import OpenAPIView
-from django_modern_rest.routing import path
+from dmr.openapi.core.builder import OpenApiBuilder
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.views import OpenAPIView
+from dmr.routing import path
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.renderers import BaseRenderer
-    from django_modern_rest.routing import Router
+    from dmr.openapi.renderers import BaseRenderer
+    from dmr.routing import Router
 
 
 def openapi_spec(
@@ -54,7 +54,7 @@ def openapi_spec(
 
 
 def _default_config() -> OpenAPIConfig:
-    from django_modern_rest.settings import (  # noqa: PLC0415
+    from dmr.settings import (  # noqa: PLC0415
         Settings,
         resolve_setting,
     )

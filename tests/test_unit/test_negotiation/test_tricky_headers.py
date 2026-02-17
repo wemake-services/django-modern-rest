@@ -7,12 +7,12 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest import (
+from dmr import (
     Body,
     Controller,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 @final

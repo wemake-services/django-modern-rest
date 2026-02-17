@@ -1,10 +1,10 @@
 import pytest
 
-from django_modern_rest import (
+from dmr import (
     Controller,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 class _WrongController(Controller[PydanticSerializer]):

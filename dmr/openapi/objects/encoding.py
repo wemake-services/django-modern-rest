@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.header import Header
-    from django_modern_rest.openapi.objects.reference import Reference
+    from dmr.openapi.objects.header import Header
+    from dmr.openapi.objects.reference import Reference
 
 
 @final

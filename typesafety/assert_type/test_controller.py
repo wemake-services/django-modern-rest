@@ -3,8 +3,8 @@ from typing import assert_type
 import pydantic
 from django.http import HttpRequest
 
-from django_modern_rest import Body, Controller, Headers, Query
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Body, Controller, Headers, Query
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _HeaderModel(pydantic.BaseModel):

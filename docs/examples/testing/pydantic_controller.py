@@ -2,8 +2,8 @@ import uuid
 
 import pydantic
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Body, Controller
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class UserCreateModel(pydantic.BaseModel):

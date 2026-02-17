@@ -13,7 +13,7 @@ from typing import (
 
 from typing_extensions import get_original_bases, get_type_hints
 
-from django_modern_rest.exceptions import UnsolvableAnnotationsError
+from dmr.exceptions import UnsolvableAnnotationsError
 
 
 @final

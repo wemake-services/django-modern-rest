@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import msgspec
 
-from django_modern_rest import (
+from dmr import (
     APIError,
     Body,
     Controller,
@@ -10,8 +10,8 @@ from django_modern_rest import (
     ResponseSpec,
     modify,
 )
-from django_modern_rest.errors import ErrorModel, ErrorType
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from dmr.errors import ErrorModel, ErrorType
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class UserModel(msgspec.Struct):

@@ -93,15 +93,15 @@ In this example:
 1. We defined regular ``pydantic`` and ``msgspec`` models
    that we will use for our API
 2. We added two component parsers: one for request's
-   :class:`~django_modern_rest.components.Body` and one
-   for :class:`~django_modern_rest.components.Headers`
+   :class:`~dmr.components.Body` and one
+   for :class:`~dmr.components.Headers`
    which will parse them into typed models
    (:class:`pydantic.BaseModel` or :class:`msgspec.Struct` based) that we pass
    to these components as type parameters
 3. You can see how we created
-   a :class:`~django_modern_rest.controller.Controller` class
-   with :class:`~django_modern_rest.plugins.pydantic.PydanticSerializer`
-   or :class:`~django_modern_rest.plugins.msgspec.MsgspecSerializer`
+   a :class:`~dmr.controller.Controller` class
+   with :class:`~dmr.plugins.pydantic.PydanticSerializer`
+   or :class:`~dmr.plugins.msgspec.MsgspecSerializer`
 4. And how we defined ``post`` endpoint and returned
    a simple model response from it, it will automatically
    transformed into :class:`django.http.HttpResponse` instance by the framework

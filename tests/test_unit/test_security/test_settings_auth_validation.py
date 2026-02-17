@@ -1,11 +1,11 @@
 import pytest
 from django.conf import LazySettings
 
-from django_modern_rest import Controller
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.settings import Settings
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Controller
+from dmr.exceptions import EndpointMetadataError
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.settings import Settings
+from dmr.test import DMRRequestFactory
 
 
 def test_settings_auth_none(

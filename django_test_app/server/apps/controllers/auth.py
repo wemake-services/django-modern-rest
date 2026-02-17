@@ -2,15 +2,15 @@ from typing import TYPE_CHECKING, Any, final
 
 from typing_extensions import override
 
-from django_modern_rest.security.http import (
+from dmr.security.http import (
     HttpBasicAsyncAuth,
     HttpBasicSyncAuth,
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 
 @final

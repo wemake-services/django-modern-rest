@@ -7,18 +7,18 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from django_modern_rest.plugins.pydantic.extractor import (
+from dmr.plugins.pydantic.extractor import (
     PydanticFieldExtractor as PydanticFieldExtractor,
 )
-from django_modern_rest.plugins.pydantic.serializer import (
+from dmr.plugins.pydantic.serializer import (
     FromPythonKwargs as FromPythonKwargs,
 )
-from django_modern_rest.plugins.pydantic.serializer import (
+from dmr.plugins.pydantic.serializer import (
     ModelDumpKwargs as ModelDumpKwargs,
 )
-from django_modern_rest.plugins.pydantic.serializer import (
+from dmr.plugins.pydantic.serializer import (
     PydanticEndpointOptimizer as PydanticEndpointOptimizer,
 )
-from django_modern_rest.plugins.pydantic.serializer import (
+from dmr.plugins.pydantic.serializer import (
     PydanticSerializer as PydanticSerializer,
 )

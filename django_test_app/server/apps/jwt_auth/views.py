@@ -4,10 +4,10 @@ from typing import final
 import pydantic
 from typing_extensions import override
 
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.jwt import JWTAsyncAuth, JWTSyncAuth
-from django_modern_rest.security.jwt.views import (
+from dmr import Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.views import (
     ObtainTokensAsyncController,
     ObtainTokensPayload,
     ObtainTokensResponse,

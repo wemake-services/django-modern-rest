@@ -13,7 +13,7 @@ from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Body,
     Controller,
@@ -21,17 +21,17 @@ from django_modern_rest import (
     modify,
     validate,
 )
-from django_modern_rest.exceptions import RequestSerializationError
-from django_modern_rest.negotiation import (
+from dmr.exceptions import RequestSerializationError
+from dmr.negotiation import (
     ContentType,
     conditional_type,
     request_parser,
 )
-from django_modern_rest.parsers import DeserializeFunc, JsonParser, Parser, Raw
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import JsonRenderer, Renderer
-from django_modern_rest.settings import Settings
-from django_modern_rest.test import DMRRequestFactory
+from dmr.parsers import DeserializeFunc, JsonParser, Parser, Raw
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import JsonRenderer, Renderer
+from dmr.settings import Settings
+from dmr.test import DMRRequestFactory
 
 
 class _XmlParser(Parser):

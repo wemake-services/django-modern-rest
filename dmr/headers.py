@@ -2,8 +2,8 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import ResponseModification
-    from django_modern_rest.renderers import Renderer
+    from dmr.metadata import ResponseModification
+    from dmr.renderers import Renderer
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)

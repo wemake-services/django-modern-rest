@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.encoding import Encoding
-    from django_modern_rest.openapi.objects.example import Example
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.schema import Schema
+    from dmr.openapi.objects.encoding import Encoding
+    from dmr.openapi.objects.example import Example
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.schema import Schema
 
 
 @final

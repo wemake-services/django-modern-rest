@@ -28,7 +28,7 @@ We offer a concept of a "reusable controllers"
 
 To make a reusable controller, you need
 to provide :class:`typing.TypeVar` instead of a
-real :class:`~django_modern_rest.serializer.BaseSerializer` type.
+real :class:`~dmr.serializer.BaseSerializer` type.
 
 Here's an example:
 

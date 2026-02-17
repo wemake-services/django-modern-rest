@@ -1,11 +1,11 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.objects import Paths
-from django_modern_rest.openapi.objects.components import Components
+from dmr.openapi.objects import Paths
+from dmr.openapi.objects.components import Components
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.core.context import OpenAPIContext
+    from dmr.openapi.core.context import OpenAPIContext
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

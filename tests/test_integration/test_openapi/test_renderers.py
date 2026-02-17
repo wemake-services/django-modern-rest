@@ -4,8 +4,8 @@ from typing import Final
 import pytest
 from django.urls import reverse
 
-from django_modern_rest.openapi.objects.open_api import _OPENAPI_VERSION
-from django_modern_rest.test import DMRClient
+from dmr.openapi.objects.open_api import _OPENAPI_VERSION
+from dmr.test import DMRClient
 
 _ENDPOINTS: Final = (
     ('openapi:json', HTTPStatus.OK, 'application/json'),

@@ -1,12 +1,12 @@
 import dataclasses
 from typing import TYPE_CHECKING, TypedDict
 
-from django_modern_rest.openapi.objects import PathItem
+from dmr.openapi.objects import PathItem
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.collector import ControllerMapping
-    from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.openapi.objects import Operation
+    from dmr.openapi.collector import ControllerMapping
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.objects import Operation
 
 
 # TODO: support openapi 3.2.0

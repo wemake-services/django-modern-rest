@@ -41,16 +41,16 @@ from typing import (
 
 from typing_extensions import is_typeddict
 
-from django_modern_rest.openapi.extractors.finder import find_extractor
-from django_modern_rest.openapi.mappers import TypeMapper
-from django_modern_rest.openapi.objects.enums import OpenAPIType
-from django_modern_rest.openapi.objects.reference import Reference
-from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
+from dmr.openapi.extractors.finder import find_extractor
+from dmr.openapi.mappers import TypeMapper
+from dmr.openapi.objects.enums import OpenAPIType
+from dmr.openapi.objects.reference import Reference
+from dmr.openapi.objects.schema import Schema
+from dmr.openapi.types import FieldDefinition, KwargDefinition
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.openapi.mappers import KwargMapper
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.mappers import KwargMapper
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

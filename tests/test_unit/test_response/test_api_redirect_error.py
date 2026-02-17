@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import DisallowedRedirect
 from django.utils.http import MAX_URL_REDIRECT_LENGTH
 
-from django_modern_rest import APIRedirectError
+from dmr import APIRedirectError
 
 
 def test_invalid_redirect_length() -> None:

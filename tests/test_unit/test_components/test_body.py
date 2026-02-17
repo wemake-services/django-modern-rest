@@ -8,10 +8,10 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.errors import ErrorType
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr import Body, Controller
+from dmr.errors import ErrorType
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final

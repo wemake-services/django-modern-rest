@@ -6,10 +6,10 @@ import msgspec
 from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.exceptions import DataParsingError
-from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
-from django_modern_rest.renderers import Renderer
+from dmr.envs import MAX_CACHE_SIZE
+from dmr.exceptions import DataParsingError
+from dmr.parsers import DeserializeFunc, Parser, Raw
+from dmr.renderers import Renderer
 
 
 class MsgspecJsonParser(Parser):

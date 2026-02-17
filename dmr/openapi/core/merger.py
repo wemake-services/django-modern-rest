@@ -1,7 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.objects import (
+from dmr.openapi.objects import (
     Components,
     Info,
     OpenAPI,
@@ -9,7 +9,7 @@ from django_modern_rest.openapi.objects import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.core.context import OpenAPIContext
+    from dmr.openapi.core.context import OpenAPIContext
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

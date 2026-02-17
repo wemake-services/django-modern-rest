@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.server import Server
+    from dmr.openapi.objects.server import Server
 
 
 @final

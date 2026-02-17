@@ -14,13 +14,13 @@ Just like Django itself, we provide several builtin utilities for testing.
 Which includes subclasses of :class:`django.test.RequestFactory`
 for sync and async requests. Use them for faster and simpler unit-tests:
 
-- :class:`~django_modern_rest.test.DMRRequestFactory` for sync cases
-- :class:`~django_modern_rest.test.DMRAsyncRequestFactory` for async ones
+- :class:`~dmr.test.DMRRequestFactory` for sync cases
+- :class:`~dmr.test.DMRAsyncRequestFactory` for async ones
 
 We also have two subclasses of :class:`django.test.Client`
 
-- :class:`~django_modern_rest.test.DMRClient` for sync cases
-- :class:`~django_modern_rest.test.DMRAsyncClient` for async ones
+- :class:`~dmr.test.DMRClient` for sync cases
+- :class:`~dmr.test.DMRAsyncClient` for async ones
 
 What is the difference with the default ones? Not much:
 
@@ -41,8 +41,8 @@ We support both:
 
 For ``pytest`` we also have a bundled plugin with several different fixtures:
 
-.. literalinclude:: ../../django_modern_rest_pytest.py
-  :caption: django_modern_rest_pytest.py
+.. literalinclude:: ../../dmr_pytest.py
+  :caption: dmr_pytest.py
   :language: python
   :linenos:
 

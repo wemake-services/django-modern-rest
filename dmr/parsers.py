@@ -9,20 +9,13 @@ from django.http import HttpRequest
 from django.http.multipartparser import MultiPartParserError
 from typing_extensions import override
 
-from django_modern_rest.exceptions import (
-    DataParsingError,
-    RequestSerializationError,
-)
-from django_modern_rest.internal.django import parse_as_post
-from django_modern_rest.metadata import (
-    EndpointMetadata,
-    ResponseSpec,
-    ResponseSpecProvider,
-)
+from dmr.exceptions import DataParsingError, RequestSerializationError
+from dmr.internal.django import parse_as_post
+from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
 Raw: TypeAlias = str | bytes | bytearray
@@ -222,7 +215,7 @@ class MultiPartParser(
     ) -> None:
         """Returns parsed multipart form data."""
         # Circular import:
-        from django_modern_rest.settings import (  # noqa: PLC0415
+        from dmr.settings import (  # noqa: PLC0415
             Settings,
             resolve_setting,
         )
@@ -276,7 +269,7 @@ class FormUrlEncodedParser(
     ) -> None:
         """Returns parsed form data."""
         # Circular import:
-        from django_modern_rest.settings import (  # noqa: PLC0415
+        from dmr.settings import (  # noqa: PLC0415
             Settings,
             resolve_setting,
         )

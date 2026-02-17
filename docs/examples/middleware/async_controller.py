@@ -1,5 +1,5 @@
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.middleware.csrf_protect_json import csrf_protect_json
 
 

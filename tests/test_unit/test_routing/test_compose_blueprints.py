@@ -5,23 +5,23 @@ from typing import Any, ClassVar, TypeAlias, final
 import pytest
 from typing_extensions import override
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Controller,
 )
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.metadata import ResponseSpec
-from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
-from django_modern_rest.plugins.pydantic import (
+from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import ResponseSpec
+from dmr.options_mixins import AsyncMetaMixin, MetaMixin
+from dmr.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
 )
-from django_modern_rest.routing import compose_blueprints
-from django_modern_rest.serializer import (
+from dmr.routing import compose_blueprints
+from dmr.serializer import (
     BaseEndpointOptimizer,
     BaseSerializer,
 )
-from django_modern_rest.validation import BlueprintValidator
+from dmr.validation import BlueprintValidator
 
 BlueprintTuple: TypeAlias = tuple[type[Blueprint[PydanticSerializer]], ...]
 

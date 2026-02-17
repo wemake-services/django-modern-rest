@@ -42,7 +42,7 @@ from django.http.multipartparser import MultiPartParser, MultiPartParserError
 from django.http.request import HttpRequest, QueryDict
 from django.utils.datastructures import MultiValueDict
 
-from django_modern_rest.exceptions import RequestSerializationError
+from dmr.exceptions import RequestSerializationError
 
 
 def convert_multi_value_dict(

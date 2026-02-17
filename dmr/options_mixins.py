@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING, Final
 
 from django.http import HttpResponse
 
-from django_modern_rest.endpoint import validate
-from django_modern_rest.headers import HeaderSpec
-from django_modern_rest.metadata import ResponseSpec
+from dmr.endpoint import validate
+from dmr.headers import HeaderSpec
+from dmr.metadata import ResponseSpec
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
 
 
 #: Metadata for the default options response.
@@ -28,13 +28,13 @@ class MetaMixin:
 
     It just returns the list of allowed methods.
     Use it as a mixin with
-    the :class:`django_modern_rest.controller.Controller` type:
+    the :class:`dmr.controller.Controller` type:
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller
-        >>> from django_modern_rest.options_mixins import MetaMixin
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Controller
+        >>> from dmr.options_mixins import MetaMixin
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class SupportsOptionsHttpMethod(
         ...     MetaMixin,
@@ -59,13 +59,13 @@ class AsyncMetaMixin:
 
     It just returns the list of allowed methods.
     Use it as a mixin with
-    the :class:`django_modern_rest.controller.Controller` type:
+    the :class:`dmr.controller.Controller` type:
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller
-        >>> from django_modern_rest.options_mixins import AsyncMetaMixin
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Controller
+        >>> from dmr.options_mixins import AsyncMetaMixin
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class SupportsOptionsHttpMethod(
         ...     AsyncMetaMixin,

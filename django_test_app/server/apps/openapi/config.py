@@ -1,7 +1,7 @@
-from django_modern_rest.openapi import (
+from dmr.openapi import (
     OpenAPIConfig,
 )
-from django_modern_rest.openapi.objects import (
+from dmr.openapi.objects import (
     Contact,
     ExternalDocumentation,
     License,

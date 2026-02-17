@@ -2,17 +2,17 @@ import dataclasses
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.objects.header import Header
-from django_modern_rest.openapi.objects.media_type import MediaType
-from django_modern_rest.openapi.objects.reference import Reference
-from django_modern_rest.openapi.objects.response import Response
-from django_modern_rest.openapi.objects.responses import Responses
-from django_modern_rest.openapi.objects.schema import Schema
+from dmr.openapi.objects.header import Header
+from dmr.openapi.objects.media_type import MediaType
+from dmr.openapi.objects.reference import Reference
+from dmr.openapi.objects.response import Response
+from dmr.openapi.objects.responses import Responses
+from dmr.openapi.objects.schema import Schema
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
-    from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.renderers import Renderer
+    from dmr.metadata import EndpointMetadata, ResponseSpec
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.renderers import Renderer
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

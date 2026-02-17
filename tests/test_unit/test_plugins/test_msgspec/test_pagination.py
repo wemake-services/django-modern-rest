@@ -16,10 +16,10 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
-from django_modern_rest import Controller, Query
-from django_modern_rest.pagination import Page, Paginated
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr import Controller, Query
+from dmr.pagination import Page, Paginated
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final

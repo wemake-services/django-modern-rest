@@ -8,11 +8,11 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest import Body, Controller, modify
-from django_modern_rest.negotiation import ContentType
-from django_modern_rest.parsers import FormUrlEncodedParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Body, Controller, modify
+from dmr.negotiation import ContentType
+from dmr.parsers import FormUrlEncodedParser
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 class _User(pydantic.BaseModel):

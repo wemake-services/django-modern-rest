@@ -6,21 +6,21 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 from django.http import FileResponse, HttpRequest, HttpResponseBase
 from typing_extensions import TypedDict
 
-from django_modern_rest.errors import ErrorDetail
-from django_modern_rest.exceptions import (
+from dmr.errors import ErrorDetail
+from dmr.exceptions import (
     InternalServerError,
     RequestSerializationError,
     ValidationError,
 )
-from django_modern_rest.files import FileBody
-from django_modern_rest.parsers import Parser, Raw
-from django_modern_rest.renderers import Renderer
+from dmr.files import FileBody
+from dmr.parsers import Parser, Raw
+from dmr.renderers import Renderer
 
 if TYPE_CHECKING:
-    from django_modern_rest.components import ComponentParser
-    from django_modern_rest.controller import Blueprint
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.metadata import EndpointMetadata
+    from dmr.components import ComponentParser
+    from dmr.controller import Blueprint
+    from dmr.endpoint import Endpoint
+    from dmr.metadata import EndpointMetadata
 
 _ModelT = TypeVar('_ModelT')
 _ComponentParserSpec: TypeAlias = dict[type['ComponentParser'], Any]

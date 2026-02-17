@@ -1,8 +1,8 @@
 from http import HTTPStatus
 
-from django_modern_rest import Controller, modify
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.settings import HttpSpec
+from dmr import Controller, modify
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.settings import HttpSpec
 
 
 class JobController(Controller[PydanticSerializer]):

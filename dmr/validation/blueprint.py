@@ -1,12 +1,12 @@
 import types
 from typing import TYPE_CHECKING
 
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.validation.endpoint_metadata import validate_method_name
+from dmr.exceptions import EndpointMetadataError
+from dmr.serializer import BaseSerializer
+from dmr.validation.endpoint_metadata import validate_method_name
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint
+    from dmr.controller import Blueprint
 
 
 class BlueprintValidator:
@@ -32,7 +32,7 @@ class BlueprintValidator:
         self,
         blueprint: type['Blueprint[BaseSerializer]'],
     ) -> None:
-        from django_modern_rest.options_mixins import (  # noqa: PLC0415
+        from dmr.options_mixins import (  # noqa: PLC0415
             AsyncMetaMixin,
             MetaMixin,
         )

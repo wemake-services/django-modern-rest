@@ -5,11 +5,11 @@ from typing import Any, Generic, TypeVar
 import pydantic
 import pytest
 
-from django_modern_rest import Blueprint, Body, Controller
-from django_modern_rest.exceptions import UnsolvableAnnotationsError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import compose_blueprints
-from django_modern_rest.serializer import BaseSerializer
+from dmr import Blueprint, Body, Controller
+from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import compose_blueprints
+from dmr.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound=type[BaseSerializer])
 _ModelT = TypeVar('_ModelT')

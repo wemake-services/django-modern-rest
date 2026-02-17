@@ -6,8 +6,8 @@ the unstructured things like headers, body, and cookies
 into a string typed and validated model.
 
 To use a component, you can just add it as a base class to your
-:class:`~django_modern_rest.controller.Controller`
-or :class:`~django_modern_rest.controller.Blueprint`.
+:class:`~dmr.controller.Controller`
+or :class:`~dmr.controller.Blueprint`.
 
 How does it work?
 
@@ -19,7 +19,7 @@ How does it work?
   for this single parsing model
 - If everything is ok, we call the needed endpoint with the correct data
 - If there's a parsing error we raise
-  :exc:`~django_modern_rest.exceptions.RequestSerializationError`
+  :exc:`~dmr.exceptions.RequestSerializationError`
   and return a beautiful error message for the user
 
 You can use existing ones or create our own.
@@ -31,27 +31,27 @@ Existing components
 Parsing headers
 ~~~~~~~~~~~~~~~
 
-.. autoclass:: django_modern_rest.components.Headers
+.. autoclass:: dmr.components.Headers
 
 Parsing query string
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: django_modern_rest.components.Query
+.. autoclass:: dmr.components.Query
 
 Parsing request body
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: django_modern_rest.components.Body
+.. autoclass:: dmr.components.Body
 
 Body can be anything: json, xml,
 ``application/x-www-form-urlencoded``, or ``multipart/form-data``.
 
-It depends on the :class:`~django_modern_rest.parsers.Parser`
+It depends on the :class:`~dmr.parsers.Parser`
 that is being used for the endpoint.
 
 Here's an example how one can send ``application/x-www-form-urlencoded``
 form data to an API endpoint with the help
-of :class:`~django_modern_rest.parsers.FormUrlEncodedParser`:
+of :class:`~dmr.parsers.FormUrlEncodedParser`:
 
 .. literalinclude:: /examples/components/form_body.py
   :caption: views.py
@@ -61,12 +61,12 @@ of :class:`~django_modern_rest.parsers.FormUrlEncodedParser`:
 Parsing path parameters
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: django_modern_rest.components.Path
+.. autoclass:: dmr.components.Path
 
 Parsing cookies
 ~~~~~~~~~~~~~~~
 
-.. autoclass:: django_modern_rest.components.Cookies
+.. autoclass:: dmr.components.Cookies
 
 Parsing files
 ~~~~~~~~~~~~~
@@ -77,7 +77,7 @@ There are several way of how users can send files to a REST API:
    It supports passing multiple files at once,
    it also supports sending other body parameters together with the files.
    It is the best option for 95% of cases. This way requires our
-   :class:`~django_modern_rest.parsers.MultiPartParser` to be used
+   :class:`~dmr.parsers.MultiPartParser` to be used
 2. Via direct requests with a single file and a concrete content-type metadata
 3. Via base64 encoded strings inside a json / xml files.
    Is only suitable for really small files
@@ -88,7 +88,7 @@ The second option is not supported yet, but can be, even by user-code only.
 While the third way has no specific support,
 but is possible to be implemented by users directly.
 
-.. autoclass:: django_modern_rest.components.FileMetadata
+.. autoclass:: dmr.components.FileMetadata
 
 
 .. rubric:: Sending files with extra body parameters
@@ -118,5 +118,5 @@ and attach it to a form data field.
 API Reference
 -------------
 
-.. autoclass:: django_modern_rest.components.ComponentParser
+.. autoclass:: dmr.components.ComponentParser
    :members:

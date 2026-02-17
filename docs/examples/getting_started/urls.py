@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from django_modern_rest.routing import Router
+from dmr.routing import Router
 from examples.getting_started.pydantic_controller import UserController
 
 # Router is just a collection of regular Django urls:

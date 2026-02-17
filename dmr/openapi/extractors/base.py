@@ -9,8 +9,8 @@ from typing import (
 
 from typing_extensions import override
 
-from django_modern_rest.openapi.mappers import KwargMapper
-from django_modern_rest.openapi.types import FieldDefinition
+from dmr.openapi.mappers import KwargMapper
+from dmr.openapi.types import FieldDefinition
 
 _SourceT = TypeVar('_SourceT')
 _Registry: TypeAlias = list['type[FieldExtractor[Any]]']

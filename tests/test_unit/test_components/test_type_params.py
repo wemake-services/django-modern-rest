@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Body,
     Controller,
@@ -11,10 +11,10 @@ from django_modern_rest import (
     Path,
     Query,
 )
-from django_modern_rest.exceptions import (
+from dmr.exceptions import (
     UnsolvableAnnotationsError,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 def test_validate_components_type_params() -> None:

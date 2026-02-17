@@ -176,7 +176,7 @@ class _AppBuilder:
             INSTALLED_APPS=[
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
-                'django_modern_rest',
+                'dmr',
             ],
             MIDDLEWARE=[],
             USE_TZ=True,

@@ -17,7 +17,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.defaults import page_not_found
 from typing_extensions import TypedDict
 
-from django_modern_rest.exceptions import (
+from dmr.exceptions import (
     InternalServerError,
     NotAcceptableError,
     NotAuthenticatedError,
@@ -27,9 +27,9 @@ from django_modern_rest.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 
 @final
@@ -86,7 +86,7 @@ def format_error(  # noqa: C901, WPS231
 
     Args:
         error: A serialization exception like a validation error or
-            a ``django_modern_rest.exceptions.DataParsingError``.
+            a ``dmr.exceptions.DataParsingError``.
         loc: Location where this error happened.
             Like "headers" or "field_name".
         error_type: Optional type of the error for extra metadata.
@@ -241,8 +241,8 @@ def global_error_handler(
     It is the last item in the chain that we try:
 
     1. Per endpoint configuration via
-       :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
-       and :meth:`~django_modern_rest.endpoint.Endpoint.handle_async_error`
+       :meth:`~dmr.endpoint.Endpoint.handle_error`
+       and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
        methods
     2. Per blueprint handlers
     3. Per controller handlers
@@ -260,7 +260,7 @@ def global_error_handler(
         Or raise *exc* back.
 
     You can access active blueprint
-    via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
+    via :attr:`~dmr.controller.Controller.active_blueprint`.
 
     Here's an example that will produce
     ``{'detail': [{'msg': 'inf', 'type': 'user_msg'}]}``
@@ -270,9 +270,9 @@ def global_error_handler(
 
        >>> from http import HTTPStatus
        >>> from django.http import HttpResponse
-       >>> from django_modern_rest.controller import Controller
-       >>> from django_modern_rest.endpoint import Endpoint
-       >>> from django_modern_rest.errors import global_error_handler, ErrorType
+       >>> from dmr.controller import Controller
+       >>> from dmr.endpoint import Endpoint
+       >>> from dmr.errors import global_error_handler, ErrorType
 
        >>> def custom_error_handler(
        ...     controller: Controller,

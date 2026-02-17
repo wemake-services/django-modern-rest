@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.oauth_flow import OAuthFlow
+    from dmr.openapi.objects.oauth_flow import OAuthFlow
 
 
 @final

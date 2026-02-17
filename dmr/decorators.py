@@ -5,17 +5,17 @@ from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 from django.http import HttpResponseBase
 from django.utils.decorators import method_decorator
 
-from django_modern_rest.internal.middleware_wrapper import (
+from dmr.internal.middleware_wrapper import (
     DecoratorWithResponses,
     MiddlewareDecorator,
     ResponseConverter,
     do_wrap_dispatch,
 )
-from django_modern_rest.metadata import ResponseSpec
+from dmr.metadata import ResponseSpec
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Blueprint
+    from dmr.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 
@@ -44,14 +44,10 @@ def wrap_middleware(
         >>> from django.views.decorators.csrf import csrf_protect
         >>> from django.http import HttpResponse
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import Controller, ResponseSpec
-        >>> from django_modern_rest.response import build_response
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
-        >>> from django_modern_rest.errors import (
-        ...     ErrorType,
-        ...     ErrorModel,
-        ...     format_error,
-        ... )
+        >>> from dmr import Controller, ResponseSpec
+        >>> from dmr.response import build_response
+        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.errors import ErrorType, ErrorModel, format_error
 
         >>> @wrap_middleware(
         ...     csrf_protect,
@@ -111,9 +107,9 @@ def dispatch_decorator(
 
     .. code:: python
 
-        >>> from django_modern_rest import Controller
-        >>> from django_modern_rest.decorators import dispatch_decorator
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Controller
+        >>> from dmr.decorators import dispatch_decorator
+        >>> from dmr.plugins.pydantic import PydanticSerializer
         >>> from django.contrib.auth.decorators import login_required
 
         >>> @dispatch_decorator(login_required())
@@ -137,8 +133,8 @@ def dispatch_decorator(
 
         If you want full spec support, use middleware wrappers.
         You would probably want to use
-        :func:`~django_modern_rest.decorators.wrap_middleware` as well.
-        Or use :func:`~django_modern_rest.decorators.endpoint_decorator`.
+        :func:`~dmr.decorators.wrap_middleware` as well.
+        Or use :func:`~dmr.decorators.endpoint_decorator`.
 
     """
     return method_decorator(func, name='dispatch')
@@ -164,9 +160,9 @@ def endpoint_decorator(
 
         >>> from http import HTTPStatus
 
-        >>> from django_modern_rest import Controller, HeaderSpec, modify
-        >>> from django_modern_rest.decorators import endpoint_decorator
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Controller, HeaderSpec, modify
+        >>> from dmr.decorators import endpoint_decorator
+        >>> from dmr.plugins.pydantic import PydanticSerializer
         >>> from django.contrib.auth.decorators import login_required
 
         >>> class MyController(Controller[PydanticSerializer]):

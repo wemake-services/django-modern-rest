@@ -1,12 +1,12 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.objects.media_type import MediaType
-from django_modern_rest.openapi.objects.request_body import RequestBody
+from dmr.openapi.objects.media_type import MediaType
+from dmr.openapi.objects.request_body import RequestBody
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata
-    from django_modern_rest.openapi.core.context import OpenAPIContext
+    from dmr.metadata import EndpointMetadata
+    from dmr.openapi.core.context import OpenAPIContext
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

@@ -7,8 +7,8 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
-from django_modern_rest.openapi.converter import ConvertedSchema
-from django_modern_rest.openapi.renderers import BaseRenderer
+from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.renderers import BaseRenderer
 
 
 @method_decorator(

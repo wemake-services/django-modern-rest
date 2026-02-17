@@ -9,11 +9,11 @@ from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
 from typing_extensions import TypedDict
 
-from django_modern_rest import Body, Controller, ResponseSpec, modify
-from django_modern_rest.errors import ErrorModel
-from django_modern_rest.exceptions import NotAuthenticatedError
-from django_modern_rest.security.jwt.token import JWTToken
-from django_modern_rest.serializer import BaseSerializer
+from dmr import Body, Controller, ResponseSpec, modify
+from dmr.errors import ErrorModel
+from dmr.exceptions import NotAuthenticatedError
+from dmr.security.jwt.token import JWTToken
+from dmr.serializer import BaseSerializer
 
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
 _TokensResponseT = TypeVar('_TokensResponseT')

@@ -9,16 +9,16 @@ from django.utils.encoding import iri_to_uri
 from django.utils.http import MAX_URL_REDIRECT_LENGTH
 from typing_extensions import TypeVar
 
-from django_modern_rest.cookies import NewCookie
-from django_modern_rest.settings import Settings, resolve_setting
+from dmr.cookies import NewCookie
+from dmr.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
     from django.utils.functional import (
         _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
     )
 
-    from django_modern_rest.renderers import Renderer
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.renderers import Renderer
+    from dmr.serializer import BaseSerializer
 
 _ItemT = TypeVar('_ItemT', default=Any)
 
@@ -39,14 +39,14 @@ class APIError(Exception, Generic[_ItemT]):
     .. code:: python
 
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import (
+        >>> from dmr import (
         ...     APIError,
         ...     Controller,
         ...     ResponseSpec,
         ...     modify,
         ... )
-        >>> from django_modern_rest.errors import ErrorType
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr.errors import ErrorType
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class UserController(Controller[PydanticSerializer]):
         ...     @modify(
@@ -103,15 +103,15 @@ class APIRedirectError(Exception):
     .. code:: python
 
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import (
+        >>> from dmr import (
         ...     APIRedirectError,
         ...     Controller,
         ...     ResponseSpec,
         ...     modify,
         ...     HeaderSpec,
         ... )
-        >>> from django_modern_rest.errors import ErrorType
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr.errors import ErrorType
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class UserController(Controller[PydanticSerializer]):
         ...     @modify(
@@ -215,7 +215,7 @@ def build_response(  # noqa: WPS210, WPS211
     We need this as a function, so it can be called when no endpoints exist.
 
     Do not use directly, prefer using
-    :meth:`~django_modern_rest.controller.Controller.to_response` method.
+    :meth:`~dmr.controller.Controller.to_response` method.
     Unless you are using a lower-level API. Like in middlewares, for example.
 
     You have to provide either *method* or *status_code*.

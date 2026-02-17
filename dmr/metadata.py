@@ -10,22 +10,22 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.components import ComponentParser
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.cookies import CookieSpec, NewCookie
-    from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
-    from django_modern_rest.headers import HeaderSpec, NewHeader
-    from django_modern_rest.openapi.objects import (
+    from dmr.components import ComponentParser
+    from dmr.controller import Controller
+    from dmr.cookies import CookieSpec, NewCookie
+    from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+    from dmr.headers import HeaderSpec, NewHeader
+    from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
         Reference,
         Server,
     )
-    from django_modern_rest.parsers import Parser
-    from django_modern_rest.renderers import Renderer
-    from django_modern_rest.security.base import AsyncAuth, SyncAuth
-    from django_modern_rest.serializer import BaseSerializer
-    from django_modern_rest.settings import HttpSpec
+    from dmr.parsers import Parser
+    from dmr.renderers import Renderer
+    from dmr.security.base import AsyncAuth, SyncAuth
+    from dmr.serializer import BaseSerializer
+    from dmr.settings import HttpSpec
 
 ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
 
@@ -206,15 +206,15 @@ class EndpointMetadata:
             of (ComponentParser class, type args).
         parsers: List of instances to be used for this endpoint
             to parse incoming request's body. All instances must be of subtypes
-            of :class:`~django_modern_rest.parsers.Parser`.
+            of :class:`~dmr.parsers.Parser`.
         renderers: List of instances to be used for this endpoint
             to render response's body. All instances must be of subtypes
-            of :class:`~django_modern_rest.renderers.Renderer`.
+            of :class:`~dmr.renderers.Renderer`.
         auth: list of auth instances to be used for this endpoint.
             Sync endpoints must use instances
-            of :class:`django_modern_rest.security.SyncAuth`.
+            of :class:`dmr.security.SyncAuth`.
             Async endpoints must use instances
-            of :class:`django_modern_rest.security.AsyncAuth`.
+            of :class:`dmr.security.AsyncAuth`.
             When set it to ``None`` it means that auth
             is disabled for this endpoint.
         no_validate_http_spec: Set of checks that user wants
@@ -282,7 +282,7 @@ class EndpointMetadata:
         if you want more or less response spec providers.
 
         For example: you can add some custom field to
-        :class:`~django_modern_rest.controller.Controller` like ``checks=``.
+        :class:`~dmr.controller.Controller` like ``checks=``.
         And you can subclass ``EndpointMetadata``
         to also contain ``checks`` field and override this method
         to also include response specs from this field.

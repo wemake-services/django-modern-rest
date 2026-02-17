@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 import pydantic
 
-from django_modern_rest import Body, Controller, NewHeader, modify
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Body, Controller, NewHeader, modify
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class UserModel(pydantic.BaseModel):

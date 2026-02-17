@@ -3,16 +3,16 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.discriminator import Discriminator
-    from django_modern_rest.openapi.objects.enums import (
+    from dmr.openapi.objects.discriminator import Discriminator
+    from dmr.openapi.objects.enums import (
         OpenAPIFormat,
         OpenAPIType,
     )
-    from django_modern_rest.openapi.objects.external_documentation import (
+    from dmr.openapi.objects.external_documentation import (
         ExternalDocumentation,
     )
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.xml import XML
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.xml import XML
 
 
 @final

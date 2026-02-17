@@ -3,12 +3,12 @@ from typing import Any
 
 import pytest
 
-from django_modern_rest.openapi.converter import (
+from dmr.openapi.converter import (
     SchemaConverter,
     normalize_key,
     normalize_value,
 )
-from django_modern_rest.openapi.objects import (
+from dmr.openapi.objects import (
     OpenAPIFormat,
     OpenAPIType,
     Schema,

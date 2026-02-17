@@ -6,8 +6,8 @@ from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
 

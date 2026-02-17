@@ -8,7 +8,7 @@ from django.urls import Resolver404, URLPattern, include
 from django.urls import path as django_path
 from django.urls.resolvers import RegexPattern, URLResolver
 
-from django_modern_rest.routing import path as dmr_path
+from dmr.routing import path as dmr_path
 
 
 def _a_view(request: HttpRequest) -> HttpResponse:

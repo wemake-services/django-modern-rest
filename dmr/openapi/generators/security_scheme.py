@@ -3,9 +3,9 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.openapi.objects import SecurityRequirement
-    from django_modern_rest.security import AsyncAuth, SyncAuth
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.objects import SecurityRequirement
+    from dmr.security import AsyncAuth, SyncAuth
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

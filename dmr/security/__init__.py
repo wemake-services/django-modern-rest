@@ -1,6 +1,2 @@
-from django_modern_rest.security.base import (
-    AsyncAuth as AsyncAuth,
-)
-from django_modern_rest.security.base import (
-    SyncAuth as SyncAuth,
-)
+from dmr.security.base import AsyncAuth as AsyncAuth
+from dmr.security.base import SyncAuth as SyncAuth

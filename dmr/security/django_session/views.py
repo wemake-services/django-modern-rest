@@ -7,16 +7,16 @@ from django.conf import settings
 from django.contrib.auth import aauthenticate, alogin, authenticate, login
 from typing_extensions import TypedDict
 
-from django_modern_rest import (
+from dmr import (
     Body,
     Controller,
     CookieSpec,
     ResponseSpec,
     modify,
 )
-from django_modern_rest.errors import ErrorModel
-from django_modern_rest.exceptions import NotAuthenticatedError
-from django_modern_rest.serializer import BaseSerializer
+from dmr.errors import ErrorModel
+from dmr.exceptions import NotAuthenticatedError
+from dmr.serializer import BaseSerializer
 
 _RequestModelT = TypeVar('_RequestModelT', bound=Mapping[str, Any])
 _ResponseT = TypeVar('_ResponseT')

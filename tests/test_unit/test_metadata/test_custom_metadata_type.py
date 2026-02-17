@@ -7,17 +7,17 @@ from django.http import HttpResponse
 from django.middleware.csrf import get_token
 from typing_extensions import override
 
-from django_modern_rest import (
+from dmr import (
     Body,
     Controller,
     ResponseSpec,
     modify,
     validate,
 )
-from django_modern_rest.metadata import EndpointMetadata, ResponseSpecProvider
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.django_session import DjangoSessionSyncAuth
-from django_modern_rest.test import DMRRequestFactory
+from dmr.metadata import EndpointMetadata, ResponseSpecProvider
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import DjangoSessionSyncAuth
+from dmr.test import DMRRequestFactory
 
 
 class _NoExtrasMetadata(EndpointMetadata):

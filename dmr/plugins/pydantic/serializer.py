@@ -16,18 +16,15 @@ from django.http import HttpRequest
 from pydantic.config import ExtraValues
 from typing_extensions import TypedDict, override
 
-from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.errors import ErrorDetail, ErrorType
-from django_modern_rest.exceptions import InternalServerError
-from django_modern_rest.parsers import Parser, Raw
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.serializer import (
-    BaseEndpointOptimizer,
-    BaseSerializer,
-)
+from dmr.envs import MAX_CACHE_SIZE
+from dmr.errors import ErrorDetail, ErrorType
+from dmr.exceptions import InternalServerError
+from dmr.parsers import Parser, Raw
+from dmr.renderers import Renderer
+from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata
+    from dmr.metadata import EndpointMetadata
 
 
 # pydantic does not allow to import this,
@@ -228,7 +225,7 @@ def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
 
         >>> _get_cached_type_adapter.cache_clear()
 
-    Or use :func:`django_modern_rest.settings.clear_settings_cache`.
+    Or use :func:`dmr.settings.clear_settings_cache`.
     """
     # This is a function not to cache `self` or `cls`
     return pydantic.TypeAdapter(model)

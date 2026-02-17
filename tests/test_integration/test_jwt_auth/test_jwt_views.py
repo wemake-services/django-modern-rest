@@ -9,7 +9,7 @@ from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest.test import DMRClient
+from dmr.test import DMRClient
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
-from django_modern_rest import Blueprint, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.jwt import JWTSyncAuth
+from dmr import Blueprint, Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.jwt import JWTSyncAuth
 
 
 class MyBlueprint(Blueprint[PydanticSerializer]):

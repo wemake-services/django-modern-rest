@@ -3,8 +3,8 @@ from typing import Any
 
 import pytest
 
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.negotiation import ContentType, conditional_type
+from dmr.exceptions import EndpointMetadataError
+from dmr.negotiation import ContentType, conditional_type
 
 
 @pytest.mark.parametrize(

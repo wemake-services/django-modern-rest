@@ -3,8 +3,8 @@ from typing import assert_type
 import msgspec
 from django.http import HttpRequest
 
-from django_modern_rest import Body, Controller, Headers, Query
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from dmr import Body, Controller, Headers, Query
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class _HeaderModel(msgspec.Struct):

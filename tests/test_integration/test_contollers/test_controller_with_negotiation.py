@@ -5,8 +5,8 @@ from typing import Final
 import pytest
 from django.urls import reverse
 
-from django_modern_rest.negotiation import ContentType
-from django_modern_rest.test import DMRClient
+from dmr.negotiation import ContentType
+from dmr.test import DMRClient
 
 _URL: Final = reverse('api:negotiations:negotiation')
 _XML_DATA = '<root><key>value</key></root>'

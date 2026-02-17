@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, override
 
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 from examples.reusable_code.reusable_parsing import ReusableController
 
 

@@ -14,35 +14,31 @@ from typing import (
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponseBase
 
-from django_modern_rest.components import Body
-from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.metadata import (
-    EndpointMetadata,
-    ResponseModification,
-    ResponseSpec,
-)
-from django_modern_rest.parsers import Parser
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import infer_status_code
-from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.settings import HttpSpec, Settings, resolve_setting
-from django_modern_rest.types import (
+from dmr.components import Body
+from dmr.cookies import CookieSpec, NewCookie
+from dmr.exceptions import EndpointMetadataError
+from dmr.headers import HeaderSpec, NewHeader
+from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
+from dmr.parsers import Parser
+from dmr.renderers import Renderer
+from dmr.response import infer_status_code
+from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.serializer import BaseSerializer
+from dmr.settings import HttpSpec, Settings, resolve_setting
+from dmr.types import (
     infer_annotation,
     is_safe_subclass,
     parse_return_annotation,
 )
-from django_modern_rest.validation.payload import (
+from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
     ValidateEndpointPayload,
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint, Controller
-    from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
+    from dmr.controller import Blueprint, Controller
+    from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 
 #: HTTP methods that should not have a request body according to HTTP spec.
 #: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.

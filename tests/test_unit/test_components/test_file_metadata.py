@@ -13,17 +13,17 @@ from faker import Faker
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from django_modern_rest import Body, Controller, FileMetadata, modify
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.parsers import (
+from dmr import Body, Controller, FileMetadata, modify
+from dmr.exceptions import EndpointMetadataError
+from dmr.parsers import (
     DeserializeFunc,
     MultiPartParser,
     Parser,
     Raw,
     SupportsFileParsing,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 @final

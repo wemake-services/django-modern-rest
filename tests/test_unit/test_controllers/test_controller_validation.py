@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from typing_extensions import override
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Body,
     Controller,
@@ -14,11 +14,11 @@ from django_modern_rest import (
     Query,
     ResponseSpec,
 )
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import compose_blueprints
+from dmr.endpoint import Endpoint
+from dmr.exceptions import EndpointMetadataError
+from dmr.options_mixins import AsyncMetaMixin, MetaMixin
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import compose_blueprints
 
 
 class _SyncBlueprint(Blueprint[PydanticSerializer]):

@@ -7,24 +7,17 @@ from typing import TYPE_CHECKING, Any
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
-from django_modern_rest.exceptions import (
-    NotAcceptableError,
-    ResponseSchemaError,
-)
-from django_modern_rest.metadata import (
-    EndpointMetadata,
-    ResponseSpec,
-    ResponseSpecProvider,
-)
-from django_modern_rest.parsers import (
+from dmr.exceptions import NotAcceptableError, ResponseSchemaError
+from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
+from dmr.parsers import (
     JsonParser,
     Parser,
     _NoOpParser,  # pyright: ignore[reportPrivateUsage]
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
 
 
 class Renderer(ResponseSpecProvider):

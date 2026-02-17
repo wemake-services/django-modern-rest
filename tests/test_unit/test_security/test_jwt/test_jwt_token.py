@@ -12,8 +12,8 @@ import jwt
 import pytest
 from faker import Faker
 
-from django_modern_rest.exceptions import InternalServerError
-from django_modern_rest.security.jwt import JWTToken
+from dmr.exceptions import InternalServerError
+from dmr.security.jwt import JWTToken
 
 
 @pytest.mark.parametrize('algorithm', ['HS256', 'HS384', 'HS512'])

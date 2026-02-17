@@ -2,11 +2,11 @@ import uuid
 
 import pydantic
 
-from django_modern_rest import (  # noqa: WPS235
+from dmr import (  # noqa: WPS235
     Blueprint,
     Body,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _UserInput(pydantic.BaseModel):

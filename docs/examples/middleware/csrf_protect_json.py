@@ -3,11 +3,11 @@ from http import HTTPStatus
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect
 
-from django_modern_rest import Controller, ResponseSpec
-from django_modern_rest.decorators import wrap_middleware
-from django_modern_rest.errors import ErrorModel, format_error
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.response import build_response
+from dmr import Controller, ResponseSpec
+from dmr.decorators import wrap_middleware
+from dmr.errors import ErrorModel, format_error
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.response import build_response
 
 
 @wrap_middleware(

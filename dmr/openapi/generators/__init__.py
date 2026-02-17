@@ -1,21 +1,21 @@
-from django_modern_rest.openapi.generators.component import (
+from dmr.openapi.generators.component import (
     ComponentGenerator as ComponentGenerator,
 )
-from django_modern_rest.openapi.generators.parameter import (
+from dmr.openapi.generators.parameter import (
     ParameterGenerator as ParameterGenerator,
 )
-from django_modern_rest.openapi.generators.path_item import (
+from dmr.openapi.generators.path_item import (
     PathItemGenerator as PathItemGenerator,
 )
-from django_modern_rest.openapi.generators.request_body import (
+from dmr.openapi.generators.request_body import (
     RequestBodyGenerator as RequestBodyGenerator,
 )
-from django_modern_rest.openapi.generators.response import (
+from dmr.openapi.generators.response import (
     ResponseGenerator as ResponseGenerator,
 )
-from django_modern_rest.openapi.generators.schema import (
+from dmr.openapi.generators.schema import (
     SchemaGenerator as SchemaGenerator,
 )
-from django_modern_rest.openapi.generators.security_scheme import (
+from dmr.openapi.generators.security_scheme import (
     SecuritySchemeGenerator as SecuritySchemeGenerator,
 )
