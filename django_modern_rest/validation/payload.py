@@ -38,7 +38,6 @@ class _BasePayload:
     # Common fields:
     validate_responses: bool | None = None
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None
-    allow_custom_http_methods: bool = False
     no_validate_http_spec: Set[HttpSpec] | None = None
     parsers: Sequence[Parser] | None = None
     renderers: Sequence[Renderer] | None = None

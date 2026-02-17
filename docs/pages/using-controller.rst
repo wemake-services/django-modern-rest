@@ -186,7 +186,7 @@ Customizing controllers
 ``Controller`` is built to be customized with a class-level API.
 If you need granual control, you can change anything.
 
-- :attr:`~django_modern_rest.controller.Blueprint.http_methods`
+- :attr:`~django_modern_rest.controller.Blueprint.allowed_http_methods`
   to support custom HTTP methods like ``QUERY``
   or your custom DSLs on top of HTTP
 - :attr:`~django_modern_rest.controller.Blueprint.endpoint_cls`

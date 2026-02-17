@@ -219,6 +219,8 @@ class EndpointMetadata:
             is disabled for this endpoint.
         no_validate_http_spec: Set of checks that user wants
             to disable for validation in this endpoint.
+        allowed_http_methods: Set of extra HTTP methods
+            that are allowed for this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -239,7 +241,7 @@ class EndpointMetadata:
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
-    ``allow_custom_http_methods`` is used for endpoint definition.
+    ``allowed_http_methods`` is used for endpoint definition.
     This might be useful for cases like when you need
     to define a method like ``query``, which is not yet formally accepted.
     Or provide domain specific HTTP methods.
@@ -260,6 +262,7 @@ class EndpointMetadata:
     renderers: dict[str, 'Renderer']
     auth: list['SyncAuth | AsyncAuth'] | None
     no_validate_http_spec: frozenset['HttpSpec']
+    allowed_http_methods: frozenset[str]
 
     # OpenAPI documentation fields:
     summary: str | None = None

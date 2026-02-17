@@ -86,7 +86,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
-        http_methods: Set of names to be treated as names for endpoints.
+        allowed_http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
         parsers: Sequence of parsers to be used for this controller
             to parse incoming request's body. All instances must be of subtypes
@@ -123,7 +123,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
-    http_methods: ClassVar[Set[str]] = frozenset(
+    allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
@@ -315,7 +315,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         return {
             # Rename `meta` back to `options`:
             ('OPTIONS' if dsl_method == 'meta' else dsl_method.upper()): method
-            for dsl_method in cls.http_methods
+            for dsl_method in cls.allowed_http_methods
             if (method := getattr(cls, dsl_method, None)) is not None
         }
 
@@ -533,7 +533,8 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
            ...     )
            ...     def meta(self) -> HttpResponse:
            ...         allow = ','.join(
-           ...             method.upper() for method in self.http_methods
+           ...             method.upper()
+           ...             for method in self.allowed_http_methods
            ...         )
            ...         return self.to_response(
            ...             None,

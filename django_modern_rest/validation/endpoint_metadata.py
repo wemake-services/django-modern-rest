@@ -184,17 +184,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     """
 
     payload: Payload
+    blueprint_cls: type['Blueprint[BaseSerializer]'] | None
+    controller_cls: type['Controller[BaseSerializer]']
+    func: Callable[..., Any]
 
-    def __call__(
-        self,
-        func: Callable[..., Any],
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> EndpointMetadata:
+    def __call__(self) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = infer_annotation(
-            parse_return_annotation(func),
-            blueprint_cls or controller_cls,
+            parse_return_annotation(self.func),
+            self.blueprint_cls or self.controller_cls,
         )
         if self.payload is None and is_safe_subclass(
             return_annotation,
@@ -205,106 +203,73 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 'payload',
                 ValidateEndpointPayload(responses=[]),
             )
-        method = validate_method_name(
-            func.__name__,
-            allow_custom_http_methods=getattr(
-                self.payload,
-                'allow_custom_http_methods',
-                False,
+        allowed_http_methods: frozenset[str] = frozenset((
+            *(
+                self.blueprint_cls.allowed_http_methods
+                if self.blueprint_cls
+                else set()
             ),
+            *self.controller_cls.allowed_http_methods,
+        ))
+        method = validate_method_name(
+            self.func.__name__,
+            allowed_http_methods=allowed_http_methods,
         )
-        func.__name__ = method  # we can change it :)
-        endpoint = str(func)
+        self.func.__name__ = method  # we can change it :)
+        endpoint = str(self.func)
 
         self._validate_return_annotation(
             return_annotation,
             endpoint=endpoint,
-            blueprint_cls=blueprint_cls,
-            controller_cls=controller_cls,
         )
 
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
                 method,
-                func,
                 endpoint=endpoint,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
+                allowed_http_methods=allowed_http_methods,
             )
         if isinstance(self.payload, ModifyEndpointPayload):
             return self._from_modify(
                 self.payload,
-                return_annotation,
                 method,
-                func,
+                return_annotation,
                 endpoint=endpoint,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
+                allowed_http_methods=allowed_http_methods,
             )
         if self.payload is None:
             return self._from_raw_data(
-                return_annotation,
                 method,
-                func,
+                return_annotation,
                 endpoint=endpoint,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
+                allowed_http_methods=allowed_http_methods,
             )
         assert_never(self.payload)
 
-    def _from_validate(  # noqa: WPS211, WPS210
+    def _from_validate(  # noqa: WPS211
         self,
         payload: ValidateEndpointPayload,
         method: str,
-        func: Callable[..., Any],
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
+        allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
-        summary, description = self._build_description(func, payload)
+        summary, description = self._build_description()
         return payload.metadata_cls(
             responses={},
             method=method,
-            validate_responses=self._build_validate_responses(
-                payload,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
-            ),
+            validate_responses=self._build_validate_responses(),
             modification=None,
-            error_handler=self._build_error_handler(
-                payload,
-                func,
-                endpoint=endpoint,
-            ),
+            error_handler=self._build_error_handler(endpoint=endpoint),
             component_parsers=(
-                (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                (self.blueprint_cls or self.controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parsers=self._build_parsers(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-            ),
-            renderers=self._build_renderers(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-            ),
-            auth=self._build_auth(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-                func=func,
-            ),
-            no_validate_http_spec=self._build_no_validate_http_spec(
-                payload,
-                blueprint_cls,
-                controller_cls,
-            ),
+            parsers=self._build_parsers(endpoint=endpoint),
+            renderers=self._build_renderers(endpoint=endpoint),
+            auth=self._build_auth(endpoint=endpoint),
+            no_validate_http_spec=self._build_no_validate_http_spec(),
+            allowed_http_methods=allowed_http_methods,
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -315,16 +280,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_modify(  # noqa: WPS211, WPS210
+    def _from_modify(
         self,
         payload: ModifyEndpointPayload,
-        return_annotation: Any,
         method: str,
-        func: Callable[..., Any],
+        return_annotation: Any,
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
+        allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         self._validate_new_http_parts(payload, endpoint=endpoint)
         modification = ResponseModification(
@@ -337,48 +300,21 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 else payload.status_code
             ),
         )
-        summary, description = self._build_description(func, payload)
+        summary, description = self._build_description()
         return payload.metadata_cls(
             responses={},
-            validate_responses=self._build_validate_responses(
-                payload,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
-            ),
+            validate_responses=self._build_validate_responses(),
             method=method,
             modification=modification,
-            error_handler=self._build_error_handler(
-                payload,
-                func,
-                endpoint=endpoint,
-            ),
+            error_handler=self._build_error_handler(endpoint=endpoint),
             component_parsers=(
-                (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                (self.blueprint_cls or self.controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parsers=self._build_parsers(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-            ),
-            renderers=self._build_renderers(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-            ),
-            auth=self._build_auth(
-                payload,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-                func=func,
-            ),
-            no_validate_http_spec=self._build_no_validate_http_spec(
-                payload,
-                blueprint_cls,
-                controller_cls,
-            ),
+            parsers=self._build_parsers(endpoint=endpoint),
+            renderers=self._build_renderers(endpoint=endpoint),
+            auth=self._build_auth(endpoint=endpoint),
+            no_validate_http_spec=self._build_no_validate_http_spec(),
+            allowed_http_methods=allowed_http_methods,
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -389,15 +325,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_raw_data(  # noqa: WPS211, WPS210
+    def _from_raw_data(
         self,
-        return_annotation: Any,
         method: str,
-        func: Callable[..., Any],
+        return_annotation: Any,
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
+        allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         status_code = infer_status_code(method)
         modification = ResponseModification(
@@ -406,62 +340,34 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             headers=None,
             cookies=None,
         )
-        summary, description = self._build_description(func)
+        summary, description = self._build_description()
         return EndpointMetadata(
             responses={},
-            validate_responses=self._build_validate_responses(
-                None,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
-            ),
+            validate_responses=self._build_validate_responses(),
             method=method,
             modification=modification,
             error_handler=None,
             component_parsers=(
-                (blueprint_cls or controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                (self.blueprint_cls or self.controller_cls)._component_parsers  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             ),
-            parsers=self._build_parsers(
-                None,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-            ),
-            renderers=self._build_renderers(
-                None,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-            ),
-            auth=self._build_auth(
-                None,
-                blueprint_cls,
-                controller_cls,
-                endpoint=endpoint,
-                func=func,
-            ),
-            no_validate_http_spec=self._build_no_validate_http_spec(
-                None,
-                blueprint_cls,
-                controller_cls,
-            ),
+            parsers=self._build_parsers(endpoint=endpoint),
+            renderers=self._build_renderers(endpoint=endpoint),
+            auth=self._build_auth(endpoint=endpoint),
+            no_validate_http_spec=self._build_no_validate_http_spec(),
+            allowed_http_methods=allowed_http_methods,
             summary=summary,
             description=description,
         )
 
-    def _build_parsers(
-        self,
-        payload: Payload,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
-        *,
-        endpoint: str,
-    ) -> dict[str, Parser]:
-        if payload and payload.parsers:
-            return {typ.content_type: typ for typ in payload.parsers}
-        if blueprint_cls and blueprint_cls.parsers:
-            return {typ.content_type: typ for typ in blueprint_cls.parsers}
-        if controller_cls.parsers:
-            return {typ.content_type: typ for typ in controller_cls.parsers}
+    def _build_parsers(self, *, endpoint: str) -> dict[str, Parser]:
+        if self.payload and self.payload.parsers:
+            return {typ.content_type: typ for typ in self.payload.parsers}
+        if self.blueprint_cls and self.blueprint_cls.parsers:
+            return {typ.content_type: typ for typ in self.blueprint_cls.parsers}
+        if self.controller_cls.parsers:
+            return {
+                typ.content_type: typ for typ in self.controller_cls.parsers
+            }
         settings_types = resolve_setting(Settings.parsers)
         if not settings_types:
             # This is the last place we look at, it must be present:
@@ -471,20 +377,17 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         return {typ.content_type: typ for typ in settings_types}
 
-    def _build_renderers(
-        self,
-        payload: Payload,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
-        *,
-        endpoint: str,
-    ) -> dict[str, Renderer]:
-        if payload and payload.renderers:
-            return {typ.content_type: typ for typ in payload.renderers}
-        if blueprint_cls and blueprint_cls.renderers:
-            return {typ.content_type: typ for typ in blueprint_cls.renderers}
-        if controller_cls.renderers:
-            return {typ.content_type: typ for typ in controller_cls.renderers}
+    def _build_renderers(self, *, endpoint: str) -> dict[str, Renderer]:
+        if self.payload and self.payload.renderers:
+            return {typ.content_type: typ for typ in self.payload.renderers}
+        if self.blueprint_cls and self.blueprint_cls.renderers:
+            return {
+                typ.content_type: typ for typ in self.blueprint_cls.renderers
+            }
+        if self.controller_cls.renderers:
+            return {
+                typ.content_type: typ for typ in self.controller_cls.renderers
+            }
         settings_types = resolve_setting(Settings.renderers)
         if not settings_types:
             # This is the last place we look at, it must be present:
@@ -496,16 +399,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_auth(  # noqa: WPS231
         self,
-        payload: Payload,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
         *,
         endpoint: str,
-        func: Callable[..., Any],
     ) -> list[SyncAuth | AsyncAuth] | None:
-        payload_auth = () if payload is None else (payload.auth or ())
+        payload_auth = () if self.payload is None else (self.payload.auth or ())
         blueprint_auth = (
-            () if blueprint_cls is None else (blueprint_cls.auth or ())
+            ()
+            if self.blueprint_cls is None
+            else (self.blueprint_cls.auth or ())
         )
         settings_auth: list[SyncAuth | AsyncAuth] = resolve_setting(
             Settings.auth,
@@ -519,13 +420,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         auth = [
             *payload_auth,  # pyrefly: ignore[not-iterable]
             *blueprint_auth,  # pyrefly: ignore[not-iterable]
-            *(controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
+            *(self.controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
             # TODO: maybe we should wrap auth handlers in global settings
             # in `sync_to_async` and `async_to_sync`?
             *(settings_auth or ()),  # pyrefly: ignore[not-iterable]
         ]
         # Validate that auth matches the sync / async endpoints:
-        base_type = AsyncAuth if inspect.iscoroutinefunction(func) else SyncAuth
+        base_type = (
+            AsyncAuth if inspect.iscoroutinefunction(self.func) else SyncAuth
+        )
         if not all(
             isinstance(auth_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
             for auth_instance in auth
@@ -537,9 +440,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         # We are doing this as late as possible to still
         # have the full validation logic even if some value is None.
         if (
-            (payload and payload.auth is None)  # noqa: WPS222
-            or (blueprint_cls and blueprint_cls.auth is None)
-            or controller_cls.auth is None
+            (self.payload and self.payload.auth is None)  # noqa: WPS222
+            or (self.blueprint_cls and self.blueprint_cls.auth is None)
+            or self.controller_cls.auth is None
             # Empty auth list means that no auth is configured
             # and it is just None.
             or not auth
@@ -547,66 +450,57 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return None
         return auth
 
-    def _build_validate_responses(
-        self,
-        payload: Payload,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> bool:
-        if payload and payload.validate_responses is not None:
-            return payload.validate_responses
-        if blueprint_cls and blueprint_cls.validate_responses is not None:
-            return blueprint_cls.validate_responses
-        if controller_cls.validate_responses is not None:
-            return controller_cls.validate_responses
+    def _build_validate_responses(self) -> bool:
+        if self.payload and self.payload.validate_responses is not None:
+            return self.payload.validate_responses
+        if (
+            self.blueprint_cls
+            and self.blueprint_cls.validate_responses is not None
+        ):
+            return self.blueprint_cls.validate_responses
+        if self.controller_cls.validate_responses is not None:
+            return self.controller_cls.validate_responses
         return resolve_setting(  # type: ignore[no-any-return]
             Settings.validate_responses,
         )
 
     def _build_error_handler(
         self,
-        payload: ValidateEndpointPayload | ModifyEndpointPayload,
-        func: Callable[..., Any],
         *,
         endpoint: str,
     ) -> 'SyncErrorHandler | AsyncErrorHandler | None':
-        if payload.error_handler is None:
+        if self.payload is None or self.payload.error_handler is None:
             return None
-        if inspect.iscoroutinefunction(func):
-            if not inspect.iscoroutinefunction(payload.error_handler):
+        if inspect.iscoroutinefunction(self.func):
+            if not inspect.iscoroutinefunction(self.payload.error_handler):
                 raise EndpointMetadataError(
                     f'Cannot pass sync `error_handler` to async {endpoint}',
                 )
-        elif inspect.iscoroutinefunction(payload.error_handler):
+        elif inspect.iscoroutinefunction(self.payload.error_handler):
             raise EndpointMetadataError(
                 f'Cannot pass async `error_handler` to sync {endpoint}',
             )
-        return payload.error_handler
+        return self.payload.error_handler
 
-    def _build_no_validate_http_spec(
-        self,
-        payload: Payload,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> frozenset[HttpSpec]:
+    def _build_no_validate_http_spec(self) -> frozenset[HttpSpec]:
         payload_spec: Set[HttpSpec] = (
-            (payload.no_validate_http_spec or set()) if payload else set()
+            (self.payload.no_validate_http_spec or set())
+            if self.payload
+            else set()
         )
         blueprint_spec: Set[HttpSpec] = (
-            blueprint_cls.no_validate_http_spec if blueprint_cls else set()
+            self.blueprint_cls.no_validate_http_spec
+            if self.blueprint_cls
+            else set()
         )
-        return frozenset(
-            payload_spec
-            | blueprint_spec
-            | controller_cls.no_validate_http_spec
-            | resolve_setting(Settings.no_validate_http_spec),
-        )
+        return frozenset((
+            *payload_spec,
+            *blueprint_spec,
+            *self.controller_cls.no_validate_http_spec,
+            *resolve_setting(Settings.no_validate_http_spec),
+        ))
 
-    def _build_description(
-        self,
-        func: Callable[..., Any],
-        payload: ValidateEndpointPayload | ModifyEndpointPayload | None = None,
-    ) -> tuple[str | None, str | None]:
+    def _build_description(self) -> tuple[str | None, str | None]:
         """
         Resolve summary and description for an endpoint.
 
@@ -620,17 +514,20 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         All empty strings are converted to ``None``.
         """
-        if payload is not None:
-            if payload.summary is not None or payload.description is not None:
-                return payload.summary, payload.description
+        if self.payload is not None:
+            if (
+                self.payload.summary is not None
+                or self.payload.description is not None
+            ):
+                return self.payload.summary, self.payload.description
 
-            if func.__doc__ is None:
-                return payload.summary, payload.description
+            if self.func.__doc__ is None:
+                return self.payload.summary, self.payload.description
 
         summary: str | None
         description: str | None
 
-        summary, description, _ = parse_docstring(func.__doc__ or '')
+        summary, description, _ = parse_docstring(self.func.__doc__ or '')
 
         if not summary:
             summary = None
@@ -674,8 +571,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return_annotation: Any,
         *,
         endpoint: str,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
-        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponseBase):
             if isinstance(self.payload, ModifyEndpointPayload):
@@ -688,8 +583,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             assert isinstance(self.payload, ValidateEndpointPayload)  # noqa: S101
             if not _build_responses(
                 self.payload,
-                blueprint_cls=blueprint_cls,
-                controller_cls=controller_cls,
+                blueprint_cls=self.blueprint_cls,
+                controller_cls=self.controller_cls,
             ):
                 raise EndpointMetadataError(
                     f'{endpoint!r} returns HttpResponse '
@@ -846,7 +741,7 @@ def _build_responses(
 def validate_method_name(
     func_name: str,
     *,
-    allow_custom_http_methods: bool,
+    allowed_http_methods: Set[str],
 ) -> str:
     """Validates that a function has correct HTTP method name."""
     if func_name != func_name.lower():
@@ -855,7 +750,7 @@ def validate_method_name(
         )
     if func_name == 'meta':
         return 'options'
-    if allow_custom_http_methods:
+    if func_name in allowed_http_methods:
         return func_name
 
     try:
