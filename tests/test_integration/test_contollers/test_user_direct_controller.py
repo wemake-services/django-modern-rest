@@ -8,7 +8,7 @@ from faker import Faker
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from django_modern_rest.test import DMRAsyncClient, DMRClient
+from dmr.test import DMRAsyncClient, DMRClient
 
 
 def test_user_update_direct_view(dmr_client: DMRClient, faker: Faker) -> None:

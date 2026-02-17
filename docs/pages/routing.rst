@@ -15,7 +15,7 @@ To register a controller what you do is:
 
 So, how do you compose different controllers with different parsing
 behaviours into a single URL? For this we use
-:func:`~django_modern_rest.routing.compose_blueprints` function:
+:func:`~dmr.routing.compose_blueprints` function:
 
 
 But, no second validation ever happens, because we respect your time!
@@ -41,7 +41,7 @@ to be extended, but composed!
 Handling meta endpoint
 ----------------------
 
-When using :func:`~django_modern_rest.routing.compose_blueprints`,
+When using :func:`~dmr.routing.compose_blueprints`,
 duplicate ``meta`` methods will be a import-time error. To solve this,
 remove ``meta`` method from individual controllers
 and use ``meta_mixin=`` keyword parameter to ``compose_blueprints``.
@@ -50,7 +50,7 @@ Example:
 
 .. code:: python
 
-  from django_modern_rest import AsyncMetaMixin
+  from dmr import AsyncMetaMixin
 
   composed = compose_blueprints(
       UserPut,
@@ -73,7 +73,7 @@ Optimized URL Routing
 ---------------------
 
 ``django-modern-rest`` provides
-an optimized :func:`~django_modern_rest.routing.path` function
+an optimized :func:`~dmr.routing.path` function
 that is a **drop-in replacement** for Django's :func:`django.urls.path`.
 
 What's Changed?
@@ -209,12 +209,12 @@ This is especially beneficial for applications with:
 Migration
 ~~~~~~~~~
 
-Simply replace Django's ``path`` with ``django_modern_rest.routing.path``:
+Simply replace Django's ``path`` with ``dmr.routing.path``:
 
 .. code:: python
 
     # Instead of ``from django.urls import path``:
-    from django_modern_rest.routing import path
+    from dmr.routing import path
 
     urlpatterns = [
         path('api/', include('myapp.urls')),

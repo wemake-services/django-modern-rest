@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from django_modern_rest.openapi.objects import (  # noqa: WPS235
+from dmr.openapi.objects import (  # noqa: WPS235
     Components,
     Contact,
     ExternalDocumentation,

@@ -5,8 +5,8 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import path
 from inline_snapshot import snapshot
 
-from django_modern_rest.errors import build_404_handler
-from django_modern_rest.test import DMRClient
+from dmr.errors import build_404_handler
+from dmr.test import DMRClient
 
 
 def _view(request: HttpRequest) -> HttpResponse:

@@ -3,8 +3,8 @@ from typing import ClassVar, final
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
-from django_modern_rest.openapi.converter import ConvertedSchema
-from django_modern_rest.openapi.renderers.base import (
+from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.renderers.base import (
     BaseRenderer,
     SchemaSerializer,
     json_serializer,

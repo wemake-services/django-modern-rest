@@ -5,17 +5,15 @@ from urllib.parse import unquote
 
 from typing_extensions import override
 
-from django_modern_rest.openapi.objects.components import Components
-from django_modern_rest.openapi.objects.security_requirement import (
-    SecurityRequirement,
-)
-from django_modern_rest.openapi.objects.security_scheme import SecurityScheme
-from django_modern_rest.security.base import AsyncAuth, SyncAuth
+from dmr.openapi.objects.components import Components
+from dmr.openapi.objects.security_requirement import SecurityRequirement
+from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 
 class _HttpBasicAuth:

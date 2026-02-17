@@ -17,18 +17,18 @@ Blueprint validation
 
 First layer of validation.
 
-Validates that :class:`~django_modern_rest.controller.Blueprint`
+Validates that :class:`~dmr.controller.Blueprint`
 creation is correct by itself. At this early stage blueprints do not have
-:class:`endpoints <django_modern_rest.endpoint.Endpoint>` just yet.
+:class:`endpoints <dmr.endpoint.Endpoint>` just yet.
 
 So, the things we can validate is very limited.
 We would have the full context when you will compose blueprints
-into a :class:`~django_modern_rest.controller.Controller`.
+into a :class:`~dmr.controller.Controller`.
 
 You can customize ``Blueprint`` validation via setting
-:attr:`~django_modern_rest.controller.Blueprint.blueprint_validator_cls`.
+:attr:`~dmr.controller.Blueprint.blueprint_validator_cls`.
 
-.. autoclass:: django_modern_rest.validation.BlueprintValidator
+.. autoclass:: dmr.validation.BlueprintValidator
   :members:
 
 
@@ -36,19 +36,19 @@ Endpoint validation
 -------------------
 
 Next, when controller is being created,
-we run :class:`~django_modern_rest.endpoint.Endpoint` validation.
+we run :class:`~dmr.endpoint.Endpoint` validation.
 
 Here we can detect all kinds of problems with how endpoints are defined:
 
-- Invalid :func:`~django_modern_rest.endpoint.modify`
-  or :func:`~django_modern_rest.endpoint.validate` usage
-- Or invalid :class:`~django_modern_rest.settings.HttpSpec` usage
+- Invalid :func:`~dmr.endpoint.modify`
+  or :func:`~dmr.endpoint.validate` usage
+- Or invalid :class:`~dmr.settings.HttpSpec` usage
 
 HttpSpec validation
 ~~~~~~~~~~~~~~~~~~~
 
 You can customize the strictness of HTTP Spec validation with overriding
-disabled :class:`~django_modern_rest.settings.HttpSpec` options per-endpoint,
+disabled :class:`~dmr.settings.HttpSpec` options per-endpoint,
 per-blueprint, per-controller and globally.
 
 .. warning::
@@ -85,19 +85,19 @@ per-blueprint, per-controller and globally.
         :emphasize-lines: 9
 
 
-.. autoclass:: django_modern_rest.validation.endpoint_metadata.EndpointMetadataBuilder
+.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataBuilder
 
-.. autoclass:: django_modern_rest.validation.EndpointMetadataValidator
+.. autoclass:: dmr.validation.EndpointMetadataValidator
 
 
 Controller validation
 ---------------------
 
-The last step is the final :class:`~django_modern_rest.controller.Controller`
+The last step is the final :class:`~dmr.controller.Controller`
 validation which has everything ready:
 
-- :attr:`~django_modern_rest.controller.Controller.api_endpoints`
-- :attr:`~django_modern_rest.controller.Controller.blueprints`
+- :attr:`~dmr.controller.Controller.api_endpoints`
+- :attr:`~dmr.controller.Controller.blueprints`
 
 Here we validate:
 
@@ -105,7 +105,7 @@ Here we validate:
 - That all endpoints are either sync or async
 - All per-controller and per-endpoint error handling
 
-.. autoclass:: django_modern_rest.validation.ControllerValidator
+.. autoclass:: dmr.validation.ControllerValidator
 
 
 Response validation
@@ -117,4 +117,4 @@ We need this to make sure that API responses always match response schemas.
 
 It can be :ref:`turned off <response_validation>`.
 
-.. autoclass:: django_modern_rest.validation.ResponseValidator
+.. autoclass:: dmr.validation.ResponseValidator

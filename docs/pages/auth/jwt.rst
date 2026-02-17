@@ -21,20 +21,20 @@ JWT with access and refresh tokens
 We provide two :ref:`reusable-controllers` to obtain
 pairs of access and refresh tokens:
 
-1. :class:`~django_modern_rest.security.jwt.views.ObtainTokensSyncController`
+1. :class:`~dmr.security.jwt.views.ObtainTokensSyncController`
    for sync controllers
-2. :class:`~django_modern_rest.security.jwt.views.ObtainTokensAsyncController`
+2. :class:`~dmr.security.jwt.views.ObtainTokensAsyncController`
    for async controllers
 
 To use them, you will need to:
 
 1. Provide actual types for serializer, request model, and response body
 2. Redefine
-   :meth:`~django_modern_rest.security.jwt.views.ObtainTokensSyncController.convert_auth_payload`
+   :meth:`~dmr.security.jwt.views.ObtainTokensSyncController.convert_auth_payload`
    to convert your request model into the kwargs
    of :func:`django.contrib.auth.authenticate` to authenticate your request
 3. Redefine
-   :meth:`~django_modern_rest.security.jwt.views.ObtainTokensSyncController.make_api_response`
+   :meth:`~dmr.security.jwt.views.ObtainTokensSyncController.make_api_response`
    to return the response in the format of your choice
 
 .. literalinclude:: /examples/auth/jwt/jwt_obtain_tokens.py
@@ -50,7 +50,7 @@ Things that you can customize:
 - Request body format
 - Response body format
 - JWT settings
-- JWT token class to be :class:`~django_modern_rest.security.jwt.JWTToken`
+- JWT token class to be :class:`~dmr.security.jwt.JWTToken`
   subclass with custom logic
 - Error messages, see :ref:`customizing-error-messages`
 - Error handling, see :doc:`../error-handling`
@@ -65,7 +65,7 @@ Here's an example with a lot more customizations:
 
 This example also provides issuer and audience in the token,
 so it can be used together with ``accepted_issuers`` and ``accepted_audiences``
-configurations of :attr:`django_modern_rest.security.jwt.JWTSyncAuth`
+configurations of :attr:`dmr.security.jwt.JWTSyncAuth`
 to additionally validate ``aud`` and ``iss`` JWT token claims.
 
 We want to be sure that this class is at the same time:
@@ -79,30 +79,30 @@ We want to be sure that this class is at the same time:
 API Reference
 -------------
 
-.. autoclass:: django_modern_rest.security.jwt.JWTToken
+.. autoclass:: dmr.security.jwt.JWTToken
   :members:
 
-.. autoclass:: django_modern_rest.security.jwt.JWTSyncAuth
+.. autoclass:: dmr.security.jwt.JWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: django_modern_rest.security.jwt.JWTAsyncAuth
+.. autoclass:: dmr.security.jwt.JWTAsyncAuth
   :members:
   :inherited-members:
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensSyncController
+.. autoclass:: dmr.security.jwt.views.ObtainTokensSyncController
   :members: post, login, make_api_response, create_jwt_token, convert_auth_payload, make_jwt_id
 
-.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensAsyncController
+.. autoclass:: dmr.security.jwt.views.ObtainTokensAsyncController
   :members: post, login, make_api_response, create_jwt_token, convert_auth_payload, make_jwt_id
 
-.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensPayload
+.. autoclass:: dmr.security.jwt.views.ObtainTokensPayload
   :members:
   :show-inheritance:
 
-.. autoclass:: django_modern_rest.security.jwt.views.ObtainTokensResponse
+.. autoclass:: dmr.security.jwt.views.ObtainTokensResponse
   :members:
   :show-inheritance:

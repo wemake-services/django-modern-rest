@@ -2,17 +2,17 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.callback import Callback
-    from django_modern_rest.openapi.objects.example import Example
-    from django_modern_rest.openapi.objects.header import Header
-    from django_modern_rest.openapi.objects.link import Link
-    from django_modern_rest.openapi.objects.parameter import Parameter
-    from django_modern_rest.openapi.objects.path_item import PathItem
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.request_body import RequestBody
-    from django_modern_rest.openapi.objects.response import Response
-    from django_modern_rest.openapi.objects.schema import Schema
-    from django_modern_rest.openapi.objects.security_scheme import (
+    from dmr.openapi.objects.callback import Callback
+    from dmr.openapi.objects.example import Example
+    from dmr.openapi.objects.header import Header
+    from dmr.openapi.objects.link import Link
+    from dmr.openapi.objects.parameter import Parameter
+    from dmr.openapi.objects.path_item import PathItem
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.request_body import RequestBody
+    from dmr.openapi.objects.response import Response
+    from dmr.openapi.objects.schema import Schema
+    from dmr.openapi.objects.security_scheme import (
         SecurityScheme,
     )
 

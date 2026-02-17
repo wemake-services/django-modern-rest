@@ -1,6 +1,6 @@
-from django_modern_rest.openapi.extractors.base import (
+from dmr.openapi.extractors.base import (
     FieldExtractor as FieldExtractor,
 )
-from django_modern_rest.openapi.extractors.stdlib import (
+from dmr.openapi.extractors.stdlib import (
     TypedDictExtractor as TypedDictExtractor,
 )

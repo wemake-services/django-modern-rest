@@ -1,11 +1,8 @@
 import dataclasses
 from typing import final
 
-from django_modern_rest.openapi.objects.enums import (
-    OpenAPIFormat,
-    OpenAPIType,
-)
-from django_modern_rest.openapi.objects.schema import Schema
+from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+from dmr.openapi.objects.schema import Schema
 
 
 @final

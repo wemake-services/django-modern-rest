@@ -1,10 +1,10 @@
 import pytest
 
-from django_modern_rest.openapi.core.registry import (
+from dmr.openapi.core.registry import (
     OperationIdRegistry,
     SchemaRegistry,
 )
-from django_modern_rest.openapi.objects.schema import Schema
+from dmr.openapi.objects.schema import Schema
 
 
 class _TestClass:

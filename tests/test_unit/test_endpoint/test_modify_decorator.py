@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Controller,
     CookieSpec,
@@ -18,12 +18,12 @@ from django_modern_rest import (
     ResponseSpec,
     modify,
 )
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import wrap_handler
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.response import APIError
-from django_modern_rest.test import DMRRequestFactory
+from dmr.endpoint import Endpoint
+from dmr.errors import wrap_handler
+from dmr.exceptions import EndpointMetadataError
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.response import APIError
+from dmr.test import DMRRequestFactory
 
 
 @final

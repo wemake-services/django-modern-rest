@@ -4,21 +4,17 @@ from typing import Annotated, Any, final, get_origin
 
 from django.http.request import HttpRequest
 
-from django_modern_rest.exceptions import (
+from dmr.exceptions import (
     EndpointMetadataError,
     NotAcceptableError,
     RequestSerializationError,
 )
-from django_modern_rest.internal.negotiation import (
-    ConditionalType as _ConditionalType,
-)
-from django_modern_rest.internal.negotiation import (
-    media_by_precedence,
-)
-from django_modern_rest.metadata import EndpointMetadata
-from django_modern_rest.parsers import Parser
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.serializer import BaseSerializer
+from dmr.internal.negotiation import ConditionalType as _ConditionalType
+from dmr.internal.negotiation import media_by_precedence
+from dmr.metadata import EndpointMetadata
+from dmr.parsers import Parser
+from dmr.renderers import Renderer
+from dmr.serializer import BaseSerializer
 
 
 class RequestNegotiator:

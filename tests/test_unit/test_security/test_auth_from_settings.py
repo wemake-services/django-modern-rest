@@ -8,13 +8,13 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from django_modern_rest import Controller, modify
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.http import HttpBasicSyncAuth, basic_auth
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.settings import Settings
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Controller, modify
+from dmr.endpoint import Endpoint
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.http import HttpBasicSyncAuth, basic_auth
+from dmr.serializer import BaseSerializer
+from dmr.settings import Settings
+from dmr.test import DMRRequestFactory
 
 
 class _HttpBasicAuth(HttpBasicSyncAuth):

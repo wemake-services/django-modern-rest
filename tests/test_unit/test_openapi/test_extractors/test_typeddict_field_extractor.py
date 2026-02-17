@@ -3,7 +3,7 @@ from typing import Any, NotRequired, Required
 import pytest
 from typing_extensions import ReadOnly, TypedDict
 
-from django_modern_rest.openapi.extractors.stdlib import TypedDictExtractor
+from dmr.openapi.extractors.stdlib import TypedDictExtractor
 
 
 @pytest.fixture

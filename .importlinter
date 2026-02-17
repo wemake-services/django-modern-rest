@@ -11,7 +11,7 @@ name = Layered architecture of our project
 type = layers
 
 containers =
-  django_modern_rest
+  dmr
 
 layers =
   routing
@@ -33,13 +33,13 @@ layers =
 
 ignore_imports =
   # Mixin validation:
-  django_modern_rest.validation.* -> django_modern_rest.options_mixins
+  dmr.validation.* -> dmr.options_mixins
   # Settings can clear cache:
-  django_modern_rest.settings -> django_modern_rest.internal.cache
+  dmr.settings -> dmr.internal.cache
   # Settings can initialize default OpenAPI config:
-  django_modern_rest.settings -> django_modern_rest.openapi.config
+  dmr.settings -> dmr.openapi.config
   # Openapi can use our optimizing `path`:
-  django_modern_rest.openapi.spec -> django_modern_rest.routing
+  dmr.openapi.spec -> dmr.routing
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins
@@ -59,24 +59,24 @@ forbidden_modules =
 
 ignore_imports =
   # Pydantic plugin:
-  django_modern_rest.plugins.pydantic -> pydantic
-  django_modern_rest.plugins.pydantic.* -> pydantic
+  dmr.plugins.pydantic -> pydantic
+  dmr.plugins.pydantic.* -> pydantic
   # Msgspec plugin:
-  django_modern_rest.plugins.msgspec -> msgspec
-  django_modern_rest.plugins.msgspec.* -> msgspec
+  dmr.plugins.msgspec -> msgspec
+  dmr.plugins.msgspec.* -> msgspec
   # jwt auth:
-  django_modern_rest.security.jwt -> jwt
-  django_modern_rest.security.jwt.* -> jwt
+  dmr.security.jwt -> jwt
+  dmr.security.jwt.* -> jwt
   # Optional json support from msgspec:
-  django_modern_rest.settings -> msgspec
-  django_modern_rest.internal.json -> msgspec
+  dmr.settings -> msgspec
+  dmr.internal.json -> msgspec
 
 [importlinter:contract:plugins-independence]
 name = All `plugins` must be independent
 type = independence
 
 modules =
-  django_modern_rest.plugins.*
+  dmr.plugins.*
 
 
 [importlinter:openapi:layers]
@@ -84,7 +84,7 @@ name = Layered architecture of OpenAPI schema generation
 type = layers
 
 containers =
-  django_modern_rest.openapi
+  dmr.openapi
 
 layers =
   spec
@@ -100,22 +100,22 @@ name = All OpenAPI `generators` must be independent
 type = independence
 
 modules =
-  django_modern_rest.openapi.generators.*
+  dmr.openapi.generators.*
 
 [importlinter:openapi:renderers-independence]
 name = All OpenAPI `renderers` must be independent
 type = independence
 
 modules =
-  django_modern_rest.openapi.objects.*
+  dmr.openapi.objects.*
 
 [importlinter:openapi:objects-independence]
 name = All OpenAPI `objects` must be independent
 type = independence
 
 modules =
-  django_modern_rest.openapi.renderers.*
+  dmr.openapi.renderers.*
 
 ignore_imports =
   # Allow import base render class:
-  django_modern_rest.openapi.renderers.* -> django_modern_rest.openapi.renderers.base
+  dmr.openapi.renderers.* -> dmr.openapi.renderers.base

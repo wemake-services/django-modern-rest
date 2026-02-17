@@ -5,7 +5,7 @@ from dirty_equals import IsDatetime, IsPositiveInt
 from django.urls import reverse
 from faker import Faker
 
-from django_modern_rest.test import DMRClient
+from dmr.test import DMRClient
 
 
 @pytest.mark.django_db

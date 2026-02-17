@@ -3,8 +3,8 @@ from typing import Any, Final, Literal, final
 import pytest
 from pydantic import BaseModel, Field
 
-from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
-from django_modern_rest.plugins.pydantic import (
+from dmr.openapi.types import FieldDefinition, KwargDefinition
+from dmr.plugins.pydantic import (
     PydanticFieldExtractor,
 )
 

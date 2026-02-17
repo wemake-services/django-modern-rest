@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.contact import Contact
-    from django_modern_rest.openapi.objects.license import License
+    from dmr.openapi.objects.contact import Contact
+    from dmr.openapi.objects.license import License
 
 
 @final

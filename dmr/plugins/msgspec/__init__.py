@@ -7,12 +7,12 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from django_modern_rest.plugins.msgspec.json import (
+from dmr.plugins.msgspec.json import (
     MsgspecJsonParser as MsgspecJsonParser,
 )
-from django_modern_rest.plugins.msgspec.json import (
+from dmr.plugins.msgspec.json import (
     MsgspecJsonRenderer as MsgspecJsonRenderer,
 )
-from django_modern_rest.plugins.msgspec.serializer import (
+from dmr.plugins.msgspec.serializer import (
     MsgspecSerializer as MsgspecSerializer,
 )

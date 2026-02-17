@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from typing import Generic, TypeVar
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.serializer import BaseSerializer
+from dmr import Body, Controller
+from dmr.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 _RequestModelT = TypeVar('_RequestModelT')

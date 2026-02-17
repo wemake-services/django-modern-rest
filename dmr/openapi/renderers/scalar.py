@@ -4,8 +4,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
 
-from django_modern_rest.openapi.converter import ConvertedSchema
-from django_modern_rest.openapi.renderers.base import (
+from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.renderers.base import (
     BaseRenderer,
     SchemaSerializer,
     json_serializer,
@@ -25,7 +25,7 @@ class ScalarRenderer(BaseRenderer):
     default_path: ClassVar[str] = 'scalar/'
     default_name: ClassVar[str] = 'scalar'
     content_type: ClassVar[str] = 'text/html'
-    template_name: ClassVar[str] = 'django_modern_rest/scalar.html'
+    template_name: ClassVar[str] = 'dmr/scalar.html'
     serializer: SchemaSerializer = staticmethod(json_serializer)  # noqa: WPS421
 
     @override

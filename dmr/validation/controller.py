@@ -1,11 +1,11 @@
 from collections.abc import Set
 from typing import TYPE_CHECKING
 
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.serializer import BaseSerializer
+from dmr.exceptions import EndpointMetadataError
+from dmr.serializer import BaseSerializer
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint, Controller
+    from dmr.controller import Blueprint, Controller
 
 
 class ControllerValidator:

@@ -10,16 +10,13 @@ import msgspec
 from django.http import HttpRequest
 from typing_extensions import TypedDict, override
 
-from django_modern_rest.errors import ErrorDetail, ErrorType
-from django_modern_rest.parsers import Parser, Raw
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.serializer import (
-    BaseEndpointOptimizer,
-    BaseSerializer,
-)
+from dmr.errors import ErrorDetail, ErrorType
+from dmr.parsers import Parser, Raw
+from dmr.renderers import Renderer
+from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata
+    from dmr.metadata import EndpointMetadata
 
 
 class MsgspecConvertOptions(TypedDict):

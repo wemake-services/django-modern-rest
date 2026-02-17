@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
 
 if TYPE_CHECKING:
     # We can't import it directly, because it will ruin our coverage measures.
-    from django_modern_rest.test import (
+    from dmr.test import (
         DMRAsyncClient,
         DMRAsyncRequestFactory,
         DMRClient,
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 @pytest.fixture
 def dmr_client() -> 'DMRClient':
     """Customized version of :class:`django.test.Client`."""
-    from django_modern_rest.test import DMRClient
+    from dmr.test import DMRClient
 
     return DMRClient()
 
@@ -30,7 +30,7 @@ def dmr_client() -> 'DMRClient':
 @pytest.fixture
 def dmr_async_client() -> 'DMRAsyncClient':
     """Customized version of :class:`django.test.AsyncClient`."""
-    from django_modern_rest.test import DMRAsyncClient
+    from dmr.test import DMRAsyncClient
 
     return DMRAsyncClient()
 
@@ -38,7 +38,7 @@ def dmr_async_client() -> 'DMRAsyncClient':
 @pytest.fixture
 def dmr_rf() -> 'DMRRequestFactory':
     """Customized version of :class:`django.test.RequestFactory`."""
-    from django_modern_rest.test import DMRRequestFactory
+    from dmr.test import DMRRequestFactory
 
     return DMRRequestFactory()
 
@@ -46,7 +46,7 @@ def dmr_rf() -> 'DMRRequestFactory':
 @pytest.fixture
 def dmr_async_rf() -> 'DMRAsyncRequestFactory':
     """Customized version of :class:`django.test.AsyncRequestFactory`."""
-    from django_modern_rest.test import DMRAsyncRequestFactory
+    from dmr.test import DMRAsyncRequestFactory
 
     return DMRAsyncRequestFactory()
 
@@ -54,7 +54,7 @@ def dmr_async_rf() -> 'DMRAsyncRequestFactory':
 @pytest.fixture
 def dmr_clean_settings() -> Iterator[None]:
     """Cleans settings caches before and after the test."""
-    from django_modern_rest.settings import clear_settings_cache
+    from dmr.settings import clear_settings_cache
 
     clear_settings_cache()
     yield

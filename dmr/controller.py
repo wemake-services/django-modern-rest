@@ -18,28 +18,22 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import deprecated, override
 
-from django_modern_rest.components import (
-    ComponentParserBuilder,
-    ComponentParserSpec,
-)
-from django_modern_rest.cookies import NewCookie
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import ErrorModel, ErrorType, format_error
-from django_modern_rest.exceptions import UnsolvableAnnotationsError
-from django_modern_rest.internal.io import identity
-from django_modern_rest.metadata import ResponseSpec
-from django_modern_rest.negotiation import request_renderer
-from django_modern_rest.parsers import Parser
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import build_response
-from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serializer import BaseSerializer, SerializerContext
-from django_modern_rest.settings import HttpSpec
-from django_modern_rest.types import infer_type_args
-from django_modern_rest.validation import (
-    BlueprintValidator,
-    ControllerValidator,
-)
+from dmr.components import ComponentParserBuilder, ComponentParserSpec
+from dmr.cookies import NewCookie
+from dmr.endpoint import Endpoint
+from dmr.errors import ErrorModel, ErrorType, format_error
+from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.internal.io import identity
+from dmr.metadata import ResponseSpec
+from dmr.negotiation import request_renderer
+from dmr.parsers import Parser
+from dmr.renderers import Renderer
+from dmr.response import build_response
+from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.serializer import BaseSerializer, SerializerContext
+from dmr.settings import HttpSpec
+from dmr.types import infer_type_args
+from dmr.validation import BlueprintValidator, ControllerValidator
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -71,12 +65,12 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             the attribute in the controller class.
             Because it is already passed to many other places.
             To customize it: create a new class,
-            subclass :class:`~django_modern_rest.serializer.BaseSerializer`,
+            subclass :class:`~dmr.serializer.BaseSerializer`,
             and pass the new type as a type argument to the controller.
         serializer_context_cls: Class for the input model generation.
             We combine all components like
-            :class:`~django_modern_rest.components.Headers`,
-            :class:`~django_modern_rest.components.Query`, etc into
+            :class:`~dmr.components.Headers`,
+            :class:`~dmr.components.Query`, etc into
             one big model for faster validation and better error messages.
         blueprint_validator_cls: Runs blueprint validation on definition.
         no_validate_http_spec: Set of http spec validation checks
@@ -90,15 +84,15 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             Does not include ``options``, but includes ``meta``.
         parsers: Sequence of parsers to be used for this controller
             to parse incoming request's body. All instances must be of subtypes
-            of :class:`~django_modern_rest.parsers.Parser`.
+            of :class:`~dmr.parsers.Parser`.
         renderers: Sequence of renderers to be used for this controller
             to render response's body. All instances must be of subtypes
-            of :class:`~django_modern_rest.renderers.Renderer`.
+            of :class:`~dmr.renderers.Renderer`.
         auth: Sequence of auth instances to be used for this controller.
             Sync controllers must use instances
-            of :class:`django_modern_rest.security.SyncAuth`.
+            of :class:`dmr.security.SyncAuth`.
             Async controllers must use instances
-            of :class:`django_modern_rest.security.AsyncAuth`.
+            of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
         error_model: Schema type that represents
             and validates common error responses.
@@ -256,7 +250,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
 
         Args:
             error: A serialization exception like a validation error or
-                a ``django_modern_rest.exceptions.DataParsingError``.
+                a ``dmr.exceptions.DataParsingError``.
             loc: Location where this error happened.
                 Like "headers" or "field_name".
             error_type: Optional type of the error for extra metadata.
@@ -281,7 +275,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Won't be called when using async endpoints.
 
         You can access active blueprint
-        via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
+        via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
         raise  # noqa: PLE0704
 
@@ -299,7 +293,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Won't be called when using sync endpoints.
 
         You can access active blueprint
-        via :attr:`~django_modern_rest.controller.Controller.active_blueprint`.
+        via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
         raise  # noqa: PLE0704
 
@@ -332,7 +326,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     Defines API views as controllers.
 
     Controller is both
-    a :class:`~django_modern_rest.controller.Blueprint`
+    a :class:`~dmr.controller.Blueprint`
     a :class:`django.views.generic.base.View` subclass
     that should be used in the final routing.
 
@@ -505,8 +499,8 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             .. code:: python
 
                 >>> from http import HTTPStatus
-                >>> from django_modern_rest import Controller, validate
-                >>> from django_modern_rest.plugins.pydantic import (
+                >>> from dmr import Controller, validate
+                >>> from dmr.plugins.pydantic import (
                 ...     PydanticSerializer,
                 ... )
                 >>> class MyController(Controller[PydanticSerializer]):
@@ -550,7 +544,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
 
             .. code:: python
 
-               >>> from django_modern_rest.options_mixins import MetaMixin
+               >>> from dmr.options_mixins import MetaMixin
 
                >>> class ControllerWithMeta(
                ...     MetaMixin,

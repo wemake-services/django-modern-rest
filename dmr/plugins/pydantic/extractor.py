@@ -6,8 +6,8 @@ from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from typing_extensions import override
 
-from django_modern_rest.openapi.extractors.base import FieldExtractor
-from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
+from dmr.openapi.extractors.base import FieldExtractor
+from dmr.openapi.types import FieldDefinition, KwargDefinition
 
 
 class PydanticFieldExtractor(FieldExtractor[type[BaseModel]]):

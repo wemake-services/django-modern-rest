@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, override
 
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.reusable_code.reusable_parsing import ReusableController
 
 

@@ -2,18 +2,18 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.callback import Callback
-    from django_modern_rest.openapi.objects.external_documentation import (
+    from dmr.openapi.objects.callback import Callback
+    from dmr.openapi.objects.external_documentation import (
         ExternalDocumentation,
     )
-    from django_modern_rest.openapi.objects.parameter import Parameter
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.request_body import RequestBody
-    from django_modern_rest.openapi.objects.responses import Responses
-    from django_modern_rest.openapi.objects.security_requirement import (
+    from dmr.openapi.objects.parameter import Parameter
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.request_body import RequestBody
+    from dmr.openapi.objects.responses import Responses
+    from dmr.openapi.objects.security_requirement import (
         SecurityRequirement,
     )
-    from django_modern_rest.openapi.objects.server import Server
+    from dmr.openapi.objects.server import Server
 
 
 @final

@@ -3,23 +3,23 @@ from collections.abc import Mapping, Sequence, Set
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
 
-from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
-from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
-from django_modern_rest.parsers import Parser
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.settings import HttpSpec
+from dmr.cookies import CookieSpec, NewCookie
+from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+from dmr.headers import HeaderSpec, NewHeader
+from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.parsers import Parser
+from dmr.renderers import Renderer
+from dmr.settings import HttpSpec
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects import (
+    from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
         Reference,
         SecurityRequirement,
         Server,
     )
-    from django_modern_rest.security.base import AsyncAuth, SyncAuth
+    from dmr.security.base import AsyncAuth, SyncAuth
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)

@@ -2,13 +2,13 @@ from http import HTTPStatus
 
 from django.http import HttpResponse
 
-from django_modern_rest import (
+from dmr import (
     Controller,
     HeaderSpec,
     ResponseSpec,
     validate,
 )
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class SettingsController(Controller[MsgspecSerializer]):

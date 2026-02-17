@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.converter import ConvertedSchema
+    from dmr.openapi.converter import ConvertedSchema
 
 SerializedSchema: TypeAlias = str
 

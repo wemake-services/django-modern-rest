@@ -2,9 +2,9 @@ from http import HTTPStatus
 
 from typing_extensions import TypedDict
 
-from django_modern_rest import APIError, Body, Controller, ResponseSpec, modify
-from django_modern_rest.errors import ErrorType, format_error
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import APIError, Body, Controller, ResponseSpec, modify
+from dmr.errors import ErrorType, format_error
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _ErrorDetail(TypedDict):

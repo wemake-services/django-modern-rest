@@ -4,24 +4,24 @@ from typing import Final
 import pytest
 from inline_snapshot import snapshot
 
-from django_modern_rest.controller import Controller
-from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.endpoint import modify
-from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.generators.response import ResponseGenerator
-from django_modern_rest.openapi.mappers import TypeMapper
-from django_modern_rest.openapi.objects import (
+from dmr.controller import Controller
+from dmr.cookies import CookieSpec, NewCookie
+from dmr.endpoint import modify
+from dmr.headers import HeaderSpec, NewHeader
+from dmr.openapi.config import OpenAPIConfig
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.generators.response import ResponseGenerator
+from dmr.openapi.mappers import TypeMapper
+from dmr.openapi.objects import (
     Header,
     Reference,
     Response,
     Schema,
 )
-from django_modern_rest.openapi.objects.enums import OpenAPIType
-from django_modern_rest.openapi.objects.media_type import MediaType
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import FileRenderer, JsonRenderer
+from dmr.openapi.objects.enums import OpenAPIType
+from dmr.openapi.objects.media_type import MediaType
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import FileRenderer, JsonRenderer
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 _SCHEMA_ONLY_HEADER: Final = HeaderSpec(

@@ -1,5 +1,5 @@
-from django_modern_rest.controller import Controller
-from django_modern_rest.serializer import BaseSerializer
+from dmr.controller import Controller
+from dmr.serializer import BaseSerializer
 
 
 class UserList(Controller[BaseSerializer]):

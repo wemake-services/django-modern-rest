@@ -6,7 +6,7 @@ import pytest
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from django_modern_rest import (
+from dmr import (
     Controller,
     CookieSpec,
     HeaderSpec,
@@ -16,8 +16,8 @@ from django_modern_rest import (
     modify,
     validate,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 @final

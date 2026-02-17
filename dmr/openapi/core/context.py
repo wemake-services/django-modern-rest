@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.builders import (
+from dmr.openapi.builders import (
     OperationIDBuilder,
 )
-from django_modern_rest.openapi.core.merger import ConfigMerger
-from django_modern_rest.openapi.core.registry import (
+from dmr.openapi.core.merger import ConfigMerger
+from dmr.openapi.core.registry import (
     OperationIdRegistry,
     SchemaRegistry,
     SecuritySchemeRegistry,
 )
-from django_modern_rest.openapi.generators import (
+from dmr.openapi.generators import (
     ComponentGenerator,
     ParameterGenerator,
     PathItemGenerator,
@@ -21,7 +21,7 @@ from django_modern_rest.openapi.generators import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.config import OpenAPIConfig
+    from dmr.openapi.config import OpenAPIConfig
 
 
 @dataclass(slots=True, frozen=True)

@@ -8,18 +8,18 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Controller,
     ResponseSpec,
     modify,
     validate,
 )
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import wrap_handler
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import compose_blueprints
-from django_modern_rest.test import (
+from dmr.endpoint import Endpoint
+from dmr.errors import wrap_handler
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import compose_blueprints
+from dmr.test import (
     DMRAsyncRequestFactory,
     DMRRequestFactory,
 )

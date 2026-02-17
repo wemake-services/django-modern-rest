@@ -2,13 +2,13 @@ import dataclasses
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Final
 
-from django_modern_rest.openapi.extractors.finder import find_extractor
-from django_modern_rest.openapi.objects.parameter import Parameter
-from django_modern_rest.openapi.objects.reference import Reference
+from dmr.openapi.extractors.finder import find_extractor
+from dmr.openapi.objects.parameter import Parameter
+from dmr.openapi.objects.reference import Reference
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata
-    from django_modern_rest.openapi.core.context import OpenAPIContext
+    from dmr.metadata import EndpointMetadata
+    from dmr.openapi.core.context import OpenAPIContext
 
 _CONTEXT_TO_IN: Final = MappingProxyType({
     'parsed_query': 'query',

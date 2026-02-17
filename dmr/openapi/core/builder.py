@@ -1,12 +1,12 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.collector import controller_collector
+from dmr.openapi.collector import controller_collector
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.core.context import OpenAPIContext
-    from django_modern_rest.openapi.objects import OpenAPI, Paths
-    from django_modern_rest.routing import Router
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.objects import OpenAPI, Paths
+    from dmr.routing import Router
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

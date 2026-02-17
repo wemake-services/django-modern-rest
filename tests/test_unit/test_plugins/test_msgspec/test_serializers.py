@@ -11,9 +11,9 @@ except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Body, Controller
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.test import DMRRequestFactory
 
 
 class _ForTestError(Exception):

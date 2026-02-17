@@ -7,26 +7,22 @@ from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
 from typing_extensions import override
 
-from django_modern_rest.exceptions import (
-    NotAuthenticatedError,
-)
-from django_modern_rest.metadata import (
+from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import (
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
 )
-from django_modern_rest.openapi.objects.components import Components
-from django_modern_rest.openapi.objects.security_requirement import (
-    SecurityRequirement,
-)
-from django_modern_rest.openapi.objects.security_scheme import SecurityScheme
-from django_modern_rest.response import APIError
-from django_modern_rest.security.base import AsyncAuth, SyncAuth
+from dmr.openapi.objects.components import Components
+from dmr.openapi.objects.security_requirement import SecurityRequirement
+from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.response import APIError
+from dmr.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 
 @final

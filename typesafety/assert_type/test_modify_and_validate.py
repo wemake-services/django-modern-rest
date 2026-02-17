@@ -3,7 +3,7 @@ from http import HTTPStatus
 import pydantic
 from django.http import HttpResponse, JsonResponse
 
-from django_modern_rest import (
+from dmr import (
     Controller,
     CookieSpec,
     HeaderSpec,
@@ -12,8 +12,8 @@ from django_modern_rest import (
     modify,
     validate,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.django_session import (
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )

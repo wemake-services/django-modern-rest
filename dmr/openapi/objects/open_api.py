@@ -2,19 +2,19 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.components import Components
-    from django_modern_rest.openapi.objects.external_documentation import (
+    from dmr.openapi.objects.components import Components
+    from dmr.openapi.objects.external_documentation import (
         ExternalDocumentation,
     )
-    from django_modern_rest.openapi.objects.info import Info
-    from django_modern_rest.openapi.objects.path_item import PathItem
-    from django_modern_rest.openapi.objects.paths import Paths
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.security_requirement import (
+    from dmr.openapi.objects.info import Info
+    from dmr.openapi.objects.path_item import PathItem
+    from dmr.openapi.objects.paths import Paths
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.security_requirement import (
         SecurityRequirement,
     )
-    from django_modern_rest.openapi.objects.server import Server
-    from django_modern_rest.openapi.objects.tag import Tag
+    from dmr.openapi.objects.server import Server
+    from dmr.openapi.objects.tag import Tag
 
 _OPENAPI_VERSION: Final = '3.1.0'
 

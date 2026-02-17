@@ -5,16 +5,16 @@ import pytest
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse_lazy
 
-from django_modern_rest import (
+from dmr import (
     APIRedirectError,
     Controller,
     HeaderSpec,
     modify,
     validate,
 )
-from django_modern_rest.metadata import ResponseSpec
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr.metadata import ResponseSpec
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _REDIRECT_URL: Final = reverse_lazy(
     'api:jwt_auth:jwt_obtain_access_refresh_sync',

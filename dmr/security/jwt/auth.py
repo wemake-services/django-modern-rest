@@ -10,21 +10,19 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest.exceptions import NotAuthenticatedError
-from django_modern_rest.openapi.objects.components import Components
-from django_modern_rest.openapi.objects.security_requirement import (
-    SecurityRequirement,
-)
-from django_modern_rest.openapi.objects.security_scheme import SecurityScheme
-from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.security.jwt.token import JWTToken
+from dmr.exceptions import NotAuthenticatedError
+from dmr.openapi.objects.components import Components
+from dmr.openapi.objects.security_requirement import SecurityRequirement
+from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.security.jwt.token import JWTToken
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
 
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 
 class _BaseJWTAuth:  # noqa: WPS214, WPS230

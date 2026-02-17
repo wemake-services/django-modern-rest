@@ -2,8 +2,8 @@ from typing import TypeVar
 
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller
-from django_modern_rest.serializer import BaseSerializer
+from dmr import Controller
+from dmr.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 

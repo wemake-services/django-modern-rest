@@ -2,8 +2,8 @@ from typing import Any
 
 from typing_extensions import get_type_hints, is_typeddict, override
 
-from django_modern_rest.openapi.extractors.base import FieldExtractor
-from django_modern_rest.openapi.types import FieldDefinition
+from dmr.openapi.extractors.base import FieldExtractor
+from dmr.openapi.types import FieldDefinition
 
 
 class TypedDictExtractor(FieldExtractor[type[dict[str, Any]]]):

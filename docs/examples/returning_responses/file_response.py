@@ -4,10 +4,10 @@ from typing import Final
 
 from django.http import FileResponse
 
-from django_modern_rest import Controller, HeaderSpec, ResponseSpec, validate
-from django_modern_rest.files import FileBody
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import FileRenderer
+from dmr import Controller, HeaderSpec, ResponseSpec, validate
+from dmr.files import FileBody
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import FileRenderer
 
 _FILEPATH: Final = pathlib.Path('examples/components/receipt.txt')
 

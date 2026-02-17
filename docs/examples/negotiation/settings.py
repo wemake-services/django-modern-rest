@@ -1,4 +1,4 @@
-from django_modern_rest.settings import Settings
+from dmr.settings import Settings
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
 DMR_SETTINGS = {  # noqa: WPS407

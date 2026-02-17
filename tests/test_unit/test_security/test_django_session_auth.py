@@ -8,15 +8,15 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from django_modern_rest import Controller, modify
-from django_modern_rest.openapi.objects.components import Components
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.django_session import (
+from dmr import Controller, modify
+from dmr.openapi.objects.components import Components
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
-from django_modern_rest.settings import Settings
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr.settings import Settings
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final

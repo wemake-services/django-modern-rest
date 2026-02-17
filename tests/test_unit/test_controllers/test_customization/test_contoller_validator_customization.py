@@ -2,10 +2,10 @@ from typing import ClassVar, final
 
 from typing_extensions import override
 
-from django_modern_rest import Blueprint, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.validation import BlueprintValidator
+from dmr import Blueprint, Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
+from dmr.validation import BlueprintValidator
 
 
 def test_custom_blueprint_validator_cls() -> None:

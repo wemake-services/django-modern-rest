@@ -1,8 +1,8 @@
 from typing import ClassVar, final
 
-from django_modern_rest import Controller
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller
+from dmr.endpoint import Endpoint
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 @final

@@ -7,7 +7,7 @@ from typing import Any, TypeAlias, final
 import pydantic
 from django.http import HttpResponse
 
-from django_modern_rest import (  # noqa: WPS235
+from dmr import (  # noqa: WPS235
     Blueprint,
     Body,
     Controller,
@@ -18,7 +18,7 @@ from django_modern_rest import (  # noqa: WPS235
     modify,
     validate,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.controllers.auth import HttpBasicAsync, HttpBasicSync
 
 _CallableAny: TypeAlias = Callable[..., Any]

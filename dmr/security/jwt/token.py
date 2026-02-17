@@ -35,10 +35,7 @@ from typing import Any, Self
 import jwt
 from jwt.types import Options
 
-from django_modern_rest.exceptions import (
-    InternalServerError,
-    NotAuthenticatedError,
-)
+from dmr.exceptions import InternalServerError, NotAuthenticatedError
 
 
 @dataclass(frozen=True, slots=True)

@@ -12,7 +12,7 @@ from dirty_equals import IsUUID
 from django.http import HttpResponse
 from polyfactory.factories.pydantic_factory import ModelFactory
 
-from django_modern_rest.test import DMRRequestFactory
+from dmr.test import DMRRequestFactory
 from examples.testing.pydantic_controller import UserController, UserCreateModel
 
 

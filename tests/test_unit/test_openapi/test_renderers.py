@@ -8,9 +8,9 @@ from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 
-from django_modern_rest.openapi.converter import ConvertedSchema
-from django_modern_rest.openapi.objects.open_api import _OPENAPI_VERSION
-from django_modern_rest.openapi.renderers import (
+from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.objects.open_api import _OPENAPI_VERSION
+from dmr.openapi.renderers import (
     BaseRenderer,
     JsonRenderer,
     RedocRenderer,
@@ -18,7 +18,7 @@ from django_modern_rest.openapi.renderers import (
     SwaggerRenderer,
     json_serializer,
 )
-from django_modern_rest.test import DMRRequestFactory
+from dmr.test import DMRRequestFactory
 
 _TEST_SCHEMA: Final[ConvertedSchema] = {  # noqa: WPS407
     'openapi': _OPENAPI_VERSION,

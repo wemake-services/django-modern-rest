@@ -4,11 +4,11 @@ from typing import Any, ClassVar, TypeAlias
 
 from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest.internal.json import (
+from dmr.internal.json import (
     SerializedSchema as SerializedSchema,
 )
-from django_modern_rest.internal.json import json_dumps
-from django_modern_rest.openapi.converter import ConvertedSchema
+from dmr.internal.json import json_dumps
+from dmr.openapi.converter import ConvertedSchema
 
 SchemaSerializer: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
 _CallableAny: TypeAlias = Callable[..., Any]

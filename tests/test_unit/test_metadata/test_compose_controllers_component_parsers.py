@@ -5,7 +5,7 @@ import pydantic
 import pytest
 from django.http import HttpResponse
 
-from django_modern_rest import (  # noqa: WPS235
+from dmr import (  # noqa: WPS235
     Blueprint,
     Body,
     Headers,
@@ -15,8 +15,8 @@ from django_modern_rest import (  # noqa: WPS235
     modify,
     validate,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import compose_blueprints
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import compose_blueprints
 
 
 class _QueryModel(pydantic.BaseModel):

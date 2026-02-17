@@ -1,8 +1,8 @@
 from typing import Any, ClassVar
 
-from django_modern_rest.openapi.objects.reference import Reference
-from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.objects.security_scheme import (
+from dmr.openapi.objects.reference import Reference
+from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects.security_scheme import (
     SecurityScheme,
 )
 

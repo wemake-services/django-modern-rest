@@ -1,8 +1,8 @@
 import pytest
 from inline_snapshot import snapshot
 
-from django_modern_rest.openapi.objects.components import Components
-from django_modern_rest.security.http import (
+from dmr.openapi.objects.components import Components
+from dmr.security.http import (
     HttpBasicAsyncAuth,
     HttpBasicSyncAuth,
 )

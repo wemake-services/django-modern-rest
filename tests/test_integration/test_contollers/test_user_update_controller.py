@@ -3,7 +3,7 @@ from http import HTTPStatus
 from django.urls import reverse
 from faker import Faker
 
-from django_modern_rest.test import DMRClient
+from dmr.test import DMRClient
 
 
 def test_user_update_view(dmr_client: DMRClient, faker: Faker) -> None:

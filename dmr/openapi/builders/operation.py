@@ -2,11 +2,11 @@ import dataclasses
 import re
 from typing import TYPE_CHECKING
 
-from django_modern_rest.openapi.objects import Operation
+from dmr.openapi.objects import Operation
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata
-    from django_modern_rest.openapi.core.context import OpenAPIContext
+    from dmr.metadata import EndpointMetadata
+    from dmr.openapi.core.context import OpenAPIContext
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

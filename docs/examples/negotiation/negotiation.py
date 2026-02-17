@@ -6,12 +6,12 @@ import xmltodict
 from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest.exceptions import (
+from dmr.exceptions import (
     InternalServerError,
     RequestSerializationError,
 )
-from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
-from django_modern_rest.renderers import Renderer
+from dmr.parsers import DeserializeFunc, Parser, Raw
+from dmr.renderers import Renderer
 
 
 # NOTE: this is a overly-simplified example of xml parsing / rendering.

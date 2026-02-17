@@ -12,35 +12,31 @@ from typing import (
 from django.http import HttpResponse, HttpResponseBase
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
-from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.errors import AsyncErrorHandler, SyncErrorHandler
-from django_modern_rest.exceptions import (
+from dmr.cookies import CookieSpec, NewCookie
+from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+from dmr.exceptions import (
     InternalServerError,
     NotAuthenticatedError,
     ResponseSchemaError,
     ValidationError,
 )
-from django_modern_rest.headers import HeaderSpec, NewHeader
-from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
-from django_modern_rest.negotiation import RequestNegotiator, ResponseNegotiator
-from django_modern_rest.openapi.builders import OperationBuilder
-from django_modern_rest.openapi.objects import (
+from dmr.headers import HeaderSpec, NewHeader
+from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.negotiation import RequestNegotiator, ResponseNegotiator
+from dmr.openapi.builders import OperationBuilder
+from dmr.openapi.objects import (
     Callback,
     ExternalDocumentation,
     Reference,
     Server,
 )
-from django_modern_rest.parsers import Parser
-from django_modern_rest.renderers import Renderer
-from django_modern_rest.response import APIError, APIRedirectError
-from django_modern_rest.security.base import AsyncAuth, SyncAuth
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.settings import (
-    HttpSpec,
-    Settings,
-    resolve_setting,
-)
-from django_modern_rest.validation import (
+from dmr.parsers import Parser
+from dmr.renderers import Renderer
+from dmr.response import APIError, APIRedirectError
+from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.serializer import BaseSerializer
+from dmr.settings import HttpSpec, Settings, resolve_setting
+from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
     ModifyEndpointPayload,
@@ -50,7 +46,7 @@ from django_modern_rest.validation import (
 )
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint, Controller
+    from dmr.controller import Blueprint, Controller
 
 
 # TODO: make generic
@@ -561,12 +557,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
 
         >>> from http import HTTPStatus
         >>> from django.http import HttpResponse
-        >>> from django_modern_rest import (
-        ...     Controller,
-        ...     validate,
-        ...     ResponseSpec,
-        ... )
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Controller, validate, ResponseSpec
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class TaskController(Controller[PydanticSerializer]):
         ...     @validate(
@@ -601,15 +593,15 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             when this endpoint faces an exception.
         parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
-            of :class:`~django_modern_rest.parsers.Parser`.
+            of :class:`~dmr.parsers.Parser`.
         renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
-            of :class:`~django_modern_rest.renderers.Renderer`.
+            of :class:`~dmr.renderers.Renderer`.
         auth: Sequence of auth instances to be used for this endpoint.
             Sync endpoints must use instances
-            of :class:`django_modern_rest.security.SyncAuth`.
+            of :class:`dmr.security.SyncAuth`.
             Async endpoints must use instances
-            of :class:`django_modern_rest.security.AsyncAuth`.
+            of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth for this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
@@ -627,7 +619,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
         metadata_cls: Subclass of
-            :class:`django_modern_rest.metadata.EndpointMetadata` that will
+            :class:`dmr.metadata.EndpointMetadata` that will
             be used to populate endpoint's metadata.
 
     Returns:
@@ -835,8 +827,8 @@ def modify(  # noqa: WPS211
     .. code:: python
 
         >>> from http import HTTPStatus
-        >>> from django_modern_rest import Controller, modify
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Controller, modify
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class TaskController(Controller[PydanticSerializer]):
         ...     @modify(status_code=HTTPStatus.ACCEPTED)
@@ -863,15 +855,15 @@ def modify(  # noqa: WPS211
             when this endpoint faces an exception.
         parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
-            of :class:`~django_modern_rest.parsers.Parser`.
+            of :class:`~dmr.parsers.Parser`.
         renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
-            of :class:`~django_modern_rest.renderers.Renderer`.
+            of :class:`~dmr.renderers.Renderer`.
         auth: Sequence of auth instances to be used for this endpoint.
             Sync endpoints must use instances
-            of :class:`django_modern_rest.security.SyncAuth`.
+            of :class:`dmr.security.SyncAuth`.
             Async endpoints must use instances
-            of :class:`django_modern_rest.security.AsyncAuth`.
+            of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth for this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
@@ -889,7 +881,7 @@ def modify(  # noqa: WPS211
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
         metadata_cls: Subclass of
-            :class:`django_modern_rest.metadata.EndpointMetadata` that will
+            :class:`dmr.metadata.EndpointMetadata` that will
             be used to populate endpoint's metadata.
 
     Returns:

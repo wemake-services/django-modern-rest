@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 
-from django_modern_rest.routing import Router, compose_blueprints
+from dmr.routing import Router, compose_blueprints
 from server.apps.controllers import views
 
 router = Router([

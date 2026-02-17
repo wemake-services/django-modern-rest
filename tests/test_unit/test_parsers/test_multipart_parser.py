@@ -7,9 +7,9 @@ from django.test import RequestFactory
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.parsers import MultiPartParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Body, Controller
+from dmr.parsers import MultiPartParser
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _User(pydantic.BaseModel):

@@ -5,9 +5,9 @@ import pydantic
 import pytest
 from django.http import HttpResponse
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Body, Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 @final

@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.response import Response
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.response import Response
 
 Responses = dict[str, Union['Response', 'Reference']]
 """

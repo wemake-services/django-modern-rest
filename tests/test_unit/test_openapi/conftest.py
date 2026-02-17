@@ -2,7 +2,7 @@ from collections.abc import Generator
 
 import pytest
 
-from django_modern_rest.openapi.mappers import TypeMapper
+from dmr.openapi.mappers import TypeMapper
 
 
 @pytest.fixture(autouse=True)

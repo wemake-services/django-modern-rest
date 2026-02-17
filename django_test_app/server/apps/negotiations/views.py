@@ -10,32 +10,32 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import override
 
-from django_modern_rest import Body, Controller, ResponseSpec, validate
-from django_modern_rest.exceptions import (
+from dmr import Body, Controller, ResponseSpec, validate
+from dmr.exceptions import (
     InternalServerError,
     RequestSerializationError,
 )
-from django_modern_rest.negotiation import ContentType, conditional_type
-from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import Renderer
+from dmr.negotiation import ContentType, conditional_type
+from dmr.parsers import DeserializeFunc, Parser, Raw
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import Renderer
 
 # Used for different test setups:
 try:  # pragma: no cover
-    from django_modern_rest.plugins.msgspec import (
+    from dmr.plugins.msgspec import (
         MsgspecJsonParser as JsonParser,
     )
 except ImportError:  # pragma: no cover
-    from django_modern_rest.parsers import (  # type: ignore[assignment]
+    from dmr.parsers import (  # type: ignore[assignment]
         JsonParser,
     )
 
 try:  # pragma: no cover
-    from django_modern_rest.plugins.msgspec import (
+    from dmr.plugins.msgspec import (
         MsgspecJsonRenderer as JsonRenderer,
     )
 except ImportError:  # pragma: no cover
-    from django_modern_rest.renderers import (  # type: ignore[assignment]
+    from dmr.renderers import (  # type: ignore[assignment]
         JsonRenderer,
     )
 

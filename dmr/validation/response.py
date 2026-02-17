@@ -11,29 +11,29 @@ from typing import (
 
 from django.http import HttpResponse, HttpResponseBase
 
-from django_modern_rest.cookies import NewCookie
-from django_modern_rest.exceptions import (
+from dmr.cookies import NewCookie
+from dmr.exceptions import (
     InternalServerError,
     ResponseSchemaError,
     ValidationError,
 )
-from django_modern_rest.headers import build_headers
-from django_modern_rest.internal.negotiation import (
+from dmr.headers import build_headers
+from dmr.internal.negotiation import (
     media_by_precedence,
     response_validation_negotiator,
 )
-from django_modern_rest.metadata import EndpointMetadata, ResponseSpec
-from django_modern_rest.negotiation import (
+from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.negotiation import (
     get_conditional_types,
     request_renderer,
 )
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.types import EmptyObj
+from dmr.serializer import BaseSerializer
+from dmr.types import EmptyObj
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.renderers import Renderer
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.renderers import Renderer
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponseBase)
 

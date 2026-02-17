@@ -2,8 +2,8 @@ import uuid
 
 import msgspec
 
-from django_modern_rest import Body, Controller, Headers
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
+from dmr import Body, Controller, Headers
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class UserCreateModel(msgspec.Struct):

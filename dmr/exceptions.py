@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.errors import ErrorDetail
+    from dmr.errors import ErrorDetail
 
 
 @final

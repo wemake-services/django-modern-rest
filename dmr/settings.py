@@ -6,29 +6,27 @@ from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
 
-from django_modern_rest.envs import MAX_CACHE_SIZE
-from django_modern_rest.internal.cache import (
-    clear_settings_cache as clear_settings_cache,
-)
-from django_modern_rest.openapi.config import OpenAPIConfig
+from dmr.envs import MAX_CACHE_SIZE
+from dmr.internal.cache import clear_settings_cache as clear_settings_cache
+from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
-    from django_modern_rest.parsers import Parser
-    from django_modern_rest.renderers import Renderer
+    from dmr.parsers import Parser
+    from dmr.renderers import Renderer
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
     # We do that so `lint-imports` won't trigger :)
     default_parser: 'Parser' = importlib.import_module(
-        'django_modern_rest.parsers',
+        'dmr.parsers',
     ).JsonParser()
     default_renderer: 'Renderer' = importlib.import_module(
-        'django_modern_rest.renderers',
+        'dmr.renderers',
     ).JsonRenderer()
 else:  # pragma: no cover
     # We do that so `lint-imports` won't trigger :)
-    plugin = importlib.import_module('django_modern_rest.plugins.msgspec')
+    plugin = importlib.import_module('dmr.plugins.msgspec')
     MsgspecJsonParser = plugin.MsgspecJsonParser
     MsgspecJsonRenderer = plugin.MsgspecJsonRenderer
     del plugin  # noqa: WPS420
@@ -104,9 +102,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
     Settings.responses: [],  # global responses, for response validation
-    Settings.global_error_handler: (
-        'django_modern_rest.errors.global_error_handler'
-    ),
+    Settings.global_error_handler: ('dmr.errors.global_error_handler'),
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
 }

@@ -6,10 +6,10 @@ import pydantic
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serializer import SerializerContext
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Body, Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import SerializerContext
+from dmr.test import DMRRequestFactory
 
 
 @final

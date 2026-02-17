@@ -1,4 +1,4 @@
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.reusable_code.reusable_controller import ReusableController
 
 

@@ -1,7 +1,7 @@
 import pytest
 
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.response import build_response
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.response import build_response
 
 
 def test_build_response_no_status() -> None:

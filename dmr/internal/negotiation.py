@@ -6,10 +6,10 @@ from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 
 if TYPE_CHECKING:
-    from django_modern_rest.metadata import EndpointMetadata
-    from django_modern_rest.negotiation import ContentType
-    from django_modern_rest.parsers import Parser
-    from django_modern_rest.renderers import Renderer
+    from dmr.metadata import EndpointMetadata
+    from dmr.negotiation import ContentType
+    from dmr.parsers import Parser
+    from dmr.renderers import Renderer
 
 
 @final

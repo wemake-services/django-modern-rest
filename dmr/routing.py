@@ -15,9 +15,9 @@ from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from typing_extensions import override
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint, Controller
-    from django_modern_rest.options_mixins import AsyncMetaMixin, MetaMixin
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Blueprint, Controller
+    from dmr.options_mixins import AsyncMetaMixin, MetaMixin
+    from dmr.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 _BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
@@ -63,7 +63,7 @@ def compose_blueprints(
         from all composed blueprints.
 
     """
-    from django_modern_rest.controller import Controller  # noqa: PLC0415
+    from dmr.controller import Controller  # noqa: PLC0415
 
     blueprints = [first_blueprint, *extra]
     type_name = ', '.join(typ.__qualname__ for typ in blueprints)

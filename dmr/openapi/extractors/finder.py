@@ -1,6 +1,6 @@
 from typing import Any
 
-from django_modern_rest.openapi.extractors import FieldExtractor
+from dmr.openapi.extractors import FieldExtractor
 
 
 def find_extractor(source_type: Any) -> FieldExtractor[Any]:

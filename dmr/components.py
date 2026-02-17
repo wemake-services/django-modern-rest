@@ -13,36 +13,29 @@ from typing import (
 
 from typing_extensions import override
 
-from django_modern_rest.exceptions import (
+from dmr.exceptions import (
     DataParsingError,
     EndpointMetadataError,
     RequestSerializationError,
     UnsolvableAnnotationsError,
 )
-from django_modern_rest.internal.django import (
+from dmr.internal.django import (
     convert_multi_value_dict,
     exctract_files_metadata,
 )
-from django_modern_rest.metadata import (
+from dmr.metadata import (
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
 )
-from django_modern_rest.negotiation import get_conditional_types
-from django_modern_rest.parsers import (
-    SupportsDjangoDefaultParsing,
-    SupportsFileParsing,
-)
-from django_modern_rest.types import (
-    TypeVarInference,
-    infer_bases,
-    is_safe_subclass,
-)
+from dmr.negotiation import get_conditional_types
+from dmr.parsers import SupportsDjangoDefaultParsing, SupportsFileParsing
+from dmr.types import TypeVarInference, infer_bases, is_safe_subclass
 
 if TYPE_CHECKING:
-    from django_modern_rest.controller import Blueprint, Controller
-    from django_modern_rest.endpoint import Endpoint
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Blueprint, Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -224,8 +217,8 @@ class Query(ComponentParser, Generic[_QueryT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Query, Controller
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Query, Controller
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class ProductQuery(pydantic.BaseModel):
         ...     category: str
@@ -297,8 +290,8 @@ class Body(ComponentParser, Generic[_BodyT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Body, Controller
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Body, Controller
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class UserCreateInput(pydantic.BaseModel):
         ...     email: str
@@ -360,7 +353,7 @@ class Body(ComponentParser, Generic[_BodyT]):
 
         Body model can be conditional based on a content_type.
         If :data:`typing.Annotated` is passed together
-        with :func:`django_modern_rest.negotiation.conditional_type`
+        with :func:`dmr.negotiation.conditional_type`
         we treat the body as conditional. Otherwise, returns an empty dict.
         """
         return get_conditional_types(model) or {}
@@ -375,8 +368,8 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Headers, Controller
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Headers, Controller
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class AuthHeaders(pydantic.BaseModel):
         ...     token: str = pydantic.Field(alias='X-API-Token')
@@ -416,9 +409,9 @@ class Path(ComponentParser, Generic[_PathT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Path, Controller
-        >>> from django_modern_rest.routing import Router
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Path, Controller
+        >>> from dmr.routing import Router
+        >>> from dmr.plugins.pydantic import PydanticSerializer
         >>> from django.urls import include, path
 
         >>> class UserPath(pydantic.BaseModel):
@@ -519,8 +512,8 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
     .. code:: python
 
         >>> import pydantic
-        >>> from django_modern_rest import Cookies, Controller
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+        >>> from dmr import Cookies, Controller
+        >>> from dmr.plugins.pydantic import PydanticSerializer
 
         >>> class UserSession(pydantic.BaseModel):
         ...     session_id: int
@@ -573,9 +566,9 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
 
         >>> from typing import Literal
         >>> import pydantic
-        >>> from django_modern_rest import Controller, FileMetadata
-        >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
-        >>> from django_modern_rest.parsers import MultiPartParser
+        >>> from dmr import Controller, FileMetadata
+        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.parsers import MultiPartParser
 
         >>> class TextFile(pydantic.BaseModel):
         ...     # Will validate that all files are text files
@@ -674,7 +667,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         Validates that the component is correctly defined.
 
         This component requires at least one
-        :class:`django_modern_rest.parsers.SupportsFileParser` instance
+        :class:`dmr.parsers.SupportsFileParser` instance
         to be present in parsers.
 
         Runs in import time.

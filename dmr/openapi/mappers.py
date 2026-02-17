@@ -30,11 +30,11 @@ from uuid import UUID
 
 from typing_extensions import is_typeddict
 
-from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
-from django_modern_rest.openapi.objects.schema import Schema
+from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+from dmr.openapi.objects.schema import Schema
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.types import KwargDefinition
+    from dmr.openapi.types import KwargDefinition
 
 
 _SCHEMA_ARRAY: Final = Schema(type=OpenAPIType.ARRAY)

@@ -3,20 +3,20 @@ from typing import Any, Final
 import pytest
 from typing_extensions import override
 
-from django_modern_rest.controller import Controller
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.generators.security_scheme import (
+from dmr.controller import Controller
+from dmr.endpoint import Endpoint
+from dmr.openapi.config import OpenAPIConfig
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.generators.security_scheme import (
     SecuritySchemeGenerator,
 )
-from django_modern_rest.openapi.objects.components import Components
-from django_modern_rest.openapi.objects.security_requirement import (
+from dmr.openapi.objects.components import Components
+from dmr.openapi.objects.security_requirement import (
     SecurityRequirement,
 )
-from django_modern_rest.openapi.objects.security_scheme import SecurityScheme
-from django_modern_rest.security import SyncAuth
-from django_modern_rest.serializer import BaseSerializer
+from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.security import SyncAuth
+from dmr.serializer import BaseSerializer
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 

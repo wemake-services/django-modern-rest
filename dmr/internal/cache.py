@@ -8,14 +8,14 @@ def clear_settings_cache() -> None:
     Useful for tests, when you modify the global settings object.
     """
     to_import = {
-        'django_modern_rest.plugins.pydantic.serializer': [
+        'dmr.plugins.pydantic.serializer': [
             '_get_cached_type_adapter',
         ],
-        'django_modern_rest.plugins.msgspec.json': [
+        'dmr.plugins.msgspec.json': [
             '_get_serializer',
             '_get_deserializer',
         ],
-        'django_modern_rest.settings': [
+        'dmr.settings': [
             '_resolve_defaults',
             'resolve_setting',
         ],

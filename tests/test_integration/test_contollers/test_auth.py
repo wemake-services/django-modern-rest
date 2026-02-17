@@ -4,8 +4,8 @@ import pytest
 from django.urls import reverse
 from inline_snapshot import snapshot
 
-from django_modern_rest.security.http import basic_auth
-from django_modern_rest.test import DMRClient
+from dmr.security.http import basic_auth
+from dmr.test import DMRClient
 
 
 @pytest.mark.parametrize(

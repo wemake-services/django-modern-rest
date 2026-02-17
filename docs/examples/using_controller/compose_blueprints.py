@@ -1,5 +1,5 @@
-from django_modern_rest.controller import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.controller import Controller
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.using_controller.blueprints import (
     UserCreateBlueprint,
     UserListBlueprint,

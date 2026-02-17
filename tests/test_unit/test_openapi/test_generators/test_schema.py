@@ -4,19 +4,19 @@ from typing import Final
 import pytest
 from pydantic import BaseModel, Field
 
-from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.openapi.generators.schema import (
+from dmr.openapi.config import OpenAPIConfig
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.generators.schema import (
     SchemaGenerator,
     _handle_sequence,
     _handle_union,
 )
-from django_modern_rest.openapi.mappers import KwargMapper, TypeMapper
-from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
-from django_modern_rest.openapi.objects.reference import Reference
-from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.types import FieldDefinition, KwargDefinition
-from django_modern_rest.plugins import pydantic  # noqa: F401
+from dmr.openapi.mappers import KwargMapper, TypeMapper
+from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+from dmr.openapi.objects.reference import Reference
+from dmr.openapi.objects.schema import Schema
+from dmr.openapi.types import FieldDefinition, KwargDefinition
+from dmr.plugins import pydantic  # noqa: F401
 
 _MAXIMUM: Final = 100
 _CONFIG: Final = OpenAPIConfig(title='Test config', version='0.1')

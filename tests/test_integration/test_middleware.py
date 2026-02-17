@@ -6,7 +6,7 @@ from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest.test import DMRAsyncClient, DMRClient
+from dmr.test import DMRAsyncClient, DMRClient
 
 _CSRF_TOKEN_ENDPOINT: Final = 'api:middlewares:csrf_token'  # noqa: S105
 _CSRF_TEST_ENDPOINT: Final = 'api:middlewares:csrf_test'

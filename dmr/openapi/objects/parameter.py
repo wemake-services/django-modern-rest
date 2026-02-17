@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
-    from django_modern_rest.openapi.objects.example import Example
-    from django_modern_rest.openapi.objects.media_type import MediaType
-    from django_modern_rest.openapi.objects.reference import Reference
-    from django_modern_rest.openapi.objects.schema import Schema
+    from dmr.openapi.objects.example import Example
+    from dmr.openapi.objects.media_type import MediaType
+    from dmr.openapi.objects.reference import Reference
+    from dmr.openapi.objects.schema import Schema
 
 
 @final

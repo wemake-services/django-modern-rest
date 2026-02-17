@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 from django.http import HttpRequest, HttpResponse
 
 if TYPE_CHECKING:
-    from django_modern_rest import Controller
-    from django_modern_rest.metadata import ResponseSpec
-    from django_modern_rest.serializer import BaseSerializer
+    from dmr.controller import Controller
+    from dmr.metadata import ResponseSpec
+    from dmr.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
 _CallableAny: TypeAlias = Callable[..., Any]

@@ -15,130 +15,130 @@ it to the default list of response specs in controller / settings.
 Objects
 -------
 
-.. autoclass:: django_modern_rest.openapi.objects.Callback
+.. autoclass:: dmr.openapi.objects.Callback
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Components
+.. autoclass:: dmr.openapi.objects.Components
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Contact
+.. autoclass:: dmr.openapi.objects.Contact
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Discriminator
+.. autoclass:: dmr.openapi.objects.Discriminator
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Encoding
+.. autoclass:: dmr.openapi.objects.Encoding
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Example
+.. autoclass:: dmr.openapi.objects.Example
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.ExternalDocumentation
+.. autoclass:: dmr.openapi.objects.ExternalDocumentation
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Header
+.. autoclass:: dmr.openapi.objects.Header
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Info
+.. autoclass:: dmr.openapi.objects.Info
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.License
+.. autoclass:: dmr.openapi.objects.License
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Link
+.. autoclass:: dmr.openapi.objects.Link
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.MediaType
+.. autoclass:: dmr.openapi.objects.MediaType
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.OAuthFlow
+.. autoclass:: dmr.openapi.objects.OAuthFlow
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.OAuthFlows
+.. autoclass:: dmr.openapi.objects.OAuthFlows
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.OpenAPI
+.. autoclass:: dmr.openapi.objects.OpenAPI
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.OpenAPIFormat
+.. autoclass:: dmr.openapi.objects.OpenAPIFormat
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.OpenAPIType
+.. autoclass:: dmr.openapi.objects.OpenAPIType
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Operation
+.. autoclass:: dmr.openapi.objects.Operation
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Parameter
+.. autoclass:: dmr.openapi.objects.Parameter
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.PathItem
+.. autoclass:: dmr.openapi.objects.PathItem
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Paths
+.. autoclass:: dmr.openapi.objects.Paths
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Reference
+.. autoclass:: dmr.openapi.objects.Reference
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.RequestBody
+.. autoclass:: dmr.openapi.objects.RequestBody
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Response
+.. autoclass:: dmr.openapi.objects.Response
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Responses
+.. autoclass:: dmr.openapi.objects.Responses
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Schema
+.. autoclass:: dmr.openapi.objects.Schema
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.SecurityRequirement
+.. autoclass:: dmr.openapi.objects.SecurityRequirement
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.SecurityScheme
+.. autoclass:: dmr.openapi.objects.SecurityScheme
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Server
+.. autoclass:: dmr.openapi.objects.Server
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.ServerVariable
+.. autoclass:: dmr.openapi.objects.ServerVariable
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.Tag
+.. autoclass:: dmr.openapi.objects.Tag
    :members:
 
-.. autoclass:: django_modern_rest.openapi.objects.XML
+.. autoclass:: dmr.openapi.objects.XML
    :members:
 
 
 Core
 ----
 
-.. autoclass:: django_modern_rest.openapi.core.builder.OpenApiBuilder
+.. autoclass:: dmr.openapi.core.builder.OpenApiBuilder
    :members:
 
-.. autoclass:: django_modern_rest.openapi.core.context.OpenAPIContext
+.. autoclass:: dmr.openapi.core.context.OpenAPIContext
    :members:
 
-.. autoclass:: django_modern_rest.openapi.core.merger.ConfigMerger
+.. autoclass:: dmr.openapi.core.merger.ConfigMerger
    :members:
 
-.. autoclass:: django_modern_rest.openapi.core.registry.OperationIdRegistry
+.. autoclass:: dmr.openapi.core.registry.OperationIdRegistry
    :members:
 
-.. autoclass:: django_modern_rest.openapi.core.registry.SchemaRegistry
+.. autoclass:: dmr.openapi.core.registry.SchemaRegistry
    :members:
 
-.. autoclass:: django_modern_rest.openapi.config.OpenAPIConfig
+.. autoclass:: dmr.openapi.config.OpenAPIConfig
    :members:
 
 
 Builders
 --------
 
-.. autoclass:: django_modern_rest.openapi.builders.OperationBuilder
+.. autoclass:: dmr.openapi.builders.OperationBuilder
    :members:
 
-.. autoclass:: django_modern_rest.openapi.builders.OperationIDBuilder
+.. autoclass:: dmr.openapi.builders.OperationIDBuilder
    :members:
