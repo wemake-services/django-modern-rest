@@ -186,13 +186,17 @@ Customizing controllers
 ``Controller`` is built to be customized with a class-level API.
 If you need granual control, you can change anything.
 
-- :attr:`~django_modern_rest.controller.Controller.http_methods`
+- :attr:`~django_modern_rest.controller.Blueprint.http_methods`
   to support custom HTTP methods like ``QUERY``
   or your custom DSLs on top of HTTP
-- :attr:`~django_modern_rest.controller.Controller.endpoint_cls`
+- :attr:`~django_modern_rest.controller.Blueprint.endpoint_cls`
   to customize how endpoints are created
-- :attr:`~django_modern_rest.controller.Controller.serializer_context_cls`
+- :attr:`~django_modern_rest.controller.Blueprint.serializer_context_cls`
   to customize how model for serialization of incoming data is created
+- :attr:`~django_modern_rest.controller.Controller.csrf_exempt`
+  to customize whether or not this controller is exempted from the CSRF
+- :attr:`~django_modern_rest.controller.Controller.controller_validator_cls`
+  to customize how controller is validated in import time
 
 Check out our :doc:`API <deep-dive/public-api>` for the advanced features.
 

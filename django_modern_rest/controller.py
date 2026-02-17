@@ -8,7 +8,11 @@ from typing import (
     TypeVar,
 )
 
-from django.http import HttpRequest, HttpResponse, HttpResponseBase
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBase,
+)
 from django.utils.functional import cached_property, classproperty
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -23,9 +27,7 @@ from django_modern_rest.endpoint import Endpoint
 from django_modern_rest.errors import ErrorModel, ErrorType, format_error
 from django_modern_rest.exceptions import UnsolvableAnnotationsError
 from django_modern_rest.internal.io import identity
-from django_modern_rest.metadata import (
-    ResponseSpec,
-)
+from django_modern_rest.metadata import ResponseSpec
 from django_modern_rest.negotiation import request_renderer
 from django_modern_rest.parsers import Parser
 from django_modern_rest.renderers import Renderer
@@ -33,9 +35,7 @@ from django_modern_rest.response import build_response
 from django_modern_rest.security.base import AsyncAuth, SyncAuth
 from django_modern_rest.serializer import BaseSerializer, SerializerContext
 from django_modern_rest.settings import HttpSpec
-from django_modern_rest.types import (
-    infer_type_args,
-)
+from django_modern_rest.types import infer_type_args
 from django_modern_rest.validation import (
     BlueprintValidator,
     ControllerValidator,
@@ -331,43 +331,21 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     """
     Defines API views as controllers.
 
-    Controller is a ``View`` subclass that should be used in the final routing.
+    Controller is both
+    a :class:`~django_modern_rest.controller.Blueprint`
+    a :class:`django.views.generic.base.View` subclass
+    that should be used in the final routing.
+
+    It has some extra API over the regular Blueprint.
 
     Attributes:
-        endpoint_cls: Class to create endpoints with.
-        serializer: Serializer that is passed via type parameters.
-            The main goal of the serializer is to serialize object
-            to json and deserialize them from json.
-            You can't change the serializer simply by modifying
-            the attribute in the controller class.
-            Because it is already passed to many other places.
-            To customize it: create a new class,
-            subclass :class:`~django_modern_rest.serializer.BaseSerializer`,
-            and pass the new type as a type argument to the controller.
-        serializer_context_cls: Class for the input model generation.
-            We combine all components like
-            :class:`~django_modern_rest.components.Headers`,
-            :class:`~django_modern_rest.components.Query`, etc into
-            one big model for faster validation and better error messages.
-        blueprint_validator_cls: Runs blueprint validation on definition.
         controller_validator_cls: Runs full controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
             Is ``True`` by default.
-        no_validate_http_spec: Set of http spec validation checks
-            that we disable for this class.
-        validate_responses: Boolean whether or not validating responses.
-            Works in runtime, can be disabled for better performance.
-        responses: List of responses schemas that this controller can return.
-            Also customizable in endpoints and globally with ``'responses'``
-            key in the settings.
-        http_methods: Set of names to be treated as names for endpoints.
-            Does not include ``options``, but includes ``meta``.
-        request: Current :class:`~django.http.HttpRequest` instance.
-        args: Path positional parameters of the request.
-        kwargs: Path named parameters of the request.
         blueprints: A sequence of :class:`Blueprint` types
             that should be composed together.
+        blueprint: Currently active blueprint instance if any.
 
     """
 
@@ -470,8 +448,6 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         method: str = request.method  # type: ignore[assignment]
         endpoint = self.api_endpoints.get(method)
         if endpoint is not None:
-            # TODO: support `StreamingHttpResponse`
-            # TODO: support `FileResponse`
             return endpoint(self, *args, **kwargs)
         # This return is very special,
         # since it does not have an attached endpoint.

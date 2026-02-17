@@ -7,7 +7,7 @@ import pytest
 from django.http import FileResponse
 
 from django_modern_rest import Controller, HeaderSpec, ResponseSpec, validate
-from django_modern_rest.openapi.markers import Binary
+from django_modern_rest.files import FileBody
 from django_modern_rest.openapi.objects.enums import OpenAPIFormat
 from django_modern_rest.plugins.pydantic import PydanticSerializer
 from django_modern_rest.renderers import FileRenderer
@@ -15,8 +15,8 @@ from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 def test_binary_schema() -> None:
-    """Ensure that ``Binary`` returns valid schema."""
-    assert Binary.schema().format == OpenAPIFormat.BINARY
+    """Ensure that ``FileBody`` returns valid schema."""
+    assert FileBody.schema().format == OpenAPIFormat.BINARY
 
 
 _FILEPATH: Final = 'docs/examples/components/receipt.txt'
@@ -26,7 +26,7 @@ _FILEPATH: Final = 'docs/examples/components/receipt.txt'
 class _FileSyncController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(
-            Binary,
+            FileBody,
             status_code=HTTPStatus.OK,
             headers={
                 'Content-Length': HeaderSpec(),
@@ -70,7 +70,7 @@ class _FileAsyncController(Controller[PydanticSerializer]):
 
     @validate(
         ResponseSpec(
-            Binary,
+            FileBody,
             status_code=HTTPStatus.OK,
             headers={
                 'Content-Length': HeaderSpec(),

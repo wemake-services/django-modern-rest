@@ -162,7 +162,7 @@ Response handling
   .. note::
 
     You can also switch off this validation per-controller
-    with :attr:`~django_modern_rest.controller.Controller.validate_responses`
+    with :attr:`~django_modern_rest.controller.Blueprint.validate_responses`
     and per-endpoint with ``validate_responses`` argument
     to :func:`~django_modern_rest.endpoint.modify`
     and :func:`~django_modern_rest.endpoint.validate`.

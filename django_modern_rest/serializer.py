@@ -12,7 +12,7 @@ from django_modern_rest.exceptions import (
     RequestSerializationError,
     ValidationError,
 )
-from django_modern_rest.openapi.markers import Binary
+from django_modern_rest.files import FileBody
 from django_modern_rest.parsers import Parser, Raw
 from django_modern_rest.renderers import Renderer
 
@@ -170,7 +170,7 @@ class BaseSerializer:
 def deserialize_response(response: HttpResponseBase) -> Any:
     """Deserialize complex response subtypes."""
     if isinstance(response, FileResponse):
-        return Binary()
+        return FileBody()
     raise InternalServerError(
         f'Unsupported response type {type(response)!r}',
     )
@@ -281,7 +281,7 @@ class SerializerContext:
             component_cls,
             type_args,
         ) in blueprint_cls._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-            type_args = type_args[0] if len(type_args) == 1 else type_args  # noqa: PLW2901
+            type_args = type_args[0] if len(type_args) == 1 else type_args
             type_map[component_cls.context_name] = type_args
             specs[component_cls] = type_args
             for content_type, model in component_cls.conditional_types(
