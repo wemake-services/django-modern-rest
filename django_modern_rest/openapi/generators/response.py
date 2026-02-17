@@ -37,36 +37,62 @@ class ResponseGenerator:
         response_spec: 'ResponseSpec',
     ) -> Response:
         headers: dict[str, Header | Reference] = {}
-        if response_spec.headers:
-            for name, header_spec in response_spec.headers.items():
-                headers[name] = Header(
-                    description=header_spec.description,
-                    deprecated=header_spec.deprecated,
-                    required=header_spec.required,
-                    schema=self._context.generators.schema(str),
-                )
-
-        if response_spec.cookies:
-            for name, cookie_spec in response_spec.cookies.items():
-                schema = self._context.generators.schema(str)
-                if isinstance(schema, Schema):
-                    schema = dataclasses.replace(schema, example=f'{name}=123')
-
-                headers[f'Set-Cookie: {name}'] = Header(
-                    description=cookie_spec.description,
-                    required=cookie_spec.required,
-                    schema=schema,
-                )
+        headers.update(self._get_headers(response_spec))
+        headers.update(self._get_cookies(response_spec))
 
         return Response(
             description=HTTPStatus(response_spec.status_code).phrase,
             headers=headers or None,
-            content={
-                renderer.content_type: MediaType(
-                    schema=self._context.generators.schema(
-                        response_spec.return_type,
-                    ),
-                )
-                for renderer in renderers.values()
-            },
+            content=self._get_content(renderers, response_spec),
         )
+
+    def _get_headers(
+        self,
+        response_spec: 'ResponseSpec',
+    ) -> dict[str, Header | Reference]:
+        if not response_spec.headers:
+            return {}
+
+        return {
+            name: Header(
+                description=header_spec.description,
+                deprecated=header_spec.deprecated or None,
+                required=header_spec.required or None,
+                schema=self._context.generators.schema(str),
+            )
+            for name, header_spec in response_spec.headers.items()
+        }
+
+    def _get_cookies(
+        self,
+        response_spec: 'ResponseSpec',
+    ) -> dict[str, Header | Reference]:
+        if not response_spec.cookies:
+            return {}
+
+        cookies: dict[str, Header | Reference] = {}
+        for name, cookie_spec in response_spec.cookies.items():
+            schema = self._context.generators.schema(str)
+            if isinstance(schema, Schema):
+                schema = dataclasses.replace(schema, example=f'{name}=123')
+
+            cookies[f'Set-Cookie: {name}'] = Header(
+                description=cookie_spec.description,
+                required=cookie_spec.required or None,
+                schema=schema,
+            )
+        return cookies
+
+    def _get_content(
+        self,
+        renderers: dict[str, 'Renderer'],
+        response_spec: 'ResponseSpec',
+    ) -> dict[str, MediaType]:
+        return {
+            renderer.content_type: MediaType(
+                schema=self._context.generators.schema(
+                    response_spec.return_type,
+                ),
+            )
+            for renderer in renderers.values()
+        }

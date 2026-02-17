@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, final
+from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.example import Example
@@ -25,11 +25,9 @@ class Header:
     """
 
     schema: 'Schema | Reference | None' = None
-    name: Literal[''] = ''
-    param_in: Literal['header'] = 'header'
     description: str | None = None
-    required: bool = False
-    deprecated: bool = False
+    required: bool | None = None
+    deprecated: bool | None = None
     style: str | None = None
     explode: bool | None = None
     example: Any | None = None
