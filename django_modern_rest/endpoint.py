@@ -47,7 +47,6 @@ from django_modern_rest.validation import (
     Payload,
     ResponseValidator,
     ValidateEndpointPayload,
-    validate_method_name,
 )
 
 if TYPE_CHECKING:
@@ -117,7 +116,7 @@ class Endpoint:  # noqa: WPS214
         """
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
-        payload: Payload = getattr(func, '__payload__', None)
+        payload: Payload = getattr(func, '__dmr_payload__', None)
         # We add metadata in two steps:
         # 1. We construct metadata with no responses yet.
         #    We only do basic validation at this point: structure, types, etc.
@@ -128,11 +127,10 @@ class Endpoint:  # noqa: WPS214
         # Done!
         metadata = self.metadata_builder_cls(
             payload=payload,
-        )(
-            func,
             blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
-        )
+            func=func,
+        )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
             payload=payload,
@@ -456,7 +454,6 @@ def validate(  # noqa: WPS234
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -482,7 +479,6 @@ def validate(
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -509,7 +505,6 @@ def validate(
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -535,7 +530,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     validate_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -605,9 +599,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             that we disable for this endpoint.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
-        allow_custom_http_methods: Should we allow custom HTTP
-            methods for this endpoint. By "custom" we mean ones that
-            are not in :class:`http.HTTPMethod` enum.
         parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
@@ -640,7 +631,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             be used to populate endpoint's metadata.
 
     Returns:
-        The same function with ``__payload__`` payload instance.
+        The same function with ``__dmr_payload__`` payload instance.
 
     .. warning::
         Do not disable ``validate_responses`` unless
@@ -653,7 +644,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             validate_responses=validate_responses,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
-            allow_custom_http_methods=allow_custom_http_methods,
             parsers=parsers,
             renderers=renderers,
             auth=auth,
@@ -750,7 +740,6 @@ def modify(
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -776,7 +765,6 @@ def modify(
     validate_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -802,7 +790,6 @@ def modify(
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -827,7 +814,6 @@ def modify(  # noqa: WPS211
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
-    allow_custom_http_methods: bool = False,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -875,9 +861,6 @@ def modify(  # noqa: WPS211
             that we disable for this endpoint.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
-        allow_custom_http_methods: Should we allow custom HTTP
-            methods for this endpoint. By "custom" we mean ones that
-            are not in :class:`http.HTTPMethod` enum.
         parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~django_modern_rest.parsers.Parser`.
@@ -910,7 +893,7 @@ def modify(  # noqa: WPS211
             be used to populate endpoint's metadata.
 
     Returns:
-        The same function with ``__payload__`` payload instance.
+        The same function with ``__dmr_payload__`` payload instance.
 
     .. warning::
         Do not disable ``validate_responses`` unless
@@ -926,7 +909,6 @@ def modify(  # noqa: WPS211
             validate_responses=validate_responses,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
-            allow_custom_http_methods=allow_custom_http_methods,
             parsers=parsers,
             renderers=renderers,
             auth=auth,
@@ -947,15 +929,11 @@ def _add_payload(
     *,
     payload: ModifyEndpointPayload | ValidateEndpointPayload,
 ) -> Callable[[Callable[_ParamT, _ReturnT]], Callable[_ParamT, _ReturnT]]:
-    # Add payload for future use in the Endpoint validation.
+    # Add payload for future use in the Endpoint creation.
     def decorator(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
-        validate_method_name(
-            func.__name__,
-            allow_custom_http_methods=payload.allow_custom_http_methods,
-        )
-        func.__payload__ = payload  # type: ignore[attr-defined]
+        func.__dmr_payload__ = payload  # type: ignore[attr-defined]
         return func
 
     return decorator
