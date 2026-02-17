@@ -8,6 +8,7 @@ from django_modern_rest.openapi.core.merger import ConfigMerger
 from django_modern_rest.openapi.core.registry import (
     OperationIdRegistry,
     SchemaRegistry,
+    SecuritySchemeRegistry,
 )
 from django_modern_rest.openapi.generators import (
     ComponentGenerator,
@@ -16,6 +17,7 @@ from django_modern_rest.openapi.generators import (
     RequestBodyGenerator,
     ResponseGenerator,
     SchemaGenerator,
+    SecuritySchemeGenerator,
 )
 
 if TYPE_CHECKING:
@@ -28,6 +30,7 @@ class RegistryContainer:
 
     operation_id: OperationIdRegistry
     schema: SchemaRegistry
+    security_scheme: SecuritySchemeRegistry
 
 
 @dataclass(slots=True, frozen=True)
@@ -41,6 +44,7 @@ class GeneratorContainer:
     response: ResponseGenerator
     component: ComponentGenerator
     path_item: PathItemGenerator
+    security_scheme: SecuritySchemeGenerator
 
 
 class OpenAPIContext:
@@ -60,6 +64,7 @@ class OpenAPIContext:
         self.registries = RegistryContainer(
             operation_id=OperationIdRegistry(),
             schema=SchemaRegistry(),
+            security_scheme=SecuritySchemeRegistry(),
         )
 
         # Initialize generators
@@ -71,4 +76,5 @@ class OpenAPIContext:
             response=ResponseGenerator(self),
             component=ComponentGenerator(self),
             path_item=PathItemGenerator(self),
+            security_scheme=SecuritySchemeGenerator(self),
         )

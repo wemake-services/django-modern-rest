@@ -16,3 +16,6 @@ from django_modern_rest.openapi.generators.response import (
 from django_modern_rest.openapi.generators.schema import (
     SchemaGenerator as SchemaGenerator,
 )
+from django_modern_rest.openapi.generators.security_scheme import (
+    SecuritySchemeGenerator as SecuritySchemeGenerator,
+)

@@ -47,7 +47,7 @@ def normalize_key(key: str) -> str:
     if key == 'ref':
         return '$ref'
 
-    if key == 'param_in':
+    if key in {'param_in', 'security_scheme_in'}:
         return 'in'
 
     if key.startswith('schema_'):

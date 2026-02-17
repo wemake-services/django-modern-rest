@@ -20,10 +20,10 @@ class Parameter:
     description: str | None = None
     required: bool = False
     deprecated: bool = False
-    allow_empty_value: bool = False
+    allow_empty_value: bool | None = None
     style: str | None = None
     explode: bool | None = None
-    allow_reserved: bool = False
+    allow_reserved: bool | None = None
     example: Any | None = None
     examples: 'Mapping[str, Example | Reference] | None' = None
     content: 'dict[str, MediaType] | None' = None

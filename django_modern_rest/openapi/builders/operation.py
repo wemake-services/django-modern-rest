@@ -30,17 +30,14 @@ class OperationBuilder:
         request_body = context.generators.request_body(self.metadata)
         responses = context.generators.response(self.metadata)
         params_list = context.generators.parameter(self.metadata)
+        security = context.generators.security_scheme(self.metadata.auth)
 
         return Operation(
             tags=self.metadata.tags,
             summary=self.metadata.summary,
             description=self.metadata.description,
             deprecated=self.metadata.deprecated,
-            security=(
-                None
-                if self.metadata.auth is None
-                else [auth.security_requirement for auth in self.metadata.auth]
-            ),
+            security=security,
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,

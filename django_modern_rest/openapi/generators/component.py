@@ -24,4 +24,7 @@ class ComponentGenerator:
 
     def __call__(self, paths_items: Paths) -> Components:
         """Generate OpenAPI Components from path items."""
-        return Components(schemas=self._context.registries.schema.schemas)
+        return Components(
+            schemas=self._context.registries.schema.schemas,
+            security_schemes=self._context.registries.security_scheme.schemes,
+        )

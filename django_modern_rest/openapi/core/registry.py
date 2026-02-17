@@ -2,6 +2,9 @@ from typing import Any, ClassVar
 
 from django_modern_rest.openapi.objects.reference import Reference
 from django_modern_rest.openapi.objects.schema import Schema
+from django_modern_rest.openapi.objects.security_scheme import (
+    SecurityScheme,
+)
 
 
 class OperationIdRegistry:
@@ -69,3 +72,19 @@ class SchemaRegistry:
             name = f'{original_name}{counter}'
             counter += 1
         return name
+
+
+class SecuritySchemeRegistry:
+    """Registry for ``SecuritySchemes``."""
+
+    def __init__(self) -> None:
+        """Initialize empty security schemes registry."""
+        self.schemes: dict[str, SecurityScheme | Reference] = {}
+
+    def register(
+        self,
+        name: str,
+        scheme: SecurityScheme | Reference,
+    ) -> None:
+        """Register security scheme in registry."""
+        self.schemes[name] = scheme

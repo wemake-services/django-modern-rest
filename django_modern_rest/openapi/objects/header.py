@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, final
+from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
     from django_modern_rest.openapi.objects.example import Example
@@ -16,20 +16,14 @@ class Header:
 
     The Header Object follows the structure of the Parameter Object
     with the following changes:
-
-    1. `name` MUST NOT be specified, it is given in the corresponding
-        headers map.
-    2. `in` MUST NOT be specified, it is implicitly in header.
-    3. All traits that are affected by the location MUST be applicable to
-        a location of header (for example, style).
+    All traits that are affected by the location MUST be applicable to
+    a location of header (for example, style).
     """
 
     schema: 'Schema | Reference | None' = None
-    name: Literal[''] = ''
-    param_in: Literal['header'] = 'header'
     description: str | None = None
-    required: bool = False
-    deprecated: bool = False
+    required: bool | None = None
+    deprecated: bool | None = None
     style: str | None = None
     explode: bool | None = None
     example: Any | None = None
