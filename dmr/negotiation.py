@@ -71,7 +71,7 @@ class RequestNegotiator:
             return parser
 
         parser = self._decide(request)
-        request.__dmr_parser__ = parser  # type: ignore[attr-defined]  # noqa: SLF001
+        request.__dmr_parser__ = parser  # type: ignore[attr-defined]
         return parser
 
     def _decide(self, request: HttpRequest) -> Parser:
@@ -137,7 +137,7 @@ class ResponseNegotiator:
 
         """
         renderer = self._decide(request)
-        request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]  # noqa: SLF001
+        request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
         return renderer
 
     def _decide(self, request: HttpRequest) -> Renderer:
