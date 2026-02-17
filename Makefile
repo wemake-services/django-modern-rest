@@ -18,7 +18,7 @@ lint: ## Run linting checks
 	poetry run ruff check --exit-non-zero-on-fix
 	poetry run ruff format --check --diff
 	poetry run flake8 .
-	poetry run slotscheck --no-strict-imports -v -m django_modern_rest
+	poetry run slotscheck --no-strict-imports -v -m dmr
 	poetry run lint-imports
 
 .PHONY: type-check
@@ -29,7 +29,7 @@ type-check: ## Run all type checkers we support
 
 .PHONY: spell-check
 spell-check: ## Run spell checking
-	poetry run codespell django_modern_rest tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
+	poetry run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: unit
 unit: ## Run unit tests with pytest

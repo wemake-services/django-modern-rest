@@ -1,7 +1,7 @@
 # See https://github.com/seddonym/import-linter
 
 [importlinter]
-root_package = django_modern_rest
+root_package = dmr
 include_external_packages = True
 exclude_type_checking_imports = True
 
@@ -46,7 +46,7 @@ name = Do not use these optional dependencies outside of plugins
 type = forbidden
 
 source_modules =
-  django_modern_rest
+  dmr
 
 forbidden_modules =
   # optinal deps:
@@ -54,7 +54,7 @@ forbidden_modules =
   msgspec
   jwt
   # internal modules:
-  django_modern_rest_pytest
+  dmr_pytest
   django_test_app
 
 ignore_imports =
