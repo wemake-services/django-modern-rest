@@ -73,7 +73,7 @@ class SyncAuth(_BaseAuth):
         to try another authes.
         Raise :exc:`django.core.exceptions.PermissionDenied`
         to immediately fail the login without trying other authes.
-        Raise :exc:`django_modern_rest.response.APIError`
+        Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
         Return any other value if the auth succeeded.
@@ -103,7 +103,7 @@ class AsyncAuth(_BaseAuth):
         to try another authes.
         Raise :exc:`django.core.exceptions.PermissionDenied`
         to immediately fail the login without trying other authes.
-        Raise :exc:`django_modern_rest.response.APIError`
+        Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
         Return any other value if the auth succeeded.

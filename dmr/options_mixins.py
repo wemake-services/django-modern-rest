@@ -28,7 +28,7 @@ class MetaMixin:
 
     It just returns the list of allowed methods.
     Use it as a mixin with
-    the :class:`django_modern_rest.controller.Controller` type:
+    the :class:`dmr.controller.Controller` type:
 
     .. code:: python
 
@@ -59,7 +59,7 @@ class AsyncMetaMixin:
 
     It just returns the list of allowed methods.
     Use it as a mixin with
-    the :class:`django_modern_rest.controller.Controller` type:
+    the :class:`dmr.controller.Controller` type:
 
     .. code:: python
 

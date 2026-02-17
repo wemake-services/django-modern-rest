@@ -133,8 +133,8 @@ def dispatch_decorator(
 
         If you want full spec support, use middleware wrappers.
         You would probably want to use
-        :func:`~django_modern_rest.decorators.wrap_middleware` as well.
-        Or use :func:`~django_modern_rest.decorators.endpoint_decorator`.
+        :func:`~dmr.decorators.wrap_middleware` as well.
+        Or use :func:`~dmr.decorators.endpoint_decorator`.
 
     """
     return method_decorator(func, name='dispatch')

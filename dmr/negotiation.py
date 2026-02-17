@@ -161,7 +161,7 @@ def request_parser(request: HttpRequest) -> Parser | None:
     .. note::
 
         Since request parsing is only used when there's
-        a :class:`django_modern_rest.components.Body` component,
+        a :class:`dmr.components.Body` component,
         there might be no parser.
 
     """
@@ -229,7 +229,7 @@ def get_conditional_types(
     Returns possible conditional types.
 
     Conditional types are defined with :data:`typing.Annotated`
-    and :func:`django_modern_rest.negotiation.conditional_type` helper.
+    and :func:`dmr.negotiation.conditional_type` helper.
     """
     if (
         get_origin(model) is Annotated

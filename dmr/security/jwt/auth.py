@@ -79,10 +79,10 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
           or any other unique user key.
         - *secret* can be changed, by default we use ``settings.SECRET_KEY``,
           but if you need some other secret for signing tokens - it is possible.
-        - *token_cls* can use :class:`django_modern_rest.security.jwt.JWTToken`
+        - *token_cls* can use :class:`dmr.security.jwt.JWTToken`
           subclasses with different behavior.
 
-        See :meth:`django_modern_rest.security.jwt.JWTToken.decode`
+        See :meth:`dmr.security.jwt.JWTToken.decode`
         for the docs for all jwt parameters explanation.
         """
         from django.conf import settings  # noqa: PLC0415

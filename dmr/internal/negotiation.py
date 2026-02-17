@@ -19,7 +19,7 @@ class ConditionalType:
     Internal type that we use as a metadata.
 
     Public API is to use
-    :func:`django_modern_rest.negotiation.conditional_type` instead of this.
+    :func:`dmr.negotiation.conditional_type` instead of this.
     """
 
     _original: tuple[tuple['ContentType', Any], ...]

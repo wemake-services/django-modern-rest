@@ -225,7 +225,7 @@ def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
 
         >>> _get_cached_type_adapter.cache_clear()
 
-    Or use :func:`django_modern_rest.settings.clear_settings_cache`.
+    Or use :func:`dmr.settings.clear_settings_cache`.
     """
     # This is a function not to cache `self` or `cls`
     return pydantic.TypeAdapter(model)

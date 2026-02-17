@@ -215,7 +215,7 @@ def build_response(  # noqa: WPS210, WPS211
     We need this as a function, so it can be called when no endpoints exist.
 
     Do not use directly, prefer using
-    :meth:`~django_modern_rest.controller.Controller.to_response` method.
+    :meth:`~dmr.controller.Controller.to_response` method.
     Unless you are using a lower-level API. Like in middlewares, for example.
 
     You have to provide either *method* or *status_code*.

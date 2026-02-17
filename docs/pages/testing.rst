@@ -41,8 +41,8 @@ We support both:
 
 For ``pytest`` we also have a bundled plugin with several different fixtures:
 
-.. literalinclude:: ../../django_modern_rest_pytest.py
-  :caption: django_modern_rest_pytest.py
+.. literalinclude:: ../../dmr_pytest.py
+  :caption: dmr_pytest.py
   :language: python
   :linenos:
 
