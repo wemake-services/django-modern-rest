@@ -146,7 +146,7 @@ You can dive even deeper and:
 
 - Subclass :attr:`~django_modern_rest.controller.Controller`
   and provide default error handling for this specific subclass
-- Redefine :attr:`~django_modern_rest.controller.Controller.endpoint_cls`
+- Redefine :attr:`~django_modern_rest.controller.Blueprint.endpoint_cls`
   and change how one specific endpoint behaves on a deep level,
   see :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
   and :meth:`~django_modern_rest.endpoint.Endpoint.handle_async_error`

@@ -333,7 +333,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
 
     Controller is both
     a :class:`~django_modern_rest.controller.Blueprint`
-    a :class:`django.views.View` subclass
+    a :class:`django.views.generic.base.View` subclass
     that should be used in the final routing.
 
     It has some extra API over the regular Blueprint.

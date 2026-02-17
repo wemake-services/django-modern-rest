@@ -174,6 +174,13 @@ Plugins
 .. autoclass:: django_modern_rest.plugins.msgspec.MsgspecSerializer
 
 
+Files
+-----
+
+.. autoclass:: django_modern_rest.files.FileBody
+  :members:
+
+
 Auth
 ----
 
