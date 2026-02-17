@@ -221,7 +221,7 @@ class TypeVarInference:
             iterations = 0
             while isinstance(type_param, TypeVar):
                 iterations += 1
-                type_param = type_map[type_param.__name__]  # noqa: PLW2901
+                type_param = type_map[type_param.__name__]
                 if iterations >= self._max_depth:
                     raise UnsolvableAnnotationsError(
                         f'Cannot solve type annotations for {type_param!r}. '

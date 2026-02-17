@@ -416,7 +416,7 @@ class _WrongBodyParser(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> None:
@@ -431,7 +431,7 @@ class _FakeParser(SupportsFileParsing, Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> None:

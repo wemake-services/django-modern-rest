@@ -91,9 +91,9 @@ def format_error(  # noqa: C901, WPS231
         Simple python object - exception converted to a common format.
 
     """
+    # NOTE: keep this function in sync with `_default_handled_excs`
     from django.conf import settings  # noqa: PLC0415
 
-    # NOTE: keep this in sync with `_default_handled_excs`
     if isinstance(error, ValidationError):
         return {'detail': error.payload}
 
@@ -215,7 +215,7 @@ def wrap_handler(
     return decorator
 
 
-# NOTE: keep this in sync with `format_error()`
+# NOTE: keep this tuple in sync with `format_error()`
 _default_handled_excs: Final = (
     RequestSerializationError,
     ResponseSchemaError,  # can only happen if validation is enabled

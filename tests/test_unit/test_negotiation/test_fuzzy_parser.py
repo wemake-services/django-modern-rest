@@ -19,7 +19,7 @@ class _MainStar(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -35,7 +35,7 @@ class _SubStar(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -51,7 +51,7 @@ class _AllStar(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -67,7 +67,7 @@ class _JsonExact(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:

@@ -52,7 +52,7 @@ class Parser(ResponseSpecProvider):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -61,7 +61,8 @@ class Parser(ResponseSpecProvider):
 
         Args:
             to_deserialize: Value to deserialize.
-            deserializer: Hook to convert types that are not natively supported.
+            deserializer_hook: Hook to convert types
+                that are not natively supported.
             request: Django's original request with all the details.
 
         Raises:
@@ -111,7 +112,7 @@ class JsonParser(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -120,7 +121,8 @@ class JsonParser(Parser):
 
         Args:
             to_deserialize: Value to decode.
-            deserializer: Hook to convert types that are not natively supported.
+            deserializer_hook: Hook to convert types
+                that are not natively supported.
             request: Django's original request with all the details.
 
         Raises:
@@ -154,7 +156,7 @@ class SupportsFileParsing:
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> None:
@@ -186,7 +188,7 @@ class SupportsDjangoDefaultParsing:
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> None:
@@ -214,7 +216,7 @@ class MultiPartParser(
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> None:
@@ -268,7 +270,7 @@ class FormUrlEncodedParser(
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> None:
@@ -313,7 +315,7 @@ class _NoOpParser(Parser):  # pyright: ignore[reportUnusedClass]
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:

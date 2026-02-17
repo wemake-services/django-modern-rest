@@ -47,7 +47,7 @@ class Renderer(ResponseSpecProvider):
     def render(
         self,
         to_serialize: Any,
-        serializer: Callable[[Any], Any],
+        serializer_hook: Callable[[Any], Any],
     ) -> bytes:
         """Function to be called on object serialization."""
 
@@ -111,19 +111,19 @@ class _DMREncoder(DjangoJSONEncoder):
     def __init__(
         self,
         *args: Any,
-        serializer: Callable[[Any], Any] | None = None,
+        serializer_hook: Callable[[Any], Any] | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self._serializer = serializer
+        self._serializer_hook = serializer_hook
 
     @override
     def default(self, o: Any) -> Any:  # noqa: WPS111
         try:
             return super().default(o)
         except TypeError:
-            if self._serializer:
-                return self._serializer(o)
+            if self._serializer_hook:
+                return self._serializer_hook(o)
             raise
 
 
@@ -157,14 +157,14 @@ class JsonRenderer(Renderer):
     def render(
         self,
         to_serialize: Any,
-        serializer: Callable[[Any], Any],
+        serializer_hook: Callable[[Any], Any],
     ) -> bytes:
         """
         Encode a value into JSON bytestring.
 
         Args:
             to_serialize: Value to encode.
-            serializer: Callable to support non-natively supported types.
+            serializer_hook: Callable to support non-natively supported types.
 
         Returns:
             JSON as bytes.
@@ -175,7 +175,7 @@ class JsonRenderer(Renderer):
         return json.dumps(
             to_serialize,
             cls=self._encoder_cls,
-            serializer=serializer,
+            serializer_hook=serializer_hook,
         ).encode('utf8')
 
     @property
@@ -208,7 +208,7 @@ class FileRenderer(Renderer):
     def render(
         self,
         to_serialize: Any,
-        serializer: Callable[[Any], Any],
+        serializer_hook: Callable[[Any], Any],
     ) -> bytes:
         """Render a file."""
         raise NotImplementedError(

@@ -22,7 +22,7 @@ class MsgspecJsonParser(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -31,7 +31,8 @@ class MsgspecJsonParser(Parser):
 
         Args:
             to_deserialize: Value to deserialize.
-            deserializer: Hook to convert types that are not natively supported.
+            deserializer_hook: Hook to convert types
+                that are not natively supported.
             request: Django's original request with all the details.
 
         Raises:
@@ -43,7 +44,7 @@ class MsgspecJsonParser(Parser):
         """
         try:
             return _get_deserializer(
-                deserializer,
+                deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
         except msgspec.DecodeError as exc:
@@ -65,19 +66,19 @@ class MsgspecJsonRenderer(Renderer):
     def render(
         self,
         to_serialize: Any,
-        serializer: Callable[[Any], Any] | None = None,
+        serializer_hook: Callable[[Any], Any] | None = None,
     ) -> bytes:
         """
         Encode a value into JSON bytestring.
 
         Args:
             to_serialize: Value to encode.
-            serializer: Callable to support non-natively supported types.
+            serializer_hook: Callable to support non-natively supported types.
 
         Returns:
             JSON as bytes.
         """
-        return _get_serializer(serializer).encode(to_serialize)
+        return _get_serializer(serializer_hook).encode(to_serialize)
 
     @property
     @override
@@ -88,15 +89,15 @@ class MsgspecJsonRenderer(Renderer):
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_serializer(
-    serializer: Callable[[Any], Any] | None,
+    serializer_hook: Callable[[Any], Any] | None,
 ) -> msgspec.json.Encoder:
-    return msgspec.json.Encoder(enc_hook=serializer)
+    return msgspec.json.Encoder(enc_hook=serializer_hook)
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_deserializer(
-    deserializer: DeserializeFunc | None,
+    deserializer_hook: DeserializeFunc | None,
     *,
     strict: bool,
 ) -> msgspec.json.Decoder[Any]:
-    return msgspec.json.Decoder(dec_hook=deserializer, strict=strict)
+    return msgspec.json.Decoder(dec_hook=deserializer_hook, strict=strict)

@@ -68,7 +68,7 @@ Here's how we select a renderer:
 
 .. note::
 
-  When constructing response manually, like:
+  When constructing responses manually, like:
 
   .. code-block:: python
 
@@ -76,7 +76,9 @@ Here's how we select a renderer:
     >>> response = HttpResponse(b'[]')
 
   The renderer is selected as usual, but no actual rendering is done.
-  However, all other validation works as expected.
+  However, all other validation works as expected. Which means that eventhough
+  renderer is not actually used, its metadata is still required
+  to validate the response content type.
 
   But, when using :meth:`~django_modern_rest.controller.Controller.to_response`
   method, renderer will be executed.

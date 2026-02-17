@@ -147,5 +147,5 @@ Builders
 User objects
 ------------
 
-.. autoclass:: django_modern_rest.openapi.markers.Binary
+.. autoclass:: django_modern_rest.openapi.markers.FileBody
   :members:

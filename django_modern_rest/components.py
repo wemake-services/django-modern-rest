@@ -336,9 +336,9 @@ class Body(ComponentParser, Generic[_BodyT]):
             # Special case, since this is the default content type
             # for Django's request body, it is already parsed.
             # No double work will be done:
-            parser.parse(
+            blueprint.serializer.deserialize(
                 b'',  # it does not matter what to send here.
-                deserializer=blueprint.serializer.deserialize_hook,
+                parser=parser,
                 request=blueprint.request,
             )
             return blueprint.request.POST
@@ -624,9 +624,9 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         #    parsing and reuse it
         # 2. It is a single component: we reuse `request.FILES`
         #    when it is possible.
-        parser.parse(
+        blueprint.serializer.deserialize(
             b'',  # it does not matter what to send here.
-            deserializer=blueprint.serializer.deserialize_hook,
+            parser=parser,
             request=blueprint.request,
         )
 

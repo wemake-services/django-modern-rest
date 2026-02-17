@@ -20,12 +20,12 @@ try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
     # We do that so `lint-imports` won't trigger :)
-    default_parsers: list['Parser'] = [
-        importlib.import_module('django_modern_rest.parsers').JsonParser(),
-    ]
-    default_renderers: list['Renderer'] = [
-        importlib.import_module('django_modern_rest.renderers').JsonRenderer(),
-    ]
+    default_parser: 'Parser' = importlib.import_module(
+        'django_modern_rest.parsers',
+    ).JsonParser()
+    default_renderer: 'Renderer' = importlib.import_module(
+        'django_modern_rest.renderers',
+    ).JsonRenderer()
 else:  # pragma: no cover
     # We do that so `lint-imports` won't trigger :)
     plugin = importlib.import_module('django_modern_rest.plugins.msgspec')
@@ -33,8 +33,8 @@ else:  # pragma: no cover
     MsgspecJsonRenderer = plugin.MsgspecJsonRenderer
     del plugin  # noqa: WPS420
 
-    default_parsers = [MsgspecJsonParser()]
-    default_renderers = [MsgspecJsonRenderer()]
+    default_parser = MsgspecJsonParser()
+    default_renderer = MsgspecJsonRenderer()
 
 
 # Settings with `settings.py`
@@ -91,8 +91,8 @@ class HttpSpec(enum.StrEnum):
 
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
-    Settings.parsers: default_parsers,
-    Settings.renderers: default_renderers,
+    Settings.parsers: [default_parser],
+    Settings.renderers: [default_renderer],
     Settings.auth: [],
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',

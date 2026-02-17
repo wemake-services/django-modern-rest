@@ -27,7 +27,6 @@ layers =
   openapi
   headers | cookies
   types
-  internal
   settings
   exceptions
   envs

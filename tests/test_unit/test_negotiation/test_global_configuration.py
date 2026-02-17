@@ -43,7 +43,7 @@ class _XmlParser(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -66,7 +66,7 @@ class _XmlRenderer(Renderer):
     def render(
         self,
         to_serialize: Any,
-        serializer: Callable[[Any], Any],
+        serializer_hook: Callable[[Any], Any],
     ) -> bytes:
         raw_data = xmltodict.unparse(to_serialize, pretty=True)
         assert isinstance(raw_data, str)
