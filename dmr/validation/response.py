@@ -172,6 +172,17 @@ class ResponseValidator:
             ResponseSchemaError: When validation fails.
 
         """
+        if (
+            schema.limit_to_content_types
+            and content_type not in schema.limit_to_content_types
+        ):
+            hint = list(schema.limit_to_content_types)
+            raise ResponseSchemaError(
+                f'Response {schema.status_code} is not allowed '
+                f'for {content_type!r}, '
+                f'only for {hint!r}',
+            )
+
         content_types = get_conditional_types(schema.return_type)
         if content_types:
             model = content_types.get(content_type, EmptyObj)
