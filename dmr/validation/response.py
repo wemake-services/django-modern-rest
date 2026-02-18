@@ -64,10 +64,11 @@ class ResponseValidator:
         if not self.metadata.validate_responses:
             return response
         schema = self._get_response_schema(response.status_code)
+        renderer = request_renderer(controller.request)
         parser = response_validation_negotiator(
             controller.request,
             response,
-            request_renderer(controller.request),
+            renderer,
             endpoint.metadata,
         )
 
@@ -92,7 +93,11 @@ class ResponseValidator:
         self._validate_body(
             structured,
             schema,
-            content_type=parser.content_type,
+            # Here's the tricky part:
+            # 1. We first try to use the renderer's default content type
+            # 2. But, there might be no renderer yet
+            # 3. So, we fallback to the default parser in this case.
+            content_type=getattr(renderer, 'content_type', parser.content_type),
         )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
@@ -176,7 +181,7 @@ class ResponseValidator:
             schema.limit_to_content_types
             and content_type not in schema.limit_to_content_types
         ):
-            hint = list(schema.limit_to_content_types)
+            hint = list(map(str, schema.limit_to_content_types))
             raise ResponseSchemaError(
                 f'Response {schema.status_code} is not allowed '
                 f'for {content_type!r}, '

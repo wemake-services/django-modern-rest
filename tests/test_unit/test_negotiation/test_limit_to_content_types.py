@@ -1,9 +1,10 @@
 import json
 from collections.abc import Callable
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 from typing import Any, final
 
 import pydantic
+import pytest
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
@@ -61,15 +62,32 @@ class _LimitedContentController(
         ),
     )
 
-    def get(self) -> str:
+    def get(self) -> int:
+        if self.parsed_query.conflict:
+            raise APIError(1, status_code=HTTPStatus.CONFLICT)
+        raise APIError(2, status_code=HTTPStatus.PAYMENT_REQUIRED)
+
+    def delete(self) -> HttpResponse:
         if self.parsed_query.conflict:
             raise APIError(1, status_code=HTTPStatus.CONFLICT)
         raise APIError(2, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
 
-def test_correctly_limited(dmr_rf: DMRRequestFactory) -> None:
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.GET,
+        HTTPMethod.DELETE,
+    ],
+)
+def test_correctly_limited(
+    dmr_rf: DMRRequestFactory,
+    *,
+    method: HTTPMethod,
+) -> None:
     """Ensures that correct content type works."""
-    request = dmr_rf.get(
+    request = dmr_rf.generic(
+        str(method),
         '/whatever/?conflict=1',
         headers={
             'Accept': str(ContentType.json),
@@ -84,10 +102,61 @@ def test_correctly_limited(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot(1)
 
 
-def test_wrong_limited(dmr_rf: DMRRequestFactory) -> None:
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.GET,
+        HTTPMethod.DELETE,
+    ],
+)
+def test_wrong_limited(
+    dmr_rf: DMRRequestFactory,
+    *,
+    method: HTTPMethod,
+) -> None:
     """Ensures that wrong content type raises."""
-    request = dmr_rf.get(
+    request = dmr_rf.generic(
+        str(method),
         '/whatever/',
+        headers={
+            'Accept': 'application/json',
+        },
+    )
+
+    response = _LimitedContentController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Response 402 is not allowed for '
+                    "'application/json', only for ['application/json5']"
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.GET,
+        HTTPMethod.DELETE,
+    ],
+)
+def test_wrong_limited_json5(
+    dmr_rf: DMRRequestFactory,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Ensures that wrong content type raises."""
+    request = dmr_rf.generic(
+        str(method),
+        '/whatever/?conflict=1',
         headers={
             'Accept': 'application/json5',
         },
@@ -102,8 +171,8 @@ def test_wrong_limited(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'msg': (
-                    'Response 402 is not allowed for '
-                    "'application/json', only for ['application/json5']"
+                    "Response 409 is not allowed for 'application/json5', "
+                    "only for ['application/json']"
                 ),
                 'type': 'value_error',
             },
