@@ -2,13 +2,13 @@ from typing import Final, final
 
 from typing_extensions import override
 
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.django_session import (
+from dmr import Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
-from django_modern_rest.security.django_session.views import (
+from dmr.security.django_session.views import (
     DjangoSessionAsyncController,
     DjangoSessionPayload,
     DjangoSessionResponse,

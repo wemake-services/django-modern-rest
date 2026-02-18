@@ -6,9 +6,9 @@ import pytest
 from django.http import HttpResponse
 from faker import Faker
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr import Body, Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final
@@ -24,7 +24,7 @@ class _MyController(Controller[PydanticSerializer], Body[_BodyModel]):
 
 
 def test_dmr_rf(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
-    """Ensures that :class:`django_modern_rest.test.DMRRequestFactory` works."""
+    """Ensures that :class:`dmr.test.DMRRequestFactory` works."""
     email = faker.email()
 
     request = dmr_rf.post('/whatever/', data={'email': email})
@@ -42,7 +42,7 @@ def test_dmr_async_rf_to_sync(
     faker: Faker,
 ) -> None:
     """
-    Ensures that :class:`django_modern_rest.test.DMRAsyncRequestFactory` works.
+    Ensures that :class:`dmr.test.DMRAsyncRequestFactory` works.
 
     Fully compatible with ``DMRRequestFactory`` with its API.
     """
@@ -71,7 +71,7 @@ async def test_dmr_async_rf_to_async(
     faker: Faker,
 ) -> None:
     """
-    Ensures that :class:`django_modern_rest.test.DMRAsyncRequestFactory` works.
+    Ensures that :class:`dmr.test.DMRAsyncRequestFactory` works.
 
     Fully compatible with ``DMRRequestFactory`` with its API.
     """

@@ -3,42 +3,42 @@ Error handling
 
 ``django-modern-rest`` has 3 layers where errors might be handled.
 It provides flexible error handling logic
-on :class:`~django_modern_rest.endpoint.Endpoint`,
-:class:`~django_modern_rest.controller.Controller`,
-and :func:`global <django_modern_rest.errors.global_error_handler>` levels.
+on :class:`~dmr.endpoint.Endpoint`,
+:class:`~dmr.controller.Controller`,
+and :func:`global <dmr.errors.global_error_handler>` levels.
 
 All error handling functions always accept 3 arguments:
 
-1. :class:`~django_modern_rest.endpoint.Endpoint` where error happened
-2. :class:`~django_modern_rest.controller.Controller` where error happened,
-   you can also access the :class:`~django_modern_rest.controller.Blueprint`
+1. :class:`~dmr.endpoint.Endpoint` where error happened
+2. :class:`~dmr.controller.Controller` where error happened,
+   you can also access the :class:`~dmr.controller.Blueprint`
    where this error happened
-   via :attr:`~django_modern_rest.controller.Controller.active_blueprint`
+   via :attr:`~dmr.controller.Controller.active_blueprint`
    if it exists
 3. Exception that happened
 
 Here's how it works:
 
 1. We first try to call ``error_handler`` that was passed into the endpoint
-   definition via :func:`~django_modern_rest.endpoint.modify`
-   or :func:`~django_modern_rest.endpoint.validate`
+   definition via :func:`~dmr.endpoint.modify`
+   or :func:`~dmr.endpoint.validate`
 2. If it returns :class:`django.http.HttpResponse`, return it to the user
 3. If it raises and :term:`Blueprint` was used to created this endpoint, call
-   :meth:`~django_modern_rest.controller.Blueprint.handle_error` for sync
+   :meth:`~dmr.controller.Blueprint.handle_error` for sync
    blueprints
-   and :meth:`~django_modern_rest.controller.Blueprint.handle_async_error`
+   and :meth:`~dmr.controller.Blueprint.handle_async_error`
    for async blueprints
 4. If blueprint's handler returns :class:`~django.http.HttpResponse`,
    return it to the user
 5. If it raises, call
-   :meth:`~django_modern_rest.controller.Controller.handle_error` for sync
+   :meth:`~dmr.controller.Controller.handle_error` for sync
    controllers
-   and :meth:`~django_modern_rest.controller.Controller.handle_async_error`
+   and :meth:`~dmr.controller.Controller.handle_async_error`
    for async controllers
 6. If controller's handler returns :class:`~django.http.HttpResponse`,
    return it to the user
 7. If it raises, call configured global error handler, by default
-   it is :func:`~django_modern_rest.errors.global_error_handler`
+   it is :func:`~dmr.errors.global_error_handler`
    (it is always sync)
 
 .. warning::
@@ -55,10 +55,10 @@ Here's how it works:
 
 .. note::
 
-  :exc:`~django_modern_rest.response.APIError` does not follow any of these
+  :exc:`~dmr.response.APIError` does not follow any of these
   rules and has a default handler, which will convert an instance
   of ``APIError`` to :class:`~django.http.HttpResponse` via
-  :meth:`~django_modern_rest.controller.Controller.to_error` call.
+  :meth:`~dmr.controller.Controller.to_error` call.
 
   You don't need to catch ``APIError`` in any way,
   unless you know what you are doing.
@@ -84,7 +84,7 @@ Per-endpoint's error handling has a priority
 over per-blueprint and per-controller handlers.
 
 You can also define endpoint error handlers as controller methods
-and pass them wrapped with :func:`~django_modern_rest.errors.wrap_handler`
+and pass them wrapped with :func:`~dmr.errors.wrap_handler`
 as handlers. Like so:
 
 .. literalinclude:: /examples/error_handling/wrap_endpoint.py
@@ -106,7 +106,7 @@ Let's create custom error handling for the all endpoints in a blueprint:
 In this example we define ``async_error_handler`` for both endpoints.
 All ``httpx.HTTPError`` errors that can happen in both endpoints
 will be safely handled. Notice that we also add new response schema
-to :attr:`~django_modern_rest.controller.Blueprint.responses`
+to :attr:`~dmr.controller.Blueprint.responses`
 to be sure that it will be present in the OpenAPI
 and response validation will work.
 
@@ -139,17 +139,17 @@ Now you can understand how you can create:
 
 - Endpoints with custom error handlers
 - Controllers with custom error handlers
-- :class:`~django_modern_rest.metadata.ResponseSpec` objects
+- :class:`~dmr.metadata.ResponseSpec` objects
   for new error response schemas
 
 You can dive even deeper and:
 
-- Subclass :attr:`~django_modern_rest.controller.Controller`
+- Subclass :attr:`~dmr.controller.Controller`
   and provide default error handling for this specific subclass
-- Redefine :attr:`~django_modern_rest.controller.Controller.endpoint_cls`
+- Redefine :attr:`~dmr.controller.Blueprint.endpoint_cls`
   and change how one specific endpoint behaves on a deep level,
-  see :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
-  and :meth:`~django_modern_rest.endpoint.Endpoint.handle_async_error`
+  see :meth:`~dmr.endpoint.Endpoint.handle_error`
+  and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
 
 
 Error handling diagram
@@ -196,14 +196,14 @@ on a per-controller basis.
 
 To do so, you would need to change:
 
-1. :attr:`~django_modern_rest.controller.Blueprint.error_model` attribute for
+1. :attr:`~dmr.controller.Blueprint.error_model` attribute for
    all controllers and blueprints that will be using this error message schema
-2. :meth:`~django_modern_rest.controller.Blueprint.format_error` method
+2. :meth:`~dmr.controller.Blueprint.format_error` method
    to provide custom runtime error formatting
 
-See :class:`~django_modern_rest.errors.ErrorModel`
+See :class:`~dmr.errors.ErrorModel`
 for the default error model schema.
-And :func:`~django_modern_rest.errors.format_error`
+And :func:`~dmr.errors.format_error`
 for the default error formatting.
 
 
@@ -215,7 +215,7 @@ This is not what we want for API endpoints.
 Instead, we want to return JSON responses with proper error structure.
 
 To achieve this, you can use
-:func:`~django_modern_rest.errors.build_404_handler` helper.
+:func:`~dmr.errors.build_404_handler` helper.
 It will create a handler that returns JSON for specific path prefixes,
 and falls back to Django's default handler for everything else.
 
@@ -223,7 +223,7 @@ Here is how you can use it in your root ``urls.py``:
 
 .. code-block:: python
 
-  from django_modern_rest.errors import build_404_handler
+  from dmr.errors import build_404_handler
 
   # ... your urlpatterns ...
 
@@ -233,19 +233,19 @@ Here is how you can use it in your root ``urls.py``:
 API Reference
 -------------
 
-.. autofunction:: django_modern_rest.errors.global_error_handler
+.. autofunction:: dmr.errors.global_error_handler
 
-.. autofunction:: django_modern_rest.errors.wrap_handler
+.. autofunction:: dmr.errors.wrap_handler
 
-.. autofunction:: django_modern_rest.errors.build_404_handler
+.. autofunction:: dmr.errors.build_404_handler
 
-.. autoclass:: django_modern_rest.errors.ErrorType
+.. autoclass:: dmr.errors.ErrorType
   :members:
 
-.. autoclass:: django_modern_rest.errors.ErrorModel
+.. autoclass:: dmr.errors.ErrorModel
   :members:
 
-.. autoclass:: django_modern_rest.errors.ErrorDetail
+.. autoclass:: dmr.errors.ErrorDetail
   :members:
 
-.. autofunction:: django_modern_rest.errors.format_error
+.. autofunction:: dmr.errors.format_error

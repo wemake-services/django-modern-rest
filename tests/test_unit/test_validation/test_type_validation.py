@@ -7,12 +7,12 @@ import pytest
 from django.http import HttpResponse
 from typing_extensions import TypedDict
 
-from django_modern_rest import Controller, ResponseSpec, validate
-from django_modern_rest.exceptions import (
+from dmr import Controller, ResponseSpec, validate
+from dmr.exceptions import (
     ValidationError,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serializer import BaseSerializer
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
 
 serializers: list[Any] = [PydanticSerializer]
 
@@ -23,7 +23,7 @@ if sys.version_info >= (3, 12):  # pragma: no cover
 
 
 try:
-    from django_modern_rest.plugins.msgspec import MsgspecSerializer
+    from dmr.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
     pass  # do nothing then :(  # noqa: WPS420
 else:

@@ -3,14 +3,14 @@ from http import HTTPStatus
 from dirty_equals import IsStr
 from inline_snapshot import snapshot
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Body,
     Controller,
     ResponseSpec,
     modify,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _Blueprint(Blueprint[PydanticSerializer]):

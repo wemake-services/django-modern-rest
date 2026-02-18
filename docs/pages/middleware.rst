@@ -13,7 +13,7 @@ system that allows you to wrap Django middleware around your controllers
 while maintaining proper OpenAPI documentation and response handling.
 
 The main function for this
-is :func:`~django_modern_rest.decorators.wrap_middleware`,
+is :func:`~dmr.decorators.wrap_middleware`,
 which creates reusable decorators that can be applied to controller classes.
 
 How it works
@@ -23,7 +23,7 @@ How it works
 with pre-configured middleware. It takes:
 
 1. A middleware function or class
-2. One or more :class:`~django_modern_rest.metadata.ResponseSpec` objects
+2. One or more :class:`~dmr.metadata.ResponseSpec` objects
 3. Returns a decorator factory that takes a response converter function
 
 The created decorator:

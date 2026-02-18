@@ -3,13 +3,13 @@ from http import HTTPStatus
 import pydantic
 from django.http import HttpResponse
 
-from django_modern_rest import (
+from dmr import (
     Body,
     Controller,
     ResponseSpec,
     validate,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class UserModel(pydantic.BaseModel):

@@ -4,11 +4,11 @@ from typing import Final
 import pytest
 from django.http import HttpResponse
 
-from django_modern_rest.openapi.converter import ConvertedSchema
-from django_modern_rest.openapi.objects.open_api import _OPENAPI_VERSION
-from django_modern_rest.openapi.renderers import JsonRenderer
-from django_modern_rest.openapi.views import OpenAPIView
-from django_modern_rest.test import DMRRequestFactory
+from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.objects.open_api import _OPENAPI_VERSION
+from dmr.openapi.renderers import JsonRenderer
+from dmr.openapi.views import OpenAPIView
+from dmr.test import DMRRequestFactory
 
 _TEST_SCHEMA: Final[ConvertedSchema] = {  # noqa: WPS407
     'openapi': _OPENAPI_VERSION,

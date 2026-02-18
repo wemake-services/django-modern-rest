@@ -1,8 +1,8 @@
 import pytest
 
-from django_modern_rest import modify
-from django_modern_rest.controller import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import modify
+from dmr.controller import Controller
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _PaylodDescriptionController(

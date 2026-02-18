@@ -16,13 +16,13 @@ for the :term:`controller` definition.
 
       .. code:: python
 
-        from django_modern_rest.plugins.msgspec import MsgspecSerializer
+        from dmr.plugins.msgspec import MsgspecSerializer
 
     .. tab:: pydantic
 
       .. code:: python
 
-        from django_modern_rest.plugins.pydantic import PydanticSerializer
+        from dmr.plugins.pydantic import PydanticSerializer
 
 
 Customizing serializers
@@ -35,9 +35,9 @@ Support more data types
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 By default,
-:meth:`~django_modern_rest.serializer.BaseSerializer.serialize_hook`
+:meth:`~dmr.serializer.BaseSerializer.serialize_hook`
 and
-:meth:`~django_modern_rest.serializer.BaseSerializer.deserialize_hook`
+:meth:`~dmr.serializer.BaseSerializer.deserialize_hook`
 support not that many types.
 
 You can customize the serializer to know how to serializer / deserialize
@@ -47,7 +47,7 @@ more types by extending it and customizing the method you need.
 Customizing the serializer context
 ----------------------------------
 
-We use :class:`django_modern_rest.serializer.SerializerContext` type
+We use :class:`dmr.serializer.SerializerContext` type
 to deserialize all components from a single model, so it would be much faster
 than parsing each component separately.
 
@@ -64,7 +64,7 @@ It is kinda useful for request bodies, where you don't control the clients.
 Here's how we determine the default strictness for ``pydantic`` models:
 
 1. If
-   :attr:`~django_modern_rest.serializer.SerializerContext.strict_validation`
+   :attr:`~dmr.serializer.SerializerContext.strict_validation`
    is not ``None``, we return the serializer-level strictness
 2. Then ``pydantic`` looks at ``strict`` attribute
    in :class:`~pydantic.config.ConfigDict`
@@ -86,7 +86,7 @@ For example, :class:`pydantic.TypeAdapter` takes time to be created.
 Why doing it on the first request, when we can do that during the import time?
 
 Each serializer must provide a type, which must be a subclass
-of :class:`~django_modern_rest.serializer.BaseEndpointOptimizer`
+of :class:`~dmr.serializer.BaseEndpointOptimizer`
 to optimize / pre-compile / create / cache things that it can.
 
 

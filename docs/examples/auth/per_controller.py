@@ -1,6 +1,6 @@
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.jwt import JWTAsyncAuth
+from dmr import Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.jwt import JWTAsyncAuth
 
 
 class APIController(Controller[PydanticSerializer]):

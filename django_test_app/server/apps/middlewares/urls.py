@@ -1,6 +1,6 @@
 from django.urls import path
 
-from django_modern_rest.routing import Router
+from dmr.routing import Router
 from server.apps.middlewares import views
 
 router = Router([

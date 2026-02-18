@@ -3,9 +3,9 @@ from typing import Final, NotRequired, TypedDict
 import pydantic
 from django.core.paginator import Paginator
 
-from django_modern_rest import Controller, Query
-from django_modern_rest.pagination import Page, Paginated
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller, Query
+from dmr.pagination import Page, Paginated
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _User(pydantic.BaseModel):

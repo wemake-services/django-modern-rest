@@ -82,9 +82,9 @@ The shortest example:
 ```python
 >>> import uuid
 >>> import pydantic
->>> from django_modern_rest import Body, Controller, Headers
->>> # Or use `django_modern_rest.plugins.msgspec` or write your own!
->>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+>>> from dmr import Body, Controller, Headers
+>>> # Or use `dmr.plugins.msgspec` or write your own!
+>>> from dmr.plugins.pydantic import PydanticSerializer
 
 >>> class UserCreateModel(pydantic.BaseModel):
 ...     email: str
@@ -111,7 +111,7 @@ And then route this controller in your `urls.py`:
 
 ```python
 >>> from django.urls import include, path
->>> from django_modern_rest.routing import Router
+>>> from dmr.routing import Router
 
 >>> router = Router([
 ...     path('user/', UserController.as_view(), name='users'),

@@ -4,10 +4,10 @@ from typing import final
 import pytest
 from django.http import HttpResponse
 
-from django_modern_rest import Controller, ResponseSpec, modify, validate
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Controller, ResponseSpec, modify, validate
+from dmr.exceptions import EndpointMetadataError
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 def test_modify_decorator_method_name(

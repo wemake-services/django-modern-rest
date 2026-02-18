@@ -176,7 +176,7 @@ class _AppBuilder:
             INSTALLED_APPS=[
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
-                'django_modern_rest',
+                'dmr',
             ],
             MIDDLEWARE=[],
             USE_TZ=True,
@@ -450,7 +450,7 @@ def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
             clean_args.extend(body_args)
         for body_key, body_value in run_args.get('files', {}).items():
             clean_args.extend(['-F', f'{body_key}=@{body_value}'])
-            body_value = str(app_file.parent / body_value)  # noqa: PLW2901
+            body_value = str(app_file.parent / body_value)
             args.extend(['-F', f'{body_key}=@{body_value}'])
     else:
         raise RuntimeError(f'{content_type} is not supported')

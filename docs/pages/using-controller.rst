@@ -7,7 +7,7 @@ Using controller
 Creating endpoints
 ------------------
 
-Controllers consist of :class:`~django_modern_rest.endpoint.Endpoint` objects.
+Controllers consist of :class:`~dmr.endpoint.Endpoint` objects.
 Each HTTP method is an independent endpoint.
 
 The simplest way to create and endpoint is to define sync
@@ -15,8 +15,8 @@ or async method with the right name:
 
 .. code:: python
 
-  >>> from django_modern_rest import Controller
-  >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+  >>> from dmr import Controller
+  >>> from dmr.plugins.pydantic import PydanticSerializer
 
   >>> class MyController(Controller[PydanticSerializer]):
   ...     def post(self) -> str:
@@ -33,7 +33,7 @@ There will be several things that ``django-modern-rest`` will do for you here:
    All other endpoints would have ``200`` as the default
 4. All this metadata will be used to validate responses from this endpoint.
    Returning ``[]`` from ``post`` would trigger
-   :exc:`~django_modern_rest.exceptions.ResponseSchemaError`,
+   :exc:`~dmr.exceptions.ResponseSchemaError`,
    unless :ref:`response_validation` is explicitly turned off
 5. The same metadata will be used to render OpenAPI spec
 
@@ -45,12 +45,12 @@ modify
 ~~~~~~
 
 But, what if you need to add response headers? Or change the status code?
-That's where :func:`~django_modern_rest.endpoint.modify` comes in handy:
+That's where :func:`~dmr.endpoint.modify` comes in handy:
 
 .. code:: python
 
   >>> from http import HTTPStatus
-  >>> from django_modern_rest import NewHeader, modify
+  >>> from dmr import NewHeader, modify
 
   >>> class MyController(Controller[PydanticSerializer]):
   ...     @modify(
@@ -71,14 +71,14 @@ validate
 
 Ok, but what if we need full control over the response?
 To return raw :class:`~django.http.HttpResponse` object,
-we can use :func:`~django_modern_rest.endpoint.validate` decorator.
+we can use :func:`~dmr.endpoint.validate` decorator.
 It will not modify anything, but will just attach metadata
 to any endpoint that returns ``HttpResponse`` objects:
 
 .. code:: python
 
   >>> from django.http import HttpResponse
-  >>> from django_modern_rest import (
+  >>> from dmr import (
   ...     HeaderSpec, ResponseSpec, validate,
   ... )
 
@@ -117,7 +117,7 @@ parsing rules for different endpoints on the same URL:
   to create a new user with the pre-defined set of fields
 
 To achieve that we have a special composition primitive called
-:class:`~django_modern_rest.controller.Blueprint`.
+:class:`~dmr.controller.Blueprint`.
 
 It is used to define parsing rules / :doc:`error handling <error-handling>`
 for a set of endpoints that share the same logic.
@@ -132,14 +132,14 @@ Here's an example:
 Unlike controllers, they can't be used in routing directly.
 First, they need to be composed into a controller:
 
-- Via :attr:`~django_modern_rest.controller.Controller.blueprints` attribute
+- Via :attr:`~dmr.controller.Controller.blueprints` attribute
 
 .. literalinclude:: /examples/using_controller/compose_blueprints.py
   :caption: views.py
   :language: python
   :linenos:
 
-- Via :func:`~django_modern_rest.routing.compose_blueprints` function.
+- Via :func:`~dmr.routing.compose_blueprints` function.
   See our :doc:`routing` guide for more details.
 
 
@@ -163,8 +163,8 @@ for older ``options`` name.
 To use it you have two options:
 
 1. Define the ``meta`` endpoint yourself and provide an implementation
-2. Use :class:`~django_modern_rest.options_mixins.MetaMixin`
-   or :class:`~django_modern_rest.options_mixins.AsyncMetaMixin`
+2. Use :class:`~dmr.options_mixins.MetaMixin`
+   or :class:`~dmr.options_mixins.AsyncMetaMixin`
    with the default implementation: which provides ``Allow`` header
    with all the allowed HTTP methods in this controller
 
@@ -177,7 +177,7 @@ Here's an example of a custom ``meta`` implementation:
 
 
 See how you can use :ref:`composed-meta`
-with :func:`~django_modern_rest.routing.compose_blueprints`.
+with :func:`~dmr.routing.compose_blueprints`.
 
 
 Customizing controllers
@@ -186,13 +186,17 @@ Customizing controllers
 ``Controller`` is built to be customized with a class-level API.
 If you need granual control, you can change anything.
 
-- :attr:`~django_modern_rest.controller.Controller.http_methods`
+- :attr:`~dmr.controller.Blueprint.allowed_http_methods`
   to support custom HTTP methods like ``QUERY``
   or your custom DSLs on top of HTTP
-- :attr:`~django_modern_rest.controller.Controller.endpoint_cls`
+- :attr:`~dmr.controller.Blueprint.endpoint_cls`
   to customize how endpoints are created
-- :attr:`~django_modern_rest.controller.Controller.serializer_context_cls`
+- :attr:`~dmr.controller.Blueprint.serializer_context_cls`
   to customize how model for serialization of incoming data is created
+- :attr:`~dmr.controller.Controller.csrf_exempt`
+  to customize whether or not this controller is exempted from the CSRF
+- :attr:`~dmr.controller.Controller.controller_validator_cls`
+  to customize how controller is validated in import time
 
 Check out our :doc:`API <deep-dive/public-api>` for the advanced features.
 

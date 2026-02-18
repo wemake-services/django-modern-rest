@@ -4,12 +4,12 @@ Public API
 Controller
 ----------
 
-.. autoclass:: django_modern_rest.controller.Blueprint
+.. autoclass:: dmr.controller.Blueprint
   :members:
   :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
   :show-inheritance:
 
-.. autoclass:: django_modern_rest.controller.Controller
+.. autoclass:: dmr.controller.Controller
   :members:
   :inherited-members:
   :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
@@ -19,55 +19,55 @@ Controller
 Endpoint
 --------
 
-.. autoclass:: django_modern_rest.endpoint.Endpoint
+.. autoclass:: dmr.endpoint.Endpoint
   :members:
 
-.. autoclass:: django_modern_rest.metadata.EndpointMetadata
+.. autoclass:: dmr.metadata.EndpointMetadata
 
-.. autodecorator:: django_modern_rest.endpoint.modify
+.. autodecorator:: dmr.endpoint.modify
 
-.. autodecorator:: django_modern_rest.endpoint.validate
+.. autodecorator:: dmr.endpoint.validate
 
 
 Response, headers and cookies
 -----------------------------
 
-.. autoclass:: django_modern_rest.metadata.ResponseSpecProvider
+.. autoclass:: dmr.metadata.ResponseSpecProvider
   :members:
 
-.. autoclass:: django_modern_rest.metadata.ResponseSpec
+.. autoclass:: dmr.metadata.ResponseSpec
   :members:
 
-.. autoclass:: django_modern_rest.metadata.ResponseModification
+.. autoclass:: dmr.metadata.ResponseModification
   :members:
 
-.. autoexception:: django_modern_rest.response.APIError
+.. autoexception:: dmr.response.APIError
   :members:
 
-.. autoexception:: django_modern_rest.response.APIRedirectError
+.. autoexception:: dmr.response.APIRedirectError
   :members:
 
-.. autofunction:: django_modern_rest.response.build_response
+.. autofunction:: dmr.response.build_response
 
-.. autoclass:: django_modern_rest.headers.HeaderSpec
+.. autoclass:: dmr.headers.HeaderSpec
   :members:
 
-.. autoclass:: django_modern_rest.headers.NewHeader
+.. autoclass:: dmr.headers.NewHeader
   :members:
 
-.. autoclass:: django_modern_rest.cookies.CookieSpec
+.. autoclass:: dmr.cookies.CookieSpec
   :members:
 
-.. autoclass:: django_modern_rest.cookies.NewCookie
+.. autoclass:: dmr.cookies.NewCookie
   :members:
 
 
 Validation
 ----------
 
-.. autoclass:: django_modern_rest.validation.ModifyEndpointPayload
+.. autoclass:: dmr.validation.ModifyEndpointPayload
 
-.. autoclass:: django_modern_rest.validation.ValidateEndpointPayload
+.. autoclass:: dmr.validation.ValidateEndpointPayload
 
 
 .. _serializer:
@@ -75,112 +75,119 @@ Validation
 Serialization
 -------------
 
-.. autoclass:: django_modern_rest.serializer.BaseSerializer
+.. autoclass:: dmr.serializer.BaseSerializer
   :members:
 
-.. autoclass:: django_modern_rest.serializer.BaseEndpointOptimizer
+.. autoclass:: dmr.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: django_modern_rest.serializer.SerializerContext
+.. autoclass:: dmr.serializer.SerializerContext
 
 
 Routing
 -------
 
-.. autoclass:: django_modern_rest.routing.Router
+.. autoclass:: dmr.routing.Router
   :members:
 
-.. autofunction:: django_modern_rest.routing.compose_blueprints
+.. autofunction:: dmr.routing.compose_blueprints
 
-.. autofunction:: django_modern_rest.routing.path
+.. autofunction:: dmr.routing.path
 
 
 Meta mixins
 -----------
 
-.. autoclass:: django_modern_rest.options_mixins.MetaMixin
+.. autoclass:: dmr.options_mixins.MetaMixin
   :members:
 
-.. autoclass:: django_modern_rest.options_mixins.AsyncMetaMixin
+.. autoclass:: dmr.options_mixins.AsyncMetaMixin
   :members:
 
 
 Exceptions
 ----------
 
-.. autoexception:: django_modern_rest.exceptions.UnsolvableAnnotationsError
+.. autoexception:: dmr.exceptions.UnsolvableAnnotationsError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.EndpointMetadataError
+.. autoexception:: dmr.exceptions.EndpointMetadataError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.DataParsingError
+.. autoexception:: dmr.exceptions.DataParsingError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.RequestSerializationError
+.. autoexception:: dmr.exceptions.RequestSerializationError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.ResponseSchemaError
+.. autoexception:: dmr.exceptions.ResponseSchemaError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.ValidationError
+.. autoexception:: dmr.exceptions.ValidationError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.NotAcceptableError
+.. autoexception:: dmr.exceptions.NotAcceptableError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.NotAuthenticatedError
+.. autoexception:: dmr.exceptions.NotAuthenticatedError
   :members:
 
-.. autoexception:: django_modern_rest.exceptions.InternalServerError
+.. autoexception:: dmr.exceptions.InternalServerError
   :members:
 
 
 Utilities
 ---------
 
-.. autoclass:: django_modern_rest.types.Empty
+.. autoclass:: dmr.types.Empty
 
-.. autodata:: django_modern_rest.types.EmptyObj
+.. autodata:: dmr.types.EmptyObj
 
 
 Decorators
 ----------
 
-.. autofunction:: django_modern_rest.decorators.dispatch_decorator
+.. autofunction:: dmr.decorators.dispatch_decorator
 
-.. autofunction:: django_modern_rest.decorators.endpoint_decorator
+.. autofunction:: dmr.decorators.endpoint_decorator
 
-.. autofunction:: django_modern_rest.decorators.wrap_middleware
+.. autofunction:: dmr.decorators.wrap_middleware
 
 
 Testing
 -------
 
-.. autoclass:: django_modern_rest.test.DMRRequestFactory
+.. autoclass:: dmr.test.DMRRequestFactory
 
-.. autoclass:: django_modern_rest.test.DMRAsyncRequestFactory
+.. autoclass:: dmr.test.DMRAsyncRequestFactory
 
-.. autoclass:: django_modern_rest.test.DMRClient
+.. autoclass:: dmr.test.DMRClient
 
-.. autoclass:: django_modern_rest.test.DMRAsyncClient
+.. autoclass:: dmr.test.DMRAsyncClient
 
 
 Plugins
 -------
 
-.. autoclass:: django_modern_rest.plugins.pydantic.PydanticSerializer
+.. autoclass:: dmr.plugins.pydantic.PydanticSerializer
 
-.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecSerializer
+.. autoclass:: dmr.plugins.msgspec.MsgspecSerializer
+
+
+Files
+-----
+
+.. autoclass:: dmr.files.FileBody
+  :members:
 
 
 Auth
 ----
 
-.. autoclass:: django_modern_rest.security.SyncAuth
+.. autoclass:: dmr.security.SyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: django_modern_rest.security.AsyncAuth
+.. autoclass:: dmr.security.AsyncAuth
   :members:
   :inherited-members:

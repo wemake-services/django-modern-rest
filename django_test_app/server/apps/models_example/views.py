@@ -1,9 +1,9 @@
 from http import HTTPStatus
 from typing import final
 
-from django_modern_rest import APIError, Body, Controller
-from django_modern_rest.errors import ErrorType
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import APIError, Body, Controller
+from dmr.errors import ErrorType
+from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.models_example.serializers import (
     UserCreateSchema,
     UserSchema,

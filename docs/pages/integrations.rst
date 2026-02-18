@@ -50,7 +50,7 @@ Now, let's create a service to build your model instances:
   :language: python
   :linenos:
 
-Here's how the final :class:`~django_modern_rest.controller.Controller`
+Here's how the final :class:`~dmr.controller.Controller`
 would look like:
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/views.py
@@ -72,12 +72,12 @@ protection.
 
 By default we exempt all controllers from CSRF checks, unless:
 
-1. :attr:`~django_modern_rest.controller.Controller.csrf_exempt`
+1. :attr:`~dmr.controller.Controller.csrf_exempt`
    is set to ``False`` for a specific controller
 2. Endpoints protected by
-   :class:`~django_modern_rest.security.django_session.DjangoSessionSyncAuth`
+   :class:`~dmr.security.django_session.DjangoSessionSyncAuth`
    or
-   :class:`~django_modern_rest.security.django_session.DjangoSessionAsyncAuth`
+   :class:`~dmr.security.django_session.DjangoSessionAsyncAuth`
    will require CSRF as well. Because using Django sessions
    without CSRF is not secure
 
@@ -139,10 +139,10 @@ To do so, we only provide metadata for the default pagination:
 If you are using a different pagination system, you can define
 your own metadata / models and use them with our framework.
 
-.. autoclass:: django_modern_rest.pagination.Paginated
+.. autoclass:: dmr.pagination.Paginated
   :members:
 
-.. autoclass:: django_modern_rest.pagination.Page
+.. autoclass:: dmr.pagination.Page
   :members:
 
 

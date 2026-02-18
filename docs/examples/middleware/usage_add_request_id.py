@@ -1,8 +1,8 @@
 from django.http import HttpRequest
 from project.app.middleware import add_request_id_json  # Don't forget to change
 
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _RequestWithID(HttpRequest):

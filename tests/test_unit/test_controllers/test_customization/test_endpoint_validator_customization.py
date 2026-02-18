@@ -4,17 +4,17 @@ from typing import Any, ClassVar, final
 
 from typing_extensions import override
 
-from django_modern_rest import APIError, Blueprint, Controller
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serializer import BaseSerializer
-from django_modern_rest.test import DMRRequestFactory
-from django_modern_rest.validation import (
+from dmr import APIError, Blueprint, Controller
+from dmr.endpoint import Endpoint
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
+from dmr.test import DMRRequestFactory
+from dmr.validation import (
     EndpointMetadataValidator,
     Payload,
     ResponseValidator,
 )
-from django_modern_rest.validation.response import _ResponseT
+from dmr.validation.response import _ResponseT
 
 
 @final

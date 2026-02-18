@@ -4,10 +4,10 @@ import pytest
 from django.http import HttpRequest
 from typing_extensions import override
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr import Body, Controller
+from dmr.parsers import DeserializeFunc, Parser, Raw
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 class _MainStar(Parser):
@@ -19,7 +19,7 @@ class _MainStar(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -35,7 +35,7 @@ class _SubStar(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -51,7 +51,7 @@ class _AllStar(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -67,7 +67,7 @@ class _JsonExact(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:

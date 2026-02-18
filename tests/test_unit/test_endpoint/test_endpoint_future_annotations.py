@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 
 import pytest
 
-from django_modern_rest import Controller
-from django_modern_rest.exceptions import UnsolvableAnnotationsError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller
+from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.plugins.pydantic import PydanticSerializer
 
 _RegularAlias: TypeAlias = list[int]
 

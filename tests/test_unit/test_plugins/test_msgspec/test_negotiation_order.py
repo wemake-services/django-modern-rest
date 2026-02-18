@@ -13,11 +13,11 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
 
-from django_modern_rest import Body, Controller, modify
-from django_modern_rest.negotiation import request_parser, request_renderer
-from django_modern_rest.parsers import JsonParser
-from django_modern_rest.plugins.msgspec import MsgspecSerializer
-from django_modern_rest.renderers import JsonRenderer
+from dmr import Body, Controller, modify
+from dmr.negotiation import request_parser, request_renderer
+from dmr.parsers import JsonParser
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.renderers import JsonRenderer
 
 
 class _RequestModel(msgspec.Struct):

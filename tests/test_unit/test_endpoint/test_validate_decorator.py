@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_modern_rest import (
+from dmr import (
     APIError,
     Blueprint,
     Body,
@@ -18,13 +18,13 @@ from django_modern_rest import (
     ResponseSpec,
     validate,
 )
-from django_modern_rest.cookies import CookieSpec, NewCookie
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import wrap_handler
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.routing import compose_blueprints
-from django_modern_rest.test import DMRRequestFactory
+from dmr.cookies import CookieSpec, NewCookie
+from dmr.endpoint import Endpoint
+from dmr.errors import wrap_handler
+from dmr.exceptions import EndpointMetadataError
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import compose_blueprints
+from dmr.test import DMRRequestFactory
 
 _InnerT = TypeVar('_InnerT')
 

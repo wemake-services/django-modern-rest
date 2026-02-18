@@ -3,11 +3,11 @@ from http import HTTPStatus
 import pydantic
 from django.http import HttpResponse
 
-from django_modern_rest import Body, Controller, modify
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import wrap_handler
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.serializer import BaseSerializer
+from dmr import Body, Controller, modify
+from dmr.endpoint import Endpoint
+from dmr.errors import wrap_handler
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
 
 
 class TwoNumbers(pydantic.BaseModel):

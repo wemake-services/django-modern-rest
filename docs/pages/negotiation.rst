@@ -6,13 +6,13 @@ Content negotiation
 We have two abstractions to do that:
 
 - Parsers: instances of subtypes
-  of :class:`~django_modern_rest.parsers.Parser` type
+  of :class:`~dmr.parsers.Parser` type
   that parses request body based on
   `Content-Type <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type>`_
   header into python primitives
 
 - Renderers: instances of subtypes
-  of :class:`~django_modern_rest.renderers.Renderer` type
+  of :class:`~dmr.renderers.Renderer` type
   that renders python primitives into a requested format
   based on the
   `Accept <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept>`_
@@ -26,9 +26,9 @@ We fallback to pure-python implementation if ``msgspec`` is not installed.
 How parser and renderer are selected
 ------------------------------------
 
-We select a :class:`~django_modern_rest.parsers.Parser` instance
-if there's a :class:`~django_modern_rest.components.Body`
-or :class:`~django_modern_rest.components.FileMetadata` components to parse.
+We select a :class:`~dmr.parsers.Parser` instance
+if there's a :class:`~dmr.components.Body`
+or :class:`~dmr.components.FileMetadata` components to parse.
 Otherwise, for performance reasons, no parser is selected at all.
 Nothing to parse - no parser is selected.
 
@@ -40,16 +40,16 @@ Here's how we select a parser, when it is needed:
    aka the most specific one
 3. If there's a ``Content-Type`` header,
    we try to exactly match known parsers based on their
-   :attr:`~django_modern_rest.parsers.Parser.content_type` attribute.
+   :attr:`~dmr.parsers.Parser.content_type` attribute.
    This is a positive path optimization
 4. If there's no direct match, we now include parsers
    that have ``*`` pattern in supported content types.
    We match them in order based on ``'specificity', 'quality'``,
    the first match wins
 5. If no parser fits the request's content type, we raise
-   :exc:`~django_modern_rest.exceptions.RequestSerializationError`
+   :exc:`~dmr.exceptions.RequestSerializationError`
 
-We select :class:`~django_modern_rest.renderers.Renderer` instance
+We select :class:`~dmr.renderers.Renderer` instance
 for all responses (including error responses), before performing any logic.
 If the selection fails, we don't even try to run the endpoint.
 
@@ -64,11 +64,11 @@ Here's how we select a renderer:
    to match the best accepted type, based on ``'specificity', 'quality'``,
    the first match wins
 4. If no renderer fits for the accepted content types, we raise
-   :exc:`~django_modern_rest.exceptions.ResponseSchemaError`
+   :exc:`~dmr.exceptions.ResponseSchemaError`
 
 .. note::
 
-  When constructing response manually, like:
+  When constructing responses manually, like:
 
   .. code-block:: python
 
@@ -76,9 +76,11 @@ Here's how we select a renderer:
     >>> response = HttpResponse(b'[]')
 
   The renderer is selected as usual, but no actual rendering is done.
-  However, all other validation works as expected.
+  However, all other validation works as expected. Which means that even though
+  renderer is not actually used, its metadata is still required
+  to validate the response content type.
 
-  But, when using :meth:`~django_modern_rest.controller.Controller.to_response`
+  But, when using :meth:`~dmr.controller.Controller.to_response`
   method, renderer will be executed.
   So, it is a preferred method for regular responses.
 
@@ -86,7 +88,7 @@ Here's how we select a renderer:
 
   Settings always must have one parser
   and one renderer defined at all times,
-  because utils like :func:`django_modern_rest.response.build_response`
+  because utils like :func:`dmr.response.build_response`
   fallbacks to settings-defined renderers in some error cases.
 
 
@@ -142,8 +144,8 @@ First parsers / renders definition found, starting from the top,
 will win and be used for the endpoint.
 
 You can also modify
-:attr:`django_modern_rest.endpoint.Endpoint.request_negotiator_cls`
-and :attr:`django_modern_rest.endpoint.Endpoint.response_negotiator_cls`
+:attr:`dmr.endpoint.Endpoint.request_negotiator_cls`
+and :attr:`dmr.endpoint.Endpoint.response_negotiator_cls`
 to completely change the negotiation logic to fit your needs.
 
 This is possible on per-controller level.
@@ -165,11 +167,11 @@ Using different schemes for different content types
 
 Sometimes we have to accept different schemes based on the content type.
 `According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
-:class:`~django_modern_rest.components.Body`
+:class:`~dmr.components.Body`
 should support different content types.
 
 We utilize :data:`typing.Annotated`
-and :func:`django_modern_rest.negotiation.conditional_type`:
+and :func:`dmr.negotiation.conditional_type`:
 
 .. literalinclude:: /examples/negotiation/conditional_body_types.py
    :caption: views.py
@@ -201,35 +203,35 @@ in a type-safe and fully OpenAPI-compatible way.
 Negotiation API
 ---------------
 
-.. autoclass:: django_modern_rest.negotiation.RequestNegotiator
+.. autoclass:: dmr.negotiation.RequestNegotiator
   :members:
 
-.. autoclass:: django_modern_rest.negotiation.ResponseNegotiator
+.. autoclass:: dmr.negotiation.ResponseNegotiator
   :members:
 
-.. autoclass:: django_modern_rest.negotiation.ContentType
+.. autoclass:: dmr.negotiation.ContentType
   :members:
 
-.. autofunction:: django_modern_rest.negotiation.conditional_type
+.. autofunction:: dmr.negotiation.conditional_type
 
-.. autofunction:: django_modern_rest.negotiation.request_parser
+.. autofunction:: dmr.negotiation.request_parser
 
-.. autofunction:: django_modern_rest.negotiation.request_renderer
+.. autofunction:: dmr.negotiation.request_renderer
 
-.. autofunction:: django_modern_rest.negotiation.get_conditional_types
+.. autofunction:: dmr.negotiation.get_conditional_types
 
 
 Parser API
 ----------
 
-.. autoclass:: django_modern_rest.parsers.Parser
+.. autoclass:: dmr.parsers.Parser
   :members:
 
 
 Renderer API
 ------------
 
-.. autoclass:: django_modern_rest.renderers.Renderer
+.. autoclass:: dmr.renderers.Renderer
   :members:
 
 
@@ -239,36 +241,36 @@ Existing parsers and renderers
 Parsers
 ~~~~~~~
 
-.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecJsonParser
+.. autoclass:: dmr.plugins.msgspec.MsgspecJsonParser
   :members:
 
-.. autoclass:: django_modern_rest.parsers.JsonParser
+.. autoclass:: dmr.parsers.JsonParser
   :members:
 
-.. autoclass:: django_modern_rest.parsers.MultiPartParser
+.. autoclass:: dmr.parsers.MultiPartParser
   :members:
 
-.. autoclass:: django_modern_rest.parsers.FormUrlEncodedParser
+.. autoclass:: dmr.parsers.FormUrlEncodedParser
   :members:
 
 Renderers
 ~~~~~~~~~
 
-.. autoclass:: django_modern_rest.plugins.msgspec.MsgspecJsonRenderer
+.. autoclass:: dmr.plugins.msgspec.MsgspecJsonRenderer
   :members:
 
-.. autoclass:: django_modern_rest.renderers.JsonRenderer
+.. autoclass:: dmr.renderers.JsonRenderer
   :members:
 
-.. autoclass:: django_modern_rest.renderers.FileRenderer
+.. autoclass:: dmr.renderers.FileRenderer
   :members:
 
 
 Advanced API
 ------------
 
-.. autoclass:: django_modern_rest.parsers.SupportsFileParsing
+.. autoclass:: dmr.parsers.SupportsFileParsing
   :members:
 
-.. autoclass:: django_modern_rest.parsers.SupportsDjangoDefaultParsing
+.. autoclass:: dmr.parsers.SupportsDjangoDefaultParsing
   :members:

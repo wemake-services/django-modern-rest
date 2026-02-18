@@ -8,16 +8,16 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from typing_extensions import override
 
-from django_modern_rest import (
+from dmr import (
     Blueprint,
     Body,
     Controller,
     modify,
 )
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.errors import wrap_handler
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr.endpoint import Endpoint
+from dmr.errors import wrap_handler
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final

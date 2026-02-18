@@ -16,8 +16,8 @@ Let's start with how auth can be enabled and how it works.
 
 There are two main base classes for auth:
 
-1. :class:`~django_modern_rest.security.SyncAuth` for sync controllers
-2. :class:`~django_modern_rest.security.AsyncAuth` for async controllers
+1. :class:`~dmr.security.SyncAuth` for sync controllers
+2. :class:`~dmr.security.AsyncAuth` for async controllers
 
 .. warning::
 
@@ -30,21 +30,21 @@ All auth - that we are going to use - will be instances for these two classes
 All of them have unified API:
 
 - ``__init__`` method contains configuration that can be changed per instance
-- :meth:`~django_modern_rest.security.SyncAuth.__call__` does all
+- :meth:`~dmr.security.SyncAuth.__call__` does all
   the heavy lifting. If ``__call__`` returns anything but ``None``,
   then we consider auth instance to succeed. If it returns ``None``,
   we try the next one in the chain (if any).
-  If it raises :exc:`~django_modern_rest.exceptions.NotAuthenticatedError`
+  If it raises :exc:`~dmr.exceptions.NotAuthenticatedError`
   then we imidiatelly stop and return the error response.
   Async auth has async ``__call__``, sync auth has sync one.
-- :meth:`~django_modern_rest.security.SyncAuth.security_scheme`
+- :meth:`~dmr.security.SyncAuth.security_scheme`
   provides OpenAPI spec to define this auth method in the spec.
-- :meth:`~django_modern_rest.security.SyncAuth.security_requirement`
+- :meth:`~dmr.security.SyncAuth.security_requirement`
   provides OpenAPI spec to indicate what kind of auth will
   be required for each endpoint using this auth.
 
 Some class provide configuration to be adjusted when creating instances.
-For example: :class:`~django_modern_rest.security.jwt.JWTSyncAuth`
+For example: :class:`~dmr.security.jwt.JWTSyncAuth`
 contains multiple options in its ``__init__`` method.
 
 There are 4 ways to provide auth classes for an endpoint:
@@ -78,8 +78,8 @@ There are 4 ways to provide auth classes for an endpoint:
         :caption: settings.py
         :linenos:
 
-        >>> from django_modern_rest.settings import Settings, DMR_SETTINGS
-        >>> from django_modern_rest.security.django_session import DjangoSessionSyncAuth
+        >>> from dmr.settings import Settings, DMR_SETTINGS
+        >>> from dmr.security.django_session import DjangoSessionSyncAuth
 
         >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
 

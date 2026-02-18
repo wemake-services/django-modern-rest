@@ -4,9 +4,9 @@ import httpx
 from django.http import HttpResponse
 from typing_extensions import override
 
-from django_modern_rest import Blueprint, Controller, ResponseSpec
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Blueprint, Controller, ResponseSpec
+from dmr.endpoint import Endpoint
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class ProxyBlueprint(Blueprint[PydanticSerializer]):

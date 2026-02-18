@@ -3,10 +3,10 @@ from typing import Any, Final, TypedDict
 
 import pytest
 
-from django_modern_rest.openapi.mappers import KwargMapper, TypeMapper
-from django_modern_rest.openapi.objects.enums import OpenAPIFormat, OpenAPIType
-from django_modern_rest.openapi.objects.schema import Schema
-from django_modern_rest.openapi.types import KwargDefinition
+from dmr.openapi.mappers import KwargMapper, TypeMapper
+from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+from dmr.openapi.objects.schema import Schema
+from dmr.openapi.types import KwargDefinition
 
 
 @pytest.fixture

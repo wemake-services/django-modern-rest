@@ -9,7 +9,7 @@ from django.middleware.csrf import get_token
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_modern_rest import (
+from dmr import (
     APIError,
     Blueprint,
     Body,
@@ -17,10 +17,10 @@ from django_modern_rest import (
     ResponseSpec,
     modify,
 )
-from django_modern_rest.errors import ErrorType, format_error
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.django_session import DjangoSessionSyncAuth
-from django_modern_rest.test import DMRRequestFactory
+from dmr.errors import ErrorType, format_error
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import DjangoSessionSyncAuth
+from dmr.test import DMRRequestFactory
 
 
 def _fill_csrf(request: HttpRequest) -> HttpRequest:

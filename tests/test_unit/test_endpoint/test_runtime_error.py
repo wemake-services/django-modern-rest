@@ -2,9 +2,9 @@ from typing import final
 
 import pytest
 
-from django_modern_rest import Controller
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr import Controller
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @final

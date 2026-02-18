@@ -3,15 +3,15 @@ from typing import Final
 
 from django.http import HttpResponse
 
-from django_modern_rest import (
+from dmr import (
     APIRedirectError,
     Controller,
     HeaderSpec,
     modify,
     validate,
 )
-from django_modern_rest.metadata import ResponseSpec
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.metadata import ResponseSpec
+from dmr.plugins.pydantic import PydanticSerializer
 
 _RedirectSpec: Final = ResponseSpec(
     None,

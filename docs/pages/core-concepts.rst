@@ -6,18 +6,18 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 .. glossary::
 
   Endpoint
-    :class:`~django_modern_rest.endpoint.Endpoint`
+    :class:`~dmr.endpoint.Endpoint`
     is a single API route. It is defined
     by its name – HTTP method – and its :term:`Metadata`, what response schema
     it returns, what status codes it can return, etc.
 
   Blueprint
-    :class:`~django_modern_rest.controller.Blueprint` is a building block
+    :class:`~dmr.controller.Blueprint` is a building block
     for composition of different HTTP methods and parsing rules under
     one resulting URL.
 
   Controller
-    :class:`~django_modern_rest.controller.Controller`
+    :class:`~dmr.controller.Controller`
     is a collection of one or more :term:`endpoints <Endpoint>`
     with the same set of :term:`components <Component>`.
     Controller is a subclass of :class:`~django.views.generic.base.View`, so
@@ -27,8 +27,8 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 
   Component
     Controllers parse data via components like
-    :class:`~django_modern_rest.components.Body`
-    or :class:`~django_modern_rest.components.Headers`.
+    :class:`~dmr.components.Body`
+    or :class:`~dmr.components.Headers`.
     You can write your own components.
 
   Metadata
@@ -36,7 +36,7 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
     It is used for request parsing, response validation, and OpenAPI schema.
 
   Serializer
-    :class:`~django_modern_rest.serializer.BaseSerializer` subclass
+    :class:`~dmr.serializer.BaseSerializer` subclass
     that knows how to load and dump raw data into models.
     We have 2 bundled serializers in :doc:`plugins <plugins>`\ :
     for ``pydantic`` and ``msgspec``, you can write your
@@ -78,12 +78,12 @@ We also provide :doc:`middleware` wrapper tools to convert any middleware
 response to the required API schema and set needed ``Content-Type``, etc.
 
 We support all existing mixins: because
-:class:`~django_modern_rest.controller.Controller` is a subclass
+:class:`~dmr.controller.Controller` is a subclass
 of Django's :class:`django.views.generic.base.View` class.
 
 We support all existing decorators: because we have
-:func:`~django_modern_rest.decorators.endpoint_decorator`
-and :func:`~django_modern_rest.decorators.dispatch_decorator` utilities
+:func:`~dmr.decorators.endpoint_decorator`
+and :func:`~dmr.decorators.dispatch_decorator` utilities
 that can decorate endpoints and controllers.
 
 Works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.

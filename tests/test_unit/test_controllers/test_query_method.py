@@ -3,21 +3,23 @@ from typing import cast
 
 from django.http import HttpResponse
 
-from django_modern_rest import (
+from dmr import (
     Controller,
     ResponseSpec,
     validate,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.test import DMRRequestFactory
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 
 class _QueryController(Controller[PydanticSerializer]):
-    http_methods = frozenset((*Controller.http_methods, 'query'))
+    allowed_http_methods = frozenset((
+        *Controller.allowed_http_methods,
+        'query',
+    ))
 
     @validate(
         ResponseSpec(None, status_code=HTTPStatus.OK),
-        allow_custom_http_methods=True,
     )
     def query(self) -> HttpResponse:
         return self.to_response(None, status_code=HTTPStatus.OK)

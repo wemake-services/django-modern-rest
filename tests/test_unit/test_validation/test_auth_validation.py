@@ -1,9 +1,9 @@
 import pytest
 
-from django_modern_rest import Controller, modify
-from django_modern_rest.exceptions import EndpointMetadataError
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.django_session import (
+from dmr import Controller, modify
+from dmr.exceptions import EndpointMetadataError
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )

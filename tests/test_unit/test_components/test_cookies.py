@@ -8,8 +8,8 @@ from django.test import RequestFactory
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest import Controller, Cookies
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller, Cookies
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 @final

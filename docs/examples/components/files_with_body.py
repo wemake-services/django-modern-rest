@@ -3,9 +3,9 @@ from typing import Literal
 import pydantic
 from django.core.files.uploadedfile import UploadedFile
 
-from django_modern_rest import Body, Controller, FileMetadata
-from django_modern_rest.parsers import MultiPartParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Body, Controller, FileMetadata
+from dmr.parsers import MultiPartParser
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _FileModel(pydantic.BaseModel):

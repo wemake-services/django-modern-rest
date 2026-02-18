@@ -3,12 +3,12 @@ from typing import Generic, TypeVar
 
 import pydantic
 
-from django_modern_rest import Blueprint, Body, Controller
-from django_modern_rest.plugins.msgspec import (
+from dmr import Blueprint, Body, Controller
+from dmr.plugins.msgspec import (
     MsgspecJsonParser,
     MsgspecJsonRenderer,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
 

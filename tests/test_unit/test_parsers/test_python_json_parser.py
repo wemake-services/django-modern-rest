@@ -8,15 +8,15 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from django_modern_rest import (
+from dmr import (
     Body,
     Controller,
 )
-from django_modern_rest.parsers import JsonParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import JsonRenderer
-from django_modern_rest.settings import Settings
-from django_modern_rest.test import DMRRequestFactory
+from dmr.parsers import JsonParser
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import JsonRenderer
+from dmr.settings import Settings
+from dmr.test import DMRRequestFactory
 
 
 @pytest.fixture(autouse=True)

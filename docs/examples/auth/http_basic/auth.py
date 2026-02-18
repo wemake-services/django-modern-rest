@@ -3,10 +3,10 @@ from typing import Any
 from django.conf import settings
 from typing_extensions import override
 
-from django_modern_rest import Controller
-from django_modern_rest.endpoint import Endpoint
-from django_modern_rest.security.http import HttpBasicAsyncAuth
-from django_modern_rest.serializer import BaseSerializer
+from dmr import Controller
+from dmr.endpoint import Endpoint
+from dmr.security.http import HttpBasicAsyncAuth
+from dmr.serializer import BaseSerializer
 
 
 class HttpBasicAsync(HttpBasicAsyncAuth):

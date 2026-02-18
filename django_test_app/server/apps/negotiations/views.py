@@ -10,32 +10,32 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import override
 
-from django_modern_rest import Body, Controller, ResponseSpec, validate
-from django_modern_rest.exceptions import (
+from dmr import Body, Controller, ResponseSpec, validate
+from dmr.exceptions import (
     InternalServerError,
     RequestSerializationError,
 )
-from django_modern_rest.negotiation import ContentType, conditional_type
-from django_modern_rest.parsers import DeserializeFunc, Parser, Raw
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.renderers import Renderer
+from dmr.negotiation import ContentType, conditional_type
+from dmr.parsers import DeserializeFunc, Parser, Raw
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import Renderer
 
 # Used for different test setups:
 try:  # pragma: no cover
-    from django_modern_rest.plugins.msgspec import (
+    from dmr.plugins.msgspec import (
         MsgspecJsonParser as JsonParser,
     )
 except ImportError:  # pragma: no cover
-    from django_modern_rest.parsers import (  # type: ignore[assignment]
+    from dmr.parsers import (  # type: ignore[assignment]
         JsonParser,
     )
 
 try:  # pragma: no cover
-    from django_modern_rest.plugins.msgspec import (
+    from dmr.plugins.msgspec import (
         MsgspecJsonRenderer as JsonRenderer,
     )
 except ImportError:  # pragma: no cover
-    from django_modern_rest.renderers import (  # type: ignore[assignment]
+    from dmr.renderers import (  # type: ignore[assignment]
         JsonRenderer,
     )
 
@@ -54,7 +54,7 @@ class XmlParser(Parser):
     def parse(
         self,
         to_deserialize: Raw,
-        deserializer: DeserializeFunc | None = None,
+        deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
     ) -> Any:
@@ -74,9 +74,9 @@ class XmlRenderer(Renderer):
     def render(
         self,
         to_serialize: Any,
-        serializer: Callable[[Any], Any],
+        serializer_hook: Callable[[Any], Any],
     ) -> bytes:
-        preprocessor = self._wrap_serializer(serializer)
+        preprocessor = self._wrap_serializer(serializer_hook)
         raw_data = xmltodict.unparse(
             preprocessor('', to_serialize)[1],
             preprocessor=preprocessor,
@@ -91,11 +91,11 @@ class XmlRenderer(Renderer):
 
     def _wrap_serializer(
         self,
-        serializer: Callable[[Any], Any],
+        serializer_hook: Callable[[Any], Any],
     ) -> Callable[[str, Any], tuple[str, Any]]:
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
             try:  # noqa: SIM105
-                xml_value = serializer(xml_value)
+                xml_value = serializer_hook(xml_value)
             except InternalServerError:
                 pass  # noqa: WPS420
             return xml_key, xml_value

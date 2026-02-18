@@ -11,8 +11,8 @@ Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication
 
 
 To work with HTTP Basic auth you would need to subclass either
-:class:`~django_modern_rest.security.http.HttpBasicSyncAuth` or
-:class:`~django_modern_rest.security.http.HttpBasicAsyncAuth`
+:class:`~dmr.security.http.HttpBasicSyncAuth` or
+:class:`~dmr.security.http.HttpBasicAsyncAuth`
 and override its sync or async (respectively) ``authenticate`` method,
 which will decide whether or not passed username and password are correct.
 
@@ -39,12 +39,12 @@ Consider using :doc:`jwt` instead.
 API Reference
 -------------
 
-.. autoclass:: django_modern_rest.security.http.HttpBasicSyncAuth
+.. autoclass:: dmr.security.http.HttpBasicSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: django_modern_rest.security.http.HttpBasicAsyncAuth
+.. autoclass:: dmr.security.http.HttpBasicAsyncAuth
   :members:
   :inherited-members:
 
-.. autofunction:: django_modern_rest.security.http.basic_auth
+.. autofunction:: dmr.security.http.basic_auth

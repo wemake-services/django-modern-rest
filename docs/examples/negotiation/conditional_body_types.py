@@ -2,13 +2,13 @@ from typing import Annotated
 
 import pydantic
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.negotiation import ContentType, conditional_type
-from django_modern_rest.plugins.msgspec import (
+from dmr import Body, Controller
+from dmr.negotiation import ContentType, conditional_type
+from dmr.plugins.msgspec import (
     MsgspecJsonParser,
     MsgspecJsonRenderer,
 )
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
 

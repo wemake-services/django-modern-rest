@@ -1,6 +1,6 @@
 from examples.using_controller import simple_routing_controllers as views  # noqa: I001
 
-from django_modern_rest.routing import Router, path
+from dmr.routing import Router, path
 
 router = Router(
     [

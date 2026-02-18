@@ -3,10 +3,10 @@ from http import HTTPStatus
 
 from django.http import HttpRequest, HttpResponse
 
-from django_modern_rest import ResponseSpec
-from django_modern_rest.decorators import wrap_middleware
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.response import build_response
+from dmr import ResponseSpec
+from dmr.decorators import wrap_middleware
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.response import build_response
 
 
 def custom_middleware(

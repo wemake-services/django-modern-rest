@@ -2,11 +2,11 @@ from typing import Final
 
 import pytest
 
-from django_modern_rest import Controller, modify
-from django_modern_rest.openapi.builders import OperationIDBuilder
-from django_modern_rest.openapi.config import OpenAPIConfig
-from django_modern_rest.openapi.core.context import OpenAPIContext
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Controller, modify
+from dmr.openapi.builders import OperationIDBuilder
+from dmr.openapi.config import OpenAPIConfig
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.plugins.pydantic import PydanticSerializer
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 

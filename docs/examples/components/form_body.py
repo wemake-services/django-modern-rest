@@ -1,8 +1,8 @@
 import pydantic
 
-from django_modern_rest import Body, Controller
-from django_modern_rest.parsers import FormUrlEncodedParser
-from django_modern_rest.plugins.pydantic import PydanticSerializer
+from dmr import Body, Controller
+from dmr.parsers import FormUrlEncodedParser
+from dmr.plugins.pydantic import PydanticSerializer
 
 
 class _User(pydantic.BaseModel):

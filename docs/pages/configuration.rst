@@ -2,7 +2,7 @@ Configuration
 =============
 
 We use ``DMR_SETTINGS`` dictionary object to store all the configuration.
-All keys are typed with :class:`~django_modern_rest.settings.Settings` enum keys
+All keys are typed with :class:`~dmr.settings.Settings` enum keys
 which can be used to both set and get settings.
 
 .. note::
@@ -10,7 +10,7 @@ which can be used to both set and get settings.
   Remember, that ``django-modern-rest`` settings
   are cached after the first access.
   If you need to modify settings dynamically
-  in runtime use :func:`~django_modern_rest.settings.clear_settings_cache`.
+  in runtime use :func:`~dmr.settings.clear_settings_cache`.
   You can modify the size of cache with adjusting
   :envvar:`DMR_MAX_CACHE_SIZE` value.
 
@@ -25,16 +25,16 @@ As usual, all settings go to ``settings.py`` file in your Django project.
     https://github.com/wemake-services/django-split-settings
 
 
-.. autoclass:: django_modern_rest.settings.Settings
+.. autoclass:: dmr.settings.Settings
   :show-inheritance:
 
   To get settings use
-  :func:`~django_modern_rest.settings.resolve_setting` function
+  :func:`~dmr.settings.resolve_setting` function
   together with ``Settings`` keys:
 
   .. code:: python
 
-    >>> from django_modern_rest.settings import Settings, resolve_setting
+    >>> from dmr.settings import Settings, resolve_setting
 
     >>> resolve_setting(Settings.responses)
     []
@@ -54,13 +54,13 @@ Content negotiation
   It is recommended to always install ``msgspec``
   with ``'django-modern-rest[msgspec]'`` extra for better performance.
 
-.. data:: django_modern_rest.settings.Settings.parsers
+.. data:: dmr.settings.Settings.parsers
 
-  Default: :class:`django_modern_rest.parsers.JsonParser` or
-  :class:`django_modern_rest.plugins.msgspec.MsgspecJsonParser` if installed.
+  Default: :class:`dmr.parsers.JsonParser` or
+  :class:`dmr.plugins.msgspec.MsgspecJsonParser` if installed.
 
   A list of instances of subtypes
-  of :class:`~django_modern_rest.parsers.Parser`
+  of :class:`~dmr.parsers.Parser`
   to serialize data from the requested text format,
   like json or xml, into python object.
 
@@ -73,16 +73,16 @@ Content negotiation
   .. code-block:: python
     :caption: settings.py
 
-    >>> from django_modern_rest.parsers import JsonParser
+    >>> from dmr.parsers import JsonParser
     >>> DMR_SETTINGS = {Settings.parsers: [JsonParser()]}
 
-.. data:: django_modern_rest.settings.Settings.renderers
+.. data:: dmr.settings.Settings.renderers
 
-  Default: :class:`django_modern_rest.renderers.JsonRenderer` or
-  :class:`django_modern_rest.plugins.msgspec.MsgspecJsonRenderer` if installed.
+  Default: :class:`dmr.renderers.JsonRenderer` or
+  :class:`dmr.plugins.msgspec.MsgspecJsonRenderer` if installed.
 
   A list of instances of subtypes
-  of :class:`~django_modern_rest.renderers.Renderer`
+  of :class:`~dmr.renderers.Renderer`
   to serialize python objects to the requested text format, like json or xml.
 
   By default uses ``json`` module for serialization
@@ -94,18 +94,18 @@ Content negotiation
   .. code-block:: python
     :caption: settings.py
 
-    >>> from django_modern_rest.renderers import JsonRenderer
+    >>> from dmr.renderers import JsonRenderer
     >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer()]}
 
 
 Response handling
 -----------------
 
-.. data:: django_modern_rest.settings.Settings.responses
+.. data:: dmr.settings.Settings.responses
 
   Default: ``[]``
 
-  The list of global :class:`~django_modern_rest.metadata.ResponseSpec`
+  The list of global :class:`~dmr.metadata.ResponseSpec`
   object that will be added to all endpoints' metadata
   as a possible response schema.
 
@@ -116,7 +116,7 @@ Response handling
 
     >>> from http import HTTPStatus
     >>> from typing_extensions import TypedDict
-    >>> from django_modern_rest import ResponseSpec
+    >>> from dmr import ResponseSpec
 
     >>> class Error(TypedDict):
     ...     detail: str
@@ -132,7 +132,7 @@ Response handling
     ...     ],
     ... }
 
-.. data:: django_modern_rest.settings.Settings.validate_responses
+.. data:: dmr.settings.Settings.validate_responses
 
   Default: ``True``
 
@@ -144,8 +144,8 @@ Response handling
 
   .. code:: python
 
-    >>> from django_modern_rest import Controller
-    >>> from django_modern_rest.plugins.pydantic import PydanticSerializer
+    >>> from dmr import Controller
+    >>> from dmr.plugins.pydantic import PydanticSerializer
 
     >>> class MyController(Controller[PydanticSerializer]):
     ...     def get(self) -> list[str]:
@@ -162,32 +162,32 @@ Response handling
   .. note::
 
     You can also switch off this validation per-controller
-    with :attr:`~django_modern_rest.controller.Controller.validate_responses`
+    with :attr:`~dmr.controller.Blueprint.validate_responses`
     and per-endpoint with ``validate_responses`` argument
-    to :func:`~django_modern_rest.endpoint.modify`
-    and :func:`~django_modern_rest.endpoint.validate`.
+    to :func:`~dmr.endpoint.modify`
+    and :func:`~dmr.endpoint.validate`.
 
 
 Error handling
 --------------
 
-.. data:: django_modern_rest.settings.Settings.global_error_handler
+.. data:: dmr.settings.Settings.global_error_handler
 
-  Default: ``'django_modern_rest.errors.global_error_handler'``
+  Default: ``'dmr.errors.global_error_handler'``
 
   Globally handle all errors in the application.
   You can use real object or string path for the object to be imported.
   Here's our error handling hieracy:
 
   1. Per-endpoint with
-     :meth:`~django_modern_rest.endpoint.Endpoint.handle_error`
-     and :meth:`~django_modern_rest.endpoint.Endpoint.handle_async_error`
+     :meth:`~dmr.endpoint.Endpoint.handle_error`
+     and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
   2. Per-controller with
-     :meth:`~django_modern_rest.controller.Controller.handle_error`
-     or :meth:`~django_modern_rest.controller.Controller.handle_async_error`
+     :meth:`~dmr.controller.Controller.handle_error`
+     or :meth:`~dmr.controller.Controller.handle_async_error`
   3. If nothing helped, ``'global_error_handler'`` is called
 
-  See :func:`~django_modern_rest.errors.global_error_handler`
+  See :func:`~dmr.errors.global_error_handler`
   for the callback type.
 
   .. code-block:: python
@@ -199,7 +199,7 @@ Error handling
 Authentication
 --------------
 
-.. data:: django_modern_rest.settings.Settings.auth
+.. data:: dmr.settings.Settings.auth
 
   Default: ``[]``
 
@@ -210,7 +210,7 @@ Authentication
   .. code-block:: python
     :caption: settings.py
 
-    >>> from django_modern_rest.security.django_session import DjangoSessionSyncAuth
+    >>> from dmr.security.django_session import DjangoSessionSyncAuth
 
     >>> DMR_SETTINGS = {
     ...     Settings.auth: [
@@ -228,11 +228,11 @@ Authentication
 HTTP Spec validation
 --------------------
 
-.. data:: django_modern_rest.settings.Settings.no_validate_http_spec
+.. data:: dmr.settings.Settings.no_validate_http_spec
 
   Default: ``frozenset()``
 
-  A set of unique :class:`~django_modern_rest.settings.HttpSpec` codes
+  A set of unique :class:`~dmr.settings.HttpSpec` codes
   to be globally disabled.
 
   We don't recommend disabling any of these checks globally.
@@ -240,7 +240,7 @@ HTTP Spec validation
   .. code-block:: python
     :caption: settings.py
 
-    >>> from django_modern_rest.settings import HttpSpec
+    >>> from dmr.settings import HttpSpec
 
     >>> DMR_SETTINGS = {
     ...     Settings.no_validate_http_spec: {
@@ -249,7 +249,7 @@ HTTP Spec validation
     ... }
 
 
-.. autoclass:: django_modern_rest.settings.HttpSpec
+.. autoclass:: dmr.settings.HttpSpec
   :show-inheritance:
   :members:
 
@@ -257,7 +257,7 @@ HTTP Spec validation
 Hacks
 -----
 
-.. data:: django_modern_rest.settings.Settings.django_treat_as_post
+.. data:: dmr.settings.Settings.django_treat_as_post
 
   Default: ``frozenset({'PUT', 'PATCH'})``
 
@@ -266,16 +266,16 @@ Hacks
   and :attr:`django.http.HttpRequest.FILES`
   for ``POST`` requests.
 
-  Some parsers like :class:`~django_modern_rest.parsers.MultiPartParser`
+  Some parsers like :class:`~dmr.parsers.MultiPartParser`
   require ``.POST`` and ``.FILES`` to be set to work with
-  :class:`~django_modern_rest.components.Body`
-  and :class:`~django_modern_rest.components.FileMetadata`.
+  :class:`~dmr.components.Body`
+  and :class:`~dmr.components.FileMetadata`.
 
   However, we build REST APIs where more methods are in use, not just ``POST``.
   So, we use this setting to populate ``.POST`` and ``.FILES``
   when parser is a subtype of either
-  :class:`~django_modern_rest.parsers.SupportsFileParsing`
-  or :class:`~django_modern_rest.parsers.SupportsDjangoDefaultParsing`
+  :class:`~dmr.parsers.SupportsFileParsing`
+  or :class:`~dmr.parsers.SupportsDjangoDefaultParsing`
   and we work with components that require request body.
 
   .. note::
@@ -296,7 +296,7 @@ Environment variables
 
   - To create json encoders and decoders only once
   - To create type validation objects
-    in :class:`~django_modern_rest.serializer.BaseEndpointOptimizer`
+    in :class:`~dmr.serializer.BaseEndpointOptimizer`
 
   You can control the size / memory usage with this setting.
 
@@ -306,6 +306,6 @@ Environment variables
 API Reference
 -------------
 
-.. autofunction:: django_modern_rest.settings.resolve_setting
+.. autofunction:: dmr.settings.resolve_setting
 
-.. autofunction:: django_modern_rest.settings.clear_settings_cache
+.. autofunction:: dmr.settings.clear_settings_cache

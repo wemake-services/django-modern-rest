@@ -11,10 +11,10 @@ from django.http import HttpResponse
 from faker import Faker
 from freezegun.api import FrozenDateTimeFactory
 
-from django_modern_rest import Controller, modify
-from django_modern_rest.plugins.pydantic import PydanticSerializer
-from django_modern_rest.security.jwt import JWTAsyncAuth, JWTSyncAuth, JWTToken
-from django_modern_rest.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr import Controller, modify
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth, JWTToken
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
 @pytest.fixture
