@@ -53,9 +53,9 @@ class ExampleController(
             return original
         return {
             'xml_errors': {
-                '.'.join(
-                    str(location) for location in detail['loc']
-                ): detail['msg']
+                '.'.join(str(location) for location in detail['loc']): detail[
+                    'msg'
+                ]
                 for detail in original['detail']
             },
         }
