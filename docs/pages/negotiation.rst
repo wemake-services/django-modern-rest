@@ -161,6 +161,11 @@ And here's how our test ``xml`` parser and renderer are defined:
    :language: python
    :linenos:
 
+.. warning::
+
+  This parser is only used as a demo, do not use it in production,
+  prefer more tested and battle-proven solutions.
+
 
 Using different schemes for different content types
 ---------------------------------------------------
@@ -198,6 +203,27 @@ for ``xml`` content type.
 
 You can combine conditional bodies and conditional return types
 in a type-safe and fully OpenAPI-compatible way.
+
+
+.. _error-model-negotiation:
+
+Using different error models for different content types
+--------------------------------------------------------
+
+The same can be done with error models.
+Let's say you want to present JSON and XML error models differently.
+
+We utilize the same technique :data:`typing.Annotated`
+and :func:`dmr.negotiation.conditional_type`:
+
+.. literalinclude:: /examples/negotiation/conditional_error_model.py
+   :caption: views.py
+   :language: python
+   :linenos:
+
+Note that you would also have to customize
+:meth:`~dmr.controller.Blueprint.format_error`
+accordingly.
 
 
 Negotiation API

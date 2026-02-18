@@ -20,10 +20,9 @@ from docutils.nodes import Node
 from sphinx.addnodes import pending_xref
 from sphinx.application import Sphinx
 
-# We need `server` to be importable from here:
+# We need `dmr` to be importable from here:
 _ROOT = Path('..').resolve(strict=True)
 sys.path.insert(0, str(_ROOT))
-
 
 # -- Project information -----------------------------------------------------
 

@@ -347,11 +347,14 @@ def _process_single_example(
     if proc.returncode != 0:
         raise _StartupError(
             (
-                f'Could not run {args!r} in {app_file}, '
-                f'got {proc.returncode} error code'
+                (
+                    f'Could not run example in {app_file}, '
+                    f'got {proc.returncode} error code'
+                ),
+                args,
+                proc.stdout,
+                proc.stderr,
             ),
-            proc.stdout,
-            proc.stderr,
         )
     stdout = proc.stdout.splitlines()
     if not stdout:
@@ -382,7 +385,7 @@ def _build_curl_request(
     args = [
         'curl',
         '-v',
-        '-s',
+        '-sS',
         f'http://127.0.0.1:{port}{url_path}{query}',
     ]
     if run_args.pop('fail-with-body', True):
