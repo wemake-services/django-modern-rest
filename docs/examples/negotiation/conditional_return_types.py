@@ -4,10 +4,7 @@ import pydantic
 
 from dmr import Body, Controller
 from dmr.negotiation import ContentType, conditional_type
-from dmr.plugins.msgspec import (
-    MsgspecJsonParser,
-    MsgspecJsonRenderer,
-)
+from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 

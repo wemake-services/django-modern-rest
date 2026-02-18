@@ -11,7 +11,7 @@ from django.conf import LazySettings
 from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from dmr import (
     Blueprint,
@@ -21,6 +21,7 @@ from dmr import (
     modify,
     validate,
 )
+from dmr.errors import ErrorType
 from dmr.exceptions import RequestSerializationError
 from dmr.negotiation import (
     ContentType,
@@ -54,6 +55,8 @@ class _XmlParser(Parser):
                 force_list={'detail'},
             )
         except expat.ExpatError as exc:
+            if to_deserialize == b'':
+                return {}
             raise RequestSerializationError(str(exc)) from None
 
 
@@ -716,3 +719,198 @@ def test_conditional_body_model_wrong(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == expected_headers
+
+
+@final
+class _CustomErrorMsg(TypedDict):
+    reason: str
+
+
+@final
+class _CustomJsonErrorModel(TypedDict):
+    json_errors: list[_CustomErrorMsg]
+
+
+@final
+class _CustomXmlErrorModel(TypedDict):
+    xml_errors: dict[str, str]
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            {'Content-Type': 'application/xml'},
+            (
+                b'<?xml version="1.0" encoding="utf-8"?>\n'
+                b'<xml_errors>\n\t'
+                b'<parsed_body.root>Field required</parsed_body.root>\n'
+                b'</xml_errors>'
+            ),
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            {'Content-Type': 'application/json'},
+            (
+                b'{"json_errors": [{"reason": '
+                b'"Input should be a valid dictionary or instance '
+                b"of _RequestModel: ['parsed_body']\"}]}"
+            ),
+        ),
+    ],
+)
+def test_conditional_error_model(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    expected_headers: dict[str, str],
+    expected_data: Any,
+) -> None:
+    """Ensures conditional errors with content types work correctly."""
+
+    @final
+    class _Controller(
+        Controller[PydanticSerializer],
+        Body[_RequestModel],
+    ):
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
+        error_model = Annotated[
+            _CustomJsonErrorModel | _CustomXmlErrorModel,
+            conditional_type({
+                ContentType.json: _CustomJsonErrorModel,
+                ContentType.xml: _CustomXmlErrorModel,
+            }),
+        ]
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+        @override
+        def format_error(
+            self,
+            error: str | Exception,
+            *,
+            loc: str | None = None,
+            error_type: str | ErrorType | None = None,
+        ) -> _CustomJsonErrorModel | _CustomXmlErrorModel:
+            original = super().format_error(
+                error,
+                loc=loc,
+                error_type=error_type,
+            )
+            if self.request.accepts(ContentType.json):
+                return {
+                    'json_errors': [
+                        {'reason': f'{detail["msg"]}: {detail["loc"]}'}
+                        for detail in original['detail']
+                    ],
+                }
+            return {
+                'xml_errors': {
+                    '.'.join(detail['loc']): detail['msg']
+                    for detail in original['detail']
+                },
+            }
+
+    request = dmr_rf.post(
+        '/whatever/',
+        headers=request_headers,
+        data='',
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == expected_headers
+    assert response.content == expected_data
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            {'Content-Type': 'application/xml'},
+            (
+                b'<?xml version="1.0" encoding="utf-8"?>\n<json_errors>\n\t'
+                b'<reason>Field required: '
+                b"['xml_errors']</reason>\n</json_errors>"
+            ),
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            {'Content-Type': 'application/json'},
+            b'{"xml_errors": {"json_errors": "Field required"}}',
+        ),
+    ],
+)
+def test_conditional_error_model_wrong(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    expected_headers: dict[str, str],
+    expected_data: Any,
+) -> None:
+    """Ensures conditional errors are validated."""
+
+    @final
+    class _Controller(
+        Controller[PydanticSerializer],
+        Body[_RequestModel],
+    ):
+        parsers = [_XmlParser(), JsonParser()]
+        renderers = [_XmlRenderer(), JsonRenderer()]
+        error_model = Annotated[
+            _CustomJsonErrorModel | _CustomXmlErrorModel,
+            conditional_type({
+                ContentType.json: _CustomJsonErrorModel,
+                ContentType.xml: _CustomXmlErrorModel,
+            }),
+        ]
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+        @override
+        def format_error(
+            self,
+            error: str | Exception,
+            *,
+            loc: str | None = None,
+            error_type: str | ErrorType | None = None,
+        ) -> _CustomJsonErrorModel | _CustomXmlErrorModel:
+            original = super().format_error(
+                error,
+                loc=loc,
+                error_type=error_type,
+            )
+            # NOTE: we change the formats to trigger the validation:
+            if self.request.accepts(ContentType.xml):
+                return {
+                    'json_errors': [
+                        {'reason': f'{detail["msg"]}: {detail["loc"]}'}
+                        for detail in original['detail']
+                    ],
+                }
+            return {
+                'xml_errors': {
+                    '.'.join(detail['loc']): detail['msg']
+                    for detail in original['detail']
+                },
+            }
+
+    request = dmr_rf.post(
+        '/whatever/',
+        headers=request_headers,
+        data='',
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == expected_headers
+    assert response.content == expected_data

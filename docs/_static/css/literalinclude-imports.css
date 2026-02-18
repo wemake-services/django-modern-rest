@@ -5,7 +5,7 @@
 
 .literal-block-wrapper.github-link-enabled .github-source-link {
   position: absolute;
-  top: 0.25rem;
+  top: 0.4rem;
   right: 0.75rem;
   z-index: 1;
   color: var(--color-foreground-secondary, #b7bec8);

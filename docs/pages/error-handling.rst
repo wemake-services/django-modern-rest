@@ -206,6 +206,10 @@ for the default error model schema.
 And :func:`~dmr.errors.format_error`
 for the default error formatting.
 
+See :ref:`content negotiation <error-model-negotiation>`
+docs about how to use different error models
+for different content types.
+
 
 Handling 404 errors
 -------------------
