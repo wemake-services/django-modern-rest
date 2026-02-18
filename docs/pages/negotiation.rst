@@ -226,6 +226,21 @@ Note that you would also have to customize
 accordingly.
 
 
+Limiting response specs to content types
+----------------------------------------
+
+Sometimes some responses can only be returned for some content types.
+We need a way to describe it: both for our validation and OpenAPI spec.
+
+To do so, we utilize :attr:`~dmr.metadata.ResponseSpec.limit_to_content_types`
+attribute:
+
+.. literalinclude:: /examples/negotiation/limit_to_content_types.py
+   :caption: views.py
+   :language: python
+   :linenos:
+
+
 Negotiation API
 ---------------
 

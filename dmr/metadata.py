@@ -1,13 +1,8 @@
 import dataclasses
 from abc import abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Set
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAlias,
-    final,
-)
+from typing import TYPE_CHECKING, Any, TypeAlias, final
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
@@ -36,7 +31,7 @@ class ResponseSpec:
     """
     Represents a single API response specification.
 
-    Args:
+    Attributes:
         return_type: Shows *return_type* in the documentation
             as returned model schema.
             We validate *return_type* to match the returned response content
@@ -51,6 +46,9 @@ class ResponseSpec:
             When passed, we validate that all given required cookies are present
             in the final response.
         description: Text comment about what this response represents.
+        limit_to_content_types: This response can only happen
+            only for given content types. By default, when equals to ``None``,
+            all responses can happen for all content types.
 
     We use this structure to validate responses and render them in OpenAPI.
     """
@@ -67,6 +65,10 @@ class ResponseSpec:
         default=None,
     )
     description: str | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    limit_to_content_types: Set[str] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
