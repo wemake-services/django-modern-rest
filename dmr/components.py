@@ -257,25 +257,6 @@ class Query(ComponentParser, Generic[_QueryT]):
     This will parse a query like ``?query=text&query=match&reversed=1``
     into the provided model.
 
-    Additionally, this parser automatically converts the string literal
-    ``'null'`` into Python's ``None``.
-    This is especially useful for frontend clients
-    that send explicit nulls in query parameters. It works for both single
-    values and lists of values:
-
-    .. code:: python
-
-        >>> class NullableQuery(pydantic.BaseModel):
-        ...     category: str | None
-        ...     tags: list[str | None]
-        ...
-        ...     __dmr_force_list__: ClassVar[frozenset[str]] = frozenset((
-        ...         'tags',
-        ...     ))
-
-    Will parse a request like ``?category=null&tags=python&tags=null``
-    into ``category=None`` and ``tags=['python', None]``.
-
     We don't inference this value in any way, it is up to users to set.
     Inspecting annotations is hard and produce a lot of errors.
     """
@@ -297,33 +278,10 @@ class Query(ComponentParser, Generic[_QueryT]):
             '__dmr_force_list__',
             frozenset(),
         )
-        request_params = convert_multi_value_dict(
+        return convert_multi_value_dict(
             blueprint.request.GET,
             force_list,
         )
-
-        return {
-            param_key: cls._clean_param_value(param_value)
-            for param_key, param_value in request_params.items()
-        }
-
-    @classmethod
-    def _replace_null_string(cls, param_value: str) -> str | None:
-        if param_value == 'null':
-            return None
-        return param_value
-
-    @classmethod
-    def _clean_param_value(
-        cls,
-        param_value: list[str] | str,
-    ) -> list[str | None] | str | None:
-        if isinstance(param_value, list):
-            return [
-                cls._replace_null_string(element) for element in param_value
-            ]
-
-        return cls._replace_null_string(param_value)
 
 
 class Body(ComponentParser, Generic[_BodyT]):
