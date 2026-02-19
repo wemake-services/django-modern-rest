@@ -178,17 +178,24 @@ def _handle_union(
     generator: SchemaGenerator,
     args: tuple[Any, ...],
 ) -> Schema | Reference:
+    is_nullable = any(arg in {NoneType, type(None)} for arg in args)
     real_args = [arg for arg in args if arg not in {NoneType, type(None)}]
+
     if not real_args:
         # We know that NoneType is registered in TypeMapper
         return TypeMapper.get_schema(NoneType)  # type: ignore[return-value]
 
     if len(real_args) == 1:
-        return generator(real_args[0])
+        schema = generator(real_args[0])
+        if is_nullable:
+            return Schema(one_of=[schema, Schema(type=OpenAPIType.NULL)])
+        return schema
 
-    return Schema(
-        one_of=[generator(arg) for arg in real_args],
-    )
+    schemas: list[Schema | Reference] = [generator(arg) for arg in real_args]
+    if is_nullable:
+        schemas.append(Schema(type=OpenAPIType.NULL))
+
+    return Schema(one_of=schemas)
 
 
 def _handle_mapping(
