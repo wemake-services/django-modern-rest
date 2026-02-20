@@ -167,8 +167,30 @@ class BaseSerializer:
         raise NotImplementedError
 
 
+class DeserializableResponse:
+    """
+    Provides body content to be validated in our optional response validation.
+
+    Abstract base class for custom responses
+    that do not have content to be validated.
+    For example, streaming responses might not have any content right now.
+
+    But, we still need to validate something.
+    """
+
+    # TODO: maybe we should skip `body` validation
+    # for responses that do not have it instead?
+
+    @abc.abstractmethod
+    def deserializable_content(self) -> Any:
+        """Provide response content for the validation."""
+        raise NotImplementedError
+
+
 def deserialize_response(response: HttpResponseBase) -> Any:
     """Deserialize complex response subtypes."""
+    if isinstance(response, DeserializableResponse):
+        return response.deserializable_content()
     if isinstance(response, FileResponse):
         return FileBody()
     raise InternalServerError(

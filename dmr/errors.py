@@ -310,6 +310,7 @@ def global_error_handler(
     raise  # noqa: PLE0704
 
 
+# We mimic django's name here:
 def build_404_handler(  # noqa: WPS114
     prefix: str,
     /,
@@ -325,8 +326,12 @@ def build_404_handler(  # noqa: WPS114
     combined = (prefix, *prefixes)
     all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
 
-    def _factory(request: HttpRequest, exception: Exception) -> HttpResponse:  # noqa: WPS430
+    def factory(
+        request: HttpRequest,
+        exception: Exception,
+    ) -> HttpResponse:
         if request.path.startswith(all_prefixes):
+            # TODO: support content negotiation here:
             return JsonResponse(
                 format_error(
                     'Page not found',
@@ -336,4 +341,4 @@ def build_404_handler(  # noqa: WPS114
             )
         return page_not_found(request, exception)
 
-    return _factory
+    return factory

@@ -66,7 +66,7 @@ class _AsyncController(Controller[PydanticSerializer]):
         return 'authed'
 
 
-async def _resolve(user: User) -> User:  # noqa: RUF029
+async def _resolve(user: User) -> User:
     return user
 
 

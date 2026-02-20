@@ -276,6 +276,25 @@ class EndpointMetadata:
     callbacks: dict[str, 'Callback | Reference'] | None = None
     servers: list['Server'] | None = None
 
+    def collect_response_specs(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        existing_responses: dict[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
+        """Collect unique responses for all possible response providers."""
+        all_responses: list[ResponseSpec] = []
+        for provider in self.response_spec_providers():
+            responses = provider.provide_response_specs(
+                self,
+                controller_cls,
+                existing_responses,
+            )
+            all_responses.extend(responses)
+            existing_responses.update({
+                response.status_code: response for response in responses
+            })
+        return all_responses
+
     def response_spec_providers(self) -> list[type[ResponseSpecProvider]]:
         """
         Determine: from where we should collect response schemas.

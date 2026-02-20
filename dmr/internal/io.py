@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 else:
 
-    async def identity(wrapped: _ItemT) -> _ItemT:  # noqa: RUF029
+    async def identity(wrapped: _ItemT) -> _ItemT:
         """
         Just returns an object wrapped in a coroutine.
 
