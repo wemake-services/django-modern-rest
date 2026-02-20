@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import ClassVar, final
 
 import pydantic
+import pytest
 from django.http import HttpResponse
 from faker import Faker
 
@@ -116,3 +117,53 @@ def test_trim_query(
     assert response.headers == {'Content-Type': 'application/json'}
     # Last passed value wins:
     assert json.loads(response.content) == last_name
+
+
+@final
+class _DefaultCastNullQuery(pydantic.BaseModel):
+    query: str | None
+
+
+@final
+class _DisableCastNullQuery(pydantic.BaseModel):
+    __dmr_cast_null__: ClassVar[bool] = False
+    query: str
+
+
+@final
+class _DefaultCastNullController(
+    Controller[PydanticSerializer],
+    Query[_DefaultCastNullQuery],
+):
+    def get(self) -> _DefaultCastNullQuery:
+        return self.parsed_query
+
+
+@final
+class _DisableCastNullController(
+    Controller[PydanticSerializer],
+    Query[_DisableCastNullQuery],
+):
+    def get(self) -> _DisableCastNullQuery:
+        return self.parsed_query
+
+
+@pytest.mark.parametrize(
+    ('controller_cls', 'expected_query_value'),
+    [
+        (_DefaultCastNullController, None),
+        (_DisableCastNullController, 'null'),
+    ],
+)
+def test_default_cast_null(
+    dmr_rf: DMRRequestFactory,
+    controller_cls: Controller[PydanticSerializer],
+    expected_query_value: str | None,
+) -> None:
+    """Ensures that query casts 'null' to None or not."""
+    request = dmr_rf.get('/whatever/?query=null')
+    response = controller_cls.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'query': expected_query_value}
