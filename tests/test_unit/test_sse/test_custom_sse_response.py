@@ -51,7 +51,10 @@ async def _valid_events(
     yield SSEvent(-1)
 
 
-@validation(PydanticSerializer, sse_streaming_response_cls=_PositiveStreamingResponse)
+@validation(
+    PydanticSerializer,
+    sse_streaming_response_cls=_PositiveStreamingResponse,
+)
 async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
