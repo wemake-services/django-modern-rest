@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.renderers import Renderer
 
+_InputT = TypeVar('_InputT')
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponseBase)
 
 

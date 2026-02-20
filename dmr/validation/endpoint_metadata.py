@@ -662,16 +662,12 @@ class EndpointMetadataValidator:
         existing_responses = {
             response.status_code: response for response in all_responses
         }
-        for provider in self.metadata.response_spec_providers():
-            responses = provider.provide_response_specs(
-                self.metadata,
+        all_responses.extend(
+            self.metadata.collect_response_specs(
                 controller_cls,
                 existing_responses,
-            )
-            all_responses.extend(responses)
-            existing_responses.update({
-                response.status_code: response for response in responses
-            })
+            ),
+        )
         return all_responses
 
     def _validate_components(self) -> None:

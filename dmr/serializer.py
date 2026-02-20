@@ -167,8 +167,15 @@ class BaseSerializer:
         raise NotImplementedError
 
 
+class DeserializableResponse:
+    @abc.abstractmethod
+    def deserializable_model(self) -> Any: ...
+
+
 def deserialize_response(response: HttpResponseBase) -> Any:
     """Deserialize complex response subtypes."""
+    if isinstance(response, DeserializableResponse):
+        return response.deserializable_model()
     if isinstance(response, FileResponse):
         return FileBody()
     raise InternalServerError(

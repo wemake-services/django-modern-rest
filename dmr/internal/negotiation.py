@@ -86,3 +86,7 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
         key=lambda media: (media.specificity, media.quality),  # noqa: WPS617
         reverse=True,
     )
+
+
+def force_request_renderer(request: HttpRequest, renderer: 'Renderer') -> None:
+    request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
