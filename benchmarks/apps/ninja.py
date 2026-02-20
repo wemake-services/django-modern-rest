@@ -75,7 +75,7 @@ api = NinjaAPI()
 
 
 @api.post('/async/user/')
-async def async_post(  # noqa: RUF029
+async def async_post(
     request: HttpRequest,
     data: UserCreateModel,
     filters: Query[QueryModel],

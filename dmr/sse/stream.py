@@ -5,6 +5,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+from http import HTTPStatus
 from typing import (
     Any,
     ClassVar,
@@ -20,9 +21,9 @@ from typing_extensions import override
 from dmr.exceptions import ValidationError
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer, DeserializableResponse
-from dmr.sse.validation import validate_event_type
-from dmr.sse.metadata import SSEvent, SSEData
+from dmr.sse.metadata import SSEData, SSEvent
 from dmr.sse.renderer import SSERenderer
+from dmr.sse.validation import validate_event_type
 
 _EventPipeline: TypeAlias = Callable[
     ['SSEData', Any, type[BaseSerializer]],
@@ -46,7 +47,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         validate_event_type,
     )
 
-    def __init__(
+    def __init__(  # noqa: WPS211
         self,
         streaming_content: AsyncIterator[SSEData],
         serializer: type['BaseSerializer'],
@@ -66,6 +67,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             regular_renderer: Render python objects to text format.
             sse_renderer: Render events to bytes according to the SSE protocol.
             event_schema: Schema for all possible produced events.
+            headers: Headers to be set on the response.
             validate_events: Should all produced events be validated
                 against *event_schema*.
 
@@ -84,7 +86,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
                 'Connection': 'keep-alive',
             })
 
-        super().__init__(headers=headers, status=200)
+        super().__init__(headers=headers, status=HTTPStatus.OK)
         self._streaming_content = streaming_content
         self.serializer = serializer
         self.regular_renderer = regular_renderer
@@ -96,7 +98,8 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             self._event_pipeline = ()
 
     @override
-    def deserializable_model(self) -> Any:
+    def deserializable_content(self) -> Any:
+        """Empty body."""
         return b''
 
     @override
@@ -158,19 +161,15 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
     async def _events_pipeline(self) -> AsyncIterator[bytes]:
         async for event in self._streaming_content:
             try:
-                event = self._apply_pipeline(event)
+                for func in self._event_pipeline:
+                    event = func(
+                        event,
+                        self.event_schema,
+                        self.serializer,
+                    )
             except Exception as exc:
                 event = self.handle_event_error(event, exc)
             yield self._render_event(event)
-
-    def _apply_pipeline(self, event: SSEData) -> SSEData:
-        for func in self._event_pipeline:
-            event = func(
-                event,
-                self.event_schema,
-                self.serializer,
-            )
-        return event
 
     def _render_event(self, event: SSEData) -> bytes:
         return self.serializer.serialize(

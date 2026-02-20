@@ -17,12 +17,14 @@ from dmr.sse import (
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
-    validation,
+    sse,
 )
 from dmr.test import DMRAsyncRequestFactory
 
 if TYPE_CHECKING:
-    from tests.test_sse.conftest import GetStreamingContent
+    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
+        GetStreamingContent,
+    )
 
 
 async def _valid_events(
@@ -34,7 +36,7 @@ async def _valid_events(
     yield SSEvent(b'third', retry=1, id=10)
 
 
-@validation(PydanticSerializer)
+@sse(PydanticSerializer)
 async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
@@ -81,7 +83,7 @@ async def _simple_events(
     yield b'simple'
 
 
-@validation(
+@sse(
     PydanticSerializer,
     response_spec=ResponseSpec(
         SSEData,

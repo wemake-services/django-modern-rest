@@ -2,7 +2,7 @@ import dataclasses
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final, TypedDict
+from typing import TYPE_CHECKING, Final, TypeAlias, TypedDict
 
 import pydantic
 import pytest
@@ -17,22 +17,25 @@ from dmr.sse import (
     SSEData,
     SSEResponse,
     SSEStreamingResponse,
-    validation,
+    sse,
 )
 from dmr.test import DMRAsyncRequestFactory
 
 if TYPE_CHECKING:
-    from tests.test_sse.conftest import GetStreamingContent
+    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
+        GetStreamingContent,
+    )
 
 
-serializers: Final[list[type[BaseSerializer]]] = [
+_Serializes: TypeAlias = list[type[BaseSerializer]]
+serializers: Final[_Serializes] = [
     PydanticSerializer,
 ]
 
 try:
     from dmr.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
-    pass
+    pass  # noqa: WPS420
 else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
@@ -41,7 +44,8 @@ async def _empty_events(
     serializer: type[BaseSerializer],
     renderer: Renderer,
 ) -> AsyncIterator[SSEData]:
-    if False:  # This is needed to make `_empty_events` an async iterator
+    # # This is needed to make `_empty_events` an async iterator:
+    if False:  # noqa: WPS314
         yield b''  # type: ignore[unreachable]
 
 
@@ -66,7 +70,7 @@ async def test_sse_parses_all_components(
 ) -> None:
     """Ensures that sse can parse all components."""
 
-    @validation(
+    @sse(
         PydanticSerializer,
         path=Path[_PathModel],
         query=Query[_QueryModel],
@@ -83,7 +87,7 @@ async def test_sse_parses_all_components(
             dict[str, str],
         ],
     ) -> SSEResponse:
-        assert context.parsed_path == dict(user_id=1, stream_name='abc')
+        assert context.parsed_path == {'user_id': 1, 'stream_name': 'abc'}
         assert context.parsed_query == _QueryModel(filter='python')
         assert context.parsed_headers == _HeaderModel(whatever='yes')
         assert context.parsed_cookies == {'session_id': 'unique'}
@@ -119,7 +123,7 @@ async def test_sse_parsing_error(
 ) -> None:
     """Ensures that sse can parse all components."""
 
-    @validation(
+    @sse(
         serializer,
         path=Path[_PathModel],
     )

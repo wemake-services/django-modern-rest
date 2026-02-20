@@ -281,7 +281,8 @@ class EndpointMetadata:
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: dict[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
-        all_responses = []
+        """Collect unique responses for all possible response providers."""
+        all_responses: list[ResponseSpec] = []
         for provider in self.response_spec_providers():
             responses = provider.provide_response_specs(
                 self,

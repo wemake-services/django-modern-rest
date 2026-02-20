@@ -196,6 +196,7 @@ ignore = [
   "PLC0414", # do not raise on `as` re-exports
   "PLW2901", # allow to redefine iteration targets in for loops
   "TRY003",  # long exception messages from `tryceratops`
+  "RUF029",  # we decide `async` functions based on API, not `await` usage
   "RUF067",  # wps handles `__init__.py` logic better
 ]
 external = [ "WPS" ]

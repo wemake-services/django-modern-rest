@@ -14,12 +14,14 @@ from dmr.sse import (
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
-    validation,
+    sse,
 )
 from dmr.test import DMRAsyncRequestFactory
 
 if TYPE_CHECKING:
-    from tests.test_sse.conftest import GetStreamingContent
+    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
+        GetStreamingContent,
+    )
 
 
 def _positive_numbers(
@@ -51,7 +53,7 @@ async def _valid_events(
     yield SSEvent(-1)
 
 
-@validation(
+@sse(
     PydanticSerializer,
     sse_streaming_response_cls=_PositiveStreamingResponse,
 )

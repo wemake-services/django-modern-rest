@@ -14,7 +14,7 @@ from dmr.parsers import (
     _NoOpParser,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.renderers import Renderer
-from dmr.sse.metadata import SSEvent, SSEData
+from dmr.sse.metadata import SSEvent
 
 _DEFAULT_SEPARATOR: Final = b'\r\n'
 _LINE_BREAK_RE: Final = re.compile(rb'\r\n|\r|\n')

@@ -44,14 +44,30 @@ class SSEvent:
 
 
 SSEData: TypeAlias = int | bytes | SSEvent
+"""Types that we allow to yield from async events producer iterator."""
 
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
 class SSEResponse:
+    """
+    Future response representation.
+
+    Not a real response.
+    We need this type, because creating
+    :class:`dmr.sse.stream.SSEStreamingResponse` is quite complex.
+    We don't want users to have a complicated API.
+    So, instead: return this metadata class,
+    we will transform it to the stream later on.
+
+    Attributes:
+        streaming_content: Async iterator of server sent events.
+        headers: Headers to be set on the response object.
+    """
+
     streaming_content: AsyncIterator[SSEData]
-    cookies: Mapping[str, NewCookie] | None = None
     headers: Mapping[str, str] | None = None
+    cookies: Mapping[str, NewCookie] | None = None
 
 
 _PathT = TypeVar('_PathT', default=None)
@@ -60,7 +76,16 @@ _HeadersT = TypeVar('_HeadersT', default=None)
 _CookiesT = TypeVar('_CookiesT', default=None)
 
 
+@final
 class SSEContext(NamedTuple, Generic[_PathT, _QueryT, _HeadersT, _CookiesT]):
+    """
+    Parsed context for the SSE endpoint.
+
+    All properties always exist.
+    If some component parser is not passed, we provide ``None`` as a default.
+    All properties here have type vars that default to ``None`` as well.
+    """
+
     parsed_path: _PathT
     parsed_query: _QueryT
     parsed_headers: _HeadersT

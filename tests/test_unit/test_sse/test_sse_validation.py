@@ -1,12 +1,16 @@
 import dataclasses
+import json
 from collections.abc import AsyncIterator
-from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Final
+from http import HTTPMethod, HTTPStatus
+from typing import TYPE_CHECKING, Any, Final, TypeAlias
 
 import pytest
-from django.http import HttpRequest
+from dirty_equals import IsStr
+from django.http import HttpRequest, HttpResponse
+from inline_snapshot import snapshot
 
-from dmr import HeaderSpec, ResponseSpec
+from dmr import APIError, HeaderSpec, ResponseSpec
+from dmr.errors import ErrorModel, format_error
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
@@ -16,21 +20,25 @@ from dmr.sse import (
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
-    validation,
+    sse,
 )
 from dmr.test import DMRAsyncRequestFactory
 
 if TYPE_CHECKING:
-    from tests.test_sse.conftest import GetStreamingContent
+    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
+        GetStreamingContent,
+    )
 
-serializers: Final[list[type[BaseSerializer]]] = [
+
+_Serializers: TypeAlias = list[type[BaseSerializer]]
+serializers: Final[_Serializers] = [
     PydanticSerializer,
 ]
 
 try:
     from dmr.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
-    pass
+    pass  # noqa: WPS420
 else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
@@ -72,7 +80,7 @@ async def test_valid_sse(
 ) -> None:
     """Ensures that valid sse produces valid results."""
 
-    @validation(serializer)
+    @sse(serializer)
     async def _valid_sse(
         request: HttpRequest,
         renderer: Renderer,
@@ -154,7 +162,7 @@ async def test_wrong_event_type(
     ) -> AsyncIterator[SSEData]:
         yield event
 
-    @validation(serializer, **options)
+    @sse(serializer, **options)
     async def _wrong_type_sse(
         request: HttpRequest,
         renderer: Renderer,
@@ -264,7 +272,7 @@ async def test_main_response_validation_sse(
 ) -> None:
     """Ensures that response validation can fail."""
 
-    @validation(serializer, **options)
+    @sse(serializer, **options)
     async def _wrong_sse(
         request: HttpRequest,
         renderer: Renderer,
@@ -277,3 +285,129 @@ async def test_main_response_validation_sse(
     response = await dmr_async_rf.wrap(_wrong_sse.as_view()(request))
 
     assert response.status_code == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+@pytest.mark.parametrize('validate_responses', [True, False])
+async def test_sse_api_error(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+    validate_responses: bool,
+) -> None:
+    """Ensures that raising API errors is supported in SSE."""
+
+    @sse(
+        serializer,
+        validate_responses=validate_responses,
+        extra_responses=[
+            ResponseSpec(ErrorModel, status_code=HTTPStatus.CONFLICT),
+        ],
+    )
+    async def _valid_sse(
+        request: HttpRequest,
+        renderer: Renderer,
+        context: SSEContext,
+    ) -> SSEResponse:
+        raise APIError(
+            format_error('API Error'),
+            status_code=HTTPStatus.CONFLICT,
+        )
+
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_valid_sse.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CONFLICT, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'API Error'}],
+    })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_sse_api_error_validation(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that raising API errors is supported in SSE."""
+
+    @sse(serializer)
+    async def _valid_sse(
+        request: HttpRequest,
+        renderer: Renderer,
+        context: SSEContext,
+    ) -> SSEResponse:
+        raise APIError(
+            format_error('API Error'),
+            status_code=HTTPStatus.CONFLICT,
+        )
+
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_valid_sse.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Returned status code 409 is not specified '
+                    'in the list of allowed status codes: [200, 422, 406]'
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+@pytest.mark.parametrize(
+    'method',
+    [
+        HTTPMethod.POST,
+        HTTPMethod.PUT,
+        HTTPMethod.PATCH,
+        HTTPMethod.DELETE,
+        HTTPMethod.OPTIONS,
+        HTTPMethod.HEAD,
+        HTTPMethod.TRACE,
+        HTTPMethod.CONNECT,
+    ],
+)
+async def test_sse_wrong_method(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+    method: HTTPMethod,
+) -> None:
+    """Ensures that wrong methods are not supported."""
+
+    @sse(serializer)
+    async def _valid_sse(
+        request: HttpRequest,
+        renderer: Renderer,
+        context: SSEContext,
+    ) -> SSEResponse:
+        raise NotImplementedError
+
+    request = dmr_async_rf.generic(str(method), '/whatever/')
+
+    response = await dmr_async_rf.wrap(_valid_sse.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+    assert response.headers == {
+        'Content-Type': 'application/json',
+        'Allow': 'GET',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': IsStr(), 'type': 'not_allowed'}],
+    })

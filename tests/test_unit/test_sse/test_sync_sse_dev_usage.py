@@ -16,7 +16,7 @@ from dmr.sse import (
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
-    validation,
+    sse,
 )
 from dmr.test import DMRRequestFactory
 
@@ -28,7 +28,7 @@ async def _valid_events(
     yield SSEvent(b'event')
 
 
-@validation(PydanticSerializer)
+@sse(PydanticSerializer)
 async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
