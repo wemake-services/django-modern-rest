@@ -9,7 +9,7 @@ Standard: https://html.spec.whatwg.org/multipage/server-sent-events.html
   Why? Because SSE is a long-living connection by design.
   WSGI handlers have very limited amount of connections.
   Basically ``number_of_workers * number_of_threads``,
-  just a very small number of SSE clinets will completely
+  just a very small number of SSE clients will completely
   block all other work on the sever.
 
   Use ASGI for SSE endpoints.

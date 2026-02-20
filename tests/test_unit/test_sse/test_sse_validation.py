@@ -35,11 +35,13 @@ serializers: Final[_Serializers] = [
     PydanticSerializer,
 ]
 
+MsgspecSerializer: type[BaseSerializer] | None
 try:
     from dmr.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
-    pass  # noqa: WPS420
+    MsgspecSerializer = None
 else:  # pragma: no cover
+    assert MsgspecSerializer is not None
     serializers.append(MsgspecSerializer)
 
 
@@ -52,15 +54,24 @@ async def _valid_events(
     serializer: type[BaseSerializer],
     renderer: Renderer,
 ) -> AsyncIterator[SSEData]:
+    # When `msgspec` is missing, `@dataclass` is not supported:
     yield SSEvent(
         serializer.serialize(
-            _User(email='first@example.com'),
+            (
+                {'email': 'first@example.com'}
+                if MsgspecSerializer is None
+                else _User(email='first@example.com')
+            ),
             renderer=renderer,
         ),
     )
     yield SSEvent(
         serializer.serialize(
-            _User(email='second@example.com'),
+            (
+                {'email': 'second@example.com'}
+                if MsgspecSerializer is None
+                else _User(email='second@example.com')
+            ),
             renderer=renderer,
         ),
     )
