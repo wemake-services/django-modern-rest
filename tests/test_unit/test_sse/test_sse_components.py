@@ -2,11 +2,12 @@ import dataclasses
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import pydantic
 import pytest
 from django.http import HttpRequest, HttpResponse
+from typing_extensions import TypedDict
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
