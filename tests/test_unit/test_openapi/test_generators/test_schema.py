@@ -2,6 +2,7 @@ from types import NoneType
 from typing import Final
 
 import pytest
+from inline_snapshot import snapshot
 from pydantic import BaseModel, Field
 
 from dmr.openapi.config import OpenAPIConfig
@@ -147,3 +148,29 @@ def test_get_schema_name(generator: SchemaGenerator) -> None:
     """Ensure ``_get_schema_name`` returns a given schema name if one exists."""
     name = generator._get_schema_name(_NamedModel)
     assert name == _NamedModel.__dmr_schema_name__
+
+
+def test_handle_union_empty(generator: SchemaGenerator) -> None:
+    """Ensure ``_handle_union`` handles empty union args."""
+    schema = _handle_union(generator, ())
+    assert schema == snapshot(Schema(type=OpenAPIType.NULL))
+
+
+def test_handle_union_single_non_nullable(generator: SchemaGenerator) -> None:
+    """Ensure ``_handle_union`` handles single non-nullable type."""
+    schema = _handle_union(generator, (_TestModel,))
+    assert schema == snapshot(Reference(ref='#/components/schemas/_TestModel'))
+
+
+def test_handle_union_multiple_nullable(generator: SchemaGenerator) -> None:
+    """Ensure ``_handle_union`` handles multiple types with None."""
+    schema = _handle_union(generator, (int, str, NoneType))
+    assert schema == snapshot(
+        Schema(
+            one_of=[
+                Schema(type=OpenAPIType.INTEGER),
+                Schema(type=OpenAPIType.STRING),
+                Schema(type=OpenAPIType.NULL),
+            ],
+        ),
+    )

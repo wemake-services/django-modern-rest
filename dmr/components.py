@@ -259,6 +259,20 @@ class Query(ComponentParser, Generic[_QueryT]):
 
     We don't inference this value in any way, it is up to users to set.
     Inspecting annotations is hard and produce a lot of errors.
+
+    Additionally, users can customize whether the string literal ``'null'``
+    should be cast to Python's ``None``.
+    To do so, use ``__dmr_cast_null__`` optional attribute.
+    It defaults to ``True``.
+    If set to ``False``, ``'null'`` will be treated as a regular string.
+
+    .. code:: python
+
+        >>> class SearchQuery(pydantic.BaseModel):
+        ...     __dmr_cast_null__: ClassVar[bool] = False
+        ...
+        ...     query: str  # will be 'null' if ?query=null is sent
+
     """
 
     parsed_query: _QueryT
@@ -278,7 +292,16 @@ class Query(ComponentParser, Generic[_QueryT]):
             '__dmr_force_list__',
             frozenset(),
         )
-        return convert_multi_value_dict(blueprint.request.GET, force_list)
+        cast_null: bool = getattr(
+            field_model,
+            '__dmr_cast_null__',
+            True,
+        )
+        return convert_multi_value_dict(
+            blueprint.request.GET,
+            force_list,
+            cast_null=cast_null,
+        )
 
 
 class Body(ComponentParser, Generic[_BodyT]):

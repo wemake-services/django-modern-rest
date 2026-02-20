@@ -48,6 +48,8 @@ from dmr.exceptions import RequestSerializationError
 def convert_multi_value_dict(
     to_parse: 'MultiValueDict[str, Any]',
     force_list: frozenset[str],
+    *,
+    cast_null: bool,
 ) -> dict[str, Any]:
     """
     Convert multi value dictionary to a regular one.
@@ -57,16 +59,31 @@ def convert_multi_value_dict(
     into a regular :class:`dict`. To do that, we require explicit *force_list*
     parameter to return lists as dict values. Otherwise, single value is set.
 
+    Additionally, this function automatically converts the string literal
+    ``'null'`` into Python's ``None`` if *cast_null* is True.
+
     We use the last value that is sent via query,
     if there are multiple ones and only one is needed.
     """
     regular_dict: dict[str, Any] = {}
     for dict_key in to_parse:
         if dict_key in force_list:
-            regular_dict[dict_key] = to_parse.getlist(dict_key)
+            regular_dict[dict_key] = [
+                _replace_null_string(list_value, cast_null=cast_null)
+                for list_value in to_parse.getlist(dict_key)
+            ]
         else:
-            regular_dict[dict_key] = to_parse[dict_key]
+            regular_dict[dict_key] = _replace_null_string(
+                to_parse[dict_key],
+                cast_null=cast_null,
+            )
     return regular_dict
+
+
+def _replace_null_string(param_value: Any, *, cast_null: bool) -> Any:
+    if cast_null and param_value == 'null':
+        return None
+    return param_value
 
 
 def parse_as_post(request: HttpRequest) -> None:

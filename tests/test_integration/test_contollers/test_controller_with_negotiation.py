@@ -4,6 +4,7 @@ from typing import Final
 
 import pytest
 from django.urls import reverse
+from inline_snapshot import snapshot
 
 from dmr.negotiation import ContentType
 from dmr.test import DMRClient
@@ -78,3 +79,27 @@ def test_negotiation_json_to_xml(
     response_content = response.content.decode('utf-8')
     assert '<key>value</key>' in response_content
     assert response['Content-Type'] == ContentType.xml
+
+
+@pytest.mark.parametrize('method', [HTTPMethod.POST, HTTPMethod.PUT])
+def test_negotiation_invalid_xml(
+    dmr_client: DMRClient,
+    *,
+    method: HTTPMethod,
+) -> None:
+    """Test sending invalid XML."""
+    response = dmr_client.generic(
+        str(method),
+        _URL,
+        data='<invalid-xml',
+        headers={
+            'Content-Type': str(ContentType.xml),
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == snapshot({
+        'detail': [
+            {'msg': 'unclosed token: line 1, column 0', 'type': 'value_error'},
+        ],
+    })

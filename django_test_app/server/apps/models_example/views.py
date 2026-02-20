@@ -1,8 +1,9 @@
 from http import HTTPStatus
 from typing import final
 
-from dmr import APIError, Body, Controller
-from dmr.errors import ErrorType
+from dmr import APIError, Body, Controller, modify
+from dmr.errors import ErrorModel, ErrorType
+from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.models_example.serializers import (
     UserCreateSchema,
@@ -19,6 +20,14 @@ class UserCreateController(
     Body[UserCreateSchema],
     Controller[PydanticSerializer],
 ):
+    @modify(
+        extra_responses=[
+            ResponseSpec(
+                ErrorModel,
+                status_code=HTTPStatus.CONFLICT,
+            ),
+        ],
+    )
     def post(self) -> UserSchema:
         try:
             user = user_create_service(self.parsed_body)
@@ -28,7 +37,7 @@ class UserCreateController(
                     'User email must be unique',
                     error_type=ErrorType.value_error,
                 ),
-                status_code=HTTPStatus.BAD_REQUEST,
+                status_code=HTTPStatus.CONFLICT,
             ) from None
         return UserSchema(
             id=user.pk,
