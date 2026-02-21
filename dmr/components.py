@@ -262,16 +262,15 @@ class Query(ComponentParser, Generic[_QueryT]):
 
     Additionally, users can customize whether the string literal ``'null'``
     should be cast to Python's ``None``.
-    To do so, use ``__dmr_cast_null__`` optional attribute.
-    It defaults to ``True``.
-    If set to ``False``, ``'null'`` will be treated as a regular string.
+    To do so, set ``__dmr_cast_null__`` attribute to ``True``.
+    It defaults to ``False``.
 
     .. code:: python
 
         >>> class SearchQuery(pydantic.BaseModel):
-        ...     __dmr_cast_null__: ClassVar[bool] = False
+        ...     __dmr_cast_null__: ClassVar[bool] = True
         ...
-        ...     query: str  # will be 'null' if ?query=null is sent
+        ...     query: str | None  # will be `None` if `?query=null` is sent
 
     """
 
@@ -295,11 +294,11 @@ class Query(ComponentParser, Generic[_QueryT]):
         cast_null: bool = getattr(
             field_model,
             '__dmr_cast_null__',
-            True,
+            False,
         )
         return convert_multi_value_dict(
             blueprint.request.GET,
-            force_list,
+            force_list=force_list,
             cast_null=cast_null,
         )
 

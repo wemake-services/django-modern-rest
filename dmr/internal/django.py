@@ -47,8 +47,8 @@ from dmr.exceptions import RequestSerializationError
 
 def convert_multi_value_dict(
     to_parse: 'MultiValueDict[str, Any]',
-    force_list: frozenset[str],
     *,
+    force_list: frozenset[str],
     cast_null: bool,
 ) -> dict[str, Any]:
     """
