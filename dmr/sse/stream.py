@@ -21,6 +21,7 @@ from typing_extensions import override
 from dmr.exceptions import ValidationError
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer, DeserializableResponse
+from dmr.sse.exceptions import SSECloseConnectionError
 from dmr.sse.metadata import SSEData, SSEvent
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.validation import validate_event_type
@@ -112,7 +113,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         .. danger::
 
             Do not use this in production!
-            We even added a special error to cache this.
+            We even added a special error to catch this.
             In production you must use ASGI servers like ``uvicorn`` with SSE.
 
         """
@@ -159,20 +160,24 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         raise  # noqa: PLE0704
 
     async def _events_pipeline(self) -> AsyncIterator[bytes]:
-        async for event in self._streaming_content:
-            try:
-                for func in self._event_pipeline:
-                    event = func(
-                        event,
-                        self.event_schema,
-                        self.serializer,
-                    )
-            except Exception as exc:
-                event = self.handle_event_error(event, exc)
-            yield self._render_event(event)
+        try:
+            async for event in self._streaming_content:
+                event = self._apply_event_pipeline(event)
+                yield self.serializer.serialize(
+                    event,
+                    renderer=self.sse_renderer,
+                )
+        except SSECloseConnectionError:
+            self.close()
 
-    def _render_event(self, event: SSEData) -> bytes:
-        return self.serializer.serialize(
-            event,
-            renderer=self.sse_renderer,
-        )
+    def _apply_event_pipeline(self, event: SSEData) -> SSEData:
+        try:
+            for func in self._event_pipeline:
+                event = func(
+                    event,
+                    self.event_schema,
+                    self.serializer,
+                )
+        except Exception as exc:
+            event = self.handle_event_error(event, exc)
+        return event

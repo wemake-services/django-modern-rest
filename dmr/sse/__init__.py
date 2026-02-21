@@ -1,4 +1,7 @@
 from dmr.sse.builder import sse as sse
+from dmr.sse.exceptions import (
+    SSECloseConnectionError as SSECloseConnectionError,
+)
 from dmr.sse.metadata import SSEContext as SSEContext
 from dmr.sse.metadata import SSEData as SSEData
 from dmr.sse.metadata import SSEResponse as SSEResponse

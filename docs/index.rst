@@ -178,7 +178,6 @@ Here are our amazing people who made this project possible.
   pages/reusable-code.rst
   pages/openapi.rst
   pages/integrations.rst
-  pages/micro-framework.rst
   pages/sse.rst
   pages/testing.rst
 
@@ -191,6 +190,15 @@ Here are our amazing people who made this project possible.
   pages/auth/http-basic.rst
   pages/auth/django-session.rst
   pages/auth/jwt.rst
+
+
+.. toctree::
+  :caption: Project structure
+  :hidden:
+
+  pages/structure/micro-framework.rst
+  pages/structure/sync-and-async.rst
+
 
 .. toctree::
   :caption: Deep Dive

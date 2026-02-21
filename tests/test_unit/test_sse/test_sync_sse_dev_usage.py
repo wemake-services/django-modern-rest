@@ -9,8 +9,8 @@ from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer
 from dmr.sse import (
+    SSECloseConnectionError,
     SSEContext,
     SSEData,
     SSEResponse,
@@ -21,10 +21,7 @@ from dmr.sse import (
 from dmr.test import DMRRequestFactory
 
 
-async def _valid_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
+async def _valid_events() -> AsyncIterator[SSEData]:
     yield SSEvent(b'event')
 
 
@@ -34,7 +31,7 @@ async def _valid_sse(
     renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse:
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+    return SSEResponse(_valid_events())
 
 
 def _get_sync_content(response: SSEStreamingResponse) -> bytes:
@@ -93,3 +90,40 @@ def test_sync_sse_prod(
         match='Do not use wsgi with SSE in production',
     ):
         _get_sync_content(response)
+
+
+async def _events_with_close() -> AsyncIterator[SSEData]:
+    yield SSEvent(b'event')
+    raise SSECloseConnectionError
+
+
+@sse(PydanticSerializer)
+async def _sse_with_close(
+    request: HttpRequest,
+    renderer: Renderer,
+    context: SSEContext,
+) -> SSEResponse:
+    return SSEResponse(_events_with_close())
+
+
+def test_sync_sse_dev_with_close(
+    dmr_rf: DMRRequestFactory,
+    settings: LazySettings,
+) -> None:
+    """Ensures that it is possible to iterate over response in sync mode."""
+    settings.DEBUG = True
+    request = dmr_rf.get('/whatever/')
+
+    response: SSEStreamingResponse = async_to_sync(
+        _sse_with_close.as_view(),  # type: ignore[arg-type]
+    )(request)
+
+    assert isinstance(response, SSEStreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers == {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/event-stream',
+        'X-Accel-Buffering': 'no',
+    }
+    assert _get_sync_content(response) == (b'data: event\r\n\r\n')

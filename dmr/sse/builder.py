@@ -165,6 +165,8 @@ def sse(  # noqa: WPS211, WPS234
         validate_responses: Optional flag to disable strict response validation.
             See :ref:`response_validation` for more info.
         validate_events: Optional flag to disable strict events validation.
+            We recommend keeping event and response validation on
+            in development and turn it off in production for better performance.
         regular_renderer: Optional instance of :class:`~dmr.renderers.Renderer`
             to render errors, default event bodies, etc.
         sse_renderer: Optional instance of

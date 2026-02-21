@@ -12,16 +12,96 @@ Standard: https://html.spec.whatwg.org/multipage/server-sent-events.html
   just a very small number of SSE clients will completely
   block all other work on the sever.
 
-  Use ASGI for SSE endpoints.
+  **Use ASGI** for SSE endpoints.
   This will give you the best of two worlds: simple sync Django
-  for major code base and some async endpoints where you need them.
+  for major part of your code base and some async endpoints where you need them.
 
   However, we allow running SSE with WSGI
   if ``settings.DEBUG is True`` for local development.
 
 
-Usage Guide
------------
+Using SSE
+---------
+
+When to use SSE? When you have a single directional stream of events.
+These events are sent over a single HTTP connection.
+
+We utilize :class:`typing.AsyncIterator` protocol to model event sources.
+
+.. literalinclude:: /examples/sse/usage.py
+   :language: python
+   :linenos:
+
+
+Using components
+----------------
+
+:func:`~dmr.sse.builder.sse` supports working with several component types:
+
+- :class:`~dmr.components.Path`
+- :class:`~dmr.components.Query`
+- :class:`~dmr.components.Headers`
+- :class:`~dmr.components.Cookies`
+
+For example, if you need to parse ``Last-Event-ID`` header:
+
+.. literalinclude:: /examples/sse/components.py
+   :language: python
+   :linenos:
+
+Use :class:`~dmr.sse.metadata.SSEContext` to get parsed
+data inside your callback function.
+It is also fully annotated with 4 type variables,
+which of them have ``None`` as a default value (matches runtime behavior).
+
+
+Handling errors
+---------------
+
+Any errors which happens in event producers are not handled by default.
+Because these errors happen inside the ASGI handler, long after
+we can possibly handle them with regular :doc:`error-handling`.
+
+So, any errors that need to be handled, are up to users to handle:
+
+.. literalinclude:: /examples/sse/error_handling.py
+   :language: python
+   :linenos:
+
+If you need to imediatelly close the response stream, you can raise
+:exc:`~dmr.sse.exceptions.SSECloseConnectionError`
+nside the events producing async iterator.
+
+
+Validation
+----------
+
+All our regular :ref:`response validation rules <response_validation>`
+are applied to the SSE responses as well.
+We strictly validate that all headers / cookies / etc
+are listed in the metadata.
+
+It can be disabled by:
+
+- Passing ``validate_responses=False`` parameter
+- Or setting :data:`dmr.settings.Settings.validate_responses`
+  to ``False`` in the settings file
+
+.. literalinclude:: /examples/sse/response_validation.py
+   :language: python
+   :linenos:
+
+Users can also disable event structure validation.
+It defaults to the passed ``validate_responses`` value.
+
+.. literalinclude:: /examples/sse/event_validation.py
+   :language: python
+   :linenos:
+
+However, it is recommended to use event validation in development
+and to disable it in production.
+You can do so by setting :data:`~dmr.settings.Settings.validate_responses`
+to ``False`` in production. It will also disable ``validate_events`` as well.
 
 
 API Reference
@@ -63,3 +143,8 @@ Validation
 ~~~~~~~~~~
 
 .. autofunction:: dmr.sse.validation.validate_event_type
+
+Exceptions
+~~~~~~~~~~
+
+.. autoexception:: dmr.sse.exceptions.SSECloseConnectionError

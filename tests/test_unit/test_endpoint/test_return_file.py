@@ -81,7 +81,7 @@ class _FileAsyncController(Controller[PydanticSerializer]):
     async def get(self) -> FileResponse:
         return FileResponse(
             # We don't care that it is sync:
-            pathlib.Path(_FILEPATH).open(mode='rb'),
+            pathlib.Path(_FILEPATH).open(mode='rb'),  # noqa: ASYNC230
             filename='receipt.txt',
             as_attachment=True,
             content_type='text/plain',
