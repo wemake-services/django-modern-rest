@@ -126,7 +126,7 @@ class _DefaultCastNullQuery(pydantic.BaseModel):
 
 @final
 class _EnableCastNullQuery(pydantic.BaseModel):
-    __dmr_cast_null__: ClassVar[bool] = True
+    __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('query',))
     query: str | None
 
 

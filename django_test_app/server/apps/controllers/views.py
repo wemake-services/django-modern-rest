@@ -26,9 +26,9 @@ _CallableAny: TypeAlias = Callable[..., Any]
 
 @final
 class _QueryData(pydantic.BaseModel):
-    __dmr_cast_null__: ClassVar[bool] = True
+    __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('start_from',))
 
-    query: str | None = pydantic.Field(alias='q')
+    query: str = pydantic.Field(alias='q')
     start_from: dt.datetime | None = None
 
 
