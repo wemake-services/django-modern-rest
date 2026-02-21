@@ -10,8 +10,8 @@ from dmr.headers import HeaderSpec
 from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer
 from dmr.sse import (
+    SSECloseConnectionError,
     SSEContext,
     SSEData,
     SSEResponse,
@@ -27,10 +27,7 @@ if TYPE_CHECKING:
     )
 
 
-async def _valid_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
+async def _valid_events() -> AsyncIterator[SSEData]:
     yield SSEvent(1, event='first', id=100, retry=5, comment='multi\nline\n')
     yield SSEvent(b'second', event=None, retry=None)
     yield SSEvent(b'third', retry=1, id=10)
@@ -42,7 +39,7 @@ async def _valid_sse(
     renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse:
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+    return SSEResponse(_valid_events())
 
 
 @pytest.mark.asyncio
@@ -76,10 +73,7 @@ async def test_all_sse_events_props(
     )
 
 
-async def _simple_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
+async def _simple_events() -> AsyncIterator[SSEData]:
     yield b'simple'
 
 
@@ -105,7 +99,7 @@ async def _sse_with_headers_and_cookies(
     context: SSEContext,
 ) -> SSEResponse:
     return SSEResponse(
-        _simple_events(PydanticSerializer, renderer),
+        _simple_events(),
         headers={'X-Test': 'secret'},
         cookies={'session_id': NewCookie(value='cook', path='/sess')},
     )
@@ -137,3 +131,35 @@ async def test_sse_with_headers_and_cookies(
         'Set-Cookie: session_id=cook; Path=/sess; SameSite=lax'
     )
     assert await get_streaming_content(response) == b'data: simple\r\n\r\n'
+
+
+async def _events_with_close() -> AsyncIterator[SSEData]:
+    yield SSEvent(1, event='first')
+    raise SSECloseConnectionError
+
+
+@sse(PydanticSerializer)
+async def _sse_with_close(
+    request: HttpRequest,
+    renderer: Renderer,
+    context: SSEContext,
+) -> SSEResponse:
+    return SSEResponse(_events_with_close())
+
+
+@pytest.mark.asyncio
+async def test_sse_close_error(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    get_streaming_content: 'GetStreamingContent',
+) -> None:
+    """Ensures that valid sse can raise close error."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_sse_with_close.as_view()(request))
+
+    assert isinstance(response, SSEStreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert await get_streaming_content(response) == (
+        b'event: first\r\ndata: 1\r\n\r\n'
+    )

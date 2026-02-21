@@ -138,6 +138,7 @@ docstring-code-format = true
 [tool.ruff.lint]
 select = [
   "A",    # flake8-builtins
+  "ASYNC",
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
   "C90",  # maccabe

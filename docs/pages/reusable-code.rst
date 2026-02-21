@@ -111,3 +111,21 @@ and return type validation.
   the same way for concrete controllers.
 
   We infer the passed values during import time and use real types.
+
+
+Building controllers
+--------------------
+
+We support buildings controller types in import time
+for the deepest level of customization and boilerplate reduction.
+
+Basically, the idea is simple: you create a controller inside a function,
+then use it as a regular controller.
+
+This is how our :func:`dmr.sse.builder.sse` function works.
+Take a look at its source code, if you want an example.
+
+However, this feature should be the last resort:
+we provide enough flexibility for the common use-cases,
+but if you are building something completely different,
+like a SSE / WebSocket handlers, you might need this level.
