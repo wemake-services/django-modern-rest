@@ -1,7 +1,6 @@
 from django.urls import include, path
 
-from dmr.errors import build_404_handler
-from dmr.routing import Router
+from dmr.routing import Router, build_404_handler
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls

@@ -2,7 +2,6 @@ import enum
 import inspect
 from collections.abc import Awaitable, Callable
 from functools import wraps
-from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,8 +12,7 @@ from typing import (
     overload,
 )
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.views.defaults import page_not_found
+from django.http import HttpResponse
 from typing_extensions import TypedDict
 
 from dmr.exceptions import (
@@ -308,37 +306,3 @@ def global_error_handler(
             status_code=exc.status_code,
         )
     raise  # noqa: PLE0704
-
-
-# We mimic django's name here:
-def build_404_handler(  # noqa: WPS114
-    prefix: str,
-    /,
-    *prefixes: str,
-) -> Callable[[HttpRequest, Exception], HttpResponse]:
-    """
-    Create a 404 handler that returns a JSON response.
-
-    All prefixes are normalized to start with a leading slash. If the
-    request path matches any of them, a JSON 404 response is returned.
-    Otherwise, Django's default ``page_not_found`` handler is used.
-    """
-    combined = (prefix, *prefixes)
-    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
-
-    def factory(
-        request: HttpRequest,
-        exception: Exception,
-    ) -> HttpResponse:
-        if request.path.startswith(all_prefixes):
-            # TODO: support content negotiation here:
-            return JsonResponse(
-                format_error(
-                    'Page not found',
-                    error_type=ErrorType.not_found,
-                ),
-                status=HTTPStatus.NOT_FOUND,
-            )
-        return page_not_found(request, exception)
-
-    return factory

@@ -1,5 +1,6 @@
 import types
 from collections.abc import Callable, Coroutine, Sequence
+from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -9,22 +10,31 @@ from typing import (
     overload,
 )
 
-from django.http import HttpResponseBase
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBase,
+    JsonResponse,
+)
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
+from django.views.defaults import page_not_found
 from typing_extensions import override
+
+from dmr.errors import ErrorType, format_error
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
     from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.serializer import BaseSerializer
 
-_SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 _BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
 _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
 _AnyPattern: TypeAlias = URLPattern | URLResolver
+
+_SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
 
 class Router:
@@ -35,6 +45,41 @@ class Router:
     def __init__(self, urls: Sequence[_AnyPattern]) -> None:
         """Just stores the passed routes."""
         self.urls = urls
+
+
+# We mimic django's name here:
+def build_404_handler(  # noqa: WPS114
+    prefix: str,
+    /,
+    *prefixes: str,
+) -> Callable[[HttpRequest, Exception], HttpResponse]:
+    """
+    Create a 404 handler that returns a JSON response.
+
+    All prefixes are normalized to start with a leading slash. If the
+    request path matches any of them, a JSON 404 response is returned.
+    Otherwise, Django's default ``page_not_found`` handler is used.
+    """
+    combined = (prefix, *prefixes)
+    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
+
+    def factory(
+        request: HttpRequest,
+        exception: Exception,
+    ) -> HttpResponse:
+        if request.path.startswith(all_prefixes):
+            # TODO: support content negotiation here:
+            # TODO: replace `JsonResponse` with a normal serializer call
+            return JsonResponse(
+                format_error(
+                    'Page not found',
+                    error_type=ErrorType.not_found,
+                ),
+                status=HTTPStatus.NOT_FOUND,
+            )
+        return page_not_found(request, exception)
+
+    return factory
 
 
 def compose_blueprints(
@@ -80,7 +125,7 @@ def compose_blueprints(
     )
 
 
-def _body_builder(
+def _body_builder(  # :)
     blueprints: list['_BlueprintCls[_SerializerT]'],
 ) -> Callable[[dict[str, Any]], object]:
     def factory(ns: dict[str, Any]) -> object:

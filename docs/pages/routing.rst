@@ -69,6 +69,33 @@ in the response's ``Allow`` header.
   won't have a mix of sync and async endpoints.
 
 
+Handling 404 errors
+-------------------
+
+By default, Django returns HTML 404 pages.
+This is not what we want for API endpoints.
+Instead, we want to return API responses with proper error structure.
+
+To achieve this, you can use
+:func:`~dmr.routing.build_404_handler` helper.
+It will create a handler that returns API responses for specific path prefixes,
+and falls back to Django's default handler for everything else.
+
+Here is how you can use it in your root ``urls.py``:
+
+.. code-block:: python
+  :caption: urls.py
+
+  >>> from dmr.routing import build_404_handler
+
+  >>> # ... your urlpatterns ...
+
+  >>> handler404 = build_404_handler('api/')
+
+
+.. autofunction:: dmr.routing.build_404_handler
+
+
 Optimized URL Routing
 ---------------------
 
