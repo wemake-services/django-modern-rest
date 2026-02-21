@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, TypeAlias, final
+from typing import Any, ClassVar, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse
@@ -26,6 +26,8 @@ _CallableAny: TypeAlias = Callable[..., Any]
 
 @final
 class _QueryData(pydantic.BaseModel):
+    __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('start_from',))
+
     query: str = pydantic.Field(alias='q')
     start_from: dt.datetime | None = None
 

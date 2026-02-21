@@ -211,37 +211,12 @@ docs about how to use different error models
 for different content types.
 
 
-Handling 404 errors
--------------------
-
-By default, Django returns HTML 404 pages.
-This is not what we want for API endpoints.
-Instead, we want to return JSON responses with proper error structure.
-
-To achieve this, you can use
-:func:`~dmr.errors.build_404_handler` helper.
-It will create a handler that returns JSON for specific path prefixes,
-and falls back to Django's default handler for everything else.
-
-Here is how you can use it in your root ``urls.py``:
-
-.. code-block:: python
-
-  from dmr.errors import build_404_handler
-
-  # ... your urlpatterns ...
-
-  handler404 = build_404_handler('api/')
-
-
 API Reference
 -------------
 
 .. autofunction:: dmr.errors.global_error_handler
 
 .. autofunction:: dmr.errors.wrap_handler
-
-.. autofunction:: dmr.errors.build_404_handler
 
 .. autoclass:: dmr.errors.ErrorType
   :members:

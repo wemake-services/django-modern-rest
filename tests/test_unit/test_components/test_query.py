@@ -121,13 +121,13 @@ def test_trim_query(
 
 @final
 class _DefaultCastNullQuery(pydantic.BaseModel):
-    query: str | None
+    query: str
 
 
 @final
-class _DisableCastNullQuery(pydantic.BaseModel):
-    __dmr_cast_null__: ClassVar[bool] = False
-    query: str
+class _EnableCastNullQuery(pydantic.BaseModel):
+    __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('query',))
+    query: str | None
 
 
 @final
@@ -140,23 +140,24 @@ class _DefaultCastNullController(
 
 
 @final
-class _DisableCastNullController(
+class _EnableCastNullController(
     Controller[PydanticSerializer],
-    Query[_DisableCastNullQuery],
+    Query[_EnableCastNullQuery],
 ):
-    def get(self) -> _DisableCastNullQuery:
+    def get(self) -> _EnableCastNullQuery:
         return self.parsed_query
 
 
 @pytest.mark.parametrize(
     ('controller_cls', 'expected_query_value'),
     [
-        (_DefaultCastNullController, None),
-        (_DisableCastNullController, 'null'),
+        (_DefaultCastNullController, 'null'),
+        (_EnableCastNullController, None),
     ],
 )
 def test_default_cast_null(
     dmr_rf: DMRRequestFactory,
+    *,
     controller_cls: Controller[PydanticSerializer],
     expected_query_value: str | None,
 ) -> None:

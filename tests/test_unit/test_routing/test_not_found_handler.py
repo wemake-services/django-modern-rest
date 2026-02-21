@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import path
 from inline_snapshot import snapshot
 
-from dmr.errors import build_404_handler
+from dmr.routing import build_404_handler
 from dmr.test import DMRClient
 
 
