@@ -43,6 +43,7 @@ classifiers = [
 ]
 
 packages = [
+  { include = "dmr" },
   { include = "dmr_pytest.py" }
 ]
 
