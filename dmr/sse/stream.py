@@ -133,7 +133,9 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
                     while True:  # noqa: WPS457
                         yield runner.run(anext(iterator))  # type: ignore[arg-type]  # noqa: WPS220
                 except StopAsyncIteration:
-                    runner.close()
+                    pass  # noqa: WPS420
+
+            runner.close()  # noqa: WPS441
 
         return factory()
 
