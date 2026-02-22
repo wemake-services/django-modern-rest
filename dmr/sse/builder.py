@@ -78,7 +78,7 @@ def sse(  # noqa: WPS211, WPS234
         SSEStreamingResponse
     ] = SSEStreamingResponse,
     metadata_cls: type[EndpointMetadata] = _SSEMetadata,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    auth: Sequence[AsyncAuth] | None = None,
 ) -> Callable[
     [
         Callable[
@@ -179,8 +179,6 @@ def sse(  # noqa: WPS211, WPS234
         metadata_cls: Optional :class:`~dmr.metadata.EndpointMetadata` subtype
             to be used to populate ``GET`` endpoint metadata.
         auth: Sequence of auth instances to be used for this sse controller.
-            Sync controllers must use instances
-            of :class:`dmr.security.SyncAuth`.
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this sse controller.
