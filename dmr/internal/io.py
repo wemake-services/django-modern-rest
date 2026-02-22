@@ -1,3 +1,6 @@
+import asyncio
+from collections.abc import AsyncIterator, Iterator
+from contextlib import closing
 from typing import TYPE_CHECKING, TypeVar
 
 _ItemT = TypeVar('_ItemT')
@@ -19,3 +22,19 @@ else:
         require coroutine return types.
         """
         return wrapped
+
+
+def aiter_to_iter(aiterator: AsyncIterator[_ItemT]) -> Iterator[_ItemT]:
+    """
+    Convert async iterator to a sync one.
+
+    This implementation has a lot of potential limitations.
+    And should not be used anywhere.
+    We use it for ``runserver`` integration with SSE.
+    """
+    with closing(asyncio.new_event_loop()) as loop:
+        while True:
+            try:
+                yield loop.run_until_complete(anext(aiterator))
+            except StopAsyncIteration:
+                break

@@ -6,19 +6,14 @@ from collections.abc import (
     Sequence,
 )
 from http import HTTPStatus
-from typing import (
-    Any,
-    ClassVar,
-    Final,
-    TypeAlias,
-)
+from typing import Any, ClassVar, Final, TypeAlias
 
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
 
 from dmr.exceptions import ValidationError
+from dmr.internal.io import aiter_to_iter
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer, DeserializableResponse
 from dmr.sse.exceptions import SSECloseConnectionError
@@ -94,9 +89,9 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         self.sse_renderer = sse_renderer
         self.event_schema = event_schema
         if validate_events:
-            self._event_pipeline = self.validation_pipeline
+            self._pipeline = self.validation_pipeline
         else:
-            self._event_pipeline = ()
+            self._pipeline = ()
 
     @override
     def deserializable_content(self) -> Any:
@@ -116,15 +111,15 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             We even added a special error to catch this.
             In production you must use ASGI servers like ``uvicorn`` with SSE.
 
+        This implementation has a lot of limitations.
+        Be careful even in development.
+
         """
         # NOTE: DO NOT USE IN PRODUCTION
         if not settings.DEBUG:
-            raise RuntimeError('Do not use wsgi with SSE in production')
+            raise RuntimeError('Do not use WSGI with SSE in production')
 
-        async def factory() -> list[bytes]:
-            return [chunk async for chunk in self._events_pipeline()]
-
-        return iter(async_to_sync(factory)())
+        return aiter_to_iter(self._events_pipeline())
 
     def __aiter__(self) -> AsyncIterator[bytes]:
         """
@@ -172,7 +167,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
 
     def _apply_event_pipeline(self, event: SSEData) -> SSEData:
         try:
-            for func in self._event_pipeline:
+            for func in self._pipeline:
                 event = func(
                     event,
                     self.event_schema,

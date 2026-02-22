@@ -1,3 +1,4 @@
+import asyncio
 import io
 from collections.abc import AsyncIterator
 from http import HTTPStatus
@@ -23,6 +24,10 @@ from dmr.test import DMRRequestFactory
 
 async def _valid_events() -> AsyncIterator[SSEData]:
     yield SSEvent(b'event')
+    await asyncio.sleep(0.1)  # simulate work
+    yield b'second'
+    await asyncio.sleep(0.1)
+    yield 3
 
 
 @sse(PydanticSerializer)
@@ -55,13 +60,17 @@ def test_sync_sse_dev(
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
+    assert not response.closed
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
         'Cache-Control': 'no-cache',
         'Content-Type': 'text/event-stream',
         'X-Accel-Buffering': 'no',
     }
-    assert _get_sync_content(response) == (b'data: event\r\n\r\n')
+    assert _get_sync_content(response) == (
+        b'data: event\r\n\r\ndata: second\r\n\r\ndata: 3\r\n\r\n'
+    )
+    assert not response.closed
 
 
 def test_sync_sse_prod(
@@ -87,13 +96,14 @@ def test_sync_sse_prod(
     }
     with pytest.raises(
         RuntimeError,
-        match='Do not use wsgi with SSE in production',
+        match='Do not use WSGI with SSE in production',
     ):
         _get_sync_content(response)
 
 
 async def _events_with_close() -> AsyncIterator[SSEData]:
     yield SSEvent(b'event')
+    yield SSEvent(b'second')
     raise SSECloseConnectionError
 
 
@@ -120,10 +130,14 @@ def test_sync_sse_dev_with_close(
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
+    assert not response.closed
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
         'Cache-Control': 'no-cache',
         'Content-Type': 'text/event-stream',
         'X-Accel-Buffering': 'no',
     }
-    assert _get_sync_content(response) == (b'data: event\r\n\r\n')
+    assert _get_sync_content(response) == (
+        b'data: event\r\n\r\ndata: second\r\n\r\n'
+    )
+    assert response.closed
