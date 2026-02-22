@@ -178,10 +178,10 @@ def sse(  # noqa: WPS211, WPS234
             to actually return ASGI compatible streaming response.
         metadata_cls: Optional :class:`~dmr.metadata.EndpointMetadata` subtype
             to be used to populate ``GET`` endpoint metadata.
-        auth: Sequence of auth instances to be used for this sse controller.
-            Async controllers must use instances
-            of :class:`dmr.security.AsyncAuth`.
-            Set it to ``None`` to disable auth of this sse controller.
+        auth: Sequence of auth instances to be used for this SSE controller.
+            SSE endpoints must use instances
+            of :class:`~dmr.security.AsyncAuth`.
+            Set it to ``None`` to disable auth for this SSE controller.
 
     .. important::
 
