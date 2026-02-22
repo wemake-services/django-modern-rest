@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import (
     AsyncIterator,
     Callable,
@@ -7,18 +6,14 @@ from collections.abc import (
     Sequence,
 )
 from http import HTTPStatus
-from typing import (
-    Any,
-    ClassVar,
-    Final,
-    TypeAlias,
-)
+from typing import Any, ClassVar, Final, TypeAlias
 
 from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
 
 from dmr.exceptions import ValidationError
+from dmr.internal.io import aiter_to_iter
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer, DeserializableResponse
 from dmr.sse.exceptions import SSECloseConnectionError
@@ -117,27 +112,14 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             In production you must use ASGI servers like ``uvicorn`` with SSE.
 
         This implementation has a lot of limitations.
-        Be careful even in production.
+        Be careful even in development.
 
         """
         # NOTE: DO NOT USE IN PRODUCTION
         if not settings.DEBUG:
-            raise RuntimeError('Do not use wsgi with SSE in production')
+            raise RuntimeError('Do not use WSGI with SSE in production')
 
-        # This implementation has a lot of potential limitations:
-        def factory() -> Iterator[bytes]:
-            iterator = self._events_pipeline()
-
-            with asyncio.Runner() as runner:
-                try:
-                    while True:  # noqa: WPS457
-                        yield runner.run(anext(iterator))  # type: ignore[arg-type]  # noqa: WPS220
-                except StopAsyncIteration:
-                    pass  # noqa: WPS420
-
-            runner.close()  # noqa: WPS441
-
-        return factory()
+        return aiter_to_iter(self._events_pipeline())
 
     def __aiter__(self) -> AsyncIterator[bytes]:
         """

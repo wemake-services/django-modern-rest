@@ -96,7 +96,7 @@ def test_sync_sse_prod(
     }
     with pytest.raises(
         RuntimeError,
-        match='Do not use wsgi with SSE in production',
+        match='Do not use WSGI with SSE in production',
     ):
         _get_sync_content(response)
 
