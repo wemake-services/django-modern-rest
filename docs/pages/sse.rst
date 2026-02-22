@@ -10,14 +10,16 @@ Standard: https://html.spec.whatwg.org/multipage/server-sent-events.html
   WSGI handlers have very limited amount of connections.
   Basically ``number_of_workers * number_of_threads``,
   just a very small number of SSE clients will completely
-  block all other work on the sever.
+  block all other work on the server.
 
   **Use ASGI** for SSE endpoints.
   This will give you the best of two worlds: simple sync Django
   for major part of your code base and some async endpoints where you need them.
+  See our :doc:`guide <structure/sync-and-async>`.
 
   However, we allow running SSE with WSGI
-  if ``settings.DEBUG is True`` for local development.
+  if ``settings.DEBUG is True`` for local development and testing.
+  In a very *limited* compatibiltity mode.
 
 
 Using SSE
