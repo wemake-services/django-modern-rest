@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import (
     AsyncIterator,
     Callable,
@@ -13,7 +14,6 @@ from typing import (
     TypeAlias,
 )
 
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
@@ -124,20 +124,16 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         if not settings.DEBUG:
             raise RuntimeError('Do not use wsgi with SSE in production')
 
-        iterator = self._events_pipeline()
-
-        async def async_anext(  # noqa: WPS430
-            async_iter: AsyncIterator[Any],
-        ) -> Any:
-            return await anext(async_iter)
-
         # This implementation has a lot of potential limitations:
         def factory() -> Iterator[bytes]:
-            try:
-                while True:  # noqa: WPS457
-                    yield async_to_sync(async_anext)(iterator)
-            except StopAsyncIteration:
-                pass  # noqa: WPS420
+            iterator = self._events_pipeline()
+
+            with asyncio.Runner() as runner:
+                try:
+                    while True:  # noqa: WPS457
+                        yield runner.run(anext(iterator))  # type: ignore[arg-type]  # noqa: WPS220
+                except StopAsyncIteration:
+                    pass  # noqa: WPS420
 
         return factory()
 
