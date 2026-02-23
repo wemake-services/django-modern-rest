@@ -1,8 +1,8 @@
 Using sync and async code together
 ==================================
 
-Writting sync code is easy, fun, and readable.
-Writting async code is sometimes required:
+Writing sync code is easy, fun, and readable.
+Writing async code is sometimes required:
 
 - If you use HTTP requests to other services
 - If you are using SSE or WebSockets
