@@ -9,12 +9,7 @@ from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
-from dmr.sse import (
-    SSEContext,
-    SSEData,
-    SSEResponse,
-    sse,
-)
+from dmr.sse import SSEContext, SSEData, SSEResponse, sse
 
 
 async def _valid_events(

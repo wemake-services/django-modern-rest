@@ -149,4 +149,56 @@ your own metadata / models and use them with our framework.
 django-filters
 --------------
 
-TODO
+No special integration with
+`django-filter <https://github.com/carltongibson/django-filter>`_
+is required.
+
+Everything just works.
+
+.. code-block:: python
+
+  import django_filters
+  import pydantic
+  from dmr import Controller, Query
+  from dmr.plugins.pydantic import PydanticSerializer
+
+  from your_app.models import User
+
+  class UserFilter(django_filters.FilterSet):
+      class Meta:
+          model = User
+          fields = ('is_active',)
+
+  # Create query model for better docs:
+  class QueryModel(pydantic.BaseModel):
+      is_active: bool
+
+  class UserModel(pydantic.BaseModel):
+      username: str
+      email: str
+      is_active: bool
+
+  class UserListController(
+      Controller[PydanticSerializer],
+      Query[QueryModel],
+  ):
+      def get(self) -> list[UserModel]:
+          # Still pass `.GET` for API compatibility:
+          user_filter = UserFilter(
+               self.request.GET,
+               queryset=User.objects.all(),
+          )
+          return [
+              UserModel.model_validate(user, from_attributes=True)
+              for user in user_filter.qs
+          ]
+
+
+CORS Headers
+------------
+
+No special integration with
+`django-cors-headers <https://github.com/adamchainz/django-cors-headers>`_
+is required.
+
+Everything just works.
