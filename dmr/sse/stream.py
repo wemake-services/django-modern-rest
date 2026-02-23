@@ -37,6 +37,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
 
     #: Part of the the ASGI handler protocol. Will trigger `__aiter__`
     streaming: Final = True  # type: ignore[misc]
+    is_async: Final = True
 
     validation_pipeline: ClassVar[Sequence[_EventPipeline]] = (
         # Order is important:
