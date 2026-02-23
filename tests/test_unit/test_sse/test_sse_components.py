@@ -1,27 +1,17 @@
 import dataclasses
 import json
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Final,
-    TypeAlias,
-)
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import pydantic
 import pytest
-from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import TypedDict
 
 from dmr.components import Cookies, Headers, Path, Query
-from dmr.controller import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
-from dmr.security import AsyncAuth
-from dmr.security.django_session import (
-    DjangoSessionAsyncAuth,
-)
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
@@ -74,20 +64,19 @@ class _HeaderModel(pydantic.BaseModel):
     whatever: str
 
 
-async def _resolve_user(user: AbstractBaseUser) -> AbstractBaseUser:
-    return user
+@pytest.mark.asyncio
+async def test_sse_parses_all_components(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    get_streaming_content: 'GetStreamingContent',
+) -> None:
+    """Ensures that sse can parse all components."""
 
-
-def _get_sse_components_by_auth(
-    auth: Sequence[AsyncAuth] | None = None,
-) -> type[Controller[PydanticSerializer]]:
     @sse(
         PydanticSerializer,
         path=Path[_PathModel],
         query=Query[_QueryModel],
         headers=Headers[_HeaderModel],
         cookies=Cookies[dict[str, str]],
-        auth=auth,
     )
     async def _sse_components(
         request: HttpRequest,
@@ -105,72 +94,6 @@ def _get_sse_components_by_auth(
         assert context.parsed_cookies == {'session_id': 'unique'}
         return SSEResponse(_empty_events(PydanticSerializer, renderer))
 
-    return _sse_components
-
-
-@pytest.mark.asyncio
-async def test_sse_parses_all_components_no_auth(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
-) -> None:
-    """Ensures that sse can parse all components."""
-    request = dmr_async_rf.get(
-        '/whatever/?filter=python',
-        headers={
-            'whatever': 'yes',
-        },
-    )
-    request.COOKIES = {
-        'session_id': 'unique',
-    }
-    components = _get_sse_components_by_auth(auth=None)
-    response = await dmr_async_rf.wrap(
-        components.as_view()(request, user_id=1, stream_name='abc'),
-    )
-
-    assert isinstance(response, SSEStreamingResponse)
-    assert response.streaming
-    assert response.status_code == HTTPStatus.OK
-    assert await get_streaming_content(response) == b''
-
-
-@pytest.mark.asyncio
-async def test_sse_parses_all_components_with_auth_failure(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
-) -> None:
-    """Ensures that sse can parse all components."""
-    request = dmr_async_rf.get(
-        '/whatever/?filter=python',
-        headers={
-            'whatever': 'yes',
-        },
-    )
-    request.COOKIES = {
-        'session_id': 'unique',
-    }
-    components = _get_sse_components_by_auth(
-        auth=[DjangoSessionAsyncAuth()],
-    )
-
-    response = await dmr_async_rf.wrap(
-        components.as_view()(request, user_id=1, stream_name='abc'),
-    )
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.headers['Content-Type'] == 'application/json'
-    assert json.loads(response.content) == {
-        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
-    }
-
-
-@pytest.mark.asyncio
-async def test_sse_parses_all_components_with_auth_success(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
-    django_user_model: type[AbstractBaseUser],
-) -> None:
-    """Ensures that sse can parse all components with successful auth."""
     request = dmr_async_rf.get(
         '/whatever/?filter=python',
         headers={
@@ -181,13 +104,8 @@ async def test_sse_parses_all_components_with_auth_success(
         'session_id': 'unique',
     }
 
-    user = django_user_model(username='testuser', is_active=True)
-    request.auser = lambda: _resolve_user(user)
-    components = _get_sse_components_by_auth(
-        auth=[DjangoSessionAsyncAuth()],
-    )
     response = await dmr_async_rf.wrap(
-        components.as_view()(request, user_id=1, stream_name='abc'),
+        _sse_components.as_view()(request, user_id=1, stream_name='abc'),
     )
 
     assert isinstance(response, SSEStreamingResponse)
