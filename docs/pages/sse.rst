@@ -56,6 +56,11 @@ data inside your callback function.
 It is also fully annotated with 4 type variables,
 which of them have ``None`` as a default value (matches runtime behavior).
 
+.. note::
+
+  Use ``Last-Event-ID`` header to handle reconnects to start sending
+  events to the client from the last consumed one.
+
 
 Handling errors
 ---------------

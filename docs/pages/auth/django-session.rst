@@ -4,6 +4,21 @@ Django Session Auth
 Docs: https://docs.djangoproject.com/en/dev/topics/auth
 
 
+Requiring auth
+--------------
+
+We provide two classes to require Django session auth in you API:
+
+- :class:`~dmr.security.django_session.DjangoSessionSyncAuth` for sync views
+- :class:`~dmr.security.django_session.DjangoSessionAsyncAuth` for async views
+
+.. note::
+
+  Using any of these classes would also automatically enable ``CSRF`` checks
+  for this view. Because it is not secure to use Django
+  session auth without ``CSRF`` checks.
+
+
 Reusing pre-existing views
 --------------------------
 

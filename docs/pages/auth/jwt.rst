@@ -8,6 +8,15 @@ Docs: https://jwt.io
   To use ``jwt`` you must install ``'django-modern-rest[jwt]'`` extra.
 
 
+Requiring auth
+--------------
+
+We provide two classes to require JWT auth in you API:
+
+- :class:`~dmr.security.jwt.JWTSyncAuth` for sync views
+- :class:`~dmr.security.jwt.JWTAsyncAuth` for async views
+
+
 Reusing pre-existing views
 --------------------------
 

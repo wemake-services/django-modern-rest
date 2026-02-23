@@ -10,6 +10,9 @@ Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication
   Please, condider using :doc:`jwt` instead.
 
 
+Requiring auth
+--------------
+
 To work with HTTP Basic auth you would need to subclass either
 :class:`~dmr.security.http.HttpBasicSyncAuth` or
 :class:`~dmr.security.http.HttpBasicAsyncAuth`
