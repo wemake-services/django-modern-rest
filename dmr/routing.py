@@ -24,7 +24,7 @@ from dmr.errors import ErrorType, format_error
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
-    from dmr.errors import FormatError
+    from dmr.internal.types import FormatError
     from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer

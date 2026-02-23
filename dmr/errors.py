@@ -72,20 +72,6 @@ class ErrorModel(TypedDict):
     detail: list[ErrorDetail]
 
 
-class FormatError(Protocol):
-    """Callable that formats an error into :class:`~dmr.errors.ErrorModel`."""
-
-    def __call__(
-        self,
-        error: str | Exception,
-        *,
-        loc: str | None = None,
-        error_type: str | ErrorType | None = None,
-    ) -> ErrorModel:
-        """Format an error into :class:`~dmr.errors.ErrorModel`."""
-        ...
-
-
 def format_error(  # noqa: C901, WPS231
     error: str | Exception,
     *,
