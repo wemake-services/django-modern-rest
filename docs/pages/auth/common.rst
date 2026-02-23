@@ -113,17 +113,17 @@ for defining permissions classes, like:
 ``guards=[UserHasPermissions('delete')]`` or ``IsSuperUser()``, etc.
 
 We don't do that on purpose.
-This is not a framework logic, this is you business logic.
+This is not a framework logic, this is your business logic.
 It should be placed inside your code, not ours.
 
-This will allow you to:
+Making proper abstractions inside your own code base will allow you to:
 
 - Make is super specific for your usecase
 - Make it optimized
 - Make it clean and consistent with other business rules you will have
 
-Yes, these permissions can look cool in a framework,
-but they do not surve a good purpose in large codebases.
+Yes, these permissions can look cool in a framework on paper,
+but they do not surve a good purpose in large codebases in reality.
 
 Focus on your **domain**, not on framework.
 
