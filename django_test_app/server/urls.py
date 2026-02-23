@@ -1,5 +1,6 @@
 from django.urls import include, path
 
+from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, build_404_handler
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
@@ -59,4 +60,7 @@ urlpatterns = [
     path('docs/', build_spec(router)),
 ]
 
-handler404 = build_404_handler('api/')
+handler404 = build_404_handler(
+    'api/',
+    serializer=PydanticSerializer,
+)

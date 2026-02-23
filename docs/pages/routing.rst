@@ -74,26 +74,26 @@ Handling 404 errors
 
 By default, Django returns HTML 404 pages.
 This is not what we want for API endpoints.
-Instead, we want to return API responses with proper error structure.
+Instead, we want to return API responses with proper error structure and
+content negotiation (e.g. JSON or XML based on the ``Accept`` header).
 
 To achieve this, you can use
 :func:`~dmr.routing.build_404_handler` helper.
-It will create a handler that returns API responses for specific path prefixes,
-and falls back to Django's default handler for everything else.
+It creates a handler that returns API-style 404 responses for specific path
+prefixes (using the same serializer and renderers as your API), and falls back
+to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``:
 
 .. code-block:: python
   :caption: urls.py
 
+  >>> from dmr.plugins.pydantic import PydanticSerializer
   >>> from dmr.routing import build_404_handler
 
   >>> # ... your urlpatterns ...
 
-  >>> handler404 = build_404_handler('api/')
-
-
-.. autofunction:: dmr.routing.build_404_handler
+  >>> handler404 = build_404_handler('api/', serializer=PydanticSerializer)
 
 
 Optimized URL Routing

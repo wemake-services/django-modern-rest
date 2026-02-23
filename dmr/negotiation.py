@@ -6,11 +6,15 @@ from django.http.request import HttpRequest
 
 from dmr.exceptions import (
     EndpointMetadataError,
-    NotAcceptableError,
     RequestSerializationError,
 )
-from dmr.internal.negotiation import ConditionalType as _ConditionalType
+from dmr.internal.negotiation import (
+    ConditionalType as _ConditionalType,
+)
 from dmr.internal.negotiation import media_by_precedence
+from dmr.internal.negotiation import (
+    negotiate_renderer as _negotiate_renderer,
+)
 from dmr.metadata import EndpointMetadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
@@ -136,22 +140,13 @@ class ResponseNegotiator:
             Renderer class for this response.
 
         """
-        renderer = self._decide(request)
+        renderer = _negotiate_renderer(
+            request,
+            self._renderers,
+            default=self._default,
+        )
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
         return renderer
-
-    def _decide(self, request: HttpRequest) -> Renderer:
-        if request.headers.get('Accept') is None:
-            return self._default
-        renderer_type = request.get_preferred_type(self._renderer_keys)
-        if renderer_type is None:
-            supported = self._renderer_keys
-            raise NotAcceptableError(
-                'Cannot serialize response body '
-                f'with accepted types {request.accepted_types!r}, '
-                f'{supported=!r}',
-            )
-        return self._renderers[renderer_type]
 
 
 def request_parser(request: HttpRequest) -> Parser | None:
