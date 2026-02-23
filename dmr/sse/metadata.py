@@ -35,7 +35,7 @@ class SSEvent:
 
     # NOTE: `str | bytes` is not supported by `msgspec`,
     # but, since it is very common to return json
-    # which has `bytes` by default in our serializers - we use `bytes`.
+    # which has `bytes` by default in our serializers - we use `bytes` here.
     data: bytes | int  # noqa: WPS110
     event: str | None = dataclasses.field(default=None, kw_only=True)
     id: int | str | None = dataclasses.field(default=None, kw_only=True)
