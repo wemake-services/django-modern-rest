@@ -6,7 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import path
 from inline_snapshot import snapshot
 
-from dmr.errors import ErrorModel, ErrorType
+from dmr.errors import ErrorType
 from dmr.exceptions import NotAcceptableError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -31,7 +31,7 @@ def test_accept_json_returns(dmr_client: DMRClient) -> None:
     """Ensure that Accept: application/json returns JSON 404."""
     response = dmr_client.get(
         '/api/missing/',
-        headers={'Accept': 'application/json'}
+        headers={'Accept': 'application/json'},
     )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response['Content-Type'] == 'application/json'
@@ -168,5 +168,5 @@ def test_format_error_parameter(dmr_rf: DMRRequestFactory) -> None:
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response['Content-Type'] == 'application/json'
     assert json.loads(response.content) == snapshot(
-        {'message':'Page not found'}
+        {'message': 'Page not found'},
     )

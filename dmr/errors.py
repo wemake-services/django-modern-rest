@@ -7,7 +7,6 @@ from typing import (
     Any,
     Final,
     NotRequired,
-    Protocol,
     TypeAlias,
     final,
     overload,
