@@ -105,6 +105,29 @@ all auth in further layers.
   because it will globally disable all auth with no ways to re-enable it.
 
 
+Permissions
+-----------
+
+Many similar frameworks also include different abstractions
+for defining permissions classes, like:
+``guards=[UserHasPermissions('delete')]`` or ``IsSuperUser()``, etc.
+
+We don't do that on purpose.
+This is not a framework logic, this is your business logic.
+It should be placed inside your code, not ours.
+
+Making proper abstractions inside your own code base will allow you to:
+
+- Make is super specific for your usecase
+- Make it optimized
+- Make it clean and consistent with other business rules you will have
+
+Yes, these permissions can look cool in a framework on paper,
+but they do not surve a good purpose in large codebases in reality.
+
+Focus on your **domain**, not on framework.
+
+
 Next up
 -------
 
