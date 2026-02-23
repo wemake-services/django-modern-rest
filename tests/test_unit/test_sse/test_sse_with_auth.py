@@ -5,11 +5,13 @@ from typing import (
     TYPE_CHECKING,
     Final,
     TypeAlias,
+    cast,
 )
 
 import pytest
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
+from inline_snapshot import snapshot
 
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
@@ -47,7 +49,6 @@ else:  # pragma: no cover
 
 
 async def _events(username: str) -> AsyncIterator[SSEData]:
-
     yield SSEvent(b'user', id=username)
 
 
@@ -62,9 +63,9 @@ async def _resolve(user: User) -> User:
 async def _sse_components(
     request: HttpRequest,
     renderer: Renderer,
-    context: SSEContext[dict[str, str],],
+    context: SSEContext,
 ) -> SSEResponse:
-    user = await request.auser()
+    user = cast(User, await request.auser())
     return SSEResponse(_events(user.username))
 
 
@@ -73,19 +74,17 @@ async def test_sse_with_auth_failure(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that incorrect auth raises 401."""
-    request = dmr_async_rf.get(
-        '/whatever',
-    )
+    request = dmr_async_rf.get('/whatever')
 
     response = await dmr_async_rf.wrap(
-        _sse_components.as_view()(request, user_id=1, stream_name='abc'),
+        _sse_components.as_view()(request),
     )
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.headers['Content-Type'] == 'application/json'
-    assert json.loads(response.content) == {
+    assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
-    }
+    })
 
 
 @pytest.mark.asyncio
@@ -94,18 +93,17 @@ async def test_sse_with_auth_success(
     get_streaming_content: 'GetStreamingContent',
 ) -> None:
     """Ensures that sse can parse all components with successful auth."""
-    request = dmr_async_rf.get(
-        '/whatever',
-    )
-    request.auser = lambda: _resolve(User())
+    request = dmr_async_rf.get('/whatever')
+    username = 'test_user'
+    request.auser = lambda: _resolve(User(username=username))
 
     response = await dmr_async_rf.wrap(
-        _sse_components.as_view()(request, user_id=1, stream_name='abc'),
+        _sse_components.as_view()(request),
     )
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
-    streaming_content = str(await get_streaming_content(response))
-    assert 'id' in streaming_content
-    assert 'data: user' in streaming_content
+
+    expected_content = f'id: {username}\r\ndata: user\r\n\r\n'.encode()
+    assert await get_streaming_content(response) == expected_content
