@@ -114,11 +114,12 @@ def negotiate_renderer(
     if request.headers.get('Accept') is None:
         return fallback
 
-    preferred = request.get_preferred_type(renderer_keys)
-    if preferred is None:
+    renderer_type = request.get_preferred_type(renderer_keys)
+    if renderer_type is None:
+        supported = renderer_keys
         raise NotAcceptableError(
             'Cannot serialize response body '
             f'with accepted types {request.accepted_types!r}, '
-            f'supported={renderer_keys!r}',
+            f'{supported=!r}',
         )
-    return renderers[preferred]
+    return renderers[renderer_type]
