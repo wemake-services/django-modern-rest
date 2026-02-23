@@ -18,7 +18,7 @@ from dmr.headers import HeaderSpec
 from dmr.internal.negotiation import force_request_renderer
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.renderers import Renderer
-from dmr.security import AsyncAuth, SyncAuth
+from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
 from dmr.sse.metadata import SSEContext, SSEData, SSEResponse
@@ -275,7 +275,7 @@ def _build_controller(  # noqa: WPS211, WPS234
     sse_renderer: SSERenderer,
     sse_streaming_response_cls: type[SSEStreamingResponse],
     metadata_cls: type[EndpointMetadata],
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    auth: Sequence[AsyncAuth] | None = (),
 ) -> type[Controller[_SerializerT]]:
     class SSEController(  # noqa: WPS431
         Controller[serializer],  # type: ignore[valid-type]
