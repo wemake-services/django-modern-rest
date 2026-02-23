@@ -92,7 +92,7 @@ Use any DI that you already have or want to use with ``django``.
 
 Try any of these officially recommended tools:
 
-- https://github.com/reagento/dishka
+- https://github.com/arturboyun/dmr-dishka
 - https://github.com/bobthemighty/punq
 
 Or any other one that suits your needs :)
