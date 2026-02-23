@@ -79,6 +79,14 @@ If you need to imediatelly close the response stream, you can raise
 :exc:`~dmr.sse.exceptions.SSECloseConnectionError`
 nside the events producing async iterator.
 
+Handling disconnects
+~~~~~~~~~~~~~~~~~~~~
+
+Async clients can disconnect at any time using :exc:`asyncio.CancelledError`.
+It is a good idea to handle this error.
+
+See Django docs: https://docs.djangoproject.com/en/6.0/ref/request-response/#request-response-streaming-disconnect
+
 
 Validation
 ----------
