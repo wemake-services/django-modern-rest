@@ -1,4 +1,7 @@
+import json
+from collections.abc import Callable, Sequence
 from http import HTTPStatus
+from typing import Protocol
 
 import pytest
 from django.http import HttpRequest, HttpResponse
@@ -7,9 +10,42 @@ from inline_snapshot import snapshot
 
 from dmr.exceptions import NotAcceptableError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import JsonRenderer
+from dmr.renderers import JsonRenderer, Renderer
 from dmr.routing import build_404_handler
-from dmr.test import DMRClient
+from dmr.serializer import BaseSerializer
+from dmr.test import DMRClient, DMRRequestFactory
+
+
+class _NotFoundHandlerFactory(Protocol):
+    def __call__(
+        self,
+        prefix: str,
+        /,
+        *prefixes: str,
+        serializer: type[BaseSerializer],
+        renderers: Sequence['Renderer'] | None = None,
+    ) -> Callable[[HttpRequest, Exception], HttpResponse]: ...
+
+
+@pytest.fixture
+def handler_factory() -> _NotFoundHandlerFactory:
+    """Return a factory that builds 404 handlers."""
+
+    def factory(
+        prefix: str,
+        /,
+        *prefixes: str,
+        serializer: type['BaseSerializer'],
+        renderers: Sequence['Renderer'] | None = None,
+    ) -> Callable[[HttpRequest, Exception], HttpResponse]:
+        return build_404_handler(
+            prefix,
+            *prefixes,
+            serializer=serializer,
+            renderers=renderers,
+        )
+
+    return factory
 
 
 def _view(request: HttpRequest) -> HttpResponse:
@@ -49,7 +85,7 @@ def test_fallback_html_not_found(dmr_client: DMRClient) -> None:
 
 
 @pytest.mark.urls(__name__)
-def test_existing_ok(dmr_client: DMRClient) -> None:
+def test_existing_success(dmr_client: DMRClient) -> None:
     """Ensure that does not affect existing routes."""
     response = dmr_client.get('/api/existing/')
 
@@ -57,17 +93,23 @@ def test_existing_ok(dmr_client: DMRClient) -> None:
 
 
 @pytest.mark.parametrize('prefix', ['api', '/api', 'api/', '/api/'])
-def test_prefix_normalization(prefix: str) -> None:
+def test_prefix_normalization(
+    prefix: str,
+    *,
+    dmr_rf: DMRRequestFactory,
+    handler_factory: _NotFoundHandlerFactory,
+) -> None:
     """Ensure that normalizes prefix with or without slashes."""
-    not_found_view = build_404_handler(prefix, serializer=PydanticSerializer)
-
-    request = HttpRequest()
-    request.path = '/api/missing/'
+    not_found_view = handler_factory(prefix, serializer=PydanticSerializer)
+    request = dmr_rf.get('/api/missing/')
 
     response = not_found_view(request, Exception())
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response['Content-Type'] == 'application/json'
+    assert json.loads(response.content) == snapshot(
+        {'detail': [{'msg': 'Page not found', 'type': 'not_found'}]},
+    )
 
 
 @pytest.mark.parametrize(
@@ -82,54 +124,68 @@ def test_prefix_matching(
     prefixes: tuple[str, ...],
     path: str,
     content_type: str,
+    *,
+    dmr_rf: DMRRequestFactory,
+    handler_factory: _NotFoundHandlerFactory,
 ) -> None:
     """Ensure correct prefix matching and fallback behavior."""
-    not_found_view = build_404_handler(*prefixes, serializer=PydanticSerializer)
+    not_found_view = handler_factory(*prefixes, serializer=PydanticSerializer)
+    request = dmr_rf.get(path)
 
-    request = HttpRequest()
-    request.path = path
     response = not_found_view(request, Exception())
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response['Content-Type'].startswith(content_type)
 
 
-def test_renderers_parameter() -> None:
+def test_renderers_parameter(
+    dmr_rf: DMRRequestFactory,
+    handler_factory: _NotFoundHandlerFactory,
+) -> None:
     """Ensure that explicit renderers is used for negotiation."""
-    not_found_view = build_404_handler(
+    not_found_view = handler_factory(
         'api/',
         serializer=PydanticSerializer,
         renderers=[JsonRenderer()],
     )
-    request = HttpRequest()
-    request.path = '/api/missing/'
-    # No Accept -> default (first) renderer
+    request = dmr_rf.get('/api/missing/')
+
     response = not_found_view(request, Exception())
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response['Content-Type'] == 'application/json'
+    assert json.loads(response.content) == snapshot(
+        {'detail': [{'msg': 'Page not found', 'type': 'not_found'}]},
+    )
 
 
-def test_handler_raises_not_acceptable() -> None:
+def test_handler_raises_not_acceptable(
+    dmr_rf: DMRRequestFactory,
+    handler_factory: _NotFoundHandlerFactory,
+) -> None:
     """Ensure that unsupported Accept leads to ``NotAcceptableError``."""
-    not_found_view = build_404_handler('api/', serializer=PydanticSerializer)
-    request = HttpRequest()
-    request.path = '/api/missing/'
-    request.META['HTTP_ACCEPT'] = 'text/plain'
+    not_found_view = handler_factory('api/', serializer=PydanticSerializer)
+    request = dmr_rf.get('/api/missing/', headers={'Accept': 'text/plain'})
 
-    with pytest.raises(NotAcceptableError):
+    with pytest.raises(
+        NotAcceptableError,
+        match='Cannot serialize response body with accepted types',
+    ):
         not_found_view(request, Exception())
 
 
-def test_no_accept_uses_default_renderer() -> None:
+def test_no_accept_uses_default_renderer(
+    dmr_rf: DMRRequestFactory,
+    handler_factory: _NotFoundHandlerFactory,
+) -> None:
     """Ensure that missing Accept header uses first configured renderer."""
-    not_found_view = build_404_handler('api/', serializer=PydanticSerializer)
-    request = HttpRequest()
-    request.path = '/api/missing/'
-    # Ensure no Accept is set (e.g. new request may have no META)
-    request.META.pop('HTTP_ACCEPT', None)
+    not_found_view = handler_factory('api/', serializer=PydanticSerializer)
+    request = dmr_rf.get('/api/missing/', headers={'Accept': None})
 
     response = not_found_view(request, Exception())
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response['Content-Type'] == 'application/json'
+    assert json.loads(response.content) == snapshot(
+        {'detail': [{'msg': 'Page not found', 'type': 'not_found'}]},
+    )

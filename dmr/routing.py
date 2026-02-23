@@ -24,6 +24,7 @@ from dmr.errors import ErrorType, format_error
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
+    from dmr.errors import FormatError
     from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
@@ -53,6 +54,7 @@ def build_404_handler(  # noqa: WPS114
     /,
     *prefixes: str,
     serializer: type['BaseSerializer'],
+    format_error: 'FormatError' = format_error,
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest, Exception], HttpResponse]:
     """
@@ -69,6 +71,7 @@ def build_404_handler(  # noqa: WPS114
     Args:
         prefix: Path prefix (e.g. ``'api/'``) for which to return API 404.
         *prefixes: Additional path prefixes.
+        format_error: Callable used to build the error body for the response.
         serializer: Serializer class used to serialize the error body.
         renderers: Optional sequence of renderers. If omitted, uses
             :attr:`~dmr.settings.Settings.renderers` from settings.
