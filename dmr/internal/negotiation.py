@@ -104,9 +104,9 @@ def negotiate_renderer(
     """
     Choose a renderer by the request's Accept header.
 
-    If *strict* is False and Accept does not match any renderer,
-    returns *default* (or the first renderer) instead
-    of raising NotAcceptableError.
+    When Accept is missing, returns *default* (or the first renderer).
+    Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
+    and does not match any of *renderers*.
     """
     renderer_keys = list(renderers.keys())
     fallback = next(iter(renderers.values())) if default is None else default
