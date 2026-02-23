@@ -78,7 +78,7 @@ def sse(  # noqa: WPS211, WPS234
         SSEStreamingResponse
     ] = SSEStreamingResponse,
     metadata_cls: type[EndpointMetadata] = _SSEMetadata,
-    auth: Sequence[AsyncAuth] | None = None,
+    auth: Sequence[AsyncAuth] | None = (),
 ) -> Callable[
     [
         Callable[
@@ -275,7 +275,7 @@ def _build_controller(  # noqa: WPS211, WPS234
     sse_renderer: SSERenderer,
     sse_streaming_response_cls: type[SSEStreamingResponse],
     metadata_cls: type[EndpointMetadata],
-    auth: Sequence[AsyncAuth] | None = (),
+    auth: Sequence[AsyncAuth] | None,
 ) -> type[Controller[_SerializerT]]:
     class SSEController(  # noqa: WPS431
         Controller[serializer],  # type: ignore[valid-type]
