@@ -15,4 +15,3 @@ class FormatError(Protocol):
         error_type: 'str | ErrorType | None' = None,
     ) -> Any:
         """Return a formatted representation of the given error."""
-        ...
