@@ -1,5 +1,6 @@
 import json
 from http import HTTPStatus
+from typing import Any
 
 import pytest
 from django.http import HttpRequest, HttpResponse
@@ -12,6 +13,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.routing import build_404_handler
 from dmr.test import DMRClient, DMRRequestFactory
+from tests.infra.xml_format import XmlRenderer
 
 
 def _simple_view(request: HttpRequest) -> HttpResponse:
@@ -121,8 +123,15 @@ def test_renderers_parameter(dmr_rf: DMRRequestFactory) -> None:
 
 def test_handler_raises_not_acceptable(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that unsupported Accept leads to ``NotAcceptableError``."""
-    not_found_view = build_404_handler('api/', serializer=PydanticSerializer)
-    request = dmr_rf.get('/api/missing/', headers={'Accept': 'text/plain'})
+    not_found_view = build_404_handler(
+        'api/',
+        serializer=PydanticSerializer,
+        renderers=[XmlRenderer()],
+    )
+    request = dmr_rf.get(
+        '/api/missing/',
+        headers={'Accept': 'application/json'},
+    )
 
     with pytest.raises(
         NotAcceptableError,
@@ -170,3 +179,57 @@ def test_format_error_parameter(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot(
         {'message': 'Page not found'},
     )
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Accept': 'application/json'},
+            {'Content-Type': 'application/json'},
+            b'{"detail": [{"msg": "Page not found", "type": "not_found"}]}',
+        ),
+        (
+            {'Accept': 'application/xml'},
+            {'Content-Type': 'application/xml'},
+            (
+                b'<?xml version="1.0" encoding="utf-8"?>\n<detail>\n\t<msg>'
+                b'Page not found</msg>\n\t<type>not_found</type>\n</detail>'
+            ),
+        ),
+        (
+            {'Accept': 'application/xml, application/json'},
+            {'Content-Type': 'application/xml'},
+            (
+                b'<?xml version="1.0" encoding="utf-8"?>\n<detail>\n\t<msg>'
+                b'Page not found</msg>\n\t<type>not_found</type>\n</detail>'
+            ),
+        ),
+        (
+            {'Accept': 'application/json, application/xml'},
+            {'Content-Type': 'application/json'},
+            b'{"detail": [{"msg": "Page not found", "type": "not_found"}]}',
+        ),
+    ],
+)
+def test_not_found_format_by_accept_header(
+    dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    expected_headers: dict[str, str],
+    expected_data: Any,
+) -> None:
+    """Ensure 404 response format follows ``Accept`` header."""
+    not_found_view = build_404_handler(
+        'api/',
+        serializer=PydanticSerializer,
+        renderers=[XmlRenderer(), JsonRenderer()],
+    )
+    request = dmr_rf.get('/api/missing/', headers=request_headers)
+
+    response = not_found_view(request, Exception())
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert dict(response.headers) == expected_headers
+    assert response.content == expected_data
