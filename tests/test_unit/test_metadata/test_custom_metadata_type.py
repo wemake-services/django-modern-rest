@@ -14,6 +14,7 @@ from dmr import (
     modify,
     validate,
 )
+from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpecProvider
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
@@ -26,25 +27,33 @@ class _NoExtrasMetadata(EndpointMetadata):
         return []  # do not add any extra specs
 
 
+class _NoExtrasEndpoint(Endpoint):
+    metadata_cls = _NoExtrasMetadata
+
+
 class _NoExtrasController(
     Controller[PydanticSerializer],
     Body[dict[str, str]],
 ):
     auth = (DjangoSessionSyncAuth(),)
+    endpoint_cls = _NoExtrasEndpoint
 
-    @validate(
-        ResponseSpec(return_type=str, status_code=HTTPStatus.OK),
-        metadata_cls=_NoExtrasMetadata,
-    )
+    @validate(ResponseSpec(return_type=str, status_code=HTTPStatus.OK))
     def post(self) -> HttpResponse:
         return HttpResponse(b'"abc"', content_type='application/json')
 
-    @modify(metadata_cls=_NoExtrasMetadata)
     def put(self) -> str:
         return 'abc'
 
+    @modify()
+    def patch(self) -> str:
+        return 'abc'
 
-@pytest.mark.parametrize('method', [HTTPMethod.POST, HTTPMethod.PUT])
+
+@pytest.mark.parametrize(
+    'method',
+    [HTTPMethod.POST, HTTPMethod.PUT, HTTPMethod.PATCH],
+)
 def test_no_extras_metadata(
     dmr_rf: DMRRequestFactory,
     *,

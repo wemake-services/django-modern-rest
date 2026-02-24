@@ -28,7 +28,7 @@ into a :class:`~dmr.controller.Controller`.
 You can customize ``Blueprint`` validation via setting
 :attr:`~dmr.controller.Blueprint.blueprint_validator_cls`.
 
-.. autoclass:: dmr.validation.BlueprintValidator
+.. autoclass:: dmr.validation.blueprint.BlueprintValidator
   :members:
 
 
@@ -87,7 +87,7 @@ per-blueprint, per-controller and globally.
 
 .. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataBuilder
 
-.. autoclass:: dmr.validation.EndpointMetadataValidator
+.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataValidator
 
 
 Controller validation
@@ -105,7 +105,7 @@ Here we validate:
 - That all endpoints are either sync or async
 - All per-controller and per-endpoint error handling
 
-.. autoclass:: dmr.validation.ControllerValidator
+.. autoclass:: dmr.validation.controller.ControllerValidator
 
 
 Response validation
@@ -117,4 +117,4 @@ We need this to make sure that API responses always match response schemas.
 
 It can be :ref:`turned off <response_validation>`.
 
-.. autoclass:: dmr.validation.ResponseValidator
+.. autoclass:: dmr.validation.response.ResponseValidator

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, TypeAlias
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.headers import HeaderSpec, NewHeader
-from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.metadata import ResponseSpec
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.settings import HttpSpec
@@ -42,9 +42,6 @@ class _BasePayload:
     parsers: Sequence[Parser] | None = None
     renderers: Sequence[Renderer] | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
-
-    # Context:
-    metadata_cls: type[EndpointMetadata] = EndpointMetadata
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

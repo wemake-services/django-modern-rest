@@ -183,6 +183,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     blueprint_cls: type['Blueprint[BaseSerializer]'] | None
     controller_cls: type['Controller[BaseSerializer]']
     func: Callable[..., Any]
+    metadata_cls: type[EndpointMetadata]
 
     def __call__(self) -> EndpointMetadata:
         """Do the validation."""
@@ -252,7 +253,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         summary, description = self._build_description()
-        return payload.metadata_cls(
+        return self.metadata_cls(
             responses={},
             method=method,
             validate_responses=self._build_validate_responses(),
@@ -297,7 +298,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             ),
         )
         summary, description = self._build_description()
-        return payload.metadata_cls(
+        return self.metadata_cls(
             responses={},
             validate_responses=self._build_validate_responses(),
             method=method,
@@ -337,7 +338,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             cookies=None,
         )
         summary, description = self._build_description()
-        return EndpointMetadata(
+        return self.metadata_cls(
             responses={},
             validate_responses=self._build_validate_responses(),
             method=method,

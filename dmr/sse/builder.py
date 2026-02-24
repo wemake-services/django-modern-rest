@@ -13,7 +13,7 @@ from typing_extensions import TypeVar, override
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.controller import Controller
-from dmr.endpoint import validate
+from dmr.endpoint import Endpoint, validate
 from dmr.headers import HeaderSpec
 from dmr.internal.negotiation import force_request_renderer
 from dmr.metadata import EndpointMetadata, ResponseSpec
@@ -241,7 +241,7 @@ def sse(  # noqa: WPS211, WPS234
             sse_renderer=sse_renderer,
             sse_streaming_response_cls=sse_streaming_response_cls,
             auth=auth,
-            metadata_cls=type(
+            custom_metadata_cls=type(
                 '_LimitedSSEMetadata',
                 (metadata_cls,),
                 {'default_renderer': regular_renderer},
@@ -274,13 +274,16 @@ def _build_controller(  # noqa: WPS211, WPS234
     regular_renderer: Renderer,
     sse_renderer: SSERenderer,
     sse_streaming_response_cls: type[SSEStreamingResponse],
-    metadata_cls: type[EndpointMetadata],
+    custom_metadata_cls: type[EndpointMetadata],
     auth: Sequence[AsyncAuth] | None,
 ) -> type[Controller[_SerializerT]]:
     class SSEController(  # noqa: WPS431
         Controller[serializer],  # type: ignore[valid-type]
         *filter(None, [path, query, headers, cookies]),  # type: ignore[misc]  # noqa: WPS606
     ):
+        class endpoint_cls(Endpoint):  # noqa: N801, WPS431
+            metadata_cls = custom_metadata_cls
+
         @override
         def to_error(
             self,
@@ -295,7 +298,6 @@ def _build_controller(  # noqa: WPS211, WPS234
             *extra_responses,
             renderers=[sse_renderer, regular_renderer],
             validate_responses=validate_responses,
-            metadata_cls=metadata_cls,
             auth=auth,
         )
         async def get(self) -> SSEStreamingResponse:
