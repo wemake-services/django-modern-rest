@@ -56,6 +56,11 @@ data inside your callback function.
 It is also fully annotated with 4 type variables,
 which of them have ``None`` as a default value (matches runtime behavior).
 
+.. note::
+
+  Use ``Last-Event-ID`` header to handle reconnects to start sending
+  events to the client from the last consumed one.
+
 
 Handling errors
 ---------------
@@ -73,6 +78,14 @@ So, any errors that need to be handled, are up to users to handle:
 If you need to imediatelly close the response stream, you can raise
 :exc:`~dmr.sse.exceptions.SSECloseConnectionError`
 nside the events producing async iterator.
+
+Handling disconnects
+~~~~~~~~~~~~~~~~~~~~
+
+Async clients can disconnect at any time using :exc:`asyncio.CancelledError`.
+It is a good idea to handle this error.
+
+See Django docs: https://docs.djangoproject.com/en/6.0/ref/request-response/#request-response-streaming-disconnect
 
 
 Validation

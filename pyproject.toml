@@ -86,7 +86,7 @@ pytest-custom-exit-code = "^0.3"
 pytest-freezer = "^0.4"
 dirty-equals = "^0.11"
 faker = "^40.1"
-inline-snapshot = "^0.31"
+inline-snapshot = ">=0.31,<0.33"
 schemathesis = "^4.3"
 polyfactory = "^3.2"
 
@@ -112,7 +112,7 @@ shibuya = "^2026.1"
 docutils = "0.21.2"
 
 # Needed for our extension:
-uvicorn = "^0.40"
+uvicorn = ">=0.40,<0.42"
 httpx = "^0.28"
 
 # Needed for examples:

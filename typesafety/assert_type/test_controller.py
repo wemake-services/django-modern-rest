@@ -1,9 +1,10 @@
 from typing import assert_type
 
 import pydantic
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
+from typing_extensions import override
 
-from dmr import Body, Controller, Headers, Query
+from dmr import Controller, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 
 
@@ -17,14 +18,14 @@ class _QueryModel(pydantic.BaseModel):
 
 class _MyController(
     Controller[PydanticSerializer],
-    Body[dict[str, int]],
+    Path[dict[str, int]],
     Headers[_HeaderModel],
     Query[_QueryModel],
 ):
     def get(self) -> str:
         """All added props have the correct types."""
         assert_type(self.request, HttpRequest)
-        assert_type(self.parsed_body, dict[str, int])
+        assert_type(self.parsed_path, dict[str, int])
         assert_type(self.parsed_headers, _HeaderModel)
         assert_type(self.parsed_query, _QueryModel)
         return 'Done'
@@ -33,3 +34,10 @@ class _MyController(
 class _Handle405Correctly(Controller[PydanticSerializer]):
     def whatever(self, request: HttpRequest) -> None:
         self.http_method_not_allowed(request)  # type: ignore[deprecated]
+        self.options(request)  # type: ignore[deprecated]
+
+
+class _OptionsController(Controller[PydanticSerializer]):
+    @override
+    def options(self) -> HttpResponse:  # type: ignore[override]
+        raise NotImplementedError
