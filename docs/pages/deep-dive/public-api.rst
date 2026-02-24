@@ -92,6 +92,8 @@ Routing
 
 .. autofunction:: dmr.routing.compose_blueprints
 
+.. autofunction:: dmr.routing.build_404_handler
+
 .. autofunction:: dmr.routing.path
 
 

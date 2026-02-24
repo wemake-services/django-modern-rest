@@ -14,7 +14,6 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseBase,
-    JsonResponse,
 )
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
@@ -25,7 +24,9 @@ from dmr.errors import ErrorType, format_error
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
+    from dmr.internal.types import FormatError
     from dmr.options_mixins import AsyncMetaMixin, MetaMixin
+    from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
 
 _BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
@@ -52,30 +53,62 @@ def build_404_handler(  # noqa: WPS114
     prefix: str,
     /,
     *prefixes: str,
+    serializer: type['BaseSerializer'],
+    format_error: 'FormatError' = format_error,
+    renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest, Exception], HttpResponse]:
     """
-    Create a 404 handler that returns a JSON response.
+    Create a 404 handler that returns an response with content negotiation.
 
-    All prefixes are normalized to start with a leading slash. If the
-    request path matches any of them, a JSON 404 response is returned.
-    Otherwise, Django's default ``page_not_found`` handler is used.
+    All prefixes are normalized to start with a leading slash.
+    If the request path matches any of them, a 404 response is returned
+    using the same serializer and renderers as your API.
+    If the client's ``Accept`` does not match any renderer, the first
+    configured renderer is used.
+    For non-matching paths, Django's default ``page_not_found`` handler
+    is used.
+
+    Args:
+        prefix: Path prefix (e.g. ``'api/'``) for which to return API 404.
+        *prefixes: Additional path prefixes.
+        format_error: Callable used to build the error body for the response.
+        serializer: Serializer class used to serialize the error body.
+        renderers: Optional sequence of renderers. If omitted, uses
+            :attr:`~dmr.settings.Settings.renderers` from settings.
+
     """
+    from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
+    from dmr.response import build_response  # noqa: PLC0415
+    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
     combined = (prefix, *prefixes)
     all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
+    renderers_list = (
+        resolve_setting(Settings.renderers) if renderers is None else renderers
+    )
+    renderer_by_type = {
+        renderer.content_type: renderer for renderer in renderers_list
+    }
+    default_renderer = next(iter(renderer_by_type.values()))
 
     def factory(
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
         if request.path.startswith(all_prefixes):
-            # TODO: support content negotiation here:
-            # TODO: replace `JsonResponse` with a normal serializer call
-            return JsonResponse(
-                format_error(
+            renderer = negotiate_renderer(
+                request,
+                renderer_by_type,
+                default=default_renderer,
+            )
+            return build_response(
+                serializer=serializer,
+                raw_data=format_error(
                     'Page not found',
                     error_type=ErrorType.not_found,
                 ),
-                status=HTTPStatus.NOT_FOUND,
+                status_code=HTTPStatus.NOT_FOUND,
+                renderer=renderer,
             )
         return page_not_found(request, exception)
 

@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any, final
 from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 
+from dmr.exceptions import NotAcceptableError
+
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
     from dmr.negotiation import ContentType
@@ -91,3 +93,33 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
 def force_request_renderer(request: HttpRequest, renderer: 'Renderer') -> None:
     """Forces *renderer* to be used for the *request*."""
     request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
+
+
+def negotiate_renderer(
+    request: HttpRequest,
+    renderers: Mapping[str, 'Renderer'],
+    *,
+    default: 'Renderer | None' = None,
+) -> 'Renderer':
+    """
+    Choose a renderer by the request's Accept header.
+
+    When Accept is missing, returns *default* (or the first renderer).
+    Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
+    and does not match any of *renderers*.
+    """
+    renderer_keys = list(renderers.keys())
+    fallback = next(iter(renderers.values())) if default is None else default
+
+    if request.headers.get('Accept') is None:
+        return fallback
+
+    renderer_type = request.get_preferred_type(renderer_keys)
+    if renderer_type is None:
+        supported = renderer_keys
+        raise NotAcceptableError(
+            'Cannot serialize response body '
+            f'with accepted types {request.accepted_types!r}, '
+            f'{supported=!r}',
+        )
+    return renderers[renderer_type]

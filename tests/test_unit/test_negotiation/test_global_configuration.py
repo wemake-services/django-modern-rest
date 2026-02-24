@@ -1,14 +1,11 @@
 import json
-from collections.abc import Callable
 from http import HTTPMethod, HTTPStatus
 from typing import Annotated, Any, final
-from xml.parsers import expat
 
 import pydantic
 import pytest
-import xmltodict
 from django.conf import LazySettings
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict, override
@@ -22,63 +19,17 @@ from dmr import (
     validate,
 )
 from dmr.errors import ErrorType
-from dmr.exceptions import RequestSerializationError
 from dmr.negotiation import (
     ContentType,
     conditional_type,
     request_parser,
 )
-from dmr.parsers import DeserializeFunc, JsonParser, Parser, Raw
+from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import JsonRenderer, Renderer
+from dmr.renderers import JsonRenderer
 from dmr.settings import Settings
 from dmr.test import DMRRequestFactory
-
-
-class _XmlParser(Parser):
-    __slots__ = ()
-
-    content_type = 'application/xml'
-
-    @override
-    def parse(
-        self,
-        to_deserialize: Raw,
-        deserializer_hook: DeserializeFunc | None = None,
-        *,
-        request: HttpRequest,
-    ) -> Any:
-        try:
-            return xmltodict.parse(
-                to_deserialize,
-                process_namespaces=True,
-                force_list={'detail'},
-            )
-        except expat.ExpatError as exc:
-            if to_deserialize == b'':
-                return {}
-            raise RequestSerializationError(str(exc)) from None
-
-
-class _XmlRenderer(Renderer):
-    __slots__ = ()
-
-    content_type = 'application/xml'
-
-    @override
-    def render(
-        self,
-        to_serialize: Any,
-        serializer_hook: Callable[[Any], Any],
-    ) -> bytes:
-        raw_data = xmltodict.unparse(to_serialize, pretty=True)
-        assert isinstance(raw_data, str)
-        return raw_data.encode('utf8')
-
-    @property
-    @override
-    def validation_parser(self) -> _XmlParser:
-        return _XmlParser()
+from tests.infra.xml_format import XmlParser, XmlRenderer
 
 
 @pytest.fixture(autouse=True)
@@ -87,8 +38,8 @@ def _setup_parser_and_renderer(
     dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
-        Settings.parsers: [_XmlParser()],
-        Settings.renderers: [_XmlRenderer()],
+        Settings.parsers: [XmlParser()],
+        Settings.renderers: [XmlRenderer()],
     }
 
 
@@ -222,8 +173,8 @@ def test_per_controller_customization(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             parser = request_parser(self.request)
@@ -256,8 +207,8 @@ def test_per_blueprint_customization(
 
     @final
     class _Blueprint(Blueprint[PydanticSerializer], Body[_RequestModel]):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
@@ -293,8 +244,8 @@ def test_per_endpoint_customization(
     @final
     class _BothController(Controller[PydanticSerializer], Body[_RequestModel]):
         @modify(
-            parsers=[_XmlParser(), JsonParser()],
-            renderers=[_XmlRenderer(), JsonRenderer()],
+            parsers=[XmlParser(), JsonParser()],
+            renderers=[XmlRenderer(), JsonRenderer()],
         )
         def post(self) -> dict[str, str]:
             return self.parsed_body.root
@@ -358,8 +309,8 @@ def test_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
@@ -452,8 +403,8 @@ def test_wrong_conditional_content_type(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
@@ -520,8 +471,8 @@ def test_missing_conditional_content_type(
 
     @final
     class _Controller(Controller[PydanticSerializer]):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def get(
             self,
@@ -605,8 +556,8 @@ def test_conditional_body_model(
             ]
         ],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             if isinstance(self.parsed_body, _RequestModel):
@@ -698,8 +649,8 @@ def test_conditional_body_model_wrong(
             ]
         ],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(self) -> dict[str, str]:
             raise NotImplementedError
@@ -774,8 +725,8 @@ def test_conditional_error_model(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
         error_model = Annotated[
             _CustomJsonErrorModel | _CustomXmlErrorModel,
             conditional_type({
@@ -861,8 +812,8 @@ def test_conditional_error_model_wrong(
         Controller[PydanticSerializer],
         Body[_RequestModel],
     ):
-        parsers = [_XmlParser(), JsonParser()]
-        renderers = [_XmlRenderer(), JsonRenderer()]
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
         error_model = Annotated[
             _CustomJsonErrorModel | _CustomXmlErrorModel,
             conditional_type({
