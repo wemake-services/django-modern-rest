@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 import schemathesis as st
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
 @pytest.fixture
-def api_schema(db: Any) -> 'OpenApiSchema':
+def api_schema(db: None) -> 'OpenApiSchema':
     """Load OpenAPI schema as a pytest fixture."""
     return st.openapi.from_wsgi(reverse('openapi:json'), application)
 

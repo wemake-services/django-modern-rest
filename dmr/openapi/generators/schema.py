@@ -41,6 +41,7 @@ from typing import (
 
 from typing_extensions import is_typeddict
 
+from dmr.internal.schema import get_schema_name
 from dmr.openapi.extractors.finder import find_extractor
 from dmr.openapi.mappers import TypeMapper
 from dmr.openapi.objects.enums import OpenAPIType
@@ -96,7 +97,7 @@ class SchemaGenerator:
                 properties=props,
                 required=required or None,
             ),
-            name=self._get_schema_name(source_type),
+            name=get_schema_name(source_type),
         )
 
     def _extract_properties(
@@ -139,11 +140,6 @@ class SchemaGenerator:
             return schema
 
         return dataclasses.replace(schema, **updates)
-
-    def _get_schema_name(self, source_type: Any) -> str:
-        return str(
-            getattr(source_type, '__dmr_schema_name__', source_type.__name__),
-        )
 
 
 def _get_schema_from_type_map(annotation: Any) -> Schema | None:

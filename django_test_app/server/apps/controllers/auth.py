@@ -2,10 +2,7 @@ from typing import TYPE_CHECKING, Any, final
 
 from typing_extensions import override
 
-from dmr.security.http import (
-    HttpBasicAsyncAuth,
-    HttpBasicSyncAuth,
-)
+from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
 
 if TYPE_CHECKING:
     from dmr.controller import Controller

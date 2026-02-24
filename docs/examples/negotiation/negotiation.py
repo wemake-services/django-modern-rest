@@ -28,6 +28,7 @@ class XmlParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         try:
             return xmltodict.parse(to_deserialize, process_namespaces=True)

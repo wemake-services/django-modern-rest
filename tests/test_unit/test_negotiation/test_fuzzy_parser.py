@@ -22,6 +22,7 @@ class _MainStar(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
@@ -38,6 +39,7 @@ class _SubStar(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
@@ -54,6 +56,7 @@ class _AllStar(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
@@ -70,6 +73,7 @@ class _JsonExact(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         raise RuntimeError(type(self).__name__)
 
