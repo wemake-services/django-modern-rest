@@ -231,5 +231,5 @@ def test_not_found_format_by_accept_header(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert dict(response.headers) == expected_headers
+    assert response.headers == expected_headers
     assert response.content == expected_data
