@@ -30,12 +30,14 @@ class XmlParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         try:
             return xmltodict.parse(
                 to_deserialize,
                 process_namespaces=True,
-                force_list={'detail'},
+                # TODO: this is very bad :(
+                force_list={'detail', 'loc'},
             )
         except expat.ExpatError as exc:
             if to_deserialize == b'':

@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import ClassVar, Literal, final
+from typing import Any, ClassVar, Literal, final
 
 import pydantic
 import pytest
@@ -419,6 +419,7 @@ class _WrongBodyParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> None:
         raise NotImplementedError
 
@@ -434,6 +435,7 @@ class _FakeParser(SupportsFileParsing, Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> None:
         raise NotImplementedError
 

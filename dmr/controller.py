@@ -8,11 +8,7 @@ from typing import (
     TypeVar,
 )
 
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseBase,
-)
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.utils.functional import cached_property, classproperty
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt

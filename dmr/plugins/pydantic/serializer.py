@@ -143,12 +143,14 @@ class PydanticSerializer(BaseSerializer):
         *,
         parser: Parser,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         """Convert string or bytestring to simple python object."""
         return parser.parse(
             buffer,
             cls.deserialize_hook,
             request=request,
+            model=model,
         )
 
     @override

@@ -25,6 +25,7 @@ class MsgspecJsonParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         """
         Deserialize a raw JSON string/bytes/bytearray into an object.
@@ -34,6 +35,7 @@ class MsgspecJsonParser(Parser):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
+            model: Model that reprensents the final result's structure.
 
         Raises:
             DataParsingError: If error decoding ``obj``.

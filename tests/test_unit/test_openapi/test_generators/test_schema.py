@@ -5,6 +5,7 @@ import pytest
 from inline_snapshot import snapshot
 from pydantic import BaseModel, Field
 
+from dmr.internal.schema import get_schema_name
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import (
@@ -146,7 +147,7 @@ def test_apply_kwarg_definition_format(generator: SchemaGenerator) -> None:
 
 def test_get_schema_name(generator: SchemaGenerator) -> None:
     """Ensure ``_get_schema_name`` returns a given schema name if one exists."""
-    name = generator._get_schema_name(_NamedModel)
+    name = get_schema_name(_NamedModel)
     assert name == _NamedModel.__dmr_schema_name__
 
 

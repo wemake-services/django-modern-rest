@@ -337,10 +337,6 @@ class Body(ComponentParser, Generic[_BodyT]):
 
     parsed_body: _BodyT
     context_name: ClassVar[str] = 'parsed_body'
-    django_default_content_types: ClassVar[frozenset[str]] = frozenset((
-        'multipart/form-data',
-        'application/x-www-form-urlencoded',
-    ))
 
     @override
     @classmethod
@@ -360,6 +356,7 @@ class Body(ComponentParser, Generic[_BodyT]):
                 b'',  # it does not matter what to send here.
                 parser=parser,
                 request=blueprint.request,
+                model=field_model,
             )
             return blueprint.request.POST
 
@@ -368,6 +365,7 @@ class Body(ComponentParser, Generic[_BodyT]):
                 blueprint.request.body,
                 parser=parser,
                 request=blueprint.request,
+                model=field_model,
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None
@@ -678,6 +676,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
             b'',  # it does not matter what to send here.
             parser=parser,
             request=blueprint.request,
+            model=field_model,
         )
 
         force_list: frozenset[str] = getattr(

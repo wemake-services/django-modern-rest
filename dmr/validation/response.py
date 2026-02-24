@@ -80,6 +80,7 @@ class ResponseValidator:
                 response.content,
                 parser=parser,
                 request=controller.request,
+                model=schema.return_type,
             )
         else:
             # But, when we are dealing with `FileResponse`

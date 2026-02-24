@@ -97,7 +97,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
     @override
     def deserializable_content(self) -> Any:
         """Empty body."""
-        return b''
+        return SSEvent(b'')
 
     @override
     def __iter__(self) -> Iterator[bytes]:

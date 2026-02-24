@@ -48,6 +48,7 @@ class Parser(ResponseSpecProvider):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         """
         Deserialize a raw string/bytes/bytearray into an object.
@@ -57,6 +58,7 @@ class Parser(ResponseSpecProvider):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
+            model: Model that reprensents the final result's structure.
 
         Raises:
             DataParsingError: If error decoding ``obj``.
@@ -108,6 +110,7 @@ class JsonParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         """
         Decode a JSON string/bytes/bytearray into an object.
@@ -117,6 +120,7 @@ class JsonParser(Parser):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
+            model: Model that reprensents the final result's structure.
 
         Raises:
             DataParsingError: If error decoding ``obj``.
@@ -152,6 +156,7 @@ class SupportsFileParsing:
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> None:
         """Populate ``request.FILES`` if possible."""
 
@@ -184,6 +189,7 @@ class SupportsDjangoDefaultParsing:
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> None:
         """Populate ``request.POST`` and ``request.FILES`` if possible."""
 
@@ -212,6 +218,7 @@ class MultiPartParser(
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> None:
         """Returns parsed multipart form data."""
         # Circular import:
@@ -266,6 +273,7 @@ class FormUrlEncodedParser(
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> None:
         """Returns parsed form data."""
         # Circular import:
@@ -311,5 +319,6 @@ class _NoOpParser(Parser):  # pyright: ignore[reportUnusedClass]
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         raise NotImplementedError('NoOpParser.parse() should not be used')

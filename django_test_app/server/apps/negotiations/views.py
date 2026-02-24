@@ -6,8 +6,6 @@ from xml.parsers import expat
 import pydantic
 import xmltodict
 from django.http import HttpRequest, HttpResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import override
 
 from dmr import Body, Controller, ResponseSpec, validate
@@ -15,6 +13,7 @@ from dmr.exceptions import (
     InternalServerError,
     RequestSerializationError,
 )
+from dmr.internal.schema import get_schema_name
 from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
@@ -57,11 +56,27 @@ class XmlParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         try:
-            return xmltodict.parse(to_deserialize, process_namespaces=True)
+            parsed = xmltodict.parse(
+                to_deserialize,
+                process_namespaces=True,
+                postprocessor=self._postprocessor,
+                # TODO: this is really bad, but I have no idea what to do.
+                force_list={'detail', 'loc'},
+            )
         except expat.ExpatError as exc:
             raise RequestSerializationError(str(exc)) from None
+        return parsed[next(iter(parsed.keys()))]
+
+    def _postprocessor(
+        self,
+        path: Any,
+        key: str,
+        xml_value: Any,
+    ) -> tuple[str, Any]:
+        return key, xml_value
 
 
 @final
@@ -78,7 +93,7 @@ class XmlRenderer(Renderer):
     ) -> bytes:
         preprocessor = self._wrap_serializer(serializer_hook)
         raw_data = xmltodict.unparse(
-            preprocessor('', to_serialize)[1],
+            {get_schema_name(type(to_serialize)): to_serialize},
             preprocessor=preprocessor,
         )
         assert isinstance(raw_data, str)  # noqa: S101
@@ -105,11 +120,11 @@ class XmlRenderer(Renderer):
 
 @final
 class _RequestModel(pydantic.BaseModel):
-    root: dict[str, str]
+    payment_method_id: str
+    payment_amount: str
 
 
 @final
-@method_decorator(csrf_exempt, name='dispatch')
 class ContentNegotiationController(
     Controller[PydanticSerializer],
     Body[_RequestModel],
@@ -120,23 +135,26 @@ class ContentNegotiationController(
     def post(
         self,
     ) -> Annotated[
-        dict[str, str] | list[str],
+        _RequestModel | list[str],
         conditional_type({
             ContentType.json: list[str],
-            ContentType.xml: dict[str, str],
+            ContentType.xml: _RequestModel,
         }),
     ]:
         if self.request.accepts(ContentType.json):
-            return list(self.parsed_body.root.values())
-        return self.parsed_body.root
+            return [
+                self.parsed_body.payment_method_id,
+                self.parsed_body.payment_amount,
+            ]
+        return self.parsed_body
 
     @validate(
         ResponseSpec(
             return_type=Annotated[
-                dict[str, str] | list[str],
+                _RequestModel | list[str],
                 conditional_type({
                     ContentType.json: list[str],
-                    ContentType.xml: dict[str, str],
+                    ContentType.xml: _RequestModel,
                 }),
             ],
             status_code=HTTPStatus.CREATED,
@@ -145,10 +163,13 @@ class ContentNegotiationController(
     def put(self) -> HttpResponse:
         if self.request.accepts(ContentType.json):
             return self.to_response(
-                list(self.parsed_body.root.values()),
+                [
+                    self.parsed_body.payment_method_id,
+                    self.parsed_body.payment_amount,
+                ],
                 status_code=HTTPStatus.CREATED,
             )
         return self.to_response(
-            self.parsed_body.root,
+            self.parsed_body,
             status_code=HTTPStatus.CREATED,
         )

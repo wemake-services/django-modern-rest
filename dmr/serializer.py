@@ -85,6 +85,7 @@ class BaseSerializer:
         *,
         parser: Parser,
         request: HttpRequest,
+        model: Any,
     ) -> Any:
         """Convert json bytestring to structured data."""
         raise NotImplementedError
@@ -177,9 +178,6 @@ class DeserializableResponse:
 
     But, we still need to validate something.
     """
-
-    # TODO: maybe we should skip `body` validation
-    # for responses that do not have it instead?
 
     @abc.abstractmethod
     def deserializable_content(self) -> Any:
