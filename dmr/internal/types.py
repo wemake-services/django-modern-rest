@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 
 class FormatError(Protocol):
-    """Callable that formats an error into :class:`~dmr.errors.ErrorModel`."""
+    """Callable that converts an error into a structured Python object."""
 
     def __call__(
         self,
@@ -14,5 +14,5 @@ class FormatError(Protocol):
         loc: str | None = None,
         error_type: 'str | ErrorType | None' = None,
     ) -> Any:
-        """Format an error into simple python object."""
+        """Return a formatted representation of the given error."""
         ...
