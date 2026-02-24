@@ -66,7 +66,7 @@ async def _sse_components(
 ) -> SSEResponse:
     user = await request.auser()
     assert user.is_authenticated
-    return SSEResponse(_events(user.username))  # type: ignore[attr-defined]
+    return SSEResponse(_events(user.get_username()))
 
 
 @pytest.mark.asyncio
