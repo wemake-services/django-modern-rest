@@ -112,7 +112,7 @@ shibuya = "^2026.1"
 docutils = "0.21.2"
 
 # Needed for our extension:
-uvicorn = "^0.40"
+uvicorn = ">=0.40,<0.42"
 httpx = "^0.28"
 
 # Needed for examples:

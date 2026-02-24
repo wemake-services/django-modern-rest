@@ -18,6 +18,7 @@ from dmr.headers import HeaderSpec
 from dmr.internal.negotiation import force_request_renderer
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.renderers import Renderer
+from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
 from dmr.sse.metadata import SSEContext, SSEData, SSEResponse
@@ -77,6 +78,7 @@ def sse(  # noqa: WPS211, WPS234
         SSEStreamingResponse
     ] = SSEStreamingResponse,
     metadata_cls: type[EndpointMetadata] = _SSEMetadata,
+    auth: Sequence[AsyncAuth] | None = (),
 ) -> Callable[
     [
         Callable[
@@ -176,6 +178,10 @@ def sse(  # noqa: WPS211, WPS234
             to actually return ASGI compatible streaming response.
         metadata_cls: Optional :class:`~dmr.metadata.EndpointMetadata` subtype
             to be used to populate ``GET`` endpoint metadata.
+        auth: Sequence of auth instances to be used for this SSE controller.
+            SSE endpoints must use instances
+            of :class:`~dmr.security.AsyncAuth`.
+            Set it to ``None`` to disable auth for this SSE controller.
 
     .. important::
 
@@ -234,6 +240,7 @@ def sse(  # noqa: WPS211, WPS234
             regular_renderer=regular_renderer,
             sse_renderer=sse_renderer,
             sse_streaming_response_cls=sse_streaming_response_cls,
+            auth=auth,
             metadata_cls=type(
                 '_LimitedSSEMetadata',
                 (metadata_cls,),
@@ -268,6 +275,7 @@ def _build_controller(  # noqa: WPS211, WPS234
     sse_renderer: SSERenderer,
     sse_streaming_response_cls: type[SSEStreamingResponse],
     metadata_cls: type[EndpointMetadata],
+    auth: Sequence[AsyncAuth] | None,
 ) -> type[Controller[_SerializerT]]:
     class SSEController(  # noqa: WPS431
         Controller[serializer],  # type: ignore[valid-type]
@@ -288,6 +296,7 @@ def _build_controller(  # noqa: WPS211, WPS234
             renderers=[sse_renderer, regular_renderer],
             validate_responses=validate_responses,
             metadata_cls=metadata_cls,
+            auth=auth,
         )
         async def get(self) -> SSEStreamingResponse:
             context = SSEContext(  # pyright: ignore[reportUnknownVariableType]
