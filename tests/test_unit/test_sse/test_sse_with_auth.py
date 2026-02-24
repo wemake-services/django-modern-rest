@@ -5,7 +5,6 @@ from typing import (
     TYPE_CHECKING,
     Final,
     TypeAlias,
-    cast,
 )
 
 import pytest
@@ -65,8 +64,9 @@ async def _sse_components(
     renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse:
-    user = cast(User, await request.auser())
-    return SSEResponse(_events(user.username))
+    user = await request.auser()
+    assert user.is_authenticated
+    return SSEResponse(_events(user.username))  # type: ignore[attr-defined]
 
 
 @pytest.mark.asyncio
