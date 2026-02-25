@@ -130,18 +130,23 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """Fetches JWTToken instance from the auth header."""
         # We return `None` here, because it might be some other auth.
         # We don't want to falsely trigger any errors just yet.
-        header = self.get_header(request)
-        if header is None:
+        token = self.get_token_from_request(request)
+        if token is None:
             return None
-        encoded_token = self.split_encoded_token(header)
+        encoded_token = self.split_encoded_token(token)
         if encoded_token is None:
             return None
         # After this point we are sure that this is a jwt token.
         # We can raise `NotAuthenticatedError` below this point.
         return self.decode_token(encoded_token)
 
-    def get_header(self, request: HttpRequest) -> str | None:
-        """Gets the header with the token."""
+    def get_token_from_request(self, request: HttpRequest) -> str | None:
+        """
+        Gets the jwt token from the request.
+
+        By default, it is in headers.
+        Customize this method to get the token from cookies or body.
+        """
         return request.headers.get(self.auth_header)
 
     def split_encoded_token(self, header: str) -> str | None:
