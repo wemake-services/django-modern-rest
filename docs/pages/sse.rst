@@ -62,6 +62,38 @@ which of them have ``None`` as a default value (matches runtime behavior).
   events to the client from the last consumed one.
 
 
+Auth
+----
+
+SSE endpoints can also be protected by any instance of the async auth.
+However, note that ``EventSource`` JavaScript API does not support passing
+explicit headers. There are several options:
+
+1. Cookies based auth, because ``EventSource`` passes
+   all the cookies on the request
+2. Query string based auth, but it might be exposed in logs / etc,
+   so make sure tokens have a really short expiration time
+
+Here's an example with
+:class:`~dmr.security.django_session.DjangoSessionAsyncAuth` class:
+
+.. literalinclude:: /examples/sse/error_handling.py
+   :language: python
+   :linenos:
+
+You can customize :class:`~dmr.security.jwt.JWTAsyncAuth`
+to provide auth in cookies instead of headers.
+This way you will be able to send the same JWT tokens
+to establish trusted SSE connection.
+
+You would need to:
+
+- Customize :attr:`~dmr.security.jwt.JWTSyncAuth.security_requirement`
+  property to change how your security requirement in defined in OpenAPI
+- Customize :meth:`~dmr.security.jwt.JWTAsyncAuth.get_token_from_request`
+  to get JWT token from the request cookies instead of request's headers
+
+
 Handling errors
 ---------------
 
