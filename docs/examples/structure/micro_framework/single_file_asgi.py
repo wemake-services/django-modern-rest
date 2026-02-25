@@ -1,5 +1,6 @@
 import sys
 import uuid
+import secrets
 
 import pydantic
 from django.conf import settings
@@ -22,6 +23,9 @@ if not settings.configured:
         ALLOWED_HOSTS='*',
         DEBUG=True,
         INSTALLED_APPS=['dmr'],
+        # Secret key for tests, will be new on each run,
+        # in production it must be the same token, kept in secret:
+        SECRET_KEY=secrets.token_hex(),
     )
 
 app = asgi.ASGIHandler()

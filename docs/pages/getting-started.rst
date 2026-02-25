@@ -54,14 +54,14 @@ Extras for different features:
 
 .. note::
 
-  You don't need to add ``'django-modern-rest'`` to the ``INSTALLED_APPS``,
+  You don't need to add ``'dmr'`` to the ``INSTALLED_APPS``,
   unless you want to serve static files for the OpenAPI.
 
 
 Showcase
 --------
 
-Quick example:
+Let's see the basics and learn how to use ``dmr`` in a single example:
 
 .. tabs::
 
@@ -83,30 +83,32 @@ Quick example:
 
 In this example:
 
-1. We defined regular ``pydantic`` and ``msgspec`` models
+1. We defined regular ``pydantic`` or ``msgspec`` models
    that we will use for our API
 2. We added two component parsers: one for request's
    :class:`~dmr.components.Body` and one
    for :class:`~dmr.components.Headers`
-   which will parse them into typed models
+   which will parse them into the typed models
    (:class:`pydantic.BaseModel` or :class:`msgspec.Struct` based) that we pass
    to these components as type parameters
-3. You can see how we created
+3. Next we created
    a :class:`~dmr.controller.Controller` class
    with :class:`~dmr.plugins.pydantic.PydanticSerializer`
    or :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-4. And how we defined ``post`` endpoint and returned
-   a simple model response from it, it will automatically
-   transformed into :class:`django.http.HttpResponse` instance by the framework
+   to serialize input and output data for us
+4. We also defined ``post`` API endpoint and returned
+   a simple model response from it, it will be automatically
+   transformed into :class:`django.http.HttpResponse` instance
+   by ``django-modern-rest``
 
-Now, let's add our API to the list of URLs:
+Now, let's add our controller to the list of URLs:
 
 .. literalinclude:: /examples/getting_started/urls.py
   :caption: urls.py
   :language: python
   :linenos:
 
-Basically - that's it! Your first ``django-modern-rest`` API is ready.
+Your first ``django-modern-rest`` API is ready.
 Next, you can learn:
 
 - How to generate OpenAPI schema
@@ -117,7 +119,8 @@ Next, you can learn:
 But, Django is complicated!
 ---------------------------
 
-No, it is not :)
+If you were ever told that Django is too big and complicated,
+that was misleading, to say the least.
 
 Here's a :doc:`single-file application <structure/micro-framework>`
 that looks pretty much the same as any other micro-framework, like:
@@ -135,7 +138,7 @@ install the ``django-modern-rest`` and run it with:
 
   python example.py runserver
 
-And then visit: https://localhost:8000/docs/swagger
+And then visit https://localhost:8000/docs/swagger for the interactive docs.
 
 That's it, enjoy your new project!
 

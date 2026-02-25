@@ -12,7 +12,7 @@ router = Router([
     ),
 ])
 
-# Just a regular `urlpatterns` definition.
+# Just a regular `urlpatterns` definition, Django-style:
 urlpatterns = [
     path('api/', include((router.urls, 'rest_app'), namespace='api')),
 ]
