@@ -8,6 +8,7 @@ from typing import (
     Any,
     ClassVar,
     Final,
+    TypeVar,
     assert_never,
 )
 
@@ -50,6 +51,8 @@ _HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
     'CONNECT',
     'TRACE',
 ))
+
+_PluggableT = TypeVar('_PluggableT', bound=Parser | Renderer)
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -358,12 +361,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_parsers(self, *, endpoint: str) -> dict[str, Parser]:
         if self.payload and self.payload.parsers:
-            return {typ.content_type: typ for typ in self.payload.parsers}
+            return {
+                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                for typ in self.payload.parsers
+            }
         if self.blueprint_cls and self.blueprint_cls.parsers:
-            return {typ.content_type: typ for typ in self.blueprint_cls.parsers}
+            return {
+                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                for typ in self.blueprint_cls.parsers
+            }
         if self.controller_cls.parsers:
             return {
-                typ.content_type: typ for typ in self.controller_cls.parsers
+                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                for typ in self.controller_cls.parsers
             }
         settings_types = resolve_setting(Settings.parsers)
         if not settings_types:
@@ -372,18 +382,26 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'{endpoint!r} must have at least one parser '
                 'configured in settings',
             )
-        return {typ.content_type: typ for typ in settings_types}
+        return {
+            typ.content_type: self._check_supported(typ, endpoint=endpoint)
+            for typ in settings_types
+        }
 
     def _build_renderers(self, *, endpoint: str) -> dict[str, Renderer]:
         if self.payload and self.payload.renderers:
-            return {typ.content_type: typ for typ in self.payload.renderers}
+            return {
+                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                for typ in self.payload.renderers
+            }
         if self.blueprint_cls and self.blueprint_cls.renderers:
             return {
-                typ.content_type: typ for typ in self.blueprint_cls.renderers
+                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                for typ in self.blueprint_cls.renderers
             }
         if self.controller_cls.renderers:
             return {
-                typ.content_type: typ for typ in self.controller_cls.renderers
+                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                for typ in self.controller_cls.renderers
             }
         settings_types = resolve_setting(Settings.renderers)
         if not settings_types:
@@ -392,7 +410,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'{endpoint!r} must have at least one renderer '
                 'configured in settings',
             )
-        return {typ.content_type: typ for typ in settings_types}
+        return {
+            typ.content_type: self._check_supported(typ, endpoint=endpoint)
+            for typ in settings_types
+        }
+
+    def _check_supported(
+        self,
+        pluggable: _PluggableT,
+        *,
+        endpoint: str,
+    ) -> _PluggableT:
+        active_blueprint = self.blueprint_cls or self.controller_cls
+        if active_blueprint.serializer.is_supported(pluggable):
+            return pluggable
+        raise EndpointMetadataError(
+            f'{endpoint!r} serializer does not support {pluggable!r}',
+        )
 
     def _build_auth(  # noqa: WPS231
         self,
