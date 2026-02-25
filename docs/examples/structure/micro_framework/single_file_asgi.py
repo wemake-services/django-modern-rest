@@ -16,9 +16,7 @@ from dmr.routing import Router
 
 if not settings.configured:
     settings.configure(
-        # Keep it as is:
         ROOT_URLCONF=__name__,
-        # Required options but feel free to configure as you like:
         ALLOWED_HOSTS='*',
         DEBUG=True,
         INSTALLED_APPS=['dmr', 'django.contrib.staticfiles'],
@@ -42,7 +40,7 @@ class UserCreateModel(pydantic.BaseModel):
     email: str
 
 
-class UserModel(UserCreateModel):
+class UserResponseModel(UserCreateModel):
     uid: uuid.UUID
 
 
@@ -50,8 +48,8 @@ class UserController(
     Controller[PydanticSerializer],
     Body[UserCreateModel],
 ):
-    async def post(self) -> UserModel:
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+    async def post(self) -> UserResponseModel:
+        return UserResponseModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 
 
 router = Router([
