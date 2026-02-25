@@ -32,9 +32,21 @@ _TypeMapResult: TypeAlias = tuple[
 ]
 
 
-class BaseSerializer:
+class BaseSerializer:  # noqa: WPS214
     """
     Abstract base class for data serialization.
+
+    What serializer does?
+
+    1. It provides serialization and deserialization hooks
+       for parser and renderer. So different parsers and renderers
+       will work similarly. This way you can modify all the serialization
+       logic in one place and not adjust all possible parsers or renderers
+    2. It provides validation for raw python data,
+       see :meth:`dmr.serializer.BaseSerializer.from_python` method
+    3. It provides serialization for related complex utility objects like
+       validation errors and responses that don't have ``.content`` attribute.
+       For example: file and sse responses
 
     Attributes:
         validation_error: Exception type that is used for validation errors.
@@ -166,6 +178,18 @@ class BaseSerializer:
             Simple python object - exception converted to json.
         """
         raise NotImplementedError
+
+    @classmethod
+    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+        """
+        Is this parser or renderer supported?
+
+        When defining custom serializers you can specify what kind
+        of parser and renders you support.
+        Adding a combination of unsupported serializer and parser / render
+        will raise an import-time validation error.
+        """
+        return True  # By default all are supported
 
 
 class DeserializableResponse:
