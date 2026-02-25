@@ -281,7 +281,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         Controller[serializer],  # type: ignore[valid-type]
         *filter(None, [path, query, headers, cookies]),  # type: ignore[misc]  # noqa: WPS606
     ):
-        class endpoint_cls(Endpoint):  # noqa: N801, WPS431
+        class endpoint_cls(Endpoint):  # noqa: N801, WPS431  # pyrefly: ignore[bad-override]
             metadata_cls = custom_metadata_cls
 
         @override

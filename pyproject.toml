@@ -68,7 +68,7 @@ django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 types-xmltodict = "^1.0"
 pyright = "^1.1"
-pyrefly = "^0.52"
+pyrefly = "^0.53"
 
 codespell = "^2.4"
 wemake-python-styleguide = "^1.5"
