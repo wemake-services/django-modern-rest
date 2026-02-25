@@ -89,11 +89,16 @@ Here is how you can use it in your root ``urls.py``:
   :caption: urls.py
 
   >>> from dmr.plugins.pydantic import PydanticSerializer
-  >>> from dmr.routing import build_404_handler
+  >>> from dmr.routing import Router, build_404_handler
 
-  >>> # ... your urlpatterns ...
+  >>> router = Router([
+  ...     # ... your urlpatterns ...
+  ... ], prefix='api/')
 
-  >>> handler404 = build_404_handler('api/', serializer=PydanticSerializer)
+  >>> handler404 = build_404_handler(
+  ...     router.prefix,
+  ...     serializer=PydanticSerializer,
+  ... )
 
 
 Optimized URL Routing

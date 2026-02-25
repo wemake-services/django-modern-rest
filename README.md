@@ -115,9 +115,9 @@ And then route this controller in your `urls.py`:
 
 >>> router = Router([
 ...     path('user/', UserController.as_view(), name='users'),
-... ])
+... ], prefix='api/')
 >>> urlpatterns = [
-...     path('api/', include((router.urls, 'your_app'), namespace='api')),
+...     path(router.prefix, include((router.urls, 'my_app'), namespace='api')),
 ... ]
 
 ```

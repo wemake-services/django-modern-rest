@@ -447,17 +447,21 @@ class Path(ComponentParser, Generic[_PathT]):
         ...     Controller[PydanticSerializer],
         ... ): ...
 
-        >>> router = Router([
-        ...     path(
-        ...         'user/<int:user_id>',
-        ...         UserUpdateController.as_view(),
-        ...         name='users',
-        ...     ),
-        ... ])
+        >>> router = Router(
+        ...     [
+        ...         path(
+        ...             'user/<int:user_id>',
+        ...             UserUpdateController.as_view(),
+        ...             name='users',
+        ...         ),
+        ...     ],
+        ...     prefix='api/',
+        ... )
 
         >>> urlpatterns = [
         ...     path(
-        ...         'api/', include((router.urls, 'rest_app'), namespace='api')
+        ...         router.prefix,
+        ...         include((router.urls, 'rest_app'), namespace='api'),
         ...     ),
         ... ]
 

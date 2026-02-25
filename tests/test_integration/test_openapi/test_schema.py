@@ -22,7 +22,7 @@ def api_schema(db: None) -> 'OpenApiSchema':
 # TODO: We skip negotiation tests because our implementation of
 # XmlParser and XmlRenderer too simple and naive.
 schema = st.pytest.from_fixture('api_schema').exclude(
-    path='/negotiations/negotiation',
+    path='/api/negotiations/negotiation',
 )
 
 

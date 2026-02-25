@@ -3,14 +3,17 @@ from django.urls import include, path
 from dmr.routing import Router
 from examples.using_controller.custom_meta import SettingsController
 
-router = Router([
-    path(
-        'settings/',
-        SettingsController.as_view(),
-        name='settings',
-    ),
-])
+router = Router(
+    [
+        path(
+            'settings/',
+            SettingsController.as_view(),
+            name='settings',
+        ),
+    ],
+    prefix='api/',
+)
 
 urlpatterns = [
-    path('api/', include((router.urls, 'server'), namespace='api')),
+    path(router.prefix, include((router.urls, 'server'), namespace='api')),
 ]

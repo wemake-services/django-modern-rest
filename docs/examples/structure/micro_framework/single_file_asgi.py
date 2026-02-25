@@ -8,8 +8,7 @@ from django.core.management import execute_from_command_line
 from django.urls import include, path
 
 from dmr import Body, Controller
-from dmr.openapi import OpenAPIConfig, openapi_spec
-from dmr.openapi.objects import Server
+from dmr.openapi import openapi_spec
 from dmr.openapi.renderers import JsonRenderer, SwaggerRenderer
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
@@ -52,22 +51,17 @@ class UserController(
         return UserResponseModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 
 
-router = Router([
-    path('user/', UserController.as_view(), name='users'),
-])
+router = Router(
+    [
+        path('user/', UserController.as_view(), name='users'),
+    ],
+    prefix='api/',
+)
 urlpatterns = [
-    path('api/', include((router.urls, 'your_app'), namespace='api')),
+    path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
     path(
         'docs/',
-        openapi_spec(
-            router,
-            renderers=[JsonRenderer(), SwaggerRenderer()],
-            config=OpenAPIConfig(
-                title='django-modern-rest',
-                version='0.1.0',
-                servers=[Server(url='/api')],
-            ),
-        ),
+        openapi_spec(router, renderers=[JsonRenderer(), SwaggerRenderer()]),
     ),
 ]
 

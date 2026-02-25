@@ -7,14 +7,11 @@ from typing import (
     TypeAlias,
     TypeVar,
     cast,
+    final,
     overload,
 )
 
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseBase,
-)
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from django.views.defaults import page_not_found
@@ -38,14 +35,16 @@ _AnyPattern: TypeAlias = URLPattern | URLResolver
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
 
+@final
 class Router:
     """Collection of HTTP routes for REST framework."""
 
-    __slots__ = ('urls',)
+    __slots__ = ('prefix', 'urls')
 
-    def __init__(self, urls: Sequence[_AnyPattern]) -> None:
+    def __init__(self, urls: Sequence[_AnyPattern], *, prefix: str) -> None:
         """Just stores the passed routes."""
         self.urls = urls
+        self.prefix = prefix
 
 
 # We mimic django's name here:
