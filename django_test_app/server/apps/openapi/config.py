@@ -1,6 +1,4 @@
-from dmr.openapi import (
-    OpenAPIConfig,
-)
+from dmr.openapi import OpenAPIConfig
 from dmr.openapi.objects import (
     Contact,
     ExternalDocumentation,

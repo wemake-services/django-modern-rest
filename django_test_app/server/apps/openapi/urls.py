@@ -8,9 +8,7 @@ from dmr.openapi.renderers import (
     SwaggerRenderer,
 )
 from dmr.routing import Router
-from server.apps.openapi.config import (
-    get_openapi_config,
-)
+from server.apps.openapi.config import get_openapi_config
 
 
 def build_spec(router: Router) -> tuple[list[URLPattern], str, str]:
