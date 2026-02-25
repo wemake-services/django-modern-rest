@@ -140,6 +140,10 @@ install the ``django-modern-rest`` and run it with:
 
 And then visit https://localhost:8000/docs/swagger for the interactive docs.
 
+.. image:: /_static/images/swagger.png
+   :alt: Swagger view
+   :align: center
+
 That's it, enjoy your new project!
 
 
