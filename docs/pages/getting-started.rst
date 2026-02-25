@@ -58,13 +58,6 @@ Extras for different features:
   unless you want to serve static files for the OpenAPI.
 
 
-Project template
-----------------
-
-Jump start your new ``django-modern-rest`` project with
-`wemake-django-template <https://github.com/wemake-services/wemake-django-template>`_!
-
-
 Showcase
 --------
 
@@ -119,6 +112,46 @@ Next, you can learn:
 - How to generate OpenAPI schema
 - How to handle errors
 - How to customize controllers and endpoints
+
+
+But, Django is complicated!
+---------------------------
+
+No, it is not :)
+
+Here's a :doc:`single-file application <structure/micro-framework>`
+that looks pretty much the same as any other micro-framework, like:
+FastAPI, Litestar, or Flask.
+
+.. literalinclude:: /examples/structure/micro_framework/single_file_asgi.py
+   :language: python
+   :linenos:
+
+You can copy it by clicking "Copy" in the right upper corner of the example,
+it shows up on hovering the code example. Paste it as ``example.py``,
+install the ``django-modern-rest`` and run it with:
+
+.. code-block:: bash
+
+  python example.py runserver
+
+And then visit: https://localhost:8000/docs/swagger
+
+That's it, enjoy your new project!
+
+
+But, this is too simple for my use-case!
+----------------------------------------
+
+What is great about Django is that it scales.
+You can start with a single file app and scale it up to a full
+featured monolith with scrict context boundaries, DDD, reusable apps, etc.
+
+We recommend starting new big projects with
+https://github.com/wemake-services/wemake-django-template
+
+It is strict, security-first, battle-proven, highload-tested boilerplate
+for real apps of the modern age.
 
 
 Next up

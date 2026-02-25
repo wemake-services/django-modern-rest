@@ -8,6 +8,8 @@ from django.core.management import execute_from_command_line
 from django.urls import include, path
 
 from dmr import Body, Controller, Headers
+from dmr.openapi import openapi_spec
+from dmr.openapi.renderers import JsonRenderer, SwaggerRenderer
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
@@ -52,10 +54,15 @@ router = Router([
 ])
 urlpatterns = [
     path('api/', include((router.urls, 'your_app'), namespace='api')),
+    path(
+        'docs/',
+        openapi_spec(router, renderers=[JsonRenderer(), SwaggerRenderer()]),
+    ),
 ]
 
 if __name__ == '__main__':
-    # Use `python THIS_FILE_NAME.py runserver` to run the example:
+    # Use `python THIS_FILE_NAME.py runserver` to run the example.
+    # Then visit `http://localhost:8000/docs/swagger` to view the docs.
     execute_from_command_line(sys.argv)
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wms.org"}, "headers": {"X-API-Consumer": "my-api"}, "url": "/api/user/"}  # noqa: ERA001, E501
