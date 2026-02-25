@@ -20,7 +20,7 @@ _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 def test_returns_correct_structure() -> None:
     """Ensure that ``openapi_spec`` returns correct tuple structure."""
     urlpatterns, app_name, namespace = openapi_spec(
-        router=Router([]),  # noqa: WPS204
+        router=Router([], prefix=''),  # noqa: WPS204
         renderers=[JsonRenderer()],
         config=_TEST_CONFIG,
     )
@@ -34,7 +34,7 @@ def test_returns_correct_structure() -> None:
 
 def test_creates_pattern_per_renderer() -> None:
     """Ensure that each renderer creates a URL pattern."""
-    router = Router([])
+    router = Router([], prefix='/api/v1')
     renderers = [JsonRenderer(), SwaggerRenderer()]
 
     urlpatterns, _, _ = openapi_spec(
@@ -50,7 +50,7 @@ def test_creates_pattern_per_renderer() -> None:
 def test_pattern_names_match_renderers() -> None:
     """Ensure that URL pattern names match renderer names."""
     urlpatterns, _, _ = openapi_spec(
-        router=Router([]),
+        router=Router([], prefix='/api'),
         renderers=[
             JsonRenderer(),
             RedocRenderer(),
@@ -79,7 +79,7 @@ def test_custom_app_and_namespace(
 ) -> None:
     """Ensure that custom ``app_name`` and ``namespace`` are returned."""
     _, returned_app_name, returned_namespace = openapi_spec(
-        router=Router([]),
+        router=Router([], prefix='/api/v1'),
         renderers=[JsonRenderer()],
         config=_TEST_CONFIG,
         app_name=app_name,
@@ -93,7 +93,7 @@ def test_custom_app_and_namespace(
 def test_with_none_config_uses_default(dmr_clean_settings: None) -> None:
     """Ensure that ``None`` config triggers default config loading."""
     urlpatterns, app_name, namespace = openapi_spec(
-        router=Router([]),
+        router=Router([], prefix='/api'),
         renderers=[JsonRenderer()],
     )
 
@@ -117,7 +117,7 @@ def test_default_config_raises_when_wrong_type(
         match='OpenAPI config is not set',
     ):
         openapi_spec(
-            router=Router([]),
+            router=Router([], prefix=''),
             renderers=[JsonRenderer()],
         )
 
@@ -129,7 +129,7 @@ def test_empty_renderers_list() -> None:
         match='At least one renderer must be specified',
     ):
         openapi_spec(
-            router=Router([]),
+            router=Router([], prefix=''),
             renderers=[],
             config=_TEST_CONFIG,
         )
@@ -138,7 +138,7 @@ def test_empty_renderers_list() -> None:
 def test_decorated_view_with_csrf_exempt() -> None:
     """Ensure that ``csrf_exempt`` decorator is applied to view."""
     urlpatterns, _, _ = openapi_spec(
-        router=Router([]),
+        router=Router([], prefix='/api/v1'),
         renderers=[JsonRenderer(decorators=[csrf_exempt])],
         config=_TEST_CONFIG,
     )

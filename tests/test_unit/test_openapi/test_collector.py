@@ -198,9 +198,12 @@ def test_controller_collector_with_router() -> None:
             compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
         ),
     ]
-    controllers = controller_collector(Router(patterns).urls)
+    router = Router(patterns, prefix='/api')
+    controllers = controller_collector(router.urls, router.prefix)
 
     assert len(controllers) == 3
-    assert all(
-        isinstance(controller, ControllerMapping) for controller in controllers
-    )
+    assert {controller.path for controller in controllers} == {
+        '/api/direct/',
+        '/api/composed/',
+        '/api/nested/inner/',
+    }

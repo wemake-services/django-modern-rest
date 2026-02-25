@@ -453,11 +453,12 @@ class Path(ComponentParser, Generic[_PathT]):
         ...         UserUpdateController.as_view(),
         ...         name='users',
         ...     ),
-        ... ])
+        ... ], prefix='api/')
 
         >>> urlpatterns = [
         ...     path(
-        ...         'api/', include((router.urls, 'rest_app'), namespace='api')
+        ...         router.prefix,
+        ...         include((router.urls, 'rest_app'), namespace='api'),
         ...     ),
         ... ]
 

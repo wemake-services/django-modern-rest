@@ -6,18 +6,21 @@ from examples.using_controller.blueprints import (
     UserListBlueprint,
 )
 
-router = Router([
-    path(
-        'user/',
-        compose_blueprints(
-            UserCreateBlueprint,
-            UserListBlueprint,
-            # Can compose as many blueprints as you need!
-        ).as_view(),
-        name='users',
-    ),
-])
+router = Router(
+    [
+        path(
+            'user/',
+            compose_blueprints(
+                UserCreateBlueprint,
+                UserListBlueprint,
+                # Can compose as many blueprints as you need!
+            ).as_view(),
+            name='users',
+        ),
+    ],
+    prefix='api/',
+)
 
 urlpatterns = [
-    path('api/', include((router.urls, 'server'), namespace='api')),
+    path(router.prefix, include((router.urls, 'server'), namespace='api')),
 ]

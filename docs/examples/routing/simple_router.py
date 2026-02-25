@@ -4,8 +4,9 @@ from dmr.routing import Router, path
 
 router = Router(
     [
-        path('api/v1/users/', views.UserList.as_view()),
-        path('api/v1/posts/', views.PostList.as_view()),
-        path('api/v1/users/<int:id>/', views.UserDetail.as_view()),
+        path('users/', views.UserList.as_view()),
+        path('posts/', views.PostList.as_view()),
+        path('users/<int:id>/', views.UserDetail.as_view()),
     ],
+    prefix='api/v1',
 )
