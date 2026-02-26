@@ -85,7 +85,7 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
             for content_type in content_types
             if (media_type := MediaType(content_type)).quality != 0
         ),
-        key=lambda media: (media.specificity, media.quality),  # noqa: WPS617
+        key=lambda media: (media.specificity, media.quality),
         reverse=True,
     )
 

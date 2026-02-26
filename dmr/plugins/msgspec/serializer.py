@@ -121,7 +121,7 @@ class MsgspecSerializer(BaseSerializer):
         return msgspec.convert(
             unstructured,
             model,
-            strict=strict or False,
+            strict=strict or False,  # noqa: WPS366  # TODO: remove after 1.6.1
             dec_hook=cls.deserialize_hook,
             **cls.convert_kwargs,
         )

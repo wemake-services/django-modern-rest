@@ -187,7 +187,7 @@ def wrap_handler(
     if inspect.iscoroutinefunction(method):
 
         @wraps(method)
-        async def decorator(  # noqa: WPS430  # pyright: ignore[reportRedeclaration]
+        async def decorator(  # pyright: ignore[reportRedeclaration]
             endpoint: 'Endpoint',
             controller: 'Controller[BaseSerializer]',
             exc: Exception,
@@ -202,7 +202,7 @@ def wrap_handler(
     else:
 
         @wraps(method)  # pyrefly: ignore[bad-argument-type]
-        def decorator(  # noqa: WPS430
+        def decorator(
             endpoint: 'Endpoint',
             controller: 'Controller[BaseSerializer]',
             exc: Exception,
