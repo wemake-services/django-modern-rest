@@ -5,7 +5,7 @@ import pytest
 from django.http import HttpResponse
 
 from dmr.openapi.converter import ConvertedSchema
-from dmr.openapi.objects.open_api import _OPENAPI_VERSION
+from dmr.openapi.objects.openapi import _OPENAPI_VERSION
 from dmr.openapi.renderers import JsonRenderer
 from dmr.openapi.views import OpenAPIView
 from dmr.test import DMRRequestFactory

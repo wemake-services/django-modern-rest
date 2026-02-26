@@ -4,12 +4,10 @@ from typing import TYPE_CHECKING
 from django.urls import URLPattern
 
 from dmr.openapi.config import OpenAPIConfig
-from dmr.openapi.converter import (
-    ConvertedSchema,
-    SchemaConverter,
-)
+from dmr.openapi.converter import SchemaConverter
 from dmr.openapi.core.builder import OpenApiBuilder
 from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.objects.openapi import OpenAPI
 from dmr.openapi.views import OpenAPIView
 from dmr.routing import path
 
@@ -39,7 +37,7 @@ def openapi_spec(
             'render the API documentation.',
         )
 
-    schema = _build_schema(config or _default_config(), router)
+    schema = SchemaConverter.convert(build_schema(router, config=config))
 
     urlpatterns: list[URLPattern] = []
     for renderer in renderers:
@@ -51,6 +49,24 @@ def openapi_spec(
         urlpatterns.append(path(renderer.path, view, name=renderer.name))
 
     return (urlpatterns, app_name, namespace)
+
+
+def build_schema(
+    router: 'Router',
+    *,
+    config: OpenAPIConfig | None = None,
+) -> OpenAPI:
+    """
+    Build OpenAPI schema.
+
+    Parameters:
+        router: Router that contains all API endpoints and all controllers.
+        config: Optional configuration of OpenAPI metadata.
+            Can be ``None``, in this case we fetch OpenAPI config from settings.
+
+    """
+    context = OpenAPIContext(config=config or _default_config())
+    return OpenApiBuilder(context)(router)
 
 
 def _default_config() -> OpenAPIConfig:
@@ -66,10 +82,3 @@ def _default_config() -> OpenAPIConfig:
             f'{str(Settings.openapi_config)!r} setting.',
         )
     return config
-
-
-def _build_schema(config: OpenAPIConfig, router: 'Router') -> ConvertedSchema:
-    # TODO: refactor
-    context = OpenAPIContext(config=config)
-    schema = OpenApiBuilder(context)(router)
-    return SchemaConverter.convert(schema)

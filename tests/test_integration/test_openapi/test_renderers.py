@@ -4,7 +4,7 @@ from typing import Final
 import pytest
 from django.urls import reverse
 
-from dmr.openapi.objects.open_api import _OPENAPI_VERSION
+from dmr.openapi.objects.openapi import _OPENAPI_VERSION
 from dmr.test import DMRClient
 
 _ENDPOINTS: Final = (
