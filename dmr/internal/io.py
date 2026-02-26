@@ -1,8 +1,5 @@
 import asyncio
-from collections.abc import (
-    AsyncIterator,
-    Iterator,
-)
+from collections.abc import AsyncIterator, Iterator
 from contextlib import closing
 from typing import TYPE_CHECKING, TypeVar
 

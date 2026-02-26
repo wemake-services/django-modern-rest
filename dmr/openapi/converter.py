@@ -1,17 +1,20 @@
 from collections.abc import Callable, Iterator
 from dataclasses import Field, fields, is_dataclass
 from enum import Enum
-from typing import Any, ClassVar, Protocol, TypeAlias, cast, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeAlias,
+    cast,
+    final,
+)
 
-
-class SchemaObject(Protocol):
-    """Type that represents the `dataclass` object."""
-
-    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]  # noqa: WPS234
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
 
 
 ConvertedSchema: TypeAlias = dict[str, Any]
-_ConverterFunc: TypeAlias = Callable[[SchemaObject], ConvertedSchema]
+_ConverterFunc: TypeAlias = Callable[['DataclassInstance'], ConvertedSchema]
 _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
@@ -75,7 +78,7 @@ def normalize_value(to_normalize: Any, converter: '_ConverterFunc') -> Any:
     - None values (should be filtered out by caller)
     """
     if is_dataclass(to_normalize):
-        return converter(cast(SchemaObject, to_normalize))
+        return converter(cast('DataclassInstance', to_normalize))
 
     if isinstance(to_normalize, list):
         return [
@@ -111,7 +114,7 @@ class SchemaConverter:
     _normalize_value: _NormalizeValueFunc = staticmethod(normalize_value)  # noqa: WPS421
 
     @classmethod
-    def convert(cls, schema_obj: SchemaObject) -> ConvertedSchema:
+    def convert(cls, schema_obj: 'DataclassInstance') -> ConvertedSchema:
         """Convert the object to OpenAPI schema dictionary."""
         schema: ConvertedSchema = {}
 
@@ -129,5 +132,8 @@ class SchemaConverter:
 
     # Private API:
     @classmethod
-    def _iter_fields(cls, schema_obj: SchemaObject) -> Iterator[Field[Any]]:
+    def _iter_fields(
+        cls,
+        schema_obj: 'DataclassInstance',
+    ) -> Iterator[Field[Any]]:
         yield from fields(schema_obj)

@@ -12,6 +12,16 @@ If you want to list this response, consider adding
 it to the default list of response specs in controller / settings.
 
 
+Top level API
+-------------
+
+.. autofunction:: dmr.openapi.schema.build_schema
+
+
+.. autoclass:: dmr.openapi.config.OpenAPIConfig
+   :members:
+
+
 Objects
 -------
 
@@ -128,9 +138,6 @@ Core
    :members:
 
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
-   :members:
-
-.. autoclass:: dmr.openapi.config.OpenAPIConfig
    :members:
 
 

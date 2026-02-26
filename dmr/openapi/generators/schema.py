@@ -62,7 +62,7 @@ class SchemaGenerator:
 
     def __call__(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
-        simple_schema = _get_schema_from_type_map(
+        simple_schema = TypeMapper.get_schema(
             annotation,
         ) or self._context.registries.schema.get_reference(annotation)
         if simple_schema:
@@ -140,10 +140,6 @@ class SchemaGenerator:
             return schema
 
         return dataclasses.replace(schema, **updates)
-
-
-def _get_schema_from_type_map(annotation: Any) -> Schema | None:
-    return TypeMapper.get_schema(annotation)
 
 
 def _handle_generic_types(
