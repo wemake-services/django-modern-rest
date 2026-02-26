@@ -15,7 +15,7 @@ it to the default list of response specs in controller / settings.
 Top level API
 -------------
 
-.. autofunction:: dmr.openapi.schema.build_schema
+.. autofunction:: dmr.openapi.spec.build_schema
 
 
 .. autoclass:: dmr.openapi.config.OpenAPIConfig
