@@ -15,9 +15,8 @@ def my_middleware(
     3. Return the response
     """
 
-    def middleware_function(request: HttpRequest) -> HttpResponse:  # noqa: WPS430
-        # Your middleware logic here
-        response = get_response(request)  # Call the view
-        return response  # noqa: RET504
+    def factory(request: HttpRequest) -> HttpResponse:
+        # Your middleware logic here:
+        return get_response(request)  # Call the view
 
-    return middleware_function
+    return factory
