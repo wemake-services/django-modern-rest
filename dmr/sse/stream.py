@@ -5,6 +5,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+from contextlib import aclosing, nullcontext
 from http import HTTPStatus
 from typing import Any, ClassVar, Final, TypeAlias
 
@@ -156,15 +157,24 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         raise  # noqa: PLE0704
 
     async def _events_pipeline(self) -> AsyncIterator[bytes]:
-        try:
-            async for event in self._streaming_content:
-                event = self._apply_event_pipeline(event)
-                yield self.serializer.serialize(
-                    event,
-                    renderer=self.sse_renderer,
-                )
-        except SSECloseConnectionError:
-            self.close()
+        # We want to close any async generators after they are fully used.
+        # Why? Because they can be cancelled at any point
+        # and not do any cleanup.
+        context: aclosing[Any] | nullcontext[Any] = (
+            aclosing(self._streaming_content)
+            if hasattr(self._streaming_content, 'aclose')
+            else nullcontext()
+        )
+        async with context:
+            try:
+                async for event in self._streaming_content:
+                    event = self._apply_event_pipeline(event)
+                    yield self.serializer.serialize(
+                        event,
+                        renderer=self.sse_renderer,
+                    )
+            except SSECloseConnectionError:
+                self.close()
 
     def _apply_event_pipeline(self, event: SSEData) -> SSEData:
         try:
