@@ -72,7 +72,7 @@ pyrefly = "^0.53"
 
 codespell = "^2.4"
 wemake-python-styleguide = "^1.6"
-ruff = "^0.15"
+ruff = "0.15.2"
 import-linter = "^2.5"
 slotscheck = "^0.19"
 
