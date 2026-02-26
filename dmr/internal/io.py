@@ -1,12 +1,10 @@
 import asyncio
 from collections.abc import (
     AsyncIterator,
-    Awaitable,
-    Callable,
     Iterator,
 )
 from contextlib import closing
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 _ItemT = TypeVar('_ItemT')
 
