@@ -1,5 +1,8 @@
 import asyncio
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import (
+    AsyncIterator,
+    Iterator,
+)
 from contextlib import closing
 from typing import TYPE_CHECKING, TypeVar
 
@@ -36,5 +39,14 @@ def aiter_to_iter(aiterator: AsyncIterator[_ItemT]) -> Iterator[_ItemT]:
         while True:
             try:
                 yield loop.run_until_complete(anext(aiterator))
-            except StopAsyncIteration:
+            except (StopAsyncIteration, asyncio.CancelledError):
                 break
+
+        # After we received an exception, we want to explicitly close any
+        # async generators.
+        try:
+            aclose = aiterator.aclose  # type: ignore[attr-defined]
+        except AttributeError:  # pragma: no cover
+            pass  # noqa: WPS420
+        else:
+            loop.run_until_complete(aclose())  # pyright: ignore[reportUnknownArgumentType]
