@@ -125,7 +125,7 @@ Objects
 Core
 ----
 
-.. autoclass:: dmr.openapi.core.builder.OpenApiBuilder
+.. autoclass:: dmr.openapi.core.builder.OpenAPIBuilder
    :members:
 
 .. autoclass:: dmr.openapi.core.context.OpenAPIContext
