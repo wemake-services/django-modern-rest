@@ -40,9 +40,8 @@ _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 class OpenAPI:
     """This is the root object of the OpenAPI document."""
 
-    openapi: str = _OPENAPI_VERSION
-
     info: 'Info'
+    openapi: str = _OPENAPI_VERSION
     json_schema_dialect: str | None = None
     servers: 'list[Server] | None' = None
     paths: 'Paths | None' = None
