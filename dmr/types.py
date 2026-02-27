@@ -71,12 +71,12 @@ def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
     Args:
         endpoint_func: function with return type annotation.
 
+    Returns:
+        Function's parsed and solved return type.
+
     Raises:
         UnsolvableAnnotationsError: when annotation can't be solved
             or when the annotation does not exist.
-
-    Returns:
-        Function's parsed and solved return type.
     """
     try:
         return_annotation = get_type_hints(

@@ -62,12 +62,12 @@ class RequestNegotiator:
         Must set ``_dmr_parser`` request attribute
         if the negotiation is successful.
 
+        Returns:
+            Parser class for this request.
+
         Raises:
             RequestSerializationError: when ``Content-Type`` request
                 header is not supported.
-
-        Returns:
-            Parser class for this request.
 
         """
         parser = request_parser(request)  # Does it already exist?
@@ -133,11 +133,11 @@ class ResponseNegotiator:
         Must set ``_dmr_renderer`` request attribute
         if the negotiation is successful.
 
-        Raises:
-            NotAcceptableError: when ``Accept`` request header is not supported.
-
         Returns:
             Renderer class for this response.
+
+        Raises:
+            NotAcceptableError: when ``Accept`` request header is not supported.
 
         """
         renderer = _negotiate_renderer(

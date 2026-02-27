@@ -112,11 +112,12 @@ class MsgspecSerializer(BaseSerializer):
                 to be less strict in some cases and allow type coercition.
                 But, response types need to be strongly validated.
 
+        Returns:
+            Structured and validated data.
+
         Raises:
             msgspec.ValidationError: When parsing can't be done.
 
-        Returns:
-            Structured and validated data.
         """
         return msgspec.convert(
             unstructured,

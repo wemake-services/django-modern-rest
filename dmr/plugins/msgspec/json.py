@@ -37,11 +37,11 @@ class MsgspecJsonParser(Parser):
             request: Django's original request with all the details.
             model: Model that reprensents the final result's structure.
 
-        Raises:
-            DataParsingError: If error decoding ``obj``.
-
         Returns:
             Simple python object with primitive parts.
+
+        Raises:
+            DataParsingError: If error decoding ``obj``.
 
         """
         try:
