@@ -7,10 +7,16 @@ from dmr.openapi.views.base import OpenAPIView
 
 class OpenAPIJsonView(OpenAPIView):
     """
-    Render ``OpenAPI`` schema in JSON format.
+    View for returning the OpenAPI schema as JSON.
 
-    Provides JSON representation of OpenAPI specification suitable for
-    API documentation tools and client code generation.
+    Produces a JSON representation of the :class:`~dmr.openapi.objects.OpenAPI`
+    specification that can be used by API documentation tools
+    and client code generators.
+
+    Attributes:
+        content_type: Content type of the rendered response. Defaults to
+            ``"application/json"``.
+
     """
 
     content_type: ClassVar[str] = 'application/json'

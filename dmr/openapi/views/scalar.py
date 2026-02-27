@@ -10,10 +10,16 @@ if TYPE_CHECKING:
 
 class ScalarView(OpenAPIView):
     """
-    Renderer for ``OpenAPI`` schema using Scalar.
+    View for rendering the OpenAPI schema with Scalar.
 
-    Provides interactive HTML interface for exploring OpenAPI specification
-    using Scalar API Reference.
+    Renders an interactive HTML page that allows exploring the
+    :class:`~dmr.openapi.objects.OpenAPI` specification using Scalar
+    API Reference.
+
+    Attributes:
+        content_type: Content type of the rendered response. Defaults to
+            ``"text/html"``.
+        template_name: Template used to render the Scalar page.
     """
 
     content_type: ClassVar[str] = 'text/html'

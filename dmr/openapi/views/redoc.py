@@ -10,10 +10,16 @@ if TYPE_CHECKING:
 
 class RedocView(OpenAPIView):
     """
-    Renderer for ``OpenAPI`` schema using Redoc.
+    View for rendering the OpenAPI schema with Redoc.
 
-    Provides interactive HTML interface for exploring OpenAPI specification
-    using Redoc components.
+    Renders an interactive HTML page that allows exploring the
+    :class:`~dmr.openapi.objects.OpenAPI` specification using Redoc
+    components.
+
+    Attributes:
+        content_type: Content type of the rendered response. Defaults to
+            ``"text/html"``.
+        template_name: Template used to render the Redoc page.
     """
 
     content_type: ClassVar[str] = 'text/html'

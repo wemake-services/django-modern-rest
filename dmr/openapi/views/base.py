@@ -26,9 +26,16 @@ class OpenAPIView(View):
     """
     Base view for serving an OpenAPI schema.
 
-    Extends Django's ``View`` to accept an ``OpenAPI`` object via ``as_view()``.
-    The provided schema is converted using and stored on the view instance
-    so that concrete subclasses can render it in their preferred format.
+    This view extends Django's :class:`django.views.View` to accept an
+    :class:`~dmr.openapi.objects.OpenAPI` instance via :meth:`as_view`.
+    The passed schema is stored on the view class and can be rendered in
+    any concrete subclass (for example, as JSON or YAML).
+
+    Attributes:
+        dumps: Callable that converts a converted OpenAPI schema into a string.
+            Defaults to :func:`dmr.internal.json.json_dumps`.
+        schema: The OpenAPI schema associated with this view. Set when
+            :meth:`as_view` is called.
     """
 
     # Public API:
@@ -43,11 +50,11 @@ class OpenAPIView(View):
         **initkwargs: Any,
     ) -> Callable[..., 'HttpResponseBase']:
         """
-        Create a view callable with OpenAPI schema.
+        Create a view function bound to the given OpenAPI schema.
 
-        This method extends Django's base ``as_view()`` to accept
-        and configure OpenAPI schema parameter before creating
-        the view callable.
+        Extends Django's :meth:`django.views.View.as_view` to accept an
+        :class:`~dmr.openapi.objects.OpenAPI` instance, store it on the
+        view class, and then return the configured view callable.
         """
         cls.schema = schema
         return super().as_view(**initkwargs)

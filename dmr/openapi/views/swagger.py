@@ -10,10 +10,16 @@ if TYPE_CHECKING:
 
 class SwaggerView(OpenAPIView):
     """
-    Renderer for ``OpenAPI`` schema using Swagger UI.
+    View for rendering the OpenAPI schema with Swagger UI.
 
-    Provides interactive HTML interface for exploring OpenAPI specification
-    using Swagger UI components.
+    Renders an interactive HTML page that allows exploring the
+    :class:`~dmr.openapi.objects.OpenAPI` specification using Swagger UI
+    components.
+
+    Attributes:
+        content_type: Content type of the rendered response. Defaults to
+            ``"text/html"``.
+        template_name: Template used to render the Swagger UI page.
     """
 
     content_type: ClassVar[str] = 'text/html'
