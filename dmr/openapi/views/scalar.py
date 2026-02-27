@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class ScalarView(OpenAPIView):
     """
-    Renderer for OpenAPI schema using Scalar.
+    Renderer for ``OpenAPI`` schema using Scalar.
 
     Provides interactive HTML interface for exploring OpenAPI specification
     using Scalar API Reference.
@@ -25,8 +25,8 @@ class ScalarView(OpenAPIView):
             request,
             self.template_name,
             context={
-                'title': self.converted_schema['info']['title'],
-                'schema': self.serializer(self.converted_schema),
+                'title': self.schema.info.title,
+                'schema': self.serializer(self.schema.convert()),
             },
             content_type=self.content_type,
         )

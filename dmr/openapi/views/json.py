@@ -7,7 +7,7 @@ from dmr.openapi.views.base import OpenAPIView
 
 class OpenAPIJsonView(OpenAPIView):
     """
-    Renderer OpenAPI schema in JSON format.
+    Render ``OpenAPI`` schema in JSON format.
 
     Provides JSON representation of OpenAPI specification suitable for
     API documentation tools and client code generation.
@@ -18,6 +18,6 @@ class OpenAPIJsonView(OpenAPIView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema as JSON response."""
         return HttpResponse(
-            content=self.serializer(self.converted_schema),
+            content=self.serializer(self.schema.convert()),
             content_type=self.content_type,
         )

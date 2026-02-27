@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class RedocView(OpenAPIView):
     """
-    Renderer OpenAPI schema using Redoc.
+    Renderer for ``OpenAPI`` schema using Redoc.
 
     Provides interactive HTML interface for exploring OpenAPI specification
     using Redoc components.
@@ -25,8 +25,8 @@ class RedocView(OpenAPIView):
             request,
             self.template_name,
             context={
-                'title': self.converted_schema['info']['title'],
-                'schema': self.serializer(self.converted_schema),
+                'title': self.schema.info.title,
+                'schema': self.serializer(self.schema.convert()),
             },
             content_type=self.content_type,
         )

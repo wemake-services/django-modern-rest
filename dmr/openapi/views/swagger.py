@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class SwaggerView(OpenAPIView):
     """
-    Renderer for OpenAPI schema using Swagger UI.
+    Renderer for ``OpenAPI`` schema using Swagger UI.
 
     Provides interactive HTML interface for exploring OpenAPI specification
     using Swagger UI components.
@@ -25,8 +25,8 @@ class SwaggerView(OpenAPIView):
             request,
             self.template_name,
             context={
-                'title': self.converted_schema['info']['title'],
-                'schema': self.serializer(self.converted_schema),
+                'title': self.schema.info.title,
+                'schema': self.serializer(self.schema.convert()),
             },
             content_type=self.content_type,
         )
