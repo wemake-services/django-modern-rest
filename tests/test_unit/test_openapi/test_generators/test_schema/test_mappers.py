@@ -69,6 +69,13 @@ def test_simple_types(
             ),
         ),
         (
+            list,
+            Schema(
+                type=OpenAPIType.ARRAY,
+                items=Schema(type=OpenAPIType.OBJECT),
+            ),
+        ),
+        (
             set[float],
             Schema(
                 type=OpenAPIType.ARRAY,
@@ -112,6 +119,20 @@ def test_generic_arrays(
             Schema(
                 type=OpenAPIType.OBJECT,
                 additional_properties=Schema(type=OpenAPIType.INTEGER),
+            ),
+        ),
+        (
+            dict[str, Any],
+            Schema(
+                type=OpenAPIType.OBJECT,
+                additional_properties=Schema(type=OpenAPIType.OBJECT),
+            ),
+        ),
+        (
+            dict,
+            Schema(
+                type=OpenAPIType.OBJECT,
+                additional_properties=Schema(type=OpenAPIType.OBJECT),
             ),
         ),
         (

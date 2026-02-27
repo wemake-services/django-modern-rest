@@ -131,7 +131,7 @@ def _generic_array(
     type_args: tuple[Any, ...],
     generator: 'SchemaGenerator',
 ) -> Schema:
-    items_schema = generator(type_args[0]) if type_args else None
+    items_schema = generator(type_args[0] if type_args else Any)
     return Schema(type=OpenAPIType.ARRAY, items=items_schema)
 
 
@@ -185,6 +185,9 @@ class TypeMapper:
 
     # Private API:
     _mapping: ClassVar[dict[Any, SchemaOrCallback]] = {
+        # Fallback, which means "any json object":
+        Any: Schema(type=OpenAPIType.OBJECT),
+        # Real types:
         Decimal: Schema(type=OpenAPIType.NUMBER),
         IPv4Address: Schema(
             type=OpenAPIType.STRING,
