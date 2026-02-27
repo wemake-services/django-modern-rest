@@ -132,12 +132,12 @@ def compose_blueprints(
         extra: Other optional blueprint classes to compose.
         meta_mixin: Type to add to support ``OPTIONS`` method.
 
-    Raises:
-        EndpointMetadataError: When blueprint validation fails.
-
     Returns:
         New controller class that has all the endpoints
         from all composed blueprints.
+
+    Raises:
+        EndpointMetadataError: When blueprint validation fails.
 
     """
     from dmr.controller import Controller  # noqa: PLC0415
