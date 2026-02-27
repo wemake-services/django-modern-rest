@@ -11,7 +11,7 @@ from dmr.headers import HeaderSpec, NewHeader
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.response import ResponseGenerator
-from dmr.openapi.mappers import TypeMapper
+from dmr.openapi.mappers.types import TypeMapper
 from dmr.openapi.objects import (
     Header,
     Reference,

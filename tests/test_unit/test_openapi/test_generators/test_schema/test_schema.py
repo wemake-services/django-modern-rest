@@ -7,7 +7,7 @@ from dmr.internal.schema import get_schema_name
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
-from dmr.openapi.mappers import KwargMapper
+from dmr.openapi.mappers.kwargs import KwargMapper
 from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
