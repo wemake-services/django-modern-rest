@@ -38,8 +38,7 @@ ignore_imports =
   dmr.settings -> dmr.internal.cache
   # Settings can initialize default OpenAPI config:
   dmr.settings -> dmr.openapi.config
-  # Openapi can use our optimizing `path`:
-  dmr.openapi.spec -> dmr.routing
+
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins
@@ -89,7 +88,6 @@ containers =
 layers =
   spec
   views | core
-  renderers
   generators
   extractors | collector | config
   types
@@ -103,7 +101,7 @@ modules =
   dmr.openapi.generators.*
 
 [importlinter:openapi:renderers-independence]
-name = All OpenAPI `renderers` must be independent
+name = All OpenAPI `views` must be independent
 type = independence
 
 modules =
@@ -114,8 +112,8 @@ name = All OpenAPI `objects` must be independent
 type = independence
 
 modules =
-  dmr.openapi.renderers.*
+  dmr.openapi.views.*
 
 ignore_imports =
   # Allow import base render class:
-  dmr.openapi.renderers.* -> dmr.openapi.renderers.base
+  dmr.openapi.views.* -> dmr.openapi.views.base

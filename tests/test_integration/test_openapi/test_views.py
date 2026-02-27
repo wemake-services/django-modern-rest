@@ -8,10 +8,10 @@ from dmr.openapi.objects.openapi import _OPENAPI_VERSION
 from dmr.test import DMRClient
 
 _ENDPOINTS: Final = (
-    ('openapi:json', HTTPStatus.OK, 'application/json'),
-    ('openapi:redoc', HTTPStatus.OK, 'text/html'),
-    ('openapi:swagger', HTTPStatus.OK, 'text/html'),
-    ('openapi:scalar', HTTPStatus.OK, 'text/html'),
+    ('openapi', HTTPStatus.OK, 'application/json'),
+    ('redoc', HTTPStatus.OK, 'text/html'),
+    ('swagger', HTTPStatus.OK, 'text/html'),
+    ('scalar', HTTPStatus.OK, 'text/html'),
 )
 
 
@@ -49,16 +49,8 @@ def test_wrong_method(
     assert response.status_code == expected_status
 
 
-@pytest.mark.parametrize(
-    'endpoint_name',
-    ['openapi:json'],
-)
-def test_returns_correct_structure(
-    dmr_client: DMRClient,
-    *,
-    endpoint_name: str,
-) -> None:
+def test_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
-    response = dmr_client.get(reverse(endpoint_name))
+    response = dmr_client.get(reverse('openapi'))
 
     assert response.json()['openapi'] == _OPENAPI_VERSION

@@ -1,16 +1,15 @@
 import json
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.openapi import ConvertedSchema
-
-SerializedSchema: TypeAlias = str
-
-_Dumper: TypeAlias = Callable[['ConvertedSchema'], SerializedSchema]
+    from dmr.openapi.views.base import DumpedSchema, SchemaDumper
 
 
-def _wrap_bytes_dumper(dumper: Callable[['ConvertedSchema'], bytes]) -> _Dumper:
+def _wrap_bytes_dumper(
+    dumper: Callable[['ConvertedSchema'], bytes],
+) -> 'SchemaDumper':
     """
     Wrap a bytes-returning JSON dumper to always return a UTF-8 string.
 
@@ -18,7 +17,7 @@ def _wrap_bytes_dumper(dumper: Callable[['ConvertedSchema'], bytes]) -> _Dumper:
     to a single `str`-based interface expected by `json_dumps`.
     """
 
-    def wrapper(schema: 'ConvertedSchema') -> SerializedSchema:
+    def wrapper(schema: 'ConvertedSchema') -> 'DumpedSchema':
         return dumper(schema).decode('utf-8')
 
     return wrapper
@@ -27,12 +26,12 @@ def _wrap_bytes_dumper(dumper: Callable[['ConvertedSchema'], bytes]) -> _Dumper:
 try:
     import msgspec
 except ImportError:  # pragma: no cover
-    _json_dumps: _Dumper = json.dumps
+    _json_dumps: 'SchemaDumper' = json.dumps
 else:
     _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
 
 
-def json_dumps(schema: 'ConvertedSchema') -> SerializedSchema:
+def json_dumps(schema: 'ConvertedSchema') -> 'DumpedSchema':
     """
     Serialize `ConvertedSchema` to decoded JSON string.
 
