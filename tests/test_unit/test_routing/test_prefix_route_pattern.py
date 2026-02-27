@@ -64,7 +64,7 @@ def test_path(
     expected_remaining: str | None,
     expected_capture: dict[str, int | str] | None,
 ) -> None:
-    """Ensures that prefix-optimized `path` works."""
+    """Ensures that prefix-optimized ``path`` works."""
     url_pattern = path(prefix, include(([path(nested, _simple_view)], 'app')))
     assert isinstance(url_pattern.pattern, _PrefixRoutePattern)
     matched = url_pattern.pattern.match(input_path)
@@ -76,3 +76,12 @@ def test_path(
         assert remaining_path == expected_remaining
         assert args == ()
         assert kwargs == expected_capture
+
+
+def test_path_exact_match() -> None:
+    """Ensures that static ``path`` matches exactly."""
+    url_pattern = path('users/', _simple_view)
+    assert isinstance(url_pattern.pattern, _PrefixRoutePattern)
+
+    matched = url_pattern.pattern.match('users/')
+    assert matched == ('', (), {})

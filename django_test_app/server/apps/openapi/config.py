@@ -7,7 +7,7 @@ from dmr.openapi.objects import (
 )
 
 
-def get_openapi_config() -> OpenAPIConfig:
+def get_config() -> OpenAPIConfig:
     return OpenAPIConfig(
         title='Test API',
         version='1.0.0',

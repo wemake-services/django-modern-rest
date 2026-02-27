@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class OpenApiBuilder:
+class OpenAPIBuilder:
     """
     Builds OpenAPI specification.
 

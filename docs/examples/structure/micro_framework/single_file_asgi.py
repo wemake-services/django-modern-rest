@@ -8,8 +8,8 @@ from django.core.management import execute_from_command_line
 from django.urls import include, path
 
 from dmr import Body, Controller
-from dmr.openapi import openapi_spec
-from dmr.openapi.renderers import JsonRenderer, SwaggerRenderer
+from dmr.openapi import build_schema
+from dmr.openapi.views import OpenAPIJsonView, SwaggerView
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
@@ -57,12 +57,12 @@ router = Router(
     ],
     prefix='api/',
 )
+schema = build_schema(router)
+
 urlpatterns = [
     path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
-    path(
-        'docs/',
-        openapi_spec(router, renderers=[JsonRenderer(), SwaggerRenderer()]),
-    ),
+    path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
+    path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
 ]
 
 if __name__ == '__main__':
@@ -70,4 +70,4 @@ if __name__ == '__main__':
     # Then visit `http://localhost:8000/docs/swagger` to view the docs.
     execute_from_command_line(sys.argv)
 
-# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wemake.services"}, "url": "/api/user/"}  # noqa: ERA001, E501
