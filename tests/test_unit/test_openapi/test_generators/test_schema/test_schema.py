@@ -1,19 +1,13 @@
-from types import NoneType
 from typing import Final
 
 import pytest
-from inline_snapshot import snapshot
 from pydantic import BaseModel, Field
 
 from dmr.internal.schema import get_schema_name
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.generators.schema import (
-    SchemaGenerator,
-    _handle_sequence,
-    _handle_union,
-)
-from dmr.openapi.mappers import KwargMapper, TypeMapper
+from dmr.openapi.generators.schema import SchemaGenerator
+from dmr.openapi.mappers import KwargMapper
 from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
@@ -25,10 +19,9 @@ _CONFIG: Final = OpenAPIConfig(title='Test config', version='0.1')
 
 
 @pytest.fixture
-def generator() -> SchemaGenerator:
-    """Create ``SchemaGenerator`` instance for testing."""
-    context = OpenAPIContext(config=_CONFIG)
-    return context.generators.schema
+def generator(openapi_context: OpenAPIContext) -> SchemaGenerator:
+    """Fixture for ``SchemaGenerator`` class."""
+    return openapi_context.generators.schema
 
 
 class _TestModel(BaseModel):
@@ -75,14 +68,6 @@ def test_schema_generator_caching(generator: SchemaGenerator) -> None:
     assert len(generator._context.registries.schema.schemas) == 1
 
 
-def test_handle_sequence_without_args(generator: SchemaGenerator) -> None:
-    """Ensure ``_handle_sequence`` handles bare sequence types."""
-    schema = _handle_sequence(generator, ())
-
-    assert schema.type == OpenAPIType.ARRAY
-    assert schema.items is None
-
-
 def test_schema_generator_with_kwarg_definition(
     generator: SchemaGenerator,
 ) -> None:
@@ -103,15 +88,6 @@ def test_schema_generator_with_kwarg_definition(
     assert score_schema.default == 0
     assert score_schema.minimum == 0
     assert score_schema.maximum == _MAXIMUM
-
-
-def test_handle_union_only_none(generator: SchemaGenerator) -> None:
-    """Ensure ``_handle_union`` handles ``Union`` of only ``None`` types."""
-    schema = _handle_union(generator, (NoneType, type(None)))
-
-    assert schema is TypeMapper.get_schema(NoneType)
-    assert isinstance(schema, Schema)
-    assert schema.type == OpenAPIType.NULL
 
 
 def test_extract_properties_wo_kwarg_definition(
@@ -149,29 +125,3 @@ def test_get_schema_name(generator: SchemaGenerator) -> None:
     """Ensure ``_get_schema_name`` returns a given schema name if one exists."""
     name = get_schema_name(_NamedModel)
     assert name == _NamedModel.__dmr_schema_name__
-
-
-def test_handle_union_empty(generator: SchemaGenerator) -> None:
-    """Ensure ``_handle_union`` handles empty union args."""
-    schema = _handle_union(generator, ())
-    assert schema == snapshot(Schema(type=OpenAPIType.NULL))
-
-
-def test_handle_union_single_non_nullable(generator: SchemaGenerator) -> None:
-    """Ensure ``_handle_union`` handles single non-nullable type."""
-    schema = _handle_union(generator, (_TestModel,))
-    assert schema == snapshot(Reference(ref='#/components/schemas/_TestModel'))
-
-
-def test_handle_union_multiple_nullable(generator: SchemaGenerator) -> None:
-    """Ensure ``_handle_union`` handles multiple types with None."""
-    schema = _handle_union(generator, (int, str, NoneType))
-    assert schema == snapshot(
-        Schema(
-            one_of=[
-                Schema(type=OpenAPIType.INTEGER),
-                Schema(type=OpenAPIType.STRING),
-                Schema(type=OpenAPIType.NULL),
-            ],
-        ),
-    )

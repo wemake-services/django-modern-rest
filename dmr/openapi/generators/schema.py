@@ -28,18 +28,7 @@
 # SOFTWARE.
 
 import dataclasses
-from collections.abc import Mapping, Sequence
-from types import NoneType, UnionType
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    Any,
-    Union,
-    get_args,
-    get_origin,
-)
-
-from typing_extensions import is_typeddict
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from dmr.internal.schema import get_schema_name
 from dmr.openapi.extractors.finder import find_extractor
@@ -58,29 +47,17 @@ if TYPE_CHECKING:
 class SchemaGenerator:
     """Generate ``FieldDefinition`` from dtos."""
 
+    type_mapper: ClassVar[type[TypeMapper]] = TypeMapper
     _context: 'OpenAPIContext'
 
     def __call__(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
-        simple_schema = TypeMapper.get_schema(
+        simple_schema = self.type_mapper.get_schema(
             annotation,
+            self,
         ) or self._context.registries.schema.get_reference(annotation)
         if simple_schema:
             return simple_schema
-
-        origin = get_origin(annotation) or annotation
-
-        if origin is Annotated:
-            return self(get_args(annotation)[0])
-
-        generic_schema = _handle_generic_types(
-            self,
-            origin,
-            get_args(annotation),
-        )
-        if generic_schema:
-            return generic_schema
-
         return self._generate_reference(annotation)
 
     def _generate_reference(self, source_type: Any) -> Reference:
@@ -140,72 +117,3 @@ class SchemaGenerator:
             return schema
 
         return dataclasses.replace(schema, **updates)
-
-
-def _handle_generic_types(
-    generator: SchemaGenerator,
-    origin: Any,
-    args: tuple[Any, ...],
-) -> Schema | Reference | None:
-    if is_typeddict(origin):
-        return None
-
-    if origin is UnionType or origin is Union:
-        return _handle_union(generator, args)
-
-    if isinstance(origin, type) and issubclass(origin, Mapping):
-        return _handle_mapping(generator, args)
-
-    if (
-        isinstance(origin, type)
-        and issubclass(origin, Sequence)
-        and origin not in {str, bytes, bytearray}
-    ):
-        return _handle_sequence(generator, args)
-
-    return None
-
-
-def _handle_union(
-    generator: SchemaGenerator,
-    args: tuple[Any, ...],
-) -> Schema | Reference:
-    is_nullable = any(arg in {NoneType, type(None)} for arg in args)
-    real_args = [arg for arg in args if arg not in {NoneType, type(None)}]
-
-    if not real_args:
-        # We know that NoneType is registered in TypeMapper
-        return TypeMapper.get_schema(NoneType)  # type: ignore[return-value]
-
-    if len(real_args) == 1:
-        schema = generator(real_args[0])
-        if is_nullable:
-            return Schema(one_of=[schema, Schema(type=OpenAPIType.NULL)])
-        return schema
-
-    schemas: list[Schema | Reference] = [generator(arg) for arg in real_args]
-    if is_nullable:
-        schemas.append(Schema(type=OpenAPIType.NULL))
-
-    return Schema(one_of=schemas)
-
-
-def _handle_mapping(
-    generator: SchemaGenerator,
-    args: tuple[Any, ...],
-) -> Schema:
-    value_type = args[1] if len(args) >= 2 else Any
-    return Schema(
-        type=OpenAPIType.OBJECT,
-        additional_properties=generator(value_type),
-    )
-
-
-def _handle_sequence(
-    generator: SchemaGenerator,
-    args: tuple[Any, ...],
-) -> Schema:
-    items_schema = None
-    if args:
-        items_schema = generator(args[0])
-    return Schema(type=OpenAPIType.ARRAY, items=items_schema)
