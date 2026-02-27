@@ -4,7 +4,7 @@ import pytest
 
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.mappers import TypeMapper
+from dmr.openapi.mappers.types import TypeMapper
 
 
 @pytest.fixture(autouse=True)

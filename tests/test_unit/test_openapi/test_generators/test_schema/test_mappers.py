@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Mapping
 from decimal import Decimal
-from typing import Annotated, Any, Final, Optional, Union
+from typing import Annotated, Any, Final, Literal, Optional, Union
 
 import pytest
 from typing_extensions import TypedDict
@@ -248,12 +248,44 @@ def test_annotated_objects(
     assert schema == expected_schema
 
 
-def test_annotated_error(
-    schema_generator: SchemaGenerator,
-) -> None:
+def test_annotated_error(schema_generator: SchemaGenerator) -> None:
     """Ensure schema is generated correctly for annotated."""
     with pytest.raises(ValueError, match=r'Annotated\[YourType'):
         schema_generator(Annotated)
+
+
+@pytest.mark.parametrize(
+    ('source_type', 'expected_schema'),
+    [
+        (
+            Literal,
+            Schema(type=OpenAPIType.OBJECT),
+        ),
+        (
+            Literal[*()],
+            Schema(type=OpenAPIType.OBJECT),
+        ),
+        (
+            Literal[1, 2],
+            Schema(enum=(1, 2)),
+        ),
+        (
+            Literal[1, 'a', None, True],
+            Schema(enum=(1, 'a', None, True)),
+        ),
+    ],
+)
+def test_literal_types(
+    schema_generator: SchemaGenerator,
+    *,
+    source_type: Any,
+    expected_schema: Schema,
+) -> None:
+    """Ensure schema is generated correctly for literal types."""
+    schema = schema_generator(source_type)
+
+    assert isinstance(schema, Schema)
+    assert schema == expected_schema
 
 
 def test_type_mapper_register_works(schema_generator: SchemaGenerator) -> None:
@@ -274,7 +306,7 @@ def test_type_mapper_register_raise_error(
 
 
 def test_type_mapper_override(schema_generator: SchemaGenerator) -> None:
-    """Ensure ``TypeMapper.override`` works."""
+    """Ensure ``override=True`` works."""
     schema_generator.type_mapper.register(int, _TEST_SCHEMA, override=True)
 
     int_schema = schema_generator(int)

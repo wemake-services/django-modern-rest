@@ -9,7 +9,7 @@ from typing import (
 
 from typing_extensions import override
 
-from dmr.openapi.mappers import KwargMapper
+from dmr.openapi.mappers.kwargs import KwargMapper
 from dmr.openapi.types import FieldDefinition
 
 _SourceT = TypeVar('_SourceT')

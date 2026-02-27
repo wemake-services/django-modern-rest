@@ -1,6 +1,6 @@
 from inline_snapshot import snapshot
 
-from dmr.openapi.mappers import KwargMapper
+from dmr.openapi.mappers.kwargs import KwargMapper
 from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from dmr.openapi.objects.schema import Schema
 from dmr.openapi.types import KwargDefinition

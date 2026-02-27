@@ -100,15 +100,15 @@ type = independence
 modules =
   dmr.openapi.generators.*
 
-[importlinter:openapi:renderers-independence]
-name = All OpenAPI `views` must be independent
+[importlinter:openapi:objects-independence]
+name = All OpenAPI `objects` must be independent
 type = independence
 
 modules =
   dmr.openapi.objects.*
 
-[importlinter:openapi:objects-independence]
-name = All OpenAPI `objects` must be independent
+[importlinter:openapi:views-independence]
+name = All OpenAPI `views` must be independent
 type = independence
 
 modules =

@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from dmr.internal.schema import get_schema_name
 from dmr.openapi.extractors.finder import find_extractor
-from dmr.openapi.mappers import TypeMapper
+from dmr.openapi.mappers.types import TypeMapper
 from dmr.openapi.objects.enums import OpenAPIType
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
@@ -40,7 +40,7 @@ from dmr.openapi.types import FieldDefinition, KwargDefinition
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.openapi.mappers import KwargMapper
+    from dmr.openapi.mappers.kwargs import KwargMapper
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
