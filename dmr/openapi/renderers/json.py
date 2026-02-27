@@ -3,7 +3,7 @@ from typing import ClassVar, final
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
-from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.objects.openapi import ConvertedSchema
 from dmr.openapi.renderers.base import (
     BaseRenderer,
     SchemaSerializer,

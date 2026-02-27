@@ -90,7 +90,7 @@ layers =
   spec
   views | core
   renderers
-  converter | generators
+  generators
   extractors | collector | config
   types
   objects

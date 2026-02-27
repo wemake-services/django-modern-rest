@@ -7,15 +7,15 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
-from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.objects.openapi import ConvertedSchema
 from dmr.openapi.renderers import BaseRenderer
 
 
+@final
 @method_decorator(
     ensure_csrf_cookie,  # pyrefly: ignore[bad-argument-type]
     name='dispatch',
 )
-@final
 class OpenAPIView(View):
     """
     View for rendering OpenAPI schema documentation.
@@ -36,7 +36,9 @@ class OpenAPIView(View):
         if not isinstance(self.renderer, BaseRenderer):
             raise TypeError("Renderer must be a 'BaseRenderer' instance.")
 
-        return self.renderer.render(request, self.schema)  # type: ignore[arg-type]
+        # for mypy: it must be set
+        assert self.schema is not None  # noqa: S101
+        return self.renderer.render(request, self.schema)
 
     @override
     @classmethod

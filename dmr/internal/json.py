@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
-    from dmr.openapi.converter import ConvertedSchema
+    from dmr.openapi.objects.openapi import ConvertedSchema
 
 SerializedSchema: TypeAlias = str
 

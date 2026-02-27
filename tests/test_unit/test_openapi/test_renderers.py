@@ -8,8 +8,7 @@ from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 
-from dmr.openapi.converter import ConvertedSchema
-from dmr.openapi.objects.openapi import _OPENAPI_VERSION
+from dmr.openapi.objects.openapi import _OPENAPI_VERSION, ConvertedSchema
 from dmr.openapi.renderers import (
     BaseRenderer,
     JsonRenderer,

@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from django.http import HttpRequest
@@ -17,11 +17,7 @@ from dmr.sse import (
     sse,
 )
 from dmr.test import DMRAsyncRequestFactory
-
-if TYPE_CHECKING:
-    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
-        GetStreamingContent,
-    )
+from tests.infra.streaming import get_streaming_content
 
 
 def _positive_numbers(
@@ -68,7 +64,6 @@ async def _valid_sse(
 @pytest.mark.asyncio
 async def test_sse_extra_validation_response(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
 ) -> None:
     """Ensures that valid sse produces valid results."""
     request = dmr_async_rf.get('/whatever/')

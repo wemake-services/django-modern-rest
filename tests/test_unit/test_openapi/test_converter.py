@@ -3,23 +3,17 @@ from typing import Any
 
 import pytest
 
-from dmr.openapi.converter import (
-    SchemaConverter,
-    normalize_key,
-    normalize_value,
-)
 from dmr.openapi.objects import (
     OpenAPIFormat,
     OpenAPIType,
     Schema,
     Tag,
 )
-
-
-@pytest.fixture
-def converter() -> type[SchemaConverter]:
-    """Fixtutre for ``SchemaConverter`` class."""
-    return SchemaConverter
+from dmr.openapi.objects.openapi import (
+    convert,
+    normalize_key,
+    normalize_value,
+)
 
 
 @pytest.mark.parametrize(
@@ -48,7 +42,11 @@ def converter() -> type[SchemaConverter]:
         ('numbers_123', 'numbers123'),
     ],
 )
-def test_normalize_key(input_key: str, expected_output: str) -> None:
+def test_normalize_key(
+    *,
+    input_key: str,
+    expected_output: str,
+) -> None:
     """Ensure that ``_normalize_key`` converts field names to OpenAPI keys."""
     assert normalize_key(input_key) == expected_output
 
@@ -78,13 +76,12 @@ class _TestEnum(enum.Enum):
     ],
 )
 def test_normalize_value_primitives(
+    *,
     input_value: Any,
     expected_output: Any,
-    *,
-    converter: SchemaConverter,
 ) -> None:
     """Ensure that ``_normalize_value`` returns primitive values as-is."""
-    assert normalize_value(input_value, converter.convert) == expected_output
+    assert normalize_value(input_value, convert) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -100,13 +97,12 @@ def test_normalize_value_primitives(
     ],
 )
 def test_normalize_value_list(
+    *,
     input_value: Any,
     expected_output: Any,
-    *,
-    converter: SchemaConverter,
 ) -> None:
     """Ensure that ``_normalize_value`` processes list recursively."""
-    normalized = normalize_value(input_value, converter.convert)
+    normalized = normalize_value(input_value, convert)
     assert normalized == expected_output
 
 
@@ -120,13 +116,12 @@ def test_normalize_value_list(
     ],
 )
 def test_normalize_value_dict(
+    *,
     input_value: Any,
     expected_output: Any,
-    *,
-    converter: SchemaConverter,
 ) -> None:
     """Ensure that ``_normalize_value`` processes dict recursively."""
-    normalized = normalize_value(input_value, converter.convert)
+    normalized = normalize_value(input_value, convert)
     assert normalized == expected_output
 
 
@@ -208,10 +203,9 @@ def test_normalize_value_dict(
     ],
 )
 def test_normalize_value_base_objects(
+    *,
     input_value: Any,
     expected_output: Any,
-    *,
-    converter: SchemaConverter,
 ) -> None:
     """Ensure that ``_normalize_value`` calls ``to_schema()`` correctly."""
-    assert normalize_value(input_value, converter.convert) == expected_output
+    assert normalize_value(input_value, convert) == expected_output
