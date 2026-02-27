@@ -1,6 +1,5 @@
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import TYPE_CHECKING
 
 import pytest
 from django.http import HttpRequest
@@ -20,11 +19,7 @@ from dmr.sse import (
     sse,
 )
 from dmr.test import DMRAsyncRequestFactory
-
-if TYPE_CHECKING:
-    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
-        GetStreamingContent,
-    )
+from tests.infra.streaming import get_streaming_content
 
 
 async def _valid_events() -> AsyncIterator[SSEData]:
@@ -45,7 +40,6 @@ async def _valid_sse(
 @pytest.mark.asyncio
 async def test_all_sse_events_props(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
 ) -> None:
     """Ensures that valid sse produces valid results."""
     request = dmr_async_rf.get('/whatever/')
@@ -108,7 +102,6 @@ async def _sse_with_headers_and_cookies(
 @pytest.mark.asyncio
 async def test_sse_with_headers_and_cookies(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
 ) -> None:
     """Ensures that valid sse produces valid results."""
     request = dmr_async_rf.get('/whatever/')
@@ -150,7 +143,6 @@ async def _sse_with_close(
 @pytest.mark.asyncio
 async def test_sse_close_error(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
 ) -> None:
     """Ensures that valid sse can raise close error."""
     request = dmr_async_rf.get('/whatever/')

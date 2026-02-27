@@ -128,6 +128,12 @@ Before calling ``get_response``, you can:
   :linenos:
   :language: python
 
+Wrap your middleware:
+
+.. literalinclude:: /examples/middleware/wrap_add_request_id.py
+  :linenos:
+  :language: python
+
 Now your controller can access ``self.request.request_id``:
 
 .. literalinclude:: /examples/middleware/usage_add_request_id.py

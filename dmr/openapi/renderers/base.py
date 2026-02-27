@@ -8,7 +8,7 @@ from dmr.internal.json import (
     SerializedSchema as SerializedSchema,
 )
 from dmr.internal.json import json_dumps
-from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.objects.openapi import ConvertedSchema
 
 SchemaSerializer: TypeAlias = Callable[[ConvertedSchema], SerializedSchema]
 _CallableAny: TypeAlias = Callable[..., Any]

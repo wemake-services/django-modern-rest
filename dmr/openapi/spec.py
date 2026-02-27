@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 from django.urls import URLPattern
 
 from dmr.openapi.config import OpenAPIConfig
-from dmr.openapi.converter import SchemaConverter
 from dmr.openapi.core.builder import OpenApiBuilder
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects.openapi import OpenAPI
@@ -37,7 +36,7 @@ def openapi_spec(
             'render the API documentation.',
         )
 
-    schema = SchemaConverter.convert(build_schema(router, config=config))
+    schema = build_schema(router, config=config).convert()
 
     urlpatterns: list[URLPattern] = []
     for renderer in renderers:

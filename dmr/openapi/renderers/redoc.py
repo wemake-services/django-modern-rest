@@ -4,7 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from typing_extensions import override
 
-from dmr.openapi.converter import ConvertedSchema
+from dmr.openapi.objects.openapi import ConvertedSchema
 from dmr.openapi.renderers.base import (
     BaseRenderer,
     SchemaSerializer,

@@ -2,7 +2,6 @@ import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
 from typing import (
-    TYPE_CHECKING,
     Final,
     TypeAlias,
 )
@@ -27,12 +26,7 @@ from dmr.sse import (
     sse,
 )
 from dmr.test import DMRAsyncRequestFactory
-
-if TYPE_CHECKING:
-    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
-        GetStreamingContent,
-    )
-
+from tests.infra.streaming import get_streaming_content
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
@@ -90,7 +84,6 @@ async def test_sse_with_auth_failure(
 @pytest.mark.asyncio
 async def test_sse_with_auth_success(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
 ) -> None:
     """Ensures that sse can parse all components with successful auth."""
     request = dmr_async_rf.get('/whatever')

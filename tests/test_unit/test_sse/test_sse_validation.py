@@ -2,7 +2,7 @@ import dataclasses
 import json
 from collections.abc import AsyncIterator
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, Final, TypeAlias
+from typing import Any, Final, TypeAlias
 
 import pytest
 from dirty_equals import IsStr
@@ -23,12 +23,7 @@ from dmr.sse import (
     sse,
 )
 from dmr.test import DMRAsyncRequestFactory
-
-if TYPE_CHECKING:
-    from tests.test_sse.conftest import (  # pyright: ignore[reportMissingImports]
-        GetStreamingContent,
-    )
-
+from tests.infra.streaming import get_streaming_content
 
 _Serializers: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializers] = [
@@ -85,7 +80,6 @@ async def _valid_events(
 @pytest.mark.parametrize('serializer', serializers)
 async def test_valid_sse(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
     *,
     serializer: type[BaseSerializer],
 ) -> None:
@@ -175,7 +169,6 @@ async def test_valid_sse(
 @pytest.mark.parametrize('serializer', serializers)
 async def test_wrong_event_type(
     dmr_async_rf: DMRAsyncRequestFactory,
-    get_streaming_content: 'GetStreamingContent',
     *,
     event: Any,
     serializer: type[BaseSerializer],
