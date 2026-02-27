@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 @pytest.fixture
 def api_schema(db: None) -> 'OpenApiSchema':
     """Load OpenAPI schema as a pytest fixture."""
-    return st.openapi.from_wsgi(reverse('openapi:json'), application)
+    return st.openapi.from_wsgi(reverse('openapi'), application)
 
 
 # TODO: We skip negotiation tests because our implementation of
