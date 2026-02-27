@@ -11,11 +11,11 @@ from dmr.internal.json import json_dumps
 if TYPE_CHECKING:
     from django.http import HttpResponseBase
 
-    from dmr.internal.json import SerializedSchema
     from dmr.openapi.objects import OpenAPI
     from dmr.openapi.objects.openapi import ConvertedSchema
 
-SchemaSerializer: TypeAlias = Callable[['ConvertedSchema'], 'SerializedSchema']
+DumpedSchema: TypeAlias = str
+SchemaDumper: TypeAlias = Callable[['ConvertedSchema'], DumpedSchema]
 
 
 @method_decorator(
@@ -27,13 +27,12 @@ class OpenAPIView(View):
     Base view for serving an OpenAPI schema.
 
     Extends Django's ``View`` to accept an ``OpenAPI`` object via ``as_view()``.
-    The provided schema is converted using ``schema_converter_cls``
-    and stored on the view instance so that concrete subclasses can
-    render it in their preferred format.
+    The provided schema is converted using and stored on the view instance
+    so that concrete subclasses can render it in their preferred format.
     """
 
     # Public API:
-    serializer: SchemaSerializer = staticmethod(json_dumps)  # noqa: WPS421
+    dumps: SchemaDumper = staticmethod(json_dumps)  # noqa: WPS421
     schema: ClassVar['OpenAPI']
 
     @override

@@ -26,7 +26,7 @@ class RedocView(OpenAPIView):
             self.template_name,
             context={
                 'title': self.schema.info.title,
-                'schema': self.serializer(self.schema.convert()),
+                'schema': self.dumps(self.schema.convert()),
             },
             content_type=self.content_type,
         )

@@ -49,16 +49,8 @@ def test_wrong_method(
     assert response.status_code == expected_status
 
 
-@pytest.mark.parametrize(
-    'endpoint_name',
-    ['openapi'],
-)
-def test_returns_correct_structure(
-    dmr_client: DMRClient,
-    *,
-    endpoint_name: str,
-) -> None:
+def test_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
-    response = dmr_client.get(reverse(endpoint_name))
+    response = dmr_client.get(reverse('openapi'))
 
     assert response.json()['openapi'] == _OPENAPI_VERSION
