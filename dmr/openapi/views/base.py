@@ -1,9 +1,10 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, override
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
+from typing_extensions import override
 
 from dmr.internal.json import json_dumps
 
