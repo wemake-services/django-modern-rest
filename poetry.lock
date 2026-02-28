@@ -686,7 +686,7 @@ version = "5.2.9"
 description = "Monkey-patching and extensions for django-stubs"
 optional = false
 python-versions = ">=3.10"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "django_stubs_ext-5.2.9-py3-none-any.whl", hash = "sha256:230c51575551b0165be40177f0f6805f1e3ebf799b835c85f5d64c371ca6cf71"},
     {file = "django_stubs_ext-5.2.9.tar.gz", hash = "sha256:6db4054d1580657b979b7d391474719f1a978773e66c7070a5e246cd445a25a9"},
@@ -3314,4 +3314,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "0593a5104e8e689bfce37bc6ef6de3f38b41b43256aeedba4c7b40b780625a4c"
+content-hash = "b75e4f8a397ce5b32bf4fd316ba8d8a45e3655385694f5dfbb171a78e01b4069"

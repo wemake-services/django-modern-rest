@@ -56,6 +56,7 @@ django = ">=5.2,<6.1"
 msgspec = { version = ">=0.19", optional = true }
 pydantic = { version = "^2.12", optional = true, extras = ["email"] }
 pyjwt = { version = ">=2.11", optional = true, extras = ["crypto"] }
+django-stubs-ext = "^5.2.9"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
