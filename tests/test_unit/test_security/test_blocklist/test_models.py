@@ -1,6 +1,5 @@
 import datetime as dt
 import secrets
-from typing import Any
 
 import pytest
 from django.contrib.auth.models import User
@@ -33,26 +32,11 @@ def token(user: User) -> BlocklistedJWTToken:
 
 
 @pytest.mark.django_db
-def test_token_user_field(token: BlocklistedJWTToken, user: User) -> None:
-    """Test user field."""
-    assert token.user == user
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    ('field', 'expected'),
-    [
-        ('jti', _JTI),
-        ('expires_at', _EXPIRES_AT),
-    ],
-)
-def test_token_model_fields(
-    token: BlocklistedJWTToken,
-    field: str,
-    expected: Any,
-) -> None:
+def test_token_model_fields(token: BlocklistedJWTToken, user: User) -> None:
     """Test model fields."""
-    assert getattr(token, field) == expected
+    assert token.user == user
+    assert token.jti == _JTI
+    assert token.expires_at == _EXPIRES_AT
 
 
 @pytest.mark.django_db

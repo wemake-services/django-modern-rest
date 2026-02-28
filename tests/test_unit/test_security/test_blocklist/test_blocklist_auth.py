@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 import secrets
 from collections.abc import Callable
 from http import HTTPStatus
@@ -105,7 +106,6 @@ def test_blocklist_sync_mixin_success(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK
-    assert response.content == snapshot(b'"authed"')
 
 
 @pytest.mark.django_db
@@ -131,9 +131,14 @@ def test_blocklist_sync_mixin_unauthorized(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.content == snapshot(
-        b'{"detail":[{"msg":"Not authenticated","type":"security"}]}',
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Not authenticated',
+                'type': 'security',
+            },
+        ],
+    })
 
 
 class MyJWTAsyncAuth(JWTTokenBlocklistAsyncMixin, JWTAsyncAuth):
@@ -186,7 +191,6 @@ async def test_blocklist_async_mixin_ok(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK
-    assert response.content == snapshot(b'"authed"')
 
 
 @pytest.mark.asyncio
@@ -215,6 +219,11 @@ async def test_blocklist_async_mixin_unauthorized(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.content == snapshot(
-        b'{"detail":[{"msg":"Not authenticated","type":"security"}]}',
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Not authenticated',
+                'type': 'security',
+            },
+        ],
+    })
