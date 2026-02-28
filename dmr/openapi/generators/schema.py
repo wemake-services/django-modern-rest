@@ -52,12 +52,17 @@ class SchemaGenerator:
 
     def __call__(self, annotation: Any) -> Schema | Reference:
         """Get schema for a type."""
-        simple_schema = self.type_mapper.get_schema(
+        primitive_schema = self.type_mapper.get_schema(
             annotation,
             self,
-        ) or self._context.registries.schema.get_reference(annotation)
-        if simple_schema:
-            return simple_schema
+        )
+        if primitive_schema:
+            return primitive_schema
+        existing_reference = self._context.registries.schema.get_reference(
+            annotation,
+        )
+        if existing_reference:
+            return existing_reference
         return self._generate_reference(annotation)
 
     def _generate_reference(self, source_type: Any) -> Reference:

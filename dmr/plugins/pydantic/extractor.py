@@ -71,6 +71,7 @@ class PydanticFieldExtractor(FieldExtractor[type[BaseModel]]):
         self,
         field_info: FieldInfo,
     ) -> KwargDefinition:
+
         kwargs: dict[str, Any] = {}
         for kwarg_field in fields(KwargDefinition):
             kwarg_value = getattr(field_info, kwarg_field.name, None)
