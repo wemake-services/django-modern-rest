@@ -1,5 +1,6 @@
 import abc
 from collections import defaultdict
+from collections.abc import Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
@@ -256,6 +257,7 @@ class SerializerContext:
 
     # Public API:
     strict_validation: ClassVar[bool | None] = None
+    from_python_kwargs: ClassVar[Mapping[str, Any]] = {}
 
     # Protected API:
     _specs: _ComponentParserSpec
@@ -402,6 +404,7 @@ class SerializerContext:
                 context,
                 model,
                 strict=self.strict_validation,
+                **self.from_python_kwargs,
             )
         except serializer.validation_error as exc:
             raise ValidationError(
