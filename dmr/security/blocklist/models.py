@@ -1,7 +1,8 @@
-from typing import Any, override
+from typing import Any
 
 from django.conf import settings
 from django.db import models
+from typing_extensions import override
 
 from dmr.security.blocklist.apps import BlocklistConfig
 
