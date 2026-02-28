@@ -1,5 +1,6 @@
 import datetime as dt
 import secrets
+from typing import Any
 
 import pytest
 from django.contrib.auth.models import User
@@ -7,8 +8,8 @@ from faker import Faker
 
 from dmr.security.blocklist.models import BlocklistedJWTToken
 
-jti = secrets.token_hex()
-expires_at = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+_JTI = secrets.token_hex()
+_EXPIRES_AT = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
 
 
 @pytest.fixture
@@ -26,8 +27,8 @@ def token(user: User) -> BlocklistedJWTToken:
     """Create blocklisted token for tests."""
     return BlocklistedJWTToken.objects.create(
         user=user,
-        jti=jti,
-        expires_at=expires_at,
+        jti=_JTI,
+        expires_at=_EXPIRES_AT,
     )
 
 
@@ -38,15 +39,20 @@ def test_token_user_field(token: BlocklistedJWTToken, user: User) -> None:
 
 
 @pytest.mark.django_db
-def test_token_jti_field(token: BlocklistedJWTToken) -> None:
-    """Test jti field."""
-    assert token.jti == jti
-
-
-@pytest.mark.django_db
-def test_token_expires_at_field(token: BlocklistedJWTToken) -> None:
-    """Test expires_at field."""
-    assert token.expires_at == expires_at
+@pytest.mark.parametrize(
+    ('field', 'result'),
+    [
+        ('jti', _JTI),
+        ('expires_at', _EXPIRES_AT),
+    ],
+)
+def test_token_model_fields(
+    token: BlocklistedJWTToken,
+    field: str,
+    result: Any,
+) -> None:
+    """Test model fields."""
+    assert getattr(token, field) == result
 
 
 @pytest.mark.django_db

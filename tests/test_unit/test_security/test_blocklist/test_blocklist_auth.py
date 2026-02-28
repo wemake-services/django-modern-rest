@@ -10,6 +10,7 @@ from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from faker import Faker
+from inline_snapshot import snapshot
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic.serializer import PydanticSerializer
@@ -79,6 +80,7 @@ def test_add_to_blocklist(
     token = build_user_token()
     auth = MyJWTSyncAuth()
     decoded_token = auth.decode_token(token)
+
     auth.blocklist(decoded_token)
 
     assert auth.blocklist_model.objects.filter(jti=decoded_token.jti).exists()
@@ -103,6 +105,7 @@ def test_blocklist_sync_mixin_success(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK
+    assert response.content == snapshot(b'"authed"')
 
 
 @pytest.mark.django_db
@@ -120,6 +123,7 @@ def test_blocklist_sync_mixin_unauthorized(
     )
     auth = MyJWTSyncAuth()
     decoded_token = auth.decode_token(token)
+
     auth.blocklist(decoded_token)
 
     response = _BlocklistSyncController.as_view()(request)
@@ -127,6 +131,9 @@ def test_blocklist_sync_mixin_unauthorized(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.content == snapshot(
+        b'{"detail":[{"msg":"Not authenticated","type":"security"}]}',
+    )
 
 
 class MyJWTAsyncAuth(JWTTokenBlocklistAsyncMixin, JWTAsyncAuth):
@@ -149,6 +156,7 @@ async def test_async_add_to_blocklist(
     token = build_user_token()
     auth = MyJWTAsyncAuth()
     decoded_token = auth.decode_token(token)
+
     await auth.blocklist(decoded_token)
 
     assert await auth.blocklist_model.objects.filter(
@@ -178,6 +186,7 @@ async def test_blocklist_async_mixin_ok(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK
+    assert response.content == snapshot(b'"authed"')
 
 
 @pytest.mark.asyncio
@@ -196,6 +205,7 @@ async def test_blocklist_async_mixin_unauthorized(
     )
     auth = MyJWTAsyncAuth()
     decoded_token = auth.decode_token(token)
+
     await auth.blocklist(decoded_token)
 
     response = await dmr_async_rf.wrap(
@@ -205,3 +215,6 @@ async def test_blocklist_async_mixin_unauthorized(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.content == snapshot(
+        b'{"detail":[{"msg":"Not authenticated","type":"security"}]}',
+    )
