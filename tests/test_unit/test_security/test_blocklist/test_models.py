@@ -40,7 +40,7 @@ def test_token_user_field(token: BlocklistedJWTToken, user: User) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    ('field', 'result'),
+    ('field', 'expected'),
     [
         ('jti', _JTI),
         ('expires_at', _EXPIRES_AT),
@@ -49,10 +49,10 @@ def test_token_user_field(token: BlocklistedJWTToken, user: User) -> None:
 def test_token_model_fields(
     token: BlocklistedJWTToken,
     field: str,
-    result: Any,
+    expected: Any,
 ) -> None:
     """Test model fields."""
-    assert getattr(token, field) == result
+    assert getattr(token, field) == expected
 
 
 @pytest.mark.django_db
