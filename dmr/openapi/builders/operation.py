@@ -7,6 +7,7 @@ from dmr.openapi.objects import Operation
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.serializer import BaseSerializer
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -21,6 +22,7 @@ class OperationBuilder:
     """
 
     metadata: 'EndpointMetadata'
+    serializer: type['BaseSerializer']
 
     # NOTE: We are currently maintaining `context` for backward compatibility.
     # In future, we must encapsulate it.

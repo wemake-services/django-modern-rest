@@ -154,7 +154,10 @@ class Endpoint:  # noqa: WPS214
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
 
         # Also, we build openapi `Operation` object:
-        self.operation_builder = self.operation_builder_cls(metadata)
+        self.operation_builder = self.operation_builder_cls(
+            metadata,
+            controller_cls.serializer,
+        )
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):

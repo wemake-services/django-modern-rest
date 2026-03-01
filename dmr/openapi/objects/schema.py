@@ -4,13 +4,8 @@ from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.discriminator import Discriminator
-    from dmr.openapi.objects.enums import (
-        OpenAPIFormat,
-        OpenAPIType,
-    )
-    from dmr.openapi.objects.external_documentation import (
-        ExternalDocumentation,
-    )
+    from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
+    from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.xml import XML
 
@@ -29,19 +24,19 @@ class Schema:
     the OpenAPI document.
     """
 
-    all_of: 'Sequence[Reference | Schema] | None' = None
-    any_of: 'Sequence[Reference | Schema] | None' = None
-    one_of: 'Sequence[Reference | Schema] | None' = None
+    all_of: Sequence['Reference | Schema'] | None = None
+    any_of: Sequence['Reference | Schema'] | None = None
+    one_of: Sequence['Reference | Schema'] | None = None
     schema_not: 'Reference | Schema | None' = None
     schema_if: 'Reference | Schema | None' = None
     then: 'Reference | Schema | None' = None
     schema_else: 'Reference | Schema | None' = None
-    dependent_schemas: 'dict[str, Reference | Schema] | None' = None
-    prefix_items: 'Sequence[Reference | Schema] | None' = None
+    dependent_schemas: dict[str, 'Reference | Schema'] | None = None
+    prefix_items: Sequence['Reference | Schema'] | None = None
     items: 'Reference | Schema | None' = None
     contains: 'Reference | Schema | None' = None
-    properties: 'dict[str, Reference | Schema] | None' = None
-    pattern_properties: 'dict[str, Reference | Schema] | None' = None
+    properties: dict[str, 'Reference | Schema'] | None = None
+    pattern_properties: dict[str, 'Reference | Schema'] | None = None
     additional_properties: 'Reference | Schema | bool | None' = None
     property_names: 'Reference | Schema | None' = None
     unevaluated_items: 'Reference | Schema | None' = None
