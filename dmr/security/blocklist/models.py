@@ -1,30 +1,41 @@
-from typing import Any
+from datetime import date
+from typing import TypeAlias
 
 from django.conf import settings
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
+from django.db.models.expressions import Combinable
 from typing_extensions import override
 
 from dmr.security.blocklist.apps import BlocklistConfig
+
+_ForeignKey: TypeAlias = (
+    'models.ForeignKey[str | AbstractBaseUser | Combinable, AbstractBaseUser ]'
+)
+_CharField: TypeAlias = 'models.CharField[str | int | Combinable, str]'
+_DateTimeField: TypeAlias = (
+    'models.DateTimeField[str | date | Combinable, date]'
+)
 
 
 class BlocklistedJWTToken(models.Model):
     """Model for Blocklisted token."""
 
-    user: 'models.ForeignKey[Any, Any]' = models.ForeignKey(
+    user: _ForeignKey = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
-    jti: 'models.CharField[Any, Any]' = models.CharField(
+    jti: _CharField = models.CharField(
         unique=True,
         max_length=255,
     )
-    expires_at: 'models.DateTimeField[Any, Any]' = models.DateTimeField()
-    created_at: 'models.DateTimeField[Any, Any]' = models.DateTimeField(
+    expires_at: _DateTimeField = models.DateTimeField()
+    created_at: _DateTimeField = models.DateTimeField(
         auto_now_add=True,
     )
-    updated_at: 'models.DateTimeField[Any, Any]' = models.DateTimeField(
+    updated_at: _DateTimeField = models.DateTimeField(
         auto_now=True,
     )
 
