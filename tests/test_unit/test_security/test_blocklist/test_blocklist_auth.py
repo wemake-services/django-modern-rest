@@ -1,9 +1,9 @@
 import datetime as dt
 import json
 import secrets
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import Any, TypeAlias, final
+from typing import Any, NotRequired, TypeAlias, TypedDict, Unpack, final
 
 import pytest
 from django.apps import apps
@@ -22,6 +22,19 @@ from dmr.security.blocklist.auth import (
 from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
 from dmr.security.jwt.token import JWTToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+
+_EXP = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+_JTI = secrets.token_hex()
+
+
+class _JWTTokenKwargs(TypedDict):
+    exp: NotRequired[dt.datetime]
+    iat: NotRequired[dt.datetime]
+    iss: NotRequired[str]
+    aud: NotRequired[str | Sequence[str]]
+    jti: NotRequired[str]
+    extras: NotRequired[dict[str, Any]]
+    leeway: NotRequired[int]
 
 
 def test_is_installed() -> None:
@@ -46,14 +59,9 @@ _TokenBuilder: TypeAlias = Callable[..., str]
 def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
-    def factory(**kwargs: Any) -> str:
+    def factory(**kwargs: Unpack[_JWTTokenKwargs]) -> str:
         token = JWTToken(
             sub=str(user.pk),
-            exp=kwargs.pop(
-                'exp',
-                dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
-            ),
-            jti=secrets.token_hex(),
             **kwargs,
         )
 
@@ -78,7 +86,7 @@ def test_add_to_blocklist(
     build_user_token: _TokenBuilder,
 ) -> None:
     """Ensure that blocklist method works."""
-    token = build_user_token()
+    token = build_user_token(exp=_EXP, jti=_JTI)
     auth = MyJWTSyncAuth()
     decoded_token = auth.decode_token(token)
 
@@ -93,7 +101,7 @@ def test_blocklist_sync_mixin_success(
     build_user_token: _TokenBuilder,
 ) -> None:
     """Ensures that sync check_auth of tokenblocklist mixin works."""
-    token = build_user_token()
+    token = build_user_token(exp=_EXP, jti=_JTI)
     request = dmr_rf.get(
         '/whatever/',
         headers={
@@ -114,7 +122,7 @@ def test_blocklist_sync_mixin_unauthorized(
     build_user_token: _TokenBuilder,
 ) -> None:
     """Ensures that sync check_auth of tokenblocklist mixin works."""
-    token = build_user_token()
+    token = build_user_token(exp=_EXP, jti=_JTI)
     request = dmr_rf.get(
         '/whatever/',
         headers={
@@ -158,7 +166,7 @@ async def test_async_add_to_blocklist(
     build_user_token: _TokenBuilder,
 ) -> None:
     """Ensure that blocklist method works."""
-    token = build_user_token()
+    token = build_user_token(exp=_EXP, jti=_JTI)
     auth = MyJWTAsyncAuth()
     decoded_token = auth.decode_token(token)
 
@@ -176,7 +184,7 @@ async def test_blocklist_async_mixin_ok(
     build_user_token: _TokenBuilder,
 ) -> None:
     """Ensures that async check_auth of tokenblocklist mixin works."""
-    token = build_user_token()
+    token = build_user_token(exp=_EXP, jti=_JTI)
     request = dmr_async_rf.get(
         '/whatever/',
         headers={
@@ -200,7 +208,7 @@ async def test_blocklist_async_mixin_unauthorized(
     build_user_token: _TokenBuilder,
 ) -> None:
     """Ensures that async check_auth of tokenblocklist mixin works."""
-    token = build_user_token()
+    token = build_user_token(exp=_EXP, jti=_JTI)
     request = dmr_async_rf.get(
         '/whatever/',
         headers={
