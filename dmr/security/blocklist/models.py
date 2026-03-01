@@ -44,4 +44,4 @@ class BlocklistedJWTToken(models.Model):
 
     @override
     def __str__(self) -> str:
-        return f'Token for {self.user} {self.jti}'
+        return f'Blocked JWT token for {self.user} {self.jti}'
