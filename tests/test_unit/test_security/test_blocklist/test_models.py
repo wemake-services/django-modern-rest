@@ -42,4 +42,4 @@ def test_token_model_fields(token: BlocklistedJWTToken, user: User) -> None:
 @pytest.mark.django_db
 def test_token_str(token: BlocklistedJWTToken) -> None:
     """Test token str."""
-    assert str(token) == f'Token for {token.user} {token.jti}'
+    assert str(token) == f'Blocked JWT token for {token.user} {token.jti}'
