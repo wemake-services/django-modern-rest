@@ -103,6 +103,21 @@ def test_add_to_blocklist(
 
 
 @pytest.mark.django_db
+def test_double_add_to_blacklist(
+    build_user_token: _TokenBuilder,
+) -> None:
+    """Ensure that blocklist method add jti to db only in first run."""
+    token = build_user_token(exp=_EXP, jti=_JTI)
+    auth = MyJWTSyncAuth()
+    decoded_token = auth.decode_token(token)
+
+    auth.blocklist(decoded_token)
+    _, created = auth.blocklist(decoded_token)
+
+    assert created is False
+
+
+@pytest.mark.django_db
 def test_blocklist_sync_mixin_success(
     dmr_rf: DMRRequestFactory,
     build_user_token: _TokenBuilder,
@@ -189,6 +204,22 @@ async def test_async_add_to_blocklist(
     assert await auth.blocklist_model.objects.filter(
         jti=decoded_token.jti,
     ).aexists()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_async_double_add_to_blacklist(
+    build_user_token: _TokenBuilder,
+) -> None:
+    """Ensure that blocklist method add jti to db only in first run."""
+    token = build_user_token(exp=_EXP, jti=_JTI)
+    auth = MyJWTAsyncAuth()
+    decoded_token = auth.decode_token(token)
+
+    await auth.blocklist(decoded_token)
+    _, created = await auth.blocklist(decoded_token)
+
+    assert created is False
 
 
 @pytest.mark.asyncio
