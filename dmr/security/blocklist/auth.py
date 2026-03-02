@@ -53,9 +53,11 @@ class JWTTokenBlocklistSyncMixin:
     ) -> tuple[BlocklistedJWTToken, bool]:
         """Add token to the blocklist."""
         return self.blocklist_model.objects.get_or_create(
-            user=self.get_user(token),
             jti=token.jti,
-            expires_at=token.exp,
+            defaults={
+                'user': self.get_user(token),
+                'expires_at': token.exp,
+            },
         )
 
 
@@ -81,7 +83,9 @@ class JWTTokenBlocklistAsyncMixin:
         """Add token to the blocklist."""
         user = await self.get_user(token)
         return await self.blocklist_model.objects.aget_or_create(
-            user=user,
             jti=token.jti,
-            expires_at=token.exp,
+            defaults={
+                'user': user,
+                'expires_at': token.exp,
+            },
         )

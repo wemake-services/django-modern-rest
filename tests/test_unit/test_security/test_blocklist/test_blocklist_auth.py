@@ -3,7 +3,7 @@ import json
 import secrets
 from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import Any, NotRequired, TypeAlias, TypedDict, Unpack, final
+from typing import Any, Final, TypeAlias, TypedDict, Unpack, final
 
 import pytest
 from django.apps import apps
@@ -23,18 +23,18 @@ from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
 from dmr.security.jwt.token import JWTToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
-_EXP = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
-_JTI = secrets.token_hex()
+_EXP: Final = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+_JTI: Final = secrets.token_hex()
 
 
-class _JWTTokenKwargs(TypedDict):
-    exp: NotRequired[dt.datetime]
-    iat: NotRequired[dt.datetime]
-    iss: NotRequired[str]
-    aud: NotRequired[str | Sequence[str]]
-    jti: NotRequired[str]
-    extras: NotRequired[dict[str, Any]]
-    leeway: NotRequired[int]
+class _JWTTokenKwargs(TypedDict, total=False):
+    exp: dt.datetime
+    iat: dt.datetime
+    iss: str
+    aud: str | Sequence[str]
+    jti: str
+    extras: dict[str, Any]
+    leeway: int
 
 
 def test_is_installed() -> None:
@@ -90,7 +90,14 @@ def test_add_to_blocklist(
     auth = MyJWTSyncAuth()
     decoded_token = auth.decode_token(token)
 
-    auth.blocklist(decoded_token)
+    blocklisted_token, created = auth.blocklist(decoded_token)
+
+    assert blocklisted_token.jti == decoded_token.jti
+    assert blocklisted_token.expires_at == decoded_token.exp
+    assert str(
+        getattr(blocklisted_token.user, auth.user_id_field),
+    ) == auth.claim_from_token(decoded_token)
+    assert created is True
 
     assert auth.blocklist_model.objects.filter(jti=decoded_token.jti).exists()
 
@@ -170,7 +177,14 @@ async def test_async_add_to_blocklist(
     auth = MyJWTAsyncAuth()
     decoded_token = auth.decode_token(token)
 
-    await auth.blocklist(decoded_token)
+    blocklisted_token, created = await auth.blocklist(decoded_token)
+
+    assert blocklisted_token.jti == decoded_token.jti
+    assert blocklisted_token.expires_at == decoded_token.exp
+    assert str(
+        getattr(blocklisted_token.user, auth.user_id_field),
+    ) == auth.claim_from_token(decoded_token)
+    assert created is True
 
     assert await auth.blocklist_model.objects.filter(
         jti=decoded_token.jti,
