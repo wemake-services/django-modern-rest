@@ -1,28 +1,35 @@
 import json
-from typing import Literal
+from typing import Annotated, Literal
 
-import pydantic
+import pytest
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
 
 from dmr import Body, Controller, Cookies, FileMetadata
 from dmr.openapi import build_schema
 from dmr.parsers import MultiPartParser
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.routing import Router
 from dmr.security.jwt import JWTAsyncAuth
 
 
-class _UserModel(pydantic.BaseModel):
-    age: int = pydantic.Field(gt=0, le=100)
-    username: str = pydantic.Field(deprecated=True)
+class _UserModel(msgspec.Struct):
+    age: Annotated[int, msgspec.Meta(ge=0, le=100)]
+    username: Annotated[
+        str,
+        msgspec.Meta(extra_json_schema={'deprecated': True}),
+    ]
     email: str
-
-    model_config = pydantic.ConfigDict(title='CustomUserModel')
 
 
 class _UserController(
-    Controller[PydanticSerializer],
+    Controller[MsgspecSerializer],
     Body[dict[str, int]],
 ):
     def post(self) -> _UserModel:
@@ -45,13 +52,13 @@ def test_user_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _CookieModel(pydantic.BaseModel):
+class _CookieModel(msgspec.Struct):
     session_id: str
-    csrf: str = pydantic.Field(alias='CSRF')
+    csrf: str = msgspec.field(name='CSRF')
 
 
 class _AuthedAndCookiesController(
-    Controller[PydanticSerializer],
+    Controller[MsgspecSerializer],
     Cookies[_CookieModel],
 ):
     auth = (JWTAsyncAuth(),)
@@ -76,18 +83,18 @@ def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _FileModel(pydantic.BaseModel):
+class _FileModel(msgspec.Struct):
     content_type: Literal['application/json']
     size: int
 
 
-class _SeveralFiles(pydantic.BaseModel):
+class _SeveralFiles(msgspec.Struct):
     file_name1: _FileModel
     second_file: _FileModel
 
 
 class _FileController(
-    Controller[PydanticSerializer],
+    Controller[MsgspecSerializer],
     FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)

@@ -55,12 +55,17 @@ class SchemaRegistry:
             return self._make_reference(schema_name)
         return None
 
-    def maybe_resolve_reference(self, reference: Reference | Schema) -> Schema:
+    def maybe_resolve_reference(
+        self,
+        reference: Reference | Schema,
+        *,
+        resoltion_context: dict[str, Schema] | None = None,
+    ) -> Schema:
         """Resolve reference and return a schema back."""
         if isinstance(reference, Schema):
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
-        return self.schemas[schema_name]
+        return (resoltion_context or self.schemas)[schema_name]
 
     def _make_reference(self, name: str) -> Reference:
         return Reference(ref=f'{self.schema_prefix}{name}')
