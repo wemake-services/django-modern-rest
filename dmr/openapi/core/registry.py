@@ -1,10 +1,9 @@
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
-from dmr.openapi.objects.security_scheme import (
-    SecurityScheme,
-)
+from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.types import EmptyObj
 
 
 class OperationIdRegistry:
@@ -34,25 +33,50 @@ class SchemaRegistry:
 
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
-        self.schemas: dict[str, Schema] = {}
+        self._schemas: dict[str, tuple[Schema, int | None]] = {}
+
+    @property
+    def schemas(self) -> dict[str, Schema]:
+        """Return schemas by name."""
+        return {
+            schema_name: schema[0]
+            for schema_name, schema in self._schemas.items()
+        }
 
     def register(
         self,
         schema_name: str,
         schema: Schema,
+        annotation: Any = EmptyObj,
     ) -> Reference:
         """Register Schema in registry."""
-        existing_schema = self.schemas.get(schema_name)
+        existing_schema = self._schemas.get(schema_name)
         if existing_schema:
+            self._check_hashes(
+                schema_name,
+                annotation,
+                existing_schema[1],
+            )
             return self._make_reference(schema_name)
 
-        self.schemas[schema_name] = schema
+        self._schemas[schema_name] = (schema, _safe_hash(annotation))
         return self._make_reference(schema_name)
 
-    def get_reference(self, schema_name: str | None) -> Reference | None:
+    def get_reference(
+        self,
+        schema_name: str | None,
+        annotation: Any = EmptyObj,
+    ) -> Reference | None:
         """Get registered reference."""
-        if schema_name and self.schemas.get(schema_name):
-            return self._make_reference(schema_name)
+        if schema_name:
+            existing_schema = self._schemas.get(schema_name)
+            if existing_schema:
+                self._check_hashes(
+                    schema_name,
+                    annotation,
+                    existing_schema[1],
+                )
+                return self._make_reference(schema_name)
         return None
 
     def maybe_resolve_reference(
@@ -70,6 +94,24 @@ class SchemaRegistry:
     def _make_reference(self, name: str) -> Reference:
         return Reference(ref=f'{self.schema_prefix}{name}')
 
+    def _check_hashes(
+        self,
+        schema_name: str,
+        annotation: Any,
+        other_hash: int | None,
+    ) -> None:
+        if annotation is EmptyObj:
+            return
+        ann_hash = _safe_hash(annotation)
+        if (
+            ann_hash is not None
+            and other_hash is not None
+            and ann_hash != other_hash
+        ):
+            raise ValueError(
+                f'Different schemas under a single name: {schema_name}',
+            )
+
 
 class SecuritySchemeRegistry:
     """Registry for ``SecuritySchemes``."""
@@ -85,3 +127,12 @@ class SecuritySchemeRegistry:
     ) -> None:
         """Register security scheme in registry."""
         self.schemes[name] = scheme
+
+
+def _safe_hash(annotation: Any) -> int | None:
+    if annotation is EmptyObj:
+        return None
+    try:
+        return hash(annotation)
+    except Exception:  # pragma: no cover
+        return None
