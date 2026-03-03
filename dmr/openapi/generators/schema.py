@@ -42,7 +42,8 @@ class SchemaGenerator:
 
         """
         existing_reference = self._context.registries.schema.get_reference(
-            serializer.schema_generator.schema_name(annotation),
+            serializer.schema_generator.schema_name(annotation)
+            or getattr(annotation, '__qualname__', None),
         )
         if existing_reference is not None:
             return existing_reference
