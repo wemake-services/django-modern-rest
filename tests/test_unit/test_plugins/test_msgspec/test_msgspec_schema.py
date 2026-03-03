@@ -13,7 +13,11 @@ from dmr.openapi.generators.schema import SchemaGenerator
 from dmr.openapi.objects.enums import OpenAPIType
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
-from dmr.plugins.msgspec import MsgspecSerializer
+
+try:
+    from dmr.plugins.msgspec import MsgspecSerializer
+except ImportError:
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 
 @pytest.fixture
