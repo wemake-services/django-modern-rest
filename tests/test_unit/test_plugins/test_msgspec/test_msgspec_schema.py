@@ -16,7 +16,7 @@ from dmr.openapi.objects.schema import Schema
 
 try:
     from dmr.plugins.msgspec import MsgspecSerializer
-except ImportError:
+except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 
