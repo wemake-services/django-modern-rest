@@ -48,7 +48,7 @@
               }
             },
             "400": {
-              "description": "Bad Request",
+              "description": "Raised when request components cannot be parsed",
               "content": {
                 "application/json": {
                   "schema": {
@@ -58,7 +58,7 @@
               }
             },
             "422": {
-              "description": "Unprocessable Content",
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -68,7 +68,7 @@
               }
             },
             "406": {
-              "description": "Not Acceptable",
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -78,7 +78,7 @@
               }
             },
             "401": {
-              "description": "Unauthorized",
+              "description": "Raised when auth was not successful",
               "content": {
                 "application/json": {
                   "schema": {
@@ -232,7 +232,7 @@
               }
             },
             "400": {
-              "description": "Bad Request",
+              "description": "Raised when request components cannot be parsed",
               "content": {
                 "application/json": {
                   "schema": {
@@ -242,7 +242,7 @@
               }
             },
             "422": {
-              "description": "Unprocessable Content",
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -252,7 +252,7 @@
               }
             },
             "406": {
-              "description": "Not Acceptable",
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -360,7 +360,7 @@
               }
             },
             "400": {
-              "description": "Bad Request",
+              "description": "Raised when request components cannot be parsed",
               "content": {
                 "application/json": {
                   "schema": {
@@ -370,7 +370,7 @@
               }
             },
             "422": {
-              "description": "Unprocessable Content",
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -380,7 +380,7 @@
               }
             },
             "406": {
-              "description": "Not Acceptable",
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {

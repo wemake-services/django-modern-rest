@@ -48,7 +48,10 @@ class ResponseGenerator:
         headers.update(self._get_cookies(response_spec, serializer))
 
         return Response(
-            description=HTTPStatus(response_spec.status_code).phrase,
+            description=(
+                response_spec.description
+                or HTTPStatus(response_spec.status_code).phrase
+            ),
             headers=headers or None,
             content=self._get_content(renderers, response_spec, serializer),
         )
