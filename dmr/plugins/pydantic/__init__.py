@@ -7,9 +7,6 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from dmr.plugins.pydantic.extractor import (
-    PydanticFieldExtractor as PydanticFieldExtractor,
-)
 from dmr.plugins.pydantic.serializer import (
     FromPythonKwargs as FromPythonKwargs,
 )

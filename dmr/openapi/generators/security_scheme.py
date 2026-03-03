@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.openapi.objects import SecurityRequirement
     from dmr.security import AsyncAuth, SyncAuth
+    from dmr.serializer import BaseSerializer
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -23,6 +24,7 @@ class SecuritySchemeGenerator:
     def __call__(
         self,
         auth_providers: Sequence['SyncAuth | AsyncAuth'] | None,
+        serializer: type['BaseSerializer'],
     ) -> list['SecurityRequirement'] | None:
         """
         Process auth providers and generate security requirements.

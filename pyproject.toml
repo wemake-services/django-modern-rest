@@ -68,7 +68,7 @@ django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 types-xmltodict = "^1.0"
 pyright = "^1.1"
-pyrefly = "^0.53"
+pyrefly = "^0.54"
 
 codespell = "^2.4"
 wemake-python-styleguide = "^1.6"
@@ -86,7 +86,8 @@ pytest-custom-exit-code = "^0.3"
 pytest-freezer = "^0.4"
 dirty-equals = "^0.11"
 faker = "^40.1"
-inline-snapshot = ">=0.31,<0.33"
+inline-snapshot = "^0.32"
+syrupy = "^5.1"
 schemathesis = "^4.3"
 polyfactory = "^3.2"
 
@@ -97,13 +98,13 @@ xmltodict = "^1.0"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = ">=8.2,<10.0"
+sphinx = "^9.0"
 sphinx-autodoc-typehints = "^3.0"
 sphinx-iconify = "^0.3"
 sphinx-tabs = "^3.4"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
-sphinx-design = ">=0.6,<0.8"
+sphinx-design = "^0.7"
 sphinxcontrib-mermaid = "^2.0"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
@@ -112,7 +113,7 @@ shibuya = "^2026.1"
 docutils = "0.21.2"
 
 # Needed for our extension:
-uvicorn = ">=0.40,<0.42"
+uvicorn = "^0.41"
 httpx = "^0.28"
 
 # Needed for examples:

@@ -28,13 +28,13 @@ class Components:
     outside the components object.
     """
 
-    schemas: 'dict[str, Schema] | None' = None
-    responses: 'dict[str, Response | Reference] | None' = None
-    parameters: 'dict[str, Parameter | Reference] | None' = None
-    examples: 'dict[str, Example | Reference] | None' = None
-    request_bodies: 'dict[str, RequestBody | Reference] | None' = None
-    headers: 'dict[str, Header | Reference] | None' = None
-    security_schemes: 'dict[str, SecurityScheme | Reference] | None' = None
-    links: 'dict[str, Link | Reference] | None' = None
-    callbacks: 'dict[str, Callback | Reference] | None' = None
-    path_items: 'dict[str, PathItem | Reference] | None' = None
+    schemas: dict[str, 'Schema'] | None = None
+    responses: dict[str, 'Response | Reference'] | None = None
+    parameters: dict[str, 'Parameter | Reference'] | None = None
+    examples: dict[str, 'Example | Reference'] | None = None
+    request_bodies: dict[str, 'RequestBody | Reference'] | None = None
+    headers: dict[str, 'Header | Reference'] | None = None
+    security_schemes: dict[str, 'SecurityScheme | Reference'] | None = None
+    links: dict[str, 'Link | Reference'] | None = None
+    callbacks: dict[str, 'Callback | Reference'] | None = None
+    path_items: dict[str, 'PathItem | Reference'] | None = None

@@ -1,15 +1,19 @@
-from collections.abc import Iterable, Mapping
-from decimal import Decimal
+# NOTE: when editing this file, also edit `test_pydantic_schema.py`
+
+import enum
+from collections.abc import Collection, Mapping
 from typing import Annotated, Any, Final, Literal, Optional, Union
 
 import pytest
 from typing_extensions import TypedDict
 
+from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
 from dmr.openapi.objects.enums import OpenAPIType
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 @pytest.fixture
@@ -26,8 +30,9 @@ class _TestTypedDict(TypedDict):
     attr: int
 
 
-class _SubDecimal(Decimal):
-    """Test ``SubDecimal`` class."""
+class _TestEnum(enum.IntEnum):
+    height = 1
+    width = 2
 
 
 _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
@@ -42,7 +47,6 @@ _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
         (bytes, OpenAPIType.STRING),
         (bool, OpenAPIType.BOOLEAN),
         (None, OpenAPIType.NULL),
-        (_SubDecimal, OpenAPIType.NUMBER),
     ],
 )
 def test_simple_types(
@@ -52,10 +56,10 @@ def test_simple_types(
     schema_type: OpenAPIType,
 ) -> None:
     """Ensure schema is generated correctly for simple types."""
-    schema = schema_generator(source_type)
+    schema = schema_generator(source_type, MsgspecSerializer)
 
     assert isinstance(schema, Schema)
-    assert schema.type == schema_type
+    assert schema.type == schema_type, source_type
 
 
 @pytest.mark.parametrize(
@@ -70,10 +74,7 @@ def test_simple_types(
         ),
         (
             list,
-            Schema(
-                type=OpenAPIType.ARRAY,
-                items=Schema(type=OpenAPIType.OBJECT),
-            ),
+            Schema(type=OpenAPIType.ARRAY),
         ),
         (
             set[float],
@@ -83,7 +84,15 @@ def test_simple_types(
             ),
         ),
         (
-            Iterable[str],
+            frozenset[str],
+            Schema(
+                type=OpenAPIType.ARRAY,
+                items=Schema(type=OpenAPIType.STRING),
+            ),
+        ),
+        # `Iterable[T]` is not supported by `msgspec`
+        (
+            Collection[str],
             Schema(
                 type=OpenAPIType.ARRAY,
                 items=Schema(type=OpenAPIType.STRING),
@@ -96,24 +105,28 @@ def test_simple_types(
                 items=Schema(type=OpenAPIType.BOOLEAN),
             ),
         ),
-    ],
-)
-def test_generic_arrays(
-    schema_generator: SchemaGenerator,
-    *,
-    source_type: Any,
-    expected_schema: Schema,
-) -> None:
-    """Ensure schema is generated correctly for generic arrays."""
-    schema = schema_generator(source_type)
-
-    assert isinstance(schema, Schema)
-    assert schema == expected_schema
-
-
-@pytest.mark.parametrize(
-    ('source_type', 'expected_schema'),
-    [
+        (
+            tuple[int, str],
+            Schema(
+                type=OpenAPIType.ARRAY,
+                items=False,
+                max_items=2,
+                min_items=2,
+                prefix_items=[
+                    Schema(type=OpenAPIType.INTEGER),
+                    Schema(type=OpenAPIType.STRING),
+                ],
+            ),
+        ),
+        (
+            tuple[()],
+            Schema(
+                type=OpenAPIType.ARRAY,
+                items=None,
+                max_items=0,
+                min_items=0,
+            ),
+        ),
         (
             dict[str, int],
             Schema(
@@ -123,17 +136,11 @@ def test_generic_arrays(
         ),
         (
             dict[str, Any],
-            Schema(
-                type=OpenAPIType.OBJECT,
-                additional_properties=Schema(type=OpenAPIType.OBJECT),
-            ),
+            Schema(type=OpenAPIType.OBJECT),
         ),
         (
             dict,
-            Schema(
-                type=OpenAPIType.OBJECT,
-                additional_properties=Schema(type=OpenAPIType.OBJECT),
-            ),
+            Schema(type=OpenAPIType.OBJECT),
         ),
         (
             Mapping[str, float],
@@ -151,10 +158,10 @@ def test_generic_objects(
     expected_schema: Schema,
 ) -> None:
     """Ensure schema is generated correctly for generic objects."""
-    schema = schema_generator(source_type)
+    schema = schema_generator(source_type, MsgspecSerializer)
 
     assert isinstance(schema, Schema)
-    assert schema == expected_schema
+    assert schema == expected_schema, source_type
 
 
 @pytest.mark.parametrize(
@@ -165,21 +172,22 @@ def test_generic_objects(
             Schema(type=OpenAPIType.NULL),
         ),
         (
+            Optional[int],  # noqa: UP045
+            Schema(
+                any_of=[
+                    Schema(type=OpenAPIType.INTEGER),
+                    Schema(type=OpenAPIType.NULL),
+                ],
+            ),
+        ),
+        (
             Union[None, None],  # noqa: UP007
-            Schema(type=OpenAPIType.NULL),
-        ),
-        (
-            Union,
-            Schema(type=OpenAPIType.NULL),
-        ),
-        (
-            Optional,
             Schema(type=OpenAPIType.NULL),
         ),
         (
             Union[str, int, None],  # noqa: UP007
             Schema(
-                one_of=[
+                any_of=[
                     Schema(type=OpenAPIType.STRING),
                     Schema(type=OpenAPIType.INTEGER),
                     Schema(type=OpenAPIType.NULL),
@@ -189,7 +197,7 @@ def test_generic_objects(
         (
             bool | float,
             Schema(
-                one_of=[
+                any_of=[
                     Schema(type=OpenAPIType.BOOLEAN),
                     Schema(type=OpenAPIType.NUMBER),
                 ],
@@ -204,10 +212,10 @@ def test_union_schema(
     expected_schema: Schema,
 ) -> None:
     """Ensure schema is generated correctly for generic objects."""
-    schema = schema_generator(source_type)
+    schema = schema_generator(source_type, MsgspecSerializer)
 
     assert isinstance(schema, Schema)
-    assert schema == expected_schema
+    assert schema == expected_schema, source_type
 
 
 @pytest.mark.parametrize(
@@ -227,7 +235,7 @@ def test_union_schema(
         (
             Annotated[str | int, 'meta'],
             Schema(
-                one_of=[
+                any_of=[
                     Schema(type=OpenAPIType.STRING),
                     Schema(type=OpenAPIType.INTEGER),
                 ],
@@ -242,37 +250,34 @@ def test_annotated_objects(
     expected_schema: Schema,
 ) -> None:
     """Ensure schema is generated correctly for annotated."""
-    schema = schema_generator(source_type)
+    schema = schema_generator(source_type, MsgspecSerializer)
 
     assert isinstance(schema, Schema)
-    assert schema == expected_schema
+    assert schema == expected_schema, source_type
 
 
-def test_annotated_error(schema_generator: SchemaGenerator) -> None:
-    """Ensure schema is generated correctly for annotated."""
-    with pytest.raises(ValueError, match=r'Annotated\[YourType'):
-        schema_generator(Annotated)
+def test_enum(
+    schema_generator: SchemaGenerator,
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Ensure schema for enums is correct."""
+    reference = schema_generator(_TestEnum, MsgspecSerializer)
+    assert isinstance(reference, Reference)
+
+    schema = openapi_context.registries.schema.maybe_resolve_reference(
+        reference,
+    )
+    assert schema == Schema(enum=[1, 2], title=_TestEnum.__qualname__)
 
 
 @pytest.mark.parametrize(
     ('source_type', 'expected_schema'),
     [
         (
-            Literal,
-            Schema(type=OpenAPIType.OBJECT),
-        ),
-        (
-            Literal[*()],
-            Schema(type=OpenAPIType.OBJECT),
-        ),
-        (
             Literal[1, 2],
-            Schema(enum=(1, 2)),
+            Schema(enum=[1, 2]),
         ),
-        (
-            Literal[1, 'a', None, True],
-            Schema(enum=(1, 'a', None, True)),
-        ),
+        # `Literal[]` with different types is not supported by `msgspec`
     ],
 )
 def test_literal_types(
@@ -282,41 +287,35 @@ def test_literal_types(
     expected_schema: Schema,
 ) -> None:
     """Ensure schema is generated correctly for literal types."""
-    schema = schema_generator(source_type)
+    schema = schema_generator(source_type, MsgspecSerializer)
 
     assert isinstance(schema, Schema)
-    assert schema == expected_schema
+    assert schema == expected_schema, source_type
 
 
-def test_type_mapper_register_works(schema_generator: SchemaGenerator) -> None:
-    """Ensure ``TypeMapper`` register new ``Schema``."""
-    schema_generator.type_mapper.register(_TestClass, _TEST_SCHEMA)
-
-    schema = schema_generator(_TestClass)
-
-    assert schema == _TEST_SCHEMA
-
-
-def test_type_mapper_register_raise_error(
+def test_type_mapper_typeddict(
     schema_generator: SchemaGenerator,
+    openapi_context: OpenAPIContext,
 ) -> None:
-    """Ensure ``TypeMapper`` raise error if register available ``Schema``."""
-    with pytest.raises(ValueError, match='already registered'):
-        schema_generator.type_mapper.register(int, _TEST_SCHEMA)
-
-
-def test_type_mapper_override(schema_generator: SchemaGenerator) -> None:
-    """Ensure ``override=True`` works."""
-    schema_generator.type_mapper.register(int, _TEST_SCHEMA, override=True)
-
-    int_schema = schema_generator(int)
-
-    assert int_schema == _TEST_SCHEMA
-
-
-def test_type_mapper_typeddict(schema_generator: SchemaGenerator) -> None:
     """Ensure that schema for ``TypedDict`` returns ``None``."""
-    schema = schema_generator(_TestTypedDict)
+    reference = schema_generator(_TestTypedDict, MsgspecSerializer)
+    assert isinstance(reference, Reference)
 
-    assert isinstance(schema, Reference)
-    assert schema.ref == f'#/components/schemas/{_TestTypedDict.__name__}'
+    schema = openapi_context.registries.schema.maybe_resolve_reference(
+        reference,
+    )
+    assert schema == Schema(
+        type=OpenAPIType.OBJECT,
+        title=_TestTypedDict.__qualname__,
+        required=['attr'],
+        properties={'attr': Schema(type=OpenAPIType.INTEGER)},
+    )
+
+
+def test_unsupported_type(schema_generator: SchemaGenerator) -> None:
+    """Ensures that unsupported types raise."""
+    with pytest.raises(
+        UnsolvableAnnotationsError,
+        match='Cannot generate OpenAPI schema',
+    ):
+        schema_generator(_TestClass, MsgspecSerializer)

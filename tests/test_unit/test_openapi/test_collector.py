@@ -10,7 +10,7 @@ from dmr.openapi.collector import (
     _join_paths,
     _normalize_path,
     _process_pattern,
-    controller_collector,
+    controller_mapping_collector,
 )
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, compose_blueprints
@@ -188,8 +188,8 @@ def test_process_pattern_with_different_views(
     assert controller_mapping.path == f'/api/{path_str}'
 
 
-def test_controller_collector_with_router() -> None:
-    """Test the main ``controller_collector`` function with a ``Router``."""
+def test_controller_mapping_collector_with_router() -> None:
+    """Test controller collection function with a ``Router`` instance."""
     patterns: Sequence[URLPattern | URLResolver] = [
         path('direct/', _GetController.as_view()),
         path('nested/', include([path('inner/', _PostController.as_view())])),
@@ -199,7 +199,7 @@ def test_controller_collector_with_router() -> None:
         ),
     ]
     router = Router(patterns, prefix='/api')
-    controllers = controller_collector(router.urls, router.prefix)
+    controllers = controller_mapping_collector(router.urls, router.prefix)
 
     assert len(controllers) == 3
     assert {controller.path for controller in controllers} == {

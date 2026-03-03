@@ -27,5 +27,5 @@ class Header:
     style: str | None = None
     explode: bool | None = None
     example: Any | None = None
-    examples: 'dict[str, Example | Reference] | None' = None
-    content: 'dict[str, MediaType] | None' = None
+    examples: dict[str, 'Example | Reference'] | None = None
+    content: dict[str, 'MediaType'] | None = None

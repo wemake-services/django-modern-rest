@@ -18,6 +18,6 @@ class Response:
     """
 
     description: str
-    headers: 'dict[str, Header | Reference] | None' = None
-    content: 'dict[str, MediaType] | None' = None
-    links: 'dict[str, Link | Reference] | None' = None
+    headers: dict[str, 'Header | Reference'] | None = None
+    content: dict[str, 'MediaType'] | None = None
+    links: dict[str, 'Link | Reference'] | None = None

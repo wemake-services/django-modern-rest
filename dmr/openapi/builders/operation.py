@@ -28,11 +28,20 @@ class OperationBuilder:
     # In future, we must encapsulate it.
     def __call__(self, context: 'OpenAPIContext', path: str) -> Operation:
         """Builde an OpenAPI Operation from an endpoint."""
-        operation_id = context.generators.operation_id(self.metadata, path)
-        request_body = context.generators.request_body(self.metadata)
-        responses = context.generators.response(self.metadata)
-        params_list = context.generators.parameter(self.metadata)
-        security = context.generators.security_scheme(self.metadata.auth)
+        operation_id = context.generators.operation_id(
+            self.metadata,
+            path,
+            self.serializer,
+        )
+        request_body, params_list = context.generators.component_parsers(
+            self.metadata,
+            self.serializer,
+        )
+        responses = context.generators.response(self.metadata, self.serializer)
+        security = context.generators.security_scheme(
+            self.metadata.auth,
+            self.serializer,
+        )
 
         return Operation(
             tags=self.metadata.tags,
@@ -66,7 +75,12 @@ class OperationIDBuilder:
 
     _context: 'OpenAPIContext'
 
-    def __call__(self, metadata: 'EndpointMetadata', path: str) -> str:
+    def __call__(
+        self,
+        metadata: 'EndpointMetadata',
+        path: str,
+        serializer: type['BaseSerializer'],
+    ) -> str:
         """
         Generate a unique operation ID for an OpenAPI operation.
 

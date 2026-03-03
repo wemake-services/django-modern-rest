@@ -12,10 +12,9 @@ _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 @pytest.fixture
-def generator() -> OperationIDBuilder:
+def generator(openapi_context: OpenAPIContext) -> OperationIDBuilder:
     """Create ``OperationIDGenerator`` instance for testing."""
-    context = OpenAPIContext(config=_TEST_CONFIG)
-    return context.generators.operation_id
+    return openapi_context.generators.operation_id
 
 
 @pytest.mark.parametrize(
@@ -127,6 +126,7 @@ def test_explicit_operation_id(generator: OperationIDBuilder) -> None:
     operation_id = generator(
         controller.api_endpoints['GET'].metadata,
         path='whatever',
+        serializer=PydanticSerializer,
     )
     registry = generator._context.registries.operation_id
 

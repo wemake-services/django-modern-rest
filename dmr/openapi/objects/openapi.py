@@ -64,6 +64,8 @@ def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:
         schema_value = getattr(to_convert, field.name, None)
         if schema_value is None:
             continue
+        if field.name == 'required' and not schema_value:
+            continue  # Skip empty `required` field
 
         schema[normalize_key(field.name)] = normalize_value(
             schema_value,
@@ -95,8 +97,6 @@ def normalize_key(key: str) -> str:
         'in'
         >>> normalize_key('schema_not')
         'not'
-        >>> normalize_key('external_docs')
-        'externalDocs'
         >>> normalize_key('ref')
         '$ref'
         >>> normalize_key('content_media_type')
@@ -110,7 +110,7 @@ def normalize_key(key: str) -> str:
         return 'in'
 
     if key.startswith('schema_'):
-        key = key.split('_', maxsplit=1)[-1]
+        key = key.removeprefix('schema_')
 
     if '_' in key:
         components = key.split('_')

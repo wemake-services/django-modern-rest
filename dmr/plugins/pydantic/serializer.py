@@ -20,6 +20,7 @@ from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
 from dmr.exceptions import InternalServerError
 from dmr.parsers import Parser, Raw
+from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
 from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
 
@@ -97,8 +98,9 @@ class PydanticSerializer(BaseSerializer):
     __slots__ = ()
 
     # Required API:
-    validation_error: ClassVar[type[Exception]] = pydantic.ValidationError
-    optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
+    validation_error = pydantic.ValidationError
+    optimizer = PydanticEndpointOptimizer
+    schema_generator = PydanticSchemaGenerator
 
     # Custom API:
 

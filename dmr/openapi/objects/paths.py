@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from dmr.openapi.objects import PathItem
 
-Paths = dict[str, 'PathItem']
+Paths: TypeAlias = dict[str, 'PathItem']
 """
 Holds the relative paths to the individual endpoints and their operations.
 The path is appended to the URL from the Server Object in order to construct

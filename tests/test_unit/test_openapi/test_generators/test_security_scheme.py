@@ -1,6 +1,7 @@
 from typing import Any, Final
 
 import pytest
+from inline_snapshot import snapshot
 from typing_extensions import override
 
 from dmr.controller import Controller
@@ -10,11 +11,8 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.security_scheme import (
     SecuritySchemeGenerator,
 )
-from dmr.openapi.objects.components import Components
-from dmr.openapi.objects.security_requirement import (
-    SecurityRequirement,
-)
-from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.openapi.objects import Components, SecurityRequirement, SecurityScheme
+from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
 
@@ -66,34 +64,32 @@ class _WithSchemeAuth(SyncAuth):
 
 
 @pytest.fixture
-def context() -> OpenAPIContext:
-    """Create ``OpenAPIContext`` instance for testing."""
-    return OpenAPIContext(config=_TEST_CONFIG)
-
-
-@pytest.fixture
-def generator(context: OpenAPIContext) -> SecuritySchemeGenerator:
+def generator(openapi_context: OpenAPIContext) -> SecuritySchemeGenerator:
     """Create ``SecuritySchemeGenerator`` instance for testing."""
-    return context.generators.security_scheme
+    return openapi_context.generators.security_scheme
 
 
 def test_security_scheme_generator_no_schemes(
     generator: SecuritySchemeGenerator,
+    openapi_context: OpenAPIContext,
 ) -> None:
     """Ensure that auth providers without schemes are handled."""
     auth = _NoSchemeAuth()
-    requirements = generator([auth])
+    requirements = generator([auth], PydanticSerializer)
 
     assert requirements == [{'noScheme': []}]
-    assert len(generator._context.registries.security_scheme.schemes) == 0
+    assert len(openapi_context.registries.security_scheme.schemes) == 0
 
 
 def test_security_scheme_generator_with_schemes(
     generator: SecuritySchemeGenerator,
+    openapi_context: OpenAPIContext,
 ) -> None:
     """Ensure that auth providers with schemes are handled."""
     auth = _WithSchemeAuth()
-    requirements = generator([auth])
+    requirements = generator([auth], PydanticSerializer)
 
     assert requirements == [{'testScheme': []}]
-    assert 'testScheme' in generator._context.registries.security_scheme.schemes
+    assert openapi_context.registries.security_scheme.schemes == snapshot({
+        'testScheme': SecurityScheme(type='http', scheme='bearer'),
+    })

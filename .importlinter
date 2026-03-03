@@ -89,8 +89,7 @@ layers =
   spec
   views | core
   generators
-  extractors | collector | config
-  types
+  collector | config
   objects
 
 [importlinter:openapi:generators-independence]

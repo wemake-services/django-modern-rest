@@ -1,7 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from dmr.openapi.collector import controller_collector
+from dmr.openapi.collector import controller_mapping_collector
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
@@ -26,12 +26,12 @@ class OpenAPIBuilder:
         """Build complete OpenAPI specification from a router."""
         paths_items: Paths = {}
 
-        for controller in controller_collector(
+        for controller_mapping in controller_mapping_collector(
             router.urls,
             base_path=router.prefix,
         ):
-            path_item = self._context.generators.path_item(controller)
-            paths_items[controller.path] = path_item
+            path_item = self._context.generators.path_item(controller_mapping)
+            paths_items[controller_mapping.path] = path_item
 
         components = self._context.generators.component(paths_items)
         return self._context.config_merger(paths_items, components)

@@ -34,7 +34,10 @@ class PathItemGenerator:
 
     _context: 'OpenAPIContext'
 
-    def __call__(self, mapping: 'ControllerMapping') -> PathItem:
+    def __call__(
+        self,
+        mapping: 'ControllerMapping',
+    ) -> PathItem:
         """Generate an OpenAPI ``PathItem`` from a controller mapping."""
         kwargs: _PathItemKwargs = {}
 

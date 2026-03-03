@@ -12,9 +12,8 @@ from dmr.openapi.core.registry import (
 )
 from dmr.openapi.generators import (
     ComponentGenerator,
-    ParameterGenerator,
+    ComponentParserGenerator,
     PathItemGenerator,
-    RequestBodyGenerator,
     ResponseGenerator,
     SchemaGenerator,
     SecuritySchemeGenerator,
@@ -39,8 +38,7 @@ class GeneratorContainer:
 
     operation_id: OperationIDBuilder
     schema: SchemaGenerator
-    parameter: ParameterGenerator
-    request_body: RequestBodyGenerator
+    component_parsers: ComponentParserGenerator
     response: ResponseGenerator
     component: ComponentGenerator
     path_item: PathItemGenerator
@@ -55,7 +53,10 @@ class OpenAPIContext:
     generation process. Provides access to different generators.
     """
 
-    def __init__(self, config: 'OpenAPIConfig') -> None:
+    def __init__(
+        self,
+        config: 'OpenAPIConfig',
+    ) -> None:
         """Initialize the OpenAPI context."""
         self.config = config
         self.config_merger = ConfigMerger(self)
@@ -71,8 +72,7 @@ class OpenAPIContext:
         self.generators = GeneratorContainer(
             operation_id=OperationIDBuilder(self),
             schema=SchemaGenerator(self),
-            parameter=ParameterGenerator(self),
-            request_body=RequestBodyGenerator(self),
+            component_parsers=ComponentParserGenerator(self),
             response=ResponseGenerator(self),
             component=ComponentGenerator(self),
             path_item=PathItemGenerator(self),

@@ -1,4 +1,5 @@
 import abc
+import dataclasses
 from collections.abc import Mapping
 from http import HTTPStatus
 from typing import (
@@ -19,6 +20,7 @@ from dmr.exceptions import (
     RequestSerializationError,
     UnsolvableAnnotationsError,
 )
+from dmr.files import FileBody
 from dmr.internal.django import (
     convert_multi_value_dict,
     exctract_files_metadata,
@@ -29,6 +31,13 @@ from dmr.metadata import (
     ResponseSpecProvider,
 )
 from dmr.negotiation import get_conditional_types
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.mappers.parameters import parameters_spec
+from dmr.openapi.objects.media_type import MediaType
+from dmr.openapi.objects.parameter import Parameter
+from dmr.openapi.objects.reference import Reference
+from dmr.openapi.objects.request_body import RequestBody
+from dmr.openapi.objects.schema import Schema
 from dmr.parsers import SupportsDjangoDefaultParsing, SupportsFileParsing
 from dmr.types import TypeVarInference, infer_bases, is_safe_subclass
 
@@ -141,6 +150,15 @@ class ComponentParser(ResponseSpecProvider):
     will live under a dict field with this name.
     """
 
+    generates_fake_schema: ClassVar[bool] = False
+    """
+    Whether or not this component generates a real OpenAPI schema from a model.
+
+    Some components might have fake schemas, like ``FileMetadata``,
+    that are only used for validation internally.
+    You can disable real schema generation for such components.
+    """
+
     @classmethod
     @abc.abstractmethod
     def provide_context_data(
@@ -206,6 +224,18 @@ class ComponentParser(ResponseSpecProvider):
         By default does nothing.
         Runs in import time.
         """
+
+    @classmethod
+    @abc.abstractmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        """Generate OpenAPI spec for component."""
+        raise NotImplementedError
 
 
 class Query(ComponentParser, Generic[_QueryT]):
@@ -307,6 +337,23 @@ class Query(ComponentParser, Generic[_QueryT]):
             cast_null=cast_null,
         )
 
+    @override
+    @classmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        return parameters_spec(
+            schema,
+            serializer,
+            metadata,
+            context,
+            param_in='query',
+        )
+
 
 class Body(ComponentParser, Generic[_BodyT]):
     """
@@ -383,6 +430,23 @@ class Body(ComponentParser, Generic[_BodyT]):
         """
         return get_conditional_types(model) or {}
 
+    @override
+    @classmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        return RequestBody(
+            content={
+                req_parser.content_type: MediaType(schema=schema)
+                for req_parser in metadata.parsers.values()
+            },
+            required=True,
+        )
+
 
 class Headers(ComponentParser, Generic[_HeadersT]):
     """
@@ -423,6 +487,23 @@ class Headers(ComponentParser, Generic[_HeadersT]):
         field_model: Any,
     ) -> Any:
         return blueprint.request.headers
+
+    @override
+    @classmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        return parameters_spec(
+            schema,
+            serializer,
+            metadata,
+            context,
+            param_in='header',
+        )
 
 
 class Path(ComponentParser, Generic[_PathT]):
@@ -531,6 +612,23 @@ class Path(ComponentParser, Generic[_PathT]):
             )
         return blueprint.kwargs
 
+    @override
+    @classmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        return parameters_spec(
+            schema,
+            serializer,
+            metadata,
+            context,
+            param_in='path',
+        )
+
 
 class Cookies(ComponentParser, Generic[_CookiesT]):
     """
@@ -577,6 +675,23 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
         field_model: Any,
     ) -> Any:
         return blueprint.request.COOKIES
+
+    @override
+    @classmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        return parameters_spec(
+            schema,
+            serializer,
+            metadata,
+            context,
+            param_in='cookie',
+        )
 
 
 class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
@@ -653,6 +768,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
 
     parsed_file_metadata: _FileMetadataT
     context_name: ClassVar[str] = 'parsed_file_metadata'
+    generates_fake_schema: ClassVar[bool] = True
 
     @override
     @classmethod
@@ -711,3 +827,29 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
                 f'Class {cls!r} requires at least one parser '
                 f'that can parse files, found: {hint}',
             )
+
+    @override
+    @classmethod
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        serializer: type['BaseSerializer'],
+        metadata: EndpointMetadata,
+        context: OpenAPIContext,
+    ) -> list[Parameter | Reference] | RequestBody:
+        schema = context.registries.schema.maybe_resolve_reference(schema)
+        return RequestBody(
+            content={
+                req_parser.content_type: MediaType(
+                    schema=dataclasses.replace(
+                        schema,
+                        properties={
+                            property_name: FileBody.schema()
+                            for property_name in (schema.properties or [])
+                        },
+                    ),
+                )
+                for req_parser in metadata.parsers.values()
+            },
+            required=True,
+        )

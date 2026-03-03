@@ -55,6 +55,7 @@ class BaseSerializer:  # noqa: WPS214
         optimizer: Endpoint optimizer.
             Type that pre-compiles / creates / caches models in import time.
             Required to be set in subclasses.
+        openapi:
 
     """
 
@@ -63,6 +64,7 @@ class BaseSerializer:  # noqa: WPS214
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
     optimizer: ClassVar[type['BaseEndpointOptimizer']]
+    schema_generator: ClassVar[type['BaseSchemaGenerator']]
 
     @classmethod
     @abc.abstractmethod
@@ -238,6 +240,37 @@ class BaseEndpointOptimizer:
             metadata: Endpoint metadata to optimize.
 
         """
+        raise NotImplementedError
+
+
+SchemaDef: TypeAlias = tuple[
+    dict[str, Any],
+    dict[str, Any],
+]
+
+
+class BaseSchemaGenerator:
+    """Generates JSON schema by the native serializer API."""
+
+    @classmethod
+    @abc.abstractmethod
+    def get_schema(
+        cls,
+        model: Any,
+        ref_template: str,
+        *,
+        used_for_response: bool = False,
+    ) -> SchemaDef | None:
+        """
+        Provide JSON schema / OpenAPI spec for the given model.
+
+        Args:
+            model: Model to generate JSON schema for.
+            ref_template: Reference template to use for the references.
+            used_for_response: Is this schema used for the response or request.
+
+        """
+        raise NotImplementedError
 
 
 class SerializerContext:

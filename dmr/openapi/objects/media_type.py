@@ -20,5 +20,5 @@ class MediaType:
 
     schema: 'Reference | Schema | None' = None
     example: Any | None = None
-    examples: 'dict[str, Example | Reference] | None' = None
-    encoding: 'dict[str, Encoding] | None' = None
+    examples: dict[str, 'Example | Reference'] | None = None
+    encoding: dict[str, 'Encoding'] | None = None
