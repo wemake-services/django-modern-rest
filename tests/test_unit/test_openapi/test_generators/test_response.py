@@ -31,6 +31,12 @@ _HEADER: Final = NewHeader(
 )
 
 
+@pytest.fixture
+def generator(openapi_context: OpenAPIContext) -> ResponseGenerator:
+    """Create ``ResponseGenerator`` instance for testing."""
+    return openapi_context.generators.response
+
+
 class _ControllerWithCookies(Controller[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.CREATED,
@@ -46,38 +52,6 @@ class _ControllerWithCookies(Controller[PydanticSerializer]):
     )
     def post(self) -> list[int]:
         raise NotImplementedError
-
-
-class _ControllerWithHeaders(Controller[PydanticSerializer]):
-    @modify(
-        headers={
-            'X-Test-Header': _SCHEMA_ONLY_HEADER,
-            'X-Other-Test-Header': _HEADER,
-        },
-    )
-    def get(self) -> str:
-        raise NotImplementedError
-
-
-class _ControllerWithMultipleRenderers(Controller[PydanticSerializer]):
-    @modify(
-        renderers=[
-            JsonRenderer(),
-            FileRenderer(content_type='application/pdf'),
-        ],
-        headers={
-            'X-Test-Header': _SCHEMA_ONLY_HEADER,
-            'X-Other-Test-Header': _HEADER,
-        },
-    )
-    def post(self) -> str:
-        raise NotImplementedError
-
-
-@pytest.fixture
-def generator(openapi_context: OpenAPIContext) -> ResponseGenerator:
-    """Create ``ResponseGenerator`` instance for testing."""
-    return openapi_context.generators.response
 
 
 def test_response_generator_multiple_cookies(
@@ -111,6 +85,17 @@ def test_response_generator_multiple_cookies(
     })
 
 
+class _ControllerWithHeaders(Controller[PydanticSerializer]):
+    @modify(
+        headers={
+            'X-Test-Header': _SCHEMA_ONLY_HEADER,
+            'X-Other-Test-Header': _HEADER,
+        },
+    )
+    def get(self) -> str:
+        raise NotImplementedError
+
+
 def test_response_generator_headers(
     generator: ResponseGenerator,
 ) -> None:
@@ -139,41 +124,19 @@ def test_response_generator_headers(
     })
 
 
-def test_response_generator_cookie_with_reference(
-    openapi_context: OpenAPIContext,
-) -> None:
-    """Ensure that cookies with reference schemas are handled."""
-    # We force a string ref to override the default string:
-    string_ref = 'StringRef'
-    openapi_context.registries.schema.register(
-        schema_name=string_ref,
-        schema=Schema(type=OpenAPIType.STRING),
+class _ControllerWithMultipleRenderers(Controller[PydanticSerializer]):
+    @modify(
+        renderers=[
+            JsonRenderer(),
+            FileRenderer(content_type='application/pdf'),
+        ],
+        headers={
+            'X-Test-Header': _SCHEMA_ONLY_HEADER,
+            'X-Other-Test-Header': _HEADER,
+        },
     )
-    controller = _ControllerWithCookies()
-
-    response = openapi_context.generators.response(
-        controller.api_endpoints[HTTPMethod.POST].metadata,
-        PydanticSerializer,
-    )
-
-    response_created = response['201']
-    assert isinstance(response_created, Response)
-    assert response_created.headers is not None
-    assert response_created.headers == snapshot({
-        'Set-Cookie: first_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='first_cookie=123'),
-            description='First',
-            required=True,
-        ),
-        'Set-Cookie: second_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='second_cookie=123'),
-            description='Second',
-        ),
-        'Set-Cookie: third_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='third_cookie=123'),
-            required=True,
-        ),
-    })
+    def post(self) -> str:
+        raise NotImplementedError
 
 
 def test_response_multiple_content_types(

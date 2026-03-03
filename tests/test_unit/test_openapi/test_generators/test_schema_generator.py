@@ -36,10 +36,6 @@ class _UnsupportedTestModel:
     attr: str
 
 
-class _NamedModel(BaseModel):
-    __dmr_schema_name__ = 'SchemaName'
-
-
 def test_schema_generator_unsupported_type(
     generator: SchemaGenerator,
     openapi_context: OpenAPIContext,

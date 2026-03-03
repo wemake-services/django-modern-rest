@@ -42,8 +42,11 @@ class SchemaGenerator:
 
         """
         existing_reference = self._context.registries.schema.get_reference(
-            serializer.schema_generator.schema_name(annotation)
-            or getattr(annotation, '__qualname__', None),
+            (
+                serializer.schema_generator.schema_name(annotation)
+                or getattr(annotation, '__qualname__', None)
+            ),
+            annotation,
         )
         if existing_reference is not None:
             return existing_reference
@@ -55,6 +58,7 @@ class SchemaGenerator:
         )
         if schemas is not None:
             return self._maybe_generate_reference(
+                annotation,
                 *schemas,
                 fake_schema=fake_schema,
             )
@@ -65,6 +69,7 @@ class SchemaGenerator:
 
     def _maybe_generate_reference(
         self,
+        annotation: Any,
         schema: dict[str, Any],
         components: dict[str, Any],
         *,
@@ -104,6 +109,7 @@ class SchemaGenerator:
             return self._context.registries.schema.register(
                 schema_name=schema_obj.title,
                 schema=schema_obj,
+                annotation=annotation,
             )
         return schema_obj
 
