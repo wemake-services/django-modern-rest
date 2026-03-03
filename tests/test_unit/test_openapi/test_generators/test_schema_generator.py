@@ -51,8 +51,12 @@ def test_schema_generator_unsupported_type(
     ):
         generator(_UnsupportedTestModel, PydanticSerializer)
 
+    schema_name = PydanticSerializer.schema_generator.schema_name(
+        _UnsupportedTestModel,
+    )
+    assert schema_name
     openapi_context.registries.schema.register(
-        _UnsupportedTestModel.__qualname__,
+        schema_name,
         Schema(type=OpenAPIType.STRING),
     )
 

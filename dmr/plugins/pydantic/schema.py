@@ -32,3 +32,10 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
 
         components = schema.pop('$defs', {})
         return schema, components
+
+    @override
+    @classmethod
+    def schema_name(cls, model: Any) -> str | None:
+        """Return a schema name for a model, if it exists."""
+        schema = cls.get_schema(model, ref_template='')
+        return schema[0].get('title') if schema else None

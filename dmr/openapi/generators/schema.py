@@ -42,8 +42,7 @@ class SchemaGenerator:
 
         """
         existing_reference = self._context.registries.schema.get_reference(
-            # TODO: fix this, schema name generation must be strandartized
-            getattr(annotation, '__qualname__', None),
+            serializer.schema_generator.schema_name(annotation),
         )
         if existing_reference is not None:
             return existing_reference
@@ -80,10 +79,22 @@ class SchemaGenerator:
         reference = schema.get('$ref')
         if reference:
             # We got a reference back, return it. It is registered already.
-            return Reference(
+            reference = Reference(
                 ref=reference,
                 summary=schema.get('summary'),
                 description=schema.get('description'),
+            )
+            # When we create fake schemas, we need
+            # real schemas back, not references.
+            return (
+                self._context.registries.schema.maybe_resolve_reference(
+                    reference,
+                    resoltion_context=self._build_resolution_context(
+                        components,
+                    ),
+                )
+                if fake_schema
+                else reference
             )
 
         # Register the final schema:
@@ -94,3 +105,12 @@ class SchemaGenerator:
                 schema=schema_obj,
             )
         return schema_obj
+
+    def _build_resolution_context(
+        self,
+        components: dict[str, Any],
+    ) -> dict[str, Schema]:
+        return {
+            component_name: load_schema(component)
+            for component_name, component in components.items()
+        }

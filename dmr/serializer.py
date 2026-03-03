@@ -272,6 +272,17 @@ class BaseSchemaGenerator:
         """
         raise NotImplementedError
 
+    @classmethod
+    @abc.abstractmethod
+    def schema_name(cls, model: Any) -> str | None:
+        """
+        Return a schema name for a model, if it exists.
+
+        It is done directly by the serializer,
+        we don't store any specific logic for it.
+        """
+        raise NotImplementedError
+
 
 class SerializerContext:
     """Parse and bind request components for a controller.
