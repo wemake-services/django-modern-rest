@@ -8,7 +8,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
 
-class _ResponseModel(pydantic.BaseModel):
+class _ResponseModel(pydantic.BaseModel):  # pyright: ignore[reportRedeclaration]
     first: int
 
 
