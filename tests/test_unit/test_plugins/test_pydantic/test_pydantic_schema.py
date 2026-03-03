@@ -4,6 +4,7 @@ import enum
 from collections.abc import Iterable, Mapping
 from typing import Annotated, Any, Final, Literal, Optional, Union
 
+import pydantic
 import pytest
 from typing_extensions import TypedDict
 
@@ -273,6 +274,27 @@ def test_enum(
         type=OpenAPIType.INTEGER,
         enum=[1, 2],
         title=_TestEnum.__qualname__,
+    )
+
+
+def test_root_model(
+    schema_generator: SchemaGenerator,
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Ensure schema for enums is correct."""
+    reference = schema_generator(
+        pydantic.RootModel[list[int]],
+        PydanticSerializer,
+    )
+    assert isinstance(reference, Reference)
+
+    schema = openapi_context.registries.schema.maybe_resolve_reference(
+        reference,
+    )
+    assert schema == Schema(
+        type=OpenAPIType.ARRAY,
+        items=Schema(type=OpenAPIType.INTEGER),
+        title='RootModel[list[int]]',
     )
 
 
