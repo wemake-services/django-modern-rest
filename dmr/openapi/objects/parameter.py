@@ -1,4 +1,3 @@
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, final
 
@@ -25,5 +24,5 @@ class Parameter:
     explode: bool | None = None
     allow_reserved: bool | None = None
     example: Any | None = None
-    examples: 'Mapping[str, Example | Reference] | None' = None
-    content: 'dict[str, MediaType] | None' = None
+    examples: dict[str, 'Example | Reference'] | None = None
+    content: dict[str, 'MediaType'] | None = None

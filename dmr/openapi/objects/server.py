@@ -14,4 +14,4 @@ class Server:
 
     url: str
     description: str | None = None
-    variables: 'dict[str, ServerVariable] | None' = None
+    variables: dict[str, 'ServerVariable'] | None = None

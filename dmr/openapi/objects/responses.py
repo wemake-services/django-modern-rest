@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, TypeAlias, Union
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.response import Response
 
-Responses = dict[str, Union['Response', 'Reference']]
+Responses: TypeAlias = dict[str, Union['Response', 'Reference']]
 """
 A container for the expected responses of an operation.
 

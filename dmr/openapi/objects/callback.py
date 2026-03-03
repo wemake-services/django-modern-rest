@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, TypeAlias, Union
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.path_item import PathItem
     from dmr.openapi.objects.reference import Reference
 
-Callback = dict[str, Union['PathItem', 'Reference']]
+Callback: TypeAlias = dict[str, Union['PathItem', 'Reference']]
 """
 A map of possible out-of band callbacks related to the parent operation.
 

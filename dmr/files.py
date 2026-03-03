@@ -13,4 +13,4 @@ class FileBody:
     @classmethod
     def schema(cls) -> Schema:
         """Returns the openapi schema that this object represents."""
-        return Schema(format=OpenAPIFormat.BINARY, type=OpenAPIType.STRING)
+        return Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.BINARY)

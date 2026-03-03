@@ -10,6 +10,6 @@ if TYPE_CHECKING:
 class RequestBody:
     """Describes a single request body."""
 
-    content: 'dict[str, MediaType]'
+    content: dict[str, 'MediaType']
     description: str | None = None
     required: bool = False

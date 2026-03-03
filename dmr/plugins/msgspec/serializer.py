@@ -12,6 +12,7 @@ from typing_extensions import TypedDict, override
 
 from dmr.errors import ErrorDetail, ErrorType
 from dmr.parsers import Parser, Raw
+from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator
 from dmr.renderers import Renderer
 from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
 
@@ -55,8 +56,9 @@ class MsgspecSerializer(BaseSerializer):
     __slots__ = ()
 
     # Required API:
-    validation_error: ClassVar[type[Exception]] = msgspec.ValidationError
-    optimizer: ClassVar[type[BaseEndpointOptimizer]] = MsgspecEndpointOptimizer
+    validation_error = msgspec.ValidationError
+    optimizer = MsgspecEndpointOptimizer
+    schema_generator = MsgspecSchemaGenerator
 
     # Custom API:
     convert_kwargs: ClassVar[MsgspecConvertOptions] = {}
@@ -122,7 +124,7 @@ class MsgspecSerializer(BaseSerializer):
         return msgspec.convert(
             unstructured,
             model,
-            strict=strict or False,  # noqa: WPS366  # TODO: remove after 1.6.1
+            strict=strict or False,
             dec_hook=cls.deserialize_hook,
             **cls.convert_kwargs,
         )

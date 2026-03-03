@@ -8,22 +8,18 @@ from dmr.controller import Controller
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import modify
 from dmr.headers import HeaderSpec, NewHeader
-from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.response import ResponseGenerator
-from dmr.openapi.mappers.types import TypeMapper
 from dmr.openapi.objects import (
     Header,
-    Reference,
+    OpenAPIType,
     Response,
     Schema,
 )
-from dmr.openapi.objects.enums import OpenAPIType
 from dmr.openapi.objects.media_type import MediaType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer, JsonRenderer
 
-_TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 _SCHEMA_ONLY_HEADER: Final = HeaderSpec(
     description='Test Header',
     required=True,
@@ -40,7 +36,11 @@ class _ControllerWithCookies(Controller[PydanticSerializer]):
         status_code=HTTPStatus.CREATED,
         cookies={
             'first_cookie': CookieSpec(description='First', schema_only=True),
-            'second_cookie': CookieSpec(description='Second', schema_only=True),
+            'second_cookie': CookieSpec(
+                description='Second',
+                schema_only=True,
+                required=False,
+            ),
             'third_cookie': NewCookie(value='Third'),
         },
     )
@@ -75,15 +75,9 @@ class _ControllerWithMultipleRenderers(Controller[PydanticSerializer]):
 
 
 @pytest.fixture
-def context() -> OpenAPIContext:
-    """Create ``OpenAPIContext`` instance for testing."""
-    return OpenAPIContext(config=_TEST_CONFIG)
-
-
-@pytest.fixture
-def generator(context: OpenAPIContext) -> ResponseGenerator:
+def generator(openapi_context: OpenAPIContext) -> ResponseGenerator:
     """Create ``ResponseGenerator`` instance for testing."""
-    return context.generators.response
+    return openapi_context.generators.response
 
 
 def test_response_generator_multiple_cookies(
@@ -92,7 +86,10 @@ def test_response_generator_multiple_cookies(
     """Ensure that multiple cookies are handled."""
     controller = _ControllerWithCookies()
 
-    response = generator(controller.api_endpoints[HTTPMethod.POST].metadata)
+    response = generator(
+        controller.api_endpoints[HTTPMethod.POST].metadata,
+        PydanticSerializer,
+    )
     response_created = response['201']
 
     assert isinstance(response_created, Response)
@@ -106,7 +103,6 @@ def test_response_generator_multiple_cookies(
         'Set-Cookie: second_cookie': Header(
             schema=Schema(type=OpenAPIType.STRING, example='second_cookie=123'),
             description='Second',
-            required=True,
         ),
         'Set-Cookie: third_cookie': Header(
             schema=Schema(type=OpenAPIType.STRING, example='third_cookie=123'),
@@ -121,7 +117,10 @@ def test_response_generator_headers(
     """Ensure that headers are handled."""
     controller = _ControllerWithHeaders()
 
-    response = generator(controller.api_endpoints[HTTPMethod.GET].metadata)
+    response = generator(
+        controller.api_endpoints[HTTPMethod.GET].metadata,
+        PydanticSerializer,
+    )
     response_ok = response['200']
 
     assert isinstance(response_ok, Response)
@@ -141,22 +140,20 @@ def test_response_generator_headers(
 
 
 def test_response_generator_cookie_with_reference(
-    context: OpenAPIContext,
+    openapi_context: OpenAPIContext,
 ) -> None:
     """Ensure that cookies with reference schemas are handled."""
-    # We manually remove str from TypeMapper to force SchemaGenerator
-    # to look into the registry.
-    TypeMapper._mapping.pop(str)
+    # We force a string ref to override the default string:
     string_ref = 'StringRef'
-    context.registries.schema.register(
-        source_type=str,
+    openapi_context.registries.schema.register(
+        schema_name=string_ref,
         schema=Schema(type=OpenAPIType.STRING),
-        name=string_ref,
     )
     controller = _ControllerWithCookies()
 
-    response = context.generators.response(
+    response = openapi_context.generators.response(
         controller.api_endpoints[HTTPMethod.POST].metadata,
+        PydanticSerializer,
     )
 
     response_created = response['201']
@@ -164,17 +161,16 @@ def test_response_generator_cookie_with_reference(
     assert response_created.headers is not None
     assert response_created.headers == snapshot({
         'Set-Cookie: first_cookie': Header(
-            schema=Reference(ref=f'#/components/schemas/{string_ref}'),
+            schema=Schema(type=OpenAPIType.STRING, example='first_cookie=123'),
             description='First',
             required=True,
         ),
         'Set-Cookie: second_cookie': Header(
-            schema=Reference(ref=f'#/components/schemas/{string_ref}'),
+            schema=Schema(type=OpenAPIType.STRING, example='second_cookie=123'),
             description='Second',
-            required=True,
         ),
         'Set-Cookie: third_cookie': Header(
-            schema=Reference(ref='#/components/schemas/StringRef'),
+            schema=Schema(type=OpenAPIType.STRING, example='third_cookie=123'),
             required=True,
         ),
     })
@@ -185,7 +181,10 @@ def test_response_multiple_content_types(
 ) -> None:
     """Ensure that multiple content types (from renderers) are handled."""
     controller = _ControllerWithMultipleRenderers()
-    response = generator(controller.api_endpoints[HTTPMethod.POST].metadata)
+    response = generator(
+        controller.api_endpoints[HTTPMethod.POST].metadata,
+        PydanticSerializer,
+    )
 
     response_created = response['201']
 

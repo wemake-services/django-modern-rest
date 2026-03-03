@@ -52,7 +52,7 @@ def _normalize_path(path: str) -> str:
     return re.sub(pattern, r'{\g<parameter>}', path)
 
 
-def controller_collector(
+def controller_mapping_collector(
     urls: Sequence[_AnyPattern],
     base_path: str = '',
 ) -> list[ControllerMapping]:
@@ -76,7 +76,7 @@ def controller_collector(
         else:
             current_path = _join_paths(base_path, str(url.pattern))
             controllers.extend(
-                controller_collector(url.url_patterns, current_path),
+                controller_mapping_collector(url.url_patterns, current_path),
             )
 
     return controllers

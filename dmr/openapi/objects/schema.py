@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ class Schema:
     schema_else: 'Reference | Schema | None' = None
     dependent_schemas: dict[str, 'Reference | Schema'] | None = None
     prefix_items: Sequence['Reference | Schema'] | None = None
-    items: 'Reference | Schema | None' = None
+    items: 'Reference | Schema | bool | None' = None
     contains: 'Reference | Schema | None' = None
     properties: dict[str, 'Reference | Schema'] | None = None
     pattern_properties: dict[str, 'Reference | Schema'] | None = None
@@ -59,7 +59,7 @@ class Schema:
     min_contains: int | None = None
     max_properties: int | None = None
     min_properties: int | None = None
-    required: Sequence[str] | None = None
+    required: Sequence[str] = field(default_factory=list[str])
     dependent_required: dict[str, Sequence[str]] | None = None
     format: 'OpenAPIFormat | None' = None
     content_encoding: str | None = None
@@ -71,7 +71,7 @@ class Schema:
     deprecated: bool | None = None
     read_only: bool | None = None
     write_only: bool | None = None
-    examples: list[Any] | None = None
+    examples: Sequence[Any] | None = None
     discriminator: 'Discriminator | None' = None
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None

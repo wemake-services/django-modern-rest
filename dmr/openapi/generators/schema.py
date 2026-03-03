@@ -1,124 +1,96 @@
-# Parts of the code is taken from
-# https://github.com/litestar-org/litestar/blob/main/litestar/_openapi/schema_generation/schema.py
-# under MIT license.
-
-# Original license:
-# https://github.com/litestar-org/litestar/blob/main/LICENSE
-
-# The MIT License (MIT)
-
-# Copyright (c) 2021, 2022, 2023, 2024, 2025, 2026 Litestar Org.
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import dataclasses
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
-from dmr.internal.schema import get_schema_name
-from dmr.openapi.extractors.finder import find_extractor
-from dmr.openapi.mappers.types import TypeMapper
-from dmr.openapi.objects.enums import OpenAPIType
+from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
-from dmr.openapi.types import FieldDefinition, KwargDefinition
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.openapi.mappers.kwargs import KwargMapper
+    from dmr.serializer import BaseSerializer
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class SchemaGenerator:
-    """Generate ``FieldDefinition`` from dtos."""
+    """Generate OpenAPI schemas from different type annotations."""
 
-    type_mapper: ClassVar[type[TypeMapper]] = TypeMapper
+    # Instance API:
     _context: 'OpenAPIContext'
 
-    def __call__(self, annotation: Any) -> Schema | Reference:
-        """Get schema for a type."""
-        primitive_schema = self.type_mapper.get_schema(
-            annotation,
-            self,
-        )
-        if primitive_schema:
-            return primitive_schema
-        existing_reference = self._context.registries.schema.get_reference(
-            annotation,
-        )
-        if existing_reference:
-            return existing_reference
-        return self._generate_reference(annotation)
-
-    def _generate_reference(self, source_type: Any) -> Reference:
-        extractor = find_extractor(source_type)
-        props, required = self._extract_properties(
-            extractor.extract_fields(source_type),
-            extractor.mapper_cls(),
-        )
-
-        return self._context.registries.schema.register(
-            source_type=source_type,
-            schema=Schema(
-                type=OpenAPIType.OBJECT,
-                properties=props,
-                required=required or None,
-            ),
-            name=get_schema_name(source_type),
-        )
-
-    def _extract_properties(
+    def __call__(
         self,
-        field_definitions: list[FieldDefinition],
-        mapper: 'KwargMapper',
-    ) -> tuple[dict[str, Schema | Reference], list[str]]:
-        props: dict[str, Schema | Reference] = {}
-        required: list[str] = []
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+        *,
+        used_for_response: bool = False,
+        fake_schema: bool = False,
+    ) -> Schema | Reference:
+        """
+        Get schema for an annotation.
 
-        for field_definition in field_definitions:
-            schema = self(field_definition.annotation)
+        Here's the algorithm we use:
+        1. First we try to find any existing schema references
+        2. Next, we try to get a model schema from a serializer.
+           If it exists, we create an internal reference and return it.
+           The next time it will returned as a reference, cached.
+        3. If nothing worked, we raise an error
 
-            if field_definition.kwarg_definition:
-                schema = self._apply_kwarg_definition(
-                    schema,
-                    field_definition.kwarg_definition,
-                    mapper,
+        Raises:
+            UnsolvableAnnotationsError: when we can't generate
+                an OpenAPI schema from an existing annotation.
+
+        """
+        existing_reference = self._context.registries.schema.get_reference(
+            # TODO: fix this, schema name generation must be strandartized
+            getattr(annotation, '__qualname__', None),
+        )
+        if existing_reference is not None:
+            return existing_reference
+
+        schemas = serializer.schema_generator.get_schema(
+            annotation,
+            ref_template=self._context.registries.schema.schema_prefix,
+            used_for_response=used_for_response,
+        )
+        if schemas is not None:
+            return self._maybe_generate_reference(
+                *schemas,
+                fake_schema=fake_schema,
+            )
+        raise UnsolvableAnnotationsError(
+            f'Cannot generate OpenAPI schema from {annotation}, '
+            'consider registerting it as described in your serializer',
+        )
+
+    def _maybe_generate_reference(
+        self,
+        schema: dict[str, Any],
+        components: dict[str, Any],
+        *,
+        fake_schema: bool,
+    ) -> Schema | Reference:
+        if not fake_schema:
+            for component_name, component in components.items():
+                self._context.registries.schema.register(
+                    schema_name=component_name,
+                    schema=load_schema(component),
                 )
 
-            props[field_definition.name] = schema
+        reference = schema.get('$ref')
+        if reference:
+            # We got a reference back, return it. It is registered already.
+            return Reference(
+                ref=reference,
+                summary=schema.get('summary'),
+                description=schema.get('description'),
+            )
 
-            if field_definition.extra_data.get('is_required'):
-                required.append(field_definition.name)
-        return props, required
-
-    def _apply_kwarg_definition(
-        self,
-        schema: Schema | Reference,
-        kwarg_definition: KwargDefinition,
-        mapper: 'KwargMapper',
-    ) -> Schema | Reference:
-        if isinstance(schema, Reference):
-            # TODO: handle Reference wrapping with allOf?
-            return schema
-
-        updates = mapper(schema, kwarg_definition)
-
-        if not updates:
-            return schema
-
-        return dataclasses.replace(schema, **updates)
+        # Register the final schema:
+        schema_obj = load_schema(schema)
+        if schema_obj.title and not fake_schema:
+            return self._context.registries.schema.register(
+                schema_name=schema_obj.title,
+                schema=schema_obj,
+            )
+        return schema_obj

@@ -12,7 +12,7 @@ class Encoding:
     """A single encoding definition applied to a single schema property."""
 
     content_type: str | None = None
-    headers: 'dict[str, Header | Reference] | None' = None
+    headers: dict[str, 'Header | Reference'] | None = None
     style: str | None = None
     explode: bool = False
     allow_reserved: bool = False

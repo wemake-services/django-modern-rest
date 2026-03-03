@@ -13,7 +13,6 @@ from dmr.exceptions import (
     InternalServerError,
     RequestSerializationError,
 )
-from dmr.internal.schema import get_schema_name
 from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
@@ -93,7 +92,7 @@ class XmlRenderer(Renderer):
     ) -> bytes:
         preprocessor = self._wrap_serializer(serializer_hook)
         raw_data = xmltodict.unparse(
-            {get_schema_name(type(to_serialize)): to_serialize},
+            {type(to_serialize).__qualname__: to_serialize},
             preprocessor=preprocessor,
         )
         assert isinstance(raw_data, str)  # noqa: S101
