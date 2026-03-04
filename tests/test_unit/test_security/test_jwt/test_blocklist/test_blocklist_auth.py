@@ -1,9 +1,9 @@
 import datetime as dt
 import json
 import secrets
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from http import HTTPStatus
-from typing import Any, Final, TypeAlias, TypedDict, Unpack, final
+from typing import Any, Final, Protocol, TypedDict, Unpack, final
 
 import pytest
 from django.apps import apps
@@ -52,7 +52,8 @@ def user(faker: Faker) -> User:
     )
 
 
-_TokenBuilder: TypeAlias = Callable[[Unpack[_JWTokenKwargs]], str]
+class _TokenBuilder(Protocol):
+    def __call__(self, **kwargs: Unpack[_JWTokenKwargs]) -> str: ...
 
 
 @pytest.fixture
