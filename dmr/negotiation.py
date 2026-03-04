@@ -1,6 +1,6 @@
 import enum
 from collections.abc import Mapping
-from typing import Annotated, Any, final, get_origin
+from typing import Any, final
 
 from django.http.request import HttpRequest
 
@@ -15,7 +15,7 @@ from dmr.internal.negotiation import media_by_precedence
 from dmr.internal.negotiation import (
     negotiate_renderer as _negotiate_renderer,
 )
-from dmr.metadata import EndpointMetadata
+from dmr.metadata import EndpointMetadata, get_annotated_metadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
@@ -226,14 +226,7 @@ def get_conditional_types(
     Conditional types are defined with :data:`typing.Annotated`
     and :func:`dmr.negotiation.conditional_type` helper.
     """
-    if (
-        get_origin(model) is Annotated
-        and model.__metadata__
-        # TODO: change logic, this can be in any place in `__metadata__`
-        and isinstance(
-            model.__metadata__[0],
-            _ConditionalType,
-        )
-    ):
-        return model.__metadata__[0].computed
+    metadata = get_annotated_metadata(model, _ConditionalType)
+    if metadata:
+        return metadata.computed
     return None

@@ -85,8 +85,10 @@ class ComponentParserGenerator:
         return RequestBody(
             content=new_content,
             description=(
-                (schema.description or '') + (new_schema.description or '')
-            ),
+                (schema.description or '')
+                + ' '
+                + (new_schema.description or '')
+            ).strip(),
             required=schema.required or new_schema.required,
         )
 

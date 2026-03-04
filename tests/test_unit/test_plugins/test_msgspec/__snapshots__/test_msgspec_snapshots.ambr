@@ -13,22 +13,22 @@
           "operationId": "getApiCookies",
           "parameters": [
             {
+              "deprecated": false,
               "name": "session_id",
               "in": "cookie",
               "schema": {
                 "type": "string"
               },
-              "required": true,
-              "deprecated": false
+              "required": true
             },
             {
+              "deprecated": false,
               "name": "CSRF",
               "in": "cookie",
               "schema": {
                 "type": "string"
               },
-              "required": true,
-              "deprecated": false
+              "required": true
             }
           ],
           "responses": {

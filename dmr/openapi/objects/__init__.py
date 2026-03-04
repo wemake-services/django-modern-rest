@@ -62,6 +62,7 @@ from dmr.openapi.objects.oauth_flows import (
 from dmr.openapi.objects.openapi import OpenAPI as OpenAPI
 from dmr.openapi.objects.operation import Operation as Operation
 from dmr.openapi.objects.parameter import Parameter as Parameter
+from dmr.openapi.objects.parameter import ParameterMetadata as ParameterMetadata
 from dmr.openapi.objects.path_item import PathItem as PathItem
 from dmr.openapi.objects.paths import Paths as Paths
 from dmr.openapi.objects.reference import Reference as Reference

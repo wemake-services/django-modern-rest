@@ -316,6 +316,7 @@ def test_conditional_content_type(
             self,
         ) -> Annotated[
             dict[str, str] | str,
+            'comment',
             conditional_type({
                 ContentType.json: str,
                 ContentType.xml: dict[str, str],

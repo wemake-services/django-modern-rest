@@ -349,9 +349,8 @@ class Query(ComponentParser, Generic[_QueryT]):
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
+            model,
             schema,
-            serializer,
-            metadata,
             context,
             param_in='query',
         )
@@ -460,6 +459,9 @@ class Body(ComponentParser, Generic[_BodyT]):
                 for parser in metadata.parsers.values()
             },
             required=True,
+            description=context.registries.schema.maybe_resolve_reference(
+                schema,
+            ).description,
         )
 
 
@@ -514,9 +516,8 @@ class Headers(ComponentParser, Generic[_HeadersT]):
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
+            model,
             schema,
-            serializer,
-            metadata,
             context,
             param_in='header',
         )
@@ -639,9 +640,8 @@ class Path(ComponentParser, Generic[_PathT]):
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
+            model,
             schema,
-            serializer,
-            metadata,
             context,
             param_in='path',
         )
@@ -704,9 +704,8 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
+            model,
             schema,
-            serializer,
-            metadata,
             context,
             param_in='cookie',
         )
@@ -893,6 +892,9 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
                 for parser in metadata.parsers.values()
             },
             required=True,
+            description=context.registries.schema.maybe_resolve_reference(
+                schema,
+            ).description,
         )
 
     @classmethod

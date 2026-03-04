@@ -2,7 +2,15 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping, Set
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeAlias, final
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    TypeAlias,
+    TypeVar,
+    final,
+    get_origin,
+)
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
@@ -314,3 +322,22 @@ class EndpointMetadata:
             *[type(renderer) for renderer in self.renderers.values()],
             *[type(auth) for auth in (self.auth or [])],
         ]
+
+
+_MetadataT = TypeVar('_MetadataT')
+
+
+def get_annotated_metadata(
+    model: Any,
+    metadata_type: type[_MetadataT],
+) -> _MetadataT | None:
+    """
+    Find given *metadata_type* in :attr:`typing.Annotate.__metadata__`.
+
+    Or return ``None`` if it can't be found.
+    """
+    if get_origin(model) is Annotated and model.__metadata__:
+        for metadata in model.__metadata__:
+            if isinstance(metadata, metadata_type):
+                return metadata
+    return None

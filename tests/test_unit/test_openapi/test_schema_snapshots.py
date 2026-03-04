@@ -6,9 +6,18 @@ import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Body, Controller, Cookies, FileMetadata, ResponseSpec
+from dmr import (
+    Body,
+    Controller,
+    Cookies,
+    FileMetadata,
+    Query,
+    ResponseSpec,
+    modify,
+)
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
+from dmr.openapi.objects import ParameterMetadata
 from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -51,12 +60,27 @@ def test_user_schema(snapshot: SnapshotAssertion) -> None:
 
 class _CookieModel(pydantic.BaseModel):
     session_id: str
-    csrf: str = pydantic.Field(alias='CSRF')
+    csrf: str = pydantic.Field(alias='CSRF', description='Override')
+
+
+class _QueryModel(pydantic.BaseModel):
+    query: str
 
 
 class _AuthedAndCookiesController(
     Controller[PydanticSerializer],
-    Cookies[_CookieModel],
+    Cookies[
+        Annotated[
+            _CookieModel,
+            ParameterMetadata(description='Cookies metadata'),
+        ]
+    ],
+    Query[
+        Annotated[
+            _QueryModel,
+            ParameterMetadata(style='deepObject', explode=True),
+        ]
+    ],
 ):
     auth = (JWTAsyncAuth(),)
 
@@ -86,6 +110,8 @@ class _FileModel(pydantic.BaseModel):
 
 
 class _SeveralFiles(pydantic.BaseModel):
+    """Model docs."""
+
     file_name1: _FileModel
     second_file: _FileModel
 
@@ -96,6 +122,7 @@ class _FileController(
 ):
     parsers = (MultiPartParser(),)
 
+    @modify(operation_id='file_test_id', deprecated=True)
     async def get(self) -> list[int]:
         raise NotImplementedError
 
@@ -116,9 +143,16 @@ def test_file_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
+class _DescriptionModel(pydantic.BaseModel):
+    """Description from doc."""
+
+    first: str
+    second: list[int]
+
+
 class _BodyAndFileController(
     Controller[PydanticSerializer],
-    Body[_UserModel],
+    Body[_DescriptionModel],
     FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
@@ -179,6 +213,7 @@ class _ConditionalTypesController(
         self,
     ) -> Annotated[
         _UserModel | _XmlResponseModel,
+        'comment',
         conditional_type({
             ContentType.json: _UserModel,
             ContentType.xml: _XmlResponseModel,
