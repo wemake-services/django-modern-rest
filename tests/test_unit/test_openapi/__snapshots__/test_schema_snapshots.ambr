@@ -13,24 +13,39 @@
           "operationId": "getApiCookies",
           "parameters": [
             {
+              "description": "Cookies metadata",
+              "deprecated": false,
               "name": "session_id",
               "in": "cookie",
               "schema": {
                 "type": "string",
                 "title": "Session Id"
               },
-              "required": true,
-              "deprecated": false
+              "required": true
             },
             {
+              "description": "Override",
+              "deprecated": false,
               "name": "CSRF",
               "in": "cookie",
               "schema": {
                 "type": "string",
-                "title": "Csrf"
+                "title": "Csrf",
+                "description": "Override"
               },
-              "required": true,
-              "deprecated": false
+              "required": true
+            },
+            {
+              "deprecated": false,
+              "style": "deepObject",
+              "explode": true,
+              "name": "query",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "title": "Query"
+              },
+              "required": true
             }
           ],
           "responses": {
@@ -107,7 +122,8 @@
             },
             "CSRF": {
               "type": "string",
-              "title": "Csrf"
+              "title": "Csrf",
+              "description": "Override"
             }
           },
           "type": "object",
@@ -116,6 +132,19 @@
             "CSRF"
           ],
           "title": "_CookieModel"
+        },
+        "_QueryModel": {
+          "properties": {
+            "query": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          "type": "object",
+          "required": [
+            "query"
+          ],
+          "title": "_QueryModel"
         },
         "ErrorDetail": {
           "properties": {
@@ -212,16 +241,17 @@
                         "file_name1",
                         "second_file"
                       ],
-                      "title": "_SeveralFiles"
+                      "title": "_SeveralFiles",
+                      "description": "Model docs."
                     },
                     {
-                      "$ref": "#/components/schemas/CustomUserModel"
+                      "$ref": "#/components/schemas/_DescriptionModel"
                     }
                   ]
                 }
               }
             },
-            "description": "",
+            "description": "Description from doc. Model docs.",
             "required": true
           },
           "responses": {
@@ -275,31 +305,27 @@
     },
     "components": {
       "schemas": {
-        "CustomUserModel": {
+        "_DescriptionModel": {
           "properties": {
-            "age": {
-              "type": "integer",
-              "maximum": 100,
-              "exclusiveMinimum": 0,
-              "title": "Age"
-            },
-            "username": {
+            "first": {
               "type": "string",
-              "title": "Username",
-              "deprecated": true
+              "title": "First"
             },
-            "email": {
-              "type": "string",
-              "title": "Email"
+            "second": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array",
+              "title": "Second"
             }
           },
           "type": "object",
           "required": [
-            "age",
-            "username",
-            "email"
+            "first",
+            "second"
           ],
-          "title": "CustomUserModel"
+          "title": "_DescriptionModel",
+          "description": "Description from doc."
         },
         "ErrorDetail": {
           "properties": {
@@ -605,7 +631,7 @@
     "paths": {
       "/file": {
         "get": {
-          "operationId": "getFile",
+          "operationId": "file_test_id",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -625,10 +651,12 @@
                     "file_name1",
                     "second_file"
                   ],
-                  "title": "_SeveralFiles"
+                  "title": "_SeveralFiles",
+                  "description": "Model docs."
                 }
               }
             },
+            "description": "Model docs.",
             "required": true
           },
           "responses": {
@@ -676,7 +704,7 @@
               }
             }
           },
-          "deprecated": false
+          "deprecated": true
         }
       }
     },

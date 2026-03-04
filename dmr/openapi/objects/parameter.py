@@ -8,16 +8,11 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.schema import Schema
 
 
-@final
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Parameter:
-    """Describes a single operation parameter."""
+class ParameterMetadata:
+    """Describes a metadata for a single operation parameter."""
 
-    name: str
-    param_in: str
-    schema: 'Schema | Reference | None' = None
     description: str | None = None
-    required: bool = False
     deprecated: bool = False
     allow_empty_value: bool | None = None
     style: str | None = None
@@ -25,4 +20,15 @@ class Parameter:
     allow_reserved: bool | None = None
     example: Any | None = None
     examples: dict[str, 'Example | Reference'] | None = None
+
+
+@final
+@dataclass(frozen=True, kw_only=True, slots=True)
+class Parameter(ParameterMetadata):
+    """Describes a single operation parameter."""
+
+    name: str
+    param_in: str
+    schema: 'Schema | Reference | None' = None
     content: dict[str, 'MediaType'] | None = None
+    required: bool = False

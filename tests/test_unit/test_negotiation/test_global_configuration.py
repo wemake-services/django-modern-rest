@@ -307,7 +307,7 @@ def test_conditional_content_type(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
+        Body[Annotated[_RequestModel, 'other comment']],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -316,6 +316,7 @@ def test_conditional_content_type(
             self,
         ) -> Annotated[
             dict[str, str] | str,
+            'comment',
             conditional_type({
                 ContentType.json: str,
                 ContentType.xml: dict[str, str],

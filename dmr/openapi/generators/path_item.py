@@ -39,6 +39,7 @@ class PathItemGenerator:
         mapping: 'ControllerMapping',
     ) -> PathItem:
         """Generate an OpenAPI ``PathItem`` from a controller mapping."""
+        # TODO: move this to the controller
         kwargs: _PathItemKwargs = {}
 
         for method, endpoint in mapping.controller.api_endpoints.items():
