@@ -1,16 +1,20 @@
 import json
-from typing import Literal
+from http import HTTPStatus
+from typing import Annotated, Literal
 
 import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Body, Controller, Cookies, FileMetadata
+from dmr import Body, Controller, Cookies, FileMetadata, ResponseSpec
+from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
-from dmr.parsers import MultiPartParser
+from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import JsonRenderer
 from dmr.routing import Router
 from dmr.security.jwt import JWTAsyncAuth
+from tests.infra.xml_format import XmlParser, XmlRenderer
 
 
 class _UserModel(pydantic.BaseModel):
@@ -131,6 +135,66 @@ def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     [path('/file', _BodyAndFileController.as_view())],
                     prefix='/',
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _XmlModel(pydantic.BaseModel):
+    xml_value: int
+
+
+class _XmlResponseModel(pydantic.BaseModel):
+    xml_response: str
+
+
+class _ConditionalTypesController(
+    Controller[PydanticSerializer],
+    Body[
+        Annotated[
+            _UserModel | _XmlModel,
+            conditional_type({
+                ContentType.json: _UserModel,
+                ContentType.xml: _XmlModel,
+            }),
+        ],
+    ],
+):
+    responses = (
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.CONFLICT,
+            limit_to_content_types={
+                ContentType.json,
+            },
+        ),
+    )
+    parsers = [JsonParser(), XmlParser()]
+    renderers = [JsonRenderer(), XmlRenderer()]
+
+    def post(
+        self,
+    ) -> Annotated[
+        _UserModel | _XmlResponseModel,
+        conditional_type({
+            ContentType.json: _UserModel,
+            ContentType.xml: _XmlResponseModel,
+        }),
+    ]:
+        raise NotImplementedError
+
+
+def test_conditional_types(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for file controller."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    [path('/types', _ConditionalTypesController.as_view())],
+                    prefix='/api',
                 ),
             ).convert(),
             indent=2,
