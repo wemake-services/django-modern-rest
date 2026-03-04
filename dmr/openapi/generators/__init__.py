@@ -4,9 +4,6 @@ from dmr.openapi.generators.component import (
 from dmr.openapi.generators.component_parsers import (
     ComponentParserGenerator as ComponentParserGenerator,
 )
-from dmr.openapi.generators.path_item import (
-    PathItemGenerator as PathItemGenerator,
-)
 from dmr.openapi.generators.response import (
     ResponseGenerator as ResponseGenerator,
 )

@@ -13,6 +13,7 @@ def build_schema(
     router: 'Router',
     *,
     config: OpenAPIConfig | None = None,
+    builder: type[OpenAPIBuilder] = OpenAPIBuilder,
 ) -> OpenAPI:
     """
     Build OpenAPI schema.
@@ -21,10 +22,11 @@ def build_schema(
         router: Router that contains all API endpoints and all controllers.
         config: Optional configuration of OpenAPI metadata.
             Can be ``None``, in this case we fetch OpenAPI config from settings.
+        builder: ``OpenAPIBuilder`` subclass to build the API.
 
     """
     context = OpenAPIContext(config=config or _default_config())
-    return OpenAPIBuilder(context)(router)
+    return builder(context)(router)
 
 
 def _default_config() -> OpenAPIConfig:
