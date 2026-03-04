@@ -22,6 +22,8 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
+from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.objects import PathItem
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -582,6 +584,15 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
                 renderer=request_renderer(self.request),
             ),
         )
+
+    @classmethod
+    def get_path_item(cls, path: str, context: OpenAPIContext) -> PathItem:
+        """Generate OpenAPI spec for path items."""
+        operations: dict[str, Any] = {}
+        for method, endpoint in cls.api_endpoints.items():
+            operation = endpoint.operation_builder(context, path)
+            operations[method.lower()] = operation
+        return PathItem(**operations)
 
     @classproperty
     @override

@@ -13,7 +13,6 @@ from dmr.openapi.core.registry import (
 from dmr.openapi.generators import (
     ComponentGenerator,
     ComponentParserGenerator,
-    PathItemGenerator,
     ResponseGenerator,
     SchemaGenerator,
     SecuritySchemeGenerator,
@@ -41,7 +40,6 @@ class GeneratorContainer:
     component_parsers: ComponentParserGenerator
     response: ResponseGenerator
     component: ComponentGenerator
-    path_item: PathItemGenerator
     security_scheme: SecuritySchemeGenerator
 
 
@@ -75,6 +73,5 @@ class OpenAPIContext:
             component_parsers=ComponentParserGenerator(self),
             response=ResponseGenerator(self),
             component=ComponentGenerator(self),
-            path_item=PathItemGenerator(self),
             security_scheme=SecuritySchemeGenerator(self),
         )

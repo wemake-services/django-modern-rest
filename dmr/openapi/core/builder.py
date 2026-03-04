@@ -30,7 +30,10 @@ class OpenAPIBuilder:
             router.urls,
             base_path=router.prefix,
         ):
-            path_item = self._context.generators.path_item(controller_mapping)
+            path_item = controller_mapping.controller.get_path_item(
+                controller_mapping.path,
+                self._context,
+            )
             paths_items[controller_mapping.path] = path_item
 
         components = self._context.generators.component(paths_items)
