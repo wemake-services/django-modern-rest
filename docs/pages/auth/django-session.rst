@@ -9,8 +9,10 @@ Requiring auth
 
 We provide two classes to require Django session auth in you API:
 
-- :class:`~dmr.security.django_session.DjangoSessionSyncAuth` for sync views
-- :class:`~dmr.security.django_session.DjangoSessionAsyncAuth` for async views
+- :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
+  for sync views
+- :class:`~dmr.security.django_session.auth.DjangoSessionAsyncAuth`
+  for async views
 
 .. note::
 
@@ -55,11 +57,11 @@ Any further customizations are also possible.
 API Reference
 -------------
 
-.. autoclass:: dmr.security.django_session.DjangoSessionSyncAuth
+.. autoclass:: dmr.security.django_session.auth.DjangoSessionSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.django_session.DjangoSessionAsyncAuth
+.. autoclass:: dmr.security.django_session.auth.DjangoSessionAsyncAuth
   :members:
   :inherited-members:
 

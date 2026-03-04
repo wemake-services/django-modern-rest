@@ -8,7 +8,7 @@ from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from dmr.security.jwt import JWTToken
+from dmr.security.jwt import JWToken
 from dmr.test import DMRClient
 
 
@@ -79,7 +79,7 @@ def test_valid_auth(
     url: str,
 ) -> None:
     """Ensures that correct jwt auth works."""
-    token = JWTToken(
+    token = JWToken(
         sub=str(user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
     ).encode(settings.SECRET_KEY, algorithm='HS256')
@@ -115,7 +115,7 @@ def test_missing_user(
     url: str,
 ) -> None:
     """Ensures that missing user raises."""
-    token = JWTToken(
+    token = JWToken(
         sub='-1',
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
     ).encode(settings.SECRET_KEY, algorithm='HS256')
@@ -153,7 +153,7 @@ def test_inactive_user(
     user.is_active = False
     user.save(update_fields=['is_active'])
 
-    token = JWTToken(
+    token = JWToken(
         sub=str(user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
     ).encode(settings.SECRET_KEY, algorithm='HS256')

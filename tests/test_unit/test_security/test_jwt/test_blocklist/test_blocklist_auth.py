@@ -1,9 +1,9 @@
 import datetime as dt
 import json
 import secrets
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from http import HTTPStatus
-from typing import Any, Final, TypeAlias, TypedDict, Unpack, final
+from typing import Any, Final, Protocol, TypedDict, Unpack, final
 
 import pytest
 from django.apps import apps
@@ -15,19 +15,19 @@ from inline_snapshot import snapshot
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic.serializer import PydanticSerializer
-from dmr.security.blocklist.auth import (
-    JWTTokenBlocklistAsyncMixin,
-    JWTTokenBlocklistSyncMixin,
+from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth, get_jwt
+from dmr.security.jwt.blocklist.auth import (
+    JWTokenBlocklistAsyncMixin,
+    JWTokenBlocklistSyncMixin,
 )
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
-from dmr.security.jwt.token import JWTToken
+from dmr.security.jwt.token import JWToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _EXP: Final = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
 _JTI: Final = secrets.token_hex()
 
 
-class _JWTTokenKwargs(TypedDict, total=False):
+class _JWTokenKwargs(TypedDict, total=False):
     exp: dt.datetime
     iat: dt.datetime
     iss: str
@@ -39,7 +39,7 @@ class _JWTTokenKwargs(TypedDict, total=False):
 
 def test_is_installed() -> None:
     """Ensure that blocklist is in installed apps list."""
-    assert apps.is_installed('dmr.security.blocklist')
+    assert apps.is_installed('dmr.security.jwt.blocklist')
 
 
 @pytest.fixture
@@ -52,15 +52,16 @@ def user(faker: Faker) -> User:
     )
 
 
-_TokenBuilder: TypeAlias = Callable[..., str]
+class _TokenBuilder(Protocol):
+    def __call__(self, **kwargs: Unpack[_JWTokenKwargs]) -> str: ...
 
 
 @pytest.fixture
 def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
-    def factory(**kwargs: Unpack[_JWTTokenKwargs]) -> str:
-        token = JWTToken(
+    def factory(**kwargs: Unpack[_JWTokenKwargs]) -> str:
+        token = JWToken(
             sub=str(user.pk),
             **kwargs,
         )
@@ -70,7 +71,7 @@ def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
     return factory
 
 
-class MyJWTSyncAuth(JWTTokenBlocklistSyncMixin, JWTSyncAuth):
+class MyJWTSyncAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth):
     """JWTSyncAuth with blocklist mixin."""
 
 
@@ -78,6 +79,7 @@ class MyJWTSyncAuth(JWTTokenBlocklistSyncMixin, JWTSyncAuth):
 class _BlocklistSyncController(Controller[PydanticSerializer]):
     @modify(auth=[MyJWTSyncAuth()])
     def get(self) -> str:
+        assert isinstance(get_jwt(self.request), JWToken)
         return 'authed'
 
 
@@ -99,7 +101,7 @@ def test_add_to_blocklist(
     ) == auth.claim_from_token(decoded_token)
     assert created is True
 
-    assert auth.blocklist_model.objects.filter(jti=decoded_token.jti).exists()
+    assert auth.blocklist_model().objects.filter(jti=decoded_token.jti).exists()
 
 
 @pytest.mark.django_db
@@ -171,7 +173,7 @@ def test_blocklist_sync_mixin_unauthorized(
     })
 
 
-class MyJWTAsyncAuth(JWTTokenBlocklistAsyncMixin, JWTAsyncAuth):
+class MyJWTAsyncAuth(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
     """JWTAsyncAuth with blocklist mixin."""
 
 
@@ -201,9 +203,14 @@ async def test_async_add_to_blocklist(
     ) == auth.claim_from_token(decoded_token)
     assert created is True
 
-    assert await auth.blocklist_model.objects.filter(
-        jti=decoded_token.jti,
-    ).aexists()
+    assert (
+        await auth
+        .blocklist_model()
+        .objects.filter(
+            jti=decoded_token.jti,
+        )
+        .aexists()
+    )
 
 
 @pytest.mark.asyncio

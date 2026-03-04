@@ -13,8 +13,8 @@ Requiring auth
 
 We provide two classes to require JWT auth in you API:
 
-- :class:`~dmr.security.jwt.JWTSyncAuth` for sync views
-- :class:`~dmr.security.jwt.JWTAsyncAuth` for async views
+- :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
+- :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views
 
 
 Reusing pre-existing views
@@ -59,7 +59,7 @@ Things that you can customize:
 - Request body format
 - Response body format
 - JWT settings
-- JWT token class to be :class:`~dmr.security.jwt.JWTToken`
+- JWT token class to be :class:`~dmr.security.jwt.token.JWToken`
   subclass with custom logic
 - Error messages, see :ref:`customizing-error-messages`
 - Error handling, see :doc:`../error-handling`
@@ -74,7 +74,7 @@ Here's an example with a lot more customizations:
 
 This example also provides issuer and audience in the token,
 so it can be used together with ``accepted_issuers`` and ``accepted_audiences``
-configurations of :attr:`dmr.security.jwt.JWTSyncAuth`
+configurations of :attr:`dmr.security.jwt.auth.JWTSyncAuth`
 to additionally validate ``aud`` and ``iss`` JWT token claims.
 
 We want to be sure that this class is at the same time:
@@ -85,19 +85,51 @@ We want to be sure that this class is at the same time:
 3. Always type safe
 
 
+Blocklisting tokens
+-------------------
+
+.. note::
+
+  Add ``'dmr.security.jwt.blocklist'`` to the ``INSTALLED_APPS``
+  if you want to use tokens blocklist.
+
+JWT tokens might be leaked / outdated / etc.
+There must be a way to make a valid, non-expired token blocked from auth.
+
+To do so, we provide a default Django app to do so.
+We store blocked tokens in the database
+and provide an API to add tokens to the blocklist.
+
+Here's an example:
+
+.. literalinclude:: /examples/auth/jwt/blocklist_tokens.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+We provide two mixin types:
+
+- :class:`~dmr.security.jwt.blocklist.auth.JWTokenBlocklistAsyncMixin`
+  for async auth
+- :class:`~dmr.security.jwt.blocklist.auth.JWTokenBlocklistSyncMixin`
+  for sync auth
+
+
 API Reference
 -------------
 
-.. autoclass:: dmr.security.jwt.JWTToken
+.. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
-.. autoclass:: dmr.security.jwt.JWTSyncAuth
+.. autoclass:: dmr.security.jwt.auth.JWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.jwt.JWTAsyncAuth
+.. autoclass:: dmr.security.jwt.auth.JWTAsyncAuth
   :members:
   :inherited-members:
+
+.. autofunction:: dmr.security.jwt.auth.get_jwt
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,3 +147,12 @@ Pre-defined views to fetch JWT tokens
 .. autoclass:: dmr.security.jwt.views.ObtainTokensResponse
   :members:
   :show-inheritance:
+
+Blocklist app
+~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.blocklist.auth.JWTokenBlocklistSyncMixin
+  :members:
+
+.. autoclass:: dmr.security.jwt.blocklist.auth.JWTokenBlocklistAsyncMixin
+  :members:

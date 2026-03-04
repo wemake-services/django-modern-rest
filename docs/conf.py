@@ -117,6 +117,7 @@ nitpick_ignore = [
     (PY_CLASS, 'AsyncErrorHandler'),
     (PY_CLASS, '_MethodSyncHandler'),
     (PY_CLASS, '_MethodAsyncHandler'),
+    (PY_CLASS, 'BlocklistedJWToken'),
     (PY_CLASS, '_StrOrPromise'),
     (PY_CLASS, 'dmr.decorators._ReturnT'),
     (PY_CLASS, 'dmr.decorators._ViewT'),

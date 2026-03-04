@@ -12,7 +12,7 @@ from typing_extensions import TypedDict
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
-from dmr.security.jwt.token import JWTToken
+from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
 
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
@@ -51,7 +51,7 @@ class _BaseTokenSettings:
     jwt_algorithm: ClassVar[str] = 'HS256'
     jwt_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=1)
     jwt_secret: ClassVar[str | None] = None
-    jwt_token_cls: ClassVar[type[JWTToken]] = JWTToken
+    jwt_token_cls: ClassVar[type[JWToken]] = JWToken
 
 
 class _BaseObtainTokensSettings(_BaseTokenSettings):
