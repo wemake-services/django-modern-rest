@@ -33,6 +33,7 @@ class _Fake(ComponentParser, Generic[_FakeT]):
     @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type[BaseSerializer],
         metadata: EndpointMetadata,

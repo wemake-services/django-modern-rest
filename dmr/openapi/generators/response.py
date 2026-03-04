@@ -102,13 +102,24 @@ class ResponseGenerator:
         response_spec: 'ResponseSpec',
         serializer: type['BaseSerializer'],
     ) -> dict[str, MediaType]:
+        # Import cycle:
+        from dmr.negotiation import get_conditional_types  # noqa: PLC0415
+
+        return_types = get_conditional_types(response_spec.return_type) or {}
         return {
             renderer.content_type: MediaType(
                 schema=self._context.generators.schema(
-                    response_spec.return_type,
+                    return_types.get(
+                        renderer.content_type,
+                        response_spec.return_type,
+                    ),
                     serializer,
                     used_for_response=True,
                 ),
             )
             for renderer in renderers.values()
+            if (
+                not response_spec.limit_to_content_types
+                or renderer.content_type in response_spec.limit_to_content_types
+            )
         }

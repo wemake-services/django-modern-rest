@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from dmr.openapi.objects.parameter import Parameter
 from dmr.openapi.objects.reference import Reference
@@ -7,6 +7,7 @@ from dmr.openapi.objects.request_body import RequestBody
 from dmr.openapi.objects.schema import Schema
 
 if TYPE_CHECKING:
+    from dmr.components import ComponentParser
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.openapi.objects.media_type import MediaType
@@ -33,15 +34,11 @@ class ComponentParserGenerator:
         request_body: RequestBody | None = None
 
         for parser, parser_args in metadata.component_parsers:
-            schema = parser.get_schema(
-                schema=self._context.generators.schema(
-                    (parser_args[0] if len(parser_args) == 1 else parser_args),
-                    serializer,
-                    fake_schema=parser.generates_fake_schema,
-                ),
-                serializer=serializer,
-                metadata=metadata,
-                context=self._context,
+            schema = self._call_component(
+                parser,
+                parser_args,
+                metadata,
+                serializer,
             )
 
             if isinstance(schema, RequestBody):
@@ -55,6 +52,26 @@ class ComponentParserGenerator:
                 )
 
         return request_body, params_list or None
+
+    def _call_component(
+        self,
+        parser: type['ComponentParser'],
+        parser_args: tuple[Any, ...],
+        metadata: 'EndpointMetadata',
+        serializer: type['BaseSerializer'],
+    ) -> list[Parameter | Reference] | RequestBody:
+        model = parser_args[0] if len(parser_args) == 1 else parser_args
+        return parser.get_schema(
+            model,
+            schema=self._context.generators.schema(
+                model,
+                serializer,
+                fake_schema=parser.generates_fake_schema,
+            ),
+            serializer=serializer,
+            metadata=metadata,
+            context=self._context,
+        )
 
     def _merge_bodies(
         self,

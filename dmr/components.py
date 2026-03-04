@@ -229,6 +229,7 @@ class ComponentParser(ResponseSpecProvider):
     @abc.abstractmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
@@ -341,6 +342,7 @@ class Query(ComponentParser, Generic[_QueryT]):
     @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
@@ -434,15 +436,28 @@ class Body(ComponentParser, Generic[_BodyT]):
     @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
+        conditional_schemas = {
+            content_type: context.generators.schema(
+                conditional_model,
+                serializer,
+                fake_schema=cls.generates_fake_schema,
+            )
+            for content_type, conditional_model in cls.conditional_types(
+                model,
+            ).items()
+        }
         return RequestBody(
             content={
-                req_parser.content_type: MediaType(schema=schema)
-                for req_parser in metadata.parsers.values()
+                parser.content_type: MediaType(
+                    schema=conditional_schemas.get(parser.content_type, schema),
+                )
+                for parser in metadata.parsers.values()
             },
             required=True,
         )
@@ -492,6 +507,7 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
@@ -616,6 +632,7 @@ class Path(ComponentParser, Generic[_PathT]):
     @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
@@ -680,6 +697,7 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
     @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
@@ -769,6 +787,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     parsed_file_metadata: _FileMetadataT
     context_name: ClassVar[str] = 'parsed_file_metadata'
     generates_fake_schema: ClassVar[bool] = True
+    schema_metadata: ClassVar[type[FileBody]] = FileBody
 
     @override
     @classmethod
@@ -830,26 +849,63 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
 
     @override
     @classmethod
+    def conditional_types(cls, model: Any) -> Mapping[str, Any]:
+        """
+        Provide conditional parsing types based on content type.
+
+        Body model can be conditional based on a content_type.
+        If :data:`typing.Annotated` is passed together
+        with :func:`dmr.negotiation.conditional_type`
+        we treat the body as conditional. Otherwise, returns an empty dict.
+        """
+        # TODO: test conditional file models and add `application/ocet-stream`
+        # parser support to test it.
+        return get_conditional_types(model) or {}
+
+    @override
+    @classmethod
     def get_schema(
         cls,
+        model: Any,
         schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
-        schema = context.registries.schema.maybe_resolve_reference(schema)
+        conditional_schemas = {
+            content_type: context.generators.schema(
+                conditional_model,
+                serializer,
+                fake_schema=cls.generates_fake_schema,
+            )
+            for content_type, conditional_model in cls.conditional_types(
+                model,
+            ).items()
+        }
         return RequestBody(
             content={
-                req_parser.content_type: MediaType(
-                    schema=dataclasses.replace(
-                        schema,
-                        properties={
-                            property_name: FileBody.schema()
-                            for property_name in (schema.properties or [])
-                        },
+                parser.content_type: MediaType(
+                    schema=cls._process_schema(
+                        conditional_schemas.get(parser.content_type, schema),
+                        context,
                     ),
                 )
-                for req_parser in metadata.parsers.values()
+                for parser in metadata.parsers.values()
             },
             required=True,
+        )
+
+    @classmethod
+    def _process_schema(
+        cls,
+        schema: Schema | Reference,
+        context: OpenAPIContext,
+    ) -> Schema:
+        schema = context.registries.schema.maybe_resolve_reference(schema)
+        return dataclasses.replace(
+            schema,
+            properties={
+                property_name: cls.schema_metadata.schema()
+                for property_name in (schema.properties or [])
+            },
         )
