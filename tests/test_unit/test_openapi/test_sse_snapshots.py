@@ -22,7 +22,7 @@ async def _valid_sse(
     renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse:
-    return SSEResponse(_events())
+    raise NotImplementedError
 
 
 def test_sse_schema(snapshot: SnapshotAssertion) -> None:
