@@ -34,10 +34,10 @@ class _HttpBasicAuth:
         """Provides a security schema definition."""
         return Components(
             security_schemes={
+                # TODO: this does not change if `name!='Authentication'`,
+                # but it probably should.
                 self.security_scheme_name: SecurityScheme(
                     type='http',
-                    name=self.header,
-                    security_scheme_in='header',
                     scheme='basic',
                     description='Http Basic auth',
                 ),

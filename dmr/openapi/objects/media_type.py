@@ -18,7 +18,7 @@ class MediaType:
     type identified by its key.
     """
 
-    schema: 'Reference | Schema | None' = None
+    schema: 'Reference | Schema'
     example: Any | None = None
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None

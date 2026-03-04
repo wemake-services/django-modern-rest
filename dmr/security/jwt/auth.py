@@ -111,10 +111,11 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """Provides a security schema definition."""
         return Components(
             security_schemes={
+                # TODO: this does not change if `name!='Authentication'`,
+                # but it probably should.
                 self.security_scheme_name: SecurityScheme(
                     type='http',
                     scheme=self.auth_scheme,
-                    name=self.auth_header,
                     bearer_format='JWT',
                     description='JWT token auth',
                 ),

@@ -24,7 +24,7 @@
 - [x] Supports `pydantic2`, but not bound to it
 - [x] Supports `msgspec`, but not bound to it
 - [x] Supports async Django without any `sync_to_async` calls inside
-- [ ] Supports `openapi` 3.1+ schema generation out of the box
+- [x] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [ ] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage
@@ -73,6 +73,8 @@ There are several included extras:
   and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
 - `'django-modern-rest[jwt]'` provides `pyjwt` auth support
+- `'django-modern-rest[openapi]'` provides `OpenAPI` schema validation
+  and generates better examples
 
 
 ## Example
