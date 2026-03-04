@@ -26,6 +26,7 @@ class OpenAPIConfig:
 
     title: str
     version: str
+    openapi_version: str = '3.1.0'
 
     summary: str | None = None
     description: str | None = None

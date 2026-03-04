@@ -592,6 +592,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         for method, endpoint in cls.api_endpoints.items():
             operation = endpoint.operation_builder(context, path)
             operations[method.lower()] = operation
+        # TODO: support metadata here, add controller-level props
         return PathItem(**operations)
 
     @classproperty

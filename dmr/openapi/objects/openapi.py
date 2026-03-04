@@ -4,7 +4,6 @@ from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
-    Final,
     TypeAlias,
     cast,
     final,
@@ -32,8 +31,6 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server
     from dmr.openapi.objects.tag import Tag
 
-_OPENAPI_VERSION: Final = '3.1.0'
-
 ConvertedSchema: TypeAlias = dict[str, Any]
 _ConverterFunc: TypeAlias = Callable[['DataclassInstance'], ConvertedSchema]
 _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
@@ -46,7 +43,7 @@ class OpenAPI:
     """This is the root object of the OpenAPI document."""
 
     info: 'Info'
-    openapi: str = _OPENAPI_VERSION
+    openapi: str
     json_schema_dialect: str | None = None
     servers: list['Server'] | None = None
     paths: 'Paths | None' = None
