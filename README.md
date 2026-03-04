@@ -73,7 +73,7 @@ There are several included extras:
   and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
 - `'django-modern-rest[jwt]'` provides `pyjwt` auth support
-- `'django-modern-rest[openapi]'` provides `OpenAPI` schema validation 
+- `'django-modern-rest[openapi]'` provides `OpenAPI` schema validation
   and generates better examples
 
 
