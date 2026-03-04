@@ -28,6 +28,7 @@ class ConfigMerger:
         """Merge paths and components with configuration."""
         config = self.context.config
         return OpenAPI(
+            openapi=config.openapi_version,
             info=Info(
                 title=config.title,
                 version=config.version,
