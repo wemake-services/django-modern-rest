@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.encoding import Encoding
@@ -8,8 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.schema import Schema
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class MediaType:
     """
     Media Type Object.

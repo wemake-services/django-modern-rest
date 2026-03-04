@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.external_documentation import (
@@ -7,8 +7,7 @@ if TYPE_CHECKING:
     )
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Tag:
     """
     Adds metadata to a single tag that is used by the `Operation` object.

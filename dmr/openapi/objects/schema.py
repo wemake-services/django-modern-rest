@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.discriminator import Discriminator
@@ -10,8 +10,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.xml import XML
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Schema:
     """
     The Schema Object allows the definition of input and output data types.

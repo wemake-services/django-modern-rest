@@ -6,7 +6,6 @@ from typing import (
     Any,
     TypeAlias,
     cast,
-    final,
 )
 
 try:
@@ -37,8 +36,7 @@ _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class OpenAPI:
     """This is the root object of the OpenAPI document."""
 

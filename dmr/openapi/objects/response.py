@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.header import Header
@@ -8,8 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.reference import Reference
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Response:
     """
     Describes a single response from an API Operation.

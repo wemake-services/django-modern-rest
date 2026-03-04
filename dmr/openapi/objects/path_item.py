@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.operation import Operation
@@ -8,8 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class PathItem:
     """
     Describes the operations available on a single path.

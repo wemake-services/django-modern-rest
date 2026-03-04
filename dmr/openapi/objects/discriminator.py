@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from typing import final
 
 
-@final
-@dataclass(unsafe_hash=True, frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Discriminator:
     """
     Discriminator Object.

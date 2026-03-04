@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from typing import final
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class ServerVariable:
     """An object representing a `Server Variable` for server URL template."""
 

@@ -1,12 +1,11 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.oauth_flow import OAuthFlow
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class OAuthFlows:
     """Allows configuration of the supported OAuth Flows."""
 

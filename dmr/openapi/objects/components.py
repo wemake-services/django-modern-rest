@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.callback import Callback
@@ -17,8 +17,7 @@ if TYPE_CHECKING:
     )
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Components:
     """
     Holds a set of reusable objects for different aspects of the OAS.

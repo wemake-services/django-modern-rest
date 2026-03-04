@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from typing import final
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Contact:
     """Contact information for the exposed API."""
 
