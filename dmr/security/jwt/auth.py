@@ -15,7 +15,7 @@ from dmr.openapi.objects.components import Components
 from dmr.openapi.objects.security_requirement import SecurityRequirement
 from dmr.openapi.objects.security_scheme import SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.security.jwt.token import JWTToken
+from dmr.security.jwt.token import JWToken
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
@@ -56,7 +56,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         auth_header: str = 'Authorization',
         auth_scheme: str = 'Bearer',
         secret: str | None = None,
-        token_cls: type[JWTToken] = JWTToken,
+        token_cls: type[JWToken] = JWToken,
         leeway: int = 0,  # seconds
         accepted_audiences: str | Sequence[str] | None = None,
         accepted_issuers: str | Sequence[str] | None = None,
@@ -79,10 +79,10 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
           or any other unique user key.
         - *secret* can be changed, by default we use ``settings.SECRET_KEY``,
           but if you need some other secret for signing tokens - it is possible.
-        - *token_cls* can use :class:`dmr.security.jwt.JWTToken`
+        - *token_cls* can use :class:`dmr.security.jwt.token.JWToken`
           subclasses with different behavior.
 
-        See :meth:`dmr.security.jwt.JWTToken.decode`
+        See :meth:`dmr.security.jwt.token.JWToken.decode`
         for the docs for all jwt parameters explanation.
         """
         from django.conf import settings  # noqa: PLC0415
@@ -127,8 +127,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """Provides a security schema usage requirement."""
         return {self.security_scheme_name: []}
 
-    def prepare_token(self, request: HttpRequest) -> JWTToken | None:
-        """Fetches JWTToken instance from the auth header."""
+    def prepare_token(self, request: HttpRequest) -> JWToken | None:
+        """Fetches JWToken instance from the auth header."""
         # We return `None` here, because it might be some other auth.
         # We don't want to falsely trigger any errors just yet.
         token = self.get_token_from_request(request)
@@ -157,7 +157,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
             return None
         return parts[1]
 
-    def decode_token(self, encoded_token: str) -> JWTToken:
+    def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
         return self.token_cls.decode(
             encoded_token=encoded_token,
@@ -176,7 +176,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
             enforce_minimum_key_length=self.enforce_minimum_key_length,
         )
 
-    def claim_from_token(self, token: JWTToken) -> str:
+    def claim_from_token(self, token: JWToken) -> str:
         """
         Return claim value from the token object.
 
@@ -189,13 +189,15 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """
         return token.sub
 
-    def set_request_user(
+    def set_request_attrs(
         self,
         request: HttpRequest,
         user: 'AbstractBaseUser',
+        token: JWToken,
     ) -> None:
         """Set current user as authed for this request."""
         request.user = user
+        request.jwt = token  # type: ignore[attr-defined]
 
 
 class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
@@ -218,15 +220,15 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
     def authenticate(
         self,
         request: HttpRequest,
-        token: JWTToken,
+        token: JWToken,
     ) -> 'AbstractBaseUser':
         """Run all auth pipeline."""
         user = self.get_user(token)
         self.check_auth(user, token)
-        self.set_request_user(request, user)
+        self.set_request_attrs(request, user, token)
         return user
 
-    def get_user(self, token: JWTToken) -> 'AbstractBaseUser':
+    def get_user(self, token: JWToken) -> 'AbstractBaseUser':
         """Get application user from token."""
         # We import user here, because we need this file to be importable
         # without calling `.setup()`:
@@ -239,7 +241,7 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
 
-    def check_auth(self, user: 'AbstractBaseUser', token: JWTToken) -> None:
+    def check_auth(self, user: 'AbstractBaseUser', token: JWToken) -> None:
         """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError
@@ -265,15 +267,15 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     async def authenticate(
         self,
         request: HttpRequest,
-        token: JWTToken,
+        token: JWToken,
     ) -> 'AbstractBaseUser':
         """Run all auth pipeline."""
         user = await self.get_user(token)
         await self.check_auth(user, token)
-        self.set_request_user(request, user)
+        self.set_request_attrs(request, user, token)
         return user
 
-    async def get_user(self, token: JWTToken) -> 'AbstractBaseUser':
+    async def get_user(self, token: JWToken) -> 'AbstractBaseUser':
         """Get application user from token."""
         # We import user here, because we need this file to be importable
         # without calling `.setup()`:
@@ -289,8 +291,13 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     async def check_auth(
         self,
         user: 'AbstractBaseUser',
-        token: JWTToken,
+        token: JWToken,
     ) -> None:
         """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError
+
+
+def get_jwt(request: HttpRequest) -> JWToken:
+    """Returns a JWToken from request, if it was authed with it."""
+    return request.jwt  # type: ignore[attr-defined, no-any-return]

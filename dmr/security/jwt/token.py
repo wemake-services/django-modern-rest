@@ -39,7 +39,7 @@ from dmr.exceptions import InternalServerError, NotAuthenticatedError
 
 
 @dataclass(frozen=True, slots=True)
-class JWTToken:
+class JWToken:
     """
     JWT Token DTO.
 

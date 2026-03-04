@@ -75,22 +75,22 @@ explicit headers. There are several options:
    so make sure tokens have a really short expiration time
 
 Here's an example with
-:class:`~dmr.security.django_session.DjangoSessionAsyncAuth` class:
+:class:`~dmr.security.django_session.auth.DjangoSessionAsyncAuth` class:
 
 .. literalinclude:: /examples/sse/error_handling.py
    :language: python
    :linenos:
 
-You can customize :class:`~dmr.security.jwt.JWTAsyncAuth`
+You can customize :class:`~dmr.security.jwt.auth.JWTAsyncAuth`
 to provide auth in cookies instead of headers.
 This way you will be able to send the same JWT tokens
 to establish trusted SSE connection.
 
 You would need to:
 
-- Customize :attr:`~dmr.security.jwt.JWTSyncAuth.security_requirement`
+- Customize :attr:`~dmr.security.jwt.auth.JWTSyncAuth.security_requirement`
   property to change how your security requirement in defined in OpenAPI
-- Customize :meth:`~dmr.security.jwt.JWTAsyncAuth.get_token_from_request`
+- Customize :meth:`~dmr.security.jwt.auth.JWTAsyncAuth.get_token_from_request`
   to get JWT token from the request cookies instead of request's headers
 
 

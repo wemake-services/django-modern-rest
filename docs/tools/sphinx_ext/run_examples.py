@@ -177,6 +177,7 @@ class _AppBuilder:
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
                 'dmr',
+                'dmr.security.jwt.blocklist',
             ],
             MIDDLEWARE=[],
             USE_TZ=True,

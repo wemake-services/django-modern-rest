@@ -13,7 +13,7 @@ import pytest
 from faker import Faker
 
 from dmr.exceptions import InternalServerError
-from dmr.security.jwt import JWTToken
+from dmr.security.jwt import JWToken
 
 
 @pytest.mark.parametrize('algorithm', ['HS256', 'HS384', 'HS512'])
@@ -40,7 +40,7 @@ def test_token_roundtrip(
 ) -> None:
     """Ensures that token encode/decode roundtrips with different params."""
     token_secret = secrets.token_hex()
-    token = JWTToken(
+    token = JWToken(
         sub=secrets.token_hex(),
         exp=(dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1)),
         aud=token_audience,
@@ -61,7 +61,7 @@ def test_empty_token() -> None:
     """Ensures that we can't create an empty token."""
     exp = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
     with pytest.raises(ValueError, match='a length greater than 0'):
-        JWTToken('', exp)
+        JWToken('', exp)
 
 
 @pytest.mark.parametrize(
@@ -75,14 +75,14 @@ def test_empty_token() -> None:
 def test_exp_in_the_past(exp: dt.datetime) -> None:
     """Ensures that we can't create an exp date in the past."""
     with pytest.raises(ValueError, match='datetime in the future'):
-        JWTToken('a', exp)
+        JWToken('a', exp)
 
 
 def test_iat_in_the_past() -> None:
     """Ensures that we can't create an iat date in the future."""
     exp = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
     with pytest.raises(ValueError, match='current or past time'):
-        JWTToken('a', exp, iat=exp)
+        JWToken('a', exp, iat=exp)
 
 
 def test_extra_fields(faker: Faker) -> None:
@@ -97,7 +97,7 @@ def test_extra_fields(faker: Faker) -> None:
     token_secret = secrets.token_hex()
     encoded_token = jwt.encode(raw_token, key=token_secret, algorithm='HS256')
 
-    token = JWTToken.decode(
+    token = JWToken.decode(
         encoded_token,
         secret=token_secret,
         algorithm='HS256',
@@ -112,7 +112,7 @@ def test_extra_fields(faker: Faker) -> None:
 def test_strict_audience_validation() -> None:
     """Ensures that strict_audience validates correctly."""
     with pytest.raises(ValueError, match='a single string'):
-        JWTToken.decode(
+        JWToken.decode(
             'whatever',
             secret='whatever',  # noqa: S106
             algorithm='HS256',
@@ -125,13 +125,13 @@ def test_strict_audience_single_value() -> None:
     """Ensures that strict_audience validates correctly."""
     secret = secrets.token_hex()
     audience = 'foo'
-    encoded = JWTToken(
+    encoded = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub='foo',
         aud=audience,
     ).encode(secret, 'HS256')
 
-    token = JWTToken.decode(
+    token = JWToken.decode(
         encoded,
         secret=secret,
         algorithm='HS256',
@@ -166,7 +166,7 @@ def test_encode_validation(
 ) -> None:
     """Ensures that incorrect combination of algorithm and secret raises."""
     with pytest.raises(InternalServerError):
-        JWTToken(
+        JWToken(
             sub='123',
             exp=(dt.datetime.now(dt.UTC) + dt.timedelta(seconds=10)),
         ).encode(algorithm=algorithm, secret=secret)
@@ -177,13 +177,13 @@ def test_token_issuer(issuer: str | list[str] | None) -> None:
     """Ensure that issue validation works."""
     iss = issuer[0] if isinstance(issuer, list) else issuer
     secret = secrets.token_hex()
-    encoded = JWTToken(
+    encoded = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub='foo',
         iss=iss,
     ).encode(secret, 'HS256')
 
-    token = JWTToken.decode(
+    token = JWToken.decode(
         encoded,
         secret=secret,
         algorithm='HS256',
@@ -195,7 +195,7 @@ def test_token_issuer(issuer: str | list[str] | None) -> None:
 
 def test_token_encode_includes_custom_headers() -> None:
     """Ensure that custom headers can be provided and work."""
-    token = JWTToken(
+    token = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub='whatever',
     )

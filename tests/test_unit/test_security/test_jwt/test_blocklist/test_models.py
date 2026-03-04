@@ -5,7 +5,7 @@ import pytest
 from django.contrib.auth.models import User
 from faker import Faker
 
-from dmr.security.blocklist.models import BlocklistedJWTToken
+from dmr.security.jwt.blocklist.models import BlocklistedJWToken
 
 _JTI = secrets.token_hex()
 _EXPIRES_AT = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
@@ -22,9 +22,9 @@ def user(faker: Faker) -> User:
 
 
 @pytest.fixture
-def token(user: User) -> BlocklistedJWTToken:
+def token(user: User) -> BlocklistedJWToken:
     """Create blocklisted token for tests."""
-    return BlocklistedJWTToken.objects.create(
+    return BlocklistedJWToken.objects.create(
         user=user,
         jti=_JTI,
         expires_at=_EXPIRES_AT,
@@ -32,7 +32,7 @@ def token(user: User) -> BlocklistedJWTToken:
 
 
 @pytest.mark.django_db
-def test_token_model_fields(token: BlocklistedJWTToken, user: User) -> None:
+def test_token_model_fields(token: BlocklistedJWToken, user: User) -> None:
     """Test model fields."""
     assert token.user == user
     assert token.jti == _JTI
@@ -40,6 +40,6 @@ def test_token_model_fields(token: BlocklistedJWTToken, user: User) -> None:
 
 
 @pytest.mark.django_db
-def test_token_str(token: BlocklistedJWTToken) -> None:
+def test_token_str(token: BlocklistedJWToken) -> None:
     """Test token str."""
     assert str(token) == f'Blocked JWT token for {token.user} {token.jti}'

@@ -75,9 +75,9 @@ By default we exempt all controllers from CSRF checks, unless:
 1. :attr:`~dmr.controller.Controller.csrf_exempt`
    is set to ``False`` for a specific controller
 2. Endpoints protected by
-   :class:`~dmr.security.django_session.DjangoSessionSyncAuth`
+   :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
    or
-   :class:`~dmr.security.django_session.DjangoSessionAsyncAuth`
+   :class:`~dmr.security.django_session.auth.DjangoSessionAsyncAuth`
    will require CSRF as well. Because using Django sessions
    without CSRF is not secure
 

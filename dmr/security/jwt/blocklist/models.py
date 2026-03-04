@@ -7,8 +7,6 @@ from django.db import models
 from django.db.models.expressions import Combinable
 from typing_extensions import override
 
-from dmr.security.blocklist.apps import BlocklistConfig
-
 _ForeignKey: TypeAlias = (
     'models.ForeignKey[str | AbstractBaseUser | Combinable, AbstractBaseUser ]'
 )
@@ -18,7 +16,7 @@ _DateTimeField: TypeAlias = (
 )
 
 
-class BlocklistedJWTToken(models.Model):
+class BlocklistedJWToken(models.Model):
     """Model for Blocklisted token."""
 
     user: _ForeignKey = models.ForeignKey(
@@ -40,7 +38,7 @@ class BlocklistedJWTToken(models.Model):
     )
 
     class Meta:
-        abstract = BlocklistConfig.name not in settings.INSTALLED_APPS
+        abstract = 'dmr.security.jwt.blocklist' not in settings.INSTALLED_APPS
 
     @override
     def __str__(self) -> str:

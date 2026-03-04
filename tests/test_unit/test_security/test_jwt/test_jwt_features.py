@@ -13,7 +13,7 @@ from freezegun.api import FrozenDateTimeFactory
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth, JWTToken
+from dmr.security.jwt import JWTAsyncAuth, JWToken, JWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -35,7 +35,7 @@ def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
     def factory(**kwargs: Any) -> str:
-        return JWTToken(
+        return JWToken(
             sub=str(user.pk),
             exp=kwargs.pop(
                 'exp',

@@ -1,58 +1,67 @@
-from typing import TYPE_CHECKING, ClassVar, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.security.blocklist.models import BlocklistedJWTToken
-from dmr.security.jwt.token import JWTToken
+from dmr.security.jwt.token import JWToken
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
 
+    from dmr.security.jwt.blocklist.models import BlocklistedJWToken
+
 
 class _JWTAuth(Protocol):
-    blocklist_model: ClassVar[type[BlocklistedJWTToken]]
+    def blocklist_model(self) -> type['BlocklistedJWToken']: ...
 
 
 class _JWTSyncAuth(_JWTAuth, Protocol):
     def check_auth(
         self,
         user: 'AbstractBaseUser',
-        token: JWTToken,
+        token: JWToken,
     ) -> None: ...
 
-    def get_user(self, token: JWTToken) -> 'AbstractBaseUser': ...
+    def get_user(self, token: JWToken) -> 'AbstractBaseUser': ...
 
 
 class _JWTAsyncAuth(_JWTAuth, Protocol):
     async def check_auth(
         self,
         user: 'AbstractBaseUser',
-        token: JWTToken,
+        token: JWToken,
     ) -> None: ...
 
-    async def get_user(self, token: JWTToken) -> 'AbstractBaseUser': ...
+    async def get_user(self, token: JWToken) -> 'AbstractBaseUser': ...
 
 
-class JWTTokenBlocklistSyncMixin:
+class _BaseBlocklistMixin:
+    def blocklist_model(self) -> type['BlocklistedJWToken']:
+        """Returns the model to be used."""
+        from dmr.security.jwt.blocklist.models import (  # noqa: PLC0415
+            BlocklistedJWToken,
+        )
+
+        return BlocklistedJWToken
+
+
+class JWTokenBlocklistSyncMixin(_BaseBlocklistMixin):
     """Sync mixin for working with tokens blocklist."""
-
-    blocklist_model: ClassVar[type[BlocklistedJWTToken]] = BlocklistedJWTToken
 
     def check_auth(
         self: _JWTSyncAuth,
         user: 'AbstractBaseUser',
-        token: JWTToken,
+        token: JWToken,
     ) -> None:
         """Check if the token is in the black list, if so raise the error."""
         super().check_auth(user, token)  # type: ignore[safe-super]
-        if self.blocklist_model.objects.filter(jti=token.jti).exists():
+        if self.blocklist_model().objects.filter(jti=token.jti).exists():
             raise NotAuthenticatedError
 
     def blocklist(
         self: _JWTSyncAuth,
-        token: JWTToken,
-    ) -> tuple[BlocklistedJWTToken, bool]:
+        token: JWToken,
+    ) -> tuple['BlocklistedJWToken', bool]:
         """Add token to the blocklist."""
-        return self.blocklist_model.objects.get_or_create(
+        return self.blocklist_model().objects.get_or_create(
             jti=token.jti,
             defaults={
                 'user': self.get_user(token),
@@ -61,28 +70,26 @@ class JWTTokenBlocklistSyncMixin:
         )
 
 
-class JWTTokenBlocklistAsyncMixin:
+class JWTokenBlocklistAsyncMixin(_BaseBlocklistMixin):
     """Async mixin for working with tokens blocklist."""
-
-    blocklist_model: ClassVar[type[BlocklistedJWTToken]] = BlocklistedJWTToken
 
     async def check_auth(
         self: _JWTAsyncAuth,
         user: 'AbstractBaseUser',
-        token: JWTToken,
+        token: JWToken,
     ) -> None:
         """Check if the token is in the black list, if so raise the error."""
         await super().check_auth(user, token)  # type: ignore[safe-super]
-        if await self.blocklist_model.objects.filter(jti=token.jti).aexists():
+        if await self.blocklist_model().objects.filter(jti=token.jti).aexists():
             raise NotAuthenticatedError
 
     async def blocklist(
         self: _JWTAsyncAuth,
-        token: JWTToken,
-    ) -> tuple[BlocklistedJWTToken, bool]:
+        token: JWToken,
+    ) -> tuple['BlocklistedJWToken', bool]:
         """Add token to the blocklist."""
         user = await self.get_user(token)
-        return await self.blocklist_model.objects.aget_or_create(
+        return await self.blocklist_model().objects.aget_or_create(
             jti=token.jti,
             defaults={
                 'user': user,
