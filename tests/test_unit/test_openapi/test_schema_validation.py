@@ -2,9 +2,18 @@ import re
 
 import pytest
 from django.urls import path
-from openapi_spec_validator.validation.exceptions import OpenAPIValidationError
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
+
+try:
+    from openapi_spec_validator.validation.exceptions import (
+        OpenAPIValidationError,
+    )
+except ImportError:  # pragma: no cover
+    pytest.skip(
+        reason='openapi_spec_validator is not installed',
+        allow_module_level=True,
+    )
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
