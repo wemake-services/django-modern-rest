@@ -75,6 +75,8 @@ class XmlParser(Parser):
         key: str,
         xml_value: Any,
     ) -> tuple[str, Any]:
+        if xml_value is None:
+            return key, ''
         return key, xml_value
 
 
