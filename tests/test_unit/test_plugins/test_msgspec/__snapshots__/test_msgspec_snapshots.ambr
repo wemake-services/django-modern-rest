@@ -163,7 +163,6 @@
         "jwt": {
           "type": "http",
           "description": "JWT token auth",
-          "name": "Authorization",
           "scheme": "Bearer",
           "bearerFormat": "JWT"
         }

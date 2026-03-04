@@ -229,6 +229,7 @@ def get_conditional_types(
     if (
         get_origin(model) is Annotated
         and model.__metadata__
+        # TODO: change logic, this can be in any place in `__metadata__`
         and isinstance(
             model.__metadata__[0],
             _ConditionalType,

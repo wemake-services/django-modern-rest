@@ -52,6 +52,7 @@ forbidden_modules =
   pydantic
   msgspec
   jwt
+  openapi_spec_validator
   # internal modules:
   dmr_pytest
   django_test_app
@@ -66,6 +67,8 @@ ignore_imports =
   # jwt auth:
   dmr.security.jwt -> jwt
   dmr.security.jwt.* -> jwt
+  # OpenAPI validation:
+  dmr.openapi.objects.openapi -> openapi_spec_validator
   # Optional json support from msgspec:
   dmr.settings -> msgspec
   dmr.internal.json -> msgspec

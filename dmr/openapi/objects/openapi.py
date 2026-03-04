@@ -10,6 +10,11 @@ from typing import (
     final,
 )
 
+try:
+    from openapi_spec_validator import validate as _validate_spec
+except ImportError:  # pragma: no cover
+    _validate_spec = None  # type: ignore[assignment]
+
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
 
@@ -43,17 +48,24 @@ class OpenAPI:
     info: 'Info'
     openapi: str = _OPENAPI_VERSION
     json_schema_dialect: str | None = None
-    servers: 'list[Server] | None' = None
+    servers: list['Server'] | None = None
     paths: 'Paths | None' = None
-    webhooks: 'dict[str, PathItem | Reference] | None' = None
+    webhooks: dict[str, 'PathItem | Reference'] | None = None
     components: 'Components | None' = None
-    security: 'list[SecurityRequirement] | None' = None
-    tags: 'list[Tag] | None' = None
+    security: list['SecurityRequirement'] | None = None
+    tags: list['Tag'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
 
     def convert(self) -> ConvertedSchema:
-        """Convert the object to OpenAPI schema dictionary."""
-        return convert(self)
+        """
+        Convert the object to OpenAPI schema dictionary.
+
+        Runs validation if ``'django-modern-rest[openapi]'`` is installed.
+        """
+        spec = convert(self)
+        if _validate_spec is not None:  # pragma: no cover
+            _validate_spec(spec)
+        return spec
 
 
 def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:

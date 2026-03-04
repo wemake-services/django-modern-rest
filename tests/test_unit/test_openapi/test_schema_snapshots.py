@@ -110,3 +110,30 @@ def test_file_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+class _BodyAndFileController(
+    Controller[PydanticSerializer],
+    Body[_UserModel],
+    FileMetadata[_SeveralFiles],
+):
+    parsers = (MultiPartParser(),)
+
+    async def post(self) -> list[int]:
+        raise NotImplementedError
+
+
+def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for file controller."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    [path('/file', _BodyAndFileController.as_view())],
+                    prefix='/',
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )

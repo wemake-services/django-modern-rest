@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.builder import OpenAPIBuilder
 from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.objects import OpenAPI
 
 if TYPE_CHECKING:
-    from dmr.openapi.objects import OpenAPI
     from dmr.routing import Router
 
 
@@ -13,7 +13,7 @@ def build_schema(
     router: 'Router',
     *,
     config: OpenAPIConfig | None = None,
-) -> 'OpenAPI':
+) -> OpenAPI:
     """
     Build OpenAPI schema.
 
