@@ -15,7 +15,7 @@ from inline_snapshot import snapshot
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic.serializer import PydanticSerializer
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth, get_jwt
 from dmr.security.jwt.blocklist.auth import (
     JWTokenBlocklistAsyncMixin,
     JWTokenBlocklistSyncMixin,
@@ -52,7 +52,7 @@ def user(faker: Faker) -> User:
     )
 
 
-_TokenBuilder: TypeAlias = Callable[..., str]
+_TokenBuilder: TypeAlias = Callable[[Unpack[_JWTokenKwargs]], str]
 
 
 @pytest.fixture
@@ -78,6 +78,7 @@ class MyJWTSyncAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth):
 class _BlocklistSyncController(Controller[PydanticSerializer]):
     @modify(auth=[MyJWTSyncAuth()])
     def get(self) -> str:
+        assert isinstance(get_jwt(self.request), JWToken)
         return 'authed'
 
 
