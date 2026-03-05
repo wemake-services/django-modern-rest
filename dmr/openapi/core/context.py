@@ -1,9 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from dmr.openapi.builders import (
-    OperationIDBuilder,
-)
+from dmr.openapi.core.builder import OperationIDBuilder
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
     OperationIdRegistry,

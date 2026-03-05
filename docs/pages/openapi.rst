@@ -128,6 +128,9 @@ Core
 .. autoclass:: dmr.openapi.core.builder.OpenAPIBuilder
    :members:
 
+.. autoclass:: dmr.openapi.core.builder.OperationIDBuilder
+   :members:
+
 .. autoclass:: dmr.openapi.core.context.OpenAPIContext
    :members:
 
@@ -138,14 +141,4 @@ Core
    :members:
 
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
-   :members:
-
-
-Builders
---------
-
-.. autoclass:: dmr.openapi.builders.OperationBuilder
-   :members:
-
-.. autoclass:: dmr.openapi.builders.OperationIDBuilder
    :members:

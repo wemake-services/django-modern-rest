@@ -23,7 +23,7 @@ from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import PathItem
+from dmr.openapi.objects import PathItem, Server
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -338,6 +338,9 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         blueprints: A sequence of :class:`Blueprint` types
             that should be composed together.
         blueprint: Currently active blueprint instance if any.
+        summary: A short summary of what the this path item does.
+        description: A verbose explanation of the path item behavior.
+        servers: An alternative servers array to service this path item.
 
     """
 
@@ -348,6 +351,11 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     )
     api_endpoints: ClassVar[Mapping[str, Endpoint]]
     csrf_exempt: ClassVar[bool] = True
+
+    # OpenAPI:
+    summary: ClassVar[str | None] = None
+    description: ClassVar[str | None] = None
+    servers: ClassVar[list[Server] | None] = None
 
     # Public instance API:
     blueprint: Blueprint[_SerializerT_co] | None
@@ -590,9 +598,14 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         """Generate OpenAPI spec for path items."""
         operations: dict[str, Any] = {}
         for method, endpoint in cls.api_endpoints.items():
-            operation = endpoint.operation_builder(context, path)
+            operation = endpoint.get_schema(cls.serializer, context, path)
             operations[method.lower()] = operation
-        return PathItem(**operations)
+        return PathItem(
+            **operations,
+            summary=cls.summary,
+            description=cls.description,
+            servers=cls.servers,
+        )
 
     @classproperty
     @override

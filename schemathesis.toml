@@ -1,4 +1,3 @@
-# TODO: We extend the rules as the schema generation results improve.
 [generation]
 # Limit the number of generated examples per API operation to keep tests fast.
 max-examples = 100
@@ -8,5 +7,10 @@ max-examples = 100
 # We will expand the checks as we implement the openapi schemageneration.
 enabled = true
 
-# Verifies the API rejects requests when required headers are missing.
-missing_required_header.enabled = false
+[warnings]
+# Fail on any warning:
+fail-on = true
+
+[auth.basic]
+username = 'test'
+password = 'pass'

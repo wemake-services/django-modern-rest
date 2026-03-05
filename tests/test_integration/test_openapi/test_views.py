@@ -4,7 +4,6 @@ from typing import Final
 import pytest
 from django.urls import reverse
 
-from dmr.openapi.objects.openapi import _OPENAPI_VERSION
 from dmr.test import DMRClient
 
 _ENDPOINTS: Final = (
@@ -53,4 +52,4 @@ def test_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
     response = dmr_client.get(reverse('openapi'))
 
-    assert response.json()['openapi'] == _OPENAPI_VERSION
+    assert response.json()['openapi'] == '3.1.0'
