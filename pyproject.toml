@@ -108,6 +108,7 @@ sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
 sphinx-design = "^0.7"
 sphinxcontrib-mermaid = "^2.0"
+sphinx-llms-txt = "^0.7"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
 # TODO: remove when `sphinx-tabs` is fixed:

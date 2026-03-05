@@ -69,6 +69,7 @@ extensions = [
     'sphinx_tabs.tabs',
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
+    'sphinx_llms_txt',
     # custom extensions
     'docs.tools.sphinx_ext',
 ]

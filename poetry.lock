@@ -745,14 +745,14 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [[package]]
 name = "faker"
-version = "40.5.1"
+version = "40.8.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "faker-40.5.1-py3-none-any.whl", hash = "sha256:c69640c1e13bad49b4bcebcbf1b52f9f1a872b6ea186c248ada34d798f1661bf"},
-    {file = "faker-40.5.1.tar.gz", hash = "sha256:70222361cd82aa10cb86066d1a4e8f47f2bcdc919615c412045a69c4e6da0cd3"},
+    {file = "faker-40.8.0-py3-none-any.whl", hash = "sha256:eb21bdba18f7a8375382eb94fb436fce07046893dc94cb20817d28deb0c3d579"},
+    {file = "faker-40.8.0.tar.gz", hash = "sha256:936a3c9be6c004433f20aa4d99095df5dec82b8c7ad07459756041f8c1728875"},
 ]
 
 [package.dependencies]
@@ -2990,6 +2990,21 @@ files = [
 sphinx = "*"
 
 [[package]]
+name = "sphinx-llms-txt"
+version = "0.7.1"
+description = "llms-full.txt generator for Sphinx"
+optional = false
+python-versions = "*"
+groups = ["docs"]
+files = [
+    {file = "sphinx_llms_txt-0.7.1-py3-none-any.whl", hash = "sha256:8f1cfcfe5897f5be118792f33f73eeb04cbbf66fc60c4c15982ec59252522263"},
+    {file = "sphinx_llms_txt-0.7.1.tar.gz", hash = "sha256:b5cefec19d3fd56670aa4a28917d17d32b22c61a9feadbab8564ad11e932f5c0"},
+]
+
+[package.dependencies]
+sphinx = "*"
+
+[[package]]
 name = "sphinx-tabs"
 version = "3.5.0"
 description = "Tabbed views for Sphinx"
@@ -3386,4 +3401,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "714774163ffed424d0b6877319b195f9d5a0ea7182e4b122a0b6ba2b608b9f6d"
+content-hash = "8822ec905741618b8a46488879e81cb5bd037900f48714c59fdc452df63f9d0c"
