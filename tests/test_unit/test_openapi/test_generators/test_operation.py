@@ -3,7 +3,7 @@ from typing import Final
 import pytest
 
 from dmr import Controller, modify
-from dmr.openapi.builders import OperationIDBuilder
+from dmr.openapi.core.builder import OperationIDBuilder
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.plugins.pydantic import PydanticSerializer

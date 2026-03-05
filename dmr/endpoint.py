@@ -23,10 +23,11 @@ from dmr.exceptions import (
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
-from dmr.openapi.builders import OperationBuilder
+from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import (
     Callback,
     ExternalDocumentation,
+    Operation,
     Reference,
     Server,
 )
@@ -62,7 +63,6 @@ class Endpoint:  # noqa: WPS214
         '_method',
         'is_async',
         'metadata',
-        'operation_builder',
         'request_negotiator',
         'response_negotiator',
         'response_validator',
@@ -86,7 +86,6 @@ class Endpoint:  # noqa: WPS214
     response_validator_cls: ClassVar[type[ResponseValidator]] = (
         ResponseValidator
     )
-    operation_builder_cls: ClassVar[type[OperationBuilder]] = OperationBuilder
 
     def __init__(
         self,
@@ -152,12 +151,6 @@ class Endpoint:  # noqa: WPS214
         )
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
-
-        # Also, we build openapi `Operation` object:
-        self.operation_builder = self.operation_builder_cls(
-            metadata,
-            controller_cls.serializer,
-        )
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -266,6 +259,43 @@ class Endpoint:  # noqa: WPS214
         except Exception:
             # And the last option is to handle error globally:
             return self._global_error_handler(controller, exc)
+
+    def get_schema(
+        self,
+        serializer: type[BaseSerializer],
+        context: 'OpenAPIContext',
+        path: str,
+    ) -> Operation:
+        """Builde an OpenAPI Operation from an endpoint."""
+        operation_id = context.generators.operation_id(
+            self.metadata,
+            path,
+            serializer,
+        )
+        request_body, params_list = context.generators.component_parsers(
+            self.metadata,
+            serializer,
+        )
+        responses = context.generators.response(self.metadata, serializer)
+        security = context.generators.security_scheme(
+            self.metadata.auth,
+            serializer,
+        )
+
+        return Operation(
+            tags=self.metadata.tags,
+            summary=self.metadata.summary,
+            description=self.metadata.description,
+            deprecated=self.metadata.deprecated,
+            security=security,
+            external_docs=self.metadata.external_docs,
+            servers=self.metadata.servers,
+            callbacks=self.metadata.callbacks,
+            operation_id=operation_id,
+            request_body=request_body,
+            responses=responses,
+            parameters=params_list,
+        )
 
     def _async_endpoint(
         self,
@@ -617,8 +647,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             a request that may be initiated by the API provider and the
             expected responses.
         servers: An alternative servers array to service this operation.
-            If a servers array is specified at the Path Item Object or
-            OpenAPI Object level, it will be overridden by this value.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -871,8 +899,6 @@ def modify(  # noqa: WPS211
             a request that may be initiated by the API provider and the
             expected responses.
         servers: An alternative servers array to service this operation.
-            If a servers array is specified at the Path Item Object or
-            OpenAPI Object level, it will be overridden by this value.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
