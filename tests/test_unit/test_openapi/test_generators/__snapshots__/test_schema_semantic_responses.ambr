@@ -1,347 +1,39 @@
 # serializer version: 1
-# name: test_no_semantic_responses_modify
-  dict({
-    'components': dict({
-      'schemas': dict({
-        'ErrorDetail': dict({
-          'description': 'Base schema for error details description.',
-          'properties': dict({
-            'loc': dict({
-              'items': dict({
-                'anyOf': list([
-                  dict({
-                    'type': 'integer',
-                  }),
-                  dict({
-                    'type': 'string',
-                  }),
-                ]),
-              }),
-              'title': 'Loc',
-              'type': 'array',
-            }),
-            'msg': dict({
-              'title': 'Msg',
-              'type': 'string',
-            }),
-            'type': dict({
-              'title': 'Type',
-              'type': 'string',
-            }),
-          }),
-          'required': list([
-            'msg',
-          ]),
-          'title': 'ErrorDetail',
-          'type': 'object',
-        }),
-        'ErrorModel': dict({
-          'description': '''
-            Default error response schema.
-
-            Can be customized.
-            See :ref:`customizing-error-messages` for more details.
-          ''',
-          'properties': dict({
-            'detail': dict({
-              'items': dict({
-                '$ref': '#/components/schemas/ErrorDetail',
-              }),
-              'title': 'Detail',
-              'type': 'array',
-            }),
-          }),
-          'required': list([
-            'detail',
-          ]),
-          'title': 'ErrorModel',
-          'type': 'object',
-        }),
-        '_MyPydanticModel': dict({
-          'properties': dict({
-            'email': dict({
-              'title': 'Email',
-              'type': 'string',
-            }),
-          }),
-          'required': list([
-            'email',
-          ]),
-          'title': '_MyPydanticModel',
-          'type': 'object',
-        }),
-      }),
-      'securitySchemes': dict({
-      }),
-    }),
-    'info': dict({
-      'title': 'Django Modern Rest',
-      'version': '0.1.0',
-    }),
-    'openapi': '3.1.0',
-    'paths': dict({
-      '/api/items': dict({
-        'post': dict({
-          'deprecated': False,
-          'operationId': 'postApiItems',
-          'responses': dict({
-            '201': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/_MyPydanticModel',
-                  }),
-                }),
-              }),
-              'description': 'Created',
-            }),
-            '406': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/ErrorModel',
-                  }),
-                }),
-              }),
-              'description': 'Raised when provided `Accept` header cannot be satisfied',
-            }),
-            '422': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/ErrorModel',
-                  }),
-                }),
-              }),
-              'description': 'Raised when returned response does not match the response schema',
-            }),
-          }),
-        }),
-      }),
-    }),
-  })
-# ---
-# name: test_no_semantic_responses_validate
-  dict({
-    'components': dict({
-      'schemas': dict({
-        'ErrorDetail': dict({
-          'description': 'Base schema for error details description.',
-          'properties': dict({
-            'loc': dict({
-              'items': dict({
-                'anyOf': list([
-                  dict({
-                    'type': 'integer',
-                  }),
-                  dict({
-                    'type': 'string',
-                  }),
-                ]),
-              }),
-              'title': 'Loc',
-              'type': 'array',
-            }),
-            'msg': dict({
-              'title': 'Msg',
-              'type': 'string',
-            }),
-            'type': dict({
-              'title': 'Type',
-              'type': 'string',
-            }),
-          }),
-          'required': list([
-            'msg',
-          ]),
-          'title': 'ErrorDetail',
-          'type': 'object',
-        }),
-        'ErrorModel': dict({
-          'description': '''
-            Default error response schema.
-
-            Can be customized.
-            See :ref:`customizing-error-messages` for more details.
-          ''',
-          'properties': dict({
-            'detail': dict({
-              'items': dict({
-                '$ref': '#/components/schemas/ErrorDetail',
-              }),
-              'title': 'Detail',
-              'type': 'array',
-            }),
-          }),
-          'required': list([
-            'detail',
-          ]),
-          'title': 'ErrorModel',
-          'type': 'object',
-        }),
-      }),
-      'securitySchemes': dict({
-      }),
-    }),
-    'info': dict({
-      'title': 'Django Modern Rest',
-      'version': '0.1.0',
-    }),
-    'openapi': '3.1.0',
-    'paths': dict({
-      '/api/items': dict({
-        'get': dict({
-          'deprecated': False,
-          'operationId': 'getApiItems',
-          'responses': dict({
-            '200': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    'items': dict({
-                      'type': 'integer',
-                    }),
-                    'type': 'array',
-                  }),
-                }),
-              }),
-              'description': 'OK',
-            }),
-            '406': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/ErrorModel',
-                  }),
-                }),
-              }),
-              'description': 'Raised when provided `Accept` header cannot be satisfied',
-            }),
-            '422': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/ErrorModel',
-                  }),
-                }),
-              }),
-              'description': 'Raised when returned response does not match the response schema',
-            }),
-          }),
-        }),
-      }),
-    }),
-  })
-# ---
 # name: test_openapi_spec_no_semantic_responses
-  dict({
-    'components': dict({
-      'schemas': dict({
-        'ErrorDetail': dict({
-          'description': 'Base schema for error details description.',
-          'properties': dict({
-            'loc': dict({
-              'items': dict({
-                'anyOf': list([
-                  dict({
-                    'type': 'integer',
-                  }),
-                  dict({
-                    'type': 'string',
-                  }),
-                ]),
-              }),
-              'title': 'Loc',
-              'type': 'array',
-            }),
-            'msg': dict({
-              'title': 'Msg',
-              'type': 'string',
-            }),
-            'type': dict({
-              'title': 'Type',
-              'type': 'string',
-            }),
-          }),
-          'required': list([
-            'msg',
-          ]),
-          'title': 'ErrorDetail',
-          'type': 'object',
-        }),
-        'ErrorModel': dict({
-          'description': '''
-            Default error response schema.
-
-            Can be customized.
-            See :ref:`customizing-error-messages` for more details.
-          ''',
-          'properties': dict({
-            'detail': dict({
-              'items': dict({
-                '$ref': '#/components/schemas/ErrorDetail',
-              }),
-              'title': 'Detail',
-              'type': 'array',
-            }),
-          }),
-          'required': list([
-            'detail',
-          ]),
-          'title': 'ErrorModel',
-          'type': 'object',
-        }),
-      }),
-      'securitySchemes': dict({
-      }),
-    }),
-    'info': dict({
-      'title': 'Django Modern Rest',
-      'version': '0.1.0',
-    }),
-    'openapi': '3.1.0',
-    'paths': dict({
-      '/api/items': dict({
-        'get': dict({
-          'deprecated': False,
-          'operationId': 'getApiItems',
-          'responses': dict({
-            '200': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    'items': dict({
-                      'type': 'integer',
-                    }),
-                    'type': 'array',
-                  }),
-                }),
-              }),
-              'description': 'OK',
-            }),
-            '406': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/ErrorModel',
-                  }),
-                }),
-              }),
-              'description': 'Raised when provided `Accept` header cannot be satisfied',
-            }),
-            '422': dict({
-              'content': dict({
-                'application/json': dict({
-                  'schema': dict({
-                    '$ref': '#/components/schemas/ErrorModel',
-                  }),
-                }),
-              }),
-              'description': 'Raised when returned response does not match the response schema',
-            }),
-          }),
-        }),
-      }),
-    }),
-  })
+  '''
+  {
+    "info": {
+      "title": "Django Modern Rest",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/items": {
+        "get": {
+          "operationId": "getApiItems",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {},
+      "securitySchemes": {}
+    }
+  }
+  '''
 # ---
