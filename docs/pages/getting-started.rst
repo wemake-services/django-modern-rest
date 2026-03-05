@@ -61,6 +61,17 @@ Extras for different features:
   unless you want to serve static files for the OpenAPI.
 
 
+LLMs support
+------------
+
+Are you using AI for the assistant coding?
+We got you covered, use this files for the context to make sure that the LLM
+knows our framework:
+
+- https://django-modern-rest.readthedocs.io/llms.txt
+- https://django-modern-rest.readthedocs.io/llms-full.txt
+
+
 Showcase
 --------
 
