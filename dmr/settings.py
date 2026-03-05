@@ -53,6 +53,7 @@ class Settings(enum.StrEnum):
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     responses = 'responses'
+    semantic_responses = 'semantic_responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
     django_treat_as_post = 'django_treat_as_post'
@@ -102,6 +103,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
     Settings.responses: [],  # global responses, for response validation
+    Settings.semantic_responses: True,
     Settings.global_error_handler: ('dmr.errors.global_error_handler'),
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),

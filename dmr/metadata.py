@@ -316,6 +316,10 @@ class EndpointMetadata:
         to also contain ``checks`` field and override this method
         to also include response specs from this field.
         """
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
+        if not resolve_setting(Settings.semantic_responses):
+            return []
         return [
             *[spec[0] for spec in self.component_parsers],
             *[type(parser) for parser in self.parsers.values()],

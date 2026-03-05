@@ -167,6 +167,28 @@ Response handling
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.
 
+.. data:: dmr.settings.Settings.semantic_responses
+
+  Default: ``True``
+
+  When ``True``, parsers, renderers, and authentication classes
+  automatically inject their semantic response specs
+  (e.g. ``422 Unprocessable Entity``, ``406 Not Acceptable``)
+  into every endpoint's metadata.
+  These responses are then visible in the generated OpenAPI spec.
+
+  Set to ``False`` to disable this auto-injection globally.
+  User-defined responses (via ``@modify``, ``@validate``,
+  controller ``responses``, or ``Settings.responses``)
+  are not affected by this flag.
+  Runtime response validation still works as configured
+  by ``Settings.validate_responses``.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {Settings.semantic_responses: False}
+
 
 Error handling
 --------------
