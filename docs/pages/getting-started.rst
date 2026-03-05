@@ -69,7 +69,9 @@ We got you covered, use this files for the context to make sure that the LLM
 knows our framework:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
+  for indexes with links to different pages and topics
 - https://django-modern-rest.readthedocs.io/llms-full.txt
+  for complete docs
 
 
 Showcase
