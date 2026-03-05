@@ -7,12 +7,9 @@ from dmr.openapi.collector import controller_mapping_collector
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.serializer import BaseSerializer
-
-if TYPE_CHECKING:
-    from dmr.openapi.core.context import OpenAPIContext
     from dmr.openapi.objects import OpenAPI, Paths
     from dmr.routing import Router
+    from dmr.serializer import BaseSerializer
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
