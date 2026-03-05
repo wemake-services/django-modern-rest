@@ -142,4 +142,3 @@ Core
 
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
    :members:
-
