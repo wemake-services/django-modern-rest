@@ -32,6 +32,8 @@ class _UserController(
     Controller[MsgspecSerializer],
     Body[dict[str, int]],
 ):
+    summary = 'Handles users'
+
     def post(self) -> _UserModel:
         raise NotImplementedError
 
