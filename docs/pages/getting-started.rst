@@ -73,6 +73,10 @@ knows our framework:
 - https://django-modern-rest.readthedocs.io/llms-full.txt
   for complete docs
 
+We also support
+`Context7 <https://context7.com/wemake-services/django-modern-rest>`_
+for up-to-date docs for the LLMs.
+
 
 Showcase
 --------
