@@ -21,7 +21,7 @@ from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
-from dmr.sse.metadata import SSEContext, SSEData, SSEResponse
+from dmr.sse.metadata import SSEContext, SSEResponse
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 
@@ -110,14 +110,16 @@ def sse(  # noqa: WPS211, WPS234
 
         >>> from dmr.plugins.pydantic import PydanticSerializer
         >>> from dmr.renderers import Renderer
-        >>> from dmr.sse import SSEContext, SSEData, SSEResponse, sse
+        >>> from dmr.sse import SSEContext, SSEResponse, sse, SSEvent
 
         >>> async def clock_events(
         ...     serializer: type[PydanticSerializer],
         ...     renderer: Renderer,
-        ... ) -> AsyncIterator[SSEData]:
+        ... ) -> AsyncIterator[SSEvent]:
         ...     while True:
-        ...         yield dt.datetime.now(dt.timezone.utc).timestamp()
+        ...         yield SSEvent(
+        ...             dt.datetime.now(dt.timezone.utc).timestamp(),
+        ...         )
         ...         await asyncio.sleep(1)
 
     .. danger::
@@ -204,7 +206,7 @@ def sse(  # noqa: WPS211, WPS234
 
     if response_spec is None:
         response_spec = ResponseSpec(
-            SSEData,
+            SSEvent,  # TODO: rework schema generation
             status_code=HTTPStatus.OK,
             headers={
                 'Cache-Control': HeaderSpec(),
@@ -323,6 +325,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         ) -> SSEStreamingResponse:
             streaming_response = sse_streaming_response_cls(
                 response.streaming_content,
+                event_model=response.event_model,
                 serializer=serializer,
                 regular_renderer=regular_renderer,
                 sse_renderer=sse_renderer,

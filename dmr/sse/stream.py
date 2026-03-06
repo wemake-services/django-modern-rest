@@ -18,13 +18,13 @@ from dmr.internal.io import aiter_to_iter
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer, DeserializableResponse
 from dmr.sse.exceptions import SSECloseConnectionError
-from dmr.sse.metadata import SSEData, SSEvent
+from dmr.sse.metadata import SSEvent
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.validation import validate_event_type
 
 _EventPipeline: TypeAlias = Callable[
-    ['SSEData', Any, type[BaseSerializer]],
-    'SSEData',
+    [SSEvent, Any, type[BaseSerializer]],
+    SSEvent,
 ]
 
 
@@ -47,7 +47,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
 
     def __init__(  # noqa: WPS211
         self,
-        streaming_content: AsyncIterator[SSEData],
+        streaming_content: AsyncIterator[SSEvent],
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
         sse_renderer: SSERenderer,
@@ -139,7 +139,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         self,
         event: Any,
         exception: Exception,
-    ) -> SSEData:
+    ) -> SSEvent:
         """
         Handles errors that can happen while sending events.
 
@@ -176,7 +176,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             except SSECloseConnectionError:
                 self.close()
 
-    def _apply_event_pipeline(self, event: SSEData) -> SSEData:
+    def _apply_event_pipeline(self, event: SSEvent) -> SSEvent:
         try:
             for func in self._pipeline:
                 event = func(
