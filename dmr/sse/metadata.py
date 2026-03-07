@@ -1,23 +1,29 @@
 import dataclasses
-from collections.abc import (
-    AsyncIterator,
-    Mapping,
-)
+from collections.abc import AsyncIterator, Mapping
+from functools import cached_property
+from types import AsyncGeneratorType
 from typing import (
+    Any,
     Generic,
+    Literal,
     NamedTuple,
-    TypeAlias,
     final,
+    get_args,
+    overload,
 )
 
 from typing_extensions import TypeVar
 
 from dmr.cookies import NewCookie
+from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.types import Empty, EmptyObj, parse_return_annotation
+
+_DataT = TypeVar('_DataT')
 
 
 @final
-@dataclasses.dataclass(slots=True, frozen=True)
-class SSEvent:
+@dataclasses.dataclass(slots=True, frozen=True, init=False)
+class SSEvent(Generic[_DataT]):
     """
     Server sent event.
 
@@ -27,24 +33,69 @@ class SSEvent:
         id: Unique event's identification.
         retry: The reconnection time.
         comment: Comment about the event.
+        serialize: Custom attribute to indicate whether or not
+            to serialize the passed value or to return the value as is.
+            Serializes by default. When *serialize* is ``False``,
+            *data* can only be ``bytes``.
 
     See also:
         https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
 
     """
 
-    # NOTE: `str | bytes` is not supported by `msgspec`,
-    # but, since it is very common to return json
-    # which has `bytes` by default in our serializers - we use `bytes` here.
-    data: bytes | int  # noqa: WPS110
+    data: _DataT  # noqa: WPS110
     event: str | None = dataclasses.field(default=None, kw_only=True)
     id: int | str | None = dataclasses.field(default=None, kw_only=True)
     retry: int | None = dataclasses.field(default=None, kw_only=True)
     comment: str | None = dataclasses.field(default=None, kw_only=True)
+    serialize: bool = dataclasses.field(default=True, kw_only=True)
 
+    @overload  # type: ignore[no-overload-impl]
+    def __init__(
+        self: 'SSEvent[bytes]',
+        data: bytes,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
 
-SSEData: TypeAlias = int | bytes | SSEvent
-"""Types that we allow to yield from async events producer iterator."""
+    @overload
+    def __init__(
+        self,
+        data: _DataT,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: Literal[True] = True,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        data: _DataT,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None:
+        self.data = data
+        self.event = event
+        self.id = id
+        self.retry = retry
+        self.comment = comment
+        self.serialize = serialize
+
+        if not self.serialize and not isinstance(self.data, bytes):
+            raise ValueError(
+                f'data must be an instance of "bytes", not {type(self.data)}, '
+                'when serialize=False',
+            )
 
 
 @final
@@ -63,11 +114,58 @@ class SSEResponse:
     Attributes:
         streaming_content: Async iterator of server sent events.
         headers: Headers to be set on the response object.
+        cookies: Cookies to be set on the response object.
+
     """
 
-    streaming_content: AsyncIterator[SSEData]
+    streaming_content: AsyncIterator[SSEvent[Any]]
     headers: Mapping[str, str] | None = None
     cookies: Mapping[str, NewCookie] | None = None
+    _event_model: Any | Empty = EmptyObj  # `None` can be a valid model
+
+    @cached_property
+    def event_model(self) -> Any:
+        if self._event_model is EmptyObj:
+            inferred_model = self._infer_model()
+            if inferred_model is EmptyObj:
+                raise UnsolvableAnnotationsError(
+                    f'Cannot resolve event model for {self.streaming_content}, '
+                    'pass `event_model=` parameter directly for validation',
+                )
+            return inferred_model
+        return self._event_model
+
+    def _infer_model(self) -> Any | Empty:
+        return_annotation = self._infer_return_annotaiton()
+        if return_annotation is EmptyObj:
+            return return_annotation
+        # We expect return annotation to be: `AsyncIterator[SSEvent[Model]]`.
+        # We need `SSEvent[Model]` from it.
+        try:
+            return get_args(return_annotation)[0]
+        except Exception:
+            return EmptyObj
+
+    def _infer_return_annotaiton(self) -> Any | Empty:
+        # Is it `async def(): yield`?
+        if isinstance(self.streaming_content, AsyncGeneratorType):
+            try:
+                return parse_return_annotation(
+                    self.streaming_content.ag_frame.f_globals[
+                        self.streaming_content.__qualname__
+                    ],
+                )
+            except Exception:
+                return EmptyObj
+
+        # Is it an instance with `__aiter__`?
+        method = getattr(self.streaming_content, '__aiter__', None)
+        if method is None:
+            return EmptyObj
+        try:
+            return parse_return_annotation(method)
+        except Exception:
+            return EmptyObj
 
 
 _PathT = TypeVar('_PathT', default=None)

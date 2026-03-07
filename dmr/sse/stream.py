@@ -13,18 +13,19 @@ from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
 
+from dmr.errors import ErrorModel
 from dmr.exceptions import ValidationError
 from dmr.internal.io import aiter_to_iter
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer, DeserializableResponse
 from dmr.sse.exceptions import SSECloseConnectionError
-from dmr.sse.metadata import SSEData, SSEvent
+from dmr.sse.metadata import SSEvent
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.validation import validate_event_type
 
 _EventPipeline: TypeAlias = Callable[
-    ['SSEData', Any, type[BaseSerializer]],
-    'SSEData',
+    [SSEvent[Any], Any, type[BaseSerializer]],
+    SSEvent[Any],
 ]
 
 
@@ -47,11 +48,11 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
 
     def __init__(  # noqa: WPS211
         self,
-        streaming_content: AsyncIterator[SSEData],
+        streaming_content: AsyncIterator[SSEvent[Any]],
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
         sse_renderer: SSERenderer,
-        event_schema: Any,
+        event_model: Any,
         *,
         headers: Mapping[str, str] | None = None,
         validate_events: bool = True,
@@ -64,10 +65,10 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             serializer: Serializer type to handle event's data.
             regular_renderer: Render python objects to text format.
             sse_renderer: Render events to bytes according to the SSE protocol.
-            event_schema: Schema for all possible produced events.
+            event_model: Validation model for all possible produced events.
             headers: Headers to be set on the response.
             validate_events: Should all produced events be validated
-                against *event_schema*.
+                against *event_model*.
 
         """
         headers = {} if headers is None else dict(headers)
@@ -89,7 +90,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         self.serializer = serializer
         self.regular_renderer = regular_renderer
         self.sse_renderer = sse_renderer
-        self.event_schema = event_schema
+        self.event_model = event_model
         if validate_events:
             self._pipeline = self.validation_pipeline
         else:
@@ -98,7 +99,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
     @override
     def deserializable_content(self) -> Any:
         """Empty body."""
-        return SSEvent(b'')
+        return SSEvent(b'', serialize=False)
 
     @override
     def __iter__(self) -> Iterator[bytes]:
@@ -139,7 +140,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         self,
         event: Any,
         exception: Exception,
-    ) -> SSEData:
+    ) -> SSEvent[ErrorModel]:
         """
         Handles errors that can happen while sending events.
 
@@ -147,13 +148,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         By default does nothing and just reraises the exception.
         """
         if isinstance(exception, ValidationError):
-            return SSEvent(
-                self.serializer.serialize(
-                    exception.payload,
-                    renderer=self.regular_renderer,
-                ),
-                event='error',
-            )
+            return SSEvent(ErrorModel(detail=exception.payload), event='error')
         raise  # noqa: PLE0704
 
     async def _events_pipeline(self) -> AsyncIterator[bytes]:
@@ -176,12 +171,13 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             except SSECloseConnectionError:
                 self.close()
 
-    def _apply_event_pipeline(self, event: SSEData) -> SSEData:
+    def _apply_event_pipeline(self, event: SSEvent[Any]) -> SSEvent[Any]:
         try:
+            # TODO: validate event_type to be in the list of allowed ones
             for func in self._pipeline:
                 event = func(
                     event,
-                    self.event_schema,
+                    self.event_model,
                     self.serializer,
                 )
         except Exception as exc:

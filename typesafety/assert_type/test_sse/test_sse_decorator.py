@@ -9,14 +9,14 @@ from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
-from dmr.sse import SSEContext, SSEData, SSEResponse, sse
+from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
 async def _valid_events(
     serializer: type[BaseSerializer],
     renderer: Renderer,
-) -> AsyncIterator[SSEData]:
-    yield b'valid event'
+) -> AsyncIterator[SSEvent[bytes]]:
+    yield SSEvent(b'valid event', serialize=False)
 
 
 class _PathModel(TypedDict):
@@ -55,13 +55,6 @@ async def _sse_valid(
     assert_type(context.parsed_headers, _HeaderModel)
     assert_type(context.parsed_cookies, dict[str, str])
     return SSEResponse(_valid_events(PydanticSerializer, renderer))
-
-
-async def _empty_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
-    yield {}  # type: ignore[misc]
 
 
 @sse(  # type: ignore[arg-type]
