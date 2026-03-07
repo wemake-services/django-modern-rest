@@ -3,7 +3,6 @@ from collections.abc import AsyncIterator, Mapping
 from functools import cached_property
 from types import AsyncGeneratorType
 from typing import (
-    TYPE_CHECKING,
     Any,
     Generic,
     Literal,
@@ -23,7 +22,7 @@ _DataT = TypeVar('_DataT')
 
 
 @final
-@dataclasses.dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True, init=False)
 class SSEvent(Generic[_DataT]):
     """
     Server sent event.
@@ -51,34 +50,47 @@ class SSEvent(Generic[_DataT]):
     comment: str | None = dataclasses.field(default=None, kw_only=True)
     serialize: bool = dataclasses.field(default=True, kw_only=True)
 
-    if TYPE_CHECKING:
+    @overload  # type: ignore[no-overload-impl]
+    def __init__(
+        self: 'SSEvent[bytes]',
+        data: bytes,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
 
-        @overload  # type: ignore[no-overload-impl]
-        def __init__(
-            self: 'SSEvent[bytes]',
-            data: bytes,
-            *,
-            event: str | None = None,
-            id: int | str | None = None,
-            retry: int | None = None,
-            comment: str | None = None,
-            serialize: Literal[False],
-        ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        data: _DataT,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: Literal[True] = True,
+    ) -> None: ...
 
-        @overload
-        def __init__(
-            self,
-            data: _DataT,
-            *,
-            event: str | None = None,
-            id: int | str | None = None,
-            retry: int | None = None,
-            comment: str | None = None,
-            serialize: bool = True,
-        ) -> None: ...
+    def __init__(
+        self,
+        data: _DataT,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None:
+        self.data = data
+        self.event = event
+        self.id = id
+        self.retry = retry
+        self.comment = comment
+        self.serialize = serialize
 
-    def __post_init__(self) -> None:
-        """Validates that serialize and data are correct."""
         if not self.serialize and not isinstance(self.data, bytes):
             raise ValueError(
                 f'data must be an instance of "bytes", not {type(self.data)}, '
