@@ -21,7 +21,7 @@ from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
-from dmr.sse.metadata import SSEContext, SSEResponse
+from dmr.sse.metadata import SSEContext, SSEResponse, SSEvent
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 
@@ -202,7 +202,7 @@ def sse(  # noqa: WPS211, WPS234
         validate_events = validate_responses
 
     regular_renderer = regular_renderer or default_renderer
-    sse_renderer = sse_renderer or SSERenderer()
+    sse_renderer = sse_renderer or SSERenderer(serializer, regular_renderer)
 
     if response_spec is None:
         response_spec = ResponseSpec(
@@ -329,7 +329,6 @@ def _build_controller(  # noqa: WPS211, WPS234
                 serializer=serializer,
                 regular_renderer=regular_renderer,
                 sse_renderer=sse_renderer,
-                event_schema=response_spec.return_type,
                 headers=response.headers,
                 validate_events=validate_events,
             )

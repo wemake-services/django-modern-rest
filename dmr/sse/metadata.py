@@ -8,8 +8,8 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
-    TypeVar,
     final,
+    get_args,
     overload,
 )
 
@@ -53,9 +53,9 @@ class SSEvent(Generic[_DataT]):
 
     if TYPE_CHECKING:
 
-        @overload
+        @overload  # type: ignore[no-overload-impl]
         def __init__(
-            self: SSEvent[bytes],
+            self: 'SSEvent[bytes]',
             data: bytes,
             *,
             event: str | None = None,
@@ -113,16 +113,28 @@ class SSEResponse:
 
     @cached_property
     def event_model(self) -> Any:
-        if self.event_model is EmptyObj:
+        if self._event_model is EmptyObj:
             inferred_model = self._infer_model()
             if inferred_model is EmptyObj:
                 raise UnsolvableAnnotationsError(
                     f'Cannot resolve event model for {self.streaming_content}, '
                     'pass `event_model=` parameter directly for validation',
                 )
-        return self.event_model
+            return inferred_model
+        return self._event_model
 
     def _infer_model(self) -> Any | Empty:
+        return_annotation = self._infer_return_annotaiton()
+        if return_annotation is EmptyObj:
+            return return_annotation
+        # We expect return annotation to be: `AsyncIterator[SSEvent[Model]]`.
+        # We need `SSEvent[Model]` from it.
+        try:
+            return get_args(return_annotation)[0]
+        except Exception:
+            return EmptyObj
+
+    def _infer_return_annotaiton(self) -> Any | Empty:
         # Is it `async def(): yield`?
         if isinstance(self.streaming_content, AsyncGeneratorType):
             try:
