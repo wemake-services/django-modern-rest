@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Final
 from typing_extensions import override
 
 from dmr.exceptions import EndpointMetadataError
+from dmr.negotiation import ContentType
 from dmr.parsers import (
     _NoOpParser,  # pyright: ignore[reportPrivateUsage]
 )
@@ -34,7 +35,7 @@ class SSERenderer(Renderer):
         '_serializer',
     )
 
-    content_type = 'text/event-stream'
+    content_type = ContentType.event_stream
 
     def __init__(
         self,

@@ -17,12 +17,12 @@ from dmr.cookies import NewCookie
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.types import Empty, EmptyObj, parse_return_annotation
 
-_DataT = TypeVar('_DataT')
+_DataT_co = TypeVar('_DataT_co', covariant=True)
 
 
 @final
 @dataclasses.dataclass(init=False)
-class SSEvent(Generic[_DataT]):
+class SSEvent(Generic[_DataT_co]):
     """
     Server sent event.
 
@@ -42,7 +42,7 @@ class SSEvent(Generic[_DataT]):
 
     """
 
-    data: _DataT  # noqa: WPS110
+    data: _DataT_co  # type: ignore[misc]  # noqa: WPS110
     event: str | None = dataclasses.field(default=None, kw_only=True)
     id: int | str | None = dataclasses.field(default=None, kw_only=True)
     retry: int | None = dataclasses.field(default=None, kw_only=True)
@@ -63,7 +63,7 @@ class SSEvent(Generic[_DataT]):
     @overload
     def __init__(
         self,
-        data: _DataT,
+        data: _DataT_co,
         *,
         event: str | None = None,
         id: int | str | None = None,
@@ -73,8 +73,8 @@ class SSEvent(Generic[_DataT]):
     ) -> None: ...
 
     def __init__(
-        self: 'SSEvent[_DataT | bytes]',
-        data: _DataT | bytes,
+        self: 'SSEvent[_DataT_co | bytes]',
+        data: _DataT_co | bytes,
         *,
         event: str | None = None,
         id: int | str | None = None,  # noqa: A002
@@ -82,6 +82,12 @@ class SSEvent(Generic[_DataT]):
         comment: str | None = None,
         serialize: bool = True,
     ) -> None:
+        if not serialize and not isinstance(data, bytes):
+            raise ValueError(
+                f'data must be an instance of "bytes", not {type(data)}, '
+                'when serialize=False',
+            )
+
         self.data = data
         self.event = event
         self.id = id
@@ -89,20 +95,17 @@ class SSEvent(Generic[_DataT]):
         self.comment = comment
         self._serialize = serialize
 
-        if not self.serialize and not isinstance(self.data, bytes):
-            raise ValueError(
-                f'data must be an instance of "bytes", not {type(self.data)}, '
-                'when serialize=False',
-            )
-
     @property
     def serialize(self) -> bool:
         return self._serialize
 
 
+_EventT = TypeVar('_EventT')
+
+
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
-class SSEResponse:
+class SSEResponse(Generic[_EventT]):
     """
     Future response representation.
 
@@ -117,17 +120,18 @@ class SSEResponse:
         streaming_content: Async iterator of server sent events.
         headers: Headers to be set on the response object.
         cookies: Cookies to be set on the response object.
+        event_model: Optional explicit event model to be used
+            for the runtime validation of events' data.
 
     """
 
-    streaming_content: AsyncIterator[SSEvent[Any]]
+    streaming_content: AsyncIterator[SSEvent[_EventT]]
     headers: Mapping[str, str] | None = None
     cookies: Mapping[str, NewCookie] | None = None
-    _event_model: Any | Empty = EmptyObj  # `None` can be a valid model
+    event_model: Any | Empty = EmptyObj  # `None` can be a valid model
 
-    @property
-    def event_model(self) -> Any:
-        if self._event_model is EmptyObj:
+    def resolve_event_model(self) -> Any:
+        if self.event_model is EmptyObj:
             inferred_model = self._infer_model()
             if inferred_model is EmptyObj:
                 raise UnsolvableAnnotationsError(
@@ -135,7 +139,7 @@ class SSEResponse:
                     'pass `event_model=` parameter directly for validation',
                 )
             return inferred_model
-        return self._event_model
+        return self.event_model
 
     def _infer_model(self) -> Any | Empty:
         return_annotation = self._infer_return_annotaiton()

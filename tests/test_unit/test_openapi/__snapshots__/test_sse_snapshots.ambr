@@ -71,6 +71,7 @@
         "SSEvent": {
           "properties": {
             "data": {
+              "type": "integer",
               "title": "Data"
             },
             "event": {

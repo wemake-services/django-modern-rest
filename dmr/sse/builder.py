@@ -1,11 +1,7 @@
 import dataclasses
-from collections.abc import (
-    Awaitable,
-    Callable,
-    Sequence,
-)
+from collections.abc import Awaitable, Callable, Sequence
 from http import HTTPStatus
-from typing import Any, ClassVar
+from typing import Any, ClassVar, get_args
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
@@ -14,6 +10,7 @@ from typing_extensions import TypeVar, override
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.controller import Controller
 from dmr.endpoint import Endpoint, validate
+from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec
 from dmr.internal.negotiation import force_request_renderer
 from dmr.metadata import EndpointMetadata, ResponseSpec
@@ -24,6 +21,7 @@ from dmr.settings import Settings, default_renderer, resolve_setting
 from dmr.sse.metadata import SSEContext, SSEResponse, SSEvent
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
+from dmr.types import parse_return_annotation
 
 
 class _SSEMetadata(EndpointMetadata):
@@ -204,18 +202,6 @@ def sse(  # noqa: WPS211, WPS234
     regular_renderer = regular_renderer or default_renderer
     sse_renderer = sse_renderer or SSERenderer(serializer, regular_renderer)
 
-    if response_spec is None:
-        response_spec = ResponseSpec(
-            SSEvent,  # TODO: rework schema generation
-            status_code=HTTPStatus.OK,
-            headers={
-                'Cache-Control': HeaderSpec(),
-                'Connection': HeaderSpec(required=not settings.DEBUG),
-                'X-Accel-Buffering': HeaderSpec(),
-            },
-            limit_to_content_types={sse_renderer.content_type},
-        )
-
     def decorator(
         func: Callable[
             [
@@ -227,6 +213,18 @@ def sse(  # noqa: WPS211, WPS234
         ],
         /,
     ) -> type[Controller[_SerializerT]]:
+        nonlocal response_spec
+        if response_spec is None:
+            response_spec = ResponseSpec(
+                SSEvent[_resolve_event_model(func) if validate_events else Any],
+                status_code=HTTPStatus.OK,
+                headers={
+                    'Cache-Control': HeaderSpec(),
+                    'Connection': HeaderSpec(required=not settings.DEBUG),
+                    'X-Accel-Buffering': HeaderSpec(),
+                },
+                limit_to_content_types={sse_renderer.content_type},
+            )
 
         return _build_controller(
             serializer,
@@ -325,7 +323,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         ) -> SSEStreamingResponse:
             streaming_response = sse_streaming_response_cls(
                 response.streaming_content,
-                event_model=response.event_model,
+                event_model=response.resolve_event_model(),
                 serializer=serializer,
                 regular_renderer=regular_renderer,
                 sse_renderer=sse_renderer,
@@ -340,3 +338,13 @@ def _build_controller(  # noqa: WPS211, WPS234
             return streaming_response
 
     return SSEController
+
+
+def _resolve_event_model(func: Callable[..., Any]) -> Any:
+    return_type = parse_return_annotation(func)
+    type_args = get_args(return_type)
+    if not type_args:
+        raise UnsolvableAnnotationsError(
+            'Cannot determine event data model for runtime validation',
+        )
+    return type_args[0]
