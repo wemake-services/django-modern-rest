@@ -24,7 +24,9 @@ class SchemaGenerator:
         serializer: type['BaseSerializer'],
         *,
         used_for_response: bool = False,
-        fake_schema: bool = False,
+        # TODO: make an overload. When `skip_registration` is `True`
+        # We can only return `Schema`, not reference.
+        skip_registration: bool = False,
     ) -> Schema | Reference:
         """
         Get schema for an annotation.
@@ -60,7 +62,7 @@ class SchemaGenerator:
             return self._maybe_generate_reference(
                 annotation,
                 *schemas,
-                fake_schema=fake_schema,
+                skip_registration=skip_registration,
             )
         raise UnsolvableAnnotationsError(
             f'Cannot generate OpenAPI schema from {annotation}, '
@@ -73,9 +75,9 @@ class SchemaGenerator:
         schema: dict[str, Any],
         components: dict[str, Any],
         *,
-        fake_schema: bool,
+        skip_registration: bool,
     ) -> Schema | Reference:
-        if not fake_schema:
+        if not skip_registration:
             for component_name, component in components.items():
                 self._context.registries.schema.register(
                     schema_name=component_name,
@@ -90,8 +92,9 @@ class SchemaGenerator:
                 summary=schema.get('summary'),
                 description=schema.get('description'),
             )
-            # When we create fake schemas, we need
-            # real schemas back, not references.
+            # When we create skip registration, we need
+            # real schemas back, not references,
+            # because there's no registered schema under the reference.
             return (
                 self._context.registries.schema.maybe_resolve_reference(
                     reference,
@@ -99,13 +102,13 @@ class SchemaGenerator:
                         components,
                     ),
                 )
-                if fake_schema
+                if skip_registration
                 else reference
             )
 
         # Register the final schema:
         schema_obj = load_schema(schema)
-        if schema_obj.title and not fake_schema:
+        if not skip_registration and schema_obj.title:
             return self._context.registries.schema.register(
                 schema_name=schema_obj.title,
                 schema=schema_obj,

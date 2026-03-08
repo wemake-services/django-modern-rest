@@ -214,8 +214,10 @@ class DeserializableResponse:
 
 def deserialize_response(response: HttpResponseBase) -> Any:
     """Deserialize complex response subtypes."""
+    # Our own responses are smart:
     if isinstance(response, DeserializableResponse):
         return response.deserializable_content()
+    # Custom overrides for Django default responses:
     if isinstance(response, FileResponse):
         return FileBody()
     raise InternalServerError(
