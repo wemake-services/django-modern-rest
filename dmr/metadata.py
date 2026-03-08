@@ -12,16 +12,20 @@ from typing import (
     get_origin,
 )
 
+from dmr.openapi.mappers import responses
+
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
     from dmr.headers import HeaderSpec, NewHeader
+    from dmr.openapi.core.context import OpenAPIContext
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
         Reference,
+        Response,
         Server,
     )
     from dmr.parsers import Parser
@@ -33,7 +37,6 @@ if TYPE_CHECKING:
 ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
 
 
-@final
 @dataclasses.dataclass(frozen=True, slots=True)
 class ResponseSpec:
     """
@@ -80,6 +83,19 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+
+    def get_schema(
+        self,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+        metadata: 'EndpointMetadata',
+    ) -> 'Response':
+        """
+        Returns the OpenAPI schema for the response.
+
+        Can be customized in subclasses.
+        """
+        return responses.get_schema(self, serializer, context, metadata)
 
 
 @final
