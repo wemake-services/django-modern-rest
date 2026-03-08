@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.example import Example
@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.schema import Schema
 
 
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(unsafe_hash=True, kw_only=True)
 class ParameterMetadata:
     """Describes a metadata for a single operation parameter."""
 
@@ -22,8 +22,7 @@ class ParameterMetadata:
     examples: dict[str, 'Example | Reference'] | None = None
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class Parameter(ParameterMetadata):
     """Describes a single operation parameter."""
 
