@@ -49,7 +49,7 @@ class SSEvent(Generic[_DataT]):
     retry: int | None = dataclasses.field(default=None, kw_only=True)
     comment: str | None = dataclasses.field(default=None, kw_only=True)
 
-    @overload  # type: ignore[no-overload-impl]
+    @overload
     def __init__(
         self: 'SSEvent[bytes]',
         data: bytes,
@@ -74,8 +74,8 @@ class SSEvent(Generic[_DataT]):
     ) -> None: ...
 
     def __init__(
-        self,
-        data: _DataT,
+        self: 'SSEvent[_DataT | bytes]',
+        data: _DataT | bytes,
         *,
         event: str | None = None,
         id: int | str | None = None,  # noqa: A002
