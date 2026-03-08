@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from collections.abc import Mapping, Set
+from collections.abc import Callable, Mapping, Set
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -18,10 +18,12 @@ if TYPE_CHECKING:
     from dmr.cookies import CookieSpec, NewCookie
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
     from dmr.headers import HeaderSpec, NewHeader
+    from dmr.openapi.core.context import OpenAPIContext
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
         Reference,
+        Schema,
         Server,
     )
     from dmr.parsers import Parser
@@ -57,6 +59,11 @@ class ResponseSpec:
         limit_to_content_types: This response can only happen
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
+        schema_overridde: OpenAPI schema override callback,
+            used to completely change how
+            this response is rendered in the final schema.
+            Be careful! We don't provide any validations for the passed schema.
+            Ensure that it is in sync with the actual response.
 
     We use this structure to validate responses and render them in OpenAPI.
     """
@@ -80,6 +87,13 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+    schema_overridde: (
+        Callable[
+            [type['BaseSerializer'], 'OpenAPIContext'],
+            'Schema | Reference',
+        ]
+        | None
+    ) = None
 
 
 @final

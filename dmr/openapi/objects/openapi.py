@@ -53,14 +53,15 @@ class OpenAPI:
     tags: list['Tag'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
 
-    def convert(self) -> ConvertedSchema:
+    def convert(self, *, skip_validation: bool = False) -> ConvertedSchema:
         """
         Convert the object to OpenAPI schema dictionary.
 
-        Runs validation if ``'django-modern-rest[openapi]'`` is installed.
+        Runs validation if ``'django-modern-rest[openapi]'`` is installed
+        and *skip_validation* is falsy.
         """
         spec = convert(self)
-        if _validate_spec is not None:  # pragma: no cover
+        if not skip_validation and _validate_spec is not None:
             _validate_spec(spec)
         return spec
 

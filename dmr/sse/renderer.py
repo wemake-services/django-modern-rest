@@ -38,7 +38,7 @@ class SSERenderer(Renderer):
 
     def __init__(
         self,
-        serializer: type[BaseSerializer],
+        serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
         *,
         sep: bytes = _DEFAULT_SEPARATOR,

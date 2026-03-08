@@ -9,11 +9,11 @@ from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.routing import Router
-from dmr.sse import SSEContext, SSEData, SSEResponse, sse
+from dmr.sse import SSEContext, SSEvent, SSEResponse, sse
 
 
-async def _events() -> AsyncIterator[SSEData]:  # pragma: no cover
-    yield b''
+async def _events() -> AsyncIterator[SSEvent[int]]:  # pragma: no cover
+    yield SSEvent(1)
 
 
 @sse(PydanticSerializer)

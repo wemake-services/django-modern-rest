@@ -22,7 +22,7 @@ _DataT = TypeVar('_DataT')
 
 
 @final
-@dataclasses.dataclass(slots=True, frozen=True, init=False)
+@dataclasses.dataclass(init=False)
 class SSEvent(Generic[_DataT]):
     """
     Server sent event.
@@ -48,7 +48,6 @@ class SSEvent(Generic[_DataT]):
     id: int | str | None = dataclasses.field(default=None, kw_only=True)
     retry: int | None = dataclasses.field(default=None, kw_only=True)
     comment: str | None = dataclasses.field(default=None, kw_only=True)
-    serialize: bool = dataclasses.field(default=True, kw_only=True)
 
     @overload  # type: ignore[no-overload-impl]
     def __init__(
@@ -79,7 +78,7 @@ class SSEvent(Generic[_DataT]):
         data: _DataT,
         *,
         event: str | None = None,
-        id: int | str | None = None,
+        id: int | str | None = None,  # noqa: A002
         retry: int | None = None,
         comment: str | None = None,
         serialize: bool = True,
@@ -89,13 +88,17 @@ class SSEvent(Generic[_DataT]):
         self.id = id
         self.retry = retry
         self.comment = comment
-        self.serialize = serialize
+        self._serialize = serialize
 
         if not self.serialize and not isinstance(self.data, bytes):
             raise ValueError(
                 f'data must be an instance of "bytes", not {type(self.data)}, '
                 'when serialize=False',
             )
+
+    @property
+    def serialize(self) -> bool:
+        return self._serialize
 
 
 @final
@@ -123,7 +126,7 @@ class SSEResponse:
     cookies: Mapping[str, NewCookie] | None = None
     _event_model: Any | Empty = EmptyObj  # `None` can be a valid model
 
-    @cached_property
+    @property
     def event_model(self) -> Any:
         if self._event_model is EmptyObj:
             inferred_model = self._infer_model()

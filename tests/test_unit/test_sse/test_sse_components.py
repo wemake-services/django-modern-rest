@@ -15,9 +15,9 @@ from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
+    SSEvent,
     sse,
 )
 from dmr.test import DMRAsyncRequestFactory
@@ -39,10 +39,8 @@ else:  # pragma: no cover
 async def _empty_events(
     serializer: type[BaseSerializer],
     renderer: Renderer,
-) -> AsyncIterator[SSEData]:
-    # # This is needed to make `_empty_events` an async iterator:
-    if False:  # noqa: WPS314
-        yield b''  # type: ignore[unreachable]
+) -> AsyncIterator[SSEvent[list[str]]]:
+    yield SSEvent(['authed'])
 
 
 class _PathModel(TypedDict):
@@ -105,7 +103,7 @@ async def test_sse_parses_all_components(
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
-    assert await get_streaming_content(response) == b''
+    assert await get_streaming_content(response) == b'data: ["authed"]\r\n\r\n'
 
 
 @pytest.mark.asyncio

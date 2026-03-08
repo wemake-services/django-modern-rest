@@ -10,7 +10,6 @@ from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
@@ -21,17 +20,16 @@ from tests.infra.streaming import get_streaming_content
 
 
 def _positive_numbers(
-    event: Any,
+    event: SSEvent[Any],
     model: Any,
     serializer: type['BaseSerializer'],
-) -> SSEData:
+) -> SSEvent[Any]:
     if (
-        isinstance(event, SSEvent)
-        and isinstance(event.data, int)
+        isinstance(event.data, int)
         and event.data < 0
     ):
         raise ValueError(f'Negative number found: {event.data}')
-    return event  # type: ignore[no-any-return]
+    return event
 
 
 class _PositiveStreamingResponse(SSEStreamingResponse):
@@ -44,7 +42,7 @@ class _PositiveStreamingResponse(SSEStreamingResponse):
 async def _valid_events(
     serializer: type[BaseSerializer],
     renderer: Renderer,
-) -> AsyncIterator[SSEData]:
+) -> AsyncIterator[SSEvent[int]]:
     yield SSEvent(1)
     yield SSEvent(-1)
 

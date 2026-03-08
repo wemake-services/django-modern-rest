@@ -19,7 +19,6 @@ from dmr.security.django_session import (
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
@@ -41,8 +40,8 @@ else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
 
-async def _events(username: str) -> AsyncIterator[SSEData]:
-    yield SSEvent(b'user', id=username)
+async def _events(username: str) -> AsyncIterator[SSEvent[bytes]]:
+    yield SSEvent(b'user', id=username, serialize=False)
 
 
 async def _resolve(user: User) -> User:

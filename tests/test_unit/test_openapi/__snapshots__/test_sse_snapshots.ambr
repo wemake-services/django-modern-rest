@@ -36,18 +36,7 @@
               "content": {
                 "text/event-stream": {
                   "schema": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string",
-                        "format": "binary"
-                      },
-                      {
-                        "$ref": "#/components/schemas/SSEvent"
-                      }
-                    ]
+                    "$ref": "#/components/schemas/SSEvent"
                   }
                 }
               }
@@ -82,15 +71,6 @@
         "SSEvent": {
           "properties": {
             "data": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "binary"
-                },
-                {
-                  "type": "integer"
-                }
-              ],
               "title": "Data"
             },
             "event": {

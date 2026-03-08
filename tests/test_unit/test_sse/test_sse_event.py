@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from http import HTTPStatus
+from typing import Any
 
 import pytest
 from django.http import HttpRequest
@@ -12,7 +13,6 @@ from dmr.renderers import Renderer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
@@ -22,10 +22,11 @@ from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
 
-async def _valid_events() -> AsyncIterator[SSEData]:
+async def _valid_events() -> AsyncIterator[SSEvent[Any]]:
     yield SSEvent(1, event='first', id=100, retry=5, comment='multi\nline\n')
     yield SSEvent(b'second', event=None, retry=None)
-    yield SSEvent(b'third', retry=1, id=10)
+    yield SSEvent(b'third', retry=1, id=10, serialize=False)
+    yield SSEvent({'user': 1})
 
 
 @sse(PydanticSerializer)
@@ -58,23 +59,25 @@ async def test_all_sse_events_props(
         b'data: 1\r\n'
         b'retry: 5\r\n'
         b'\r\n'
-        b'data: second\r\n'
+        b'data: "c2Vjb25k"\r\n'
         b'\r\n'
         b'id: 10\r\n'
         b'data: third\r\n'
         b'retry: 1\r\n'
         b'\r\n'
+        b'data: {"user":1}\r\n'
+        b'\r\n'
     )
 
 
-async def _simple_events() -> AsyncIterator[SSEData]:
-    yield b'simple'
+async def _simple_events() -> AsyncIterator[SSEvent]:
+    yield SSEvent(b'simple', serialize=False)
 
 
 @sse(
     PydanticSerializer,
     response_spec=ResponseSpec(
-        SSEData,
+        SSEvent[bytes],
         status_code=HTTPStatus.OK,
         headers={
             'Cache-Control': HeaderSpec(),
@@ -126,7 +129,7 @@ async def test_sse_with_headers_and_cookies(
     assert await get_streaming_content(response) == b'data: simple\r\n\r\n'
 
 
-async def _events_with_close() -> AsyncIterator[SSEData]:
+async def _events_with_close() -> AsyncIterator[SSEvent[int]]:
     yield SSEvent(1, event='first')
     raise SSECloseConnectionError
 
