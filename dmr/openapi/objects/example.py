@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Any, final
+from typing import Any
 
 
-@final
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(kw_only=True, slots=True)
 class Example:
     """
     Example Object.
