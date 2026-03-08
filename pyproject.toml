@@ -91,7 +91,6 @@ faker = "^40.1"
 inline-snapshot = "^0.32"
 syrupy = "^5.1"
 schemathesis = "^4.11"
-tracecov = "^0.15"
 polyfactory = "^3.2"
 
 httpx = "^0.28"
