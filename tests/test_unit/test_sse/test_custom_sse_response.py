@@ -24,10 +24,7 @@ def _positive_numbers(
     model: Any,
     serializer: type['BaseSerializer'],
 ) -> SSEvent[Any]:
-    if (
-        isinstance(event.data, int)
-        and event.data < 0
-    ):
+    if isinstance(event.data, int) and event.data < 0:
         raise ValueError(f'Negative number found: {event.data}')
     return event
 

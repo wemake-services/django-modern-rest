@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from collections.abc import Callable, Mapping, Set
+from collections.abc import Mapping, Set
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -11,6 +11,8 @@ from typing import (
     final,
     get_origin,
 )
+
+from dmr.openapi.mappers import responses
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
@@ -23,7 +25,7 @@ if TYPE_CHECKING:
         Callback,
         ExternalDocumentation,
         Reference,
-        Schema,
+        Response,
         Server,
     )
     from dmr.parsers import Parser
@@ -35,7 +37,6 @@ if TYPE_CHECKING:
 ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
 
 
-@final
 @dataclasses.dataclass(frozen=True, slots=True)
 class ResponseSpec:
     """
@@ -59,11 +60,6 @@ class ResponseSpec:
         limit_to_content_types: This response can only happen
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
-        schema_overridde: OpenAPI schema override callback,
-            used to completely change how
-            this response is rendered in the final schema.
-            Be careful! We don't provide any validations for the passed schema.
-            Ensure that it is in sync with the actual response.
 
     We use this structure to validate responses and render them in OpenAPI.
     """
@@ -87,13 +83,22 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
-    schema_overridde: (
-        Callable[
-            [type['BaseSerializer'], 'OpenAPIContext'],
-            'Schema | Reference',
-        ]
-        | None
-    ) = None
+
+    def get_schema(
+        self,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+        metadata: 'EndpointMetadata',
+    ) -> 'Response':
+        """
+        Returns the OpenAPI schema for the response.
+
+        Can be customized in subclasses.
+        Be careful when overriding the schema generation.
+        We don't provide any validations for the returned schema.
+        Ensure that it is in sync with the actual response.
+        """
+        return responses.get_schema(self, serializer, context, metadata)
 
 
 @final

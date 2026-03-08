@@ -1,6 +1,5 @@
 import dataclasses
 from collections.abc import AsyncIterator, Mapping
-from functools import cached_property
 from types import AsyncGeneratorType
 from typing import (
     Any,
