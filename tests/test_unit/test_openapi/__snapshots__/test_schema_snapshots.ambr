@@ -39,10 +39,32 @@
               "deprecated": false,
               "style": "deepObject",
               "explode": true,
+              "name": "tags",
+              "in": "query",
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Tags"
+              },
+              "required": true
+            },
+            {
+              "deprecated": false,
+              "style": "deepObject",
+              "explode": true,
               "name": "query",
               "in": "query",
               "schema": {
-                "type": "string",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
                 "title": "Query"
               },
               "required": true
@@ -135,13 +157,28 @@
         },
         "_QueryModel": {
           "properties": {
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Tags"
+            },
             "query": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Query"
             }
           },
           "type": "object",
           "required": [
+            "tags",
             "query"
           ],
           "title": "_QueryModel"
@@ -227,7 +264,7 @@
                   "allOf": [
                     {
                       "properties": {
-                        "file_name1": {
+                        "attachments": {
                           "type": "string",
                           "format": "binary"
                         },
@@ -238,7 +275,7 @@
                       },
                       "type": "object",
                       "required": [
-                        "file_name1",
+                        "attachments",
                         "second_file"
                       ],
                       "title": "_SeveralFiles",
@@ -637,7 +674,7 @@
               "multipart/form-data": {
                 "schema": {
                   "properties": {
-                    "file_name1": {
+                    "attachments": {
                       "type": "string",
                       "format": "binary"
                     },
@@ -648,7 +685,7 @@
                   },
                   "type": "object",
                   "required": [
-                    "file_name1",
+                    "attachments",
                     "second_file"
                   ],
                   "title": "_SeveralFiles",
