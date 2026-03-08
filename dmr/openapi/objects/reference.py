@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Reference:
     """
     A simple object to allow referencing other components in document.

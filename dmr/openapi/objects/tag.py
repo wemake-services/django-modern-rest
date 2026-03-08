@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     )
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Tag:
     """
     Adds metadata to a single tag that is used by the `Operation` object.

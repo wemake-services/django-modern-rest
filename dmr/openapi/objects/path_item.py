@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class PathItem:
     """
     Describes the operations available on a single path.

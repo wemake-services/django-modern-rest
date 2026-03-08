@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Operation:
     """Describes a single API operation on a path."""
 

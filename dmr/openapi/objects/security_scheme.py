@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.oauth_flows import OAuthFlows
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class SecurityScheme:
     """
     Defines a security scheme that can be used by the operations.

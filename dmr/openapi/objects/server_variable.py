@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class ServerVariable:
     """An object representing a `Server Variable` for server URL template."""
 

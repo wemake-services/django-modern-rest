@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class OAuthFlow:
     """Configuration details for a supported OAuth Flow."""
 

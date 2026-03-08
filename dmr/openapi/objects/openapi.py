@@ -36,7 +36,7 @@ _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class OpenAPI:
     """This is the root object of the OpenAPI document."""
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Example:
     """
     Example Object.

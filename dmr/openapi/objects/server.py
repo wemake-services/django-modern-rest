@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     )
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Server:
     """An object representing a `Server`."""
 

@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.license import License
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Info:
     """
     The Info object provides metadata about the API.

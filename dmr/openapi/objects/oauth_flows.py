@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.oauth_flow import OAuthFlow
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class OAuthFlows:
     """Allows configuration of the supported OAuth Flows."""
 

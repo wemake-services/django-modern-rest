@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class XML:
     """
     A metadata object that allows for more fine-tuned XML model definitions.

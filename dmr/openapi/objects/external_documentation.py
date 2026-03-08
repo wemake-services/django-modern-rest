@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class ExternalDocumentation:
     """Allows referencing an external resource for extended documentation."""
 

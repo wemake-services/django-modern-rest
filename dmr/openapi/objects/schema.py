@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -10,7 +9,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.xml import XML
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Schema:
     """
     The Schema Object allows the definition of input and output data types.
@@ -23,15 +22,15 @@ class Schema:
     the OpenAPI document.
     """
 
-    all_of: Sequence['Reference | Schema'] | None = None
-    any_of: Sequence['Reference | Schema'] | None = None
-    one_of: Sequence['Reference | Schema'] | None = None
+    all_of: list['Reference | Schema'] | None = None
+    any_of: list['Reference | Schema'] | None = None
+    one_of: list['Reference | Schema'] | None = None
     schema_not: 'Reference | Schema | None' = None
     schema_if: 'Reference | Schema | None' = None
     then: 'Reference | Schema | None' = None
     schema_else: 'Reference | Schema | None' = None
     dependent_schemas: dict[str, 'Reference | Schema'] | None = None
-    prefix_items: Sequence['Reference | Schema'] | None = None
+    prefix_items: list['Reference | Schema'] | None = None
     items: 'Reference | Schema | bool | None' = None
     contains: 'Reference | Schema | None' = None
     properties: dict[str, 'Reference | Schema'] | None = None
@@ -40,8 +39,8 @@ class Schema:
     property_names: 'Reference | Schema | None' = None
     unevaluated_items: 'Reference | Schema | None' = None
     unevaluated_properties: 'Reference | Schema | None' = None
-    type: 'OpenAPIType | Sequence[OpenAPIType] | None' = None
-    enum: Sequence[Any] | None = None
+    type: 'OpenAPIType | list[OpenAPIType] | None' = None
+    enum: list[Any] | None = None
     const: Any | None = None
     multiple_of: float | None = None
     maximum: float | None = None
@@ -58,8 +57,8 @@ class Schema:
     min_contains: int | None = None
     max_properties: int | None = None
     min_properties: int | None = None
-    required: Sequence[str] = field(default_factory=list[str])
-    dependent_required: dict[str, Sequence[str]] | None = None
+    required: list[str] = field(default_factory=list[str])
+    dependent_required: dict[str, list[str]] | None = None
     format: 'OpenAPIFormat | None' = None
     content_encoding: str | None = None
     content_media_type: str | None = None
@@ -70,7 +69,7 @@ class Schema:
     deprecated: bool | None = None
     read_only: bool | None = None
     write_only: bool | None = None
-    examples: Sequence[Any] | None = None
+    examples: list[Any] | None = None
     discriminator: 'Discriminator | None' = None
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None

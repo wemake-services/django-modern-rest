@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Link:
     """
     The Link object represents a possible design-time link for a response.

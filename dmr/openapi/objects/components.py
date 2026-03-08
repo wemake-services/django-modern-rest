@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     )
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Components:
     """
     Holds a set of reusable objects for different aspects of the OAS.

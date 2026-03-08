@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.reference import Reference
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Response:
     """
     Describes a single response from an API Operation.

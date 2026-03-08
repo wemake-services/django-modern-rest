@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.schema import Schema
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class MediaType:
     """
     Media Type Object.

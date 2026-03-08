@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.media_type import MediaType
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class RequestBody:
     """Describes a single request body."""
 
