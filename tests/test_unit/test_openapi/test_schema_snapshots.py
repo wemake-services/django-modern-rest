@@ -115,6 +115,7 @@ class _FileModel(pydantic.BaseModel):
 
 class _SeveralFiles(pydantic.BaseModel):
     """Model docs."""
+
     __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('attachments',))
 
     attachments: list[_FileModel]
