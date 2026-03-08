@@ -1,5 +1,5 @@
 from dataclasses import fields
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from dmr.metadata import get_annotated_metadata
 from dmr.openapi.core.context import OpenAPIContext
@@ -7,16 +7,24 @@ from dmr.openapi.objects.parameter import Parameter, ParameterMetadata
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
 
+if TYPE_CHECKING:
+    from dmr.serializer import BaseSerializer
+
 
 def parameters_spec(
     model: Any,
-    schema: Schema | Reference,
+    serializer: type['BaseSerializer'],
     context: OpenAPIContext,
     *,
     param_in: Literal['query', 'path', 'cookie', 'header'],
 ) -> list[Parameter | Reference]:
     """Generates ``Parameter`` specification for different components."""
-    schema = context.registries.schema.maybe_resolve_reference(schema)
+    schema = context.registries.schema.maybe_resolve_reference(
+        context.generators.schema(
+            model,
+            serializer,
+        ),
+    )
     metadata = get_annotated_metadata(model, ParameterMetadata)
     return [  # pyright: ignore[reportReturnType]
         Parameter(

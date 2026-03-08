@@ -3,7 +3,7 @@ from typing import Any, ClassVar
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
 from dmr.openapi.objects.security_scheme import SecurityScheme
-from dmr.types import EmptyObj
+from dmr.types import Empty, EmptyObj
 
 
 class OperationIdRegistry:
@@ -47,7 +47,7 @@ class SchemaRegistry:
         self,
         schema_name: str,
         schema: Schema,
-        annotation: Any = EmptyObj,
+        annotation: Any | Empty = EmptyObj,
     ) -> Reference:
         """Register Schema in registry."""
         existing_schema = self._schemas.get(schema_name)
@@ -65,7 +65,7 @@ class SchemaRegistry:
     def get_reference(
         self,
         schema_name: str | None,
-        annotation: Any = EmptyObj,
+        annotation: Any | Empty = EmptyObj,
     ) -> Reference | None:
         """Get registered reference."""
         if schema_name:
@@ -97,7 +97,7 @@ class SchemaRegistry:
     def _check_hashes(
         self,
         schema_name: str,
-        annotation: Any,
+        annotation: Any | Empty,
         other_hash: int | None,
     ) -> None:
         if annotation is EmptyObj:

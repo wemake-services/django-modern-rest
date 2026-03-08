@@ -1,3 +1,4 @@
+import re
 from typing import Any, Generic, TypeVar
 
 import pytest
@@ -8,7 +9,6 @@ from dmr.components import ComponentParser
 from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 
@@ -34,7 +34,6 @@ class _Fake(ComponentParser, Generic[_FakeT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type[BaseSerializer],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
@@ -52,7 +51,12 @@ class _FakeController(
 
 def test_fake_component(openapi_context: OpenAPIContext) -> None:
     """Ensures that wrong components raise."""
-    with pytest.raises(TypeError, match='Returning None from ComponentParser'):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "Returning <class 'NoneType'> from ComponentParser.get_schema",
+        ),
+    ):
         openapi_context.generators.component_parsers(
             _FakeController.api_endpoints['GET'].metadata,
             PydanticSerializer,

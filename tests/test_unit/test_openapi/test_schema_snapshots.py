@@ -63,6 +63,8 @@ class _CookieModel(pydantic.BaseModel):
     csrf: str = pydantic.Field(alias='CSRF', description='Override')
 
 
+# TODO: test `__dmr_force_list__`
+# TODO: test `__dmr_cast_null__`
 class _QueryModel(pydantic.BaseModel):
     query: str
 
@@ -116,7 +118,8 @@ class _SeveralFiles(pydantic.BaseModel):
     second_file: _FileModel
 
 
-class _FileController(
+# TODO: test file response
+class _FileController(  # TODO: test `__dmr_force_list__` as well
     Controller[PydanticSerializer],
     FileMetadata[_SeveralFiles],
 ):
