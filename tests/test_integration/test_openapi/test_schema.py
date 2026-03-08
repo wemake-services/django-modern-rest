@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+import tracecov
 import pytest
 import schemathesis as st
 from django.urls import reverse
