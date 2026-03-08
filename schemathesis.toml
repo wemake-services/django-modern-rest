@@ -2,11 +2,6 @@
 # Limit the number of generated examples per API operation to keep tests fast.
 max-examples = 100
 
-[checks]
-# Docs: https://schemathesis.readthedocs.io/en/stable/reference/checks
-# We will expand the checks as we implement the openapi schemageneration.
-enabled = true
-
 [warnings]
 # Fail on any warning:
 fail-on = true

@@ -1,7 +1,8 @@
 import pytest
 from django.conf import LazySettings
 
-from dmr.openapi import build_schema
+from dmr.openapi import OpenAPIConfig, build_schema
+from dmr.openapi.objects import Tag
 from dmr.routing import Router
 
 
@@ -17,3 +18,43 @@ def test_config_raises_wrong_type(
         match='OpenAPI config is not set',
     ):
         build_schema(router=Router([], prefix=''))
+
+
+def test_schema_nested_objects_can_be_mutated(
+    dmr_clean_settings: None,
+    settings: LazySettings,
+) -> None:
+    """Ensure schema nested objects can be modified in place."""
+    settings.DMR_SETTINGS = {
+        'openapi_config': OpenAPIConfig(
+            title='Original',
+            version='1.0.0',
+        ),
+    }
+    router = Router([], prefix='')
+    schema = build_schema(router)
+
+    schema.info.title = 'Modified'
+
+    assert schema.info.title == 'Modified'
+
+
+def test_schema_collections_can_be_mutated(
+    dmr_clean_settings: None,
+    settings: LazySettings,
+) -> None:
+    """Ensure schema collections can be modified in place."""
+    settings.DMR_SETTINGS = {
+        'openapi_config': OpenAPIConfig(
+            title='Original',
+            version='1.0.0',
+        ),
+    }
+    router = Router([], prefix='')
+    schema = build_schema(router)
+
+    schema.tags = []
+    tag = Tag(name='Whatever')
+    schema.tags.append(tag)
+
+    assert schema.tags == [tag]
