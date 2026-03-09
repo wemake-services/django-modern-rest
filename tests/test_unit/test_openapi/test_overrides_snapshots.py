@@ -1,9 +1,10 @@
 import json
-from typing import Generic, TypedDict, TypeVar
+from typing import Generic, TypeVar
 
 import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
+from typing_extensions import TypedDict
 
 from dmr import Controller
 from dmr.openapi import OpenAPIContext, build_schema, default_config
