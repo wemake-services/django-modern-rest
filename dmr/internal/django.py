@@ -147,7 +147,7 @@ def parse_as_post(request: HttpRequest) -> None:
 _FileMetadata: TypeAlias = dict[str, Any]
 
 
-def exctract_files_metadata(
+def extract_files_metadata(
     request_files: MultiValueDict[str, UploadedFile],
     force_list: frozenset[str],
 ) -> Mapping[str, _FileMetadata | list[_FileMetadata]]:

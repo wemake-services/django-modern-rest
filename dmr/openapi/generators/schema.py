@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, get_args, get_origin
 
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.mappers.schema_loader import load_schema
@@ -24,23 +24,35 @@ class SchemaGenerator:
         serializer: type['BaseSerializer'],
         *,
         used_for_response: bool = False,
-        fake_schema: bool = False,
+        # TODO: make an overload. When `skip_registration` is `True`
+        # We can only return `Schema`, not reference.
+        skip_registration: bool = False,
     ) -> Schema | Reference:
         """
         Get schema for an annotation.
 
         Here's the algorithm we use:
-        1. First we try to find any existing schema references
-        2. Next, we try to get a model schema from a serializer.
+        1. First, we try to find manually defined overrides for the annotation
+        2. If nothing is found, we try to find any existing schema references
+        3. Next, we try to get a model schema from a serializer.
            If it exists, we create an internal reference and return it.
            The next time it will returned as a reference, cached.
-        3. If nothing worked, we raise an error
+        4. If nothing worked, we raise an error
 
         Raises:
             UnsolvableAnnotationsError: when we can't generate
                 an OpenAPI schema from an existing annotation.
 
         """
+        explicit_override = self._resolve_schema_override(
+            annotation,
+            serializer,
+            used_for_response=used_for_response,
+            skip_registration=skip_registration,
+        )
+        if explicit_override:
+            return explicit_override
+
         existing_reference = self._context.registries.schema.get_reference(
             (
                 serializer.schema_generator.schema_name(annotation)
@@ -60,12 +72,37 @@ class SchemaGenerator:
             return self._maybe_generate_reference(
                 annotation,
                 *schemas,
-                fake_schema=fake_schema,
+                skip_registration=skip_registration,
             )
         raise UnsolvableAnnotationsError(
             f'Cannot generate OpenAPI schema from {annotation}, '
             'consider registerting it as described in your serializer',
         )
+
+    def _resolve_schema_override(
+        self,
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+        *,
+        used_for_response: bool = False,
+        skip_registration: bool = False,
+    ) -> Schema | Reference | None:
+        origin = get_origin(annotation) or annotation
+        type_args = get_args(annotation)
+
+        registry = self._context.registries.schema
+        schema = registry.overrides.get(origin)
+        if callable(schema):
+            return schema(
+                annotation,
+                origin,
+                type_args,
+                used_for_response=used_for_response,
+                skip_registration=skip_registration,
+            )
+        if schema is not None:
+            return schema
+        return None
 
     def _maybe_generate_reference(
         self,
@@ -73,9 +110,9 @@ class SchemaGenerator:
         schema: dict[str, Any],
         components: dict[str, Any],
         *,
-        fake_schema: bool,
+        skip_registration: bool = False,
     ) -> Schema | Reference:
-        if not fake_schema:
+        if not skip_registration:
             for component_name, component in components.items():
                 self._context.registries.schema.register(
                     schema_name=component_name,
@@ -90,22 +127,21 @@ class SchemaGenerator:
                 summary=schema.get('summary'),
                 description=schema.get('description'),
             )
-            # When we create fake schemas, we need
-            # real schemas back, not references.
+            # When we create skip registration, we need
+            # real schemas back, not references,
+            # because there's no registered schema under the reference.
             return (
                 self._context.registries.schema.maybe_resolve_reference(
                     reference,
-                    resoltion_context=self._build_resolution_context(
-                        components,
-                    ),
+                    resoltion_context=_build_resolution_context(components),
                 )
-                if fake_schema
+                if skip_registration
                 else reference
             )
 
         # Register the final schema:
         schema_obj = load_schema(schema)
-        if schema_obj.title and not fake_schema:
+        if not skip_registration and schema_obj.title:
             return self._context.registries.schema.register(
                 schema_name=schema_obj.title,
                 schema=schema_obj,
@@ -113,11 +149,11 @@ class SchemaGenerator:
             )
         return schema_obj
 
-    def _build_resolution_context(
-        self,
-        components: dict[str, Any],
-    ) -> dict[str, Schema]:
-        return {
-            component_name: load_schema(component)
-            for component_name, component in components.items()
-        }
+
+def _build_resolution_context(
+    components: dict[str, Any],
+) -> dict[str, Schema]:
+    return {
+        component_name: load_schema(component)
+        for component_name, component in components.items()
+    }

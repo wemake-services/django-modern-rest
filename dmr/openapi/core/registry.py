@@ -1,9 +1,28 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Protocol
 
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
 from dmr.openapi.objects.security_scheme import SecurityScheme
-from dmr.types import EmptyObj
+from dmr.types import Empty, EmptyObj
+
+
+class SchemaCallback(Protocol):
+    """Callback protocol for the schema registration."""
+
+    def __call__(
+        self,
+        annotation: Any,
+        origin: Any,
+        type_args: Any,
+        *,
+        used_for_response: bool,
+        skip_registration: bool,
+    ) -> Schema | Reference | None:
+        """
+        Resolve the annotation into schema or into a reference.
+
+        Return ``None`` to fallback to the default resolution.
+        """
 
 
 class OperationIdRegistry:
@@ -34,6 +53,7 @@ class SchemaRegistry:
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
         self._schemas: dict[str, tuple[Schema, int | None]] = {}
+        self.overrides: dict[Any, Schema | Reference | SchemaCallback] = {}
 
     @property
     def schemas(self) -> dict[str, Schema]:
@@ -47,7 +67,7 @@ class SchemaRegistry:
         self,
         schema_name: str,
         schema: Schema,
-        annotation: Any = EmptyObj,
+        annotation: Any | Empty = EmptyObj,
     ) -> Reference:
         """Register Schema in registry."""
         existing_schema = self._schemas.get(schema_name)
@@ -65,7 +85,7 @@ class SchemaRegistry:
     def get_reference(
         self,
         schema_name: str | None,
-        annotation: Any = EmptyObj,
+        annotation: Any | Empty = EmptyObj,
     ) -> Reference | None:
         """Get registered reference."""
         if schema_name:
@@ -97,7 +117,7 @@ class SchemaRegistry:
     def _check_hashes(
         self,
         schema_name: str,
-        annotation: Any,
+        annotation: Any | Empty,
         other_hash: int | None,
     ) -> None:
         if annotation is EmptyObj:

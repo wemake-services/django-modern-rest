@@ -23,7 +23,7 @@ from dmr.exceptions import (
 from dmr.files import FileBody
 from dmr.internal.django import (
     convert_multi_value_dict,
-    exctract_files_metadata,
+    extract_files_metadata,
 )
 from dmr.metadata import (
     EndpointMetadata,
@@ -150,15 +150,6 @@ class ComponentParser(ResponseSpecProvider):
     will live under a dict field with this name.
     """
 
-    generates_fake_schema: ClassVar[bool] = False
-    """
-    Whether or not this component generates a real OpenAPI schema from a model.
-
-    Some components might have fake schemas, like ``FileMetadata``,
-    that are only used for validation internally.
-    You can disable real schema generation for such components.
-    """
-
     @classmethod
     @abc.abstractmethod
     def provide_context_data(
@@ -230,7 +221,6 @@ class ComponentParser(ResponseSpecProvider):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
@@ -343,14 +333,13 @@ class Query(ComponentParser, Generic[_QueryT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
             model,
-            schema,
+            serializer,
             context,
             param_in='query',
         )
@@ -436,16 +425,15 @@ class Body(ComponentParser, Generic[_BodyT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
+        schema = context.generators.schema(model, serializer)
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
                 serializer,
-                fake_schema=cls.generates_fake_schema,
             )
             for content_type, conditional_model in cls.conditional_types(
                 model,
@@ -510,14 +498,13 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
             model,
-            schema,
+            serializer,
             context,
             param_in='header',
         )
@@ -634,14 +621,13 @@ class Path(ComponentParser, Generic[_PathT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
             model,
-            schema,
+            serializer,
             context,
             param_in='path',
         )
@@ -698,14 +684,13 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
             model,
-            schema,
+            serializer,
             context,
             param_in='cookie',
         )
@@ -785,7 +770,6 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
 
     parsed_file_metadata: _FileMetadataT
     context_name: ClassVar[str] = 'parsed_file_metadata'
-    generates_fake_schema: ClassVar[bool] = True
     schema_metadata: ClassVar[type[FileBody]] = FileBody
 
     @override
@@ -822,7 +806,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
             '__dmr_force_list__',
             frozenset(),
         )
-        return exctract_files_metadata(blueprint.request.FILES, force_list)
+        return extract_files_metadata(blueprint.request.FILES, force_list)
 
     @override
     @classmethod
@@ -866,16 +850,19 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     def get_schema(
         cls,
         model: Any,
-        schema: Schema | Reference,
         serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
+        schema = context.generators.schema(
+            model,
+            serializer,
+            skip_registration=True,
+        )
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
                 serializer,
-                fake_schema=cls.generates_fake_schema,
             )
             for content_type, conditional_model in cls.conditional_types(
                 model,

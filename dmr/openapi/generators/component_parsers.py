@@ -47,8 +47,8 @@ class ComponentParserGenerator:
                 params_list.extend(schema)
             else:
                 raise TypeError(
-                    f'Returning {schema} from ComponentParser.get_schema '
-                    'is not supported',
+                    f'Returning {type(schema)!r} '
+                    'from ComponentParser.get_schema is not supported',
                 )
 
         return request_body, params_list or None
@@ -63,11 +63,6 @@ class ComponentParserGenerator:
         model = parser_args[0] if len(parser_args) == 1 else parser_args
         return parser.get_schema(
             model,
-            schema=self._context.generators.schema(
-                model,
-                serializer,
-                fake_schema=parser.generates_fake_schema,
-            ),
             serializer=serializer,
             metadata=metadata,
             context=self._context,
@@ -101,7 +96,8 @@ class ComponentParserGenerator:
         for media_name, media_type in new_schema.content.items():
             media_items = [media_type.schema]
             existing_content = schema.content.get(media_name)
-            # TODO: remove pragma after fixing conditional types
+            # TODO: remove pragma after implementing conditional types
+            # for `FileMetadata[]` component
             if existing_content:  # pragma: no cover
                 media_items.append(existing_content.schema)
             new_content[media_name] = dataclasses.replace(

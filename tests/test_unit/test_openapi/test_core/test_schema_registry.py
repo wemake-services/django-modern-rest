@@ -27,7 +27,7 @@ class _SecondController(Controller[PydanticSerializer]):
 
 
 def test_duplicated_schema() -> None:
-    """Ensure that multiple cookies are handled."""
+    """Ensure that duplicated schemas raise."""
     with pytest.raises(
         ValueError,
         match='Different schemas under a single name: _ResponseModel',
@@ -41,3 +41,26 @@ def test_duplicated_schema() -> None:
                 prefix='/',
             ),
         )
+
+
+class _ResponseModel(pydantic.BaseModel):  # type: ignore[no-redef]
+    second: str
+    model_config = pydantic.ConfigDict(title='_CustomResponseModel')
+
+
+class _ThirdController(Controller[PydanticSerializer]):
+    def put(self) -> _ResponseModel:
+        raise NotImplementedError
+
+
+def test_renamed_schema() -> None:
+    """Ensure that renamed schemas work."""
+    build_schema(
+        Router(
+            [
+                path('first', _FirstController.as_view()),
+                path('third', _ThirdController.as_view()),
+            ],
+            prefix='/',
+        ),
+    )

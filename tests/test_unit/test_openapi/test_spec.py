@@ -1,7 +1,12 @@
 import pytest
 from django.conf import LazySettings
 
-from dmr.openapi import OpenAPIConfig, build_schema
+from dmr.openapi import (
+    OpenAPIConfig,
+    OpenAPIContext,
+    build_schema,
+    default_config,
+)
 from dmr.openapi.objects import Tag
 from dmr.routing import Router
 
@@ -58,3 +63,12 @@ def test_schema_collections_can_be_mutated(
     schema.tags.append(tag)
 
     assert schema.tags == [tag]
+
+
+def test_pass_both_context_and_config() -> None:
+    """Ensures that you can't pass both ``config`` and ``context``."""
+    router = Router([], prefix='')
+    config = default_config()
+    context = OpenAPIContext(config)
+    with pytest.raises(ValueError, match='Passing both'):
+        build_schema(router, context=context, config=config)
