@@ -142,3 +142,6 @@ Core
 
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
    :members:
+
+.. autoclass:: dmr.openapi.core.registry.SchemaCallback
+  :members:
