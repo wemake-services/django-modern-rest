@@ -16,7 +16,7 @@ from dmr.openapi.generators import (
     SchemaGenerator,
     SecuritySchemeGenerator,
 )
-from dmr.openapi.objects import Schema, Reference
+from dmr.openapi.objects import Reference, Schema
 
 if TYPE_CHECKING:
     from dmr.openapi.config import OpenAPIConfig

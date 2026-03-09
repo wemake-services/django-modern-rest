@@ -22,7 +22,7 @@ class _UserController(Controller[PydanticSerializer]):
 
 
 def test_regular_type_override(snapshot: SnapshotAssertion) -> None:
-    """Ensure that regular type can be overriden."""
+    """Ensure that regular type can be overridden."""
     context = OpenAPIContext(config=default_config())
     context.register_schema(
         _UserModel,
@@ -89,7 +89,7 @@ class _GenericController(Controller[PydanticSerializer]):
 
 
 def test_generic_type_override(snapshot: SnapshotAssertion) -> None:
-    """Ensure that generic type can be overriden."""
+    """Ensure that generic type can be overridden."""
     context = OpenAPIContext(config=default_config())
     context.register_schema(
         _GenericModel,
