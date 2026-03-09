@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
 import pydantic
 from django.urls import path
@@ -63,10 +63,12 @@ class _CookieModel(pydantic.BaseModel):
     csrf: str = pydantic.Field(alias='CSRF', description='Override')
 
 
-# TODO: test `__dmr_force_list__`
-# TODO: test `__dmr_cast_null__`
 class _QueryModel(pydantic.BaseModel):
-    query: str
+    __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('tags',))
+    __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('query',))
+
+    tags: list[str]
+    query: str | None
 
 
 class _AuthedAndCookiesController(
@@ -114,12 +116,14 @@ class _FileModel(pydantic.BaseModel):
 class _SeveralFiles(pydantic.BaseModel):
     """Model docs."""
 
-    file_name1: _FileModel
+    __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('attachments',))
+
+    attachments: list[_FileModel]
     second_file: _FileModel
 
 
 # TODO: test file response
-class _FileController(  # TODO: test `__dmr_force_list__` as well
+class _FileController(
     Controller[PydanticSerializer],
     FileMetadata[_SeveralFiles],
 ):
