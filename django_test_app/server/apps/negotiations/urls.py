@@ -6,7 +6,7 @@ from server.apps.negotiations import views
 router = Router(
     [
         path(
-            'negotiation',
+            'negotiation/',
             views.ContentNegotiationController.as_view(),
             name='negotiation',
         ),

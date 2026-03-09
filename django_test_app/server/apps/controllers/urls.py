@@ -14,7 +14,7 @@ router = Router(
             name='users',
         ),
         path(
-            'user/<int:user_id>',
+            'user/<int:user_id>/',
             compose_blueprints(
                 views.UserReplaceBlueprint,
                 views.UserUpdateBlueprint,
@@ -22,27 +22,27 @@ router = Router(
             name='user_update',
         ),
         re_path(
-            r'user/direct/re/(?P<user_id>\d+)$',
+            r'user/direct/re/(?P<user_id>\d+)/$',
             compose_blueprints(views.UserUpdateBlueprint).as_view(),
             name='user_update_direct_re',
         ),
         path(
-            'user/direct/<int:user_id>',
+            'user/direct/<int:user_id>/',
             compose_blueprints(views.UserUpdateBlueprint).as_view(),
             name='user_update_direct',
         ),
         path(
-            'headers',
+            'headers/',
             views.ParseHeadersController.as_view(),
             name='parse_headers',
         ),
         path(
-            'async_headers',
+            'async_headers/',
             views.AsyncParseHeadersController.as_view(),
             name='async_parse_headers',
         ),
         path(
-            'constrained-user',
+            'constrained-user/',
             views.ConstrainedUserController.as_view(),
             name='constrained_user_create',
         ),
