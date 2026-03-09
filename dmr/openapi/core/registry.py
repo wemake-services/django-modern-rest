@@ -1,9 +1,28 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Protocol
 
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
 from dmr.openapi.objects.security_scheme import SecurityScheme
 from dmr.types import Empty, EmptyObj
+
+
+class SchemaCallback(Protocol):
+    """Callback protocol for the schema registration."""
+
+    def __call__(
+        self,
+        annotation: Any,
+        origin: Any,
+        type_args: Any,
+        *,
+        used_for_response: bool,
+        skip_registration: bool,
+    ) -> Schema | Reference | None:
+        """
+        Resolve the annotation into schema or into a reference.
+
+        Return ``None`` to fallback to the default resolution.
+        """
 
 
 class OperationIdRegistry:
@@ -34,6 +53,7 @@ class SchemaRegistry:
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
         self._schemas: dict[str, tuple[Schema, int | None]] = {}
+        self.overrides: dict[Any, Schema | Reference | SchemaCallback] = {}
 
     @property
     def schemas(self) -> dict[str, Schema]:

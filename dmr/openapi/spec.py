@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 def build_schema(
     router: 'Router',
     *,
+    # TODO: this can be an overloaded function:
+    context: OpenAPIContext | None = None,
     config: OpenAPIConfig | None = None,
     builder: type[OpenAPIBuilder] = OpenAPIBuilder,
 ) -> OpenAPI:
@@ -20,16 +22,21 @@ def build_schema(
 
     Parameters:
         router: Router that contains all API endpoints and all controllers.
+        context: OpenAPI context with all the builder tools.
         config: Optional configuration of OpenAPI metadata.
             Can be ``None``, in this case we fetch OpenAPI config from settings.
         builder: ``OpenAPIBuilder`` subclass to build the API.
 
     """
-    context = OpenAPIContext(config=config or _default_config())
+    if context and config:
+        raise ValueError('Passing both `config` and `context` is not supported')
+    if context is None:
+        context = OpenAPIContext(config=config or default_config())
     return builder(context)(router)
 
 
-def _default_config() -> OpenAPIConfig:
+def default_config() -> OpenAPIConfig:
+    """Resolves the default config from settings."""
     from dmr.settings import (  # noqa: PLC0415
         Settings,
         resolve_setting,
