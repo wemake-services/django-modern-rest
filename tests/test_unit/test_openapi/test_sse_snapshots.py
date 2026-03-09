@@ -21,7 +21,7 @@ async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse[int]:
+) -> SSEResponse[SSEvent[int]]:
     raise NotImplementedError
 
 

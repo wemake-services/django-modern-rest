@@ -1,6 +1,8 @@
 from typing import assert_type
 
-from dmr.sse import SSEvent
+from dmr.sse import SSE, SSEvent
+
+event: SSE = SSEvent(event='test')
 
 assert_type(SSEvent({1: 'a'}), SSEvent[dict[int, str]])
 assert_type(SSEvent(b''), SSEvent[bytes])

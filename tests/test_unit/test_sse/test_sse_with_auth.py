@@ -56,7 +56,7 @@ async def _sse_components(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     user = await request.auser()
     assert user.is_authenticated
     return SSEResponse(_events(user.get_username()))

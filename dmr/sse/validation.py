@@ -24,15 +24,17 @@ def validate_event_type(
        it will be a big problem for our users and it would be hard to debug
     3. But, we can modify events to be ``error`` events instead!
     4. When validation is active and the event is either not ``SSEvent``
-       or has the wrong payload type - we send ``event: error`` SSE event
+       or has the wrong payload type - we send ``event: error`` event
 
     """
     try:
+        print(event, model)
         serializer.from_python(
             event,
             model=model,
             strict=True,
         )
+        print('done')
     except serializer.validation_error as exc:
         raise ValidationError(
             serializer.serialize_validation_error(exc),

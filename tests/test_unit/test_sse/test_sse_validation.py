@@ -1,3 +1,4 @@
+import contextlib
 import json
 from collections.abc import AsyncIterator
 from http import HTTPMethod, HTTPStatus
@@ -10,6 +11,7 @@ from inline_snapshot import snapshot
 
 from dmr import APIError, HeaderSpec, ResponseSpec
 from dmr.errors import ErrorModel, format_error
+from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
@@ -57,7 +59,7 @@ async def test_valid_sse(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[SSEvent[dict[str, str] | bytes]]:
         return SSEResponse(_valid_events())
 
     request = dmr_async_rf.get('/whatever/')
@@ -98,12 +100,11 @@ async def test_valid_sse(
 @pytest.mark.parametrize(
     'event',
     [
-        {},
-        {'a': 'b'},
         [],
         [1, 'a'],
         None,
         'abc',
+        b'abc',
         object(),
     ],
 )
@@ -140,7 +141,7 @@ async def test_wrong_event_type(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         return SSEResponse(_wrong_type_events(), event_model=SSEvent[Any])
 
     request = dmr_async_rf.get('/whatever/')
@@ -156,9 +157,16 @@ async def test_wrong_event_type(
         'X-Accel-Buffering': 'no',
         'Connection': 'keep-alive',
     }
-    assert (
-        b'event: error\r\n' in await get_streaming_content(response)
-    ) is expected
+    with (
+        contextlib.nullcontext()
+        if expected
+        else pytest.raises(
+            EndpointMetadataError, match='SSERenderer can only render SSE',
+        )
+    ):
+        assert (
+            b'event: error\r\n' in await get_streaming_content(response)
+        )
 
 
 @pytest.mark.asyncio
@@ -250,7 +258,7 @@ async def test_main_response_validation_sse(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[SSEvent[dict[str, str] | bytes]]:
         return SSEResponse(_valid_events())
 
     request = dmr_async_rf.get('/whatever/')
@@ -282,7 +290,7 @@ async def test_sse_api_error(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise APIError(
             format_error('API Error'),
             status_code=HTTPStatus.CONFLICT,
@@ -314,7 +322,7 @@ async def test_sse_api_error_validation(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise APIError(
             format_error('API Error'),
             status_code=HTTPStatus.CONFLICT,
@@ -368,7 +376,7 @@ async def test_sse_wrong_method(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise NotImplementedError
 
     request = dmr_async_rf.generic(str(method), '/whatever/')

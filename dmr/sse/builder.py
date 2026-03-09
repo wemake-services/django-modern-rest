@@ -18,7 +18,7 @@ from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
-from dmr.sse.metadata import SSEContext, SSEResponse, SSEvent
+from dmr.sse.metadata import SSE, SSEContext, SSEResponse
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 from dmr.types import parse_return_annotation
@@ -85,7 +85,7 @@ def sse(  # noqa: WPS211, WPS234
                 Renderer,
                 SSEContext[_PathT, _QueryT, _HeadersT, _CookiesT],
             ],
-            Awaitable[SSEResponse],
+            Awaitable[SSEResponse[SSE]],
         ],
     ],
     type[Controller[_SerializerT]],
@@ -113,11 +113,9 @@ def sse(  # noqa: WPS211, WPS234
         >>> async def clock_events(
         ...     serializer: type[PydanticSerializer],
         ...     renderer: Renderer,
-        ... ) -> AsyncIterator[SSEvent]:
+        ... ) -> AsyncIterator[SSEvent[dt.datetime]]:
         ...     while True:
-        ...         yield SSEvent(
-        ...             dt.datetime.now(dt.timezone.utc).timestamp(),
-        ...         )
+        ...         yield SSEvent(dt.datetime.now(dt.timezone.utc))
         ...         await asyncio.sleep(1)
 
     .. danger::
@@ -209,14 +207,14 @@ def sse(  # noqa: WPS211, WPS234
                 Renderer,
                 SSEContext[_PathT, _QueryT, _HeadersT, _CookiesT],
             ],
-            Awaitable[SSEResponse],
+            Awaitable[SSEResponse[SSE]],
         ],
         /,
     ) -> type[Controller[_SerializerT]]:
         nonlocal response_spec
         if response_spec is None:
             response_spec = ResponseSpec(
-                SSEvent[_resolve_event_model(func) if validate_events else Any],
+                _resolve_event_model(func),
                 status_code=HTTPStatus.OK,
                 headers={
                     'Cache-Control': HeaderSpec(),
@@ -259,7 +257,7 @@ def _build_controller(  # noqa: WPS211, WPS234
             Renderer,
             SSEContext[_PathT, _QueryT, _HeadersT, _CookiesT],
         ],
-        Awaitable[SSEResponse],
+        Awaitable[SSEResponse[SSE]],
     ],
     /,
     *,
@@ -319,7 +317,7 @@ def _build_controller(  # noqa: WPS211, WPS234
 
         def build_sse_streaming_response(
             self,
-            response: SSEResponse,
+            response: SSEResponse[SSE],
         ) -> SSEStreamingResponse:
             streaming_response = sse_streaming_response_cls(
                 response.streaming_content,

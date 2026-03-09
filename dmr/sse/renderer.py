@@ -11,7 +11,6 @@ from dmr.parsers import (
     _NoOpParser,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.renderers import Renderer
-from dmr.sse.metadata import SSEvent
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -64,18 +63,21 @@ class SSERenderer(Renderer):
         self._linebreak = linebreak
 
     @override
-    def render(  # noqa: C901, WPS213
+    def render(
         self,
         to_serialize: Any,
         serializer_hook: Callable[[Any], Any],
     ) -> bytes:
         """Render a single event in the SSE chain of events."""
-        if not isinstance(to_serialize, SSEvent):
+        try:
+            return self._render_event(to_serialize)
+        except AttributeError:
             raise EndpointMetadataError(
-                'SSERenderer can only render SSEvent instances, '
+                'SSERenderer can only render SSE protocol instances, '
                 f'got {type(to_serialize)}',
-            )
+            ) from None
 
+    def _render_event(self, to_serialize: Any) -> bytes:  # noqa: C901, WPS213
         # We use BytesIO, because our json renderer returns `bytes`.
         # We don't want to convert it to string to convert it to bytes again.
         # Payload will always be preset,

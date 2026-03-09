@@ -27,6 +27,8 @@ async def _valid_events() -> AsyncIterator[SSEvent[Any]]:
     yield SSEvent(b'second', event=None, retry=None)
     yield SSEvent(b'third', retry=1, id=10, serialize=False)
     yield SSEvent({'user': 1})
+    yield SSEvent(comment='ping')
+    yield SSEvent(event='pong')
 
 
 @sse(PydanticSerializer)
@@ -34,7 +36,7 @@ async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[Any]]:
     return SSEResponse(_valid_events())
 
 
@@ -67,10 +69,14 @@ async def test_all_sse_events_props(
         b'\r\n'
         b'data: {"user":1}\r\n'
         b'\r\n'
+        b': ping\r\n'
+        b'\r\n'
+        b'event: pong\r\n'
+        b'\r\n'
     )
 
 
-async def _simple_events() -> AsyncIterator[SSEvent]:
+async def _simple_events() -> AsyncIterator[SSEvent[bytes]]:
     yield SSEvent(b'simple', serialize=False)
 
 
@@ -94,7 +100,7 @@ async def _sse_with_headers_and_cookies(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     return SSEResponse(
         _simple_events(),
         headers={'X-Test': 'secret'},
@@ -139,7 +145,7 @@ async def _sse_with_close(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[int]]:
     return SSEResponse(_events_with_close())
 
 

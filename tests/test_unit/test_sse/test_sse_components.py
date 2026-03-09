@@ -2,7 +2,7 @@ import dataclasses
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import Final, TypeAlias
+from typing import Any, Final, TypeAlias
 
 import pydantic
 import pytest
@@ -36,10 +36,7 @@ else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
 
-async def _empty_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEvent[list[str]]]:
+async def _empty_events() -> AsyncIterator[SSEvent[list[str]]]:
     yield SSEvent(['authed'])
 
 
@@ -79,12 +76,12 @@ async def test_sse_parses_all_components(
             _HeaderModel,
             dict[str, str],
         ],
-    ) -> SSEResponse:
+    ) -> SSEResponse[SSEvent[list[str]]]:
         assert context.parsed_path == {'user_id': 1, 'stream_name': 'abc'}
         assert context.parsed_query == _QueryModel(filter='python')
         assert context.parsed_headers == _HeaderModel(whatever='yes')
         assert context.parsed_cookies == {'session_id': 'unique'}
-        return SSEResponse(_empty_events(PydanticSerializer, renderer))
+        return SSEResponse(_empty_events())
 
     request = dmr_async_rf.get(
         '/whatever/?filter=python',
@@ -123,7 +120,7 @@ async def test_sse_parsing_error(
         request: HttpRequest,
         renderer: Renderer,
         context: SSEContext[_PathModel],
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise NotImplementedError
 
     request = dmr_async_rf.get('/whatever/')

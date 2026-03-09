@@ -32,7 +32,6 @@ class Schema:
     dependent_schemas: dict[str, 'Reference | Schema'] | None = None
     prefix_items: list['Reference | Schema'] | None = None
     items: 'Reference | Schema | bool | None' = None
-    item_schema: 'Reference | Schema | None' = None  # 3.2+
     contains: 'Reference | Schema | None' = None
     properties: dict[str, 'Reference | Schema'] | None = None
     pattern_properties: dict[str, 'Reference | Schema'] | None = None

@@ -8,14 +8,10 @@ from django.http import HttpRequest
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer
 from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
-async def _valid_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEvent[bytes]]:
+async def _valid_events() -> AsyncIterator[SSEvent[bytes]]:
     yield SSEvent(b'valid event', serialize=False)
 
 
@@ -49,12 +45,12 @@ async def _sse_valid(
         _HeaderModel,
         dict[str, str],
     ],
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     assert_type(context.parsed_path, _PathModel)
     assert_type(context.parsed_query, _QueryModel)
     assert_type(context.parsed_headers, _HeaderModel)
     assert_type(context.parsed_cookies, dict[str, str])
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+    return SSEResponse(_valid_events())
 
 
 @sse(  # type: ignore[arg-type]
@@ -68,12 +64,12 @@ async def _sse_no_type_args(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     assert_type(context.parsed_path, None)
     assert_type(context.parsed_query, None)
     assert_type(context.parsed_headers, None)
     assert_type(context.parsed_cookies, None)
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+    return SSEResponse(_valid_events())
 
 
 @sse(
@@ -86,9 +82,9 @@ async def _sse_missing_component(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext[_PathModel, _QueryModel, None, dict[str, str]],
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     assert_type(context.parsed_path, _PathModel)
     assert_type(context.parsed_query, _QueryModel)
     assert_type(context.parsed_headers, None)
     assert_type(context.parsed_cookies, dict[str, str])
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+    return SSEResponse(_valid_events())

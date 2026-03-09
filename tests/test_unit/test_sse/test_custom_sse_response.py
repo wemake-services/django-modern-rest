@@ -9,6 +9,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
+    SSE,
     SSEContext,
     SSEResponse,
     SSEStreamingResponse,
@@ -20,10 +21,10 @@ from tests.infra.streaming import get_streaming_content
 
 
 def _positive_numbers(
-    event: SSEvent[Any],
+    event: SSE,
     model: Any,
     serializer: type['BaseSerializer'],
-) -> SSEvent[Any]:
+) -> SSE:
     if isinstance(event.data, int) and event.data < 0:
         raise ValueError(f'Negative number found: {event.data}')
     return event
@@ -36,10 +37,7 @@ class _PositiveStreamingResponse(SSEStreamingResponse):
     )
 
 
-async def _valid_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEvent[int]]:
+async def _valid_events() -> AsyncIterator[SSEvent[int]]:
     yield SSEvent(1)
     yield SSEvent(-1)
 
@@ -52,8 +50,8 @@ async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+) -> SSEResponse[SSEvent[int]]:
+    return SSEResponse(_valid_events())
 
 
 @pytest.mark.asyncio

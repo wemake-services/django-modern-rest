@@ -6,6 +6,7 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Protocol,
     final,
     get_args,
     overload,
@@ -20,11 +21,24 @@ from dmr.types import Empty, EmptyObj, parse_return_annotation
 _DataT_co = TypeVar('_DataT_co', covariant=True)
 
 
+class SSE(Protocol):
+    data: Any | None = None
+    event: str | None = None
+    id: int | str | None = None
+    retry: int | None = None
+    comment: str | None = None
+
+    @property
+    def serialize(self) -> bool: ...
+
+
 @final
 @dataclasses.dataclass(init=False)
 class SSEvent(Generic[_DataT_co]):
     """
-    Server sent event.
+    Default implementation for the Server Sent Event.
+
+    All parameters are optional, but at least one is required.
 
     Attributes:
         data: Event payload.
@@ -37,16 +51,33 @@ class SSEvent(Generic[_DataT_co]):
             Serializes by default. When *serialize* is ``False``,
             *data* can only be ``bytes``.
 
+    .. note::
+
+        It is recommended for end users to define their own types
+        that will be type-safe and will have the correct schema.
+
     See also:
         https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
 
     """
 
-    data: _DataT_co  # type: ignore[misc]  # noqa: WPS110
+    data: _DataT_co  # noqa: WPS110
     event: str | None = dataclasses.field(default=None, kw_only=True)
     id: int | str | None = dataclasses.field(default=None, kw_only=True)
     retry: int | None = dataclasses.field(default=None, kw_only=True)
     comment: str | None = dataclasses.field(default=None, kw_only=True)
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -73,8 +104,8 @@ class SSEvent(Generic[_DataT_co]):
     ) -> None: ...
 
     def __init__(
-        self: 'SSEvent[_DataT_co | bytes]',
-        data: _DataT_co | bytes,
+        self: 'SSEvent[_DataT_co | bytes | None]',
+        data: _DataT_co | bytes | None = None,
         *,
         event: str | None = None,
         id: int | str | None = None,  # noqa: A002
@@ -87,6 +118,14 @@ class SSEvent(Generic[_DataT_co]):
                 f'data must be an instance of "bytes", not {type(data)}, '
                 'when serialize=False',
             )
+        if (
+            data is None
+            and event is None
+            and id is None
+            and retry is None
+            and comment is None
+        ):
+            raise ValueError('At least one event field must be non-None')
 
         self.data = data
         self.event = event
@@ -100,7 +139,7 @@ class SSEvent(Generic[_DataT_co]):
         return self._serialize
 
 
-_EventT = TypeVar('_EventT')
+_EventT = TypeVar('_EventT', bound=SSE, covariant=True)
 
 
 @final
@@ -125,7 +164,7 @@ class SSEResponse(Generic[_EventT]):
 
     """
 
-    streaming_content: AsyncIterator[SSEvent[_EventT]]
+    streaming_content: AsyncIterator[_EventT]
     headers: Mapping[str, str] | None = None
     cookies: Mapping[str, NewCookie] | None = None
     event_model: Any | Empty = EmptyObj  # `None` can be a valid model

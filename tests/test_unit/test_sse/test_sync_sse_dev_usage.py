@@ -34,7 +34,7 @@ async def _valid_sse(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[str | bytes | int]]:
     return SSEResponse(_valid_events())
 
 
@@ -111,7 +111,7 @@ async def _sse_with_close(
     request: HttpRequest,
     renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     return SSEResponse(_events_with_close())
 
 
