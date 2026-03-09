@@ -7,13 +7,13 @@ from django.http import HttpRequest
 
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.headers import HeaderSpec
-from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
     SSEResponse,
+    SSEResponseSpec,
     SSEStreamingResponse,
     SSEvent,
     sse,
@@ -82,9 +82,8 @@ async def _simple_events() -> AsyncIterator[SSEvent[bytes]]:
 
 @sse(
     PydanticSerializer,
-    response_spec=ResponseSpec(
+    response_spec=SSEResponseSpec(
         SSEvent[bytes],
-        status_code=HTTPStatus.OK,
         headers={
             'Cache-Control': HeaderSpec(),
             'Connection': HeaderSpec(),

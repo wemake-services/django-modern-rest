@@ -1,6 +1,6 @@
 import dataclasses
 from http import HTTPStatus
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import (
@@ -21,6 +21,9 @@ def get_schema(
     serializer: type['BaseSerializer'],
     context: OpenAPIContext,
     metadata: 'EndpointMetadata',
+    *,
+    schema_field_name: Literal['schema', 'item_schema'] = 'schema',
+    used_for_response: bool = True,
 ) -> Response:
     """
     Returns the OpenAPI schema for the response.
@@ -32,10 +35,19 @@ def get_schema(
     headers.update(_get_cookies(response_spec, serializer, context))
 
     return Response(
-        description=response_spec.description
-        or HTTPStatus(response_spec.status_code).phrase,
+        description=(
+            response_spec.description
+            or HTTPStatus(response_spec.status_code).phrase
+        ),
         headers=headers or None,
-        content=_get_content(response_spec, serializer, context, metadata),
+        content=_get_content(
+            response_spec,
+            serializer,
+            context,
+            metadata,
+            schema_field_name=schema_field_name,
+            used_for_response=used_for_response,
+        ),
     )
 
 
@@ -87,6 +99,9 @@ def _get_content(
     serializer: type['BaseSerializer'],
     context: OpenAPIContext,
     metadata: 'EndpointMetadata',
+    *,
+    schema_field_name: Literal['schema', 'item_schema'],
+    used_for_response: bool,
 ) -> dict[str, MediaType]:
     # Import cycle:
     from dmr.negotiation import get_conditional_types  # noqa: PLC0415
@@ -94,14 +109,16 @@ def _get_content(
     return_types = get_conditional_types(response_spec.return_type) or {}
     return {
         renderer.content_type: MediaType(
-            schema=context.generators.schema(
-                return_types.get(
-                    renderer.content_type,
-                    response_spec.return_type,
+            **{
+                schema_field_name: context.generators.schema(
+                    return_types.get(
+                        renderer.content_type,
+                        response_spec.return_type,
+                    ),
+                    serializer,
+                    used_for_response=used_for_response,
                 ),
-                serializer,
-                used_for_response=True,
-            ),
+            },
         )
         for renderer in metadata.renderers.values()
         if (

@@ -9,7 +9,7 @@ from dirty_equals import IsStr
 from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
 
-from dmr import APIError, HeaderSpec, ResponseSpec
+from dmr import APIError, ResponseSpec
 from dmr.errors import ErrorModel, format_error
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
@@ -18,6 +18,7 @@ from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
     SSEResponse,
+    SSEResponseSpec,
     SSEStreamingResponse,
     SSEvent,
     sse,
@@ -161,12 +162,11 @@ async def test_wrong_event_type(
         contextlib.nullcontext()
         if expected
         else pytest.raises(
-            EndpointMetadataError, match='SSERenderer can only render SSE',
+            EndpointMetadataError,
+            match='SSERenderer can only render SSE',
         )
     ):
-        assert (
-            b'event: error\r\n' in await get_streaming_content(response)
-        )
+        assert b'event: error\r\n' in await get_streaming_content(response)
 
 
 @pytest.mark.asyncio
@@ -177,7 +177,7 @@ async def test_wrong_event_type(
         ({'response_spec': None, 'validate_responses': False}, HTTPStatus.OK),
         (
             {
-                'response_spec': ResponseSpec(None, status_code=HTTPStatus.OK),
+                'response_spec': SSEResponseSpec(None),
                 'validate_responses': False,
             },
             HTTPStatus.OK,
@@ -194,9 +194,8 @@ async def test_wrong_event_type(
         ),
         (
             {
-                'response_spec': ResponseSpec(
+                'response_spec': SSEResponseSpec(
                     SSEvent[Any],
-                    status_code=HTTPStatus.OK,
                 ),
                 'validate_responses': False,
             },
@@ -204,15 +203,7 @@ async def test_wrong_event_type(
         ),
         (
             {
-                'response_spec': ResponseSpec(
-                    SSEvent[Any],
-                    status_code=HTTPStatus.OK,
-                    headers={
-                        'Cache-Control': HeaderSpec(),
-                        'Connection': HeaderSpec(),
-                        'X-Accel-Buffering': HeaderSpec(),
-                    },
-                ),
+                'response_spec': SSEResponseSpec(SSEvent[Any]),
                 'validate_responses': True,
             },
             HTTPStatus.OK,
@@ -220,22 +211,21 @@ async def test_wrong_event_type(
         # Failures:
         (
             {
-                'response_spec': ResponseSpec(None, status_code=HTTPStatus.OK),
+                'response_spec': SSEResponseSpec(None),
             },
             HTTPStatus.UNPROCESSABLE_ENTITY,
         ),
         (
             {
-                'response_spec': ResponseSpec(None, status_code=HTTPStatus.OK),
+                'response_spec': SSEResponseSpec(None),
                 'validate_responses': True,
             },
             HTTPStatus.UNPROCESSABLE_ENTITY,
         ),
         (
             {
-                'response_spec': ResponseSpec(
+                'response_spec': SSEResponseSpec(
                     SSEvent[Any],
-                    status_code=HTTPStatus.OK,
                     headers={},
                 ),
             },

@@ -3,7 +3,6 @@ from collections.abc import Awaitable, Callable, Sequence
 from http import HTTPStatus
 from typing import Any, ClassVar, get_args
 
-from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import TypeVar, override
 
@@ -11,14 +10,13 @@ from dmr.components import Cookies, Headers, Path, Query
 from dmr.controller import Controller
 from dmr.endpoint import Endpoint, validate
 from dmr.exceptions import UnsolvableAnnotationsError
-from dmr.headers import HeaderSpec
 from dmr.internal.negotiation import force_request_renderer
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
-from dmr.sse.metadata import SSE, SSEContext, SSEResponse
+from dmr.sse.metadata import SSE, SSEContext, SSEResponse, SSEResponseSpec
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 from dmr.types import parse_return_annotation
@@ -66,7 +64,7 @@ def sse(  # noqa: WPS211, WPS234
     query: type[Query[_QueryT]] | None = None,
     headers: type[Headers[_HeadersT]] | None = None,
     cookies: type[Cookies[_CookiesT]] | None = None,
-    response_spec: ResponseSpec | None = None,
+    response_spec: SSEResponseSpec | None = None,
     extra_responses: Sequence[ResponseSpec] = (),
     validate_responses: bool | None = None,
     validate_events: bool | None = None,
@@ -213,16 +211,7 @@ def sse(  # noqa: WPS211, WPS234
     ) -> type[Controller[_SerializerT]]:
         nonlocal response_spec
         if response_spec is None:
-            response_spec = ResponseSpec(
-                _resolve_event_model(func),
-                status_code=HTTPStatus.OK,
-                headers={
-                    'Cache-Control': HeaderSpec(),
-                    'Connection': HeaderSpec(required=not settings.DEBUG),
-                    'X-Accel-Buffering': HeaderSpec(),
-                },
-                limit_to_content_types={sse_renderer.content_type},
-            )
+            response_spec = SSEResponseSpec(_resolve_event_model(func))
 
         return _build_controller(
             serializer,

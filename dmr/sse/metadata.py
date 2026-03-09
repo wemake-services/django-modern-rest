@@ -1,5 +1,6 @@
 import dataclasses
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Mapping, Set
+from http import HTTPStatus
 from types import AsyncGeneratorType
 from typing import (
     Any,
@@ -12,21 +13,29 @@ from typing import (
     overload,
 )
 
-from typing_extensions import TypeVar
+from django.conf import settings
+from typing_extensions import TypeVar, override
 
 from dmr.cookies import NewCookie
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.headers import HeaderSpec
+from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.negotiation import ContentType
+from dmr.openapi import OpenAPIContext
+from dmr.openapi.mappers import responses
+from dmr.openapi.objects import Response
+from dmr.serializer import BaseSerializer
 from dmr.types import Empty, EmptyObj, parse_return_annotation
 
 _DataT_co = TypeVar('_DataT_co', covariant=True)
 
 
 class SSE(Protocol):
-    data: Any | None = None
-    event: str | None = None
-    id: int | str | None = None
-    retry: int | None = None
-    comment: str | None = None
+    data: Any = None
+    event: Any = None
+    id: Any = None
+    retry: Any = None
+    comment: Any = None
 
     @property
     def serialize(self) -> bool: ...
@@ -61,7 +70,7 @@ class SSEvent(Generic[_DataT_co]):
 
     """
 
-    data: _DataT_co  # noqa: WPS110
+    data: _DataT_co  # type: ignore[misc]  # noqa: WPS110
     event: str | None = dataclasses.field(default=None, kw_only=True)
     id: int | str | None = dataclasses.field(default=None, kw_only=True)
     retry: int | None = dataclasses.field(default=None, kw_only=True)
@@ -139,12 +148,48 @@ class SSEvent(Generic[_DataT_co]):
         return self._serialize
 
 
-_EventT = TypeVar('_EventT', bound=SSE, covariant=True)
+@dataclasses.dataclass(slots=True, frozen=True)
+class SSEResponseSpec(ResponseSpec):
+    status_code: Literal[HTTPStatus.OK] = dataclasses.field(
+        kw_only=True,
+        default=HTTPStatus.OK,
+    )
+    headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
+        kw_only=True,
+        default_factory=lambda: {
+            'Cache-Control': HeaderSpec(),
+            'Connection': HeaderSpec(required=not settings.DEBUG),
+            'X-Accel-Buffering': HeaderSpec(),
+        },
+    )
+    limit_to_content_types: Set[str] | None = dataclasses.field(
+        kw_only=True,
+        default_factory=lambda: {ContentType.event_stream},
+    )
+
+    @override
+    def get_schema(
+        self,
+        serializer: type['BaseSerializer'],
+        context: OpenAPIContext,
+        metadata: EndpointMetadata,
+    ) -> Response:
+        return responses.get_schema(
+            self,
+            serializer,
+            context,
+            metadata,
+            schema_field_name='item_schema',
+            used_for_response=False,
+        )
+
+
+_EventT_co = TypeVar('_EventT_co', bound=SSE, covariant=True)
 
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
-class SSEResponse(Generic[_EventT]):
+class SSEResponse(Generic[_EventT_co]):
     """
     Future response representation.
 
@@ -164,7 +209,7 @@ class SSEResponse(Generic[_EventT]):
 
     """
 
-    streaming_content: AsyncIterator[_EventT]
+    streaming_content: AsyncIterator[_EventT_co]
     headers: Mapping[str, str] | None = None
     cookies: Mapping[str, NewCookie] | None = None
     event_model: Any | Empty = EmptyObj  # `None` can be a valid model
