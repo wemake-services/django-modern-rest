@@ -1,17 +1,18 @@
 import sys
+
 from django.conf import settings
+from django.core.management import execute_from_command_line
 from django.http import HttpResponse
 from django.urls import path
-from django.core.management import execute_from_command_line
 
 # Configure Django settings
 # For now, just leave it as is
 # Real apps typically add INSTALLED_APPS and MIDDLEWARE. We will add it later
 settings.configure(
-     DEBUG=True,
-     SECRET_KEY='your-secret-key-here',
-     ROOT_URLCONF=__name__,
- )
+    DEBUG=True,
+    SECRET_KEY='your-secret-key-here',
+    ROOT_URLCONF=__name__,
+)
 
 # Define URL patterns
 # urlpatterns is mechanism that maps URL to function

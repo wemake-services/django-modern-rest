@@ -172,7 +172,3 @@ And then visit https://localhost:8000/docs/swagger for the interactive docs.
 Note that new endpoints will change to http://localhost:8000/api/users/get_users and http://localhost:8000/api/user/set_user
 
 That's it! Enjoy your new project!
-
-
-
-

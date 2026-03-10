@@ -1,26 +1,26 @@
-import sys
-from django.conf import settings
-from django.http import HttpResponse, JsonResponse
-from django.urls import path, include
-from django.core.management import execute_from_command_line
 import json
+import sys
+
+from django.conf import settings
+from django.core.management import execute_from_command_line
+from django.http import HttpResponse, JsonResponse
+from django.urls import include, path
 
 from dmr.routing import Router
 
-
 DATABASE = {
-   '1': 'Alex',
-   '2': 'Sasha',
+    '1': 'Alex',
+    '2': 'Sasha',
 }
 
 # Configure Django settings
 # For now just leave it as is
 # Real apps typically add INSTALLED_APPS and MIDDLEWARE. We will add it later
 settings.configure(
-     DEBUG=True,
-     SECRET_KEY='your-secret-key-here',
-     ROOT_URLCONF=__name__,
- )
+    DEBUG=True,
+    SECRET_KEY='your-secret-key-here',
+    ROOT_URLCONF=__name__,
+)
 
 
 def get_users(request):
@@ -66,8 +66,14 @@ users_router = Router(
 # Now we pass a lambda function for the root URL (http://localhost:8000/)
 urlpatterns = [
     path('', lambda request: HttpResponse('Hello from Django Modern Rest!')),
-    path(user_router.prefix, include((user_router.urls, 'your_app'), namespace='api')),
-    path(users_router.prefix, include((users_router.urls, 'your_app'), namespace='api'))
+    path(
+        user_router.prefix,
+        include((user_router.urls, 'your_app'), namespace='api'),
+    ),
+    path(
+        users_router.prefix,
+        include((users_router.urls, 'your_app'), namespace='api'),
+    ),
 ]
 
 if __name__ == '__main__':

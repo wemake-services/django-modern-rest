@@ -1,27 +1,28 @@
 import sys
+
+import pydantic
 from django.conf import settings
-from django.http import HttpResponse
-from django.urls import path, include
 from django.core.management import execute_from_command_line
+from django.http import HttpResponse
+from django.urls import include, path
 
 from dmr import Body, Controller
-from dmr.routing import Router
-import pydantic
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import Router
 
 DATABASE = {
-   '1': 'Alex',
-   '2': 'Sasha',
+    '1': 'Alex',
+    '2': 'Sasha',
 }
 
 # Configure Django settings
 # For now, just leave it as is
 # Real apps typically add INSTALLED_APPS and MIDDLEWARE. We will add it later
 settings.configure(
-     DEBUG=True,
-     SECRET_KEY='your-secret-key-here',
-     ROOT_URLCONF=__name__,
- )
+    DEBUG=True,
+    SECRET_KEY='your-secret-key-here',
+    ROOT_URLCONF=__name__,
+)
 
 
 # Models for users
@@ -54,13 +55,13 @@ class UserController(
     Controller[PydanticSerializer],
     Body[UserCreateModel],
 ):
-
     def post(self) -> UserCreateStatusModel:
         user_id = self.parsed_body.id
         name = self.parsed_body.name
         DATABASE[user_id] = name
         return UserCreateStatusModel(
-            status=True, message=f'User with {user_id=} and {name=} created')
+            status=True, message=f'User with {user_id=} and {name=} created'
+        )
 
 
 user_router = Router(
