@@ -6,6 +6,6 @@ max-examples = 100
 # Fail on any warning:
 fail-on = true
 
-[auth.basic]
+[auth.openapi.http_basic]
 username = 'test'
 password = 'pass'
