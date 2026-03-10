@@ -6,7 +6,7 @@ from server.apps.models_example import views
 router = Router(
     [
         path(
-            'user',
+            'user/',
             views.UserCreateController.as_view(),
             name='user_model_create',
         ),
