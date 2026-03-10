@@ -209,6 +209,12 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst
 
+.. toctree::
+  :caption: Expanded Examples
+  :hidden:
+
+  pages/expanded_examples/first-app
+
 
 .. toctree::
   :caption: Community

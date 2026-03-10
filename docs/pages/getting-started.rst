@@ -81,6 +81,11 @@ for up-to-date docs for the LLMs.
 Showcase
 --------
 
+.. note::
+   If you don't familiar with rest frameworks or Django iteslf,
+   see our :doc:`single-file application <structure/micro-framework>`
+   or :doc:`expanded example for beginners <expanded_examples/first-app>`.
+
 Let's see the basics and learn how to use ``dmr`` in a single example:
 
 .. tabs::
@@ -134,37 +139,6 @@ Next, you can learn:
 - How to generate OpenAPI schema
 - How to handle errors
 - How to customize controllers and endpoints
-
-
-But, Django is complicated!
----------------------------
-
-If you were ever told that Django is too big and complicated,
-that was misleading, to say the least.
-
-Here's a :doc:`single-file application <structure/micro-framework>`
-that looks pretty much the same as any other micro-framework, like:
-FastAPI, Litestar, or Flask.
-
-.. literalinclude:: /examples/structure/micro_framework/single_file_asgi.py
-   :language: python
-   :linenos:
-
-You can copy it by clicking "Copy" in the right upper corner of the example,
-it shows up on hovering the code example. Paste it as ``example.py``,
-install the ``django-modern-rest`` and run it with:
-
-.. code-block:: bash
-
-  python example.py runserver
-
-And then visit https://localhost:8000/docs/swagger for the interactive docs.
-
-.. image:: /_static/images/swagger.png
-   :alt: Swagger view
-   :align: center
-
-That's it, enjoy your new project!
 
 
 But, this is too simple for my use-case!
