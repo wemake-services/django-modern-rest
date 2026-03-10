@@ -132,6 +132,8 @@ nitpick_ignore = [
     ),
     (PY_CLASS, 'dmr.security.django_session.views._ResponseT'),
     (PY_CLASS, 'dmr.pagination._ModelT'),
+    (PY_CLASS, 'dmr.sse.metadata._EventT_co'),
+    (PY_CLASS, 'dmr.sse.metadata._DataT_co'),
     (PY_CLASS, 'dmr.sse.metadata._PathT'),
     (PY_CLASS, 'dmr.sse.metadata._QueryT'),
     (PY_CLASS, 'dmr.sse.metadata._HeadersT'),

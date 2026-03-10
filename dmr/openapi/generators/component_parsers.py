@@ -94,11 +94,13 @@ class ComponentParserGenerator:
     ) -> dict[str, 'MediaType']:
         new_content: dict[str, MediaType] = {}
         for media_name, media_type in new_schema.content.items():
-            media_items = [media_type.schema]
+            media_items: list[Schema | Reference] = []
+            if media_type.schema:  # pragma: no cover:
+                media_items.append(media_type.schema)
             existing_content = schema.content.get(media_name)
             # TODO: remove pragma after implementing conditional types
             # for `FileMetadata[]` component
-            if existing_content:  # pragma: no cover
+            if existing_content and existing_content.schema:  # pragma: no cover
                 media_items.append(existing_content.schema)
             new_content[media_name] = dataclasses.replace(
                 media_type,

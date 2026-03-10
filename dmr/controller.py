@@ -1,4 +1,5 @@
 from collections.abc import Callable, Mapping, Sequence, Set
+from functools import cached_property
 from http import HTTPMethod, HTTPStatus
 from typing import (
     Any,
@@ -9,7 +10,7 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
-from django.utils.functional import cached_property, classproperty
+from django.utils.functional import classproperty
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import deprecated, override

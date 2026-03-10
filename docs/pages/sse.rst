@@ -28,15 +28,33 @@ Using SSE
 When to use SSE? When you have a single directional stream of events.
 These events are sent over a single HTTP connection.
 
-We utilize :class:`typing.AsyncIterator` protocol to model event sources.
+We utilize :class:`collections.abc.AsyncIterator`
+protocol to model event sources.
 
 .. literalinclude:: /examples/sse/usage.py
    :language: python
    :linenos:
 
 
+What happens in this example?
+
+1. We define an event producing function yielding events one by one.
+   This functions returns :class:`collections.abc.AsyncIterator` instance
+2. We define an async callback for a special :class:`~dmr.controller.Controller`
+   instance that we generate inside :deco:`~dmr.sse.builder.sse` decorator
+3. This callback must always return :class:`~dmr.sse.metadata.SSEResponse`
+   instance. You can set custom headers and cookies on this response as well
+4. ``SSEResponse[SSEvent[_User]]`` annotation here does two things.
+   First, it is used as a validation model,
+   to be sure that all events follow the same model.
+   Second, it is used to generate OpenAPI schema for this specific endpoint
+
+
 Using components
 ----------------
+
+If you want to parse any incoming data,
+we utilize the same parsing components, as a regular API.
 
 :func:`~dmr.sse.builder.sse` supports working with several component types:
 
@@ -139,16 +157,66 @@ It can be disabled by:
    :linenos:
 
 Users can also disable event structure validation.
-It defaults to the passed ``validate_responses`` value.
+By explicitly passing ``validate_events=False`` parameter.
+If not passed, it defaults to the passed ``validate_responses`` value.
+
+By default all events are strictly validated:
 
 .. literalinclude:: /examples/sse/event_validation.py
    :language: python
    :linenos:
 
+Now, let's disable it:
+
+.. literalinclude:: /examples/sse/event_validation_disabled.py
+   :language: python
+   :linenos:
+   :emphasize-lines: 13
+
 However, it is recommended to use event validation in development
 and to disable it in production.
 You can do so by setting :data:`~dmr.settings.Settings.validate_responses`
 to ``False`` in production. It will also disable ``validate_events`` as well.
+
+
+Modeling business events
+------------------------
+
+We provide our default implementation for sending events:
+:class:`~dmr.sse.metadata.SSEvent`
+
+But, users are not required to use it directly.
+They can create their own models, as long as they respect
+:class:`~dmr.sse.metadata.SSE` protocol fields.
+
+It is quite common in SSE to model different
+`ADTs <https://en.wikipedia.org/wiki/Algebraic_data_type>`_.
+Because events can be of different types,
+they might have different data based on it.
+And they might also contain different other fields based on that.
+
+For example, let's model three different events:
+
+1. If any new users are registered, send us an event with type ``user``,
+   ``id`` with the user's id, and a username as the data
+2. If any new payment is made, send us ``payment`` event type
+   with ``{"amount": int, "currency": str}`` json string as the data
+3. Sometimes we send purely technical ``ping`` events
+   with ``: ping`` as a comment and ``retry: 50`` instruction
+
+Let's model this with perfect type-safety and state-of-the-art OpenAPI schema.
+
+.. literalinclude:: /examples/sse/event_modeling.py
+   :language: python
+   :linenos:
+
+This will also generate a correct OpenAPI spec
+with all the logical cases covered.
+
+If you are still not happy with the resulting OpenAPI schema,
+you can fully customize it using your serializer's official docs.
+For example, ``pydantic`` uses ``__get_pydantic_json_schema__`` method
+for `this purpose <https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_core_schema__>`_.
 
 
 API Reference
@@ -157,12 +225,13 @@ API Reference
 Builder
 ~~~~~~~
 
-.. autofunction:: dmr.sse.builder.sse
+.. autodecorator:: dmr.sse.builder.sse
 
 Metadata
 ~~~~~~~~
 
-.. autodata:: dmr.sse.metadata.SSEData
+.. autoclass:: dmr.sse.metadata.SSE
+  :members:
 
 .. autoclass:: dmr.sse.metadata.SSEvent
   :members:

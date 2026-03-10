@@ -9,7 +9,7 @@ from typing import (
     final,
 )
 
-from django.http import HttpResponse, HttpResponseBase
+from django.http import FileResponse, HttpResponse, HttpResponseBase
 
 from dmr.cookies import NewCookie
 from dmr.exceptions import (
@@ -17,6 +17,7 @@ from dmr.exceptions import (
     ResponseSchemaError,
     ValidationError,
 )
+from dmr.files import FileBody
 from dmr.headers import build_headers
 from dmr.internal.negotiation import (
     media_by_precedence,
@@ -33,6 +34,7 @@ from dmr.types import EmptyObj
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
+    from dmr.parsers import Parser
     from dmr.renderers import Renderer
 
 _InputT = TypeVar('_InputT')
@@ -40,7 +42,7 @@ _ResponseT = TypeVar('_ResponseT', bound=HttpResponseBase)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class ResponseValidator:
+class ResponseValidator:  # noqa: WPS214
     """
     Response validator.
 
@@ -74,33 +76,12 @@ class ResponseValidator:
             endpoint.metadata,
         )
 
-        if isinstance(response, HttpResponse):
-            # When we have a regular response, we deserialize
-            # its content, it is quite clear.
-            structured = self.serializer.deserialize(
-                response.content,
-                parser=parser,
-                request=controller.request,
-                model=schema.return_type,
-            )
-        else:
-            # But, when we are dealing with `FileResponse`
-            # or any other streaming response type,
-            # there's nothing really to deserialize.
-            # So, we end up working with some specific markers / abstractions.
-            structured = self.serializer.deserialize_response(
-                response,
-                parser=parser,
-                request=controller.request,
-            )
-        self._validate_body(
-            structured,
+        self._maybe_validate_body(
+            response,
             schema,
-            # Here's the tricky part:
-            # 1. We first try to use the renderer's default content type
-            # 2. But, there might be no renderer yet
-            # 3. So, we fallback to the default parser in this case.
-            content_type=getattr(renderer, 'content_type', parser.content_type),
+            controller,
+            parser,
+            renderer,
         )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
@@ -159,6 +140,49 @@ class ResponseValidator:
         raise ResponseSchemaError(
             f'Returned status code {status_code} is not specified '
             f'in the list of allowed status codes: {allowed!r}',
+        )
+
+    def _maybe_validate_body(
+        self,
+        response: HttpResponseBase,
+        schema: ResponseSpec,
+        controller: 'Controller[BaseSerializer]',
+        parser: 'Parser',
+        renderer: 'Renderer | None',
+    ) -> None:
+        if isinstance(response, HttpResponse):
+            # When we have a regular response, we deserialize
+            # its content, it is quite clear.
+            structured = self.serializer.deserialize(
+                response.content,
+                parser=parser,
+                request=controller.request,
+                model=schema.return_type,
+            )
+        elif isinstance(response, FileResponse):
+            # But, when we are dealing with `FileResponse`
+            # there's nothing really to deserialize.
+            # So, we end up working with some specific markers / abstractions.
+            structured = FileBody()
+        elif getattr(response, 'streaming', False):
+            # If this is a streaming response,
+            # we know that there's no real body. Just skip it.
+            return
+        else:
+            # If this response is something else, we raise an error.
+            # Because, we don't know how to deserialize the response body.
+            raise InternalServerError(
+                f'Unsupported response type {type(response)!r}',
+            )
+
+        self._validate_body(
+            structured,
+            schema,
+            # Here's the tricky part:
+            # 1. We first try to use the renderer's default content type
+            # 2. But, there might be no renderer yet
+            # 3. So, we fallback to the default parser in this case.
+            content_type=getattr(renderer, 'content_type', parser.content_type),
         )
 
     def _validate_body(

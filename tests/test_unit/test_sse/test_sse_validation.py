@@ -1,4 +1,4 @@
-import dataclasses
+import contextlib
 import json
 from collections.abc import AsyncIterator
 from http import HTTPMethod, HTTPStatus
@@ -9,15 +9,15 @@ from dirty_equals import IsStr
 from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
 
-from dmr import APIError, HeaderSpec, ResponseSpec
+from dmr import APIError, ResponseSpec
 from dmr.errors import ErrorModel, format_error
+from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
-    SSEData,
     SSEResponse,
+    SSEResponseSpec,
     SSEStreamingResponse,
     SSEvent,
     sse,
@@ -40,40 +40,9 @@ else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class _User:
-    email: str
-
-
-async def _valid_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
-    # When `msgspec` is missing, `@dataclass` is not supported:
-    yield SSEvent(
-        serializer.serialize(
-            (
-                {'email': 'first@example.com'}
-                if MsgspecSerializer is None
-                else _User(email='first@example.com')
-            ),
-            renderer=renderer,
-        ),
-    )
-    yield SSEvent(
-        serializer.serialize(
-            (
-                {'email': 'second@example.com'}
-                if MsgspecSerializer is None
-                else _User(email='second@example.com')
-            ),
-            renderer=renderer,
-        ),
-    )
-
-    yield b'regular bytes'
-    yield b'multiline\nbyte\nstring'
-    yield 10
+async def _valid_events() -> AsyncIterator[SSEvent[dict[str, str] | bytes]]:
+    yield SSEvent({'email': 'first@example.com'})
+    yield SSEvent(b'multiline\nbyte\nstring', serialize=False)
 
 
 @pytest.mark.asyncio
@@ -88,10 +57,9 @@ async def test_valid_sse(
     @sse(serializer)
     async def _valid_sse(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
-        return SSEResponse(_valid_events(serializer, renderer))
+    ) -> SSEResponse[SSEvent[dict[str, str] | bytes]]:
+        return SSEResponse(_valid_events())
 
     request = dmr_async_rf.get('/whatever/')
 
@@ -111,30 +79,18 @@ async def test_valid_sse(
         assert await get_streaming_content(response) == (
             b'data: {"email": "first@example.com"}\r\n'
             b'\r\n'
-            b'data: {"email": "second@example.com"}\r\n'
-            b'\r\n'
-            b'data: regular bytes\r\n'
-            b'\r\n'
             b'data: multiline\r\n'
             b'data: byte\r\n'
             b'data: string\r\n'
-            b'\r\n'
-            b'data: 10\r\n'
             b'\r\n'
         )
     else:  # pragma: no cover
         assert await get_streaming_content(response) == (
             b'data: {"email":"first@example.com"}\r\n'
             b'\r\n'
-            b'data: {"email":"second@example.com"}\r\n'
-            b'\r\n'
-            b'data: regular bytes\r\n'
-            b'\r\n'
             b'data: multiline\r\n'
             b'data: byte\r\n'
             b'data: string\r\n'
-            b'\r\n'
-            b'data: 10\r\n'
             b'\r\n'
         )
 
@@ -143,12 +99,11 @@ async def test_valid_sse(
 @pytest.mark.parametrize(
     'event',
     [
-        {},
-        {'a': 'b'},
         [],
         [1, 'a'],
         None,
         'abc',
+        b'abc',
         object(),
     ],
 )
@@ -177,19 +132,15 @@ async def test_wrong_event_type(
 ) -> None:
     """Ensures that wrong event types are validated."""
 
-    async def _wrong_type_events(
-        serializer: type[BaseSerializer],
-        renderer: Renderer,
-    ) -> AsyncIterator[SSEData]:
+    async def _wrong_type_events() -> AsyncIterator[Any]:
         yield event
 
     @sse(serializer, **options)
     async def _wrong_type_sse(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
-        return SSEResponse(_wrong_type_events(serializer, renderer))
+    ) -> SSEResponse[SSEvent[Any]]:
+        return SSEResponse(_wrong_type_events())
 
     request = dmr_async_rf.get('/whatever/')
 
@@ -204,9 +155,87 @@ async def test_wrong_event_type(
         'X-Accel-Buffering': 'no',
         'Connection': 'keep-alive',
     }
-    assert (
-        b'event: error\r\n' in await get_streaming_content(response)
-    ) is expected
+    with (
+        contextlib.nullcontext()
+        if expected
+        else pytest.raises(
+            EndpointMetadataError,
+            match='SSERenderer can only render SSE',
+        )
+    ):
+        assert b'event: error\r\n' in await get_streaming_content(response)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_event_generic_validation(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that wrong event types are validated."""
+
+    async def _wrong_type_events() -> AsyncIterator[Any]:
+        yield SSEvent('string')
+
+    @sse(serializer)
+    async def _wrong_type_sse(
+        request: HttpRequest,
+        context: SSEContext,
+    ) -> SSEResponse[SSEvent[int]]:
+        return SSEResponse(_wrong_type_events())
+
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_wrong_type_sse.as_view()(request))
+
+    assert isinstance(response, SSEStreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers == {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/event-stream',
+        'X-Accel-Buffering': 'no',
+        'Connection': 'keep-alive',
+    }
+    assert b'event: error\r\ndata: {"detail"' in await get_streaming_content(
+        response,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_event_generic_validation_skip(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that missing type args skip the generic validation."""
+
+    async def _wrong_type_events() -> AsyncIterator[Any]:
+        yield SSEvent('string')
+
+    @sse(serializer)
+    async def _wrong_type_sse(
+        request: HttpRequest,
+        context: SSEContext,
+    ) -> SSEResponse[SSEvent]:  # type: ignore[type-arg]
+        return SSEResponse(_wrong_type_events())
+
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_wrong_type_sse.as_view()(request))
+
+    assert isinstance(response, SSEStreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers == {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/event-stream',
+        'X-Accel-Buffering': 'no',
+        'Connection': 'keep-alive',
+    }
+    assert await get_streaming_content(response) == b'data: "string"\r\n\r\n'
 
 
 @pytest.mark.asyncio
@@ -217,7 +246,7 @@ async def test_wrong_event_type(
         ({'response_spec': None, 'validate_responses': False}, HTTPStatus.OK),
         (
             {
-                'response_spec': ResponseSpec(None, status_code=HTTPStatus.OK),
+                'response_spec': SSEResponseSpec(None),
                 'validate_responses': False,
             },
             HTTPStatus.OK,
@@ -234,9 +263,8 @@ async def test_wrong_event_type(
         ),
         (
             {
-                'response_spec': ResponseSpec(
-                    SSEData,
-                    status_code=HTTPStatus.OK,
+                'response_spec': SSEResponseSpec(
+                    SSEvent[Any],
                 ),
                 'validate_responses': False,
             },
@@ -244,15 +272,7 @@ async def test_wrong_event_type(
         ),
         (
             {
-                'response_spec': ResponseSpec(
-                    SSEData,
-                    status_code=HTTPStatus.OK,
-                    headers={
-                        'Cache-Control': HeaderSpec(),
-                        'Connection': HeaderSpec(),
-                        'X-Accel-Buffering': HeaderSpec(),
-                    },
-                ),
+                'response_spec': SSEResponseSpec(SSEvent[Any]),
                 'validate_responses': True,
             },
             HTTPStatus.OK,
@@ -260,22 +280,8 @@ async def test_wrong_event_type(
         # Failures:
         (
             {
-                'response_spec': ResponseSpec(None, status_code=HTTPStatus.OK),
-            },
-            HTTPStatus.UNPROCESSABLE_ENTITY,
-        ),
-        (
-            {
-                'response_spec': ResponseSpec(None, status_code=HTTPStatus.OK),
-                'validate_responses': True,
-            },
-            HTTPStatus.UNPROCESSABLE_ENTITY,
-        ),
-        (
-            {
-                'response_spec': ResponseSpec(
-                    SSEData,
-                    status_code=HTTPStatus.OK,
+                'response_spec': SSEResponseSpec(
+                    SSEvent[Any],
                     headers={},
                 ),
             },
@@ -296,10 +302,9 @@ async def test_main_response_validation_sse(
     @sse(serializer, **options)
     async def _wrong_sse(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
-        return SSEResponse(_valid_events(serializer, renderer))
+    ) -> SSEResponse[SSEvent[dict[str, str] | bytes]]:
+        return SSEResponse(_valid_events())
 
     request = dmr_async_rf.get('/whatever/')
 
@@ -328,9 +333,8 @@ async def test_sse_api_error(
     )
     async def _valid_sse(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise APIError(
             format_error('API Error'),
             status_code=HTTPStatus.CONFLICT,
@@ -360,9 +364,8 @@ async def test_sse_api_error_validation(
     @sse(serializer)
     async def _valid_sse(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise APIError(
             format_error('API Error'),
             status_code=HTTPStatus.CONFLICT,
@@ -414,9 +417,8 @@ async def test_sse_wrong_method(
     @sse(serializer)
     async def _valid_sse(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext,
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise NotImplementedError
 
     request = dmr_async_rf.generic(str(method), '/whatever/')
@@ -432,3 +434,61 @@ async def test_sse_wrong_method(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': IsStr(), 'type': 'not_allowed'}],
     })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_missing_event_model(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that missing event model raises."""
+    with pytest.raises(UnsolvableAnnotationsError, match='event data model'):
+
+        @sse(serializer)
+        async def _valid_sse(
+            request: HttpRequest,
+            context: SSEContext,
+        ) -> SSEResponse:  # type: ignore[type-arg]
+            raise NotImplementedError
+
+
+class _Events:
+    async def __aiter__(self) -> AsyncIterator[SSEvent[int]]:
+        yield SSEvent(1)
+        yield SSEvent(2)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_valid_sse_aiter_magic(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that valid sse produces valid results."""
+
+    @sse(serializer)
+    async def _valid_sse(
+        request: HttpRequest,
+        context: SSEContext,
+    ) -> SSEResponse[SSEvent[int]]:
+        return SSEResponse(_Events())  # type: ignore[arg-type]
+
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_valid_sse.as_view()(request))
+
+    assert isinstance(response, SSEStreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers == {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/event-stream',
+        'X-Accel-Buffering': 'no',
+        'Connection': 'keep-alive',
+    }
+    assert await get_streaming_content(response) == (
+        b'data: 1\r\n\r\ndata: 2\r\n\r\n'
+    )

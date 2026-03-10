@@ -12,14 +12,12 @@ from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
 )
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
@@ -41,8 +39,8 @@ else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
 
-async def _events(username: str) -> AsyncIterator[SSEData]:
-    yield SSEvent(b'user', id=username)
+async def _events(username: str) -> AsyncIterator[SSEvent[bytes]]:
+    yield SSEvent(b'user', id=username, serialize=False)
 
 
 async def _resolve(user: User) -> User:
@@ -55,9 +53,8 @@ async def _resolve(user: User) -> User:
 )
 async def _sse_components(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     user = await request.auser()
     assert user.is_authenticated
     return SSEResponse(_events(user.get_username()))

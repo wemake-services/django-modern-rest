@@ -6,11 +6,10 @@ import pytest
 from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
+    SSE,
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
@@ -21,17 +20,13 @@ from tests.infra.streaming import get_streaming_content
 
 
 def _positive_numbers(
-    event: Any,
+    event: SSE,
     model: Any,
     serializer: type['BaseSerializer'],
-) -> SSEData:
-    if (
-        isinstance(event, SSEvent)
-        and isinstance(event.data, int)
-        and event.data < 0
-    ):
+) -> SSE:
+    if isinstance(event.data, int) and event.data < 0:
         raise ValueError(f'Negative number found: {event.data}')
-    return event  # type: ignore[no-any-return]
+    return event
 
 
 class _PositiveStreamingResponse(SSEStreamingResponse):
@@ -41,10 +36,7 @@ class _PositiveStreamingResponse(SSEStreamingResponse):
     )
 
 
-async def _valid_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
+async def _valid_events() -> AsyncIterator[SSEvent[int]]:
     yield SSEvent(1)
     yield SSEvent(-1)
 
@@ -55,10 +47,9 @@ async def _valid_events(
 )
 async def _valid_sse(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
-    return SSEResponse(_valid_events(PydanticSerializer, renderer))
+) -> SSEResponse[SSEvent[int]]:
+    return SSEResponse(_valid_events())
 
 
 @pytest.mark.asyncio

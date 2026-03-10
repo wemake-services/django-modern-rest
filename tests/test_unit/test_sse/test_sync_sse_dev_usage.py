@@ -9,11 +9,9 @@ from django.conf import LazySettings
 from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
     SSEvent,
@@ -22,20 +20,19 @@ from dmr.sse import (
 from dmr.test import DMRRequestFactory
 
 
-async def _valid_events() -> AsyncIterator[SSEData]:
-    yield SSEvent(b'event')
+async def _valid_events() -> AsyncIterator[SSEvent[str | bytes | int]]:
+    yield SSEvent('event')
     await asyncio.sleep(0.1)  # simulate work
-    yield b'second'
+    yield SSEvent(b'second', serialize=False)
     await asyncio.sleep(0.1)
-    yield 3
+    yield SSEvent(3)
 
 
 @sse(PydanticSerializer)
 async def _valid_sse(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[str | bytes | int]]:
     return SSEResponse(_valid_events())
 
 
@@ -68,7 +65,7 @@ def test_sync_sse_dev(
         'X-Accel-Buffering': 'no',
     }
     assert _get_sync_content(response) == (
-        b'data: event\r\n\r\ndata: second\r\n\r\ndata: 3\r\n\r\n'
+        b'data: "event"\r\n\r\ndata: second\r\n\r\ndata: 3\r\n\r\n'
     )
     assert not response.closed
 
@@ -101,18 +98,17 @@ def test_sync_sse_prod(
         _get_sync_content(response)
 
 
-async def _events_with_close() -> AsyncIterator[SSEData]:
-    yield SSEvent(b'event')
-    yield SSEvent(b'second')
+async def _events_with_close() -> AsyncIterator[SSEvent[bytes]]:
+    yield SSEvent(b'event', serialize=False)
+    yield SSEvent(b'second', serialize=False)
     raise SSECloseConnectionError
 
 
 @sse(PydanticSerializer)
 async def _sse_with_close(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[bytes]]:
     return SSEResponse(_events_with_close())
 
 

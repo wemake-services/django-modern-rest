@@ -94,6 +94,9 @@ class ResponseSpec:
         Returns the OpenAPI schema for the response.
 
         Can be customized in subclasses.
+        Be careful when overriding the schema generation.
+        We don't provide any validations for the returned schema.
+        Ensure that it is in sync with the actual response.
         """
         return responses.get_schema(self, serializer, context, metadata)
 

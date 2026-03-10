@@ -62,13 +62,16 @@ class _UserController(
 
 def test_schema_validation(snapshot: SnapshotAssertion) -> None:
     """Ensure that schema is validated correctly."""
+    router = Router(
+        [path('/user', _UserController.as_view())],
+        prefix='/api/v1',
+    )
+
     with pytest.raises(
         OpenAPIValidationError,
         match=re.escape('instance["components"]["securitySchemes"]["wrong"]'),
     ):
-        build_schema(
-            Router(
-                [path('/user', _UserController.as_view())],
-                prefix='/api/v1',
-            ),
-        ).convert()
+        build_schema(router).convert()
+
+    # It is possible to disable the validation:
+    build_schema(router).convert(skip_validation=True)

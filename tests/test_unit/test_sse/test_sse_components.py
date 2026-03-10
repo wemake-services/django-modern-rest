@@ -2,7 +2,7 @@ import dataclasses
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import Final, TypeAlias
+from typing import Any, Final, TypeAlias
 
 import pydantic
 import pytest
@@ -11,13 +11,12 @@ from typing_extensions import TypedDict
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
-    SSEData,
     SSEResponse,
     SSEStreamingResponse,
+    SSEvent,
     sse,
 )
 from dmr.test import DMRAsyncRequestFactory
@@ -35,14 +34,11 @@ except ImportError:  # pragma: no cover
 else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
+_ListStrEvent: TypeAlias = SSEvent[list[str]]
 
-async def _empty_events(
-    serializer: type[BaseSerializer],
-    renderer: Renderer,
-) -> AsyncIterator[SSEData]:
-    # # This is needed to make `_empty_events` an async iterator:
-    if False:  # noqa: WPS314
-        yield b''  # type: ignore[unreachable]
+
+async def _empty_events() -> AsyncIterator[_ListStrEvent]:
+    yield SSEvent(['authed'])
 
 
 class _PathModel(TypedDict):
@@ -74,19 +70,18 @@ async def test_sse_parses_all_components(
     )
     async def _sse_components(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext[
             _PathModel,
             _QueryModel,
             _HeaderModel,
             dict[str, str],
         ],
-    ) -> SSEResponse:
+    ) -> SSEResponse[_ListStrEvent]:
         assert context.parsed_path == {'user_id': 1, 'stream_name': 'abc'}
         assert context.parsed_query == _QueryModel(filter='python')
         assert context.parsed_headers == _HeaderModel(whatever='yes')
         assert context.parsed_cookies == {'session_id': 'unique'}
-        return SSEResponse(_empty_events(PydanticSerializer, renderer))
+        return SSEResponse(_empty_events())
 
     request = dmr_async_rf.get(
         '/whatever/?filter=python',
@@ -105,7 +100,7 @@ async def test_sse_parses_all_components(
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
-    assert await get_streaming_content(response) == b''
+    assert await get_streaming_content(response) == b'data: ["authed"]\r\n\r\n'
 
 
 @pytest.mark.asyncio
@@ -123,9 +118,8 @@ async def test_sse_parsing_error(
     )
     async def _sse_components(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext[_PathModel],
-    ) -> SSEResponse:
+    ) -> SSEResponse[Any]:
         raise NotImplementedError
 
     request = dmr_async_rf.get('/whatever/')

@@ -1,25 +1,58 @@
 import dataclasses
-from collections.abc import (
-    AsyncIterator,
-    Mapping,
-)
+from collections.abc import AsyncIterator, Mapping, Set
+from http import HTTPStatus
 from typing import (
+    Any,
     Generic,
+    Literal,
     NamedTuple,
-    TypeAlias,
+    Protocol,
     final,
+    overload,
 )
 
-from typing_extensions import TypeVar
+from django.conf import settings
+from typing_extensions import TypeVar, override
 
 from dmr.cookies import NewCookie
+from dmr.headers import HeaderSpec
+from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.negotiation import ContentType
+from dmr.openapi import OpenAPIContext
+from dmr.openapi.mappers import responses
+from dmr.openapi.objects import Response
+from dmr.serializer import BaseSerializer
+
+_DataT_co = TypeVar('_DataT_co', covariant=True)
+
+
+class SSE(Protocol):
+    """
+    Basic interface for all possible SSE implementations.
+
+    We don't force users to use our default implementation, moreover,
+    we encourage them to create their own event ADT and models.
+    """
+
+    data: Any = None
+    event: Any = None
+    id: Any = None
+    retry: Any = None
+    comment: Any = None
+
+    @property
+    def serialize(self) -> bool:
+        """Should we serialize the data attribute or return it as is?"""
+        raise NotImplementedError
 
 
 @final
-@dataclasses.dataclass(slots=True, frozen=True)
-class SSEvent:
+@dataclasses.dataclass(init=False)
+class SSEvent(Generic[_DataT_co]):
     """
-    Server sent event.
+    Default implementation for the Server Sent Event.
+
+    All parameters are optional, but at least one is required.
 
     Attributes:
         data: Event payload.
@@ -28,28 +61,186 @@ class SSEvent:
         retry: The reconnection time.
         comment: Comment about the event.
 
+    .. note::
+
+        It is recommended for end users to define their own types
+        that will be type-safe and will have the correct schema.
+
     See also:
         https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
 
     """
 
-    # NOTE: `str | bytes` is not supported by `msgspec`,
-    # but, since it is very common to return json
-    # which has `bytes` by default in our serializers - we use `bytes` here.
-    data: bytes | int  # noqa: WPS110
-    event: str | None = dataclasses.field(default=None, kw_only=True)
-    id: int | str | None = dataclasses.field(default=None, kw_only=True)
-    retry: int | None = dataclasses.field(default=None, kw_only=True)
-    comment: str | None = dataclasses.field(default=None, kw_only=True)
+    # Fields declaration, `__init__` method is customized further:
+    data: _DataT_co  # type: ignore[misc, unused-ignore]
+    # ^^ for some reason 3.11 and 3.12 does not report a mypy error here.
+    event: str | None = None
+    id: int | str | None = None
+    retry: int | None = None
+    comment: str | None = None
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str | None = None,
+        id: int | str,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: 'SSEvent[bytes]',
+        data: bytes,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        data: _DataT_co,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: Literal[True] = True,
+    ) -> None: ...
+
+    def __init__(  # noqa: WPS211
+        self: 'SSEvent[Any]',
+        data: _DataT_co | bytes | None = None,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,  # noqa: A002
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None:
+        """Initialize and validate the default SSE event."""
+        if not serialize and not isinstance(data, bytes):
+            raise ValueError(
+                f'data must be an instance of "bytes", not {type(data)}, '
+                'when serialize=False',
+            )
+        if (
+            data is None  # noqa: WPS222
+            and event is None
+            and id is None
+            and retry is None
+            and comment is None
+        ):
+            raise ValueError('At least one event field must be non-None')
+
+        self.data = data
+        self.event = event
+        self.id = id
+        self.retry = retry
+        self.comment = comment
+        self._serialize = serialize
+
+    @property
+    def serialize(self) -> bool:
+        """
+        Should we serialize ``data`` attribute with the serializer?
+
+        Serializes by default. When *serialize* is ``False``,
+        *data* can only be ``bytes``.
+        """
+        return self._serialize
 
 
-SSEData: TypeAlias = int | bytes | SSEvent
-"""Types that we allow to yield from async events producer iterator."""
+@dataclasses.dataclass(slots=True, frozen=True)
+class SSEResponseSpec(ResponseSpec):
+    """Subclass to represent the SSE response specification."""
+
+    status_code: Literal[HTTPStatus.OK] = dataclasses.field(
+        kw_only=True,
+        default=HTTPStatus.OK,
+    )
+    headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
+        kw_only=True,
+        default_factory=lambda: {
+            'Cache-Control': HeaderSpec(),
+            'Connection': HeaderSpec(required=not settings.DEBUG),
+            'X-Accel-Buffering': HeaderSpec(),
+        },
+    )
+    limit_to_content_types: Set[str] | None = dataclasses.field(
+        kw_only=True,
+        default_factory=lambda: {ContentType.event_stream},
+    )
+
+    @override
+    def get_schema(
+        self,
+        serializer: type['BaseSerializer'],
+        context: OpenAPIContext,
+        metadata: EndpointMetadata,
+    ) -> Response:
+        """Customizes how response's schemas are rendered."""
+        return responses.get_schema(
+            self,
+            serializer,
+            context,
+            metadata,
+            schema_field_name='item_schema',
+            # Despite the fact that it looks like a response,
+            # produced events are not regular responses.
+            used_for_response=False,
+        )
+
+
+_EventT_co = TypeVar('_EventT_co', bound=SSE, covariant=True)
 
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
-class SSEResponse:
+class SSEResponse(Generic[_EventT_co]):
     """
     Future response representation.
 
@@ -63,9 +254,13 @@ class SSEResponse:
     Attributes:
         streaming_content: Async iterator of server sent events.
         headers: Headers to be set on the response object.
+        cookies: Cookies to be set on the response object.
+        event_model: Optional explicit event model to be used
+            for the runtime validation of events' data.
+
     """
 
-    streaming_content: AsyncIterator[SSEData]
+    streaming_content: AsyncIterator[_EventT_co]
     headers: Mapping[str, str] | None = None
     cookies: Mapping[str, NewCookie] | None = None
 

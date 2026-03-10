@@ -13,27 +13,31 @@ from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
 
+from dmr.errors import ErrorModel
 from dmr.exceptions import ValidationError
 from dmr.internal.io import aiter_to_iter
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer, DeserializableResponse
+from dmr.serializer import BaseSerializer
 from dmr.sse.exceptions import SSECloseConnectionError
-from dmr.sse.metadata import SSEData, SSEvent
+from dmr.sse.metadata import SSE, SSEvent
 from dmr.sse.renderer import SSERenderer
-from dmr.sse.validation import validate_event_type
+from dmr.sse.validation import validate_event_data, validate_event_type
 
 _EventPipeline: TypeAlias = Callable[
-    ['SSEData', Any, type[BaseSerializer]],
-    'SSEData',
+    [SSE, Any, type[BaseSerializer]],
+    SSE,
 ]
 
 
-class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
+class SSEStreamingResponse(HttpResponseBase):
     """
     Our own response subclass to mark that we explicitly return SSE.
 
     Converts events to ``bytes`` with the help of a passed serializer
     and renderer types.
+
+    We don't inherit from the ``StreamingResponse`` here, because
+    it has a strict API for streaming that we can't use.
     """
 
     #: Part of the the ASGI handler protocol. Will trigger `__aiter__`
@@ -43,15 +47,16 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
     validation_pipeline: ClassVar[Sequence[_EventPipeline]] = (
         # Order is important:
         validate_event_type,
+        validate_event_data,
     )
 
     def __init__(  # noqa: WPS211
         self,
-        streaming_content: AsyncIterator[SSEData],
+        streaming_content: AsyncIterator[SSE],
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
         sse_renderer: SSERenderer,
-        event_schema: Any,
+        event_model: Any,
         *,
         headers: Mapping[str, str] | None = None,
         validate_events: bool = True,
@@ -64,10 +69,10 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             serializer: Serializer type to handle event's data.
             regular_renderer: Render python objects to text format.
             sse_renderer: Render events to bytes according to the SSE protocol.
-            event_schema: Schema for all possible produced events.
+            event_model: Validation model for all possible produced events.
             headers: Headers to be set on the response.
             validate_events: Should all produced events be validated
-                against *event_schema*.
+                against *event_model*.
 
         """
         headers = {} if headers is None else dict(headers)
@@ -89,16 +94,11 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         self.serializer = serializer
         self.regular_renderer = regular_renderer
         self.sse_renderer = sse_renderer
-        self.event_schema = event_schema
+        self.event_model = event_model
         if validate_events:
             self._pipeline = self.validation_pipeline
         else:
             self._pipeline = ()
-
-    @override
-    def deserializable_content(self) -> Any:
-        """Empty body."""
-        return SSEvent(b'')
 
     @override
     def __iter__(self) -> Iterator[bytes]:
@@ -139,7 +139,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         self,
         event: Any,
         exception: Exception,
-    ) -> SSEData:
+    ) -> SSE:
         """
         Handles errors that can happen while sending events.
 
@@ -147,13 +147,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
         By default does nothing and just reraises the exception.
         """
         if isinstance(exception, ValidationError):
-            return SSEvent(
-                self.serializer.serialize(
-                    exception.payload,
-                    renderer=self.regular_renderer,
-                ),
-                event='error',
-            )
+            return SSEvent(ErrorModel(detail=exception.payload), event='error')
         raise  # noqa: PLE0704
 
     async def _events_pipeline(self) -> AsyncIterator[bytes]:
@@ -176,12 +170,12 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             except SSECloseConnectionError:
                 self.close()
 
-    def _apply_event_pipeline(self, event: SSEData) -> SSEData:
+    def _apply_event_pipeline(self, event: SSE) -> SSE:
         try:
             for func in self._pipeline:
                 event = func(
                     event,
-                    self.event_schema,
+                    self.event_model,
                     self.serializer,
                 )
         except Exception as exc:
