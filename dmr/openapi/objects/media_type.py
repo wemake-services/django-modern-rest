@@ -29,5 +29,6 @@ class MediaType:
     prefix_encoding: 'Encoding | None' = None
 
     def __post_init__(self) -> None:
+        """Validate the object."""
         if self.schema is None and self.item_schema is None:
             raise ValueError('Both `schema` and `item_schema` cannot be None')

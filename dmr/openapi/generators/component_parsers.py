@@ -94,7 +94,7 @@ class ComponentParserGenerator:
     ) -> dict[str, 'MediaType']:
         new_content: dict[str, MediaType] = {}
         for media_name, media_type in new_schema.content.items():
-            media_items = []
+            media_items: list[Schema | Reference] = []
             if media_type.schema:  # pragma: no cover:
                 media_items.append(media_type.schema)
             existing_content = schema.content.get(media_name)

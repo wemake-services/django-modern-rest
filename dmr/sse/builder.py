@@ -80,7 +80,6 @@ def sse(  # noqa: WPS211, WPS234
         Callable[
             [
                 HttpRequest,
-                Renderer,
                 SSEContext[_PathT, _QueryT, _HeadersT, _CookiesT],
             ],
             Awaitable[SSEResponse[SSE]],
@@ -135,7 +134,7 @@ def sse(  # noqa: WPS211, WPS234
         ...     request: HttpRequest,
         ...     renderer: Renderer,
         ...     context: SSEContext,
-        ... ) -> SSEResponse:
+        ... ) -> SSEResponse[SSEvent[dt.datetime]]:
         ...     return SSEResponse(clock_events())
 
     ``clock_view`` will be a :class:`~dmr.controller.Controller` instance
@@ -198,20 +197,20 @@ def sse(  # noqa: WPS211, WPS234
     regular_renderer = regular_renderer or default_renderer
     sse_renderer = sse_renderer or SSERenderer(serializer, regular_renderer)
 
-    def decorator(
+    def decorator(  # noqa: WPS234
         func: Callable[
             [
                 HttpRequest,
-                Renderer,
                 SSEContext[_PathT, _QueryT, _HeadersT, _CookiesT],
             ],
             Awaitable[SSEResponse[SSE]],
         ],
         /,
     ) -> type[Controller[_SerializerT]]:
-        nonlocal response_spec
+        nonlocal response_spec  # noqa: WPS420
+        event_model = _resolve_event_model(func)
         if response_spec is None:
-            response_spec = SSEResponseSpec(_resolve_event_model(func))
+            response_spec = SSEResponseSpec(event_model)
 
         return _build_controller(
             serializer,
@@ -228,6 +227,7 @@ def sse(  # noqa: WPS211, WPS234
             sse_renderer=sse_renderer,
             sse_streaming_response_cls=sse_streaming_response_cls,
             auth=auth,
+            event_model=event_model,
             custom_metadata_cls=type(
                 '_LimitedSSEMetadata',
                 (metadata_cls,),
@@ -243,7 +243,6 @@ def _build_controller(  # noqa: WPS211, WPS234
     func: Callable[
         [
             HttpRequest,
-            Renderer,
             SSEContext[_PathT, _QueryT, _HeadersT, _CookiesT],
         ],
         Awaitable[SSEResponse[SSE]],
@@ -261,8 +260,9 @@ def _build_controller(  # noqa: WPS211, WPS234
     regular_renderer: Renderer,
     sse_renderer: SSERenderer,
     sse_streaming_response_cls: type[SSEStreamingResponse],
-    custom_metadata_cls: type[EndpointMetadata],
     auth: Sequence[AsyncAuth] | None,
+    event_model: Any,
+    custom_metadata_cls: type[EndpointMetadata],
 ) -> type[Controller[_SerializerT]]:
     class SSEController(  # noqa: WPS431
         Controller[serializer],  # type: ignore[valid-type]
@@ -299,7 +299,6 @@ def _build_controller(  # noqa: WPS211, WPS234
             return self.build_sse_streaming_response(
                 await func(
                     self.request,
-                    regular_renderer,
                     context,  # type: ignore[arg-type]
                 ),
             )
@@ -310,7 +309,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         ) -> SSEStreamingResponse:
             streaming_response = sse_streaming_response_cls(
                 response.streaming_content,
-                event_model=response.resolve_event_model(),
+                event_model=event_model,
                 serializer=serializer,
                 regular_renderer=regular_renderer,
                 sse_renderer=sse_renderer,
@@ -332,6 +331,7 @@ def _resolve_event_model(func: Callable[..., Any]) -> Any:
     type_args = get_args(return_type)
     if not type_args:
         raise UnsolvableAnnotationsError(
-            'Cannot determine event data model for runtime validation',
+            'Cannot determine event data model for runtime validation, '
+            'did you forget to specify the type arg for SSEResponse?',
         )
     return type_args[0]

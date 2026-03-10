@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
-from django.http import FileResponse, HttpRequest, HttpResponseBase
+from django.http import HttpRequest
 from typing_extensions import TypedDict
 
 from dmr.errors import ErrorDetail
@@ -13,7 +13,6 @@ from dmr.exceptions import (
     RequestSerializationError,
     ValidationError,
 )
-from dmr.files import FileBody
 from dmr.parsers import Parser, Raw
 from dmr.renderers import Renderer
 
@@ -106,17 +105,6 @@ class BaseSerializer:  # noqa: WPS214
         raise NotImplementedError
 
     @classmethod
-    def deserialize_response(
-        cls,
-        response: HttpResponseBase,
-        *,
-        parser: Parser,
-        request: HttpRequest,
-    ) -> Any:
-        """Deserialize non-HttpResponse response subclass."""
-        return deserialize_response(response)
-
-    @classmethod
     def deserialize_hook(
         cls,
         target_type: type[Any],
@@ -193,36 +181,6 @@ class BaseSerializer:  # noqa: WPS214
         will raise an import-time validation error.
         """
         return True  # By default all are supported
-
-
-class DeserializableResponse:
-    """
-    Provides body content to be validated in our optional response validation.
-
-    Abstract base class for custom responses
-    that do not have content to be validated.
-    For example, streaming responses might not have any content right now.
-
-    But, we still need to validate something.
-    """
-
-    @abc.abstractmethod
-    def deserializable_content(self) -> Any:
-        """Provide response content for the validation."""
-        raise NotImplementedError
-
-
-def deserialize_response(response: HttpResponseBase) -> Any:
-    """Deserialize complex response subtypes."""
-    # Our own responses are smart:
-    if isinstance(response, DeserializableResponse):
-        return response.deserializable_content()
-    # Custom overrides for Django default responses:
-    if isinstance(response, FileResponse):
-        return FileBody()
-    raise InternalServerError(
-        f'Unsupported response type {type(response)!r}',
-    )
 
 
 class BaseEndpointOptimizer:

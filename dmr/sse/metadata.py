@@ -1,7 +1,6 @@
 import dataclasses
 from collections.abc import AsyncIterator, Mapping, Set
 from http import HTTPStatus
-from types import AsyncGeneratorType
 from typing import (
     Any,
     Generic,
@@ -9,7 +8,6 @@ from typing import (
     NamedTuple,
     Protocol,
     final,
-    get_args,
     overload,
 )
 
@@ -17,7 +15,6 @@ from django.conf import settings
 from typing_extensions import TypeVar, override
 
 from dmr.cookies import NewCookie
-from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import ContentType
@@ -25,12 +22,18 @@ from dmr.openapi import OpenAPIContext
 from dmr.openapi.mappers import responses
 from dmr.openapi.objects import Response
 from dmr.serializer import BaseSerializer
-from dmr.types import Empty, EmptyObj, parse_return_annotation
 
 _DataT_co = TypeVar('_DataT_co', covariant=True)
 
 
 class SSE(Protocol):
+    """
+    Basic interface for all possible SSE implementations.
+
+    We don't force users to use our default implementation, moreover,
+    we encourage them to create their own event ADT and models.
+    """
+
     data: Any = None
     event: Any = None
     id: Any = None
@@ -38,7 +41,9 @@ class SSE(Protocol):
     comment: Any = None
 
     @property
-    def serialize(self) -> bool: ...
+    def serialize(self) -> bool:
+        """Should we serialize the data attribute or return it as is?"""
+        raise NotImplementedError
 
 
 @final
@@ -55,10 +60,6 @@ class SSEvent(Generic[_DataT_co]):
         id: Unique event's identification.
         retry: The reconnection time.
         comment: Comment about the event.
-        serialize: Custom attribute to indicate whether or not
-            to serialize the passed value or to return the value as is.
-            Serializes by default. When *serialize* is ``False``,
-            *data* can only be ``bytes``.
 
     .. note::
 
@@ -70,11 +71,48 @@ class SSEvent(Generic[_DataT_co]):
 
     """
 
-    data: _DataT_co  # type: ignore[misc]  # noqa: WPS110
-    event: str | None = dataclasses.field(default=None, kw_only=True)
-    id: int | str | None = dataclasses.field(default=None, kw_only=True)
-    retry: int | None = dataclasses.field(default=None, kw_only=True)
-    comment: str | None = dataclasses.field(default=None, kw_only=True)
+    # Field declaration, `__init__` method is customized further:
+    data: _DataT_co  # type: ignore[misc]
+    event: str | None = None
+    id: int | str | None = None
+    retry: int | None = None
+    comment: str | None = None
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str,
+        id: int | str | None = None,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str | None = None,
+        id: int | str,
+        retry: int | None = None,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: 'SSEvent[None]',
+        data: None = None,
+        *,
+        event: str | None = None,
+        id: int | str | None = None,
+        retry: int,
+        comment: str | None = None,
+        serialize: bool = True,
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -84,7 +122,7 @@ class SSEvent(Generic[_DataT_co]):
         event: str | None = None,
         id: int | str | None = None,
         retry: int | None = None,
-        comment: str | None = None,
+        comment: str,
         serialize: bool = True,
     ) -> None: ...
 
@@ -112,8 +150,8 @@ class SSEvent(Generic[_DataT_co]):
         serialize: Literal[True] = True,
     ) -> None: ...
 
-    def __init__(
-        self: 'SSEvent[_DataT_co | bytes | None]',
+    def __init__(  # noqa: WPS211
+        self: 'SSEvent[Any]',
         data: _DataT_co | bytes | None = None,
         *,
         event: str | None = None,
@@ -122,13 +160,14 @@ class SSEvent(Generic[_DataT_co]):
         comment: str | None = None,
         serialize: bool = True,
     ) -> None:
+        """Initialize and validate the default SSE event."""
         if not serialize and not isinstance(data, bytes):
             raise ValueError(
                 f'data must be an instance of "bytes", not {type(data)}, '
                 'when serialize=False',
             )
         if (
-            data is None
+            data is None  # noqa: WPS222
             and event is None
             and id is None
             and retry is None
@@ -145,11 +184,19 @@ class SSEvent(Generic[_DataT_co]):
 
     @property
     def serialize(self) -> bool:
+        """
+        Should we serialize ``data`` attribute with the serializer?
+
+        Serializes by default. When *serialize* is ``False``,
+        *data* can only be ``bytes``.
+        """
         return self._serialize
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
 class SSEResponseSpec(ResponseSpec):
+    """Subclass to represent the SSE response specification."""
+
     status_code: Literal[HTTPStatus.OK] = dataclasses.field(
         kw_only=True,
         default=HTTPStatus.OK,
@@ -174,6 +221,7 @@ class SSEResponseSpec(ResponseSpec):
         context: OpenAPIContext,
         metadata: EndpointMetadata,
     ) -> Response:
+        """Customizes how response's schemas are rendered."""
         return responses.get_schema(
             self,
             serializer,
@@ -212,50 +260,6 @@ class SSEResponse(Generic[_EventT_co]):
     streaming_content: AsyncIterator[_EventT_co]
     headers: Mapping[str, str] | None = None
     cookies: Mapping[str, NewCookie] | None = None
-    event_model: Any | Empty = EmptyObj  # `None` can be a valid model
-
-    def resolve_event_model(self) -> Any:
-        if self.event_model is EmptyObj:
-            inferred_model = self._infer_model()
-            if inferred_model is EmptyObj:
-                raise UnsolvableAnnotationsError(
-                    f'Cannot resolve event model for {self.streaming_content}, '
-                    'pass `event_model=` parameter directly for validation',
-                )
-            return inferred_model
-        return self.event_model
-
-    def _infer_model(self) -> Any | Empty:
-        return_annotation = self._infer_return_annotaiton()
-        if return_annotation is EmptyObj:
-            return return_annotation
-        # We expect return annotation to be: `AsyncIterator[SSEvent[Model]]`.
-        # We need `SSEvent[Model]` from it.
-        try:
-            return get_args(return_annotation)[0]
-        except Exception:
-            return EmptyObj
-
-    def _infer_return_annotaiton(self) -> Any | Empty:
-        # Is it `async def(): yield`?
-        if isinstance(self.streaming_content, AsyncGeneratorType):
-            try:
-                return parse_return_annotation(
-                    self.streaming_content.ag_frame.f_globals[
-                        self.streaming_content.__qualname__
-                    ],
-                )
-            except Exception:
-                return EmptyObj
-
-        # Is it an instance with `__aiter__`?
-        method = getattr(self.streaming_content, '__aiter__', None)
-        if method is None:
-            return EmptyObj
-        try:
-            return parse_return_annotation(method)
-        except Exception:
-            return EmptyObj
 
 
 _PathT = TypeVar('_PathT', default=None)

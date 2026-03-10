@@ -77,7 +77,12 @@ class SSERenderer(Renderer):
                 f'got {type(to_serialize)}',
             ) from None
 
-    def _render_event(self, to_serialize: Any) -> bytes:  # noqa: C901, WPS213
+    @property
+    @override
+    def validation_parser(self) -> _NoOpParser:
+        return _NoOpParser(self.content_type)
+
+    def _render_event(self, to_serialize: Any) -> bytes:  # noqa: WPS213, C901
         # We use BytesIO, because our json renderer returns `bytes`.
         # We don't want to convert it to string to convert it to bytes again.
         # Payload will always be preset,
@@ -133,8 +138,3 @@ class SSERenderer(Renderer):
 
         buffer.write(self._sep)
         return buffer.getvalue()
-
-    @property
-    @override
-    def validation_parser(self) -> _NoOpParser:
-        return _NoOpParser(self.content_type)

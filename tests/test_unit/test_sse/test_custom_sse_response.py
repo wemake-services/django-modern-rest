@@ -6,7 +6,6 @@ import pytest
 from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSE,
@@ -48,7 +47,6 @@ async def _valid_events() -> AsyncIterator[SSEvent[int]]:
 )
 async def _valid_sse(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[int]]:
     return SSEResponse(_valid_events())

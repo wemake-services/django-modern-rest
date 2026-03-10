@@ -8,7 +8,6 @@ from django.http import HttpRequest
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.headers import HeaderSpec
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
@@ -34,7 +33,6 @@ async def _valid_events() -> AsyncIterator[SSEvent[Any]]:
 @sse(PydanticSerializer)
 async def _valid_sse(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[Any]]:
     return SSEResponse(_valid_events())
@@ -97,7 +95,6 @@ async def _simple_events() -> AsyncIterator[SSEvent[bytes]]:
 )
 async def _sse_with_headers_and_cookies(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[bytes]]:
     return SSEResponse(
@@ -142,7 +139,6 @@ async def _events_with_close() -> AsyncIterator[SSEvent[int]]:
 @sse(PydanticSerializer)
 async def _sse_with_close(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[int]]:
     return SSEResponse(_events_with_close())
@@ -163,3 +159,12 @@ async def test_sse_close_error(
     assert await get_streaming_content(response) == (
         b'event: first\r\ndata: 1\r\n\r\n'
     )
+
+
+def test_event_model_validation() -> None:
+    """Ensure that validation for event works."""
+    with pytest.raises(ValueError, match='At least one event field'):
+        SSEvent()  # type: ignore[call-overload]
+
+    with pytest.raises(ValueError, match='data must be an instance of "bytes"'):
+        SSEvent({}, serialize=False)  # type: ignore[call-overload]

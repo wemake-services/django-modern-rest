@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, get_args
 
 from dmr.exceptions import ValidationError
 
@@ -28,16 +28,49 @@ def validate_event_type(
 
     """
     try:
-        print(event, model)
         serializer.from_python(
             event,
             model=model,
             strict=True,
         )
-        print('done')
     except serializer.validation_error as exc:
         raise ValidationError(
             serializer.serialize_validation_error(exc),
             status_code=HTTPStatus.OK,
         ) from None
     return event
+
+
+def validate_event_data(
+    event: Any,
+    model: Any,
+    serializer: type['BaseSerializer'],
+) -> Any:
+    """
+    Injects itself into the stream of SSE to validate the events.
+
+    Validates ``SSEvent.data`` to be of the given type arg.
+    """
+    from dmr.sse.metadata import SSEvent  # noqa: PLC0415
+
+    if not isinstance(event, SSEvent):
+        # Might be a custom type:
+        return event
+
+    type_args = get_args(model)
+    if not type_args:
+        # Might be a custom alias, or missing item:
+        return event  # pyright: ignore[reportUnknownVariableType]
+
+    try:
+        serializer.from_python(
+            event.data,  # pyright: ignore[reportUnknownMemberType]
+            model=type_args[0],
+            strict=True,
+        )
+    except serializer.validation_error as exc:
+        raise ValidationError(
+            serializer.serialize_validation_error(exc),
+            status_code=HTTPStatus.OK,
+        ) from None
+    return event  # pyright: ignore[reportUnknownVariableType]

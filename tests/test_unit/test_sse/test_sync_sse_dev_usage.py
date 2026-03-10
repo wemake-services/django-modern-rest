@@ -9,7 +9,6 @@ from django.conf import LazySettings
 from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
@@ -32,7 +31,6 @@ async def _valid_events() -> AsyncIterator[SSEvent[str | bytes | int]]:
 @sse(PydanticSerializer)
 async def _valid_sse(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[str | bytes | int]]:
     return SSEResponse(_valid_events())
@@ -109,7 +107,6 @@ async def _events_with_close() -> AsyncIterator[SSEvent[bytes]]:
 @sse(PydanticSerializer)
 async def _sse_with_close(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[bytes]]:
     return SSEResponse(_events_with_close())

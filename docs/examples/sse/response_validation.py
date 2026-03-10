@@ -3,29 +3,26 @@ from collections.abc import AsyncIterator
 from django.http import HttpRequest
 
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.renderers import Renderer
-from dmr.sse import SSEContext, SSEData, SSEResponse, sse
+from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
-async def events() -> AsyncIterator[SSEData]:
-    yield b'example'
+async def events() -> AsyncIterator[SSEvent[str]]:
+    yield SSEvent('example')
 
 
 @sse(MsgspecSerializer)  # validate_responses is True by default
 async def with_validation(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[str]]:
     return SSEResponse(events(), headers={'X-Example': 'value'})
 
 
 @sse(MsgspecSerializer, validate_responses=False)
 async def no_validation(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[str]]:
     return SSEResponse(events(), headers={'X-Example': 'value'})
 
 

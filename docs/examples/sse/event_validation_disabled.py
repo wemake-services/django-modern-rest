@@ -10,7 +10,7 @@ async def produce_events() -> AsyncIterator[SSEvent[str]]:
     yield SSEvent('skipped event validation')
 
 
-@sse(MsgspecSerializer)
+@sse(MsgspecSerializer, validate_events=False)
 async def user_events(
     request: HttpRequest,
     context: SSEContext,

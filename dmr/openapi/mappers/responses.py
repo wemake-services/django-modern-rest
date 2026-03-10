@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
-def get_schema(
+def get_schema(  # noqa: WPS211
     response_spec: 'ResponseSpec',
     serializer: type['BaseSerializer'],
     context: OpenAPIContext,
@@ -94,13 +94,13 @@ def _get_cookies(
     return cookies
 
 
-def _get_content(
+def _get_content(  # noqa: WPS211
     response_spec: 'ResponseSpec',
     serializer: type['BaseSerializer'],
     context: OpenAPIContext,
     metadata: 'EndpointMetadata',
     *,
-    schema_field_name: Literal['schema', 'item_schema'],
+    schema_field_name: str,
     used_for_response: bool,
 ) -> dict[str, MediaType]:
     # Import cycle:
@@ -109,7 +109,7 @@ def _get_content(
     return_types = get_conditional_types(response_spec.return_type) or {}
     return {
         renderer.content_type: MediaType(
-            **{
+            **{  # type: ignore[arg-type]
                 schema_field_name: context.generators.schema(
                     return_types.get(
                         renderer.content_type,

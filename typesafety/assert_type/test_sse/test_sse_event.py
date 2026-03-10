@@ -9,6 +9,11 @@ assert_type(SSEvent(b''), SSEvent[bytes])
 assert_type(SSEvent(b'', serialize=False), SSEvent[bytes])
 SSEvent(b'', serialize=True)
 SSEvent(['a', 1], serialize=True)
+SSEvent(event='test')
+SSEvent(comment='ping')
+SSEvent(id=1)
+SSEvent(retry=1)
 
 # Wrong:
 SSEvent([], serialize=False)  # type: ignore[call-overload]
+SSEvent()  # type: ignore[call-overload]

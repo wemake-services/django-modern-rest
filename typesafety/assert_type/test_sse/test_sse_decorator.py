@@ -7,7 +7,6 @@ from django.http import HttpRequest
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
@@ -38,7 +37,6 @@ class _HeaderModel(pydantic.BaseModel):
 )
 async def _sse_valid(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext[
         _PathModel,
         _QueryModel,
@@ -62,7 +60,6 @@ async def _sse_valid(
 )
 async def _sse_no_type_args(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[bytes]]:
     assert_type(context.parsed_path, None)
@@ -80,7 +77,6 @@ async def _sse_no_type_args(
 )
 async def _sse_missing_component(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext[_PathModel, _QueryModel, None, dict[str, str]],
 ) -> SSEResponse[SSEvent[bytes]]:
     assert_type(context.parsed_path, _PathModel)

@@ -12,7 +12,6 @@ from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
 )
@@ -54,7 +53,6 @@ async def _resolve(user: User) -> User:
 )
 async def _sse_components(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[bytes]]:
     user = await request.auser()

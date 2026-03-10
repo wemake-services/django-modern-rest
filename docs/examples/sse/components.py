@@ -5,8 +5,7 @@ from django.http import HttpRequest
 
 from dmr.components import Headers
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.renderers import Renderer
-from dmr.sse import SSEContext, SSEData, SSEResponse, sse
+from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
 class HeaderModel(msgspec.Struct):
@@ -18,19 +17,18 @@ class HeaderModel(msgspec.Struct):
 
 async def produce_user_events(
     request_headers: HeaderModel,
-) -> AsyncIterator[SSEData]:
+) -> AsyncIterator[SSEvent[str]]:
     if request_headers.last_event_id:
-        yield f'starting from {request_headers.last_event_id}'.encode()
+        yield SSEvent(f'starting from {request_headers.last_event_id}')
     else:
-        yield b'starting from scratch'
+        yield SSEvent('starting from scratch')
 
 
 @sse(MsgspecSerializer, headers=Headers[HeaderModel])
 async def user_events(
     request: HttpRequest,
-    renderer: Renderer,
     context: SSEContext[None, None, HeaderModel],
-) -> SSEResponse:
+) -> SSEResponse[SSEvent[str]]:
     return SSEResponse(produce_user_events(context.parsed_headers))
 
 

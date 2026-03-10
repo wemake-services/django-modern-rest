@@ -17,11 +17,11 @@ from dmr.errors import ErrorModel
 from dmr.exceptions import ValidationError
 from dmr.internal.io import aiter_to_iter
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer, DeserializableResponse
+from dmr.serializer import BaseSerializer
 from dmr.sse.exceptions import SSECloseConnectionError
 from dmr.sse.metadata import SSE, SSEvent
 from dmr.sse.renderer import SSERenderer
-from dmr.sse.validation import validate_event_type
+from dmr.sse.validation import validate_event_data, validate_event_type
 
 _EventPipeline: TypeAlias = Callable[
     [SSE, Any, type[BaseSerializer]],
@@ -29,12 +29,15 @@ _EventPipeline: TypeAlias = Callable[
 ]
 
 
-class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
+class SSEStreamingResponse(HttpResponseBase):
     """
     Our own response subclass to mark that we explicitly return SSE.
 
     Converts events to ``bytes`` with the help of a passed serializer
     and renderer types.
+
+    We don't inherit from the ``StreamingResponse`` here, because
+    it has a strict API for streaming that we can't use.
     """
 
     #: Part of the the ASGI handler protocol. Will trigger `__aiter__`
@@ -44,6 +47,7 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
     validation_pipeline: ClassVar[Sequence[_EventPipeline]] = (
         # Order is important:
         validate_event_type,
+        validate_event_data,
     )
 
     def __init__(  # noqa: WPS211
@@ -95,11 +99,6 @@ class SSEStreamingResponse(DeserializableResponse, HttpResponseBase):
             self._pipeline = self.validation_pipeline
         else:
             self._pipeline = ()
-
-    @override
-    def deserializable_content(self) -> Any:
-        """Empty body."""
-        return SSEvent(b'', serialize=False)
 
     @override
     def __iter__(self) -> Iterator[bytes]:

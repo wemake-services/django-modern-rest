@@ -11,7 +11,6 @@ from typing_extensions import TypedDict
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
@@ -35,8 +34,10 @@ except ImportError:  # pragma: no cover
 else:  # pragma: no cover
     serializers.append(MsgspecSerializer)
 
+_ListStrEvent: TypeAlias = SSEvent[list[str]]
 
-async def _empty_events() -> AsyncIterator[SSEvent[list[str]]]:
+
+async def _empty_events() -> AsyncIterator[_ListStrEvent]:
     yield SSEvent(['authed'])
 
 
@@ -69,14 +70,13 @@ async def test_sse_parses_all_components(
     )
     async def _sse_components(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext[
             _PathModel,
             _QueryModel,
             _HeaderModel,
             dict[str, str],
         ],
-    ) -> SSEResponse[SSEvent[list[str]]]:
+    ) -> SSEResponse[_ListStrEvent]:
         assert context.parsed_path == {'user_id': 1, 'stream_name': 'abc'}
         assert context.parsed_query == _QueryModel(filter='python')
         assert context.parsed_headers == _HeaderModel(whatever='yes')
@@ -118,7 +118,6 @@ async def test_sse_parsing_error(
     )
     async def _sse_components(
         request: HttpRequest,
-        renderer: Renderer,
         context: SSEContext[_PathModel],
     ) -> SSEResponse[Any]:
         raise NotImplementedError
