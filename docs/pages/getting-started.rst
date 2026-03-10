@@ -61,128 +61,6 @@ Extras for different features:
   unless you want to serve static files for the OpenAPI.
 
 
-Quickstart
-----------
-
-Start a new project in four steps:
-
-**1. Create a Django project:**
-
-.. code-block:: bash
-
-    django-admin startproject myproject
-    cd myproject
-
-**2. Create a controller** in ``myproject/views.py``:
-
-.. tabs::
-
-    .. tab:: pydantic
-
-        .. code-block:: python
-
-            import uuid
-            import pydantic
-            from dmr import Body, Controller
-            from dmr.plugins.pydantic import PydanticSerializer
-
-
-            class UserIn(pydantic.BaseModel):
-                email: str
-
-
-            class UserOut(UserIn):
-                uid: uuid.UUID
-
-
-            class UserListController(Controller[PydanticSerializer]):
-                def get(self) -> list[UserOut]:
-                    return []  # replace with a real DB query
-
-
-            class UserCreateController(Controller[PydanticSerializer], Body[UserIn]):
-                def post(self) -> UserOut:
-                    return UserOut(uid=uuid.uuid4(), email=self.parsed_body.email)
-
-
-    .. tab:: msgspec
-
-        .. code-block:: python
-
-            import uuid
-            import msgspec
-            from dmr import Body, Controller
-            from dmr.plugins.msgspec import MsgspecSerializer
-
-
-            class UserIn(msgspec.Struct):
-                email: str
-
-
-            class UserOut(UserIn):
-                uid: uuid.UUID
-
-
-            class UserListController(Controller[MsgspecSerializer]):
-                def get(self) -> list[UserOut]:
-                    return []  # replace with a real DB query
-
-
-            class UserCreateController(Controller[MsgspecSerializer], Body[UserIn]):
-                def post(self) -> UserOut:
-                    return UserOut(uid=uuid.uuid4(), email=self.parsed_body.email)
-
-
-**3. Register it** in ``myproject/urls.py``:
-
-.. code-block:: python
-
-    from django.contrib import admin
-    from django.urls import include, path
-    from dmr.routing import Router
-    from .views import UserCreateController, UserListController
-
-    router = Router(
-        [
-            path('users/', UserListController.as_view(), name='user-list'),
-            path('user/', UserCreateController.as_view(), name='user-create'),
-        ],
-        prefix='api/',
-    )
-
-    urlpatterns = [
-        path('admin/', admin.site.urls),
-        path(router.prefix, include((router.urls, 'api'), namespace='api'))
-    ]
-
-**4. Run the server:**
-
-.. tabs::
-
-    .. tab:: :iconify:`material-icon-theme:uv` uv
-
-        .. code-block:: bash
-
-            uv run manage.py runserver
-
-    .. tab:: :iconify:`devicon:poetry` poetry
-
-        .. code-block:: bash
-
-            poetry run python manage.py runserver
-
-    .. tab:: :iconify:`devicon:pypi` pip
-
-        .. code-block:: bash
-
-            python manage.py runserver
-
-Your API is now live:
-
-- ``GET http://localhost:8000/api/users/`` — list users
-- ``POST http://localhost:8000/api/user/`` — create a user
-
-
 LLMs support
 ------------
 
@@ -258,8 +136,8 @@ Next, you can learn:
 - How to customize controllers and endpoints
 
 
-But, Django is complicated!
----------------------------
+Full example
+------------
 
 If you were ever told that Django is too big and complicated,
 that was misleading, to say the least.
@@ -276,11 +154,32 @@ You can copy it by clicking "Copy" in the right upper corner of the example,
 it shows up on hovering the code example. Paste it as ``example.py``,
 install the ``django-modern-rest`` and run it with:
 
-.. code-block:: bash
+.. tabs::
 
-  python example.py runserver
+    .. tab:: :iconify:`material-icon-theme:uv` uv
 
-And then visit https://localhost:8000/docs/swagger for the interactive docs.
+        .. code-block:: bash
+
+            uv run example.py runserver
+
+    .. tab:: :iconify:`devicon:poetry` poetry
+
+        .. code-block:: bash
+
+            poetry run python example.py runserver
+
+    .. tab:: :iconify:`devicon:pypi` pip
+
+        .. code-block:: bash
+
+            python example.py runserver
+
+Your API is now live:
+
+- ``GET`` http://localhost:8000/api/users/ — list users
+- ``POST`` http://localhost:8000/api/user/ — create a user
+
+And then visit https://localhost:8000/docs/swagger/ for the interactive docs.
 
 .. image:: /_static/images/swagger.png
    :alt: Swagger view
