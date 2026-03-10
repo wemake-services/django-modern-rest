@@ -71,8 +71,9 @@ class SSEvent(Generic[_DataT_co]):
 
     """
 
-    # Field declaration, `__init__` method is customized further:
-    data: _DataT_co  # type: ignore[misc]
+    # Fields declaration, `__init__` method is customized further:
+    data: _DataT_co  # type: ignore[misc, unused-ignore]
+    # ^^ for some reason 3.11 and 3.12 does not report a mypy error here.
     event: str | None = None
     id: int | str | None = None
     retry: int | None = None
@@ -228,6 +229,8 @@ class SSEResponseSpec(ResponseSpec):
             context,
             metadata,
             schema_field_name='item_schema',
+            # Despite the fact that it looks like a response,
+            # produced events are not regular responses.
             used_for_response=False,
         )
 
