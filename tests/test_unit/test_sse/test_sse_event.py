@@ -8,6 +8,7 @@ from django.http import HttpRequest
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.headers import HeaderSpec
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
@@ -19,6 +20,12 @@ from dmr.sse import (
 )
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
+
+MsgspecSerializer: type[BaseSerializer] | None
+try:
+    from dmr.plugins.msgspec import MsgspecSerializer
+except ImportError:  # pragma: no cover
+    MsgspecSerializer = None
 
 
 async def _valid_events() -> AsyncIterator[SSEvent[Any]]:
@@ -39,6 +46,10 @@ async def _valid_sse(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    MsgspecSerializer is None,
+    reason='regular json formats it differently',
+)
 async def test_all_sse_events_props(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
