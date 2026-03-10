@@ -176,7 +176,6 @@ install the ``django-modern-rest`` and run it with:
 
 Your API is now live:
 
-- ``GET`` http://localhost:8000/api/users/ — list users
 - ``POST`` http://localhost:8000/api/user/ — create a user
 
 And then visit https://localhost:8000/docs/swagger/ for the interactive docs.
