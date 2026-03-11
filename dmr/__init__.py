@@ -10,6 +10,7 @@ from dmr.cookies import CookieSpec as CookieSpec
 from dmr.cookies import NewCookie as NewCookie
 from dmr.endpoint import modify as modify
 from dmr.endpoint import validate as validate
+from dmr.headers import ETag as ETag
 from dmr.headers import HeaderSpec as HeaderSpec
 from dmr.headers import NewHeader as NewHeader
 from dmr.metadata import ResponseSpec as ResponseSpec
