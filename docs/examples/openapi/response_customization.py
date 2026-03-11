@@ -15,6 +15,7 @@ class UserModel(msgspec.Struct):
 
 class UserController(Controller[MsgspecSerializer]):
     @modify(
+        response_description='This is a description for your response',
         links={
             'GetUser': Link(
                 operation_id='getUser',

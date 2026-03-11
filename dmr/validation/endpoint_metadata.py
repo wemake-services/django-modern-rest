@@ -299,7 +299,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 if payload.status_code is None
                 else payload.status_code
             ),
-            description=payload.description,
+            description=payload.response_description,
             links=payload.links,
         )
         summary, description = self._build_description()
