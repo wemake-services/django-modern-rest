@@ -68,6 +68,18 @@
                 "title": "Query"
               },
               "required": true
+            },
+            {
+              "deprecated": false,
+              "style": "deepObject",
+              "explode": true,
+              "name": "regular",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Regular"
+              },
+              "required": true
             }
           ],
           "responses": {
@@ -174,12 +186,17 @@
                 }
               ],
               "title": "Query"
+            },
+            "regular": {
+              "type": "integer",
+              "title": "Regular"
             }
           },
           "type": "object",
           "required": [
             "tags",
-            "query"
+            "query",
+            "regular"
           ],
           "title": "_QueryModel"
         },
