@@ -34,7 +34,7 @@ How do we build this semantic schema?
    auth instance will inject its part of the schema into the main one.
    This way you will see ``401`` response in the schema
    for all the endpoints which use auth.
-   We surelly allow to redefine any of this behavior
+   We surely allow to redefine any of this behavior
 
 .. note::
 
