@@ -49,7 +49,7 @@ else:
         except Exception:  # pragma: no cover
             return None
         return Example(
-            description='Genereated example',
+            description='Generated example',
             value=generated,
         )
 

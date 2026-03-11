@@ -18,7 +18,7 @@
                   "additionalProperties": true,
                   "type": "object",
                   "example": {
-                    "description": "Genereated example",
+                    "description": "Generated example",
                     "value": {
                       "GMPXMVbyXHUfymCDaloV": "39d864419"
                     }
@@ -134,7 +134,7 @@
           ],
           "title": "_UserModel",
           "example": {
-            "description": "Genereated example",
+            "description": "Generated example",
             "value": {
               "age": 74,
               "username": "GMPXMVbyXHUfymCDaloV",
@@ -199,7 +199,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
           "example": {
-            "description": "Genereated example",
+            "description": "Generated example",
             "value": {
               "detail": [
                 {
@@ -333,7 +333,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
           "example": {
-            "description": "Genereated example",
+            "description": "Generated example",
             "value": {
               "detail": [
                 {
