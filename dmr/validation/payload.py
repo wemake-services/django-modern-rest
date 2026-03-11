@@ -64,6 +64,8 @@ class ModifyEndpointPayload(_BasePayload):
     headers: Mapping[str, NewHeader | HeaderSpec] | None
     cookies: Mapping[str, NewCookie | CookieSpec] | None
 
+    # OpenAPI metadata:
+    response_description: str | None
     links: dict[str, 'Link | Reference'] | None
 
 
