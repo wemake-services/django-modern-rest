@@ -140,7 +140,11 @@ class SchemaGenerator:
             )
 
         # Register the final schema:
-        schema_obj = load_schema(schema)
+        schema_obj = load_schema(
+            schema,
+            should_generate_example=True,
+            annotation=annotation,
+        )
         if not skip_registration and schema_obj.title:
             return self._context.registries.schema.register(
                 schema_name=schema_obj.title,

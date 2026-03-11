@@ -1,0 +1,103 @@
+import enum
+import json
+from typing import Any
+
+import pydantic
+from django.conf import LazySettings
+from django.urls import path
+from syrupy.assertion import SnapshotAssertion
+
+from dmr import (
+    Body,
+    Controller,
+)
+from dmr.openapi import build_schema
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import Router
+from dmr.settings import Settings
+
+
+class _Status(enum.StrEnum):
+    active = 'active'
+    inactive = 'inactive'
+
+
+class _UserModel(pydantic.BaseModel):
+    age: int = pydantic.Field(gt=0, le=100)
+    username: str
+    status: _Status
+    email: str
+    salary: float
+    tags: list[str]
+    metadata: dict[str, str]
+
+
+class _UserController(
+    Controller[PydanticSerializer],
+    Body[dict[str, Any]],
+):
+    def post(self) -> _UserModel:
+        raise NotImplementedError
+
+
+def test_user_schema_with_examples(
+    snapshot: SnapshotAssertion,
+    dmr_clean_settings: None,
+    settings: LazySettings,
+) -> None:
+    """Ensure that schema is correct for user controller."""
+    settings.DMR_SETTINGS = {
+        Settings.openapi_examples_seed: 5,
+    }
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    [path('/user', _UserController.as_view())],
+                    prefix='/api/v1',
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _WithExistingExampleModel(pydantic.BaseModel):
+    field: str
+
+    model_config = pydantic.ConfigDict(
+        json_schema_extra={'example': {'field': 'example@email.com'}},
+    )
+
+
+class _ExistingExampleController(
+    Controller[PydanticSerializer],
+):
+    def post(self) -> _WithExistingExampleModel:
+        raise NotImplementedError
+
+
+def test_user_schema_with_existing_examples(
+    snapshot: SnapshotAssertion,
+    dmr_clean_settings: None,
+    settings: LazySettings,
+) -> None:
+    """Ensure that schema is correct for existing examples controller."""
+    settings.DMR_SETTINGS = {
+        Settings.openapi_examples_seed: 5,
+    }
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    [path('/user', _ExistingExampleController.as_view())],
+                    prefix='/api/v1',
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
