@@ -56,6 +56,7 @@ class Settings(enum.StrEnum):
     semantic_responses = 'semantic_responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
+    openapi_examples_seed = 'openapi_examples_seed'
     django_treat_as_post = 'django_treat_as_post'
 
 
@@ -93,10 +94,12 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
     Settings.auth: [],
+    # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
         version='0.1.0',
     ),
+    Settings.openapi_examples_seed: None,  # turned off by default
     # We validate some HTTP spec things by default to be strict,
     # can be disabled:
     Settings.no_validate_http_spec: frozenset(),

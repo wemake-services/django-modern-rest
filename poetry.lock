@@ -737,11 +737,12 @@ version = "40.8.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.10"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "faker-40.8.0-py3-none-any.whl", hash = "sha256:eb21bdba18f7a8375382eb94fb436fce07046893dc94cb20817d28deb0c3d579"},
     {file = "faker-40.8.0.tar.gz", hash = "sha256:936a3c9be6c004433f20aa4d99095df5dec82b8c7ad07459756041f8c1728875"},
 ]
+markers = {main = "extra == \"openapi\""}
 
 [package.dependencies]
 tzdata = {version = "*", markers = "platform_system == \"Windows\""}
@@ -1894,11 +1895,12 @@ version = "3.3.0"
 description = "Mock data generation factories"
 optional = false
 python-versions = "<4.0,>=3.9"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "polyfactory-3.3.0-py3-none-any.whl", hash = "sha256:686abcaa761930d3df87b91e95b26b8d8cb9fdbbbe0b03d5f918acff5c72606e"},
     {file = "polyfactory-3.3.0.tar.gz", hash = "sha256:237258b6ff43edf362ffd1f68086bb796466f786adfa002b0ac256dbf2246e9a"},
 ]
+markers = {main = "extra == \"openapi\""}
 
 [package.dependencies]
 faker = ">=5.0.0"
@@ -3268,7 +3270,7 @@ files = [
     {file = "tzdata-2025.3-py2.py3-none-any.whl", hash = "sha256:06a47e5700f3081aab02b2e513160914ff0694bce9947d6b76ebd6bf57cfc5d1"},
     {file = "tzdata-2025.3.tar.gz", hash = "sha256:de39c2ca5dc7b0344f2eba86f49d614019d29f060fc4ebc8a417896a620b56a7"},
 ]
-markers = {main = "sys_platform == \"win32\"", dev = "sys_platform == \"win32\" or platform_system == \"Windows\""}
+markers = {main = "extra == \"openapi\" and platform_system == \"Windows\" or sys_platform == \"win32\"", dev = "sys_platform == \"win32\" or platform_system == \"Windows\""}
 
 [[package]]
 name = "urllib3"
@@ -3360,10 +3362,10 @@ test = ["pytest", "pytest-cov"]
 [extras]
 jwt = ["pyjwt"]
 msgspec = ["msgspec"]
-openapi = ["openapi-spec-validator"]
+openapi = ["openapi-spec-validator", "polyfactory"]
 pydantic = ["pydantic"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "a2300b61f0616e65c07d63496a9e9ceb90998fc9d40f946a5fe83a60cef78036"
+content-hash = "f8b2da528cfcd931c893861ac0c60bd88730fcc3d9b5a40c53dfc350a8601aa3"

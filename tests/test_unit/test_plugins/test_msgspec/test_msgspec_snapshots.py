@@ -1,9 +1,16 @@
+import enum
 import json
 from typing import Annotated, Literal
 
 import pytest
+from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
+
+from dmr import Body, Controller
+from dmr.openapi import build_schema
+from dmr.routing import Router
+from dmr.settings import Settings
 
 try:
     import msgspec
@@ -11,11 +18,9 @@ except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 
-from dmr import Body, Controller, Cookies, FileMetadata
-from dmr.openapi import build_schema
+from dmr import Cookies, FileMetadata
 from dmr.parsers import MultiPartParser
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.routing import Router
 from dmr.security.jwt import JWTAsyncAuth
 
 
@@ -113,6 +118,50 @@ def test_file_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     [path('/file', _FileController.as_view())],
                     prefix='/',
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _Status(enum.StrEnum):
+    active = 'active'
+    inactive = 'inactive'
+
+
+class _ExampleModel(msgspec.Struct):
+    age: Annotated[int, msgspec.Meta(gt=0, le=10)]
+    username: str
+    status: _Status
+    email: str
+    salary: float
+    tags: list[str]
+    metadata: dict[str, str]
+
+
+class _ExampleController(Controller[MsgspecSerializer]):
+    def post(self) -> _ExampleModel:
+        raise NotImplementedError
+
+
+def test_example_schema(
+    snapshot: SnapshotAssertion,
+    dmr_clean_settings: None,
+    settings: LazySettings,
+) -> None:
+    """Ensure that schema with examples is correctly generated."""
+    settings.DMR_SETTINGS = {
+        Settings.openapi_examples_seed: 5,
+    }
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    [path('/example', _ExampleController.as_view())],
+                    prefix='/api/v1',
                 ),
             ).convert(),
             indent=2,

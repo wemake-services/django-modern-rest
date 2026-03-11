@@ -57,12 +57,13 @@ msgspec = { version = ">=0.19", optional = true }
 pydantic = { version = "^2.12", optional = true, extras = ["email"] }
 pyjwt = { version = ">=2.11", optional = true, extras = ["crypto"] }
 openapi-spec-validator = { version = "^0.8", optional = true }
+polyfactory = { version = "^3.2", optional = true }
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
 msgspec = ["msgspec"]
 jwt = ["pyjwt"]
-openapi = ["openapi-spec-validator"]
+openapi = ["openapi-spec-validator", "polyfactory"]
 
 [tool.poetry.group.dev.dependencies]
 django = "^5.2"
@@ -70,7 +71,7 @@ django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 types-xmltodict = "^1.0"
 pyright = "^1.1"
-pyrefly = ">=0.54,<0.56"
+pyrefly = "^0.55"
 
 codespell = "^2.4"
 wemake-python-styleguide = "^1.6"
