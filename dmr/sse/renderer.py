@@ -11,6 +11,7 @@ from dmr.parsers import (
     _NoOpParser,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.renderers import Renderer
+from dmr.sse.metadata import SSE
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -82,7 +83,7 @@ class SSERenderer(Renderer):
     def validation_parser(self) -> _NoOpParser:
         return _NoOpParser(self.content_type)
 
-    def _render_event(self, to_serialize: Any) -> bytes:  # noqa: WPS213, C901
+    def _render_event(self, to_serialize: SSE) -> bytes:  # noqa: WPS213, C901
         # We use BytesIO, because our json renderer returns `bytes`.
         # We don't want to convert it to string to convert it to bytes again.
         # Payload will always be preset,
@@ -123,7 +124,7 @@ class SSERenderer(Renderer):
                     to_serialize.data,
                     renderer=self._regular_renderer,
                 )
-                if to_serialize.serialize
+                if to_serialize.should_serialize_data
                 else to_serialize.data
             )
             for chunk in self._linebreak.split(payload):
