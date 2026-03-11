@@ -94,7 +94,7 @@ class _BaseEvent(pydantic.BaseModel):
     retry: SkipJsonSchema[int | None] = None
 
     @property
-    def serialize(self) -> bool:
+    def should_serialize_data(self) -> bool:
         return True
 
 
@@ -206,7 +206,7 @@ class _OverriddenEvent(pydantic.BaseModel):
     id: None = None
 
     @property
-    def serialize(self) -> bool:
+    def should_serialize_data(self) -> bool:
         return False
 
     @override

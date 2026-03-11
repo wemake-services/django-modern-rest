@@ -18,7 +18,7 @@ class _BaseEvent(pydantic.BaseModel):
     retry: SkipJsonSchema[int | None] = None
 
     @property
-    def serialize(self) -> bool:
+    def should_serialize_data(self) -> bool:
         return True
 
 
@@ -47,7 +47,7 @@ class PingEvent(pydantic.BaseModel):
     event: SkipJsonSchema[None] = None
 
     @property
-    def serialize(self) -> bool:
+    def should_serialize_data(self) -> bool:
         return False
 
 

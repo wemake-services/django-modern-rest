@@ -41,7 +41,7 @@ class SSE(Protocol):
     comment: Any = None
 
     @property
-    def serialize(self) -> bool:
+    def should_serialize_data(self) -> bool:
         """Should we serialize the data attribute or return it as is?"""
         raise NotImplementedError
 
@@ -184,7 +184,7 @@ class SSEvent(Generic[_DataT_co]):
         self._serialize = serialize
 
     @property
-    def serialize(self) -> bool:
+    def should_serialize_data(self) -> bool:
         """
         Should we serialize ``data`` attribute with the serializer?
 
