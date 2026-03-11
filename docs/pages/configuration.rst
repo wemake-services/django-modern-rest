@@ -300,7 +300,7 @@ OpenAPI
     ...         title='My Amazing App',
     ...         version='13.22.3',
     ...         openapi_version='3.2.0',
-    ...     },
+    ...     ),
     ... }
 
 .. data:: dmr.settings.Settings.openapi_examples_seed
