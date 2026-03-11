@@ -39,6 +39,7 @@ def get_schema(  # noqa: WPS211
             response_spec.description
             or HTTPStatus(response_spec.status_code).phrase
         ),
+        links=response_spec.links,
         headers=headers or None,
         content=_get_content(
             response_spec,

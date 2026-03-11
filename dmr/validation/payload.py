@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
+        Link,
         Reference,
         SecurityRequirement,
         Server,
@@ -62,6 +63,8 @@ class ModifyEndpointPayload(_BasePayload):
     # That's why `HeaderSpec` and `CookieSpec` are allowed.
     headers: Mapping[str, NewHeader | HeaderSpec] | None
     cookies: Mapping[str, NewCookie | CookieSpec] | None
+
+    links: dict[str, 'Link | Reference'] | None
 
 
 #: Alias for different payload types:

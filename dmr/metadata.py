@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
+        Link,
         Reference,
         Response,
         Server,
@@ -56,10 +57,11 @@ class ResponseSpec:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
-        description: Text comment about what this response represents.
         limit_to_content_types: This response can only happen
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
+        description: Text comment about what this response represents.
+        links: Possible links to other OpenAPI operations.
 
     We use this structure to validate responses and render them in OpenAPI.
     """
@@ -75,11 +77,17 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+    limit_to_content_types: Set[str] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+
+    # Metadata:
     description: str | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
-    limit_to_content_types: Set[str] | None = dataclasses.field(
+    links: dict[str, 'Link | Reference'] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -119,6 +127,8 @@ class ResponseModification:
             Headers passed here will be added to the final response.
         cookies: Shows *cookies* in the documentation.
             New cookies passed here will be added to the final response.
+        description: Text comment about what this response represents.
+        links: Possible links to other OpenAPI operations.
 
     We use this structure to modify the default response.
     """
@@ -128,6 +138,10 @@ class ResponseModification:
     status_code: HTTPStatus
     headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
     cookies: Mapping[str, 'NewCookie | CookieSpec'] | None
+
+    # Metadata:
+    description: str | None
+    links: dict[str, 'Link | Reference'] | None
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
@@ -150,6 +164,9 @@ class ResponseModification:
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),
+            # Metadata:
+            description=self.description,
+            links=self.links,
         )
 
     def actionable_headers(self) -> Mapping[str, 'NewHeader'] | None:

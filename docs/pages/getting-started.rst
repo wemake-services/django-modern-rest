@@ -55,6 +55,10 @@ Extras for different features:
   since it is `the fastest <https://jcristharif.com/msgspec/benchmarks.html>`_
   library out there for this task.
 
+  We also recommend to always install
+  `django-stubs <https://github.com/typeddjango/django-stubs>`_
+  for typing the Django itself.
+
 .. note::
 
   You don't need to add ``'dmr'`` to the ``INSTALLED_APPS``,
