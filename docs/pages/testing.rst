@@ -144,7 +144,7 @@ When running the test case with
 
 it will cover all your API. In simple cases it might be enough of tests.
 Yes, you heard right: in simple cases just using ``schemathesis``
-can remove the need in writting any other integration tests.
+can remove the need in writing any other integration tests.
 
 .. important::
 
