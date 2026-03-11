@@ -40,8 +40,6 @@ except ImportError:  # pragma: no cover
 _CallableAny: TypeAlias = Callable[..., Any]
 
 
-# NOTE: this is a overly-simplified example of xml parsing / rendering.
-# You *will* need more work.
 @final
 class XmlParser(Parser):
     __slots__ = ()
@@ -75,6 +73,10 @@ class XmlParser(Parser):
         key: str,
         xml_value: Any,
     ) -> tuple[str, Any]:
+        # xmltodict converts empty tags to `None`; for leaf fields in payloads
+        # we normalize them to empty strings to match OpenAPI string semantics.
+        if xml_value is None:
+            return key, ''
         return key, xml_value
 
 
