@@ -41,13 +41,61 @@ What happens in the example above?
 .. important::
 
   Make sure that ``'dmr'`` is listed in the ``INSTALLED_APPS``
-  and that static files are enabled, so we can serve you the required js libs.
+  and that static files are enabled,
+  so we can serve you the required static files.
 
 
 Customizing OpenAPI generation
 ------------------------------
 
-TODO
+Customizing schema
+~~~~~~~~~~~~~~~~~~
+
+We delegate all schema generation to the model's library directly.
+To do so, we use :class:`~dmr.serializer.BaseSchemaGenerator`
+subclasses for different serializers.
+
+To customize a schema, use the native methods.
+
+.. tabs::
+
+    .. tab:: msgspec
+
+      Docs: https://jcristharif.com/msgspec/jsonschema.html
+
+      .. literalinclude:: /examples/openapi/msgspec_customization.py
+        :caption: dtos.py
+        :language: python
+        :linenos:
+        :no-imports-spoiler:
+
+    .. tab:: pydantic
+
+      Docs: https://docs.pydantic.dev/latest/concepts/json_schema
+
+      .. literalinclude:: /examples/openapi/pydantic_customization.py
+        :caption: dtos.py
+        :language: python
+        :linenos:
+        :no-imports-spoiler:
+
+      You can completely redefine the schema generation with
+      overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
+
+Customizing response
+~~~~~~~~~~~~~~~~~~~~
+
+:class:`~dmr.metadata.ResponseSpec` supports all the metadata fields
+that :class:`~dmr.openapi.objects.Response` has.
+
+Providing an explicit link for ``schemathesis``
+`stateful API testing <https://schemathesis.readthedocs.io/en/stable/explanations/stateful>`_
+would look like so:
+
+.. literalinclude:: /examples/openapi/response_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
 
 Examples generation

@@ -27,6 +27,7 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import (
     Callback,
     ExternalDocumentation,
+    Link,
     Operation,
     Reference,
     Server,
@@ -792,6 +793,7 @@ def modify(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
 ) -> _ModifySyncCallable: ...
 
 
@@ -816,6 +818,7 @@ def modify(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
 ) -> _ModifyAnyCallable: ...
 
 
@@ -839,6 +842,7 @@ def modify(  # noqa: WPS211
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
 ) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -899,6 +903,7 @@ def modify(  # noqa: WPS211
             a request that may be initiated by the API provider and the
             expected responses.
         servers: An alternative servers array to service this operation.
+        links: Possible links to other OpenAPI operations.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -928,6 +933,7 @@ def modify(  # noqa: WPS211
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,
+            links=links,
         ),
     )
 
