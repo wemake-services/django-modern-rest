@@ -1,19 +1,31 @@
 # pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownMemberType=false
 
 from enum import Enum
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
+from dmr.openapi.mappers.example import generate_example
 from dmr.openapi.objects.discriminator import Discriminator
 from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
 from dmr.openapi.objects.external_documentation import ExternalDocumentation
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
 from dmr.openapi.objects.xml import XML
+from dmr.types import Empty, EmptyObj
+
+if TYPE_CHECKING:
+    from dmr.serializer import BaseSerializer
 
 _EnumT = TypeVar('_EnumT', bound=Enum)
 
 
-def load_schema(raw_data: dict[str, Any]) -> Schema:
+def load_schema(
+    raw_data: dict[str, Any],
+    *,
+    # TODO: make an overload
+    should_generate_example: bool = False,
+    annotation: Any | Empty = EmptyObj,
+    serializer: type['BaseSerializer'] | None = None,
+) -> Schema:
     """
     Load schema from python's dict into a dataclass.
 
@@ -23,6 +35,13 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
 
     After that we will just use the serializer and remove this code.
     """
+    examples = raw_data.get('examples')
+    example = raw_data.get('example')
+
+    if should_generate_example and not example and not examples:
+        assert serializer is not None, 'serializer instance is required'  # noqa: S101
+        example = generate_example(annotation, serializer)
+
     return Schema(
         all_of=_try_sequence(raw_data.get('allOf')),
         any_of=_try_sequence(raw_data.get('anyOf')),
@@ -75,11 +94,11 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         deprecated=raw_data.get('deprecated'),
         read_only=raw_data.get('readOnly'),
         write_only=raw_data.get('writeOnly'),
-        examples=raw_data.get('examples'),
         discriminator=_try_discriminator(raw_data.get('discriminator')),
         xml=_try_xml(raw_data.get('xml')),
         external_docs=_try_external_documentation(raw_data.get('externalDocs')),
-        example=raw_data.get('example'),
+        examples=examples,
+        example=example,
     )
 
 

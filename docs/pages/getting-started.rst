@@ -136,8 +136,8 @@ Next, you can learn:
 - How to customize controllers and endpoints
 
 
-But, Django is complicated!
----------------------------
+Full example
+------------
 
 If you were ever told that Django is too big and complicated,
 that was misleading, to say the least.
@@ -154,11 +154,31 @@ You can copy it by clicking "Copy" in the right upper corner of the example,
 it shows up on hovering the code example. Paste it as ``example.py``,
 install the ``django-modern-rest`` and run it with:
 
-.. code-block:: bash
+.. tabs::
 
-  python example.py runserver
+    .. tab:: :iconify:`material-icon-theme:uv` uv
 
-And then visit https://localhost:8000/docs/swagger for the interactive docs.
+        .. code-block:: bash
+
+            uv run example.py runserver
+
+    .. tab:: :iconify:`devicon:poetry` poetry
+
+        .. code-block:: bash
+
+            poetry run python example.py runserver
+
+    .. tab:: :iconify:`devicon:pypi` pip
+
+        .. code-block:: bash
+
+            python example.py runserver
+
+Your API is now live:
+
+- ``POST`` http://localhost:8000/api/user/ — create a user
+
+And then visit https://localhost:8000/docs/swagger/ for the interactive docs.
 
 .. image:: /_static/images/swagger.png
    :alt: Swagger view

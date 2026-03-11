@@ -12,6 +12,10 @@ If you want to list this response, consider adding
 it to the default list of response specs in controller / settings.
 
 
+Examples generation
+-------------------
+
+
 Top level API
 -------------
 
