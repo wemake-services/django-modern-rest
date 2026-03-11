@@ -7,7 +7,6 @@ from typing import (
     TypeAlias,
     TypeVar,
     cast,
-    final,
     overload,
 )
 
@@ -18,10 +17,13 @@ from django.views.defaults import page_not_found
 from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
+from dmr.openapi.collector import controller_mapping_collector
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
     from dmr.internal.types import FormatError
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.objects import OpenAPI, Paths
     from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
@@ -35,7 +37,6 @@ _AnyPattern: TypeAlias = URLPattern | URLResolver
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
 
-@final
 class Router:
     """Collection of HTTP routes for REST framework."""
 
@@ -45,6 +46,26 @@ class Router:
         """Just stores the passed routes."""
         self.urls = urls
         self.prefix = prefix
+
+    def get_schema(self, context: 'OpenAPIContext') -> 'OpenAPI':
+        """
+        Builds OpenAPI specification.
+
+        This class orchestrates the process of generating a complete OpenAPI
+        specification by collecting controllers from the router, generating path
+        items for each controller, extracting shared components, and merging
+        everything together with the configuration.
+        """
+        paths_items: Paths = {}
+
+        for path, controller in controller_mapping_collector(
+            self.urls,
+            base_path=self.prefix,
+        ):
+            paths_items[path] = controller.get_path_item(path, context)
+
+        components = context.generators.component(paths_items)
+        return context.config_merger(paths_items, components)
 
 
 # We mimic django's name here:

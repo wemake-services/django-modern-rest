@@ -98,7 +98,7 @@ class PydanticSerializer(BaseSerializer):
     __slots__ = ()
 
     # Required API:
-    validation_error = pydantic.ValidationError
+    validation_error = pydantic_core.ValidationError
     optimizer = PydanticEndpointOptimizer
     schema_generator = PydanticSchemaGenerator
 
@@ -185,7 +185,7 @@ class PydanticSerializer(BaseSerializer):
             Structured and validated data.
 
         Raises:
-            pydantic.ValidationError: When parsing can't be done.
+            pydantic_core.ValidationError: When parsing can't be done.
 
         """
         # At this point `_get_cached_type_adapter(model)` was already called

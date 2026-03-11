@@ -321,10 +321,8 @@ class SerializerContext:
         """
         Collect, validate, and bind component data to the controller.
 
-        Raises:
-            serializer.validation_error: When provided data does not
-                match the expected model.
-
+        Raises ``serializer.validation_error`` when provided
+        data does not match the expected model.
         """
         if not self._specs:
             return

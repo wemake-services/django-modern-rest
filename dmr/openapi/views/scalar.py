@@ -1,11 +1,9 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from dmr.openapi.views.base import OpenAPIView
-
-if TYPE_CHECKING:
-    from django.http import HttpRequest, HttpResponse
 
 
 class ScalarView(OpenAPIView):

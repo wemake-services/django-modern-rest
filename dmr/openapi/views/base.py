@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
+from django.http import HttpResponseBase
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -9,8 +10,6 @@ from typing_extensions import override
 from dmr.internal.json import json_dumps
 
 if TYPE_CHECKING:
-    from django.http import HttpResponseBase
-
     from dmr.openapi.objects import OpenAPI
     from dmr.openapi.objects.openapi import ConvertedSchema
 

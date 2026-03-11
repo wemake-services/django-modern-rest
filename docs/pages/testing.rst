@@ -126,7 +126,8 @@ What will happen here?
    from the ``reverse('openapi')`` URL
 2. Then we will create a top level ``schema`` object from the ``api_schema``
    pytest fixture. It is needed to create a property-based test case
-3. Lastly, we create a generated test case with the help of
+3. Lastly, we create a generated test case with
+   the help of ``@schema.parametrize()``
 
 You can also provide settings, like
 the number of generated tests, enabled rules, auth, etc:

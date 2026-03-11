@@ -23,6 +23,7 @@ Endpoint
   :members:
 
 .. autoclass:: dmr.metadata.EndpointMetadata
+  :members:
 
 .. autodecorator:: dmr.endpoint.modify
 
@@ -66,8 +67,10 @@ Validation
 ----------
 
 .. autoclass:: dmr.validation.ModifyEndpointPayload
+  :members:
 
 .. autoclass:: dmr.validation.ValidateEndpointPayload
+  :members:
 
 
 .. _serializer:
@@ -82,6 +85,10 @@ Serialization
   :members:
 
 .. autoclass:: dmr.serializer.SerializerContext
+  :members:
+
+.. autoclass:: dmr.serializer.BaseSchemaGenerator
+  :members:
 
 
 Routing
@@ -160,20 +167,44 @@ Testing
 -------
 
 .. autoclass:: dmr.test.DMRRequestFactory
+  :members:
 
 .. autoclass:: dmr.test.DMRAsyncRequestFactory
+  :members:
 
 .. autoclass:: dmr.test.DMRClient
+  :members:
 
 .. autoclass:: dmr.test.DMRAsyncClient
+  :members:
 
 
 Plugins
 -------
 
+Pydantic
+~~~~~~~~
+
 .. autoclass:: dmr.plugins.pydantic.PydanticSerializer
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.serializer.PydanticEndpointOptimizer
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
+  :members:
+
+Msgspec
+~~~~~~~
 
 .. autoclass:: dmr.plugins.msgspec.MsgspecSerializer
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.MsgspecEndpointOptimizer
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
+  :members:
 
 
 Files

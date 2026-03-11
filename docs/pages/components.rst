@@ -28,6 +28,14 @@ You can use existing ones or create our own.
 Existing components
 -------------------
 
+.. note::
+
+  All existing components should only be inherited for parsing.
+  If you want to change the implementation details
+  of a component – create a new one from scratch.
+
+  You can still delegate parts of the work to existing ones.
+
 Parsing headers
 ~~~~~~~~~~~~~~~
 
