@@ -440,7 +440,10 @@ def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
         args.extend(['-d', body_data])
         clean_args.extend(['-d', body_data])
     elif content_type == 'application/xml':
-        body_data = xmltodict.unparse(run_args['body'], full_document=False)
+        body_data = xmltodict.unparse(
+            {'request': run_args['body']},
+            full_document=False,
+        )
         args.extend(['-d', body_data])
         clean_args.extend(['-d', body_data])
     elif content_type == 'application/x-www-form-urlencoded':
