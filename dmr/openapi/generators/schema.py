@@ -2,6 +2,7 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, get_args, get_origin
 
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.openapi.mappers.example import generate_example
 from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects.reference import Reference
 from dmr.openapi.objects.schema import Schema
@@ -72,6 +73,7 @@ class SchemaGenerator:
             return self._maybe_generate_reference(
                 annotation,
                 *schemas,
+                serializer,
                 skip_registration=skip_registration,
             )
         raise UnsolvableAnnotationsError(
@@ -109,6 +111,7 @@ class SchemaGenerator:
         annotation: Any,
         schema: dict[str, Any],
         components: dict[str, Any],
+        serializer: type['BaseSerializer'],
         *,
         skip_registration: bool = False,
     ) -> Schema | Reference:
@@ -127,6 +130,11 @@ class SchemaGenerator:
                 summary=schema.get('summary'),
                 description=schema.get('description'),
             )
+            if not skip_registration:
+                # If we got a reference from the start,
+                # it might still miss the examples:
+                self._maybe_generate_example(reference, annotation, serializer)
+
             # When we create skip registration, we need
             # real schemas back, not references,
             # because there's no registered schema under the reference.
@@ -144,6 +152,7 @@ class SchemaGenerator:
             schema,
             should_generate_example=True,
             annotation=annotation,
+            serializer=serializer,
         )
         if not skip_registration and schema_obj.title:
             return self._context.registries.schema.register(
@@ -152,6 +161,18 @@ class SchemaGenerator:
                 annotation=annotation,
             )
         return schema_obj
+
+    def _maybe_generate_example(
+        self,
+        reference: Reference,
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+    ) -> None:
+        schema = self._context.registries.schema.maybe_resolve_reference(
+            reference,
+        )
+        if not schema.example and not schema.examples:  # pragma: no branch
+            schema.example = generate_example(annotation, serializer)
 
 
 def _build_resolution_context(

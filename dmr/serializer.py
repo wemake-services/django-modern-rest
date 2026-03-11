@@ -147,6 +147,25 @@ class BaseSerializer:  # noqa: WPS214
 
         Returns:
             Structured and validated data.
+
+        """
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def to_python(
+        cls,
+        structured: Any,
+    ) -> Any:
+        """
+        Unarse *structured* data from a model into Python primitives.
+
+        Args:
+            structured: Model instance.
+
+        Returns:
+            Unstructured data.
+
         """
         raise NotImplementedError
 

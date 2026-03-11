@@ -55,6 +55,7 @@ forbidden_modules =
   msgspec
   jwt
   openapi_spec_validator
+  polyfactory
   # internal modules:
   dmr_pytest
   django_test_app
@@ -71,6 +72,8 @@ ignore_imports =
   dmr.security.jwt.* -> jwt
   # OpenAPI validation:
   dmr.openapi.objects.openapi -> openapi_spec_validator
+  # Examples generation:
+  dmr.openapi.mappers.example -> polyfactory
   # Optional json support from msgspec:
   dmr.settings -> msgspec
   dmr.internal.json -> msgspec

@@ -201,6 +201,24 @@ class PydanticSerializer(BaseSerializer):
 
     @override
     @classmethod
+    def to_python(
+        cls,
+        structured: Any,
+    ) -> Any:
+        """
+        Unparse *structured* data from a model into Python primitives.
+
+        Args:
+            structured: Model instance.
+
+        Returns:
+            Unstructured data.
+
+        """
+        return _get_cached_type_adapter(Any).dump_python(structured)
+
+    @override
+    @classmethod
     def serialize_validation_error(
         cls,
         exc: Exception,

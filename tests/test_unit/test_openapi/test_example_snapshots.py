@@ -7,10 +7,7 @@ from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Body,
-    Controller,
-)
+from dmr import Body, Controller
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
@@ -72,9 +69,7 @@ class _WithExistingExampleModel(pydantic.BaseModel):
     )
 
 
-class _ExistingExampleController(
-    Controller[PydanticSerializer],
-):
+class _ExistingExampleController(Controller[PydanticSerializer]):
     def post(self) -> _WithExistingExampleModel:
         raise NotImplementedError
 

@@ -1,15 +1,19 @@
-import decimal
-import enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from dmr.openapi.objects.example import Example
 from dmr.types import EmptyObj
+
+if TYPE_CHECKING:
+    from dmr.serializer import BaseSerializer
 
 try:
     from polyfactory.factories import DataclassFactory
 except ImportError:  # pragma: no cover
 
-    def generate_example(annotation: Any) -> Example | None:
+    def generate_example(
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+    ) -> Example | None:
         """Does nothing, since polyfactory is not installed."""
 
 else:
@@ -23,7 +27,10 @@ else:
         __random_seed__ = 10  # just a random number
         __check_model__ = False
 
-    def generate_example(annotation: Any) -> Example | None:
+    def generate_example(
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+    ) -> Example | None:
         """Generates examples based on the type annotation."""
         if annotation is EmptyObj:  # pragma: no cover
             return None
@@ -41,7 +48,7 @@ else:
             _ExampleFactory.seed_random(seed)
 
         try:  # noqa: WPS505
-            generated = _post_process_value(
+            generated = serializer.to_python(
                 _ExampleFactory.get_field_value(
                     FieldMeta.from_type(annotation=annotation),
                 ),
@@ -52,21 +59,3 @@ else:
             description='Generated example',
             value=generated,
         )
-
-
-# pyright: reportUnknownVariableType=false
-def _post_process_value(generated: Any) -> Any:  # noqa: C901
-    if hasattr(generated, 'model_dump'):
-        generated = generated.model_dump(mode='json')
-    if isinstance(generated, (decimal.Decimal, float)):
-        generated = round(generated, 2)
-    if isinstance(generated, enum.Enum):  # pragma: no cover
-        generated = generated.value
-
-    # Must be at the bottom:
-    if isinstance(generated, (list, set, frozenset, tuple)):
-        generated = [_post_process_value(seq_item) for seq_item in generated]
-    if isinstance(generated, dict):
-        for dict_key, dict_value in generated.items():
-            generated[dict_key] = _post_process_value(dict_value)
-    return generated
