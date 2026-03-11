@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 import pytest
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
@@ -33,6 +34,12 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
         'paths': {},
         'components': {'schemas': {}, 'securitySchemes': {}},
     })
+
+
+def test_schema_requires_init() -> None:
+    """Ensure that raw views fail loudly when schema is missing."""
+    with pytest.raises(ImproperlyConfigured):
+        OpenAPIJsonView().configured_schema()
 
 
 @pytest.mark.parametrize(

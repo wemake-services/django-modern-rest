@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import Any, final
 from xml.parsers import expat
 
 import xmltodict
@@ -14,8 +14,7 @@ from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.renderers import Renderer
 
 
-# NOTE: this is a overly-simplified example of xml parsing / rendering.
-# You *will* need more work.
+@final
 class XmlParser(Parser):
     __slots__ = ()
 
@@ -31,11 +30,31 @@ class XmlParser(Parser):
         model: Any,
     ) -> Any:
         try:
-            return xmltodict.parse(to_deserialize, process_namespaces=True)
+            parsed = xmltodict.parse(
+                to_deserialize,
+                process_namespaces=True,
+                postprocessor=self._postprocessor,
+                # TODO: this is really bad, but I have no idea what to do.
+                force_list={'detail', 'loc'},
+            )
         except expat.ExpatError as exc:
             raise RequestSerializationError(str(exc)) from None
+        return parsed[next(iter(parsed.keys()))]
+
+    def _postprocessor(
+        self,
+        path: Any,
+        key: str,
+        xml_value: Any,
+    ) -> tuple[str, Any]:
+        # xmltodict converts empty tags to `None`; for leaf fields in payloads
+        # we normalize them to empty strings to match OpenAPI string semantics.
+        if xml_value is None:
+            return key, ''
+        return key, xml_value
 
 
+@final
 class XmlRenderer(Renderer):
     __slots__ = ()
 
@@ -49,7 +68,7 @@ class XmlRenderer(Renderer):
     ) -> bytes:
         preprocessor = self._wrap_serializer(serializer_hook)
         raw_data = xmltodict.unparse(
-            preprocessor('', to_serialize)[1],
+            {type(to_serialize).__qualname__: to_serialize},
             preprocessor=preprocessor,
         )
         assert isinstance(raw_data, str)

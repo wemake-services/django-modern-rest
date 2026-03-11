@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -40,7 +41,8 @@ class OpenAPIView(View):
 
     # Public API:
     dumps: SchemaDumper = staticmethod(json_dumps)  # noqa: WPS421
-    schema: ClassVar['OpenAPI']
+    # Django's `View.as_view()` only accepts kwargs for existing attributes.
+    schema: ClassVar['OpenAPI | None'] = None
 
     @override
     @classmethod
@@ -56,5 +58,18 @@ class OpenAPIView(View):
         :class:`~dmr.openapi.objects.OpenAPI` instance, store it on the
         view class, and then return the configured view callable.
         """
-        cls.schema = schema
-        return super().as_view(**initkwargs)
+        return super().as_view(schema=schema, **initkwargs)
+
+    def configured_schema(self) -> 'OpenAPI':
+        """
+        Return the configured OpenAPI schema for the current view.
+
+        Raises:
+            ImproperlyConfigured: If the view was not created via `as_view`.
+        """
+        if self.schema is None:
+            raise ImproperlyConfigured(
+                '`OpenAPIView` requires an `OpenAPI` schema. '
+                'Use `YourView.as_view(schema)` to create the view.',
+            )
+        return self.schema
