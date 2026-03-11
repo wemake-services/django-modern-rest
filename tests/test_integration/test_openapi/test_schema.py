@@ -19,11 +19,7 @@ def api_schema(db: None) -> 'OpenApiSchema':
     return st.openapi.from_wsgi(reverse('openapi'), application)
 
 
-# TODO: We skip negotiation tests because our implementation of
-# XmlParser and XmlRenderer too simple and naive.
-schema = st.pytest.from_fixture('api_schema').exclude(
-    path='/api/negotiations/negotiation/',
-)
+schema = st.pytest.from_fixture('api_schema')
 
 
 @schema.parametrize()
