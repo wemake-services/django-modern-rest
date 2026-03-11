@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 from dmr.openapi.config import OpenAPIConfig
-from dmr.openapi.core.builder import OpenAPIBuilder
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import OpenAPI
 
@@ -15,7 +14,6 @@ def build_schema(
     # TODO: this can be an overloaded function:
     context: OpenAPIContext | None = None,
     config: OpenAPIConfig | None = None,
-    builder: type[OpenAPIBuilder] = OpenAPIBuilder,
 ) -> OpenAPI:
     """
     Build OpenAPI schema.
@@ -25,14 +23,13 @@ def build_schema(
         context: OpenAPI context with all the builder tools.
         config: Optional configuration of OpenAPI metadata.
             Can be ``None``, in this case we fetch OpenAPI config from settings.
-        builder: ``OpenAPIBuilder`` subclass to build the API.
 
     """
     if context and config:
         raise ValueError('Passing both `config` and `context` is not supported')
     if context is None:
         context = OpenAPIContext(config=config or default_config())
-    return builder(context)(router)
+    return router.get_schema(context)
 
 
 def default_config() -> OpenAPIConfig:

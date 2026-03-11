@@ -1,4 +1,4 @@
-from datetime import date
+import datetime as dt
 from typing import TypeAlias
 
 from django.conf import settings
@@ -7,12 +7,13 @@ from django.db import models
 from django.db.models.expressions import Combinable
 from typing_extensions import override
 
+_BaseFkData: TypeAlias = int | str | Combinable
 _ForeignKey: TypeAlias = (
-    'models.ForeignKey[str | AbstractBaseUser | Combinable, AbstractBaseUser ]'
+    'models.ForeignKey[_BaseFkData | AbstractBaseUser, AbstractBaseUser]'
 )
-_CharField: TypeAlias = 'models.CharField[str | int | Combinable, str]'
+_CharField: TypeAlias = 'models.CharField[_BaseFkData, str]'
 _DateTimeField: TypeAlias = (
-    'models.DateTimeField[str | date | Combinable, date]'
+    'models.DateTimeField[str | dt.datetime | Combinable, dt.datetime]'
 )
 
 

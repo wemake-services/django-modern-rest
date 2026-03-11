@@ -111,7 +111,7 @@ Main features include:
       Both ``wsgi`` and ``asgi`` are supported.
 
     .. grid-item-card:: :octicon:`beaker` Not just schema generation
-      :link: pages/openapi
+      :link: pages/openapi/openapi
       :link-type: doc
 
       Of course, OpenAPI schema generation and modification
@@ -176,7 +176,6 @@ Here are our amazing people who made this project possible.
   pages/middleware.rst
   pages/validation.rst
   pages/reusable-code.rst
-  pages/openapi.rst
   pages/integrations.rst
   pages/sse.rst
   pages/testing.rst
@@ -190,6 +189,15 @@ Here are our amazing people who made this project possible.
   pages/auth/http-basic.rst
   pages/auth/django-session.rst
   pages/auth/jwt.rst
+
+
+.. toctree::
+  :caption: OpenAPI
+  :hidden:
+
+  pages/openapi/schema.rst
+  pages/openapi/openapi.rst
+  pages/openapi/openapi-reference.rst
 
 
 .. toctree::

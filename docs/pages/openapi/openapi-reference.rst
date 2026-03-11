@@ -1,29 +1,5 @@
-OpenAPI
-=======
-
-Semantic schema generation
---------------------------
-
-TODO: explain how responses are fetched from components and auth
-
-Each endpoint might always return ``500`` status code,
-it is not listed by default.
-If you want to list this response, consider adding
-it to the default list of response specs in controller / settings.
-
-
-Examples generation
--------------------
-
-
-Top level API
--------------
-
-.. autofunction:: dmr.openapi.spec.build_schema
-
-
-.. autoclass:: dmr.openapi.config.OpenAPIConfig
-   :members:
+OpenAPI Reference
+=================
 
 
 Objects
@@ -83,7 +59,12 @@ Objects
 .. autoclass:: dmr.openapi.objects.Operation
    :members:
 
+.. autoclass:: dmr.openapi.objects.ParameterMetadata
+  :members:
+
 .. autoclass:: dmr.openapi.objects.Parameter
+   :inherited-members:
+   :show-inheritance:
    :members:
 
 .. autoclass:: dmr.openapi.objects.PathItem
@@ -129,9 +110,6 @@ Objects
 Core
 ----
 
-.. autoclass:: dmr.openapi.core.builder.OpenAPIBuilder
-   :members:
-
 .. autoclass:: dmr.openapi.core.builder.OperationIDBuilder
    :members:
 
@@ -148,4 +126,20 @@ Core
    :members:
 
 .. autoclass:: dmr.openapi.core.registry.SchemaCallback
+  :members:
+
+
+Existing views
+--------------
+
+.. autoclass:: dmr.openapi.views.ScalarView
+  :members:
+
+.. autoclass:: dmr.openapi.views.SwaggerView
+  :members:
+
+.. autoclass:: dmr.openapi.views.RedocView
+  :members:
+
+.. autoclass:: dmr.openapi.views.OpenAPIJsonView
   :members:

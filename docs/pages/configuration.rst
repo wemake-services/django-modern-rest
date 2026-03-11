@@ -312,6 +312,10 @@ OpenAPI
   If set to ``None``, no examples are generated.
   Existing examples won't be overridden.
 
+  It only works if ``'django-modern-rest[openapi]'`` extra is installed.
+  If `polyfactory <https://github.com/litestar-org/polyfactory>`_
+  package is missing, no examples are generated.
+
   .. code-block:: python
     :caption: settings.py
 

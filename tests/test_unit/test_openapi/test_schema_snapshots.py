@@ -69,6 +69,7 @@ class _QueryModel(pydantic.BaseModel):
 
     tags: list[str]
     query: str | None
+    regular: int
 
 
 class _AuthedAndCookiesController(

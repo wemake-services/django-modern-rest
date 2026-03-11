@@ -1,6 +1,6 @@
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
@@ -10,32 +10,17 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
-
-
-class ControllerMapping(NamedTuple):
-    """
-    Information about an API controller for OpenAPI generation.
-
-    This named tuple contains the essential information needed to generate
-    OpenAPI specifications for a single API controller.
-
-    Attributes:
-        path: The URL path pattern for this controller (e.g., '/users/{id}/')
-        controller: The Controller instance that handles this API controller
-    """
-
-    path: str
-    controller: 'Controller[BaseSerializer]'
+_PathAndController: TypeAlias = tuple[str, 'Controller[BaseSerializer]']
 
 
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str = '',
-) -> ControllerMapping:
+) -> tuple[str, 'Controller[BaseSerializer]']:
     path = _join_paths(base_path, str(url_pattern.pattern))
-    controller: Controller[BaseSerializer] = url_pattern.callback.view_class  # type: ignore[attr-defined]
+    controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
     normalized = _normalize_path(path)
-    return ControllerMapping(path=normalized, controller=controller)
+    return normalized, controller
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
@@ -55,7 +40,7 @@ def _normalize_path(path: str) -> str:
 def controller_mapping_collector(
     urls: Sequence[_AnyPattern],
     base_path: str = '',
-) -> list[ControllerMapping]:
+) -> list[_PathAndController]:
     """
     Collect all API controllers from a router for OpenAPI generation.
 
@@ -68,7 +53,7 @@ def controller_mapping_collector(
     direct URL patterns and nested URL resolvers, to build a comprehensive
     list of all available API controllers.
     """
-    controllers: list[ControllerMapping] = []
+    controllers: list[_PathAndController] = []
 
     for url in urls:
         if isinstance(url, URLPattern):

@@ -6,7 +6,6 @@ from django.urls import URLPattern, URLResolver, include, path
 
 from dmr import Blueprint, Controller
 from dmr.openapi.collector import (
-    ControllerMapping,
     _join_paths,
     _normalize_path,
     _process_pattern,
@@ -184,8 +183,8 @@ def test_process_pattern_with_different_views(
     pattern = path(path_str, view_class.as_view())
     controller_mapping = _process_pattern(pattern, '/api/')
 
-    assert isinstance(controller_mapping, ControllerMapping)
-    assert controller_mapping.path == f'/api/{path_str}'
+    assert isinstance(controller_mapping, tuple)
+    assert controller_mapping[0] == f'/api/{path_str}'
 
 
 def test_controller_mapping_collector_with_router() -> None:
@@ -199,10 +198,10 @@ def test_controller_mapping_collector_with_router() -> None:
         ),
     ]
     router = Router(patterns, prefix='/api')
-    controllers = controller_mapping_collector(router.urls, router.prefix)
+    mappings = controller_mapping_collector(router.urls, router.prefix)
 
-    assert len(controllers) == 3
-    assert {controller.path for controller in controllers} == {
+    assert len(mappings) == 3
+    assert {path for path, _ in mappings} == {
         '/api/direct/',
         '/api/composed/',
         '/api/nested/inner/',
