@@ -23,8 +23,7 @@ class OpenAPIJsonView(OpenAPIView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema as JSON response."""
-        schema = self.configured_schema()
         return HttpResponse(
-            content=self.dumps(schema.convert()),
+            content=self.dumps(self.schema.convert()),
             content_type=self.content_type,
         )

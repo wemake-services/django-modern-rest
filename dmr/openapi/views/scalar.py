@@ -27,13 +27,12 @@ class ScalarView(OpenAPIView):
 
     def get(self, request: 'HttpRequest') -> 'HttpResponse':
         """Render the OpenAPI schema using Scalar template."""
-        schema = self.configured_schema()
         return render(
             request,
             self.template_name,
             context={
-                'title': schema.info.title,
-                'schema': self.dumps(schema.convert()),
+                'title': self.schema.info.title,
+                'schema': self.dumps(self.schema.convert()),
             },
             content_type=self.content_type,
         )
