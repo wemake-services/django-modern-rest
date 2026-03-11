@@ -47,6 +47,8 @@ smoke: ## Run smoke tests (check that package can be imported without `django.se
 	poetry run python -c 'from dmr.security import *'
 	poetry run python -c 'from dmr.security.django_session import *'
 	poetry run python -c 'from dmr.security.jwt import *'
+	poetry run python -c 'from dmr.openapi.config import *'
+	poetry run python -c 'from dmr.openapi.objects import *'
 	# Settings itself can be imported with `.setup()`:
 	poetry run python -c 'from dmr import settings'
 

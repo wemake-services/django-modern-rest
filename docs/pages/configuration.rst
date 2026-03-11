@@ -276,6 +276,53 @@ HTTP Spec validation
   :members:
 
 
+OpenAPI
+-------
+
+.. data:: dmr.settings.Settings.openapi_config
+
+  Default: ``OpenAPIConfig(title='Django Modern Rest', version='0.1.0')``
+
+  Metadata to be used in the OpenAPI schema.
+
+  See :class:`~dmr.openapi.config.OpenAPIConfig`
+  for the available fields and their description.
+  It can also be used to change the default OpenAPI spec version.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from dmr.settings import HttpSpec
+    >>> from dmr.openapi.config import OpenAPIConfig
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.openapi_config: OpenAPIConfig(
+    ...         title='My Amazing App',
+    ...         version='13.22.3',
+    ...         openapi_version='3.2.0',
+    ...     },
+    ... }
+
+.. data:: dmr.settings.Settings.openapi_examples_seed
+
+  Default: ``None``
+
+  Random seed to use when generating missing examples in the OpenAPI spec.
+
+  If set to ``None``, no examples are generated.
+  Existing examples won't be overridden.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from dmr.settings import HttpSpec
+    >>> from dmr.openapi.config import OpenAPIConfig
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.openapi_examples_seed: 10,
+    ... }
+
+
 Hacks
 -----
 
