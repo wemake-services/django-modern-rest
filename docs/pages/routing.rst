@@ -10,13 +10,11 @@ about its future URL. Why so?
 2. Because all controllers might be used in multiple URLs,
    for example in ``api/v1`` and ``api/v2``. Our way allows any customizations
 
-
 To register a controller what you do is:
 
 So, how do you compose different controllers with different parsing
 behaviours into a single URL? For this we use
 :func:`~dmr.routing.compose_blueprints` function:
-
 
 But, no second validation ever happens, because we respect your time!
 
@@ -109,14 +107,14 @@ an optimized :func:`~dmr.routing.path` function
 that is a **drop-in replacement** for Django's :func:`django.urls.path`.
 
 What's Changed?
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 The custom implementation uses prefix-based pattern matching
 for faster routing. Instead of immediately running Django's regex engine
 on every request, it performs a quick prefix check first.
 
 How It Works
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 The optimizer works in two stages:
 
@@ -235,21 +233,22 @@ The prefix-based optimization dramatically reduces regex operations:
 - **Failed matches**: Eliminated in one operation (startswith check)
 
 This is especially beneficial for applications with:
+
 - Large number of routes
 - High traffic
 
 Migration
 ~~~~~~~~~
 
-Simply replace Django's ``path`` with ``dmr.routing.path``:
+Simply replace Django's ``path`` with :func:`dmr.routing.path`:
 
 .. code:: python
 
     # Instead of ``from django.urls import path``:
-    from dmr.routing import path
+    >>> from dmr.routing import path
 
-    urlpatterns = [
-        path('api/', include('myapp.urls')),
-    ]
+    >>> urlpatterns = [
+    ...     path('api/', include('myapp.urls')),
+    ... ]
 
 This is a drop-in replacement with no API changes required.

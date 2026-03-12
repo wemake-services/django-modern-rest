@@ -11,9 +11,11 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.openapi.objects.components import Components
-from dmr.openapi.objects.security_requirement import SecurityRequirement
-from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.openapi.objects import (
+    Reference,
+    SecurityRequirement,
+    SecurityScheme,
+)
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -107,20 +109,18 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         self.enforce_minimum_key_length = enforce_minimum_key_length
 
     @property
-    def security_scheme(self) -> Components:
+    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        return Components(
-            security_schemes={
-                # TODO: this does not change if `name!='Authentication'`,
-                # but it probably should.
-                self.security_scheme_name: SecurityScheme(
-                    type='http',
-                    scheme=self.auth_scheme,
-                    bearer_format='JWT',
-                    description='JWT token auth',
-                ),
-            },
-        )
+        return {
+            # TODO: this does not change if `name!='Authentication'`,
+            # but it probably should.
+            self.security_scheme_name: SecurityScheme(
+                type='http',
+                scheme=self.auth_scheme,
+                bearer_format='JWT',
+                description='JWT token auth',
+            ),
+        }
 
     @property
     def security_requirement(self) -> SecurityRequirement:

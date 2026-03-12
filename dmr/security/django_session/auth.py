@@ -13,9 +13,7 @@ from dmr.metadata import (
     ResponseSpec,
     ResponseSpecProvider,
 )
-from dmr.openapi.objects.components import Components
-from dmr.openapi.objects.security_requirement import SecurityRequirement
-from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.response import APIError
 from dmr.security.base import AsyncAuth, SyncAuth
 
@@ -57,25 +55,23 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         self.csrf_scheme_name = csrf_scheme_name
 
     @property
-    def security_scheme(self) -> Components:
+    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        return Components(
-            security_schemes={
-                self.security_scheme_name: SecurityScheme(
-                    type='apiKey',
-                    name=settings.SESSION_COOKIE_NAME,
-                    security_scheme_in='cookie',
-                    description='Reusing standard Django auth flow for API',
-                ),
-                # TODO: this is not right if `CSRF_USE_SESSIONS` is used:
-                self.csrf_scheme_name: SecurityScheme(
-                    type='apiKey',
-                    name=settings.CSRF_COOKIE_NAME,
-                    security_scheme_in='cookie',
-                    description='CSRF protection',
-                ),
-            },
-        )
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=settings.SESSION_COOKIE_NAME,
+                security_scheme_in='cookie',
+                description='Reusing standard Django auth flow for API',
+            ),
+            # TODO: this is not right if `CSRF_USE_SESSIONS` is used:
+            self.csrf_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=settings.CSRF_COOKIE_NAME,
+                security_scheme_in='cookie',
+                description='CSRF protection',
+            ),
+        }
 
     @property
     def security_requirement(self) -> SecurityRequirement:

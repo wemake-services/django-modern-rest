@@ -110,9 +110,6 @@ Objects
 Core
 ----
 
-.. autoclass:: dmr.openapi.core.builder.OperationIDBuilder
-   :members:
-
 .. autoclass:: dmr.openapi.core.context.OpenAPIContext
    :members:
 
@@ -127,6 +124,25 @@ Core
 
 .. autoclass:: dmr.openapi.core.registry.SchemaCallback
   :members:
+
+
+Generators
+----------
+
+.. autoclass:: dmr.openapi.generators.ComponentParserGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.ResponseGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.SchemaGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.SecuritySchemeGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.OperationIdGenerator
+   :members:
 
 
 Existing views

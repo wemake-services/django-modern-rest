@@ -21,9 +21,10 @@ from dmr.components import ComponentParser, Path
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType
-from dmr.openapi.objects.components import Components
-from dmr.openapi.objects.security_requirement import (
+from dmr.openapi.objects import (
+    Reference,
     SecurityRequirement,
+    SecurityScheme,
 )
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
@@ -254,7 +255,7 @@ class _TestSyncAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> Components:
+    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
     @property
@@ -276,7 +277,7 @@ class _TestAsyncAuth(AsyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> Components:
+    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
     @property

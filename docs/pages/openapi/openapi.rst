@@ -126,7 +126,7 @@ This is how OpenAPI spec is generated, top level overview:
 
   graph
       Start[build_schema] --> Router[Router];
-      Router -->|for each controller| Controller[controller.get_path_item];
+      Router -->|for each controller| Controller[Controller.get_path_item];
       Router -->|for each defined auth| SecurityScheme[Auth.security_scheme];
       Controller -->|for each endpoint| Endpoint[Endpoint.get_schema];
       Endpoint -->|for each component| ComponentParser[ComponentParser.get_schema]
@@ -150,9 +150,38 @@ We have several major design principles that define our API:
    See :class:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator`
    and :class:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator`
 
+APIs for schema overrides
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Useful APIs for users to override:
+
+- :func:`dmr.openapi.spec.build_schema` to change
+  how config / context is generated
+- :meth:`dmr.routing.Router.get_schema` to change
+  how :class:`~dmr.openapi.objects.OpenAPI`
+  and :class:`~dmr.openapi.objects.Component` are generated
+- :meth:`dmr.controller.Controller.get_path_item` to change how
+  :class:`~dmr.openapi.objects.PathItem` objects are generated
+- :meth:`dmr.endpoint.Endpoint.get_schema` to change how
+  :class:`~dmr.openapi.objects.Operation` is generated
+- :meth:`dmr.components.ComponentParser.get_schema` to change how
+  :class:`~dmr.openapi.objects.Parameter` objects are generated
+- :meth:`dmr.metadata.ResponseSpec.get_schema` to change how
+  :class:`~dmr.openapi.objects.Response` objects are generated
+- :meth:`dmr.security.SyncAuth.security_scheme`
+  and :class:`dmr.security.SyncAuth.security_requirement` to change how
+  :class:`~dmr.openapi.objects.SecurityScheme` and requirements are generated
+
+
+API Reference
+-------------
+
+This is the API every user needs:
+
 .. autofunction:: dmr.openapi.spec.build_schema
 
 .. autoclass:: dmr.openapi.config.OpenAPIConfig
    :members:
 
-All other objects are listed in :doc:`openapi-reference`.
+All other objects that are only used if you decide to customize the schema
+are listed in :doc:`openapi-reference`.

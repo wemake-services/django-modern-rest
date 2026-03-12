@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Controller, modify
-from dmr.openapi.objects.components import Components
+from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
@@ -148,11 +148,21 @@ def test_schema(
 ) -> None:
     """Ensures that security scheme is correct for django session auth."""
     instance = typ()
-    scheme = instance.security_scheme
 
-    assert isinstance(scheme, Components)
-    assert scheme.security_schemes
-    assert len(scheme.security_schemes) == 2
+    assert instance.security_scheme == snapshot({
+        'django_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='sessionid',
+            security_scheme_in='cookie',
+        ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='csrftoken',
+            security_scheme_in='cookie',
+        ),
+    })
     assert instance.security_requirement == snapshot({
         'django_session': [],
         'csrf': [],
