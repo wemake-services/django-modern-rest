@@ -1,7 +1,7 @@
 # pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownMemberType=false
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 from dmr.openapi.mappers.example import generate_example
 from dmr.openapi.objects.discriminator import Discriminator
@@ -22,7 +22,7 @@ _EnumT = TypeVar('_EnumT', bound=Enum)
 def load_schema(
     raw_data: dict[str, Any],
     *,
-    should_generate_example: bool = False,
+    should_generate_example: Literal[False] = False,
 ) -> Schema: ...
 
 
@@ -30,9 +30,9 @@ def load_schema(
 def load_schema(
     raw_data: dict[str, Any],
     *,
-    should_generate_example: bool = True,
-    annotation: Any | Empty,
-    serializer: type['BaseSerializer'] | None,
+    should_generate_example: Literal[True],
+    annotation: Any,
+    serializer: type['BaseSerializer'],
 ) -> Schema: ...
 
 

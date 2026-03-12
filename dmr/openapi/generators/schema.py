@@ -151,6 +151,7 @@ class SchemaGenerator:
         # Register the final schema:
         schema_obj = load_schema(
             schema,
+            should_generate_example=True,
             annotation=annotation,
             serializer=serializer,
         )
