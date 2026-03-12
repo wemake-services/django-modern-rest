@@ -242,6 +242,10 @@ html_js_files = [
     'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
 ]
 
+html_show_sourcelink = False
+html_sourcelink_suffix = ''
+llms_txt_uri_template = '{base_url}{docname}.html'
+
 
 def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:
     """Resolve canonical names of types to names that resolve in intersphinx.
