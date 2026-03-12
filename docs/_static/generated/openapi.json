@@ -1,0 +1,170 @@
+{
+  "components": {
+    "schemas": {
+      "ErrorDetail": {
+        "description": "Base schema for error details description.",
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorModel": {
+        "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorModel",
+        "type": "object"
+      },
+      "HeaderModel": {
+        "properties": {
+          "X-API-Consumer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-API-Consumer"
+        ],
+        "title": "HeaderModel",
+        "type": "object"
+      },
+      "UserCreateModel": {
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "UserCreateModel",
+        "type": "object"
+      },
+      "UserModel": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "uid": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "uid"
+        ],
+        "title": "UserModel",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {}
+  },
+  "info": {
+    "title": "Django Modern Rest",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/user/": {
+      "post": {
+        "deprecated": false,
+        "operationId": "postApiUser",
+        "parameters": [
+          {
+            "deprecated": false,
+            "in": "header",
+            "name": "X-API-Consumer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreateModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserModel"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Raised when request components cannot be parsed"
+          },
+          "406": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Raised when provided `Accept` header cannot be satisfied"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Raised when returned response does not match the response schema"
+          }
+        },
+        "summary": "All added props have the correct runtime and static types."
+      }
+    }
+  }
+}

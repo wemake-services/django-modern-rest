@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sphinx.application import Sphinx
 
-from tools.sphinx_ext import chartjs, run_examples
+from tools.sphinx_ext import chartjs, openapi_snapshot, run_examples
 
 
 def _register_directives(app: Sphinx) -> None:
@@ -19,5 +19,6 @@ def setup(app: Sphinx) -> dict[str, bool]:
     """Initialize Sphinx extensions and return configuration."""
     app.connect('builder-inited', _register_directives)
     chartjs.setup(app)
+    openapi_snapshot.setup(app)
     run_examples.setup(app)
     return {'parallel_read_safe': True, 'parallel_write_safe': True}
