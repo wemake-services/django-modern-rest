@@ -1,16 +1,14 @@
-import msgspec
-
 from dmr import Controller
+from dmr.openapi.objects import Server
 from dmr.plugins.msgspec import MsgspecSerializer
 
 
-class QueryModel(msgspec.Struct):
-    search: str
-    max_items: int
-
-
 class UserController(Controller[MsgspecSerializer]):
-    description = 'Find '
+    description = 'Create new users'
+    servers = (
+        Server(url='https://example.com'),
+        Server(url='https://dev.example.com'),
+    )
 
     def post(self) -> str:
         return 'post'
