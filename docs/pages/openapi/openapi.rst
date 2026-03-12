@@ -100,7 +100,7 @@ for :class:`~dmr.openapi.objects.PathItem`:
 .. note::
 
   By default docstring or ``__doc__`` from the controller
-  is used to genereate summary and description
+  is used to generate summary and description
   for the :class:`~dmr.openapi.objects.PathItem`.
 
 Customizing operation
@@ -118,7 +118,7 @@ metadata.
 .. note::
 
   By default docstring or ``__doc__`` from endpoint's function definition
-  is used to genereate summary and description
+  is used to generate summary and description
   for the :class:`~dmr.openapi.objects.Operation`.
 
 Customizing parameter
