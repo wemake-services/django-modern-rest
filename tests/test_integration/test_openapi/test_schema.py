@@ -1,13 +1,9 @@
-from typing import TYPE_CHECKING
-
 import pytest
 import schemathesis as st
 from django.urls import reverse
+from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 from django_test_app.server.wsgi import application
-
-if TYPE_CHECKING:
-    from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 
 # NOTE: The `db` fixture is required to enable database access.

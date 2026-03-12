@@ -4,6 +4,7 @@ from dmr.routing import Router
 from server.apps.jwt_auth import views
 
 router = Router(
+    'jwt-auth/',
     [
         path(
             'jwt-obtain-access-refresh-sync/',
@@ -26,5 +27,4 @@ router = Router(
             name='jwt_async_auth',
         ),
     ],
-    prefix='jwt-auth/',
 )

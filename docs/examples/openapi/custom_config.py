@@ -12,10 +12,10 @@ from dmr.routing import Router
 from examples.getting_started.msgspec_controller import UserController
 
 router = Router(
+    'api/',
     [
         path('user/', UserController.as_view(), name='users'),
     ],
-    prefix='api/',
 )
 
 config = OpenAPIConfig(

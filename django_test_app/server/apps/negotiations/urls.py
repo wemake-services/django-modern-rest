@@ -4,6 +4,7 @@ from dmr.routing import Router
 from server.apps.negotiations import views
 
 router = Router(
+    'negotiations/',
     [
         path(
             'negotiation/',
@@ -11,5 +12,4 @@ router = Router(
             name='negotiation',
         ),
     ],
-    prefix='negotiations/',
 )

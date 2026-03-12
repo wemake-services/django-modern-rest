@@ -4,6 +4,7 @@ from dmr.routing import Router
 from server.apps.django_session_auth import views
 
 router = Router(
+    'django-session-auth/',
     [
         path(
             'django-session-sync/',
@@ -26,5 +27,4 @@ router = Router(
             name='user_session_async',
         ),
     ],
-    prefix='django-session-auth/',
 )

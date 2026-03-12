@@ -304,10 +304,10 @@ class _OpenAPIBuilder(_BaseBuilder):
         ).lstrip('/')  # noqa: WPS226
 
         router = Router(
+            '',
             [
                 path(url_path, controller_cls.as_view()),
             ],
-            prefix='',
         )
         schema = build_schema(router)
 

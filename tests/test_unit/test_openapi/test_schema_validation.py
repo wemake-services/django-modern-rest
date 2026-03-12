@@ -65,8 +65,8 @@ class _UserController(
 def test_schema_validation(snapshot: SnapshotAssertion) -> None:
     """Ensure that schema is validated correctly."""
     router = Router(
+        'api/v1/',
         [path('/user', _UserController.as_view())],
-        prefix='/api/v1',
     )
 
     with pytest.raises(

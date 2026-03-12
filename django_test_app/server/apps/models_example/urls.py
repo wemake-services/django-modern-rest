@@ -4,6 +4,7 @@ from dmr.routing import Router
 from server.apps.models_example import views
 
 router = Router(
+    'model-examples/',
     [
         path(
             'user/',
@@ -11,5 +12,4 @@ router = Router(
             name='user_model_create',
         ),
     ],
-    prefix='model-examples/',
 )

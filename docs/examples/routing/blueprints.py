@@ -7,6 +7,7 @@ from examples.using_controller.blueprints import (
 )
 
 router = Router(
+    'api/',
     [
         path(
             'user/',
@@ -18,7 +19,6 @@ router = Router(
             name='users',
         ),
     ],
-    prefix='api/',
 )
 
 urlpatterns = [

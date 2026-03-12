@@ -4,6 +4,7 @@ from dmr.routing import Router
 from examples.using_controller.custom_meta import SettingsController
 
 router = Router(
+    'api/',
     [
         path(
             'settings/',
@@ -11,7 +12,6 @@ router = Router(
             name='settings',
         ),
     ],
-    prefix='api/',
 )
 
 urlpatterns = [

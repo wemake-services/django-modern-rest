@@ -533,6 +533,7 @@ class Path(ComponentParser, Generic[_PathT]):
         ... ): ...
 
         >>> router = Router(
+        ...     'api/',
         ...     [
         ...         path(
         ...             'user/<int:user_id>',
@@ -540,7 +541,6 @@ class Path(ComponentParser, Generic[_PathT]):
         ...             name='users',
         ...         ),
         ...     ],
-        ...     prefix='api/',
         ... )
 
         >>> urlpatterns = [

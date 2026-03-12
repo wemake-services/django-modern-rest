@@ -74,8 +74,8 @@ def test_sse_schema(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
+                    'api/v1/',
                     [path('/sse', _valid_sse.as_view())],
-                    prefix='/api/v1',
                 ),
                 config=OpenAPIConfig(
                     title='SSE Test',
@@ -183,8 +183,8 @@ def test_complex_sse_schema(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
+                    'api/v1/',
                     [path('/complex', _complex_sse.as_view())],
-                    prefix='/api/v1',
                 ),
                 config=OpenAPIConfig(
                     title='SSE Complex Pydantic <odels',
@@ -266,8 +266,8 @@ def test_overridden_sse_schema(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
+                    'api/v1/',
                     [path('/overridden', _overridden_sse.as_view())],
-                    prefix='/api/v1',
                 ),
                 config=OpenAPIConfig(
                     title='SSE Overridden Pydantic models',
