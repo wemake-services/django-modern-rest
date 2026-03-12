@@ -12,7 +12,7 @@ def test_schema(
     """Ensures that security scheme is correct for jwt auth."""
     instance = typ()
 
-    assert instance.security_scheme == snapshot({
+    assert instance.security_schemes == snapshot({
         'jwt': SecurityScheme(
             type='http',
             description='JWT token auth',

@@ -109,7 +109,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         self.enforce_minimum_key_length = enforce_minimum_key_length
 
     @property
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
         return {
             # TODO: this does not change if `name!='Authentication'`,

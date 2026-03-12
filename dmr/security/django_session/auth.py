@@ -55,7 +55,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         self.csrf_scheme_name = csrf_scheme_name
 
     @property
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
         return {
             self.security_scheme_name: SecurityScheme(

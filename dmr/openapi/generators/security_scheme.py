@@ -39,7 +39,7 @@ class SecuritySchemeGenerator:
         requirements: list[SecurityRequirement] = []
 
         for auth in auth_providers:
-            schemes = auth.security_scheme
+            schemes = auth.security_schemes
             if not schemes:
                 continue
 

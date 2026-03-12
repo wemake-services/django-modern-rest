@@ -34,7 +34,7 @@ class _NoSchemeAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         return {}
 
     @property
@@ -54,7 +54,7 @@ class _WithSchemeAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         return {
             'testScheme': SecurityScheme(type='http', scheme='bearer'),
         }

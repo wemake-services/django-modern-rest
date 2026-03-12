@@ -40,7 +40,7 @@ class _WrongAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         return {
             'wrong': SecurityScheme(
                 type='http',

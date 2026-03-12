@@ -24,7 +24,7 @@ class _BaseAuth(ResponseSpecProvider):
 
     @property
     @abstractmethod
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
         raise NotImplementedError
 

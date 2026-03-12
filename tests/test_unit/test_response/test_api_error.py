@@ -255,7 +255,7 @@ class _TestSyncAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
     @property
@@ -277,7 +277,7 @@ class _TestAsyncAuth(AsyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
     @property

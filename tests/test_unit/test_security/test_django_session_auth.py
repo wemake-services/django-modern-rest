@@ -149,7 +149,7 @@ def test_schema(
     """Ensures that security scheme is correct for django session auth."""
     instance = typ()
 
-    assert instance.security_scheme == snapshot({
+    assert instance.security_schemes == snapshot({
         'django_session': SecurityScheme(
             type='apiKey',
             description='Reusing standard Django auth flow for API',

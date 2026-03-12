@@ -14,9 +14,8 @@ def test_schema(
 ) -> None:
     """Ensures that security scheme is correct for http basic auth."""
     instance = typ()
-    scheme = instance.security_scheme
 
-    assert scheme == snapshot({
+    assert instance.security_schemes == snapshot({
         'http_basic': SecurityScheme(
             type='http',
             description='Http Basic auth',

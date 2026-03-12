@@ -169,7 +169,7 @@ Useful APIs for users to override:
   :class:`~dmr.openapi.objects.Parameter` objects are generated
 - :meth:`dmr.metadata.ResponseSpec.get_schema` to change how
   :class:`~dmr.openapi.objects.Response` objects are generated
-- :meth:`dmr.security.SyncAuth.security_scheme`
+- :meth:`dmr.security.SyncAuth.security_schemes`
   and :class:`dmr.security.SyncAuth.security_requirement` to change how
   :class:`~dmr.openapi.objects.SecurityScheme` and requirements are generated
 
