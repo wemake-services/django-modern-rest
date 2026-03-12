@@ -70,3 +70,10 @@
   > span.imports-hidden-line {
   display: none;
 }
+
+.admonition.tip.openapi-result-admonition::after {
+  -webkit-mask: url("/_static/images/book.svg") no-repeat;
+  mask: url("/_static/images/book.svg") no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
