@@ -2721,14 +2721,14 @@ files = [
 
 [[package]]
 name = "schemathesis"
-version = "4.11.2"
+version = "4.12.0"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.11.2-py3-none-any.whl", hash = "sha256:a909b08d05a0324ed7b7e2a426b3dd7322b95100d75887595495393a22f73d3b"},
-    {file = "schemathesis-4.11.2.tar.gz", hash = "sha256:58a349be770d419c332a26edad377b5dd414de580b77e84ebe2ead1a4935bc7b"},
+    {file = "schemathesis-4.12.0-py3-none-any.whl", hash = "sha256:8b488381b9d4fa83af0a5c4f6bc4861562dec53c1d5ded25ab1f473f4d33381c"},
+    {file = "schemathesis-4.12.0.tar.gz", hash = "sha256:91f5f5137292636a4c84f5ba801d9f1ffbf462a541ed517919c387c9a8363323"},
 ]
 
 [package.dependencies]
@@ -3368,4 +3368,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "f8b2da528cfcd931c893861ac0c60bd88730fcc3d9b5a40c53dfc350a8601aa3"
+content-hash = "2c6e7c88b2379d5d5f83d06b1c0b9e2b189368af557645addac9b1f3ef455563"
