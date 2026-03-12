@@ -81,6 +81,13 @@ We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
 for up-to-date docs for the LLMs.
 
+Usecases we officially support:
+
+- LLMs can help you generating
+  a :doc:`working project boilerplate <openapi/spec-first>`
+  with all the models / controllers / etc from a single ``openapi.json`` file,
+  also know as "Spec First" approach
+
 
 Showcase
 --------

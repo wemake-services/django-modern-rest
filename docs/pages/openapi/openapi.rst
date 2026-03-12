@@ -156,10 +156,11 @@ APIs for schema overrides
 Useful APIs for users to override:
 
 - :func:`dmr.openapi.spec.build_schema` to change
-  how config / context is generated
+  how :class:`~dmr.openapi.config.OpenAPIConfig`
+  and :class:`~dmr.openapi.core.context.OpenAPIContext` are generated
 - :meth:`dmr.routing.Router.get_schema` to change
   how :class:`~dmr.openapi.objects.OpenAPI`
-  and :class:`~dmr.openapi.objects.Component` are generated
+  and :class:`~dmr.openapi.objects.Components` are generated
 - :meth:`dmr.controller.Controller.get_path_item` to change how
   :class:`~dmr.openapi.objects.PathItem` objects are generated
 - :meth:`dmr.endpoint.Endpoint.get_schema` to change how

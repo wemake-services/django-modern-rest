@@ -28,21 +28,23 @@ You can use prompt like this:
 
 .. code-block:: text
 
-   $dmr-openapi-skeleton Read openapi.yaml and create a new runnable Django
-   project in this folder. Bootstrap the environment with uv, generate
-   pyproject.toml, settings, manage.py, DTOs, controllers, routers,
+   $dmr-openapi-skeleton Read `openapi.yaml` and create a new runnable Django
+   project in this folder. Use `django-modern-rest` as your REST framework.
+   Bootstrap the environment with `uv`, generate
+   `pyproject.toml`, settings, `manage.py`, DTOs, controllers, routers,
    docs wiring, and minimal smoke tests.
-   Use PydanticSerializer, include msgspec and openapi extras,
-   and do not implement business logic.
+   Use `PydanticSerializer`, include `msgspec` and `openapi` extras,
+   and do not implement any business logic.
 
 
 What is generated
 -----------------
 
-- typed DTOs / serializers
-- ``Controller`` / ``Blueprint`` handlers for operations
-- app ``urls.py`` + project URL wiring
-- OpenAPI docs endpoints (JSON, ReDoc, Swagger, Scalar)
-- minimal smoke tests
+- Typed DTOs / serializers
+- :class:`~dmr.controller.Controller` / :class:`~dmr.controller.Blueprint`
+  objects as operations handlers
+- All required ``urls.py`` + project URL wiring
+- OpenAPI docs (JSON, ReDoc, Swagger, Scalar)
+- Minimal smoke tests
 
-Business logic is intentionally left as placeholders.
+Business logic is intentionally left unimplemented.
