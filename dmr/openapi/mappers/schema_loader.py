@@ -22,16 +22,16 @@ _EnumT = TypeVar('_EnumT', bound=Enum)
 def load_schema(
     raw_data: dict[str, Any],
     *,
-    annotation: Any | Empty = EmptyObj,
-    serializer: type['BaseSerializer'] | None = None,
+    annotation: Any | Empty,
+    serializer: type['BaseSerializer'] | None,
 ) -> Schema: ...
 
 
 def load_schema(
     raw_data: dict[str, Any],
     *,
-    annotation: Any | Empty,
-    serializer: type['BaseSerializer'] | None,
+    annotation: Any | Empty = EmptyObj,
+    serializer: type['BaseSerializer'] | None = None,
 ) -> Schema:
     """
     Load schema from python's dict into a dataclass.
