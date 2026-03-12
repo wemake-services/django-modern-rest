@@ -7,10 +7,7 @@ import pytest
 from django.http import HttpResponse
 from faker import Faker
 
-from dmr import (
-    Controller,
-    Query,
-)
+from dmr import Controller, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 

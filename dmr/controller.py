@@ -356,7 +356,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     # OpenAPI:
     summary: ClassVar[str | None] = None
     description: ClassVar[str | None] = None
-    servers: ClassVar[list[Server] | None] = None
+    servers: ClassVar[Sequence[Server] | None] = None
 
     # Public instance API:
     blueprint: Blueprint[_SerializerT_co] | None
@@ -605,7 +605,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             **operations,
             summary=cls.summary,
             description=cls.description,
-            servers=cls.servers,
+            servers=None if cls.servers is None else list(cls.servers),
         )
 
     @classproperty

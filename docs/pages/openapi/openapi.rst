@@ -82,13 +82,67 @@ To customize a schema, use the native methods.
       You can completely redefine the schema generation with
       overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
 
+.. note::
+
+  By default docstring or ``__doc__`` from the model is used as a description.
+
+Customizing path items
+~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`~dmr.controller.Controller` allows customizing some metadata
+for :class:`~dmr.openapi.objects.PathItem`:
+
+.. literalinclude:: /examples/openapi/path_item_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. note::
+
+  By default docstring or ``__doc__`` from the controller
+  is used to generate summary and description
+  for the :class:`~dmr.openapi.objects.PathItem`.
+
+Customizing operation
+~~~~~~~~~~~~~~~~~~~~~
+
+:deco:`~dmr.endpoint.modify` and :deco:`~dmr.endpoint.validate`
+can be used to customize the resulting :class:`~dmr.openapi.objects.Operation`
+metadata.
+
+.. literalinclude:: /examples/openapi/operation_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. note::
+
+  By default docstring or ``__doc__`` from endpoint's function definition
+  is used to generate summary and description
+  for the :class:`~dmr.openapi.objects.Operation`.
+
+Customizing parameter
+~~~~~~~~~~~~~~~~~~~~~
+
+There are different styles and other features
+that :class:`~dmr.openapi.objects.Parameter` supports
+in `OpenAPI <https://learn.openapis.org/specification/parameters.html>`_.
+
+For example, if you want to change how :class:`~dmr.components.Query`
+parameter is documented:
+
+.. literalinclude:: /examples/openapi/parameter_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
 Customizing response
 ~~~~~~~~~~~~~~~~~~~~
 
 :class:`~dmr.metadata.ResponseSpec` supports all the metadata fields
 that :class:`~dmr.openapi.objects.Response` has.
 
-Providing an explicit link for ``schemathesis``
+Providing an explicit :class:`~dmr.openapi.objects.Link` for ``schemathesis``
 `stateful API testing <https://schemathesis.readthedocs.io/en/stable/explanations/stateful>`_
 would look like so:
 
