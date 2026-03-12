@@ -3,10 +3,10 @@ from examples.using_controller import simple_routing_controllers as views  # noq
 from dmr.routing import Router, path
 
 router = Router(
+    'api/v1/',
     [
         path('users/', views.UserList.as_view()),
         path('posts/', views.PostList.as_view()),
         path('users/<int:id>/', views.UserDetail.as_view()),
     ],
-    prefix='api/v1',
 )

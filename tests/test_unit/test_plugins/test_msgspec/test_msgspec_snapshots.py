@@ -49,8 +49,8 @@ def test_user_schema(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
+                    'api/v1/',
                     [path('/user', _UserController.as_view())],
-                    prefix='/api/v1',
                 ),
             ).convert(),
             indent=2,
@@ -80,8 +80,8 @@ def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
+                    'api/',
                     [path('/cookies', _AuthedAndCookiesController.as_view())],
-                    prefix='/api',
                 ),
             ).convert(),
             indent=2,
@@ -116,8 +116,8 @@ def test_file_schema(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
+                    '',
                     [path('/file', _FileController.as_view())],
-                    prefix='/',
                 ),
             ).convert(),
             indent=2,
@@ -160,8 +160,8 @@ def test_example_schema(
         json.dumps(
             build_schema(
                 Router(
+                    'api/v1/',
                     [path('/example', _ExampleController.as_view())],
-                    prefix='/api/v1',
                 ),
             ).convert(),
             indent=2,

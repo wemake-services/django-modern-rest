@@ -4,6 +4,7 @@ from dmr.routing import Router
 from server.apps.middlewares import views
 
 router = Router(
+    'middlewares/',
     [
         path(
             'csrf-protected/',
@@ -41,5 +42,4 @@ router = Router(
             name='csrf_token',
         ),
     ],
-    prefix='middlewares/',
 )

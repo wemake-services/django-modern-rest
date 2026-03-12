@@ -34,11 +34,11 @@ def test_duplicated_schema() -> None:
     ):
         build_schema(
             Router(
+                '/',
                 [
                     path('first', _FirstController.as_view()),
                     path('second', _SecondController.as_view()),
                 ],
-                prefix='/',
             ),
         )
 
@@ -57,10 +57,10 @@ def test_renamed_schema() -> None:
     """Ensure that renamed schemas work."""
     build_schema(
         Router(
+            '/',
             [
                 path('first', _FirstController.as_view()),
                 path('third', _ThirdController.as_view()),
             ],
-            prefix='/',
         ),
     )

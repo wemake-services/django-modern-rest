@@ -106,10 +106,16 @@ class UserSyncController(
         )
 
 
-router = Router([
-    path('async/user/', UserAsyncController.as_view(), name='async_users'),
-    path('sync/user/', UserSyncController.as_view(), name='sync_users'),
-])
+router = Router(
+    '',
+    [
+        path('async/user/', UserAsyncController.as_view(), name='async_users'),
+        path('sync/user/', UserSyncController.as_view(), name='sync_users'),
+    ],
+)
 urlpatterns = [
-    path('', include((router.urls, 'benchmark_app'), namespace='api')),
+    path(
+        router.prefix,
+        include((router.urls, 'benchmark_app'), namespace='api'),
+    ),
 ]

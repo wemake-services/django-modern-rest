@@ -40,8 +40,8 @@ def test_openapi_spec_no_semantic_responses(
 
     schema = build_schema(
         Router(
+            'api/',
             [path('/items', _SimpleController.as_view())],
-            prefix='/api',
         ),
     ).convert()
 

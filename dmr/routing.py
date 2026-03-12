@@ -42,10 +42,10 @@ class Router:
 
     __slots__ = ('prefix', 'urls')
 
-    def __init__(self, urls: Sequence[_AnyPattern], *, prefix: str) -> None:
+    def __init__(self, prefix: str, urls: Sequence[_AnyPattern]) -> None:
         """Just stores the passed routes."""
-        self.urls = urls
         self.prefix = prefix
+        self.urls = urls
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
         """

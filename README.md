@@ -115,9 +115,12 @@ And then route this controller in your `urls.py`:
 >>> from django.urls import include, path
 >>> from dmr.routing import Router
 
->>> router = Router([
-...     path('user/', UserController.as_view(), name='users'),
-... ], prefix='api/')
+>>> router = Router(
+...     'api/',
+...     [
+...         path('user/', UserController.as_view(), name='users'),
+...     ],
+... )
 >>> urlpatterns = [
 ...     path(router.prefix, include((router.urls, 'my_app'), namespace='api')),
 ... ]

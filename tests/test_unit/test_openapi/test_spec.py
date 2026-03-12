@@ -22,7 +22,7 @@ def test_config_raises_wrong_type(
         TypeError,
         match='OpenAPI config is not set',
     ):
-        build_schema(router=Router([], prefix=''))
+        build_schema(router=Router('', []))
 
 
 def test_schema_nested_objects_can_be_mutated(
@@ -36,7 +36,7 @@ def test_schema_nested_objects_can_be_mutated(
             version='1.0.0',
         ),
     }
-    router = Router([], prefix='')
+    router = Router('', [])
     schema = build_schema(router)
 
     schema.info.title = 'Modified'
@@ -55,7 +55,7 @@ def test_schema_collections_can_be_mutated(
             version='1.0.0',
         ),
     }
-    router = Router([], prefix='')
+    router = Router('', [])
     schema = build_schema(router)
 
     schema.tags = []
@@ -67,7 +67,7 @@ def test_schema_collections_can_be_mutated(
 
 def test_pass_both_context_and_config() -> None:
     """Ensures that you can't pass both ``config`` and ``context``."""
-    router = Router([], prefix='')
+    router = Router('', [])
     config = default_config()
     context = OpenAPIContext(config)
     with pytest.raises(ValueError, match='Passing both'):

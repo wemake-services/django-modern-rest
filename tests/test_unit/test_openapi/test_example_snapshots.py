@@ -51,8 +51,8 @@ def test_user_schema_with_examples(
         json.dumps(
             build_schema(
                 Router(
+                    'api/v1',
                     [path('/user', _UserController.as_view())],
-                    prefix='/api/v1',
                 ),
             ).convert(),
             indent=2,
@@ -88,8 +88,8 @@ def test_user_schema_with_existing_examples(
         json.dumps(
             build_schema(
                 Router(
+                    '/api/v1',
                     [path('/user', _ExistingExampleController.as_view())],
-                    prefix='/api/v1',
                 ),
             ).convert(),
             indent=2,

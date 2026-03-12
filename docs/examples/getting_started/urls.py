@@ -5,6 +5,7 @@ from examples.getting_started.pydantic_controller import UserController
 
 # Router is just a collection of regular Django urls:
 router = Router(
+    'api/',
     [
         path(
             'user/',
@@ -12,7 +13,6 @@ router = Router(
             name='users',
         ),
     ],
-    prefix='api/',
 )
 
 # Just a regular `urlpatterns` definition, Django-style:

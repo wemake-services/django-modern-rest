@@ -52,10 +52,10 @@ class UserController(
 
 
 router = Router(
+    'api/',
     [
         path('user/', UserController.as_view(), name='users'),
     ],
-    prefix='api/',
 )
 schema = build_schema(router)
 

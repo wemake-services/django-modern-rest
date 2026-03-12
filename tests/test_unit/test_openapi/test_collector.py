@@ -197,7 +197,7 @@ def test_controller_mapping_collector_with_router() -> None:
             compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
         ),
     ]
-    router = Router(patterns, prefix='/api')
+    router = Router('api/', patterns)
     mappings = controller_mapping_collector(router.urls, router.prefix)
 
     assert len(mappings) == 3

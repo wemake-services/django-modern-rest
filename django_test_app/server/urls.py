@@ -18,7 +18,8 @@ from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.config import get_config
 
 router = Router(
-    [
+    prefix='api/',
+    urls=[
         path(
             models_example_urls.router.prefix,
             include(
@@ -62,7 +63,6 @@ router = Router(
             ),
         ),
     ],
-    prefix='api/',
 )
 
 schema = build_schema(router, config=get_config())

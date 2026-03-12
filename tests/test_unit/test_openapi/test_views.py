@@ -19,7 +19,7 @@ from dmr.test import DMRRequestFactory
 
 def test_json_view(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that ``OpenAPIJsonView`` returns correct JSON response."""
-    schema = build_schema(Router([], prefix=''))
+    schema = build_schema(Router('', []))
     request = dmr_rf.get('/whatever/')
 
     response = OpenAPIJsonView.as_view(schema)(request)
@@ -45,7 +45,7 @@ def test_html_view(
     view_class: type[OpenAPIView],
 ) -> None:
     """Ensure that views return proper ``HTML`` response."""
-    schema = build_schema(Router([], prefix=''))
+    schema = build_schema(Router('', []))
     request = dmr_rf.get('/whatever/')
 
     response = view_class.as_view(schema)(request)
