@@ -3,6 +3,8 @@ This file contains code adapted from Litestar.
 
 See:
 https://github.com/litestar-org/litestar/blob/main/tools/sphinx_ext/run_examples.py
+
+This module is also allowed to contain AI slop.
 """
 
 from __future__ import annotations
@@ -26,14 +28,13 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
-import django
 import httpx
 import uvicorn
 import xmltodict
-from django.apps import apps
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
-from django.urls import path
+from django.test import override_settings
+from django.urls import URLPattern, clear_url_caches, path
 from django.views import View
 from docutils.nodes import (
     Element,
@@ -51,6 +52,8 @@ from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+from dmr.settings import Settings, clear_settings_cache
+
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
 
@@ -62,7 +65,6 @@ _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 _RGX_OPENAPI: Final = re.compile(r'# +?openapi:(.*)')
 _RGX_OPENAPI_COMMENT: Final = re.compile(r'^\s*#\s*openapi:')
-_OPENAPI_SERVER_PATH: Final = Path(__file__).with_name('openapi_server.py')
 
 _AppRunArgs: TypeAlias = dict[str, Any]
 _OpenAPIRunArgs: TypeAlias = dict[str, Any]
@@ -194,9 +196,7 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
-class _AppBuilder:
-    """Builds a Django application from configuration."""
-
+class _BaseBuilder:
     def __init__(self, file_path: Path, config: _AppRunArgs) -> None:
         """Initialize application builder with file path and configuration."""
         self.file_path = file_path
@@ -228,27 +228,25 @@ class _AppBuilder:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
         )
-        if not apps.ready:
-            django.setup()
 
     def _build_app(self) -> ASGIHandler:
         file_path_without_ext = self.file_path.with_suffix('')
         module_name = str(file_path_without_ext).replace(os.sep, '.')
 
         sys.modules.pop(module_name, None)
-
         module = importlib.import_module(module_name)
-        controller_name = self.config['controller']
-        controller_cls = self._find_controller(module, controller_name)
-        self._add_controller_to_urlpatterns(controller_cls)
+        self._create_urlpatterns(module)
 
         return ASGIHandler()
 
-    def _find_controller(
-        self,
-        module: ModuleType,
-        controller_name: str,
-    ) -> View:
+    def _find_controller(self, module: ModuleType) -> View:
+        controller_name = self.config.get('controller')
+        if not controller_name:
+            raise RuntimeError(
+                'Controller option is required',
+                self.file_path,
+                self.config,
+            )
         controller_cls: View | None = None
         for obj_name in module.__dict__:
             module_obj = getattr(module, obj_name)
@@ -263,37 +261,84 @@ class _AppBuilder:
 
         return controller_cls
 
-    def _add_controller_to_urlpatterns(
-        self,
-        controller_cls: View,
-    ) -> None:
+    def _create_urlpatterns(self, module: ModuleType) -> None:
         url_conf_module = ModuleType('url_conf')
+        url_conf_module.urlpatterns = self._generate_urls(module)  # type: ignore[attr-defined]
+        sys.modules['url_conf'] = url_conf_module
+
+    def _generate_urls(self, module: ModuleType) -> list[URLPattern]:
+        clear_url_caches()
+
+        if self.config.get('use_urlpatterns', False):
+            return module.urlpatterns  # type: ignore[no-any-return]
+
+        controller_cls = self._find_controller(module)
+        url_path = _get_url_path_from_run_args(
+            self.config,
+        ).lstrip('/')  # noqa: WPS226
+        return [
+            path(url_path, controller_cls.as_view()),
+        ]
+
+
+class _AppBuilder(_BaseBuilder):
+    """Builds a Django application from configuration."""
+
+
+class _OpenAPIBuilder(_BaseBuilder):
+    """Builds an OpenAPI application from configuration."""
+
+    @override
+    def _generate_urls(self, module: ModuleType) -> list[URLPattern]:
+        from dmr.openapi import build_schema  # noqa: PLC0415
+        from dmr.openapi.views import OpenAPIJsonView  # noqa: PLC0415
+        from dmr.routing import Router  # noqa: PLC0415
+
+        urlpatterns = super()._generate_urls(module)
+        if self.config.get('use_urlpatterns', False):
+            return urlpatterns
+
+        controller_cls = self._find_controller(module)
         url_path = _get_url_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
 
-        url_conf_module.urlpatterns = [  # type: ignore[attr-defined]
-            path(url_path, controller_cls.as_view()),
-        ]
+        router = Router(
+            [
+                path(url_path, controller_cls.as_view()),
+            ],
+            prefix='',
+        )
+        schema = build_schema(router)
 
-        sys.modules['url_conf'] = url_conf_module
+        urlpatterns.append(
+            path(
+                self.config['openapi_url'].lstrip('/'),
+                OpenAPIJsonView.as_view(schema),
+            ),
+        )
+        return urlpatterns
 
 
 def _get_url_path_from_run_args(run_args: _AppRunArgs) -> str:
+    url = run_args.get('url')
+    if url:
+        assert isinstance(url, str)  # noqa: S101
+        return url
     controller_name = run_args['controller'].lower()
-    url: str = run_args.get(
-        'url',
-        f'/api/{controller_name}/',
-    )
-    return url
+    return f'/api/{controller_name}/'
 
 
 @contextmanager
-def _run_app(path: Path, config: _AppRunArgs) -> Iterator[int]:
+def _run_app(
+    path: Path,
+    config: _AppRunArgs,
+    builder: type[_BaseBuilder],
+) -> Iterator[int]:
     """Start a Django app on an available port."""
     restart_duration = 0.2
     port = _get_available_port()
-    app = _AppBuilder(path, config).build_app()
+    app = builder(path, config).build_app()
 
     attempts = 0
     while attempts < 100:
@@ -322,35 +367,6 @@ def _run_app_worker(app: ASGIHandler, port: int) -> None:
 
 def _get_module_name(file_path: Path) -> str:
     return str(file_path.with_suffix('')).replace(os.sep, '.')
-
-
-def _start_openapi_process(app_file: Path, port: int) -> subprocess.Popen[str]:
-    docs_dir = Path.cwd()
-    module_name = _get_module_name(app_file)
-    return subprocess.Popen(  # noqa: S603
-        [
-            sys.executable,
-            str(_OPENAPI_SERVER_PATH),
-            str(port),
-            module_name,
-            str(docs_dir),
-        ],
-        stderr=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        text=True,
-    )
-
-
-@contextmanager
-def _run_openapi_app(app_file: Path) -> Iterator[int]:
-    port = _get_available_port()
-    proc = _start_openapi_process(app_file, port)
-    _wait_for_app_startup(port)
-
-    try:
-        yield port
-    finally:
-        proc.kill()
 
 
 def _wait_for_app_startup(port: int) -> None:
@@ -423,7 +439,7 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
 
     for run_args in run_configs:
         url_path = _get_url_path_from_run_args(run_args)
-        with _run_app(app_file, run_args) as port:
+        with _run_app(app_file, run_args, _AppBuilder) as port:
             example_result = _process_single_example(
                 app_file,
                 run_args,
@@ -443,9 +459,21 @@ def _exec_openapi_examples(
     openapi_results = []
 
     for openapi_args in openapi_configs:
-        url_path = cast(str, openapi_args['url'])
-        with _run_openapi_app(app_file) as port:
-            openapi_results.append(_process_openapi_example(port, url_path))
+        url_path = cast(str, openapi_args['openapi_url'])
+        with (
+            override_settings(
+                DMR_SETTINGS={
+                    Settings.openapi_examples_seed: openapi_args.get(
+                        'openapi_examples_seed',
+                    ),
+                },
+            ),
+            _run_app(app_file, openapi_args, _OpenAPIBuilder) as port,
+        ):
+            clear_settings_cache()
+            openapi_results.append(
+                _process_openapi_example(port, url_path, app_file),
+            )
 
     return '\n\n'.join(openapi_results)
 
@@ -491,9 +519,10 @@ def _process_single_example(
     return '\n'.join((f'$ {clean_args_string}', *stdout))
 
 
-def _process_openapi_example(port: int, url_path: str) -> str:
+def _process_openapi_example(port: int, url_path: str, app_file: Path) -> str:
     args = [
         'curl',
+        '-v',
         '-sS',
         '--fail-with-body',
         f'http://127.0.0.1:{port}{url_path}',
@@ -506,7 +535,7 @@ def _process_openapi_example(port: int, url_path: str) -> str:
     if proc.returncode != 0:
         raise _StartupError(
             (
-                'Could not fetch OpenAPI schema',
+                f'Could not fetch OpenAPI schema in {app_file}',
                 args,
                 proc.stdout,
                 proc.stderr,
@@ -530,9 +559,9 @@ def _create_openapi_admonition(result_content: str) -> Node:
     result_toggle += literal_block('', result_content)
     return admonition(
         '',
-        title('', 'OpenAPI result'),
+        title('', 'OpenAPI Schema'),
         result_toggle,
-        classes=['tip', 'openapi-result-admonition'],
+        classes=['hint'],
     )
 
 

@@ -65,7 +65,7 @@ that will be used for the final schema in two ways:
 For example, this is how you can change some OpenAPI metadata,
 including the spec version:
 
-.. literalinclude:: /examples/openapi/setting_up_schema.py
+.. literalinclude:: /examples/openapi/custom_config.py
   :caption: urls.py
   :language: python
   :linenos:

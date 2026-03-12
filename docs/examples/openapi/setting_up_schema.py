@@ -26,4 +26,4 @@ urlpatterns = [
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
 ]
 
-# openapi: {"url": "/docs/openapi.json/"}  # noqa: ERA001
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501

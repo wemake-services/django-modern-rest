@@ -12,3 +12,6 @@ class UserController(Controller[MsgspecSerializer]):
 
     def post(self) -> str:
         return 'post'
+
+
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
