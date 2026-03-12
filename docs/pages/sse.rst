@@ -1,5 +1,5 @@
-Server Sent Events aka SSE
-==========================
+Server Sent Events
+==================
 
 Standard: https://html.spec.whatwg.org/multipage/server-sent-events.html
 

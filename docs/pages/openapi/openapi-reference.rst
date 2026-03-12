@@ -110,9 +110,6 @@ Objects
 Core
 ----
 
-.. autoclass:: dmr.openapi.core.context.OpenAPIContext
-   :members:
-
 .. autoclass:: dmr.openapi.core.merger.ConfigMerger
    :members:
 

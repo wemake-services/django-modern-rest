@@ -285,7 +285,7 @@ OpenAPI
 
   Metadata to be used in the OpenAPI schema.
 
-  See :class:`~dmr.openapi.config.OpenAPIConfig`
+  See :class:`~dmr.openapi.OpenAPIConfig`
   for the available fields and their description.
   It can also be used to change the default OpenAPI spec version.
 

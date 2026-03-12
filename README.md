@@ -72,14 +72,14 @@ There are several included extras:
 - `'django-modern-rest[msgspec]'` provides `msgspec` support
   and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
-- `'django-modern-rest[jwt]'` provides `pyjwt` auth support
-- `'django-modern-rest[openapi]'` provides `OpenAPI` schema validation
-  and generates better examples
+- `'django-modern-rest[jwt]'` provides [`pyjwt`](https://github.com/jpadilla/pyjwt) auth support
+- `'django-modern-rest[openapi]'` provides `OpenAPI` [schema validation](https://github.com/python-openapi/openapi-spec-validator)
+  and generates better OpenAPI examples with [`polyfactory`](https://github.com/litestar-org/polyfactory)
 
 
 ## Example
 
-The shortest example:
+The [shortest example]():
 
 ```python
 >>> import uuid
