@@ -36,6 +36,7 @@
               "required": true
             },
             {
+              "description": "Short summary.\n\nAnd some other description text.",
               "deprecated": false,
               "style": "deepObject",
               "explode": true,
@@ -51,6 +52,7 @@
               "required": true
             },
             {
+              "description": "Short summary.\n\nAnd some other description text.",
               "deprecated": false,
               "style": "deepObject",
               "explode": true,
@@ -70,6 +72,7 @@
               "required": true
             },
             {
+              "description": "Short summary.\n\nAnd some other description text.",
               "deprecated": false,
               "style": "deepObject",
               "explode": true,
@@ -198,7 +201,8 @@
             "query",
             "regular"
           ],
-          "title": "_QueryModel"
+          "title": "_QueryModel",
+          "description": "Short summary.\n\nAnd some other description text."
         },
         "ErrorDetail": {
           "properties": {

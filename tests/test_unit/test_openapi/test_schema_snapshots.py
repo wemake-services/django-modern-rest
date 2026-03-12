@@ -64,6 +64,12 @@ class _CookieModel(pydantic.BaseModel):
 
 
 class _QueryModel(pydantic.BaseModel):
+    """
+    Short summary.
+
+    And some other description text.
+    """
+
     __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('tags',))
     __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('query',))
 
