@@ -4,6 +4,7 @@ from dmr.routing import Router, compose_blueprints
 from server.apps.controllers import views
 
 router = Router(
+    'controllers/',
     [
         path(
             'user/',
@@ -47,5 +48,4 @@ router = Router(
             name='constrained_user_create',
         ),
     ],
-    prefix='controllers/',
 )
