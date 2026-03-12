@@ -40,14 +40,12 @@ class SecuritySchemeGenerator:
 
         for auth in auth_providers:
             schemes = auth.security_schemes
-            if not schemes:
-                continue
-
-            for scheme_name, scheme in schemes.items():
-                self._context.registries.security_scheme.register(
-                    scheme_name,
-                    scheme,
-                )
+            if schemes:
+                for scheme_name, scheme in schemes.items():
+                    self._context.registries.security_scheme.register(
+                        scheme_name,
+                        scheme,
+                    )
 
             requirements.append(auth.security_requirement)
         return requirements
