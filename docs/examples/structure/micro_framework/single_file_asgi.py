@@ -70,4 +70,5 @@ if __name__ == '__main__':
     # Then visit `http://localhost:8000/docs/swagger` to view the docs.
     execute_from_command_line(sys.argv)
 
-# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wemake.services"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wemake.services"}, "url": "/api/user/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501

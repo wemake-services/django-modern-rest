@@ -36,3 +36,5 @@ urlpatterns = [
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
 ]
+
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
