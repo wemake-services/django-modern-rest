@@ -21,6 +21,12 @@ _EnumT = TypeVar('_EnumT', bound=Enum)
 @overload
 def load_schema(
     raw_data: dict[str, Any],
+) -> Schema: ...
+
+
+@overload
+def load_schema(
+    raw_data: dict[str, Any],
     *,
     annotation: Any | Empty,
     serializer: type['BaseSerializer'] | None,
