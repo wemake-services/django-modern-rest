@@ -245,10 +245,11 @@ Simply replace Django's ``path`` with :func:`dmr.routing.path`:
 .. code:: python
 
     # Instead of ``from django.urls import path``:
-    >>> from dmr.routing import path
+    from dmr.routing import path
+    from django.urls import include
 
-    >>> urlpatterns = [
-    ...     path('api/', include('myapp.urls')),
-    ... ]
+    urlpatterns = [
+        path('api/', include('myapp.urls')),
+    ]
 
 This is a drop-in replacement with no API changes required.
