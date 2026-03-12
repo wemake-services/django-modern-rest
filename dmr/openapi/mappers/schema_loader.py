@@ -21,6 +21,8 @@ _EnumT = TypeVar('_EnumT', bound=Enum)
 @overload
 def load_schema(
     raw_data: dict[str, Any],
+    *,
+    should_generate_example: bool = False,
 ) -> Schema: ...
 
 
@@ -28,6 +30,7 @@ def load_schema(
 def load_schema(
     raw_data: dict[str, Any],
     *,
+    should_generate_example: bool = True,
     annotation: Any | Empty,
     serializer: type['BaseSerializer'] | None,
 ) -> Schema: ...
@@ -36,6 +39,7 @@ def load_schema(
 def load_schema(
     raw_data: dict[str, Any],
     *,
+    should_generate_example: bool = False,
     annotation: Any | Empty = EmptyObj,
     serializer: type['BaseSerializer'] | None = None,
 ) -> Schema:
@@ -51,7 +55,7 @@ def load_schema(
     examples = raw_data.get('examples')
     example = raw_data.get('example')
 
-    if not example and not examples:
+    if should_generate_example and not example and not examples:
         assert serializer is not None, 'serializer instance is required'  # noqa: S101
         example = generate_example(annotation, serializer)
 
