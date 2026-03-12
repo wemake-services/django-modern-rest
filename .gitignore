@@ -130,7 +130,6 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/_static/generated/
 .auto_pytabs_cache/
 
 # PyBuilder

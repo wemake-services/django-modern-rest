@@ -21,13 +21,6 @@ Here's how it works:
   :language: python
   :linenos:
 
-The generated ``openapi.json`` is available as JSON:
-
-.. dropdown:: Preview ``openapi.json``
-
-   .. literalinclude:: /_static/generated/openapi.json
-      :language: json
-
 And then visit https://localhost:8000/docs/swagger/ (or any other renderer)
 for the interactive docs.
 

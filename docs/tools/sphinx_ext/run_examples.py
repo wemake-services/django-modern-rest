@@ -26,9 +26,11 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
+import django
 import httpx
 import uvicorn
 import xmltodict
+from django.apps import apps
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.urls import path
@@ -58,8 +60,12 @@ if platform.system() in {'Darwin', 'Linux'}:
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
+_RGX_OPENAPI: Final = re.compile(r'# +?openapi:(.*)')
+_RGX_OPENAPI_COMMENT: Final = re.compile(r'^\s*#\s*openapi:')
+_OPENAPI_SERVER_PATH: Final = Path(__file__).with_name('openapi_server.py')
 
 _AppRunArgs: TypeAlias = dict[str, Any]
+_OpenAPIRunArgs: TypeAlias = dict[str, Any]
 
 logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
@@ -79,6 +85,14 @@ class _ImportsSpoilerSummary(General, Element):
 
 class _GithubSourceLink(General, Element):
     """GitHub source link node."""
+
+
+class _OpenAPIResultToggle(General, Element):
+    """OpenAPI result collapse container node."""
+
+
+class _OpenAPIResultToggleSummary(General, Element):
+    """OpenAPI result collapse summary node."""
 
 
 def _visit_imports_spoiler(
@@ -107,11 +121,12 @@ def _visit_imports_spoiler_summary(
     node: _ImportsSpoilerSummary,
 ) -> None:
     collapsed_title = node.get('collapsed_title', 'Show imports')
+    expanded_title = node.get('expanded_title', 'Hide imports')
     self.body.append(
         (
             '<button type="button" class="imports-spoiler-toggle" '
             f'data-collapsed-title="{collapsed_title}" '
-            'data-expanded-title="Hide imports">'
+            f'data-expanded-title="{expanded_title}">'
         ),
     )
 
@@ -139,6 +154,34 @@ def _depart_github_source_link(
     node: _GithubSourceLink,
 ) -> None:
     self.body.append('')
+
+
+def _visit_openapi_result_toggle(
+    self: HTML5Translator,
+    node: _OpenAPIResultToggle,
+) -> None:
+    self.body.append('<details class="openapi-result-toggle">\n')
+
+
+def _depart_openapi_result_toggle(
+    self: HTML5Translator,
+    node: _OpenAPIResultToggle,
+) -> None:
+    self.body.append('</details>\n')
+
+
+def _visit_openapi_result_toggle_summary(
+    self: HTML5Translator,
+    node: _OpenAPIResultToggleSummary,
+) -> None:
+    self.body.append('<summary class="openapi-result-summary">')
+
+
+def _depart_openapi_result_toggle_summary(
+    self: HTML5Translator,
+    node: _OpenAPIResultToggleSummary,
+) -> None:
+    self.body.append('</summary>\n')
 
 
 def _get_available_port() -> int:
@@ -185,6 +228,8 @@ class _AppBuilder:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
         )
+        if not apps.ready:
+            django.setup()
 
     def _build_app(self) -> ASGIHandler:
         file_path_without_ext = self.file_path.with_suffix('')
@@ -194,7 +239,6 @@ class _AppBuilder:
 
         module = importlib.import_module(module_name)
         controller_name = self.config['controller']
-
         controller_cls = self._find_controller(module, controller_name)
         self._add_controller_to_urlpatterns(controller_cls)
 
@@ -276,6 +320,39 @@ def _run_app_worker(app: ASGIHandler, port: int) -> None:
         uvicorn.run(app, port=port, access_log=False)
 
 
+def _get_module_name(file_path: Path) -> str:
+    return str(file_path.with_suffix('')).replace(os.sep, '.')
+
+
+def _start_openapi_process(app_file: Path, port: int) -> subprocess.Popen[str]:
+    docs_dir = Path.cwd()
+    module_name = _get_module_name(app_file)
+    return subprocess.Popen(  # noqa: S603
+        [
+            sys.executable,
+            str(_OPENAPI_SERVER_PATH),
+            str(port),
+            module_name,
+            str(docs_dir),
+        ],
+        stderr=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        text=True,
+    )
+
+
+@contextmanager
+def _run_openapi_app(app_file: Path) -> Iterator[int]:
+    port = _get_available_port()
+    proc = _start_openapi_process(app_file, port)
+    _wait_for_app_startup(port)
+
+    try:
+        yield port
+    finally:
+        proc.kill()
+
+
 def _wait_for_app_startup(port: int) -> None:
     """Wait for app to start up and become responsive."""
     for _ in range(100):
@@ -288,24 +365,52 @@ def _wait_for_app_startup(port: int) -> None:
     raise _StartupError(f'App failed to come online on port {port}')
 
 
-def _extract_run_args(file_content: str) -> tuple[str, list[_AppRunArgs]]:
+def _extract_run_args(
+    file_content: str,
+) -> tuple[str, list[_AppRunArgs], list[_OpenAPIRunArgs]]:
     """Extract run args from a python file.
 
     Return the file content stripped of the run comments
     and a list of argument lists.
     """
-    new_lines = []
-    run_configs = []
-    for line in file_content.splitlines():
-        run_stmt_match = _RGX_RUN.match(line)
-        if run_stmt_match:
-            run_stmt = run_stmt_match.group(1).lstrip()
-            if '# noqa' in run_stmt:
-                run_stmt = run_stmt.split('# noqa')[0]
-            run_configs.append(json.loads(run_stmt))
-        else:
-            new_lines.append(line)
-    return '\n'.join(new_lines), run_configs
+    new_lines, run_configs, openapi_configs = _split_example_lines(
+        file_content.splitlines(),
+    )
+    return '\n'.join(new_lines), run_configs, openapi_configs
+
+
+def _split_example_lines(
+    lines: list[str],
+) -> tuple[list[str], list[_AppRunArgs], list[_OpenAPIRunArgs]]:
+    new_lines: list[str] = []
+    run_configs: list[_AppRunArgs] = []
+    openapi_configs: list[_OpenAPIRunArgs] = []
+    for line in lines:
+        config = _extract_comment_config(line, _RGX_RUN)
+        if config is not None:
+            run_configs.append(config)
+            continue
+        config = _extract_comment_config(line, _RGX_OPENAPI)
+        if config is not None:
+            openapi_configs.append(config)
+            continue
+
+        new_lines.append(line)
+    return new_lines, run_configs, openapi_configs
+
+
+def _extract_comment_config(
+    line: str,
+    pattern: re.Pattern[str],
+) -> dict[str, Any] | None:
+    match = pattern.match(line)
+    if match is None:
+        return None
+
+    run_stmt = match.group(1).lstrip()
+    if '# noqa' in run_stmt:
+        run_stmt = run_stmt.split('# noqa')[0]
+    return cast(dict[str, Any], json.loads(run_stmt))
 
 
 def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
@@ -329,6 +434,20 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
                 example_results.append(example_result)
 
     return '\n\n'.join(example_results)
+
+
+def _exec_openapi_examples(
+    app_file: Path,
+    openapi_configs: list[_OpenAPIRunArgs],
+) -> str:
+    openapi_results = []
+
+    for openapi_args in openapi_configs:
+        url_path = cast(str, openapi_args['url'])
+        with _run_openapi_app(app_file) as port:
+            openapi_results.append(_process_openapi_example(port, url_path))
+
+    return '\n\n'.join(openapi_results)
 
 
 def _process_single_example(
@@ -370,6 +489,51 @@ def _process_single_example(
 
     clean_args_string = ' '.join(clean_args)
     return '\n'.join((f'$ {clean_args_string}', *stdout))
+
+
+def _process_openapi_example(port: int, url_path: str) -> str:
+    args = [
+        'curl',
+        '-sS',
+        '--fail-with-body',
+        f'http://127.0.0.1:{port}{url_path}',
+    ]
+    proc = subprocess.run(  # noqa: PLW1510, S603
+        args,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise _StartupError(
+            (
+                'Could not fetch OpenAPI schema',
+                args,
+                proc.stdout,
+                proc.stderr,
+            ),
+        )
+    return json.dumps(json.loads(proc.stdout), indent=2, sort_keys=True)
+
+
+def _create_openapi_admonition(result_content: str) -> Node:
+    result_toggle = _OpenAPIResultToggle()
+    result_summary = _OpenAPIResultToggleSummary()
+    result_summary += Text('Preview openapi.json')
+    result_toggle += result_summary
+    result_toggle += highlightlang(
+        '',
+        literal_block('', result_content),
+        lang='json',
+        force=False,
+        linenothreshold=sys.maxsize,
+    )
+    result_toggle += literal_block('', result_content)
+    return admonition(
+        '',
+        title('', 'OpenAPI result'),
+        result_toggle,
+        classes=['tip', 'openapi-result-admonition'],
+    )
 
 
 _CurlArgs: TypeAlias = list[str]
@@ -536,36 +700,35 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         if not self._need_to_run(file_path):
             return self._generate_nodes(file_path, imports_data)
 
-        clean_content, run_args = self._execute_code(file_path)
-        if not run_args:
+        clean_content, run_args, openapi_args = self._execute_code(file_path)
+        if not run_args and not openapi_args:
             return self._generate_nodes(file_path, imports_data)
         self._create_tmp_example_file(file_path, clean_content)
 
         nodes = self._generate_nodes(file_path, imports_data)
 
-        executed_result = _exec_examples(
-            file_path.relative_to(Path.cwd()),
-            run_args,
-        )
+        example_file = file_path.relative_to(Path.cwd())
+        executed_result = _exec_examples(example_file, run_args)
+        openapi_result = _exec_openapi_examples(example_file, openapi_args)
 
-        if not executed_result:
-            return nodes
-
-        nodes.append(
-            admonition(
-                '',
-                title('', 'Run result'),
-                highlightlang(
+        if executed_result:
+            nodes.append(
+                admonition(
                     '',
+                    title('', 'Run result'),
+                    highlightlang(
+                        '',
+                        literal_block('', executed_result),
+                        lang='shell',
+                        force=False,
+                        linenothreshold=sys.maxsize,
+                    ),
                     literal_block('', executed_result),
-                    lang='shell',
-                    force=False,
-                    linenothreshold=sys.maxsize,
+                    classes=['tip'],
                 ),
-                literal_block('', executed_result),
-                classes=['tip'],
-            ),
-        )
+            )
+        if openapi_result:
+            nodes.append(_create_openapi_admonition(openapi_result))
         return nodes
 
     def _generate_nodes(
@@ -668,7 +831,12 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         hidden_lines = source_lines[:hidden_until_line]
 
         hidden_lines = [
-            line for line in hidden_lines if not _RGX_RUN_COMMENT.match(line)
+            line
+            for line in hidden_lines
+            if (
+                not _RGX_RUN_COMMENT.match(line)
+                and not _RGX_OPENAPI_COMMENT.match(line)
+            )
         ]
 
         return hidden_lines, hidden_until_line + 1
@@ -680,10 +848,10 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     ) -> _ImportsSpoiler:
         node = _ImportsSpoiler(classes=['imports-inline-spoiler'])
         node['imports_from_line'] = start_line
-
         summary_text = self._get_imports_summary_text(hidden_lines)
         summary_node = _ImportsSpoilerSummary()
         summary_node['collapsed_title'] = summary_text
+        summary_node['expanded_title'] = 'Hide imports'
         summary_node += Text(summary_text)
         node += summary_node
         return node
@@ -792,7 +960,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     def _execute_code(
         self,
         file_path: Path,
-    ) -> tuple[str, list[_AppRunArgs]]:
+    ) -> tuple[str, list[_AppRunArgs], list[_OpenAPIRunArgs]]:
         file_content = file_path.read_text(encoding='utf-8')
         return _extract_run_args(file_content)
 
@@ -833,6 +1001,17 @@ def setup(app: Sphinx) -> None:
     app.add_node(
         _GithubSourceLink,
         html=(_visit_github_source_link, _depart_github_source_link),
+    )
+    app.add_node(
+        _OpenAPIResultToggle,
+        html=(_visit_openapi_result_toggle, _depart_openapi_result_toggle),
+    )
+    app.add_node(
+        _OpenAPIResultToggleSummary,
+        html=(
+            _visit_openapi_result_toggle_summary,
+            _depart_openapi_result_toggle_summary,
+        ),
     )
     app.add_css_file('css/literalinclude-imports.css')
     app.add_js_file('js/literalinclude-imports.js')
