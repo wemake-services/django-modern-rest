@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class OperationIDBuilder:
+class OperationIdGenerator:
     """
-    Builder for unique OpenAPI operation IDs.
+    Generator for unique OpenAPI operation IDs.
 
     The Operation ID builder is responsible for creating unique
     operation IDs for OpenAPI operations.

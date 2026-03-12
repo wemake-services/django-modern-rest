@@ -33,6 +33,7 @@ class SchemaGenerator:
         Get schema for an annotation.
 
         Here's the algorithm we use:
+
         1. First, we try to find manually defined overrides for the annotation
         2. If nothing is found, we try to find any existing schema references
         3. Next, we try to get a model schema from a serializer.

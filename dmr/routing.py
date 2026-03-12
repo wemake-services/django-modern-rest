@@ -18,12 +18,12 @@ from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
 from dmr.openapi.collector import controller_mapping_collector
+from dmr.openapi.objects import Components, OpenAPI, Paths
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
     from dmr.internal.types import FormatError
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.openapi.objects import OpenAPI, Paths
     from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
@@ -47,7 +47,7 @@ class Router:
         self.urls = urls
         self.prefix = prefix
 
-    def get_schema(self, context: 'OpenAPIContext') -> 'OpenAPI':
+    def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
         """
         Builds OpenAPI specification.
 
@@ -64,7 +64,10 @@ class Router:
         ):
             paths_items[path] = controller.get_path_item(path, context)
 
-        components = context.generators.component(paths_items)
+        components = Components(
+            schemas=context.registries.schema.schemas,
+            security_schemes=context.registries.security_scheme.schemes,
+        )
         return context.config_merger(paths_items, components)
 
 

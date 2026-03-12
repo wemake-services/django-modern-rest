@@ -1,8 +1,8 @@
-from dmr.openapi.generators.component import (
-    ComponentGenerator as ComponentGenerator,
-)
 from dmr.openapi.generators.component_parsers import (
     ComponentParserGenerator as ComponentParserGenerator,
+)
+from dmr.openapi.generators.operation import (
+    OperationIdGenerator as OperationIdGenerator,
 )
 from dmr.openapi.generators.response import (
     ResponseGenerator as ResponseGenerator,

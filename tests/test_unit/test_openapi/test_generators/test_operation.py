@@ -4,16 +4,16 @@ import pytest
 
 from dmr import Controller, modify
 from dmr.openapi.config import OpenAPIConfig
-from dmr.openapi.core.builder import OperationIDBuilder
 from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.generators import OperationIdGenerator
 from dmr.plugins.pydantic import PydanticSerializer
 
 _TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 @pytest.fixture
-def generator(openapi_context: OpenAPIContext) -> OperationIDBuilder:
-    """Create ``OperationIDGenerator`` instance for testing."""
+def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
+    """Create ``OperationIdGenerator`` instance for testing."""
     return openapi_context.generators.operation_id
 
 
@@ -100,7 +100,7 @@ def generator(openapi_context: OpenAPIContext) -> OperationIDBuilder:
     ],
 )
 def test_tokenize_path(
-    generator: OperationIDBuilder,
+    generator: OperationIdGenerator,
     input_path: str,
     expected_tokens: list[str],
 ) -> None:
@@ -120,7 +120,7 @@ class _ControllerWithOperationId(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_explicit_operation_id(generator: OperationIDBuilder) -> None:
+def test_explicit_operation_id(generator: OperationIdGenerator) -> None:
     """Ensure that explicit ``operation_id`` is registered and returned."""
     controller = _ControllerWithOperationId()
     operation_id = generator(

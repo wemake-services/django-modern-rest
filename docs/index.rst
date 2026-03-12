@@ -179,7 +179,6 @@ Here are our amazing people who made this project possible.
   pages/integrations.rst
   pages/sse.rst
   pages/testing.rst
-  pages/spec-first.rst
 
 
 .. toctree::
@@ -198,6 +197,7 @@ Here are our amazing people who made this project possible.
 
   pages/openapi/schema.rst
   pages/openapi/openapi.rst
+  pages/openapi/spec-first.rst
   pages/openapi/openapi-reference.rst
 
 

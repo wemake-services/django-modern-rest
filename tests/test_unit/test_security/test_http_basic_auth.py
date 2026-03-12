@@ -1,7 +1,7 @@
 import pytest
 from inline_snapshot import snapshot
 
-from dmr.openapi.objects.components import Components
+from dmr.openapi.objects import SecurityScheme
 from dmr.security.http import (
     HttpBasicAsyncAuth,
     HttpBasicSyncAuth,
@@ -14,9 +14,12 @@ def test_schema(
 ) -> None:
     """Ensures that security scheme is correct for http basic auth."""
     instance = typ()
-    scheme = instance.security_scheme
 
-    assert isinstance(scheme, Components)
-    assert scheme.security_schemes
-    assert len(scheme.security_schemes) == 1
+    assert instance.security_schemes == snapshot({
+        'http_basic': SecurityScheme(
+            type='http',
+            description='Http Basic auth',
+            scheme='basic',
+        ),
+    })
     assert instance.security_requirement == snapshot({'http_basic': []})

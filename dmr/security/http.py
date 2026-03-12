@@ -5,9 +5,7 @@ from urllib.parse import unquote
 
 from typing_extensions import override
 
-from dmr.openapi.objects.components import Components
-from dmr.openapi.objects.security_requirement import SecurityRequirement
-from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
@@ -30,19 +28,17 @@ class _HttpBasicAuth:
         self.header = header
 
     @property
-    def security_scheme(self) -> Components:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        return Components(
-            security_schemes={
-                # TODO: this does not change if `name!='Authentication'`,
-                # but it probably should.
-                self.security_scheme_name: SecurityScheme(
-                    type='http',
-                    scheme='basic',
-                    description='Http Basic auth',
-                ),
-            },
-        )
+        return {
+            # TODO: this does not change if `name!='Authentication'`,
+            # but it probably should.
+            self.security_scheme_name: SecurityScheme(
+                type='http',
+                scheme='basic',
+                description='Http Basic auth',
+            ),
+        }
 
     @property
     def security_requirement(self) -> SecurityRequirement:

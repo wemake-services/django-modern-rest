@@ -7,8 +7,11 @@ from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.openapi.objects.components import Components
-from dmr.openapi.objects.security_requirement import SecurityRequirement
+from dmr.openapi.objects import (
+    Reference,
+    SecurityRequirement,
+    SecurityScheme,
+)
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -21,7 +24,7 @@ class _BaseAuth(ResponseSpecProvider):
 
     @property
     @abstractmethod
-    def security_scheme(self) -> Components:
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
         raise NotImplementedError
 

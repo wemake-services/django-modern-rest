@@ -37,7 +37,7 @@ All of them have unified API:
   If it raises :exc:`~dmr.exceptions.NotAuthenticatedError`
   then we imidiatelly stop and return the error response.
   Async auth has async ``__call__``, sync auth has sync one.
-- :meth:`~dmr.security.SyncAuth.security_scheme`
+- :meth:`~dmr.security.SyncAuth.security_schemes`
   provides OpenAPI spec to define this auth method in the spec.
 - :meth:`~dmr.security.SyncAuth.security_requirement`
   provides OpenAPI spec to indicate what kind of auth will

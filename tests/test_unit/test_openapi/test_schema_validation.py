@@ -18,7 +18,11 @@ except ImportError:  # pragma: no cover
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.openapi import build_schema
-from dmr.openapi.objects import Components, SecurityRequirement, SecurityScheme
+from dmr.openapi.objects import (
+    Reference,
+    SecurityRequirement,
+    SecurityScheme,
+)
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.security import SyncAuth
@@ -36,15 +40,13 @@ class _WrongAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> Components:
-        return Components(
-            security_schemes={
-                'wrong': SecurityScheme(
-                    type='http',
-                    name='Wrong',
-                ),
-            },
-        )
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        return {
+            'wrong': SecurityScheme(
+                type='http',
+                name='Wrong',
+            ),
+        }
 
     @property
     @override

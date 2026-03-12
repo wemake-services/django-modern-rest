@@ -39,11 +39,11 @@ class SecuritySchemeGenerator:
         requirements: list[SecurityRequirement] = []
 
         for auth in auth_providers:
-            schemes = auth.security_scheme.security_schemes
+            schemes = auth.security_schemes
             if schemes:
-                for name, scheme in schemes.items():
+                for scheme_name, scheme in schemes.items():
                     self._context.registries.security_scheme.register(
-                        name,
+                        scheme_name,
                         scheme,
                     )
 

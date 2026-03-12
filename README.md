@@ -30,7 +30,7 @@
 - [x] 100% test coverage
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
 - [x] Great docs
-- [x] No AI slop, but built for the LLM era: use our [`llms-full.txt`](https://django-modern-rest.readthedocs.io/llms-full.txt) or [context7](https://context7.com/wemake-services/django-modern-rest) for the context
+- [x] No AI slop, but built for the LLM era: use our [`llms-full.txt`](https://django-modern-rest.readthedocs.io/llms-full.txt) or [context7](https://context7.com/wemake-services/django-modern-rest) for the context, we also support different [use-cases specific to LLMs](https://django-modern-rest.readthedocs.io/en/latest/pages/getting-started.html#llms-support)
 - [x] No emojis 🌚️️
 
 ---------

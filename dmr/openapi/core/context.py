@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, get_origin
 
-from dmr.openapi.core.builder import OperationIDBuilder
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
     OperationIdRegistry,
@@ -10,8 +9,8 @@ from dmr.openapi.core.registry import (
     SecuritySchemeRegistry,
 )
 from dmr.openapi.generators import (
-    ComponentGenerator,
     ComponentParserGenerator,
+    OperationIdGenerator,
     ResponseGenerator,
     SchemaGenerator,
     SecuritySchemeGenerator,
@@ -35,11 +34,10 @@ class RegistryContainer:
 class GeneratorContainer:
     """Container for generators."""
 
-    operation_id: OperationIDBuilder
+    operation_id: OperationIdGenerator
     schema: SchemaGenerator
     component_parsers: ComponentParserGenerator
     response: ResponseGenerator
-    component: ComponentGenerator
     security_scheme: SecuritySchemeGenerator
 
 
@@ -68,11 +66,10 @@ class OpenAPIContext:
 
         # Initialize generators
         self.generators = GeneratorContainer(
-            operation_id=OperationIDBuilder(self),
+            operation_id=OperationIdGenerator(self),
             schema=SchemaGenerator(self),
             component_parsers=ComponentParserGenerator(self),
             response=ResponseGenerator(self),
-            component=ComponentGenerator(self),
             security_scheme=SecuritySchemeGenerator(self),
         )
 

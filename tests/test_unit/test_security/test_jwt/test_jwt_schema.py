@@ -1,7 +1,7 @@
 import pytest
 from inline_snapshot import snapshot
 
-from dmr.openapi.objects.components import Components
+from dmr.openapi.objects import SecurityScheme
 from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
 
 
@@ -11,9 +11,13 @@ def test_schema(
 ) -> None:
     """Ensures that security scheme is correct for jwt auth."""
     instance = typ()
-    scheme = instance.security_scheme
 
-    assert isinstance(scheme, Components)
-    assert scheme.security_schemes
-    assert len(scheme.security_schemes) == 1
+    assert instance.security_schemes == snapshot({
+        'jwt': SecurityScheme(
+            type='http',
+            description='JWT token auth',
+            scheme='Bearer',
+            bearer_format='JWT',
+        ),
+    })
     assert instance.security_requirement == snapshot({'jwt': []})

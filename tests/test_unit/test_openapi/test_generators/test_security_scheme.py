@@ -11,7 +11,11 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.security_scheme import (
     SecuritySchemeGenerator,
 )
-from dmr.openapi.objects import Components, SecurityRequirement, SecurityScheme
+from dmr.openapi.objects import (
+    Reference,
+    SecurityRequirement,
+    SecurityScheme,
+)
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
@@ -30,8 +34,8 @@ class _NoSchemeAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> Components:
-        return Components()
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        return {}
 
     @property
     @override
@@ -50,12 +54,10 @@ class _WithSchemeAuth(SyncAuth):
 
     @property
     @override
-    def security_scheme(self) -> Components:
-        return Components(
-            security_schemes={
-                'testScheme': SecurityScheme(type='http', scheme='bearer'),
-            },
-        )
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        return {
+            'testScheme': SecurityScheme(type='http', scheme='bearer'),
+        }
 
     @property
     @override
