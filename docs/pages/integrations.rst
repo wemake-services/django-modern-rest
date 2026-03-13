@@ -202,3 +202,9 @@ No special integration with
 is required.
 
 Everything just works.
+
+
+ETag
+----
+
+TODO

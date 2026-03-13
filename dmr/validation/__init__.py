@@ -16,12 +16,11 @@ from dmr.validation.endpoint_metadata import (
 from dmr.validation.payload import (
     ModifyEndpointPayload as ModifyEndpointPayload,
 )
-from dmr.validation.payload import (
-    Payload as Payload,
-)
+from dmr.validation.payload import Payload as Payload
 from dmr.validation.payload import (
     ValidateEndpointPayload as ValidateEndpointPayload,
 )
 from dmr.validation.response import (
     ResponseValidator as ResponseValidator,
 )
+from dmr.validation.settings import SettingsValidator as SettingsValidator

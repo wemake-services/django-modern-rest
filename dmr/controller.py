@@ -32,7 +32,11 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer, SerializerContext
 from dmr.settings import HttpSpec
 from dmr.types import infer_type_args
-from dmr.validation import BlueprintValidator, ControllerValidator
+from dmr.validation import (
+    BlueprintValidator,
+    ControllerValidator,
+    SettingsValidator,
+)
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -72,6 +76,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             :class:`~dmr.components.Query`, etc into
             one big model for faster validation and better error messages.
         blueprint_validator_cls: Runs blueprint validation on definition.
+        settings_validator_cls: Runs settings validation
+            once the first blueprint is created.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
@@ -114,6 +120,9 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     )
     blueprint_validator_cls: ClassVar[type[BlueprintValidator]] = (
         BlueprintValidator
+    )
+    settings_validator_cls: ClassVar[type[SettingsValidator]] = (
+        SettingsValidator
     )
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
@@ -163,6 +172,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             )
         cls.is_abstract = False
         cls.serializer = type_args[0]
+        cls.settings_validator_cls(serializer=cls.serializer)()
         cls._component_parsers = cls._component_parsers_builder_cls(
             cls,
             Blueprint,

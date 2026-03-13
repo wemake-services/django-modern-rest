@@ -6,13 +6,13 @@ Controller
 
 .. autoclass:: dmr.controller.Blueprint
   :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
   :show-inheritance:
 
 .. autoclass:: dmr.controller.Controller
   :members:
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, error_model
+  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
   :show-inheritance:
 
 
