@@ -23,9 +23,9 @@ class ResponseGenerator:
         """Generate responses from response specs."""
         return {
             str(status_code.value): response_spec.get_schema(
+                metadata,
                 serializer,
                 self._context,
-                metadata,
             )
             for status_code, response_spec in metadata.responses.items()
         }

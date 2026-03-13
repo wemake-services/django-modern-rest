@@ -597,10 +597,10 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     @classmethod
     def get_path_item(cls, path: str, context: OpenAPIContext) -> PathItem:
         """Generate OpenAPI spec for path items."""
-        operations: dict[str, Any] = {}
-        for method, endpoint in cls.api_endpoints.items():
-            operation = endpoint.get_schema(cls.serializer, context, path)
-            operations[method.lower()] = operation
+        operations: dict[str, Any] = {
+            method.lower(): endpoint.get_schema(path, cls.serializer, context)
+            for method, endpoint in cls.api_endpoints.items()
+        }
         return PathItem(
             **operations,
             summary=cls.summary,

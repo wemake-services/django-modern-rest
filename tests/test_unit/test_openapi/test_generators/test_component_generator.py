@@ -34,8 +34,8 @@ class _Fake(ComponentParser, Generic[_FakeT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type[BaseSerializer],
         metadata: EndpointMetadata,
+        serializer: type[BaseSerializer],
         context: OpenAPIContext,
     ) -> Any:
         """Just return None."""

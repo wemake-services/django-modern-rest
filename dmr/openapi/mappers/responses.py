@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 
 def get_schema(  # noqa: WPS211
     response_spec: 'ResponseSpec',
+    metadata: 'EndpointMetadata',
     serializer: type['BaseSerializer'],
     context: OpenAPIContext,
-    metadata: 'EndpointMetadata',
     *,
     schema_field_name: Literal['schema', 'item_schema'] = 'schema',
     used_for_response: bool = True,
