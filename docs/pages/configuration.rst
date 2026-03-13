@@ -25,6 +25,21 @@ As usual, all settings go to ``settings.py`` file in your Django project.
     https://github.com/wemake-services/django-split-settings
 
 
+We also validate defined settings in import time.
+See :ref:`settings_validation` for more details.
+
+
+Settings
+--------
+
+Class that can be used to properly type settings in user's code:
+
+.. autoclass:: dmr.settings.SettingsDict
+  :members:
+
+
+Class with all possible setting keys as enum:
+
 .. autoclass:: dmr.settings.Settings
   :show-inheritance:
 

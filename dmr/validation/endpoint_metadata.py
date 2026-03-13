@@ -446,7 +446,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             if self.blueprint_cls is None
             else (self.blueprint_cls.auth or ())
         )
-        settings_auth: list[SyncAuth | AsyncAuth] = resolve_setting(
+        settings_auth: Sequence[SyncAuth | AsyncAuth] = resolve_setting(
             Settings.auth,
         )
         if not isinstance(settings_auth, Sequence):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -461,7 +461,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *(self.controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
             # TODO: maybe we should wrap auth handlers in global settings
             # in `sync_to_async` and `async_to_sync`?
-            *(settings_auth or ()),  # pyrefly: ignore[not-iterable]
+            *settings_auth,  # pyrefly: ignore[not-iterable]
         ]
         # Validate that auth matches the sync / async endpoints:
         base_type = (

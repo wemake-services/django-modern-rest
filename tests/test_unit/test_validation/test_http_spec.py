@@ -5,7 +5,6 @@ import pytest
 from dmr import Controller, modify
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.test import DMRRequestFactory
 
 
 @pytest.mark.parametrize(
@@ -16,7 +15,6 @@ from dmr.test import DMRRequestFactory
     ],
 )
 def test_http_spec_none_body_for_status(
-    dmr_rf: DMRRequestFactory,
     *,
     status_code: HTTPStatus,
 ) -> None:

@@ -1,18 +1,22 @@
 import enum
 import importlib
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence, Set
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
+from typing_extensions import TypedDict
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.internal.cache import clear_settings_cache as clear_settings_cache
 from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
+    from dmr.metadata import ResponseSpec
+    from dmr.openapi import OpenAPIConfig
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
+    from dmr.security import AsyncAuth, SyncAuth
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
@@ -52,8 +56,8 @@ class Settings(enum.StrEnum):
     auth = 'auth'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
-    responses = 'responses'
     semantic_responses = 'semantic_responses'
+    responses = 'responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
     openapi_examples_seed = 'openapi_examples_seed'
@@ -89,6 +93,22 @@ class HttpSpec(enum.StrEnum):
     empty_response_body = 'empty_response_body'
 
 
+class SettingsDict(TypedDict, total=False):
+    """Settings type that can be used for typing."""
+
+    parsers: Sequence['Parser']
+    renderers: Sequence['Renderer']
+    auth: Sequence['AsyncAuth | SyncAuth']
+    no_validate_http_spec: Set[HttpSpec]
+    validate_responses: bool
+    semantic_responses: bool
+    responses: Sequence['ResponseSpec']
+    global_error_handler: Callable[[Any, Any, Any], Any] | str
+    openapi_config: 'OpenAPIConfig'
+    openapi_examples_seed: int | None
+    django_treat_as_post: Set[str]
+
+
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
@@ -105,9 +125,9 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.no_validate_http_spec: frozenset(),
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
-    Settings.responses: [],  # global responses, for response validation
     Settings.semantic_responses: True,
-    Settings.global_error_handler: ('dmr.errors.global_error_handler'),
+    Settings.responses: [],  # global responses, for response validation
+    Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
 }

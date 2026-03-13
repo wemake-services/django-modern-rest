@@ -12,6 +12,21 @@ in production for speed.
 What do we validate and how?
 
 
+.. _settings_validation:
+
+Settings validation
+-------------------
+
+We start with settings validation.
+We only validate settings once per application,
+we do it when the first :class:`~dmr.controller.Blueprint` is created.
+
+.. autoclass:: dmr.validation.settings.SettingsValidator
+  :members:
+
+We also validate our own default values to be correct.
+
+
 Blueprint validation
 --------------------
 
@@ -106,6 +121,7 @@ Here we validate:
 - All per-controller and per-endpoint error handling
 
 .. autoclass:: dmr.validation.controller.ControllerValidator
+  :members:
 
 
 Response validation
@@ -118,3 +134,4 @@ We need this to make sure that API responses always match response schemas.
 It can be :ref:`turned off <response_validation>`.
 
 .. autoclass:: dmr.validation.response.ResponseValidator
+  :members:

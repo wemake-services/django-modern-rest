@@ -1,10 +1,7 @@
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import (
-    Final,
-    TypeAlias,
-)
+from typing import Final, TypeAlias
 
 import pytest
 from django.contrib.auth.models import User
@@ -12,9 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.django_session import (
-    DjangoSessionAsyncAuth,
-)
+from dmr.security.django_session import DjangoSessionAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.sse import (
     SSEContext,
