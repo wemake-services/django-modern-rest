@@ -18,7 +18,7 @@ SchemaDumper: TypeAlias = Callable[['ConvertedSchema'], DumpedSchema]
 
 
 @method_decorator(
-    ensure_csrf_cookie,  # pyrefly: ignore[bad-argument-type]
+    ensure_csrf_cookie,
     name='dispatch',
 )
 class OpenAPIView(View):

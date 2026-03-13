@@ -461,7 +461,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *(self.controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
             # TODO: maybe we should wrap auth handlers in global settings
             # in `sync_to_async` and `async_to_sync`?
-            *settings_auth,  # pyrefly: ignore[not-iterable]
+            *settings_auth,
         ]
         # Validate that auth matches the sync / async endpoints:
         base_type = (
