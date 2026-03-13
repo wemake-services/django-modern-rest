@@ -53,7 +53,11 @@ class SettingsValidator:
         settings = _resolve_defaults()
         try:
             self.serializer.from_python(
-                settings,
+                {
+                    # msgspec does not like `StrEnum` keys:
+                    str(setting_key): setting_value
+                    for setting_key, setting_value in settings.items()
+                },
                 model=_SettingsModel,
                 strict=True,
             )

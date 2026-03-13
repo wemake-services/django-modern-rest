@@ -80,3 +80,17 @@ def test_correct_settings_validation(
     class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
         def post(self) -> int:
             raise NotImplementedError
+
+
+@pytest.mark.parametrize('serializer', serializers)
+def test_default_settings_validation(
+    settings: LazySettings,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures default settings passes."""
+    del settings.DMR_SETTINGS  # noqa: WPS420
+
+    class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
+        def post(self) -> int:
+            raise NotImplementedError
