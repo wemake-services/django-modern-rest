@@ -4,13 +4,10 @@ import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Controller,
-    modify,
-)
+from dmr import Blueprint, Controller, modify
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router
+from dmr.routing import Router, compose_blueprints
 from dmr.security.jwt import JWTAsyncAuth
 
 
@@ -43,7 +40,7 @@ def test_per_endpoint_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _PerBlurprint(Controller[PydanticSerializer]):
+class _PerBlurprint(Blueprint[PydanticSerializer]):
     semantic_responses = False
 
     async def get(self) -> _UserModel:
@@ -60,7 +57,12 @@ def test_per_blueprint_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     '',
-                    [path('per_blueprint/', _PerBlurprint.as_view())],
+                    [
+                        path(
+                            'per_blueprint/',
+                            compose_blueprints(_PerBlurprint).as_view(),
+                        ),
+                    ],
                 ),
             ).convert(),
             indent=2,
