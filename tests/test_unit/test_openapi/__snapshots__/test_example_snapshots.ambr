@@ -8,7 +8,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/user": {
+      "/api/v1/user/": {
         "post": {
           "operationId": "postApiV1User",
           "requestBody": {
@@ -227,7 +227,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/user": {
+      "/api/v1/user/": {
         "post": {
           "operationId": "postApiV1User",
           "responses": {

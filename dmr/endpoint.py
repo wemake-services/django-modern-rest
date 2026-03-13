@@ -491,6 +491,7 @@ def validate(  # noqa: WPS234
     *responses: ResponseSpec,
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -516,6 +517,7 @@ def validate(
     *responses: ResponseSpec,
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -540,6 +542,7 @@ def validate(
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
@@ -564,6 +567,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -626,6 +630,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        semantic_responses: Should semantic responses be collected
+            from different providers for this endpoint.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
         error_handler: Callback function to be called
@@ -668,6 +674,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
+            semantic_responses=semantic_responses,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             parsers=parsers,
@@ -763,6 +770,7 @@ def modify(
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -788,6 +796,7 @@ def modify(
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -813,6 +822,7 @@ def modify(
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
@@ -838,6 +848,7 @@ def modify(  # noqa: WPS211
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    semantic_responses: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
@@ -880,11 +891,13 @@ def modify(  # noqa: WPS211
             When *headers* are passed we will add them for the default response.
         cookies: Shows *cookies* in the documentation.
             When *cookies* are passed we will add them for the default response.
-        extra_responses: List of extra responses that this endpoint can return.
         validate_responses: Do we have to run runtime validation
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        semantic_responses: Should semantic responses be collected
+            from different providers for this endpoint.
+        extra_responses: List of extra responses that this endpoint can return.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
         error_handler: Callback function to be called
@@ -921,6 +934,7 @@ def modify(  # noqa: WPS211
         The same function with ``__dmr_payload__`` payload instance.
 
     .. warning::
+
         Do not disable ``validate_responses`` unless
         this is performance critical for you!
 
@@ -932,6 +946,7 @@ def modify(  # noqa: WPS211
             cookies=cookies,
             responses=extra_responses,
             validate_responses=validate_responses,
+            semantic_responses=semantic_responses,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             parsers=parsers,

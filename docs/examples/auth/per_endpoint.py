@@ -1,8 +1,6 @@
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.django_session import (
-    DjangoSessionSyncAuth,
-)
+from dmr.security.django_session import DjangoSessionSyncAuth
 
 
 class APIController(Controller[PydanticSerializer]):

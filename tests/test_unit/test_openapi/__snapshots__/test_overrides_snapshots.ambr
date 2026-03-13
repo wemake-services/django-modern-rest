@@ -8,7 +8,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/generic": {
+      "/api/generic/": {
         "post": {
           "operationId": "postApiGeneric",
           "responses": {
@@ -117,7 +117,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/user": {
+      "/api/v1/user/": {
         "post": {
           "operationId": "postApiV1User",
           "responses": {
@@ -223,7 +223,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/root/custom/user": {
+      "/api/root/custom/user/": {
         "post": {
           "operationId": "postApiRootCustomUser",
           "responses": {

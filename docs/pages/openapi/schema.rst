@@ -56,4 +56,49 @@ Each :class:`~dmr.metadata.ResponseSpec` knows what it returns in great detail.
 Customizing schema generation
 -----------------------------
 
-TODO
+All endpoints by default generate semantic responses.
+However, we allow 4 levels of customizations.
+
+First non ``None`` value wins:
+
+.. tabs::
+
+    .. tab:: per endpoint
+
+      Pass ``semantic_responses`` parameter
+      to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+
+      .. literalinclude:: /examples/openapi/per_endpoint.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+    .. tab:: per blueprint
+
+      Customize :attr:`~dmr.controller.Blueprint.semantic_responses` attribute.
+
+      .. literalinclude:: /examples/openapi/per_blueprint.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+    .. tab:: per controller
+
+      Customize :attr:`~dmr.controller.Blueprint.semantic_responses` attribute.
+
+      .. literalinclude:: /examples/openapi/per_controller.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+    .. tab:: per settings
+
+      Disable semantic responses globally:
+
+      .. code-block:: python
+        :caption: settings.py
+        :linenos:
+
+        >>> from dmr.settings import Settings, DMR_SETTINGS
+
+        >>> DMR_SETTINGS = {Settings.semantic_responses: False}

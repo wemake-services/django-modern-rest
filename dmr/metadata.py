@@ -267,6 +267,8 @@ class EndpointMetadata:
             to disable for validation in this endpoint.
         allowed_http_methods: Set of extra HTTP methods
             that are allowed for this endpoint.
+        semantic_responses: Should semantic responses
+            from different providers be collected?
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -309,6 +311,7 @@ class EndpointMetadata:
     auth: list['SyncAuth | AsyncAuth'] | None
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
+    semantic_responses: bool
 
     # OpenAPI documentation fields:
     summary: str | None = None
@@ -351,11 +354,13 @@ class EndpointMetadata:
         And you can subclass ``EndpointMetadata``
         to also contain ``checks`` field and override this method
         to also include response specs from this field.
-        """
-        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
-        if not resolve_setting(Settings.semantic_responses):
+        Define ``semantic_responses`` to ``False`` on settings
+        or controller level to disable semantic responses collection.
+        """
+        if not self.semantic_responses:
             return []
+
         return [
             *[spec[0] for spec in self.component_parsers],
             *[type(parser) for parser in self.parsers.values()],
