@@ -8,7 +8,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/cookies": {
+      "/api/cookies/": {
         "get": {
           "operationId": "getApiCookies",
           "parameters": [
@@ -275,7 +275,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/file": {
+      "/file/": {
         "post": {
           "operationId": "postFile",
           "requestBody": {
@@ -449,7 +449,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/types": {
+      "/api/types/": {
         "post": {
           "operationId": "postApiTypes",
           "requestBody": {
@@ -687,7 +687,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/file": {
+      "/file/": {
         "get": {
           "operationId": "file_test_id",
           "requestBody": {
@@ -832,7 +832,7 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/user": {
+      "/api/v1/user/": {
         "post": {
           "operationId": "postApiV1User",
           "requestBody": {

@@ -35,7 +35,7 @@ def test_regular_type_override(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('/user', _UserController.as_view())],
+                    [path('user/', _UserController.as_view())],
                 ),
                 context=context,
             ).convert(),
@@ -67,7 +67,7 @@ def test_returns_reference(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/root/custom/',
-                    [path('/user', _UserController.as_view())],
+                    [path('user/', _UserController.as_view())],
                 ),
                 context=context,
             ).convert(),
@@ -108,8 +108,8 @@ def test_generic_type_override(snapshot: SnapshotAssertion) -> None:
         json.dumps(
             build_schema(
                 Router(
-                    '/api',
-                    [path('/generic', _GenericController.as_view())],
+                    'api/',
+                    [path('generic/', _GenericController.as_view())],
                 ),
                 context=context,
             ).convert(),

@@ -270,6 +270,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(endpoint=endpoint),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            semantic_responses=self._build_semantic_responses(),
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -317,6 +318,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(endpoint=endpoint),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            semantic_responses=self._build_semantic_responses(),
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -359,6 +361,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(endpoint=endpoint),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            semantic_responses=self._build_semantic_responses(),
             summary=summary,
             description=description,
         )
@@ -534,6 +537,18 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *self.controller_cls.no_validate_http_spec,
             *resolve_setting(Settings.no_validate_http_spec),
         ))
+
+    def _build_semantic_responses(self) -> bool:
+        if self.payload and self.payload.semantic_responses is not None:
+            return self.payload.semantic_responses
+        if (
+            self.blueprint_cls
+            and self.blueprint_cls.semantic_responses is not None
+        ):
+            return self.blueprint_cls.semantic_responses
+        if self.controller_cls.semantic_responses is not None:
+            return self.controller_cls.semantic_responses
+        return resolve_setting(Settings.semantic_responses)  # type: ignore[no-any-return]
 
     def _build_description(self) -> tuple[str | None, str | None]:
         """

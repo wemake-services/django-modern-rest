@@ -76,6 +76,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
+        semantic_responses: Should semantic responses be collected
+            from different providers for all endpoints in this class.
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
@@ -115,6 +117,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     )
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
+    semantic_responses: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:

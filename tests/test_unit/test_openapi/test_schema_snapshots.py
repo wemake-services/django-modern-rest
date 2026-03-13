@@ -49,7 +49,7 @@ def test_user_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('/user', _UserController.as_view())],
+                    [path('user/', _UserController.as_view())],
                 ),
             ).convert(),
             indent=2,
@@ -106,7 +106,7 @@ def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/',
-                    [path('/cookies', _AuthedAndCookiesController.as_view())],
+                    [path('cookies/', _AuthedAndCookiesController.as_view())],
                 ),
             ).convert(),
             indent=2,
@@ -148,7 +148,7 @@ def test_file_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     '',
-                    [path('/file', _FileController.as_view())],
+                    [path('file/', _FileController.as_view())],
                 ),
             ).convert(),
             indent=2,
@@ -182,7 +182,7 @@ def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     '/',
-                    [path('/file', _BodyAndFileController.as_view())],
+                    [path('file/', _BodyAndFileController.as_view())],
                 ),
             ).convert(),
             indent=2,
@@ -243,7 +243,7 @@ def test_conditional_types(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/',
-                    [path('/types', _ConditionalTypesController.as_view())],
+                    [path('types/', _ConditionalTypesController.as_view())],
                 ),
             ).convert(),
             indent=2,
