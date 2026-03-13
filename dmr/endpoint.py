@@ -263,21 +263,15 @@ class Endpoint:  # noqa: WPS214
 
     def get_schema(
         self,
+        path: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
-        path: str,
     ) -> Operation:
         """Builde an OpenAPI Operation from an endpoint."""
-        operation_id = context.generators.operation_id(
-            self.metadata,
-            path,
-            serializer,
-        )
         request_body, params_list = context.generators.component_parsers(
             self.metadata,
             serializer,
         )
-        responses = context.generators.response(self.metadata, serializer)
         security = context.generators.security_scheme(
             self.metadata.auth,
             serializer,
@@ -292,10 +286,23 @@ class Endpoint:  # noqa: WPS214
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,
-            operation_id=operation_id,
+            operation_id=self.get_operation_id(path, serializer, context),
             request_body=request_body,
-            responses=responses,
+            responses=context.generators.response(self.metadata, serializer),
             parameters=params_list,
+        )
+
+    def get_operation_id(
+        self,
+        path: str,
+        serializer: type[BaseSerializer],
+        context: 'OpenAPIContext',
+    ) -> str:
+        """Customize how OperationId is generated for the OpenAPI."""
+        return context.generators.operation_id(
+            path,
+            self.metadata,
+            serializer,
         )
 
     def _async_endpoint(

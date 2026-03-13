@@ -218,16 +218,16 @@ class SSEResponseSpec(ResponseSpec):
     @override
     def get_schema(
         self,
+        metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: OpenAPIContext,
-        metadata: EndpointMetadata,
     ) -> Response:
         """Customizes how response's schemas are rendered."""
         return responses.get_schema(
             self,
+            metadata,
             serializer,
             context,
-            metadata,
             schema_field_name='item_schema',
             # Despite the fact that it looks like a response,
             # produced events are not regular responses.

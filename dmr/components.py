@@ -221,8 +221,8 @@ class ComponentParser(ResponseSpecProvider):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         """Generate OpenAPI spec for component."""
@@ -333,8 +333,8 @@ class Query(ComponentParser, Generic[_QueryT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
@@ -425,8 +425,8 @@ class Body(ComponentParser, Generic[_BodyT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(model, serializer)
@@ -498,8 +498,8 @@ class Headers(ComponentParser, Generic[_HeadersT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
@@ -621,8 +621,8 @@ class Path(ComponentParser, Generic[_PathT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
@@ -684,8 +684,8 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         return parameters_spec(
@@ -850,8 +850,8 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     def get_schema(
         cls,
         model: Any,
-        serializer: type['BaseSerializer'],
         metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
         context: OpenAPIContext,
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(

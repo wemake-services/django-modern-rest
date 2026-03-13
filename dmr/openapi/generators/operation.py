@@ -26,8 +26,8 @@ class OperationIdGenerator:
 
     def __call__(
         self,
-        metadata: 'EndpointMetadata',
         path: str,
+        metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> str:
         """

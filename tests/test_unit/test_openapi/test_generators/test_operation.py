@@ -124,8 +124,8 @@ def test_explicit_operation_id(generator: OperationIdGenerator) -> None:
     """Ensure that explicit ``operation_id`` is registered and returned."""
     controller = _ControllerWithOperationId()
     operation_id = generator(
-        controller.api_endpoints['GET'].metadata,
-        path='whatever',
+        'whatever',
+        metadata=controller.api_endpoints['GET'].metadata,
         serializer=PydanticSerializer,
     )
     registry = generator._context.registries.operation_id

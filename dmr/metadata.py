@@ -94,9 +94,9 @@ class ResponseSpec:
 
     def get_schema(
         self,
+        metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
-        metadata: 'EndpointMetadata',
     ) -> 'Response':
         """
         Returns the OpenAPI schema for the response.
@@ -106,7 +106,7 @@ class ResponseSpec:
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
         """
-        return responses.get_schema(self, serializer, context, metadata)
+        return responses.get_schema(self, metadata, serializer, context)
 
 
 @final
