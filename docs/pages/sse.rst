@@ -127,7 +127,7 @@ So, any errors that need to be handled, are up to users to handle:
 
 If you need to imediatelly close the response stream, you can raise
 :exc:`~dmr.sse.exceptions.SSECloseConnectionError`
-nside the events producing async iterator.
+inside the events producing async iterator.
 
 Handling disconnects
 ~~~~~~~~~~~~~~~~~~~~
