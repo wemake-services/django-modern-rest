@@ -318,6 +318,10 @@ plugins = [
   "pydantic.mypy",
 ]
 
+[[tool.mypy.overrides]]
+module = "tracecov.*"
+follow_untyped_imports = true
+
 
 [tool.pyright]
 # Docs: https://microsoft.github.io/pyright/#/configuration

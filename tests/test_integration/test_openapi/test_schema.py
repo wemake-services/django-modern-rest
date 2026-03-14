@@ -1,31 +1,34 @@
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 import schemathesis as st
-import tracecov  # type: ignore[import-untyped]
+import tracecov
 from django.urls import reverse
 from schemathesis.specs.openapi.schemas import OpenApiSchema
-from tracecov.schemathesis import helpers  # type: ignore[import-untyped]
+from tracecov.schemathesis import helpers
 
 from django_test_app.server.wsgi import application
 
+if TYPE_CHECKING:
+    from tests.plugins.tracecov import RegisterTracecovMap
+
 
 @pytest.fixture(scope='session')
-def coverage_map() -> Iterator[tracecov.CoverageMap]:
+def coverage_map(
+    register_tracecov_map: 'RegisterTracecovMap',
+) -> tracecov.CoverageMap:
     """
-    Provide a ``Tracecov`` coverage map for the whole test session.
+    Provide a ``tracecov`` coverage map for the whole test session.
 
     The coverage map is initialized from the current schema and is used
     during tests to record which API operations and responses are
-    exercised by the test suite. After the tests finishes, a coverage
-    report is generated and saved to ``tracecov.json``.
+    exercised by the test suite.
     """
     from django_test_app.server.urls import schema  # noqa: PLC0415
 
     coverage_map = tracecov.CoverageMap.from_dict(schema.convert())
-    yield coverage_map
-
-    coverage_map.save_report(output_file='tracecov.json', format='json')
+    register_tracecov_map(coverage_map)
+    return coverage_map
 
 
 # The `db` fixture is required to enable database access.
