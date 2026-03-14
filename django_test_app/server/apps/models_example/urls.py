@@ -1,6 +1,4 @@
-from django.urls import path
-
-from dmr.routing import Router
+from dmr.routing import Router, path
 from server.apps.models_example import views
 
 router = Router(

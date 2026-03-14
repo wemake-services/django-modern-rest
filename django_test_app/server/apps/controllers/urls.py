@@ -1,6 +1,6 @@
-from django.urls import path, re_path
+from django.urls import re_path
 
-from dmr.routing import Router, compose_blueprints
+from dmr.routing import Router, compose_blueprints, path
 from server.apps.controllers import views
 
 router = Router(
