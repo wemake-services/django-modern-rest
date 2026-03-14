@@ -1,6 +1,4 @@
-from django.urls import path
-
-from dmr.routing import Router
+from dmr.routing import Router, path
 from server.apps.jwt_auth import views
 
 router = Router(

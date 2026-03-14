@@ -5,13 +5,13 @@ import uuid
 import pydantic
 from django.conf import settings
 from django.core.management import execute_from_command_line
-from django.urls import include, path
+from django.urls import include
 
 from dmr import Body, Controller
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView, SwaggerView
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router
+from dmr.routing import Router, path
 
 if not settings.configured:
     settings.configure(

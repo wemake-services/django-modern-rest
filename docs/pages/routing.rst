@@ -75,6 +75,14 @@ This is not what we want for API endpoints.
 Instead, we want to return API responses with proper error structure and
 content negotiation (e.g. JSON or XML based on the ``Accept`` header).
 
+.. important::
+
+  Overriding :data:`django.conf.urls.handler404` has no effect
+  while ``DEBUG = True`` is set.
+
+  This is how Django behaves:
+  https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+
 To achieve this, you can use
 :func:`~dmr.routing.build_404_handler` helper.
 It creates a handler that returns API-style 404 responses for specific path

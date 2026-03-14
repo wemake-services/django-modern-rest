@@ -1,6 +1,6 @@
-from django.urls import include, path
+from django.urls import include
 
-from dmr.routing import Router, compose_blueprints
+from dmr.routing import Router, compose_blueprints, path
 from examples.using_controller.blueprints import (
     UserCreateBlueprint,
     UserListBlueprint,
