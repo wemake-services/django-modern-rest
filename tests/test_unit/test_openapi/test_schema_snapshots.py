@@ -6,7 +6,7 @@ import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
+from dmr import (  # noqa: WPS235
     Blueprint,
     Body,
     Controller,
