@@ -89,7 +89,8 @@ It creates a handler that returns API-style 404 responses for specific path
 prefixes (using the same serializer and renderers as your API), and falls back
 to Django's default handler for everything else.
 
-Here is how you can use it in your root ``urls.py``:
+Here is how you can use it in your root ``urls.py``
+(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/6.0/ref/settings/#root-urlconf>`_):
 
 .. code-block:: python
   :caption: urls.py
