@@ -6,8 +6,8 @@ from inline_snapshot import snapshot
 from dmr.test import DMRClient
 
 
-@pytest.mark.parametrize('method', set(HTTPMethod))
-def test404_view(
+@pytest.mark.parametrize('method', list(HTTPMethod))
+def test_not_found_view(
     dmr_client: DMRClient,
     *,
     method: HTTPMethod,

@@ -449,11 +449,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         settings_auth: Sequence[SyncAuth | AsyncAuth] = resolve_setting(
             Settings.auth,
         )
-        if not isinstance(settings_auth, Sequence):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise EndpointMetadataError(
-                'Settings.auth must be a list of auth instances. '
-                f'Got: {settings_auth!r}',
-            )
 
         auth = [
             *payload_auth,  # pyrefly: ignore[not-iterable]
