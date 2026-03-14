@@ -100,4 +100,4 @@ class OperationIdGenerator:
         tokens: list[str],
     ) -> str:
         """Build operation ID from HTTP method and path tokens."""
-        return method + operation_prefix + ''.join(tokens) if tokens else method
+        return method + operation_prefix + ''.join(tokens)
