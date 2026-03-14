@@ -834,7 +834,7 @@
     "paths": {
       "/api/v1/user/": {
         "get": {
-          "operationId": "get_GetUserListControllerApiV1User",
+          "operationId": "get_GetUserListBlueprintApiV1User",
           "responses": {
             "200": {
               "description": "OK",
@@ -873,7 +873,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "post_UserControllerApiV1User",
+          "operationId": "post_UserBlueprintApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
