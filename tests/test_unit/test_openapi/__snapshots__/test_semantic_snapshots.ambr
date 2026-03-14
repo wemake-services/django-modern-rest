@@ -10,7 +10,7 @@
     "paths": {
       "/per_blueprint/": {
         "get": {
-          "operationId": "getPerBlueprint",
+          "operationId": "get_PerBlurprintPerBlueprint",
           "responses": {
             "200": {
               "description": "OK",
@@ -26,7 +26,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postPerBlueprint",
+          "operationId": "post_PerBlurprintPerBlueprint",
           "responses": {
             "201": {
               "description": "Created",
@@ -75,7 +75,7 @@
     "paths": {
       "/per_controller/": {
         "get": {
-          "operationId": "getPerController",
+          "operationId": "get_PerControllerPerController",
           "responses": {
             "200": {
               "description": "OK",
@@ -96,7 +96,7 @@
           ]
         },
         "post": {
-          "operationId": "postPerController",
+          "operationId": "post_PerControllerPerController",
           "responses": {
             "201": {
               "description": "Created",
@@ -157,7 +157,7 @@
     "paths": {
       "/per_endpoint/": {
         "get": {
-          "operationId": "getPerEndpoint",
+          "operationId": "get_PerEndpointPerEndpoint",
           "responses": {
             "200": {
               "description": "OK",
@@ -193,7 +193,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postPerEndpoint",
+          "operationId": "post_PerEndpointPerEndpoint",
           "responses": {
             "201": {
               "description": "Created",

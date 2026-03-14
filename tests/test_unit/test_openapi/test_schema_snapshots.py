@@ -6,11 +6,13 @@ import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
+from dmr import (  # noqa: WPS235
+    Blueprint,
     Body,
     Controller,
     Cookies,
     FileMetadata,
+    Path,
     Query,
     ResponseSpec,
     modify,
@@ -21,7 +23,7 @@ from dmr.openapi.objects import ParameterMetadata
 from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
-from dmr.routing import Router
+from dmr.routing import Router, compose_blueprints
 from dmr.security.jwt import JWTAsyncAuth
 from tests.infra.xml_format import XmlParser, XmlRenderer
 
@@ -34,11 +36,25 @@ class _UserModel(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(title='CustomUserModel')
 
 
-class _UserController(
-    Controller[PydanticSerializer],
+class _PathIdModel(pydantic.BaseModel):
+    id: int
+
+
+class _UserBlueprint(
+    Blueprint[PydanticSerializer],
     Body[dict[str, int]],
 ):
     def post(self) -> _UserModel:
+        raise NotImplementedError
+
+
+class _GetUserListBlueprint(Blueprint[PydanticSerializer]):
+    def get(self) -> list[_UserModel]:
+        raise NotImplementedError
+
+
+class _GetUserController(Controller[PydanticSerializer], Path[_PathIdModel]):
+    def get(self) -> _UserModel:
         raise NotImplementedError
 
 
@@ -49,7 +65,16 @@ def test_user_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('user/', _UserController.as_view())],
+                    [
+                        path(
+                            'user/',
+                            compose_blueprints(
+                                _UserBlueprint,
+                                _GetUserListBlueprint,
+                            ).as_view(),
+                        ),
+                        path('user/<int:id>/', _GetUserController.as_view()),
+                    ],
                 ),
             ).convert(),
             indent=2,

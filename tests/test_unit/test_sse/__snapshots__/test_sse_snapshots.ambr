@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getApiV1Complex",
+          "operationId": "get_build_controller.<locals>.SSEControllerApiV1Complex",
           "responses": {
             "200": {
               "description": "OK",
@@ -206,7 +206,7 @@
     "paths": {
       "/api/v1/overridden": {
         "get": {
-          "operationId": "getApiV1Overridden",
+          "operationId": "get_build_controller.<locals>.SSEControllerApiV1Overridden",
           "responses": {
             "200": {
               "description": "OK",
@@ -343,7 +343,7 @@
     "paths": {
       "/api/v1/sse": {
         "get": {
-          "operationId": "getApiV1Sse",
+          "operationId": "get_build_controller.<locals>.SSEControllerApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",

@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
+from functools import wraps
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -62,6 +63,7 @@ class Endpoint:  # noqa: WPS214
     __slots__ = (
         '_func',
         '_method',
+        '_operation_prefix',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -152,6 +154,13 @@ class Endpoint:  # noqa: WPS214
         )
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
+
+        # Define operation id prefix for OpenAPI:
+        self._operation_prefix = (
+            controller_cls.__qualname__
+            if blueprint_cls is None
+            else blueprint_cls.__qualname__
+        )
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -301,6 +310,7 @@ class Endpoint:  # noqa: WPS214
         """Customize how OperationId is generated for the OpenAPI."""
         return context.generators.operation_id(
             path,
+            self._operation_prefix,
             self.metadata,
             serializer,
         )
@@ -310,6 +320,7 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., Awaitable[HttpResponseBase]]:
         # NOTE: if you change something here, also change in `_sync_endpoint`
+        @wraps(func)
         async def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
@@ -349,6 +360,7 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., HttpResponseBase]:
         # NOTE: if you change something here, also change in `_async_endpoint`
+        @wraps(func)
         def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,

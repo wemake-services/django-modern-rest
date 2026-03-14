@@ -10,7 +10,7 @@
     "paths": {
       "/api/cookies/": {
         "get": {
-          "operationId": "getApiCookies",
+          "operationId": "get_AuthedAndCookiesControllerApiCookies",
           "parameters": [
             {
               "description": "Cookies metadata",
@@ -277,7 +277,7 @@
     "paths": {
       "/file/": {
         "post": {
-          "operationId": "postFile",
+          "operationId": "post_BodyAndFileControllerFile",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -451,7 +451,7 @@
     "paths": {
       "/api/types/": {
         "post": {
-          "operationId": "postApiTypes",
+          "operationId": "post_ConditionalTypesControllerApiTypes",
           "requestBody": {
             "content": {
               "application/json": {
@@ -833,8 +833,47 @@
     "openapi": "3.1.0",
     "paths": {
       "/api/v1/user/": {
+        "get": {
+          "operationId": "get_GetUserListBlueprintApiV1User",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "items": {
+                      "$ref": "#/components/schemas/_UserModel"
+                    },
+                    "type": "array"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
         "post": {
-          "operationId": "postApiV1User",
+          "operationId": "post_UserBlueprintApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -861,6 +900,76 @@
             },
             "400": {
               "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/api/v1/user/{id}/": {
+        "get": {
+          "operationId": "get_GetUserControllerApiV1User",
+          "parameters": [
+            {
+              "deprecated": false,
+              "name": "id",
+              "in": "path",
+              "schema": {
+                "type": "integer",
+                "title": "Id"
+              },
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CustomUserModel"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Raised when path parameters do not match",
               "content": {
                 "application/json": {
                   "schema": {
@@ -970,6 +1079,45 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "properties": {
+            "age": {
+              "type": "integer",
+              "maximum": 100,
+              "exclusiveMinimum": 0,
+              "title": "Age"
+            },
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "deprecated": true
+            },
+            "email": {
+              "type": "string",
+              "title": "Email"
+            }
+          },
+          "type": "object",
+          "required": [
+            "age",
+            "username",
+            "email"
+          ],
+          "title": "CustomUserModel"
+        },
+        "_PathIdModel": {
+          "properties": {
+            "id": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "title": "_PathIdModel"
         }
       },
       "securitySchemes": {}
