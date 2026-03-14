@@ -17,6 +17,7 @@ from django.views.defaults import page_not_found
 from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
+from dmr.exceptions import NotAcceptableError
 from dmr.openapi.collector import controller_mapping_collector
 from dmr.openapi.objects import Components, OpenAPI, Paths
 
@@ -118,22 +119,32 @@ def build_404_handler(  # noqa: WPS114
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
-        if request.path.startswith(all_prefixes):
+        if not request.path.startswith(all_prefixes):
+            return page_not_found(request, exception)
+
+        try:
             renderer = negotiate_renderer(
                 request,
                 renderer_by_type,
                 default=default_renderer,
             )
+        except NotAcceptableError as exc:
             return build_response(
                 serializer=serializer,
-                raw_data=format_error(
-                    'Page not found',
-                    error_type=ErrorType.not_found,
-                ),
-                status_code=HTTPStatus.NOT_FOUND,
-                renderer=renderer,
+                raw_data=format_error(exc),
+                status_code=exc.status_code,
+                renderer=default_renderer,
             )
-        return page_not_found(request, exception)
+
+        return build_response(
+            serializer=serializer,
+            raw_data=format_error(
+                'Page not found',
+                error_type=ErrorType.not_found,
+            ),
+            status_code=HTTPStatus.NOT_FOUND,
+            renderer=renderer,
+        )
 
     return factory
 
