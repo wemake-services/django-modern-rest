@@ -7,12 +7,25 @@ Docs: https://docs.djangoproject.com/en/dev/topics/auth
 Requiring auth
 --------------
 
+.. note::
+
+  Current user will always be accessible as ``self.request.user``.
+
+  Read more: https://docs.djangoproject.com/en/6.0/topics/auth/default/
+
 We provide two classes to require Django session auth in you API:
 
 - :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
   for sync views
 - :class:`~dmr.security.django_session.auth.DjangoSessionAsyncAuth`
   for async views
+
+Example, how to use the auth class and how to get ``self.request.user``:
+
+.. literalinclude:: /examples/auth/django_session/using_django_session.py
+  :caption: views.py
+  :linenos:
+  :language: python
 
 .. note::
 
