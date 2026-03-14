@@ -11,10 +11,23 @@ Docs: https://jwt.io
 Requiring auth
 --------------
 
+.. note::
+
+  Current user will always be accessible as ``self.request.user``.
+
+  Read more: https://docs.djangoproject.com/en/6.0/topics/auth/default/
+
 We provide two classes to require JWT auth in you API:
 
 - :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
 - :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views
+
+Example, how to use the auth class and how to get ``self.request.user``:
+
+.. literalinclude:: /examples/auth/jwt/using_jwt.py
+  :caption: views.py
+  :linenos:
+  :language: python
 
 
 Reusing pre-existing views

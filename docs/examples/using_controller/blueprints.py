@@ -2,10 +2,7 @@ import uuid
 
 import pydantic
 
-from dmr import (  # noqa: WPS235
-    Blueprint,
-    Body,
-)
+from dmr import Blueprint, Body
 from dmr.plugins.pydantic import PydanticSerializer
 
 
