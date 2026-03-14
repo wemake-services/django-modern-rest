@@ -125,7 +125,7 @@ def test_explicit_operation_id(generator: OperationIdGenerator) -> None:
     controller = _ControllerWithOperationId()
     operation_id = generator(
         'whatever',
-        'second',
+        'test',
         metadata=controller.api_endpoints['GET'].metadata,
         serializer=PydanticSerializer,
     )
