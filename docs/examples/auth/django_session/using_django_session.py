@@ -21,6 +21,3 @@ class APIController(Controller[PydanticSerializer]):
         # Let's test that `User` has the correct type:
         assert_type(self.request.user, User)
         return 'authed'
-
-
-# run: {"controller": "APIController", "method": "get", "url": "/api/example/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
