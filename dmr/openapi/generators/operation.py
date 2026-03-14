@@ -27,6 +27,7 @@ class OperationIdGenerator:
     def __call__(
         self,
         path: str,
+        operation_prefix: str,
         metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> str:
@@ -46,7 +47,11 @@ class OperationIdGenerator:
         # Generate operation_id from path and method
         tokens = self._tokenize_path(path)
         method = metadata.method.lower()
-        operation_id = self._build_operation_id(method, tokens)
+        operation_id = self._build_operation_id(
+            method,
+            operation_prefix,
+            tokens,
+        )
 
         self._context.registries.operation_id.register(operation_id)
         return operation_id
@@ -88,6 +93,11 @@ class OperationIdGenerator:
 
         return normalized_tokens
 
-    def _build_operation_id(self, method: str, tokens: list[str]) -> str:
+    def _build_operation_id(
+        self,
+        method: str,
+        operation_prefix: str,
+        tokens: list[str],
+    ) -> str:
         """Build operation ID from HTTP method and path tokens."""
-        return method + ''.join(tokens) if tokens else method
+        return method + operation_prefix + ''.join(tokens) if tokens else method
