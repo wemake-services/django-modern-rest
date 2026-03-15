@@ -629,7 +629,7 @@ def _add_method(
     clean_args.extend(['-X', method])
 
 
-def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
+def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
     app_file: Path,
     args: list[str],
     clean_args: list[str],
@@ -659,7 +659,12 @@ def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
         clean_args.extend(['-d', body_data])
     elif content_type == 'multipart/form-data':
         for body_key, body_value in run_args.get('body', {}).items():
-            body_args = ['-F', f'{body_key}={body_value}']
+            if isinstance(body_value, list):
+                body_args = []
+                for body_subvalue in body_value:
+                    body_args.extend(['-F', f'{body_key}={body_subvalue}'])
+            else:
+                body_args = ['-F', f'{body_key}={body_value}']
             args.extend(body_args)
             clean_args.extend(body_args)
         for body_key, body_value in run_args.get('files', {}).items():

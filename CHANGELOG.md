@@ -24,6 +24,8 @@ We follow [Semantic Versions](https://semver.org/).
   was raising an error. Now it returns 406 as it should, #656
 - Fixed fake examples generation, #638
 - Fixed OpenAPI schema for custom JWT auth parameters, #660
+- Fixed ``Body`` component was not able to properly parse lists
+  with ``multipart/form-data`` parser, #644
 
 ### Misc
 

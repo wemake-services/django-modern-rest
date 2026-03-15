@@ -326,6 +326,12 @@ class Body(ComponentParser, Generic[_BodyT]):
     ``UserCreateInput`` model.
 
     You can access parsed body as ``self.parsed_body`` attribute.
+
+    When working with parsers that support
+    :class:`dmr.parsers.SupportsDjangoDefaultParsing` interface,
+    you can specify ``__dmr_split_commas__`` attribute:
+    it must contain a :class:`frozenset` of field aliases
+    that will be split by ``','`` char.
     """
 
     parsed_body: _BodyT
@@ -351,7 +357,28 @@ class Body(ComponentParser, Generic[_BodyT]):
                 request=blueprint.request,
                 model=field_model,
             )
-            return blueprint.request.POST
+            # Django's native parsing is a mess:
+            force_list: frozenset[str] = getattr(
+                field_model,
+                '__dmr_force_list__',
+                frozenset(),
+            )
+            cast_null: frozenset[str] = getattr(
+                field_model,
+                '__dmr_cast_null__',
+                frozenset(),
+            )
+            split_commas: frozenset[str] = getattr(
+                field_model,
+                '__dmr_split_commas__',
+                frozenset(),
+            )
+            return convert_multi_value_dict(
+                blueprint.request.POST,
+                force_list=force_list,
+                cast_null=cast_null,
+                split_commas=split_commas,
+            )
 
         try:
             return blueprint.serializer.deserialize(

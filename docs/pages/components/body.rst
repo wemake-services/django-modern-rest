@@ -57,6 +57,64 @@ of :class:`~dmr.parsers.FormUrlEncodedParser`:
   :language: python
   :linenos:
 
+.. note::
+
+  We don't recommend using forms. If you can avoid using this feature
+  and switch to json – you totally should.
+
+  Forms are only needed for compatibility with older APIs, strange libs,
+  existing workflows.
+
+
+Forcing lists and casting nulls in forms
+----------------------------------------
+
+.. warning::
+
+  All of the features below only work for
+  ``application/x-www-form-urlencoded`` and ``multipart/form-data``
+  parsers. Json and other "modern" formats are not affected.
+
+Django's form parsing algorithm is 20+ years old
+at the moment of writing this doc.
+
+There are some known quirks to it.
+
+Forcing lists
+~~~~~~~~~~~~~
+
+Django uses :class:`django.utils.datastructures.MultiValueDict`
+to store body data, when parsing forms. Due to its API,
+it does not give ``list`` objects back easily.
+So, when we need a list for a field, we need to force it like this:
+
+.. literalinclude:: /examples/components/body_force_list.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Split commas
+~~~~~~~~~~~~
+
+Another problem that might happen is that some field might
+look like ``{'foo': 'bar,baz'}``, not ``{'foo': ['bar', 'baz']}``.
+To solve this, one can use a different magic attribute:
+
+.. literalinclude:: /examples/components/body_split_commas.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. warning::
+
+  We split all data by ``','``, if your data contains ``','`` as a regular
+  value, it might be corrupted.
+
+  Be careful to use this with fields which does not contain ``','``.
+  Like list of ints, uuids, or slugs.
+
+``__dmr_cast_null__`` is also supported in both of these modes.
+
 
 API Reference
 -------------
