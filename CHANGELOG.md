@@ -3,6 +3,13 @@
 We follow [Semantic Versions](https://semver.org/).
 
 
+## WIP
+
+### Bugfixes
+
+- Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
+
+
 ## Version 0.2.0 (2026-03-15)
 
 ### Features
