@@ -70,7 +70,7 @@ Install ``django-modern-rest`` first if you haven't (see :doc:`installation`).
   :caption: example.py
   :language: python
   :linenos:
-  :lines: 65-71
+  :lines: 68-71
   :no-imports-spoiler:
 
 Then start the server:
