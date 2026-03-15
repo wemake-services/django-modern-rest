@@ -7,6 +7,7 @@ We follow [Semantic Versions](https://semver.org/).
 
 ### Features
 
+- Added `dmr.routing.build_500_handler` handler
 - Added support for `__dmr_split_commas__` in `Headers` component
 - Added support for native Django urls to be rendered in the OpenAPI,
   now OpenAPI parameters will be generated even without `Path` component

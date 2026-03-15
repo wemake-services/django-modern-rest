@@ -38,9 +38,12 @@ class ProxyBlueprint(Blueprint[PydanticSerializer]):
                 'Request to example.com failed',
                 status_code=HTTPStatus.FAILED_DEPENDENCY,
             )
-        # Reraise unfamiliar errors to let someone
-        # else to handle them further.
-        raise exc
+        # Handle errors from super:
+        return await super().handle_async_error(
+            endpoint,
+            controller,
+            exc,
+        )
 
     def _client(self) -> httpx.AsyncClient:
         return httpx.AsyncClient()

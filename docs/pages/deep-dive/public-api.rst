@@ -101,6 +101,8 @@ Routing
 
 .. autofunction:: dmr.routing.build_404_handler
 
+.. autofunction:: dmr.routing.build_500_handler
+
 .. autofunction:: dmr.routing.path
 
 

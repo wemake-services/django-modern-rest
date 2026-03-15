@@ -38,6 +38,7 @@ class ErrorType(enum.StrEnum):
 
     Attributes:
         value_error: Raised when we can't parse something.
+        internal_error: Raised when internal error happens.
         not_allowed: Raised when using unsupported http method. 405 alias.
         security: Raised when security related error happens.
         user_msg: Raised for custom errors from users.
@@ -46,6 +47,7 @@ class ErrorType(enum.StrEnum):
     """
 
     value_error = 'value_error'
+    internal_error = 'internal_error'
     not_allowed = 'not_allowed'
     security = 'security'
     user_msg = 'user_msg'
