@@ -12,7 +12,7 @@ import jwt
 import pytest
 from faker import Faker
 
-from dmr.exceptions import InternalServerError
+from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.jwt import JWToken
 
 
@@ -211,3 +211,50 @@ def test_token_encode_includes_custom_headers() -> None:
     assert header['alg'] == 'HS256'
     assert 'kid' in header
     assert header['kid'] == custom_headers['kid']
+
+
+def test_verify_nbf_is_independent_from_exp() -> None:
+    """Ensure nbf validation remains enabled independently from exp."""
+    secret = secrets.token_hex()
+    encoded = jwt.encode(
+        {
+            'sub': 'foo',
+            'iat': dt.datetime.now(dt.UTC),
+            'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+            'nbf': dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5),
+        },
+        key=secret,
+        algorithm='HS256',
+    )
+
+    with pytest.raises(NotAuthenticatedError):
+        JWToken.decode(
+            encoded,
+            secret=secret,
+            algorithm='HS256',
+            verify_exp=False,
+            verify_nbf=True,
+        )
+
+
+def test_verify_nbf_can_be_disabled_independently() -> None:
+    """Ensure nbf validation can be disabled without affecting exp."""
+    secret = secrets.token_hex()
+    not_before = dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5)
+    raw_token = {
+        'sub': 'foo',
+        'iat': dt.datetime.now(dt.UTC),
+        'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        'nbf': not_before,
+    }
+    encoded = jwt.encode(raw_token, key=secret, algorithm='HS256')
+
+    token = JWToken.decode(
+        encoded,
+        secret=secret,
+        algorithm='HS256',
+        verify_exp=True,
+        verify_nbf=False,
+    )
+
+    assert token.extras['nbf'] == int(not_before.timestamp())
