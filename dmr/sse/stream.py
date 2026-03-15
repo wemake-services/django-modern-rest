@@ -1,3 +1,5 @@
+import datetime as dt
+from asyncio import Lock
 from collections.abc import (
     AsyncIterator,
     Callable,
@@ -60,6 +62,7 @@ class SSEStreamingResponse(HttpResponseBase):
         *,
         headers: Mapping[str, str] | None = None,
         validate_events: bool = True,
+        ping_interval: float | None = None,
     ) -> None:
         """
         Create the SSE streaming response.
@@ -99,6 +102,8 @@ class SSEStreamingResponse(HttpResponseBase):
             self._pipeline = self.validation_pipeline
         else:
             self._pipeline = ()
+        self.ping_interval = ping_interval
+        self._send_lock = Lock()
 
     @override
     def __iter__(self) -> Iterator[bytes]:
@@ -161,8 +166,21 @@ class SSEStreamingResponse(HttpResponseBase):
         )
         async with context:
             try:
-                async for event in self._streaming_content:
+                while True:
+                    await self._send_lock.acquire()
+                    start = dt.datetime.now()
+
+                    event = await anext(self._streaming_content)
                     event = self._apply_event_pipeline(event)
+
+                    send_time = dt.datetime.now() - start
+
+                    if self.ping_interval < send_time.total_seconds():
+                        self._send_lock.release()
+
+                    if not self._send_lock.locked:
+                        yield self._ping()
+
                     yield self.serializer.serialize(
                         event,
                         renderer=self.sse_renderer,
