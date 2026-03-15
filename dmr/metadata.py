@@ -12,8 +12,6 @@ from typing import (
     get_origin,
 )
 
-from dmr.openapi.mappers import responses
-
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
     from dmr.controller import Controller
@@ -106,7 +104,12 @@ class ResponseSpec:
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
         """
-        return responses.get_schema(self, metadata, serializer, context)
+        return context.generators.response.get_schema(
+            self,
+            metadata,
+            serializer,
+            context,
+        )
 
 
 @final

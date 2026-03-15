@@ -10,17 +10,21 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
-_PathAndController: TypeAlias = tuple[str, 'Controller[BaseSerializer]']
+_PathControllerSpec: TypeAlias = tuple[
+    str,
+    URLPattern,
+    'Controller[BaseSerializer]',
+]
 
 
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str = '',
-) -> tuple[str, 'Controller[BaseSerializer]']:
+) -> _PathControllerSpec:
     path = _join_paths(base_path, str(url_pattern.pattern))
     controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
     normalized = _normalize_path(path)
-    return normalized, controller
+    return normalized, url_pattern, controller
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
@@ -40,7 +44,7 @@ def _normalize_path(path: str) -> str:
 def controller_mapping_collector(
     urls: Sequence[_AnyPattern],
     base_path: str = '',
-) -> list[_PathAndController]:
+) -> list[_PathControllerSpec]:
     """
     Collect all API controllers from a router for OpenAPI generation.
 
@@ -53,7 +57,7 @@ def controller_mapping_collector(
     direct URL patterns and nested URL resolvers, to build a comprehensive
     list of all available API controllers.
     """
-    controllers: list[_PathAndController] = []
+    controllers: list[_PathControllerSpec] = []
 
     for url in urls:
         if isinstance(url, URLPattern):

@@ -59,11 +59,11 @@ class Router:
         """
         paths_items: Paths = {}
 
-        for path, controller in controller_mapping_collector(
+        for path, pattern, controller in controller_mapping_collector(
             self.urls,
             base_path=self.prefix,
         ):
-            paths_items[path] = controller.get_path_item(path, context)
+            paths_items[path] = controller.get_path_item(path, pattern, context)
 
         components = Components(
             schemas=context.registries.schema.schemas,

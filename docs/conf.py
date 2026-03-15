@@ -14,7 +14,7 @@ import sys
 import tomllib
 from collections.abc import Iterable
 from pathlib import Path
-from typing import cast
+from typing import Final, cast
 
 from docutils.nodes import Node
 from sphinx.addnodes import pending_xref
@@ -101,70 +101,78 @@ napoleon_attr_annotations = True
 # You can activate this mode temporarily using the `-n` command-line switch.
 nitpicky = True
 
-PY_CLASS = 'py:class'
+_PY_CLASS: Final = 'py:class'
+_PY_OBJ: Final = 'py:obj'
+
 nitpick_ignore = [
     # internal type helpers
-    (PY_CLASS, 'FromJson'),
-    (PY_CLASS, 'dmr.endpoint._ResponseT'),
-    (PY_CLASS, 'dmr.endpoint._ModifyAnyCallable'),
-    (PY_CLASS, 'dmr.endpoint._ModifyAsyncCallable'),
-    (PY_CLASS, 'dmr.endpoint._ModifySyncCallable'),
-    (PY_CLASS, '_ParamT'),
-    (PY_CLASS, 'dmr.response._ItemT'),
-    (PY_CLASS, 'dmr.internal.middleware_wrapper._TypeT'),
-    (PY_CLASS, '_SerializerT'),
-    (PY_CLASS, '_BlueprintCls'),
-    (PY_CLASS, 'SyncErrorHandler'),
-    (PY_CLASS, 'AsyncErrorHandler'),
-    (PY_CLASS, '_MethodSyncHandler'),
-    (PY_CLASS, '_MethodAsyncHandler'),
-    (PY_CLASS, 'BlocklistedJWToken'),
-    (PY_CLASS, '_StrOrPromise'),
-    (PY_CLASS, '_ValidationContext'),
-    (PY_CLASS, 'dmr.validation.response._ResponseT'),
-    (PY_CLASS, 'dmr.decorators._ReturnT'),
-    (PY_CLASS, 'dmr.decorators._ViewT'),
-    (PY_CLASS, 'dmr.decorators._TypeT'),
-    (PY_CLASS, 'dmr.internal.negotiation.ConditionalType'),
-    (PY_CLASS, 'dmr.security.jwt.views._ObtainTokensT'),
-    (PY_CLASS, 'dmr.security.jwt.views._TokensResponseT'),
+    (_PY_CLASS, 'FromJson'),
+    (_PY_CLASS, 'dmr.endpoint._ResponseT'),
+    (_PY_CLASS, 'dmr.endpoint._ModifyAnyCallable'),
+    (_PY_CLASS, 'dmr.endpoint._ModifyAsyncCallable'),
+    (_PY_CLASS, 'dmr.endpoint._ModifySyncCallable'),
+    (_PY_CLASS, '_ParamT'),
+    (_PY_CLASS, 'dmr.response._ItemT'),
+    (_PY_CLASS, 'dmr.internal.middleware_wrapper._TypeT'),
+    (_PY_CLASS, '_SerializerT'),
+    (_PY_CLASS, '_BlueprintCls'),
+    (_PY_CLASS, 'SyncErrorHandler'),
+    (_PY_CLASS, 'AsyncErrorHandler'),
+    (_PY_CLASS, '_MethodSyncHandler'),
+    (_PY_CLASS, '_MethodAsyncHandler'),
+    (_PY_CLASS, 'BlocklistedJWToken'),
+    (_PY_CLASS, '_StrOrPromise'),
+    (_PY_CLASS, '_ValidationContext'),
+    (_PY_CLASS, 'dmr.validation.response._ResponseT'),
+    (_PY_CLASS, 'dmr.decorators._ReturnT'),
+    (_PY_CLASS, 'dmr.decorators._ViewT'),
+    (_PY_CLASS, 'dmr.decorators._TypeT'),
+    (_PY_CLASS, 'dmr.internal.negotiation.ConditionalType'),
+    (_PY_CLASS, 'dmr.security.jwt.views._ObtainTokensT'),
+    (_PY_CLASS, 'dmr.security.jwt.views._TokensResponseT'),
     (
-        PY_CLASS,
+        _PY_CLASS,
         'dmr.security.django_session.views._RequestModelT',
     ),
-    (PY_CLASS, 'dmr.security.django_session.views._ResponseT'),
-    (PY_CLASS, 'dmr.pagination._ModelT'),
-    (PY_CLASS, 'dmr.sse.metadata._EventT_co'),
-    (PY_CLASS, 'dmr.sse.metadata._DataT_co'),
-    (PY_CLASS, 'dmr.sse.metadata._PathT'),
-    (PY_CLASS, 'dmr.sse.metadata._QueryT'),
-    (PY_CLASS, 'dmr.sse.metadata._HeadersT'),
-    (PY_CLASS, 'dmr.sse.metadata._CookiesT'),
-    (PY_CLASS, 'dmr.sse.builder._PathT'),
-    (PY_CLASS, 'dmr.sse.builder._QueryT'),
-    (PY_CLASS, 'dmr.sse.builder._HeadersT'),
-    (PY_CLASS, 'dmr.sse.builder._CookiesT'),
-    (PY_CLASS, 'dmr.sse.builder._SerializerT'),
-    (PY_CLASS, 'dmr.controller._SerializerT_co'),
-    ('py:obj', 'dmr.controller._SerializerT_co'),
+    (_PY_CLASS, 'dmr.security.django_session.views._ResponseT'),
+    (_PY_OBJ, 'dmr.components._HeadersT'),
+    (_PY_OBJ, 'dmr.components._QueryT'),
+    (_PY_OBJ, 'dmr.components._PathT'),
+    (_PY_OBJ, 'dmr.components._BodyT'),
+    (_PY_OBJ, 'dmr.components._CookiesT'),
+    (_PY_OBJ, 'dmr.components._FileMetadataT'),
+    (_PY_CLASS, 'dmr.pagination._ModelT'),
+    (_PY_CLASS, 'dmr.sse.metadata._EventT_co'),
+    (_PY_CLASS, 'dmr.sse.metadata._DataT_co'),
+    (_PY_CLASS, 'dmr.sse.metadata._PathT'),
+    (_PY_CLASS, 'dmr.sse.metadata._QueryT'),
+    (_PY_CLASS, 'dmr.sse.metadata._HeadersT'),
+    (_PY_CLASS, 'dmr.sse.metadata._CookiesT'),
+    (_PY_CLASS, 'dmr.sse.builder._PathT'),
+    (_PY_CLASS, 'dmr.sse.builder._QueryT'),
+    (_PY_CLASS, 'dmr.sse.builder._HeadersT'),
+    (_PY_CLASS, 'dmr.sse.builder._CookiesT'),
+    (_PY_CLASS, 'dmr.sse.builder._SerializerT'),
+    (_PY_CLASS, 'dmr.controller._SerializerT_co'),
+    (_PY_OBJ, 'dmr.controller._SerializerT_co'),
     # Explicitly protected names:
-    (PY_CLASS, 'dmr.parsers._NoOpParser'),
+    (_PY_CLASS, 'dmr.parsers._NoOpParser'),
     # Unsolvable imports:
-    (PY_CLASS, 'AbstractBaseUser'),
+    (_PY_CLASS, 'AbstractBaseUser'),
     # Undocumented in Django:
-    (PY_CLASS, 'django.urls.resolvers.URLPattern'),
-    (PY_CLASS, 'django.urls.resolvers.URLResolver'),
-    (PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
+    (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
+    (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
+    (_PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
     # OpenAPI types used in TYPE_CHECKING blocks:
-    (PY_CLASS, 'SecurityRequirement'),
-    (PY_CLASS, 'ExternalDocumentation'),
-    (PY_CLASS, 'Callback'),
-    (PY_CLASS, 'Server'),
-    (PY_CLASS, 'Reference'),
-    (PY_CLASS, 'Paths'),
-    (PY_CLASS, 'Responses'),
+    (_PY_CLASS, 'SecurityRequirement'),
+    (_PY_CLASS, 'ExternalDocumentation'),
+    (_PY_CLASS, 'Callback'),
+    (_PY_CLASS, 'Server'),
+    (_PY_CLASS, 'Reference'),
+    (_PY_CLASS, 'Paths'),
+    (_PY_CLASS, 'Responses'),
     # Looks like a bug:
-    (PY_CLASS, 'dict[str'),
+    (_PY_CLASS, 'dict[str'),
 ]
 
 qualname_overrides = {

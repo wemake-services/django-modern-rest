@@ -19,7 +19,6 @@ from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import ContentType
 from dmr.openapi import OpenAPIContext
-from dmr.openapi.mappers import responses
 from dmr.openapi.objects import Response
 from dmr.serializer import BaseSerializer
 
@@ -223,7 +222,7 @@ class SSEResponseSpec(ResponseSpec):
         context: OpenAPIContext,
     ) -> Response:
         """Customizes how response's schemas are rendered."""
-        return responses.get_schema(
+        return context.generators.response.get_schema(
             self,
             metadata,
             serializer,

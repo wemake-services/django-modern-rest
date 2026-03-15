@@ -201,7 +201,7 @@ def test_controller_mapping_collector_with_router() -> None:
     mappings = controller_mapping_collector(router.urls, router.prefix)
 
     assert len(mappings) == 3
-    assert {path for path, _ in mappings} == {
+    assert {path for path, _, _ in mappings} == {
         '/api/direct/',
         '/api/composed/',
         '/api/nested/inner/',

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from typing import Annotated, ClassVar, Literal
 
 import pydantic
-from django.urls import path
+from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import (  # noqa: WPS235
@@ -269,6 +269,36 @@ def test_conditional_types(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/',
                     [path('types/', _ConditionalTypesController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _GetPostController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for raw path items."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path(
+                            'user/<int:user_id>/post/<uuid:post_id>/',
+                            _GetPostController.as_view(),
+                        ),
+                        re_path(
+                            r'^articles/(?P<year>[0-9]{4})/(?P<slug>[\w-]+)/$',
+                            _GetPostController.as_view(),
+                        ),
+                    ],
                 ),
             ).convert(),
             indent=2,
