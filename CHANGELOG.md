@@ -19,6 +19,7 @@ We follow [Semantic Versions](https://semver.org/).
 - Fixed a bug, when request to a missing page with wrong `Accept` header
   was raising an error. Now it returns 406 as it should, #656
 - Fixed fake examples generation, #638
+- Fixed OpenAPI schema for custom JWT auth parameters, #660
 
 ### Misc
 

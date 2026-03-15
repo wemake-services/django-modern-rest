@@ -7,12 +7,12 @@ from dmr.errors import ErrorType, format_error
 from dmr.plugins.pydantic import PydanticSerializer
 
 
-class _ErrorDetail(TypedDict):
+class CustomErrorDetail(TypedDict):
     message: str
 
 
 class CustomErrorModel(TypedDict):
-    errors: list[_ErrorDetail]
+    errors: list[CustomErrorDetail]
 
 
 class _CustomErrorMixin:
@@ -59,3 +59,4 @@ class ApiController(
 
 # run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/",  "fail-with-body": false}  # noqa: ERA001, E501
 # run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
