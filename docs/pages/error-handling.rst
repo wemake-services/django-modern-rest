@@ -189,17 +189,19 @@ Customizing error messages
 All error messages, including pre-defined ones, can be easily customized
 on a per-controller basis.
 
-.. literalinclude:: /examples/error_handling/custom_error_messages.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
 To do so, you would need to change:
 
 1. :attr:`~dmr.controller.Blueprint.error_model` attribute for
    all controllers and blueprints that will be using this error message schema
 2. :meth:`~dmr.controller.Blueprint.format_error` method
    to provide custom runtime error formatting
+
+.. literalinclude:: /examples/error_handling/custom_error_messages.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+This will also change the OpenAPI schema for the affected controller.
 
 See :class:`~dmr.errors.ErrorModel`
 for the default error model schema.
