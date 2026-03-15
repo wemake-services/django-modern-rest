@@ -1,5 +1,5 @@
-from asyncio import Lock
 import datetime as dt
+from asyncio import Lock
 from collections.abc import (
     AsyncIterator,
     Callable,
@@ -169,15 +169,15 @@ class SSEStreamingResponse(HttpResponseBase):
                 while True:
                     await self._send_lock.acquire()
                     start = dt.datetime.now()
-                        
+
                     event = await anext(self._streaming_content)
                     event = self._apply_event_pipeline(event)
 
                     send_time = dt.datetime.now() - start
-                    
+
                     if self.ping_interval < send_time.total_seconds():
                         self._send_lock.release()
-                    
+
                     if not self._send_lock.locked:
                         yield self._ping()
 
