@@ -3,7 +3,7 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.errors import ErrorType
@@ -12,10 +12,6 @@ from dmr.renderers import JsonRenderer
 from dmr.routing import build_500_handler
 from dmr.test import DMRRequestFactory
 from tests.infra.xml_format import XmlRenderer
-
-
-def _simple_view(request: HttpRequest) -> HttpResponse:
-    raise RuntimeError('_simple_view')
 
 
 @pytest.mark.parametrize('prefix', ['api', '/api', 'api/', '/api/'])

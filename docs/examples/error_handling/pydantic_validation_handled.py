@@ -3,6 +3,7 @@ from typing import Literal
 
 import pydantic
 from django.http import HttpResponse
+from typing_extensions import override
 
 from dmr import Controller
 from dmr.endpoint import Endpoint
@@ -19,6 +20,7 @@ class PongController(Controller[PydanticSerializer]):
         # because `message` must be `'pong'`, not `'wrong'`:
         return Pong(message='wrong')
 
+    @override
     def handle_error(
         self,
         endpoint: Endpoint,
@@ -32,7 +34,7 @@ class PongController(Controller[PydanticSerializer]):
                 self.format_error('Validation error'),
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
-        return super().handle_async_error(endpoint, controller, exc)
+        return super().handle_error(endpoint, controller, exc)
 
 
 # run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
