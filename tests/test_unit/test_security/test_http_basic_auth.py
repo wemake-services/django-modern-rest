@@ -10,6 +10,7 @@ from dmr.security.http import (
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
 def test_schema(
+    *,
     typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for http basic auth."""

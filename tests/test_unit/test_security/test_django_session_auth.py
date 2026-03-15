@@ -144,6 +144,7 @@ def test_global_settings_override(
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
 def test_schema(
+    *,
     typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for django session auth."""

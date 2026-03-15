@@ -7,6 +7,7 @@ from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
 
 @pytest.mark.parametrize('typ', [JWTSyncAuth, JWTAsyncAuth])
 def test_schema(
+    *,
     typ: type[JWTSyncAuth] | type[JWTAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for jwt auth."""
@@ -25,6 +26,7 @@ def test_schema(
 
 @pytest.mark.parametrize('typ', [JWTSyncAuth, JWTAsyncAuth])
 def test_custom_header_schema(
+    *,
     typ: type[JWTSyncAuth] | type[JWTAsyncAuth],
 ) -> None:
     """Ensures that custom jwt auth is documented with the real header."""
@@ -46,6 +48,7 @@ def test_custom_header_schema(
 
 @pytest.mark.parametrize('typ', [JWTSyncAuth, JWTAsyncAuth])
 def test_custom_scheme_schema(
+    *,
     typ: type[JWTSyncAuth] | type[JWTAsyncAuth],
 ) -> None:
     """Ensures that non-bearer JWT auth is documented as a header contract."""
