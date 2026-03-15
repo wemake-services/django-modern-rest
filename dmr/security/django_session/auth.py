@@ -54,13 +54,10 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         self.security_scheme_name = security_scheme_name
         self.csrf_scheme_name = csrf_scheme_name
 
-    def _uses_csrf_cookie(self) -> bool:
-        return not settings.CSRF_USE_SESSIONS
-
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        schemes = {
+        schemes: dict[str, SecurityScheme | Reference] = {
             self.security_scheme_name: SecurityScheme(
                 type='apiKey',
                 name=settings.SESSION_COOKIE_NAME,
@@ -80,7 +77,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
     @property
     def security_requirement(self) -> SecurityRequirement:
         """Provides a security schema usage requirement."""
-        requirement = {self.security_scheme_name: []}
+        requirement: SecurityRequirement = {self.security_scheme_name: []}
         if self._uses_csrf_cookie():
             requirement[self.csrf_scheme_name] = []
         return requirement
@@ -112,6 +109,9 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                 existing_responses,
             ),
         ]
+
+    def _uses_csrf_cookie(self) -> bool:
+        return not settings.CSRF_USE_SESSIONS
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         reason = _get_csrf_failure_reason(controller.request)
