@@ -218,6 +218,14 @@ you can fully customize it using your serializer's official docs.
 For example, ``pydantic`` uses ``__get_pydantic_json_schema__`` method
 for `this purpose <https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_core_schema__>`_.
 
+.. note::
+
+  When creating custom event types, don't forget to validate
+  that ``id`` and ``event`` fields do not contain: ``'\x00'``,
+  ``'\n'``, and ``'\r'`` chars.
+
+  Use :func:`dmr.sse.validation.check_event_field` to do that.
+
 
 API Reference
 -------------
@@ -259,6 +267,10 @@ Validation
 ~~~~~~~~~~
 
 .. autofunction:: dmr.sse.validation.validate_event_type
+
+.. autofunction:: dmr.sse.validation.validate_event_data
+
+.. autofunction:: dmr.sse.validation.check_event_field
 
 Exceptions
 ~~~~~~~~~~
