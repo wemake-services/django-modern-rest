@@ -17,8 +17,8 @@ import multiprocessing
 import os
 import platform
 import re
-import socket
 import shlex
+import socket
 import subprocess  # noqa: S404
 import sys
 import time
