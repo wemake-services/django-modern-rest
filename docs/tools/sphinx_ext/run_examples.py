@@ -18,6 +18,7 @@ import os
 import platform
 import re
 import socket
+import shlex
 import subprocess  # noqa: S404
 import sys
 import time
@@ -526,7 +527,7 @@ def _process_single_example(
             )
         return ''
 
-    clean_args_string = ' '.join(clean_args)
+    clean_args_string = shlex.join(clean_args)
     return '\n'.join((f'$ {clean_args_string}', *stdout))
 
 
