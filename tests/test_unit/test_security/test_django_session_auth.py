@@ -143,10 +143,12 @@ def test_global_settings_override(
 
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
-def test_schema(
+def test_schema_with_csrf_cookie(
+    settings: LazySettings,
     typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for django session auth."""
+    settings.CSRF_USE_SESSIONS = False
     instance = typ()
 
     assert instance.security_schemes == snapshot({
@@ -166,4 +168,26 @@ def test_schema(
     assert instance.security_requirement == snapshot({
         'django_session': [],
         'csrf': [],
+    })
+
+
+@pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
+def test_schema_with_csrf_sessions(
+    settings: LazySettings,
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
+) -> None:
+    """Ensures that CSRF cookie schema is omitted for session-backed CSRF."""
+    settings.CSRF_USE_SESSIONS = True
+    instance = typ()
+
+    assert instance.security_schemes == snapshot({
+        'django_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='sessionid',
+            security_scheme_in='cookie',
+        ),
+    })
+    assert instance.security_requirement == snapshot({
+        'django_session': [],
     })
