@@ -8,6 +8,8 @@ We follow [Semantic Versions](https://semver.org/).
 ### Bugfixes
 
 - Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
+- Fixed OpenAPI schema for Django session auth
+  when `CSRF_USE_SESSIONS=True`, #674
 
 
 ## Version 0.2.0 (2026-03-15)
