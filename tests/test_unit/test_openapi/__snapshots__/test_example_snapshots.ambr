@@ -135,21 +135,7 @@
             "metadata",
             "created_at"
           ],
-          "title": "_UserModel",
-          "example": {
-            "age": 74,
-            "username": "GMPXMVbyXHUfymCDaloV",
-            "status": "active",
-            "email": "NiPhGgaTklZTpXCJkWJY",
-            "salary": -2895104.6059761,
-            "tags": [
-              "vWnrQEEKdspKjyjnWXsv"
-            ],
-            "metadata": {
-              "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
-            },
-            "created_at": "1997-02-27T00:37:45.647045"
-          }
+          "title": "_UserModel"
         },
         "ErrorDetail": {
           "properties": {
