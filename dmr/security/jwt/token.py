@@ -224,7 +224,7 @@ class JWToken:
             issuer=accepted_issuers,
             require_claims=require_claims,
             verify_exp=verify_exp,
-            verify_nbf=verify_exp,
+            verify_nbf=verify_nbf,
             strict_audience=strict_audience,
             enforce_minimum_key_length=enforce_minimum_key_length,
         )
