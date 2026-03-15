@@ -258,3 +258,59 @@ def test_verify_nbf_can_be_disabled_independently() -> None:
     )
 
     assert token.extras['nbf'] == int(not_before.timestamp())
+
+
+def test_decode_passes_verify_options_to_pyjwt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure explicit verify flags are forwarded to PyJWT options."""
+    captured_options: dict[str, Any] = {}
+
+    def fake_decode_payload(  # noqa: WPS211
+        cls: type[JWToken],
+        encoded_token: str,
+        secret: str,
+        algorithms: list[str],
+        *,
+        leeway: int,
+        issuer: str | list[str] | None,
+        audience: str | list[str] | None,
+        options: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        assert cls is JWToken
+        assert encoded_token
+        assert secret
+        assert algorithms == ['HS256']
+        assert leeway == 0
+        assert issuer is None
+        assert audience is None
+        assert options is not None
+        captured_options.update(options)
+        return {
+            'sub': 'foo',
+            'exp': int(
+                (dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1)).timestamp(),
+            ),
+            'iat': int(dt.datetime.now(dt.UTC).timestamp()),
+        }
+
+    monkeypatch.setattr(
+        JWToken,
+        'decode_payload',
+        classmethod(fake_decode_payload),
+    )
+    encoded_token = secrets.token_hex()
+
+    token = JWToken.decode(
+        encoded_token=encoded_token,
+        secret='secret',  # noqa: S106
+        algorithm='HS256',
+        verify_iat=False,
+        verify_jti=False,
+        verify_sub=False,
+    )
+
+    assert token.sub == 'foo'
+    assert captured_options['verify_iat'] is False
+    assert captured_options['verify_jti'] is False
+    assert captured_options['verify_sub'] is False
