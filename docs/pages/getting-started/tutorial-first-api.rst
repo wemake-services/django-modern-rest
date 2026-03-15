@@ -57,7 +57,7 @@ Put the code below in your app's ``views.py`` (create the file if needed).
 Use either the msgspec or pydantic; the structure is the same.
 
 
-Step 1: Define models
+Step 2: Define models
 ---------------------
 
 Define the request and response as ``pydantic`` or ``msgspec`` models.
@@ -83,7 +83,7 @@ These will be used by the controller for parsing and serialization.
         :no-imports-spoiler:
 
 
-Step 2: Create the controller
+Step 3: Create the controller
 -----------------------------
 
 Add a :class:`~dmr.controller.Controller` with :class:`~dmr.components.Body`
@@ -112,7 +112,7 @@ it into a :class:`django.http.HttpResponse`.
         :emphasize-lines: 6, 26
 
 
-Step 3: Wire the controller in URLs
+Step 4: Wire the controller in URLs
 -----------------------------------
 
 In your project's root ``urls.py``, use :class:`~dmr.routing.Router` and
