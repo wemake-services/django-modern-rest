@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, get_args
+from typing import TYPE_CHECKING, Any, Final, get_args
 
 from dmr.exceptions import ValidationError
 
@@ -74,3 +74,21 @@ def validate_event_data(
             status_code=HTTPStatus.OK,
         ) from None
     return event  # pyright: ignore[reportUnknownVariableType]
+
+
+# Source:
+# https://html.spec.whatwg.org/multipage/server-sent-events.html#the-last-event-id-header
+_NULL_CHAR: Final = '\x00'
+_LR: Final = '\r'
+_NL: Final = '\n'
+
+
+def check_event_field(event_field: Any, field_name: str) -> None:
+    """Checks that event field does not contain wrong chars."""
+    if isinstance(event_field, str):
+        if _NULL_CHAR in event_field:
+            raise ValueError(
+                f'Event {field_name} must not contain null byte "\x00"',
+            )
+        if _LR in event_field or _NL in event_field:
+            raise ValueError(f'Event {field_name} must not contain line breaks')

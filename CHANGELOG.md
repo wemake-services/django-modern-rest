@@ -12,6 +12,8 @@ We follow [Semantic Versions](https://semver.org/).
 - Added support for `__dmr_split_commas__` in `Headers` component, #659
 - Added support for native Django urls to be rendered in the OpenAPI,
   now OpenAPI parameters will be generated even without `Path` component, #659
+- Do not allow `'\x00'`, `\n`, and `\r`
+  as `SSEvent.id` and `SSEvent.event`, #667
 
 ### Bugfixes
 
