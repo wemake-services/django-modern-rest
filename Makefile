@@ -1,4 +1,6 @@
 SHELL := /usr/bin/env bash
+# Override with, for example: POETRY='uvx poetry' make test
+POETRY ?= poetry
 
 .DEFAULT_GOAL := help
 
@@ -11,61 +13,61 @@ help: ## Show the help message
 
 .PHONY: format
 format: ## Format code with ruff
-	ruff format && ruff check && ruff format
+	$(POETRY) run ruff format && $(POETRY) run ruff check && $(POETRY) run ruff format
 
 .PHONY: lint
 lint: ## Run linting checks
-	poetry run ruff check --exit-non-zero-on-fix
-	poetry run ruff format --check --diff
-	poetry run flake8 .
-	poetry run slotscheck --no-strict-imports -v -m dmr \
+	$(POETRY) run ruff check --exit-non-zero-on-fix
+	$(POETRY) run ruff format --check --diff
+	$(POETRY) run flake8 .
+	$(POETRY) run slotscheck --no-strict-imports -v -m dmr \
 		--exclude-modules 'dmr\.security\.jwt\.blocklist|dmr\.security\.django_session\.views'
-	poetry run lint-imports
+	$(POETRY) run lint-imports
 
 .PHONY: type-check
 type-check: ## Run all type checkers we support
-	poetry run mypy .
-	poetry run pyright
-	poetry run pyrefly check
+	$(POETRY) run mypy .
+	$(POETRY) run pyright
+	$(POETRY) run pyrefly check
 
 .PHONY: spell-check
 spell-check: ## Run spell checking
-	poetry run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
+	$(POETRY) run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: unit
 unit: ## Run unit tests with pytest
-	poetry run pytest --inline-snapshot=disable
+	$(POETRY) run pytest --inline-snapshot=disable
 
 .PHONY: smoke
 smoke: ## Run smoke tests (check that package can be imported without `django.setup`)
-	poetry run python -c 'from dmr import Controller'
+	$(POETRY) run python -c 'from dmr import Controller'
 	# Checks that renderers and parsers can be imported
 	# from settings without `.setup()` call:
-	poetry run python -c 'from dmr.renderers import *'
-	poetry run python -c 'from dmr.parsers import *'
+	$(POETRY) run python -c 'from dmr.renderers import *'
+	$(POETRY) run python -c 'from dmr.parsers import *'
 	# Checks that auth can be imported from settings without `.setup()` call:
-	poetry run python -c 'from dmr.security import *'
-	poetry run python -c 'from dmr.security.django_session import *'
-	poetry run python -c 'from dmr.security.jwt import *'
-	poetry run python -c 'from dmr.openapi.config import *'
-	poetry run python -c 'from dmr.openapi.objects import *'
+	$(POETRY) run python -c 'from dmr.security import *'
+	$(POETRY) run python -c 'from dmr.security.django_session import *'
+	$(POETRY) run python -c 'from dmr.security.jwt import *'
+	$(POETRY) run python -c 'from dmr.openapi.config import *'
+	$(POETRY) run python -c 'from dmr.openapi.objects import *'
 	# Settings itself can be imported with `.setup()`:
-	poetry run python -c 'from dmr import settings'
+	$(POETRY) run python -c 'from dmr import settings'
 
 .PHONY: example
 example: ## Run mypy and pytest on example code
-	cd django_test_app && poetry run mypy --config-file mypy.ini
-	PYTHONPATH='docs/' poetry run pytest -o addopts='' \
+	cd django_test_app && $(POETRY) run mypy --config-file mypy.ini
+	PYTHONPATH='docs/' $(POETRY) run pytest -o addopts='' \
 	  --suppress-no-test-exit-code \
 	  docs/examples/testing/polyfactory_usage.py
 
 .PHONY: run-example
 run-example: ## Run example app
-	cd django_test_app && poetry run python manage.py runserver
+	cd django_test_app && $(POETRY) run python manage.py runserver
 
 .PHONY: package
 package: ## Check package dependencies with pip
-	poetry run pip check
+	$(POETRY) run pip check
 
 .PHONY: test
 test: lint type-check example spell-check package smoke unit ## Run all checks
