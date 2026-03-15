@@ -65,7 +65,9 @@ class DjangoSessionSyncController(
 
     @modify(
         status_code=HTTPStatus.OK,
-        cookies={settings.SESSION_COOKIE_NAME: CookieSpec(schema_only=True)},
+        cookies={
+            settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+        },
     )
     def post(self) -> _ResponseT:
         """By default cookies are acquired on post."""
@@ -125,7 +127,9 @@ class DjangoSessionAsyncController(
 
     @modify(
         status_code=HTTPStatus.OK,
-        cookies={settings.SESSION_COOKIE_NAME: CookieSpec(schema_only=True)},
+        cookies={
+            settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+        },
     )
     async def post(self) -> _ResponseT:
         """By default cookies are acquired on post."""

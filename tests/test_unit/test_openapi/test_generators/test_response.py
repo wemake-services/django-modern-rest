@@ -23,7 +23,7 @@ from dmr.renderers import FileRenderer, JsonRenderer
 _SCHEMA_ONLY_HEADER: Final = HeaderSpec(
     description='Test Header',
     required=True,
-    schema_only=True,
+    skip_validation=True,
 )
 _HEADER: Final = NewHeader(
     value='Test',
@@ -41,10 +41,13 @@ class _ControllerWithCookies(Controller[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.CREATED,
         cookies={
-            'first_cookie': CookieSpec(description='First', schema_only=True),
+            'first_cookie': CookieSpec(
+                description='First',
+                skip_validation=True,
+            ),
             'second_cookie': CookieSpec(
                 description='Second',
-                schema_only=True,
+                skip_validation=True,
                 required=False,
             ),
             'third_cookie': NewCookie(value='Third'),

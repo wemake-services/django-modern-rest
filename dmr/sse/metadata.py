@@ -11,7 +11,6 @@ from typing import (
     overload,
 )
 
-from django.conf import settings
 from typing_extensions import TypeVar, override
 
 from dmr.cookies import NewCookie
@@ -205,8 +204,9 @@ class SSEResponseSpec(ResponseSpec):
         kw_only=True,
         default_factory=lambda: {
             'Cache-Control': HeaderSpec(),
-            'Connection': HeaderSpec(required=not settings.DEBUG),
             'X-Accel-Buffering': HeaderSpec(),
+            # wsgi cannot provide `Connection` header in `DEBUG`:
+            'Connection': HeaderSpec(skip_validation=True),
         },
     )
     limit_to_content_types: Set[str] | None = dataclasses.field(

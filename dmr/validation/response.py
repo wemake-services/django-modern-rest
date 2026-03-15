@@ -247,16 +247,13 @@ class ResponseValidator:  # noqa: WPS214
     ) -> None:
         """Validates response headers against provided metadata."""
         response_headers = {header.lower() for header in response.headers}
-        metadata_headers = {
-            header.lower()
-            for header, response_header in (schema.headers or {}).items()
-            if not response_header.schema_only
-        }
+        metadata_headers = {header.lower() for header in (schema.headers or {})}
         if schema.headers is not None:
             missing_required_headers = {
                 header.lower()
                 for header, response_header in schema.headers.items()
-                if response_header.required and not response_header.schema_only
+                if response_header.required
+                and not response_header.skip_validation
             } - response_headers
             if missing_required_headers:
                 raise ResponseSchemaError(
@@ -288,7 +285,7 @@ class ResponseValidator:  # noqa: WPS214
         missing_required_cookies = {
             cookie
             for cookie, response_cookie in metadata_cookies.items()
-            if response_cookie.required and not response_cookie.schema_only
+            if response_cookie.required and not response_cookie.skip_validation
         } - response.cookies.keys()
         if missing_required_cookies:
             raise ResponseSchemaError(
@@ -297,11 +294,9 @@ class ResponseValidator:  # noqa: WPS214
             )
 
         # Find extra cookies:
-        extra_response_cookies = response.cookies.keys() - {
-            cookie
-            for cookie, response_cookie in metadata_cookies.items()
-            if not response_cookie.schema_only
-        }
+        extra_response_cookies = (
+            response.cookies.keys() - metadata_cookies.keys()
+        )
         if extra_response_cookies:
             raise ResponseSchemaError(
                 'Response has extra real undescribed '

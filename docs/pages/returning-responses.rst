@@ -144,7 +144,7 @@ and pass ``headers`` dict to
 :meth:`~dmr.controller.Controller.to_response` method.
 
 The last important thing about headers
-is :attr:`~dmr.headers.HeaderSpec.schema_only` attribute.
+is :attr:`~dmr.headers.HeaderSpec.skip_validation` attribute.
 It is used to describe headers that:
 
 1. Will be set in the response by someone else outside the framework,
@@ -196,7 +196,7 @@ it is required to describe the set cookies with
   :emphasize-lines: 30-33, 40, 42, 45
 
 The last important thing about cookies
-is :attr:`~dmr.cookies.CookieSpec.schema_only` attribute.
+is :attr:`~dmr.cookies.CookieSpec.skip_validation` attribute.
 It is used to describe cookies that:
 
 1. Will be set in the response by someone else outside the framework,

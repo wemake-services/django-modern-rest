@@ -48,11 +48,11 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
     async def put(self) -> int:
         return 1
 
-    @modify(headers={'X-Custom': HeaderSpec(schema_only=True)})
+    @modify(headers={'X-Custom': HeaderSpec(skip_validation=True)})
     def delete(self) -> int:
         return 1
 
-    @modify(cookies={'X-Custom': CookieSpec(schema_only=True)})
+    @modify(cookies={'X-Custom': CookieSpec(skip_validation=True)})
     def trace(self) -> int:
         return 1
 
