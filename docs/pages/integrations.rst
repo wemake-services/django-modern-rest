@@ -92,6 +92,9 @@ Use any DI that you already have or want to use with ``django``.
 
 Try any of these officially recommended tools:
 
+- https://github.com/maksimzayats/diwire
+  with the official
+  `django-modern-rest how-to <https://docs.diwire.dev/howto/web/django-modern-rest.html>`_
 - https://github.com/reagento/dishka with the help of https://github.com/arturboyun/dmr-dishka plugin
 - https://github.com/bobthemighty/punq
 
