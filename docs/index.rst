@@ -50,7 +50,7 @@ and extend ``django-modern-rest`` framework.
 
 .. container:: buttons
 
-    :doc:`Getting started <pages/getting-started/installation>`
+    :doc:`pages/getting-started/index`
     `GitHub <https://github.com/wemake-services/django-modern-rest>`_
 
 
