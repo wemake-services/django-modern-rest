@@ -31,7 +31,7 @@ project. The app serves OpenAPI UI, so we need ``'dmr'`` and
 Step 2: Define models and controller
 ------------------------------------
 
-Define the request/response model and a :class:`~dmr.controller.Controller`
+Define the request and response model and a :class:`~dmr.controller.Controller`
 with :class:`~dmr.components.Body`. This is the same pattern as in
 :doc:`tutorial-first-api`, just in the same file.
 

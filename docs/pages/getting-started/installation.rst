@@ -1,10 +1,6 @@
 Installation
 ============
 
-
-Requirements
-------------
-
 Modern REST requires the following:
 
 - Python 3.11+
@@ -15,27 +11,7 @@ Modern REST requires the following:
   We **recommend** using the latest patch release of each Python and Django
   series, as only these versions are officially supported.
 
-The following packages are optional:
-
-- ``'django-modern-rest[pydantic]'`` — `pydantic <https://github.com/pydantic/pydantic>`_
-  for request and response models
-- ``'django-modern-rest[msgspec]'`` — `msgspec <https://github.com/jcrist/msgspec>`_
-  for models and the `fastest <https://jcristharif.com/msgspec/benchmarks.html>`_ JSON parsing
-- ``'django-modern-rest[jwt]'`` — `PyJWT <https://pyjwt.readthedocs.io>`_ for JWT auth
-- ``'django-modern-rest[openapi]'`` — OpenAPI schema validation and better examples
-
-
-We also recommend installing `django-stubs <https://github.com/typeddjango/django-stubs>`_
-for typing Django itself
-
-
-.. tip::
-
-  You can combine extras, for example: ``django-modern-rest[pydantic,msgspec]``.
-
-
-Installation
-------------
+Install the package with your preferred tool:
 
 .. tabs::
 
@@ -56,6 +32,22 @@ Installation
         .. code-block:: bash
 
             pip install django-modern-rest
+
+The following packages are optional:
+
+- ``'django-modern-rest[pydantic]'`` — `pydantic <https://github.com/pydantic/pydantic>`_
+  for request and response models
+- ``'django-modern-rest[msgspec]'`` — `msgspec <https://github.com/jcrist/msgspec>`_
+  for models and the `fastest <https://jcristharif.com/msgspec/benchmarks.html>`_ JSON parsing
+- ``'django-modern-rest[jwt]'`` — `PyJWT <https://pyjwt.readthedocs.io>`_ for JWT auth
+- ``'django-modern-rest[openapi]'`` — OpenAPI schema validation and better examples
+
+We also recommend installing `django-stubs <https://github.com/typeddjango/django-stubs>`_
+for typing Django itself
+
+.. tip::
+
+  You can combine extras, for example: ``django-modern-rest[pydantic,msgspec]``.
 
 .. important::
 
