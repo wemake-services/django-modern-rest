@@ -24,6 +24,7 @@ We follow [Semantic Versions](https://semver.org/).
 ### Misc
 
 - Improved components and auth docs
+- Improved getting started docs #665
 
 
 ## Version 0.1.0 (2026-03-13)
