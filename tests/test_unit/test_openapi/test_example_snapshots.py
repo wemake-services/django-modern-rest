@@ -1,8 +1,10 @@
+import datetime as dt
 import enum
 import json
 from typing import Any
 
 import pydantic
+import pytest
 from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -27,6 +29,7 @@ class _UserModel(pydantic.BaseModel):
     salary: float
     tags: list[str]
     metadata: dict[str, str]
+    created_at: dt.datetime
 
 
 class _UserController(
@@ -37,6 +40,17 @@ class _UserController(
         raise NotImplementedError
 
 
+@pytest.mark.freeze_time(
+    dt.datetime(
+        year=2026,  # noqa: WPS432
+        month=3,
+        day=10,
+        hour=5,
+        minute=2,
+        second=5,
+        tzinfo=dt.UTC,
+    ),
+)
 def test_user_schema_with_examples(
     snapshot: SnapshotAssertion,
     dmr_clean_settings: None,

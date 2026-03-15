@@ -215,7 +215,11 @@ class PydanticSerializer(BaseSerializer):
             Unstructured data.
 
         """
-        return _get_cached_type_adapter(Any).dump_python(structured)
+        return _get_cached_type_adapter(Any).dump_python(
+            structured,
+            # To be in sync with `msgspec`:
+            mode='json',
+        )
 
     @override
     @classmethod
