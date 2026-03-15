@@ -252,8 +252,10 @@ class ResponseValidator:  # noqa: WPS214
             missing_required_headers = {
                 header.lower()
                 for header, response_header in schema.headers.items()
-                if response_header.required
-                and not response_header.skip_validation
+                if (
+                    response_header.required
+                    and not response_header.skip_validation
+                )
             } - response_headers
             if missing_required_headers:
                 raise ResponseSchemaError(
