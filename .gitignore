@@ -112,6 +112,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .ruff_cache/
+tracecov.*
 
 # Translations
 *.mo
