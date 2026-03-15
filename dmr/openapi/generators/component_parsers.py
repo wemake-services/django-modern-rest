@@ -1,5 +1,10 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, TypeAlias
+import uuid
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+
+from django.urls import URLPattern, converters
+from typing_extensions import TypedDict
 
 from dmr.openapi.objects.parameter import Parameter
 from dmr.openapi.objects.reference import Reference
@@ -16,6 +21,7 @@ if TYPE_CHECKING:
 
 _RequestBody: TypeAlias = RequestBody | Reference | None
 _RequestParameters: TypeAlias = list[Parameter | Reference] | None
+_ConvertersMapping: TypeAlias = Mapping[type[Any], Any]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -24,8 +30,18 @@ class ComponentParserGenerator:
 
     _context: 'OpenAPIContext'
 
+    # Class API:
+    _converters: ClassVar[_ConvertersMapping] = {
+        converters.IntConverter: int,
+        converters.UUIDConverter: uuid.UUID,
+        # Any custom registered converter can have `__dmr_converter_schema__`
+        # attribute to resolve our schema.
+    }
+
     def __call__(
         self,
+        operation_id: str,
+        pattern: URLPattern,
         metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> tuple[_RequestBody, _RequestParameters]:
@@ -33,10 +49,9 @@ class ComponentParserGenerator:
         params_list: list[Parameter | Reference] = []
         request_body: RequestBody | None = None
 
-        for parser, parser_args in metadata.component_parsers:
+        for component in metadata.component_parsers:
             schema = self._call_component(
-                parser,
-                parser_args,
+                *component,
                 metadata,
                 serializer,
             )
@@ -50,6 +65,15 @@ class ComponentParserGenerator:
                     f'Returning {type(schema)!r} '
                     'from ComponentParser.get_schema is not supported',
                 )
+
+        pattern_param = self._parse_pattern(
+            operation_id,
+            pattern,
+            params_list,
+            serializer,
+        )
+        if pattern_param is not None:
+            params_list.extend(pattern_param)
 
         return request_body, params_list or None
 
@@ -67,6 +91,60 @@ class ComponentParserGenerator:
             metadata=metadata,
             context=self._context,
         )
+
+    def _parse_pattern(
+        self,
+        operation_id: str,
+        pattern: URLPattern,
+        parameter_specs: list[Parameter | Reference],
+        serializer: type['BaseSerializer'],
+    ) -> list[Parameter | Reference] | None:
+        # TODO: support `parameter` references:
+        if any(
+            param_spec.param_in == 'path'
+            for param_spec in parameter_specs
+            if isinstance(param_spec, Parameter)
+        ):
+            # We already have some `Path` component, so move on.
+            return None
+
+        params_list: list[Parameter | Reference] = []
+
+        # `path()` and `RoutePattern`:
+        schema = {
+            converter_name: self._converters.get(
+                type(converter),  # pyright: ignore[reportUnknownArgumentType]
+                getattr(converter, '__dmr_converter_schema__', str),
+            )
+            for converter_name, converter in pattern.pattern.converters.items()
+        }
+        if schema:
+            params_list.extend(
+                self._context.generators.parameter(
+                    TypedDict(f'{operation_id}_Path', schema),  # type: ignore[operator]
+                    serializer,
+                    self._context,
+                    param_in='path',
+                ),
+            )
+            return params_list
+
+        # `re_path()` and `RegexPattern`:
+        regex = pattern.pattern.regex
+        schema = dict.fromkeys(
+            regex.groupindex,  # pyrefly: ignore[missing-attribute]
+            str,
+        )
+        if schema:
+            params_list.extend(
+                self._context.generators.parameter(
+                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                    serializer,
+                    self._context,
+                    param_in='path',
+                ),
+            )
+        return params_list or None
 
     def _merge_bodies(
         self,

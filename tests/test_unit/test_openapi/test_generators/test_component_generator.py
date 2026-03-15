@@ -2,6 +2,7 @@ import re
 from typing import Any, Generic, TypeVar
 
 import pytest
+from django.urls import path
 from typing_extensions import override
 
 from dmr import Blueprint, Controller
@@ -58,6 +59,8 @@ def test_fake_component(openapi_context: OpenAPIContext) -> None:
         ),
     ):
         openapi_context.generators.component_parsers(
+            'unique-operationid',
+            path('/', _FakeController.as_view()),
             _FakeController.api_endpoints['GET'].metadata,
             PydanticSerializer,
         )

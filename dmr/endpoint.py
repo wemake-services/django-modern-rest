@@ -11,6 +11,7 @@ from typing import (
 )
 
 from django.http import HttpResponse, HttpResponseBase
+from django.urls import URLPattern
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from dmr.cookies import CookieSpec, NewCookie
@@ -24,7 +25,6 @@ from dmr.exceptions import (
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
-from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import (
     Callback,
     ExternalDocumentation,
@@ -50,6 +50,7 @@ from dmr.validation import (
 
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
+    from dmr.openapi.core.context import OpenAPIContext
 
 
 class Endpoint:  # noqa: WPS214
@@ -273,11 +274,15 @@ class Endpoint:  # noqa: WPS214
     def get_schema(
         self,
         path: str,
+        pattern: URLPattern,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> Operation:
         """Builde an OpenAPI Operation from an endpoint."""
+        operation_id = self.get_operation_id(path, serializer, context)
         request_body, params_list = context.generators.component_parsers(
+            operation_id,
+            pattern,
             self.metadata,
             serializer,
         )
@@ -295,7 +300,7 @@ class Endpoint:  # noqa: WPS214
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,
-            operation_id=self.get_operation_id(path, serializer, context),
+            operation_id=operation_id,
             request_body=request_body,
             responses=context.generators.response(self.metadata, serializer),
             parameters=params_list,

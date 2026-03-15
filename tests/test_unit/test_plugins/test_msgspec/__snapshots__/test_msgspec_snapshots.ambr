@@ -97,22 +97,6 @@
     },
     "components": {
       "schemas": {
-        "_CookieModel": {
-          "properties": {
-            "session_id": {
-              "type": "string"
-            },
-            "CSRF": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "required": [
-            "session_id",
-            "CSRF"
-          ],
-          "title": "_CookieModel"
-        },
         "ErrorModel": {
           "properties": {
             "detail": {

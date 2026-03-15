@@ -1,0 +1,22 @@
+import msgspec
+
+from dmr import Controller, Cookies
+from dmr.plugins.msgspec import MsgspecSerializer
+
+
+class _CookiesModel(msgspec.Struct):
+    cache: str
+    client_id: int
+
+
+class ApiController(
+    Controller[MsgspecSerializer],
+    Cookies[_CookiesModel],
+):
+    def get(self) -> _CookiesModel:
+        return self.parsed_cookies
+
+
+# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "cookies": {"cache": "yes", "client_id": "1"}}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "cookies": {"cache": "yes", "client_id": "wrong"}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

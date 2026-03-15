@@ -52,6 +52,8 @@ from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import build_404_handler
 from dmr.settings import Settings, clear_settings_cache
 
 if TYPE_CHECKING:
@@ -214,7 +216,7 @@ class _BaseBuilder:
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=True,
+            DEBUG=False,
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
@@ -264,6 +266,10 @@ class _BaseBuilder:
     def _create_urlpatterns(self, module: ModuleType) -> None:
         url_conf_module = ModuleType('url_conf')
         url_conf_module.urlpatterns = self._generate_urls(module)  # type: ignore[attr-defined]
+        url_conf_module.handler404 = build_404_handler(  # type: ignore[attr-defined]
+            'api/',
+            serializer=PydanticSerializer,
+        )
         sys.modules['url_conf'] = url_conf_module
 
     def _generate_urls(self, module: ModuleType) -> list[URLPattern]:
@@ -440,6 +446,7 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
     for run_args in run_configs:
         url_path = _get_url_path_from_run_args(run_args)
         with _run_app(app_file, run_args, _AppBuilder) as port:
+            clear_settings_cache()
             example_result = _process_single_example(
                 app_file,
                 run_args,
@@ -576,6 +583,8 @@ def _build_curl_request(
     url_path: str,
 ) -> tuple[_CurlArgs, _CurlCleanArgs]:
     query = run_args.pop('query', '')
+    if query and not query.startswith('?'):
+        raise ValueError(f'{query!r} must start with "?"')
     args = [
         'curl',
         '-v',
@@ -591,6 +600,7 @@ def _build_curl_request(
     _add_method(args, clean_args, run_args)
     _add_body_and_content_type(app_file, args, clean_args, run_args)
     _add_headers(args, clean_args, run_args)
+    _add_cookies(args, clean_args, run_args)
 
     return args, clean_args
 
@@ -666,9 +676,26 @@ def _add_headers(
     run_args: _AppRunArgs,
 ) -> None:
     header_flag = '-H'
-    for header_name, header_value in run_args.get('headers', {}).items():
+
+    headers = run_args.get('headers', {})
+    if isinstance(headers, dict):
+        headers = headers.items()
+    for header_name, header_value in headers:
         args.extend([header_flag, f'{header_name}: {header_value}'])
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
+
+
+def _add_cookies(
+    args: list[str],
+    clean_args: list[str],
+    run_args: _AppRunArgs,
+) -> None:
+    cookie_flag = '--cookie'
+
+    cookies = run_args.get('cookies', {})
+    for cookie_name, cookie_value in cookies.items():
+        args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
+        clean_args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
 
 
 def _find_imports_block_end_line(file_content: str) -> int:

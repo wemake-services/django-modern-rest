@@ -40,9 +40,31 @@ from django.core.exceptions import TooManyFilesSent
 from django.core.files.uploadedfile import UploadedFile
 from django.http.multipartparser import MultiPartParser, MultiPartParserError
 from django.http.request import HttpRequest, QueryDict
-from django.utils.datastructures import MultiValueDict
+from django.utils.datastructures import CaseInsensitiveMapping, MultiValueDict
 
 from dmr.exceptions import RequestSerializationError
+
+
+def parse_headers(
+    headers: 'CaseInsensitiveMapping[str]',
+    *,
+    split_commas: frozenset[str],
+) -> 'CaseInsensitiveMapping[Any]':
+    """
+    Split headers specified in *split_commas* on ``','`` char.
+
+    Make sure that all headers in *split_commas* have lower-case names.
+    """
+    if not split_commas:
+        return headers
+
+    parsed_headers: dict[str, Any] = {}
+    for header_key, header_value in headers.items():
+        if header_key.lower() in split_commas:
+            parsed_headers[header_key] = header_value.split(',')
+        else:
+            parsed_headers[header_key] = header_value
+    return CaseInsensitiveMapping(parsed_headers)
 
 
 def convert_multi_value_dict(

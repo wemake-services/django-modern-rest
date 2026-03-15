@@ -160,7 +160,7 @@ Here are our amazing people who made this project possible.
 
 
 .. toctree::
-  :caption: User Guide
+  :caption: Getting starting guides
   :hidden:
 
   pages/getting-started.rst
@@ -169,7 +169,7 @@ Here are our amazing people who made this project possible.
   pages/returning-responses.rst
   pages/routing.rst
   pages/configuration.rst
-  pages/components.rst
+  pages/components/index
   pages/plugins.rst
   pages/negotiation.rst
   pages/error-handling.rst
