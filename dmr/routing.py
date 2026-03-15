@@ -13,11 +13,11 @@ from typing import (
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
-from django.views.defaults import page_not_found
+from django.views.defaults import page_not_found, server_error
 from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
-from dmr.exceptions import NotAcceptableError
+from dmr.exceptions import InternalServerError, NotAcceptableError
 from dmr.openapi.collector import controller_mapping_collector
 from dmr.openapi.objects import Components, OpenAPI, Paths
 
@@ -100,6 +100,9 @@ def build_404_handler(  # noqa: WPS114
         renderers: Optional sequence of renderers. If omitted, uses
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
+    See also:
+        https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
     from dmr.response import build_response  # noqa: PLC0415
@@ -143,6 +146,83 @@ def build_404_handler(  # noqa: WPS114
                 error_type=ErrorType.not_found,
             ),
             status_code=HTTPStatus.NOT_FOUND,
+            renderer=renderer,
+        )
+
+    return factory
+
+
+# We mimic django's name here:
+def build_500_handler(  # noqa: WPS114
+    prefix: str,
+    /,
+    *prefixes: str,
+    serializer: type['BaseSerializer'],
+    format_error: 'FormatError' = format_error,
+    renderers: Sequence['Renderer'] | None = None,
+) -> Callable[[HttpRequest], HttpResponse]:
+    """
+    Create a 500 handler that returns an response with content negotiation.
+
+    All prefixes are normalized to start with a leading slash.
+    If the request path matches any of them, a 500 response is returned
+    using the same serializer and renderers as your API.
+    If the client's ``Accept`` does not match any renderer, the first
+    configured renderer is used.
+    For non-matching paths, Django's default ``server_error`` handler
+    is used.
+
+    Args:
+        prefix: Path prefix (e.g. ``'api/'``) for which to return API 500.
+        *prefixes: Additional path prefixes.
+        format_error: Callable used to build the error body for the response.
+        serializer: Serializer class used to serialize the error body.
+        renderers: Optional sequence of renderers. If omitted, uses
+            :attr:`~dmr.settings.Settings.renderers` from settings.
+
+    See also:
+        https://docs.djangoproject.com/en/6.0/ref/views/#the-500-server-error-view
+
+    """
+    from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
+    from dmr.response import build_response  # noqa: PLC0415
+    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
+    combined = (prefix, *prefixes)
+    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
+    renderers_list = (
+        resolve_setting(Settings.renderers) if renderers is None else renderers
+    )
+    renderer_by_type = {
+        renderer.content_type: renderer for renderer in renderers_list
+    }
+    default_renderer = next(iter(renderer_by_type.values()))
+
+    def factory(request: HttpRequest) -> HttpResponse:
+        if not request.path.startswith(all_prefixes):
+            return server_error(request)
+
+        try:
+            renderer = negotiate_renderer(
+                request,
+                renderer_by_type,
+                default=default_renderer,
+            )
+        except NotAcceptableError as exc:
+            return build_response(
+                serializer=serializer,
+                raw_data=format_error(exc),
+                status_code=exc.status_code,
+                renderer=default_renderer,
+            )
+
+        return build_response(
+            serializer=serializer,
+            raw_data=format_error(
+                InternalServerError.default_message,
+                error_type=ErrorType.internal_error,
+            ),
+            status_code=InternalServerError.status_code,
             renderer=renderer,
         )
 

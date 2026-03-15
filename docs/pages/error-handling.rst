@@ -211,6 +211,41 @@ docs about how to use different error models
 for different content types.
 
 
+Handling validation errors from models
+--------------------------------------
+
+When creating models with, for example , :class:`pydantic.BaseModel`,
+your validation can fail. This error will not be handled by design.
+
+Why? Because catching all specific validation errors for a specific serializer
+that can happen in your application will do more harm than good.
+
+This is the default behavior:
+
+.. literalinclude:: /examples/error_handling/pydantic_validation_error.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+If you want to catch this error in a specific place
+and attach a specific behavior, use an error handler at a proper level.
+
+For example, here we would handle it on a controller level:
+
+.. literalinclude:: /examples/error_handling/pydantic_validation_handled.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Now, the error is handled: we modified its error text and status code.
+Remember not to dump all the error information out to users,
+since they might contain sensitive data.
+
+.. seealso::
+
+  See :ref:`handler500` if you want to change the ``500`` error rendering.
+
+
 API Reference
 -------------
 

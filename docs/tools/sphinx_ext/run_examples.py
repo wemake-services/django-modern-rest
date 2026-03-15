@@ -53,7 +53,7 @@ from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import build_404_handler
+from dmr.routing import build_404_handler, build_500_handler
 from dmr.settings import Settings, clear_settings_cache
 
 if TYPE_CHECKING:
@@ -267,6 +267,10 @@ class _BaseBuilder:
         url_conf_module = ModuleType('url_conf')
         url_conf_module.urlpatterns = self._generate_urls(module)  # type: ignore[attr-defined]
         url_conf_module.handler404 = build_404_handler(  # type: ignore[attr-defined]
+            'api/',
+            serializer=PydanticSerializer,
+        )
+        url_conf_module.handler500 = build_500_handler(  # type: ignore[attr-defined]
             'api/',
             serializer=PydanticSerializer,
         )

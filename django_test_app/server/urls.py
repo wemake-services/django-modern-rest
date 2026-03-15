@@ -8,7 +8,7 @@ from dmr.openapi.views import (
     SwaggerView,
 )
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router, build_404_handler, path
+from dmr.routing import Router, build_404_handler, build_500_handler, path
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls
@@ -76,6 +76,11 @@ urlpatterns = [
 ]
 
 handler404 = build_404_handler(
+    router.prefix,
+    serializer=PydanticSerializer,
+)
+
+handler500 = build_500_handler(
     router.prefix,
     serializer=PydanticSerializer,
 )
