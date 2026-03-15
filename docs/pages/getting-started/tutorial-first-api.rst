@@ -14,9 +14,8 @@ Use either the msgspec or pydantic; the structure is the same.
 Step 1: Define models
 ---------------------
 
-Define the request/response and header shapes as plain ``pydantic`` or
-``msgspec`` models. These will be used by the controller for parsing and
-serialization.
+Define the request and response as ``pydantic`` or ``msgspec`` models.
+These will be used by the controller for parsing and serialization.
 
 .. tabs::
 
