@@ -3,6 +3,13 @@
 We follow [Semantic Versions](https://semver.org/).
 
 
+## WIP
+
+### Bugfixes
+
+- Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
+
+
 ## Version 0.2.0 (2026-03-15)
 
 ### Features
@@ -23,7 +30,6 @@ We follow [Semantic Versions](https://semver.org/).
 - Fixed a bug, when request to a missing page with wrong `Accept` header
   was raising an error. Now it returns 406 as it should, #656
 - Fixed fake examples generation, #638
-- Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
 - Fixed OpenAPI schema for custom JWT auth parameters, #660
 - Fixed ``Body`` component was not able to properly parse lists
   with ``multipart/form-data`` parser, #644
