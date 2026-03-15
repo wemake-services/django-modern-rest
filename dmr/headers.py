@@ -1,4 +1,5 @@
 import dataclasses
+import re
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
 
 if TYPE_CHECKING:
@@ -79,6 +80,41 @@ class HeaderSpec(_BaseResponseHeader):
     def to_spec(self) -> 'HeaderSpec':
         """Needed for API compat with `NewHeader`."""
         return self
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class ETag(_BaseResponseHeader):
+    """
+    Represents a parsed ETag HTTP header.
+
+    This class is used to construct ETag header and parse received header value.
+
+    Attributes:
+        weak: Indicates that a weak validator is used.
+        value: Entity tag that uniquely represents the requested resource.
+
+    """
+
+    weak: bool = False
+    value: str = ''
+
+    def to_header(self) -> str:
+        """ETag to header."""
+        quoted = f'"{self.value}"'
+        return f'W/{quoted}' if self.weak else quoted
+
+    @classmethod
+    def from_header(cls, header_value: str) -> 'ETag':
+        """Parse an `ETag` header value string."""
+        match = re.fullmatch(r'(W/)?"([ -~]+)"', header_value, re.ASCII)
+        if not match:
+            raise ValueError(
+                f'Invalid ETag header value: {header_value!r}',
+            )
+
+        weak_prefix, etag_value = match.group(1, 2)
+        return cls(weak=bool(weak_prefix), value=etag_value)
 
 
 def build_headers(
