@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import final
+from typing import ClassVar, final
 
 import pydantic
 import pytest
@@ -10,6 +10,7 @@ from inline_snapshot import snapshot
 
 from dmr import Body, Controller
 from dmr.errors import ErrorType
+from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -111,3 +112,87 @@ def test_body_parse_invalid_json(dmr_rf: DMRRequestFactory) -> None:
         json.loads(response.content)['detail'][0]['type']
         == ErrorType.value_error
     )
+
+
+class _TagsForceList(pydantic.BaseModel):
+    __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('tags', 'simple'))
+    __dmr_conver_null__: ClassVar[frozenset[str]] = frozenset(('null', 'tags'))
+
+    simple: list[str]
+    tags: list[str | None]
+    null: str | None
+    regular: str
+
+
+class _TagsForceListController(
+    Controller[PydanticSerializer],
+    Body[_TagsForceList],
+):
+    parsers = (MultiPartParser(),)
+
+    def post(self) -> _TagsForceList:
+        return self.parsed_body
+
+
+def test_body_force_list(rf: RequestFactory) -> None:
+    """Ensures that body can use ``__dmr_force_list__``."""
+    request = rf.post(
+        '/whatever/',
+        data={
+            'simple': ['foo', 'bar', 'null'],
+            'tags': ['foo', 'bar', 'null'],
+            'null': 'null',
+            'regular': 'null',
+        },
+    )
+
+    response = _TagsForceListController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'simple': ['foo', 'bar', 'null'],
+        'tags': ['foo', 'bar', 'null'],
+        'null': 'null',
+        'regular': 'null',
+    })
+
+
+class _TagsSplitCommas(pydantic.BaseModel):
+    __dmr_split_commas__: ClassVar[frozenset[str]] = frozenset((
+        'tags',
+        'with_nulls',
+    ))
+    __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('with_nulls',))
+
+    tags: list[str]
+    with_nulls: list[str | None]
+
+
+class _TagsSplitCommasController(
+    Controller[PydanticSerializer],
+    Body[_TagsSplitCommas],
+):
+    parsers = (MultiPartParser(),)
+
+    def post(self) -> _TagsSplitCommas:
+        return self.parsed_body
+
+
+def test_body_split_commas(rf: RequestFactory) -> None:
+    """Ensures that body can use ``__dmr_split_commas__``."""
+    request = rf.post(
+        '/whatever/',
+        data={'tags': 'foo,bar,null', 'with_nulls': 'foo,bar,null'},
+    )
+
+    response = _TagsSplitCommasController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'tags': ['foo', 'bar', 'null'],
+        'with_nulls': ['foo', 'bar', None],
+    })

@@ -2,13 +2,11 @@ from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any, ClassVar, TypeAlias, final
 
+import pydantic
 import pytest
 from typing_extensions import override
 
-from dmr import (
-    Blueprint,
-    Controller,
-)
+from dmr import Blueprint, Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.metadata import ResponseSpec
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin
@@ -16,9 +14,9 @@ from dmr.plugins.pydantic import (
     PydanticEndpointOptimizer,
     PydanticSerializer,
 )
+from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.routing import compose_blueprints
 from dmr.serializer import (
-    BaseEndpointOptimizer,
     BaseSerializer,
 )
 from dmr.validation import BlueprintValidator
@@ -51,8 +49,9 @@ class _ZeroMethodsBlueprint(Blueprint[PydanticSerializer]):
 
 @final
 class _DifferentSerializer(BaseSerializer):  # type: ignore[misc]
-    optimizer: ClassVar[type[BaseEndpointOptimizer]] = PydanticEndpointOptimizer
-    error_model = dict
+    optimizer = PydanticEndpointOptimizer
+    validation_error = pydantic.ValidationError
+    schema_generator = PydanticSchemaGenerator
 
 
 @final
