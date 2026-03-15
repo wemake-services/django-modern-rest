@@ -1,3 +1,4 @@
+import datetime as dt
 import enum
 import json
 from typing import Any
@@ -27,6 +28,7 @@ class _UserModel(pydantic.BaseModel):
     salary: float
     tags: list[str]
     metadata: dict[str, str]
+    created_at: dt.datetime
 
 
 class _UserController(

@@ -18,10 +18,7 @@
                   "additionalProperties": true,
                   "type": "object",
                   "example": {
-                    "description": "Generated example",
-                    "value": {
-                      "GMPXMVbyXHUfymCDaloV": "39d864419"
-                    }
+                    "GMPXMVbyXHUfymCDaloV": "39d864419"
                   }
                 }
               }
@@ -120,6 +117,11 @@
               },
               "type": "object",
               "title": "Metadata"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Created At"
             }
           },
           "type": "object",
@@ -130,24 +132,23 @@
             "email",
             "salary",
             "tags",
-            "metadata"
+            "metadata",
+            "created_at"
           ],
           "title": "_UserModel",
           "example": {
-            "description": "Generated example",
-            "value": {
-              "age": 74,
-              "username": "GMPXMVbyXHUfymCDaloV",
-              "status": "active",
-              "email": "NiPhGgaTklZTpXCJkWJY",
-              "salary": -2895104.6059761,
-              "tags": [
-                "vWnrQEEKdspKjyjnWXsv"
-              ],
-              "metadata": {
-                "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
-              }
-            }
+            "age": 74,
+            "username": "GMPXMVbyXHUfymCDaloV",
+            "status": "active",
+            "email": "NiPhGgaTklZTpXCJkWJY",
+            "salary": -2895104.6059761,
+            "tags": [
+              "vWnrQEEKdspKjyjnWXsv"
+            ],
+            "metadata": {
+              "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
+            },
+            "created_at": "1997-02-27T00:37:45.647045"
           }
         },
         "ErrorDetail": {
@@ -199,17 +200,14 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
           "example": {
-            "description": "Generated example",
-            "value": {
-              "detail": [
-                {
-                  "msg": "GMPXMVbyXHUfymCDaloV",
-                  "loc": [
-                    "NiPhGgaTklZTpXCJkWJY"
-                  ]
-                }
-              ]
-            }
+            "detail": [
+              {
+                "msg": "GMPXMVbyXHUfymCDaloV",
+                "loc": [
+                  "NiPhGgaTklZTpXCJkWJY"
+                ]
+              }
+            ]
           }
         }
       },
@@ -333,17 +331,14 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
           "example": {
-            "description": "Generated example",
-            "value": {
-              "detail": [
-                {
-                  "msg": "GMPXMVbyXHUfymCDaloV",
-                  "loc": [
-                    "NiPhGgaTklZTpXCJkWJY"
-                  ]
-                }
-              ]
-            }
+            "detail": [
+              {
+                "msg": "GMPXMVbyXHUfymCDaloV",
+                "loc": [
+                  "NiPhGgaTklZTpXCJkWJY"
+                ]
+              }
+            ]
           }
         }
       },
