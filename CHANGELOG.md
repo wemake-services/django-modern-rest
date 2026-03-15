@@ -7,6 +7,7 @@ We follow [Semantic Versions](https://semver.org/).
 
 ### Features
 
+- *Breaking*: Renamed `schema_only` parameter to `skip_validation`
 - Added `dmr.routing.build_500_handler` handler, #661
 - Added support for `__dmr_split_commas__` in `Headers` component, #659
 - Added support for native Django urls to be rendered in the OpenAPI,
@@ -14,6 +15,7 @@ We follow [Semantic Versions](https://semver.org/).
 
 ### Bugfixes
 
+- Fixes how `SSEResponseSpec.headers['Connection']` header is specified, #654
 - Fixed an `operation_id` generation bug, #652
 - Fixed a bug with parameter schemas were registered with no uses in the OpenAPI
 - Fixed a bug, when request to a missing page with wrong `Accept` header

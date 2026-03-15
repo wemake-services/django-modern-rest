@@ -1,5 +1,6 @@
 import pytest
 import schemathesis as st
+from django.conf import LazySettings
 from django.urls import reverse
 from schemathesis.specs.openapi.schemas import OpenApiSchema
 
@@ -19,6 +20,13 @@ schema = st.pytest.from_fixture('api_schema')
 
 
 @schema.parametrize()
-def test_schemathesis(case: st.Case) -> None:
+def test_schemathesis(case: st.Case, settings: LazySettings) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
+    if settings.DEBUG:
+        pytest.skip(
+            reason=(
+                'Django with DEBUG=True and schemathesis are hard to integrate'
+            ),
+        )
+
     case.call_and_validate()
