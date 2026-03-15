@@ -180,5 +180,18 @@ def test_event_model_validation() -> None:
     with pytest.raises(ValueError, match='data must be an instance of "bytes"'):
         SSEvent({}, serialize=False)  # type: ignore[call-overload]
 
-    with pytest.raises(ValueError, match='null byte'):
-        SSEvent({}, id='\x00')
+
+@pytest.mark.parametrize(
+    'char',
+    [
+        '\x00',
+        '\n',
+        '\r',
+    ],
+)
+def test_wrong_chars(char: str) -> None:
+    """Ensures that wrong chars can't be used in some fields."""
+    with pytest.raises(ValueError, match='Event'):
+        SSEvent({}, id=char)
+    with pytest.raises(ValueError, match='Event'):
+        SSEvent({}, event=char)
