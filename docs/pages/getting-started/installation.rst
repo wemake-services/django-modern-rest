@@ -39,8 +39,8 @@ The following packages are optional:
   for request and response models
 - ``'django-modern-rest[msgspec]'`` — `msgspec <https://github.com/jcrist/msgspec>`_
   for models and the `fastest <https://jcristharif.com/msgspec/benchmarks.html>`_ JSON parsing
-- ``'django-modern-rest[jwt]'`` — `PyJWT <https://pyjwt.readthedocs.io>`_ for JWT auth
-- ``'django-modern-rest[openapi]'`` — OpenAPI schema validation and better examples
+- ``'django-modern-rest[jwt]'`` — `PyJWT <https://pyjwt.readthedocs.io>`_ for :doc:`JWT auth <../auth/jwt>`
+- ``'django-modern-rest[openapi]'`` — :doc:`OpenAPI schema <../openapi/openapi>` validation and better examples
 
 We also recommend installing `django-stubs <https://github.com/typeddjango/django-stubs>`_
 for typing Django itself

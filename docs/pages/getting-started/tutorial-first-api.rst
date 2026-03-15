@@ -7,6 +7,52 @@ Tutorial 1: Your first API
 **What you'll build:** A ``POST`` endpoint that accepts a JSON body and
 a header, and returns a typed JSON response.
 
+
+Step 1: Create a Django project and app
+---------------------------------------
+
+If you don't have a Django project yet, create one and add an
+app where the API will live. For a full walkthrough, see the
+`official Django tutorial <https://docs.djangoproject.com/en/stable/intro/tutorial01/>`_.
+
+From a new directory:
+
+.. code-block:: bash
+
+   # Create a virtual environment to isolate our package dependencies locally
+   >>> python3 -m venv .venv
+   >>> source .venv/bin/activate
+
+   # Install Django and Djnago Modern REST into the virtual environment
+   >>> pip install django 'django-modern-rest[msgspec]'
+
+   # Create the project (replace 'myproject' with your project name)
+   >>> django-admin startproject myproject .
+   >>> cd myproject
+   >>> django-admin startapp api
+   >>> cd ..
+
+Register the new app in ``myproject/settings.py`` by adding ``'myproject.api'``
+to ``INSTALLED_APPS``.
+
+Your layout will look like:
+
+.. code-block:: text
+
+   myproject/
+   ├── manage.py
+   ├── myproject/
+   │   ├── __init__.py
+   │   ├── settings.py
+   │   ├── urls.py
+   │   └── ...
+   └── api/
+       ├── __init__.py
+       ├── views.py    ← we'll put our controller here
+       └── ...
+
+If you already have a project, create only the app and add it to ``INSTALLED_APPS``.
+
 Put the code below in your app's ``views.py`` (create the file if needed).
 Use either the msgspec or pydantic; the structure is the same.
 
