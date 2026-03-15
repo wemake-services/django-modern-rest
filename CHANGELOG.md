@@ -33,6 +33,8 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed OpenAPI schema for Django session auth
+  when `CSRF_USE_SESSIONS=True`, #674
 - Fixed that `itemSchema` was possible to be rendered
   in OpenAPI `3.0.0` and `3.1.0`, #908
 - Fixed response validation when global error handler returns
