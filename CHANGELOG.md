@@ -3,7 +3,7 @@
 We follow [Semantic Versions](https://semver.org/).
 
 
-## WIP
+## Version 0.2.0 (2026-03-15)
 
 ### Features
 
@@ -27,6 +27,7 @@ We follow [Semantic Versions](https://semver.org/).
 - Fixed OpenAPI schema for custom JWT auth parameters, #660
 - Fixed ``Body`` component was not able to properly parse lists
   with ``multipart/form-data`` parser, #644
+- Fixed that not options were passed to ``JWToken._build_options``, #671
 
 ### Misc
 
