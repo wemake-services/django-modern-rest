@@ -629,7 +629,7 @@ def _add_method(
     clean_args.extend(['-X', method])
 
 
-def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
+def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
     app_file: Path,
     args: list[str],
     clean_args: list[str],
