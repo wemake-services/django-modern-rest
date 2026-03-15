@@ -26,6 +26,7 @@ We follow [Semantic Versions](https://semver.org/).
 - Fixed OpenAPI schema for custom JWT auth parameters, #660
 - Fixed ``Body`` component was not able to properly parse lists
   with ``multipart/form-data`` parser, #644
+- Fixed that not options were passed to ``JWToken._build_options``, #671
 
 ### Misc
 
