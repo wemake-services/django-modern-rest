@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, get_args
+from typing import TYPE_CHECKING, Any, Final, get_args
 
 from dmr.exceptions import ValidationError
 
@@ -74,3 +74,14 @@ def validate_event_data(
             status_code=HTTPStatus.OK,
         ) from None
     return event  # pyright: ignore[reportUnknownVariableType]
+
+
+# Source:
+# https://html.spec.whatwg.org/multipage/server-sent-events.html#the-last-event-id-header
+_NULL_CHAR: Final = '\x00'
+
+
+def check_event_id(event_id: Any) -> None:
+    """Checks that event id does not contain null bytes."""
+    if isinstance(event_id, str) and _NULL_CHAR in event_id:
+        raise ValueError('Event id must not contain null byte "\x00"')

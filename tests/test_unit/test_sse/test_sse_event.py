@@ -179,3 +179,6 @@ def test_event_model_validation() -> None:
 
     with pytest.raises(ValueError, match='data must be an instance of "bytes"'):
         SSEvent({}, serialize=False)  # type: ignore[call-overload]
+
+    with pytest.raises(ValueError, match='null byte'):
+        SSEvent({}, id='\x00')
