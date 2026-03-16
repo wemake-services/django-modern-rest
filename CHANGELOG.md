@@ -47,7 +47,6 @@ We follow [Semantic Versions](https://semver.org/).
 
 - Improved components and auth docs
 
-
 ## Version 0.1.0 (2026-03-13)
 
 - Initial release
