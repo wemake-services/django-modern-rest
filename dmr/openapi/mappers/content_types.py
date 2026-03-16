@@ -18,7 +18,7 @@ def content_types(model: Any, property_name: str) -> str | None:
         ...     content_type: Literal['image/jpeg', 'image/png']
 
         >>> class LicenseFile(BaseModel):
-        ...      content_type: str
+        ...     content_type: str
 
         >>> class Payload(BaseModel):
         ...     avatar: ImageFile
