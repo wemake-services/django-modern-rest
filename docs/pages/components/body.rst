@@ -48,6 +48,14 @@ What happens in this example?
 Parsing forms
 -------------
 
+.. note::
+
+  We don't recommend using forms. If you can avoid using this feature
+  and switch to json – you totally should.
+
+  Forms are only needed for compatibility with older APIs, strange libs,
+  existing workflows.
+
 Here's an example how one can send ``application/x-www-form-urlencoded``
 form data to an API endpoint with the help
 of :class:`~dmr.parsers.FormUrlEncodedParser`:
@@ -56,14 +64,6 @@ of :class:`~dmr.parsers.FormUrlEncodedParser`:
   :caption: views.py
   :language: python
   :linenos:
-
-.. note::
-
-  We don't recommend using forms. If you can avoid using this feature
-  and switch to json – you totally should.
-
-  Forms are only needed for compatibility with older APIs, strange libs,
-  existing workflows.
 
 
 Forcing lists and casting nulls in forms
@@ -113,7 +113,20 @@ To solve this, one can use a different magic attribute:
   Be careful to use this with fields which does not contain ``','``.
   Like list of ints, uuids, or slugs.
 
-``__dmr_cast_null__`` is also supported in both of these modes.
+Casting nulls
+~~~~~~~~~~~~~
+
+It is hard to pass ``None`` as a value in a form.
+To solve the need for ``None`` many places offer to pass ``'null'`` as a string.
+We can cast ``'null'`` back to ``None`` if ``__dmr_cast_null__`` is specified.
+
+.. literalinclude:: /examples/components/body_cast_null.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+You can combine this feature with
+both ``__dmr_split_commas__`` and ``__dmr_force_list__`` as well.
 
 
 API Reference
