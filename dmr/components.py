@@ -1,5 +1,4 @@
 import abc
-import dataclasses
 from collections.abc import Mapping
 from http import HTTPStatus
 from typing import (
@@ -32,11 +31,12 @@ from dmr.metadata import (
     ResponseSpecProvider,
 )
 from dmr.negotiation import get_conditional_types
-from dmr.openapi.objects.media_type import MediaType
-from dmr.openapi.objects.parameter import Parameter
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.request_body import RequestBody
-from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects import (
+    MediaType,
+    Parameter,
+    Reference,
+    RequestBody,
+)
 from dmr.parsers import SupportsDjangoDefaultParsing, SupportsFileParsing
 from dmr.types import TypeVarInference, infer_bases, is_safe_subclass
 
@@ -861,11 +861,10 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         }
         return RequestBody(
             content={
-                parser.content_type: MediaType(
-                    schema=cls._process_schema(
-                        conditional_schemas.get(parser.content_type, schema),
-                        context,
-                    ),
+                parser.content_type: cls.schema_metadata.media_type(
+                    conditional_schemas.get(parser.content_type, schema),
+                    model,
+                    context,
                 )
                 for parser in metadata.parsers.values()
             },
@@ -873,19 +872,4 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
             description=context.registries.schema.maybe_resolve_reference(
                 schema,
             ).description,
-        )
-
-    @classmethod
-    def _process_schema(
-        cls,
-        schema: Schema | Reference,
-        context: 'OpenAPIContext',
-    ) -> Schema:
-        schema = context.registries.schema.maybe_resolve_reference(schema)
-        return dataclasses.replace(
-            schema,
-            properties={
-                property_name: cls.schema_metadata.schema()
-                for property_name in (schema.properties or [])
-            },
         )

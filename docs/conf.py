@@ -173,6 +173,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'Responses'),
     # Looks like a bug:
     (_PY_CLASS, 'dict[str'),
+    (_PY_CLASS, 'collections.abc.Mapping[str'),
 ]
 
 qualname_overrides = {

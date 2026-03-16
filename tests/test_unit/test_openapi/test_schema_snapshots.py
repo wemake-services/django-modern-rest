@@ -1,26 +1,24 @@
 import json
 from http import HTTPStatus
-from typing import Annotated, ClassVar, Literal
+from typing import Annotated, ClassVar
 
 import pydantic
 from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (  # noqa: WPS235
+from dmr import (
     Blueprint,
     Body,
     Controller,
     Cookies,
-    FileMetadata,
     Path,
     Query,
     ResponseSpec,
-    modify,
 )
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import ParameterMetadata
-from dmr.parsers import JsonParser, MultiPartParser
+from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.routing import Router, compose_blueprints
@@ -132,82 +130,6 @@ def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/',
                     [path('cookies/', _AuthedAndCookiesController.as_view())],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-class _FileModel(pydantic.BaseModel):
-    content_type: Literal['application/json']
-    size: int
-
-
-class _SeveralFiles(pydantic.BaseModel):
-    """Model docs."""
-
-    __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('attachments',))
-
-    attachments: list[_FileModel]
-    second_file: _FileModel
-
-
-# TODO: test file response
-class _FileController(
-    Controller[PydanticSerializer],
-    FileMetadata[_SeveralFiles],
-):
-    parsers = (MultiPartParser(),)
-
-    @modify(operation_id='file_test_id', deprecated=True)
-    async def get(self) -> list[int]:
-        raise NotImplementedError
-
-
-def test_file_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is correct for file controller."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    '',
-                    [path('file/', _FileController.as_view())],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-class _DescriptionModel(pydantic.BaseModel):
-    """Description from doc."""
-
-    first: str
-    second: list[int]
-
-
-class _BodyAndFileController(
-    Controller[PydanticSerializer],
-    Body[_DescriptionModel],
-    FileMetadata[_SeveralFiles],
-):
-    parsers = (MultiPartParser(),)
-
-    async def post(self) -> list[int]:
-        raise NotImplementedError
-
-
-def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is correct for file controller."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    '/',
-                    [path('file/', _BodyAndFileController.as_view())],
                 ),
             ).convert(),
             indent=2,

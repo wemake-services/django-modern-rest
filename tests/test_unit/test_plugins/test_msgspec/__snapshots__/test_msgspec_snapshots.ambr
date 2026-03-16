@@ -362,6 +362,14 @@
                     "second_file"
                   ],
                   "title": "_SeveralFiles"
+                },
+                "encoding": {
+                  "file_name1": {
+                    "contentType": "application/json"
+                  },
+                  "second_file": {
+                    "contentType": "application/json"
+                  }
                 }
               }
             },

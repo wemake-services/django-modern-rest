@@ -6,11 +6,15 @@ import pydantic
 from django.http import HttpResponse
 
 from dmr import Controller
-from dmr.openapi.objects import Reference, Schema
-from dmr.openapi.objects.discriminator import Discriminator
-from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
-from dmr.openapi.objects.external_documentation import ExternalDocumentation
-from dmr.openapi.objects.xml import XML
+from dmr.openapi.objects import (
+    XML,
+    Discriminator,
+    ExternalDocumentation,
+    OpenAPIFormat,
+    OpenAPIType,
+    Reference,
+    Schema,
+)
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 

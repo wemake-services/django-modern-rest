@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING, Any, get_args, get_origin
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.mappers.example import generate_example
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects import Reference, Schema
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext

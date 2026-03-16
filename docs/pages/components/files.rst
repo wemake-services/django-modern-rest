@@ -96,6 +96,8 @@ Here's the list of fields that we support as a metadata:
       'content_type_extra',
    ]
 
+We don't copy content for the validation, only metadata.
+
 
 Sending files with extra body parameters
 ----------------------------------------
@@ -110,6 +112,9 @@ This is also supported:
   :language: python
   :linenos:
 
+To do that also define :class:`~dmr.components.Body` component
+in the same controller / blueprint.
+
 
 Sending files with json as a body parameter
 -------------------------------------------
@@ -122,6 +127,11 @@ and attach it to a form data field.
   :caption: views.py
   :language: python
   :linenos:
+
+The easiest way to do this would be to declare
+a field as ``pydantic.Json``.
+
+However, this can be done with ``msgspec`` as well.
 
 
 API Reference

@@ -5,6 +5,10 @@ We follow [Semantic Versions](https://semver.org/).
 
 ## WIP
 
+### Features
+
+- Added ``FileResponseSpec`` and improved ``FileResponse`` schema generation
+
 ### Bugfixes
 
 - Fixed OpenAPI schema for custom HTTP Basic auth headers, #672

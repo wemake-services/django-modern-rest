@@ -4,12 +4,15 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 from dmr.openapi.mappers.example import generate_example
-from dmr.openapi.objects.discriminator import Discriminator
-from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
-from dmr.openapi.objects.external_documentation import ExternalDocumentation
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.schema import Schema
-from dmr.openapi.objects.xml import XML
+from dmr.openapi.objects import (
+    XML,
+    Discriminator,
+    ExternalDocumentation,
+    OpenAPIFormat,
+    OpenAPIType,
+    Reference,
+    Schema,
+)
 from dmr.types import Empty, EmptyObj
 
 if TYPE_CHECKING:

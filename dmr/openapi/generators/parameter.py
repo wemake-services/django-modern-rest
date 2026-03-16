@@ -1,9 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING, Any, Literal
 
-from dmr.openapi.objects.parameter import Parameter, ParameterMetadata
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects import Parameter, ParameterMetadata, Reference, Schema
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext

@@ -1,9 +1,10 @@
 from http import HTTPStatus
+from typing import Any
 
 import pytest
 from django.conf import LazySettings
 
-from dmr.errors import ErrorDetail, ErrorType, format_error
+from dmr.errors import ErrorType, format_error
 from dmr.exceptions import (
     InternalServerError,
     NotAcceptableError,
@@ -14,109 +15,107 @@ from dmr.exceptions import (
 )
 
 
-def test_format_error_from_string() -> None:
-    """Ensures plain string is wrapped into a detail entry."""
-    formatted = format_error('something went wrong')
-    assert formatted == {'detail': [{'msg': 'something went wrong'}]}
-
-
-def test_format_error_from_string_with_loc() -> None:
-    """Ensures ``loc`` parameter is included as a list in the detail entry."""
-    formatted = format_error('bad value', loc='body')
-    assert formatted == {'detail': [{'msg': 'bad value', 'loc': ['body']}]}
-
-
-def test_format_error_with_error_type() -> None:
-    """Ensures ``error_type`` parameter is included in the detail entry."""
-    formatted = format_error('bad value', error_type=ErrorType.user_msg)
-    assert formatted == {'detail': [{'msg': 'bad value', 'type': 'user_msg'}]}
-
-
-def test_format_error_with_loc_and_type() -> None:
-    """Ensures both ``loc`` and ``error_type`` are included together."""
-    formatted = format_error(
-        'bad value',
-        loc='field',
-        error_type=ErrorType.value_error,
-    )
-    assert formatted == {
-        'detail': [
-            {'msg': 'bad value', 'loc': ['field'], 'type': 'value_error'},
-        ],
-    }
-
-
-def test_format_error_error_type_as_str() -> None:
-    """Ensures ``error_type`` accepts plain strings."""
-    formatted = format_error('oops', error_type='custom_type')
-    assert formatted == {'detail': [{'msg': 'oops', 'type': 'custom_type'}]}
-
-
-def test_format_error_from_validation() -> None:
-    """Ensures ``ValidationError`` payload is returned as-is."""
-    payload: list[ErrorDetail] = [
-        {'msg': 'too short', 'loc': ['name'], 'type': 'value_error'},
-    ]
-    exc = ValidationError(payload, status_code=HTTPStatus.UNPROCESSABLE_ENTITY)
-
-    formatted = format_error(exc)
-
-    assert formatted == {'detail': payload}
-
-
-def test_format_error_from_request_serial() -> None:
-    """Ensures ``RequestSerializationError`` gets ``value_error`` type."""
-    exc = RequestSerializationError('cannot parse body')
-
-    formatted = format_error(exc)
-
-    assert formatted == {
-        'detail': [{'msg': 'cannot parse body', 'type': 'value_error'}],
-    }
-
-
-def test_format_error_from_response_schema() -> None:
-    """Ensures ``ResponseSchemaError`` gets ``value_error`` type."""
-    exc = ResponseSchemaError('schema mismatch')
-
-    formatted = format_error(exc)
-
-    assert formatted == {
-        'detail': [{'msg': 'schema mismatch', 'type': 'value_error'}],
-    }
-
-
-def test_format_error_from_not_acceptable() -> None:
-    """Ensures ``NotAcceptableError`` gets ``value_error`` type."""
-    exc = NotAcceptableError('unsupported media type')
-
-    formatted = format_error(exc)
-
-    assert formatted == {
-        'detail': [{'msg': 'unsupported media type', 'type': 'value_error'}],
-    }
-
-
-def test_format_error_from_not_authed() -> None:
-    """Ensures ``NotAuthenticatedError`` gets ``security`` type."""
-    exc = NotAuthenticatedError('token expired')
-
-    formatted = format_error(exc)
-
-    assert formatted == {
-        'detail': [{'msg': 'token expired', 'type': 'security'}],
-    }
-
-
-def test_format_error_not_authed_default() -> None:
-    """Ensures ``NotAuthenticatedError`` uses default message."""
-    exc = NotAuthenticatedError()
-
-    formatted = format_error(exc)
-
-    assert formatted == {
-        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
-    }
+@pytest.mark.parametrize(
+    ('input_args', 'expected'),
+    [
+        (
+            (('something went wrong',), {}),
+            {'detail': [{'msg': 'something went wrong'}]},
+        ),
+        (
+            (('bad value',), {'loc': 'body'}),
+            {'detail': [{'msg': 'bad value', 'loc': ['body']}]},
+        ),
+        (
+            (('bad value',), {'error_type': ErrorType.user_msg}),
+            {'detail': [{'msg': 'bad value', 'type': 'user_msg'}]},
+        ),
+        (
+            (
+                ('bad value',),
+                {'loc': 'field', 'error_type': ErrorType.value_error},
+            ),
+            {
+                'detail': [
+                    {
+                        'msg': 'bad value',
+                        'loc': ['field'],
+                        'type': 'value_error',
+                    },
+                ],
+            },
+        ),
+        (
+            (('oops',), {'error_type': 'custom_type'}),
+            {'detail': [{'msg': 'oops', 'type': 'custom_type'}]},
+        ),
+        (
+            ((RequestSerializationError('cannot parse body'),), {}),
+            {
+                'detail': [{'msg': 'cannot parse body', 'type': 'value_error'}],
+            },
+        ),
+        (
+            (
+                (
+                    ValidationError(
+                        [
+                            {
+                                'msg': 'too short',
+                                'loc': ['name'],
+                                'type': 'value_error',
+                            },
+                        ],
+                        status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                    ),
+                ),
+                {},
+            ),
+            {
+                'detail': [
+                    {
+                        'msg': 'too short',
+                        'loc': ['name'],
+                        'type': 'value_error',
+                    },
+                ],
+            },
+        ),
+        (
+            ((ResponseSchemaError('schema mismatch'),), {}),
+            {
+                'detail': [{'msg': 'schema mismatch', 'type': 'value_error'}],
+            },
+        ),
+        (
+            ((NotAcceptableError('unsupported media type'),), {}),
+            {
+                'detail': [
+                    {'msg': 'unsupported media type', 'type': 'value_error'},
+                ],
+            },
+        ),
+        (
+            ((NotAuthenticatedError('token expired'),), {}),
+            {
+                'detail': [{'msg': 'token expired', 'type': 'security'}],
+            },
+        ),
+        (
+            ((NotAuthenticatedError(),), {}),
+            {
+                'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+            },
+        ),
+    ],
+)
+def test_format_error_function(
+    *,
+    input_args: tuple[tuple[Any, ...], dict[str, Any]],
+    expected: Any,
+) -> None:
+    """Ensures ``format_error`` works correctly."""
+    assert format_error(*input_args[0], **input_args[1]) == expected
 
 
 def test_format_error_from_ise_debug(

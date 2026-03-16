@@ -13,5 +13,5 @@ class Encoding:
     content_type: str | None = None
     headers: dict[str, 'Header | Reference'] | None = None
     style: str | None = None
-    explode: bool = False
-    allow_reserved: bool = False
+    explode: bool | None = None
+    allow_reserved: bool | None = None

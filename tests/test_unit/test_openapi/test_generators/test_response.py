@@ -12,11 +12,11 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.response import ResponseGenerator
 from dmr.openapi.objects import (
     Header,
+    MediaType,
     OpenAPIType,
     Response,
     Schema,
 )
-from dmr.openapi.objects.media_type import MediaType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer, JsonRenderer
 

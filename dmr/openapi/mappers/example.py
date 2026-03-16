@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from dmr.openapi.objects.example import Example
+from dmr.openapi.objects import Example
 from dmr.types import EmptyObj
 
 if TYPE_CHECKING:

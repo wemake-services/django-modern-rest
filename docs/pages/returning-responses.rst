@@ -251,15 +251,16 @@ We support file and other binary responses.
 
   Instead return files with S3-like systems or at least on a proxy-server level.
 
-To do so, you should mark your
-:class:`~dmr.metadata.ResponseSpec`
-with a :class:`~dmr.files.FileBody` marker:
+To do so, you indicate that you will return a file with
+:class:`dmr.files.FileResponseSpec` and specify a renderer file renderer.
+We provide :class:`dmr.renderers.FileRenderer` for this case.
+It can also accept a specific ``content_type`` to render:
 
 .. literalinclude:: /examples/returning_responses/file_response.py
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 17, 26
+  :emphasize-lines: 16, 17
 
 
 .. _response_validation:

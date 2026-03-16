@@ -6,16 +6,18 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
 
-from dmr.openapi.objects.parameter import Parameter
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.request_body import RequestBody
-from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects import (
+    MediaType,
+    Parameter,
+    Reference,
+    RequestBody,
+    Schema,
+)
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.openapi.objects.media_type import MediaType
     from dmr.serializer import BaseSerializer
 
 

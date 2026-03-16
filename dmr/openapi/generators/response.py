@@ -2,12 +2,14 @@ import dataclasses
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Literal
 
-from dmr.openapi.objects.header import Header
-from dmr.openapi.objects.media_type import MediaType
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.response import Response
-from dmr.openapi.objects.responses import Responses
-from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects import (
+    Header,
+    MediaType,
+    Reference,
+    Response,
+    Responses,
+    Schema,
+)
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata, ResponseSpec

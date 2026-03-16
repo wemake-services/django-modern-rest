@@ -215,6 +215,9 @@ Files
 .. autoclass:: dmr.files.FileBody
   :members:
 
+.. autoclass:: dmr.files.FileResponseSpec
+  :members:
+
 
 Auth
 ----

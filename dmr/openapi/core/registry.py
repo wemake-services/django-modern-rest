@@ -1,8 +1,6 @@
 from typing import Any, ClassVar, Protocol
 
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.schema import Schema
-from dmr.openapi.objects.security_scheme import SecurityScheme
+from dmr.openapi.objects import Reference, Schema, SecurityScheme
 from dmr.types import Empty, EmptyObj
 
 
@@ -72,7 +70,7 @@ class SchemaRegistry:
         """Register Schema in registry."""
         existing_schema = self._schemas.get(schema_name)
         if existing_schema:
-            self._check_hashes(
+            _check_hashes(
                 schema_name,
                 annotation,
                 existing_schema[1],
@@ -91,7 +89,7 @@ class SchemaRegistry:
         if schema_name:
             existing_schema = self._schemas.get(schema_name)
             if existing_schema:
-                self._check_hashes(
+                _check_hashes(
                     schema_name,
                     annotation,
                     existing_schema[1],
@@ -111,26 +109,13 @@ class SchemaRegistry:
         schema_name = reference.ref.removeprefix(self.schema_prefix)
         return (resoltion_context or self.schemas)[schema_name]
 
+    def try_unregister(self, schema_name: str | None) -> None:
+        """Try to unregister the schema by name."""
+        if schema_name is not None:
+            self._schemas.pop(schema_name, None)
+
     def _make_reference(self, name: str) -> Reference:
         return Reference(ref=f'{self.schema_prefix}{name}')
-
-    def _check_hashes(
-        self,
-        schema_name: str,
-        annotation: Any | Empty,
-        other_hash: int | None,
-    ) -> None:
-        if annotation is EmptyObj:
-            return
-        ann_hash = _safe_hash(annotation)
-        if (
-            ann_hash is not None
-            and other_hash is not None
-            and ann_hash != other_hash
-        ):
-            raise ValueError(
-                f'Different schemas under a single name: {schema_name}',
-            )
 
 
 class SecuritySchemeRegistry:
@@ -147,6 +132,24 @@ class SecuritySchemeRegistry:
     ) -> None:
         """Register security scheme in registry."""
         self.schemes[name] = scheme
+
+
+def _check_hashes(
+    schema_name: str,
+    annotation: Any | Empty,
+    other_hash: int | None,
+) -> None:
+    if annotation is EmptyObj:
+        return
+    ann_hash = _safe_hash(annotation)
+    if (
+        ann_hash is not None
+        and other_hash is not None
+        and ann_hash != other_hash
+    ):
+        raise ValueError(
+            f'Different schemas under a single name: {schema_name}',
+        )
 
 
 def _safe_hash(annotation: Any) -> int | None:
