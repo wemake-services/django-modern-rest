@@ -69,3 +69,4 @@ def test_renamed_schema() -> None:
 def test_try_unregister_schema(openapi_context: OpenAPIContext) -> None:
     """Ensure that removing non existent schema works."""
     openapi_context.registries.schema.try_unregister('missing')
+    openapi_context.registries.schema.try_unregister(None)

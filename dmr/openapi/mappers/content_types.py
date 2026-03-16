@@ -17,13 +17,18 @@ def content_types(model: Any, property_name: str) -> str | None:
         >>> class ImageFile(BaseModel):
         ...     content_type: Literal['image/jpeg', 'image/png']
 
+        >>> class LicenseFile(BaseModel):
+        ...      content_type: str
+
         >>> class Payload(BaseModel):
         ...     avatar: ImageFile
+        ...     license: LicenseFile
         ...     username: str
 
         >>> content_types(Payload, 'avatar')
         'image/jpeg, image/png'
 
+        >>> assert content_types(Payload, 'license') is None
         >>> assert content_types(Payload, 'username') is None
 
     """
