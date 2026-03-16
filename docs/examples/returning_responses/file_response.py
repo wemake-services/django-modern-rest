@@ -26,3 +26,4 @@ class FileController(Controller[PydanticSerializer]):
 
 
 # run: {"controller": "FileController", "method": "get", "url": "/api/file/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "FileController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

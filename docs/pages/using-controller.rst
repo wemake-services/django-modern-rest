@@ -102,7 +102,7 @@ method of metadata specification.
 Both ``@modify`` and ``@validate`` can specify multiple different
 response descriptions (or "schemas"), if you need explicit cases for errors.
 
-See :doc:`returning-responses` for more.
+See :doc:`responses/index` for more.
 
 
 Composing Blueprints into Controllers
@@ -210,7 +210,7 @@ Next up
     :gutter: 2
 
     .. grid-item-card:: :octicon:`comment-discussion` Returning responses
-      :link: returning-responses
+      :link: responses/index
       :link-type: doc
 
       Learn how you can return a response from your endpoint.

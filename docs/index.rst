@@ -166,7 +166,7 @@ Here are our amazing people who made this project possible.
   pages/getting-started.rst
   pages/core-concepts.rst
   pages/using-controller.rst
-  pages/returning-responses.rst
+  pages/responses/index
   pages/routing.rst
   pages/configuration.rst
   pages/components/index

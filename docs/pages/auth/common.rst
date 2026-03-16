@@ -155,3 +155,15 @@ Select auth backend that fits your needs:
       :link-type: doc
 
       Support for JWT tokens based auth.
+
+
+API Reference
+-------------
+
+.. autoclass:: dmr.security.SyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.security.AsyncAuth
+  :members:
+  :inherited-members:
