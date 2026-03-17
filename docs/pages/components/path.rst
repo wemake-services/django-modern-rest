@@ -107,7 +107,8 @@ What happens in this example?
 What is the difference from the raw ``path()`` model?
 
 1. ``Path`` component automatically injects ``404`` error into the final schema
-2. It perfoms a second validation of the ``self.kwargs`` with new extra metadata
+2. It performs a second validation of the ``self.kwargs``
+   with new extra metadata from the ``Path`` model
 3. It add ``self.parsed_path`` attribute
 
 .. important::
