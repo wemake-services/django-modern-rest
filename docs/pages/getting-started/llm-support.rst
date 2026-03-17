@@ -13,7 +13,8 @@ Documentation for AI context
 Use the following URLs to supply documentation to your LLM or RAG pipeline.
 Choose the format that fits your context window and workflow.
 
-**Index (llms.txt)** — Structured index with links to sections and topics.
+`Index (llms.txt) <https://django-modern-rest.readthedocs.io/llms.txt>`_ —
+Structured index with links to sections and topics.
 Use when the assistant has a limited context window or you want to point
 it to specific pages.
 
@@ -21,9 +22,9 @@ it to specific pages.
 
    https://django-modern-rest.readthedocs.io/llms.txt
 
-**Full documentation (llms-full.txt)** — Complete documentation in a single
-plain-text file. Use when the model supports large context or you need the
-entire reference in one place.
+`Full documentation (llms-full.txt) <https://django-modern-rest.readthedocs.io/llms-full.txt>`_ —
+Complete documentation in a single plain-text file. Use when the model
+supports large context or you need the entire reference in one place.
 
 .. code-block:: text
 

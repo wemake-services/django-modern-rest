@@ -1,5 +1,5 @@
-Tutorial 2: Single-file app
-===========================
+Single-file app
+===============
 
 **Prerequisites:** ``django-modern-rest`` installed
 (see :doc:`../getting-started/installation`). No Django project required,
@@ -11,6 +11,11 @@ but without ``django-admin startproject``. Great for trying DMR or small service
 
 Save the code below as ``example.py`` (or any name). Use either pydantic
 (as shown) or msgspec; the structure is the same.
+
+.. tip::
+
+  You can inspect the complete example as a single file using
+  :download:`examples/structure/micro_framework/single_file_asgi.py </examples/structure/micro_framework/single_file_asgi.py>`.
 
 
 Step 1: Configure Django in one file

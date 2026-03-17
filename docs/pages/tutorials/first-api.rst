@@ -1,5 +1,5 @@
-Tutorial 1: Your first API
-==========================
+Your first API
+==============
 
 **Prerequisites:** A Django project with ``django-modern-rest`` installed
 (see :doc:`../getting-started/installation`). We'll add one controller
@@ -31,6 +31,7 @@ These will be used by the controller for parsing and serialization.
       .. literalinclude:: /examples/getting_started/pydantic_controller.py
         :caption: views.py
         :language: python
+        :linenos:
         :lines: 1-16
         :no-imports-spoiler:
 
@@ -86,10 +87,41 @@ Next steps
 
 Once you've completed a tutorial, explore these guides and reference:
 
-- :doc:`How routing and Router work <../routing>`
-- :doc:`How to customize controllers and endpoints <../using-controller>`
-- :doc:`How to handle errors <../error-handling>`
-- :doc:`How to generate OpenAPI schema <../openapi/openapi>`
+.. grid:: 1 1 2 2
+    :class-row: surface
+    :padding: 0
+    :gutter: 2
+
+    .. grid-item-card:: :octicon:`tools` Controllers and endpoints
+      :link: ../using-controller
+      :link-type: doc
+
+      Learn how to customize controllers and endpoints.
+
+    .. grid-item-card:: :octicon:`alert` Error handling
+      :link: ../error-handling
+      :link-type: doc
+
+      Handle validation errors and exceptions.
+
+    .. grid-item-card:: :octicon:`git-branch` Routing
+      :link: ../routing
+      :link-type: doc
+
+      Understand how ``Router`` and ``path`` work.
+
+    .. grid-item-card:: :octicon:`file-badge` OpenAPI
+      :link: ../openapi/openapi
+      :link-type: doc
+
+      Generate and explore your OpenAPI schema.
+
+.. tip::
+
+  To discover more projects, templates, and tools built with
+  ``django-modern-rest``, check out the curated
+  `awesome-django-modern-rest <https://github.com/kondratevdev/awesome-django-modern-rest>`_
+  list.
 
 For fundamentals and configuration:
 
