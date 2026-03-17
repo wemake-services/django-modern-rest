@@ -7,7 +7,7 @@ build-backend = "poetry.core.masonry.api"
 name = "django-modern-rest"
 description = "Modern REST framework for Django with types and async support"
 license = "MIT"
-version = "0.2.0"
+version = "0.3.0"
 requires-poetry = ">=2.3"
 
 authors = [

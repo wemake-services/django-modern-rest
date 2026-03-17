@@ -3,7 +3,7 @@
 We follow [Semantic Versions](https://semver.org/).
 
 
-## WIP
+## Version 0.3.0 (2026-03-17)
 
 ### Features
 
