@@ -18,7 +18,7 @@ def test_empty_parsers(
     """Ensure that always has to be at least one parser type."""
     settings.DMR_SETTINGS = {
         Settings.parsers: [],
-        Settings.renderers: [JsonRenderer],
+        Settings.renderers: [JsonRenderer()],
     }
 
     with pytest.raises(EndpointMetadataError, match='at least one parser'):
