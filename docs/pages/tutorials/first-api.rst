@@ -1,9 +1,13 @@
 Your first API
 ==============
 
-**Prerequisites:** A Django project with ``django-modern-rest`` installed
-(see :doc:`../getting-started/installation`). We'll add one controller
-and wire it in your URLs.
+.. attention::
+   Before starting this tutorial, make sure you have completed
+   the :doc:`../getting-started/installation` guide and verified
+   that your project runs successfully.
+
+**Prerequisites:** A Django project with ``django-modern-rest``.
+We'll add one controller and wire it in your URLs.
 
 **What you'll build:** A ``POST`` endpoint that accepts a JSON body and
 a header, and returns a typed JSON response.

@@ -6,7 +6,7 @@ Modern REST requires the following:
 - Python 3.11+
 - Django 5.2+
 
-.. attention::
+.. caution::
 
   We **recommend** using the latest patch release of each Python and Django
   series, as only these versions are officially supported.
