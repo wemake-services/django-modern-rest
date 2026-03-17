@@ -5,7 +5,7 @@ from dmr.settings import Settings
 
 
 @pytest.fixture(autouse=True, params=[True, False])
-def _generate_examples(
+def _modify_integration_settings(
     settings: LazySettings,
     request: pytest.FixtureRequest,
     dmr_clean_settings: None,

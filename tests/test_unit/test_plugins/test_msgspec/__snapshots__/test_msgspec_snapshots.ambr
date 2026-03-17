@@ -10,7 +10,7 @@
     "paths": {
       "/api/cookies": {
         "get": {
-          "operationId": "get_AuthedAndCookiesControllerApiCookies",
+          "operationId": "getAuthedandcookiescontrollerApiCookies",
           "parameters": [
             {
               "deprecated": false,
@@ -166,7 +166,7 @@
     "paths": {
       "/api/v1/example": {
         "post": {
-          "operationId": "post_ExampleControllerApiV1Example",
+          "operationId": "postExamplecontrollerApiV1Example",
           "responses": {
             "201": {
               "description": "Created",
@@ -341,7 +341,7 @@
     "paths": {
       "/file": {
         "get": {
-          "operationId": "get_FileControllerFile",
+          "operationId": "getFilecontrollerFile",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -489,7 +489,7 @@
       "/api/v1/user": {
         "summary": "Handles users",
         "post": {
-          "operationId": "post_UserControllerApiV1User",
+          "operationId": "postUsercontrollerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {

@@ -56,11 +56,11 @@ async def test_user_update_direct_view_async_client(
 def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that re_path with named groups is allowed."""
     email = faker.email()
-    user_id = faker.unique.random_int()
+    user_id = faker.unique.random_int(min=1)
 
     response = dmr_client.patch(
         reverse('api:controllers:user_update_direct_re', args=(user_id,)),
-        data={'email': email, 'age': faker.unique.random_int()},
+        data={'email': email, 'age': faker.unique.random_int(min=1)},
     )
 
     assert response.status_code == HTTPStatus.OK, response.json()

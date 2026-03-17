@@ -2,10 +2,11 @@ import datetime as dt
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, ClassVar, TypeAlias, final
+from typing import Annotated, Any, ClassVar, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse
+from typing_extensions import override
 
 from dmr import (  # noqa: WPS235
     Blueprint,
@@ -18,6 +19,8 @@ from dmr import (  # noqa: WPS235
     modify,
     validate,
 )
+from dmr.endpoint import Endpoint
+from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.controllers.auth import HttpBasicAsync, HttpBasicSync
 
@@ -39,7 +42,7 @@ class _CustomHeaders(pydantic.BaseModel):
 
 class _SimpleUserInput(pydantic.BaseModel):
     email: str
-    age: int = pydantic.Field(strict=True)
+    age: int = pydantic.Field(ge=0, strict=True)
 
 
 @final
@@ -52,7 +55,7 @@ class _SimpleUserOutput(_SimpleUserInput):
 
 @final
 class _UserPath(pydantic.BaseModel):
-    user_id: int
+    user_id: Annotated[int, pydantic.Field(ge=1)]
 
 
 @final
@@ -97,13 +100,40 @@ class UserListBlueprint(Blueprint[PydanticSerializer]):
 class UserUpdateBlueprint(
     Body[_SimpleUserInput],
     Blueprint[PydanticSerializer],
-    Path[_UserPath],
+    # It does not have `Path` on purpose to test `path()`'s native schema
 ):
+    responses = (
+        # Since we don't use `Path` component,
+        # we need to add `NOT_FOUND` manually:
+        ResponseSpec(Blueprint.error_model, status_code=HTTPStatus.NOT_FOUND),
+    )
+
     async def patch(self) -> _SimpleUserInput:
-        return _SimpleUserInput(
-            email=self.parsed_body.email,
-            age=self.parsed_path.user_id,
+        return _SimpleUserInput.model_validate(
+            {
+                'email': self.parsed_body.email,
+                'age': self.kwargs['user_id'],
+            },
+            strict=False,
         )
+
+    @override
+    async def handle_async_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        if isinstance(exc, pydantic.ValidationError):
+            return self.to_error(
+                self.format_error(
+                    'Object does not exist',
+                    loc=['parsed_path', 'user_id'],
+                    error_type=ErrorType.not_found,
+                ),
+                status_code=HTTPStatus.NOT_FOUND,
+            )
+        return await super().handle_async_error(endpoint, controller, exc)
 
 
 @final

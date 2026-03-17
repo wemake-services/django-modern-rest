@@ -16,7 +16,15 @@ So, how do you compose different controllers with different parsing
 behaviours into a single URL? For this we use
 :func:`~dmr.routing.compose_blueprints` function:
 
-But, no second validation ever happens, because we respect your time!
+.. literalinclude:: /examples/routing/blueprints.py
+  :caption: urls.py
+  :language: python
+  :linenos:
+
+.. note::
+
+  If you want to parse path parameters, see :doc:`components/path`
+  and :class:`dmr.components.Path`.
 
 However, there are several rules (and validation errors)
 attached to this behaviour:
@@ -31,7 +39,7 @@ attached to this behaviour:
 4. Controllers to be composed must have at least one endpoint
 
 Controllers in ``django-modern-rest`` are not built
-to be extended, but composed!
+to be extended, but composed from blueprints!
 
 
 .. _composed-meta:
@@ -148,7 +156,7 @@ Optimized URL Routing
 ---------------------
 
 ``django-modern-rest`` provides
-an optimized :func:`~dmr.routing.path` function
+an optimized :func:`dmr.routing.path` function
 that is a **drop-in replacement** for Django's :func:`django.urls.path`.
 
 The custom implementation uses prefix-based pattern matching

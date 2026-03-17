@@ -10,7 +10,7 @@
     "paths": {
       "/file/": {
         "post": {
-          "operationId": "post_BodyAndFileControllerFile",
+          "operationId": "postBodyandfilecontrollerFile",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -339,7 +339,7 @@
     "paths": {
       "/file-response/": {
         "get": {
-          "operationId": "get_FileResponseControllerFileResponse",
+          "operationId": "getFileresponsecontrollerFileResponse",
           "responses": {
             "200": {
               "description": "OK",

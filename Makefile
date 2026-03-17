@@ -61,8 +61,8 @@ example: ## Run mypy and pytest on example code
 	  --suppress-no-test-exit-code \
 	  docs/examples/testing/polyfactory_usage.py
 
-.PHONY: run-example
-run-example: ## Run example app
+.PHONY: example-run
+example-run: ## Run example app
 	cd django_test_app && $(POETRY) run python manage.py runserver
 
 .PHONY: package

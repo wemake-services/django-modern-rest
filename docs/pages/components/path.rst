@@ -5,7 +5,9 @@ Using native Django path params
 -------------------------------
 
 You don't have to use :class:`~dmr.components.Path` to parse url parameters.
-By default Django puts all url parameters into ``self.kwargs``:
+By default Django puts all url parameters into ``self.kwargs``.
+
+Let's take a look at the full example:
 
 .. literalinclude:: /examples/components/path_raw.py
   :caption: views.py
@@ -16,7 +18,14 @@ What happens here?
 
 1. We define a controller that uses regular ``self.kwargs``
    dict with path params with no extra parsing from our side
-2. We define an api url with :func:`django.urls.path`
+2. We define a custom :class:`~dmr.metadata.ResponseSpec`
+   instance with ``404`` as a response code,
+   :class:`~dmr.components.Path` injects this response automatically,
+   but since we don't use – we have to do that manually
+   for our :ref:`response_validation` to work
+3. We also show how one can use :class:`~dmr.errors.APIError`
+   to raise custom ``404`` errors when some objects are not found
+4. We define an api url with :func:`django.urls.path`
    (or with :func:`django.urls.re_path`)
    and a common Django syntax for path parameters:
    ``'user/<int:user_id>/post/<uuid:post_id/'``
@@ -43,7 +52,7 @@ use :class:`~dmr.components.Path` component with a model.
 
   However, if you are using a different converter schema type,
   you can use set ``__dmr_converter_schema__`` attribute
-  with the schema type that you need in the schema.
+  with the specific type that you need in the schema.
 
 
 Using Path component and parsing models

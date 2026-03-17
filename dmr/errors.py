@@ -76,7 +76,7 @@ class ErrorModel(TypedDict):
 def format_error(  # noqa: C901, WPS231
     error: str | Exception,
     *,
-    loc: str | None = None,
+    loc: str | list[str | int] | None = None,
     error_type: str | ErrorType | None = None,
 ) -> ErrorModel:
     """
@@ -88,7 +88,8 @@ def format_error(  # noqa: C901, WPS231
         error: A serialization exception like a validation error or
             a ``dmr.exceptions.DataParsingError``.
         loc: Location where this error happened.
-            Like "headers" or "field_name".
+            Like ``"headers"``, or ``"field_name"``,
+            or ``["parsed_headers", "header_name"]``.
         error_type: Optional type of the error for extra metadata.
 
     Returns:
@@ -120,7 +121,7 @@ def format_error(  # noqa: C901, WPS231
     if isinstance(error, str):
         msg: ErrorDetail = {'msg': error}
         if loc is not None:
-            msg.update({'loc': [loc]})
+            msg.update({'loc': loc if isinstance(loc, list) else [loc]})
         if error_type is not None:
             msg.update({'type': str(error_type)})
         return {'detail': [msg]}

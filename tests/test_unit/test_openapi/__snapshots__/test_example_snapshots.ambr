@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "post_UserControllerApiV1User",
+          "operationId": "postUsercontrollerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -213,7 +213,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "post_ExistingExampleControllerApiV1User",
+          "operationId": "postExistingexamplecontrollerApiV1User",
           "responses": {
             "201": {
               "description": "Created",

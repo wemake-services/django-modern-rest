@@ -1,7 +1,7 @@
 import json
 
 import pydantic
-from django.urls import path
+from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Blueprint, Controller, modify
@@ -59,7 +59,11 @@ def test_per_blueprint_schema(snapshot: SnapshotAssertion) -> None:
                     '',
                     [
                         path(
-                            'per_blueprint/',
+                            'per_blueprint/<str:kwarg_id>',
+                            compose_blueprints(_PerBlurprint).as_view(),
+                        ),
+                        re_path(
+                            r'^articles/(?P<other>[0-9]{4})/(?P<kwarg_id>[\w-]+)/$',
                             compose_blueprints(_PerBlurprint).as_view(),
                         ),
                     ],

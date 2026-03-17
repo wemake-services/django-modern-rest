@@ -64,7 +64,6 @@ class Endpoint:  # noqa: WPS214
     __slots__ = (
         '_func',
         '_method',
-        '_operation_prefix',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -155,13 +154,6 @@ class Endpoint:  # noqa: WPS214
         )
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
-
-        # Define operation id prefix for OpenAPI:
-        self._operation_prefix = (
-            controller_cls.__qualname__
-            if blueprint_cls is None
-            else blueprint_cls.__qualname__
-        )
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -275,11 +267,17 @@ class Endpoint:  # noqa: WPS214
         self,
         path: str,
         pattern: URLPattern,
+        controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> Operation:
         """Builde an OpenAPI Operation from an endpoint."""
-        operation_id = self.get_operation_id(path, serializer, context)
+        operation_id = self.get_operation_id(
+            path,
+            controller_name,
+            serializer,
+            context,
+        )
         request_body, params_list = context.generators.component_parsers(
             operation_id,
             pattern,
@@ -309,13 +307,14 @@ class Endpoint:  # noqa: WPS214
     def get_operation_id(
         self,
         path: str,
+        controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> str:
         """Customize how OperationId is generated for the OpenAPI."""
         return context.generators.operation_id(
             path,
-            self._operation_prefix,
+            controller_name,
             self.metadata,
             serializer,
         )

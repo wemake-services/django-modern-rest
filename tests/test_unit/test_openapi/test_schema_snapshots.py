@@ -200,6 +200,10 @@ def test_conditional_types(snapshot: SnapshotAssertion) -> None:
 
 
 class _GetPostController(Controller[PydanticSerializer]):
+    responses = (
+        ResponseSpec(Controller.error_model, status_code=HTTPStatus.NOT_FOUND),
+    )
+
     def get(self) -> str:
         raise NotImplementedError
 

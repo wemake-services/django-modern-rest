@@ -67,7 +67,7 @@ openapi = ["openapi-spec-validator", "polyfactory"]
 
 [tool.poetry.group.dev.dependencies]
 django = "^5.2"
-django-stubs = { version = "5.2.9", extras = ["compatible-mypy"] }
+django-stubs = { version = "6.0.0", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 types-xmltodict = "^1.0"
 pyright = "^1.1"

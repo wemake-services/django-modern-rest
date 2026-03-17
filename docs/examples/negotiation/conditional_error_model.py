@@ -41,7 +41,7 @@ class ExampleController(
         self,
         error: str | Exception,
         *,
-        loc: str | None = None,
+        loc: str | list[str | int] | None = None,
         error_type: str | ErrorType | None = None,
     ) -> ErrorModel | _CustomXmlErrorModel:
         original: ErrorModel = super().format_error(

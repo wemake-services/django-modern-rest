@@ -27,7 +27,7 @@ class OperationIdGenerator:
     def __call__(
         self,
         path: str,
-        operation_prefix: str,
+        suffix: str,
         metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> str:
@@ -45,12 +45,8 @@ class OperationIdGenerator:
             return operation_id
 
         # Generate operation_id from path and method
-        tokens = self._tokenize_path(path)
-        method = metadata.method.lower()
-        operation_id = self._build_operation_id(
-            method,
-            operation_prefix,
-            tokens,
+        operation_id = metadata.method.lower() + ''.join(
+            self._tokenize_path(suffix + path),
         )
 
         self._context.registries.operation_id.register(operation_id)
@@ -67,8 +63,8 @@ class OperationIdGenerator:
             as word separators for camelCase conversion
         - Removes reserved characters that shouldn't appear in operation IDs
         """
-        # Remove path variables (e.g., {id}, {user_id})
-        path = re.sub(pattern=r'\{[\w\-]+\}', repl='', string=path)
+        # Remove `{}` from path variables (e.g., {id}, {user_id})
+        path = path.replace('{', '').replace('}', '')
         tokenized_path = path.strip('/').split('/')
 
         normalized_tokens: list[str] = []
@@ -92,12 +88,3 @@ class OperationIdGenerator:
                 normalized_tokens.append(''.join(normalized_parts))
 
         return normalized_tokens
-
-    def _build_operation_id(
-        self,
-        method: str,
-        operation_prefix: str,
-        tokens: list[str],
-    ) -> str:
-        """Build operation ID from HTTP method and path tokens."""
-        return method + operation_prefix + ''.join(tokens)

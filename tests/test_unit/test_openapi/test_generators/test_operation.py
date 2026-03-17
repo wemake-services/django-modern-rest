@@ -27,11 +27,14 @@ def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
         ('users', ['Users']),
         ('api/users', ['Api', 'Users']),
         # Paths with path variables
-        ('/users/{id}', ['Users']),
-        ('/api/users/{user_id}', ['Api', 'Users']),
-        ('/api/{version}/users/{id}', ['Api', 'Users']),
-        ('/users/{id}/profile', ['Users', 'Profile']),
-        ('/shops/{shop_id}/products/{product_id}', ['Shops', 'Products']),
+        ('/users/{id}', ['Users', 'Id']),
+        ('/api/users/{user_id}', ['Api', 'Users', 'UserId']),
+        ('/api/{version}/users/{id}', ['Api', 'Version', 'Users', 'Id']),
+        ('/users/{id}/profile', ['Users', 'Id', 'Profile']),
+        (
+            '/shops/{shop_id}/products/{product_id}',
+            ['Shops', 'ShopId', 'Products', 'ProductId'],
+        ),
         # Paths with hyphen separator (word boundary)
         ('/user-profile', ['UserProfile']),
         ('/api/user-profile', ['Api', 'UserProfile']),
@@ -79,7 +82,7 @@ def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
         # Complex real-world examples
         (
             '/api/v1/users/{user_id}/posts/{post_id}/comments',
-            ['Api', 'V1', 'Users', 'Posts', 'Comments'],
+            ['Api', 'V1', 'Users', 'UserId', 'Posts', 'PostId', 'Comments'],
         ),
         (
             '/api/user-profile/settings~preferences',
@@ -88,7 +91,15 @@ def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
         ('/files/data.backup.json', ['Files', 'DataBackupJson']),
         (
             '/api/v1/shops/{shop_id}/products/{product_id}/reviews',
-            ['Api', 'V1', 'Shops', 'Products', 'Reviews'],
+            [
+                'Api',
+                'V1',
+                'Shops',
+                'ShopId',
+                'Products',
+                'ProductId',
+                'Reviews',
+            ],
         ),
         # Paths with only separators (should result in empty tokens)
         ('/-', []),
@@ -125,7 +136,7 @@ def test_explicit_operation_id(generator: OperationIdGenerator) -> None:
     controller = _ControllerWithOperationId()
     operation_id = generator(
         'whatever',
-        'test',
+        'controller',
         metadata=controller.api_endpoints['GET'].metadata,
         serializer=PydanticSerializer,
     )

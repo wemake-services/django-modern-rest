@@ -6,7 +6,7 @@ from typing_extensions import TypedDict
 
 from dmr import Controller, Path
 from dmr.openapi import build_schema
-from dmr.openapi.views import OpenAPIJsonView, SwaggerView
+from dmr.openapi.views import OpenAPIJsonView
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, path
 
@@ -42,7 +42,6 @@ urlpatterns = [
     path(router.prefix, include((router.urls, 'test_app'), namespace='api')),
     # Add swagger:
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
-    path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
 ]
 
 # run: {"controller": "PostController", "method": "get", "url": "/api/user/abcd/post/1/", "use_urlpatterns": true}  # noqa: ERA001, E501

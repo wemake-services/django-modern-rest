@@ -744,7 +744,7 @@ def test_conditional_error_model(
             self,
             error: str | Exception,
             *,
-            loc: str | None = None,
+            loc: str | list[int | str] | None = None,
             error_type: str | ErrorType | None = None,
         ) -> _CustomJsonErrorModel | _CustomXmlErrorModel:
             original = super().format_error(
@@ -831,7 +831,7 @@ def test_conditional_error_model_wrong(
             self,
             error: str | Exception,
             *,
-            loc: str | None = None,
+            loc: str | list[str | int] | None = None,
             error_type: str | ErrorType | None = None,
         ) -> _CustomJsonErrorModel | _CustomXmlErrorModel:
             original = super().format_error(

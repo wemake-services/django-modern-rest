@@ -10,7 +10,7 @@
     "paths": {
       "/api/generic/": {
         "post": {
-          "operationId": "post_GenericControllerApiGeneric",
+          "operationId": "postGenericcontrollerApiGeneric",
           "responses": {
             "201": {
               "description": "Created",
@@ -119,7 +119,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "post_UserControllerApiV1User",
+          "operationId": "postUsercontrollerApiV1User",
           "responses": {
             "201": {
               "description": "Created",
@@ -225,7 +225,7 @@
     "paths": {
       "/api/root/custom/user/": {
         "post": {
-          "operationId": "post_UserControllerApiRootCustomUser",
+          "operationId": "postUsercontrollerApiRootCustomUser",
           "responses": {
             "201": {
               "description": "Created",

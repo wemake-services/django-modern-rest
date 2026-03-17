@@ -10,7 +10,7 @@
     "paths": {
       "/api/cookies/": {
         "get": {
-          "operationId": "get_AuthedAndCookiesControllerApiCookies",
+          "operationId": "getAuthedandcookiescontrollerApiCookies",
           "parameters": [
             {
               "description": "Cookies metadata",
@@ -224,7 +224,7 @@
     "paths": {
       "/api/types/": {
         "post": {
-          "operationId": "post_ConditionalTypesControllerApiTypes",
+          "operationId": "postConditionaltypescontrollerApiTypes",
           "requestBody": {
             "content": {
               "application/json": {
@@ -462,7 +462,7 @@
     "paths": {
       "/api/v1/user/{user_id}/post/{post_id}/": {
         "get": {
-          "operationId": "get_GetPostControllerApiV1UserPost",
+          "operationId": "getGetpostcontrollerApiV1UserUserIdPostPostId",
           "parameters": [
             {
               "deprecated": false,
@@ -487,6 +487,16 @@
             }
           ],
           "responses": {
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "200": {
               "description": "OK",
               "content": {
@@ -523,7 +533,7 @@
       },
       "/api/v1/articles/{year}/{slug}/": {
         "get": {
-          "operationId": "get_GetPostControllerApiV1Articles",
+          "operationId": "getGetpostcontrollerApiV1ArticlesYearSlug",
           "parameters": [
             {
               "deprecated": false,
@@ -547,6 +557,16 @@
             }
           ],
           "responses": {
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "200": {
               "description": "OK",
               "content": {
@@ -650,7 +670,7 @@
     "paths": {
       "/api/v1/user/": {
         "get": {
-          "operationId": "get_GetUserListBlueprintApiV1User",
+          "operationId": "getComposedUserblueprintGetuserlistblueprintApiV1User",
           "responses": {
             "200": {
               "description": "OK",
@@ -689,7 +709,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "post_UserBlueprintApiV1User",
+          "operationId": "postComposedUserblueprintGetuserlistblueprintApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -750,7 +770,7 @@
       },
       "/api/v1/user/{id}/": {
         "get": {
-          "operationId": "get_GetUserControllerApiV1User",
+          "operationId": "getGetusercontrollerApiV1UserId",
           "parameters": [
             {
               "deprecated": false,

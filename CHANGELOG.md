@@ -16,6 +16,15 @@ We follow [Semantic Versions](https://semver.org/).
 - Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
 - Fixed JWT claim validation and error handling in `JWToken.decode`, #675
 - Fixed incorrect OpenAPI schema for ``FileResponse``, #682
+- Fixed that `404` was not listed in the endpoint's metadata,
+  when using `URLRoute` without `Path` component, #685
+- Fixed that `404` was not documented in the OpenAPI
+  when `Path` component was not used, but `URLPattern` had parameters, #685
+- Fixed `ValueError` on operation id generation, #685
+
+### Misc
+
+- Improved "Returning responses" docs, #684
 
 
 ## Version 0.2.0 (2026-03-15)
