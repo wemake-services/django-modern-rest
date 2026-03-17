@@ -22,7 +22,9 @@ from dmr.openapi.collector import controller_mapping_collector
 from dmr.openapi.objects import Components, OpenAPI, Paths
 
 if TYPE_CHECKING:
-    from django.utils.functional import _StrOrPromise  # pyright: ignore[reportPrivateUsage]
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
 
     from dmr.controller import Blueprint, Controller
     from dmr.internal.types import FormatError
