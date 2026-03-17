@@ -182,6 +182,14 @@ Here are our amazing people who made this project possible.
 
 
 .. toctree::
+  :caption: Tutorials
+  :hidden:
+
+  pages/tutorials/first-api.rst
+  pages/tutorials/single-file-api.rst
+
+
+.. toctree::
   :caption: Auth
   :hidden:
 

@@ -1,12 +1,13 @@
 Tutorial 2: Single-file app
 ===========================
 
-**Prerequisites:** ``django-modern-rest`` installed (see :doc:`installation`).
-No Django project required, everything runs from one file.
+**Prerequisites:** ``django-modern-rest`` installed
+(see :doc:`../getting-started/installation`). No Django project required,
+everything runs from one file.
 
 **What you'll build:** A single-file API with one ``POST`` endpoint and
-interactive Swagger docs. Same ideas as :doc:`tutorial-first-api`, but without
-``django-admin startproject``. Great for trying DMR or small services.
+interactive Swagger docs. Same ideas as :doc:`first-api`,
+but without ``django-admin startproject``. Great for trying DMR or small services.
 
 Save the code below as ``example.py`` (or any name). Use either pydantic
 (as shown) or msgspec; the structure is the same.
@@ -33,7 +34,7 @@ Step 2: Define models and controller
 
 Define the request and response model and a :class:`~dmr.controller.Controller`
 with :class:`~dmr.components.Body`. This is the same pattern as in
-:doc:`tutorial-first-api`, just in the same file.
+:doc:`first-api`, just in the same file.
 
 .. literalinclude:: /examples/structure/micro_framework/single_file_asgi.py
   :caption: example.py
@@ -64,7 +65,8 @@ Step 4: Run the app
 -------------------
 
 Use Django's so you can run ``python example.py runserver``.
-Install ``django-modern-rest`` first if you haven't (see :doc:`installation`).
+Install ``django-modern-rest`` first if you haven't
+(see :doc:`../getting-started/installation`).
 
 .. literalinclude:: /examples/structure/micro_framework/single_file_asgi.py
   :caption: example.py
@@ -117,31 +119,3 @@ clear boundaries, DDD, and reusable apps. We recommend starting larger
 projects with the `wemake-django-template
 <https://github.com/wemake-services/wemake-django-template>`_: strict,
 security-first, battle-tested boilerplate.
-
-
-Next steps
-----------
-
-See :ref:`getting-started-next-steps` for guides on routing, controllers,
-error handling, and OpenAPI. For the single-file style in depth, see
-:doc:`../structure/micro-framework`. Or try :doc:`tutorial-first-api` in a
-full Django project.
-
-Or explore:
-
-.. grid:: 1 1 2 2
-    :class-row: surface
-    :padding: 0
-    :gutter: 2
-
-    .. grid-item-card:: :octicon:`rocket` Core Concepts
-      :link: ../core-concepts
-      :link-type: doc
-
-      Learn the fundamentals.
-
-    .. grid-item-card:: :octicon:`gear` Configuration
-      :link: ../configuration
-      :link-type: doc
-
-      Learn how to configure ``django-modern-rest``.
