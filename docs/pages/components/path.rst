@@ -5,7 +5,8 @@ Using native Django path params
 -------------------------------
 
 You don't have to use :class:`~dmr.components.Path` to parse url parameters.
-By default Django puts all url parameters into ``self.kwargs``.
+By default Django puts all url parameters
+into ``self.args`` and ``self.kwargs``.
 
 Let's take a look at the full example:
 
@@ -23,7 +24,7 @@ What happens here?
    :class:`~dmr.components.Path` injects this response automatically,
    but since we don't use – we have to do that manually
    for our :ref:`response_validation` to work
-3. We also show how one can use :class:`~dmr.errors.APIError`
+3. We also show how one can use :class:`~dmr.response.APIError`
    to raise custom ``404`` errors when some objects are not found
 4. We define an api url with :func:`django.urls.path`
    (or with :func:`django.urls.re_path`)
@@ -63,6 +64,8 @@ When do you need to parse path parameters into models?
 1. When you need typed path parameter model
 2. When they have more metadata then regular Django can provide.
    For example: only positive integers. Or ``str`` with an exact length
+3. When you only need ``self.kwargs`` to be parsed,
+   because ``Path`` does not support variadic url args from ``self.args``
 
 You can define ``Path`` parameters
 the same way you define :class:`~dmr.components.Headers`,
@@ -100,6 +103,12 @@ What happens in this example?
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_path`` that will have the correct model type
+
+What is the difference from the raw ``path()`` model?
+
+1. ``Path`` component automatically injects ``404`` error into the final schema
+2. It perfoms a second validation of the ``self.kwargs`` with new extra metadata
+3. It add ``self.parsed_path`` attribute
 
 .. important::
 
