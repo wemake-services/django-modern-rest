@@ -26,6 +26,10 @@ We follow [Semantic Versions](https://semver.org/).
 
 - Improved "Returning responses" docs, #684
 
+### Misc
+
+- Improved getting started docs #665
+
 
 ## Version 0.2.0 (2026-03-15)
 
@@ -55,7 +59,6 @@ We follow [Semantic Versions](https://semver.org/).
 ### Misc
 
 - Improved components and auth docs
-- Improved getting started docs #665
 
 
 ## Version 0.1.0 (2026-03-13)
