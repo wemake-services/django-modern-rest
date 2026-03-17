@@ -47,7 +47,7 @@ class SettingsValidator:
 
         settings = self._validate_structure()
         self._validate_types(settings)
-        self.__class__.is_validated = True  # pyrefly: ignore[read-only]
+        self.__class__.is_validated = True
 
     def _validate_structure(self) -> _SettingsModel:
         settings = _resolve_defaults()

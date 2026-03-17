@@ -451,9 +451,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
 
         auth = [
-            *payload_auth,  # pyrefly: ignore[not-iterable]
-            *blueprint_auth,  # pyrefly: ignore[not-iterable]
-            *(self.controller_cls.auth or ()),  # pyrefly: ignore[not-iterable]
+            *payload_auth,
+            *blueprint_auth,
+            *(self.controller_cls.auth or ()),
             # TODO: maybe we should wrap auth handlers in global settings
             # in `sync_to_async` and `async_to_sync`?
             *settings_auth,

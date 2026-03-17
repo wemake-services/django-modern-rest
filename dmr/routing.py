@@ -12,7 +12,7 @@ from typing import (
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
-from django.urls import resolvers
+from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from django.views import defaults
 from typing_extensions import override
 
@@ -22,6 +22,8 @@ from dmr.openapi.collector import controller_mapping_collector
 from dmr.openapi.objects import Components, OpenAPI, Paths
 
 if TYPE_CHECKING:
+    from django.utils.functional import _StrOrPromise  # pyright: ignore[reportPrivateUsage]
+
     from dmr.controller import Blueprint, Controller
     from dmr.internal.types import FormatError
     from dmr.openapi.core.context import OpenAPIContext
@@ -33,7 +35,7 @@ _BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
 _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
-_AnyPattern: TypeAlias = resolvers.URLPattern | resolvers.URLResolver
+_AnyPattern: TypeAlias = URLPattern | URLResolver
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
@@ -282,7 +284,7 @@ def _body_builder(  # :)
     return factory
 
 
-class _PrefixRoutePattern(resolvers.RoutePattern):
+class _PrefixRoutePattern(RoutePattern):
     def __init__(
         self,
         route: str,
@@ -314,50 +316,44 @@ class _PrefixRoutePattern(resolvers.RoutePattern):
         return None
 
 
-@overload
-def path(
-    route: str,
-    view: Callable[..., HttpResponseBase],
-    kwargs: dict[str, Any] = ...,
-    name: str = ...,
-) -> resolvers.URLPattern: ...
-
-
 # NOTE: keep in sync with `django-stubs`!
 @overload
 def path(
-    route: str,
+    route: '_StrOrPromise',
+    view: Callable[..., HttpResponseBase],
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLPattern: ...
+@overload
+def path(
+    route: '_StrOrPromise',
     view: Callable[..., Coroutine[Any, Any, HttpResponseBase]],
-    kwargs: dict[str, Any] = ...,
-    name: str = ...,
-) -> resolvers.URLPattern: ...
-
-
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLPattern: ...
 @overload
 def path(
-    route: str,
+    route: '_StrOrPromise',
     view: tuple[Sequence[_AnyPattern], str | None, str | None],
-    kwargs: dict[str, Any] = ...,
-    name: str = ...,
-) -> resolvers.URLResolver: ...
-
-
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLResolver: ...
 @overload
 def path(
-    route: str,
-    view: Sequence[resolvers.URLResolver | str],
-    kwargs: dict[str, Any] = ...,
-    name: str = ...,
-) -> resolvers.URLResolver: ...
+    route: '_StrOrPromise',
+    view: Sequence[URLResolver | str],
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLResolver: ...
 
 
 def path(
-    route: str,
+    route: '_StrOrPromise',
     view: (
         Callable[..., HttpResponseBase]
         | Callable[..., Coroutine[Any, Any, HttpResponseBase]]
         | tuple[Sequence[_AnyPattern], str | None, str | None]
-        | Sequence[resolvers.URLResolver | str]
+        | Sequence[URLResolver | str]
     ),
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
