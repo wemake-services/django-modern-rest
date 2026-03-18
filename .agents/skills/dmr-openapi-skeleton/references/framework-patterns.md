@@ -143,7 +143,12 @@ Use this shape only when the user asks for a runnable project skeleton with docs
 from django.urls import include, path
 
 from dmr.openapi import build_schema
-from dmr.openapi.views import OpenAPIJsonView, RedocView, ScalarView, SwaggerView
+from dmr.openapi.views import (
+    OpenAPIJsonView,
+    RedocView,
+    ScalarView,
+    SwaggerView,
+)
 from dmr.routing import Router
 
 router = Router([...], prefix='api/')
