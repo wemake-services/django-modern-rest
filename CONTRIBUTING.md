@@ -34,6 +34,21 @@ make lint
 
 These steps are mandatory during the CI.
 
+## Documentation
+
+To build docs locally:
+
+```bash
+make -C docs clean html
+```
+
+If docs build fails on macOS with multiprocessing-related errors while
+running examples, force the start method explicitly:
+
+```bash
+DMR_SPAWN_METHOD=spawn make -C docs clean html
+```
+
 ## Submitting your code
 
 We use [trunk based](https://trunkbaseddevelopment.com/)
