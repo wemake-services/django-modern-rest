@@ -2,7 +2,7 @@ Spec-first generation
 =====================
 
 By example, you can use agent skill
-`dmr-llm-spec-first <https://github.com/milssky/dmr-llm-spec-first>`_
+`dmr-openapi-skeleton <https://github.com/wemake-services/django-modern-rest/tree/master/.agents/skills/dmr-openapi-skeleton>`_
 when you already have an OpenAPI contract and want a runnable
 ``django-modern-rest`` skeleton.
 
