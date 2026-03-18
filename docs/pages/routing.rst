@@ -91,7 +91,7 @@ But, we still want HTML 404 pages for non API views.
   while ``DEBUG = True`` is set.
 
   This is how Django behaves:
-  https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+  https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
 To achieve this, you can use
 :func:`~dmr.routing.build_404_handler` helper.
@@ -100,7 +100,7 @@ prefixes (using the same serializer and renderers as your API), and falls back
 to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``
-(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/6.0/ref/settings/#root-urlconf>`_):
+(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf>`_):
 
 .. literalinclude:: /examples/routing/handler404.py
   :caption: urls.py
@@ -129,7 +129,7 @@ But, we still want HTML 500 pages for non API views.
   while ``DEBUG = True`` is set.
 
   This is how Django behaves:
-  https://docs.djangoproject.com/en/6.0/ref/views/#the-500-server-error-view
+  https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
 To achieve this, you can use
 :func:`~dmr.routing.build_500_handler` helper.
@@ -138,7 +138,7 @@ prefixes (using the same serializer and renderers as your API), and falls back
 to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``
-(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/6.0/ref/settings/#root-urlconf>`_):
+(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf>`_):
 
 .. literalinclude:: /examples/routing/handler500.py
   :caption: views.py

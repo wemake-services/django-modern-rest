@@ -1,8 +1,8 @@
 LLM and AI support
-============================
+==================
 
 If you use AI coding assistants (Cursor, GitHub Copilot, ChatGPT, etc.)
-you can give them up-to-date documentation about ``django-modern-rest``.
+you can provide them up-to-date ``django-modern-rest`` documentation.
 This page describes the formats we provide and the use cases we officially
 support.
 
@@ -53,8 +53,8 @@ Supported use cases
 
 We support these workflows with LLMs:
 
-- **Learning** — Use DeepWiki (see above) to explore the framework with
-  AI assistance.
+- **Learning** — Use `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
+  to explore the framework with AI assistance.
 
 - **Spec-first / boilerplate from OpenAPI** — LLMs can help generate a
   :doc:`working project boilerplate <../openapi/spec-first>` (models,

@@ -2,9 +2,11 @@ Your first API
 ==============
 
 .. attention::
+
    Before starting this tutorial, make sure you have completed
-   the :doc:`../getting-started/installation` guide and verified
-   that your project runs successfully.
+   the :doc:`../getting-started/index` guide and verified
+   that your `project runs successfully
+   <https://docs.djangoproject.com/en/stable/ref/django-admin/#runserver>`_.
 
 **Prerequisites:** A Django project with ``django-modern-rest``.
 We'll add one controller and wire it in your URLs.
@@ -40,8 +42,8 @@ These will be used by the controller for parsing and serialization.
         :no-imports-spoiler:
 
 
-Step 2: Create the controller
------------------------------
+Step 2: Create a controller
+---------------------------
 
 Add a :class:`~dmr.controller.Controller` with :class:`~dmr.components.Body`
 and :class:`~dmr.components.Headers` so the request body and headers are

@@ -15,7 +15,7 @@ Requiring auth
 
   Current user will always be accessible as ``self.request.user``.
 
-  Read more: https://docs.djangoproject.com/en/6.0/topics/auth/default/
+  Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
 We provide two classes to require JWT auth in you API:
 

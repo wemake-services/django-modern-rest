@@ -58,7 +58,7 @@ and extend ``django-modern-rest`` framework.
 
 .. container:: buttons
 
-    :doc:`pages/getting-started/index`
+    :doc:`Getting Started <pages/getting-started/index>`
     `GitHub <https://github.com/wemake-services/django-modern-rest>`_
 
 
@@ -171,7 +171,7 @@ Here are our amazing people who made this project possible.
   :caption: Getting starting guides
   :hidden:
 
-  pages/getting-started/index
+  Getting Started <pages/getting-started/index>
   pages/core-concepts.rst
   pages/using-controller.rst
   pages/responses/index

@@ -2,7 +2,7 @@ Single-file app
 ===============
 
 **Prerequisites:** ``django-modern-rest`` installed
-(see :doc:`../getting-started/installation`). No Django project required,
+(see :doc:`../getting-started/index`). No Django project required,
 everything runs from one file.
 
 **What you'll build:** A single-file API with one ``POST`` endpoint and
@@ -71,7 +71,7 @@ Step 4: Run the app
 
 Use Django's so you can run ``python example.py runserver``.
 Install ``django-modern-rest`` first if you haven't
-(see :doc:`../getting-started/installation`).
+(see :doc:`../getting-started/index`).
 
 .. literalinclude:: /examples/structure/micro_framework/single_file_asgi.py
   :caption: example.py
