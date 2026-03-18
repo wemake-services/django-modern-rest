@@ -89,7 +89,7 @@ Usecases we officially support:
   a :doc:`working project boilerplate <openapi/spec-first>`
   with all the models / controllers / etc from a single ``openapi.json`` file,
   also know as "Spec First" approach
-- LLMs can :doc:`help you migrating from Django Ninja <openapi/dmr-from-ninja>`
+- LLMs can help you :doc:`migrating from Django Ninja <openapi/dmr-from-ninja>`
 
 
 Showcase
