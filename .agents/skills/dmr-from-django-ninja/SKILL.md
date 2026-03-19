@@ -104,17 +104,37 @@ Choose one and record it before edits:
 - Keep auth expectations endpoint-by-endpoint.
 - Keep throttling behavior and headers (e.g. `Retry-After`) unless drift approved.
 - Prefer existing project-native auth/throttle libraries through DMR hooks.
+- Always enable global `validate_responses` settings in local development and testing.
+- Ensure all extra responses are explicitly declared with `ResponseSpec`.
+- Require all responses to pass response validation.
 - Avoid Ninja compatibility shims as final solution.
   If a temporary shim is unavoidable, mark it explicitly as temporary,
   document replacement plan, and list it in `unresolved gaps`.
 
-### 10. Validate each slice with repository-native CI entrypoints
+### 10. Update tests for DMR tooling
+
+- Replace Ninja-specific test tooling (`ninja.testing.TestClient`,
+  NinjaExtra helpers, Ninja URL setup fixtures) with repository-native
+  Django/DMR testing entrypoints.
+- Migrate API test fixtures and clients as first-class migration scope:
+  keep fixture intent stable (`api_client`, `authed_api_client`, token/auth fixtures),
+  but rebind them to the migrated DMR stack.
+- Audit and update `pytest` plugin wiring (`conftest.py` / plugin modules)
+  so migrated API tests no longer depend on Ninja-only fixtures or helpers.
+- Keep contract assertions endpoint-by-endpoint:
+  status codes, payloads, headers, auth behavior, throttle behavior.
+- Ensure negative-path tests cover declared extra responses and match
+  `ResponseSpec` metadata.
+- Remove persistent `django-ninja` / `ninja-extra` imports from migrated
+  test modules unless explicitly approved as temporary drift.
+
+### 11. Validate each slice with repository-native CI entrypoints
 
 - Run the same commands CI uses in this repository.
 - Prefer official script entrypoints over ad-hoc command sets.
 - If docker-only CI/test environment is required, run in docker.
 
-### 11. Finish gate
+### 12. Finish gate
 
 Do not mark slice done until:
 - linters pass,
@@ -168,6 +188,8 @@ At each meaningful checkpoint and at completion, report in 3 sections:
 - Project-native batteries were evaluated first and used where possible.
 - No persistent Ninja shim or Ninja-bound naming remains in migrated transport layer.
 - Tests updated only where needed to keep equivalent behavioral coverage for selected strategy.
+- Response validation is enabled and all migrated endpoint responses pass it
+  (including extra responses declared via `ResponseSpec`).
 - Repository-native CI entrypoints executed per slice.
 - Final report emitted in required 3-section format.
 - After successful migration and green CI for migrated API surfaces, remove 'django-ninja' and 'ninja-extra' from project dependencies unless user explicitly approves keeping them.

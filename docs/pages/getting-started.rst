@@ -85,11 +85,14 @@ Usecases we officially support:
 
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
-- LLMs can help you generating
-  a :doc:`working project boilerplate <openapi/spec-first>`
-  with all the models / controllers / etc from a single ``openapi.json`` file,
-  also know as "Spec First" approach
-- LLMs can help you :doc:`migrating from Django Ninja <openapi/dmr-from-ninja>`
+
+We support several custom agent skills:
+
+- ``dmr-openapi-skeleton`` to generate
+  a :doc:`working project boilerplate <ai/spec-first>`
+  from a single ``openapi.json`` file (the "Spec First" approach)
+- ``dmr-from-django-ninja`` to help with
+  :doc:`migrating from Django Ninja <ai/dmr-from-ninja>`
 
 
 Showcase
