@@ -42,7 +42,7 @@ Use this shape when one route has one operation or when a single class naturally
 
 ## Use Blueprints for Multi-Method Paths
 
-Prefer this shape for multi-method paths: keep several methods in one Blueprint when they share the same parsing logic, 
+Prefer this shape for multi-method paths: keep several methods in one Blueprint when they share the same parsing logic,
 and split into multiple Blueprints only when parsing contracts differ materially.
 
 ```python
