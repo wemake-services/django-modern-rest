@@ -9,6 +9,7 @@ Use these patterns as the canonical dmr translation targets for generated skelet
 - Map path parameters to `Path[PathDto]`.
 - Map header parameters to `Headers[HeaderDto]`.
 - Map cookie parameters to `Cookies[CookieDto]`.
+- Map multipart file uploads to `FileMetadata[FileMetadataDto]` and use `self.parsed_file_metadata` for validated metadata.
 
 Prefer `pydantic.BaseModel` DTOs for OpenAPI-driven work unless the repository already leans on msgspec.
 
@@ -40,6 +41,9 @@ class UserCreateController(
 Use this shape when one route has one operation or when a single class naturally owns the endpoint.
 
 ## Use Blueprints for Multi-Method Paths
+
+Prefer this shape for multi-method paths: keep several methods in one Blueprint when they share the same parsing logic, 
+and split into multiple Blueprints only when parsing contracts differ materially.
 
 ```python
 from django.urls import path
@@ -77,7 +81,6 @@ router = Router(
 )
 ```
 
-Prefer this shape when one path exposes several verbs or when per-method contracts differ materially.
 
 ## Use Explicit Response Metadata Only When Needed
 
