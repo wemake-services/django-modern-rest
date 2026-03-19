@@ -12,7 +12,7 @@ Your first API
 We'll add one controller and wire it in your URLs.
 
 **What you'll build:** A ``POST`` endpoint that accepts a JSON body and
-a header, and returns a typed JSON response.
+returns a typed JSON response.
 
 
 Step 1: Define models
@@ -46,8 +46,8 @@ Step 2: Create a controller
 ---------------------------
 
 Add a :class:`~dmr.controller.Controller` with :class:`~dmr.components.Body`
-and :class:`~dmr.components.Headers` so the request body and headers are
-parsed into the models above. Use :class:`~dmr.plugins.pydantic.PydanticSerializer`
+so the request body is parsed into the models above.
+Use :class:`~dmr.plugins.pydantic.PydanticSerializer`
 or :class:`~dmr.plugins.msgspec.MsgspecSerializer` for serialization.
 Define a ``post`` method that returns a model instance; ``dmr`` will turn
 it into a :class:`django.http.HttpResponse`.
@@ -85,7 +85,7 @@ See :doc:`../routing` for how routing works.
   :linenos:
 
 Your first ``django-modern-rest`` API is ready. Run the server and try
-``POST /api/user/`` with a JSON body and the ``X-API-Consumer`` header.
+``POST /api/user/`` with a JSON body.
 
 
 Next steps

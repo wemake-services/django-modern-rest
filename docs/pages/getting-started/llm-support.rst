@@ -50,14 +50,21 @@ Third-party integrations
 
 Supported use cases
 -------------------
-
 We support these workflows with LLMs:
 
-- **Learning** — Use `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
-  to explore the framework with AI assistance.
+.. note::
+  LLM-generated output is not guaranteed to fully match your contract.
+  Always review and validate generated routes/schemas, media types,
+  status codes, headers, authentication/throttling, and error semantics
+  before production use.
 
-- **Spec-first / boilerplate from OpenAPI** — LLMs can help generate a
-  :doc:`working project boilerplate <../openapi/spec-first>` (models,
-  controllers, etc.) from a single ``openapi.json`` file (Spec First
-  approach). Note that LLM-generated code cannot guarantee strict
-  compliance; review and test the output.
+- **Learning** — Use `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
+  for AI-assisted exploration.
+
+- **Spec-first / boilerplate from OpenAPI** — Use :doc:`spec-first generation <../ai/spec-first>`
+  with agent skill `dmr-openapi-skeleton <https://github.com/wemake-services/django-modern-rest/tree/master/.agents/skills/dmr-openapi-skeleton>`_
+  to generate a runnable skeleton from a single ``openapi.json`` (OpenAPI ``3.1+``).
+
+- **Migration from Django Ninja** — Use :doc:`Django Ninja migration <../ai/dmr-from-ninja>`
+  with agent skill `dmr-from-django-ninja <https://github.com/wemake-services/django-modern-rest/tree/master/.agents/skills/dmr-from-django-ninja>`_
+  to migrate the transport layer incrementally.

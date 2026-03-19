@@ -3,6 +3,13 @@
 We follow [Semantic Versions](https://semver.org/).
 
 
+## WIP
+
+### Misc
+
+- Improved getting started docs #665
+
+
 ## Version 0.3.0 (2026-03-17)
 
 ### Features
@@ -25,10 +32,6 @@ We follow [Semantic Versions](https://semver.org/).
 ### Misc
 
 - Improved "Returning responses" docs, #684
-
-### Misc
-
-- Improved getting started docs #665
 
 
 ## Version 0.2.0 (2026-03-15)
