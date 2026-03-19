@@ -48,6 +48,21 @@ For ``pytest`` we also have a bundled plugin with several different fixtures:
 
 No need to configure anything, just use these fixtures by names in your tests.
 
+You can use plain Django test primitives:
+
+.. literalinclude:: /examples/testing/django_builtin_client.py
+  :caption: django_builtin_client.py
+  :language: python
+  :linenos:
+
+Or use ``dmr.test`` helpers when you want JSON defaults and controller-level
+testing with request factories:
+
+.. literalinclude:: /examples/testing/dmr_helpers.py
+  :caption: dmr_helpers.py
+  :language: python
+  :linenos:
+
 
 Structured data generation
 --------------------------

@@ -59,7 +59,9 @@ example: ## Run mypy and pytest on example code
 	cd django_test_app && $(POETRY) run mypy --config-file mypy.ini
 	PYTHONPATH='docs/' $(POETRY) run pytest -o addopts='' \
 	  --suppress-no-test-exit-code \
-	  docs/examples/testing/polyfactory_usage.py
+	  docs/examples/testing/polyfactory_usage.py \
+	  docs/examples/testing/django_builtin_client.py \
+	  docs/examples/testing/dmr_helpers.py
 
 .PHONY: example-run
 example-run: ## Run example app
