@@ -36,6 +36,29 @@ You can use prompt like this:
    Use `PydanticSerializer`, include `msgspec` and `openapi` extras,
    and do not implement any business logic.
 
+How to use in Claude Code
+-------------------------
+
+1. Install the plugin:
+
+.. code-block:: text
+
+   /plugin install github.com/wemake-services/django-modern-rest
+
+2. Verify skills are available:
+
+.. code-block:: text
+
+   /skills list
+
+3. Invoke the skill:
+
+.. code-block:: text
+
+   /skills dmr-openapi-skeleton
+
+4. Then provide the OpenAPI source (file path, URL, or pasted spec) and generation constraints.
+
 
 What is generated
 -----------------
