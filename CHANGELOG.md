@@ -8,9 +8,9 @@ We follow [Semantic Versions](https://semver.org/).
 ### Features
 
 - Added `MediaType` validation for the default `encoding` field
-  and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields
+  and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
 - Added `MediaTypeMetadata` metadata item to set required parameters
-  for the `MediaType` request body parameters for `Body` component
+  for the `MediaType` request body parameters for `Body` component, #695
 
 ### Misc
 
