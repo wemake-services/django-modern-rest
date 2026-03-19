@@ -875,10 +875,10 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         }
         return RequestBody(
             content={
-                # TODO: support `MediaTypeMetadata` annotation here
                 parser.content_type: cls.schema_metadata.media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
+                    parser,
                     context,
                 )
                 for parser in metadata.parsers.values()

@@ -19,7 +19,6 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
         used_for_response: bool = False,
     ) -> SchemaDef | None:
         """Proxies the JSON schema generation to msgspec itself."""
-        # TODO: handle `Annotated` types correctly
         try:
             (out,), components = schema_components(
                 (model,),

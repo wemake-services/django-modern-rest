@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 class MediaTypeMetadata:
     """Media type metadata to be set on a request body."""
 
+    # NOTE: defaults here must match defaults of `MediaType`:
     example: Any | None = None
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None

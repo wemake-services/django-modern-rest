@@ -12,6 +12,10 @@ We follow [Semantic Versions](https://semver.org/).
 - Added `MediaTypeMetadata` metadata item to set required parameters
   for the `MediaType` request body parameters for `Body` component, #695
 
+### Bugfixes
+
+- Fixed a bug where `FileMetadata` rendered list of schemas incorrectly
+
 ### Misc
 
 - Added `$dmr-openapi-skeleton` AI agent skill, #693

@@ -192,6 +192,13 @@ We also support the same way for conditional types:
   :language: python
   :linenos:
 
+And for :class:`~dmr.components.FileMetadata`:
+
+.. literalinclude:: /examples/openapi/request_files_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
 Customizing response
 ~~~~~~~~~~~~~~~~~~~~
 

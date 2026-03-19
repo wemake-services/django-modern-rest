@@ -99,6 +99,12 @@ Here's the list of fields that we support as a metadata:
 We don't copy content for the validation, only metadata.
 
 
+Customizing OpenAPI metadata for FileMetadata
+---------------------------------------------
+
+See :ref:`customizing_body_openapi`.
+
+
 Sending files with extra body parameters
 ----------------------------------------
 
