@@ -1,4 +1,172 @@
 # serializer version: 1
+# name: test_schema_with_body_existing_examples
+  '''
+  {
+    "info": {
+      "title": "Django Modern Rest",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/v1/point/": {
+        "post": {
+          "operationId": "postExistingbodyexamplescontrollerApiV1Point",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_RegularBody"
+                },
+                "examples": {
+                  "start": {
+                    "summary": "hand written example",
+                    "description": "starting point",
+                    "value": {
+                      "coord_x": 0,
+                      "coord_y": 0
+                    }
+                  }
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "integer",
+                    "example": 4185
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "_RegularBody": {
+          "properties": {
+            "coord_x": {
+              "type": "number",
+              "title": "Coord X"
+            },
+            "coord_y": {
+              "type": "number",
+              "title": "Coord Y"
+            }
+          },
+          "type": "object",
+          "required": [
+            "coord_x",
+            "coord_y"
+          ],
+          "title": "_RegularBody",
+          "example": {
+            "coord_x": -97227.2276503845,
+            "coord_y": -3.7299936760405
+          }
+        },
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
+          "example": {
+            "detail": [
+              {
+                "msg": "GMPXMVbyXHUfymCDaloV",
+                "loc": [
+                  "NiPhGgaTklZTpXCJkWJY"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "securitySchemes": {}
+    }
+  }
+  '''
+# ---
 # name: test_user_schema_with_examples
   '''
   {

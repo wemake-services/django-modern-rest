@@ -451,6 +451,245 @@
   }
   '''
 # ---
+# name: test_conditional_types_with_example
+  '''
+  {
+    "info": {
+      "title": "Django Modern Rest",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/types-with-example/": {
+        "post": {
+          "operationId": "postConditionaltypeswithexamplecontrollerApiTypesWithExample",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomUserModel"
+                },
+                "example": "just for test"
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/_XmlModel"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CustomUserModel"
+                  }
+                },
+                "application/xml": {
+                  "schema": {
+                    "$ref": "#/components/schemas/_XmlResponseModel"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/xml": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/xml": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/xml": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "_UserModel": {
+          "properties": {
+            "age": {
+              "type": "integer",
+              "maximum": 100,
+              "exclusiveMinimum": 0,
+              "title": "Age"
+            },
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "deprecated": true
+            },
+            "email": {
+              "type": "string",
+              "title": "Email"
+            }
+          },
+          "type": "object",
+          "required": [
+            "age",
+            "username",
+            "email"
+          ],
+          "title": "CustomUserModel"
+        },
+        "_XmlModel": {
+          "properties": {
+            "xml_value": {
+              "type": "integer",
+              "title": "Xml Value"
+            }
+          },
+          "type": "object",
+          "required": [
+            "xml_value"
+          ],
+          "title": "_XmlModel"
+        },
+        "CustomUserModel": {
+          "properties": {
+            "age": {
+              "type": "integer",
+              "maximum": 100,
+              "exclusiveMinimum": 0,
+              "title": "Age"
+            },
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "deprecated": true
+            },
+            "email": {
+              "type": "string",
+              "title": "Email"
+            }
+          },
+          "type": "object",
+          "required": [
+            "age",
+            "username",
+            "email"
+          ],
+          "title": "CustomUserModel"
+        },
+        "_XmlResponseModel": {
+          "properties": {
+            "xml_response": {
+              "type": "string",
+              "title": "Xml Response"
+            }
+          },
+          "type": "object",
+          "required": [
+            "xml_response"
+          ],
+          "title": "_XmlResponseModel"
+        },
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        }
+      },
+      "securitySchemes": {}
+    }
+  }
+  '''
+# ---
 # name: test_raw_path_schema
   '''
   {

@@ -11,4 +11,4 @@ class RequestBody:
 
     content: dict[str, 'MediaType']
     description: str | None = None
-    required: bool = False
+    required: bool = True

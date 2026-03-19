@@ -29,10 +29,12 @@ from dmr.metadata import (
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
+    get_annotated_metadata,
 )
 from dmr.negotiation import get_conditional_types
 from dmr.openapi.objects import (
     MediaType,
+    MediaTypeMetadata,
     Parameter,
     Reference,
     RequestBody,
@@ -405,7 +407,7 @@ class Body(ComponentParser, Generic[_BodyT]):
 
     @override
     @classmethod
-    def get_schema(
+    def get_schema(  # noqa: WPS210
         cls,
         model: Any,
         metadata: EndpointMetadata,
@@ -413,22 +415,34 @@ class Body(ComponentParser, Generic[_BodyT]):
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(model, serializer)
+        conditional_types = cls.conditional_types(model)
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
                 serializer,
             )
-            for content_type, conditional_model in cls.conditional_types(
-                model,
-            ).items()
+            for content_type, conditional_model in conditional_types.items()
         }
-        return RequestBody(
-            content={
-                parser.content_type: MediaType(
-                    schema=conditional_schemas.get(parser.content_type, schema),
+        media_types: dict[str, MediaType] = {}
+        for parser in metadata.parsers.values():
+            media_type_meta = (
+                get_annotated_metadata(
+                    conditional_types.get(parser.content_type, model),
+                    MediaTypeMetadata,
                 )
-                for parser in metadata.parsers.values()
-            },
+                or MediaTypeMetadata()
+            )
+            media_types[parser.content_type] = MediaType(
+                schema=conditional_schemas.get(parser.content_type, schema),
+                example=media_type_meta.example,
+                examples=media_type_meta.examples,
+                encoding=media_type_meta.encoding,
+                item_encoding=media_type_meta.item_encoding,
+                prefix_encoding=media_type_meta.prefix_encoding,
+            )
+
+        return RequestBody(
+            content=media_types,
             required=True,
             description=context.registries.schema.maybe_resolve_reference(
                 schema,
@@ -861,6 +875,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         }
         return RequestBody(
             content={
+                # TODO: support `MediaTypeMetadata` annotation here
                 parser.content_type: cls.schema_metadata.media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,

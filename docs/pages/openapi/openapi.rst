@@ -147,17 +147,47 @@ metadata.
   is used to generate summary and description
   for the :class:`~dmr.openapi.objects.Operation`.
 
+
+.. _customizing_parameter_openapi:
+
 Customizing parameter
 ~~~~~~~~~~~~~~~~~~~~~
 
 There are different styles and other features
 that :class:`~dmr.openapi.objects.Parameter` supports
-in `OpenAPI <https://learn.openapis.org/specification/parameters.html>`_.
+in `OpenAPI Parameters <https://learn.openapis.org/specification/parameters.html>`_.
 
 For example, if you want to change how :class:`~dmr.components.Query`
-parameter is documented:
+parameter is documented with the help
+of :class:`dmr.openapi.objects.ParameterMetadata` annotation:
 
 .. literalinclude:: /examples/openapi/parameter_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+
+.. _customizing_body_openapi:
+
+Customizing media types
+~~~~~~~~~~~~~~~~~~~~~~~
+
+There are different metadata fields, like ``examples`` and ``encoding``,
+that :class:`~dmr.openapi.objects.MediaType` supports
+in `OpenAPI MediaType <https://spec.openapis.org/oas/latest#media-type-object>`_.
+
+For example, if you want to change how :class:`~dmr.components.Body`
+provides examples,
+you can use :class:`dmr.openapi.objects.MediaTypeMetadata` annotation:
+
+.. literalinclude:: /examples/openapi/request_body_customization.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+We also support the same way for conditional types:
+
+.. literalinclude:: /examples/openapi/request_conditional_body_customization.py
   :caption: views.py
   :language: python
   :linenos:

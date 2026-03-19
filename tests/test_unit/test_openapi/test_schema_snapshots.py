@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, TypeAlias
 
 import pydantic
 from django.urls import path, re_path
@@ -17,7 +17,7 @@ from dmr import (
 )
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
-from dmr.openapi.objects import ParameterMetadata
+from dmr.openapi.objects import MediaTypeMetadata, ParameterMetadata
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -191,6 +191,70 @@ def test_conditional_types(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/',
                     [path('types/', _ConditionalTypesController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+_UserModelWithExample: TypeAlias = Annotated[
+    _UserModel,
+    MediaTypeMetadata(example='just for test'),
+]
+
+
+class _ConditionalTypesWithExampleController(
+    Controller[PydanticSerializer],
+    Body[
+        Annotated[
+            _UserModel | _XmlModel,
+            conditional_type({
+                ContentType.json: _UserModelWithExample,
+                ContentType.xml: _XmlModel,
+            }),
+        ],
+    ],
+):
+    responses = (
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.CONFLICT,
+            limit_to_content_types={
+                ContentType.json,
+            },
+        ),
+    )
+    parsers = [JsonParser(), XmlParser()]
+    renderers = [JsonRenderer(), XmlRenderer()]
+
+    def post(
+        self,
+    ) -> Annotated[
+        _UserModel | _XmlResponseModel,
+        'comment',
+        conditional_type({
+            ContentType.json: _UserModelWithExample,
+            ContentType.xml: _XmlResponseModel,
+        }),
+    ]:
+        raise NotImplementedError
+
+
+def test_conditional_types_with_example(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for file controller."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/',
+                    [
+                        path(
+                            'types-with-example/',
+                            _ConditionalTypesWithExampleController.as_view(),
+                        ),
+                    ],
                 ),
             ).convert(),
             indent=2,

@@ -85,6 +85,12 @@ it is up to users to set.
   If you split them, you might get a messed up value.
 
 
+Customizing OpenAPI metadata for Headers
+----------------------------------------
+
+See :ref:`customizing_parameter_openapi`.
+
+
 API Reference
 -------------
 
