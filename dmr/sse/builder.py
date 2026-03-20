@@ -20,6 +20,7 @@ from dmr.sse.metadata import SSE, SSEContext, SSEResponse, SSEResponseSpec
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 from dmr.types import parse_return_annotation
+from functools import wraps
 
 
 class _SSEMetadata(EndpointMetadata):
@@ -264,6 +265,8 @@ def _build_controller(  # noqa: WPS211, WPS234
     event_model: Any,
     custom_metadata_cls: type[EndpointMetadata],
 ) -> type[Controller[_SerializerT]]:
+
+    @wraps(func, updated=())
     class SSEController(  # noqa: WPS431
         Controller[serializer],  # type: ignore[valid-type]
         *filter(None, [path, query, headers, cookies]),  # type: ignore[misc]  # noqa: WPS606

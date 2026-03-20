@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getBuildControllerLocalsSsecontrollerApiV1Complex",
+          "operationId": "getComplexSseApiV1Complex",
           "responses": {
             "200": {
               "description": "OK",
@@ -207,7 +207,7 @@
     "paths": {
       "/api/v1/overridden": {
         "get": {
-          "operationId": "getBuildControllerLocalsSsecontrollerApiV1Overridden",
+          "operationId": "getOverriddenSseApiV1Overridden",
           "responses": {
             "200": {
               "description": "OK",
@@ -345,7 +345,7 @@
     "paths": {
       "/api/v1/sse": {
         "get": {
-          "operationId": "getBuildControllerLocalsSsecontrollerApiV1Sse",
+          "operationId": "getValidSseApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",

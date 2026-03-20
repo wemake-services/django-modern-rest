@@ -15,6 +15,7 @@ We follow [Semantic Versions](https://semver.org/).
 
 ### Bugfixes
 
+- Fixed `SSE` controllers `__name__` and `__doc__` generation
 - Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
 
 ### Misc
