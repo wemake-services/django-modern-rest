@@ -1798,7 +1798,7 @@
   margin-top: 10px;
   line-height: 1.4;
   font-size: 0.9em;
-  
+
   li {
     background-color: inherit;
   }
