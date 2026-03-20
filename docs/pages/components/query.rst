@@ -39,6 +39,12 @@ What happens in this example?
 3. Then we use ``self.parsed_query`` that will have the correct model type
 
 
+Customizing OpenAPI metadata for Query
+--------------------------------------
+
+See :ref:`customizing_parameter_openapi`.
+
+
 Forcing query params to be a list
 ---------------------------------
 

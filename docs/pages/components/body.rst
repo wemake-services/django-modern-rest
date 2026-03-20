@@ -45,6 +45,12 @@ What happens in this example?
 3. Then we use ``self.parsed_body`` that will have the correct model type
 
 
+Customizing OpenAPI metadata for Body
+-------------------------------------
+
+See :ref:`customizing_body_openapi`.
+
+
 Parsing forms
 -------------
 

@@ -33,6 +33,29 @@ You can use prompt like this:
    headers. Keep business logic untouched, migrate slice-by-slice, and run the
    repository test commands after each slice.
 
+How to use in Claude Code
+-------------------------
+
+1. Install the plugin:
+
+.. code-block:: text
+
+   /plugin install github.com/wemake-services/django-modern-rest
+
+2. Verify skills are available:
+
+.. code-block:: text
+
+   /skills list
+
+3. Invoke the skill:
+
+.. code-block:: text
+
+   /skills dmr-from-django-ninja
+
+4. Then describe migration scope and constraints in a normal prompt.
+
 
 What is migrated
 ----------------

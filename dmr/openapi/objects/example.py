@@ -13,7 +13,6 @@ class Example:
     value(s) if incompatible.
     """
 
-    id: str | None = None
     summary: str | None = None
     description: str | None = None
     value: Any | None = None

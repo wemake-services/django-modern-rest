@@ -1,5 +1,5 @@
 import json
-from typing import ClassVar, Literal
+from typing import Annotated, ClassVar, Literal
 
 import pydantic
 from django.http import FileResponse
@@ -15,6 +15,7 @@ from dmr import (
 )
 from dmr.files import FileResponseSpec
 from dmr.openapi import build_schema
+from dmr.openapi.objects import Encoding, MediaTypeMetadata
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
@@ -113,6 +114,48 @@ def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     '/',
                     [path('file/', _BodyAndFileController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _FileMetadataController(
+    Controller[PydanticSerializer],
+    FileMetadata[
+        Annotated[
+            _SeveralFiles,
+            MediaTypeMetadata(
+                example='whatever',
+                encoding={
+                    'second_file': Encoding(content_type='image/png'),
+                    'attachments': Encoding(content_type='image/jpg'),
+                },
+            ),
+        ]
+    ],
+):
+    parsers = (MultiPartParser(),)
+
+    async def get(self) -> list[int]:
+        raise NotImplementedError
+
+
+def test_file_with_metadata_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for file controller with metadata."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    '',
+                    [
+                        path(
+                            'file-with-metadata/',
+                            _FileMetadataController.as_view(),
+                        ),
+                    ],
                 ),
             ).convert(),
             indent=2,

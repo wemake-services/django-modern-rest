@@ -116,6 +116,13 @@ What is the difference from the raw ``path()`` model?
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
   We don't automatically validate it.
 
+
+Customizing OpenAPI metadata for Path
+-------------------------------------
+
+See :ref:`customizing_parameter_openapi`.
+
+
 API Reference
 -------------
 

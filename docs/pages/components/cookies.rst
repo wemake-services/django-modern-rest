@@ -41,6 +41,12 @@ What happens in this example?
 Cookies are case-sensitive.
 
 
+Customizing OpenAPI metadata for Cookies
+----------------------------------------
+
+See :ref:`customizing_parameter_openapi`.
+
+
 API Reference
 -------------
 

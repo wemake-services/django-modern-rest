@@ -55,6 +55,9 @@ from dmr.openapi.objects.link import Link as Link
 from dmr.openapi.objects.media_type import (
     MediaType as MediaType,
 )
+from dmr.openapi.objects.media_type import (
+    MediaTypeMetadata as MediaTypeMetadata,
+)
 from dmr.openapi.objects.oauth_flow import OAuthFlow as OAuthFlow
 from dmr.openapi.objects.oauth_flows import (
     OAuthFlows as OAuthFlows,

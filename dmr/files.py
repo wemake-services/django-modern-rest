@@ -6,18 +6,21 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import override
 
 from dmr.headers import HeaderSpec
-from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.metadata import EndpointMetadata, ResponseSpec, get_annotated_metadata
+from dmr.negotiation import get_conditional_types
 from dmr.openapi import OpenAPIContext
 from dmr.openapi.mappers.content_types import content_types
 from dmr.openapi.objects import (
     Encoding,
     MediaType,
+    MediaTypeMetadata,
     OpenAPIFormat,
     OpenAPIType,
     Reference,
     Response,
     Schema,
 )
+from dmr.parsers import Parser
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -32,6 +35,7 @@ class FileBody:
         cls,
         schema: Schema | Reference,
         model: Any,
+        parser: Parser,
         context: 'OpenAPIContext',
     ) -> MediaType:
         """Returns the media type for the given file."""
@@ -39,19 +43,45 @@ class FileBody:
         schema = dataclasses.replace(
             schema,
             properties={
-                property_name: cls.get_schema()
-                for property_name in (schema.properties or [])
+                property_name: cls.get_schema(second, context)
+                for property_name, second in (schema.properties or {}).items()
             },
+        )
+        conditional_models = get_conditional_types(model) or {}
+        media_type_meta = (
+            get_annotated_metadata(
+                conditional_models.get(parser.content_type, model),
+                MediaTypeMetadata,
+            )
+            or MediaTypeMetadata()
         )
         return MediaType(
             schema=schema,
-            encoding=cls.encoding(model, schema),
+            encoding=media_type_meta.encoding or cls.encoding(model, schema),
+            example=media_type_meta.example,
+            examples=media_type_meta.examples,
+            item_encoding=media_type_meta.item_encoding,
+            prefix_encoding=media_type_meta.prefix_encoding,
         )
 
     @classmethod
-    def get_schema(cls) -> Schema:
+    def get_schema(
+        cls,
+        schema: Schema | Reference,
+        context: 'OpenAPIContext',
+    ) -> Schema:
         """Returns the openapi schema that this object represents."""
-        return Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.BINARY)
+        file_schema = Schema(
+            type=OpenAPIType.STRING,
+            format=OpenAPIFormat.BINARY,
+        )
+        if isinstance(schema, Schema) and schema.type == OpenAPIType.ARRAY:
+            return Schema(
+                type=OpenAPIType.ARRAY,
+                format=schema.format,
+                items=file_schema,
+            )
+        return file_schema
 
     @classmethod
     def encoding(
@@ -105,7 +135,9 @@ class FileResponseSpec(ResponseSpec):
         response = ResponseSpec.get_schema(self, metadata, serializer, context)
         # We know that we return files:
         for media in (response.content or {}).values():
-            media.schema = self.file_body.get_schema()
+            # for mypy: it can't be `None` here
+            assert media.schema  # noqa: S101
+            media.schema = self.file_body.get_schema(Schema(), context)
         # We know that `FileBody` was a fake model, remove it:
         context.registries.schema.try_unregister(
             serializer.schema_generator.schema_name(self.file_body),

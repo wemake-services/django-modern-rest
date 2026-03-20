@@ -38,6 +38,9 @@ Objects
 .. autoclass:: dmr.openapi.objects.Link
    :members:
 
+.. autoclass:: dmr.openapi.objects.MediaTypeMetadata
+   :members:
+
 .. autoclass:: dmr.openapi.objects.MediaType
    :members:
 

@@ -5,9 +5,23 @@ We follow [Semantic Versions](https://semver.org/).
 
 ## WIP
 
+### Features
+
+- Added `MediaType` validation for the default `encoding` field
+  and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
+- Added `MediaTypeMetadata` metadata item to set required parameters
+  for the `MediaType` request body parameters
+  for `Body` and `FileMedata` components, #695 and #698
+
+### Bugfixes
+
+- Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
+
 ### Misc
 
-- Improved getting started docs #665
+- Added `$dmr-openapi-skeleton` AI agent skill, #693
+- Added `$dmr-from-django-ninja` AI agent skill, #693
+- Improved `Getting Started` docs #665
 
 
 ## Version 0.3.0 (2026-03-17)
