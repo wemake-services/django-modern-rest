@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from dmr.openapi.views.base import OpenAPIView
+from dmr.settings import Settings, resolve_setting
 
 
 class ScalarView(OpenAPIView):
@@ -25,12 +26,17 @@ class ScalarView(OpenAPIView):
 
     def get(self, request: 'HttpRequest') -> 'HttpResponse':
         """Render the OpenAPI schema using Scalar template."""
+        cdn_config = resolve_setting(Settings.openapi_static_cdn)
+        scalar_cdn = cdn_config.get('scalar')
+
         return render(
             request,
             self.template_name,
             context={
                 'title': self.schema.info.title,
                 'schema': self.dumps(self.schema.convert()),
+                'use_cdn': bool(scalar_cdn),
+                'scalar_cdn': scalar_cdn,
             },
             content_type=self.content_type,
         )

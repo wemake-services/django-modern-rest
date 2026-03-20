@@ -62,6 +62,7 @@ class Settings(enum.StrEnum):
     openapi_config = 'openapi_config'
     openapi_examples_seed = 'openapi_examples_seed'
     django_treat_as_post = 'django_treat_as_post'
+    openapi_static_cdn = 'openapi_static_cdn'
 
 
 @final
@@ -107,6 +108,7 @@ class SettingsDict(TypedDict, total=False):
     openapi_config: 'OpenAPIConfig'
     openapi_examples_seed: int | None
     django_treat_as_post: Set[str]
+    openapi_static_cdn: dict[str, str]
 
 
 #: Default settings for `django_modern_rest`.
@@ -130,6 +132,8 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
+    # OpenAPI static CDN configuration:
+    Settings.openapi_static_cdn: {},
 }
 
 assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
