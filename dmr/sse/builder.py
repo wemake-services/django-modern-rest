@@ -1,5 +1,6 @@
 import dataclasses
 from collections.abc import Awaitable, Callable, Sequence
+from functools import wraps
 from http import HTTPStatus
 from typing import Any, ClassVar, get_args
 
@@ -20,7 +21,6 @@ from dmr.sse.metadata import SSE, SSEContext, SSEResponse, SSEResponseSpec
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 from dmr.types import parse_return_annotation
-from functools import wraps
 
 
 class _SSEMetadata(EndpointMetadata):
@@ -326,7 +326,7 @@ def _build_controller(  # noqa: WPS211, WPS234
                 )
             return streaming_response
 
-    return SSEController
+    return SSEController  # pyright: ignore[reportReturnType]
 
 
 def _resolve_event_model(func: Callable[..., Any]) -> Any:
