@@ -30,6 +30,11 @@ router = Router(
             name='request_id',
         ),
         path(
+            'etag/',
+            views.ConditionalETagController.as_view(),
+            name='etag',
+        ),
+        path(
             'login-required/',
             views.LoginRequiredController.as_view(),
             name='login_required',

@@ -207,7 +207,19 @@ is required.
 Everything just works.
 
 
-ETag
-----
+Conditional requests (ETag)
+---------------------------
 
-TODO
+Django has built-in support for conditional request processing
+(``If-None-Match``, ``If-Modified-Since``, ``304 Not Modified``):
+
+- https://docs.djangoproject.com/en/6.0/topics/conditional-view-processing/
+
+With ``django-modern-rest`` you can integrate it via
+:func:`~dmr.decorators.wrap_middleware`
+and :func:`django.views.decorators.http.condition`.
+
+.. literalinclude:: /examples/integrations/etag.py
+  :caption: etag.py
+  :language: python
+  :linenos:
