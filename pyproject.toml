@@ -348,4 +348,4 @@ project-includes = ["dmr", "typesafety"]
 
 [tool.codespell]
 # codespell configuration: https://pypi.org/project/codespell
-skip = '__pycache__,_build,.mypy_cache,swagger-*.js,dmr/static/*,*.js,*.css,*.min.*'
+skip = '__pycache__,_build,.mypy_cache,swagger-*.js,dmr/static/*,*.js,*.css,*.min.*,*.msgpack'
