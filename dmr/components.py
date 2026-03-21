@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     Generic,
     TypeAlias,
     TypeVar,
@@ -49,12 +50,12 @@ if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
 
-_unnamed_path_params_msg = _(
+_UNNAMED_PATH_PARAMS_MSG: Final = _(
     'Path {cls} with field_model={field_model}'
     ' does not allow unnamed path parameters'
     ' args={args}',
 )
-_unsupported_file_parser_msg = _(
+_UNSUPPORTED_FILE_PARSER_MSG: Final = _(
     'Trying to parse files with {parser_name}'
     ' that does not support'
     ' SupportsFileParsing protocol',
@@ -628,7 +629,7 @@ class Path(ComponentParser, Generic[_PathT]):
     ) -> Any:
         if blueprint.args:
             raise RequestSerializationError(
-                _unnamed_path_params_msg.format(
+                _UNNAMED_PATH_PARAMS_MSG.format(
                     cls=cls,
                     field_model=repr(field_model),
                     args=repr(blueprint.args),
@@ -804,7 +805,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         parser = endpoint.request_negotiator(blueprint.request)
         if not isinstance(parser, SupportsFileParsing):
             raise RequestSerializationError(
-                _unsupported_file_parser_msg.format(
+                _UNSUPPORTED_FILE_PARSER_MSG.format(
                     parser_name=repr(type(parser).__name__),
                 ),
             )

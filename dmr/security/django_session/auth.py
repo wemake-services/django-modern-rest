@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from django.conf import settings
 from django.http import HttpRequest
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
-_csrf_failed_msg = _('CSRF Failed: {reason}')
+_CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
 
 
 @final
@@ -113,7 +113,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         reason = _get_csrf_failure_reason(controller.request)
         if reason:
             raise APIError(
-                controller.format_error(_csrf_failed_msg.format(reason=reason)),
+                controller.format_error(_CSRF_FAILED_MSG.format(reason=reason)),
                 status_code=HTTPStatus.FORBIDDEN,
             )
 

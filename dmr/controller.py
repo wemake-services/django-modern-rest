@@ -4,6 +4,7 @@ from http import HTTPMethod, HTTPStatus
 from typing import (
     Any,
     ClassVar,
+    Final,
     Generic,
     TypeAlias,
     TypeVar,
@@ -40,7 +41,7 @@ from dmr.validation import (
     SettingsValidator,
 )
 
-_method_not_allowed_msg = _(
+_METHOD_NOT_ALLOWED_MSG: Final = _(
     'Method {method} is not allowed, allowed: {allowed}',
 )
 
@@ -602,7 +603,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             build_response(
                 self.serializer,
                 raw_data=self.format_error(
-                    _method_not_allowed_msg.format(
+                    _METHOD_NOT_ALLOWED_MSG.format(
                         method=repr(method),
                         allowed=repr(allowed_methods),
                     ),

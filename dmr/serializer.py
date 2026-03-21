@@ -2,7 +2,7 @@ import abc
 from collections import defaultdict
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, TypeVar
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.metadata import EndpointMetadata
 
-_cannot_deserialize_msg = _(
+_CANNOT_DESERIALIZE_MSG: Final = _(
     'Value {value} of type {type} is not supported for {target_type}',
 )
 
@@ -122,7 +122,7 @@ class BaseSerializer:  # noqa: WPS214
         Should be called inside :meth:`deserialize`.
         """
         raise RequestSerializationError(
-            _cannot_deserialize_msg.format(
+            _CANNOT_DESERIALIZE_MSG.format(
                 value=to_deserialize,
                 type=type(to_deserialize),
                 target_type=target_type,

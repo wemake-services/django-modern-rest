@@ -1,6 +1,6 @@
 import enum
 from collections.abc import Mapping
-from typing import Any, final
+from typing import Any, Final, final
 
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
@@ -21,7 +21,7 @@ from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 
-_cannot_parse_msg = _(
+_CANNOT_PARSE_MSG: Final = _(
     'Cannot parse request body with'
     ' content type {content_type},'
     ' expected={expected}',
@@ -102,7 +102,7 @@ class RequestNegotiator:
         # No parsers found, raise an error:
         expected = list(self._parsers.keys())
         raise RequestSerializationError(
-            _cannot_parse_msg.format(
+            _CANNOT_PARSE_MSG.format(
                 content_type=repr(request.content_type),
                 expected=repr(expected),
             ),
