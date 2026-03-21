@@ -24,7 +24,10 @@ from dmr.sse.stream import SSEStreamingResponse
 from dmr.types import parse_return_annotation
 
 
-class _SSEMetadata(EndpointMetadata):
+class SSEEndpointMetadata(EndpointMetadata):
+    """Endpoint metadata for SSE."""
+
+    # Abstract attribute:
     default_renderer: ClassVar[Renderer]
 
     @override
@@ -66,6 +69,22 @@ class _BaseSSEController(Controller[_SerializerT_co]):
     _validate_events: ClassVar[bool]
     _event_model: ClassVar[Any]
     _sse_streaming_response_cls: ClassVar[type[SSEStreamingResponse]]
+    _metadata_cls: ClassVar[type[SSEEndpointMetadata]]
+
+    @override
+    def __init_subclass__(cls) -> None:
+        # TODO: handle types that don't have `_regular_renderer` set yet.
+        metadata_cls = type(
+            f'{cls.__qualname__}_LimitedSSEEndpointMetadata',
+            (cls._metadata_cls,),
+            {'default_renderer': cls._regular_renderer},
+        )
+        cls.endpoint_cls = type(
+            f'{cls.__qualname__}_SSEEndpoint',
+            (Endpoint,),
+            {'metadata_cls': metadata_cls},
+        )
+        super().__init_subclass__()
 
     @override
     def to_error(
@@ -130,7 +149,7 @@ def sse(  # noqa: WPS211, WPS234
     sse_streaming_response_cls: type[
         SSEStreamingResponse
     ] = SSEStreamingResponse,
-    metadata_cls: type[EndpointMetadata] = _SSEMetadata,
+    metadata_cls: type[SSEEndpointMetadata] = SSEEndpointMetadata,
     auth: Sequence[AsyncAuth] | None = (),
 ) -> Callable[
     [
@@ -285,11 +304,7 @@ def sse(  # noqa: WPS211, WPS234
             sse_streaming_response_cls=sse_streaming_response_cls,
             auth=auth,
             event_model=event_model,
-            custom_metadata_cls=type(
-                '_LimitedSSEMetadata',
-                (metadata_cls,),
-                {'default_renderer': regular_renderer},
-            ),
+            metadata_cls=metadata_cls,
         )
 
     return decorator
@@ -319,7 +334,7 @@ def _build_controller(  # noqa: WPS211, WPS234
     sse_streaming_response_cls: type[SSEStreamingResponse],
     auth: Sequence[AsyncAuth] | None,
     event_model: Any,
-    custom_metadata_cls: type[EndpointMetadata],
+    metadata_cls: type[SSEEndpointMetadata],
 ) -> type[Controller[_SerializerT]]:
 
     @wraps(func, updated=())
@@ -332,9 +347,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         _validate_events = validate_events
         _event_model = event_model
         _sse_streaming_response_cls = sse_streaming_response_cls
-
-        class endpoint_cls(Endpoint):  # noqa: N801, WPS431
-            metadata_cls = custom_metadata_cls
+        _metadata_cls = metadata_cls
 
         @validate(
             response_spec,
