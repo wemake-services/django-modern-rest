@@ -62,6 +62,19 @@ Now you have your REST API that returns fully typed model responses
 and can work with :class:`~django.db.models.query.QuerySet`
 and :class:`~django.db.models.Model` instances.
 
+django-mantle
+~~~~~~~~~~~~~
+
+If you want to automate this part and automatically
+convert ``QuerySet`` into typed models, you can use
+`django-mantle <https://noumenal.es/mantle/>`_
+which is built just for this purpose:
+
+.. literalinclude:: /examples/integrations/django_mantel.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
 
 CSRF
 ----

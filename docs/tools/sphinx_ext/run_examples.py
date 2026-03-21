@@ -22,17 +22,19 @@ import subprocess  # noqa: S404
 import sys
 import time
 from collections.abc import Iterator
-from contextlib import contextmanager, redirect_stderr
+from contextlib import contextmanager, redirect_stderr, suppress
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
+import django
 import httpx
 import uvicorn
 import xmltodict
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
+from django.db import IntegrityError
 from django.test import override_settings
 from django.urls import URLPattern, clear_url_caches, path
 from django.views import View
@@ -74,7 +76,7 @@ def _get_mp_context() -> Any:
         ) from error
 
 
-_MP_CONTEXT = _get_mp_context()
+_MP_CONTEXT: Final = _get_mp_context()
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
@@ -87,6 +89,8 @@ _OpenAPIRunArgs: TypeAlias = dict[str, Any]
 
 logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
+
+db_populated = False
 
 
 class _StartupError(RuntimeError):
@@ -212,7 +216,7 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
-class _BaseBuilder:
+class _BaseBuilder:  # noqa: WPS214
     def __init__(self, file_path: Path, config: _AppRunArgs) -> None:
         """Initialize application builder with file path and configuration."""
         self.file_path = file_path
@@ -221,7 +225,9 @@ class _BaseBuilder:
     def build_app(self) -> ASGIHandler:
         """Build and return configured ASGI application."""
         self._configure_settings()
-        return self._build_app()
+        app = self._build_app()
+        self._populate_db()
+        return app
 
     def _configure_settings(self) -> None:
         if settings.configured:
@@ -234,16 +240,51 @@ class _BaseBuilder:
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
+                'django.contrib.sessions',
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
             ],
-            MIDDLEWARE=[],
+            MIDDLEWARE=[
+                'django.middleware.security.SecurityMiddleware',
+                'django.contrib.sessions.middleware.SessionMiddleware',
+                'django.middleware.common.CommonMiddleware',
+                'django.middleware.csrf.CsrfViewMiddleware',
+                'django.contrib.auth.middleware.AuthenticationMiddleware',
+            ],
             USE_TZ=True,
+            DATABASES={
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': '_build/test.db',
+                },
+            },
+            LOGGING_CONFIG=None,
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
         )
+        django.setup()
+
+    def _populate_db(self) -> None:
+        global db_populated  # noqa: PLW0603, WPS420
+        if not self.config.get('populate_db') or db_populated:
+            return
+
+        from django.core.management.commands import migrate  # noqa: PLC0415
+
+        migrate.Command().run_from_argv(['python', 'run_examples.py'])
+
+        from django.contrib.auth.models import User  # noqa: PLC0415
+
+        with suppress(IntegrityError):
+            User.objects.create_user(
+                'test_user',
+                email='test@example.com',
+                password='password',  # noqa: S106
+            )
+
+        db_populated = True
 
     def _build_app(self) -> ASGIHandler:
         file_path_without_ext = self.file_path.with_suffix('')

@@ -54,14 +54,16 @@ typing_extensions = ">=4"
 django = ">=5.2,<6.1"
 
 msgspec = { version = ">=0.19", optional = true }
-pydantic = { version = "^2.12", optional = true, extras = ["email"] }
+pydantic = { version = ">=2.12", optional = true, extras = ["email"] }
 pyjwt = { version = ">=2.11", optional = true, extras = ["crypto"] }
-openapi-spec-validator = { version = "^0.8", optional = true }
-polyfactory = { version = "^3.2", optional = true }
+openapi-spec-validator = { version = ">=0.8", optional = true }
+polyfactory = { version = ">=3.2", optional = true }
+attrs = { version = ">=26.0", optional = true }
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
 msgspec = ["msgspec"]
+attrs = ["msgspec", "attrs"]
 jwt = ["pyjwt"]
 openapi = ["openapi-spec-validator", "polyfactory"]
 
@@ -122,6 +124,9 @@ httpx = "^0.28"
 
 # Needed for examples:
 xmltodict = "^1.0"
+django-mantle = "^26.5"
+cattrs = "^26.1"
+django-readers = "^2.5"
 
 
 [tool.poetry.plugins."pytest11"]

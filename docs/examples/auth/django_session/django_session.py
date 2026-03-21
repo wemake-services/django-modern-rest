@@ -25,3 +25,7 @@ class SessionSyncController(
     @override
     def make_api_response(self) -> DjangoSessionResponse:
         return {'user_id': str(self.request.user.pk)}
+
+
+# run: {"controller": "SessionSyncController", "method": "post", "url": "/api/auth/", "body" :{"username": "test_user", "password": "password"}, "curl_args": ["-D", "-"], "populate_db": true}  # noqa: ERA001, E501
+# openapi: {"controller": "SessionSyncController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
