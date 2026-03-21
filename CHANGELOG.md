@@ -19,7 +19,7 @@ We follow [Semantic Versions](https://semver.org/).
 
 - Fixed `SSE` controllers `__name__` and `__doc__` generation, #700
 - Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
-- Fixed response validation when global error handler returns  
+- Fixed response validation when global error handler returns
   `HttpResponse` with a different content type than the negotiated
   renderer
 
