@@ -116,7 +116,7 @@ def test_msgpack_missing_fields(
 def test_msgpack_wrong_bytes(
     dmr_rf: DMRRequestFactory,
 ) -> None:
-    """Ensures ``msgpack`` request with empty body work."""
+    """Ensures ``msgpack`` request with wrong bytes raise correctly."""
     request = dmr_rf.post(
         '/whatever/',
         headers={'Content-Type': 'application/msgpack'},
