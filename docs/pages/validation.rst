@@ -135,3 +135,6 @@ It can be :ref:`turned off <response_validation>`.
 
 .. autoclass:: dmr.validation.response.ResponseValidator
   :members:
+
+.. autoclass:: dmr.validation.response.ValidatedModification
+  :members:
