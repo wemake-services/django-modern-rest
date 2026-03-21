@@ -13,4 +13,8 @@ def _modify_integration_settings(
     # Django common settings:
     settings.DEBUG = request.param  # We run tests in both modes.
     # Our own settings:
-    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 1}
+    settings.DMR_SETTINGS = {
+        Settings.openapi_examples_seed: 1,
+        # It might be already defined in some other place:
+        **getattr(settings, 'DMR_SETTINGS', {}),
+    }

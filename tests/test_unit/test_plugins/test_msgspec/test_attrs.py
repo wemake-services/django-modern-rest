@@ -84,10 +84,7 @@ def test_correct_serializer(
     }
 
 
-def test_missing_fields(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
+def test_missing_fields(dmr_rf: DMRRequestFactory) -> None:
     """Ensures the missing fields raise."""
     request = dmr_rf.post('/whatever/', data={})
     response = _UserController.as_view()(request)
@@ -132,14 +129,14 @@ def test_wrong_types_serializer(
     })
 
 
-def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is correct for authed and cookies controller."""
+def test_attrs_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for attrs controller."""
     assert (
         json.dumps(
             build_schema(
                 Router(
                     'api/',
-                    [path('/cookies', _UserController.as_view())],
+                    [path('/attrs', _UserController.as_view())],
                 ),
             ).convert(),
             indent=2,

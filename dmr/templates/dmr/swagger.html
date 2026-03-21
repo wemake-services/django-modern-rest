@@ -5,16 +5,25 @@
 <head>
   <meta charset="UTF-8">
   <title>{{ title|default:"Swagger UI" }}</title>
-  <link rel="stylesheet" type="text/css" href="{% static 'dmr/swagger/swagger-ui.css' %}" />
-  <link rel="stylesheet" type="text/css" href="{% static 'dmr/swagger/index.css' %}" />
-  <link rel="icon" type="image/png" href="{% static 'dmr/swagger/favicon-32x32.png' %}" sizes="32x32" />
-  <link rel="icon" type="image/png" href="{% static 'dmr/swagger/favicon-16x16.png' %}" sizes="16x16" />
+  {% if swagger_cdn %}
+    <link rel="stylesheet" type="text/css" href="{{ swagger_cdn }}/swagger-ui.css" />
+  {% else %}
+    <link rel="stylesheet" type="text/css" href="{% static 'dmr/swagger/swagger-ui.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'dmr/swagger/index.css' %}" />
+    <link rel="icon" type="image/png" href="{% static 'dmr/swagger/favicon-32x32.png' %}" sizes="32x32" />
+    <link rel="icon" type="image/png" href="{% static 'dmr/swagger/favicon-16x16.png' %}" sizes="16x16" />
+  {% endif %}
 </head>
 
 <body>
   <div id="swagger-ui"></div>
-  <script src="{% static 'dmr/swagger/swagger-ui-bundle.js' %}" charset="UTF-8"> </script>
-  <script src="{% static 'dmr/swagger/swagger-ui-standalone-preset.js' %}" charset="UTF-8"> </script>
+  {% if swagger_cdn %}
+    <script src="{{ swagger_cdn }}/swagger-ui-bundle.js" charset="UTF-8"> </script>
+    <script src="{{ swagger_cdn }}/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+  {% else %}
+    <script src="{% static 'dmr/swagger/swagger-ui-bundle.js' %}" charset="UTF-8"> </script>
+    <script src="{% static 'dmr/swagger/swagger-ui-standalone-preset.js' %}" charset="UTF-8"> </script>
+  {% endif %}
   <script>
     window.onload = function () {
       window.ui = SwaggerUIBundle({

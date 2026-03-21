@@ -1,7 +1,7 @@
 Content negotiation
 ===================
 
-``django_modern_rest`` supports content negotiation.
+``django-modern-rest`` supports content negotiation.
 
 We have two abstractions to do that:
 
@@ -21,6 +21,30 @@ We have two abstractions to do that:
 By default ``json`` parser and renderer are configured
 to use ``msgspec`` if it is installed (recommended).
 We fallback to pure-python implementation if ``msgspec`` is not installed.
+
+
+Supported content types
+-----------------------
+
+We ship several pre-defined parsers and renderers.
+
+Parsers:
+
+- ``application/json`` with :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
+  and :class:`~dmr.parsers.JsonParser`
+- ``application/msgpack`` with :class:`~dmr.plugins.msgspec.MsgpackParser`
+- ``multipart/form-data`` with :class:`~dmr.parsers.MultiPartParser`
+- ``application/x-www-form-urlencoded``
+  with :class:`~dmr.parsers.FormUrlEncodedParser`
+
+Renderers:
+
+- ``application/json`` with :class:`~dmr.plugins.msgspec.MsgspecJsonRenderer`
+  and :class:`~dmr.renderers.JsonRenderer`
+- ``application/msgpack`` with :class:`~dmr.plugins.msgspec.MsgpackRenderer`
+- ``*/*`` with :class:`~dmr.renderers.FileRenderer`
+
+You can :ref:`write your own <custom-parsers-and-renderers>`!
 
 
 How parser and renderer are selected
@@ -150,6 +174,8 @@ to completely change the negotiation logic to fit your needs.
 
 This is possible on per-controller level.
 
+
+.. _custom-parsers-and-renderers:
 
 Writing custom parsers and renderers
 ------------------------------------
@@ -285,6 +311,9 @@ Parsers
 .. autoclass:: dmr.plugins.msgspec.MsgspecJsonParser
   :members:
 
+.. autoclass:: dmr.plugins.msgspec.MsgpackParser
+  :members:
+
 .. autoclass:: dmr.parsers.JsonParser
   :members:
 
@@ -298,6 +327,9 @@ Renderers
 ~~~~~~~~~
 
 .. autoclass:: dmr.plugins.msgspec.MsgspecJsonRenderer
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.MsgpackRenderer
   :members:
 
 .. autoclass:: dmr.renderers.JsonRenderer

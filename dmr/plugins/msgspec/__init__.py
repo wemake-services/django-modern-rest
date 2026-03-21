@@ -13,6 +13,8 @@ from dmr.plugins.msgspec.json import (
 from dmr.plugins.msgspec.json import (
     MsgspecJsonRenderer as MsgspecJsonRenderer,
 )
+from dmr.plugins.msgspec.msgpack import MsgpackParser as MsgpackParser
+from dmr.plugins.msgspec.msgpack import MsgpackRenderer as MsgpackRenderer
 from dmr.plugins.msgspec.serializer import (
     MsgspecSerializer as MsgspecSerializer,
 )

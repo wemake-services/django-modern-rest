@@ -197,6 +197,7 @@ class ContentType(enum.StrEnum):
         xml: ``'application/xml'`` format.
         x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
         multipart_form_data: ``'multipart/form-data'`` format.
+        msgpack: ``'application/msgpack'`` format.
         event_stream: ``'text/event-stream'`` format for SSE.
 
     """
@@ -205,6 +206,7 @@ class ContentType(enum.StrEnum):
     xml = 'application/xml'
     x_www_form_urlencoded = 'application/x-www-form-urlencoded'
     multipart_form_data = 'multipart/form-data'
+    msgpack = 'application/msgpack'
     event_stream = 'text/event-stream'
 
 

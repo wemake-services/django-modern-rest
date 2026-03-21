@@ -14,7 +14,11 @@
     <div id="app"></div>
 
     <!-- Load the Script -->
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    {% if scalar_cdn %}
+      <script src="{{ scalar_cdn }}"></script>
+    {% else %}
+      <script src="{% static 'dmr/scalar/scalar.min.js' %}"></script>
+    {% endif %}
 
     <!-- Initialize the Scalar API Reference -->
     <script>
