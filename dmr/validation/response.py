@@ -179,10 +179,14 @@ class ResponseValidator:  # noqa: WPS214
             structured,
             schema,
             # Here's the tricky part:
-            # 1. We first try to use the renderer's default content type
-            # 2. But, there might be no renderer yet
-            # 3. So, we fallback to the default parser in this case.
-            content_type=getattr(renderer, 'content_type', parser.content_type),
+            # 1. We first try to use the actual Content-Type from the response
+            # 2. But, there might be no Content-Type header yet
+            # 3. So, we fallback to the renderer's content type
+            # 4. And if there's no renderer, we fallback to the default parser
+            content_type=response.headers.get(
+                'Content-Type',
+                getattr(renderer, 'content_type', parser.content_type),
+            ),
         )
 
     def _validate_body(
