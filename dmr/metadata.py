@@ -112,7 +112,6 @@ class ResponseSpec:
         )
 
 
-@final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ResponseModification:
     """

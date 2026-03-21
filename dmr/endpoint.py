@@ -23,7 +23,7 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.headers import HeaderSpec, NewHeader
-from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
     Callback,
@@ -63,7 +63,6 @@ class Endpoint:  # noqa: WPS214
 
     __slots__ = (
         '_func',
-        '_method',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -71,8 +70,10 @@ class Endpoint:  # noqa: WPS214
         'response_validator',
     )
 
+    # Instance API:
     _func: Callable[..., Any]
 
+    # Class API:
     metadata_builder_cls: ClassVar[type[EndpointMetadataBuilder]] = (
         EndpointMetadataBuilder
     )
@@ -80,6 +81,9 @@ class Endpoint:  # noqa: WPS214
         EndpointMetadataValidator
     )
     metadata_cls: ClassVar[type[EndpointMetadata]] = EndpointMetadata
+    response_modification_cls: ClassVar[type[ResponseModification]] = (
+        ResponseModification
+    )
     request_negotiator_cls: ClassVar[type[RequestNegotiator]] = (
         RequestNegotiator
     )
@@ -129,6 +133,7 @@ class Endpoint:  # noqa: WPS214
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
+            response_modification_cls=self.response_modification_cls,
         )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
