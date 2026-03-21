@@ -52,6 +52,61 @@ class _SSEMetadata(EndpointMetadata):
         ]
 
 
+_SerializerT_co = TypeVar(
+    '_SerializerT_co',
+    bound=BaseSerializer,
+    covariant=True,
+)
+
+
+class _BaseSSEController(Controller[_SerializerT_co]):
+    # Abstract attributes:
+    _regular_renderer: ClassVar[Renderer]
+    _sse_renderer: ClassVar[SSERenderer]
+    _validate_events: ClassVar[bool]
+    _event_model: ClassVar[Any]
+    _sse_streaming_response_cls: ClassVar[type[SSEStreamingResponse]]
+
+    @override
+    def to_error(
+        self,
+        raw_data: Any,
+        *,
+        status_code: HTTPStatus,
+        headers: Mapping[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
+        renderer: Renderer | None = None,
+    ) -> HttpResponse:
+        force_request_renderer(self.request, self._regular_renderer)
+        return super().to_error(
+            raw_data,
+            status_code=status_code,
+            headers=headers,
+            cookies=cookies,
+            renderer=renderer,
+        )
+
+    def to_sse_response(
+        self,
+        response: SSEResponse[SSE],
+    ) -> SSEStreamingResponse:
+        streaming_response = self._sse_streaming_response_cls(
+            response.streaming_content,
+            headers=response.headers,
+            event_model=self._event_model,
+            serializer=self.serializer,
+            regular_renderer=self._regular_renderer,
+            sse_renderer=self._sse_renderer,
+            validate_events=self._validate_events,
+        )
+        for cookie_key, cookie in (response.cookies or {}).items():
+            streaming_response.set_cookie(
+                cookie_key,
+                **cookie.as_dict(),
+            )
+        return streaming_response
+
+
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 _PathT = TypeVar('_PathT', default=None)
 _QueryT = TypeVar('_QueryT', default=None)
@@ -269,30 +324,17 @@ def _build_controller(  # noqa: WPS211, WPS234
 
     @wraps(func, updated=())
     class SSEController(  # noqa: WPS431
-        Controller[serializer],  # type: ignore[valid-type]
+        _BaseSSEController[serializer],  # type: ignore[valid-type]
         *filter(None, [path, query, headers, cookies]),  # type: ignore[misc]  # noqa: WPS606
     ):
+        _regular_renderer = regular_renderer
+        _sse_renderer = sse_renderer
+        _validate_events = validate_events
+        _event_model = event_model
+        _sse_streaming_response_cls = sse_streaming_response_cls
+
         class endpoint_cls(Endpoint):  # noqa: N801, WPS431
             metadata_cls = custom_metadata_cls
-
-        @override
-        def to_error(
-            self,
-            raw_data: Any,
-            *,
-            status_code: HTTPStatus,
-            headers: Mapping[str, str] | None = None,
-            cookies: Mapping[str, NewCookie] | None = None,
-            renderer: Renderer | None = None,
-        ) -> HttpResponse:
-            force_request_renderer(self.request, regular_renderer)
-            return super().to_error(
-                raw_data,
-                status_code=status_code,
-                headers=headers,
-                cookies=cookies,
-                renderer=renderer,
-            )
 
         @validate(
             response_spec,
@@ -316,26 +358,6 @@ def _build_controller(  # noqa: WPS211, WPS234
                     context,  # type: ignore[arg-type]
                 ),
             )
-
-        def to_sse_response(
-            self,
-            response: SSEResponse[SSE],
-        ) -> SSEStreamingResponse:
-            streaming_response = sse_streaming_response_cls(
-                response.streaming_content,
-                event_model=event_model,
-                serializer=serializer,
-                regular_renderer=regular_renderer,
-                sse_renderer=sse_renderer,
-                headers=response.headers,
-                validate_events=validate_events,
-            )
-            for cookie_key, cookie in (response.cookies or {}).items():
-                streaming_response.set_cookie(
-                    cookie_key,
-                    **cookie.as_dict(),
-                )
-            return streaming_response
 
     return SSEController  # pyright: ignore[reportReturnType]
 
