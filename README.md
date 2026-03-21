@@ -86,49 +86,46 @@ There are several included extras:
 The [shortest example](https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/getting_started/pydantic_controller.py):
 
 ```python
->>> import uuid
->>> import pydantic
->>> from dmr import Body, Controller, Headers
->>> # Or use `dmr.plugins.msgspec` or write your own!
->>> from dmr.plugins.pydantic import PydanticSerializer
+import uuid
+import pydantic
+from dmr import Body, Controller, Headers
+# Or use `dmr.plugins.msgspec` or write your own!
+from dmr.plugins.pydantic import PydanticSerializer
 
->>> class UserCreateModel(pydantic.BaseModel):
-...     email: str
+class UserCreateModel(pydantic.BaseModel):
+    email: str
 
->>> class UserModel(UserCreateModel):
-...     uid: uuid.UUID
+class UserModel(UserCreateModel):
+    uid: uuid.UUID
 
->>> class HeaderModel(pydantic.BaseModel):
-...     consumer: str = pydantic.Field(alias='X-API-Consumer')
+class HeaderModel(pydantic.BaseModel):
+    consumer: str = pydantic.Field(alias='X-API-Consumer')
 
->>> class UserController(
-...     Controller[PydanticSerializer],
-...     Body[UserCreateModel],
-...     Headers[HeaderModel],
-... ):
-...     def post(self) -> UserModel:  # <- can be async as well!
-...         """All added props have the correct runtime and static types."""
-...         assert self.parsed_headers.consumer == 'my-api'
-...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
-
+class UserController(
+    Controller[PydanticSerializer],
+    Body[UserCreateModel],
+    Headers[HeaderModel],
+):
+    def post(self) -> UserModel:  # <- can be async as well!
+        """All added props have the correct runtime and static types."""
+        assert self.parsed_headers.consumer == 'my-api'
+        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
 ```
 
 And then route this controller in your `urls.py`:
 
 ```python
->>> from django.urls import include, path
->>> from dmr.routing import Router
+from django.urls import include, path
+from dmr.routing import Router
 
->>> router = Router(
-...     'api/',
-...     [
-...         path('user/', UserController.as_view(), name='users'),
-...     ],
-... )
->>> urlpatterns = [
-...     path(router.prefix, include((router.urls, 'my_app'), namespace='api')),
-... ]
-
+router = Router(
+    'api/',
+    [
+        path('user/', UserController.as_view(), name='users'),
+    ],
+)
+urlpatterns = [
+    path(router.prefix, include((router.urls, 'my_app'), namespace='api')),
 ```
 
 Done! Now you have your shiny API with 100% type
