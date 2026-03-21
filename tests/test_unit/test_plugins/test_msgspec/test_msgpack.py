@@ -113,6 +113,34 @@ def test_msgpack_missing_fields(
     })
 
 
+def test_msgpack_wrong_bytes(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures ``msgpack`` request with empty body work."""
+    request = dmr_rf.post(
+        '/whatever/',
+        headers={'Content-Type': 'application/msgpack'},
+        data=b'{..@7{!',
+    )
+
+    response = _MsgpackController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == {'Content-Type': 'application/msgpack'}
+    assert msgspec.msgpack.decode(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'MessagePack data is malformed: '
+                    'trailing characters (byte 1)'
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 def test_msgpack_schema(snapshot: SnapshotAssertion) -> None:
     """Ensure that schema is correct for msgpack controller."""
     assert (
