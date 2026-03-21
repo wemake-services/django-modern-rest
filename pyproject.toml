@@ -98,9 +98,6 @@ polyfactory = "^3.2"
 
 httpx = "^0.28"
 xmltodict = "^1.0"
-django-mantle = "^26.5"
-cattrs = "^26.1"
-django-readers = "^2.5"
 
 [tool.poetry.group.docs]
 optional = true
@@ -127,6 +124,9 @@ httpx = "^0.28"
 
 # Needed for examples:
 xmltodict = "^1.0"
+django-mantle = "^26.5"
+cattrs = "^26.1"
+django-readers = "^2.5"
 
 
 [tool.poetry.plugins."pytest11"]
