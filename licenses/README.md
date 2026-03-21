@@ -1,6 +1,6 @@
 # Vendored libraries
 
-We vendor several libraries. 
+We vendor several libraries.
 All licenses are always included with the source code and with the releases.
 
 Libs:
