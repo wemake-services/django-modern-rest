@@ -15,8 +15,7 @@ def _modify_integration_settings(
     settings: LazySettings,
     request: pytest.FixtureRequest,
     dmr_clean_settings: None,
-    *
-    use_cdn: bool,
+    *use_cdn: bool,
 ) -> None:
     # Django common settings:
     settings.DEBUG = request.param  # We run tests in both modes.
