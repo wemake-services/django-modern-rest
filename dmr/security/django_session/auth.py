@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, final
 from django.conf import settings
 from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
+
+_csrf_failed_msg = _('CSRF Failed: {reason}')
 
 
 @final
@@ -110,7 +113,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         reason = _get_csrf_failure_reason(controller.request)
         if reason:
             raise APIError(
-                controller.format_error(f'CSRF Failed: {reason}'),
+                controller.format_error(_csrf_failed_msg.format(reason=reason)),
                 status_code=HTTPStatus.FORBIDDEN,
             )
 

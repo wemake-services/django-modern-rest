@@ -13,6 +13,7 @@ from typing import (
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
+from django.utils.encoding import force_str
 from django.views import defaults
 from typing_extensions import override
 
@@ -223,7 +224,7 @@ def build_500_handler(  # noqa: WPS114
         return build_response(
             serializer=serializer,
             raw_data=format_error(
-                InternalServerError.default_message,
+                force_str(InternalServerError.default_message),
                 error_type=ErrorType.internal_error,
             ),
             status_code=InternalServerError.status_code,

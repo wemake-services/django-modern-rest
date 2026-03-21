@@ -1,8 +1,14 @@
 from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, final
 
+from django.utils.encoding import force_str
+from django.utils.functional import Promise
+from django.utils.translation import gettext_lazy as _
+
 if TYPE_CHECKING:
     from dmr.errors import ErrorDetail
+
+_not_authenticated_msg = _('Not authenticated')
 
 
 @final
@@ -42,7 +48,7 @@ class InternalServerError(Exception):
     If it disabled, we hust show a generic message.
     """
 
-    default_message: ClassVar[str] = 'Internal server error'
+    default_message: ClassVar[Promise] = _('Internal server error')
     status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -104,6 +110,8 @@ class NotAuthenticatedError(Exception):
 
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNAUTHORIZED
 
-    def __init__(self, msg: str = 'Not authenticated') -> None:
+    def __init__(self, msg: str | Promise = _not_authenticated_msg) -> None:
         """Provides default error message."""
+        if isinstance(msg, Promise):
+            msg = force_str(msg)
         super().__init__(msg)

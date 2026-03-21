@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import Any, final
 
 from django.http.request import HttpRequest
+from django.utils.translation import gettext_lazy as _
 
 from dmr.exceptions import (
     EndpointMetadataError,
@@ -19,6 +20,12 @@ from dmr.metadata import EndpointMetadata, get_annotated_metadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
+
+_cannot_parse_msg = _(
+    'Cannot parse request body with'
+    ' content type {content_type},'
+    ' expected={expected}',
+)
 
 
 class RequestNegotiator:
@@ -95,9 +102,10 @@ class RequestNegotiator:
         # No parsers found, raise an error:
         expected = list(self._parsers.keys())
         raise RequestSerializationError(
-            'Cannot parse request body '
-            f'with content type {request.content_type!r}, '
-            f'{expected=!r}',
+            _cannot_parse_msg.format(
+                content_type=repr(request.content_type),
+                expected=repr(expected),
+            ),
         )
 
 
