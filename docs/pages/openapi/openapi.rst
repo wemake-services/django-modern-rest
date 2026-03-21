@@ -60,6 +60,20 @@ What happens in the example above?
   all others keep using local static files.
   Exact bundled versions and license texts are documented in ``licenses/``.
 
+  You can also modify the exact versions that we use for each tool this way.
+
+  Example:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.openapi_static_cdn: {
+    ...         # or `@5.32.1`, or whatever other version:
+    ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0',
+    ...     },
+    ... }
+
 
 Customizing OpenAPI config
 --------------------------

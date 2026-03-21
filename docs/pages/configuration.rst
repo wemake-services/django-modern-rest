@@ -355,6 +355,8 @@ OpenAPI
   - ``redoc``: full URL to ``redoc.standalone.js``
   - ``scalar``: full URL to ``@scalar/api-reference`` standalone bundle
 
+  You can also modify the exact versions that we use for each tool this way.
+
   .. code-block:: python
     :caption: settings.py
 
