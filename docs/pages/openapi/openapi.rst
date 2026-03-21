@@ -67,6 +67,8 @@ What happens in the example above?
   .. code-block:: python
     :caption: settings.py
 
+    >>> from dmr.settings import Settings
+
     >>> DMR_SETTINGS = {
     ...     Settings.openapi_static_cdn: {
     ...         # or `@5.32.1`, or whatever other version:
