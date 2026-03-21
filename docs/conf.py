@@ -163,6 +163,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
     (_PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
+    (_PY_CLASS, 'django.utils.functional.Promise'),
     # OpenAPI types used in TYPE_CHECKING blocks:
     (_PY_CLASS, 'SecurityRequirement'),
     (_PY_CLASS, 'ExternalDocumentation'),
