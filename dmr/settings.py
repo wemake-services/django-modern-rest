@@ -109,6 +109,11 @@ class SettingsDict(TypedDict, total=False):
     django_treat_as_post: Set[str]
 
 
+assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
+    'Settings enum and its type SettingsDict have different keys'
+)
+
+
 #: Default settings for `django_modern_rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
