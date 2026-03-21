@@ -7,6 +7,10 @@ from dmr.exceptions import (
     NotAuthenticatedError,
 )
 
+_ExceptionClass = type[InternalServerError] | type[NotAuthenticatedError]
+
+_wrong_lang_code = 'xx'
+
 
 @pytest.mark.parametrize(
     ('exception_cls', 'expected'),
@@ -17,7 +21,7 @@ from dmr.exceptions import (
 )
 def test_default_message_is_lazy(
     *,
-    exception_cls: type,
+    exception_cls: _ExceptionClass,
     expected: str,
 ) -> None:
     """Ensure default_message is wrapped with gettext_lazy."""
@@ -33,7 +37,7 @@ def test_default_message_is_lazy(
 )
 def test_default_message_resolves_in_en(
     *,
-    exception_cls: type,
+    exception_cls: _ExceptionClass,
     expected: str,
 ) -> None:
     """Ensure default_message resolves correctly in en."""
@@ -50,9 +54,9 @@ def test_default_message_resolves_in_en(
 )
 def test_default_message_fallback_to_english(
     *,
-    exception_cls: type,
+    exception_cls: _ExceptionClass,
     expected: str,
 ) -> None:
     """Ensure default_message falls back to English."""
-    with override('xx'):
+    with override(_wrong_lang_code):
         assert str(exception_cls.default_message) == expected
