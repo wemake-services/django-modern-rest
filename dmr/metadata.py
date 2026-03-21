@@ -8,7 +8,6 @@ from typing import (
     Any,
     TypeAlias,
     TypeVar,
-    final,
     get_origin,
 )
 
