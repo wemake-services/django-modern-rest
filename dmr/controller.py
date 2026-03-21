@@ -437,7 +437,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         """
         super().setup(request, *args, **kwargs)
         # Controller is created once per request, so we can assign attributes.
-        blueprint = self._blueprint_per_method.get(  # pyrefly: ignore[no-matching-overload]  # noqa: E501
+        blueprint = self._blueprint_per_method.get(  # pyrefly: ignore[no-matching-overload]
             request.method,  # type: ignore[arg-type]
         )
         if blueprint:
