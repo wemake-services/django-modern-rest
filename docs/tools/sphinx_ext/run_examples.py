@@ -723,7 +723,7 @@ def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
         'Content-Type',
         None,
     )
-    if content_type == 'application/json' or content_type is None:
+    if content_type == 'application/json' or content_type is None:  # noqa: WPS223
         body_data = json.dumps(run_args['body'])
         args.extend(['-d', body_data])
         clean_args.extend(['-d', body_data])
