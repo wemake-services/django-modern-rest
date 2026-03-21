@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, ClassVar, get_args
@@ -9,6 +9,7 @@ from typing_extensions import TypeVar, override
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.controller import Controller
+from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.negotiation import force_request_renderer
@@ -277,11 +278,21 @@ def _build_controller(  # noqa: WPS211, WPS234
         @override
         def to_error(
             self,
-            *args: Any,
-            **kwargs: Any,
+            raw_data: Any,
+            *,
+            status_code: HTTPStatus,
+            headers: Mapping[str, str] | None = None,
+            cookies: Mapping[str, NewCookie] | None = None,
+            renderer: Renderer | None = None,
         ) -> HttpResponse:
             force_request_renderer(self.request, regular_renderer)
-            return super().to_error(*args, **kwargs)
+            return super().to_error(
+                raw_data,
+                status_code=status_code,
+                headers=headers,
+                cookies=cookies,
+                renderer=renderer,
+            )
 
         @validate(
             response_spec,
@@ -299,14 +310,14 @@ def _build_controller(  # noqa: WPS211, WPS234
             )
 
             # Now, everything is ready to send SSE events:
-            return self.build_sse_streaming_response(
+            return self.to_sse_response(
                 await func(
                     self.request,
                     context,  # type: ignore[arg-type]
                 ),
             )
 
-        def build_sse_streaming_response(
+        def to_sse_response(
             self,
             response: SSEResponse[SSE],
         ) -> SSEStreamingResponse:
