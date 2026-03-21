@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_attrs_schema
+# name: test_msgpack_schema
   '''
   {
     "info": {
@@ -8,14 +8,14 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/attrs": {
+      "/api/msgpack": {
         "post": {
-          "operationId": "postUsercontrollerApiAttrs",
+          "operationId": "postMsgpackcontrollerApiMsgpack",
           "requestBody": {
             "content": {
-              "application/json": {
+              "application/msgpack": {
                 "schema": {
-                  "$ref": "#/components/schemas/_UserModel"
+                  "$ref": "#/components/schemas/_RequestModel"
                 }
               }
             },
@@ -25,9 +25,9 @@
             "201": {
               "description": "Created",
               "content": {
-                "application/json": {
+                "application/msgpack": {
                   "schema": {
-                    "$ref": "#/components/schemas/_UserResponseModel"
+                    "$ref": "#/components/schemas/_ResponseModel"
                   }
                 }
               }
@@ -35,7 +35,7 @@
             "400": {
               "description": "Raised when request components cannot be parsed",
               "content": {
-                "application/json": {
+                "application/msgpack": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
                   }
@@ -45,7 +45,7 @@
             "422": {
               "description": "Raised when returned response does not match the response schema",
               "content": {
-                "application/json": {
+                "application/msgpack": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
                   }
@@ -55,7 +55,7 @@
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
-                "application/json": {
+                "application/msgpack": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
                   }
@@ -69,69 +69,52 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
+        "_RequestModel": {
           "properties": {
+            "username": {
+              "type": "string"
+            },
             "email": {
               "type": "string"
             },
-            "first_name": {
-              "type": "string"
-            },
-            "last_name": {
-              "type": "string"
-            },
-            "age": {
+            "friend_id": {
               "type": "integer"
             }
           },
           "type": "object",
           "required": [
+            "username",
             "email",
-            "first_name",
-            "last_name",
-            "age"
+            "friend_id"
           ],
-          "title": "_UserModel"
+          "title": "_RequestModel"
         },
-        "_UserResponseModel": {
+        "_ResponseModel": {
           "properties": {
-            "email": {
-              "type": "string"
-            },
-            "first_name": {
-              "type": "string"
-            },
-            "last_name": {
-              "type": "string"
-            },
-            "age": {
-              "type": "integer"
-            },
             "uid": {
               "type": "string",
               "format": "uuid"
             },
-            "status": {
-              "$ref": "#/components/schemas/_UserStatus"
+            "metadata": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "friends": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
             }
           },
           "type": "object",
           "required": [
-            "email",
-            "first_name",
-            "last_name",
-            "age",
             "uid",
-            "status"
+            "metadata",
+            "friends"
           ],
-          "title": "_UserResponseModel"
-        },
-        "_UserStatus": {
-          "enum": [
-            0,
-            1
-          ],
-          "title": "_UserStatus"
+          "title": "_ResponseModel"
         },
         "ErrorModel": {
           "properties": {

@@ -1,7 +1,7 @@
 Content negotiation
 ===================
 
-``django_modern_rest`` supports content negotiation.
+``django-modern-rest`` supports content negotiation.
 
 We have two abstractions to do that:
 

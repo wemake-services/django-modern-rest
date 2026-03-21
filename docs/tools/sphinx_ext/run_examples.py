@@ -752,6 +752,10 @@ def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
             clean_args.extend(['-F', f'{body_key}=@{body_value}'])
             body_value = str(app_file.parent / body_value)
             args.extend(['-F', f'{body_key}=@{body_value}'])
+    elif content_type == 'application/msgpack':
+        source = run_args['body']
+        args.extend(['--data-binary', f'@{source}'])
+        clean_args.extend(['--data-binary', f'@{source}'])
     else:
         raise RuntimeError(f'{content_type} is not supported')
 

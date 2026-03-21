@@ -44,7 +44,7 @@ _CallableAny: TypeAlias = Callable[..., Any]
 class XmlParser(Parser):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def parse(
@@ -84,7 +84,7 @@ class XmlParser(Parser):
 class XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def render(

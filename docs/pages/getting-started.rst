@@ -170,7 +170,7 @@ In this example:
    for :class:`~dmr.components.Headers`
    which will parse them into the typed models
    (:class:`pydantic.BaseModel`, :class:`msgspec.Struct`,
-   or :func:`attrs.define` based) that we pass
+   :func:`attrs.define`, or defined with any other supported way) that we pass
    to these components as type parameters
 3. Next we created
    a :class:`~dmr.controller.Controller` class

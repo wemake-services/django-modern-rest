@@ -706,7 +706,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     Parses files metadata from :attr:`django.http.HttpRequest.FILES`.
 
     Django handles files itself natively, we don't need to do anything
-    in ``django_modern_rest``. Everything just works, including all
+    in ``django-modern-rest``. Everything just works, including all
     Django's advanced file features like customizing the storage backends.
 
     But, we need a way to represent and validate the metadata.

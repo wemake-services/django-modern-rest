@@ -8,6 +8,7 @@ We follow [Semantic Versions](https://semver.org/).
 ### Features
 
 - Added `@attrs.define` official support, #706
+- Added `msgpack` parser and renderer, #630
 - Added `MediaType` validation for the default `encoding` field
   and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
 - Added `MediaTypeMetadata` metadata item to set required parameters

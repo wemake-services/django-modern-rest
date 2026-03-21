@@ -116,7 +116,7 @@ assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
 )
 
 
-#: Default settings for `django_modern_rest`.
+#: Default settings for `django-modern-rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],

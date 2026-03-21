@@ -12,10 +12,10 @@ from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.renderers import Renderer
 
 
-class MsgspecJsonParser(Parser):
-    """Parsers json bodies using ``msgspec``."""
+class MsgpackParser(Parser):
+    """Parsers ``msgpack`` bodies using ``msgspec``."""
 
-    content_type = 'application/json'
+    content_type = 'application/msgpack'
     strict: ClassVar[bool] = True
 
     @override
@@ -28,7 +28,7 @@ class MsgspecJsonParser(Parser):
         model: Any,
     ) -> Any:
         """
-        Deserialize a raw JSON string/bytes/bytearray into an object.
+        Deserialize a raw msgpack string/bytes/bytearray into an object.
 
         Args:
             to_deserialize: Value to deserialize.
@@ -59,10 +59,10 @@ class MsgspecJsonParser(Parser):
             raise DataParsingError(str(exc)) from exc
 
 
-class MsgspecJsonRenderer(Renderer):
-    """Renders json bodies using ``msgspec``."""
+class MsgpackRenderer(Renderer):
+    """Renders ``msgpack`` bodies using ``msgspec``."""
 
-    content_type = 'application/json'
+    content_type = 'application/msgpack'
 
     @override
     def render(
@@ -71,28 +71,28 @@ class MsgspecJsonRenderer(Renderer):
         serializer_hook: Callable[[Any], Any] | None = None,
     ) -> bytes:
         """
-        Encode a value into JSON bytestring.
+        Encode a value into ``msgpack`` bytestring.
 
         Args:
             to_serialize: Value to encode.
             serializer_hook: Callable to support non-natively supported types.
 
         Returns:
-            JSON as bytes.
+            ``msgpack`` as bytes.
         """
         return _get_serializer(serializer_hook).encode(to_serialize)
 
     @property
     @override
-    def validation_parser(self) -> MsgspecJsonParser:
+    def validation_parser(self) -> MsgpackParser:
         """Msgspec can parse this."""
-        return MsgspecJsonParser()
+        return MsgpackParser()
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_serializer(
     serializer_hook: Callable[[Any], Any] | None,
-) -> msgspec.json.Encoder:
+) -> msgspec.msgpack.Encoder:
     """
     Returns cached serializer.
 
@@ -103,7 +103,7 @@ def _get_serializer(
         >>> _get_serializer.cache_clear()
 
     """
-    return msgspec.json.Encoder(enc_hook=serializer_hook)
+    return msgspec.msgpack.Encoder(enc_hook=serializer_hook)
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
@@ -111,7 +111,7 @@ def _get_deserializer(
     deserializer_hook: DeserializeFunc | None,
     *,
     strict: bool,
-) -> msgspec.json.Decoder[Any]:
+) -> msgspec.msgpack.Decoder[Any]:
     """
     Returns cached deserializer.
 
@@ -122,4 +122,4 @@ def _get_deserializer(
         >>> _get_deserializer.cache_clear()
 
     """
-    return msgspec.json.Decoder(dec_hook=deserializer_hook, strict=strict)
+    return msgspec.msgpack.Decoder(dec_hook=deserializer_hook, strict=strict)
