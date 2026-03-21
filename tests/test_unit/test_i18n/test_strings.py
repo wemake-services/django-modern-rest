@@ -1,3 +1,5 @@
+from typing import Final
+
 import pytest
 from django.utils.functional import Promise
 from django.utils.translation import override
@@ -9,7 +11,7 @@ from dmr.exceptions import (
 
 _ExceptionClass = type[InternalServerError] | type[NotAuthenticatedError]
 
-_wrong_lang_code = 'xx'
+_WRONG_LANG_CODE: Final = 'xx'
 
 
 @pytest.mark.parametrize(
@@ -58,5 +60,5 @@ def test_default_message_fallback_to_english(
     expected: str,
 ) -> None:
     """Ensure default_message falls back to English."""
-    with override(_wrong_lang_code):
+    with override(_WRONG_LANG_CODE):
         assert str(exception_cls.default_message) == expected
