@@ -74,8 +74,9 @@ class _BaseSSEController(Controller[_SerializerT_co]):
     @override
     def __init_subclass__(cls) -> None:
         # TODO: handle types that don't have `_regular_renderer` set yet.
+        metadata_name = cls._metadata_cls.__qualname__
         metadata_cls = type(
-            f'{cls.__qualname__}_LimitedSSEEndpointMetadata',
+            f'{cls.__qualname__}_{metadata_name}',
             (cls._metadata_cls,),
             {'default_renderer': cls._regular_renderer},
         )
