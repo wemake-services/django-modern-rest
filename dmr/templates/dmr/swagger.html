@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <title>{{ title|default:"Swagger UI" }}</title>
-  {% if use_cdn %}
+  {% if swagger_cdn %}
     <link rel="stylesheet" type="text/css" href="{{ swagger_cdn }}/swagger-ui.css" />
   {% else %}
     <link rel="stylesheet" type="text/css" href="{% static 'dmr/swagger/swagger-ui.css' %}" />
@@ -17,7 +17,7 @@
 
 <body>
   <div id="swagger-ui"></div>
-  {% if use_cdn %}
+  {% if swagger_cdn %}
     <script src="{{ swagger_cdn }}/swagger-ui-bundle.js" charset="UTF-8"> </script>
     <script src="{{ swagger_cdn }}/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
   {% else %}

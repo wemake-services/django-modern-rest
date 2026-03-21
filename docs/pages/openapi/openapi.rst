@@ -50,6 +50,16 @@ What happens in the example above?
   and that static files are enabled,
   so we can serve you the required static files.
 
+.. note::
+
+  By default Swagger, Redoc, and Scalar use bundled static assets
+  that are shipped with ``django-modern-rest`` and served by Django.
+  To switch any renderer to a CDN, configure
+  :data:`dmr.settings.Settings.openapi_static_cdn`.
+  Only renderers listed in that mapping will use CDN;
+  all others keep using local static files.
+  Exact bundled versions and license texts are documented in ``licenses/``.
+
 
 Customizing OpenAPI config
 --------------------------

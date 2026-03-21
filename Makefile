@@ -32,7 +32,7 @@ type-check: ## Run all type checkers we support
 
 .PHONY: spell-check
 spell-check: ## Run spell checking
-	$(POETRY) run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md --skip="dmr/static/*,*.js,*.css,*.min.*"
+	$(POETRY) run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: unit
 unit: ## Run unit tests with pytest

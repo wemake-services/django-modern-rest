@@ -27,7 +27,6 @@ class RedocView(OpenAPIView):
     def get(self, request: 'HttpRequest') -> 'HttpResponse':
         """Render the OpenAPI schema using Redoc template."""
         cdn_config = resolve_setting(Settings.openapi_static_cdn)
-        redoc_cdn = cdn_config.get('redoc')
 
         return render(
             request,
@@ -35,8 +34,7 @@ class RedocView(OpenAPIView):
             context={
                 'title': self.schema.info.title,
                 'schema': self.dumps(self.schema.convert()),
-                'use_cdn': bool(redoc_cdn),
-                'redoc_cdn': redoc_cdn,
+                'redoc_cdn': cdn_config.get('redoc'),
             },
             content_type=self.content_type,
         )

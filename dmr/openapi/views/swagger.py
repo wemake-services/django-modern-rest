@@ -27,7 +27,6 @@ class SwaggerView(OpenAPIView):
     def get(self, request: 'HttpRequest') -> 'HttpResponse':
         """Render the OpenAPI schema using Swagger template."""
         cdn_config = resolve_setting(Settings.openapi_static_cdn)
-        swagger_cdn = cdn_config.get('swagger')
 
         return render(
             request,
@@ -35,8 +34,7 @@ class SwaggerView(OpenAPIView):
             context={
                 'title': self.schema.info.title,
                 'schema': self.dumps(self.schema.convert()),
-                'use_cdn': bool(swagger_cdn),
-                'swagger_cdn': swagger_cdn,
+                'swagger_cdn': cdn_config.get('swagger'),
             },
             content_type=self.content_type,
         )
