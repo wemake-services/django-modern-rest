@@ -34,6 +34,7 @@ Works for:
 Extras for different serializers:
 
 - ``'django-modern-rest[pydantic]'`` for ``pydantic`` support
+- ``'django-modern-rest[attrs]'`` for ``attrs`` support
 - ``'django-modern-rest[msgspec]'`` for ``msgspec`` support
   and the fastest ``json`` parsing
 
@@ -104,29 +105,72 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
     .. tab:: msgspec
 
+      We support :class:`msgspec.Struct`
+      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+
       .. literalinclude:: /examples/getting_started/msgspec_controller.py
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 6, 22
+        :emphasize-lines: 3, 6, 22
 
     .. tab:: pydantic
+
+      We support :class:`pydantic.BaseModel`
+      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
       .. literalinclude:: /examples/getting_started/pydantic_controller.py
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 6, 22
+        :emphasize-lines: 3, 6, 22
+
+    .. tab:: attrs
+
+      We support :func:`attrs.define`
+      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+
+      .. literalinclude:: /examples/getting_started/attrs_controller.py
+        :caption: views.py
+        :language: python
+        :linenos:
+        :emphasize-lines: 3, 6, 9, 14, 19, 25
+
+    .. tab:: dataclasses
+
+      We support :func:`dataclasses.dataclass` via both
+      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+
+      .. literalinclude:: /examples/getting_started/dataclasses_controller.py
+        :caption: views.py
+        :language: python
+        :linenos:
+        :emphasize-lines: 1, 5, 8, 13, 19
+
+    .. tab:: TypedDict
+
+      We support :class:`typing.TypedDict` via both
+      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+
+      .. literalinclude:: /examples/getting_started/typed_dict_controller.py
+        :caption: views.py
+        :language: python
+        :linenos:
+        :emphasize-lines: 2, 5, 8, 12, 16, 20
+
 
 In this example:
 
-1. We defined regular ``pydantic`` or ``msgspec`` models
+1. We defined regular ``pydantic``, ``msgspec``, or ``attrs`` models
    that we will use for our API
 2. We added two component parsers: one for request's
    :class:`~dmr.components.Body` and one
    for :class:`~dmr.components.Headers`
    which will parse them into the typed models
-   (:class:`pydantic.BaseModel` or :class:`msgspec.Struct` based) that we pass
+   (:class:`pydantic.BaseModel`, :class:`msgspec.Struct`,
+   or :func:`attrs.define` based) that we pass
    to these components as type parameters
 3. Next we created
    a :class:`~dmr.controller.Controller` class

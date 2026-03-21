@@ -46,3 +46,4 @@ class UsersController(
 
 # run: {"controller": "UsersController", "method": "get", "url": "/api/users/"}  # noqa: ERA001, E501
 # run: {"controller": "UsersController", "method": "get", "url": "/api/users/", "query": "?page=2"}  # noqa: ERA001, E501
+# openapi: {"controller": "UsersController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

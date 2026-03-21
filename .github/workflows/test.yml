@@ -162,7 +162,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
-        poetry install --extras=msgspec --extras=jwt
+        poetry install --extras=msgspec --extras=attrs --extras=jwt
 
     - name: Run checks
       run: |

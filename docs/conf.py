@@ -86,6 +86,7 @@ intersphinx_mapping = {
         'https://typing-extensions.readthedocs.io/en/stable/',
         None,
     ),
+    'attrs': ('https://www.attrs.org/en/stable/', None),
 }
 
 # Napoleon:
