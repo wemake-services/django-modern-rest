@@ -51,6 +51,7 @@ from dmr.validation import (
 if TYPE_CHECKING:
     from dmr.controller import Blueprint, Controller
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.validation.response import ValidatedModification
 
 
 class Endpoint:  # noqa: WPS214
@@ -473,6 +474,13 @@ class Endpoint:  # noqa: WPS214
             controller,
             raw_data,
         )
+        return self._build_new_response(controller, validated)
+
+    def _build_new_response(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        validated: 'ValidatedModification',
+    ) -> HttpResponseBase:
         return controller.to_response(
             validated.raw_data,
             status_code=validated.status_code,

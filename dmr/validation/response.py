@@ -93,7 +93,7 @@ class ResponseValidator:  # noqa: WPS214
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         structured: Any,
-    ) -> '_ValidationContext':
+    ) -> 'ValidatedModification':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
             # Happens in cases when `@validate` returns raw data:
@@ -107,7 +107,7 @@ class ResponseValidator:  # noqa: WPS214
         renderer = request_renderer(controller.request)
         # Renderer is present at this point, 100%
         assert renderer is not None  # noqa: S101
-        all_response_data = _ValidationContext(
+        all_response_data = ValidatedModification(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
             headers=build_headers(
@@ -337,7 +337,7 @@ class ResponseValidator:  # noqa: WPS214
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class _ValidationContext:
+class ValidatedModification:
     """Combines all validated data together."""
 
     raw_data: Any  # not empty
