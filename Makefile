@@ -64,7 +64,7 @@ smoke: ## Run smoke tests (check that package can be imported without `django.se
 example: ## Run QA tools on example code
 	( cd django_test_app \
 		&& $(POETRY) run mypy --config-file mypy.ini \
-		&& python manage.py makemigrations --dry-run --check \
+		&& $(POETRY) run python manage.py makemigrations --dry-run --check \
 		)
 	PYTHONPATH='docs/' $(POETRY) run pytest -o addopts='' \
 	  --suppress-no-test-exit-code \
