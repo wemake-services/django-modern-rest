@@ -23,6 +23,11 @@ Core features:
 Enabling translated API messages
 --------------------------------
 
+.. note::
+
+  See full list of the `supported languages here <https://github.com/wemake-services/django-modern-rest/tree/master/dmr/locale>`_.
+
+
 Setting the default language code for all users:
 
 .. code-block:: python
@@ -37,11 +42,16 @@ Setting the language code per request:
 
   MIDDLEWARE = [
       # ...
-      'django.middleware.locale.LocaleMiddleware'
+      'django.middleware.locale.LocaleMiddleware',
   ]
 
 Then any requests with ``Accept-Language`` header will set
 the required language for this specific response.
+
+.. literalinclude:: /examples/internalization/accept_language.py
+  :caption: middleware.py
+  :language: python
+  :linenos:
 
 Specifying the list of the supported languages:
 
@@ -51,7 +61,7 @@ Specifying the list of the supported languages:
   from django.utils.translation import gettext_lazy as _
 
   LANGUAGES = [
-      ('it', _('Italian')),
+      ('kk', _('Kazakh')),
       ('en', _('English')),
   ]
 
@@ -60,6 +70,26 @@ Specifying the list of the supported languages:
   Whenever you use Django's builtin translation feature, don't forget to run
   `compilemessages <https://docs.djangoproject.com/en/stable/ref/django-admin/#compilemessages>`_
   management command before using the translations.
+
+
+Enabling translation for type validation
+----------------------------------------
+
+Since we are using ``pydantic`` and ``msgspec`` directly
+to handle all type validation and schema checks, their messages
+won't be affected by the Django's ``i18n`` settings.
+
+If you want to translate their messages as well, use their own docs:
+
+- For ``pydantic``: https://github.com/boardpack/pydantic-i18n
+- For ``msgspec`` one can use `Babel <https://github.com/python-babel/babel>`_
+  directly to translate their error messages manually
+
+You can customize
+:meth:`dmr.serializer.BaseSerializer.serialize_validation_error`
+on the serializer that needs the validation errors to be translated.
+Or you can change :meth:`dmr.controller.Controller.format_error` method
+to translate messages there.
 
 
 Forcing constant API language

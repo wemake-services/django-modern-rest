@@ -63,17 +63,22 @@ _SerializerT_co = TypeVar(
 
 
 class _BaseSSEController(Controller[_SerializerT_co]):
-    # Abstract attributes:
-    regular_renderer: ClassVar[Renderer]
-    sse_renderer: ClassVar[SSERenderer]
+    # Custom attributes for the streaming responses:
+    regular_renderer: ClassVar[Renderer] = default_renderer
+    sse_streaming_response_cls: ClassVar[type[SSEStreamingResponse]] = (
+        SSEStreamingResponse
+    )
+    metadata_cls: ClassVar[type[SSEEndpointMetadata]] = SSEEndpointMetadata
+
+    # Set in `__init_subclass__`:
     validate_events: ClassVar[bool]
+    sse_renderer: ClassVar[SSERenderer]
+
+    # Must be moved elsewhere:
     event_model: ClassVar[Any]
-    sse_streaming_response_cls: ClassVar[type[SSEStreamingResponse]]
-    metadata_cls: ClassVar[type[SSEEndpointMetadata]]
 
     @override
     def __init_subclass__(cls) -> None:
-        # TODO: handle types that don't have `_regular_renderer` set yet.
         metadata_cls = cls.metadata_cls
         metadata_cls = type(
             f'{cls.__qualname__}_{metadata_cls.__qualname__}',
@@ -85,7 +90,17 @@ class _BaseSSEController(Controller[_SerializerT_co]):
             (Endpoint,),
             {'metadata_cls': metadata_cls},
         )
+        cls.validate_events = getattr(
+            cls,
+            'validate_events',
+            # Defaults to the `validates_responses`:
+            bool(cls.validate_responses),
+        )
+
         super().__init_subclass__()
+
+        # TODO: handle abstract controllers:
+        cls.sse_renderer = SSERenderer(cls.serializer, cls.regular_renderer)
 
     @override
     def to_error(

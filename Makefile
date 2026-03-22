@@ -61,8 +61,11 @@ smoke: ## Run smoke tests (check that package can be imported without `django.se
 	$(POETRY) run python -c 'from dmr import settings'
 
 .PHONY: example
-example: ## Run mypy and pytest on example code
-	cd django_test_app && $(POETRY) run mypy --config-file mypy.ini
+example: ## Run QA tools on example code
+	( cd django_test_app \
+		&& $(POETRY) run mypy --config-file mypy.ini \
+		&& $(POETRY) run python manage.py makemigrations --dry-run --check \
+		)
 	PYTHONPATH='docs/' $(POETRY) run pytest -o addopts='' \
 	  --suppress-no-test-exit-code \
 	  docs/examples/testing/polyfactory_usage.py \
