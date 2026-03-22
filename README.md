@@ -83,7 +83,7 @@ There are several included extras:
 
 ## Example
 
-The [shortest example](https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/getting_started/pydantic_controller.py):
+The shortest example [(click here to copy the whole file)](https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/getting_started/pydantic_controller.py):
 
 ```python
 >>> import uuid
