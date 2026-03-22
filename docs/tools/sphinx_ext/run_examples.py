@@ -78,6 +78,8 @@ def _get_mp_context() -> Any:
 
 _MP_CONTEXT: Final = _get_mp_context()
 
+_BASE_DIR: Final = Path(__file__).parent.parent.parent.parent
+
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
@@ -252,14 +254,16 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.middleware.csrf.CsrfViewMiddleware',
                 'django.contrib.auth.middleware.AuthenticationMiddleware',
                 'django.middleware.locale.LocaleMiddleware',
+                'django.contrib.messages.middleware.MessageMiddleware',
+                'django.middleware.clickjacking.XFrameOptionsMiddleware',
             ],
             USE_TZ=True,
             USE_I18N=True,
-            LANGUAGE_CODE='en',
-            LOCALE_PATHS=('../dmr/locale/',),
+            LANGUAGE_CODE='en-us',
+            LOCALE_PATHS=[str(_BASE_DIR / 'dmr' / 'locale')],
             LANGUAGES=(
                 ('en', 'English'),
-                ('kk', 'Kazakh'),
+                ('ru', 'Russian'),
             ),
             DATABASES={
                 'default': {

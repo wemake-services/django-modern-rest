@@ -1,7 +1,6 @@
 from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, Final, final
 
-from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
@@ -113,5 +112,4 @@ class NotAuthenticatedError(Exception):
 
     def __init__(self, msg: str | Promise | None = None) -> None:
         """Provides default error message."""
-        msg = msg or self.default_message
-        super().__init__(force_str(msg) if isinstance(msg, Promise) else msg)
+        super().__init__(msg or self.default_message)

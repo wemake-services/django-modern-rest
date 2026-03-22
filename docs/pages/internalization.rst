@@ -61,7 +61,7 @@ Specifying the list of the supported languages:
   from django.utils.translation import gettext_lazy as _
 
   LANGUAGES = [
-      ('kk', _('Kazakh')),
+      ('ru', _('Russian')),
       ('en', _('English')),
   ]
 
