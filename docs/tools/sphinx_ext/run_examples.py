@@ -251,8 +251,16 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.middleware.common.CommonMiddleware',
                 'django.middleware.csrf.CsrfViewMiddleware',
                 'django.contrib.auth.middleware.AuthenticationMiddleware',
+                'django.middleware.locale.LocaleMiddleware',
             ],
             USE_TZ=True,
+            USE_I18N=True,
+            LANGUAGE_CODE='en',
+            LOCALE_PATHS=('../dmr/locale/',),
+            LANGUAGES=(
+                ('en', 'English'),
+                ('kk', 'Kazakh'),
+            ),
             DATABASES={
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',

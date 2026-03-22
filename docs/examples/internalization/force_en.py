@@ -18,4 +18,5 @@ class ForceEnglishForAPI:
             # `settings.API_LANGUAGE_CODE`
             # and set `API_LANGUAGE_CODE = 'en-us'` in your settings file.
             translation.activate('en-us')  # or any other language
+            # Or just run: `request.META.pop('HTTP_ACCEPT_LANGUAGE', None)`
         return self.get_response(request)
