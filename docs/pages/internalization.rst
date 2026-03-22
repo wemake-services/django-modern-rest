@@ -75,7 +75,7 @@ Specifying the list of the supported languages:
 Enabling translation for type validation
 ----------------------------------------
 
-Since we are using ``pydantic`` and ``msgspec`` direclty
+Since we are using ``pydantic`` and ``msgspec`` directly
 to handle all type validation and schema checks, their messages
 won't be affected by the Django's ``i18n`` settings.
 

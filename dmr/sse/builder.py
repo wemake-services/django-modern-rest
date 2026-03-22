@@ -99,7 +99,7 @@ class _BaseSSEController(Controller[_SerializerT_co]):
 
         super().__init_subclass__()
 
-        # TODO: handle abtract controllers:
+        # TODO: handle abstract controllers:
         cls.sse_renderer = SSERenderer(cls.serializer, cls.regular_renderer)
 
     @override
