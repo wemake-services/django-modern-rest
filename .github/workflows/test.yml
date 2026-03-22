@@ -44,6 +44,10 @@ jobs:
 
     - name: Install dependencies
       run: |
+        # System deps:
+        sudo apt install -y gettext
+
+        # Python deps:
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
         poetry install --all-extras --all-groups
