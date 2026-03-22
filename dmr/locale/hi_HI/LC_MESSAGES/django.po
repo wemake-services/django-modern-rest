@@ -86,4 +86,3 @@ msgstr "ब्लॉकलिस्ट किए गए JWT टोकन"
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "{type} प्रकार का मान {value}, {target_type} के लिए समर्थित नहीं है"
-
