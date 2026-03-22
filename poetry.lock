@@ -633,6 +633,22 @@ test = ["certifi (>=2024)", "cryptography-vectors (==46.0.5)", "pretend (>=0.7)"
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
+name = "dennis"
+version = "1.2.0"
+description = "Utilities for working with gettext PO and POT files to ease development and improve localization quality"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "dennis-1.2.0-py3-none-any.whl", hash = "sha256:14cf763b9d55d27599d4f7f1061b85eabd342b28b0abab90d1dad1f4297c0346"},
+    {file = "dennis-1.2.0.tar.gz", hash = "sha256:826d447ed9b3d3c9dec0d550a8647a90dfc8932ac5b8a1a619a0c30c7d63d79b"},
+]
+
+[package.dependencies]
+click = ">=6"
+polib = ">=1.0.8"
+
+[[package]]
 name = "dirty-equals"
 version = "0.11"
 description = "Doing dirty (but extremely useful) things with equals."
@@ -670,19 +686,25 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-mantle"
-version = "26.5"
+version = "26.6"
 description = "Your type-safe wrapper around Django's liquid core."
 optional = false
 python-versions = "*"
 groups = ["docs"]
 files = [
-    {file = "django_mantle-26.5-py2.py3-none-any.whl", hash = "sha256:eea7e660b79e3e109920fb37b6d29242f8f7e0adc609a2f097c7e26f7c6a9776"},
-    {file = "django_mantle-26.5.tar.gz", hash = "sha256:c253b9292b3fc5a89f18e4d3c86a38d63f92405ccc6f75f4bffea388c776ed15"},
+    {file = "django_mantle-26.6-py2.py3-none-any.whl", hash = "sha256:c0d7ceb08656aa1043442772302b87499dcf02aee202c5ff392ad06e42769b06"},
+    {file = "django_mantle-26.6.tar.gz", hash = "sha256:db864739ed27abd3d0575ab4ca5c26b6a722de4eb6d3f68472cb76aa487d787e"},
 ]
 
+[package.dependencies]
+attrs = "*"
+cattrs = "*"
+Django = "*"
+django-readers = "*"
+
 [package.extras]
-dev = ["django-stubs", "mypy"]
-docs = ["Sphinx"]
+dev = ["coverage", "django-stubs", "mypy", "rich", "typing-extensions"]
+docs = ["Sphinx", "django-sphinx-view"]
 
 [[package]]
 name = "django-readers"
@@ -1964,6 +1986,18 @@ dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
+name = "polib"
+version = "1.2.0"
+description = "A library to manipulate gettext files (po and mo files)."
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "polib-1.2.0-py2.py3-none-any.whl", hash = "sha256:1c77ee1b81feb31df9bca258cbc58db1bbb32d10214b173882452c73af06d62d"},
+    {file = "polib-1.2.0.tar.gz", hash = "sha256:f3ef94aefed6e183e342a8a269ae1fc4742ba193186ad76f175938621dbfc26b"},
+]
+
+[[package]]
 name = "polyfactory"
 version = "3.3.0"
 description = "Mock data generation factories"
@@ -2358,14 +2392,14 @@ testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
 
 [[package]]
 name = "pytest-cov"
-version = "7.0.0"
+version = "7.1.0"
 description = "Pytest plugin for measuring coverage."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861"},
-    {file = "pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1"},
+    {file = "pytest_cov-7.1.0-py3-none-any.whl", hash = "sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678"},
+    {file = "pytest_cov-7.1.0.tar.gz", hash = "sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2"},
 ]
 
 [package.dependencies]
@@ -3270,14 +3304,14 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
 name = "types-docutils"
-version = "0.22.3.20260316"
+version = "0.22.3.20260322"
 description = "Typing stubs for docutils"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "types_docutils-0.22.3.20260316-py3-none-any.whl", hash = "sha256:083c7091b8072c242998ec51da1bf1492f0332387da81c3b085efbf5ca754c7d"},
-    {file = "types_docutils-0.22.3.20260316.tar.gz", hash = "sha256:8ef27d565b9831ff094fe2eac75337a74151013e2d21ecabd445c2955f891564"},
+    {file = "types_docutils-0.22.3.20260322-py3-none-any.whl", hash = "sha256:681d4510ce9b80a0c6a593f0f9843d81f8caa786db7b39ba04d9fd5480ac4442"},
+    {file = "types_docutils-0.22.3.20260322.tar.gz", hash = "sha256:e2450bb997283c3141ec5db3e436b91f0aa26efe35eb9165178ca976ccb4930b"},
 ]
 
 [[package]]
@@ -3442,4 +3476,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "8e2e8b9068f8388a71464b1f69596c534990cbc100b9015b7e6a4a7290b89fcc"
+content-hash = "f88a8464d2dd045a6c20896650ca4be0fdac9f453de15893322e7e58a445cade"

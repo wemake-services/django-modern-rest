@@ -48,7 +48,7 @@ class InternalServerError(Exception):
     If it disabled, we hust show a generic message.
     """
 
-    default_message: ClassVar[Promise] = _('Internal server error')
+    default_message: ClassVar[str | Promise] = _('Internal server error')
     status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -108,11 +108,10 @@ class NotAcceptableError(Exception):
 class NotAuthenticatedError(Exception):
     """Raised when we fail to authenticate a user."""
 
-    default_message: ClassVar[Promise] = _NOT_AUTHENTICATED_MSG
+    default_message: ClassVar[str | Promise] = _NOT_AUTHENTICATED_MSG
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNAUTHORIZED
 
-    def __init__(self, msg: str | Promise = _NOT_AUTHENTICATED_MSG) -> None:
+    def __init__(self, msg: str | Promise | None = None) -> None:
         """Provides default error message."""
-        if isinstance(msg, Promise):
-            msg = force_str(msg)
-        super().__init__(msg)
+        msg = msg or self.default_message
+        super().__init__(force_str(msg) if isinstance(msg, Promise) else msg)

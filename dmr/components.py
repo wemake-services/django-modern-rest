@@ -785,7 +785,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
 
     .. seealso::
 
-        https://docs.djangoproject.com/en/6.0/topics/http/file-uploads/
+        https://docs.djangoproject.com/en/stable/topics/http/file-uploads/
 
     """
 

@@ -125,7 +125,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
     This class is used for sync endpoints.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -165,7 +165,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
     This class is used for async endpoints.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 

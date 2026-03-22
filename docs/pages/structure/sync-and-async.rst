@@ -25,8 +25,8 @@ The same is true for sync / async middleware.
 
 See:
 
-- https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/uvicorn/
-- https://docs.djangoproject.com/en/6.0/topics/async/#performance
+- https://docs.djangoproject.com/en/stable/howto/deployment/asgi/uvicorn/
+- https://docs.djangoproject.com/en/stable/topics/async/#performance
 
 This is supported in ``django-modern-rest``.
 
@@ -51,7 +51,7 @@ How to properly isolate these two applications?
    `django-split-settings <https://github.com/wemake-services/django-split-settings>`_
    for that
 3. In these two settings file specify two different
-   `ROOT_URLCONF's <https://docs.djangoproject.com/en/6.0/ref/settings/#root-urlconf>`_,
+   `ROOT_URLCONF's <https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf>`_,
    one for ``urls.py`` and one for ``async_urls.py``
 4. Run two different instances of Django: one with ``gunicorn`` and ``urls.py``,
    one with ``uvicorn`` and ``async_urls.py``

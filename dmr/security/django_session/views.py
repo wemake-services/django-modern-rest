@@ -52,7 +52,7 @@ class DjangoSessionSyncController(
     Sync controller to get django session cookie.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -114,7 +114,7 @@ class DjangoSessionAsyncController(
     Async controller to get django session cookie.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 

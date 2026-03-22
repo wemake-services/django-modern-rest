@@ -114,7 +114,7 @@ coverage.xml
 .ruff_cache/
 
 # Translations
-*.mo
+!*.mo
 *.pot
 
 # Django stuff:

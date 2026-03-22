@@ -70,7 +70,7 @@ convert ``QuerySet`` into typed models, you can use
 `django-mantle <https://noumenal.es/mantle/>`_
 which is built just for this purpose:
 
-.. literalinclude:: /examples/integrations/django_mantel.py
+.. literalinclude:: /examples/integrations/django_mantle.py
   :caption: views.py
   :language: python
   :linenos:
@@ -80,7 +80,7 @@ CSRF
 ----
 
 Django supports
-`Cross Site Request Forgery <https://docs.djangoproject.com/en/6.0/ref/csrf/>`_
+`Cross Site Request Forgery <https://docs.djangoproject.com/en/stable/ref/csrf/>`_
 protection.
 
 By default we exempt all controllers from CSRF checks, unless:

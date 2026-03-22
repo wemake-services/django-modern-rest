@@ -135,7 +135,7 @@ Handling disconnects
 Async clients can disconnect at any time using :exc:`asyncio.CancelledError`.
 It is a good idea to handle this error.
 
-See Django docs: https://docs.djangoproject.com/en/6.0/ref/request-response/#request-response-streaming-disconnect
+See Django docs: https://docs.djangoproject.com/en/stable/ref/request-response/#request-response-streaming-disconnect
 
 
 Validation

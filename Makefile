@@ -34,6 +34,12 @@ type-check: ## Run all type checkers we support
 spell-check: ## Run spell checking
 	$(POETRY) run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
+.PHONY: translations
+translations: ## Run translation QA
+	$(POETRY) run dennis-cmd lint dmr/locale
+	$(POETRY) run django-admin compilemessages --ignore dmr || true
+	$(POETRY) run django-admin compilemessages
+
 .PHONY: unit
 unit: ## Run unit tests with pytest
 	$(POETRY) run pytest --inline-snapshot=disable
@@ -72,4 +78,4 @@ package: ## Check package dependencies with pip
 	$(POETRY) run pip check
 
 .PHONY: test
-test: lint type-check example spell-check package smoke unit ## Run all checks
+test: lint type-check example spell-check package smoke translations unit ## Run all checks

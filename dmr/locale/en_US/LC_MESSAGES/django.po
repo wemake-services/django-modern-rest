@@ -1,14 +1,14 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# django-modern-rest.
+# Copyright (C) 2026
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Nikita Sobolev <mail@sobolevn.me>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-21 15:51+0400\n"
+"POT-Creation-Date: 2026-03-22 11:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,59 +17,67 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: components.py:53
+#: dmr/components.py:54
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
 "parameters args={args}"
 msgstr ""
 
-#: components.py:58
+#: dmr/components.py:59
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
 
-#: controller.py:44
+#: dmr/controller.py:45
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr ""
 
-#: exceptions.py:49
-msgid "Internal server error"
-msgstr ""
-
-#: exceptions.py:111
+#: dmr/exceptions.py:11
 msgid "Not authenticated"
 msgstr ""
 
-#: internal/django.py:49
+#: dmr/exceptions.py:51
+msgid "Internal server error"
+msgstr ""
+
+#: dmr/internal/django.py:49
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
 
-#: internal/negotiation.py:18
+#: dmr/internal/negotiation.py:18
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
 
-#: negotiation.py:25
+#: dmr/negotiation.py:25
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
 
-#: security/django_session/auth.py:26
+#: dmr/security/django_session/auth.py:26
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr ""
 
-#: serializer.py:27
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr ""
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr ""
+
+#: dmr/serializer.py:27
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr ""

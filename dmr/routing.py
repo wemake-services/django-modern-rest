@@ -106,7 +106,7 @@ def build_404_handler(  # noqa: WPS114
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+        https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
@@ -186,7 +186,7 @@ def build_500_handler(  # noqa: WPS114
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/ref/views/#the-500-server-error-view
+        https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415

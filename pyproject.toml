@@ -86,6 +86,7 @@ wemake-python-styleguide = "^1.6"
 ruff = "^0.15"
 import-linter = "^2.5"
 slotscheck = "^0.19"
+dennis = "^1.2"
 
 pytest = "^9.0"
 pytest-cov = "^7.0"
@@ -130,9 +131,7 @@ httpx = "^0.28"
 
 # Needed for examples:
 xmltodict = "^1.0"
-django-mantle = "^26.5"
-cattrs = "^26.1"
-django-readers = "^2.5"
+django-mantle = "^26.6"
 
 
 [tool.poetry.plugins."pytest11"]
