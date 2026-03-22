@@ -80,6 +80,32 @@ Before submitting your code please do the following steps:
 5. Update `CHANGELOG.md` with a quick summary of your changes
 6. Run `make test` again to make sure it is still working
 
+## Translations
+
+We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
+
+### Contributing a new language
+
+1. Generate a `.po` file for your [locale](https://docs.djangoproject.com/en/stable/topics/i18n/#term-locale-name):
+   ```bash
+   poetry run django-admin makemessages --locale <lang>
+   ```
+2. Fill in the `msgstr` values in `dmr/locale/<lang>/LC_MESSAGES/django.po`
+3. Compile and validate all translations:
+   ```bash
+   make translations
+   ```
+4. Commit both `django.po` and `django.mo` files
+
+### Improving an existing translation
+
+1. Edit `dmr/locale/<lang>/LC_MESSAGES/django.po`
+2. Compile and validate:
+   ```bash
+   make translations
+   ```
+3. Commit both `django.po` and `django.mo` files
+
 ## Other help
 
 You can contribute by spreading a word about this library.
