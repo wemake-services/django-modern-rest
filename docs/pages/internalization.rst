@@ -43,7 +43,7 @@ Setting the language code per request:
 Then any requests with ``Accept-Language`` header will set
 the required language for this specific response.
 
-Specifing the list of the supported languages:
+Specifying the list of the supported languages:
 
 .. code-block:: python
   :caption: settings.py
