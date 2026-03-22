@@ -140,6 +140,7 @@ def test_single_view_sync405(
 def test_single_view_i18n_sync405(
     dmr_client: DMRClient,
     faker: Faker,
+    reset_language: None,
 ) -> None:
     """Ensure that direct routes raise 405 with i18n support."""
     response = dmr_client.delete(

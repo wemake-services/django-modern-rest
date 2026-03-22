@@ -118,6 +118,12 @@ LANGUAGE_CODE = 'en-us'
 
 LOCALE_PATHS = ['../dmr/locale/']
 
+LANGUAGES = (
+    ('en-us', 'English'),
+    ('ru-ru', 'Russian'),
+    ('kk-kz', 'Kazakh'),
+)
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True

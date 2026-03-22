@@ -16,6 +16,7 @@ from dmr.test import DMRClient
 )
 def test_missing_auth_with_accept_language(
     dmr_client: DMRClient,
+    reset_language: None,
     *,
     url: str,
 ) -> None:
@@ -35,4 +36,43 @@ def test_missing_auth_with_accept_language(
                 'type': 'security',
             },
         ],
+    })
+
+    # Second request in the same context, it is important:
+    response = dmr_client.post(
+        url,
+        data='{}',
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+    # Default in the same context, it is important:
+    response = dmr_client.post(
+        url,
+        data='{}',
+        headers={'Accept-Language': 'en'},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+    # Last request in the same context, order is very important,
+    # last test must not set the default `en` locale:
+    response = dmr_client.post(
+        url,
+        data='{}',
+        headers={'Accept-Language': 'kk'},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Аутентификация жасалмаған', 'type': 'security'}],
     })
