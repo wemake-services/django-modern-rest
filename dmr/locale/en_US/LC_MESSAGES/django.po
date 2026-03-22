@@ -1,5 +1,5 @@
 # django-modern-rest.
-# Copyright (C) 2026
+# Copyright (C) 2026, wemake.services
 # This file is distributed under the same license as the PACKAGE package.
 # Nikita Sobolev <mail@sobolevn.me>, 2026.
 #
