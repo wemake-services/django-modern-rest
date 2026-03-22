@@ -1,5 +1,5 @@
 from dmr import Controller, ResponseSpec
-from dmr.errors import NotAuthenticatedError
+from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic import PydanticSerializer
 
 
