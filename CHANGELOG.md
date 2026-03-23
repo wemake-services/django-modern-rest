@@ -21,6 +21,7 @@ We follow [Semantic Versions](https://semver.org/).
 
 - Added `$dmr-openapi-skeleton` AI agent skill, #693
 - Added `$dmr-from-django-ninja` AI agent skill, #693
+- Added ETag usage docs, #699
 
 
 ## Version 0.3.0 (2026-03-17)

@@ -27,7 +27,7 @@ class _RequestWithID(HttpRequest):
     request_id: str
 
 
-def _etag(_: HttpRequest) -> str:
+def _etag(request: HttpRequest) -> str:
     return _RESOURCE_ETAG
 
 
