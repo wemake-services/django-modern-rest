@@ -5,9 +5,8 @@ import pydantic
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
-from django.views.decorators.http import condition
 
-from dmr import Body, Controller, HeaderSpec, ResponseSpec
+from dmr import Body, Controller, ResponseSpec
 from dmr.decorators import wrap_middleware
 from dmr.errors import ErrorModel, format_error
 from dmr.plugins.pydantic import PydanticSerializer
@@ -116,25 +115,6 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
             ),
             status_code=HTTPStatus.UNAUTHORIZED,
         )
-    return response
-
-
-@wrap_middleware(
-    condition(etag_func=_etag),
-    ResponseSpec(
-        return_type=dict[str, str],
-        status_code=HTTPStatus.OK,
-    ),
-    ResponseSpec(
-        return_type=None,
-        status_code=HTTPStatus.NOT_MODIFIED,
-        headers={'ETag': HeaderSpec()},
-    ),
-)
-def condition_json(response: HttpResponse) -> HttpResponse:
-    """Adds content type for 304 responses to satisfy strict validation."""
-    if response.status_code == HTTPStatus.NOT_MODIFIED:
-        response.headers['Content-Type'] = 'application/json'
     return response
 
 
@@ -247,14 +227,3 @@ class LoginRequiredController(Controller[PydanticSerializer]):
             'username': username,
             _MESSAGE_KEY: 'Successfully accessed protected resource',
         }
-
-
-@final
-@condition_json
-class ConditionalETagController(Controller[PydanticSerializer]):
-    """Controller that supports Django conditional GET by ETag."""
-
-    responses = condition_json.responses
-
-    def get(self) -> HttpResponse:
-        return self.to_response({_MESSAGE_KEY: 'Request ID tracked'})

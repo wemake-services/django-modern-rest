@@ -231,15 +231,11 @@ With ``django-modern-rest`` you can integrate it via
 and :func:`django.views.decorators.http.condition`.
 
 
-.. literalinclude:: ../../django_test_app/server/apps/etag/urls.py
-  :caption: etag.py
-  :language: python
-  :linenos:
-
 .. literalinclude:: ../../django_test_app/server/apps/etag/views.py
   :caption: etag.py
   :language: python
   :linenos:
 
 .. seealso::
+
     https://docs.djangoproject.com/en/stable/topics/conditional-view-processing
