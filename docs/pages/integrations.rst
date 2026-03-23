@@ -213,8 +213,6 @@ Conditional requests (ETag)
 Django has built-in support for conditional request processing
 (``If-None-Match``, ``If-Modified-Since``, ``304 Not Modified``):
 
-- https://docs.djangoproject.com/en/6.0/topics/conditional-view-processing/
-
 With ``django-modern-rest`` you can integrate it via
 :func:`~dmr.decorators.wrap_middleware`
 and :func:`django.views.decorators.http.condition`.
@@ -223,3 +221,6 @@ and :func:`django.views.decorators.http.condition`.
   :caption: etag.py
   :language: python
   :linenos:
+
+.. seealso::
+    https://docs.djangoproject.com/en/stable/topics/conditional-view-processing
