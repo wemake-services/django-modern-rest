@@ -13,6 +13,12 @@ def tracecov_map(pytestconfig: pytest.Config) -> tracecov.CoverageMap:
     from django_test_app.server.urls import schema  # noqa: PLC0415
 
     coverage_map = tracecov.CoverageMap.from_dict(schema.convert())
+
+    # TraceCov uses an autouse *session* bridge to stash the map.
+    # In unit-test runs `tracecov_map` becomes `None`, so the bridge
+    # never stores anything in `pytestconfig.stash`. Later integration
+    # fixtures can't retroactively fix the stash, so the plugin sees
+    # `None` and skips report generation.
     pytestconfig.stash[_TRACECOV_MAP_KEY] = coverage_map
     return coverage_map
 
