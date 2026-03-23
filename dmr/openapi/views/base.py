@@ -52,7 +52,7 @@ class OpenAPIView(View):
         in the private ``_schema`` attribute. This property provides a
         typed and safe accessor for that value.
         """
-        #  An assertion is used to guarantee that the schema has been set.
+        # An assertion is used to guarantee that the schema has been set.
         # Under normal usage, this should always be true because the view
         # must be constructed via :meth:`as_view(schema=...)`.
         assert self._schema is not None  # noqa: S101
