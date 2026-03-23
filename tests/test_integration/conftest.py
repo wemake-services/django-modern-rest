@@ -1,9 +1,20 @@
 import pytest
 import tracecov
 from django.conf import LazySettings
+from tracecov.pytest_plugin import _TRACECOV_MAP_KEY
 
 from dmr.settings import Settings
 from dmr.test import DMRClient
+
+
+@pytest.fixture(scope='session')
+def tracecov_map(pytestconfig: pytest.Config) -> tracecov.CoverageMap:
+    """Provide the session ``tracecov`` coverage map for tests."""
+    from django_test_app.server.urls import schema  # noqa: PLC0415
+
+    coverage_map = tracecov.CoverageMap.from_dict(schema.convert())
+    pytestconfig.stash[_TRACECOV_MAP_KEY] = coverage_map
+    return coverage_map
 
 
 @pytest.fixture
