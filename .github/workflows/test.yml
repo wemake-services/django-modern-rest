@@ -65,7 +65,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Tracecov report
-      run: cat tracecov-report.md >> $GITHUB_STEP_SUMMARY
+      run: cat tracecov-report.md >> "$GITHUB_STEP_SUMMARY"
 
 
   test-django-versions:
