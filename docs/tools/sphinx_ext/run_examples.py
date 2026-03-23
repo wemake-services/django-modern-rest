@@ -218,6 +218,16 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
+def _ensure_project_import_paths() -> None:
+    """Ensure external examples can import project modules."""
+    cwd = Path.cwd()
+    project_root = cwd.parent if cwd.name == 'docs' else cwd
+    for path_item in (project_root, project_root / 'django_test_app'):
+        path_string = str(path_item)
+        if path_item.exists() and path_string not in sys.path:
+            sys.path.insert(0, path_string)
+
+
 class _BaseBuilder:  # noqa: WPS214
     def __init__(self, file_path: Path, config: _AppRunArgs) -> None:
         """Initialize application builder with file path and configuration."""
@@ -299,6 +309,8 @@ class _BaseBuilder:  # noqa: WPS214
         db_populated = True
 
     def _build_app(self) -> ASGIHandler:
+        _ensure_project_import_paths()
+
         file_path_without_ext = self.file_path.with_suffix('')
         module_name = str(file_path_without_ext).replace(os.sep, '.')
 
@@ -466,6 +478,34 @@ def _shutdown_process(proc: multiprocessing.Process) -> None:
 
 def _get_module_name(file_path: Path) -> str:
     return str(file_path.with_suffix('')).replace(os.sep, '.')
+
+
+def _resolve_tmp_example_relative_path(
+    file_path: Path,
+    docs_dir: Path,
+) -> Path:
+    """Return a stable relative path for temp examples inside docs/_build."""
+    if file_path.is_relative_to(docs_dir):
+        return file_path.relative_to(docs_dir)
+
+    project_root = docs_dir.parent
+    if file_path.is_relative_to(project_root):
+        return Path('_external') / file_path.relative_to(project_root)
+
+    return Path('_external') / file_path.name
+
+
+def _resolve_example_file_for_execution(file_path: Path) -> Path:
+    """Resolve example path for importing regardless of current cwd."""
+    cwd = Path.cwd()
+    if file_path.is_relative_to(cwd):
+        return file_path.relative_to(cwd)
+
+    project_root = cwd.parent if cwd.name == 'docs' else cwd
+    if file_path.is_relative_to(project_root):
+        return file_path.relative_to(project_root)
+
+    return file_path
 
 
 def _wait_for_app_startup(port: int, proc: multiprocessing.Process) -> None:
@@ -869,7 +909,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
 
         nodes = self._generate_nodes(file_path, imports_data)
 
-        example_file = file_path.relative_to(Path.cwd())
+        example_file = _resolve_example_file_for_execution(file_path)
         executed_result = _exec_examples(example_file, run_args)
         openapi_result = _exec_openapi_examples(example_file, openapi_args)
 
@@ -1133,12 +1173,14 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     ) -> None:
         cwd = Path.cwd()
         docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
+        relative_example_path = _resolve_tmp_example_relative_path(
+            file_path,
+            docs_dir,
+        )
         tmp_file = (
             docs_dir
             / _PATH_TO_TMP_EXAMPLES
-            / str(
-                file_path.relative_to(docs_dir),
-            ).replace('/', '_')
+            / str(relative_example_path).replace('/', '_')
         )
 
         self.arguments[0] = f'/{tmp_file.relative_to(docs_dir)!s}'

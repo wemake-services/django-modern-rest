@@ -1,11 +1,10 @@
 from datetime import UTC, datetime
 from http import HTTPStatus
 from types import MappingProxyType
-from typing import Final, final
+from typing import Any, Final, final
 
 import pydantic
 from django.http import Http404, HttpRequest, HttpResponse
-from django.urls import path
 from django.views.decorators.http import condition
 
 from dmr import Controller, HeaderSpec, Path, ResponseSpec
@@ -51,7 +50,7 @@ def _build_etag(user: _UserModel) -> str:
     return f'"user-{user.user_id}-{updated_at}"'
 
 
-def _etag(request: HttpRequest, user_id: int = 0, **_: object) -> str | None:
+def _etag(request: HttpRequest, user_id: int = 0, **kwargs: Any) -> str | None:
     user = _USERS.get(user_id)
     return _build_etag(user) if user else None
 
@@ -91,12 +90,3 @@ class ConditionalETagController(
                 updated_at=user.updated_at.isoformat(),
             ),
         )
-
-
-urlpatterns = [
-    path('api/etag/<int:user_id>/', ConditionalETagController.as_view()),
-]
-
-# run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/etag/1/", "use_urlpatterns": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
-# run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/etag/1/", "use_urlpatterns": true, "headers": {"If-None-Match": "\"user-1-2026-03-23T12:30:00+00:00\""}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
-# run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/etag/2/", "use_urlpatterns": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
