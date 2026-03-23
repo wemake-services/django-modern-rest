@@ -10,6 +10,7 @@ from django.views.decorators.http import condition
 
 from dmr import Controller, HeaderSpec, Path, ResponseSpec
 from dmr.decorators import wrap_middleware
+from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.response import APIError
 
@@ -86,7 +87,10 @@ class ConditionalETagController(
         user = _USERS.get(user_id)
         if user is None:
             raise APIError(
-                f'User {user_id} not found',
+                self.format_error(
+                    f'User {user_id} not found',
+                    error_type=ErrorType.not_found,
+                ),
                 status_code=HTTPStatus.NOT_FOUND,
             )
         return self.to_response(

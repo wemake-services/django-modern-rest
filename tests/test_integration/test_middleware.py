@@ -14,7 +14,6 @@ _ASYNC_CSRF_TEST_ENDPOINT: Final = 'api:middlewares:async_csrf_test'
 _CUSTOM_HEADER_ENDPOINT: Final = 'api:middlewares:custom_header'
 _RATE_LIMITED_ENDPOINT: Final = 'api:middlewares:rate_limited'
 _REQUEST_ID_ENDPOINT: Final = 'api:middlewares:request_id'
-_ETAG_ENDPOINT: Final = 'api:middlewares:etag'
 _LOGIN_REQUIRED_ENDPOINT: Final = 'api:middlewares:login_required'
 
 
@@ -177,26 +176,6 @@ async def test_request_id_middleware_async(
     request_id = response.json()['request_id']
 
     assert response.headers['X-Request-ID'] == request_id
-
-
-def test_conditional_etag_middleware(dmr_client: DMRClient) -> None:
-    """Test ETag based conditional requests with Django's condition()."""
-    response = dmr_client.get(reverse(_ETAG_ENDPOINT))
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {'message': 'Request ID tracked'}
-    etag = response.headers['ETag']
-
-    conditional = dmr_client.get(
-        reverse(_ETAG_ENDPOINT),
-        headers={'If-None-Match': etag},
-    )
-
-    assert conditional.status_code == HTTPStatus.NOT_MODIFIED
-    assert conditional.content == b''
-    assert conditional.headers['ETag'] == etag
-    assert conditional.headers['Content-Type'] == 'application/json'
 
 
 def _get_csrf_token(client: DMRClient) -> str:

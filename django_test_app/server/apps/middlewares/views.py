@@ -18,16 +18,11 @@ from server.apps.middlewares.middleware import (
 )
 
 _MESSAGE_KEY: Final = 'message'
-_RESOURCE_ETAG: Final = '"request-id-v1"'
 
 
 @final
 class _RequestWithID(HttpRequest):
     request_id: str
-
-
-def _etag(request: HttpRequest) -> str:
-    return _RESOURCE_ETAG
 
 
 @wrap_middleware(
