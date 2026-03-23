@@ -27,6 +27,5 @@ class UserController(
     Headers[HeaderModel],
 ):
     def post(self) -> UserModel:
-        """All added props have the correct runtime and static types."""
         assert self.parsed_headers.consumer == 'my-api'
         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)

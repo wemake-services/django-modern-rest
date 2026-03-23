@@ -106,7 +106,7 @@ The shortest example [(click here to copy the whole file)](https://github.com/we
 ...     Body[UserCreateModel],
 ...     Headers[HeaderModel],
 ... ):
-...     def post(self) -> UserModel:  # <- can be async as well!
+...     async def post(self) -> UserModel:  # <- can be sync as well!
 ...         """All added props have the correct runtime and static types."""
 ...         assert self.parsed_headers.consumer == 'my-api'
 ...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)

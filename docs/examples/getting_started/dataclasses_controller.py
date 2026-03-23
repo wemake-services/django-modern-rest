@@ -21,5 +21,4 @@ class UserController(
     Body[UserCreateModel],
 ):
     def post(self) -> UserModel:
-        """All added props have the correct runtime and static types."""
         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
