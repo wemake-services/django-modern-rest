@@ -187,6 +187,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     controller_cls: type['Controller[BaseSerializer]']
     func: Callable[..., Any]
     metadata_cls: type[EndpointMetadata]
+    response_modification_cls: type[ResponseModification]
 
     def __call__(self) -> EndpointMetadata:
         """Do the validation."""
@@ -291,7 +292,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         self._validate_new_http_parts(payload, endpoint=endpoint)
-        modification = ResponseModification(
+        modification = self.response_modification_cls(
             return_type=return_annotation,
             headers=payload.headers,
             cookies=payload.cookies,
@@ -338,7 +339,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         status_code = infer_status_code(method)
-        modification = ResponseModification(
+        modification = self.response_modification_cls(
             return_type=return_annotation,
             status_code=status_code,
             headers=None,

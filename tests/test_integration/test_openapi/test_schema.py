@@ -1,13 +1,15 @@
 import pytest
 import schemathesis as st
+import tracecov
 from django.conf import LazySettings
 from django.urls import reverse
 from schemathesis.specs.openapi.schemas import OpenApiSchema
+from tracecov.schemathesis import helpers
 
 from django_test_app.server.wsgi import application
 
 
-# NOTE: The `db` fixture is required to enable database access.
+# The `db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
 @pytest.fixture
@@ -20,7 +22,11 @@ schema = st.pytest.from_fixture('api_schema')
 
 
 @schema.parametrize()
-def test_schemathesis(case: st.Case, settings: LazySettings) -> None:
+def test_schemathesis(
+    case: st.Case,
+    settings: LazySettings,
+    tracecov_map: tracecov.CoverageMap,
+) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
     if settings.DEBUG:
         pytest.skip(
@@ -29,4 +35,10 @@ def test_schemathesis(case: st.Case, settings: LazySettings) -> None:
             ),
         )
 
-    case.call_and_validate()
+    response = case.call_and_validate()
+    # Record interaction for `tracecov` report:
+    tracecov_map.record_schemathesis_interactions(
+        case.method,
+        case.operation.full_path,
+        [helpers.from_response(case.method, response)],
+    )

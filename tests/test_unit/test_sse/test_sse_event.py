@@ -42,6 +42,7 @@ async def _valid_sse(
     request: HttpRequest,
     context: SSEContext,
 ) -> SSEResponse[SSEvent[Any]]:
+    """Doc for tests."""
     return SSEResponse(_valid_events())
 
 
@@ -54,6 +55,11 @@ async def test_all_sse_events_props(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that valid sse produces valid results."""
+    assert _valid_sse.__name__ == '_valid_sse'
+    assert _valid_sse.__qualname__ == '_valid_sse'
+    assert _valid_sse.__module__ == test_all_sse_events_props.__module__
+    assert _valid_sse.__doc__ == 'Doc for tests.'
+
     request = dmr_async_rf.get('/whatever/')
 
     response = await dmr_async_rf.wrap(_valid_sse.as_view()(request))

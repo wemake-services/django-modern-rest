@@ -8,7 +8,6 @@ from typing import (
     Any,
     TypeAlias,
     TypeVar,
-    final,
     get_origin,
 )
 
@@ -112,7 +111,6 @@ class ResponseSpec:
         )
 
 
-@final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ResponseModification:
     """

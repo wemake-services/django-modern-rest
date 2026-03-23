@@ -1,10 +1,11 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from django.conf import settings
 from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
+
+_CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
 
 
 @final
@@ -110,7 +113,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         reason = _get_csrf_failure_reason(controller.request)
         if reason:
             raise APIError(
-                controller.format_error(f'CSRF Failed: {reason}'),
+                controller.format_error(_CSRF_FAILED_MSG.format(reason=reason)),
                 status_code=HTTPStatus.FORBIDDEN,
             )
 
@@ -122,7 +125,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
     This class is used for sync endpoints.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -162,7 +165,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
     This class is used for async endpoints.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 

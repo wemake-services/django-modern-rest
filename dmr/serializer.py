@@ -2,9 +2,10 @@ import abc
 from collections import defaultdict
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, TypeVar
 
 from django.http import HttpRequest
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import TypedDict
 
 from dmr.errors import ErrorDetail
@@ -21,6 +22,10 @@ if TYPE_CHECKING:
     from dmr.controller import Blueprint
     from dmr.endpoint import Endpoint
     from dmr.metadata import EndpointMetadata
+
+_CANNOT_DESERIALIZE_MSG: Final = _(
+    'Value {value} of type {type} is not supported for {target_type}',
+)
 
 _ModelT = TypeVar('_ModelT')
 _ComponentParserSpec: TypeAlias = dict[type['ComponentParser'], Any]
@@ -117,8 +122,11 @@ class BaseSerializer:  # noqa: WPS214
         Should be called inside :meth:`deserialize`.
         """
         raise RequestSerializationError(
-            f'Value {to_deserialize} of type {type(to_deserialize)} '
-            f'is not supported for {target_type}',
+            _CANNOT_DESERIALIZE_MSG.format(
+                value=to_deserialize,
+                type=type(to_deserialize),
+                target_type=target_type,
+            ),
         )
 
     @classmethod

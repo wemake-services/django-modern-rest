@@ -5,12 +5,14 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     Generic,
     TypeAlias,
     TypeVar,
     get_args,
 )
 
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import (
@@ -47,6 +49,17 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
+
+_UNNAMED_PATH_PARAMS_MSG: Final = _(
+    'Path {cls} with field_model={field_model}'
+    ' does not allow unnamed path parameters'
+    ' args={args}',
+)
+_UNSUPPORTED_FILE_PARSER_MSG: Final = _(
+    'Trying to parse files with {parser_name}'
+    ' that does not support'
+    ' SupportsFileParsing protocol',
+)
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -616,8 +629,11 @@ class Path(ComponentParser, Generic[_PathT]):
     ) -> Any:
         if blueprint.args:
             raise RequestSerializationError(
-                f'Path {cls} with {field_model=} does not allow '
-                f'unnamed path parameters {blueprint.args=}',
+                _UNNAMED_PATH_PARAMS_MSG.format(
+                    cls=cls,
+                    field_model=repr(field_model),
+                    args=repr(blueprint.args),
+                ),
             )
         return blueprint.kwargs
 
@@ -706,7 +722,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     Parses files metadata from :attr:`django.http.HttpRequest.FILES`.
 
     Django handles files itself natively, we don't need to do anything
-    in ``django_modern_rest``. Everything just works, including all
+    in ``django-modern-rest``. Everything just works, including all
     Django's advanced file features like customizing the storage backends.
 
     But, we need a way to represent and validate the metadata.
@@ -769,7 +785,7 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
 
     .. seealso::
 
-        https://docs.djangoproject.com/en/6.0/topics/http/file-uploads/
+        https://docs.djangoproject.com/en/stable/topics/http/file-uploads/
 
     """
 
@@ -789,8 +805,9 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         parser = endpoint.request_negotiator(blueprint.request)
         if not isinstance(parser, SupportsFileParsing):
             raise RequestSerializationError(
-                f'Trying to parse files with {type(parser).__name__!r} '
-                'that does not support SupportsFileParsing protocol',
+                _UNSUPPORTED_FILE_PARSER_MSG.format(
+                    parser_name=repr(type(parser).__name__),
+                ),
             )
 
         # NOTE: double parsing does not happen.

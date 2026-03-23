@@ -4,6 +4,7 @@ from http import HTTPMethod, HTTPStatus
 from typing import (
     Any,
     ClassVar,
+    Final,
     Generic,
     TypeAlias,
     TypeVar,
@@ -12,6 +13,7 @@ from typing import (
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern
 from django.utils.functional import classproperty
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import deprecated, override
@@ -37,6 +39,10 @@ from dmr.validation import (
     BlueprintValidator,
     ControllerValidator,
     SettingsValidator,
+)
+
+_METHOD_NOT_ALLOWED_MSG: Final = _(
+    'Method {method} is not allowed, allowed: {allowed}',
 )
 
 _SerializerT_co = TypeVar(
@@ -437,7 +443,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         """
         super().setup(request, *args, **kwargs)
         # Controller is created once per request, so we can assign attributes.
-        blueprint = self._blueprint_per_method.get(  # pyrefly: ignore[no-matching-overload]  # noqa: E501
+        blueprint = self._blueprint_per_method.get(  # pyrefly: ignore[no-matching-overload]
             request.method,  # type: ignore[arg-type]
         )
         if blueprint:
@@ -597,9 +603,9 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             build_response(
                 self.serializer,
                 raw_data=self.format_error(
-                    (
-                        f'Method {method!r} is not allowed, '
-                        f'allowed: {allowed_methods!r}'
+                    _METHOD_NOT_ALLOWED_MSG.format(
+                        method=repr(method),
+                        allowed=repr(allowed_methods),
                     ),
                     error_type=ErrorType.not_allowed,
                 ),

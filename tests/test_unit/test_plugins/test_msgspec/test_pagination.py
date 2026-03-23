@@ -69,30 +69,6 @@ class _PaginatedUsersController(
         )
 
 
-@final
-class _AsyncPaginatedUsersController(
-    Controller[MsgspecSerializer],
-    Query[_PageQuery],
-):
-    """Async controller with pagination support."""
-
-    async def get(self) -> Paginated[_User]:
-        """Return paginated list of users."""
-        page = self.parsed_query.get('page', 1)
-        page_size = self.parsed_query.get('page_size', 2)
-
-        paginator = Paginator(_USERS, page_size)
-        return Paginated(
-            count=paginator.count,
-            num_pages=paginator.num_pages,
-            per_page=paginator.per_page,
-            page=Page(
-                number=page,
-                object_list=list(paginator.page(page).object_list),
-            ),
-        )
-
-
 def test_pagination_basic(dmr_rf: DMRRequestFactory) -> None:
     """Test basic pagination returns correct structure."""
     request = dmr_rf.get('/users/')
@@ -190,6 +166,30 @@ def test_pagination_single_item_per_page(dmr_rf: DMRRequestFactory) -> None:
         'per_page': 1,
         'page': {'number': 3, 'object_list': [{'email': 'three@example.com'}]},
     })
+
+
+@final
+class _AsyncPaginatedUsersController(
+    Controller[MsgspecSerializer],
+    Query[_PageQuery],
+):
+    """Async controller with pagination support."""
+
+    async def get(self) -> Paginated[_User]:
+        """Return paginated list of users."""
+        page = self.parsed_query.get('page', 1)
+        page_size = self.parsed_query.get('page_size', 2)
+
+        paginator = Paginator(_USERS, page_size)
+        return Paginated(
+            count=paginator.count,
+            num_pages=paginator.num_pages,
+            per_page=paginator.per_page,
+            page=Page(
+                number=page,
+                object_list=list(paginator.page(page).object_list),
+            ),
+        )
 
 
 @pytest.mark.asyncio

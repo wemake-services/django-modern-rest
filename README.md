@@ -25,9 +25,8 @@
 - [x] Fully typed and checked with `mypy`, `pyright`, and `pyrefly` in strict modes
 - [x] Strict schema validation of both requests and responses
 - [x] Supports `django>=5.2`
-- [x] Supports `pydantic2`, but not bound to it
-- [x] Supports `msgspec`, but not bound to it
-- [x] Supports async Django without any `sync_to_async` calls inside
+- [x] Supports `pydantic2`, `msgspec`, `attrs`, `dataclasses`, `TypedDict`, but not bound to any of the these libraries
+- [x] Supports async Django without any `sync_to_async` calls inside, tested to work with free-threading builds
 - [x] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
@@ -76,6 +75,7 @@ There are several included extras:
 - `'django-modern-rest[msgspec]'` provides `msgspec` support
   and the fastest json parsing, recommended to be **always** included
 - `'django-modern-rest[pydantic]'` provides `pydantic` support
+- `'django-modern-rest[attrs]'` provides `attrs` support
 - `'django-modern-rest[jwt]'` provides [`pyjwt`](https://github.com/jpadilla/pyjwt) auth support
 - `'django-modern-rest[openapi]'` provides `OpenAPI` [schema validation](https://github.com/python-openapi/openapi-spec-validator)
   and generates better OpenAPI examples with [`polyfactory`](https://github.com/litestar-org/polyfactory)
@@ -83,7 +83,7 @@ There are several included extras:
 
 ## Example
 
-The [shortest example](https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/getting_started/pydantic_controller.py):
+The shortest example [(click here to copy the whole file)](https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/getting_started/pydantic_controller.py):
 
 ```python
 >>> import uuid

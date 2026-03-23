@@ -42,11 +42,11 @@ We don't provide any extra abstractions on top of Django's file uploads.
 .. note::
 
   Official Django docs:
-  https://docs.djangoproject.com/en/6.0/topics/http/file-uploads/
+  https://docs.djangoproject.com/en/stable/topics/http/file-uploads/
 
 All Django features for file uploads work as well for ``django-modern-rest``.
-Like `FILE_UPLOAD_MAX_MEMORY_SIZE <https://docs.djangoproject.com/en/6.0/ref/settings/#file-upload-max-memory-size>`_
-or `FILE_UPLOAD_HANDLERS <https://docs.djangoproject.com/en/6.0/ref/settings/#std-setting-FILE_UPLOAD_HANDLERS>`_.
+Like `FILE_UPLOAD_MAX_MEMORY_SIZE <https://docs.djangoproject.com/en/stable/ref/settings/#file-upload-max-memory-size>`_
+or `FILE_UPLOAD_HANDLERS <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-FILE_UPLOAD_HANDLERS>`_.
 
 So, we do not touch Django's internal logic for file uploads.
 What we do instead is: we provide extra metadata

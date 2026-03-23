@@ -7,14 +7,21 @@ We follow [Semantic Versions](https://semver.org/).
 
 ### Features
 
+- Added `@attrs.define` official support, #706
+- Added `msgpack` parser and renderer, #630
+- Added `i18n` support for user-facing error messages
+  using Django's `gettext_lazy`, #426
 - Added `MediaType` validation for the default `encoding` field
   and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
 - Added `MediaTypeMetadata` metadata item to set required parameters
-  for the `MediaType` request body parameters
+  for the `MediaType` request body
   for `Body` and `FileMedata` components, #695 and #698
+- Added support for Swagger, Redoc, and Scalar CDN configuration, #678
 
 ### Bugfixes
 
+- Fixed `SSE` controllers `__name__` and `__doc__` generation
+  via `@sse` decorator, #700
 - Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
 
 ### Misc
@@ -22,6 +29,7 @@ We follow [Semantic Versions](https://semver.org/).
 - Added `$dmr-openapi-skeleton` AI agent skill, #693
 - Added `$dmr-from-django-ninja` AI agent skill, #693
 - Added ETag usage docs, #699
+- Added multiple translations for the user-facing error messages
 
 
 ## Version 0.3.0 (2026-03-17)

@@ -1,5 +1,12 @@
 import dataclasses
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Mapping,
+    Sequence,
+)
+from functools import wraps
 from http import HTTPStatus
 from typing import Any, ClassVar, get_args
 
@@ -8,6 +15,7 @@ from typing_extensions import TypeVar, override
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.controller import Controller
+from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.negotiation import force_request_renderer
@@ -22,7 +30,10 @@ from dmr.sse.stream import SSEStreamingResponse
 from dmr.types import parse_return_annotation
 
 
-class _SSEMetadata(EndpointMetadata):
+class SSEEndpointMetadata(EndpointMetadata):
+    """Endpoint metadata for SSE."""
+
+    # Abstract attribute:
     default_renderer: ClassVar[Renderer]
 
     @override
@@ -50,6 +61,96 @@ class _SSEMetadata(EndpointMetadata):
         ]
 
 
+_SerializerT_co = TypeVar(
+    '_SerializerT_co',
+    bound=BaseSerializer,
+    covariant=True,
+)
+
+
+class _BaseSSEController(Controller[_SerializerT_co]):
+    # Custom attributes for the streaming responses:
+    regular_renderer: ClassVar[Renderer] = default_renderer
+    sse_streaming_response_cls: ClassVar[type[SSEStreamingResponse]] = (
+        SSEStreamingResponse
+    )
+    metadata_cls: ClassVar[type[SSEEndpointMetadata]] = SSEEndpointMetadata
+
+    # Set in `__init_subclass__`:
+    validate_events: ClassVar[bool]
+    sse_renderer: ClassVar[SSERenderer]
+
+    # Must be moved elsewhere:
+    event_model: ClassVar[Any]
+
+    @override
+    def __init_subclass__(cls) -> None:
+        metadata_cls = cls.metadata_cls
+        metadata_cls = type(
+            f'{cls.__qualname__}_{metadata_cls.__qualname__}',
+            (metadata_cls,),
+            {'default_renderer': cls.regular_renderer},
+        )
+        cls.endpoint_cls = type(
+            f'{cls.__qualname__}_SSEEndpoint',
+            (Endpoint,),
+            {'metadata_cls': metadata_cls},
+        )
+        cls.validate_events = getattr(
+            cls,
+            'validate_events',
+            # Defaults to the `validates_responses`:
+            bool(cls.validate_responses),
+        )
+
+        super().__init_subclass__()
+
+        # TODO: handle abstract controllers:
+        cls.sse_renderer = SSERenderer(cls.serializer, cls.regular_renderer)
+
+    @override
+    def to_error(
+        self,
+        raw_data: Any,
+        *,
+        status_code: HTTPStatus,
+        headers: Mapping[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
+        renderer: Renderer | None = None,
+    ) -> HttpResponse:
+        force_request_renderer(self.request, self.regular_renderer)
+        return super().to_error(
+            raw_data,
+            status_code=status_code,
+            headers=headers,
+            cookies=cookies,
+            renderer=renderer,
+        )
+
+    def to_sse_response(
+        self,
+        streaming_content: AsyncIterator[SSE],
+        *,
+        headers: Mapping[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
+    ) -> SSEStreamingResponse:
+        streaming_response = self.sse_streaming_response_cls(
+            streaming_content,
+            headers=headers,
+            event_model=self.event_model,
+            serializer=self.serializer,
+            regular_renderer=self.regular_renderer,
+            sse_renderer=self.sse_renderer,
+            validate_events=self.validate_events,
+        )
+        for cookie_key, cookie in (cookies or {}).items():
+            streaming_response.set_cookie(
+                cookie_key,
+                **cookie.as_dict(),
+            )
+        return streaming_response
+
+
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 _PathT = TypeVar('_PathT', default=None)
 _QueryT = TypeVar('_QueryT', default=None)
@@ -73,7 +174,7 @@ def sse(  # noqa: WPS211, WPS234
     sse_streaming_response_cls: type[
         SSEStreamingResponse
     ] = SSEStreamingResponse,
-    metadata_cls: type[EndpointMetadata] = _SSEMetadata,
+    metadata_cls: type[SSEEndpointMetadata] = SSEEndpointMetadata,
     auth: Sequence[AsyncAuth] | None = (),
 ) -> Callable[
     [
@@ -222,17 +323,13 @@ def sse(  # noqa: WPS211, WPS234
             response_spec=response_spec,
             extra_responses=extra_responses,
             validate_responses=validate_responses,
-            validate_events=validate_events,
-            regular_renderer=regular_renderer,
-            sse_renderer=sse_renderer,
-            sse_streaming_response_cls=sse_streaming_response_cls,
             auth=auth,
-            event_model=event_model,
-            custom_metadata_cls=type(
-                '_LimitedSSEMetadata',
-                (metadata_cls,),
-                {'default_renderer': regular_renderer},
-            ),
+            _validate_events=validate_events,
+            _regular_renderer=regular_renderer,
+            _sse_renderer=sse_renderer,
+            _sse_streaming_response_cls=sse_streaming_response_cls,
+            _event_model=event_model,
+            _metadata_cls=metadata_cls,
         )
 
     return decorator
@@ -256,29 +353,28 @@ def _build_controller(  # noqa: WPS211, WPS234
     response_spec: ResponseSpec,
     extra_responses: Sequence[ResponseSpec] = (),
     validate_responses: bool = True,
-    validate_events: bool,
-    regular_renderer: Renderer,
-    sse_renderer: SSERenderer,
-    sse_streaming_response_cls: type[SSEStreamingResponse],
     auth: Sequence[AsyncAuth] | None,
-    event_model: Any,
-    custom_metadata_cls: type[EndpointMetadata],
+    _validate_events: bool,
+    _regular_renderer: Renderer,
+    _sse_renderer: SSERenderer,
+    _sse_streaming_response_cls: type[SSEStreamingResponse],
+    _event_model: Any,
+    _metadata_cls: type[SSEEndpointMetadata],
 ) -> type[Controller[_SerializerT]]:
+    # Some parameters names have a `_` prefix, because writing
+    # `event_model = `event_model` inside a class is a `NameError`.
+
+    @wraps(func, updated=())
     class SSEController(  # noqa: WPS431
-        Controller[serializer],  # type: ignore[valid-type]
+        _BaseSSEController[serializer],  # type: ignore[valid-type]
         *filter(None, [path, query, headers, cookies]),  # type: ignore[misc]  # noqa: WPS606
     ):
-        class endpoint_cls(Endpoint):  # noqa: N801, WPS431
-            metadata_cls = custom_metadata_cls
-
-        @override
-        def to_error(
-            self,
-            *args: Any,
-            **kwargs: Any,
-        ) -> HttpResponse:
-            force_request_renderer(self.request, regular_renderer)
-            return super().to_error(*args, **kwargs)
+        regular_renderer = _regular_renderer
+        sse_renderer = _sse_renderer
+        validate_events = _validate_events
+        event_model = _event_model
+        sse_streaming_response_cls = _sse_streaming_response_cls
+        metadata_cls = _metadata_cls
 
         @validate(
             response_spec,
@@ -296,34 +392,17 @@ def _build_controller(  # noqa: WPS211, WPS234
             )
 
             # Now, everything is ready to send SSE events:
-            return self.build_sse_streaming_response(
-                await func(
-                    self.request,
-                    context,  # type: ignore[arg-type]
-                ),
+            response = await func(
+                self.request,
+                context,  # type: ignore[arg-type]
             )
-
-        def build_sse_streaming_response(
-            self,
-            response: SSEResponse[SSE],
-        ) -> SSEStreamingResponse:
-            streaming_response = sse_streaming_response_cls(
+            return self.to_sse_response(
                 response.streaming_content,
-                event_model=event_model,
-                serializer=serializer,
-                regular_renderer=regular_renderer,
-                sse_renderer=sse_renderer,
                 headers=response.headers,
-                validate_events=validate_events,
+                cookies=response.cookies,
             )
-            for cookie_key, cookie in (response.cookies or {}).items():
-                streaming_response.set_cookie(
-                    cookie_key,
-                    **cookie.as_dict(),
-                )
-            return streaming_response
 
-    return SSEController
+    return SSEController  # pyright: ignore[reportReturnType]
 
 
 def _resolve_event_model(func: Callable[..., Any]) -> Any:

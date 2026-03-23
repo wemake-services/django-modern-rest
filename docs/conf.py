@@ -86,6 +86,7 @@ intersphinx_mapping = {
         'https://typing-extensions.readthedocs.io/en/stable/',
         None,
     ),
+    'attrs': ('https://www.attrs.org/en/stable/', None),
 }
 
 # Napoleon:
@@ -122,7 +123,6 @@ nitpick_ignore = [
     (_PY_CLASS, '_MethodAsyncHandler'),
     (_PY_CLASS, 'BlocklistedJWToken'),
     (_PY_CLASS, '_StrOrPromise'),
-    (_PY_CLASS, '_ValidationContext'),
     (_PY_CLASS, 'dmr.validation.response._ResponseT'),
     (_PY_CLASS, 'dmr.decorators._ReturnT'),
     (_PY_CLASS, 'dmr.decorators._ViewT'),
@@ -163,6 +163,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
     (_PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
+    (_PY_CLASS, 'django.utils.functional.Promise'),
     # OpenAPI types used in TYPE_CHECKING blocks:
     (_PY_CLASS, 'SecurityRequirement'),
     (_PY_CLASS, 'ExternalDocumentation'),

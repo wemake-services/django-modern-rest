@@ -50,7 +50,7 @@ version = "3.11.1"
 description = "ASGI specs, helper code, and adapters"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "asgiref-3.11.1-py3-none-any.whl", hash = "sha256:e8667a091e69529631969fd45dc268fa79b99c92c5fcdda727757e52146ec133"},
     {file = "asgiref-3.11.1.tar.gz", hash = "sha256:5f184dc43b7e763efe848065441eac62229c9f7b0475f41f80e207a114eda4ce"},
@@ -77,16 +77,16 @@ test = ["astroid (>=2,<5)", "pytest (<9.0)", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "attrs"
-version = "25.4.0"
+version = "26.1.0"
 description = "Classes Without Boilerplate"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
-    {file = "attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373"},
-    {file = "attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11"},
+    {file = "attrs-26.1.0-py3-none-any.whl", hash = "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"},
+    {file = "attrs-26.1.0.tar.gz", hash = "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32"},
 ]
-markers = {main = "extra == \"openapi\""}
+markers = {main = "extra == \"openapi\" or extra == \"attrs\""}
 
 [[package]]
 name = "babel"
@@ -102,6 +102,33 @@ files = [
 
 [package.extras]
 dev = ["backports.zoneinfo ; python_version < \"3.9\"", "freezegun (>=1.0,<2.0)", "jinja2 (>=3.0)", "pytest (>=6.0)", "pytest-cov", "pytz", "setuptools", "tzdata ; sys_platform == \"win32\""]
+
+[[package]]
+name = "cattrs"
+version = "26.1.0"
+description = "Composable complex class support for attrs and dataclasses."
+optional = false
+python-versions = ">=3.10"
+groups = ["docs"]
+files = [
+    {file = "cattrs-26.1.0-py3-none-any.whl", hash = "sha256:d1e0804c42639494d469d08d4f26d6b9de9b8ab26b446db7b5f8c2e97f7c3096"},
+    {file = "cattrs-26.1.0.tar.gz", hash = "sha256:fa239e0f0ec0715ba34852ce813986dfed1e12117e209b816ab87401271cdd40"},
+]
+
+[package.dependencies]
+attrs = ">=25.4.0"
+typing-extensions = ">=4.14.0"
+
+[package.extras]
+bson = ["pymongo (>=4.4.0)"]
+cbor2 = ["cbor2 (>=5.4.6)"]
+msgpack = ["msgpack (>=1.0.5)"]
+msgspec = ["msgspec (>=0.19.0) ; implementation_name == \"cpython\""]
+orjson = ["orjson (>=3.11.3) ; implementation_name == \"cpython\""]
+pyyaml = ["pyyaml (>=6.0)"]
+tomlkit = ["tomlkit (>=0.11.8)"]
+tomllib = ["tomli (>=1.1.0) ; python_version < \"3.11\"", "tomli-w (>=1.1.0)"]
+ujson = ["ujson (>=5.10.0)"]
 
 [[package]]
 name = "certifi"
@@ -606,6 +633,22 @@ test = ["certifi (>=2024)", "cryptography-vectors (==46.0.5)", "pretend (>=0.7)"
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
+name = "dennis"
+version = "1.2.0"
+description = "Utilities for working with gettext PO and POT files to ease development and improve localization quality"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "dennis-1.2.0-py3-none-any.whl", hash = "sha256:14cf763b9d55d27599d4f7f1061b85eabd342b28b0abab90d1dad1f4297c0346"},
+    {file = "dennis-1.2.0.tar.gz", hash = "sha256:826d447ed9b3d3c9dec0d550a8647a90dfc8932ac5b8a1a619a0c30c7d63d79b"},
+]
+
+[package.dependencies]
+click = ">=6"
+polib = ">=1.0.8"
+
+[[package]]
 name = "dirty-equals"
 version = "0.11"
 description = "Doing dirty (but extremely useful) things with equals."
@@ -626,7 +669,7 @@ version = "5.2.12"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 optional = false
 python-versions = ">=3.10"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "django-5.2.12-py3-none-any.whl", hash = "sha256:4853482f395c3a151937f6991272540fcbf531464f254a347bf7c89f53c8cff7"},
     {file = "django-5.2.12.tar.gz", hash = "sha256:6b809af7165c73eff5ce1c87fdae75d4da6520d6667f86401ecf55b681eb1eeb"},
@@ -642,20 +685,57 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-mantle"
+version = "26.6"
+description = "Your type-safe wrapper around Django's liquid core."
+optional = false
+python-versions = "*"
+groups = ["docs"]
+files = [
+    {file = "django_mantle-26.6-py2.py3-none-any.whl", hash = "sha256:c0d7ceb08656aa1043442772302b87499dcf02aee202c5ff392ad06e42769b06"},
+    {file = "django_mantle-26.6.tar.gz", hash = "sha256:db864739ed27abd3d0575ab4ca5c26b6a722de4eb6d3f68472cb76aa487d787e"},
+]
+
+[package.dependencies]
+attrs = "*"
+cattrs = "*"
+Django = "*"
+django-readers = "*"
+
+[package.extras]
+dev = ["coverage", "django-stubs", "mypy", "rich", "typing-extensions"]
+docs = ["Sphinx", "django-sphinx-view"]
+
+[[package]]
+name = "django-readers"
+version = "2.5.1"
+description = "A lightweight function-oriented toolkit for better organisation of business logic and efficient selection and projection of data in Django projects."
+optional = false
+python-versions = ">=3.6"
+groups = ["docs"]
+files = [
+    {file = "django_readers-2.5.1-py3-none-any.whl", hash = "sha256:af0d043403458cf66c0313f9b594b24e87a8781057510de1c95f54b1051268d9"},
+    {file = "django_readers-2.5.1.tar.gz", hash = "sha256:b00529c73842b4af69d3e44f6c362dc4ce8122cbda9b85034216a1236c26a56a"},
+]
+
+[package.dependencies]
+Django = ">=3.2"
+
+[[package]]
 name = "django-stubs"
-version = "6.0.0"
+version = "6.0.1"
 description = "Mypy stubs for Django"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "django_stubs-6.0.0-py3-none-any.whl", hash = "sha256:747baa97fb9a5c1892ef93bf881d06b4f211f719da18e4ddfd1e74bbad71e752"},
-    {file = "django_stubs-6.0.0.tar.gz", hash = "sha256:14e7c667d2de73dbaf91ae43d117f923639107d8d3e84a2257ebc101861f18ed"},
+    {file = "django_stubs-6.0.1-py3-none-any.whl", hash = "sha256:d885044bd0876610f3eb969d6b5ed22f386002a879fdcb369cd8efa0502dbbce"},
+    {file = "django_stubs-6.0.1.tar.gz", hash = "sha256:e1ca63634221b57a55e16562b9b6d1849aeee2cabfd0fc026084dbe8aa893366"},
 ]
 
 [package.dependencies]
 django = "*"
-django-stubs-ext = ">=6.0.0"
+django-stubs-ext = ">=6.0.1"
 mypy = {version = ">=1.13,<1.20", optional = true, markers = "extra == \"compatible-mypy\""}
 types-pyyaml = "*"
 typing-extensions = ">=4.11.0"
@@ -667,14 +747,14 @@ redis = ["redis", "types-redis"]
 
 [[package]]
 name = "django-stubs-ext"
-version = "6.0.0"
+version = "6.0.1"
 description = "Monkey-patching and extensions for django-stubs"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "django_stubs_ext-6.0.0-py3-none-any.whl", hash = "sha256:6f8c29e0dd5111fd36aa72519446c8a21c3e419e48c5d7dc7f418c8eec9c43ae"},
-    {file = "django_stubs_ext-6.0.0.tar.gz", hash = "sha256:fb860210b496e75ae751cadee02a3449d5a7599de68c8db9df40c84e559d9298"},
+    {file = "django_stubs_ext-6.0.1-py3-none-any.whl", hash = "sha256:17415759b9a3f4b4da7998ac3b08c7dc5137f9a019490b918aece1a8a4c2ade4"},
+    {file = "django_stubs_ext-6.0.1.tar.gz", hash = "sha256:633b280f89c0cbb7e3ce2f2f842e0acc43d8091378e75f84921d6be675d052dc"},
 ]
 
 [package.dependencies]
@@ -1624,7 +1704,7 @@ description = "A fast serialization and validation library, with builtin support
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"msgspec\""
+markers = "extra == \"msgspec\" or extra == \"attrs\""
 files = [
     {file = "msgspec-0.20.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:23a6ec2a3b5038c233b04740a545856a068bc5cb8db184ff493a58e08c994fbf"},
     {file = "msgspec-0.20.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:cde2c41ed3eaaef6146365cb0d69580078a19f974c6cb8165cc5dcd5734f573e"},
@@ -1904,6 +1984,18 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
+
+[[package]]
+name = "polib"
+version = "1.2.0"
+description = "A library to manipulate gettext files (po and mo files)."
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "polib-1.2.0-py2.py3-none-any.whl", hash = "sha256:1c77ee1b81feb31df9bca258cbc58db1bbb32d10214b173882452c73af06d62d"},
+    {file = "polib-1.2.0.tar.gz", hash = "sha256:f3ef94aefed6e183e342a8a269ae1fc4742ba193186ad76f175938621dbfc26b"},
+]
 
 [[package]]
 name = "polyfactory"
@@ -2206,33 +2298,33 @@ tests = ["coverage[toml] (==7.10.7)", "pytest (>=8.4.2,<9.0.0)"]
 
 [[package]]
 name = "pyrate-limiter"
-version = "4.0.2"
+version = "4.1.0"
 description = "Python Rate-Limiter using Leaky-Bucket Algorithm"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "pyrate_limiter-4.0.2-py3-none-any.whl", hash = "sha256:35ec42b9bb9cfabcafab14d0c5c6523f48378c3da2949e534ce3cbdfea71eadd"},
-    {file = "pyrate_limiter-4.0.2.tar.gz", hash = "sha256:b678841e2215f114ef6f98c7093755ca3b466de83cb5a881231fd6e321fa14b5"},
+    {file = "pyrate_limiter-4.1.0-py3-none-any.whl", hash = "sha256:2696b4e4a6cffb3d40fc76662baccb766697893f0979e12bebbfc7d3b6b19603"},
+    {file = "pyrate_limiter-4.1.0.tar.gz", hash = "sha256:be1ac413a263aa410b98757d1b01a880650948a1fc3a959512f15865eb58dbf3"},
 ]
 
 [[package]]
 name = "pyrefly"
-version = "0.57.0"
+version = "0.57.1"
 description = "A fast type checker and language server for Python with powerful IDE features"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "pyrefly-0.57.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:da29dfd8182e67357aa45c1734dca03aabfbeaa2339f06a97fcd26f24c4827bf"},
-    {file = "pyrefly-0.57.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:bdac6feeaa8aa45fd88dc650a9430a104ac4850aacba73e95138f4338e06ddfd"},
-    {file = "pyrefly-0.57.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fb69cf1d5bb350aa63a797b8d1b660ff1d8ea281358558ec602f7bce6b051380"},
-    {file = "pyrefly-0.57.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:1413ac880ecf0cc4def339892a3b8ca065f1ae7dff94d1a8c8160fbf0068be3a"},
-    {file = "pyrefly-0.57.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2dd048bb1db13ab42281e440306b57308fe89fde362fe622b507f3db81037d38"},
-    {file = "pyrefly-0.57.0-py3-none-win32.whl", hash = "sha256:aa6e9d9e4c7e276409f99b83d964fa39c7ba567b5521244b6b1a1eaf6ec399b9"},
-    {file = "pyrefly-0.57.0-py3-none-win_amd64.whl", hash = "sha256:4169abc722fc9a957366c4fc8fdd7a927a5fb890ec0aae5178011e41c45a560e"},
-    {file = "pyrefly-0.57.0-py3-none-win_arm64.whl", hash = "sha256:19e2c14533c00ae6e63ac38c6000e32badde5f573ca5c1cd969ecab129de89ec"},
-    {file = "pyrefly-0.57.0.tar.gz", hash = "sha256:2e1d67165d6db8bf1da8df3b88d16dd899980367bbae16867404f11ff287cfff"},
+    {file = "pyrefly-0.57.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:91974bfbe951eebf5a7bc959c1f3921f0371c789cad84761511d695e9ab2265f"},
+    {file = "pyrefly-0.57.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:808087298537c70f5e7cdccb5bbaad482e7e056e947c0adf00fb612cbace9fdc"},
+    {file = "pyrefly-0.57.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0b01f454fa5539e070c0cba17ddec46b3d2107d571d519bd8eca8f3142ba02a6"},
+    {file = "pyrefly-0.57.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:02ad59ea722191f51635f23e37574662116b82ca9d814529f7cb5528f041f381"},
+    {file = "pyrefly-0.57.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:54bc0afe56776145e37733ff763e7e9679ee8a76c467b617dc3f227d4124a9e2"},
+    {file = "pyrefly-0.57.1-py3-none-win32.whl", hash = "sha256:468e5839144b25bb0dce839bfc5fd879c9f38e68ebf5de561f30bed9ae19d8ca"},
+    {file = "pyrefly-0.57.1-py3-none-win_amd64.whl", hash = "sha256:46db9c97093673c4fb7fab96d610e74d140661d54688a92d8e75ad885a56c141"},
+    {file = "pyrefly-0.57.1-py3-none-win_arm64.whl", hash = "sha256:feb1bbe3b0d8d5a70121dcdf1476e6a99cc056a26a49379a156f040729244dcb"},
+    {file = "pyrefly-0.57.1.tar.gz", hash = "sha256:b05f6f5ee3a6a5d502ca19d84cb9ab62d67f05083819964a48c1510f2993efc6"},
 ]
 
 [[package]]
@@ -2300,14 +2392,14 @@ testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
 
 [[package]]
 name = "pytest-cov"
-version = "7.0.0"
+version = "7.1.0"
 description = "Pytest plugin for measuring coverage."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861"},
-    {file = "pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1"},
+    {file = "pytest_cov-7.1.0-py3-none-any.whl", hash = "sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678"},
+    {file = "pytest_cov-7.1.0.tar.gz", hash = "sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2"},
 ]
 
 [package.dependencies]
@@ -2709,42 +2801,42 @@ markers = {main = "extra == \"openapi\""}
 
 [[package]]
 name = "ruff"
-version = "0.15.6"
+version = "0.15.7"
 description = "An extremely fast Python linter and code formatter, written in Rust."
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 files = [
-    {file = "ruff-0.15.6-py3-none-linux_armv6l.whl", hash = "sha256:7c98c3b16407b2cf3d0f2b80c80187384bc92c6774d85fefa913ecd941256fff"},
-    {file = "ruff-0.15.6-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:ee7dcfaad8b282a284df4aa6ddc2741b3f4a18b0555d626805555a820ea181c3"},
-    {file = "ruff-0.15.6-py3-none-macosx_11_0_arm64.whl", hash = "sha256:3bd9967851a25f038fc8b9ae88a7fbd1b609f30349231dffaa37b6804923c4bb"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:13f4594b04e42cd24a41da653886b04d2ff87adbf57497ed4f728b0e8a4866f8"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:e2ed8aea2f3fe57886d3f00ea5b8aae5bf68d5e195f487f037a955ff9fbaac9e"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:70789d3e7830b848b548aae96766431c0dc01a6c78c13381f423bf7076c66d15"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:542aaf1de3154cea088ced5a819ce872611256ffe2498e750bbae5247a8114e9"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:1c22e6f02c16cfac3888aa636e9eba857254d15bbacc9906c9689fdecb1953ab"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:98893c4c0aadc8e448cfa315bd0cc343a5323d740fe5f28ef8a3f9e21b381f7e"},
-    {file = "ruff-0.15.6-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:70d263770d234912374493e8cc1e7385c5d49376e41dfa51c5c3453169dc581c"},
-    {file = "ruff-0.15.6-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:55a1ad63c5a6e54b1f21b7514dfadc0c7fb40093fa22e95143cf3f64ebdcd512"},
-    {file = "ruff-0.15.6-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:8dc473ba093c5ec238bb1e7429ee676dca24643c471e11fbaa8a857925b061c0"},
-    {file = "ruff-0.15.6-py3-none-musllinux_1_2_i686.whl", hash = "sha256:85b042377c2a5561131767974617006f99f7e13c63c111b998f29fc1e58a4cfb"},
-    {file = "ruff-0.15.6-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:cef49e30bc5a86a6a92098a7fbf6e467a234d90b63305d6f3ec01225a9d092e0"},
-    {file = "ruff-0.15.6-py3-none-win32.whl", hash = "sha256:bbf67d39832404812a2d23020dda68fee7f18ce15654e96fb1d3ad21a5fe436c"},
-    {file = "ruff-0.15.6-py3-none-win_amd64.whl", hash = "sha256:aee25bc84c2f1007ecb5037dff75cef00414fdf17c23f07dc13e577883dca406"},
-    {file = "ruff-0.15.6-py3-none-win_arm64.whl", hash = "sha256:c34de3dd0b0ba203be50ae70f5910b17188556630e2178fd7d79fc030eb0d837"},
-    {file = "ruff-0.15.6.tar.gz", hash = "sha256:8394c7bb153a4e3811a4ecdacd4a8e6a4fa8097028119160dffecdcdf9b56ae4"},
+    {file = "ruff-0.15.7-py3-none-linux_armv6l.whl", hash = "sha256:a81cc5b6910fb7dfc7c32d20652e50fa05963f6e13ead3c5915c41ac5d16668e"},
+    {file = "ruff-0.15.7-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:722d165bd52403f3bdabc0ce9e41fc47070ac56d7a91b4e0d097b516a53a3477"},
+    {file = "ruff-0.15.7-py3-none-macosx_11_0_arm64.whl", hash = "sha256:7fbc2448094262552146cbe1b9643a92f66559d3761f1ad0656d4991491af49e"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6b39329b60eba44156d138275323cc726bbfbddcec3063da57caa8a8b1d50adf"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:87768c151808505f2bfc93ae44e5f9e7c8518943e5074f76ac21558ef5627c85"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:fb0511670002c6c529ec66c0e30641c976c8963de26a113f3a30456b702468b0"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:e0d19644f801849229db8345180a71bee5407b429dd217f853ec515e968a6912"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:4806d8e09ef5e84eb19ba833d0442f7e300b23fe3f0981cae159a248a10f0036"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dce0896488562f09a27b9c91b1f58a097457143931f3c4d519690dea54e624c5"},
+    {file = "ruff-0.15.7-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:1852ce241d2bc89e5dc823e03cff4ce73d816b5c6cdadd27dbfe7b03217d2a12"},
+    {file = "ruff-0.15.7-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:5f3e4b221fb4bd293f79912fc5e93a9063ebd6d0dcbd528f91b89172a9b8436c"},
+    {file = "ruff-0.15.7-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:b15e48602c9c1d9bdc504b472e90b90c97dc7d46c7028011ae67f3861ceba7b4"},
+    {file = "ruff-0.15.7-py3-none-musllinux_1_2_i686.whl", hash = "sha256:1b4705e0e85cedc74b0a23cf6a179dbb3df184cb227761979cc76c0440b5ab0d"},
+    {file = "ruff-0.15.7-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:112c1fa316a558bb34319282c1200a8bf0495f1b735aeb78bfcb2991e6087580"},
+    {file = "ruff-0.15.7-py3-none-win32.whl", hash = "sha256:6d39e2d3505b082323352f733599f28169d12e891f7dd407f2d4f54b4c2886de"},
+    {file = "ruff-0.15.7-py3-none-win_amd64.whl", hash = "sha256:4d53d712ddebcd7dace1bc395367aec12c057aacfe9adbb6d832302575f4d3a1"},
+    {file = "ruff-0.15.7-py3-none-win_arm64.whl", hash = "sha256:18e8d73f1c3fdf27931497972250340f92e8c861722161a9caeb89a58ead6ed2"},
+    {file = "ruff-0.15.7.tar.gz", hash = "sha256:04f1ae61fc20fe0b148617c324d9d009b5f63412c0b16474f3d5f1a1a665f7ac"},
 ]
 
 [[package]]
 name = "schemathesis"
-version = "4.12.1"
+version = "4.13.0"
 description = "Property-based testing framework for Open API and GraphQL based apps"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "schemathesis-4.12.1-py3-none-any.whl", hash = "sha256:fbca23d71cf34ade35808cdc813a97c670dcfe2fe3f20c07599bc78b6b904207"},
-    {file = "schemathesis-4.12.1.tar.gz", hash = "sha256:c004411b8f358c03cf68f3478d195f54e6d69790d6159fd30918b175b2938bc1"},
+    {file = "schemathesis-4.13.0-py3-none-any.whl", hash = "sha256:225e12130614767a4a972161c1b589ce709c29fa009e484c4cf9b17b1812acaa"},
+    {file = "schemathesis-4.13.0.tar.gz", hash = "sha256:a2fafe13d20d299d10d166c521f675798d03576ae31899c3bf762aae7efab4e1"},
 ]
 
 [package.dependencies]
@@ -3134,7 +3226,7 @@ version = "0.5.5"
 description = "A non-validating SQL parser."
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "sqlparse-0.5.5-py3-none-any.whl", hash = "sha256:12a08b3bf3eec877c519589833aed092e2444e68240a3577e8e26148acc7b1ba"},
     {file = "sqlparse-0.5.5.tar.gz", hash = "sha256:e20d4a9b0b8585fdf63b10d30066c7c94c5d7a7ec47c889a2d83a3caa93ff28e"},
@@ -3146,14 +3238,14 @@ doc = ["sphinx"]
 
 [[package]]
 name = "starlette"
-version = "0.52.1"
+version = "1.0.0"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "starlette-0.52.1-py3-none-any.whl", hash = "sha256:0029d43eb3d273bc4f83a08720b4912ea4b071087a3b48db01b7c839f7954d74"},
-    {file = "starlette-0.52.1.tar.gz", hash = "sha256:834edd1b0a23167694292e94f597773bc3f89f362be6effee198165a35d62933"},
+    {file = "starlette-1.0.0-py3-none-any.whl", hash = "sha256:d3ec55e0bb321692d275455ddfd3df75fff145d009685eb40dc91fc66b03d38b"},
+    {file = "starlette-1.0.0.tar.gz", hash = "sha256:6a4beaf1f81bb472fd19ea9b918b50dc3a77a6f2e190a12954b25e6ed5eea149"},
 ]
 
 [package.dependencies]
@@ -3211,15 +3303,55 @@ doc = ["reno", "sphinx"]
 test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
+name = "tracecov"
+version = "0.18.0"
+description = "Schema-level API coverage down to individual keywords."
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "tracecov-0.18.0-py3-none-any.whl", hash = "sha256:4a0814031354e4648dbb62b9b33c611e34d6ad6fcf814ce613c683a23c8e10e4"},
+    {file = "tracecov-0.18.0.tar.gz", hash = "sha256:d827f697e1e9268466f97baf5573e0893d7660c45bfa404f65509c0ec9234671"},
+]
+
+[package.dependencies]
+tracecov-community = "0.18.0"
+
+[[package]]
+name = "tracecov-community"
+version = "0.18.0"
+description = "Schema-level API coverage. Install 'tracecov' for the full package."
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "tracecov_community-0.18.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:6a2e3533c5644bbe6b27b68dd7bd37f494de381c393382585c9edade67c8ba3e"},
+    {file = "tracecov_community-0.18.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c73a7768d46fac1e3b418b04113233885adc9236ab819e9e2af994451018fba9"},
+    {file = "tracecov_community-0.18.0-cp310-abi3-win_amd64.whl", hash = "sha256:6f9ab85ff5e0a3e0b18f8c17e7e12d06ad86fce7292ae5aa1711597da4616c20"},
+    {file = "tracecov_community-0.18.0-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:5542e8fc9b7797c5d58d3af33841a35669d08a0c2ced41f4a4c4bfeeb791c0ae"},
+    {file = "tracecov_community-0.18.0-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:78f38ea192583ccdcbb6edd5e49092a12602dda068aef0f689e6c8b35e056981"},
+    {file = "tracecov_community-0.18.0-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:4e9c1aefd2751f5beb220888515a3af881fa6fcd9a847f3b2d874ce149e2ca21"},
+    {file = "tracecov_community-0.18.0-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:f9a5f6e6706764762d2f51335d8db9643838887e7880c3ca649bc55cff2014ec"},
+    {file = "tracecov_community-0.18.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:3f40eb8bfe3409bc1bd48f0bebf58a2ab755128b1d29509ce245b3ce741e22d2"},
+    {file = "tracecov_community-0.18.0-cp313-cp313t-win_amd64.whl", hash = "sha256:fce81020da591e7f62b294000a2faf14fdf8d240741897f8e0f0b7842b6fa3fd"},
+    {file = "tracecov_community-0.18.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:56459ded5959ce43e0d4d883e36bb012cbd710d62305460bf6e43c0ebf1bb2b5"},
+    {file = "tracecov_community-0.18.0-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1eb6f76ee0fadf2f73dc6985c4e5d8361837fd097a6fbbe545ccbaf070bbd3eb"},
+    {file = "tracecov_community-0.18.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:0303151a10b478cdf64f3e7e6dc92c6c4f65ffe26bf7deef5b8cc4d90cb62864"},
+    {file = "tracecov_community-0.18.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:7961f1565e8eb002c9325368aa8ee0b1ed55a2599b0fcc5483ca476e1cb12435"},
+    {file = "tracecov_community-0.18.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:4c0a69944292ee7ebc06114bc14e64496703859c48a8b8a713ba38222b8e4083"},
+    {file = "tracecov_community-0.18.0-cp314-cp314t-win_amd64.whl", hash = "sha256:5339fabf168e84d0943c9982714fc69e82bb639eaf18b13af135c44a61435926"},
+]
+
+[[package]]
 name = "types-docutils"
-version = "0.22.3.20260316"
+version = "0.22.3.20260322"
 description = "Typing stubs for docutils"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "types_docutils-0.22.3.20260316-py3-none-any.whl", hash = "sha256:083c7091b8072c242998ec51da1bf1492f0332387da81c3b085efbf5ca754c7d"},
-    {file = "types_docutils-0.22.3.20260316.tar.gz", hash = "sha256:8ef27d565b9831ff094fe2eac75337a74151013e2d21ecabd445c2955f891564"},
+    {file = "types_docutils-0.22.3.20260322-py3-none-any.whl", hash = "sha256:681d4510ce9b80a0c6a593f0f9843d81f8caa786db7b39ba04d9fd5480ac4442"},
+    {file = "types_docutils-0.22.3.20260322.tar.gz", hash = "sha256:e2450bb997283c3141ec5db3e436b91f0aa26efe35eb9165178ca976ccb4930b"},
 ]
 
 [[package]]
@@ -3257,7 +3389,6 @@ files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
-markers = {docs = "python_version < \"3.13\""}
 
 [[package]]
 name = "typing-inspection"
@@ -3281,12 +3412,12 @@ version = "2025.3"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "tzdata-2025.3-py2.py3-none-any.whl", hash = "sha256:06a47e5700f3081aab02b2e513160914ff0694bce9947d6b76ebd6bf57cfc5d1"},
     {file = "tzdata-2025.3.tar.gz", hash = "sha256:de39c2ca5dc7b0344f2eba86f49d614019d29f060fc4ebc8a417896a620b56a7"},
 ]
-markers = {main = "extra == \"openapi\" and platform_system == \"Windows\" or sys_platform == \"win32\"", dev = "sys_platform == \"win32\" or platform_system == \"Windows\""}
+markers = {main = "extra == \"openapi\" and platform_system == \"Windows\" or sys_platform == \"win32\"", dev = "sys_platform == \"win32\" or platform_system == \"Windows\"", docs = "sys_platform == \"win32\""}
 
 [[package]]
 name = "urllib3"
@@ -3376,6 +3507,7 @@ files = [
 test = ["pytest", "pytest-cov"]
 
 [extras]
+attrs = ["attrs", "msgspec"]
 jwt = ["pyjwt"]
 msgspec = ["msgspec"]
 openapi = ["openapi-spec-validator", "polyfactory"]
@@ -3384,4 +3516,4 @@ pydantic = ["pydantic"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "27aa1517f179acaa696ed98e4c497594e23ff76d0c40c95db0f1960c3fb72347"
+content-hash = "e2d0a85a602d56bdd1a4795539199db4b27da25070f7fe384574eb6a3aa3d6a0"

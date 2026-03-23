@@ -37,17 +37,23 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    # Custom:
     'server.apps.models_example',
     'server.apps.middlewares',
     'server.apps.controllers',
     'server.apps.openapi',
+    'server.apps.negotiations',
+    'server.apps.jwt_auth',
+    'server.apps.django_session_auth',
+    # django:
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'dmr.apps.DjangoModernRestConfig',
+    # dmr:
+    'dmr',
     'dmr.security.jwt.blocklist',
 ]
 
@@ -57,6 +63,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -108,6 +115,14 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+LOCALE_PATHS = ['../dmr/locale/']
+
+LANGUAGES = (
+    ('en-us', 'English'),
+    ('ru-ru', 'Russian'),
+    ('kk-kz', 'Kazakh'),
+)
 
 TIME_ZONE = 'UTC'
 

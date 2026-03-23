@@ -1,0 +1,93 @@
+# django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the PACKAGE package.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-22 11:25+0300\n"
+"PO-Revision-Date: 2026-03-22 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Kazakh\n"
+"Language: kk_KZ\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: dmr/components.py:54
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"{cls} жолы field_model={field_model} параметрімен атаусыз жол "
+"параметрлеріне args={args} рұқсат бермейді"
+
+#: dmr/components.py:59
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"SupportsFileParsing протоколын қолдамайтын {parser_name} арқылы "
+"файлдарды талдау әрекеті"
+
+#: dmr/controller.py:45
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "{method} әдісіне рұқсат жоқ, рұқсат етілгендер: {allowed}"
+
+#: dmr/exceptions.py:11
+msgid "Not authenticated"
+msgstr "Аутентификация жасалмаған"
+
+#: dmr/exceptions.py:51
+msgid "Internal server error"
+msgstr "Сервердің ішкі қатесі"
+
+#: dmr/internal/django.py:49
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"'application/x-www-form-urlencoded' мазмұн түріндегі HTTP сұраулары "
+"UTF-8 кодтауында болуы тиіс."
+
+#: dmr/internal/negotiation.py:18
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Жауап денесін қабылданған түрлермен {accepted_types} сериялау мүмкін емес, "
+"қолдау көрсетілетіндер={supported}"
+
+#: dmr/negotiation.py:25
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"Сұрау денесін {content_type} мазмұн түрімен талдау мүмкін емес, "
+"күтілетін={expected}"
+
+#: dmr/security/django_session/auth.py:26
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF тексеруі сәтсіз аяқталды: {reason}"
+
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr "BlocklistedJWToken"
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr "BlocklistedJWTokens"
+
+#: dmr/serializer.py:27
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "{type} түріндегі {value} мәні {target_type} үшін қолдау көрсетілмейді"

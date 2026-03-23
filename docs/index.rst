@@ -177,6 +177,7 @@ Here are our amazing people who made this project possible.
   pages/validation.rst
   pages/reusable-code.rst
   pages/integrations.rst
+  pages/internalization.rst
   pages/sse.rst
   pages/testing.rst
 
@@ -201,6 +202,14 @@ Here are our amazing people who made this project possible.
 
 
 .. toctree::
+  :caption: AI and LLMs
+  :hidden:
+
+  pages/ai/spec-first.rst
+  pages/ai/dmr-from-ninja.rst
+
+
+.. toctree::
   :caption: Project structure
   :hidden:
 
@@ -216,14 +225,7 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst
-
-
-.. toctree::
-  :caption: AI and LLMs
-  :hidden:
-
-  pages/ai/spec-first.rst
-  pages/ai/dmr-from-ninja.rst
+  pages/deep-dive/contributing.rst
 
 
 .. toctree::

@@ -41,8 +41,15 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http.multipartparser import MultiPartParser, MultiPartParserError
 from django.http.request import HttpRequest, QueryDict
 from django.utils.datastructures import CaseInsensitiveMapping, MultiValueDict
+from django.utils.translation import gettext_lazy as _
 
 from dmr.exceptions import RequestSerializationError
+
+_UTF8_REQUIRED_MSG: Final = _(
+    'HTTP requests with the'
+    " 'application/x-www-form-urlencoded'"
+    ' content type must be UTF-8 encoded.',
+)
 
 
 def parse_headers(
@@ -173,10 +180,7 @@ def parse_as_post(request: HttpRequest) -> None:
     # content type does not have a charset and should be always treated
     # as UTF-8.
     if request.encoding is not None and request.encoding.lower() != 'utf-8':
-        raise RequestSerializationError(
-            "HTTP requests with the 'application/x-www-form-urlencoded' "
-            'content type must be UTF-8 encoded.',
-        )
+        raise RequestSerializationError(_UTF8_REQUIRED_MSG)
     request._post = QueryDict(request.body, encoding='utf-8')  # type: ignore[attr-defined]
     request._files = MultiValueDict()  # type: ignore[attr-defined]
 

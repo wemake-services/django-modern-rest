@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
-Raw: TypeAlias = str | bytes | bytearray
+Raw: TypeAlias = bytes | bytearray
 
 
 #: Type that represents the `deserializer` hook.

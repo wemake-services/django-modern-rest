@@ -101,7 +101,7 @@ wheels/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test / coverage / tracecov reports
 htmlcov/
 .tox/
 .coverage
@@ -112,9 +112,11 @@ coverage.xml
 *.cover
 .hypothesis/
 .ruff_cache/
+tracecov-report.md
+tracecov-report.html
 
 # Translations
-*.mo
+!*.mo
 *.pot
 
 # Django stuff:

@@ -13,6 +13,7 @@ from typing import (
 )
 
 from django.http import HttpResponse
+from django.utils.encoding import force_str
 from typing_extensions import TypedDict
 
 from dmr.exceptions import (
@@ -132,7 +133,7 @@ def format_error(  # noqa: C901, WPS231
                 {
                     'msg': str(error)
                     if settings.DEBUG
-                    else InternalServerError.default_message,
+                    else force_str(InternalServerError.default_message),
                 },
             ],
         }

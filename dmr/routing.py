@@ -13,6 +13,7 @@ from typing import (
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
+from django.utils.encoding import force_str
 from django.views import defaults
 from typing_extensions import override
 
@@ -105,7 +106,7 @@ def build_404_handler(  # noqa: WPS114
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+        https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
@@ -185,7 +186,7 @@ def build_500_handler(  # noqa: WPS114
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/ref/views/#the-500-server-error-view
+        https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
@@ -223,7 +224,7 @@ def build_500_handler(  # noqa: WPS114
         return build_response(
             serializer=serializer,
             raw_data=format_error(
-                InternalServerError.default_message,
+                force_str(InternalServerError.default_message),
                 error_type=ErrorType.internal_error,
             ),
             status_code=InternalServerError.status_code,

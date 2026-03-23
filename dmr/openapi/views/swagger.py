@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from dmr.openapi.views.base import OpenAPIView
+from dmr.settings import Settings, resolve_setting
 
 
 class SwaggerView(OpenAPIView):
@@ -25,12 +26,15 @@ class SwaggerView(OpenAPIView):
 
     def get(self, request: 'HttpRequest') -> 'HttpResponse':
         """Render the OpenAPI schema using Swagger template."""
+        cdn_config = resolve_setting(Settings.openapi_static_cdn)
+
         return render(
             request,
             self.template_name,
             context={
                 'title': self.schema.info.title,
                 'schema': self.dumps(self.schema.convert()),
+                'swagger_cdn': cdn_config.get('swagger'),
             },
             content_type=self.content_type,
         )
