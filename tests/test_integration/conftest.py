@@ -1,7 +1,25 @@
 import pytest
+import tracecov
 from django.conf import LazySettings
 
 from dmr.settings import Settings
+from dmr.test import DMRClient
+
+
+@pytest.fixture
+def dmr_client(
+    dmr_client: DMRClient,
+    tracecov_map: tracecov.CoverageMap,
+) -> DMRClient:
+    """
+    Override the ``dmr_client`` fixture for integration tests.
+
+    This replaces the base fixture so that integration tests record
+    interaction in ``tracecov_map``. As a result, these requests are included
+    in the TraceCov report.
+    """
+    tracecov_map.django.track_client(dmr_client)
+    return dmr_client
 
 
 @pytest.fixture(autouse=True, params=[True, False])

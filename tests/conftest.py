@@ -1,12 +1,28 @@
 from collections.abc import Iterator
 
 import pytest
+import tracecov
 from django.utils import translation
 
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 
-pytest_plugins = ['tests.plugins.tracecov']
+pytest_plugins = ['tracecov.pytest_plugin']
+
+
+@pytest.fixture(scope='session')
+def tracecov_map() -> tracecov.CoverageMap:
+    """
+    Provide the session ``tracecov`` coverage map for the whole test run.
+
+    It is built from the `django-test-app` schema. Declared here so the
+    ``tracecov`` pytest plugin can stash the same map for reports.
+    Map defined only under ``test_integration`` would not reliably
+    hook into that path.
+    """
+    from django_test_app.server.urls import schema  # noqa: PLC0415
+
+    return tracecov.CoverageMap.from_dict(schema.convert())
 
 
 @pytest.fixture

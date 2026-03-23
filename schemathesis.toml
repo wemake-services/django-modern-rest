@@ -1,11 +1,11 @@
 [generation]
 # Limit the number of generated examples per API operation to keep tests fast.
-max-examples = 10
+max-examples = 100
 
 [warnings]
 # Fail on any warning:
 fail-on = true
 
-# [auth.openapi.http_basic]
-# username = 'test'
-# password = 'pass'
+[auth.openapi.http_basic]
+username = 'test'
+password = 'pass'
