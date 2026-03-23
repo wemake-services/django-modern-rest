@@ -1,5 +1,11 @@
 import dataclasses
-from collections.abc import Awaitable, Callable, Mapping, Sequence
+from collections.abc import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Mapping,
+    Sequence,
+)
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, ClassVar, get_args
@@ -123,18 +129,21 @@ class _BaseSSEController(Controller[_SerializerT_co]):
 
     def to_sse_response(
         self,
-        response: SSEResponse[SSE],
+        streaming_content: AsyncIterator[SSE],
+        *,
+        headers: Mapping[str, str] | None = None,
+        cookies: Mapping[str, NewCookie] | None = None,
     ) -> SSEStreamingResponse:
         streaming_response = self.sse_streaming_response_cls(
-            response.streaming_content,
-            headers=response.headers,
+            streaming_content,
+            headers=headers,
             event_model=self.event_model,
             serializer=self.serializer,
             regular_renderer=self.regular_renderer,
             sse_renderer=self.sse_renderer,
             validate_events=self.validate_events,
         )
-        for cookie_key, cookie in (response.cookies or {}).items():
+        for cookie_key, cookie in (cookies or {}).items():
             streaming_response.set_cookie(
                 cookie_key,
                 **cookie.as_dict(),
@@ -383,11 +392,14 @@ def _build_controller(  # noqa: WPS211, WPS234
             )
 
             # Now, everything is ready to send SSE events:
+            response = await func(
+                self.request,
+                context,  # type: ignore[arg-type]
+            )
             return self.to_sse_response(
-                await func(
-                    self.request,
-                    context,  # type: ignore[arg-type]
-                ),
+                response.streaming_content,
+                headers=response.headers,
+                cookies=response.cookies,
             )
 
     return SSEController  # pyright: ignore[reportReturnType]
