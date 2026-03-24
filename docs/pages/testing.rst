@@ -76,7 +76,7 @@ For example, one can use
 to build test data from ``pydantic``, ``msgspec``,
 ``@dataclass``, or even ``TypedDict`` models.
 
-Let's say you have this code for you controller, using ``pydantic`` models:
+Let's say you have this code for your controller, using ``pydantic`` models:
 
 .. literalinclude:: /examples/testing/pydantic_controller.py
   :caption: views.py
@@ -127,7 +127,7 @@ You have to install it with:
             pip install schemathesis
 
 
-Now, let's see how you can generate thounds of tests for your API
+Now, let's see how you can generate thousands of tests for your API
 with just several lines of python code:
 
 .. literalinclude:: /../tests/test_integration/test_openapi/test_schema.py
@@ -137,7 +137,7 @@ with just several lines of python code:
 
 What will happen here?
 
-1. ``schemathesis`` with load OpenAPI schema definition
+1. ``schemathesis`` loads OpenAPI schema definition
    from the ``reverse('openapi')`` URL
 2. Then we will create a top level ``schema`` object from the ``api_schema``
    pytest fixture. It is needed to create a property-based test case
@@ -160,7 +160,7 @@ When running the test case with
 
 it will cover all your API. In simple cases it might be enough of tests.
 Yes, you heard right: in simple cases just using ``schemathesis``
-can remove the need in writing any other integration tests.
+can remove the need to write any other integration tests.
 
 .. important::
 
@@ -189,3 +189,35 @@ Example:
        )
 
        assert schema['/users']['POST'].is_valid_response(response.json())
+
+
+API coverage with TraceCov
+--------------------------
+
+`TraceCov <https://docs.tracecov.sh/>`_ can be used as an optional API
+coverage layer for ``django-modern-rest`` test suites. It complements regular
+integration tests and ``schemathesis`` runs by showing which OpenAPI operations
+and parameters were actually exercised.
+
+When ``tracecov_map`` is configured, ``dmr_client`` and ``dmr_async_client``
+automatically register requests in TraceCov. When TraceCov is not installed, or
+when ``tracecov_map`` is missing or inactive, this integration is skipped and
+fixtures return regular DMR clients without tracking.
+
+This means ``schemathesis`` and ``tracecov`` work well together: ``schemathesis``
+checks schema conformance, while ``tracecov`` reports endpoint coverage depth for
+the same test run.
+
+Example ``conftest.py``:
+
+.. code-block:: python
+
+   import pytest
+   import tracecov
+
+   from your_app.urls import schema
+
+   @pytest.fixture(scope='session')
+   def tracecov_map() -> tracecov.CoverageMap:
+
+       return tracecov.CoverageMap.from_dict(schema.convert())
