@@ -1,13 +1,10 @@
 from collections.abc import (
     AsyncIterator,
-    Callable,
     Iterator,
     Mapping,
-    Sequence,
 )
-from contextlib import aclosing, nullcontext
 from http import HTTPStatus
-from typing import Any, ClassVar, Final, TypeAlias
+from typing import TYPE_CHECKING, Any, Final
 
 from django.conf import settings
 from django.http import HttpResponseBase
@@ -15,18 +12,15 @@ from typing_extensions import override
 
 from dmr.errors import ErrorModel
 from dmr.exceptions import ValidationError
-from dmr.internal.io import aiter_to_iter
+from dmr.internal.io import aiter_to_iter, maybe_aclosing
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.sse.exceptions import SSECloseConnectionError
 from dmr.sse.metadata import SSE, SSEvent
 from dmr.sse.renderer import SSERenderer
-from dmr.sse.validation import validate_event_data, validate_event_type
 
-_EventPipeline: TypeAlias = Callable[
-    [SSE, Any, type[BaseSerializer]],
-    SSE,
-]
+if TYPE_CHECKING:
+    from dmr.sse.validation import StreamValidator
 
 
 class SSEStreamingResponse(HttpResponseBase):
@@ -44,22 +38,17 @@ class SSEStreamingResponse(HttpResponseBase):
     streaming: Final = True  # type: ignore[misc]
     is_async: Final = True
 
-    validation_pipeline: ClassVar[Sequence[_EventPipeline]] = (
-        # Order is important:
-        validate_event_type,
-        validate_event_data,
-    )
-
     def __init__(  # noqa: WPS211
         self,
         streaming_content: AsyncIterator[SSE],
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
         sse_renderer: SSERenderer,
-        event_model: Any,
         *,
+        validate_events: bool | None,
         headers: Mapping[str, str] | None = None,
-        validate_events: bool = True,
+        status_code: HTTPStatus = HTTPStatus.OK,
+        stream_validator: 'StreamValidator | None' = None,
     ) -> None:
         """
         Create the SSE streaming response.
@@ -69,10 +58,11 @@ class SSEStreamingResponse(HttpResponseBase):
             serializer: Serializer type to handle event's data.
             regular_renderer: Render python objects to text format.
             sse_renderer: Render events to bytes according to the SSE protocol.
-            event_model: Validation model for all possible produced events.
-            headers: Headers to be set on the response.
             validate_events: Should all produced events be validated
                 against *event_model*.
+            headers: Headers to be set on the response.
+            status_code: Status code for the response.
+            stream_validator: Stream validator for events.
 
         """
         headers = {} if headers is None else dict(headers)
@@ -89,16 +79,13 @@ class SSEStreamingResponse(HttpResponseBase):
                 'Connection': 'keep-alive',
             })
 
-        super().__init__(headers=headers, status=HTTPStatus.OK)
+        super().__init__(headers=headers, status=status_code)
         self._streaming_content = streaming_content
         self.serializer = serializer
         self.regular_renderer = regular_renderer
         self.sse_renderer = sse_renderer
-        self.event_model = event_model
-        if validate_events:
-            self._pipeline = self.validation_pipeline
-        else:
-            self._pipeline = ()
+        self.validate_events = validate_events
+        self.stream_validator = stream_validator
 
     @override
     def __iter__(self) -> Iterator[bytes]:
@@ -121,7 +108,7 @@ class SSEStreamingResponse(HttpResponseBase):
         if not settings.DEBUG:
             raise RuntimeError('Do not use WSGI with SSE in production')
 
-        return aiter_to_iter(self._events_pipeline())
+        return aiter_to_iter(self._produce_events())
 
     def __aiter__(self) -> AsyncIterator[bytes]:
         """
@@ -133,7 +120,7 @@ class SSEStreamingResponse(HttpResponseBase):
         When doing so, we will be inside the ASGI handler already.
         No DMR error handling will work.
         """
-        return self._events_pipeline()
+        return self._produce_events()
 
     def handle_event_error(
         self,
@@ -147,37 +134,29 @@ class SSEStreamingResponse(HttpResponseBase):
         By default does nothing and just reraises the exception.
         """
         if isinstance(exception, ValidationError):
-            return SSEvent(ErrorModel(detail=exception.payload), event='error')
+            return SSEvent(
+                # TODO: change to accept `controller.format_error`,
+                # so it can be changed accordingly
+                ErrorModel(detail=exception.payload),
+                event='error',
+            )
         raise  # noqa: PLE0704
 
-    async def _events_pipeline(self) -> AsyncIterator[bytes]:
-        # We want to close any async generators after they are fully used.
-        # Why? Because they can be cancelled at any point
-        # and not do any cleanup.
-        context: aclosing[Any] | nullcontext[Any] = (
-            aclosing(self._streaming_content)
-            if hasattr(self._streaming_content, 'aclose')
-            else nullcontext()
-        )
-        async with context:
+    async def _produce_events(self) -> AsyncIterator[bytes]:
+        async with maybe_aclosing(self._streaming_content):
             try:
                 async for event in self._streaming_content:
-                    event = self._apply_event_pipeline(event)
                     yield self.serializer.serialize(
-                        event,
+                        self._apply_validator(event),
                         renderer=self.sse_renderer,
                     )
             except SSECloseConnectionError:
                 self.close()
 
-    def _apply_event_pipeline(self, event: SSE) -> SSE:
+    def _apply_validator(self, event: SSE) -> SSE:
+        if self.stream_validator is None:
+            return event
         try:
-            for func in self._pipeline:
-                event = func(
-                    event,
-                    self.event_model,
-                    self.serializer,
-                )
+            return self.stream_validator.apply_event_pipeline(event)
         except Exception as exc:
-            event = self.handle_event_error(event, exc)
-        return event
+            return self.handle_event_error(event, exc)

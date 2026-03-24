@@ -1,10 +1,23 @@
+from collections.abc import (
+    Callable,
+    Sequence,
+)
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Final, get_args
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeAlias,
+    get_args,
+)
 
 from dmr.exceptions import ValidationError
+from dmr.serializer import BaseSerializer
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
+    from dmr.sse.metadata import SSE
 
 
 def validate_event_type(
@@ -74,6 +87,37 @@ def validate_event_data(
             status_code=HTTPStatus.OK,
         ) from None
     return event  # pyright: ignore[reportUnknownVariableType]
+
+
+_EventPipeline: TypeAlias = Callable[
+    ['SSE', Any, type['BaseSerializer']],
+    'SSE',
+]
+
+
+class StreamValidator:
+    validation_pipeline: ClassVar[Sequence[_EventPipeline]] = (
+        # Order is important:
+        validate_event_type,
+        validate_event_data,
+    )
+
+    def __init__(
+        self,
+        event_model: Any,
+        serializer: type['BaseSerializer'],
+    ) -> None:
+        self._event_model = event_model
+        self._serializer = serializer
+
+    def apply_event_pipeline(self, event: 'SSE') -> 'SSE':
+        for func in self.validation_pipeline:
+            event = func(
+                event,
+                self._event_model,
+                self._serializer,
+            )
+        return event
 
 
 # Source:

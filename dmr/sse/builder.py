@@ -10,15 +10,16 @@ from functools import wraps
 from http import HTTPStatus
 from typing import Any, ClassVar, get_args
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from typing_extensions import TypeVar, override
 
 from dmr.components import Cookies, Headers, Path, Query
-from dmr.controller import Controller
+from dmr.controller import Blueprint, Controller
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.negotiation import force_request_renderer
+from dmr.internal.types import call_init_subclass
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
@@ -27,6 +28,7 @@ from dmr.settings import Settings, default_renderer, resolve_setting
 from dmr.sse.metadata import SSE, SSEContext, SSEResponse, SSEResponseSpec
 from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
+from dmr.sse.validation import StreamValidator
 from dmr.types import parse_return_annotation
 
 
@@ -39,7 +41,7 @@ class SSEEndpointMetadata(EndpointMetadata):
     @override
     def collect_response_specs(
         self,
-        controller_cls: type['Controller[BaseSerializer]'],
+        controller_cls: type[Controller[BaseSerializer]],
         existing_responses: dict[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """
@@ -61,6 +63,34 @@ class SSEEndpointMetadata(EndpointMetadata):
         ]
 
 
+class _SSEEndpoint(Endpoint):
+    @override
+    def _pass_existing_response(
+        self,
+        response: HttpResponseBase,
+    ) -> HttpResponseBase:
+        # TODO: validate this before?
+        assert isinstance(response, SSEStreamingResponse)
+        validate_events = (
+            response.validate_events or self.metadata.validate_responses
+        )
+        if validate_events:
+            response.stream_validator = StreamValidator(
+                self._resolve_event_model(response),
+                response.serializer,
+            )
+
+        return response
+
+    def _resolve_event_model(self, response: HttpResponseBase) -> Any:
+        try:
+            return self.metadata.responses[
+                HTTPStatus(response.status_code)
+            ].return_type
+        except KeyError:
+            return Any
+
+
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
     bound=BaseSerializer,
@@ -80,33 +110,29 @@ class _BaseSSEController(Controller[_SerializerT_co]):
     validate_events: ClassVar[bool]
     sse_renderer: ClassVar[SSERenderer]
 
-    # Must be moved elsewhere:
-    event_model: ClassVar[Any]
-
     @override
     def __init_subclass__(cls) -> None:
         metadata_cls = cls.metadata_cls
         metadata_cls = type(
-            f'{cls.__qualname__}_{metadata_cls.__qualname__}',
+            f'_{cls.__qualname__}@{metadata_cls.__qualname__}',
             (metadata_cls,),
             {'default_renderer': cls.regular_renderer},
         )
         cls.endpoint_cls = type(
-            f'{cls.__qualname__}_SSEEndpoint',
-            (Endpoint,),
+            f'_{cls.__qualname__}@{_SSEEndpoint.__qualname__}',
+            (_SSEEndpoint,),
             {'metadata_cls': metadata_cls},
         )
-        cls.validate_events = getattr(
-            cls,
-            'validate_events',
-            # Defaults to the `validates_responses`:
-            bool(cls.validate_responses),
-        )
 
-        super().__init_subclass__()
+        # Now, instantiate the serializer and several required parts:
+        call_init_subclass(Blueprint, cls)
 
         # TODO: handle abstract controllers:
         cls.sse_renderer = SSERenderer(cls.serializer, cls.regular_renderer)
+        cls.renderers = (cls.regular_renderer, cls.sse_renderer)
+
+        # Now we have everything and can create `api_endpoints`:
+        call_init_subclass(Controller, cls)
 
     @override
     def to_error(
@@ -131,17 +157,19 @@ class _BaseSSEController(Controller[_SerializerT_co]):
         self,
         streaming_content: AsyncIterator[SSE],
         *,
+        status_code: HTTPStatus = HTTPStatus.OK,
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
+        validate_events: bool | None = None,
     ) -> SSEStreamingResponse:
         streaming_response = self.sse_streaming_response_cls(
             streaming_content,
             headers=headers,
-            event_model=self.event_model,
+            status_code=status_code,
             serializer=self.serializer,
             regular_renderer=self.regular_renderer,
             sse_renderer=self.sse_renderer,
-            validate_events=self.validate_events,
+            validate_events=validate_events,
         )
         for cookie_key, cookie in (cookies or {}).items():
             streaming_response.set_cookie(

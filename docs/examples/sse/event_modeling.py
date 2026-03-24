@@ -6,11 +6,8 @@ from django.http import HttpRequest
 from pydantic.json_schema import SkipJsonSchema
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.sse import (
-    SSEContext,
-    SSEResponse,
-    sse,
-)
+from dmr.sse import SSEContext, SSEResponse, sse
+from dmr.errors import ErrorModel
 
 
 class _BaseEvent(pydantic.BaseModel):
@@ -51,7 +48,14 @@ class PingEvent(pydantic.BaseModel):
         return False
 
 
-_PossibleEvents: TypeAlias = UserEvent | PaymentEvent | PingEvent
+class ErrorEvent(_BaseEvent):
+    # Can happen if event validation will fail:
+    id: SkipJsonSchema[None] = None
+    event: Literal['error'] = 'error'
+    data: pydantic.Json[ErrorModel]
+
+
+_PossibleEvents: TypeAlias = UserEvent | PaymentEvent | PingEvent | ErrorEvent
 
 
 async def complex_events() -> AsyncIterator[_PossibleEvents]:

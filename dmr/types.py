@@ -156,7 +156,7 @@ class TypeVarInference:
         Run the inference.
 
         Returns:
-            Mapping of type vars to its inferenced valued.
+            Mapping of type vars to its inferenced values.
             It can still be a type variable, if no real values are provided.
 
         """
@@ -166,7 +166,7 @@ class TypeVarInference:
         else:
             # We match type params by name, because they can be a bit different,
             # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
-            # This also ignore variance and stuff.
+            # This also ignores variance and stuff.
             type_map = {
                 type_param.__name__: type_arg
                 for type_param, type_arg in zip(
