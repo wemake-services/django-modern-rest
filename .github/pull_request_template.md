@@ -24,7 +24,8 @@ However, there are several important rules:
 
 -->
 
-- [ ] I have discosed AI usage in this PR, if any AI / LLM / coding agent was participating in this PR
+- [ ] I have disclosed AI usage in this PR,
+      if any AI / LLM / coding agent was participating in this making of this PR
 - [ ] I have removed any "Co-Authored-By" lines that attribute coding agents
 - [ ] I have carefully reviewed the final result, produced by the AI, manually
 
