@@ -5,9 +5,9 @@ import pydantic
 from django.http import HttpRequest
 from pydantic.json_schema import SkipJsonSchema
 
+from dmr.errors import ErrorModel
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.sse import SSEContext, SSEResponse, sse
-from dmr.errors import ErrorModel
 
 
 class _BaseEvent(pydantic.BaseModel):
