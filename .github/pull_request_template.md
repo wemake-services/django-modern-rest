@@ -9,6 +9,24 @@ to make our review and merging processes easier.
 Cheers!
 -->
 
+## AI Policy
+
+<!-- 
+We accept any good code, we reject any bad code:
+whether the author was human or LLM does not matter.
+
+However, there are several important rules:
+1. If you are using an AI to write this PR, you have to disclose it
+2. You have to remove AI tool from co-authors, maintainers can also do that on merge
+3. "AI Slop" with no review from a human will be closed,
+   authors of frequent low quality PRs may be blocked not to waste maintainers' time
+
+-->
+
+- [ ] I have discosed AI usage in this PR, if any AI / LLM / coding agent was participating in this PR
+- [ ] I have removed any "Co-Authored-By" lines that attribute coding agents
+- [ ] I have carefully reviewed the final result, produced by the AI, manually
+
 ## Checklist
 
 <!-- Please check everything that applies: -->
