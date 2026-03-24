@@ -5,7 +5,6 @@ from typing import Any, Final, final
 
 import pydantic
 from django.http import HttpRequest, HttpResponse
-from django.urls import path
 from django.views.decorators.http import condition
 
 from dmr import Controller, HeaderSpec, Path, ResponseSpec
@@ -101,11 +100,6 @@ class ConditionalETagController(
         )
 
 
-# NOTE: Used for example generation in docs
-urlpatterns = [
-    path('<int:user_id>/', ConditionalETagController.as_view()),
-]
-
-# run: {"controller": "ConditionalETagController", "method": "get", "url": "/1/", "use_urlpatterns": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
-# run: {"controller": "ConditionalETagController", "method": "get", "url": "/1/", "use_urlpatterns": true, "headers": {"If-None-Match": "\"user-1-2026-03-23T12:30:00+00:00\""}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
-# run: {"controller": "ConditionalETagController", "method": "get", "url": "/2/", "use_urlpatterns": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/example/1/", "url_pattern": "/api/example/<int:user_id>/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/example/1/", "url_pattern": "/api/example/<int:user_id>/", "headers": {"If-None-Match": "\"user-1-2026-03-23T12:30:00+00:00\""}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/example/2/", "url_pattern": "/api/example/<int:user_id>/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

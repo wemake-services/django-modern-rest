@@ -362,7 +362,7 @@ class _BaseBuilder:  # noqa: WPS214
             return module.urlpatterns  # type: ignore[no-any-return]
 
         controller_cls = self._find_controller(module)
-        url_path = _get_url_path_from_run_args(
+        url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
         return [
@@ -388,7 +388,7 @@ class _OpenAPIBuilder(_BaseBuilder):
             return urlpatterns
 
         controller_cls = self._find_controller(module)
-        url_path = _get_url_path_from_run_args(
+        url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
 
@@ -416,6 +416,14 @@ def _get_url_path_from_run_args(run_args: _AppRunArgs) -> str:
         return url
     controller_name = run_args['controller'].lower()
     return f'/api/{controller_name}/'
+
+
+def _get_route_path_from_run_args(run_args: _AppRunArgs) -> str:
+    url_pattern = run_args.get('url_pattern')
+    if url_pattern:
+        assert isinstance(url_pattern, str)  # noqa: S101
+        return url_pattern
+    return _get_url_path_from_run_args(run_args)
 
 
 @contextmanager
