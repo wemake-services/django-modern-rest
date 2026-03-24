@@ -11,7 +11,7 @@ Cheers!
 
 ## AI Policy
 
-<!-- 
+<!--
 We accept any good code, we reject any bad code:
 whether the author was human or LLM does not matter.
 
