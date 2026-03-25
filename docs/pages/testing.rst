@@ -292,10 +292,9 @@ What will happen here?
 .. tip::
 
   If TraceCov is not installed, or when ``tracecov_map`` is missing or inactive,
-  the skipped and fixtures return regular DMR clients without
-  tracking.
+  fixtures return regular DMR clients without tracking.
 
-When running your tests (for example):
+When running your tests:
 
 .. code-block:: bash
 
