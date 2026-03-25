@@ -106,7 +106,7 @@ The shortest example [(click here to copy the whole file)](https://github.com/we
 ...         self,
 ...         parsed_body: Body[UserCreateModel],
 ...         parsed_headers: Headers[HeaderModel],
-...     ) -> UserModel:  
+...     ) -> UserModel:
 ...         """All added props have the correct runtime and static types."""
 ...         assert parsed_headers.consumer == 'my-api'
 ...         return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
