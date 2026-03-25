@@ -40,9 +40,6 @@ Response, headers and cookies
 .. autoexception:: dmr.response.APIError
   :members:
 
-.. autoexception:: dmr.response.APIRedirectError
-  :members:
-
 .. autofunction:: dmr.response.build_response
 
 .. autoclass:: dmr.headers.HeaderSpec
