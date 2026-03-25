@@ -7,9 +7,7 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
-from dmr.openapi.objects.enums import OpenAPIType
-from dmr.openapi.objects.reference import Reference
-from dmr.openapi.objects.schema import Schema
+from dmr.openapi.objects import OpenAPIType, Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 
 _MAXIMUM: Final = 100

@@ -39,7 +39,7 @@ ignore_imports =
   # Settings can initialize default OpenAPI config:
   dmr.settings -> dmr.openapi.config
   # Response generation:
-  dmr.openapi.mappers.responses -> dmr.negotiation
+  dmr.openapi.generators.response -> dmr.negotiation
 
 
 [importlinter:contract:no-optional-deps]

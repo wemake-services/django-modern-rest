@@ -62,19 +62,20 @@ class HeaderSpec(_BaseResponseHeader):
         deprecated: Whethere this header is deprecated.
         example: Documentation, what can be given as values in this header.
         required: Whether or not this header can be missing.
-        schema_only: Is true, when header is only used for schema purposes,
+        skip_validation: Is true, when header is only used for schema purposes,
             without any runtime validation. This might be useful, when
             this header will be set after our framework's validation.
             For example,
             by :class:`django.contrib.sessions.middleware.SessionMiddleware`
             or by HTTP proxy.
+            This header might be present in runtime or might be missing.
 
     """
 
     is_actionable: ClassVar[Literal[False]] = False
 
     required: bool = True
-    schema_only: bool = False
+    skip_validation: bool = False
 
     def to_spec(self) -> 'HeaderSpec':
         """Needed for API compat with `NewHeader`."""

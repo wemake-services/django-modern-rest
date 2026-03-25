@@ -1,11 +1,10 @@
 import pathlib
-from http import HTTPStatus
 from typing import Final
 
 from django.http import FileResponse
 
-from dmr import Controller, HeaderSpec, ResponseSpec, validate
-from dmr.files import FileBody
+from dmr import Controller, validate
+from dmr.files import FileResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 
@@ -14,14 +13,7 @@ _FILEPATH: Final = pathlib.Path('examples/components/receipt.txt')
 
 class FileController(Controller[PydanticSerializer]):
     @validate(
-        ResponseSpec(
-            FileBody,
-            status_code=HTTPStatus.OK,
-            headers={
-                'Content-Length': HeaderSpec(),
-                'Content-Disposition': HeaderSpec(),
-            },
-        ),
+        FileResponseSpec(),
         renderers=[FileRenderer('text/plain')],
     )
     def get(self) -> FileResponse:
@@ -34,3 +26,4 @@ class FileController(Controller[PydanticSerializer]):
 
 
 # run: {"controller": "FileController", "method": "get", "url": "/api/file/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "FileController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

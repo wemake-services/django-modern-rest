@@ -35,11 +35,10 @@ class _UserModel(msgspec.Struct):
 
 class _UserController(
     Controller[MsgspecSerializer],
-    Body[dict[str, int]],
 ):
     summary = 'Handles users'
 
-    def post(self) -> _UserModel:
+    def post(self, parsed_body: Body[dict[str, int]]) -> _UserModel:
         raise NotImplementedError
 
 
@@ -66,11 +65,10 @@ class _CookieModel(msgspec.Struct):
 
 class _AuthedAndCookiesController(
     Controller[MsgspecSerializer],
-    Cookies[_CookieModel],
 ):
     auth = (JWTAsyncAuth(),)
 
-    async def get(self) -> list[int]:
+    async def get(self, parsed_cookies: Cookies[_CookieModel]) -> list[int]:
         raise NotImplementedError
 
 
@@ -102,11 +100,13 @@ class _SeveralFiles(msgspec.Struct):
 
 class _FileController(
     Controller[MsgspecSerializer],
-    FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
 
-    async def get(self) -> list[int]:
+    async def get(
+        self,
+        parsed_file_metadata: FileMetadata[_SeveralFiles],
+    ) -> list[int]:
         raise NotImplementedError
 
 

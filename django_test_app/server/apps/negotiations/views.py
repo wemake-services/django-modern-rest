@@ -4,7 +4,7 @@ from typing import Annotated, Any, TypeAlias, final
 from xml.parsers import expat
 
 import pydantic
-import xmltodict
+import xmltodict_rs as xmltodict
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
@@ -44,7 +44,7 @@ _CallableAny: TypeAlias = Callable[..., Any]
 class XmlParser(Parser):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def parse(
@@ -84,7 +84,7 @@ class XmlParser(Parser):
 class XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def render(
@@ -126,15 +126,13 @@ class _RequestModel(pydantic.BaseModel):
 
 
 @final
-class ContentNegotiationController(
-    Controller[PydanticSerializer],
-    Body[_RequestModel],
-):
+class ContentNegotiationController(Controller[PydanticSerializer]):
     parsers = (JsonParser(), XmlParser())
     renderers = (JsonRenderer(), XmlRenderer())
 
     def post(
         self,
+        parsed_body: Body[_RequestModel],
     ) -> Annotated[
         _RequestModel | list[str],
         conditional_type({
@@ -144,10 +142,10 @@ class ContentNegotiationController(
     ]:
         if self.request.accepts(ContentType.json):
             return [
-                self.parsed_body.payment_method_id,
-                self.parsed_body.payment_amount,
+                parsed_body.payment_method_id,
+                parsed_body.payment_amount,
             ]
-        return self.parsed_body
+        return parsed_body
 
     @validate(
         ResponseSpec(
@@ -161,16 +159,16 @@ class ContentNegotiationController(
             status_code=HTTPStatus.CREATED,
         ),
     )
-    def put(self) -> HttpResponse:
+    def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
         if self.request.accepts(ContentType.json):
             return self.to_response(
                 [
-                    self.parsed_body.payment_method_id,
-                    self.parsed_body.payment_amount,
+                    parsed_body.payment_method_id,
+                    parsed_body.payment_amount,
                 ],
                 status_code=HTTPStatus.CREATED,
             )
         return self.to_response(
-            self.parsed_body,
+            parsed_body,
             status_code=HTTPStatus.CREATED,
         )

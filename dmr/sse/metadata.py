@@ -11,7 +11,6 @@ from typing import (
     overload,
 )
 
-from django.conf import settings
 from typing_extensions import TypeVar, override
 
 from dmr.cookies import NewCookie
@@ -19,9 +18,9 @@ from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import ContentType
 from dmr.openapi import OpenAPIContext
-from dmr.openapi.mappers import responses
 from dmr.openapi.objects import Response
 from dmr.serializer import BaseSerializer
+from dmr.sse.validation import check_event_field
 
 _DataT_co = TypeVar('_DataT_co', covariant=True)
 
@@ -176,6 +175,10 @@ class SSEvent(Generic[_DataT_co]):
         ):
             raise ValueError('At least one event field must be non-None')
 
+        # Check null byte and new lines:
+        check_event_field(id, field_name='id')
+        check_event_field(event, field_name='event')
+
         self.data = data
         self.event = event
         self.id = id
@@ -206,8 +209,9 @@ class SSEResponseSpec(ResponseSpec):
         kw_only=True,
         default_factory=lambda: {
             'Cache-Control': HeaderSpec(),
-            'Connection': HeaderSpec(required=not settings.DEBUG),
             'X-Accel-Buffering': HeaderSpec(),
+            # wsgi cannot provide `Connection` header in `DEBUG`:
+            'Connection': HeaderSpec(skip_validation=True),
         },
     )
     limit_to_content_types: Set[str] | None = dataclasses.field(
@@ -223,7 +227,7 @@ class SSEResponseSpec(ResponseSpec):
         context: OpenAPIContext,
     ) -> Response:
         """Customizes how response's schemas are rendered."""
-        return responses.get_schema(
+        return context.generators.response.get_schema(
             self,
             metadata,
             serializer,

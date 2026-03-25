@@ -4,7 +4,6 @@ from dirty_equals import IsStr
 from inline_snapshot import snapshot
 
 from dmr import (
-    Blueprint,
     Body,
     Controller,
     ResponseSpec,
@@ -13,23 +12,10 @@ from dmr import (
 from dmr.plugins.pydantic import PydanticSerializer
 
 
-class _Blueprint(Blueprint[PydanticSerializer]):
-    responses = [
-        ResponseSpec(float, status_code=HTTPStatus.RESET_CONTENT),
-    ]
-
-    @modify(
-        extra_responses=[ResponseSpec(bool, status_code=HTTPStatus.CREATED)],
-    )
-    def put(self) -> str:
-        raise NotImplementedError
-
-
 class _Controller(Controller[PydanticSerializer]):
     responses = [
         ResponseSpec(int, status_code=HTTPStatus.ACCEPTED),
     ]
-    blueprints = [_Blueprint]
 
     @modify(
         extra_responses=[
@@ -40,6 +26,15 @@ class _Controller(Controller[PydanticSerializer]):
         ],
     )
     def get(self) -> str:
+        raise NotImplementedError
+
+    @modify(
+        extra_responses=[
+            ResponseSpec(bool, status_code=HTTPStatus.CREATED),
+            ResponseSpec(float, status_code=HTTPStatus.RESET_CONTENT),
+        ],
+    )
+    def put(self) -> str:
         raise NotImplementedError
 
 
@@ -95,9 +90,8 @@ def test_collected_responses() -> None:
 
 class _ControllerWithParsing(
     Controller[PydanticSerializer],
-    Body[dict[str, str]],
 ):
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise NotImplementedError
 
 

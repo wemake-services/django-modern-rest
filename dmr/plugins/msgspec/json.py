@@ -93,6 +93,16 @@ class MsgspecJsonRenderer(Renderer):
 def _get_serializer(
     serializer_hook: Callable[[Any], Any] | None,
 ) -> msgspec.json.Encoder:
+    """
+    Returns cached serializer.
+
+    If you want to clear this cache run:
+
+    .. code:: python
+
+        >>> _get_serializer.cache_clear()
+
+    """
     return msgspec.json.Encoder(enc_hook=serializer_hook)
 
 
@@ -102,4 +112,14 @@ def _get_deserializer(
     *,
     strict: bool,
 ) -> msgspec.json.Decoder[Any]:
+    """
+    Returns cached deserializer.
+
+    If you want to clear this cache run:
+
+    .. code:: python
+
+        >>> _get_deserializer.cache_clear()
+
+    """
     return msgspec.json.Decoder(dec_hook=deserializer_hook, strict=strict)

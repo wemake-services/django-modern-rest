@@ -10,7 +10,7 @@
     "paths": {
       "/api/generic/": {
         "post": {
-          "operationId": "postApiGeneric",
+          "operationId": "postGenericcontrollerApiGeneric",
           "responses": {
             "201": {
               "description": "Created",
@@ -119,7 +119,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "postApiV1User",
+          "operationId": "postUsercontrollerApiV1User",
           "responses": {
             "201": {
               "description": "Created",
@@ -225,7 +225,7 @@
     "paths": {
       "/api/root/custom/user/": {
         "post": {
-          "operationId": "postApiRootCustomUser",
+          "operationId": "postUsercontrollerApiRootCustomUser",
           "responses": {
             "201": {
               "description": "Created",
@@ -264,10 +264,6 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
-          "type": "object",
-          "title": "_CustomTitleForUserModel2"
-        },
         "ErrorDetail": {
           "properties": {
             "msg": {
@@ -316,6 +312,10 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "type": "object",
+          "title": "_CustomTitleForUserModel2"
         }
       },
       "securitySchemes": {}

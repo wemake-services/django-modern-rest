@@ -4,6 +4,9 @@ from dmr.openapi.generators.component_parsers import (
 from dmr.openapi.generators.operation import (
     OperationIdGenerator as OperationIdGenerator,
 )
+from dmr.openapi.generators.parameter import (
+    ParameterGenerator as ParameterGenerator,
+)
 from dmr.openapi.generators.response import (
     ResponseGenerator as ResponseGenerator,
 )

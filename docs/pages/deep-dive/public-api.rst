@@ -4,15 +4,10 @@ Public API
 Controller
 ----------
 
-.. autoclass:: dmr.controller.Blueprint
-  :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
-  :show-inheritance:
-
 .. autoclass:: dmr.controller.Controller
   :members:
+  :exclude-members: controller_validator_cls, endpoint_cls, error_model, settings_validator_cls
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
   :show-inheritance:
 
 
@@ -84,10 +79,13 @@ Serialization
 .. autoclass:: dmr.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.serializer.SerializerContext
+.. autoclass:: dmr.endpoint.SerializerContext
   :members:
 
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.components.ComponentParserBuilder
   :members:
 
 
@@ -97,9 +95,9 @@ Routing
 .. autoclass:: dmr.routing.Router
   :members:
 
-.. autofunction:: dmr.routing.compose_blueprints
-
 .. autofunction:: dmr.routing.build_404_handler
+
+.. autofunction:: dmr.routing.build_500_handler
 
 .. autofunction:: dmr.routing.path
 
@@ -151,6 +149,9 @@ Utilities
 .. autoclass:: dmr.types.Empty
 
 .. autodata:: dmr.types.EmptyObj
+
+.. autoclass:: dmr.types.TypeVarInference
+  :members:
 
 
 Decorators
@@ -205,22 +206,3 @@ Msgspec
 
 .. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
   :members:
-
-
-Files
------
-
-.. autoclass:: dmr.files.FileBody
-  :members:
-
-
-Auth
-----
-
-.. autoclass:: dmr.security.SyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.AsyncAuth
-  :members:
-  :inherited-members:

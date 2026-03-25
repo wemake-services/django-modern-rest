@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from django.http import HttpResponseBase
 from django.utils.decorators import method_decorator
@@ -39,7 +39,24 @@ class OpenAPIView(View):
 
     # Public API:
     dumps: SchemaDumper = staticmethod(json_dumps)  # noqa: WPS421
-    schema: ClassVar['OpenAPI']
+
+    # Private API:
+    _schema: 'OpenAPI | None' = None
+
+    @property
+    def schema(self) -> 'OpenAPI':
+        """
+        Return the OpenAPI schema bound to this view instance.
+
+        The schema is injected via :meth:`as_view` and stored internally
+        in the private ``_schema`` attribute. This property provides a
+        typed and safe accessor for that value.
+        """
+        # An assertion is used to guarantee that the schema has been set.
+        # Under normal usage, this should always be true because the view
+        # must be constructed via :meth:`as_view(schema=...)`.
+        assert self._schema is not None  # noqa: S101
+        return self._schema
 
     @override
     @classmethod
@@ -55,5 +72,4 @@ class OpenAPIView(View):
         :class:`~dmr.openapi.objects.OpenAPI` instance, store it on the
         view class, and then return the configured view callable.
         """
-        cls.schema = schema
-        return super().as_view(**initkwargs)
+        return super().as_view(_schema=schema, **initkwargs)

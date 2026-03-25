@@ -17,11 +17,13 @@ class HeaderModel(msgspec.Struct):
 
 class UserController(
     Controller[MsgspecSerializer],
-    Body[UserModel],
-    Headers[HeaderModel],
 ):
-    def post(self) -> UserModel:
-        if self.parsed_headers.consumer != 'my-api':
+    def post(
+        self,
+        parsed_body: Body[UserModel],
+        parsed_headers: Headers[HeaderModel],
+    ) -> UserModel:
+        if parsed_headers.consumer != 'my-api':
             # Notice that this response is never documented in the spec,
             # so, it will raise an error when validation is enabled (default).
             raise APIError(
@@ -32,8 +34,9 @@ class UserController(
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
         # This response will be documented by default:
-        return self.parsed_body
+        return parsed_body
 
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "my-api"}, "url": "/api/user/"}  # noqa: ERA001, E501
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "not-my-api"}, "url": "/api/user/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

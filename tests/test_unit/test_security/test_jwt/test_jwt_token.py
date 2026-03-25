@@ -6,14 +6,20 @@
 import dataclasses
 import datetime as dt
 import secrets
-from typing import Any
+from typing import Any, TypedDict
 
 import jwt
 import pytest
 from faker import Faker
 
-from dmr.exceptions import InternalServerError
+from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.jwt import JWToken
+
+
+class _DecodeKwargs(TypedDict, total=False):
+    verify_exp: bool
+    verify_iat: bool
+    verify_sub: bool
 
 
 @pytest.mark.parametrize('algorithm', ['HS256', 'HS384', 'HS512'])
@@ -211,3 +217,116 @@ def test_token_encode_includes_custom_headers() -> None:
     assert header['alg'] == 'HS256'
     assert 'kid' in header
     assert header['kid'] == custom_headers['kid']
+
+
+def test_verify_nbf_is_independent_from_exp() -> None:
+    """Ensure nbf validation remains enabled independently from exp."""
+    secret = secrets.token_hex()
+    encoded = jwt.encode(
+        {
+            'sub': 'foo',
+            'iat': dt.datetime.now(dt.UTC),
+            'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+            'nbf': dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5),
+        },
+        key=secret,
+        algorithm='HS256',
+    )
+
+    with pytest.raises(NotAuthenticatedError):
+        JWToken.decode(
+            encoded,
+            secret=secret,
+            algorithm='HS256',
+            verify_exp=False,
+            verify_nbf=True,
+        )
+
+
+def test_verify_nbf_can_be_disabled_independently() -> None:
+    """Ensure nbf validation can be disabled without affecting exp."""
+    secret = secrets.token_hex()
+    not_before = dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5)
+    raw_token = {
+        'sub': 'foo',
+        'iat': dt.datetime.now(dt.UTC),
+        'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        'nbf': not_before,
+    }
+    encoded = jwt.encode(raw_token, key=secret, algorithm='HS256')
+
+    token = JWToken.decode(
+        encoded,
+        secret=secret,
+        algorithm='HS256',
+        verify_exp=True,
+        verify_nbf=False,
+    )
+
+    assert token.extras['nbf'] == int(not_before.timestamp())
+
+
+@pytest.mark.parametrize(
+    ('raw_token_data', 'decode_kwargs'),
+    [
+        (
+            {
+                'sub': 'foo',
+                'iat': dt.datetime.now(dt.UTC),
+            },
+            _DecodeKwargs(verify_exp=False),
+        ),
+        (
+            {
+                'sub': 'foo',
+                'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+            },
+            _DecodeKwargs(verify_iat=False),
+        ),
+        (
+            {
+                'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+                'iat': dt.datetime.now(dt.UTC),
+            },
+            _DecodeKwargs(verify_sub=False),
+        ),
+    ],
+)
+def test_missing_required_claims_raise_auth_error(
+    *,
+    raw_token_data: dict[str, Any],
+    decode_kwargs: _DecodeKwargs,
+) -> None:
+    """Ensure missing required claims still fail as auth errors."""
+    secret = secrets.token_hex()
+    encoded = jwt.encode(raw_token_data, key=secret, algorithm='HS256')
+
+    with pytest.raises(NotAuthenticatedError):
+        JWToken.decode(
+            encoded,
+            secret=secret,
+            algorithm='HS256',
+            **decode_kwargs,
+        )
+
+
+def test_invalid_datetime_claim_raises_auth_error() -> None:
+    """Ensure malformed datetime claims fail as auth errors."""
+    secret = secrets.token_hex()
+    encoded = jwt.encode(
+        {
+            'sub': 'foo',
+            'exp': 'not-a-timestamp',
+            'iat': dt.datetime.now(dt.UTC),
+        },
+        key=secret,
+        algorithm='HS256',
+    )
+
+    with pytest.raises(NotAuthenticatedError):
+        JWToken.decode(
+            encoded,
+            secret=secret,
+            algorithm='HS256',
+            verify_exp=False,
+        )

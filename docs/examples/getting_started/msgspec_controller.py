@@ -20,10 +20,11 @@ class HeaderModel(msgspec.Struct):
 
 class UserController(
     Controller[MsgspecSerializer],
-    Body[UserCreateModel],
-    Headers[HeaderModel],
 ):
-    def post(self) -> UserModel:
-        """All added props have the correct runtime and static types."""
-        assert self.parsed_headers.consumer == 'my-api'
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+    def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+        parsed_headers: Headers[HeaderModel],
+    ) -> UserModel:
+        assert parsed_headers.consumer == 'my-api'
+        return UserModel(uid=uuid.uuid4(), email=parsed_body.email)

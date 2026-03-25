@@ -2,9 +2,42 @@ from http import HTTPStatus
 from typing import Final
 
 import pytest
+from django.conf import LazySettings
 from django.urls import reverse
 
+from dmr.settings import Settings
 from dmr.test import DMRClient
+
+
+@pytest.fixture(params=[True, False], name='use_cdn')
+def use_cdn(request: pytest.FixtureRequest) -> bool:
+    """Run integration tests with both local static files and CDN URLs."""
+    return bool(request.param)
+
+
+@pytest.fixture(autouse=True, params=[True, False])
+def _modify_cdn_settings(
+    settings: LazySettings,
+    request: pytest.FixtureRequest,
+    dmr_clean_settings: None,
+    *,
+    use_cdn: bool,
+) -> None:
+    if not use_cdn:
+        return
+
+    settings.DMR_SETTINGS = {
+        Settings.openapi_static_cdn: {
+            'swagger': ('https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.1'),
+            'redoc': (
+                'https://cdn.redoc.ly/redoc/2.5.2/bundles/redoc.standalone.js'
+            ),
+            'scalar': (
+                'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js'
+            ),
+        },
+    }
+
 
 _ENDPOINTS: Final = (
     ('openapi', HTTPStatus.OK, 'application/json'),

@@ -3,7 +3,7 @@ import pytest
 from django.urls import path
 
 from dmr.controller import Controller
-from dmr.openapi import build_schema
+from dmr.openapi import OpenAPIContext, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
@@ -64,3 +64,9 @@ def test_renamed_schema() -> None:
             ],
         ),
     )
+
+
+def test_try_unregister_schema(openapi_context: OpenAPIContext) -> None:
+    """Ensure that removing non existent schema works."""
+    openapi_context.registries.schema.try_unregister('missing')
+    openapi_context.registries.schema.try_unregister(None)

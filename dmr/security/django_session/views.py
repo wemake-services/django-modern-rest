@@ -45,14 +45,13 @@ class DjangoSessionResponse(TypedDict):
 
 class DjangoSessionSyncController(
     Controller[_SerializerT],
-    Body[_RequestModelT],
     Generic[_SerializerT, _RequestModelT, _ResponseT],
 ):
     """
     Sync controller to get django session cookie.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -65,17 +64,19 @@ class DjangoSessionSyncController(
 
     @modify(
         status_code=HTTPStatus.OK,
-        cookies={settings.SESSION_COOKIE_NAME: CookieSpec(schema_only=True)},
+        cookies={
+            settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+        },
     )
-    def post(self) -> _ResponseT:
+    def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseT:
         """By default cookies are acquired on post."""
-        return self.login()
+        return self.login(parsed_body)
 
-    def login(self) -> _ResponseT:
+    def login(self, parsed_body: _RequestModelT) -> _ResponseT:
         """Perform the sync login routine for user."""
         user = authenticate(
             self.request,
-            **self.convert_auth_payload(self.parsed_body),
+            **self.convert_auth_payload(parsed_body),
         )
         if user is None:
             raise NotAuthenticatedError
@@ -105,14 +106,13 @@ class DjangoSessionSyncController(
 
 class DjangoSessionAsyncController(
     Controller[_SerializerT],
-    Body[_RequestModelT],
     Generic[_SerializerT, _RequestModelT, _ResponseT],
 ):
     """
     Async controller to get django session cookie.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -125,17 +125,19 @@ class DjangoSessionAsyncController(
 
     @modify(
         status_code=HTTPStatus.OK,
-        cookies={settings.SESSION_COOKIE_NAME: CookieSpec(schema_only=True)},
+        cookies={
+            settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+        },
     )
-    async def post(self) -> _ResponseT:
+    async def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseT:
         """By default cookies are acquired on post."""
-        return await self.login()
+        return await self.login(parsed_body)
 
-    async def login(self) -> _ResponseT:
+    async def login(self, parsed_body: _RequestModelT) -> _ResponseT:
         """Perform the sync login routine for user."""
         user = await aauthenticate(
             self.request,
-            **(await self.convert_auth_payload(self.parsed_body)),
+            **(await self.convert_auth_payload(parsed_body)),
         )
         if user is None:
             raise NotAuthenticatedError

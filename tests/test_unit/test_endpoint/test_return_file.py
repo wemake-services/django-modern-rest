@@ -6,18 +6,11 @@ from typing import Final, final
 import pytest
 from django.http import FileResponse
 
-from dmr import Controller, HeaderSpec, ResponseSpec, validate
-from dmr.files import FileBody
-from dmr.openapi.objects.enums import OpenAPIFormat
+from dmr import Controller, validate
+from dmr.files import FileResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-
-
-def test_binary_schema() -> None:
-    """Ensure that ``FileBody`` returns valid schema."""
-    assert FileBody.schema().format == OpenAPIFormat.BINARY
-
 
 _FILEPATH: Final = 'docs/examples/components/receipt.txt'
 
@@ -25,14 +18,7 @@ _FILEPATH: Final = 'docs/examples/components/receipt.txt'
 @final
 class _FileSyncController(Controller[PydanticSerializer]):
     @validate(
-        ResponseSpec(
-            FileBody,
-            status_code=HTTPStatus.OK,
-            headers={
-                'Content-Length': HeaderSpec(),
-                'Content-Disposition': HeaderSpec(),
-            },
-        ),
+        FileResponseSpec(),
         renderers=[FileRenderer()],
     )
     def get(self) -> FileResponse:
@@ -68,16 +54,7 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
 class _FileAsyncController(Controller[PydanticSerializer]):
     renderers = (FileRenderer('text/plain'),)
 
-    @validate(
-        ResponseSpec(
-            FileBody,
-            status_code=HTTPStatus.OK,
-            headers={
-                'Content-Length': HeaderSpec(),
-                'Content-Disposition': HeaderSpec(),
-            },
-        ),
-    )
+    @validate(FileResponseSpec())
     async def get(self) -> FileResponse:
         return FileResponse(
             # We don't care that it is sync:

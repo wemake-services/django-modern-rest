@@ -15,7 +15,7 @@ class TwoNumbers(pydantic.BaseModel):
     right: int
 
 
-class MathController(Controller[PydanticSerializer], Body[TwoNumbers]):
+class MathController(Controller[PydanticSerializer]):
     def division_error(  # <- we define an error handler
         self,
         endpoint: Endpoint,
@@ -30,18 +30,24 @@ class MathController(Controller[PydanticSerializer], Body[TwoNumbers]):
             )
         # Reraise unfamiliar errors to let someone
         # else to handle them further.
-        raise exc
+        raise exc from None
 
     @modify(
         error_handler=wrap_handler(  # <- and we pass the handler
             division_error,
         ),
     )
-    def patch(self) -> float:  # <- has custom error handling
-        return self.parsed_body.left / self.parsed_body.right
+    def patch(
+        self,
+        parsed_body: Body[TwoNumbers],
+    ) -> float:  # <- has custom error handling
+        return parsed_body.left / parsed_body.right
 
-    def post(self) -> float:  # <- has only default error handling
-        return self.parsed_body.left * self.parsed_body.right
+    def post(
+        self,
+        parsed_body: Body[TwoNumbers],
+    ) -> float:  # <- has only default error handling
+        return parsed_body.left * parsed_body.right
 
 
 # run: {"controller": "MathController", "method": "patch", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501

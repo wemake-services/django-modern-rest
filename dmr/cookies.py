@@ -65,12 +65,13 @@ class CookieSpec(_BaseCookie):
         description: Description of the response cookie header
             for OpenAPI documentation.
         required: Defines that this cookie can be missing in some cases.
-        schema_only: Is true, when cookie is only used for schema purposes,
+        skip_validation: Is true, when cookie is only used for schema purposes,
             without any runtime validation. This might be useful, when
             this cookie will be set after our framework's validation.
             For example,
             by :class:`django.contrib.sessions.middleware.SessionMiddleware`
             or by HTTP proxy.
+            This cookie might be present in runtime or might be missing.
 
     .. seealso::
 
@@ -82,14 +83,14 @@ class CookieSpec(_BaseCookie):
     _extra_fields: ClassVar[frozenset[str]] = frozenset((
         'description',
         'required',
-        'schema_only',
+        'skip_validation',
     ))
 
     is_actionable: ClassVar[Literal[False]] = False
 
     description: str | None = None
     required: bool = True
-    schema_only: bool = False
+    skip_validation: bool = False
 
     def is_equal(self, other: Morsel[str]) -> bool:
         """Compare this object with ``SimpleCookie`` like object."""

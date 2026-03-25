@@ -10,7 +10,7 @@
     "paths": {
       "/api/cookies": {
         "get": {
-          "operationId": "getApiCookies",
+          "operationId": "getAuthedandcookiescontrollerApiCookies",
           "parameters": [
             {
               "deprecated": false,
@@ -97,38 +97,6 @@
     },
     "components": {
       "schemas": {
-        "_CookieModel": {
-          "properties": {
-            "session_id": {
-              "type": "string"
-            },
-            "CSRF": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "required": [
-            "session_id",
-            "CSRF"
-          ],
-          "title": "_CookieModel"
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
-        },
         "ErrorDetail": {
           "properties": {
             "loc": {
@@ -157,6 +125,22 @@
           ],
           "title": "ErrorDetail",
           "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
       },
       "securitySchemes": {
@@ -182,7 +166,7 @@
     "paths": {
       "/api/v1/example": {
         "post": {
-          "operationId": "postApiV1Example",
+          "operationId": "postExamplecontrollerApiV1Example",
           "responses": {
             "201": {
               "description": "Created",
@@ -221,6 +205,61 @@
     },
     "components": {
       "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "msg": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
+          "example": {
+            "detail": [
+              {
+                "msg": "GMPXMVbyXHUfymCDaloV",
+                "loc": [
+                  "NiPhGgaTklZTpXCJkWJY"
+                ]
+              }
+            ]
+          }
+        },
         "_ExampleModel": {
           "properties": {
             "age": {
@@ -265,19 +304,16 @@
           ],
           "title": "_ExampleModel",
           "example": {
-            "description": "Generated example",
-            "value": {
-              "age": 8,
-              "username": "GMPXMVbyXHUfymCDaloV",
-              "status": "active",
-              "email": "NiPhGgaTklZTpXCJkWJY",
-              "salary": -2895104.6059761,
-              "tags": [
-                "vWnrQEEKdspKjyjnWXsv"
-              ],
-              "metadata": {
-                "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
-              }
+            "age": 8,
+            "username": "GMPXMVbyXHUfymCDaloV",
+            "status": "active",
+            "email": "NiPhGgaTklZTpXCJkWJY",
+            "salary": -2895104.6059761,
+            "tags": [
+              "vWnrQEEKdspKjyjnWXsv"
+            ],
+            "metadata": {
+              "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
             }
           }
         },
@@ -287,64 +323,6 @@
             "inactive"
           ],
           "title": "_Status"
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "description": "Generated example",
-            "value": {
-              "detail": [
-                {
-                  "msg": "GMPXMVbyXHUfymCDaloV",
-                  "loc": [
-                    "NiPhGgaTklZTpXCJkWJY"
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        "ErrorDetail": {
-          "properties": {
-            "loc": {
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            "msg": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "required": [
-            "msg"
-          ],
-          "title": "ErrorDetail",
-          "description": "Base schema for error details description."
         }
       },
       "securitySchemes": {}
@@ -363,7 +341,7 @@
     "paths": {
       "/file": {
         "get": {
-          "operationId": "getFile",
+          "operationId": "getFilecontrollerFile",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -384,6 +362,14 @@
                     "second_file"
                   ],
                   "title": "_SeveralFiles"
+                },
+                "encoding": {
+                  "file_name1": {
+                    "contentType": "application/json"
+                  },
+                  "second_file": {
+                    "contentType": "application/json"
+                  }
                 }
               }
             },
@@ -440,22 +426,6 @@
     },
     "components": {
       "schemas": {
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
-        },
         "ErrorDetail": {
           "properties": {
             "loc": {
@@ -484,6 +454,22 @@
           ],
           "title": "ErrorDetail",
           "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
       },
       "securitySchemes": {}
@@ -503,7 +489,7 @@
       "/api/v1/user": {
         "summary": "Handles users",
         "post": {
-          "operationId": "postApiV1User",
+          "operationId": "postUsercontrollerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -565,45 +551,6 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
-          "properties": {
-            "age": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 0
-            },
-            "username": {
-              "type": "string",
-              "deprecated": true
-            },
-            "email": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "required": [
-            "age",
-            "username",
-            "email"
-          ],
-          "title": "_UserModel"
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
-        },
         "ErrorDetail": {
           "properties": {
             "loc": {
@@ -632,6 +579,45 @@
           ],
           "title": "ErrorDetail",
           "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "properties": {
+            "age": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 0
+            },
+            "username": {
+              "type": "string",
+              "deprecated": true
+            },
+            "email": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [
+            "age",
+            "username",
+            "email"
+          ],
+          "title": "_UserModel"
         }
       },
       "securitySchemes": {}

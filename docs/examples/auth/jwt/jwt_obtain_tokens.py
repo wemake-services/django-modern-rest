@@ -38,3 +38,7 @@ class ObtainAccessAndRefreshSyncController(
                 token_type='refresh',
             ),
         }
+
+
+# run: {"controller": "ObtainAccessAndRefreshSyncController", "method": "post", "url": "/api/auth/", "body": {"username": "test_user", "password": "password"}, "populate_db": true}  # noqa: ERA001, E501
+# openapi: {"controller": "ObtainAccessAndRefreshSyncController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

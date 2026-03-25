@@ -93,7 +93,7 @@ class ResponseValidator:  # noqa: WPS214
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         structured: Any,
-    ) -> '_ValidationContext':
+    ) -> 'ValidatedModification':
         """Validate *structured* data before dumping it to json."""
         if self.metadata.modification is None:
             # Happens in cases when `@validate` returns raw data:
@@ -107,7 +107,7 @@ class ResponseValidator:  # noqa: WPS214
         renderer = request_renderer(controller.request)
         # Renderer is present at this point, 100%
         assert renderer is not None  # noqa: S101
-        all_response_data = _ValidationContext(
+        all_response_data = ValidatedModification(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
             headers=build_headers(
@@ -215,7 +215,7 @@ class ResponseValidator:  # noqa: WPS214
                 f'only for {hint!r}',
             )
 
-        content_types = get_conditional_types(schema.return_type)
+        content_types = get_conditional_types(schema.return_type, ())
         if content_types:
             model = content_types.get(content_type, EmptyObj)
             if model is EmptyObj:
@@ -247,16 +247,15 @@ class ResponseValidator:  # noqa: WPS214
     ) -> None:
         """Validates response headers against provided metadata."""
         response_headers = {header.lower() for header in response.headers}
-        metadata_headers = {
-            header.lower()
-            for header, response_header in (schema.headers or {}).items()
-            if not response_header.schema_only
-        }
+        metadata_headers = {header.lower() for header in (schema.headers or {})}
         if schema.headers is not None:
             missing_required_headers = {
                 header.lower()
                 for header, response_header in schema.headers.items()
-                if response_header.required and not response_header.schema_only
+                if (
+                    response_header.required
+                    and not response_header.skip_validation
+                )
             } - response_headers
             if missing_required_headers:
                 raise ResponseSchemaError(
@@ -288,7 +287,7 @@ class ResponseValidator:  # noqa: WPS214
         missing_required_cookies = {
             cookie
             for cookie, response_cookie in metadata_cookies.items()
-            if response_cookie.required and not response_cookie.schema_only
+            if response_cookie.required and not response_cookie.skip_validation
         } - response.cookies.keys()
         if missing_required_cookies:
             raise ResponseSchemaError(
@@ -297,11 +296,9 @@ class ResponseValidator:  # noqa: WPS214
             )
 
         # Find extra cookies:
-        extra_response_cookies = response.cookies.keys() - {
-            cookie
-            for cookie, response_cookie in metadata_cookies.items()
-            if not response_cookie.schema_only
-        }
+        extra_response_cookies = (
+            response.cookies.keys() - metadata_cookies.keys()
+        )
         if extra_response_cookies:
             raise ResponseSchemaError(
                 'Response has extra real undescribed '
@@ -340,7 +337,7 @@ class ResponseValidator:  # noqa: WPS214
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class _ValidationContext:
+class ValidatedModification:
     """Combines all validated data together."""
 
     raw_data: Any  # not empty

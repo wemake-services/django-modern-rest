@@ -101,20 +101,14 @@ class SSERenderer(Renderer):
         if to_serialize.id is not None:
             buffer.write(b'id: ')
             buffer.write(
-                self._linebreak.sub(
-                    b'',
-                    str(to_serialize.id).encode(self._encoding),
-                ),
+                str(to_serialize.id).encode(self._encoding),
             )
             buffer.write(self._sep)
 
         if to_serialize.event is not None:
             buffer.write(b'event: ')
             buffer.write(
-                self._linebreak.sub(
-                    b'',
-                    to_serialize.event.encode(self._encoding),
-                ),
+                to_serialize.event.encode(self._encoding),
             )
             buffer.write(self._sep)
 

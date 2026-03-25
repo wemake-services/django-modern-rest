@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from dmr.openapi.objects.example import Example
+from dmr.openapi.objects import Example
 from dmr.types import EmptyObj
 
 if TYPE_CHECKING:
@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
     def generate_example(
         annotation: Any,
         serializer: type['BaseSerializer'],
-    ) -> Example | None:
+    ) -> Any | None:
         """Does nothing, since polyfactory is not installed."""
 
 else:
@@ -25,12 +25,12 @@ else:
     class _ExampleFactory(DataclassFactory[Example]):
         __model__ = Example
         __random_seed__ = 10  # just a random number
-        __check_model__ = False
+        __check_model__ = True
 
     def generate_example(
         annotation: Any,
         serializer: type['BaseSerializer'],
-    ) -> Example | None:
+    ) -> Any | None:
         """Generates examples based on the type annotation."""
         if annotation is EmptyObj:  # pragma: no cover
             return None
@@ -48,14 +48,10 @@ else:
             _ExampleFactory.seed_random(seed)
 
         try:  # noqa: WPS505
-            generated = serializer.to_python(
+            return serializer.to_python(
                 _ExampleFactory.get_field_value(
                     FieldMeta.from_type(annotation=annotation),
                 ),
             )
         except Exception:  # pragma: no cover
             return None
-        return Example(
-            description='Generated example',
-            value=generated,
-        )

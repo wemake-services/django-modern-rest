@@ -1,6 +1,6 @@
-from django.urls import include, path
+from django.urls import include
 
-from dmr.routing import Router
+from dmr.routing import Router, path
 from examples.using_controller.custom_meta import SettingsController
 
 router = Router(

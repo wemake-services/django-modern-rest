@@ -21,7 +21,6 @@ class _CustomXmlErrorModel(TypedDict):
 
 class ExampleController(
     Controller[PydanticSerializer],
-    Body[_RequestModel],
 ):
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
     error_model = Annotated[
@@ -32,7 +31,7 @@ class ExampleController(
         }),
     ]
 
-    def post(self) -> str:
+    def post(self, parsed_body: Body[_RequestModel]) -> str:
         # Will not be called in this example, because we fail to parse body:
         raise NotImplementedError
 
@@ -41,7 +40,7 @@ class ExampleController(
         self,
         error: str | Exception,
         *,
-        loc: str | None = None,
+        loc: str | list[str | int] | None = None,
         error_type: str | ErrorType | None = None,
     ) -> ErrorModel | _CustomXmlErrorModel:
         original: ErrorModel = super().format_error(

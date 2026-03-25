@@ -17,11 +17,11 @@ class _User(pydantic.BaseModel):
     age: int
 
 
-class _UserController(Controller[PydanticSerializer], Body[_User]):
+class _UserController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _User:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_User]) -> _User:
+        return parsed_body
 
 
 def test_multipart_correct_request(

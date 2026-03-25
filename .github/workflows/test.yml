@@ -44,6 +44,10 @@ jobs:
 
     - name: Install dependencies
       run: |
+        # System deps:
+        sudo apt install -y gettext
+
+        # Python deps:
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
         poetry install --all-extras --all-groups
@@ -59,6 +63,9 @@ jobs:
       with:
         files: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Tracecov report
+      run: cat tracecov-report.md >> "$GITHUB_STEP_SUMMARY"
 
 
   test-django-versions:
@@ -162,7 +169,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install -U pip
-        poetry install --extras=msgspec --extras=jwt
+        poetry install --extras=msgspec --extras=attrs --extras=jwt
 
     - name: Run checks
       run: |

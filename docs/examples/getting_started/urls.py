@@ -1,6 +1,7 @@
-from django.urls import include, path
+from django.urls import include
 
-from dmr.routing import Router
+# Our `path` is an optimized drop-in replacement of `django.urls.path`:
+from dmr.routing import Router, path
 from examples.getting_started.pydantic_controller import UserController
 
 # Router is just a collection of regular Django urls:

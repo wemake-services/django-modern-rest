@@ -8,7 +8,6 @@ from django.urls import path
 from inline_snapshot import snapshot
 
 from dmr.errors import ErrorType
-from dmr.exceptions import NotAcceptableError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.routing import build_404_handler
@@ -57,6 +56,29 @@ def test_existing_success(dmr_client: DMRClient) -> None:
     response = dmr_client.get('/api/existing/')
 
     assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.urls(__name__)
+def test_unsupported_accept_header(dmr_client: DMRClient) -> None:
+    """Ensure that unsupported ``Accept`` returns correct error message."""
+    response = dmr_client.get(
+        '/api/missing/',
+        headers={'Accept': 'wrong'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
+    assert response['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Cannot serialize response body with accepted types '
+                    "[<MediaType: wrong>], supported=['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 @pytest.mark.parametrize('prefix', ['api', '/api', 'api/', '/api/'])
@@ -119,25 +141,6 @@ def test_renderers_parameter(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot(
         {'detail': [{'msg': 'Page not found', 'type': 'not_found'}]},
     )
-
-
-def test_handler_raises_not_acceptable(dmr_rf: DMRRequestFactory) -> None:
-    """Ensure that unsupported Accept leads to ``NotAcceptableError``."""
-    not_found_view = build_404_handler(
-        'api/',
-        serializer=PydanticSerializer,
-        renderers=[XmlRenderer()],
-    )
-    request = dmr_rf.get(
-        '/api/missing/',
-        headers={'Accept': 'application/json'},
-    )
-
-    with pytest.raises(
-        NotAcceptableError,
-        match='Cannot serialize response body with accepted types',
-    ):
-        not_found_view(request, Exception())
 
 
 def test_no_accept_uses_default_renderer(dmr_rf: DMRRequestFactory) -> None:

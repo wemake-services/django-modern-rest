@@ -11,7 +11,6 @@ from typing_extensions import TypedDict
 
 from dmr import (
     APIError,
-    Blueprint,
     Body,
     Controller,
     ResponseSpec,
@@ -47,7 +46,7 @@ class _CustomErrorMixin:
         self,
         error: str | Exception,
         *,
-        loc: str | None = None,
+        loc: str | list[str | int] | None = None,
         error_type: str | ErrorType | None = None,
     ) -> _CustomErrorModel:
         default = format_error(
@@ -66,8 +65,9 @@ class _CustomErrorMixin:
 class _CustomErrorModelController(
     _CustomErrorMixin,
     Controller[PydanticSerializer],
-    Body[dict[str, str]],
 ):
+    auth = (DjangoSessionSyncAuth(),)
+
     @modify(
         extra_responses=[
             ResponseSpec(
@@ -76,7 +76,7 @@ class _CustomErrorModelController(
             ),
         ],
     )
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise APIError(
             self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,
@@ -89,79 +89,10 @@ def test_error_message_controller_customization(
     """Ensures we can customize error message via controller."""
     metadata = _CustomErrorModelController.api_endpoints['POST'].metadata
     assert metadata.responses == snapshot({
-        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
-            return_type=_CustomErrorModel,
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
         HTTPStatus.CREATED: ResponseSpec(
             return_type=str,
             status_code=HTTPStatus.CREATED,
         ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=_CustomErrorModel,
-            status_code=HTTPStatus.BAD_REQUEST,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=_CustomErrorModel,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
-            return_type=_CustomErrorModel,
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-    })
-
-    request = dmr_rf.post('/whatever/', data={})
-
-    response = _CustomErrorModelController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
-    assert json.loads(response.content) == snapshot({
-        'error': [{'message': 'test msg'}],
-    })
-
-
-@final
-class _CustomMessageBlueprint(
-    _CustomErrorMixin,
-    Blueprint[PydanticSerializer],
-    Body[dict[str, str]],
-):
-    responses = (
-        ResponseSpec(
-            return_type=_CustomErrorModel,
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
-    )
-
-    def post(self) -> str:
-        raise APIError(
-            self.format_error('test msg'),
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        )
-
-
-@final
-class _BlueprintController(_CustomErrorMixin, Controller[PydanticSerializer]):
-    blueprints = (_CustomMessageBlueprint,)
-    auth = (DjangoSessionSyncAuth(),)
-
-
-def test_error_message_blueprint_customization(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures we can customize error message via blueprint."""
-    metadata = _BlueprintController.api_endpoints['POST'].metadata
-    assert metadata.responses == snapshot({
-        HTTPStatus.CREATED: ResponseSpec(
-            return_type=str,
-            status_code=HTTPStatus.CREATED,
-        ),
-        # From blueprint:
         HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
             return_type=_CustomErrorModel,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
@@ -197,7 +128,7 @@ def test_error_message_blueprint_customization(
     request = dmr_rf.post('/whatever/', data={})
     _fill_csrf(request)
     request.user = User()
-    response = _BlueprintController.as_view()(request)
+    response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED, response.content
     assert json.loads(response.content) == snapshot({
@@ -207,7 +138,7 @@ def test_error_message_blueprint_customization(
     request = dmr_rf.post('/whatever/', data=[])
     _fill_csrf(request)
     request.user = User()
-    response = _BlueprintController.as_view()(request)
+    response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert json.loads(response.content) == snapshot({
@@ -216,7 +147,7 @@ def test_error_message_blueprint_customization(
 
     request = dmr_rf.post('/whatever/', data=[])
     request.user = User()
-    response = _BlueprintController.as_view()(request)
+    response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.FORBIDDEN, response.content
     assert json.loads(response.content) == snapshot({
@@ -225,7 +156,7 @@ def test_error_message_blueprint_customization(
 
     request = dmr_rf.post('/whatever/', data={})
     request.user = AnonymousUser()
-    response = _BlueprintController.as_view()(request)
+    response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({

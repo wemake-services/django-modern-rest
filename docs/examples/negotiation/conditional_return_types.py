@@ -15,13 +15,13 @@ class _RequestModel(pydantic.BaseModel):
 
 class ExampleController(
     Controller[PydanticSerializer],
-    Body[_RequestModel],
 ):
     parsers = (MsgspecJsonParser(), XmlParser())
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
 
     def post(
         self,
+        parsed_body: Body[_RequestModel],
     ) -> Annotated[
         dict[str, str] | list[str],
         conditional_type({
@@ -30,8 +30,8 @@ class ExampleController(
         }),
     ]:
         if self.request.accepts(ContentType.json):
-            return list(self.parsed_body.root.values())
-        return self.parsed_body.root
+            return list(parsed_body.root.values())
+        return parsed_body.root
 
 
 # run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/xml", "Accept": "application/xml"}, "body": {"root": {"one": "first"}}}  # noqa: E501, ERA001

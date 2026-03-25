@@ -1,9 +1,10 @@
 import dataclasses
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
+from django.utils.translation import gettext_lazy as _
 
 from dmr.exceptions import NotAcceptableError
 
@@ -12,6 +13,12 @@ if TYPE_CHECKING:
     from dmr.negotiation import ContentType
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
+
+_CANNOT_SERIALIZE_MSG: Final = _(
+    'Cannot serialize response body with'
+    ' accepted types {accepted_types},'
+    ' supported={supported}',
+)
 
 
 @final
@@ -118,8 +125,9 @@ def negotiate_renderer(
     if renderer_type is None:
         supported = renderer_keys
         raise NotAcceptableError(
-            'Cannot serialize response body '
-            f'with accepted types {request.accepted_types!r}, '
-            f'{supported=!r}',
+            _CANNOT_SERIALIZE_MSG.format(
+                accepted_types=repr(request.accepted_types),
+                supported=repr(supported),
+            ),
         )
     return renderers[renderer_type]

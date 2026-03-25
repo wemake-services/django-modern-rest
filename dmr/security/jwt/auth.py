@@ -111,14 +111,22 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
+        if self._uses_standard_http_bearer_auth():
+            return {
+                self.security_scheme_name: SecurityScheme(
+                    type='http',
+                    scheme=self.auth_scheme,
+                    bearer_format='JWT',
+                    description='JWT token auth',
+                ),
+            }
+
         return {
-            # TODO: this does not change if `name!='Authentication'`,
-            # but it probably should.
             self.security_scheme_name: SecurityScheme(
-                type='http',
-                scheme=self.auth_scheme,
-                bearer_format='JWT',
-                description='JWT token auth',
+                type='apiKey',
+                name=self.auth_header,
+                security_scheme_in='header',
+                description=self._get_custom_security_scheme_description(),
             ),
         }
 
@@ -198,6 +206,21 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """Set current user as authed for this request."""
         request.user = user
         request.jwt = token  # type: ignore[attr-defined]
+
+    def _uses_standard_http_bearer_auth(self) -> bool:
+        """Whether the auth contract matches OpenAPI HTTP bearer auth."""
+        return (
+            self.auth_header == 'Authorization'
+            and self.auth_scheme.casefold() == 'bearer'
+        )
+
+    def _get_custom_security_scheme_description(self) -> str:
+        """Describe non-standard JWT auth contracts for generated docs."""
+        return (
+            'JWT token auth via '
+            f'`{self.auth_header}` header using '
+            f'`{self.auth_scheme} <token>` format'
+        )
 
 
 class JWTSyncAuth(_BaseJWTAuth, SyncAuth):

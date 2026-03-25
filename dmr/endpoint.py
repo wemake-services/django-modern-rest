@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
+from functools import wraps
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
@@ -10,6 +11,7 @@ from typing import (
 )
 
 from django.http import HttpResponse, HttpResponseBase
+from django.urls import URLPattern
 from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 from dmr.cookies import CookieSpec, NewCookie
@@ -21,9 +23,9 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.headers import HeaderSpec, NewHeader
-from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.internal.context import SerializerContext as SerializerContext
+from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
-from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import (
     Callback,
     ExternalDocumentation,
@@ -48,7 +50,9 @@ from dmr.validation import (
 )
 
 if TYPE_CHECKING:
-    from dmr.controller import Blueprint, Controller
+    from dmr.controller import Controller
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.validation.response import ValidatedModification
 
 
 class Endpoint:  # noqa: WPS214
@@ -61,7 +65,7 @@ class Endpoint:  # noqa: WPS214
 
     __slots__ = (
         '_func',
-        '_method',
+        '_serializer_context',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -69,8 +73,13 @@ class Endpoint:  # noqa: WPS214
         'response_validator',
     )
 
+    # Instance API:
     _func: Callable[..., Any]
 
+    # Class API:
+    serializer_context_cls: ClassVar[type[SerializerContext]] = (
+        SerializerContext
+    )
     metadata_builder_cls: ClassVar[type[EndpointMetadataBuilder]] = (
         EndpointMetadataBuilder
     )
@@ -78,6 +87,9 @@ class Endpoint:  # noqa: WPS214
         EndpointMetadataValidator
     )
     metadata_cls: ClassVar[type[EndpointMetadata]] = EndpointMetadata
+    response_modification_cls: ClassVar[type[ResponseModification]] = (
+        ResponseModification
+    )
     request_negotiator_cls: ClassVar[type[RequestNegotiator]] = (
         RequestNegotiator
     )
@@ -92,7 +104,6 @@ class Endpoint:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         *,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """
@@ -101,8 +112,6 @@ class Endpoint:  # noqa: WPS214
         Args:
             func: Entrypoint handler. An actual function to be called.
             controller_cls: ``Controller`` class that this endpoint belongs to.
-            blueprint_cls: ``Blueprint`` class that this endpoint
-                might belong to.
 
         .. danger::
 
@@ -110,6 +119,10 @@ class Endpoint:  # noqa: WPS214
             because its instance is reused for all requests.
 
         """
+        self._serializer_context = self.serializer_context_cls(
+            func,
+            controller_cls,
+        )
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
         payload: Payload = getattr(func, '__dmr_payload__', None)
@@ -123,15 +136,15 @@ class Endpoint:  # noqa: WPS214
         # Done!
         metadata = self.metadata_builder_cls(
             payload=payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
+            response_modification_cls=self.response_modification_cls,
+            component_parsers=self._serializer_context.component_parsers,
         )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
             payload=payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
         func.__metadata__ = metadata  # type: ignore[attr-defined]
@@ -197,16 +210,7 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if controller.blueprint:
-            try:
-                return controller.blueprint.handle_error(
-                    self,
-                    controller,
-                    exc,
-                )
-            except Exception:  # noqa: S110
-                pass  # noqa: WPS420
-        # Per-endpoint error handler and per-blueprint handlers didn't work.
+        # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
             return controller.handle_error(
@@ -240,16 +244,7 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if controller.blueprint:
-            try:
-                return await controller.blueprint.handle_async_error(
-                    self,
-                    controller,
-                    exc,
-                )
-            except Exception:  # noqa: S110
-                pass  # noqa: WPS420
-        # Per-endpoint error handler and per-blueprint handlers didn't work.
+        # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
             return await controller.handle_async_error(
@@ -264,11 +259,21 @@ class Endpoint:  # noqa: WPS214
     def get_schema(
         self,
         path: str,
+        pattern: URLPattern,
+        controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> Operation:
         """Builde an OpenAPI Operation from an endpoint."""
+        operation_id = self.get_operation_id(
+            path,
+            controller_name,
+            serializer,
+            context,
+        )
         request_body, params_list = context.generators.component_parsers(
+            operation_id,
+            pattern,
             self.metadata,
             serializer,
         )
@@ -286,7 +291,7 @@ class Endpoint:  # noqa: WPS214
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,
-            operation_id=self.get_operation_id(path, serializer, context),
+            operation_id=operation_id,
             request_body=request_body,
             responses=context.generators.response(self.metadata, serializer),
             parameters=params_list,
@@ -295,12 +300,14 @@ class Endpoint:  # noqa: WPS214
     def get_operation_id(
         self,
         path: str,
+        controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> str:
         """Customize how OperationId is generated for the OpenAPI."""
         return context.generators.operation_id(
             path,
+            controller_name,
             self.metadata,
             serializer,
         )
@@ -310,12 +317,12 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., Awaitable[HttpResponseBase]]:
         # NOTE: if you change something here, also change in `_sync_endpoint`
+        @wraps(func)
         async def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
-            active_blueprint = controller.active_blueprint
             try:  # noqa: WPS229
                 # Negotiate response:
                 self.response_negotiator(controller.request)
@@ -324,15 +331,12 @@ class Endpoint:  # noqa: WPS214
                 await self._run_async_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    self,
-                    active_blueprint,
-                )
+                context = self._serializer_context(self, controller)
 
                 # Return response:
-                func_result = await func(active_blueprint)
+                func_result = await func(controller, **context)
             except (APIError, APIRedirectError) as exc:
-                func_result = active_blueprint.to_error(
+                func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
@@ -349,13 +353,12 @@ class Endpoint:  # noqa: WPS214
         func: Callable[..., Any],
     ) -> Callable[..., HttpResponseBase]:
         # NOTE: if you change something here, also change in `_async_endpoint`
+        @wraps(func)
         def decorator(
             controller: 'Controller[BaseSerializer]',
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
-            active_blueprint = controller.active_blueprint
-
             try:  # noqa: WPS229
                 # Negotiate response:
                 self.response_negotiator(controller.request)
@@ -364,15 +367,12 @@ class Endpoint:  # noqa: WPS214
                 self._run_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    self,
-                    active_blueprint,
-                )
+                context = self._serializer_context(self, controller)
 
                 # Return response:
-                func_result = func(active_blueprint)
+                func_result = func(controller, **context)
             except (APIError, APIRedirectError) as exc:
-                func_result = active_blueprint.to_error(
+                func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
@@ -452,6 +452,13 @@ class Endpoint:  # noqa: WPS214
             controller,
             raw_data,
         )
+        return self._build_new_response(controller, validated)
+
+    def _build_new_response(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        validated: 'ValidatedModification',
+    ) -> HttpResponseBase:
         return controller.to_response(
             validated.raw_data,
             status_code=validated.status_code,

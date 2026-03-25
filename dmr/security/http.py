@@ -30,13 +30,21 @@ class _HttpBasicAuth:
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
+        if self._uses_standard_http_basic_auth():
+            return {
+                self.security_scheme_name: SecurityScheme(
+                    type='http',
+                    scheme='basic',
+                    description='Http Basic auth',
+                ),
+            }
+
         return {
-            # TODO: this does not change if `name!='Authentication'`,
-            # but it probably should.
             self.security_scheme_name: SecurityScheme(
-                type='http',
-                scheme='basic',
-                description='Http Basic auth',
+                type='apiKey',
+                name=self.header,
+                security_scheme_in='header',
+                description=self._get_custom_security_scheme_description(),
             ),
         }
 
@@ -66,6 +74,19 @@ class _HttpBasicAuth:
         except Exception:
             return None
         return unquote(username), unquote(password)
+
+    def _uses_standard_http_basic_auth(self) -> bool:
+        """Whether the auth contract matches OpenAPI HTTP basic auth."""
+        return self.header == 'Authorization'
+
+    def _get_custom_security_scheme_description(self) -> str:
+        """Describe non-standard basic auth header contracts."""
+        return (
+            'HTTP Basic auth via '
+            f'`{self.header}` header using '
+            '`<base64(username:password)>` or '
+            '`Basic <base64(username:password)>` format'
+        )
 
 
 class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):

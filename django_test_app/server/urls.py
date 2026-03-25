@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import include
 
 from dmr.openapi import build_schema
 from dmr.openapi.views import (
@@ -8,9 +8,10 @@ from dmr.openapi.views import (
     SwaggerView,
 )
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router, build_404_handler
+from dmr.routing import Router, build_404_handler, build_500_handler, path
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
+from server.apps.etag import urls as etag_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
@@ -62,6 +63,13 @@ router = Router(
                 namespace='django_session_auth',
             ),
         ),
+        path(
+            etag_urls.router.prefix,
+            include(
+                (etag_urls.router.urls, 'etag'),
+                namespace='etag',
+            ),
+        ),
     ],
 )
 
@@ -76,6 +84,11 @@ urlpatterns = [
 ]
 
 handler404 = build_404_handler(
+    router.prefix,
+    serializer=PydanticSerializer,
+)
+
+handler500 = build_500_handler(
     router.prefix,
     serializer=PydanticSerializer,
 )

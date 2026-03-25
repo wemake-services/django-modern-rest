@@ -177,7 +177,7 @@ Response handling
   .. note::
 
     You can also switch off this validation per-controller
-    with :attr:`~dmr.controller.Blueprint.validate_responses`
+    with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.
@@ -339,6 +339,33 @@ OpenAPI
 
     >>> DMR_SETTINGS = {
     ...     Settings.openapi_examples_seed: 10,
+    ... }
+
+.. data:: dmr.settings.Settings.openapi_static_cdn
+
+  Default: ``{}``
+
+  Optional mapping to switch OpenAPI renderers to CDN resources.
+  Only renderers explicitly listed in this mapping will use CDN,
+  the rest will use local bundled static files served by Django.
+
+  Supported keys are:
+
+  - ``swagger``: base URL to ``swagger-ui-dist`` (without file name)
+  - ``redoc``: full URL to ``redoc.standalone.js``
+  - ``scalar``: full URL to ``@scalar/api-reference`` standalone bundle
+
+  You can also modify the exact versions that we use for each tool this way.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.openapi_static_cdn: {
+    ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.1',
+    ...         'redoc': 'https://cdn.redoc.ly/redoc/2.5.2/bundles/redoc.standalone.js',
+    ...         'scalar': 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js',
+    ...     },
     ... }
 
 

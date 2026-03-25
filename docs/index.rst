@@ -160,16 +160,16 @@ Here are our amazing people who made this project possible.
 
 
 .. toctree::
-  :caption: User Guide
+  :caption: Getting starting guides
   :hidden:
 
   pages/getting-started.rst
   pages/core-concepts.rst
   pages/using-controller.rst
-  pages/returning-responses.rst
+  pages/responses/index
   pages/routing.rst
   pages/configuration.rst
-  pages/components.rst
+  pages/components/index
   pages/plugins.rst
   pages/negotiation.rst
   pages/error-handling.rst
@@ -177,6 +177,7 @@ Here are our amazing people who made this project possible.
   pages/validation.rst
   pages/reusable-code.rst
   pages/integrations.rst
+  pages/internalization.rst
   pages/sse.rst
   pages/testing.rst
 
@@ -197,8 +198,15 @@ Here are our amazing people who made this project possible.
 
   pages/openapi/schema.rst
   pages/openapi/openapi.rst
-  pages/openapi/spec-first.rst
   pages/openapi/openapi-reference.rst
+
+
+.. toctree::
+  :caption: AI and LLMs
+  :hidden:
+
+  pages/ai/spec-first.rst
+  pages/ai/dmr-from-ninja.rst
 
 
 .. toctree::
@@ -217,6 +225,7 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
   pages/deep-dive/changelog.rst
+  pages/deep-dive/contributing.rst
 
 
 .. toctree::

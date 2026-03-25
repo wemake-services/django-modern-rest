@@ -1,0 +1,4 @@
+interface:
+  display_name: "DMR OpenAPI Skeleton"
+  short_description: "Generate DMR skeletons from OpenAPI specs"
+  default_prompt: "Use $dmr-openapi-skeleton to generate django-modern-rest DTOs, routers, and controllers from an OpenAPI 3.1 spec."

@@ -58,13 +58,6 @@ There are 4 ways to provide auth classes for an endpoint:
         :linenos:
         :language: python
 
-    .. tab:: per blueprint
-
-      .. literalinclude:: /examples/auth/per_blueprint.py
-        :caption: views.py
-        :linenos:
-        :language: python
-
     .. tab:: per controller
 
       .. literalinclude:: /examples/auth/per_controller.py
@@ -94,7 +87,7 @@ in settings and then disable auth per specific endpoints
 like ``/registration`` and ``/login``.
 
 To do so, set ``auth=None`` for the specific
-endpoints / blueprints / controllers that should not have auth.
+endpoints / controllers that should not have auth.
 
 Setting ``None`` as ``auth`` in any place will always disable
 all auth in further layers.
@@ -155,3 +148,15 @@ Select auth backend that fits your needs:
       :link-type: doc
 
       Support for JWT tokens based auth.
+
+
+API Reference
+-------------
+
+.. autoclass:: dmr.security.SyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.security.AsyncAuth
+  :members:
+  :inherited-members:

@@ -20,7 +20,6 @@ class UserModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserModel],
 ):
     @validate(
         ResponseSpec(
@@ -32,15 +31,15 @@ class UserController(
             },
         ),
     )
-    def post(self) -> HttpResponse:
+    def post(self, parsed_body: Body[UserModel]) -> HttpResponse:
         uid = uuid.uuid4()
         # This response would have an explicit status code `200`
         # and one required header `X-Created` and one optional `X-Our-Domain`:
         headers = {'X-Created': str(uid)}
-        if '@ourdomain.com' in self.parsed_body.email:
+        if '@ourdomain.com' in parsed_body.email:
             headers['X-Our-Domain'] = 'true'
         return self.to_response(
-            self.parsed_body,
+            parsed_body,
             status_code=HTTPStatus.OK,
             headers=headers,
         )
@@ -48,3 +47,4 @@ class UserController(
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@ourdomain.com"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

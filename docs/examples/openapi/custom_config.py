@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import include
 
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import Server
@@ -8,7 +8,7 @@ from dmr.openapi.views import (
     ScalarView,
     SwaggerView,
 )
-from dmr.routing import Router
+from dmr.routing import Router, path
 from examples.getting_started.msgspec_controller import UserController
 
 router = Router(

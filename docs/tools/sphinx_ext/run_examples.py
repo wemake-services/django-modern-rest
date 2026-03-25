@@ -15,24 +15,26 @@ import json
 import logging
 import multiprocessing
 import os
-import platform
 import re
+import shlex
 import socket
 import subprocess  # noqa: S404
 import sys
 import time
 from collections.abc import Iterator
-from contextlib import contextmanager, redirect_stderr
+from contextlib import contextmanager, redirect_stderr, suppress
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
+import django
 import httpx
 import uvicorn
-import xmltodict
+import xmltodict_rs as xmltodict
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
+from django.db import IntegrityError
 from django.test import override_settings
 from django.urls import URLPattern, clear_url_caches, path
 from django.views import View
@@ -52,13 +54,31 @@ from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import build_404_handler, build_500_handler
 from dmr.settings import Settings, clear_settings_cache
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
 
-if platform.system() in {'Darwin', 'Linux'}:
-    multiprocessing.set_start_method('fork', force=True)
+
+def _get_mp_context() -> Any:
+    default_start_method = 'spawn' if sys.platform == 'win32' else 'fork'
+    start_method = os.environ.get('DMR_SPAWN_METHOD', default_start_method)
+    try:
+        return multiprocessing.get_context(start_method)
+    except ValueError as error:
+        raise RuntimeError(
+            (
+                f'Unsupported multiprocessing start method: {start_method!r}. '
+                'Set DMR_SPAWN_METHOD to a valid value for this platform.'
+            ),
+        ) from error
+
+
+_MP_CONTEXT: Final = _get_mp_context()
+
+_BASE_DIR: Final = Path(__file__).parent.parent.parent.parent
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
@@ -71,6 +91,8 @@ _OpenAPIRunArgs: TypeAlias = dict[str, Any]
 
 logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
+
+db_populated = False
 
 
 class _StartupError(RuntimeError):
@@ -196,7 +218,17 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
-class _BaseBuilder:
+def _ensure_project_import_paths() -> None:
+    """Ensure external examples can import project modules."""
+    cwd = Path.cwd()
+    project_root = cwd.parent if cwd.name == 'docs' else cwd
+    for path_item in (project_root, project_root / 'django_test_app'):
+        path_string = str(path_item)
+        if path_item.exists() and path_string not in sys.path:
+            sys.path.insert(0, path_string)
+
+
+class _BaseBuilder:  # noqa: WPS214
     def __init__(self, file_path: Path, config: _AppRunArgs) -> None:
         """Initialize application builder with file path and configuration."""
         self.file_path = file_path
@@ -205,7 +237,9 @@ class _BaseBuilder:
     def build_app(self) -> ASGIHandler:
         """Build and return configured ASGI application."""
         self._configure_settings()
-        return self._build_app()
+        app = self._build_app()
+        self._populate_db()
+        return app
 
     def _configure_settings(self) -> None:
         if settings.configured:
@@ -214,22 +248,69 @@ class _BaseBuilder:
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=True,
+            DEBUG=False,
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
+                'django.contrib.sessions',
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
             ],
-            MIDDLEWARE=[],
+            MIDDLEWARE=[
+                'django.middleware.security.SecurityMiddleware',
+                'django.contrib.sessions.middleware.SessionMiddleware',
+                'django.middleware.common.CommonMiddleware',
+                'django.middleware.csrf.CsrfViewMiddleware',
+                'django.contrib.auth.middleware.AuthenticationMiddleware',
+                'django.middleware.locale.LocaleMiddleware',
+                'django.contrib.messages.middleware.MessageMiddleware',
+                'django.middleware.clickjacking.XFrameOptionsMiddleware',
+            ],
             USE_TZ=True,
+            USE_I18N=True,
+            LANGUAGE_CODE='en-us',
+            LOCALE_PATHS=[str(_BASE_DIR / 'dmr' / 'locale')],
+            LANGUAGES=(
+                ('en', 'English'),
+                ('ru', 'Russian'),
+            ),
+            DATABASES={
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': '_build/test.db',
+                },
+            },
+            LOGGING_CONFIG=None,
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
         )
+        django.setup()
+
+    def _populate_db(self) -> None:
+        global db_populated  # noqa: PLW0603, WPS420
+        if not self.config.get('populate_db') or db_populated:
+            return
+
+        from django.core.management.commands import migrate  # noqa: PLC0415
+
+        migrate.Command().run_from_argv(['python', 'run_examples.py'])
+
+        from django.contrib.auth.models import User  # noqa: PLC0415
+
+        with suppress(IntegrityError):
+            User.objects.create_user(
+                'test_user',
+                email='test@example.com',
+                password='password',  # noqa: S106
+            )
+
+        db_populated = True
 
     def _build_app(self) -> ASGIHandler:
+        _ensure_project_import_paths()
+
         file_path_without_ext = self.file_path.with_suffix('')
         module_name = str(file_path_without_ext).replace(os.sep, '.')
 
@@ -264,6 +345,14 @@ class _BaseBuilder:
     def _create_urlpatterns(self, module: ModuleType) -> None:
         url_conf_module = ModuleType('url_conf')
         url_conf_module.urlpatterns = self._generate_urls(module)  # type: ignore[attr-defined]
+        url_conf_module.handler404 = build_404_handler(  # type: ignore[attr-defined]
+            'api/',
+            serializer=PydanticSerializer,
+        )
+        url_conf_module.handler500 = build_500_handler(  # type: ignore[attr-defined]
+            'api/',
+            serializer=PydanticSerializer,
+        )
         sys.modules['url_conf'] = url_conf_module
 
     def _generate_urls(self, module: ModuleType) -> list[URLPattern]:
@@ -273,7 +362,7 @@ class _BaseBuilder:
             return module.urlpatterns  # type: ignore[no-any-return]
 
         controller_cls = self._find_controller(module)
-        url_path = _get_url_path_from_run_args(
+        url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
         return [
@@ -299,7 +388,7 @@ class _OpenAPIBuilder(_BaseBuilder):
             return urlpatterns
 
         controller_cls = self._find_controller(module)
-        url_path = _get_url_path_from_run_args(
+        url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
 
@@ -329,6 +418,14 @@ def _get_url_path_from_run_args(run_args: _AppRunArgs) -> str:
     return f'/api/{controller_name}/'
 
 
+def _get_route_path_from_run_args(run_args: _AppRunArgs) -> str:
+    url_pattern = run_args.get('url_pattern')
+    if url_pattern:
+        assert isinstance(url_pattern, str)  # noqa: S101
+        return url_pattern
+    return _get_url_path_from_run_args(run_args)
+
+
 @contextmanager
 def _run_app(
     path: Path,
@@ -338,40 +435,94 @@ def _run_app(
     """Start a Django app on an available port."""
     restart_duration = 0.2
     port = _get_available_port()
-    app = builder(path, config).build_app()
-
+    # Needed by autodoc imports in the parent process.
+    builder(path, config)._configure_settings()  # noqa: SLF001
     attempts = 0
     while attempts < 100:
-        proc = multiprocessing.Process(target=_run_app_worker, args=(app, port))
+        proc = _MP_CONTEXT.Process(
+            target=_run_app_worker,
+            args=(path, config, builder, port),
+        )
         proc.start()
 
         try:
-            _wait_for_app_startup(port)
+            _wait_for_app_startup(port, proc)
         except _StartupError:
+            _shutdown_process(proc)
             time.sleep(restart_duration)
             attempts += 1
             port = _get_available_port()
-        else:
+            continue
+
+        try:
             yield port
-            break
         finally:
-            proc.kill()
-    else:
-        raise _StartupError(str(path))
+            _shutdown_process(proc)
+        return
+    raise _StartupError(str(path))
 
 
-def _run_app_worker(app: ASGIHandler, port: int) -> None:
+def _run_app_worker(
+    path: Path,
+    config: _AppRunArgs,
+    builder: type[_BaseBuilder],
+    port: int,
+) -> None:
+    app = builder(path, config).build_app()
     with redirect_stderr(Path(os.devnull).open(encoding='utf-8')):
         uvicorn.run(app, port=port, access_log=False)
+
+
+def _shutdown_process(proc: multiprocessing.Process) -> None:
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(timeout=1.0)
+    if proc.is_alive():
+        proc.kill()
+        proc.join(timeout=1.0)
+    else:
+        proc.join(timeout=0)
 
 
 def _get_module_name(file_path: Path) -> str:
     return str(file_path.with_suffix('')).replace(os.sep, '.')
 
 
-def _wait_for_app_startup(port: int) -> None:
+def _resolve_tmp_example_relative_path(
+    file_path: Path,
+    docs_dir: Path,
+) -> Path:
+    """Return a stable relative path for temp examples inside docs/_build."""
+    if file_path.is_relative_to(docs_dir):
+        return file_path.relative_to(docs_dir)
+
+    project_root = docs_dir.parent
+    if file_path.is_relative_to(project_root):
+        return Path('_external') / file_path.relative_to(project_root)
+
+    return Path('_external') / file_path.name
+
+
+def _resolve_example_file_for_execution(file_path: Path) -> Path:
+    """Resolve example path for importing regardless of current cwd."""
+    cwd = Path.cwd()
+    if file_path.is_relative_to(cwd):
+        return file_path.relative_to(cwd)
+
+    project_root = cwd.parent if cwd.name == 'docs' else cwd
+    if file_path.is_relative_to(project_root):
+        return file_path.relative_to(project_root)
+
+    return file_path
+
+
+def _wait_for_app_startup(port: int, proc: multiprocessing.Process) -> None:
     """Wait for app to start up and become responsive."""
     for _ in range(100):
+        if proc.exitcode is not None:
+            raise _StartupError(
+                f'App worker exited during startup with {proc.exitcode}',
+            )
         try:
             httpx.get(f'http://127.0.0.1:{port}', timeout=0.1)
         except httpx.TransportError:
@@ -440,6 +591,7 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
     for run_args in run_configs:
         url_path = _get_url_path_from_run_args(run_args)
         with _run_app(app_file, run_args, _AppBuilder) as port:
+            clear_settings_cache()
             example_result = _process_single_example(
                 app_file,
                 run_args,
@@ -515,7 +667,7 @@ def _process_single_example(
             )
         return ''
 
-    clean_args_string = ' '.join(clean_args)
+    clean_args_string = shlex.join(clean_args)
     return '\n'.join((f'$ {clean_args_string}', *stdout))
 
 
@@ -576,6 +728,8 @@ def _build_curl_request(
     url_path: str,
 ) -> tuple[_CurlArgs, _CurlCleanArgs]:
     query = run_args.pop('query', '')
+    if query and not query.startswith('?'):
+        raise ValueError(f'{query!r} must start with "?"')
     args = [
         'curl',
         '-v',
@@ -591,6 +745,7 @@ def _build_curl_request(
     _add_method(args, clean_args, run_args)
     _add_body_and_content_type(app_file, args, clean_args, run_args)
     _add_headers(args, clean_args, run_args)
+    _add_cookies(args, clean_args, run_args)
 
     return args, clean_args
 
@@ -615,7 +770,7 @@ def _add_method(
     clean_args.extend(['-X', method])
 
 
-def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
+def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
     app_file: Path,
     args: list[str],
     clean_args: list[str],
@@ -628,7 +783,7 @@ def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
         'Content-Type',
         None,
     )
-    if content_type == 'application/json' or content_type is None:
+    if content_type == 'application/json' or content_type is None:  # noqa: WPS223
         body_data = json.dumps(run_args['body'])
         args.extend(['-d', body_data])
         clean_args.extend(['-d', body_data])
@@ -645,13 +800,22 @@ def _add_body_and_content_type(  # noqa: C901, WPS213, WPS231
         clean_args.extend(['-d', body_data])
     elif content_type == 'multipart/form-data':
         for body_key, body_value in run_args.get('body', {}).items():
-            body_args = ['-F', f'{body_key}={body_value}']
+            if isinstance(body_value, list):
+                body_args = []
+                for body_subvalue in body_value:
+                    body_args.extend(['-F', f'{body_key}={body_subvalue}'])
+            else:
+                body_args = ['-F', f'{body_key}={body_value}']
             args.extend(body_args)
             clean_args.extend(body_args)
         for body_key, body_value in run_args.get('files', {}).items():
             clean_args.extend(['-F', f'{body_key}=@{body_value}'])
             body_value = str(app_file.parent / body_value)
             args.extend(['-F', f'{body_key}=@{body_value}'])
+    elif content_type == 'application/msgpack':
+        source = run_args['body']
+        args.extend(['--data-binary', f'@{source}'])
+        clean_args.extend(['--data-binary', f'@{source}'])
     else:
         raise RuntimeError(f'{content_type} is not supported')
 
@@ -666,9 +830,26 @@ def _add_headers(
     run_args: _AppRunArgs,
 ) -> None:
     header_flag = '-H'
-    for header_name, header_value in run_args.get('headers', {}).items():
+
+    headers = run_args.get('headers', {})
+    if isinstance(headers, dict):
+        headers = headers.items()
+    for header_name, header_value in headers:
         args.extend([header_flag, f'{header_name}: {header_value}'])
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
+
+
+def _add_cookies(
+    args: list[str],
+    clean_args: list[str],
+    run_args: _AppRunArgs,
+) -> None:
+    cookie_flag = '--cookie'
+
+    cookies = run_args.get('cookies', {})
+    for cookie_name, cookie_value in cookies.items():
+        args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
+        clean_args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
 
 
 def _find_imports_block_end_line(file_content: str) -> int:
@@ -736,7 +917,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
 
         nodes = self._generate_nodes(file_path, imports_data)
 
-        example_file = file_path.relative_to(Path.cwd())
+        example_file = _resolve_example_file_for_execution(file_path)
         executed_result = _exec_examples(example_file, run_args)
         openapi_result = _exec_openapi_examples(example_file, openapi_args)
 
@@ -1000,12 +1181,14 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     ) -> None:
         cwd = Path.cwd()
         docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
+        relative_example_path = _resolve_tmp_example_relative_path(
+            file_path,
+            docs_dir,
+        )
         tmp_file = (
             docs_dir
             / _PATH_TO_TMP_EXAMPLES
-            / str(
-                file_path.relative_to(docs_dir),
-            ).replace('/', '_')
+            / str(relative_example_path).replace('/', '_')
         )
 
         self.arguments[0] = f'/{tmp_file.relative_to(docs_dir)!s}'

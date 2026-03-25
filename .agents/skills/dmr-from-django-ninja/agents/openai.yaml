@@ -1,0 +1,4 @@
+interface:
+  display_name: "DMR from django-ninja"
+  short_description: "Migrate django-ninja APIs to DMR"
+  default_prompt: "Use $dmr-from-django-ninja to migrate an existing django-ninja API to django-modern-rest while keeping API behavior and tests aligned."

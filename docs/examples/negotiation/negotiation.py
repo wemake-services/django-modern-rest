@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Any, final
 from xml.parsers import expat
 
-import xmltodict
+import xmltodict_rs as xmltodict
 from django.http import HttpRequest
 from typing_extensions import override
 

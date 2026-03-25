@@ -1,8 +1,9 @@
 import enum
 from collections.abc import Mapping
-from typing import Any, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest
+from django.utils.translation import gettext_lazy as _
 
 from dmr.exceptions import (
     EndpointMetadataError,
@@ -18,7 +19,15 @@ from dmr.internal.negotiation import (
 from dmr.metadata import EndpointMetadata, get_annotated_metadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer
+
+if TYPE_CHECKING:
+    from dmr.serializer import BaseSerializer
+
+_CANNOT_PARSE_MSG: Final = _(
+    'Cannot parse request body with'
+    ' content type {content_type},'
+    ' expected={expected}',
+)
 
 
 class RequestNegotiator:
@@ -35,7 +44,7 @@ class RequestNegotiator:
     def __init__(
         self,
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        serializer: type['BaseSerializer'],
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
@@ -95,9 +104,10 @@ class RequestNegotiator:
         # No parsers found, raise an error:
         expected = list(self._parsers.keys())
         raise RequestSerializationError(
-            'Cannot parse request body '
-            f'with content type {request.content_type!r}, '
-            f'{expected=!r}',
+            _CANNOT_PARSE_MSG.format(
+                content_type=repr(request.content_type),
+                expected=repr(expected),
+            ),
         )
 
 
@@ -109,7 +119,7 @@ class ResponseNegotiator:
     def __init__(
         self,
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        serializer: type['BaseSerializer'],
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
@@ -189,6 +199,7 @@ class ContentType(enum.StrEnum):
         xml: ``'application/xml'`` format.
         x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
         multipart_form_data: ``'multipart/form-data'`` format.
+        msgpack: ``'application/msgpack'`` format.
         event_stream: ``'text/event-stream'`` format for SSE.
 
     """
@@ -197,6 +208,7 @@ class ContentType(enum.StrEnum):
     xml = 'application/xml'
     x_www_form_urlencoded = 'application/x-www-form-urlencoded'
     multipart_form_data = 'multipart/form-data'
+    msgpack = 'application/msgpack'
     event_stream = 'text/event-stream'
 
 
@@ -221,6 +233,7 @@ def conditional_type(
 
 def get_conditional_types(
     model: Any,
+    model_meta: tuple[Any, ...],
 ) -> Mapping[str, Any] | None:
     """
     Returns possible conditional types.
@@ -228,7 +241,7 @@ def get_conditional_types(
     Conditional types are defined with :data:`typing.Annotated`
     and :func:`dmr.negotiation.conditional_type` helper.
     """
-    metadata = get_annotated_metadata(model, _ConditionalType)
+    metadata = get_annotated_metadata(model, model_meta, _ConditionalType)
     if metadata:
         return metadata.computed
     return None

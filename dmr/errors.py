@@ -13,6 +13,7 @@ from typing import (
 )
 
 from django.http import HttpResponse
+from django.utils.encoding import force_str
 from typing_extensions import TypedDict
 
 from dmr.exceptions import (
@@ -38,6 +39,7 @@ class ErrorType(enum.StrEnum):
 
     Attributes:
         value_error: Raised when we can't parse something.
+        internal_error: Raised when internal error happens.
         not_allowed: Raised when using unsupported http method. 405 alias.
         security: Raised when security related error happens.
         user_msg: Raised for custom errors from users.
@@ -46,6 +48,7 @@ class ErrorType(enum.StrEnum):
     """
 
     value_error = 'value_error'
+    internal_error = 'internal_error'
     not_allowed = 'not_allowed'
     security = 'security'
     user_msg = 'user_msg'
@@ -74,7 +77,7 @@ class ErrorModel(TypedDict):
 def format_error(  # noqa: C901, WPS231
     error: str | Exception,
     *,
-    loc: str | None = None,
+    loc: str | list[str | int] | None = None,
     error_type: str | ErrorType | None = None,
 ) -> ErrorModel:
     """
@@ -86,7 +89,8 @@ def format_error(  # noqa: C901, WPS231
         error: A serialization exception like a validation error or
             a ``dmr.exceptions.DataParsingError``.
         loc: Location where this error happened.
-            Like "headers" or "field_name".
+            Like ``"headers"``, or ``"field_name"``,
+            or ``["parsed_headers", "header_name"]``.
         error_type: Optional type of the error for extra metadata.
 
     Returns:
@@ -118,7 +122,7 @@ def format_error(  # noqa: C901, WPS231
     if isinstance(error, str):
         msg: ErrorDetail = {'msg': error}
         if loc is not None:
-            msg.update({'loc': [loc]})
+            msg.update({'loc': loc if isinstance(loc, list) else [loc]})
         if error_type is not None:
             msg.update({'type': str(error_type)})
         return {'detail': [msg]}
@@ -129,7 +133,7 @@ def format_error(  # noqa: C901, WPS231
                 {
                     'msg': str(error)
                     if settings.DEBUG
-                    else InternalServerError.default_message,
+                    else force_str(InternalServerError.default_message),
                 },
             ],
         }
@@ -153,14 +157,14 @@ AsyncErrorHandler: TypeAlias = Callable[
 
 
 _MethodSyncHandler: TypeAlias = Callable[
-    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
     ['Any', 'Endpoint', 'Controller[Any]', Exception],
     HttpResponse,
 ]
 
 _MethodAsyncHandler: TypeAlias = Callable[
-    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
     ['Any', 'Endpoint', 'Controller[Any]', Exception],
     Awaitable[HttpResponse],
@@ -179,7 +183,7 @@ def wrap_handler(
     method: _MethodSyncHandler | _MethodAsyncHandler,
 ) -> SyncErrorHandler | AsyncErrorHandler:
     """
-    Utility function to wrap controller / blueprint methods.
+    Utility function to wrap controller methods.
 
     It is used to wrap an existing controller method
     and pass it as ``error_handler=`` argument to an endpoint.
@@ -193,7 +197,7 @@ def wrap_handler(
             exc: Exception,
         ) -> HttpResponse:
             return await method(  # type: ignore[no-any-return]
-                controller.active_blueprint,
+                controller,
                 endpoint,
                 controller,
                 exc,
@@ -208,7 +212,7 @@ def wrap_handler(
             exc: Exception,
         ) -> HttpResponse:
             return method(  # type: ignore[return-value]
-                controller.active_blueprint,
+                controller,
                 endpoint,
                 controller,
                 exc,
@@ -242,9 +246,8 @@ def global_error_handler(
        :meth:`~dmr.endpoint.Endpoint.handle_error`
        and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
        methods
-    2. Per blueprint handlers
-    3. Per controller handlers
-    4. This global handler, specified via the configuration
+    2. Per controller handlers
+    3. This global handler, specified via the configuration
 
     If some exception cannot be handled, it is just reraised.
 
@@ -256,9 +259,6 @@ def global_error_handler(
     Returns:
         :class:`~django.http.HttpResponse` with proper response for this error.
         Or raise *exc* back.
-
-    You can access active blueprint
-    via :attr:`~dmr.controller.Controller.active_blueprint`.
 
     Here's an example that will produce
     ``{'detail': [{'msg': 'inf', 'type': 'user_msg'}]}``
@@ -305,4 +305,4 @@ def global_error_handler(
             controller.format_error(exc),
             status_code=exc.status_code,
         )
-    raise  # noqa: PLE0704
+    raise exc from None

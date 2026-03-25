@@ -40,15 +40,17 @@ class _UploadedFiles(pydantic.BaseModel):
 
 @final
 class _FileController(
-    FileMetadata[_UploadedFiles],
     Controller[PydanticSerializer],
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _UploadedFiles:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _UploadedFiles:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
-        return self.parsed_file_metadata
+        return parsed_file_metadata
 
 
 def test_file_metadata(
@@ -156,17 +158,19 @@ class _MultipleFiles(pydantic.BaseModel):
 
 @final
 class _MultipleFilesController(
-    FileMetadata[_MultipleFiles],
     Controller[PydanticSerializer],
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _MultipleFiles:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_MultipleFiles],
+    ) -> _MultipleFiles:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert content_key in self.request.FILES
             for file_obj in self.request.FILES.getlist(content_key):
                 assert isinstance(file_obj, UploadedFile)
-        return self.parsed_file_metadata
+        return parsed_file_metadata
 
 
 def test_file_metadata_multiple_uploads(
@@ -213,10 +217,12 @@ def test_file_metadata_missing_parser() -> None:
     with pytest.raises(EndpointMetadataError, match='can parse files'):
 
         class _Controller(
-            FileMetadata[_MultipleFiles],
             Controller[PydanticSerializer],
         ):
-            def post(self) -> str:
+            def post(
+                self,
+                parsed_file_metadata: FileMetadata[_MultipleFiles],
+            ) -> str:
                 raise NotImplementedError
 
 
@@ -237,40 +243,50 @@ class _OutputPayload(pydantic.BaseModel):
 @final
 class _FileAndBodyController(
     Controller[PydanticSerializer],
-    Body[_BodyPayload],
-    FileMetadata[_UploadedFiles],
 ):
     parsers = (MultiPartParser(),)
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self) -> _OutputPayload:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def post(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
-            user_id=self.parsed_body.user_id,
-            user_email=self.parsed_body.user_email,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user_id=parsed_body.user_id,
+            user_email=parsed_body.user_email,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
-    def put(self) -> _OutputPayload:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def put(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
-            user_id=self.parsed_body.user_id,
-            user_email=self.parsed_body.user_email,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user_id=parsed_body.user_id,
+            user_email=parsed_body.user_email,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
-    def patch(self) -> _OutputPayload:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def patch(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
-            user_id=self.parsed_body.user_id,
-            user_email=self.parsed_body.user_email,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user_id=parsed_body.user_id,
+            user_email=parsed_body.user_email,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
 
@@ -443,11 +459,13 @@ class _FakeParser(SupportsFileParsing, Parser):
 @final
 class _ControllerWithWrongParsers(
     Controller[PydanticSerializer],
-    FileMetadata[_UploadedFiles],
 ):
     parsers = (_FakeParser(), _WrongBodyParser())
 
-    def post(self) -> _OutputPayload:
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
         raise NotImplementedError
 
 
@@ -495,28 +513,34 @@ class _JsonOutputPayload(pydantic.BaseModel):
 @final
 class _FileAndJsonController(
     Controller[PydanticSerializer],
-    Body[_JsonBodyPayload],
-    FileMetadata[_UploadedFiles],
 ):
     parsers = (MultiPartParser(),)
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self) -> _JsonOutputPayload:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def post(
+        self,
+        parsed_body: Body[_JsonBodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _JsonOutputPayload:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _JsonOutputPayload(
-            user=self.parsed_body.user,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user=parsed_body.user,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
-    def put(self) -> _JsonOutputPayload:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def put(
+        self,
+        parsed_body: Body[_JsonBodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _JsonOutputPayload:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _JsonOutputPayload(
-            user=self.parsed_body.user,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user=parsed_body.user,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
 

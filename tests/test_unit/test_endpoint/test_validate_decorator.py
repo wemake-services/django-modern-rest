@@ -3,15 +3,12 @@ from http import HTTPMethod, HTTPStatus
 from typing import Generic, Literal, TypeVar, final
 
 import pytest
-from dirty_equals import IsStr
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from dmr import (
     APIError,
-    Blueprint,
-    Body,
     Controller,
     HeaderSpec,
     NewHeader,
@@ -23,7 +20,6 @@ from dmr.endpoint import Endpoint
 from dmr.errors import wrap_handler
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import compose_blueprints
 from dmr.test import DMRRequestFactory
 
 _InnerT = TypeVar('_InnerT')
@@ -330,15 +326,15 @@ class _SchemaOnlyHeaderController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.OK,
-            headers={'test': HeaderSpec(schema_only=True)},
+            headers={'test': HeaderSpec(skip_validation=True)},
         ),
     )
     def get(self) -> HttpResponse:
         return self.to_response(1, status_code=HTTPStatus.OK)
 
 
-def test_validate_header_schema_only(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures `@validate` validates `HeaderSpec` respects `schema_only`."""
+def test_validate_header_skip_validation(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` validates `HeaderSpec` respects `skip_validation`."""
     request = dmr_rf.get('/whatever/')
 
     response = _SchemaOnlyHeaderController.as_view()(request)
@@ -355,7 +351,7 @@ class _SchemaOnlyHeaderWrongController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.OK,
-            headers={'test': HeaderSpec(schema_only=True)},
+            headers={'test': HeaderSpec(skip_validation=True)},
         ),
     )
     def get(self) -> HttpResponse:
@@ -366,26 +362,22 @@ class _SchemaOnlyHeaderWrongController(Controller[PydanticSerializer]):
         )
 
 
-def test_validate_wrong_header_schema_only(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures `@validate` validates `HeaderSpec` respects `schema_only`."""
+def test_validate_wrong_header_skip_validation(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures `@validate` validates `HeaderSpec` respects `skip_validation`."""
     request = dmr_rf.get('/whatever/')
 
     response = _SchemaOnlyHeaderWrongController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
-        response.content
-    )
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'Content-Type': 'application/json',
+        'test': 'value',
+    }
     assert response.cookies == {}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': "Response has extra real undescribed {'test'} headers",
-                'type': 'value_error',
-            },
-        ],
-    })
+    assert json.loads(response.content) == snapshot(1)
 
 
 class _EmptyResponseController(Controller[PydanticSerializer]):
@@ -545,104 +537,6 @@ def test_validate_async_endpoint_error_for_sync() -> None:
                 raise NotImplementedError
 
 
-def test_validate_responses_from_blueprint() -> None:
-    """Ensures `@validate` has right `responses` metadata."""
-
-    class _Blueprint(
-        Blueprint[PydanticSerializer],
-        Body[list[str]],
-    ):
-        responses = (
-            ResponseSpec(
-                dict[str, str],
-                status_code=HTTPStatus.PAYMENT_REQUIRED,
-            ),
-        )
-
-        @validate(
-            ResponseSpec(list[int], status_code=HTTPStatus.OK),
-        )
-        def post(self) -> HttpResponse:
-            raise NotImplementedError
-
-    controller = compose_blueprints(_Blueprint)
-
-    assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.BAD_REQUEST,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-    })
-
-
-def test_validate_enable_semantic_responses() -> None:
-    """Ensures `@validate` has right `enable_semantic_responses` metadata."""
-
-    class _Blueprint(
-        Blueprint[PydanticSerializer],
-        Body[list[str]],
-    ):
-        responses = (
-            ResponseSpec(
-                dict[str, str],
-                status_code=HTTPStatus.PAYMENT_REQUIRED,
-            ),
-        )
-
-        @validate(
-            ResponseSpec(list[int], status_code=HTTPStatus.OK),
-        )
-        def post(self) -> HttpResponse:
-            raise NotImplementedError
-
-    controller = compose_blueprints(_Blueprint)
-
-    assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.BAD_REQUEST,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-    })
-
-
 @pytest.mark.parametrize(
     'header_name',
     [
@@ -688,15 +582,15 @@ class _SchemaOnlyCookieController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.OK,
-            cookies={'test': CookieSpec(schema_only=True)},
+            cookies={'test': CookieSpec(skip_validation=True)},
         ),
     )
     def get(self) -> HttpResponse:
         return self.to_response(1, status_code=HTTPStatus.OK)
 
 
-def test_validate_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures `@validate` validates `CookieSpec` respects `schema_only`."""
+def test_validate_cookie_skip_validation(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures `@validate` validates `CookieSpec` respects `skip_validation`."""
     request = dmr_rf.get('/whatever/')
 
     response = _SchemaOnlyCookieController.as_view()(request)
@@ -713,7 +607,7 @@ class _SchemaOnlyCookieWrongController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=int,
             status_code=HTTPStatus.OK,
-            cookies={'test': CookieSpec(schema_only=True)},
+            cookies={'test': CookieSpec(skip_validation=True)},
         ),
     )
     def get(self) -> HttpResponse:
@@ -724,23 +618,18 @@ class _SchemaOnlyCookieWrongController(Controller[PydanticSerializer]):
         )
 
 
-def test_validate_wrong_cookie_schema_only(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures `@validate` validates `CookieSpec` respects `schema_only`."""
+def test_validate_wrong_cookie_skip_validation(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures `@validate` validates `CookieSpec` respects `skip_validation`."""
     request = dmr_rf.get('/whatever/')
 
     response = _SchemaOnlyCookieWrongController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, (
-        response.content
-    )
+    assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert response.cookies == {}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': "Response has extra real undescribed {'test'} cookies",
-                'type': 'value_error',
-            },
-        ],
-    })
+    assert response.cookies.output() == snapshot(
+        'Set-Cookie: test=value; Path=/; SameSite=lax',
+    )
+    assert json.loads(response.content) == snapshot(1)

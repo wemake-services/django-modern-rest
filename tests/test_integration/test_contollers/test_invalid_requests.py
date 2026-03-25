@@ -137,6 +137,30 @@ def test_single_view_sync405(
     })
 
 
+def test_single_view_i18n_sync405(
+    dmr_client: DMRClient,
+    faker: Faker,
+    reset_language: None,
+) -> None:
+    """Ensure that direct routes raise 405 with i18n support."""
+    response = dmr_client.delete(
+        reverse('api:controllers:parse_headers'),
+        data='{}',
+        headers={'Accept-Language': 'ru'},
+    )
+
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+    assert response.headers['Content-Type'] == 'application/json'
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': "Метод 'DELETE' не разрешён, разрешённые: ['POST']",
+                'type': 'not_allowed',
+            },
+        ],
+    })
+
+
 def test_single_view_async405(
     dmr_client: DMRClient,
     faker: Faker,
@@ -145,7 +169,6 @@ def test_single_view_async405(
     response = dmr_client.delete(
         reverse('api:controllers:async_parse_headers'),
         data='{}',
-        headers={'Content-Type': 'application/xml', 'X-API-Token': '123'},
     )
 
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED

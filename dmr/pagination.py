@@ -10,7 +10,7 @@ class Page(Generic[_ModelT]):
     """
     Default page model for serialization.
 
-    Can be used when using pagination with ``django_modern_rest``.
+    Can be used when using pagination with ``django-modern-rest``.
     """
 
     number: int

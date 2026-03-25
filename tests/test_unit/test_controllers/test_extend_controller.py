@@ -24,16 +24,16 @@ def test_controller_generic_subclass() -> None:
     class _Custom(Controller[_SerializerT]):
         """Empty."""
 
+    assert _Custom.is_abstract
     assert getattr(_Custom, 'api_endpoints', None) is None
     assert getattr(_Custom, 'serializer', None) is None
-    assert getattr(_Custom, '_existing_http_methods', None) is None
 
     class _Final(_Custom[PydanticSerializer]):
         """Also empty, but not generic."""
 
+    assert not _Final.is_abstract
     assert _Final.serializer is PydanticSerializer
     assert _Final.api_endpoints == {}
-    assert _Final._existing_http_methods == {}
 
 
 def test_controller_wrong_serializer() -> None:

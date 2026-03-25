@@ -21,7 +21,6 @@ class UserModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserModel],
 ):
     @validate(
         ResponseSpec(
@@ -33,17 +32,18 @@ class UserController(
             },
         ),
     )
-    def post(self) -> HttpResponse:
+    def post(self, parsed_body: Body[UserModel]) -> HttpResponse:
         uid = uuid.uuid4()
         # This response would have one required cookie `user_id`
         # and one optional cookie `session`:
         cookies = {'user_id': NewCookie(value=str(uid))}
-        if '@ourdomain.com' in self.parsed_body.email:
+        if '@ourdomain.com' in parsed_body.email:
             cookies['session'] = NewCookie(value='true', max_age=1000)
         return self.to_response(
-            self.parsed_body,
+            parsed_body,
             cookies=cookies,
         )
 
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@ourdomain.com"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

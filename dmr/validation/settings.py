@@ -10,6 +10,7 @@ from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
+    Settings,
     SettingsDict,
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
@@ -31,6 +32,11 @@ class _SettingsModel(SettingsDict, total=False):
     global_error_handler: Any  # type: ignore[misc]
 
 
+assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
+    'Settings enum and its type _SettingsModel have different keys'
+)
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class SettingsValidator:
     """Validates defined settings once."""
@@ -47,7 +53,7 @@ class SettingsValidator:
 
         settings = self._validate_structure()
         self._validate_types(settings)
-        self.__class__.is_validated = True  # pyrefly: ignore[read-only]
+        self.__class__.is_validated = True
 
     def _validate_structure(self) -> _SettingsModel:
         settings = _resolve_defaults()

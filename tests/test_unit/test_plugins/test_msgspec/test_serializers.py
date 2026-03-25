@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 from typing import Any
 
@@ -16,26 +17,17 @@ from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRRequestFactory
 
 
-class _ForTestError(Exception):
-    """Testing as custom error from built-in exception."""
-
-
-class _ForTestMsgSpecError(msgspec.ValidationError):
-    """Testing as custom error from msgspec.ValidationError."""
-
-
 class _MsgSpecUserModel(msgspec.Struct):
     email: str
 
 
 class _UserController(
     Controller[MsgspecSerializer],
-    Body[_MsgSpecUserModel],
 ):
-    """Blueprint for POST endpoint (with body)."""
+    """Controller for POST endpoint with request parsing."""
 
-    def post(self) -> _MsgSpecUserModel:
-        return _MsgSpecUserModel(email=self.parsed_body.email)
+    def post(self, parsed_body: Body[_MsgSpecUserModel]) -> _MsgSpecUserModel:
+        return _MsgSpecUserModel(email=parsed_body.email)
 
 
 def test_serializer_via_endpoint(
@@ -49,6 +41,15 @@ def test_serializer_via_endpoint(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
+    assert json.loads(response.content) == {'email': email}
+
+
+class _ForTestError(Exception):
+    """Testing as custom error from built-in exception."""
+
+
+class _ForTestMsgSpecError(msgspec.ValidationError):
+    """Testing as custom error from msgspec.ValidationError."""
 
 
 @pytest.mark.parametrize(

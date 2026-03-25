@@ -40,9 +40,38 @@ from django.core.exceptions import TooManyFilesSent
 from django.core.files.uploadedfile import UploadedFile
 from django.http.multipartparser import MultiPartParser, MultiPartParserError
 from django.http.request import HttpRequest, QueryDict
-from django.utils.datastructures import MultiValueDict
+from django.utils.datastructures import CaseInsensitiveMapping, MultiValueDict
+from django.utils.translation import gettext_lazy as _
 
 from dmr.exceptions import RequestSerializationError
+
+_UTF8_REQUIRED_MSG: Final = _(
+    'HTTP requests with the'
+    " 'application/x-www-form-urlencoded'"
+    ' content type must be UTF-8 encoded.',
+)
+
+
+def parse_headers(
+    headers: 'CaseInsensitiveMapping[str]',
+    *,
+    split_commas: frozenset[str],
+) -> 'CaseInsensitiveMapping[Any]':
+    """
+    Split headers specified in *split_commas* on ``','`` char.
+
+    Make sure that all headers in *split_commas* have lower-case names.
+    """
+    if not split_commas:
+        return headers
+
+    parsed_headers: dict[str, Any] = {}
+    for header_key, header_value in headers.items():
+        if header_key.lower() in split_commas:
+            parsed_headers[header_key] = header_value.split(',')
+        else:
+            parsed_headers[header_key] = header_value
+    return CaseInsensitiveMapping(parsed_headers)
 
 
 def convert_multi_value_dict(
@@ -50,6 +79,7 @@ def convert_multi_value_dict(
     *,
     force_list: frozenset[str],
     cast_null: frozenset[str],
+    split_commas: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """
     Convert multi value dictionary to a regular one.
@@ -62,7 +92,12 @@ def convert_multi_value_dict(
     Additionally, this function automatically converts the string literal
     ``'null'`` into Python's ``None`` for fields in *cast_null*.
 
-    We use the last value that is sent via query,
+    If *split_commas* is passed, then we also split given field aliases
+    by ``','`` char. Be careful! If data can contain commas as a regular data,
+    it can be corrupted. Use it when you are sure that no commas are possible.
+    For example, with ``list[int]`` data.
+
+    We use the last value that is sent via multivalue dict,
     if there are multiple ones and only one is needed.
     """
     regular_dict: dict[str, Any] = {}
@@ -71,6 +106,15 @@ def convert_multi_value_dict(
             regular_dict[dict_key] = [
                 _replace_null_string(dict_key, list_value, cast_null=cast_null)
                 for list_value in to_parse.getlist(dict_key)
+            ]
+        elif split_commas is not None and dict_key in split_commas:
+            regular_dict[dict_key] = [
+                _replace_null_string(
+                    dict_key,
+                    part,
+                    cast_null=cast_null,
+                )
+                for part in to_parse.get(dict_key, '').split(',')
             ]
         else:
             regular_dict[dict_key] = _replace_null_string(
@@ -136,10 +180,7 @@ def parse_as_post(request: HttpRequest) -> None:
     # content type does not have a charset and should be always treated
     # as UTF-8.
     if request.encoding is not None and request.encoding.lower() != 'utf-8':
-        raise RequestSerializationError(
-            "HTTP requests with the 'application/x-www-form-urlencoded' "
-            'content type must be UTF-8 encoded.',
-        )
+        raise RequestSerializationError(_UTF8_REQUIRED_MSG)
     request._post = QueryDict(request.body, encoding='utf-8')  # type: ignore[attr-defined]
     request._files = MultiValueDict()  # type: ignore[attr-defined]
 

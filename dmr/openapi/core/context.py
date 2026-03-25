@@ -11,6 +11,7 @@ from dmr.openapi.core.registry import (
 from dmr.openapi.generators import (
     ComponentParserGenerator,
     OperationIdGenerator,
+    ParameterGenerator,
     ResponseGenerator,
     SchemaGenerator,
     SecuritySchemeGenerator,
@@ -39,6 +40,7 @@ class GeneratorContainer:
     component_parsers: ComponentParserGenerator
     response: ResponseGenerator
     security_scheme: SecuritySchemeGenerator
+    parameter: ParameterGenerator
 
 
 class OpenAPIContext:
@@ -71,6 +73,7 @@ class OpenAPIContext:
             component_parsers=ComponentParserGenerator(self),
             response=ResponseGenerator(self),
             security_scheme=SecuritySchemeGenerator(self),
+            parameter=ParameterGenerator(self),
         )
 
     def register_schema(

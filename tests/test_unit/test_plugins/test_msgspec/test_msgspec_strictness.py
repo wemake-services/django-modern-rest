@@ -13,8 +13,8 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
+from dmr.endpoint import Endpoint, SerializerContext
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.serializer import SerializerContext
 from dmr.test import DMRRequestFactory
 
 
@@ -27,10 +27,9 @@ class _InputModel(msgspec.Struct):
 @final
 class _DefaultInputController(
     Controller[MsgspecSerializer],
-    Body[_InputModel],
 ):
-    def post(self) -> _InputModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
+        return parsed_body
 
 
 def test_default_input_strictness_lax(dmr_rf: DMRRequestFactory) -> None:
@@ -85,13 +84,17 @@ class _StrictContext(SerializerContext):
 
 
 @final
-class _ExplicitStrictInputController(
-    Controller[MsgspecSerializer],
-    Body[_InputModel],
-):
+class _StrictEndpoint(Endpoint):
     serializer_context_cls = _StrictContext
 
-    def post(self) -> _InputModel:
+
+@final
+class _ExplicitStrictInputController(
+    Controller[MsgspecSerializer],
+):
+    endpoint_cls = _StrictEndpoint
+
+    def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
         raise NotImplementedError
 
 
@@ -123,14 +126,18 @@ class _LaxContext(SerializerContext):
 
 
 @final
-class _ExplicitLaxInputController(
-    Controller[MsgspecSerializer],
-    Body[_InputModel],
-):
+class _LaxEndpoint(Endpoint):
     serializer_context_cls = _LaxContext
 
-    def post(self) -> _InputModel:
-        return self.parsed_body
+
+@final
+class _ExplicitLaxInputController(
+    Controller[MsgspecSerializer],
+):
+    endpoint_cls = _LaxEndpoint
+
+    def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
+        return parsed_body
 
 
 def test_explicit_input_laxness(dmr_rf: DMRRequestFactory) -> None:

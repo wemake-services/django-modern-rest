@@ -23,8 +23,7 @@ What does ``django-modern-rest`` offer instead?
 Reusable controllers
 --------------------
 
-We offer a concept of a "reusable controllers"
-(and "reusable blueprints" as well).
+We offer a concept of a "reusable controllers".
 
 To make a reusable controller, you need
 to provide :class:`typing.TypeVar` instead of a

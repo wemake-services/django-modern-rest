@@ -224,7 +224,10 @@ class JWToken:
             issuer=accepted_issuers,
             require_claims=require_claims,
             verify_exp=verify_exp,
-            verify_nbf=verify_exp,
+            verify_iat=verify_iat,
+            verify_jti=verify_jti,
+            verify_nbf=verify_nbf,
+            verify_sub=verify_sub,
             strict_audience=strict_audience,
             enforce_minimum_key_length=enforce_minimum_key_length,
         )
@@ -243,14 +246,10 @@ class JWToken:
             raise NotAuthenticatedError from None
 
         # Convert types to match our definition:
-        payload['exp'] = dt.datetime.fromtimestamp(
-            payload['exp'],
-            tz=dt.UTC,
-        )
-        payload['iat'] = dt.datetime.fromtimestamp(
-            payload['iat'],
-            tz=dt.UTC,
-        )
+        payload['exp'] = cls._decode_datetime_claim(payload, 'exp')
+        payload['iat'] = cls._decode_datetime_claim(payload, 'iat')
+        cls._require_claim(payload, 'sub')
+
         extra_fields = payload.keys() - {field.name for field in fields(cls)}
         extras = payload.setdefault('extras', {})
         for key in extra_fields:
@@ -291,6 +290,32 @@ class JWToken:
             'require': list(require_claims) if require_claims else [],
         }
         return options
+
+    @classmethod
+    def _require_claim(
+        cls,
+        payload: dict[str, Any],
+        claim: str,
+    ) -> Any:
+        try:
+            return payload[claim]
+        except KeyError as error:
+            raise NotAuthenticatedError from error
+
+    @classmethod
+    def _decode_datetime_claim(
+        cls,
+        payload: dict[str, Any],
+        claim: str,
+    ) -> dt.datetime:
+        claim_value = cls._require_claim(payload, claim)
+        try:
+            return dt.datetime.fromtimestamp(
+                claim_value,
+                tz=dt.UTC,
+            )
+        except (TypeError, ValueError, OSError):
+            raise NotAuthenticatedError from None
 
 
 def _normalize_datetime(datetime: dt.datetime) -> dt.datetime:
