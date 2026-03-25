@@ -10,7 +10,7 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
     is a single API route. It is defined
     by its name – HTTP method – and its :term:`Metadata`, what response schema
     it returns, what status codes it can return, etc.
-    Each endpoint might have differnt :term:`Component` types
+    Each endpoint might have different :term:`Component` types
     for parsing the inputs.
 
   Controller
