@@ -30,7 +30,7 @@ to a newer version using AI tool of your choice.
 
 To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
-2. Convert component parsing from old class-based API to new method-based API. 
+2. Convert component parsing from old class-based API to new method-based API.
   Before:
 
   ```python
@@ -71,7 +71,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
               _UserInput(email='first@example.org', age=1),
               _UserInput(email='second@example.org', age=2),
           ]
-      
+
       def post(self, parsed_body: Body[_UserInput]) -> _UserOutput:
           return _UserOutput(
               uid=uuid.uuid4(),
