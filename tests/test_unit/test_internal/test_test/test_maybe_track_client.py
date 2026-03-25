@@ -9,7 +9,7 @@ def test_track_client_lookup_error() -> None:
     class _PytestRequest:
         def getfixturevalue(self, name: str) -> Any:
             assert name == 'tracecov_map'
-            raise LookupError()
+            raise LookupError
 
     client: Any = object()
     request = _PytestRequest()
