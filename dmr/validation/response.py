@@ -215,7 +215,7 @@ class ResponseValidator:  # noqa: WPS214
                 f'only for {hint!r}',
             )
 
-        content_types = get_conditional_types(schema.return_type)
+        content_types = get_conditional_types(schema.return_type, ())
         if content_types:
             model = content_types.get(content_type, EmptyObj)
             if model is EmptyObj:

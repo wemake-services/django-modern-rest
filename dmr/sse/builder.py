@@ -410,6 +410,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         ):
             component_parser = get_annotated_metadata(
                 component,
+                None,
                 ComponentParser,  # type: ignore[type-abstract]
             )
             assert component_parser  # noqa: S101

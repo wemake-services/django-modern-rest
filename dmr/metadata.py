@@ -388,8 +388,7 @@ def get_annotated_metadata(
             if isinstance(metadata, metadata_type):
                 return metadata
 
-    for meta in model_meta or ():
-        metadata = get_annotated_metadata(meta, None, metadata_type)
-        if metadata:
-            return metadata  # type: ignore[no-any-return]
+    for metadata in model_meta or ():
+        if isinstance(metadata, metadata_type):
+            return metadata
     return None

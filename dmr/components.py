@@ -460,6 +460,7 @@ class BodyComponent(ComponentParser, Generic[_BodyT]):
             media_type_meta = (
                 get_annotated_metadata(
                     conditional_types.get(parser.content_type, model),
+                    model_meta,
                     MediaTypeMetadata,
                 )
                 or MediaTypeMetadata()

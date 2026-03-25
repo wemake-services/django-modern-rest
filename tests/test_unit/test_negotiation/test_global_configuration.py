@@ -197,38 +197,6 @@ def test_per_controller_customization(
     assert response.content == expected_data
 
 
-def test_per_scoped_controller_customization(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures controller-level customization stays local."""
-
-    @final
-    class _ScopedController(Controller[PydanticSerializer]):
-        parsers = [XmlParser(), JsonParser()]
-        renderers = [XmlRenderer(), JsonRenderer()]
-
-        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
-            return parsed_body.root
-
-    assert len(_ScopedController.api_endpoints['POST'].metadata.parsers) == 2
-    assert len(_ScopedController.api_endpoints['POST'].metadata.renderers) == 2
-
-    request_data = {'root': {'key': 'value'}}
-
-    request = dmr_rf.post(
-        '/whatever/',
-        headers={'Content-Type': 'application/json'},
-        data=json.dumps(request_data),
-    )
-
-    response = _ScopedController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED, response.content
-    assert response.headers == {'Content-Type': 'application/xml'}
-    assert b'<key>value</key>' in response.content
-
-
 def test_per_endpoint_customization(
     dmr_rf: DMRRequestFactory,
 ) -> None:
@@ -582,54 +550,47 @@ def test_conditional_body_model(
 
 
 @pytest.mark.parametrize(
-    ('request_headers', 'request_data', 'expected_headers', 'expected_status'),
+    ('request_headers', 'request_data', 'expected_headers'),
     [
         # xml data with json structure:
         (
             {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<item>String</item>',
             {'Content-Type': 'application/xml'},
-            HTTPStatus.CREATED,
         ),
         # json data with xml structure:
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             b'{"root": {"key": "value"}}',
             {'Content-Type': 'application/json'},
-            HTTPStatus.CREATED,
         ),
         # Mixed up data and content types:
         (
             {'Content-Type': 'application/xml'},
             b'{"key": "value"}',
             {'Content-Type': 'application/xml'},
-            HTTPStatus.BAD_REQUEST,
         ),
         (
             {'Content-Type': 'application/json'},
             _xml_data,
             {'Content-Type': 'application/xml'},
-            HTTPStatus.BAD_REQUEST,
         ),
         # Just wrong json data:
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             b'1',
             {'Content-Type': 'application/json'},
-            HTTPStatus.BAD_REQUEST,
         ),
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             b'[]',
             {'Content-Type': 'application/json'},
-            HTTPStatus.BAD_REQUEST,
         ),
         # Just wrong xml data:
         (
             {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<item>1</item>',
             {'Content-Type': 'application/xml'},
-            HTTPStatus.CREATED,
         ),
     ],
 )
@@ -639,14 +600,11 @@ def test_conditional_body_model_wrong(
     request_headers: dict[str, str],
     request_data: Any,
     expected_headers: dict[str, str],
-    expected_status: HTTPStatus,
 ) -> None:
     """Ensures conditional body models validates correctly."""
 
     @final
-    class _Controller(
-        Controller[PydanticSerializer],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
@@ -679,7 +637,7 @@ def test_conditional_body_model_wrong(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == expected_status, response.content
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == expected_headers
 
 

@@ -233,7 +233,7 @@ def conditional_type(
 
 def get_conditional_types(
     model: Any,
-    model_meta: tuple[Any, ...] | None = None,
+    model_meta: tuple[Any, ...],
 ) -> Mapping[str, Any] | None:
     """
     Returns possible conditional types.

@@ -15,7 +15,7 @@ class CustomErrorModel(TypedDict):
     errors: list[CustomErrorDetail]
 
 
-class _CustomErrorMixin:
+class ApiController(Controller[PydanticSerializer]):
     error_model = CustomErrorModel
 
     def format_error(
@@ -36,11 +36,6 @@ class _CustomErrorMixin:
             ],
         }
 
-
-class ApiController(
-    _CustomErrorMixin,
-    Controller[PydanticSerializer],
-):
     @modify(
         extra_responses=[
             ResponseSpec(
