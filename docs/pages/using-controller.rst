@@ -150,14 +150,18 @@ If you need granual control, you can change anything.
   or your custom DSLs on top of HTTP
 - :attr:`~dmr.controller.Controller.endpoint_cls`
   to customize how endpoints are created
-- :attr:`~dmr.controller.Controller.serializer_context_cls`
-  to customize how model for serialization of incoming data is created
 - :attr:`~dmr.controller.Controller.csrf_exempt`
   to customize whether or not this controller is exempted from the CSRF
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how controller is validated in import time
 
 Check out our :doc:`API <deep-dive/public-api>` for the advanced features.
+
+You can also customize :class:`~dmr.endpoint.Endpoint`
+to change how API methods are executed:
+
+- :attr:`~dmr.endpoint.Endpoint.serializer_context_cls`
+  to customize how model for serialization of incoming data is created
 
 
 Next up

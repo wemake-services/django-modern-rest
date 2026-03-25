@@ -6,6 +6,7 @@ Controller
 
 .. autoclass:: dmr.controller.Controller
   :members:
+  :exclude-members: controller_validator_cls, endpoint_cls, error_model, settings_validator_cls
   :inherited-members:
   :show-inheritance:
 
@@ -84,6 +85,9 @@ Serialization
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
   :members:
 
+.. autoclass:: dmr.components.ComponentParserBuilder
+  :members:
+
 
 Routing
 -------
@@ -145,6 +149,9 @@ Utilities
 .. autoclass:: dmr.types.Empty
 
 .. autodata:: dmr.types.EmptyObj
+
+.. autoclass:: dmr.types.TypeVarInference
+  :members:
 
 
 Decorators

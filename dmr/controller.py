@@ -152,10 +152,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     # Protected API:
     _is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
-    _component_parsers_builder_cls: ClassVar[type[ComponentParserBuilder]] = (
-        ComponentParserBuilder
-    )
-    _component_parsers: ClassVar[list[ComponentParserSpec]]
 
     @override
     def __init_subclass__(cls) -> None:
