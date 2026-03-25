@@ -5,7 +5,7 @@ Use this mapping when replacing transport-layer code.
 ## Core constructs
 
 - `NinjaExtraAPI(...)` -> Django URL wiring + `Router(..., [...])`
-- `@api_controller('/path')` + `ControllerBase` -> `Controller[...]` 
+- `@api_controller('/path')` + `ControllerBase` -> `Controller[...]`
 - `@http_get`, `@http_post`, ... -> regular controller or blueprint methods (`get`, `post`, ...)
 - `ninja.Schema` -> serializer DTO classes used by dmr validation/parsing
 - `api.exception_handler(...)` -> dmr error handkung flow (`handle_error()`, handle_async_error()`)
