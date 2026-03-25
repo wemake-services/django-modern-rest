@@ -7,13 +7,7 @@ from django.http import HttpResponse
 from django.middleware.csrf import get_token
 from typing_extensions import override
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpecProvider
 from dmr.plugins.pydantic import PydanticSerializer

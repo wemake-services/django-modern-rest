@@ -3,13 +3,7 @@ from typing import Final
 
 from django.http import HttpResponse
 
-from dmr import (
-    APIRedirectError,
-    Controller,
-    HeaderSpec,
-    modify,
-    validate,
-)
+from dmr import APIRedirectError, Controller, HeaderSpec, modify, validate
 from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 

@@ -5,13 +5,7 @@ import pytest
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse_lazy
 
-from dmr import (
-    APIRedirectError,
-    Controller,
-    HeaderSpec,
-    modify,
-    validate,
-)
+from dmr import APIRedirectError, Controller, HeaderSpec, modify, validate
 from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory

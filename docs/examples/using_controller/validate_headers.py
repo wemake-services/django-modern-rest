@@ -4,13 +4,7 @@ from http import HTTPStatus
 import pydantic
 from django.http import HttpResponse
 
-from dmr import (
-    Body,
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    validate,
-)
+from dmr import Body, Controller, HeaderSpec, ResponseSpec, validate
 from dmr.plugins.pydantic import PydanticSerializer
 
 

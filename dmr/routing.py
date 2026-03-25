@@ -1,13 +1,6 @@
 from collections.abc import Callable, Coroutine, Sequence
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAlias,
-    TypeVar,
-    cast,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path

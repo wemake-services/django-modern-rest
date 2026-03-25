@@ -9,13 +9,7 @@ from django.middleware.csrf import get_token
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from dmr import (
-    APIError,
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-)
+from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth

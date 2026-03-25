@@ -8,12 +8,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from dmr import (
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Controller, ResponseSpec, modify, validate
 from dmr.endpoint import Endpoint
 from dmr.errors import wrap_handler
 from dmr.plugins.pydantic import PydanticSerializer

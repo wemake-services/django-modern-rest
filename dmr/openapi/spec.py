@@ -34,10 +34,7 @@ def build_schema(
 
 def default_config() -> OpenAPIConfig:
     """Resolves the default config from settings."""
-    from dmr.settings import (  # noqa: PLC0415
-        Settings,
-        resolve_setting,
-    )
+    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
     config = resolve_setting(Settings.openapi_config)
     if not isinstance(config, OpenAPIConfig):

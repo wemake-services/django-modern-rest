@@ -13,13 +13,7 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRRequestFactory
 

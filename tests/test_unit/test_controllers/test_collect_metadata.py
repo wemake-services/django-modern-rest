@@ -3,12 +3,7 @@ from http import HTTPStatus
 from dirty_equals import IsStr
 from inline_snapshot import snapshot
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-)
+from dmr import Body, Controller, ResponseSpec, modify
 from dmr.plugins.pydantic import PydanticSerializer
 
 

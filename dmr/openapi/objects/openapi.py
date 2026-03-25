@@ -1,12 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAlias,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 try:
     from openapi_spec_validator import validate as _validate_spec
@@ -17,16 +12,12 @@ if TYPE_CHECKING:
     from _typeshed import DataclassInstance
 
     from dmr.openapi.objects.components import Components
-    from dmr.openapi.objects.external_documentation import (
-        ExternalDocumentation,
-    )
+    from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.info import Info
     from dmr.openapi.objects.path_item import PathItem
     from dmr.openapi.objects.paths import Paths
     from dmr.openapi.objects.reference import Reference
-    from dmr.openapi.objects.security_requirement import (
-        SecurityRequirement,
-    )
+    from dmr.openapi.objects.security_requirement import SecurityRequirement
     from dmr.openapi.objects.server import Server
     from dmr.openapi.objects.tag import Tag
 

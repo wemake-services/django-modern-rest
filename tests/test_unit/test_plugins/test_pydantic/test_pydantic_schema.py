@@ -11,11 +11,7 @@ from typing_extensions import TypedDict
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
-from dmr.openapi.objects import (
-    OpenAPIType,
-    Reference,
-    Schema,
-)
+from dmr.openapi.objects import OpenAPIType, Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 
 

@@ -10,13 +10,7 @@ from dmr.endpoint import modify
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.response import ResponseGenerator
-from dmr.openapi.objects import (
-    Header,
-    MediaType,
-    OpenAPIType,
-    Response,
-    Schema,
-)
+from dmr.openapi.objects import Header, MediaType, OpenAPIType, Response, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer, JsonRenderer
 

@@ -6,13 +6,7 @@ from django.http import FileResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Body,
-    Controller,
-    FileMetadata,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, FileMetadata, modify, validate
 from dmr.files import FileResponseSpec
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Encoding, MediaTypeMetadata

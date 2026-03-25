@@ -10,19 +10,9 @@ from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict, override
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.errors import ErrorType
-from dmr.negotiation import (
-    ContentType,
-    conditional_type,
-    request_parser,
-)
+from dmr.negotiation import ContentType, conditional_type, request_parser
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer

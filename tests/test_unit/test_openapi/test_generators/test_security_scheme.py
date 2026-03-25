@@ -8,14 +8,8 @@ from dmr.controller import Controller
 from dmr.endpoint import Endpoint
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.generators.security_scheme import (
-    SecuritySchemeGenerator,
-)
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.generators.security_scheme import SecuritySchemeGenerator
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer

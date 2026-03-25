@@ -6,10 +6,7 @@ import xmltodict_rs as xmltodict
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.exceptions import (
-    InternalServerError,
-    RequestSerializationError,
-)
+from dmr.exceptions import InternalServerError, RequestSerializationError
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.renderers import Renderer
 

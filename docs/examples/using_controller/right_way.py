@@ -2,14 +2,7 @@ from http import HTTPStatus
 
 import msgspec
 
-from dmr import (
-    APIError,
-    Body,
-    Controller,
-    Headers,
-    ResponseSpec,
-    modify,
-)
+from dmr import APIError, Body, Controller, Headers, ResponseSpec, modify
 from dmr.errors import ErrorModel, ErrorType
 from dmr.plugins.msgspec import MsgspecSerializer
 

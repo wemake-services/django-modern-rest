@@ -1,10 +1,4 @@
-from collections.abc import (
-    AsyncIterator,
-    Callable,
-    Iterator,
-    Mapping,
-    Sequence,
-)
+from collections.abc import AsyncIterator, Callable, Iterator, Mapping, Sequence
 from contextlib import aclosing, nullcontext
 from http import HTTPStatus
 from typing import Any, ClassVar, Final, TypeAlias

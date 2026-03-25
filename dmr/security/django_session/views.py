@@ -7,13 +7,7 @@ from django.conf import settings
 from django.contrib.auth import aauthenticate, alogin, authenticate, login
 from typing_extensions import TypedDict
 
-from dmr import (
-    Body,
-    Controller,
-    CookieSpec,
-    ResponseSpec,
-    modify,
-)
+from dmr import Body, Controller, CookieSpec, ResponseSpec, modify
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.serializer import BaseSerializer

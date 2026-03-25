@@ -9,11 +9,7 @@ from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
-from dmr.validation import (
-    EndpointMetadataValidator,
-    Payload,
-    ResponseValidator,
-)
+from dmr.validation import EndpointMetadataValidator, Payload, ResponseValidator
 from dmr.validation.response import _ResponseT
 
 

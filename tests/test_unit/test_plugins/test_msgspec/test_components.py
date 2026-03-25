@@ -12,11 +12,7 @@ except ImportError:  # pragma: no cover
 from django.http import HttpResponse
 from faker import Faker
 
-from dmr import (
-    Controller,
-    Headers,
-    Query,
-)
+from dmr import Controller, Headers, Query
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRRequestFactory
 

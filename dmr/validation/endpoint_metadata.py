@@ -3,14 +3,7 @@ import inspect
 from collections.abc import Callable, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Final,
-    TypeVar,
-    assert_never,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
 
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponseBase

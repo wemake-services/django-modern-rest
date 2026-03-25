@@ -12,10 +12,7 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import (
-    ModelDumpKwargs,
-    PydanticSerializer,
-)
+from dmr.plugins.pydantic import ModelDumpKwargs, PydanticSerializer
 from dmr.test import DMRRequestFactory
 
 

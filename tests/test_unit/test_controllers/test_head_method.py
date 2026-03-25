@@ -4,11 +4,7 @@ from http import HTTPStatus
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from dmr import (
-    Controller,
-    ResponseSpec,
-    validate,
-)
+from dmr import Controller, ResponseSpec, validate
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 

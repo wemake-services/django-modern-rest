@@ -8,9 +8,7 @@ from django.http import HttpResponse
 from typing_extensions import TypedDict
 
 from dmr import Controller, ResponseSpec, validate
-from dmr.exceptions import (
-    ValidationError,
-)
+from dmr.exceptions import ValidationError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 

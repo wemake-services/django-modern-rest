@@ -1,13 +1,6 @@
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
-from typing import (
-    Any,
-    ClassVar,
-    Final,
-    Generic,
-    TypeAlias,
-    TypeVar,
-)
+from typing import Any, ClassVar, Final, Generic, TypeAlias, TypeVar
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -33,10 +26,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.types import infer_type_args
-from dmr.validation import (
-    ControllerValidator,
-    SettingsValidator,
-)
+from dmr.validation import ControllerValidator, SettingsValidator
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
     'Method {method} is not allowed, allowed: {allowed}',

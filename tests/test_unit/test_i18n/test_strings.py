@@ -4,10 +4,7 @@ import pytest
 from django.utils.functional import Promise
 from django.utils.translation import override
 
-from dmr.exceptions import (
-    InternalServerError,
-    NotAuthenticatedError,
-)
+from dmr.exceptions import InternalServerError, NotAuthenticatedError
 
 _ExceptionClass = type[InternalServerError] | type[NotAuthenticatedError]
 

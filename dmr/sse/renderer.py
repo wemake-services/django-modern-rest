@@ -7,9 +7,7 @@ from typing_extensions import override
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.negotiation import ContentType
-from dmr.parsers import (
-    _NoOpParser,  # pyright: ignore[reportPrivateUsage]
-)
+from dmr.parsers import _NoOpParser  # pyright: ignore[reportPrivateUsage]
 from dmr.renderers import Renderer
 from dmr.sse.metadata import SSE
 

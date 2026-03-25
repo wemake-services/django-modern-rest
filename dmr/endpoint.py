@@ -2,13 +2,7 @@ import inspect
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Never,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Never, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern

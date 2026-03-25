@@ -6,12 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 
-from dmr import (
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    modify,
-)
+from dmr import Controller, HeaderSpec, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory

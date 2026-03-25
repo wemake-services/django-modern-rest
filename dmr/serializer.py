@@ -1,21 +1,11 @@
 import abc
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Final,
-    TypeAlias,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, TypeVar
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from dmr.errors import ErrorDetail
-from dmr.exceptions import (
-    InternalServerError,
-    RequestSerializationError,
-)
+from dmr.exceptions import InternalServerError, RequestSerializationError
 from dmr.parsers import Parser, Raw
 from dmr.renderers import Renderer
 

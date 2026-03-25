@@ -6,14 +6,7 @@ import pydantic
 from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Body,
-    Controller,
-    Cookies,
-    Path,
-    Query,
-    ResponseSpec,
-)
+from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import MediaTypeMetadata, ParameterMetadata

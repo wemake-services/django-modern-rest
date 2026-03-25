@@ -3,15 +3,7 @@ from typing import Any
 
 import pytest
 
-from dmr import (
-    Body,
-    Controller,
-    Cookies,
-    FileMetadata,
-    Headers,
-    Path,
-    Query,
-)
+from dmr import Body, Controller, Cookies, FileMetadata, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
 

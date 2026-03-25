@@ -1,13 +1,7 @@
 import dataclasses
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    TypeVar,
-    final,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
 
 from django.http import FileResponse, HttpResponse, HttpResponseBase
 
@@ -24,10 +18,7 @@ from dmr.internal.negotiation import (
     response_validation_negotiator,
 )
 from dmr.metadata import EndpointMetadata, ResponseSpec
-from dmr.negotiation import (
-    get_conditional_types,
-    request_renderer,
-)
+from dmr.negotiation import get_conditional_types, request_renderer
 from dmr.serializer import BaseSerializer
 from dmr.types import EmptyObj
 

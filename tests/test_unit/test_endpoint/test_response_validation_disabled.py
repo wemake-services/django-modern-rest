@@ -8,13 +8,7 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from dmr import (
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Controller, HeaderSpec, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import Settings
 from dmr.test import DMRRequestFactory

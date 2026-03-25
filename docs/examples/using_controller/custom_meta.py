@@ -2,12 +2,7 @@ from http import HTTPStatus
 
 from django.http import HttpResponse
 
-from dmr import (
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    validate,
-)
+from dmr import Controller, HeaderSpec, ResponseSpec, validate
 from dmr.plugins.msgspec import MsgspecSerializer
 
 

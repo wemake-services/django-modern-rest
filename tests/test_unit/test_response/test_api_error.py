@@ -8,23 +8,12 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from dmr import (
-    APIError,
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import APIError, Controller, HeaderSpec, ResponseSpec, modify, validate
 from dmr.components import ComponentParser, Path
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer

@@ -4,12 +4,7 @@ from http import HTTPMethod, HTTPStatus
 import pytest
 from django.http import HttpResponse
 
-from dmr import (
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    validate,
-)
+from dmr import Controller, HeaderSpec, ResponseSpec, validate
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 

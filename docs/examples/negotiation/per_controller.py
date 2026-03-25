@@ -4,10 +4,7 @@ from typing import Generic, TypeVar
 import pydantic
 
 from dmr import Body, Controller
-from dmr.plugins.msgspec import (
-    MsgspecJsonParser,
-    MsgspecJsonRenderer,
-)
+from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 

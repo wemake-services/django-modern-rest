@@ -4,10 +4,7 @@ from typing import Any
 import pytest
 from typing_extensions import override
 
-from dmr import (
-    Controller,
-    ResponseSpec,
-)
+from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin

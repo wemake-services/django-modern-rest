@@ -2,14 +2,7 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping, Set
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    Any,
-    TypeAlias,
-    TypeVar,
-    get_origin,
-)
+from typing import TYPE_CHECKING, Annotated, Any, TypeAlias, TypeVar, get_origin
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
