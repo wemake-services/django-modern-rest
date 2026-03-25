@@ -32,7 +32,9 @@ class UserController(
     Controller[PydanticSerializer],
 ):
     @modify(parsers=[XmlParser()], renderers=[XmlRenderer()])
-    def post(self, parsed_body: Body[_UserDocument[_UserInputData]]) -> _UserDocument[_UserOutputData]:
+    def post(
+        self, parsed_body: Body[_UserDocument[_UserInputData]]
+    ) -> _UserDocument[_UserOutputData]:
         return _UserDocument(
             user=_UserOutputData(
                 uid=uuid.uuid4(),

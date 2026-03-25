@@ -25,7 +25,9 @@ class _WrongPydanticBodyController(
 ):
     """All body of these methods are not correct."""
 
-    def post(self, parsed_body: Body[_MyPydanticModel]) -> str:  # pragma: no cover
+    def post(
+        self, parsed_body: Body[_MyPydanticModel]
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 

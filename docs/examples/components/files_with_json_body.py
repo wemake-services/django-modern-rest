@@ -37,7 +37,11 @@ class FileAndJsonController(
 ):
     parsers = (MultiPartParser(),)
 
-    def put(self, parsed_body: Body[_JsonBodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _JsonOutputPayload:
+    def put(
+        self,
+        parsed_body: Body[_JsonBodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _JsonOutputPayload:
         return _JsonOutputPayload(
             user=parsed_body.user,
             receipt=parsed_file_metadata.receipt,

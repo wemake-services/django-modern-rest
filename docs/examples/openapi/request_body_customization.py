@@ -18,14 +18,17 @@ example = SearchModel(search='example', max_items=10).model_dump(mode='json')
 class UserController(
     Controller[PydanticSerializer],
 ):
-    def post(self, parsed_body: Body[
-        Annotated[
-            SearchModel,
-            MediaTypeMetadata(
-                example=example,
-            ),
-        ]
-    ]) -> str:
+    def post(
+        self,
+        parsed_body: Body[
+            Annotated[
+                SearchModel,
+                MediaTypeMetadata(
+                    example=example,
+                ),
+            ]
+        ],
+    ) -> str:
         return 'post'
 
 

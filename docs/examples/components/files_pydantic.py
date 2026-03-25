@@ -24,7 +24,9 @@ class FileController(
 ):
     parsers = (MultiPartParser(),)
 
-    def put(self, parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _UploadedFiles:
+    def put(
+        self, parsed_file_metadata: FileMetadata[_UploadedFiles]
+    ) -> _UploadedFiles:
         return parsed_file_metadata
 
 

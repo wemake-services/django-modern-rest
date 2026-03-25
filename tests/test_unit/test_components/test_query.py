@@ -128,7 +128,9 @@ class _EnableCastNullQuery(pydantic.BaseModel):
 class _DefaultCastNullController(
     Controller[PydanticSerializer],
 ):
-    def get(self, parsed_query: Query[_DefaultCastNullQuery]) -> _DefaultCastNullQuery:
+    def get(
+        self, parsed_query: Query[_DefaultCastNullQuery]
+    ) -> _DefaultCastNullQuery:
         return parsed_query
 
 
@@ -136,7 +138,9 @@ class _DefaultCastNullController(
 class _EnableCastNullController(
     Controller[PydanticSerializer],
 ):
-    def get(self, parsed_query: Query[_EnableCastNullQuery]) -> _EnableCastNullQuery:
+    def get(
+        self, parsed_query: Query[_EnableCastNullQuery]
+    ) -> _EnableCastNullQuery:
         return parsed_query
 
 

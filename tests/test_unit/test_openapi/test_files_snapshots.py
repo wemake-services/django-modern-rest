@@ -42,7 +42,9 @@ class _FileController(
     parsers = (MultiPartParser(),)
 
     @modify(operation_id='file_test_id', deprecated=True)
-    async def get(self, parsed_file_metadata: FileMetadata[_SeveralFiles]) -> list[int]:
+    async def get(
+        self, parsed_file_metadata: FileMetadata[_SeveralFiles]
+    ) -> list[int]:
         raise NotImplementedError
 
 
@@ -99,7 +101,11 @@ class _BodyAndFileController(
 ):
     parsers = (MultiPartParser(),)
 
-    async def post(self, parsed_body: Body[_DescriptionModel], parsed_file_metadata: FileMetadata[_SeveralFiles]) -> list[int]:
+    async def post(
+        self,
+        parsed_body: Body[_DescriptionModel],
+        parsed_file_metadata: FileMetadata[_SeveralFiles],
+    ) -> list[int]:
         raise NotImplementedError
 
 
@@ -124,18 +130,21 @@ class _FileMetadataController(
 ):
     parsers = (MultiPartParser(),)
 
-    async def get(self, parsed_file_metadata: FileMetadata[
-        Annotated[
-            _SeveralFiles,
-            MediaTypeMetadata(
-                example='whatever',
-                encoding={
-                    'second_file': Encoding(content_type='image/png'),
-                    'attachments': Encoding(content_type='image/jpg'),
-                },
-            ),
-        ]
-    ]) -> list[int]:
+    async def get(
+        self,
+        parsed_file_metadata: FileMetadata[
+            Annotated[
+                _SeveralFiles,
+                MediaTypeMetadata(
+                    example='whatever',
+                    encoding={
+                        'second_file': Encoding(content_type='image/png'),
+                        'attachments': Encoding(content_type='image/jpg'),
+                    },
+                ),
+            ]
+        ],
+    ) -> list[int]:
         raise NotImplementedError
 
 

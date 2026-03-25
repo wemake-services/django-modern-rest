@@ -33,7 +33,9 @@ class UserController(
             ),
         ],
     )
-    def post(self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]) -> UserModel:
+    def post(
+        self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]
+    ) -> UserModel:
         if parsed_headers.consumer != 'my-api':
             # Notice that this response is now documented in the spec,
             # no error will happen, no need to disable the validation.

@@ -35,7 +35,11 @@ class FileAndBodyController(
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self, parsed_body: Body[_BodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _OutputPayload:
+    def post(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(

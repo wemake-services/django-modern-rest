@@ -103,7 +103,9 @@ class _FileController(
 ):
     parsers = (MultiPartParser(),)
 
-    async def get(self, parsed_file_metadata: FileMetadata[_SeveralFiles]) -> list[int]:
+    async def get(
+        self, parsed_file_metadata: FileMetadata[_SeveralFiles]
+    ) -> list[int]:
         raise NotImplementedError
 
 

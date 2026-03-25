@@ -22,7 +22,9 @@ class _MyPydanticModel(pydantic.BaseModel):
 class _SplitCommasController(
     Controller[PydanticSerializer],
 ):
-    def get(self, parsed_headers: Headers[_MyPydanticModel]) -> _MyPydanticModel:
+    def get(
+        self, parsed_headers: Headers[_MyPydanticModel]
+    ) -> _MyPydanticModel:
         return parsed_headers
 
 

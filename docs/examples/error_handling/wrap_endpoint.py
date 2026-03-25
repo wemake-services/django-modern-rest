@@ -37,10 +37,14 @@ class MathController(Controller[PydanticSerializer]):
             division_error,
         ),
     )
-    def patch(self, parsed_body: Body[TwoNumbers]) -> float:  # <- has custom error handling
+    def patch(
+        self, parsed_body: Body[TwoNumbers]
+    ) -> float:  # <- has custom error handling
         return parsed_body.left / parsed_body.right
 
-    def post(self, parsed_body: Body[TwoNumbers]) -> float:  # <- has only default error handling
+    def post(
+        self, parsed_body: Body[TwoNumbers]
+    ) -> float:  # <- has only default error handling
         return parsed_body.left * parsed_body.right
 
 

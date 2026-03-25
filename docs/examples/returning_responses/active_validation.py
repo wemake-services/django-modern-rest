@@ -18,7 +18,9 @@ class HeaderModel(msgspec.Struct):
 class UserController(
     Controller[MsgspecSerializer],
 ):
-    def post(self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]) -> UserModel:
+    def post(
+        self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]
+    ) -> UserModel:
         if parsed_headers.consumer != 'my-api':
             # Notice that this response is never documented in the spec,
             # so, it will raise an error when validation is enabled (default).

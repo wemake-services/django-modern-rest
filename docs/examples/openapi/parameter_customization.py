@@ -15,15 +15,18 @@ class QueryModel(msgspec.Struct):
 class UserController(
     Controller[MsgspecSerializer],
 ):
-    def post(self, parsed_query: Query[
-        Annotated[
-            QueryModel,
-            ParameterMetadata(
-                description='Old way to search things',
-                deprecated=True,
-            ),
-        ]
-    ]) -> str:
+    def post(
+        self,
+        parsed_query: Query[
+            Annotated[
+                QueryModel,
+                ParameterMetadata(
+                    description='Old way to search things',
+                    deprecated=True,
+                ),
+            ]
+        ],
+    ) -> str:
         return 'post'
 
 

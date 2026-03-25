@@ -21,16 +21,19 @@ class UserController(
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self, parsed_file_metadata: FileMetadata[
-        Annotated[
-            UserUpload,
-            MediaTypeMetadata(
-                # Note, that this can also inferred from `Literal` type
-                # in `FileModel.content_type` property, but can be set here:
-                encoding={'avatar': Encoding(content_type='image/png')},
-            ),
-        ]
-    ]) -> str:
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[
+            Annotated[
+                UserUpload,
+                MediaTypeMetadata(
+                    # Note, that this can also inferred from `Literal` type
+                    # in `FileModel.content_type` property, but can be set here:
+                    encoding={'avatar': Encoding(content_type='image/png')},
+                ),
+            ]
+        ],
+    ) -> str:
         return 'post'
 
 

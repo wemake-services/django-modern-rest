@@ -24,6 +24,10 @@ class HeaderModel:
 class UserController(
     Controller[MsgspecSerializer],
 ):
-    def post(self, parsed_body: Body[UserCreateModel], parsed_headers: Headers[HeaderModel]) -> UserModel:
+    def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+        parsed_headers: Headers[HeaderModel],
+    ) -> UserModel:
         assert parsed_headers.consumer == 'my-api'
         return UserModel(uid=uuid.uuid4(), email=parsed_body.email)

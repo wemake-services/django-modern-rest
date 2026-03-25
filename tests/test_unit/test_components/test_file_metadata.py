@@ -44,7 +44,9 @@ class _FileController(
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self, parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _UploadedFiles:
+    def post(
+        self, parsed_file_metadata: FileMetadata[_UploadedFiles]
+    ) -> _UploadedFiles:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return parsed_file_metadata
@@ -159,7 +161,9 @@ class _MultipleFilesController(
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self, parsed_file_metadata: FileMetadata[_MultipleFiles]) -> _MultipleFiles:
+    def post(
+        self, parsed_file_metadata: FileMetadata[_MultipleFiles]
+    ) -> _MultipleFiles:
         for content_key in parsed_file_metadata.model_fields_set:
             assert content_key in self.request.FILES
             for file_obj in self.request.FILES.getlist(content_key):
@@ -213,7 +217,9 @@ def test_file_metadata_missing_parser() -> None:
         class _Controller(
             Controller[PydanticSerializer],
         ):
-            def post(self, parsed_file_metadata: FileMetadata[_MultipleFiles]) -> str:
+            def post(
+                self, parsed_file_metadata: FileMetadata[_MultipleFiles]
+            ) -> str:
                 raise NotImplementedError
 
 
@@ -238,7 +244,11 @@ class _FileAndBodyController(
     parsers = (MultiPartParser(),)
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self, parsed_body: Body[_BodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _OutputPayload:
+    def post(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
@@ -248,7 +258,11 @@ class _FileAndBodyController(
             rules=parsed_file_metadata.rules,
         )
 
-    def put(self, parsed_body: Body[_BodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _OutputPayload:
+    def put(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
@@ -258,7 +272,11 @@ class _FileAndBodyController(
             rules=parsed_file_metadata.rules,
         )
 
-    def patch(self, parsed_body: Body[_BodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _OutputPayload:
+    def patch(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
@@ -441,7 +459,9 @@ class _ControllerWithWrongParsers(
 ):
     parsers = (_FakeParser(), _WrongBodyParser())
 
-    def post(self, parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _OutputPayload:
+    def post(
+        self, parsed_file_metadata: FileMetadata[_UploadedFiles]
+    ) -> _OutputPayload:
         raise NotImplementedError
 
 
@@ -493,7 +513,11 @@ class _FileAndJsonController(
     parsers = (MultiPartParser(),)
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self, parsed_body: Body[_JsonBodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _JsonOutputPayload:
+    def post(
+        self,
+        parsed_body: Body[_JsonBodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _JsonOutputPayload:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _JsonOutputPayload(
@@ -502,7 +526,11 @@ class _FileAndJsonController(
             rules=parsed_file_metadata.rules,
         )
 
-    def put(self, parsed_body: Body[_JsonBodyPayload], parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _JsonOutputPayload:
+    def put(
+        self,
+        parsed_body: Body[_JsonBodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _JsonOutputPayload:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _JsonOutputPayload(

@@ -21,7 +21,9 @@ class UserController(
     # Now, we won't validate all endpoints in this controller:
     validate_responses = False
 
-    def post(self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]) -> UserModel:
+    def post(
+        self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]
+    ) -> UserModel:
         if parsed_headers.consumer != 'my-api':
             # Notice that this response is never documented in the spec,
             # but, it won't raise a validation error, because validation is off

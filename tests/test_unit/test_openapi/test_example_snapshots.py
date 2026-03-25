@@ -110,20 +110,23 @@ class _RegularBody(pydantic.BaseModel):
 class _ExistingBodyExamplesController(
     Controller[PydanticSerializer],
 ):
-    def post(self, parsed_body: Body[
-        Annotated[
-            _RegularBody,
-            MediaTypeMetadata(
-                examples={
-                    'start': Example(
-                        summary='hand written example',
-                        description='starting point',
-                        value={'coord_x': 0, 'coord_y': 0},
-                    ),
-                },
-            ),
-        ]
-    ]) -> int:
+    def post(
+        self,
+        parsed_body: Body[
+            Annotated[
+                _RegularBody,
+                MediaTypeMetadata(
+                    examples={
+                        'start': Example(
+                            summary='hand written example',
+                            description='starting point',
+                            value={'coord_x': 0, 'coord_y': 0},
+                        ),
+                    },
+                ),
+            ]
+        ],
+    ) -> int:
         raise NotImplementedError
 
 

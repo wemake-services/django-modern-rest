@@ -331,7 +331,9 @@ def test_conditional_content_type(
                 status_code=HTTPStatus.CREATED,
             ),
         )
-        def put(self, parsed_body: Body[Annotated[_RequestModel, 'other comment']]) -> HttpResponse:
+        def put(
+            self, parsed_body: Body[Annotated[_RequestModel, 'other comment']]
+        ) -> HttpResponse:
             if self.request.accepts(ContentType.json):
                 return self.to_response(
                     parsed_body.root['key'],
@@ -544,15 +546,18 @@ def test_conditional_body_model(
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self, parsed_body: Body[
-            Annotated[
-                _RequestModel | str,
-                conditional_type({
-                    ContentType.json: str,
-                    ContentType.xml: _RequestModel,
-                }),
-            ]
-        ]) -> dict[str, str]:
+        def post(
+            self,
+            parsed_body: Body[
+                Annotated[
+                    _RequestModel | str,
+                    conditional_type({
+                        ContentType.json: str,
+                        ContentType.xml: _RequestModel,
+                    }),
+                ]
+            ],
+        ) -> dict[str, str]:
             if isinstance(parsed_body, _RequestModel):
                 return parsed_body.root
             return {'key': parsed_body}
@@ -644,15 +649,18 @@ def test_conditional_body_model_wrong(
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self, parsed_body: Body[
-            Annotated[
-                _RequestModel | dict[str, str],
-                conditional_type({
-                    ContentType.json: dict[str, str],
-                    ContentType.xml: _RequestModel,
-                }),
-            ]
-        ]) -> dict[str, str]:
+        def post(
+            self,
+            parsed_body: Body[
+                Annotated[
+                    _RequestModel | dict[str, str],
+                    conditional_type({
+                        ContentType.json: dict[str, str],
+                        ContentType.xml: _RequestModel,
+                    }),
+                ]
+            ],
+        ) -> dict[str, str]:
             if isinstance(parsed_body, _RequestModel):
                 return parsed_body.root
             return parsed_body

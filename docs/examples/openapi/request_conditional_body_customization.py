@@ -34,15 +34,18 @@ class UserController(
 ):
     parsers = (MsgspecJsonParser(), XmlParser())
 
-    def post(self, parsed_body: Body[
-        Annotated[
-            _SearchModel | XmlSearchModel,
-            conditional_type({
-                ContentType.json: SearchModel,
-                ContentType.xml: XmlSearchModel,
-            }),
+    def post(
+        self,
+        parsed_body: Body[
+            Annotated[
+                _SearchModel | XmlSearchModel,
+                conditional_type({
+                    ContentType.json: SearchModel,
+                    ContentType.xml: XmlSearchModel,
+                }),
+            ],
         ],
-    ]) -> str:
+    ) -> str:
         return 'post'
 
 

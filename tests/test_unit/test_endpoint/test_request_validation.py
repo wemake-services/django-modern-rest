@@ -28,7 +28,9 @@ class _WrongPydanticBodyController(
 ):
     """All body of these methods are not correct."""
 
-    def post(self, parsed_body: Body[_MyPydanticModel]) -> str:  # pragma: no cover
+    def post(
+        self, parsed_body: Body[_MyPydanticModel]
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
@@ -50,7 +52,9 @@ class _WrongPydanticQueryController(
 ):
     """All query params of these methods are not correct."""
 
-    def get(self, parsed_query: Query[_MyPydanticModel]) -> str:  # pragma: no cover
+    def get(
+        self, parsed_query: Query[_MyPydanticModel]
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
@@ -66,7 +70,9 @@ class _WrongPydanticHeadersController(
 ):
     """All headers of these methods are not correct."""
 
-    def get(self, parsed_headers: Headers[_MyPydanticHeaders]) -> str:  # pragma: no cover
+    def get(
+        self, parsed_headers: Headers[_MyPydanticHeaders]
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
