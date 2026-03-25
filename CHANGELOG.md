@@ -102,6 +102,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Added TraceCov integration for API coverage tracking in test suites,
   including automatic request tracking for `dmr_client` and
   `dmr_async_client`, #735.
+- Added `$dmr-from-drf` AI agent skill, #744
 
 ### Bugfixes
 

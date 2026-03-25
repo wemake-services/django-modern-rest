@@ -76,9 +76,11 @@ class SSEStreamingResponse(HttpResponseBase):
 
         """
         headers = {} if headers is None else dict(headers)
+        # Content-Type must be a str type, as wsgiref checks that
+        # to use str type.
         headers.update({
             'Cache-Control': 'no-cache',
-            'Content-Type': sse_renderer.content_type,
+            'Content-Type': str(sse_renderer.content_type),
             'X-Accel-Buffering': 'no',
         })
         if not settings.DEBUG:
