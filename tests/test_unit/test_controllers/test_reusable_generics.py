@@ -62,7 +62,7 @@ def test_several_layers() -> None:
         """Adding extra type vars just for the complexity."""
 
     class FinalController(
-        ReusableWithExtraType[PydanticSerializer, str, _BodyModel],  # type: ignore[type-var]
+        ReusableWithExtraType[PydanticSerializer, str, _BodyModel],
     ): ...
 
     assert not FinalController.is_abstract

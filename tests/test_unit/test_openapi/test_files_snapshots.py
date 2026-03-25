@@ -43,7 +43,8 @@ class _FileController(
 
     @modify(operation_id='file_test_id', deprecated=True)
     async def get(
-        self, parsed_file_metadata: FileMetadata[_SeveralFiles]
+        self,
+        parsed_file_metadata: FileMetadata[_SeveralFiles],
     ) -> list[int]:
         raise NotImplementedError
 

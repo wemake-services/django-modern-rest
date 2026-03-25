@@ -29,5 +29,4 @@ def test_custom_controller_validator_cls() -> None:
             _ControllerValidatorSubclass
         )
 
-    assert _CustomValidatorController
     assert _ControllerValidatorSubclass.was_called

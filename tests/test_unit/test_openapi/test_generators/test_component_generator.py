@@ -20,9 +20,8 @@ class _Fake(ComponentParser, Generic[_FakeT]):
     context_name = 'parsed_fake'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
@@ -31,9 +30,8 @@ class _Fake(ComponentParser, Generic[_FakeT]):
         raise NotImplementedError
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
         metadata: EndpointMetadata,
         serializer: type[BaseSerializer],

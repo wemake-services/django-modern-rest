@@ -15,7 +15,7 @@ from typing import (
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponseBase
 
-from dmr.components import Body
+from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError
 from dmr.headers import HeaderSpec, NewHeader
@@ -710,8 +710,8 @@ class EndpointMetadataValidator:
             return
 
         has_body = any(
-            is_safe_subclass(component_cls, Body)
-            for component_cls, _ in self.metadata.component_parsers
+            isinstance(component, BodyComponent)
+            for component, _ in self.metadata.component_parsers
         )
         if has_body:
             raise EndpointMetadataError(

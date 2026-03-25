@@ -117,11 +117,10 @@ class ComponentParserBuilder:
             if context_name != metadata.context_name:
                 raise UnsolvableAnnotationsError(
                     f'Parameter name for {metadata} must always be '
-                    f'{metadata.context_name} not {context_name} '
+                    f'{metadata.context_name} not {context_name!r} '
                     f'in {self._controller_cls!r}',
                 )
 
-            # TODO: validate type args? Like `Body` vs `Body[Model]`
             components.append((metadata, component.__origin__))
 
         return components
@@ -271,13 +270,14 @@ class QueryComponent(ComponentParser, Generic[_QueryT]):
         ...     category: str
         ...     reversed: bool
 
-        >>> class ProductListController(
-        ...     Query[ProductQuery],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class ProductListController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_query: Query[ProductQuery]) -> str:
+        ...         return parsed_query.category
 
     Will parse a request like ``?category=cars&reversed=true``
     into ``ProductQuery`` model.
+
+    Parameter for ``Query`` component must be named ``parsed_query``.
     """
 
     __slots__ = ()
@@ -342,13 +342,14 @@ class BodyComponent(ComponentParser, Generic[_BodyT]):
         ...     email: str
         ...     age: int
 
-        >>> class UserCreateController(
-        ...     Body[UserCreateInput],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class UserCreateController(Controller[PydanticSerializer]):
+        ...     def post(self, parsed_body: Body[UserCreateInput]) -> str:
+        ...         return parsed_body.email
 
     Will parse a body like ``{'email': 'user@example.org', 'age': 18}`` into
     ``UserCreateInput`` model.
+
+    Parameter for ``Body`` component must be named ``parsed_body``.
 
     When working with parsers that support
     :class:`dmr.parsers.SupportsDjangoDefaultParsing` interface,
@@ -486,15 +487,14 @@ class HeadersComponent(ComponentParser, Generic[_HeadersT]):
         >>> class AuthHeaders(pydantic.BaseModel):
         ...     token: str = pydantic.Field(alias='X-API-Token')
 
-        >>> class UserCreateController(
-        ...     Headers[AuthHeaders],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class UserCreateController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_headers: Headers[AuthHeaders]) -> str:
+        ...         return parsed_headers.token
 
     Will parse request headers like ``Token: secret`` into ``AuthHeaders``
     model.
 
-    You can access parsed headers as ``self.parsed_headers`` attribute.
+    Parameter for ``Headers`` component must be named ``parsed_headers``.
     """
 
     __slots__ = ()
@@ -554,10 +554,9 @@ class PathComponent(ComponentParser, Generic[_PathT]):
         >>> class UserPath(pydantic.BaseModel):
         ...     user_id: int
 
-        >>> class UserUpdateController(
-        ...     Path[UserPath],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class UserUpdateController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_path: Path[UserPath]) -> int:
+        ...         return parsed_path.user_id
 
         >>> router = Router(
         ...     'api/',
@@ -580,6 +579,8 @@ class PathComponent(ComponentParser, Generic[_PathT]):
     Will parse a url path like ``/user_id/100``
     which will be translated into ``{'user_id': 100}``
     into ``UserPath`` model.
+
+    Parameter for ``Path`` component must be named ``parsed_path``.
 
     It is way stricter than the original Django's routing system.
     For example, django allows to such cases:
@@ -676,14 +677,14 @@ class CookiesComponent(ComponentParser, Generic[_CookiesT]):
         >>> class UserSession(pydantic.BaseModel):
         ...     session_id: int
 
-        >>> class UserUpdateController(
-        ...     Cookies[UserSession],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
-
+        >>> class UserUpdateController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_cookies: Cookies[UserSession]) -> int:
+        ...         return parsed_cookies.session_id
 
     Will parse a request header like ``Cookie: session_id=123``
     into a model ``UserSession``.
+
+    Parameter for ``Cookies`` component must be named ``parsed_cookies``.
 
     .. seealso::
 
@@ -754,18 +755,20 @@ class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
         ...     receipt: TextFile
         ...     contract: TextFile
 
-        >>> class ContractController(
-        ...     FileMetadata[ContractPayload],
-        ...     Controller[PydanticSerializer],
-        ... ):
+        >>> class ContractController(Controller[PydanticSerializer]):
         ...     parsers = (MultiPartParser(),)
         ...
-        ...     def post(self) -> str:
+        ...     def post(
+        ...         self, parsed_file_metadata: FileMetadata[ContractPayload]
+        ...     ) -> str:
         ...         return 'Valid files!'
 
     What attributes are available to be validated?
     See :class:`django.core.files.uploadedfile.UploadedFile`
     for the full list of metadata attributes.
+
+    Parameter for ``FileMetadata`` component
+    must be named ``parsed_file_metadata``.
 
     Users can customize how they want their file metadata values:
     as single values or as lists of values.

@@ -204,15 +204,14 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
     error_message = 'From component'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: Endpoint,
         controller: Controller[BaseSerializer],
         *,
         field_model: Any,
     ) -> Any:
-        raise APIError(cls.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
+        raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
 
 class _ControllerWithTestComponent(

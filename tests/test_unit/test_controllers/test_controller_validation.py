@@ -53,7 +53,7 @@ def test_controller_have_either_mixins() -> None:
         match='not both meta mixins',
     ):
 
-        class _MixedController(
+        class _MixedController(  # type: ignore[misc]
             AsyncMetaMixin,
             MetaMixin,
             Controller[PydanticSerializer],
@@ -66,7 +66,7 @@ def test_controller_have_either_mixins() -> None:
         match='not both meta mixins',
     ):
 
-        class _MixedController2(
+        class _MixedController2(  # type: ignore[misc]
             MetaMixin,
             AsyncMetaMixin,
             Controller[PydanticSerializer],

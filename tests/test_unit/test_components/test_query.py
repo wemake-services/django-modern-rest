@@ -129,7 +129,8 @@ class _DefaultCastNullController(
     Controller[PydanticSerializer],
 ):
     def get(
-        self, parsed_query: Query[_DefaultCastNullQuery]
+        self,
+        parsed_query: Query[_DefaultCastNullQuery],
     ) -> _DefaultCastNullQuery:
         return parsed_query
 
@@ -139,7 +140,8 @@ class _EnableCastNullController(
     Controller[PydanticSerializer],
 ):
     def get(
-        self, parsed_query: Query[_EnableCastNullQuery]
+        self,
+        parsed_query: Query[_EnableCastNullQuery],
     ) -> _EnableCastNullQuery:
         return parsed_query
 

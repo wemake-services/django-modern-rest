@@ -34,7 +34,9 @@ class UserController(
         ],
     )
     def post(
-        self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]
+        self,
+        parsed_body: Body[UserModel],
+        parsed_headers: Headers[HeaderModel],
     ) -> UserModel:
         if parsed_headers.consumer != 'my-api':
             # Notice that this response is now documented in the spec,

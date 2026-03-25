@@ -1,4 +1,5 @@
 from http import HTTPMethod, HTTPStatus
+from typing import Any
 
 import pydantic
 import pytest
@@ -126,13 +127,14 @@ def test_multiple_components_get() -> None:
     """Ensure GET endpoint has components without Body."""
     endpoint = _MultiComponentController.api_endpoints['GET']
     assert isinstance(endpoint.metadata.component_parsers, list)
-    assert [
-        (component.context_name, model)
-        for component, model in endpoint.metadata.component_parsers
-    ] == [
+    components: list[tuple[str, Any]] = [
         ('parsed_query', _QueryModel),
         ('parsed_headers', _HeadersModel),
         ('parsed_path', _PathModel),
+    ]
+    assert components == [
+        (component.context_name, model)
+        for component, model in endpoint.metadata.component_parsers
     ]
 
 
@@ -147,12 +149,13 @@ def test_multiple_components_with_body(
     """Ensure controller has all multiple components in component_parsers."""
     endpoint = _MultiComponentController.api_endpoints[str(method)]
     assert isinstance(endpoint.metadata.component_parsers, list)
-    assert [
-        (component.context_name, model)
-        for component, model in endpoint.metadata.component_parsers
-    ] == [
+    components: list[tuple[str, Any]] = [
         ('parsed_query', _QueryModel),
         ('parsed_body', _BodyModel),
         ('parsed_headers', _HeadersModel),
         ('parsed_path', _PathModel),
+    ]
+    assert components == [
+        (component.context_name, model)
+        for component, model in endpoint.metadata.component_parsers
     ]

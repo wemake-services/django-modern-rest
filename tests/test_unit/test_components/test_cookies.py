@@ -9,6 +9,7 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Controller, Cookies
+from dmr.components import CookiesComponent
 from dmr.plugins.pydantic import PydanticSerializer
 
 
@@ -32,9 +33,12 @@ def test_cookie_parsing_correct(
 ) -> None:
     """Ensures that correct cookies can be parsed."""
     endpoint = _WrongPydanticBodyController.api_endpoints['POST']
-    assert endpoint.metadata.component_parsers == [
-        (Cookies[_CookieModel], (_CookieModel,)),
-    ]
+    assert len(endpoint.metadata.component_parsers) == 1
+    assert isinstance(
+        endpoint.metadata.component_parsers[0][0],
+        CookiesComponent,
+    )
+    assert endpoint.metadata.component_parsers[0][1] is _CookieModel
 
     request = rf.post('/whatever/')
     request.COOKIES = {
