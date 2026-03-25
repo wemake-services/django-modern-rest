@@ -17,6 +17,9 @@ We follow [Semantic Versions](https://semver.org/).
   for the `MediaType` request body
   for `Body` and `FileMedata` components, #695 and #698
 - Added support for Swagger, Redoc, and Scalar CDN configuration, #678
+- Added TraceCov integration for API coverage tracking in test suites,
+  including automatic request tracking for `dmr_client` and
+  `dmr_async_client`, #735.
 
 ### Bugfixes
 
