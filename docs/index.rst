@@ -207,6 +207,7 @@ Here are our amazing people who made this project possible.
 
   pages/ai/spec-first.rst
   pages/ai/dmr-from-ninja.rst
+  pages/ai/dmr-from-drf.rst
 
 
 .. toctree::

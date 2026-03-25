@@ -94,6 +94,8 @@ We support several custom agent skills:
   from a single ``openapi.json`` file (the "Spec First" approach)
 - ``dmr-from-django-ninja`` to help with
   :doc:`migrating from Django Ninja <ai/dmr-from-ninja>`
+- ``dmr-from-drf`` to help with
+  :doc:`migrating from Django REST Framework <ai/dmr-from-drf>`
 
 
 Showcase
