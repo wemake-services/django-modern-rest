@@ -30,7 +30,7 @@ class MathController(Controller[PydanticSerializer]):
             )
         # Reraise unfamiliar errors to let someone
         # else to handle them further.
-        raise exc
+        raise exc from None
 
     @modify(
         error_handler=wrap_handler(  # <- and we pass the handler

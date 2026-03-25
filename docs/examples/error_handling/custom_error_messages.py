@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
@@ -18,6 +18,7 @@ class CustomErrorModel(TypedDict):
 class ApiController(Controller[PydanticSerializer]):
     error_model = CustomErrorModel
 
+    @override
     def format_error(
         self,
         error: str | Exception,

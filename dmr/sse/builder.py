@@ -404,7 +404,7 @@ def _build_controller(  # noqa: WPS211, WPS234
         # FIXME: don't look at this, this will be removed in
         # https://github.com/wemake-services/django-modern-rest/pull/736
         new_annotations = {'return': get.__annotations__['return']}  # noqa: RUF012
-        for component in filter(  # pyrefly: ignore[no-matching-overload]
+        for component in filter(  # pyrefly: ignore[no-matching-overload]  # noqa: WPS604
             None,
             [path, query, headers, cookies],
         ):
@@ -415,10 +415,10 @@ def _build_controller(  # noqa: WPS211, WPS234
             )
             assert component_parser  # noqa: S101
             new_annotations[component_parser.context_name] = component
-            del component_parser, component
+            del component_parser, component  # noqa: WPS420
 
         get.__annotations__ = new_annotations
-        del new_annotations
+        del new_annotations  # noqa: WPS420, WPS604
 
     return SSEController  # pyright: ignore[reportReturnType]
 

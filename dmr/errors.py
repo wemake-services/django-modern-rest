@@ -305,4 +305,4 @@ def global_error_handler(
             controller.format_error(exc),
             status_code=exc.status_code,
         )
-    raise  # noqa: PLE0704
+    raise exc from None

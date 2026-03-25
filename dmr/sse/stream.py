@@ -138,7 +138,7 @@ class SSEStreamingResponse(HttpResponseBase):
     def handle_event_error(
         self,
         event: Any,
-        exception: Exception,
+        exc: Exception,
     ) -> SSE:
         """
         Handles errors that can happen while sending events.
@@ -146,9 +146,9 @@ class SSEStreamingResponse(HttpResponseBase):
         Return alternative event that will indicate what error has happened.
         By default does nothing and just reraises the exception.
         """
-        if isinstance(exception, ValidationError):
-            return SSEvent(ErrorModel(detail=exception.payload), event='error')
-        raise  # noqa: PLE0704
+        if isinstance(exc, ValidationError):
+            return SSEvent(ErrorModel(detail=exc.payload), event='error')
+        raise exc from None
 
     async def _events_pipeline(self) -> AsyncIterator[bytes]:
         # We want to close any async generators after they are fully used.

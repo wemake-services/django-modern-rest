@@ -23,6 +23,7 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.context import SerializerContext as SerializerContext
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
@@ -37,7 +38,7 @@ from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import APIError, APIRedirectError
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.serializer import BaseSerializer, SerializerContext
+from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.validation import (
     EndpointMetadataBuilder,

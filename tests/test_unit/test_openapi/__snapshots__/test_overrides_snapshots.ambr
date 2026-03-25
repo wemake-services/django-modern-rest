@@ -264,10 +264,6 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
-          "type": "object",
-          "title": "_CustomTitleForUserModel2"
-        },
         "ErrorDetail": {
           "properties": {
             "msg": {
@@ -316,6 +312,10 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "type": "object",
+          "title": "_CustomTitleForUserModel2"
         }
       },
       "securitySchemes": {}

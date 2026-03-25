@@ -1,7 +1,7 @@
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import (
+from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Annotated,
     Any,
@@ -96,7 +96,7 @@ class ComponentParserBuilder:
         """Run the building process, infer type vars if needed."""
         return self._resolve_type_vars(self._find_components())
 
-    def _find_components(self) -> list[ComponentParserSpec]:
+    def _find_components(self) -> list[ComponentParserSpec]:  # noqa: WPS231
         components: list[ComponentParserSpec] = []
         for context_name, component in self._get_func_signature().items():
             if context_name == 'return':

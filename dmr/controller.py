@@ -338,7 +338,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         You can access active blueprint
         via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
-        raise  # noqa: PLE0704
+        raise exc from None
 
     async def handle_async_error(
         self,
@@ -356,7 +356,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         You can access active blueprint
         via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
-        raise  # noqa: PLE0704
+        raise exc from None
 
     @override
     @deprecated(

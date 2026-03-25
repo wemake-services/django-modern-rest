@@ -7,9 +7,8 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
-from dmr.endpoint import Endpoint
+from dmr.endpoint import Endpoint, SerializerContext
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.serializer import SerializerContext
 from dmr.test import DMRRequestFactory
 
 

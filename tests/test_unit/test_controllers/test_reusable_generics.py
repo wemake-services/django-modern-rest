@@ -45,7 +45,8 @@ def test_several_layers() -> None:
 
     class OurController(
         ReusableController[PydanticSerializer, _BodyModel],
-    ): ...
+    ):
+        """Intermediate level."""
 
     assert not OurController.is_abstract
     assert OurController.serializer is PydanticSerializer
@@ -63,7 +64,8 @@ def test_several_layers() -> None:
 
     class FinalController(
         ReusableWithExtraType[PydanticSerializer, str, _BodyModel],
-    ): ...
+    ):
+        """Final level."""
 
     assert not FinalController.is_abstract
     assert FinalController.serializer is PydanticSerializer
@@ -84,9 +86,8 @@ def test_generic_parser_in_concrete_controller() -> None:
 
     with pytest.raises(UnsolvableAnnotationsError, match='must be concrete'):
 
-        class ConcreteController(
-            _BaseController[PydanticSerializer, _ModelT],
-        ): ...
+        class ConcreteController(_BaseController[PydanticSerializer, _ModelT]):
+            """Must raise."""
 
 
 @pytest.mark.skipif(

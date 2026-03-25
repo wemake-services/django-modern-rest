@@ -27,7 +27,7 @@ def division_error(  # <- we define an error handler
         )
     # Reraise unfamiliar errors to let someone
     # else to handle them further.
-    raise exc
+    raise exc from None
 
 
 class MathController(Controller[PydanticSerializer]):

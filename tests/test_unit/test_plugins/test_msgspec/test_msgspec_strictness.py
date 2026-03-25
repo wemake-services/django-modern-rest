@@ -13,9 +13,8 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
-from dmr.endpoint import Endpoint
+from dmr.endpoint import Endpoint, SerializerContext
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.serializer import SerializerContext
 from dmr.test import DMRRequestFactory
 
 

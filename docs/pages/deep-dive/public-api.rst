@@ -84,7 +84,7 @@ Serialization
 .. autoclass:: dmr.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.serializer.SerializerContext
+.. autoclass:: dmr.endpoint.SerializerContext
   :members:
 
 .. autoclass:: dmr.serializer.BaseSchemaGenerator

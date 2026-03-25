@@ -1,9 +1,8 @@
 from typing import ClassVar, final
 
 from dmr import Controller
-from dmr.endpoint import Endpoint
+from dmr.endpoint import Endpoint, SerializerContext
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.serializer import SerializerContext
 
 
 @final

@@ -110,7 +110,7 @@ def test_empty_request_body_disabled_controller() -> None:
     assert 'GET' in _Controller.api_endpoints
 
 
-def test_empty_request_body_disabled_scoped_controller() -> None:
+def test_empty_request_body_disabled_scope() -> None:
     """Ensure that disabling on one controller does not affect others."""
 
     class _Controller(Controller[PydanticSerializer]):

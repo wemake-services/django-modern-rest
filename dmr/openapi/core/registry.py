@@ -1,4 +1,4 @@
-from typing import Annotated, Any, ClassVar, Protocol, get_origin
+from typing import Any, ClassVar, Protocol
 
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
 from dmr.types import Empty, EmptyObj
@@ -57,8 +57,8 @@ class SchemaRegistry:
     def schemas(self) -> dict[str, Schema]:
         """Return schemas by name."""
         return {
-            schema_name: schema[0]
-            for schema_name, schema in self._schemas.items()
+            schema_name: self._schemas[schema_name][0]
+            for schema_name in sorted(self._schemas)
         }
 
     def register(
@@ -155,8 +155,6 @@ def _check_hashes(
 def _safe_hash(annotation: Any) -> int | None:
     if annotation is EmptyObj:
         return None
-    if get_origin(annotation) is Annotated:
-        annotation = annotation.__origin__
     try:
         return hash(annotation)
     except Exception:  # pragma: no cover

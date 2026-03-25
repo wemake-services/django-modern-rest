@@ -1,5 +1,5 @@
 from http import HTTPMethod, HTTPStatus
-from typing import Any
+from typing import Any, TypeAlias
 
 import pydantic
 import pytest
@@ -23,6 +23,8 @@ from dmr.components import (
     QueryComponent,
 )
 from dmr.plugins.pydantic import PydanticSerializer
+
+_ComponentTypes: TypeAlias = list[tuple[str, Any, tuple[Any, ...]]]
 
 
 class _QueryModel(pydantic.BaseModel):
@@ -134,7 +136,7 @@ def test_multiple_components_get() -> None:
     """Ensure GET endpoint has components without Body."""
     endpoint = _MultiComponentController.api_endpoints['GET']
     assert isinstance(endpoint.metadata.component_parsers, list)
-    components: list[tuple[str, Any, tuple[Any, ...]]] = [
+    components: _ComponentTypes = [
         ('parsed_query', _QueryModel, (IsInstance(QueryComponent),)),
         ('parsed_headers', _HeadersModel, (IsInstance(HeadersComponent),)),
         ('parsed_path', _PathModel, (IsInstance(PathComponent),)),
@@ -156,7 +158,7 @@ def test_multiple_components_with_body(
     """Ensure controller has all multiple components in component_parsers."""
     endpoint = _MultiComponentController.api_endpoints[str(method)]
     assert isinstance(endpoint.metadata.component_parsers, list)
-    components: list[tuple[str, Any, tuple[Any, ...]]] = [
+    components: _ComponentTypes = [
         ('parsed_query', _QueryModel, (IsInstance(QueryComponent),)),
         ('parsed_headers', _HeadersModel, (IsInstance(HeadersComponent),)),
         ('parsed_path', _PathModel, (IsInstance(PathComponent),)),

@@ -108,7 +108,7 @@ class UserUpdateController(Controller[PydanticSerializer]):
                 ),
                 status_code=HTTPStatus.NOT_FOUND,
             )
-        return await super().handle_async_error(endpoint, controller, exc)
+        raise exc from None
 
     @modify(
         error_handler=wrap_handler(handle_validate_error),

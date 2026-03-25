@@ -127,7 +127,7 @@ class _ModifyComplexHandler(Controller[PydanticSerializer]):
                 'Endpoint',
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
-        raise exc
+        raise exc from None
 
     @modify(
         status_code=HTTPStatus.OK,
@@ -163,7 +163,7 @@ class _ModifyComplexHandler(Controller[PydanticSerializer]):
                 'Controller',
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
-        raise exc
+        raise exc from None
 
 
 @pytest.mark.parametrize(
@@ -213,7 +213,7 @@ class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
                 'Endpoint',
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
-        raise exc
+        raise exc from None
 
     @modify(
         status_code=HTTPStatus.OK,
@@ -249,7 +249,7 @@ class _ModifyAsyncComplexHandler(Controller[PydanticSerializer]):
                 'Controller',
                 status_code=HTTPStatus.PAYMENT_REQUIRED,
             )
-        raise exc
+        raise exc from None
 
 
 @pytest.mark.asyncio

@@ -47,7 +47,7 @@ more types by extending it and customizing the method you need.
 Customizing the serializer context
 ----------------------------------
 
-We use :class:`dmr.serializer.SerializerContext` type
+We use :class:`dmr.endpoint.SerializerContext` type
 to deserialize all components from a single model, so it would be much faster
 than parsing each component separately.
 
@@ -64,7 +64,7 @@ It is kinda useful for request bodies, where you don't control the clients.
 Here's how we determine the default strictness for ``pydantic`` models:
 
 1. If
-   :attr:`~dmr.serializer.SerializerContext.strict_validation`
+   :attr:`~dmr.endpoint.SerializerContext.strict_validation`
    is not ``None``, we return the serializer-level strictness
 2. Then ``pydantic`` looks at ``strict`` attribute
    in :class:`~pydantic.config.ConfigDict`
