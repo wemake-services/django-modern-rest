@@ -17,7 +17,11 @@ class UserUpload(pydantic.BaseModel):
 
 
 class UserController(
-    FileMetadata[
+    Controller[PydanticSerializer],
+):
+    parsers = (MultiPartParser(),)
+
+    def post(self, parsed_file_metadata: FileMetadata[
         Annotated[
             UserUpload,
             MediaTypeMetadata(
@@ -26,12 +30,7 @@ class UserController(
                 encoding={'avatar': Encoding(content_type='image/png')},
             ),
         ]
-    ],
-    Controller[PydanticSerializer],
-):
-    parsers = (MultiPartParser(),)
-
-    def post(self) -> str:
+    ]) -> str:
         return 'post'
 
 

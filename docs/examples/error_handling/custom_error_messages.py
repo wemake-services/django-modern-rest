@@ -40,7 +40,6 @@ class _CustomErrorMixin:
 class ApiController(
     _CustomErrorMixin,
     Controller[PydanticSerializer],
-    Body[dict[str, str]],
 ):
     @modify(
         extra_responses=[
@@ -50,7 +49,7 @@ class ApiController(
             ),
         ],
     )
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise APIError(
             self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,

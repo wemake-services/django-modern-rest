@@ -18,10 +18,9 @@ class _PathModel(TypedDict):
 
 class PostController(
     Controller[PydanticSerializer],
-    Path[_PathModel],
 ):
-    def get(self) -> _PathModel:
-        return self.parsed_path
+    def get(self, parsed_path: Path[_PathModel]) -> _PathModel:
+        return parsed_path
 
 
 router = Router(

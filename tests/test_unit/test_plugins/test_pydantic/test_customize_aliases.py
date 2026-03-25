@@ -22,10 +22,10 @@ class _BodyModel(pydantic.BaseModel):
 
 
 @final
-class _AliasController(Controller[PydanticSerializer], Body[_BodyModel]):
-    def post(self) -> _BodyModel:
+class _AliasController(Controller[PydanticSerializer]):
+    def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
         """Will consume and produce aliased names."""
-        return self.parsed_body
+        return parsed_body
 
 
 @final
@@ -43,11 +43,10 @@ class _NoAliasPydanticSerializer(PydanticSerializer):
 @final
 class _NoAliasController(
     Controller[_NoAliasPydanticSerializer],
-    Body[_BodyModel],
 ):
-    def post(self) -> _BodyModel:
+    def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
         """Will consume and produce regular names."""
-        return self.parsed_body
+        return parsed_body
 
 
 def test_default_alias_serialization(

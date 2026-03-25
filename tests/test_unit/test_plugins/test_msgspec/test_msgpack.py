@@ -43,17 +43,16 @@ class _ResponseModel(msgspec.Struct):
 
 class _MsgpackController(
     Controller[MsgspecSerializer],
-    Body[_RequestModel],
 ):
     @modify(parsers=[MsgpackParser()], renderers=[MsgpackRenderer()])
-    def post(self) -> _ResponseModel:
+    def post(self, parsed_body: Body[_RequestModel]) -> _ResponseModel:
         return _ResponseModel(
             uid=uuid.uuid4(),
             metadata={
-                'email': self.parsed_body.email,
-                'username': self.parsed_body.username,
+                'email': parsed_body.email,
+                'username': parsed_body.username,
             },
-            friends=[self.parsed_body.friend_id],
+            friends=[parsed_body.friend_id],
         )
 
 
@@ -181,13 +180,13 @@ def test_msgpack_response_validation(
     })
 
 
-class _MsgpackNoneController(Controller[MsgspecSerializer], Body[None]):
+class _MsgpackNoneController(Controller[MsgspecSerializer]):
     @modify(
         parsers=[MsgpackParser()],
         renderers=[MsgpackRenderer()],
         status_code=HTTPStatus.NO_CONTENT,
     )
-    def post(self) -> None:
+    def post(self, parsed_body: Body[None]) -> None:
         """Return `None`."""
 
 

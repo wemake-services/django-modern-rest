@@ -12,10 +12,9 @@ class UserCreateModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserCreateModel],
 ):
-    async def post(self) -> UserCreateModel:
-        return self.parsed_body
+    async def post(self, parsed_body: Body[UserCreateModel]) -> UserCreateModel:
+        return parsed_body
 
 
 router = Router(

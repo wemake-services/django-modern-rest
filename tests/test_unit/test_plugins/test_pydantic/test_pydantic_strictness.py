@@ -21,10 +21,9 @@ class _InputModel(pydantic.BaseModel):
 @final
 class _DefaultInputController(
     Controller[PydanticSerializer],
-    Body[_InputModel],
 ):
-    def post(self) -> _InputModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
+        return parsed_body
 
 
 def test_default_input_strictness_lax(dmr_rf: DMRRequestFactory) -> None:
@@ -105,11 +104,10 @@ class _StrictContext(SerializerContext):
 @final
 class _ExplicitStrictInputController(
     Controller[PydanticSerializer],
-    Body[_InputModel],
 ):
     serializer_context_cls = _StrictContext
 
-    def post(self) -> _InputModel:
+    def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
         raise NotImplementedError
 
 
@@ -142,12 +140,11 @@ class _LaxContext(SerializerContext):
 @final
 class _ExplicitLaxInputController(
     Controller[PydanticSerializer],
-    Body[_InputModel],
 ):
     serializer_context_cls = _LaxContext
 
-    def post(self) -> _InputModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
+        return parsed_body
 
 
 def test_explicit_input_laxness(dmr_rf: DMRRequestFactory) -> None:
@@ -174,9 +171,8 @@ class _ConfigStrictModel(pydantic.BaseModel):
 @final
 class _ConfigStrictController(
     Controller[PydanticSerializer],
-    Body[_ConfigStrictModel],
 ):
-    def post(self) -> _ConfigStrictModel:
+    def post(self, parsed_body: Body[_ConfigStrictModel]) -> _ConfigStrictModel:
         raise NotImplementedError
 
 
@@ -192,12 +188,11 @@ def test_model_config_strictness(dmr_rf: DMRRequestFactory) -> None:
 @final
 class _ExplicitLaxConfigController(
     Controller[PydanticSerializer],
-    Body[_ConfigStrictModel],
 ):
     serializer_context_cls = _LaxContext
 
-    def post(self) -> _ConfigStrictModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_ConfigStrictModel]) -> _ConfigStrictModel:
+        return parsed_body
 
 
 def test_model_config_strictness_override(dmr_rf: DMRRequestFactory) -> None:

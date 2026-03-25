@@ -16,10 +16,9 @@ class _PathModel(pydantic.BaseModel):
 
 @final
 class _PathController(
-    Path[_PathModel],
     Controller[PydanticSerializer],
 ):
-    def get(self) -> _PathModel:
+    def get(self, parsed_path: Path[_PathModel]) -> _PathModel:
         raise NotImplementedError
 
 

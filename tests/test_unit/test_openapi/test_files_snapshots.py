@@ -38,12 +38,11 @@ class _SeveralFiles(pydantic.BaseModel):
 
 class _FileController(
     Controller[PydanticSerializer],
-    FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
 
     @modify(operation_id='file_test_id', deprecated=True)
-    async def get(self) -> list[int]:
+    async def get(self, parsed_file_metadata: FileMetadata[_SeveralFiles]) -> list[int]:
         raise NotImplementedError
 
 
@@ -97,12 +96,10 @@ class _DescriptionModel(pydantic.BaseModel):
 
 class _BodyAndFileController(
     Controller[PydanticSerializer],
-    Body[_DescriptionModel],
-    FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
 
-    async def post(self) -> list[int]:
+    async def post(self, parsed_body: Body[_DescriptionModel], parsed_file_metadata: FileMetadata[_SeveralFiles]) -> list[int]:
         raise NotImplementedError
 
 
@@ -124,7 +121,10 @@ def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
 
 class _FileMetadataController(
     Controller[PydanticSerializer],
-    FileMetadata[
+):
+    parsers = (MultiPartParser(),)
+
+    async def get(self, parsed_file_metadata: FileMetadata[
         Annotated[
             _SeveralFiles,
             MediaTypeMetadata(
@@ -135,11 +135,7 @@ class _FileMetadataController(
                 },
             ),
         ]
-    ],
-):
-    parsers = (MultiPartParser(),)
-
-    async def get(self) -> list[int]:
+    ]) -> list[int]:
         raise NotImplementedError
 
 

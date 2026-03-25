@@ -35,9 +35,8 @@ class _UserModel(pydantic.BaseModel):
 
 class _UserController(
     Controller[PydanticSerializer],
-    Body[dict[str, Any]],
 ):
-    def post(self) -> _UserModel:
+    def post(self, parsed_body: Body[dict[str, Any]]) -> _UserModel:
         raise NotImplementedError
 
 
@@ -109,7 +108,9 @@ class _RegularBody(pydantic.BaseModel):
 
 
 class _ExistingBodyExamplesController(
-    Body[
+    Controller[PydanticSerializer],
+):
+    def post(self, parsed_body: Body[
         Annotated[
             _RegularBody,
             MediaTypeMetadata(
@@ -122,10 +123,7 @@ class _ExistingBodyExamplesController(
                 },
             ),
         ]
-    ],
-    Controller[PydanticSerializer],
-):
-    def post(self) -> int:
+    ]) -> int:
         raise NotImplementedError
 
 

@@ -30,7 +30,11 @@ SearchModel: TypeAlias = Annotated[
 
 
 class UserController(
-    Body[
+    Controller[PydanticSerializer],
+):
+    parsers = (MsgspecJsonParser(), XmlParser())
+
+    def post(self, parsed_body: Body[
         Annotated[
             _SearchModel | XmlSearchModel,
             conditional_type({
@@ -38,12 +42,7 @@ class UserController(
                 ContentType.xml: XmlSearchModel,
             }),
         ],
-    ],
-    Controller[PydanticSerializer],
-):
-    parsers = (MsgspecJsonParser(), XmlParser())
-
-    def post(self) -> str:
+    ]) -> str:
         return 'post'
 
 

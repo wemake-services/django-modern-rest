@@ -21,7 +21,6 @@ class UserModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserModel],
 ):
     @validate(
         ResponseSpec(
@@ -33,15 +32,15 @@ class UserController(
             },
         ),
     )
-    def post(self) -> HttpResponse:
+    def post(self, parsed_body: Body[UserModel]) -> HttpResponse:
         uid = uuid.uuid4()
         # This response would have one required cookie `user_id`
         # and one optional cookie `session`:
         cookies = {'user_id': NewCookie(value=str(uid))}
-        if '@ourdomain.com' in self.parsed_body.email:
+        if '@ourdomain.com' in parsed_body.email:
             cookies['session'] = NewCookie(value='true', max_age=1000)
         return self.to_response(
-            self.parsed_body,
+            parsed_body,
             cookies=cookies,
         )
 

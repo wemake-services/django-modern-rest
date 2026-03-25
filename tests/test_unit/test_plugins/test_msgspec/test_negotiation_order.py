@@ -31,13 +31,12 @@ def test_parser_order(rf: RequestFactory) -> None:
     @final
     class _Controller(
         Controller[MsgspecSerializer],
-        Body[_RequestModel],
     ):
         @modify(parsers=[JsonParser()], renderers=[JsonRenderer()])
-        def post(self) -> dict[str, str]:
+        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
             nonlocal real_request  # noqa: WPS420
             real_request = self.request
-            return self.parsed_body.root
+            return parsed_body.root
 
     request = rf.generic(
         'POST',

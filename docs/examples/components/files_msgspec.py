@@ -21,12 +21,11 @@ class _UploadedFiles(msgspec.Struct):
 
 class FileController(
     Controller[MsgspecSerializer],
-    FileMetadata[_UploadedFiles],
 ):
     parsers = (MultiPartParser(),)
 
-    def put(self) -> _UploadedFiles:
-        return self.parsed_file_metadata
+    def put(self, parsed_file_metadata: FileMetadata[_UploadedFiles]) -> _UploadedFiles:
+        return parsed_file_metadata
 
 
 # run: {"controller": "FileController", "url": "/api/users/", "method": "put", "headers": {"Content-Type": "multipart/form-data"}, "files": {"receipt": "receipt.txt", "rules": "rules.txt"}, "body": {}}  # noqa: ERA001, E501

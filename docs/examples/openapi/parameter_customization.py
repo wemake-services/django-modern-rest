@@ -13,7 +13,9 @@ class QueryModel(msgspec.Struct):
 
 
 class UserController(
-    Query[
+    Controller[MsgspecSerializer],
+):
+    def post(self, parsed_query: Query[
         Annotated[
             QueryModel,
             ParameterMetadata(
@@ -21,10 +23,7 @@ class UserController(
                 deprecated=True,
             ),
         ]
-    ],
-    Controller[MsgspecSerializer],
-):
-    def post(self) -> str:
+    ]) -> str:
         return 'post'
 
 
