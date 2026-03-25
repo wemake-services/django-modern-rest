@@ -83,7 +83,7 @@ of endpoints to describe response cookies.
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 17
+  :emphasize-lines: 16
 
 And you can set any cookies to :attr:`django.http.HttpResponse.cookies`
 with "real endpoints". Since we have strict schemas,
@@ -94,7 +94,7 @@ it is required to describe the set cookies with
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 30-33, 40, 42, 45
+  :emphasize-lines: 23-24
 
 The last important thing about cookies
 is :attr:`~dmr.cookies.CookieSpec.skip_validation` attribute.
