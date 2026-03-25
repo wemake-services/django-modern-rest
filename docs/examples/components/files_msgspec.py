@@ -19,9 +19,7 @@ class _UploadedFiles(msgspec.Struct):
     rules: _FileModel
 
 
-class FileController(
-    Controller[MsgspecSerializer],
-):
+class FileController(Controller[MsgspecSerializer]):
     parsers = (MultiPartParser(),)
 
     def put(

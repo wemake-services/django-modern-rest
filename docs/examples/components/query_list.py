@@ -13,9 +13,7 @@ class _QueryModel(msgspec.Struct):
     regular: int
 
 
-class ApiController(
-    Controller[MsgspecSerializer],
-):
+class ApiController(Controller[MsgspecSerializer]):
     def get(self, parsed_query: Query[_QueryModel]) -> _QueryModel:
         return parsed_query
 

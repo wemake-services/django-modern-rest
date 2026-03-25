@@ -19,9 +19,7 @@ class _UploadedFiles(pydantic.BaseModel):
     rules: _FileModel
 
 
-class FileController(
-    Controller[PydanticSerializer],
-):
+class FileController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     def put(

@@ -9,9 +9,7 @@ class _CookiesModel(pydantic.BaseModel):
     client_id: int
 
 
-class ApiController(
-    Controller[PydanticSerializer],
-):
+class ApiController(Controller[PydanticSerializer]):
     def get(self, parsed_cookies: Cookies[_CookiesModel]) -> _CookiesModel:
         return parsed_cookies
 

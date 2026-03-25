@@ -16,9 +16,7 @@ class _PathModel(TypedDict):
     post_id: Annotated[int, msgspec.Meta(gt=0)]
 
 
-class PostController(
-    Controller[MsgspecSerializer],
-):
+class PostController(Controller[MsgspecSerializer]):
     def get(self, parsed_path: Path[_PathModel]) -> _PathModel:
         return parsed_path
 

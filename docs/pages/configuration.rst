@@ -383,8 +383,8 @@ Hacks
 
   Some parsers like :class:`~dmr.parsers.MultiPartParser`
   require ``.POST`` and ``.FILES`` to be set to work with
-  :class:`~dmr.components.Body`
-  and :class:`~dmr.components.FileMetadata`.
+  :data:`~dmr.components.Body`
+  and :data:`~dmr.components.FileMetadata`.
 
   However, we build REST APIs where more methods are in use, not just ``POST``.
   So, we use this setting to populate ``.POST`` and ``.FILES``

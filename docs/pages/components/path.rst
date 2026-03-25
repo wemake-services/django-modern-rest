@@ -4,7 +4,7 @@ Path parameters
 Using native Django path params
 -------------------------------
 
-You don't have to use :class:`~dmr.components.Path` to parse url parameters.
+You don't have to use :data:`~dmr.components.Path` to parse url parameters.
 By default Django puts all url parameters
 into ``self.args`` and ``self.kwargs``.
 
@@ -21,7 +21,7 @@ What happens here?
    dict with path params with no extra parsing from our side
 2. We define a custom :class:`~dmr.metadata.ResponseSpec`
    instance with ``404`` as a response code,
-   :class:`~dmr.components.Path` injects this response automatically,
+   :data:`~dmr.components.Path` injects this response automatically,
    but since we don't use – we have to do that manually
    for our :ref:`response_validation` to work
 3. We also show how one can use :class:`~dmr.response.APIError`
@@ -42,7 +42,7 @@ Django supports multiple pre-defined path converter types:
 The main downside of this method is that ``self.kwargs`` is typed
 as ``dict[str, Any]``. Which is not always ideal.
 If you need typed path parameters,
-use :class:`~dmr.components.Path` component with a model.
+use :data:`~dmr.components.Path` component with a model.
 
 .. note::
 
@@ -68,13 +68,13 @@ When do you need to parse path parameters into models?
    because ``Path`` does not support variadic url args from ``self.args``
 
 You can define ``Path`` parameters
-the same way you define :class:`~dmr.components.Headers`,
-:class:`~dmr.components.Query` and
-:class:`~dmr.components.Cookies` parameters.
+the same way you define :data:`~dmr.components.Headers`,
+:data:`~dmr.components.Query` and
+:data:`~dmr.components.Cookies` parameters.
 
 .. note::
 
-  Parsed ``Path`` is available as ``self.parsed_path``.
+  Parsed ``Path`` parameter must be named ``parsed_path``.
 
 This is how you can parse ``Path`` parameters into a model:
 
@@ -99,7 +99,7 @@ What happens in this example?
 1. We define a ``Path`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.Path` component,
+2. Next, we use :data:`~dmr.components.Path` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_path`` that will have the correct model type

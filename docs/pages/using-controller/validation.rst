@@ -21,7 +21,7 @@ You can disable response validation via configuration:
 
     .. tab:: Active validation
 
-      .. literalinclude:: /examples/returning_responses/active_validation.py
+      .. literalinclude:: /examples/using_controller/active_validation.py
         :caption: views.py
         :language: python
         :linenos:
@@ -29,7 +29,7 @@ You can disable response validation via configuration:
 
     .. tab:: Disable per endpoint
 
-      .. literalinclude:: /examples/returning_responses/per_endpoint.py
+      .. literalinclude:: /examples/using_controller/per_endpoint.py
         :caption: views.py
         :language: python
         :linenos:
@@ -37,7 +37,7 @@ You can disable response validation via configuration:
 
     .. tab:: Disable per controller
 
-      .. literalinclude:: /examples/returning_responses/per_controller.py
+      .. literalinclude:: /examples/using_controller/per_controller.py
         :caption: views.py
         :language: python
         :linenos:
@@ -56,7 +56,7 @@ You can disable response validation via configuration:
       The "right way" is not to disable the validation,
       but to specify the correct schema to be returned from an endpoint.
 
-      .. literalinclude:: /examples/returning_responses/right_way.py
+      .. literalinclude:: /examples/using_controller/right_way.py
         :caption: views.py
         :language: python
         :linenos:

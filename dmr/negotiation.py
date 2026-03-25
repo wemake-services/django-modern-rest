@@ -166,7 +166,7 @@ def request_parser(request: HttpRequest) -> Parser | None:
     .. note::
 
         Since request parsing is only used when there's
-        a :class:`dmr.components.Body` component,
+        a :data:`dmr.components.Body` component,
         there might be no parser.
 
     """

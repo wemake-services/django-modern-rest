@@ -43,9 +43,7 @@ class UserResponseModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     async def post(
         self,
         parsed_body: Body[UserCreateModel],

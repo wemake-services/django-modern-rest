@@ -9,9 +9,7 @@ class _CookiesModel(msgspec.Struct):
     client_id: int
 
 
-class ApiController(
-    Controller[MsgspecSerializer],
-):
+class ApiController(Controller[MsgspecSerializer]):
     def get(self, parsed_cookies: Cookies[_CookiesModel]) -> _CookiesModel:
         return parsed_cookies
 

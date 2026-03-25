@@ -7,7 +7,6 @@ from typing import (  # noqa: WPS235
     Any,
     ClassVar,
     Final,
-    Generic,
     TypeAlias,
     TypeVar,
     get_type_hints,
@@ -127,6 +126,7 @@ class ComponentParserBuilder:
 
     def _get_func_signature(self) -> dict[str, Any]:
         try:
+            # TODO: we get_type_hints twice, maybe we should optimize this?
             return get_type_hints(
                 self._func,
                 # We need to get `Annotated` back:
@@ -260,7 +260,7 @@ class ComponentParser(ResponseSpecProvider):
         raise NotImplementedError
 
 
-class QueryComponent(ComponentParser, Generic[_QueryT]):
+class QueryComponent(ComponentParser):
     """
     Parses query params of the request.
 
@@ -331,10 +331,11 @@ class QueryComponent(ComponentParser, Generic[_QueryT]):
         )
 
 
-Query: TypeAlias = Annotated[_QueryT, QueryComponent[_QueryT]()]
+Query: TypeAlias = Annotated[_QueryT, QueryComponent()]
+"""Annotated alias for parsing query parameters."""
 
 
-class BodyComponent(ComponentParser, Generic[_BodyT]):
+class BodyComponent(ComponentParser):
     """
     Parses body of the request.
 
@@ -483,10 +484,11 @@ class BodyComponent(ComponentParser, Generic[_BodyT]):
         )
 
 
-Body: TypeAlias = Annotated[_BodyT, BodyComponent[_BodyT]()]
+Body: TypeAlias = Annotated[_BodyT, BodyComponent()]
+"""Annotated alias for parsing requests bodies."""
 
 
-class HeadersComponent(ComponentParser, Generic[_HeadersT]):
+class HeadersComponent(ComponentParser):
     """
     Parses request headers.
 
@@ -550,10 +552,11 @@ class HeadersComponent(ComponentParser, Generic[_HeadersT]):
         )
 
 
-Headers: TypeAlias = Annotated[_HeadersT, HeadersComponent[_HeadersT]()]
+Headers: TypeAlias = Annotated[_HeadersT, HeadersComponent()]
+"""Annotated alias for parsing header parameters."""
 
 
-class PathComponent(ComponentParser, Generic[_PathT]):
+class PathComponent(ComponentParser):
     """
     Parses the url part of the request.
 
@@ -677,10 +680,11 @@ class PathComponent(ComponentParser, Generic[_PathT]):
         )
 
 
-Path: TypeAlias = Annotated[_PathT, PathComponent[_PathT]()]
+Path: TypeAlias = Annotated[_PathT, PathComponent()]
+"""Annotated alias for parsing path parameters."""
 
 
-class CookiesComponent(ComponentParser, Generic[_CookiesT]):
+class CookiesComponent(ComponentParser):
     """
     Parses the cookies from :attr:`django.http.HttpRequest.COOKIES`.
 
@@ -741,10 +745,11 @@ class CookiesComponent(ComponentParser, Generic[_CookiesT]):
         )
 
 
-Cookies: TypeAlias = Annotated[_CookiesT, CookiesComponent[_CookiesT]()]
+Cookies: TypeAlias = Annotated[_CookiesT, CookiesComponent()]
+"""Annotated alias for parsing cookie parameters."""
 
 
-class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
+class FileMetadataComponent(ComponentParser):
     """
     Parses files metadata from :attr:`django.http.HttpRequest.FILES`.
 
@@ -945,5 +950,6 @@ class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
 
 FileMetadata: TypeAlias = Annotated[
     _FileMetadataT,
-    FileMetadataComponent[_FileMetadataT](),
+    FileMetadataComponent(),
 ]
+"""Annotated alias for parsing file metadata."""

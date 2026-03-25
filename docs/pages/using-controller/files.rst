@@ -16,7 +16,7 @@ To do so, you indicate that you will return a file with
 We provide :class:`dmr.renderers.FileRenderer` for this case.
 It can also accept a specific ``content_type`` to render:
 
-.. literalinclude:: /examples/returning_responses/file_response.py
+.. literalinclude:: /examples/using_controller/file_response.py
   :caption: views.py
   :language: python
   :linenos:

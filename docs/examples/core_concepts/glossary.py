@@ -25,4 +25,4 @@ class UserController(  # <- `Controller` definition
         return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
 
 
-# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

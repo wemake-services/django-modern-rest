@@ -30,9 +30,7 @@ class _OutputPayload(pydantic.BaseModel):
     user_email: str
 
 
-class FileAndBodyController(
-    Controller[PydanticSerializer],
-):
+class FileAndBodyController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     def post(

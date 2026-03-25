@@ -183,7 +183,7 @@ There are different styles and other features
 that :class:`~dmr.openapi.objects.Parameter` supports
 in `OpenAPI Parameters <https://learn.openapis.org/specification/parameters.html>`_.
 
-For example, if you want to change how :class:`~dmr.components.Query`
+For example, if you want to change how :data:`~dmr.components.Query`
 parameter is documented with the help
 of :class:`dmr.openapi.objects.ParameterMetadata` annotation:
 
@@ -202,7 +202,7 @@ There are different metadata fields, like ``examples`` and ``encoding``,
 that :class:`~dmr.openapi.objects.MediaType` supports
 in `OpenAPI MediaType <https://spec.openapis.org/oas/latest#media-type-object>`_.
 
-For example, if you want to change how :class:`~dmr.components.Body`
+For example, if you want to change how :data:`~dmr.components.Body`
 provides examples,
 you can use :class:`dmr.openapi.objects.MediaTypeMetadata` annotation:
 
@@ -218,7 +218,7 @@ We also support the same way for conditional types:
   :language: python
   :linenos:
 
-And for :class:`~dmr.components.FileMetadata`:
+And for :data:`~dmr.components.FileMetadata`:
 
 .. literalinclude:: /examples/openapi/request_files_customization.py
   :caption: views.py

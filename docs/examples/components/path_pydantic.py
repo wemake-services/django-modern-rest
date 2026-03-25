@@ -16,9 +16,7 @@ class _PathModel(TypedDict):
     post_id: Annotated[int, pydantic.Field(gt=0)]
 
 
-class PostController(
-    Controller[PydanticSerializer],
-):
+class PostController(Controller[PydanticSerializer]):
     def get(self, parsed_path: Path[_PathModel]) -> _PathModel:
         return parsed_path
 

@@ -13,7 +13,7 @@ Python REST frameworks is code re-usability.
 - ``fastapi`` does not even offer a way to write reusable code,
   because it is based on functions, which are really hard to reuse and modify.
   That's why you have to copy paste lots of code just to,
-  for example, use JWT auth.
+  for example, use the most common things such as JWT auth.
 
 What does ``django-modern-rest`` offer instead?
 
@@ -99,7 +99,8 @@ We would need to implement this method in all of our concrete controllers.
         :language: python
 
 Note that ``msgspec`` and ``pydantic`` controllers in this
-case have completely different request and response bodies.
+case have completely different request and response bodies
+and completely different OpenAPI schemas.
 
 We can completely customize each controller and all parsing components
 and return type validation.
@@ -110,21 +111,3 @@ and return type validation.
   the same way for concrete controllers.
 
   We infer the passed values during import time and use real types.
-
-
-Building controllers
---------------------
-
-We support buildings controller types in import time
-for the deepest level of customization and boilerplate reduction.
-
-Basically, the idea is simple: you create a controller inside a function,
-then use it as a regular controller.
-
-This is how our :func:`dmr.sse.builder.sse` function works.
-Take a look at its source code, if you want an example.
-
-However, this feature should be the last resort:
-we provide enough flexibility for the common use-cases,
-but if you are building something completely different,
-like a SSE / WebSocket handlers, you might need this level.

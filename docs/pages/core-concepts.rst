@@ -22,8 +22,8 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 
   Component
     Controllers parse data via components like
-    :class:`~dmr.components.Body`
-    or :class:`~dmr.components.Headers`.
+    :data:`~dmr.components.Body`
+    or :data:`~dmr.components.Headers`.
     You can write your own components.
 
   Metadata
@@ -39,8 +39,9 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 
   Routing
     Routing is a mapping of URLs to controllers.
-    If some controllers need the same URLs, but different data parsing, we can
-    :doc:`compose <routing>` them.
+    We use default Django's URL routing.
+    Controllers might have many URLs, for example:
+    ``/api/v1/users/`` and ``/api/v2/users/``
 
 Example:
 
@@ -94,7 +95,7 @@ Next up
     :gutter: 2
 
     .. grid-item-card:: :octicon:`rocket` Using Controller
-      :link: using-controller
+      :link: using-controller/index
       :link-type: doc
 
       Learn how controllers work.

@@ -51,8 +51,8 @@ How parser and renderer are selected
 ------------------------------------
 
 We select a :class:`~dmr.parsers.Parser` instance
-if there's a :class:`~dmr.components.Body`
-or :class:`~dmr.components.FileMetadata` components to parse.
+if there's a :data:`~dmr.components.Body`
+or :data:`~dmr.components.FileMetadata` components to parse.
 Otherwise, for performance reasons, no parser is selected at all.
 Nothing to parse - no parser is selected.
 
@@ -190,7 +190,7 @@ Using different schemes for different content types
 
 Sometimes we have to accept different schemes based on the content type.
 `According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
-:class:`~dmr.components.Body`
+:data:`~dmr.components.Body`
 should support different content types.
 
 We utilize :data:`typing.Annotated`

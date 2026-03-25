@@ -33,7 +33,7 @@ Parsing files
 
 .. note::
 
-  Parsed ``FileMetadata`` is available as ``self.parsed_file_metadata``.
+  Parsed ``FileMetadata`` parameter must be named ``parsed_file_metadata``.
   While file objects themselves are available as ``self.request.FILES``.
   See :attr:`django.http.HttpRequest.FILES` for more info.
 
@@ -73,7 +73,7 @@ What happens in this example?
 1. We define a ``FileMetadata`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.FileMetadata` component,
+2. Next, we use :data:`~dmr.components.FileMetadata` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_file_metadata``
@@ -118,7 +118,7 @@ This is also supported:
   :language: python
   :linenos:
 
-To do that also define :class:`~dmr.components.Body` component
+To do that also define :data:`~dmr.components.Body` component
 in the same controller.
 
 

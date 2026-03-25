@@ -8,24 +8,18 @@ about its future URL. Why so?
    `routing system <https://docs.djangoproject.com/en/5.2/topics/http/urls/>`_
    and we don't need to duplicate it
 2. Because all controllers might be used in multiple URLs,
-   for example in ``api/v1`` and ``api/v2``. Our way allows any customizations
+   for example in ``/api/v1/`` and ``/api/v2/``.
+   Our design allows any possible customizations
+
+.. literalinclude:: /examples/getting_started/urls.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
 .. note::
 
   If you want to parse path parameters, see :doc:`components/path`
-  and :class:`dmr.components.Path`.
-
-However, there are several rules (and validation errors)
-attached to this behaviour:
-
-1. Controllers to be composed can't have duplicate endpoints, otherwise,
-   it would be not clear which endpoint from which controller needs to called.
-   This includes :ref:`meta <meta>` method for ``OPTION`` HTTP calls as well
-2. All controllers have to be either sync or async,
-   otherwise it would be hard to run them
-3. Controllers must have the same :term:`serializer`,
-   because otherwise parsing can probably error out
-4. Controllers to be composed must have at least one endpoint
+  and :data:`dmr.components.Path`.
 
 
 Handling 404 errors
@@ -61,7 +55,7 @@ Here is how you can use it in your root ``urls.py``
   :linenos:
 
 This returns json responses for ``api/`` prefixed paths.
-But, will still return html responses for any other path.
+But, will still return regular Django HTML responses for any other path.
 
 
 .. _handler500:

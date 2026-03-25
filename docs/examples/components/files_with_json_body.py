@@ -32,9 +32,7 @@ class _JsonOutputPayload(pydantic.BaseModel):
     user: _BodyPayload
 
 
-class FileAndJsonController(
-    Controller[PydanticSerializer],
-):
+class FileAndJsonController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     def put(

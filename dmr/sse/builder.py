@@ -248,13 +248,13 @@ def sse(  # noqa: WPS211, WPS234
     Arguments:
         serializer: Required serializer type.
             Will be used to serialize events and other responses.
-        path: Optional :class:`~dmr.components.Path` component type
+        path: Optional :data:`~dmr.components.Path` component type
             to parse path parameters. Will be passed as the context.
-        query: Optional :class:`~dmr.components.Query` component type
+        query: Optional :data:`~dmr.components.Query` component type
             to parse query parameters. Will be passed as the context.
-        headers: Optional :class:`~dmr.components.Headers` component type
+        headers: Optional :data:`~dmr.components.Headers` component type
             to parse headers. Will be passed as the context.
-        cookies: Optional :class:`~dmr.components.Cookies` component type
+        cookies: Optional :data:`~dmr.components.Cookies` component type
             to parse cookies. Will be passed as the context.
         response_spec: Optional override for the default response spec.
             Needed if you provided custom headers, cookies, or API errors

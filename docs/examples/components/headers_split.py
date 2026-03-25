@@ -12,9 +12,7 @@ class _HeadersModel(msgspec.Struct):
     tags: list[int] = msgspec.field(name='X-Tag')
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     def get(self, parsed_headers: Headers[_HeadersModel]) -> _HeadersModel:
         return parsed_headers
 

@@ -58,10 +58,10 @@ we utilize the same parsing components, as a regular API.
 
 :func:`~dmr.sse.builder.sse` supports working with several component types:
 
-- :class:`~dmr.components.Path`
-- :class:`~dmr.components.Query`
-- :class:`~dmr.components.Headers`
-- :class:`~dmr.components.Cookies`
+- :data:`~dmr.components.Path`
+- :data:`~dmr.components.Query`
+- :data:`~dmr.components.Headers`
+- :data:`~dmr.components.Cookies`
 
 For example, if you need to parse ``Last-Event-ID`` header:
 

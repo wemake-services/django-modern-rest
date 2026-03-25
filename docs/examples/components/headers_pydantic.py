@@ -9,9 +9,7 @@ class _HeadersModel(pydantic.BaseModel):
     client_id: int = pydantic.Field(alias='X-Client-Id', default=-1)
 
 
-class ApiController(
-    Controller[PydanticSerializer],
-):
+class ApiController(Controller[PydanticSerializer]):
     def get(self, parsed_headers: Headers[_HeadersModel]) -> _HeadersModel:
         return parsed_headers
 

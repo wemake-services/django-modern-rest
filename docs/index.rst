@@ -165,11 +165,10 @@ Here are our amazing people who made this project possible.
 
   pages/getting-started.rst
   pages/core-concepts.rst
-  pages/using-controller.rst
-  pages/responses/index
+  pages/using-controller/index
   pages/routing.rst
-  pages/configuration.rst
   pages/components/index
+  pages/configuration.rst
   pages/plugins.rst
   pages/negotiation.rst
   pages/error-handling.rst

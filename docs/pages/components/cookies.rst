@@ -2,13 +2,13 @@ Cookie parameters
 =================
 
 You can define ``Cookies`` parameters
-the same way you define :class:`~dmr.components.Headers`,
-:class:`~dmr.components.Path` and
-:class:`~dmr.components.Query` parameters.
+the same way you define :data:`~dmr.components.Headers`,
+:data:`~dmr.components.Path` and
+:data:`~dmr.components.Query` parameters.
 
 .. note::
 
-  Parsed ``Cookies`` is available as ``self.parsed_cookies``.
+  Parsed ``Cookie`` parameter must be named ``parsed_cookies``.
 
 This is how you can parse ``Cookies`` parameters:
 
@@ -33,7 +33,7 @@ What happens in this example?
 1. We define a ``Cookies`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.Cookies` component,
+2. Next, we use :data:`~dmr.components.Cookies` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_cookies`` that will have the correct model type
