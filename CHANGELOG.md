@@ -38,6 +38,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   from dmr.routing import compose_blueprints
   from dmr.plugins.pydantic import PydanticSerializer
 
+
   class UserCreateBlueprint(
       Body[_UserInput],  # <- needs a request body
       Blueprint[PydanticSerializer],
@@ -49,12 +50,14 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
               age=self.parsed_body.age,
           )
 
+
   class UserListBlueprint(Blueprint[PydanticSerializer]):
       def get(self) -> list[_UserInput]:
           return [
               _UserInput(email='first@example.org', age=1),
               _UserInput(email='second@example.org', age=2),
           ]
+
 
   UsersController = compose_blueprints(UserCreateBlueprint, UserListBlueprint)
   ```
@@ -64,6 +67,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   ```python
   from dmr import Controller, Body
   from dmr.plugins.pydantic import PydanticSerializer
+
 
   class UsersController(Controller[PydanticSerializer]):
       def get(self) -> list[_UserInput]:
