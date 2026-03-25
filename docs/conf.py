@@ -116,7 +116,6 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.response._ItemT'),
     (_PY_CLASS, 'dmr.internal.middleware_wrapper._TypeT'),
     (_PY_CLASS, '_SerializerT'),
-    (_PY_CLASS, '_BlueprintCls'),
     (_PY_CLASS, 'SyncErrorHandler'),
     (_PY_CLASS, 'AsyncErrorHandler'),
     (_PY_CLASS, '_MethodSyncHandler'),

@@ -145,12 +145,12 @@ Customizing controllers
 ``Controller`` is built to be customized with a class-level API.
 If you need granual control, you can change anything.
 
-- :attr:`~dmr.controller.Blueprint.allowed_http_methods`
+- :attr:`~dmr.controller.Controller.allowed_http_methods`
   to support custom HTTP methods like ``QUERY``
   or your custom DSLs on top of HTTP
-- :attr:`~dmr.controller.Blueprint.endpoint_cls`
+- :attr:`~dmr.controller.Controller.endpoint_cls`
   to customize how endpoints are created
-- :attr:`~dmr.controller.Blueprint.serializer_context_cls`
+- :attr:`~dmr.controller.Controller.serializer_context_cls`
   to customize how model for serialization of incoming data is created
 - :attr:`~dmr.controller.Controller.csrf_exempt`
   to customize whether or not this controller is exempted from the CSRF

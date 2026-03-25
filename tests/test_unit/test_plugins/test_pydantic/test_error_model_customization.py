@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import final
 
 from dirty_equals import IsStr
+from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest, HttpResponse
 from django.middleware.csrf import get_token
 from inline_snapshot import snapshot
@@ -17,6 +18,7 @@ from dmr import (
 )
 from dmr.errors import ErrorType, format_error
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security.django_session import DjangoSessionSyncAuth
 from dmr.test import DMRRequestFactory
 
 
@@ -64,6 +66,8 @@ class _CustomErrorModelController(
     _CustomErrorMixin,
     Controller[PydanticSerializer],
 ):
+    auth = (DjangoSessionSyncAuth(),)
+
     @modify(
         extra_responses=[
             ResponseSpec(
@@ -85,13 +89,13 @@ def test_error_message_controller_customization(
     """Ensures we can customize error message via controller."""
     metadata = _CustomErrorModelController.api_endpoints['POST'].metadata
     assert metadata.responses == snapshot({
-        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
-            return_type=_CustomErrorModel,
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
         HTTPStatus.CREATED: ResponseSpec(
             return_type=str,
             status_code=HTTPStatus.CREATED,
+        ),
+        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
+            return_type=_CustomErrorModel,
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
         HTTPStatus.BAD_REQUEST: ResponseSpec(
             return_type=_CustomErrorModel,
@@ -103,19 +107,58 @@ def test_error_message_controller_customization(
             status_code=HTTPStatus.NOT_ACCEPTABLE,
             description=IsStr(),  # type: ignore[arg-type]
         ),
+        # From controller:
+        HTTPStatus.UNAUTHORIZED: ResponseSpec(
+            return_type=_CustomErrorModel,
+            status_code=HTTPStatus.UNAUTHORIZED,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
         HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
             return_type=_CustomErrorModel,
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             description=IsStr(),  # type: ignore[arg-type]
         ),
+        HTTPStatus.FORBIDDEN: ResponseSpec(
+            return_type=_CustomErrorModel,
+            status_code=HTTPStatus.FORBIDDEN,
+            description=IsStr(),  # type: ignore[arg-type]
+        ),
     })
 
     request = dmr_rf.post('/whatever/', data={})
-
+    _fill_csrf(request)
+    request.user = User()
     response = _CustomErrorModelController.as_view()(request)
-
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED, response.content
     assert json.loads(response.content) == snapshot({
         'error': [{'message': 'test msg'}],
+    })
+
+    request = dmr_rf.post('/whatever/', data=[])
+    _fill_csrf(request)
+    request.user = User()
+    response = _CustomErrorModelController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'error': [{'message': 'Input should be a valid dictionary'}],
+    })
+
+    request = dmr_rf.post('/whatever/', data=[])
+    request.user = User()
+    response = _CustomErrorModelController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert json.loads(response.content) == snapshot({
+        'error': [{'message': 'CSRF Failed: CSRF cookie not set.'}],
+    })
+
+    request = dmr_rf.post('/whatever/', data={})
+    request.user = AnonymousUser()
+    response = _CustomErrorModelController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert json.loads(response.content) == snapshot({
+        'error': [{'message': 'Not authenticated'}],
     })

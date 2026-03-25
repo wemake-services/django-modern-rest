@@ -94,6 +94,8 @@ See :ref:`customizing_parameter_openapi`.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Headers
+.. autodata:: dmr.components.Headers
+
+.. autoclass:: dmr.components.HeadersComponent
   :members:
   :show-inheritance:

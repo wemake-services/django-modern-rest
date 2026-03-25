@@ -64,8 +64,7 @@ What is generated
 -----------------
 
 - Typed DTOs / serializers
-- :class:`~dmr.controller.Controller` / :class:`~dmr.controller.Blueprint`
-  objects as operations handlers
+- :class:`~dmr.controller.Controller` objects as operations handlers
 - All required ``urls.py`` + project URL wiring
 - OpenAPI docs (JSON, ReDoc, Swagger, Scalar)
 - Minimal smoke tests

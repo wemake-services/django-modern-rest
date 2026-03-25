@@ -35,14 +35,6 @@ You can disable response validation via configuration:
         :linenos:
         :emphasize-lines: 23
 
-    .. tab:: Disable per blueprint
-
-      .. literalinclude:: /examples/returning_responses/per_blueprint.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 25
-
     .. tab:: Disable per controller
 
       .. literalinclude:: /examples/returning_responses/per_controller.py

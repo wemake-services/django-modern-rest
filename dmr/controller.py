@@ -334,9 +334,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         Override this method to add custom error handling for sync execution.
         By default - does nothing, only re-raises the passed error.
         Won't be called when using async endpoints.
-
-        You can access active blueprint
-        via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
         raise exc from None
 
@@ -352,9 +349,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         Override this method to add custom error handling for async execution.
         By default - does nothing, only re-raises the passed error.
         Won't be called when using sync endpoints.
-
-        You can access active blueprint
-        via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
         raise exc from None
 

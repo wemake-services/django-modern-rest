@@ -108,7 +108,7 @@ Here's how ``msgpack`` will represent ``{"username": "example", "age": 22}``
 - `examples/components/body_wrong.msgpack <https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/components/body_wrong.msgpack>`_
 
 The only visible difference from parsing JSON is specifying a different
-:attr:`~dmr.controller.Blueprint.parsers` instance.
+:attr:`~dmr.controller.Controller.parsers` instance.
 
 .. literalinclude:: /examples/components/body_msgpack.py
   :caption: views.py
@@ -209,6 +209,8 @@ both ``__dmr_split_commas__`` and ``__dmr_force_list__`` as well.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Body
+.. autodata:: dmr.components.Body
+
+.. autoclass:: dmr.components.BodyComponent
   :members:
   :show-inheritance:

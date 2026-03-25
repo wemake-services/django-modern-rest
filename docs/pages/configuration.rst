@@ -177,7 +177,7 @@ Response handling
   .. note::
 
     You can also switch off this validation per-controller
-    with :attr:`~dmr.controller.Blueprint.validate_responses`
+    with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.

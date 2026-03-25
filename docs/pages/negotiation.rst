@@ -140,14 +140,6 @@ going back to the less specific:
         :linenos:
         :emphasize-lines: 35
 
-    .. tab:: per blueprint
-
-      .. literalinclude:: /examples/negotiation/per_blueprint.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 39-40
-
     .. tab:: per controller
 
       .. literalinclude:: /examples/negotiation/per_controller.py
@@ -248,7 +240,7 @@ and :func:`dmr.negotiation.conditional_type`:
    :linenos:
 
 Note that you would also have to customize
-:meth:`~dmr.controller.Blueprint.format_error`
+:meth:`~dmr.controller.Controller.format_error`
 accordingly.
 
 

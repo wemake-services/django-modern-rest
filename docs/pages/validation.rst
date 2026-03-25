@@ -19,32 +19,12 @@ Settings validation
 
 We start with settings validation.
 We only validate settings once per application,
-we do it when the first :class:`~dmr.controller.Blueprint` is created.
+we do it when the first :class:`~dmr.controller.Controller` is created.
 
 .. autoclass:: dmr.validation.settings.SettingsValidator
   :members:
 
 We also validate our own default values to be correct.
-
-
-Blueprint validation
---------------------
-
-First layer of validation.
-
-Validates that :class:`~dmr.controller.Blueprint`
-creation is correct by itself. At this early stage blueprints do not have
-:class:`endpoints <dmr.endpoint.Endpoint>` just yet.
-
-So, the things we can validate is very limited.
-We would have the full context when you will compose blueprints
-into a :class:`~dmr.controller.Controller`.
-
-You can customize ``Blueprint`` validation via setting
-:attr:`~dmr.controller.Blueprint.blueprint_validator_cls`.
-
-.. autoclass:: dmr.validation.blueprint.BlueprintValidator
-  :members:
 
 
 Endpoint validation
@@ -64,7 +44,7 @@ HttpSpec validation
 
 You can customize the strictness of HTTP Spec validation with overriding
 disabled :class:`~dmr.settings.HttpSpec` options per-endpoint,
-per-blueprint, per-controller and globally.
+per-controller, and globally.
 
 .. warning::
 
@@ -91,7 +71,7 @@ per-blueprint, per-controller and globally.
         :linenos:
         :emphasize-lines: 11
 
-    .. tab:: Per blueprint or controller
+    .. tab:: Per controller
 
       .. literalinclude:: /examples/validation/httpspec/per_controller.py
         :language: python
@@ -112,11 +92,10 @@ The last step is the final :class:`~dmr.controller.Controller`
 validation which has everything ready:
 
 - :attr:`~dmr.controller.Controller.api_endpoints`
-- :attr:`~dmr.controller.Controller.blueprints`
 
 Here we validate:
 
-- That all ``blueprints`` have unique methods
+- That all ``Controller`` classes have unique methods
 - That all endpoints are either sync or async
 - All per-controller and per-endpoint error handling
 

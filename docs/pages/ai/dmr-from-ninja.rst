@@ -62,8 +62,7 @@ What is migrated
 
 - Ninja root wiring and URL setup to DMR router + Django URL includes
 - ``@api_controller`` / ``@http_*`` handlers to
-  :class:`~dmr.controller.Controller` and
-  :class:`~dmr.controller.Blueprint`
+  :class:`~dmr.controller.Controller`
 - ``ninja.Schema`` models to typed request and response DTOs
 - Auth and throttling behavior with project-native integrations
 - Migration reporting with:

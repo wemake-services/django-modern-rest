@@ -205,9 +205,6 @@ class ResponseSpecProvider:
     def provide_response_specs(
         cls,
         metadata: 'EndpointMetadata',
-        # Response spec can't be different inside different blueprints.
-        # It would be a nightmare to manage.
-        # So, controller is the unit of change.
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:

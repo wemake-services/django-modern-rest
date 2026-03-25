@@ -89,6 +89,8 @@ it is up to users to set.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Query
+.. autodata:: dmr.components.Query
+
+.. autoclass:: dmr.components.QueryComponent
   :members:
   :show-inheritance:

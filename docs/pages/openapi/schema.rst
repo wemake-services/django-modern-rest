@@ -73,18 +73,9 @@ First non ``None`` value wins:
         :linenos:
         :language: python
 
-    .. tab:: per blueprint
-
-      Customize :attr:`~dmr.controller.Blueprint.semantic_responses` attribute.
-
-      .. literalinclude:: /examples/openapi/per_blueprint.py
-        :caption: views.py
-        :linenos:
-        :language: python
-
     .. tab:: per controller
 
-      Customize :attr:`~dmr.controller.Blueprint.semantic_responses` attribute.
+      Customize :attr:`~dmr.controller.Controller.semantic_responses` attribute.
 
       .. literalinclude:: /examples/openapi/per_controller.py
         :caption: views.py

@@ -10,11 +10,7 @@ if TYPE_CHECKING:
 
 
 class ControllerValidator:
-    """
-    Validates that controller is created correctly.
-
-    Also validates possible composed blueprints.
-    """
+    """Validates that controller is created correctly."""
 
     __slots__ = ()
 

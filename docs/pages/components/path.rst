@@ -126,6 +126,8 @@ See :ref:`customizing_parameter_openapi`.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Path
+.. autodata:: dmr.components.Path
+
+.. autoclass:: dmr.components.PathComponent
   :members:
   :show-inheritance:

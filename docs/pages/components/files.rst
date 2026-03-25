@@ -119,7 +119,7 @@ This is also supported:
   :linenos:
 
 To do that also define :class:`~dmr.components.Body` component
-in the same controller / blueprint.
+in the same controller.
 
 
 Sending files with json as a body parameter
@@ -143,6 +143,8 @@ However, this can be done with ``msgspec`` as well.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.FileMetadata
+.. autodata:: dmr.components.FileMetadata
+
+.. autoclass:: dmr.components.FileMetadataComponent
   :members:
   :show-inheritance:

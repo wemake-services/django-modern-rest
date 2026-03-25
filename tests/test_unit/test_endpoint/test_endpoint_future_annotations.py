@@ -1,19 +1,21 @@
 from __future__ import annotations
 
+import types
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
-
-if TYPE_CHECKING:
-    from django.http import HttpResponse
-
-    _TypeCheckOnlyAlias: TypeAlias = dict[str, int]
-
 
 import pytest
 
 from dmr import Controller
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.types import parse_return_annotation
+
+if TYPE_CHECKING:
+    from django.http import HttpResponse
+
+    _TypeCheckOnlyAlias: TypeAlias = dict[str, int]
+
 
 _RegularAlias: TypeAlias = list[int]
 
@@ -45,3 +47,16 @@ def test_solvable_response_annotations() -> None:
 
     metadata = MyController.api_endpoints['GET'].metadata
     assert metadata.responses[HTTPStatus.OK].return_type == _RegularAlias
+
+
+def test_parse_return_annotation() -> None:
+    """Ensure that parse_return_annotation works correctly."""
+    assert (
+        parse_return_annotation(test_solvable_response_annotations)
+        is types.NoneType
+    )
+
+    def some_function() -> 'Undefined': ...  # type: ignore[name-defined]  # noqa: F821, UP037
+
+    with pytest.raises(UnsolvableAnnotationsError, match='cannot be solved'):
+        parse_return_annotation(some_function)

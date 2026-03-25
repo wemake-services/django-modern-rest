@@ -50,6 +50,8 @@ See :ref:`customizing_parameter_openapi`.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Cookies
+.. autodata:: dmr.components.Cookies
+
+.. autoclass:: dmr.components.CookiesComponent
   :members:
   :show-inheritance:

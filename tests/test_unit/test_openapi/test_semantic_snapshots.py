@@ -25,7 +25,7 @@ class _PerEndpoint(Controller[PydanticSerializer]):
 
 
 def test_per_endpoint_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is semantic for disabled per blueprint."""
+    """Ensure that schema is semantic for disabled per endpoint."""
     assert (
         json.dumps(
             build_schema(

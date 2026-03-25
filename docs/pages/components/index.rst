@@ -6,12 +6,11 @@ the unstructured things like headers, body, and cookies
 into a string typed and validated model.
 
 To use a component, you can just add it as a base class to your
-:class:`~dmr.controller.Controller`
-or :class:`~dmr.controller.Blueprint`.
+:class:`~dmr.controller.Controller`.
 
 How does it work?
 
-- When controller / blueprint is first created,
+- When controller is first created (in import time),
   we iterate over all existing components in this class
 - Next, we create a request parsing model during the import time,
   with all combined fields to be parsed later

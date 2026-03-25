@@ -208,7 +208,10 @@ def test_per_endpoint_customization(
             parsers=[XmlParser(), JsonParser()],
             renderers=[XmlRenderer(), JsonRenderer()],
         )
-        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
+        def post(
+            self,
+            parsed_body: Body[_RequestModel],
+        ) -> Annotated[dict[str, str], 'comment']:
             return parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
@@ -620,9 +623,7 @@ def test_conditional_body_model_wrong(
                 ]
             ],
         ) -> dict[str, str]:
-            if isinstance(parsed_body, _RequestModel):
-                return parsed_body.root
-            return parsed_body
+            raise NotImplementedError
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
