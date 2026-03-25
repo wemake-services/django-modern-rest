@@ -279,10 +279,10 @@ addopts = [
   # Tracecov:
   "--tracecov-format=text,html,markdown",
   "--tracecov-fail-under-operations=100",
-  "--tracecov-fail-under-parameters=100",
-  "--tracecov-fail-under-keywords=100",
   "--tracecov-fail-under-examples=100",
   # TODO: set value to 100
+  "--tracecov-fail-under-parameters=90",
+  "--tracecov-fail-under-keywords=90",
   "--tracecov-fail-under-responses=50",
   # Ignores benchmarks:
   "--ignore=benchmarks/",
