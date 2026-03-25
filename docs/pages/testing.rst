@@ -257,8 +257,6 @@ To enable tracking, define a session-scoped ``tracecov_map`` fixture.
 When ``tracecov_map`` is configured and TraceCov is installed, ``dmr_client``
 and ``dmr_async_client`` automatically register requests in ``tracecov``.
 
-Example ``conftest.py``:
-
 .. literalinclude:: /../tests/test_integration/conftest.py
   :caption: conftest.py
   :language: python
@@ -266,6 +264,10 @@ Example ``conftest.py``:
   :no-imports-spoiler:
   :lines: 1-13
   :emphasize-lines: 2, 13
+
+To enable TraceCov recording for ``schemathesis`` runs, make sure your
+``schemathesis`` test explicitly records validated interactions into
+``tracecov_map`` via ``record_schemathesis_interactions(...)``.
 
 .. literalinclude:: /../tests/test_integration/test_openapi/test_schema.py
   :caption: test_schema.py
