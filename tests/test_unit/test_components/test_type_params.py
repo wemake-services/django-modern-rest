@@ -3,7 +3,6 @@ from typing import Any
 import pytest
 
 from dmr import (
-    Blueprint,
     Body,
     Controller,
     Cookies,
@@ -40,14 +39,10 @@ def test_validate_components_type_params() -> None:
 )
 @pytest.mark.parametrize(
     'base',
-    [
-        Controller[PydanticSerializer],
-        Blueprint[PydanticSerializer],
-    ],
+    [Controller[PydanticSerializer]],
 )
 def test_validate_component_zero_params(
-    base: type[Any],
-    component: type[Any],
+    base: type[Any], component: type[Any]
 ) -> None:
     """Ensure that we need at least one type param for component."""
     with pytest.raises(UnsolvableAnnotationsError, match='given 0'):

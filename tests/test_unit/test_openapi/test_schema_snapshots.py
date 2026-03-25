@@ -45,8 +45,8 @@ class _UserController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-class _GetUserController(Controller[PydanticSerializer], Path[_PathIdModel]):
-    def get(self) -> _UserModel:
+class _GetUserController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_PathIdModel]) -> _UserModel:
         raise NotImplementedError
 
 

@@ -11,7 +11,6 @@ from typing_extensions import TypedDict
 
 from dmr import (
     APIError,
-    Blueprint,
     Body,
     Controller,
     ResponseSpec,
@@ -66,7 +65,6 @@ class _CustomErrorMixin:
 class _CustomErrorModelController(
     _CustomErrorMixin,
     Controller[PydanticSerializer],
-    Body[dict[str, str]],
 ):
     @modify(
         extra_responses=[
@@ -76,7 +74,7 @@ class _CustomErrorModelController(
             ),
         ],
     )
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise APIError(
             self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,
@@ -126,29 +124,20 @@ def test_error_message_controller_customization(
 
 
 @final
-class _CustomMessageBlueprint(
-    _CustomErrorMixin,
-    Blueprint[PydanticSerializer],
-    Body[dict[str, str]],
-):
+class _BlueprintController(_CustomErrorMixin, Controller[PydanticSerializer]):
     responses = (
         ResponseSpec(
             return_type=_CustomErrorModel,
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         ),
     )
+    auth = (DjangoSessionSyncAuth(),)
 
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise APIError(
             self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         )
-
-
-@final
-class _BlueprintController(_CustomErrorMixin, Controller[PydanticSerializer]):
-    blueprints = (_CustomMessageBlueprint,)
-    auth = (DjangoSessionSyncAuth(),)
 
 
 def test_error_message_blueprint_customization(

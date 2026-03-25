@@ -45,10 +45,11 @@ class UserResponseModel(UserCreateModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserCreateModel],
 ):
-    async def post(self) -> UserResponseModel:
-        return UserResponseModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+    async def post(
+        self, parsed_body: Body[UserCreateModel]
+    ) -> UserResponseModel:
+        return UserResponseModel(uid=uuid.uuid4(), email=parsed_body.email)
 
 
 router = Router(

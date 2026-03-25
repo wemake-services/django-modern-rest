@@ -17,18 +17,16 @@ class _UserModel(pydantic.BaseModel):
 
 class _AsyncController(
     Controller[PydanticSerializer],
-    Body[_UserModel],
 ):
-    async def post(self) -> _UserModel:
-        return self.parsed_body
+    async def post(self, parsed_body: Body[_UserModel]) -> _UserModel:
+        return parsed_body
 
 
 class _SyncController(
     Controller[PydanticSerializer],
-    Body[_UserModel],
 ):
-    def post(self) -> _UserModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_UserModel]) -> _UserModel:
+        return parsed_body
 
 
 @final

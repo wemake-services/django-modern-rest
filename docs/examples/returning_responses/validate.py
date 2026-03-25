@@ -18,7 +18,6 @@ class UserModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserModel],
 ):
     @validate(  # <- describes unique return types from this endpoint
         ResponseSpec(
@@ -26,10 +25,10 @@ class UserController(
             status_code=HTTPStatus.OK,
         ),
     )
-    def post(self) -> HttpResponse:
+    def post(self, parsed_body: Body[UserModel]) -> HttpResponse:
         # This response would have an explicit status code `200`:
         return self.to_response(
-            self.parsed_body,
+            parsed_body,
             status_code=HTTPStatus.OK,
         )
 

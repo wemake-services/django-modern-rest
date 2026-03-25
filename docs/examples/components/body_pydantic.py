@@ -9,9 +9,9 @@ class _User(pydantic.BaseModel):
     age: int
 
 
-class UserController(Controller[PydanticSerializer], Body[_User]):
-    def put(self) -> _User:
-        return self.parsed_body
+class UserController(Controller[PydanticSerializer]):
+    def put(self, parsed_body: Body[_User]) -> _User:
+        return parsed_body
 
 
 # run: {"controller": "UserController", "url": "/api/users/", "method": "put", "body": {"username": "sobolevn", "age": 27}}  # noqa: ERA001, E501

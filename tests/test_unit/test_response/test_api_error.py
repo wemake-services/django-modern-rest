@@ -419,9 +419,8 @@ def test_api_error_redirect_status() -> None:
 
 class _PathResponseController(
     Controller[PydanticSerializer],
-    Path[dict[str, str]],
 ):
-    def get(self) -> str:
+    def get(self, parsed_path: Path[dict[str, str]]) -> str:
         raise NotImplementedError
 
 

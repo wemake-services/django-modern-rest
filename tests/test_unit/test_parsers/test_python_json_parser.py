@@ -52,8 +52,8 @@ def test_empty_request_data(
 ) -> None:
     """Ensures we can send empty bytes to our json parser."""
 
-    class _Controller(Controller[PydanticSerializer], Body[None]):
-        def post(self) -> str:
+    class _Controller(Controller[PydanticSerializer]):
+        def post(self, parsed_body: Body[None]) -> str:
             return 'none handled'
 
     metadata = _Controller.api_endpoints['POST'].metadata
@@ -88,8 +88,8 @@ def test_wrong_request_data(
 ) -> None:
     """Ensures we can send wrong bytes to our json parser."""
 
-    class _Controller(Controller[PydanticSerializer], Body[None]):
-        def post(self) -> str:
+    class _Controller(Controller[PydanticSerializer]):
+        def post(self, parsed_body: Body[None]) -> str:
             raise NotImplementedError
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
@@ -138,9 +138,9 @@ def test_complex_request_data(
 ) -> None:
     """Ensures we that complex data can be in models."""
 
-    class _Controller(Controller[PydanticSerializer], Body[_RequestModel]):
-        def post(self) -> _RequestModel:
-            return self.parsed_body
+    class _Controller(Controller[PydanticSerializer]):
+        def post(self, parsed_body: Body[_RequestModel]) -> _RequestModel:
+            return parsed_body
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
     assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1
@@ -185,9 +185,9 @@ def test_complex_direct_return_data(
 ) -> None:
     """Ensures that complex data can directly be returned."""
 
-    class _Controller(Controller[PydanticSerializer], Body[frozenset[str]]):
-        def post(self) -> frozenset[str]:
-            return self.parsed_body
+    class _Controller(Controller[PydanticSerializer]):
+        def post(self, parsed_body: Body[frozenset[str]]) -> frozenset[str]:
+            return parsed_body
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 1
     assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 1

@@ -10,13 +10,12 @@ class _RequestModel(TypedDict):
 
 
 class BillController(
-    Body[_RequestModel],
     Controller[PydanticSerializer],
 ):
     auth = (HttpBasicAsync(),)
 
-    async def post(self) -> str:
-        return f'Processing bill: {self.parsed_body["bill"]}'
+    async def post(self, parsed_body: Body[_RequestModel]) -> str:
+        return f'Processing bill: {parsed_body["bill"]}'
 
 
 # run: {"controller": "BillController", "method": "post", "body": {"bill": "parking"}, "url": "/api/username/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501

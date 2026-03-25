@@ -80,29 +80,33 @@ class QueryModel(msgspec.Struct):
 
 class UserAsyncController(
     Controller[MsgspecSerializer],
-    Body[UserCreateModel],
-    Headers[HeadersModel],
-    Query[QueryModel],
 ):
-    async def post(self) -> UserModel:
-        assert self.parsed_query.filter[0] == 'dmr', self.parsed_query
+    async def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+        parsed_headers: Headers[HeadersModel],
+        parsed_query: Query[QueryModel],
+    ) -> UserModel:
+        assert parsed_query.filter[0] == 'dmr', parsed_query
         return UserModel(
             uid=uuid.uuid4(),
-            **msgspec.to_builtins(self.parsed_body),
+            **msgspec.to_builtins(parsed_body),
         )
 
 
 class UserSyncController(
     Controller[MsgspecSerializer],
-    Body[UserCreateModel],
-    Headers[HeadersModel],
-    Query[QueryModel],
 ):
-    def post(self) -> UserModel:
-        assert self.parsed_query.filter[0] == 'dmr', self.parsed_query
+    def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+        parsed_headers: Headers[HeadersModel],
+        parsed_query: Query[QueryModel],
+    ) -> UserModel:
+        assert parsed_query.filter[0] == 'dmr', parsed_query
         return UserModel(
             uid=uuid.uuid4(),
-            **msgspec.to_builtins(self.parsed_body),
+            **msgspec.to_builtins(parsed_body),
         )
 
 

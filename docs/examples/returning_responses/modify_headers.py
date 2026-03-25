@@ -12,17 +12,16 @@ class UserModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserModel],
 ):
     @modify(
         status_code=HTTPStatus.OK,
         # Add explicit header:
         headers={'X-Created': NewHeader(value='true')},
     )
-    def post(self) -> UserModel:
+    def post(self, parsed_body: Body[UserModel]) -> UserModel:
         # This response would have an explicit status code `200`
         # and new explicit header `{'X-Created': 'true'}`:
-        return self.parsed_body
+        return parsed_body
 
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501

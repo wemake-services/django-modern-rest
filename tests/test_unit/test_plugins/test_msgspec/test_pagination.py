@@ -48,14 +48,13 @@ _USERS: Final = (
 @final
 class _PaginatedUsersController(
     Controller[MsgspecSerializer],
-    Query[_PageQuery],
 ):
     """Controller with pagination support."""
 
-    def get(self) -> Paginated[_User]:
+    def get(self, parsed_query: Query[_PageQuery]) -> Paginated[_User]:
         """Return paginated list of users."""
-        page = self.parsed_query.get('page', 1)
-        page_size = self.parsed_query.get('page_size', 2)
+        page = parsed_query.get('page', 1)
+        page_size = parsed_query.get('page_size', 2)
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(
@@ -171,14 +170,13 @@ def test_pagination_single_item_per_page(dmr_rf: DMRRequestFactory) -> None:
 @final
 class _AsyncPaginatedUsersController(
     Controller[MsgspecSerializer],
-    Query[_PageQuery],
 ):
     """Async controller with pagination support."""
 
-    async def get(self) -> Paginated[_User]:
+    async def get(self, parsed_query: Query[_PageQuery]) -> Paginated[_User]:
         """Return paginated list of users."""
-        page = self.parsed_query.get('page', 1)
-        page_size = self.parsed_query.get('page_size', 2)
+        page = parsed_query.get('page', 1)
+        page_size = parsed_query.get('page_size', 2)
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(

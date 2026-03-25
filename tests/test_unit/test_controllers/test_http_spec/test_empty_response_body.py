@@ -4,7 +4,6 @@ import pytest
 from django.http import HttpResponse
 
 from dmr import (
-    Blueprint,
     Controller,
     ResponseSpec,
     modify,
@@ -62,13 +61,13 @@ def test_empty_response_body_controller(
     'status',
     [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
 )
-def test_empty_response_body_blueprint(
+def test_empty_response_body_scoped_controller(
     *,
     status: HTTPStatus,
 ) -> None:
-    """Ensure that can be disabled on blueprint level."""
+    """Ensure that disabling on one controller does not affect others."""
 
-    class _Blueprint(Blueprint[PydanticSerializer]):
+    class _Mixed(Controller[PydanticSerializer]):
         responses = [
             ResponseSpec(int, status_code=status),
         ]
@@ -77,17 +76,12 @@ def test_empty_response_body_blueprint(
         def get(self) -> str:  # needs at least one endpoint to validate
             raise NotImplementedError
 
-    class _Mixed(Controller[PydanticSerializer]):
-        blueprints = [_Blueprint]
-
     assert _Mixed.api_endpoints['GET'].metadata.responses
 
-    # But, controllers are not affected by `Blueprint` level:
+    # Another controller still validates this HTTP spec.
     with pytest.raises(EndpointMetadataError, match=str(status)):
 
         class _BadController(Controller[PydanticSerializer]):
-            blueprints = [_Blueprint]
-
             @modify(status_code=status)
             def post(self) -> int:
                 raise NotImplementedError

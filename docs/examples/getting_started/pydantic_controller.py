@@ -20,9 +20,11 @@ class HeaderModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserCreateModel],
-    Headers[HeaderModel],
 ):
-    def post(self) -> UserModel:
-        assert self.parsed_headers.consumer == 'my-api'
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+    def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+        parsed_headers: Headers[HeaderModel],
+    ) -> UserModel:
+        assert parsed_headers.consumer == 'my-api'
+        return UserModel(uid=uuid.uuid4(), email=parsed_body.email)

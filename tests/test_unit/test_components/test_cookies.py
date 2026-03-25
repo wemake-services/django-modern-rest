@@ -21,10 +21,9 @@ class _CookieModel(pydantic.BaseModel):
 @final
 class _WrongPydanticBodyController(
     Controller[PydanticSerializer],
-    Cookies[_CookieModel],
 ):
-    def post(self) -> _CookieModel:
-        return self.parsed_cookies
+    def post(self, parsed_cookies: Cookies[_CookieModel]) -> _CookieModel:
+        return parsed_cookies
 
 
 def test_cookie_parsing_correct(

@@ -26,11 +26,10 @@ _USERS: Final = (
 
 class UsersController(
     Controller[PydanticSerializer],
-    Query[_PageQuery],
 ):
-    def get(self) -> Paginated[_User]:
-        page = self.parsed_query.get('page', 1)
-        page_size = self.parsed_query.get('page_size', 2)
+    def get(self, parsed_query: Query[_PageQuery]) -> Paginated[_User]:
+        page = parsed_query.get('page', 1)
+        page_size = parsed_query.get('page_size', 2)
 
         paginator = Paginator(_USERS, page_size)
         return Paginated(

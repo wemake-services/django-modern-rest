@@ -11,10 +11,9 @@ class _CookiesModel(pydantic.BaseModel):
 
 class ApiController(
     Controller[PydanticSerializer],
-    Cookies[_CookiesModel],
 ):
-    def get(self) -> _CookiesModel:
-        return self.parsed_cookies
+    def get(self, parsed_cookies: Cookies[_CookiesModel]) -> _CookiesModel:
+        return parsed_cookies
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "cookies": {"cache": "yes", "client_id": "1"}}  # noqa: ERA001, E501

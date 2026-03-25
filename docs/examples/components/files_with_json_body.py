@@ -34,16 +34,18 @@ class _JsonOutputPayload(pydantic.BaseModel):
 
 class FileAndJsonController(
     Controller[PydanticSerializer],
-    Body[_JsonBodyPayload],
-    FileMetadata[_UploadedFiles],
 ):
     parsers = (MultiPartParser(),)
 
-    def put(self) -> _JsonOutputPayload:
+    def put(
+        self,
+        parsed_body: Body[_JsonBodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _JsonOutputPayload:
         return _JsonOutputPayload(
-            user=self.parsed_body.user,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user=parsed_body.user,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
 

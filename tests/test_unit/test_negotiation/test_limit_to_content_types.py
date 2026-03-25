@@ -44,7 +44,6 @@ class _QueryModel(pydantic.BaseModel):
 
 @final
 class _LimitedContentController(
-    Query[_QueryModel],
     Controller[PydanticSerializer],
 ):
     renderers = (JsonRenderer(), _FakeJson5Renderer())
@@ -62,13 +61,13 @@ class _LimitedContentController(
         ),
     )
 
-    def get(self) -> int:
-        if self.parsed_query.conflict:
+    def get(self, parsed_query: Query[_QueryModel]) -> int:
+        if parsed_query.conflict:
             raise APIError(1, status_code=HTTPStatus.CONFLICT)
         raise APIError(2, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
-    def delete(self) -> HttpResponse:
-        if self.parsed_query.conflict:
+    def delete(self, parsed_query: Query[_QueryModel]) -> HttpResponse:
+        if parsed_query.conflict:
             raise APIError(1, status_code=HTTPStatus.CONFLICT)
         raise APIError(2, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
