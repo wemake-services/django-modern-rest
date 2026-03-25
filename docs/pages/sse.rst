@@ -5,21 +5,21 @@ Standard: https://html.spec.whatwg.org/multipage/server-sent-events.html
 
 .. important::
 
-  Our SSE implementation will not work with WSGI handler in production.
+  Our SSE implementation will not work with a WSGI handler in production.
   Why? Because SSE is a long-living connection by design.
-  WSGI handlers have very limited amount of connections.
+  WSGI handlers have very limited number of connections.
   Basically ``number_of_workers * number_of_threads``,
   just a very small number of SSE clients will completely
   block all other work on the server.
 
   **Use ASGI** for SSE endpoints.
   This will give you the best of two worlds: simple sync Django
-  for major part of your code base and some async endpoints where you need them.
+  for the major part of your code base and some async endpoints where you need them.
   See our :doc:`guide <structure/sync-and-async>`.
 
   However, we allow running SSE with WSGI
   if ``settings.DEBUG is True`` for local development and testing.
-  In a very *limited* compatibiltity mode.
+  In a very *limited* compatibility mode.
 
 
 Using SSE
@@ -39,7 +39,7 @@ protocol to model event sources.
 What happens in this example?
 
 1. We define an event producing function yielding events one by one.
-   This functions returns :class:`collections.abc.AsyncIterator` instance
+   This function returns an :class:`collections.abc.AsyncIterator` instance
 2. We define an async callback for a special :class:`~dmr.controller.Controller`
    instance that we generate inside :deco:`~dmr.sse.builder.sse` decorator
 3. This callback must always return :class:`~dmr.sse.metadata.SSEResponse`
@@ -115,7 +115,7 @@ You would need to:
 Handling errors
 ---------------
 
-Any errors which happens in event producers are not handled by default.
+Any errors that happen in event producers are not handled by default.
 Because these errors happen inside the ASGI handler, long after
 we can possibly handle them with regular :doc:`error-handling`.
 
@@ -125,7 +125,7 @@ So, any errors that need to be handled, are up to users to handle:
    :language: python
    :linenos:
 
-If you need to imediatelly close the response stream, you can raise
+If you need to immediately close the response stream, you can raise
 :exc:`~dmr.sse.exceptions.SSECloseConnectionError`
 inside the events producing async iterator.
 

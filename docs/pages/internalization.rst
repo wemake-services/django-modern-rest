@@ -67,7 +67,7 @@ Specifying the list of the supported languages:
 
 .. important::
 
-  Whenever you use Django's builtin translation feature, don't forget to run
+  Whenever you use Django's built-in translation feature, don't forget to run
   `compilemessages <https://docs.djangoproject.com/en/stable/ref/django-admin/#compilemessages>`_
   management command before using the translations.
 
@@ -95,7 +95,7 @@ to translate messages there.
 Forcing constant API language
 -----------------------------
 
-If you have a website using some non-english ``LANGUAGE_CODE``
+If you have a website using some non-English ``LANGUAGE_CODE``
 and you want to add an API that will always use
 
 .. literalinclude:: /examples/internalization/force_en.py

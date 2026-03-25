@@ -9,9 +9,9 @@ Django has really good testing tools:
 - https://docs.djangoproject.com/en/latest/topics/testing/tools
 - https://docs.djangoproject.com/en/latest/topics/testing/advanced
 
-Just like Django itself, we provide several builtin utilities for testing.
+Just like Django itself, we provide several built-in utilities for testing.
 
-Which includes subclasses of :class:`django.test.RequestFactory`
+These includes subclasses of :class:`django.test.RequestFactory`
 for sync and async requests. Use them for faster and simpler unit-tests:
 
 - :class:`~dmr.test.DMRRequestFactory` for sync cases
@@ -22,12 +22,12 @@ We also have two subclasses of :class:`django.test.Client`
 - :class:`~dmr.test.DMRClient` for sync cases
 - :class:`~dmr.test.DMRAsyncClient` for async ones
 
-What is the difference with the default ones? Not much:
+What is the difference between the default ones? Not much:
 
-- Default ``Content-Type`` header is set to be ``application/json``
+- Default ``Content-Type`` header is set to ``application/json``
 - It is now easier to change ``Content-Type`` header as simple as specifying
   ``headers={'Content-Type': 'application/xml'}`` to change the content type
-  for xml requests / responses
+  for XML requests and responses
 
 
 Testing styles support
@@ -158,7 +158,7 @@ When running the test case with
 
     pytest tests/test_integration/test_openapi/test_schema.py
 
-it will cover all your API. In simple cases it might be enough of tests.
+it will cover all your API. In simple cases it might be enough tests.
 Yes, you heard right: in simple cases just using ``schemathesis``
 can remove the need to write any other integration tests.
 

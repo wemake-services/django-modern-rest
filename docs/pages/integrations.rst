@@ -126,7 +126,7 @@ So, when you use ``mypy``, you will need
 to install ``django-stubs`` together with ``django-modern-rest``
 to have the best type checking experience.
 
-This package is included into ``pyright`` by default. No actions are required.
+This package is included in ``pyright`` by default. No actions are required.
 
 We check ``django-modern-rest`` code with ``mypy`` and ``pyright``
 strict modes in CI, so be sure to have the best typing possible.
@@ -143,7 +143,7 @@ Pagination
 We don't ship our own pagination.
 We (as our main design goal suggests) provide support
 for any existing pagination plugin for Django.
-Including builtin :class:`django.core.paginator.Paginator`.
+Including the built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 
