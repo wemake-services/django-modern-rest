@@ -20,7 +20,9 @@ class UserController(
 ):
     @modify(validate_responses=False)  # <- now, we won't validate this endpoint
     def post(
-        self, parsed_body: Body[UserModel], parsed_headers: Headers[HeaderModel]
+        self,
+        parsed_body: Body[UserModel],
+        parsed_headers: Headers[HeaderModel],
     ) -> UserModel:
         if parsed_headers.consumer != 'my-api':
             # Notice that this response is never documented in the spec,

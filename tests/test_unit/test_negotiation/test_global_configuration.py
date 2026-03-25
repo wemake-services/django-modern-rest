@@ -332,7 +332,8 @@ def test_conditional_content_type(
             ),
         )
         def put(
-            self, parsed_body: Body[Annotated[_RequestModel, 'other comment']]
+            self,
+            parsed_body: Body[Annotated[_RequestModel, 'other comment']],
         ) -> HttpResponse:
             if self.request.accepts(ContentType.json):
                 return self.to_response(

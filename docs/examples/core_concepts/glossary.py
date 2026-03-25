@@ -19,7 +19,8 @@ class UserController(  # <- `Controller` definition
 ):
     @modify(headers={'X-Default': NewHeader(value='1')})  # <- extra `Metadata`
     def post(
-        self, parsed_body: Body[UserCreateModel]
+        self,
+        parsed_body: Body[UserCreateModel],
     ) -> UserModel:  # <- `Endpoint` definition
         return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
 

@@ -45,7 +45,8 @@ class _FileController(
     parsers = (MultiPartParser(),)
 
     def post(
-        self, parsed_file_metadata: FileMetadata[_UploadedFiles]
+        self,
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
     ) -> _UploadedFiles:
         for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
@@ -162,7 +163,8 @@ class _MultipleFilesController(
     parsers = (MultiPartParser(),)
 
     def post(
-        self, parsed_file_metadata: FileMetadata[_MultipleFiles]
+        self,
+        parsed_file_metadata: FileMetadata[_MultipleFiles],
     ) -> _MultipleFiles:
         for content_key in parsed_file_metadata.model_fields_set:
             assert content_key in self.request.FILES
@@ -218,7 +220,8 @@ def test_file_metadata_missing_parser() -> None:
             Controller[PydanticSerializer],
         ):
             def post(
-                self, parsed_file_metadata: FileMetadata[_MultipleFiles]
+                self,
+                parsed_file_metadata: FileMetadata[_MultipleFiles],
             ) -> str:
                 raise NotImplementedError
 
@@ -460,7 +463,8 @@ class _ControllerWithWrongParsers(
     parsers = (_FakeParser(), _WrongBodyParser())
 
     def post(
-        self, parsed_file_metadata: FileMetadata[_UploadedFiles]
+        self,
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
     ) -> _OutputPayload:
         raise NotImplementedError
 
