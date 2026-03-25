@@ -100,7 +100,7 @@ faker = "^40.1"
 inline-snapshot = "^0.32"
 syrupy = "^5.1"
 schemathesis = "^4.12"
-tracecov = "^0.19"
+tracecov = "^0.19.3"
 polyfactory = "^3.2"
 
 httpx = "^0.28"
@@ -280,8 +280,9 @@ addopts = [
   "--tracecov-skip-covered",
   "--tracecov-format=text,html,markdown",
   # TODO: set all values to 100
-  "--tracecov-fail-under-parameters=92",
-  "--tracecov-fail-under-keywords=91",
+  "--tracecov-fail-under-operations=100",
+  "--tracecov-fail-under-parameters=100",
+  "--tracecov-fail-under-keywords=100",
   "--tracecov-fail-under-responses=50",
   # Ignores benchmarks:
   "--ignore=benchmarks/",

@@ -19,38 +19,14 @@ if TYPE_CHECKING:
     )
 
 
-def _maybe_track_client(
-    request: pytest.FixtureRequest,
-    client: 'DMRClient | DMRAsyncClient',
-) -> None:
-    """
-    Connect a DMR test client to TraceCov tracking.
-
-    If the ``tracecov_map`` fixture is available and initialized, this helper
-    registers the client via ``tracecov_map.django.track_client(...)`` so all
-    client interactions are included in the TraceCov report. If TraceCov is not
-    installed/configured, it silently does nothing.
-    """
-    try:
-        # Optional fixture: exists only when tracecov plugin is installed.
-        tracecov_map = request.getfixturevalue('tracecov_map')
-    except pytest.FixtureLookupError:
-        return
-
-    # TraceCov plugin loaded, but coverage map is intentionally inactive.
-    if tracecov_map is None:
-        return
-
-    tracecov_map.django.track_client(client)
-
-
 @pytest.fixture
 def dmr_client(request: pytest.FixtureRequest) -> 'DMRClient':
     """Customized version of :class:`django.test.Client`."""
     from dmr.test import DMRClient
+    from dmr.internal.test import maybe_track_client
 
     client = DMRClient()
-    _maybe_track_client(request, client)
+    maybe_track_client(request, client)
     return client
 
 
@@ -58,9 +34,10 @@ def dmr_client(request: pytest.FixtureRequest) -> 'DMRClient':
 def dmr_async_client(request: pytest.FixtureRequest) -> 'DMRAsyncClient':
     """Customized version of :class:`django.test.AsyncClient`."""
     from dmr.test import DMRAsyncClient
+    from dmr.internal.test import maybe_track_client
 
     client = DMRAsyncClient()
-    _maybe_track_client(request, client)
+    maybe_track_client(request, client)
     return client
 
 
