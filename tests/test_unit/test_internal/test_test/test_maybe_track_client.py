@@ -7,7 +7,7 @@ def test_track_client_lookup_error() -> None:
     """Ensure tracking is skipped when fixture is missing."""
 
     class _PytestRequest:
-        def getfixturevalue(self, name: str) -> Any:
+        def getfixturevalue(self, name: str) -> None:
             assert name == 'tracecov_map'
             raise LookupError
 
@@ -22,9 +22,8 @@ def test_track_client_inactive_map() -> None:
     """Ensure tracking is skipped when map fixture returns ``None``."""
 
     class _PytestRequest:
-        def getfixturevalue(self, name: str) -> Any:
+        def getfixturevalue(self, name: str) -> None:
             assert name == 'tracecov_map'
-            return None
 
     client: Any = object()
     request = _PytestRequest()
