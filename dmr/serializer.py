@@ -365,11 +365,12 @@ class SerializerContext:
         type_map: dict[str, Any] = {}
         content_type_overrides: _ContentTypeOverrides = defaultdict(dict)
 
-        for component, model_type in self.component_parsers:
+        for component, model_type, model_meta in self.component_parsers:
             type_map[component.context_name] = model_type
             specs[component] = model_type
             for content_type, model in component.conditional_types(
                 model_type,
+                model_meta,
             ).items():
                 content_type_overrides[content_type].update({
                     component.context_name: model,

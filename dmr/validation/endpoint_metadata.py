@@ -679,7 +679,7 @@ class EndpointMetadataValidator:
         self,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
-        for component, _model in self.metadata.component_parsers:
+        for component, _model, _metadata in self.metadata.component_parsers:
             component.validate(controller_cls, self.metadata)
 
     def _validate_request_http_spec(
@@ -710,8 +710,8 @@ class EndpointMetadataValidator:
             return
 
         has_body = any(
-            isinstance(component, BodyComponent)
-            for component, _ in self.metadata.component_parsers
+            isinstance(component[0], BodyComponent)
+            for component in self.metadata.component_parsers
         )
         if has_body:
             raise EndpointMetadataError(

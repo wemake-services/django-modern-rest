@@ -35,6 +35,7 @@ class FileBody:
         cls,
         schema: Schema | Reference,
         model: Any,
+        model_meta: tuple[Any, ...],
         parser: Parser,
         context: 'OpenAPIContext',
     ) -> MediaType:
@@ -51,6 +52,7 @@ class FileBody:
         media_type_meta = (
             get_annotated_metadata(
                 conditional_models.get(parser.content_type, model),
+                model_meta,
                 MediaTypeMetadata,
             )
             or MediaTypeMetadata()

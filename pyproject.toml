@@ -348,6 +348,8 @@ venv = ".venv"
 [tool.pyrefly]
 ignore-missing-imports = ["*"]
 project-includes = ["dmr", "typesafety"]
+# TODO: refactor SSE API
+project-excludes = ["typesafety/assert_type/test_sse/test_sse_decorator.py"]
 
 
 [tool.codespell]

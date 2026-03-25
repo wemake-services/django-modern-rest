@@ -36,18 +36,14 @@ def infer_type_args(
     .. code:: python
 
         >>> import pydantic
-        >>> from dmr import Controller, Query
+        >>> from dmr import Controller
         >>> from dmr.plugins.pydantic import PydanticSerializer
 
-        >>> class MyModel(pydantic.BaseModel):
-        ...     query: str
+        >>> class MyController(Controller[PydanticSerializer]): ...
 
-        >>> class MyController(
-        ...     Query[MyModel],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
-
-        >>> assert infer_type_args(MyController, Query) == (MyModel,)
+        >>> assert infer_type_args(MyController, Controller) == (
+        ...     PydanticSerializer,
+        ... )
 
     Will return ``(MyModel, )`` for ``Query`` as *given_type*.
     """

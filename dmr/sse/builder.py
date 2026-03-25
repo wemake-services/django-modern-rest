@@ -13,13 +13,13 @@ from typing import Any, ClassVar, get_args
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import TypeVar, override
 
-from dmr.components import Cookies, Headers, Path, Query
+from dmr.components import ComponentParser, Cookies, Headers, Path, Query
 from dmr.controller import Controller
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.negotiation import force_request_renderer
-from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.metadata import EndpointMetadata, ResponseSpec, get_annotated_metadata
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
@@ -401,10 +401,24 @@ def _build_controller(  # noqa: WPS211, WPS234
                 cookies=response.cookies,
             )
 
-    SSEController.get.__annotations__ = {
-        component.context_name: component
-        for component in filter(None, [path, query, headers, cookies])
-    }
+        # FIXME: don't look at this, this will be removed in
+        # https://github.com/wemake-services/django-modern-rest/pull/736
+        new_annotations = {'return': get.__annotations__['return']}  # noqa: RUF012
+        for component in filter(  # pyrefly: ignore[no-matching-overload]
+            None,
+            [path, query, headers, cookies],
+        ):
+            component_parser = get_annotated_metadata(
+                component,
+                ComponentParser,  # type: ignore[type-abstract]
+            )
+            assert component_parser  # noqa: S101
+            new_annotations[component_parser.context_name] = component
+            del component_parser, component
+
+        get.__annotations__ = new_annotations
+        del new_annotations
+
     return SSEController  # pyright: ignore[reportReturnType]
 
 

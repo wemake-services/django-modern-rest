@@ -83,11 +83,13 @@ class ComponentParserGenerator:
         self,
         parser: 'ComponentParser',
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> list[Parameter | Reference] | RequestBody:
         return parser.get_schema(
             model,
+            model_meta,
             serializer=serializer,
             metadata=metadata,
             context=self._context,
@@ -123,6 +125,7 @@ class ComponentParserGenerator:
             params_list.extend(
                 self._context.generators.parameter(
                     TypedDict(f'{operation_id}_Path', schema),  # type: ignore[operator]
+                    (),
                     serializer,
                     self._context,
                     param_in='path',
@@ -140,6 +143,7 @@ class ComponentParserGenerator:
             params_list.extend(
                 self._context.generators.parameter(
                     TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                    (),
                     serializer,
                     self._context,
                     param_in='path',

@@ -3,6 +3,7 @@ from typing import Any
 
 import pydantic
 import pytest
+from dirty_equals import IsInstance
 from django.http import HttpResponse
 
 from dmr import (  # noqa: WPS235
@@ -14,6 +15,12 @@ from dmr import (  # noqa: WPS235
     ResponseSpec,
     modify,
     validate,
+)
+from dmr.components import (
+    BodyComponent,
+    HeadersComponent,
+    PathComponent,
+    QueryComponent,
 )
 from dmr.plugins.pydantic import PydanticSerializer
 
@@ -86,9 +93,9 @@ def test_single_component_query(
     """Ensure controller with Query component has it in component_parsers."""
     endpoint = _QueryController.api_endpoints[str(method)]
     assert [
-        (component.context_name, model)
-        for component, model in endpoint.metadata.component_parsers
-    ] == [('parsed_query', _QueryModel)]
+        (component.context_name, model, meta)
+        for component, model, meta in endpoint.metadata.component_parsers
+    ] == [('parsed_query', _QueryModel, (IsInstance(QueryComponent),))]
 
 
 class _MultiComponentController(Controller[PydanticSerializer]):
@@ -127,15 +134,15 @@ def test_multiple_components_get() -> None:
     """Ensure GET endpoint has components without Body."""
     endpoint = _MultiComponentController.api_endpoints['GET']
     assert isinstance(endpoint.metadata.component_parsers, list)
-    components: list[tuple[str, Any]] = [
-        ('parsed_query', _QueryModel),
-        ('parsed_headers', _HeadersModel),
-        ('parsed_path', _PathModel),
+    components: list[tuple[str, Any, tuple[Any, ...]]] = [
+        ('parsed_query', _QueryModel, (IsInstance(QueryComponent),)),
+        ('parsed_headers', _HeadersModel, (IsInstance(HeadersComponent),)),
+        ('parsed_path', _PathModel, (IsInstance(PathComponent),)),
     ]
-    assert components == [
-        (component.context_name, model)
-        for component, model in endpoint.metadata.component_parsers
-    ]
+    assert sorted(components) == sorted([
+        (component.context_name, model, meta)
+        for component, model, meta in endpoint.metadata.component_parsers
+    ])
 
 
 @pytest.mark.parametrize(
@@ -149,13 +156,13 @@ def test_multiple_components_with_body(
     """Ensure controller has all multiple components in component_parsers."""
     endpoint = _MultiComponentController.api_endpoints[str(method)]
     assert isinstance(endpoint.metadata.component_parsers, list)
-    components: list[tuple[str, Any]] = [
-        ('parsed_query', _QueryModel),
-        ('parsed_body', _BodyModel),
-        ('parsed_headers', _HeadersModel),
-        ('parsed_path', _PathModel),
+    components: list[tuple[str, Any, tuple[Any, ...]]] = [
+        ('parsed_query', _QueryModel, (IsInstance(QueryComponent),)),
+        ('parsed_headers', _HeadersModel, (IsInstance(HeadersComponent),)),
+        ('parsed_path', _PathModel, (IsInstance(PathComponent),)),
+        ('parsed_body', _BodyModel, (IsInstance(BodyComponent),)),
     ]
-    assert components == [
-        (component.context_name, model)
-        for component, model in endpoint.metadata.component_parsers
-    ]
+    assert sorted(components) == sorted([
+        (component.context_name, model, meta)
+        for component, model, meta in endpoint.metadata.component_parsers
+    ])

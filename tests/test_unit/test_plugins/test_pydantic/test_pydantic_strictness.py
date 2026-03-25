@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
+from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import SerializerContext
 from dmr.test import DMRRequestFactory
@@ -102,10 +103,15 @@ class _StrictContext(SerializerContext):
 
 
 @final
+class _StrictEndpoint(Endpoint):
+    serializer_context_cls = _StrictContext
+
+
+@final
 class _ExplicitStrictInputController(
     Controller[PydanticSerializer],
 ):
-    serializer_context_cls = _StrictContext
+    endpoint_cls = _StrictEndpoint
 
     def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
         raise NotImplementedError
@@ -138,10 +144,15 @@ class _LaxContext(SerializerContext):
 
 
 @final
+class _LaxEndpoint(Endpoint):
+    serializer_context_cls = _LaxContext
+
+
+@final
 class _ExplicitLaxInputController(
     Controller[PydanticSerializer],
 ):
-    serializer_context_cls = _LaxContext
+    endpoint_cls = _LaxEndpoint
 
     def post(self, parsed_body: Body[_InputModel]) -> _InputModel:
         return parsed_body
@@ -189,7 +200,7 @@ def test_model_config_strictness(dmr_rf: DMRRequestFactory) -> None:
 class _ExplicitLaxConfigController(
     Controller[PydanticSerializer],
 ):
-    serializer_context_cls = _LaxContext
+    endpoint_cls = _LaxEndpoint
 
     def post(self, parsed_body: Body[_ConfigStrictModel]) -> _ConfigStrictModel:
         return parsed_body

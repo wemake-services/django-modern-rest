@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Any, Generic, TypeVar
+from typing import Annotated, Any, Generic, TypeAlias, TypeVar
 
 import pytest
 from django.core.exceptions import DisallowedRedirect
@@ -214,16 +214,16 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
 
-class _ControllerWithTestComponent(
-    Controller[PydanticSerializer],
-    _TestComponent[str],
-):
+_Test: TypeAlias = Annotated[_StrT, _TestComponent()]
+
+
+class _ControllerWithTestComponent(Controller[PydanticSerializer]):
     @modify(
         extra_responses=[
             ResponseSpec(str, status_code=HTTPStatus.IM_A_TEAPOT),
         ],
     )
-    def get(self) -> int:
+    def get(self, test: _Test[str]) -> int:
         raise NotImplementedError
 
 

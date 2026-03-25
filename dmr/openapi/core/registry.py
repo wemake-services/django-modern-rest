@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Protocol
+from typing import Annotated, Any, ClassVar, Protocol, get_origin
 
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
 from dmr.types import Empty, EmptyObj
@@ -155,6 +155,8 @@ def _check_hashes(
 def _safe_hash(annotation: Any) -> int | None:
     if annotation is EmptyObj:
         return None
+    if get_origin(annotation) is Annotated:
+        annotation = annotation.__origin__
     try:
         return hash(annotation)
     except Exception:  # pragma: no cover

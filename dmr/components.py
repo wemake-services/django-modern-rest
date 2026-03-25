@@ -29,6 +29,7 @@ from dmr.internal.django import (
     parse_headers,
 )
 from dmr.metadata import (
+    ComponentParserSpec,
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
@@ -70,12 +71,6 @@ _CookiesT = TypeVar('_CookiesT')
 _FileMetadataT = TypeVar('_FileMetadataT')
 
 
-ComponentParserSpec: TypeAlias = tuple[
-    'ComponentParser',
-    Any,  # ModelType
-]
-
-
 class ComponentParserBuilder:
     """
     Find the component parser types in the MRO and find model types for them.
@@ -109,6 +104,7 @@ class ComponentParserBuilder:
 
             metadata = get_annotated_metadata(
                 component,
+                (),
                 ComponentParser,  # type: ignore[type-abstract]
             )
             if metadata is None:
@@ -121,7 +117,11 @@ class ComponentParserBuilder:
                     f'in {self._controller_cls!r}',
                 )
 
-            components.append((metadata, component.__origin__))
+            components.append((
+                metadata,
+                component.__origin__,
+                component.__metadata__,
+            ))
 
         return components
 
@@ -158,6 +158,7 @@ class ComponentParserBuilder:
         return (
             component_spec[0],
             type_map[component_spec[1]],
+            component_spec[2],
         )
 
 
@@ -218,7 +219,11 @@ class ComponentParser(ResponseSpecProvider):
             existing_responses,
         )
 
-    def conditional_types(self, model: Any) -> Mapping[str, Any]:
+    def conditional_types(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+    ) -> Mapping[str, Any]:
         """
         Provide conditional parsing types based on content type.
 
@@ -246,6 +251,7 @@ class ComponentParser(ResponseSpecProvider):
     def get_schema(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
@@ -311,12 +317,14 @@ class QueryComponent(ComponentParser, Generic[_QueryT]):
     def get_schema(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='query',
@@ -414,7 +422,11 @@ class BodyComponent(ComponentParser, Generic[_BodyT]):
             raise RequestSerializationError(str(exc)) from None
 
     @override
-    def conditional_types(self, model: Any) -> Mapping[str, Any]:
+    def conditional_types(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+    ) -> Mapping[str, Any]:
         """
         Provide conditional parsing types based on content type.
 
@@ -423,18 +435,19 @@ class BodyComponent(ComponentParser, Generic[_BodyT]):
         with :func:`dmr.negotiation.conditional_type`
         we treat the body as conditional. Otherwise, returns an empty dict.
         """
-        return get_conditional_types(model) or {}
+        return get_conditional_types(model, model_meta) or {}
 
     @override
     def get_schema(  # noqa: WPS210
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(model, serializer)
-        conditional_types = self.conditional_types(model)
+        conditional_types = self.conditional_types(model, model_meta)
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
@@ -522,12 +535,14 @@ class HeadersComponent(ComponentParser, Generic[_HeadersT]):
     def get_schema(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='header',
@@ -647,12 +662,14 @@ class PathComponent(ComponentParser, Generic[_PathT]):
     def get_schema(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='path',
@@ -709,12 +726,14 @@ class CookiesComponent(ComponentParser, Generic[_CookiesT]):
     def get_schema(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='cookie',
@@ -864,7 +883,11 @@ class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
             )
 
     @override
-    def conditional_types(self, model: Any) -> Mapping[str, Any]:
+    def conditional_types(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+    ) -> Mapping[str, Any]:
         """
         Provide conditional parsing types based on content type.
 
@@ -875,12 +898,13 @@ class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
         """
         # TODO: test conditional file models and add `application/ocet-stream`
         # parser support to test it.
-        return get_conditional_types(model) or {}
+        return get_conditional_types(model, model_meta) or {}
 
     @override
     def get_schema(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
@@ -897,6 +921,7 @@ class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
             )
             for content_type, conditional_model in self.conditional_types(
                 model,
+                model_meta,
             ).items()
         }
         return RequestBody(
@@ -904,6 +929,7 @@ class FileMetadataComponent(ComponentParser, Generic[_FileMetadataT]):
                 parser.content_type: self.schema_metadata.media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
+                    model_meta,
                     parser,
                     context,
                 )

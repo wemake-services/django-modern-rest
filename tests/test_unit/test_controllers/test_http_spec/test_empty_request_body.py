@@ -1,6 +1,8 @@
 from http import HTTPStatus
+from typing import Final
 
 import pydantic
+import pytest
 from django.http import HttpResponse
 
 from dmr import (
@@ -10,8 +12,11 @@ from dmr import (
     modify,
     validate,
 )
+from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
+
+_MATCH_PATTERN: Final = 'cannot have a request body'
 
 
 class _BodyModel(pydantic.BaseModel):
@@ -20,52 +25,47 @@ class _BodyModel(pydantic.BaseModel):
 
 def test_empty_request_body_get_with_body() -> None:
     """Ensure that GET can use body parsing via endpoint args."""
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
-    class _Controller(Controller[PydanticSerializer]):
-        def get(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
-
-    assert 'GET' in _Controller.api_endpoints
+        class _Controller(Controller[PydanticSerializer]):
+            def get(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError
 
 
 def test_empty_request_body_head_with_body() -> None:
     """Ensure that HEAD can use body parsing via endpoint args."""
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
-    class _Controller(Controller[PydanticSerializer]):
-        def head(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
-
-    assert 'HEAD' in _Controller.api_endpoints
+        class _Controller(Controller[PydanticSerializer]):
+            def head(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError
 
 
 def test_empty_request_body_delete_with_body() -> None:
     """Ensure that DELETE can use body parsing via endpoint args."""
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
-    class _Controller(Controller[PydanticSerializer]):
-        def delete(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
-
-    assert 'DELETE' in _Controller.api_endpoints
+        class _Controller(Controller[PydanticSerializer]):
+            def delete(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError
 
 
 def test_empty_request_body_connect_with_body() -> None:
     """Ensure that CONNECT can use body parsing via endpoint args."""
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
-    class _Controller(Controller[PydanticSerializer]):
-        def connect(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
-
-    assert 'CONNECT' in _Controller.api_endpoints
+        class _Controller(Controller[PydanticSerializer]):
+            def connect(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError
 
 
 def test_empty_request_body_trace_with_body() -> None:
     """Ensure that TRACE can use body parsing via endpoint args."""
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
-    class _Controller(Controller[PydanticSerializer]):
-        def trace(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
-
-    assert 'TRACE' in _Controller.api_endpoints
+        class _Controller(Controller[PydanticSerializer]):
+            def trace(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError
 
 
 def test_empty_request_body_post_with_body_works() -> None:
@@ -121,11 +121,11 @@ def test_empty_request_body_disabled_scoped_controller() -> None:
 
     assert 'GET' in _Controller.api_endpoints
 
-    class _AnotherController(Controller[PydanticSerializer]):
-        def get(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
-    assert 'GET' in _AnotherController.api_endpoints
+        class _AnotherController(Controller[PydanticSerializer]):
+            def get(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError
 
 
 def test_empty_request_body_disabled_on_modify() -> None:

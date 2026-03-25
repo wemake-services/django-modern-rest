@@ -233,6 +233,7 @@ def conditional_type(
 
 def get_conditional_types(
     model: Any,
+    model_meta: tuple[Any, ...] | None = None,
 ) -> Mapping[str, Any] | None:
     """
     Returns possible conditional types.
@@ -240,7 +241,7 @@ def get_conditional_types(
     Conditional types are defined with :data:`typing.Annotated`
     and :func:`dmr.negotiation.conditional_type` helper.
     """
-    metadata = get_annotated_metadata(model, _ConditionalType)
+    metadata = get_annotated_metadata(model, model_meta, _ConditionalType)
     if metadata:
         return metadata.computed
     return None

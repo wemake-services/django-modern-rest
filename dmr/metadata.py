@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
     from dmr.settings import HttpSpec
 
-ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any]
+ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -375,6 +375,7 @@ _MetadataT = TypeVar('_MetadataT')
 
 def get_annotated_metadata(
     model: Any,
+    model_meta: tuple[Any, ...] | None,
     metadata_type: type[_MetadataT],
 ) -> _MetadataT | None:
     """
@@ -386,4 +387,9 @@ def get_annotated_metadata(
         for metadata in model.__metadata__:
             if isinstance(metadata, metadata_type):
                 return metadata
+
+    for meta in model_meta or ():
+        metadata = get_annotated_metadata(meta, None, metadata_type)
+        if metadata:
+            return metadata  # type: ignore[no-any-return]
     return None
