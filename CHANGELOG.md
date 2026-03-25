@@ -1,9 +1,87 @@
 # Version history
 
-We follow [Semantic Versions](https://semver.org/).
+We will follow [Semantic Versions](https://semver.org/) since ``1.0.0`` release.
+While in `Development Status :: 3 - Alpha` - we will break
+all the things without any notices.
+
+After `Development Status :: 4 - Beta` we will still break things
+but with a deprecation period.
 
 
 ## WIP
+
+### Breaking changes
+
+1. We changed how components are defined in controllers, #738
+   Now components will be defined in method parameters, not in base classes.
+
+2. We removed `dmr.controller.Blueprint`, because it is not needed anymore.
+   It was used to compose different classes with different parsing strategies.
+   Since, it was only used for different parsing rules
+
+3. We removed `drm.routing.compose_blueprints` function,
+   because there no `Blueprint`s anymore :)
+
+We always ship AI prompts to all breaking changes.
+So, it would be easier for you to migrate
+to a newer version using AI tool of your choice.
+
+### Migration Prompt
+
+To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
+2. Convert component parsing from old class-based API to new method-based API. 
+  Before:
+
+  ```python
+  from dmr import Blueprint, Body
+  from dmr.routing import compose_blueprints
+  from dmr.plugins.pydantic import PydanticSerializer
+
+  class UserCreateBlueprint(
+      Body[_UserInput],  # <- needs a request body
+      Blueprint[PydanticSerializer],
+  ):
+      def post(self) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+
+  class UserListBlueprint(Blueprint[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+
+  UsersController = compose_blueprints(UserCreateBlueprint, UserListBlueprint)
+  ```
+
+  To:
+
+  ```python
+  from dmr import Controller, Body
+  from dmr.plugins.pydantic import PydanticSerializer
+
+  class UsersController(Controller[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+      
+      def post(self, parsed_body: Body[_UserInput]) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+  ```
+
+3. Replace all `Blueprint` and `compose_blueprints` references with a new API:
+  Instead you must use `Controller` and different methods under a single class
 
 ### Features
 
