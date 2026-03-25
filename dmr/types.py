@@ -137,14 +137,14 @@ class TypeVarInference:
 
     def __init__(
         self,
-        to_infer: type[Any] | TypeVar,
+        to_infer: TypeVar,
         context: type[Any],
     ) -> None:
         """
         Prepare the inference.
 
         Args:
-            to_infer: class or type var which needs to be inferred.
+            to_infer: type var which needs to be inferred.
             context: its usage in inheritance with real type values provided.
 
         """
@@ -160,23 +160,11 @@ class TypeVarInference:
             It can still be a type variable, if no real values are provided.
 
         """
-        if isinstance(self._to_infer, TypeVar):
-            type_map = {self._to_infer.__name__: self._to_infer}
-            type_parameters = (self._to_infer,)
-        else:
-            # We match type params by name, because they can be a bit different,
-            # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
-            # This also ignore variance and stuff.
-            type_map = {
-                type_param.__name__: type_arg
-                for type_param, type_arg in zip(
-                    self._to_infer.__parameters__,
-                    get_args(self._to_infer),
-                    strict=True,
-                )
-                if isinstance(type_param, TypeVar)
-            }
-            type_parameters = self._to_infer.__parameters__
+        # We match type params by name, because they can be a bit different,
+        # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
+        # This also ignore variance and stuff.
+        type_map = {self._to_infer.__name__: self._to_infer}
+        type_parameters = (self._to_infer,)
 
         for base in reversed(list(self._resolve_orig_bases(self._context))):
             # We apply type params in the "reversed mro order".

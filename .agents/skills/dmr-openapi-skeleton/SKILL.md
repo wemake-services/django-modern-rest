@@ -79,8 +79,7 @@ Primary framework documentation:
 
 ### 6. Generate views with the correct dmr construct
 
-- Use a direct `Controller[...]` when a route has one operation or when a single class naturally owns the endpoint.
-- Use one `Blueprint[...]` per HTTP method and combine them with `compose_blueprints(...)` when the same path exposes multiple operations or materially different request, response, or auth rules.
+- Use a minimal number of `Controller`s
 - Keep one class per operation. Let the router compose them instead of building giant mixed-purpose controllers.
 - Name classes from `operationId` when it is stable and explicit. Otherwise derive names from resource plus verb such as `UserListBlueprint`, `UserCreateController`, or `InvoiceRetrieveBlueprint`.
 

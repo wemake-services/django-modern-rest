@@ -10,17 +10,6 @@ about its future URL. Why so?
 2. Because all controllers might be used in multiple URLs,
    for example in ``api/v1`` and ``api/v2``. Our way allows any customizations
 
-To register a controller what you do is:
-
-So, how do you compose different controllers with different parsing
-behaviours into a single URL? For this we use
-:func:`~dmr.routing.compose_blueprints` function:
-
-.. literalinclude:: /examples/routing/blueprints.py
-  :caption: urls.py
-  :language: python
-  :linenos:
-
 .. note::
 
   If you want to parse path parameters, see :doc:`components/path`
@@ -37,42 +26,6 @@ attached to this behaviour:
 3. Controllers must have the same :term:`serializer`,
    because otherwise parsing can probably error out
 4. Controllers to be composed must have at least one endpoint
-
-Controllers in ``django-modern-rest`` are not built
-to be extended, but composed from blueprints!
-
-
-.. _composed-meta:
-
-Handling meta endpoint
-----------------------
-
-When using :func:`~dmr.routing.compose_blueprints`,
-duplicate ``meta`` methods will be a import-time error. To solve this,
-remove ``meta`` method from individual controllers
-and use ``meta_mixin=`` keyword parameter to ``compose_blueprints``.
-
-Example:
-
-.. code:: python
-
-  from dmr import AsyncMetaMixin
-
-  composed = compose_blueprints(
-      UserPut,
-      UserPatch,
-      # If controllers are sync, use `MetaMixin`
-      meta_mixin=AsyncMetaMixin,
-  )
-
-This will create an ``async def meta`` endpoint in the composed controller.
-All methods from ``UserPut`` and ``UserPatch`` will be listed
-in the response's ``Allow`` header.
-
-.. warning::
-
-  As usually, we validate that the resulting ``Controller``
-  won't have a mix of sync and async endpoints.
 
 
 Handling 404 errors

@@ -5,7 +5,7 @@ import pytest
 from django.urls import path
 from typing_extensions import override
 
-from dmr import Blueprint, Controller
+from dmr import Controller
 from dmr.components import ComponentParser
 from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata
@@ -24,7 +24,7 @@ class _Fake(ComponentParser, Generic[_FakeT]):
     def provide_context_data(
         cls,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> dict[str, Any]:

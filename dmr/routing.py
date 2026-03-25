@@ -1,4 +1,3 @@
-import types
 from collections.abc import Callable, Coroutine, Sequence
 from http import HTTPStatus
 from typing import (
@@ -27,14 +26,11 @@ if TYPE_CHECKING:
         _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
     )
 
-    from dmr.controller import Blueprint, Controller
     from dmr.internal.types import FormatError
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
 
-_BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
 _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
@@ -230,59 +226,6 @@ def build_500_handler(  # noqa: WPS114
             status_code=InternalServerError.status_code,
             renderer=renderer,
         )
-
-    return factory
-
-
-def compose_blueprints(
-    # This seems like a strange design at first, but it actually allows:
-    # at least two pos-only controllers and then any amount of extra ones.
-    first_blueprint: '_BlueprintCls[_SerializerT]',
-    /,
-    *extra: '_BlueprintCls[_SerializerT]',
-    meta_mixin: type['MetaMixin | AsyncMetaMixin'] | None = None,
-) -> type['Controller[_SerializerT]']:
-    """
-    Combines several blueprints with different http methods into one controller.
-
-    That can be used a single URL route.
-
-    Args:
-        first_blueprint: First required blueprint class to compose.
-        extra: Other optional blueprint classes to compose.
-        meta_mixin: Type to add to support ``OPTIONS`` method.
-
-    Returns:
-        New controller class that has all the endpoints
-        from all composed blueprints.
-
-    Raises:
-        EndpointMetadataError: When blueprint validation fails.
-
-    """
-    from dmr.controller import Controller  # noqa: PLC0415
-
-    blueprints = [first_blueprint, *extra]
-    type_name = ', '.join(typ.__qualname__ for typ in blueprints)
-
-    serializer = first_blueprint.serializer
-    bases = [
-        *([meta_mixin] if meta_mixin else []),
-        Controller[serializer],  # type: ignore[valid-type]
-    ]
-    return types.new_class(
-        f'Composed@[{type_name}]',
-        bases,
-        exec_body=_body_builder(blueprints),
-    )
-
-
-def _body_builder(  # :)
-    blueprints: list['_BlueprintCls[_SerializerT]'],
-) -> Callable[[dict[str, Any]], object]:
-    def factory(ns: dict[str, Any]) -> object:
-        ns['blueprints'] = blueprints
-        return ns
 
     return factory
 

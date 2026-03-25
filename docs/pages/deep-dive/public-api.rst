@@ -97,8 +97,6 @@ Routing
 .. autoclass:: dmr.routing.Router
   :members:
 
-.. autofunction:: dmr.routing.compose_blueprints
-
 .. autofunction:: dmr.routing.build_404_handler
 
 .. autofunction:: dmr.routing.build_500_handler

@@ -1,6 +1,3 @@
-from dmr.validation.blueprint import (
-    BlueprintValidator as BlueprintValidator,
-)
 from dmr.validation.controller import (
     ControllerValidator as ControllerValidator,
 )

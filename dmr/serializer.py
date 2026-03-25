@@ -1,13 +1,21 @@
 import abc
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeAlias,
+    TypeVar,
+)
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 from typing_extensions import TypedDict
 
+from dmr.components import ComponentParser, ComponentParserBuilder
 from dmr.errors import ErrorDetail
 from dmr.exceptions import (
     InternalServerError,
@@ -19,7 +27,7 @@ from dmr.renderers import Renderer
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
-    from dmr.controller import Blueprint
+    from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.metadata import EndpointMetadata
 
@@ -28,7 +36,7 @@ _CANNOT_DESERIALIZE_MSG: Final = _(
 )
 
 _ModelT = TypeVar('_ModelT')
-_ComponentParserSpec: TypeAlias = dict[type['ComponentParser'], Any]
+_ComponentParserSpec: TypeAlias = dict['ComponentParser', Any]
 _ContentTypeOverrides: TypeAlias = dict[str, dict[str, Any]]
 _TypeMapResult: TypeAlias = tuple[
     _ComponentParserSpec,
@@ -283,12 +291,14 @@ class SerializerContext:
             Strict mode in some serializers does
             not allow implicit type conversions.
             Defaults to ``None``. Which means that we decide
-            on a per-field and then on a per-model basis.
+            on a per-field basis if it is set, if not then on a per-model basis.
     """
 
     # Public API:
     strict_validation: ClassVar[bool | None] = None
-    from_python_kwargs: ClassVar[Mapping[str, Any]] = {}
+    component_builder_cls: ClassVar[type[ComponentParserBuilder]] = (
+        ComponentParserBuilder
+    )
 
     # Protected API:
     _specs: _ComponentParserSpec
@@ -296,24 +306,28 @@ class SerializerContext:
     _conditional_combined_models: dict[str, Any]
 
     __slots__ = (
-        '_blueprint_cls',
         '_conditional_combined_models',
         '_default_combined_model',
         '_specs',
+        'component_parsers',
     )
 
     def __init__(
         self,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
+        func: Callable[..., Any],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """Eagerly build context for a given controller and serializer."""
-        self._blueprint_cls = blueprint_cls
-        specs, type_map, content_mapping = self._build_type_map(
-            self._blueprint_cls,
-        )
+        self.component_parsers = self.component_builder_cls(
+            func,
+            controller_cls,
+        )()
+
+        specs, type_map, content_mapping = self._build_type_map(func)
         self._specs = specs
         default_combined_model, conditional_combined_models = (
             self._build_combined_models(
+                controller_cls,
                 type_map,
                 content_mapping,
             )
@@ -324,8 +338,8 @@ class SerializerContext:
     def __call__(
         self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
-    ) -> None:
+        controller: 'Controller[BaseSerializer]',
+    ) -> dict[str, Any]:
         """
         Collect, validate, and bind component data to the controller.
 
@@ -333,15 +347,14 @@ class SerializerContext:
         data does not match the expected model.
         """
         if not self._specs:
-            return
+            return {}
 
-        context = self._collect_context(endpoint, blueprint)
-        validated = self._validate_context(context, blueprint)
-        self._bind_parsed(blueprint, validated)
+        context = self._collect_context(endpoint, controller)
+        return self._validate_context(context, controller)
 
     def _build_type_map(  # noqa: WPS210
         self,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
+        func: Callable[..., Any],
     ) -> _TypeMapResult:
         """
         Build the type parsing spec.
@@ -352,29 +365,26 @@ class SerializerContext:
         type_map: dict[str, Any] = {}
         content_type_overrides: _ContentTypeOverrides = defaultdict(dict)
 
-        for (
-            component_cls,
-            type_args,
-        ) in blueprint_cls._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-            type_args = type_args[0] if len(type_args) == 1 else type_args
-            type_map[component_cls.context_name] = type_args
-            specs[component_cls] = type_args
-            for content_type, model in component_cls.conditional_types(
-                type_args,
+        for component, model_type in self.component_parsers:
+            type_map[component.context_name] = model_type
+            specs[component] = model_type
+            for content_type, model in component.conditional_types(
+                model_type,
             ).items():
                 content_type_overrides[content_type].update({
-                    component_cls.context_name: model,
+                    component.context_name: model,
                 })
         return specs, type_map, content_type_overrides
 
     def _build_combined_models(
         self,
+        controller_cls: type['Controller[BaseSerializer]'],
         type_map: dict[str, Any],
         content_type_overrides: _ContentTypeOverrides,
     ) -> tuple[Any, dict[str, Any]]:
         # Name is not really important,
         # we use `@` to identify that it is generated:
-        name_prefix = self._blueprint_cls.__qualname__  # pyright: ignore[reportUnusedVariable]
+        name_prefix = controller_cls.__qualname__  # pyright: ignore[reportUnusedVariable]
 
         default_model = TypedDict(  # type: ignore[misc]
             f'_{name_prefix}@ContextModel',  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[invalid-argument]
@@ -399,14 +409,14 @@ class SerializerContext:
     def _collect_context(
         self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
         context: dict[str, Any] = {}
         for component, submodel in self._specs.items():
             raw = component.provide_context_data(
                 endpoint,
-                blueprint,
+                controller,
                 field_model=submodel,  # just the exact field for the exact key
             )
             context[component.context_name] = raw
@@ -415,11 +425,11 @@ class SerializerContext:
     def _validate_context(
         self,
         context: dict[str, Any],
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
     ) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
-        serializer = self._blueprint_cls.serializer
-        content_type = blueprint.request.headers.get('Content-Type')
+        serializer = controller.serializer
+        content_type = controller.request.headers.get('Content-Type')
         model = (
             self._default_combined_model
             if content_type is None
@@ -433,19 +443,9 @@ class SerializerContext:
                 context,
                 model,
                 strict=self.strict_validation,
-                **self.from_python_kwargs,
             )
         except serializer.validation_error as exc:
             raise ValidationError(
                 serializer.serialize_validation_error(exc),
                 status_code=HTTPStatus.BAD_REQUEST,
             ) from None
-
-    def _bind_parsed(
-        self,
-        blueprint: 'Blueprint[BaseSerializer]',
-        validated: dict[str, Any],
-    ) -> None:
-        """Bind parsed values back to the blueprint instance."""
-        for name, parsed_value in validated.items():
-            setattr(blueprint, name, parsed_value)

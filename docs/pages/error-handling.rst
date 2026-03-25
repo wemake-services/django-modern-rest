@@ -92,32 +92,6 @@ as handlers. Like so:
   :language: python
   :linenos:
 
-
-Customizing blueprint error handler
------------------------------------
-
-Let's create custom error handling for the all endpoints in a blueprint:
-
-.. literalinclude:: /examples/error_handling/blueprint.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-In this example we define ``async_error_handler`` for both endpoints.
-All ``httpx.HTTPError`` errors that can happen in both endpoints
-will be safely handled. Notice that we also add new response schema
-to :attr:`~dmr.controller.Blueprint.responses`
-to be sure that it will be present in the OpenAPI
-and response validation will work.
-
-Per-blueprint's error handling has a priority
-over per-controller handlers.
-
-.. note::
-
-  If you are not using blueprints, then this error-handling layer won't exist.
-
-
 Customizing controller error handler
 ------------------------------------
 

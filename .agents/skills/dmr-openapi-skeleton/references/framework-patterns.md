@@ -48,21 +48,16 @@ and split into multiple Blueprints only when parsing contracts differ materially
 ```python
 from django.urls import path
 
-from dmr import Blueprint, Body
+from dmr import Controller, Body
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router, compose_blueprints
+from dmr.routing import Router
 
 
-class UserListBlueprint(Blueprint[PydanticSerializer]):
+class UsersBlueprint(Controller[PydanticSerializer]):
     def get(self) -> list[UserOutput]:
         return []
 
-
-class UserCreateBlueprint(
-    Body[UserCreateInput],
-    Blueprint[PydanticSerializer],
-):
-    def post(self) -> UserOutput:
+    def post(self, parsed_body: Body[UserCreateInput]) -> UserOutput:
         return UserOutput(id=1, email=self.parsed_body.email)
 
 
@@ -70,10 +65,7 @@ router = Router(
     [
         path(
             'users/',
-            compose_blueprints(
-                UserListBlueprint,
-                UserCreateBlueprint,
-            ).as_view(),
+            UsersController.as_view(),
             name='users',
         ),
     ],

@@ -105,43 +105,6 @@ response descriptions (or "schemas"), if you need explicit cases for errors.
 See :doc:`responses/index` for more.
 
 
-Composing Blueprints into Controllers
--------------------------------------
-
-When modeling your endpoints and data, you might find yourself
-in a situation when you would need to have different data
-parsing rules for different endpoints on the same URL:
-
-- ``GET /users`` does not a body and just returns the list of users
-- ``POST /users`` requires a request body of some ``UserInput`` type
-  to create a new user with the pre-defined set of fields
-
-To achieve that we have a special composition primitive called
-:class:`~dmr.controller.Blueprint`.
-
-It is used to define parsing rules / :doc:`error handling <error-handling>`
-for a set of endpoints that share the same logic.
-
-Here's an example:
-
-.. literalinclude:: /examples/using_controller/blueprints.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-Unlike controllers, they can't be used in routing directly.
-First, they need to be composed into a controller:
-
-- Via :attr:`~dmr.controller.Controller.blueprints` attribute
-
-.. literalinclude:: /examples/using_controller/compose_blueprints.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-- Via :func:`~dmr.routing.compose_blueprints` function.
-  See our :doc:`routing` guide for more details.
-
 
 .. _meta:
 
@@ -174,10 +137,6 @@ Here's an example of a custom ``meta`` implementation:
   :caption: views.py
   :language: python
   :linenos:
-
-
-See how you can use :ref:`composed-meta`
-with :func:`~dmr.routing.compose_blueprints`.
 
 
 Customizing controllers

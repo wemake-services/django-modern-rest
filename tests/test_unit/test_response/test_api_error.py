@@ -10,7 +10,6 @@ from typing_extensions import override
 
 from dmr import (
     APIError,
-    Blueprint,
     Controller,
     HeaderSpec,
     ResponseSpec,
@@ -209,7 +208,7 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
     def provide_context_data(
         cls,
         endpoint: Endpoint,
-        blueprint: Blueprint[BaseSerializer],
+        controller: Controller[BaseSerializer],
         *,
         field_model: Any,
     ) -> Any:

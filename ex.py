@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import ClassVar, final
+from typing import final
 
 import pytest
 
@@ -62,42 +62,3 @@ def test_msgspec_components(
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == f'{first_name} {last_name}'
-
-
-@final
-class _ForceListQuery(msgspec.Struct):
-    __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('query',))
-
-    query: list[str]
-    regular: str
-
-
-@final
-class _QueryListController(
-    Controller[MsgspecSerializer],
-):
-    def get(
-        self,
-        parsed_query: Query[_ForceListQuery],
-    ) -> str:
-        return ' '.join([parsed_query.regular, *parsed_query.query])
-
-
-def test_msgspec_force_list_query(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
-    """Ensures that query can have ``__drm_force_list__`` attr."""
-    first_name = faker.name()
-    last_name = faker.last_name()
-    regular = faker.name()
-    request = dmr_rf.get(
-        f'/whatever/?query={first_name}&query={last_name}&regular={regular}',
-    )
-
-    response = _QueryListController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == f'{regular} {first_name} {last_name}'

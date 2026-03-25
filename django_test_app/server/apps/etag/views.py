@@ -75,19 +75,15 @@ def _condition_middleware(response: HttpResponse) -> HttpResponse:
 
 @final
 @_condition_middleware
-class ConditionalETagController(
-    Controller[PydanticSerializer],
-    Path[_PathModel],
-):
+class ConditionalETagController(Controller[PydanticSerializer]):
     responses = _condition_middleware.responses
 
-    def get(self) -> HttpResponse:
-        user_id = self.parsed_path.user_id
-        user = _USERS.get(user_id)
+    def get(self, parsed_path: Path[_PathModel]) -> HttpResponse:
+        user = _USERS.get(parsed_path.user_id)
         if user is None:
             raise APIError(
                 self.format_error(
-                    f'User {user_id} not found',
+                    f'User {parsed_path.user_id} not found',
                     error_type=ErrorType.not_found,
                 ),
                 status_code=HTTPStatus.NOT_FOUND,

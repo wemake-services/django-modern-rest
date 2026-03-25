@@ -37,7 +37,7 @@ from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import APIError, APIRedirectError
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.serializer import BaseSerializer
+from dmr.serializer import BaseSerializer, SerializerContext
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.validation import (
     EndpointMetadataBuilder,
@@ -49,7 +49,7 @@ from dmr.validation import (
 )
 
 if TYPE_CHECKING:
-    from dmr.controller import Blueprint, Controller
+    from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.validation.response import ValidatedModification
 
@@ -64,6 +64,7 @@ class Endpoint:  # noqa: WPS214
 
     __slots__ = (
         '_func',
+        '_serializer_context',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -75,6 +76,9 @@ class Endpoint:  # noqa: WPS214
     _func: Callable[..., Any]
 
     # Class API:
+    serializer_context_cls: ClassVar[type[SerializerContext]] = (
+        SerializerContext
+    )
     metadata_builder_cls: ClassVar[type[EndpointMetadataBuilder]] = (
         EndpointMetadataBuilder
     )
@@ -99,7 +103,6 @@ class Endpoint:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         *,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """
@@ -108,8 +111,6 @@ class Endpoint:  # noqa: WPS214
         Args:
             func: Entrypoint handler. An actual function to be called.
             controller_cls: ``Controller`` class that this endpoint belongs to.
-            blueprint_cls: ``Blueprint`` class that this endpoint
-                might belong to.
 
         .. danger::
 
@@ -117,6 +118,10 @@ class Endpoint:  # noqa: WPS214
             because its instance is reused for all requests.
 
         """
+        self._serializer_context = self.serializer_context_cls(
+            func,
+            controller_cls,
+        )
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
         payload: Payload = getattr(func, '__dmr_payload__', None)
@@ -130,16 +135,15 @@ class Endpoint:  # noqa: WPS214
         # Done!
         metadata = self.metadata_builder_cls(
             payload=payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
             response_modification_cls=self.response_modification_cls,
+            component_parsers=self._serializer_context.component_parsers,
         )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
             payload=payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
         func.__metadata__ = metadata  # type: ignore[attr-defined]
@@ -205,16 +209,7 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if controller.blueprint:
-            try:
-                return controller.blueprint.handle_error(
-                    self,
-                    controller,
-                    exc,
-                )
-            except Exception:  # noqa: S110
-                pass  # noqa: WPS420
-        # Per-endpoint error handler and per-blueprint handlers didn't work.
+        # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
             return controller.handle_error(
@@ -248,16 +243,7 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if controller.blueprint:
-            try:
-                return await controller.blueprint.handle_async_error(
-                    self,
-                    controller,
-                    exc,
-                )
-            except Exception:  # noqa: S110
-                pass  # noqa: WPS420
-        # Per-endpoint error handler and per-blueprint handlers didn't work.
+        # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
             return await controller.handle_async_error(
@@ -336,7 +322,6 @@ class Endpoint:  # noqa: WPS214
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
-            active_blueprint = controller.active_blueprint
             try:  # noqa: WPS229
                 # Negotiate response:
                 self.response_negotiator(controller.request)
@@ -345,15 +330,12 @@ class Endpoint:  # noqa: WPS214
                 await self._run_async_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    self,
-                    active_blueprint,
-                )
+                context = self._serializer_context(self, controller)
 
                 # Return response:
-                func_result = await func(active_blueprint)
+                func_result = await func(controller, **context)
             except (APIError, APIRedirectError) as exc:
-                func_result = active_blueprint.to_error(
+                func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
@@ -376,8 +358,6 @@ class Endpoint:  # noqa: WPS214
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
-            active_blueprint = controller.active_blueprint
-
             try:  # noqa: WPS229
                 # Negotiate response:
                 self.response_negotiator(controller.request)
@@ -386,15 +366,12 @@ class Endpoint:  # noqa: WPS214
                 self._run_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    self,
-                    active_blueprint,
-                )
+                context = self._serializer_context(self, controller)
 
                 # Return response:
-                func_result = func(active_blueprint)
+                func_result = func(controller, **context)
             except (APIError, APIRedirectError) as exc:
-                func_result = active_blueprint.to_error(
+                func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,

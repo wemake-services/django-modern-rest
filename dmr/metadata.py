@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
     from dmr.settings import HttpSpec
 
-ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
+ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -363,7 +363,7 @@ class EndpointMetadata:
             return []
 
         return [
-            *[spec[0] for spec in self.component_parsers],
+            *[type(spec[0]) for spec in self.component_parsers],
             *[type(parser) for parser in self.parsers.values()],
             *[type(renderer) for renderer in self.renderers.values()],
             *[type(auth) for auth in (self.auth or [])],

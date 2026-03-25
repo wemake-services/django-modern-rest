@@ -133,28 +133,22 @@ class CsrfTokenController(Controller[PydanticSerializer]):
 
 @final
 @csrf_protect_json
-class CsrfProtectedController(
-    Body[_UserInput],
-    Controller[PydanticSerializer],
-):
+class CsrfProtectedController(Controller[PydanticSerializer]):
     # Just add responses from middleware
     responses = csrf_protect_json.responses
 
-    def post(self) -> _UserInput:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_UserInput]) -> _UserInput:
+        return parsed_body
 
 
 @final
 @csrf_protect_json
-class AsyncCsrfProtectedController(
-    Body[_UserInput],
-    Controller[PydanticSerializer],
-):
+class AsyncCsrfProtectedController(Controller[PydanticSerializer]):
     # Just add responses from middleware
     responses = csrf_protect_json.responses
 
-    async def post(self) -> _UserInput:
-        return self.parsed_body
+    async def post(self, parsed_body: Body[_UserInput]) -> _UserInput:
+        return parsed_body
 
 
 @final
@@ -171,17 +165,14 @@ class CustomHeaderController(Controller[PydanticSerializer]):
 
 @final
 @rate_limit_json
-class RateLimitedController(
-    Body[_UserInput],
-    Controller[PydanticSerializer],
-):
+class RateLimitedController(Controller[PydanticSerializer]):
     """Controller with rate limiting middleware."""
 
     responses = rate_limit_json.responses
 
-    def post(self) -> _UserInput:
+    def post(self, parsed_body: Body[_UserInput]) -> _UserInput:
         """POST endpoint with rate limiting."""
-        return self.parsed_body
+        return parsed_body
 
 
 @final

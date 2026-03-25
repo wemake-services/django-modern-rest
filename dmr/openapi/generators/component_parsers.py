@@ -81,12 +81,11 @@ class ComponentParserGenerator:
 
     def _call_component(
         self,
-        parser: type['ComponentParser'],
-        parser_args: tuple[Any, ...],
+        parser: 'ComponentParser',
+        model: Any,
         metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> list[Parameter | Reference] | RequestBody:
-        model = parser_args[0] if len(parser_args) == 1 else parser_args
         return parser.get_schema(
             model,
             serializer=serializer,

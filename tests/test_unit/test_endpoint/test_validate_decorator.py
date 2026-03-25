@@ -3,15 +3,12 @@ from http import HTTPMethod, HTTPStatus
 from typing import Generic, Literal, TypeVar, final
 
 import pytest
-from dirty_equals import IsStr
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from dmr import (
     APIError,
-    Blueprint,
-    Body,
     Controller,
     HeaderSpec,
     NewHeader,
@@ -23,7 +20,6 @@ from dmr.endpoint import Endpoint
 from dmr.errors import wrap_handler
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import compose_blueprints
 from dmr.test import DMRRequestFactory
 
 _InnerT = TypeVar('_InnerT')
@@ -539,104 +535,6 @@ def test_validate_async_endpoint_error_for_sync() -> None:
             )
             def get(self) -> HttpResponse:
                 raise NotImplementedError
-
-
-def test_validate_responses_from_blueprint() -> None:
-    """Ensures `@validate` has right `responses` metadata."""
-
-    class _Blueprint(
-        Blueprint[PydanticSerializer],
-        Body[list[str]],
-    ):
-        responses = (
-            ResponseSpec(
-                dict[str, str],
-                status_code=HTTPStatus.PAYMENT_REQUIRED,
-            ),
-        )
-
-        @validate(
-            ResponseSpec(list[int], status_code=HTTPStatus.OK),
-        )
-        def post(self) -> HttpResponse:
-            raise NotImplementedError
-
-    controller = compose_blueprints(_Blueprint)
-
-    assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.BAD_REQUEST,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-    })
-
-
-def test_validate_enable_semantic_responses() -> None:
-    """Ensures `@validate` has right `enable_semantic_responses` metadata."""
-
-    class _Blueprint(
-        Blueprint[PydanticSerializer],
-        Body[list[str]],
-    ):
-        responses = (
-            ResponseSpec(
-                dict[str, str],
-                status_code=HTTPStatus.PAYMENT_REQUIRED,
-            ),
-        )
-
-        @validate(
-            ResponseSpec(list[int], status_code=HTTPStatus.OK),
-        )
-        def post(self) -> HttpResponse:
-            raise NotImplementedError
-
-    controller = compose_blueprints(_Blueprint)
-
-    assert controller.api_endpoints['POST'].metadata.responses == snapshot({
-        HTTPStatus.PAYMENT_REQUIRED: ResponseSpec(
-            return_type=dict[str, str],
-            status_code=HTTPStatus.PAYMENT_REQUIRED,
-        ),
-        HTTPStatus.OK: ResponseSpec(
-            return_type=list[int],
-            status_code=HTTPStatus.OK,
-        ),
-        HTTPStatus.BAD_REQUEST: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.BAD_REQUEST,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.NOT_ACCEPTABLE,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-        HTTPStatus.UNPROCESSABLE_ENTITY: ResponseSpec(
-            return_type=controller.error_model,
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            description=IsStr(),  # type: ignore[arg-type]
-        ),
-    })
 
 
 @pytest.mark.parametrize(
