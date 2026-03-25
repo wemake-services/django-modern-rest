@@ -76,7 +76,7 @@ class SSEStreamingResponse(HttpResponseBase):
 
         """
         headers = {} if headers is None else dict(headers)
-        # Content-Type must be a str type, as wsgiref checks that 
+        # Content-Type must be a str type, as wsgiref checks that
         # to use str type.
         headers.update({
             'Cache-Control': 'no-cache',
