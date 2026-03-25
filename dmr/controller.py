@@ -17,13 +17,12 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import deprecated, override
 
-from dmr.components import ComponentParserBuilder
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.io import identity
-from dmr.metadata import ComponentParserSpec, ResponseSpec
+from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
