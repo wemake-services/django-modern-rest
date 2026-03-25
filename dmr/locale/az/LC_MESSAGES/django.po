@@ -1,0 +1,93 @@
+# django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the django-modern-rest package.
+# Emil Humbatov <emil4154515@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-modern-rest 0.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-24 22:05+0400\n"
+"PO-Revision-Date: 2026-03-24 22:15+0400\n"
+"Last-Translator: Emil Humbatov <emil4154515@gmail.com>\n"
+"Language-Team: Azerbaijani <az@li.org>\n"
+"Language: az\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: dmr/components.py:54
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"field_model={field_model} olan {cls} yolu adsız yol parametrlərinə "
+"(args={args}) icazə vermir"
+
+#: dmr/components.py:59
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"SupportsFileParsing protokolunu dəstəkləməyən {parser_name} ilə faylları "
+"parse etmək cəhdi"
+
+#: dmr/controller.py:45
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "{method} metoduna icazə verilmir, icazə verilənlər: {allowed}"
+
+#: dmr/exceptions.py:10
+msgid "Not authenticated"
+msgstr "Autentifikasiya olunmayıb"
+
+#: dmr/exceptions.py:50
+msgid "Internal server error"
+msgstr "Daxili server xətası"
+
+#: dmr/internal/django.py:49
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"'application/x-www-form-urlencoded' kontent tipli HTTP sorğuları UTF-8 "
+"kodlaşdırmasında olmalıdır."
+
+#: dmr/internal/negotiation.py:18
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Qəbul edilən {accepted_types} tipləri ilə cavab gövdəsini (response body) "
+"serializasiya etmək mümkün deyil, dəstəklənən: {supported}"
+
+#: dmr/negotiation.py:25
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"{content_type} kontent tipli sorğu gövdəsini (request body) parse etmək "
+"mümkün deyil, gözlənilən: {expected}"
+
+#: dmr/security/django_session/auth.py:26
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF uğursuz oldu: {reason}"
+
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr "BlocklistedJWToken"
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr "BlocklistedJWTokens"
+
+#: dmr/serializer.py:27
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "{type} tipində olan {value} dəyəri {target_type} üçün dəstəklənmir"
