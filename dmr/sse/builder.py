@@ -84,7 +84,6 @@ class _SSEResponseModification(ResponseModification):
 
 
 class _SSEEndpoint(Endpoint):
-
     __slots__ = ()
 
     response_modification_cls = _SSEResponseModification
