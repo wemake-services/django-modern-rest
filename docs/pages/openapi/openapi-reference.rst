@@ -157,5 +157,8 @@ Existing views
 .. autoclass:: dmr.openapi.views.RedocView
   :members:
 
+.. autoclass:: dmr.openapi.views.StoplightView
+  :members:
+
 .. autoclass:: dmr.openapi.views.OpenAPIJsonView
   :members:

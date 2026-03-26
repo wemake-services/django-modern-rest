@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{ title|default:"Stoplight"}}</title>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1" />
+
+    <!-- Load the Script -->
+    {% if stoplight_cdn %}
+      <script src="{{ stoplight_cdn }}/web-components.min.js"></script>
+      <link rel="stylesheet" href="{{ stoplight_cdn }}/styles.min.css">
+    {% else %}
+      <script src="{% static 'dmr/stoplight/9.0.16/web-components.min.js' %}"></script>
+      <link rel="stylesheet" href="{% static 'dmr/stoplight/9.0.16/styles.min.css' %}">
+    {% endif %}
+
+  </head>
+  <body>
+
+    <!-- Initialize the Stoplight API Reference -->
+    <elements-api
+      apiDescriptionDocument="{{ schema }}"
+      router="hash"
+      layout="responsive"
+    />
+
+  </body>
+</html>
