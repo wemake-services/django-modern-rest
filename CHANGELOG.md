@@ -103,6 +103,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   including automatic request tracking for `dmr_client` and
   `dmr_async_client`, #735.
 - Added `$dmr-from-drf` AI agent skill, #744
+- Added Stoplight Elements UI for OpenAPI documentation, #748
 
 ### Bugfixes
 
