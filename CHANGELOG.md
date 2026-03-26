@@ -102,7 +102,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Added TraceCov integration for API coverage tracking in test suites,
   including automatic request tracking for `dmr_client` and
   `dmr_async_client`, #735.
-- Added `$dmr-from-drf` AI agent skill, #744
+- Added Stoplight Elements UI for OpenAPI documentation, #748
 
 ### Bugfixes
 
@@ -114,8 +114,9 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 
 - Added `$dmr-openapi-skeleton` AI agent skill, #693
 - Added `$dmr-from-django-ninja` AI agent skill, #693
+- Added `$dmr-from-drf` AI agent skill, #744
 - Added ETag usage docs, #699
-- Added multiple translations for the user-facing error messages
+- Added multiple translations for the user-facing error messages, #718
 
 
 ## Version 0.3.0 (2026-03-17)
