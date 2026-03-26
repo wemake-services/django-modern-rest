@@ -4,10 +4,7 @@ from typing import Generic, TypeVar
 import pydantic
 
 from dmr import Body, Controller
-from dmr.plugins.msgspec import (
-    MsgspecJsonParser,
-    MsgspecJsonRenderer,
-)
+from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
@@ -33,18 +30,20 @@ class _UserDocument(pydantic.BaseModel, Generic[_ModelT]):
 
 
 class UserController(
-    Body[_UserDocument[_UserInputData]],
     Controller[PydanticSerializer],
 ):
     parsers = (MsgspecJsonParser(), XmlParser())
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
 
-    def post(self) -> _UserDocument[_UserOutputData]:
+    def post(
+        self,
+        parsed_body: Body[_UserDocument[_UserInputData]],
+    ) -> _UserDocument[_UserOutputData]:
         return _UserDocument(
             user=_UserOutputData(
                 uid=uuid.uuid4(),
-                email=self.parsed_body.user.email,
-                profile=self.parsed_body.user.profile,
+                email=parsed_body.user.email,
+                profile=parsed_body.user.profile,
             ),
         )
 

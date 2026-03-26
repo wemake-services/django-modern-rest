@@ -32,7 +32,7 @@ type-check: ## Run all type checkers we support
 
 .PHONY: spell-check
 spell-check: ## Run spell checking
-	$(POETRY) run codespell dmr tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
+	$(POETRY) run codespell dmr .agents tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
 
 .PHONY: translations
 translations: ## Run translation QA

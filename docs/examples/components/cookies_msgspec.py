@@ -9,12 +9,9 @@ class _CookiesModel(msgspec.Struct):
     client_id: int
 
 
-class ApiController(
-    Controller[MsgspecSerializer],
-    Cookies[_CookiesModel],
-):
-    def get(self) -> _CookiesModel:
-        return self.parsed_cookies
+class ApiController(Controller[MsgspecSerializer]):
+    def get(self, parsed_cookies: Cookies[_CookiesModel]) -> _CookiesModel:
+        return parsed_cookies
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "cookies": {"cache": "yes", "client_id": "1"}}  # noqa: ERA001, E501

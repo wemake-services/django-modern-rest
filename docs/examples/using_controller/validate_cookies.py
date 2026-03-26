@@ -1,0 +1,42 @@
+import uuid
+from http import HTTPStatus
+
+import pydantic
+from django.http import HttpResponse
+
+from dmr import Body, Controller, CookieSpec, NewCookie, ResponseSpec, validate
+from dmr.plugins.pydantic import PydanticSerializer
+
+
+class UserModel(pydantic.BaseModel):
+    email: str
+
+
+class UserController(
+    Controller[PydanticSerializer],
+):
+    @validate(
+        ResponseSpec(
+            UserModel,
+            status_code=HTTPStatus.CREATED,
+            cookies={
+                'user_id': CookieSpec(),
+                'session': CookieSpec(max_age=1000, required=False),
+            },
+        ),
+    )
+    def post(self, parsed_body: Body[UserModel]) -> HttpResponse:
+        uid = uuid.uuid4()
+        # This response would have one required cookie `user_id`
+        # and one optional cookie `session`:
+        cookies = {'user_id': NewCookie(value=str(uid))}
+        if '@ourdomain.com' in parsed_body.email:
+            cookies['session'] = NewCookie(value='true', max_age=1000)
+        return self.to_response(
+            parsed_body,
+            cookies=cookies,
+        )
+
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@ourdomain.com"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

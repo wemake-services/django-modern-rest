@@ -222,10 +222,7 @@ class MultiPartParser(
     ) -> None:
         """Returns parsed multipart form data."""
         # Circular import:
-        from dmr.settings import (  # noqa: PLC0415
-            Settings,
-            resolve_setting,
-        )
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         if (
             not getattr(request, '_dmr_parsed_as_post', False)
@@ -277,10 +274,7 @@ class FormUrlEncodedParser(
     ) -> None:
         """Returns parsed form data."""
         # Circular import:
-        from dmr.settings import (  # noqa: PLC0415
-            Settings,
-            resolve_setting,
-        )
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         if (
             not getattr(request, '_dmr_parsed_as_post', False)

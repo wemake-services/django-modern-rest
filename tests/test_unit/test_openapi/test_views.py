@@ -11,6 +11,7 @@ from dmr.openapi.views import (
     OpenAPIView,
     RedocView,
     ScalarView,
+    StoplightView,
     SwaggerView,
 )
 from dmr.routing import Router
@@ -37,7 +38,7 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
 
 @pytest.mark.parametrize(
     'view_class',
-    [RedocView, SwaggerView, ScalarView],
+    [RedocView, SwaggerView, ScalarView, StoplightView],
 )
 def test_html_view(
     dmr_rf: DMRRequestFactory,

@@ -4,16 +4,12 @@ from typing import Any, ClassVar, final
 
 from typing_extensions import override
 
-from dmr import APIError, Blueprint, Controller
+from dmr import APIError, Controller
 from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
-from dmr.validation import (
-    EndpointMetadataValidator,
-    Payload,
-    ResponseValidator,
-)
+from dmr.validation import EndpointMetadataValidator, Payload, ResponseValidator
 from dmr.validation.response import _ResponseT
 
 
@@ -27,14 +23,12 @@ class _CustomEndpointMetadataValidator(EndpointMetadataValidator):
         func: Callable[..., Any],
         payload: Payload,
         *,
-        blueprint_cls: type[Blueprint[BaseSerializer]] | None,
         controller_cls: type[Controller[BaseSerializer]],
     ) -> None:
         self.__class__.was_called = True
         super().__call__(
             func,
             payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
 

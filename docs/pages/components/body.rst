@@ -10,7 +10,7 @@ that is being used for the endpoint.
 
 .. note::
 
-  Parsed ``Body`` is available as ``self.parsed_body``.
+  Parsed ``Body`` parameter must be named ``parsed_body``.
 
 
 Parsing JSON
@@ -81,7 +81,7 @@ What happens in this example?
    :class:`typing.TypedDict`, or :func:`dataclasses.dataclass`.
    Basically, model definition is only limited
    by the :class:`~dmr.serializer.BaseSerializer` support
-2. Next, we use :class:`~dmr.components.Body` component,
+2. Next, we use :data:`~dmr.components.Body` component,
    provide the model as a type parameter,
    and subclass it when definiting :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_body`` that will have the correct model type
@@ -108,7 +108,7 @@ Here's how ``msgpack`` will represent ``{"username": "example", "age": 22}``
 - `examples/components/body_wrong.msgpack <https://github.com/wemake-services/django-modern-rest/blob/master/docs/examples/components/body_wrong.msgpack>`_
 
 The only visible difference from parsing JSON is specifying a different
-:attr:`~dmr.controller.Blueprint.parsers` instance.
+:attr:`~dmr.controller.Controller.parsers` instance.
 
 .. literalinclude:: /examples/components/body_msgpack.py
   :caption: views.py
@@ -209,6 +209,8 @@ both ``__dmr_split_commas__`` and ``__dmr_force_list__`` as well.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Body
+.. autodata:: dmr.components.Body
+
+.. autoclass:: dmr.components.BodyComponent
   :members:
   :show-inheritance:

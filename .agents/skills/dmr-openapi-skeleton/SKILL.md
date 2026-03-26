@@ -1,13 +1,13 @@
 ---
 name: dmr-openapi-skeleton
-description: Generate django-modern-rest transport-layer skeletons from OpenAPI 3.1+ specs. Use when Codex needs to turn an OpenAPI file, URL, or pasted document into typed DTOs, controllers or blueprints, routers, Django URL wiring, and minimal tests for this repository or similar projects built on dmr. Trigger on requests to scaffold APIs, bootstrap apps, or map OpenAPI operations to Controller, Blueprint, Router, and OpenAPI view constructs without implementing business logic.
+description: Generate django-modern-rest transport-layer skeletons from OpenAPI 3.1+ specs. Use when Codex needs to turn an OpenAPI file, URL, or pasted document into typed DTOs, controllers, routers, Django URL wiring, and minimal tests for this repository or similar projects built on dmr. Trigger on requests to scaffold APIs, bootstrap apps, or map OpenAPI operations to Controller, Router, and OpenAPI view constructs without implementing business logic.
 ---
 
 # DMR OpenAPI Skeleton
 
 ## Overview
 
-Generate runnable transport-layer skeletons for `django-modern-rest` from OpenAPI 3.1+ specifications. Keep the output intentionally thin: produce typed DTOs, base controllers or blueprints, routers, docs wiring, and minimal tests, with zero business logic by default.
+Generate runnable transport-layer skeletons for `django-modern-rest` from OpenAPI 3.1+ specifications. Keep the output intentionally thin: produce typed DTOs, base controllers, routers, docs wiring, and minimal tests, with zero business logic by default.
 
 Use the repository examples under `django_test_app/server/apps/*` and `tests/*` as the local source of truth. Read [references/framework-patterns.md](references/framework-patterns.md) when choosing dmr constructs, [references/project-map.md](references/project-map.md) when deciding where generated files should live, and [references/spec-fidelity.md](references/spec-fidelity.md) whenever a source OpenAPI document is authoritative and the generated project should preserve the public contract closely enough for a useful boilerplate.
 
@@ -79,10 +79,9 @@ Primary framework documentation:
 
 ### 6. Generate views with the correct dmr construct
 
-- Use a direct `Controller[...]` when a route has one operation or when a single class naturally owns the endpoint.
-- Use one `Blueprint[...]` per HTTP method and combine them with `compose_blueprints(...)` when the same path exposes multiple operations or materially different request, response, or auth rules.
+- Use a minimal number of `Controller`s
 - Keep one class per operation. Let the router compose them instead of building giant mixed-purpose controllers.
-- Name classes from `operationId` when it is stable and explicit. Otherwise derive names from resource plus verb such as `UserListBlueprint`, `UserCreateController`, or `InvoiceRetrieveBlueprint`.
+- Name classes from `operationId` when it is stable and explicit. Otherwise derive names from resource plus verb such as `UserListController`, `UserCreateController`, or `InvoiceRetrieveController`.
 
 ### 7. Generate skeleton behavior, not fake business logic
 
@@ -158,7 +157,7 @@ Primary framework documentation:
 
 - Create or update the environment manifest when the request is for a fresh project.
 - Create schema-valid DTO classes for every request and response model that matters to routing.
-- Create `views.py` with typed controllers or blueprints and placeholder implementations.
+- Create `views.py` with typed controllers and placeholder implementations.
 - Create `urls.py` with `Router` wiring for every generated app.
 - Update the project root URLs only when the request is for a runnable project skeleton.
 - Add minimal tests or explain why tests were not added.

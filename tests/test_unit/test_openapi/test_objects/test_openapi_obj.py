@@ -3,17 +3,8 @@ from typing import Any
 
 import pytest
 
-from dmr.openapi.objects import (
-    OpenAPIFormat,
-    OpenAPIType,
-    Schema,
-    Tag,
-)
-from dmr.openapi.objects.openapi import (
-    convert,
-    normalize_key,
-    normalize_value,
-)
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema, Tag
+from dmr.openapi.objects.openapi import convert, normalize_key, normalize_value
 
 
 @pytest.mark.parametrize(

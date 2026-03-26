@@ -110,11 +110,10 @@ def test_correct_parser_selected(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[dict[str, str]],
     ):
         parsers = parser_types
 
-        def post(self) -> dict[str, str]:
+        def post(self, parsed_body: Body[dict[str, str]]) -> dict[str, str]:
             raise NotImplementedError
 
     request = dmr_rf.post(

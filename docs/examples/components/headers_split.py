@@ -12,12 +12,9 @@ class _HeadersModel(msgspec.Struct):
     tags: list[int] = msgspec.field(name='X-Tag')
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-    Headers[_HeadersModel],
-):
-    def get(self) -> _HeadersModel:
-        return self.parsed_headers
+class UserController(Controller[MsgspecSerializer]):
+    def get(self, parsed_headers: Headers[_HeadersModel]) -> _HeadersModel:
+        return parsed_headers
 
 
 # run: {"controller": "UserController", "url": "/api/users/", "method": "get", "headers": [["X-Tag", "1"], ["X-Tag", "2"]]}  # noqa: ERA001, E501

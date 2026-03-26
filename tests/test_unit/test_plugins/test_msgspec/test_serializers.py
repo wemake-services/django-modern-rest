@@ -23,12 +23,11 @@ class _MsgSpecUserModel(msgspec.Struct):
 
 class _UserController(
     Controller[MsgspecSerializer],
-    Body[_MsgSpecUserModel],
 ):
-    """Blueprint for POST endpoint (with body)."""
+    """Controller for POST endpoint with request parsing."""
 
-    def post(self) -> _MsgSpecUserModel:
-        return _MsgSpecUserModel(email=self.parsed_body.email)
+    def post(self, parsed_body: Body[_MsgSpecUserModel]) -> _MsgSpecUserModel:
+        return _MsgSpecUserModel(email=parsed_body.email)
 
 
 def test_serializer_via_endpoint(

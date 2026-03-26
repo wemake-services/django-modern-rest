@@ -1,12 +1,5 @@
 import dataclasses
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Literal,
-    get_args,
-    get_origin,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Literal, get_args, get_origin, overload
 
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.mappers.example import generate_example

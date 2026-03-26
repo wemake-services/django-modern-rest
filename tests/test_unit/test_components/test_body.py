@@ -23,9 +23,8 @@ class _MyPydanticModel(pydantic.BaseModel):
 @final
 class _WrongPydanticBodyController(
     Controller[PydanticSerializer],
-    Body[_MyPydanticModel],
 ):
-    def post(self) -> str:
+    def post(self, parsed_body: Body[_MyPydanticModel]) -> str:
         raise NotImplementedError
 
 
@@ -57,9 +56,8 @@ def test_body_parse_wrong_content_type(rf: RequestFactory) -> None:
 @final
 class _WrongAsyncPydanticBodyController(
     Controller[PydanticSerializer],
-    Body[_MyPydanticModel],
 ):
-    async def post(self) -> str:
+    async def post(self, parsed_body: Body[_MyPydanticModel]) -> str:
         raise NotImplementedError
 
 
@@ -126,12 +124,11 @@ class _TagsForceList(pydantic.BaseModel):
 
 class _TagsForceListController(
     Controller[PydanticSerializer],
-    Body[_TagsForceList],
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _TagsForceList:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_TagsForceList]) -> _TagsForceList:
+        return parsed_body
 
 
 def test_body_force_list(rf: RequestFactory) -> None:
@@ -172,12 +169,11 @@ class _TagsSplitCommas(pydantic.BaseModel):
 
 class _TagsSplitCommasController(
     Controller[PydanticSerializer],
-    Body[_TagsSplitCommas],
 ):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _TagsSplitCommas:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_TagsSplitCommas]) -> _TagsSplitCommas:
+        return parsed_body
 
 
 def test_body_split_commas(rf: RequestFactory) -> None:

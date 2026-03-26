@@ -6,10 +6,8 @@ from typing import Annotated, Any, ClassVar, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse
-from typing_extensions import override
 
-from dmr import (  # noqa: WPS235
-    Blueprint,
+from dmr import (
     Body,
     Controller,
     Headers,
@@ -20,7 +18,7 @@ from dmr import (  # noqa: WPS235
     validate,
 )
 from dmr.endpoint import Endpoint
-from dmr.errors import ErrorType
+from dmr.errors import ErrorType, wrap_handler
 from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.controllers.auth import HttpBasicAsync, HttpBasicSync
 
@@ -70,25 +68,22 @@ class _ConstrainedUserSchema(pydantic.BaseModel):
 
 
 @final
-class UserCreateBlueprint(  # noqa: WPS215
-    Query[_QueryData],
-    Headers[_CustomHeaders],
-    Body[_SimpleUserInput],
-    Blueprint[PydanticSerializer],
-):
-    def post(self) -> _SimpleUserOutput:
+class UsersController(Controller[PydanticSerializer]):
+    def post(
+        self,
+        parsed_query: Query[_QueryData],
+        parsed_headers: Headers[_CustomHeaders],
+        parsed_body: Body[_SimpleUserInput],
+    ) -> _SimpleUserOutput:
         return _SimpleUserOutput(
             uid=uuid.uuid4(),
-            email=self.parsed_body.email,
-            age=self.parsed_body.age,
-            token=self.parsed_headers.token,
-            query=self.parsed_query.query,
-            start_from=self.parsed_query.start_from,
+            email=parsed_body.email,
+            age=parsed_body.age,
+            token=parsed_headers.token,
+            query=parsed_query.query,
+            start_from=parsed_query.start_from,
         )
 
-
-@final
-class UserListBlueprint(Blueprint[PydanticSerializer]):
     def get(self) -> list[_SimpleUserInput]:
         return [
             _SimpleUserInput(email='first@example.org', age=1),
@@ -97,28 +92,8 @@ class UserListBlueprint(Blueprint[PydanticSerializer]):
 
 
 @final
-class UserUpdateBlueprint(
-    Body[_SimpleUserInput],
-    Blueprint[PydanticSerializer],
-    # It does not have `Path` on purpose to test `path()`'s native schema
-):
-    responses = (
-        # Since we don't use `Path` component,
-        # we need to add `NOT_FOUND` manually:
-        ResponseSpec(Blueprint.error_model, status_code=HTTPStatus.NOT_FOUND),
-    )
-
-    async def patch(self) -> _SimpleUserInput:
-        return _SimpleUserInput.model_validate(
-            {
-                'email': self.parsed_body.email,
-                'age': self.kwargs['user_id'],
-            },
-            strict=False,
-        )
-
-    @override
-    async def handle_async_error(
+class UserUpdateController(Controller[PydanticSerializer]):
+    async def handle_validate_error(
         self,
         endpoint: Endpoint,
         controller: Controller[PydanticSerializer],
@@ -133,52 +108,67 @@ class UserUpdateBlueprint(
                 ),
                 status_code=HTTPStatus.NOT_FOUND,
             )
-        return await super().handle_async_error(endpoint, controller, exc)
+        raise exc from None
 
+    @modify(
+        error_handler=wrap_handler(handle_validate_error),
+        extra_responses=[
+            # Since we don't use `Path` component,
+            # we need to add `NOT_FOUND` manually:
+            ResponseSpec(
+                Controller.error_model,
+                status_code=HTTPStatus.NOT_FOUND,
+            ),
+        ],
+    )
+    async def patch(
+        self,
+        # It does not have `Path` on purpose to test `path()`'s native schema
+        parsed_body: Body[_SimpleUserInput],
+    ) -> _SimpleUserInput:
+        return _SimpleUserInput.model_validate(
+            {
+                'email': parsed_body.email,
+                'age': self.kwargs['user_id'],
+            },
+            strict=False,
+        )
 
-@final
-class UserReplaceBlueprint(
-    Blueprint[PydanticSerializer],
-    Path[_UserPath],
-):
     @validate(
         ResponseSpec(
             return_type=_SimpleUserInput,
             status_code=HTTPStatus.OK,
         ),
     )
-    async def put(self) -> HttpResponse:
+    async def put(self, parsed_path: Path[_UserPath]) -> HttpResponse:
         return self.to_response({
             'email': 'new@email.com',
-            'age': self.parsed_path.user_id,
+            'age': parsed_path.user_id,
         })
 
 
 @final
-class ParseHeadersController(
-    Headers[_CustomHeaders],
-    Controller[PydanticSerializer],
-):
+class ParseHeadersController(Controller[PydanticSerializer]):
     auth = (HttpBasicSync(),)
 
-    def post(self) -> _CustomHeaders:
-        return self.parsed_headers
+    def post(self, parsed_headers: Headers[_CustomHeaders]) -> _CustomHeaders:
+        return parsed_headers
 
 
 @final
-class AsyncParseHeadersController(
-    Headers[_CustomHeaders],
-    Controller[PydanticSerializer],
-):
+class AsyncParseHeadersController(Controller[PydanticSerializer]):
     @modify(auth=[HttpBasicAsync()])
-    async def post(self) -> _CustomHeaders:
-        return self.parsed_headers
+    async def post(
+        self,
+        parsed_headers: Headers[_CustomHeaders],
+    ) -> _CustomHeaders:
+        return parsed_headers
 
 
 @final
-class ConstrainedUserController(
-    Body[_ConstrainedUserSchema],
-    Controller[PydanticSerializer],
-):
-    def post(self) -> _ConstrainedUserSchema:
-        return self.parsed_body
+class ConstrainedUserController(Controller[PydanticSerializer]):
+    def post(
+        self,
+        parsed_body: Body[_ConstrainedUserSchema],
+    ) -> _ConstrainedUserSchema:
+        return parsed_body

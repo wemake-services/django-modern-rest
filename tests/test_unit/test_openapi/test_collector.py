@@ -4,7 +4,7 @@ from typing import final
 import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
-from dmr import Blueprint, Controller
+from dmr import Controller
 from dmr.openapi.collector import (
     _join_paths,
     _normalize_path,
@@ -12,7 +12,7 @@ from dmr.openapi.collector import (
     controller_mapping_collector,
 )
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router, compose_blueprints
+from dmr.routing import Router
 from dmr.serializer import BaseSerializer
 
 
@@ -56,18 +56,6 @@ class _PostController(Controller[PydanticSerializer]):
 
     def post(self) -> str:
         """POST endpoint."""
-        raise NotImplementedError
-
-
-@final
-class _GetBlueprint(Blueprint[PydanticSerializer]):
-    def get(self) -> str:
-        raise NotImplementedError
-
-
-@final
-class _PostBlueprint(Blueprint[PydanticSerializer]):
-    def post(self) -> str:
         raise NotImplementedError
 
 
@@ -170,7 +158,6 @@ def test_join_paths(
     ('path_str', 'view_class'),
     [
         ('full/', _FullController),
-        ('composed', compose_blueprints(_GetBlueprint, _PostBlueprint)),
         ('sla/shed/', _GetController),
         ('', _EmptyController),
     ],
@@ -192,17 +179,12 @@ def test_controller_mapping_collector_with_router() -> None:
     patterns: Sequence[URLPattern | URLResolver] = [
         path('direct/', _GetController.as_view()),
         path('nested/', include([path('inner/', _PostController.as_view())])),
-        path(
-            'composed/',
-            compose_blueprints(_GetBlueprint, _PostBlueprint).as_view(),
-        ),
     ]
     router = Router('api/', patterns)
     mappings = controller_mapping_collector(router.urls, router.prefix)
 
-    assert len(mappings) == 3
+    assert len(mappings) == 2
     assert {path for path, _, _ in mappings} == {
         '/api/direct/',
-        '/api/composed/',
         '/api/nested/inner/',
     }

@@ -14,7 +14,7 @@ from dmr.internal.middleware_wrapper import (
 from dmr.metadata import ResponseSpec
 
 if TYPE_CHECKING:
-    from dmr.controller import Blueprint
+    from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
 
 _TypeT = TypeVar('_TypeT', bound=type[Any])
@@ -201,7 +201,7 @@ def endpoint_decorator(
     ) -> Callable[_ParamT, _ReturnT]:
         @wraps(func)
         def decorator(
-            self: 'Blueprint[BaseSerializer]',
+            self: 'Controller[BaseSerializer]',
             *args: _ParamT.args,
             **kwargs: _ParamT.kwargs,
         ) -> _ReturnT:

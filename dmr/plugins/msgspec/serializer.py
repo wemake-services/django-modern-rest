@@ -1,10 +1,5 @@
 from collections.abc import Iterable
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    NotRequired,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, NotRequired
 
 import msgspec
 from django.http import HttpRequest

@@ -18,9 +18,11 @@ HeaderModel = TypedDict('HeaderModel', {'X-API-Consumer': str})
 
 class UserController(
     Controller[MsgspecSerializer],
-    Body[UserCreateModel],
-    Headers[HeaderModel],
 ):
-    def post(self) -> UserModel:
-        assert self.parsed_headers['X-API-Consumer'] == 'my-api'
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body['email'])
+    def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+        parsed_headers: Headers[HeaderModel],
+    ) -> UserModel:
+        assert parsed_headers['X-API-Consumer'] == 'my-api'
+        return UserModel(uid=uuid.uuid4(), email=parsed_body['email'])

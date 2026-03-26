@@ -7,12 +7,8 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from dmr.plugins.msgspec.json import (
-    MsgspecJsonParser as MsgspecJsonParser,
-)
-from dmr.plugins.msgspec.json import (
-    MsgspecJsonRenderer as MsgspecJsonRenderer,
-)
+from dmr.plugins.msgspec.json import MsgspecJsonParser as MsgspecJsonParser
+from dmr.plugins.msgspec.json import MsgspecJsonRenderer as MsgspecJsonRenderer
 from dmr.plugins.msgspec.msgpack import MsgpackParser as MsgpackParser
 from dmr.plugins.msgspec.msgpack import MsgpackRenderer as MsgpackRenderer
 from dmr.plugins.msgspec.serializer import (

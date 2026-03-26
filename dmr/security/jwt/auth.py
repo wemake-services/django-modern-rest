@@ -11,11 +11,7 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.jwt.token import JWToken
 

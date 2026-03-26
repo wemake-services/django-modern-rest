@@ -126,7 +126,7 @@ So, when you use ``mypy``, you will need
 to install ``django-stubs`` together with ``django-modern-rest``
 to have the best type checking experience.
 
-This package is included into ``pyright`` by default. No actions are required.
+This package is included in ``pyright`` by default. No actions are required.
 
 We check ``django-modern-rest`` code with ``mypy`` and ``pyright``
 strict modes in CI, so be sure to have the best typing possible.
@@ -143,7 +143,7 @@ Pagination
 We don't ship our own pagination.
 We (as our main design goal suggests) provide support
 for any existing pagination plugin for Django.
-Including builtin :class:`django.core.paginator.Paginator`.
+Including the built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 
@@ -220,7 +220,22 @@ is required.
 Everything just works.
 
 
-ETag
-----
+Conditional requests (ETag)
+---------------------------
 
-TODO
+Django has built-in support for conditional request processing
+(``If-None-Match``, ``If-Modified-Since``, ``304 Not Modified``):
+
+With ``django-modern-rest`` you can integrate it via
+:func:`~dmr.decorators.wrap_middleware`
+and :func:`django.views.decorators.http.condition`.
+
+
+.. literalinclude:: ../../django_test_app/server/apps/etag/views.py
+  :caption: etag.py
+  :language: python
+  :linenos:
+
+.. seealso::
+
+    https://docs.djangoproject.com/en/stable/topics/conditional-view-processing

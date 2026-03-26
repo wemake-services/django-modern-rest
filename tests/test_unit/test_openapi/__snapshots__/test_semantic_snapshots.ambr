@@ -1,171 +1,4 @@
 # serializer version: 1
-# name: test_per_blueprint_schema
-  '''
-  {
-    "info": {
-      "title": "Django Modern Rest",
-      "version": "0.1.0"
-    },
-    "openapi": "3.1.0",
-    "paths": {
-      "/per_blueprint/{kwarg_id}": {
-        "get": {
-          "operationId": "getComposedPerblurprintPerBlueprintKwargId",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "kwarg_id",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "title": "Kwarg Id"
-              },
-              "required": true
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/_UserModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        },
-        "post": {
-          "operationId": "postComposedPerblurprintPerBlueprintKwargId",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "kwarg_id",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "title": "Kwarg Id"
-              },
-              "required": true
-            }
-          ],
-          "responses": {
-            "201": {
-              "description": "Created",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/_UserModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
-      },
-      "/articles/{other}/{kwarg_id}/": {
-        "get": {
-          "operationId": "getComposedPerblurprintArticlesOtherKwargId",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "other",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "title": "Other"
-              },
-              "required": true
-            },
-            {
-              "deprecated": false,
-              "name": "kwarg_id",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "title": "Kwarg Id"
-              },
-              "required": true
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/_UserModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        },
-        "post": {
-          "operationId": "postComposedPerblurprintArticlesOtherKwargId",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "other",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "title": "Other"
-              },
-              "required": true
-            },
-            {
-              "deprecated": false,
-              "name": "kwarg_id",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "title": "Kwarg Id"
-              },
-              "required": true
-            }
-          ],
-          "responses": {
-            "201": {
-              "description": "Created",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/_UserModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
-      }
-    },
-    "components": {
-      "schemas": {
-        "_UserModel": {
-          "properties": {
-            "username": {
-              "type": "string",
-              "title": "Username"
-            }
-          },
-          "type": "object",
-          "required": [
-            "username"
-          ],
-          "title": "_UserModel"
-        }
-      },
-      "securitySchemes": {}
-    }
-  }
-  '''
-# ---
 # name: test_per_controller_schema
   '''
   {
@@ -314,19 +147,6 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
-          "properties": {
-            "username": {
-              "type": "string",
-              "title": "Username"
-            }
-          },
-          "type": "object",
-          "required": [
-            "username"
-          ],
-          "title": "_UserModel"
-        },
         "ErrorDetail": {
           "properties": {
             "msg": {
@@ -375,6 +195,19 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "properties": {
+            "username": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          "type": "object",
+          "required": [
+            "username"
+          ],
+          "title": "_UserModel"
         }
       },
       "securitySchemes": {}

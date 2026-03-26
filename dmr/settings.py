@@ -71,7 +71,7 @@ class HttpSpec(enum.StrEnum):
     """
     Keys for our HTTP spec validation.
 
-    All rules can be disabled per endpoint, per blueprint, and per controller.
+    All rules can be disabled per endpoint and per controller.
     You can disable any of the validation rules we have here globally by:
 
     .. code:: python

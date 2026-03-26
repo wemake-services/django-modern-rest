@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
@@ -15,9 +15,10 @@ class CustomErrorModel(TypedDict):
     errors: list[CustomErrorDetail]
 
 
-class _CustomErrorMixin:
+class ApiController(Controller[PydanticSerializer]):
     error_model = CustomErrorModel
 
+    @override
     def format_error(
         self,
         error: str | Exception,
@@ -36,12 +37,6 @@ class _CustomErrorMixin:
             ],
         }
 
-
-class ApiController(
-    _CustomErrorMixin,
-    Controller[PydanticSerializer],
-    Body[dict[str, str]],
-):
     @modify(
         extra_responses=[
             ResponseSpec(
@@ -50,7 +45,7 @@ class ApiController(
             ),
         ],
     )
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise APIError(
             self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,

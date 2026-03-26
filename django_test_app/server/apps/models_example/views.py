@@ -20,10 +20,7 @@ from server.apps.models_example.services import (
 
 
 @final
-class UserCreateController(
-    Body[UserCreateSchema],
-    Controller[PydanticSerializer],
-):
+class UserCreateController(Controller[PydanticSerializer]):
     @modify(
         extra_responses=[
             ResponseSpec(
@@ -32,14 +29,14 @@ class UserCreateController(
             ),
         ],
     )
-    def post(self) -> UserSchema:
-        user = user_create_service(self.parsed_body)
+    def post(self, parsed_body: Body[UserCreateSchema]) -> UserSchema:
+        user = user_create_service(parsed_body)
         return UserSchema(
             id=user.pk,
             created_at=user.created_at,
             email=user.email,
-            role=self.parsed_body.role,
-            tags=self.parsed_body.tags,
+            role=parsed_body.role,
+            tags=parsed_body.tags,
         )
 
     @override

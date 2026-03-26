@@ -15,13 +15,10 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(
-    Controller[PydanticSerializer],
-    Body[UserCreateModel],
-):
-    def post(self) -> UserModel:
+class UserController(Controller[PydanticSerializer]):
+    def post(self, parsed_body: Body[UserCreateModel]) -> UserModel:
         return UserModel(
             uid=uuid.uuid4(),
-            age=self.parsed_body.age,
-            email=self.parsed_body.email,
+            age=parsed_body.age,
+            email=parsed_body.email,
         )

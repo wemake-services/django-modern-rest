@@ -9,11 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.metadata import (
-    EndpointMetadata,
-    ResponseSpec,
-    ResponseSpecProvider,
-)
+from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.response import APIError
 from dmr.security.base import AsyncAuth, SyncAuth

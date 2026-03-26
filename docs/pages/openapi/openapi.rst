@@ -3,9 +3,9 @@ OpenAPI
 
 We support OpenAPI versions from ``3.0`` all the way up including ``3.2``.
 
-Default OpenAPI version is ``3.1``, because as of right now (12-03-2026)
-Swagger / Scalar / Redoc do not fully support ``3.2`` yet.
-See `the progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
+By default, we use OpenAPI ``3.1``, since tooling such as Swagger, Scalar,
+and Redoc does not yet fully support the latest specification.
+You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
 
 Setting up OpenAPI views
 ------------------------
@@ -18,6 +18,8 @@ We support:
   with :class:`~dmr.openapi.views.RedocView`
 - `Scalar <https://github.com/scalar/scalar>`_
   with :class:`~dmr.openapi.views.ScalarView`
+- `Stoplight Elements <https://github.com/stoplightio/elements>`_
+  with :class:`~dmr.openapi.views.StoplightView`
 - ``openapi.json`` with :class:`~dmr.openapi.views.OpenAPIJsonView`
 
 Here's how it works:
@@ -183,7 +185,7 @@ There are different styles and other features
 that :class:`~dmr.openapi.objects.Parameter` supports
 in `OpenAPI Parameters <https://learn.openapis.org/specification/parameters.html>`_.
 
-For example, if you want to change how :class:`~dmr.components.Query`
+For example, if you want to change how :data:`~dmr.components.Query`
 parameter is documented with the help
 of :class:`dmr.openapi.objects.ParameterMetadata` annotation:
 
@@ -202,7 +204,7 @@ There are different metadata fields, like ``examples`` and ``encoding``,
 that :class:`~dmr.openapi.objects.MediaType` supports
 in `OpenAPI MediaType <https://spec.openapis.org/oas/latest#media-type-object>`_.
 
-For example, if you want to change how :class:`~dmr.components.Body`
+For example, if you want to change how :data:`~dmr.components.Body`
 provides examples,
 you can use :class:`dmr.openapi.objects.MediaTypeMetadata` annotation:
 
@@ -218,7 +220,7 @@ We also support the same way for conditional types:
   :language: python
   :linenos:
 
-And for :class:`~dmr.components.FileMetadata`:
+And for :data:`~dmr.components.FileMetadata`:
 
 .. literalinclude:: /examples/openapi/request_files_customization.py
   :caption: views.py

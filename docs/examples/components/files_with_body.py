@@ -30,21 +30,21 @@ class _OutputPayload(pydantic.BaseModel):
     user_email: str
 
 
-class FileAndBodyController(
-    Controller[PydanticSerializer],
-    Body[_BodyPayload],
-    FileMetadata[_UploadedFiles],
-):
+class FileAndBodyController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _OutputPayload:
-        for content_key in self.parsed_file_metadata.model_fields_set:
+    def post(
+        self,
+        parsed_body: Body[_BodyPayload],
+        parsed_file_metadata: FileMetadata[_UploadedFiles],
+    ) -> _OutputPayload:
+        for content_key in parsed_file_metadata.model_fields_set:
             assert isinstance(self.request.FILES[content_key], UploadedFile)
         return _OutputPayload(
-            user_id=self.parsed_body.user_id,
-            user_email=self.parsed_body.user_email,
-            receipt=self.parsed_file_metadata.receipt,
-            rules=self.parsed_file_metadata.rules,
+            user_id=parsed_body.user_id,
+            user_email=parsed_body.user_email,
+            receipt=parsed_file_metadata.receipt,
+            rules=parsed_file_metadata.rules,
         )
 
 

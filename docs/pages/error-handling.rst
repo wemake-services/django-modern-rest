@@ -10,11 +10,7 @@ and :func:`global <dmr.errors.global_error_handler>` levels.
 All error handling functions always accept 3 arguments:
 
 1. :class:`~dmr.endpoint.Endpoint` where error happened
-2. :class:`~dmr.controller.Controller` where error happened,
-   you can also access the :class:`~dmr.controller.Blueprint`
-   where this error happened
-   via :attr:`~dmr.controller.Controller.active_blueprint`
-   if it exists
+2. :class:`~dmr.controller.Controller` where error happened
 3. Exception that happened
 
 Here's how it works:
@@ -23,21 +19,14 @@ Here's how it works:
    definition via :func:`~dmr.endpoint.modify`
    or :func:`~dmr.endpoint.validate`
 2. If it returns :class:`django.http.HttpResponse`, return it to the user
-3. If it raises and :term:`Blueprint` was used to created this endpoint, call
-   :meth:`~dmr.controller.Blueprint.handle_error` for sync
-   blueprints
-   and :meth:`~dmr.controller.Blueprint.handle_async_error`
-   for async blueprints
-4. If blueprint's handler returns :class:`~django.http.HttpResponse`,
-   return it to the user
-5. If it raises, call
+3. If it raises, call
    :meth:`~dmr.controller.Controller.handle_error` for sync
    controllers
    and :meth:`~dmr.controller.Controller.handle_async_error`
    for async controllers
-6. If controller's handler returns :class:`~django.http.HttpResponse`,
+4. If controller's handler returns :class:`~django.http.HttpResponse`,
    return it to the user
-7. If it raises, call configured global error handler, by default
+5. If it raises, call configured global error handler, by default
    it is :func:`~dmr.errors.global_error_handler`
    (it is always sync)
 
@@ -49,7 +38,7 @@ Here's how it works:
      Sync endpoints will require sync ``error_handler`` parameter.
      This is validated on endpoint creation
   2. We don't allow to define sync ``handle_error`` handlers
-     for async blueprints and controllers.
+     for async controllers.
      We also don't allow async ``handle_async_error`` handlers
      for sync controllers.
 
@@ -81,7 +70,7 @@ without a custom error handler.
 Because :exc:`ZeroDivisionError` can't happen in ``post``.
 
 Per-endpoint's error handling has a priority
-over per-blueprint and per-controller handlers.
+over per-controller and global handlers.
 
 You can also define endpoint error handlers as controller methods
 and pass them wrapped with :func:`~dmr.errors.wrap_handler`
@@ -92,32 +81,6 @@ as handlers. Like so:
   :language: python
   :linenos:
 
-
-Customizing blueprint error handler
------------------------------------
-
-Let's create custom error handling for the all endpoints in a blueprint:
-
-.. literalinclude:: /examples/error_handling/blueprint.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-In this example we define ``async_error_handler`` for both endpoints.
-All ``httpx.HTTPError`` errors that can happen in both endpoints
-will be safely handled. Notice that we also add new response schema
-to :attr:`~dmr.controller.Blueprint.responses`
-to be sure that it will be present in the OpenAPI
-and response validation will work.
-
-Per-blueprint's error handling has a priority
-over per-controller handlers.
-
-.. note::
-
-  If you are not using blueprints, then this error-handling layer won't exist.
-
-
 Customizing controller error handler
 ------------------------------------
 
@@ -127,9 +90,6 @@ Let's create custom error handling for the whole controller:
   :caption: views.py
   :language: python
   :linenos:
-
-We do the same as in blueprint's example to show that they are very similar.
-The main difference is the priority and scope.
 
 
 Going further
@@ -146,7 +106,7 @@ You can dive even deeper and:
 
 - Subclass :attr:`~dmr.controller.Controller`
   and provide default error handling for this specific subclass
-- Redefine :attr:`~dmr.controller.Blueprint.endpoint_cls`
+- Redefine :attr:`~dmr.controller.Controller.endpoint_cls`
   and change how one specific endpoint behaves on a deep level,
   see :meth:`~dmr.endpoint.Endpoint.handle_error`
   and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
@@ -166,12 +126,7 @@ The same error handling logic can be represented as a diagram:
       Error -->|Yes| Endpoint[Endpoint-level handler];
       Endpoint --> EndpointHandler{Raises or returns response?};
       EndpointHandler -->|response| Failure[Error response];
-      EndpointHandler -->|raises| Blueprint[Blueprint-level handler];
-      Blueprint --> BlueprintDefinition{Is blueprint used?}
-      BlueprintDefinition -->|yes| BlueprintHandler{Raises or returns response?};
-      BlueprintDefinition -->|no| Controller;
-      BlueprintHandler -->|response| Failure[Error response];
-      BlueprintHandler -->|raises| Controller[Controller-level handler];
+      EndpointHandler -->|raises| Controller[Controller-level handler];
       Controller --> ControllerHandler{Raises or returns response?};
       ControllerHandler -->|response| Failure[Error response];
       ControllerHandler -->|raises| Global[Global handler];
@@ -191,9 +146,9 @@ on a per-controller basis.
 
 To do so, you would need to change:
 
-1. :attr:`~dmr.controller.Blueprint.error_model` attribute for
-   all controllers and blueprints that will be using this error message schema
-2. :meth:`~dmr.controller.Blueprint.format_error` method
+1. :attr:`~dmr.controller.Controller.error_model` attribute for
+   all controllers that will be using this error message schema
+2. :meth:`~dmr.controller.Controller.format_error` method
    to provide custom runtime error formatting
 
 .. literalinclude:: /examples/error_handling/custom_error_messages.py

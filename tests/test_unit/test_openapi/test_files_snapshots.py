@@ -6,13 +6,7 @@ from django.http import FileResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Body,
-    Controller,
-    FileMetadata,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, FileMetadata, modify, validate
 from dmr.files import FileResponseSpec
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Encoding, MediaTypeMetadata
@@ -38,12 +32,14 @@ class _SeveralFiles(pydantic.BaseModel):
 
 class _FileController(
     Controller[PydanticSerializer],
-    FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
 
     @modify(operation_id='file_test_id', deprecated=True)
-    async def get(self) -> list[int]:
+    async def get(
+        self,
+        parsed_file_metadata: FileMetadata[_SeveralFiles],
+    ) -> list[int]:
         raise NotImplementedError
 
 
@@ -97,12 +93,14 @@ class _DescriptionModel(pydantic.BaseModel):
 
 class _BodyAndFileController(
     Controller[PydanticSerializer],
-    Body[_DescriptionModel],
-    FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
 
-    async def post(self) -> list[int]:
+    async def post(
+        self,
+        parsed_body: Body[_DescriptionModel],
+        parsed_file_metadata: FileMetadata[_SeveralFiles],
+    ) -> list[int]:
         raise NotImplementedError
 
 
@@ -124,22 +122,24 @@ def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
 
 class _FileMetadataController(
     Controller[PydanticSerializer],
-    FileMetadata[
-        Annotated[
-            _SeveralFiles,
-            MediaTypeMetadata(
-                example='whatever',
-                encoding={
-                    'second_file': Encoding(content_type='image/png'),
-                    'attachments': Encoding(content_type='image/jpg'),
-                },
-            ),
-        ]
-    ],
 ):
     parsers = (MultiPartParser(),)
 
-    async def get(self) -> list[int]:
+    async def get(
+        self,
+        parsed_file_metadata: FileMetadata[
+            Annotated[
+                _SeveralFiles,
+                MediaTypeMetadata(
+                    example='whatever',
+                    encoding={
+                        'second_file': Encoding(content_type='image/png'),
+                        'attachments': Encoding(content_type='image/jpg'),
+                    },
+                ),
+            ]
+        ],
+    ) -> list[int]:
         raise NotImplementedError
 
 

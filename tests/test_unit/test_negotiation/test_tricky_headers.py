@@ -85,10 +85,9 @@ class _RequestModel(pydantic.BaseModel):
 @final
 class _UsernameController(
     Controller[PydanticSerializer],
-    Body[_RequestModel],
 ):
-    def post(self) -> str:
-        return self.parsed_body.username
+    def post(self, parsed_body: Body[_RequestModel]) -> str:
+        return parsed_body.username
 
 
 def test_no_content_type_header(

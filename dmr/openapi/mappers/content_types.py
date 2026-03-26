@@ -6,7 +6,7 @@ def content_types(model: Any, property_name: str) -> str | None:
     """
     Get content types string from a model definition.
 
-    We mostly use this for :class:`dmr.components.FileMetadata` component.
+    We mostly use this for :data:`dmr.components.FileMetadata` component.
     We extract metadata from models like:
 
     .. code:: python

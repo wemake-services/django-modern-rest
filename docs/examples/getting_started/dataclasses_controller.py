@@ -18,7 +18,6 @@ class UserModel(UserCreateModel):
 class UserController(
     Controller[MsgspecSerializer],
     # Dataclasses do not support field name aliases, so can't use Headers :(
-    Body[UserCreateModel],
 ):
-    def post(self) -> UserModel:
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+    def post(self, parsed_body: Body[UserCreateModel]) -> UserModel:
+        return UserModel(uid=uuid.uuid4(), email=parsed_body.email)

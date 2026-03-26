@@ -177,7 +177,7 @@ Response handling
   .. note::
 
     You can also switch off this validation per-controller
-    with :attr:`~dmr.controller.Blueprint.validate_responses`
+    with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.
@@ -354,6 +354,7 @@ OpenAPI
   - ``swagger``: base URL to ``swagger-ui-dist`` (without file name)
   - ``redoc``: full URL to ``redoc.standalone.js``
   - ``scalar``: full URL to ``@scalar/api-reference`` standalone bundle
+  - ``stoplight``: base URL to ``@stoplight/elements`` (without file name)
 
   You can also modify the exact versions that we use for each tool this way.
 
@@ -365,6 +366,7 @@ OpenAPI
     ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.1',
     ...         'redoc': 'https://cdn.redoc.ly/redoc/2.5.2/bundles/redoc.standalone.js',
     ...         'scalar': 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js',
+    ...         'stoplight': 'https://unpkg.com/@stoplight/elements@9.0.16',
     ...     },
     ... }
 
@@ -383,8 +385,8 @@ Hacks
 
   Some parsers like :class:`~dmr.parsers.MultiPartParser`
   require ``.POST`` and ``.FILES`` to be set to work with
-  :class:`~dmr.components.Body`
-  and :class:`~dmr.components.FileMetadata`.
+  :data:`~dmr.components.Body`
+  and :data:`~dmr.components.FileMetadata`.
 
   However, we build REST APIs where more methods are in use, not just ``POST``.
   So, we use this setting to populate ``.POST`` and ``.FILES``

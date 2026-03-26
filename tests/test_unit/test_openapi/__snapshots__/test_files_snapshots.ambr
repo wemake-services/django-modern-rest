@@ -104,28 +104,6 @@
     },
     "components": {
       "schemas": {
-        "_DescriptionModel": {
-          "properties": {
-            "first": {
-              "type": "string",
-              "title": "First"
-            },
-            "second": {
-              "items": {
-                "type": "integer"
-              },
-              "type": "array",
-              "title": "Second"
-            }
-          },
-          "type": "object",
-          "required": [
-            "first",
-            "second"
-          ],
-          "title": "_DescriptionModel",
-          "description": "Description from doc."
-        },
         "ErrorDetail": {
           "properties": {
             "msg": {
@@ -174,6 +152,28 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_DescriptionModel": {
+          "properties": {
+            "first": {
+              "type": "string",
+              "title": "First"
+            },
+            "second": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array",
+              "title": "Second"
+            }
+          },
+          "type": "object",
+          "required": [
+            "first",
+            "second"
+          ],
+          "title": "_DescriptionModel",
+          "description": "Description from doc."
         }
       },
       "securitySchemes": {}

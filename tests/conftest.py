@@ -6,8 +6,6 @@ from django.utils import translation
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 
-pytest_plugins = ['tracecov.pytest_plugin']
-
 
 @pytest.fixture
 def openapi_context() -> OpenAPIContext:

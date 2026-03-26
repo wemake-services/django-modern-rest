@@ -1,9 +1,7 @@
 import pytest
 from django.conf import LazySettings
 
-from dmr import (
-    Controller,
-)
+from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer

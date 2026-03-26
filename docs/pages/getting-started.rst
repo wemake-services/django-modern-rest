@@ -86,6 +86,9 @@ Usecases we officially support:
 
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
+- AI-guided migrations for any API changes.
+  We break something? We provide a prompt for you, so you can automatically
+  upgrade to a newer version using AI tool for your choice
 
 We support several custom agent skills:
 
@@ -94,6 +97,8 @@ We support several custom agent skills:
   from a single ``openapi.json`` file (the "Spec First" approach)
 - ``dmr-from-django-ninja`` to help with
   :doc:`migrating from Django Ninja <ai/dmr-from-ninja>`
+- ``dmr-from-drf`` to help with
+  :doc:`migrating from Django REST Framework <ai/dmr-from-drf>`
 
 
 Showcase
@@ -166,8 +171,8 @@ In this example:
 1. We defined regular ``pydantic``, ``msgspec``, or ``attrs`` models
    that we will use for our API
 2. We added two component parsers: one for request's
-   :class:`~dmr.components.Body` and one
-   for :class:`~dmr.components.Headers`
+   :data:`~dmr.components.Body` and one
+   for :data:`~dmr.components.Headers`
    which will parse them into the typed models
    (:class:`pydantic.BaseModel`, :class:`msgspec.Struct`,
    :func:`attrs.define`, or defined with any other supported way) that we pass

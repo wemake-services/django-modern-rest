@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'server.apps.negotiations',
     'server.apps.jwt_auth',
     'server.apps.django_session_auth',
+    'server.apps.etag',
     # django:
     'django.contrib.admin',
     'django.contrib.auth',

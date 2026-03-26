@@ -4,15 +4,10 @@ Public API
 Controller
 ----------
 
-.. autoclass:: dmr.controller.Blueprint
-  :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
-  :show-inheritance:
-
 .. autoclass:: dmr.controller.Controller
   :members:
+  :exclude-members: controller_validator_cls, endpoint_cls, error_model, settings_validator_cls
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
   :show-inheritance:
 
 
@@ -43,9 +38,6 @@ Response, headers and cookies
   :members:
 
 .. autoexception:: dmr.response.APIError
-  :members:
-
-.. autoexception:: dmr.response.APIRedirectError
   :members:
 
 .. autofunction:: dmr.response.build_response
@@ -84,10 +76,13 @@ Serialization
 .. autoclass:: dmr.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.serializer.SerializerContext
+.. autoclass:: dmr.endpoint.SerializerContext
   :members:
 
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.components.ComponentParserBuilder
   :members:
 
 
@@ -96,8 +91,6 @@ Routing
 
 .. autoclass:: dmr.routing.Router
   :members:
-
-.. autofunction:: dmr.routing.compose_blueprints
 
 .. autofunction:: dmr.routing.build_404_handler
 
@@ -153,6 +146,9 @@ Utilities
 .. autoclass:: dmr.types.Empty
 
 .. autodata:: dmr.types.EmptyObj
+
+.. autoclass:: dmr.types.TypeVarInference
+  :members:
 
 
 Decorators

@@ -6,22 +6,14 @@ import pydantic
 from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Blueprint,
-    Body,
-    Controller,
-    Cookies,
-    Path,
-    Query,
-    ResponseSpec,
-)
+from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import MediaTypeMetadata, ParameterMetadata
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
-from dmr.routing import Router, compose_blueprints
+from dmr.routing import Router
 from dmr.security.jwt import JWTAsyncAuth
 from tests.infra.xml_format import XmlParser, XmlRenderer
 
@@ -38,21 +30,16 @@ class _PathIdModel(pydantic.BaseModel):
     id: int
 
 
-class _UserBlueprint(
-    Blueprint[PydanticSerializer],
-    Body[dict[str, int]],
-):
-    def post(self) -> _UserModel:
+class _UserController(Controller[PydanticSerializer]):
+    def post(self, parsed_body: Body[dict[str, int]]) -> _UserModel:
         raise NotImplementedError
 
-
-class _GetUserListBlueprint(Blueprint[PydanticSerializer]):
     def get(self) -> list[_UserModel]:
         raise NotImplementedError
 
 
-class _GetUserController(Controller[PydanticSerializer], Path[_PathIdModel]):
-    def get(self) -> _UserModel:
+class _GetUserController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_PathIdModel]) -> _UserModel:
         raise NotImplementedError
 
 
@@ -64,13 +51,7 @@ def test_user_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/v1/',
                     [
-                        path(
-                            'user/',
-                            compose_blueprints(
-                                _UserBlueprint,
-                                _GetUserListBlueprint,
-                            ).as_view(),
-                        ),
+                        path('user/', _UserController.as_view()),
                         path('user/<int:id>/', _GetUserController.as_view()),
                     ],
                 ),
@@ -101,24 +82,24 @@ class _QueryModel(pydantic.BaseModel):
     regular: int
 
 
-class _AuthedAndCookiesController(
-    Controller[PydanticSerializer],
-    Cookies[
-        Annotated[
-            _CookieModel,
-            ParameterMetadata(description='Cookies metadata'),
-        ]
-    ],
-    Query[
-        Annotated[
-            _QueryModel,
-            ParameterMetadata(style='deepObject', explode=True),
-        ]
-    ],
-):
+class _AuthedAndCookiesController(Controller[PydanticSerializer]):
     auth = (JWTAsyncAuth(),)
 
-    async def get(self) -> list[int]:
+    async def get(
+        self,
+        parsed_cookies: Cookies[
+            Annotated[
+                _CookieModel,
+                ParameterMetadata(description='Cookies metadata'),
+            ]
+        ],
+        parsed_query: Query[
+            Annotated[
+                _QueryModel,
+                ParameterMetadata(style='deepObject', explode=True),
+            ]
+        ],
+    ) -> list[int]:
         raise NotImplementedError
 
 
@@ -146,18 +127,7 @@ class _XmlResponseModel(pydantic.BaseModel):
     xml_response: str
 
 
-class _ConditionalTypesController(
-    Controller[PydanticSerializer],
-    Body[
-        Annotated[
-            _UserModel | _XmlModel,
-            conditional_type({
-                ContentType.json: _UserModel,
-                ContentType.xml: _XmlModel,
-            }),
-        ],
-    ],
-):
+class _ConditionalTypesController(Controller[PydanticSerializer]):
     responses = (
         ResponseSpec(
             str,
@@ -172,6 +142,15 @@ class _ConditionalTypesController(
 
     def post(
         self,
+        parsed_body: Body[
+            Annotated[
+                _UserModel | _XmlModel,
+                conditional_type({
+                    ContentType.json: _UserModel,
+                    ContentType.xml: _XmlModel,
+                }),
+            ],
+        ],
     ) -> Annotated[
         _UserModel | _XmlResponseModel,
         'comment',
@@ -207,15 +186,6 @@ _UserModelWithExample: TypeAlias = Annotated[
 
 class _ConditionalTypesWithExampleController(
     Controller[PydanticSerializer],
-    Body[
-        Annotated[
-            _UserModel | _XmlModel,
-            conditional_type({
-                ContentType.json: _UserModelWithExample,
-                ContentType.xml: _XmlModel,
-            }),
-        ],
-    ],
 ):
     responses = (
         ResponseSpec(
@@ -231,6 +201,15 @@ class _ConditionalTypesWithExampleController(
 
     def post(
         self,
+        parsed_body: Body[
+            Annotated[
+                _UserModel | _XmlModel,
+                conditional_type({
+                    ContentType.json: _UserModelWithExample,
+                    ContentType.xml: _XmlModel,
+                }),
+            ],
+        ],
     ) -> Annotated[
         _UserModel | _XmlResponseModel,
         'comment',

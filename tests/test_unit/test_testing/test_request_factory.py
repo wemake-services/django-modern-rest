@@ -17,10 +17,10 @@ class _BodyModel(pydantic.BaseModel):
 
 
 @final
-class _MyController(Controller[PydanticSerializer], Body[_BodyModel]):
-    def post(self) -> str:
+class _MyController(Controller[PydanticSerializer]):
+    def post(self, parsed_body: Body[_BodyModel]) -> str:
         """Simulates `post` method."""
-        return self.parsed_body.email
+        return parsed_body.email
 
 
 def test_dmr_rf(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
@@ -59,10 +59,10 @@ def test_dmr_async_rf_to_sync(
 
 
 @final
-class _MyAsyncController(Controller[PydanticSerializer], Body[_BodyModel]):
-    async def post(self) -> str:
+class _MyAsyncController(Controller[PydanticSerializer]):
+    async def post(self, parsed_body: Body[_BodyModel]) -> str:
         """Simulates `post` method."""
-        return self.parsed_body.email
+        return parsed_body.email
 
 
 @pytest.mark.asyncio

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DMR from DRF"
+  short_description: "Migrate DRF APIs to DMR"
+  default_prompt: "Use $dmr-from-drf to migrate an existing Django REST Framework API to django-modern-rest while keeping routes, contracts, auth/permissions, throttling, and tests aligned."

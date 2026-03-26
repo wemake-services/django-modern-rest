@@ -318,45 +318,6 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
-          "properties": {
-            "age": {
-              "type": "integer",
-              "maximum": 100,
-              "exclusiveMinimum": 0,
-              "title": "Age"
-            },
-            "username": {
-              "type": "string",
-              "title": "Username",
-              "deprecated": true
-            },
-            "email": {
-              "type": "string",
-              "title": "Email"
-            }
-          },
-          "type": "object",
-          "required": [
-            "age",
-            "username",
-            "email"
-          ],
-          "title": "CustomUserModel"
-        },
-        "_XmlModel": {
-          "properties": {
-            "xml_value": {
-              "type": "integer",
-              "title": "Xml Value"
-            }
-          },
-          "type": "object",
-          "required": [
-            "xml_value"
-          ],
-          "title": "_XmlModel"
-        },
         "CustomUserModel": {
           "properties": {
             "age": {
@@ -382,19 +343,6 @@
             "email"
           ],
           "title": "CustomUserModel"
-        },
-        "_XmlResponseModel": {
-          "properties": {
-            "xml_response": {
-              "type": "string",
-              "title": "Xml Response"
-            }
-          },
-          "type": "object",
-          "required": [
-            "xml_response"
-          ],
-          "title": "_XmlResponseModel"
         },
         "ErrorDetail": {
           "properties": {
@@ -444,6 +392,58 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "properties": {
+            "age": {
+              "type": "integer",
+              "maximum": 100,
+              "exclusiveMinimum": 0,
+              "title": "Age"
+            },
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "deprecated": true
+            },
+            "email": {
+              "type": "string",
+              "title": "Email"
+            }
+          },
+          "type": "object",
+          "required": [
+            "age",
+            "username",
+            "email"
+          ],
+          "title": "CustomUserModel"
+        },
+        "_XmlModel": {
+          "properties": {
+            "xml_value": {
+              "type": "integer",
+              "title": "Xml Value"
+            }
+          },
+          "type": "object",
+          "required": [
+            "xml_value"
+          ],
+          "title": "_XmlModel"
+        },
+        "_XmlResponseModel": {
+          "properties": {
+            "xml_response": {
+              "type": "string",
+              "title": "Xml Response"
+            }
+          },
+          "type": "object",
+          "required": [
+            "xml_response"
+          ],
+          "title": "_XmlResponseModel"
         }
       },
       "securitySchemes": {}
@@ -557,45 +557,6 @@
     },
     "components": {
       "schemas": {
-        "_UserModel": {
-          "properties": {
-            "age": {
-              "type": "integer",
-              "maximum": 100,
-              "exclusiveMinimum": 0,
-              "title": "Age"
-            },
-            "username": {
-              "type": "string",
-              "title": "Username",
-              "deprecated": true
-            },
-            "email": {
-              "type": "string",
-              "title": "Email"
-            }
-          },
-          "type": "object",
-          "required": [
-            "age",
-            "username",
-            "email"
-          ],
-          "title": "CustomUserModel"
-        },
-        "_XmlModel": {
-          "properties": {
-            "xml_value": {
-              "type": "integer",
-              "title": "Xml Value"
-            }
-          },
-          "type": "object",
-          "required": [
-            "xml_value"
-          ],
-          "title": "_XmlModel"
-        },
         "CustomUserModel": {
           "properties": {
             "age": {
@@ -621,19 +582,6 @@
             "email"
           ],
           "title": "CustomUserModel"
-        },
-        "_XmlResponseModel": {
-          "properties": {
-            "xml_response": {
-              "type": "string",
-              "title": "Xml Response"
-            }
-          },
-          "type": "object",
-          "required": [
-            "xml_response"
-          ],
-          "title": "_XmlResponseModel"
         },
         "ErrorDetail": {
           "properties": {
@@ -683,6 +631,58 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_UserModel": {
+          "properties": {
+            "age": {
+              "type": "integer",
+              "maximum": 100,
+              "exclusiveMinimum": 0,
+              "title": "Age"
+            },
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "deprecated": true
+            },
+            "email": {
+              "type": "string",
+              "title": "Email"
+            }
+          },
+          "type": "object",
+          "required": [
+            "age",
+            "username",
+            "email"
+          ],
+          "title": "CustomUserModel"
+        },
+        "_XmlModel": {
+          "properties": {
+            "xml_value": {
+              "type": "integer",
+              "title": "Xml Value"
+            }
+          },
+          "type": "object",
+          "required": [
+            "xml_value"
+          ],
+          "title": "_XmlModel"
+        },
+        "_XmlResponseModel": {
+          "properties": {
+            "xml_response": {
+              "type": "string",
+              "title": "Xml Response"
+            }
+          },
+          "type": "object",
+          "required": [
+            "xml_response"
+          ],
+          "title": "_XmlResponseModel"
         }
       },
       "securitySchemes": {}
@@ -909,7 +909,7 @@
     "paths": {
       "/api/v1/user/": {
         "get": {
-          "operationId": "getComposedUserblueprintGetuserlistblueprintApiV1User",
+          "operationId": "getUsercontrollerApiV1User",
           "responses": {
             "200": {
               "description": "OK",
@@ -948,7 +948,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postComposedUserblueprintGetuserlistblueprintApiV1User",
+          "operationId": "postUsercontrollerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {

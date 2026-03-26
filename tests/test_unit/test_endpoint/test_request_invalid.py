@@ -22,11 +22,13 @@ class _MyPydanticModel(pydantic.BaseModel):
 @final
 class _WrongPydanticBodyController(
     Controller[PydanticSerializer],
-    Body[_MyPydanticModel],
 ):
     """All body of these methods are not correct."""
 
-    def post(self) -> str:  # pragma: no cover
+    def post(
+        self,
+        parsed_body: Body[_MyPydanticModel],
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 

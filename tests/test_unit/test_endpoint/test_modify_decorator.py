@@ -9,7 +9,6 @@ from django.test import RequestFactory
 from inline_snapshot import snapshot
 
 from dmr import (
-    Blueprint,
     Controller,
     CookieSpec,
     HeaderSpec,
@@ -210,26 +209,7 @@ def test_modify_duplicate_statuses() -> None:
 def test_modify_deduplicate_statuses() -> None:
     """Ensures `@modify` same duplicate status codes."""
 
-    class _Blueprint(Blueprint[PydanticSerializer]):
-        responses = (
-            # From components:
-            ResponseSpec(int, status_code=HTTPStatus.OK),
-            ResponseSpec(
-                dict[str, str],
-                status_code=HTTPStatus.PAYMENT_REQUIRED,
-            ),
-        )
-
-        def post(self) -> str:
-            raise NotImplementedError
-
     class _DeduplicateStatuses(Controller[PydanticSerializer]):
-        blueprints = (_Blueprint,)
-        responses = (
-            # From components:
-            ResponseSpec(int, status_code=HTTPStatus.OK),
-        )
-
         @modify(
             extra_responses=[
                 # From middleware:
@@ -238,6 +218,18 @@ def test_modify_deduplicate_statuses() -> None:
             ],
         )
         def get(self) -> int:
+            raise NotImplementedError
+
+        @modify(
+            extra_responses=[
+                ResponseSpec(int, status_code=HTTPStatus.OK),
+                ResponseSpec(
+                    dict[str, str],
+                    status_code=HTTPStatus.PAYMENT_REQUIRED,
+                ),
+            ],
+        )
+        def post(self) -> str:
             raise NotImplementedError
 
     endpoints = _DeduplicateStatuses.api_endpoints

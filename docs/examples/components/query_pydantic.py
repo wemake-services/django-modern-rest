@@ -9,12 +9,9 @@ class _QueryModel(pydantic.BaseModel):
     count: int
 
 
-class ApiController(
-    Controller[PydanticSerializer],
-    Query[_QueryModel],
-):
-    def get(self) -> _QueryModel:
-        return self.parsed_query
+class ApiController(Controller[PydanticSerializer]):
+    def get(self, parsed_query: Query[_QueryModel]) -> _QueryModel:
+        return parsed_query
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc&count=10"}  # noqa: ERA001, E501

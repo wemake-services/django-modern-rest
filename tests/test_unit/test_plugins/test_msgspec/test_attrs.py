@@ -48,16 +48,15 @@ class _UserResponseModel(_UserModel):
 
 class _UserController(
     Controller[MsgspecSerializer],
-    Body[_UserModel],
 ):
-    def post(self) -> _UserResponseModel:
+    def post(self, parsed_body: Body[_UserModel]) -> _UserResponseModel:
         return _UserResponseModel(
             uid=uuid.uuid4(),
             status=_UserStatus.active,
-            email=self.parsed_body.email,
-            first_name=self.parsed_body.first_name,
-            last_name=self.parsed_body.last_name,
-            age=self.parsed_body.age,
+            email=parsed_body.email,
+            first_name=parsed_body.first_name,
+            last_name=parsed_body.last_name,
+            age=parsed_body.age,
         )
 
 

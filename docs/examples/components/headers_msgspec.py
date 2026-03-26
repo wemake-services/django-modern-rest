@@ -9,12 +9,9 @@ class _HeadersModel(msgspec.Struct):
     client_id: int = msgspec.field(name='X-Client-Id', default=-1)
 
 
-class ApiController(
-    Controller[MsgspecSerializer],
-    Headers[_HeadersModel],
-):
-    def get(self) -> _HeadersModel:
-        return self.parsed_headers
+class ApiController(Controller[MsgspecSerializer]):
+    def get(self, parsed_headers: Headers[_HeadersModel]) -> _HeadersModel:
+        return parsed_headers
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "headers": {"Cache-Control": "max-age=0"}}  # noqa: ERA001, E501

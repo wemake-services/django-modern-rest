@@ -132,7 +132,9 @@ class ResponseGenerator:
         # Import cycle:
         from dmr.negotiation import get_conditional_types  # noqa: PLC0415
 
-        return_types = get_conditional_types(response_spec.return_type) or {}
+        return_types = (
+            get_conditional_types(response_spec.return_type, ()) or {}
+        )
         return {
             renderer.content_type: MediaType(
                 **{  # type: ignore[arg-type]

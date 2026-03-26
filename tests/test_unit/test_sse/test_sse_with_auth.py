@@ -11,13 +11,7 @@ from inline_snapshot import snapshot
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionAsyncAuth
 from dmr.serializer import BaseSerializer
-from dmr.sse import (
-    SSEContext,
-    SSEResponse,
-    SSEStreamingResponse,
-    SSEvent,
-    sse,
-)
+from dmr.sse import SSEContext, SSEResponse, SSEStreamingResponse, SSEvent, sse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 

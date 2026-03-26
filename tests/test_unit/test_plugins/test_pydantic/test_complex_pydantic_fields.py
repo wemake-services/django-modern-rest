@@ -12,10 +12,7 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import (
-    ModelDumpKwargs,
-    PydanticSerializer,
-)
+from dmr.plugins.pydantic import ModelDumpKwargs, PydanticSerializer
 from dmr.test import DMRRequestFactory
 
 
@@ -32,10 +29,9 @@ class _BodyModel(pydantic.BaseModel):
 @final
 class _ComplexFieldsController(
     Controller[PydanticSerializer],
-    Body[_BodyModel],
 ):
-    def post(self) -> _BodyModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
+        return parsed_body
 
 
 def test_complex_pydantic_serialization(
@@ -73,10 +69,9 @@ class _RoundTripPydanticSerializer(PydanticSerializer):
 @final
 class _RoundTripJsonFieldController(
     Controller[_RoundTripPydanticSerializer],
-    Body[_BodyModel],
 ):
-    def post(self) -> _BodyModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
+        return parsed_body
 
 
 def test_pydantic_round_trip_json_field(
@@ -118,9 +113,8 @@ class _ArbitraryTypesModel(pydantic.BaseModel):
 @final
 class _ArbitraryTypesInputController(
     Controller[PydanticSerializer],
-    Body[_ArbitraryTypesModel],
 ):
-    def post(self) -> int:
+    def post(self, parsed_body: Body[_ArbitraryTypesModel]) -> int:
         raise NotImplementedError
 
 

@@ -12,12 +12,11 @@ class UserCreateModel(pydantic.BaseModel):
 
 class UserController(
     Controller[PydanticSerializer],
-    Body[UserCreateModel],
 ):
-    async def post(self) -> UserCreateModel:
-        if 'old-domain.com' in self.parsed_body.email:
+    async def post(self, parsed_body: Body[UserCreateModel]) -> UserCreateModel:
+        if 'old-domain.com' in parsed_body.email:
             raise RuntimeError('This error will not be handled')
-        return self.parsed_body
+        return parsed_body
 
 
 router = Router(

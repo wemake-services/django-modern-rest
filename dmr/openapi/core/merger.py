@@ -1,12 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from dmr.openapi.objects import (
-    Components,
-    Info,
-    OpenAPI,
-    Paths,
-)
+from dmr.openapi.objects import Components, Info, OpenAPI, Paths
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext

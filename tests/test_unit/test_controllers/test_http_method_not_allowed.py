@@ -1,8 +1,6 @@
 import pytest
 
-from dmr import (
-    Controller,
-)
+from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 

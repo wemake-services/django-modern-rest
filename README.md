@@ -30,7 +30,7 @@
 - [x] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
-- [x] 100% test coverage
+- [x] 100% test coverage with 1500+ of carefully designed unit, integration, and property-based tests
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
 - [x] Great docs
 - [x] No AI slop, but built for the LLM era: use our [`llms-full.txt`](https://django-modern-rest.readthedocs.io/llms-full.txt) or [context7](https://context7.com/wemake-services/django-modern-rest) for the context, we also support different [use-cases specific to LLMs](https://django-modern-rest.readthedocs.io/en/latest/pages/getting-started.html#llms-support)
@@ -101,15 +101,15 @@ The shortest example [(click here to copy the whole file)](https://github.com/we
 >>> class HeaderModel(pydantic.BaseModel):
 ...     consumer: str = pydantic.Field(alias='X-API-Consumer')
 
->>> class UserController(
-...     Controller[PydanticSerializer],
-...     Body[UserCreateModel],
-...     Headers[HeaderModel],
-... ):
-...     async def post(self) -> UserModel:  # <- can be sync as well!
+>>> class UserController(Controller[PydanticSerializer]):
+...     async def post(  # <- can be sync as well!
+...         self,
+...         parsed_body: Body[UserCreateModel],
+...         parsed_headers: Headers[HeaderModel],
+...     ) -> UserModel:
 ...         """All added props have the correct runtime and static types."""
-...         assert self.parsed_headers.consumer == 'my-api'
-...         return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+...         assert parsed_headers.consumer == 'my-api'
+...         return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
 
 ```
 

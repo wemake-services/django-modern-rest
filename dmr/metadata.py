@@ -2,14 +2,7 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping, Set
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    Any,
-    TypeAlias,
-    TypeVar,
-    get_origin,
-)
+from typing import TYPE_CHECKING, Annotated, Any, TypeAlias, TypeVar, get_origin
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
@@ -32,7 +25,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
     from dmr.settings import HttpSpec
 
-ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
+ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -205,9 +198,6 @@ class ResponseSpecProvider:
     def provide_response_specs(
         cls,
         metadata: 'EndpointMetadata',
-        # Response spec can't be different inside different blueprints.
-        # It would be a nightmare to manage.
-        # So, controller is the unit of change.
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -363,7 +353,7 @@ class EndpointMetadata:
             return []
 
         return [
-            *[spec[0] for spec in self.component_parsers],
+            *[type(spec[0]) for spec in self.component_parsers],
             *[type(parser) for parser in self.parsers.values()],
             *[type(renderer) for renderer in self.renderers.values()],
             *[type(auth) for auth in (self.auth or [])],
@@ -375,6 +365,7 @@ _MetadataT = TypeVar('_MetadataT')
 
 def get_annotated_metadata(
     model: Any,
+    model_meta: tuple[Any, ...] | None,
     metadata_type: type[_MetadataT],
 ) -> _MetadataT | None:
     """
@@ -386,4 +377,8 @@ def get_annotated_metadata(
         for metadata in model.__metadata__:
             if isinstance(metadata, metadata_type):
                 return metadata
+
+    for metadata in model_meta or ():
+        if isinstance(metadata, metadata_type):
+            return metadata
     return None

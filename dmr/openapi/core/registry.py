@@ -57,8 +57,8 @@ class SchemaRegistry:
     def schemas(self) -> dict[str, Schema]:
         """Return schemas by name."""
         return {
-            schema_name: schema[0]
-            for schema_name, schema in self._schemas.items()
+            schema_name: self._schemas[schema_name][0]
+            for schema_name in sorted(self._schemas)
         }
 
     def register(

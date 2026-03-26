@@ -19,16 +19,16 @@ class _QueryModel(msgspec.Struct):
     search: str
 
 
-class _MyController(
-    Controller[MsgspecSerializer],
-    Body[dict[str, int]],
-    Headers[_HeaderModel],
-    Query[_QueryModel],
-):
-    def get(self) -> str:
+class _MyController(Controller[MsgspecSerializer]):
+    def get(
+        self,
+        parsed_body: Body[dict[str, int]],
+        parsed_headers: Headers[_HeaderModel],
+        parsed_query: Query[_QueryModel],
+    ) -> str:
         """All added props have the correct types."""
         assert_type(self.request, HttpRequest)
-        assert_type(self.parsed_body, dict[str, int])
-        assert_type(self.parsed_headers, _HeaderModel)
-        assert_type(self.parsed_query, _QueryModel)
+        assert_type(parsed_body, dict[str, int])
+        assert_type(parsed_headers, _HeaderModel)
+        assert_type(parsed_query, _QueryModel)
         return 'Done'

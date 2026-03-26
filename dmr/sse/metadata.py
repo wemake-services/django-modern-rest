@@ -1,15 +1,7 @@
 import dataclasses
 from collections.abc import AsyncIterator, Mapping, Set
 from http import HTTPStatus
-from typing import (
-    Any,
-    Generic,
-    Literal,
-    NamedTuple,
-    Protocol,
-    final,
-    overload,
-)
+from typing import Any, Generic, Literal, NamedTuple, Protocol, final, overload
 
 from typing_extensions import TypeVar, override
 

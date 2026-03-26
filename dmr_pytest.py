@@ -20,19 +20,25 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def dmr_client() -> 'DMRClient':
+def dmr_client(request: pytest.FixtureRequest) -> 'DMRClient':
     """Customized version of :class:`django.test.Client`."""
+    from dmr.internal.test import maybe_track_client
     from dmr.test import DMRClient
 
-    return DMRClient()
+    client = DMRClient()
+    maybe_track_client(request, client)
+    return client
 
 
 @pytest.fixture
-def dmr_async_client() -> 'DMRAsyncClient':
+def dmr_async_client(request: pytest.FixtureRequest) -> 'DMRAsyncClient':
     """Customized version of :class:`django.test.AsyncClient`."""
+    from dmr.internal.test import maybe_track_client
     from dmr.test import DMRAsyncClient
 
-    return DMRAsyncClient()
+    client = DMRAsyncClient()
+    maybe_track_client(request, client)
+    return client
 
 
 @pytest.fixture

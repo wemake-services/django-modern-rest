@@ -76,6 +76,55 @@
     },
     "components": {
       "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
         "_Payment": {
           "properties": {
             "amount": {
@@ -140,55 +189,6 @@
             "data"
           ],
           "title": "_UserEvent"
-        },
-        "ErrorDetail": {
-          "properties": {
-            "msg": {
-              "type": "string",
-              "title": "Msg"
-            },
-            "type": {
-              "type": "string",
-              "title": "Type"
-            },
-            "loc": {
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array",
-              "title": "Loc"
-            }
-          },
-          "type": "object",
-          "required": [
-            "msg"
-          ],
-          "title": "ErrorDetail",
-          "description": "Base schema for error details description."
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array",
-              "title": "Detail"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
       },
       "securitySchemes": {}
@@ -266,19 +266,6 @@
     },
     "components": {
       "schemas": {
-        "OverriddenEvent": {
-          "properties": {
-            "data": {
-              "contentSchema": {
-                "type": "string"
-              }
-            }
-          },
-          "title": "OverriddenEvent",
-          "example": {
-            "value": "data: test"
-          }
-        },
         "ErrorDetail": {
           "properties": {
             "msg": {
@@ -327,6 +314,19 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "OverriddenEvent": {
+          "properties": {
+            "data": {
+              "contentSchema": {
+                "type": "string"
+              }
+            }
+          },
+          "title": "OverriddenEvent",
+          "example": {
+            "value": "data: test"
+          }
         }
       },
       "securitySchemes": {}
@@ -404,6 +404,55 @@
     },
     "components": {
       "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
         "SSEvent": {
           "properties": {
             "data": {
@@ -463,55 +512,6 @@
             "data"
           ],
           "title": "SSEvent"
-        },
-        "ErrorDetail": {
-          "properties": {
-            "msg": {
-              "type": "string",
-              "title": "Msg"
-            },
-            "type": {
-              "type": "string",
-              "title": "Type"
-            },
-            "loc": {
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array",
-              "title": "Loc"
-            }
-          },
-          "type": "object",
-          "required": [
-            "msg"
-          ],
-          "title": "ErrorDetail",
-          "description": "Base schema for error details description."
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array",
-              "title": "Detail"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
       },
       "securitySchemes": {}

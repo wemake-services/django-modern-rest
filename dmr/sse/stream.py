@@ -1,8 +1,4 @@
-from collections.abc import (
-    AsyncIterator,
-    Iterator,
-    Mapping,
-)
+from collections.abc import AsyncIterator, Iterator, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final
 
@@ -66,9 +62,11 @@ class SSEStreamingResponse(HttpResponseBase):
 
         """
         headers = {} if headers is None else dict(headers)
+        # Content-Type must be a str type, as wsgiref checks that
+        # to use str type.
         headers.update({
             'Cache-Control': 'no-cache',
-            'Content-Type': sse_renderer.content_type,
+            'Content-Type': str(sse_renderer.content_type),
             'X-Accel-Buffering': 'no',
         })
         if not settings.DEBUG:
@@ -125,7 +123,7 @@ class SSEStreamingResponse(HttpResponseBase):
     def handle_event_error(
         self,
         event: Any,
-        exception: Exception,
+        exc: Exception,
     ) -> SSE:
         """
         Handles errors that can happen while sending events.
@@ -133,14 +131,11 @@ class SSEStreamingResponse(HttpResponseBase):
         Return alternative event that will indicate what error has happened.
         By default does nothing and just reraises the exception.
         """
-        if isinstance(exception, ValidationError):
-            return SSEvent(
-                # TODO: change to accept `controller.format_error`,
-                # so it can be changed accordingly
-                ErrorModel(detail=exception.payload),
-                event='error',
-            )
-        raise  # noqa: PLE0704
+        if isinstance(exc, ValidationError):
+            # TODO: change to accept `controller.format_error`,
+            # so it can be changed accordingly
+            return SSEvent(ErrorModel(detail=exc.payload), event='error')
+        raise exc from None
 
     async def _produce_events(self) -> AsyncIterator[bytes]:
         async with maybe_aclosing(self._streaming_content):

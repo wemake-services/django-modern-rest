@@ -7,11 +7,7 @@ from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 
 if TYPE_CHECKING:
     from dmr.controller import Controller

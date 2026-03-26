@@ -13,13 +13,7 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRRequestFactory
 
@@ -38,11 +32,10 @@ class _ReturnModel(msgspec.Struct):
 @final
 class _ModelController(
     Controller[MsgspecSerializer],
-    Body[_InputModel],
 ):
-    def post(self) -> _ReturnModel:
-        first_name = self.parsed_body.first_name
-        last_name = self.parsed_body.last_name
+    def post(self, parsed_body: Body[_InputModel]) -> _ReturnModel:
+        first_name = parsed_body.first_name
+        last_name = parsed_body.last_name
         return _ReturnModel(full_name=f'{first_name} {last_name}')
 
 
@@ -161,10 +154,9 @@ class _ByNameModel(msgspec.Struct):
 @final
 class _ByNameController(
     Controller[MsgspecSerializer],
-    Body[_ByNameModel],
 ):
-    def post(self) -> _ByNameModel:
-        return _ByNameModel(first_name=self.parsed_body.first_name)
+    def post(self, parsed_body: Body[_ByNameModel]) -> _ByNameModel:
+        return _ByNameModel(first_name=parsed_body.first_name)
 
 
 def test_msgspec_field_names_work(
@@ -192,12 +184,11 @@ class _CamelCaseModel(msgspec.Struct, rename='camel'):
 @final
 class _CamelCaseController(
     Controller[MsgspecSerializer],
-    Body[_CamelCaseModel],
 ):
-    def post(self) -> _CamelCaseModel:
+    def post(self, parsed_body: Body[_CamelCaseModel]) -> _CamelCaseModel:
         return _CamelCaseModel(
-            first_name=self.parsed_body.first_name,
-            last_name=self.parsed_body.last_name,
+            first_name=parsed_body.first_name,
+            last_name=parsed_body.last_name,
         )
 
 

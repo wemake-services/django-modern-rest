@@ -20,10 +20,9 @@ class _ReturnModel(pydantic.BaseModel):
 @final
 class _ModelConfigController(
     Controller[PydanticSerializer],
-    Body[_ReturnModel],
 ):
-    def post(self) -> _ReturnModel:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_ReturnModel]) -> _ReturnModel:
+        return parsed_body
 
 
 @pytest.mark.parametrize(

@@ -1,11 +1,11 @@
 import re
-from typing import Any, Generic, TypeVar
+from typing import Annotated, Any, Generic, TypeAlias, TypeVar
 
 import pytest
 from django.urls import path
 from typing_extensions import override
 
-from dmr import Blueprint, Controller
+from dmr import Controller
 from dmr.components import ComponentParser
 from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata
@@ -16,25 +16,24 @@ from dmr.serializer import BaseSerializer
 _FakeT = TypeVar('_FakeT')
 
 
-class _Fake(ComponentParser, Generic[_FakeT]):
+class _FakeComponent(ComponentParser, Generic[_FakeT]):
     context_name = 'parsed_fake'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> dict[str, Any]:
         raise NotImplementedError
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type[BaseSerializer],
         context: OpenAPIContext,
@@ -42,11 +41,11 @@ class _Fake(ComponentParser, Generic[_FakeT]):
         """Just return None."""
 
 
-class _FakeController(
-    Controller[PydanticSerializer],
-    _Fake[int],
-):
-    def get(self) -> str:
+_Fake: TypeAlias = Annotated[_FakeT, _FakeComponent()]
+
+
+class _FakeController(Controller[PydanticSerializer]):
+    def get(self, parsed_fake: _Fake[int]) -> str:
         raise NotImplementedError
 
 

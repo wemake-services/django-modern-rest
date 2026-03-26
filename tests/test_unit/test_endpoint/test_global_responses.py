@@ -7,11 +7,7 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from dmr import (
-    APIError,
-    Controller,
-    ResponseSpec,
-)
+from dmr import APIError, Controller, ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 

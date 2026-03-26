@@ -13,12 +13,9 @@ class _QueryModel(msgspec.Struct):
     regular: int
 
 
-class ApiController(
-    Controller[MsgspecSerializer],
-    Query[_QueryModel],
-):
-    def get(self) -> _QueryModel:
-        return self.parsed_query
+class ApiController(Controller[MsgspecSerializer]):
+    def get(self, parsed_query: Query[_QueryModel]) -> _QueryModel:
+        return parsed_query
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc&query=xyz&regular=1&regular=2"}  # noqa: ERA001, E501

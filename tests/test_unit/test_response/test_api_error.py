@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Any, Generic, TypeVar
+from typing import Annotated, Any, Generic, TypeAlias, TypeVar
 
 import pytest
 from django.core.exceptions import DisallowedRedirect
@@ -8,24 +8,12 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
 
-from dmr import (
-    APIError,
-    Blueprint,
-    Controller,
-    HeaderSpec,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import APIError, Controller, HeaderSpec, ResponseSpec, modify, validate
 from dmr.components import ComponentParser, Path
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
@@ -205,27 +193,26 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
     error_message = 'From component'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: Endpoint,
-        blueprint: Blueprint[BaseSerializer],
+        controller: Controller[BaseSerializer],
         *,
         field_model: Any,
     ) -> Any:
-        raise APIError(cls.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
+        raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
 
-class _ControllerWithTestComponent(
-    Controller[PydanticSerializer],
-    _TestComponent[str],
-):
+_Test: TypeAlias = Annotated[_StrT, _TestComponent()]
+
+
+class _ControllerWithTestComponent(Controller[PydanticSerializer]):
     @modify(
         extra_responses=[
             ResponseSpec(str, status_code=HTTPStatus.IM_A_TEAPOT),
         ],
     )
-    def get(self) -> int:
+    def get(self, test: _Test[str]) -> int:
         raise NotImplementedError
 
 
@@ -420,9 +407,8 @@ def test_api_error_redirect_status() -> None:
 
 class _PathResponseController(
     Controller[PydanticSerializer],
-    Path[dict[str, str]],
 ):
-    def get(self) -> str:
+    def get(self, parsed_path: Path[dict[str, str]]) -> str:
         raise NotImplementedError
 
 

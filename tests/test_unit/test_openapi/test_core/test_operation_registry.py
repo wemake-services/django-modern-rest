@@ -1,8 +1,6 @@
 import pytest
 
-from dmr.openapi.core.registry import (
-    OperationIdRegistry,
-)
+from dmr.openapi.core.registry import OperationIdRegistry
 
 
 class _TestClass:

@@ -10,20 +10,9 @@ from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict, override
 
-from dmr import (
-    Blueprint,
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.errors import ErrorType
-from dmr.negotiation import (
-    ContentType,
-    conditional_type,
-    request_parser,
-)
+from dmr.negotiation import ContentType, conditional_type, request_parser
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -59,10 +48,9 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
     @final
     class _XmlController(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
-        def post(self) -> dict[str, str]:
-            return self.parsed_body.root
+        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
+            return parsed_body.root
 
     request = rf.generic(
         'POST',
@@ -171,16 +159,15 @@ def test_per_controller_customization(
     @final
     class _BothController(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
+        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
             parser = request_parser(self.request)
             assert parser
             assert parser.content_type == request.content_type
-            return self.parsed_body.root
+            return parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
@@ -200,55 +187,22 @@ def test_per_controller_customization(
     assert response.content == expected_data
 
 
-def test_per_blueprint_customization(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures we can change per-blueprint parsers and renderers."""
-
-    @final
-    class _Blueprint(Blueprint[PydanticSerializer], Body[_RequestModel]):
-        parsers = [XmlParser(), JsonParser()]
-        renderers = [XmlRenderer(), JsonRenderer()]
-
-        def post(self) -> dict[str, str]:
-            return self.parsed_body.root
-
-    @final
-    class _BothController(Controller[PydanticSerializer]):
-        blueprints = [_Blueprint]
-
-    assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
-    assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
-
-    request_data = {'root': {'key': 'value'}}
-
-    request = dmr_rf.post(
-        '/whatever/',
-        headers={'Content-Type': 'application/json'},
-        data=json.dumps(request_data),
-    )
-
-    response = _BothController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED, response.content
-    assert response.headers == {'Content-Type': 'application/xml'}
-    assert b'<key>value</key>' in response.content
-
-
 def test_per_endpoint_customization(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures we can change per-endpoint parsers and renderers."""
 
     @final
-    class _BothController(Controller[PydanticSerializer], Body[_RequestModel]):
+    class _BothController(Controller[PydanticSerializer]):
         @modify(
             parsers=[XmlParser(), JsonParser()],
             renderers=[XmlRenderer(), JsonRenderer()],
         )
-        def post(self) -> dict[str, str]:
-            return self.parsed_body.root
+        def post(
+            self,
+            parsed_body: Body[_RequestModel],
+        ) -> Annotated[dict[str, str], 'comment']:
+            return parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
@@ -307,13 +261,13 @@ def test_conditional_content_type(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[Annotated[_RequestModel, 'other comment']],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
+            parsed_body: Body[Annotated[_RequestModel, 'other comment']],
         ) -> Annotated[
             dict[str, str] | str,
             'comment',
@@ -323,8 +277,8 @@ def test_conditional_content_type(
             }),
         ]:
             if self.request.accepts(ContentType.json):
-                return self.parsed_body.root['key']
-            return self.parsed_body.root
+                return parsed_body.root['key']
+            return parsed_body.root
 
         @validate(
             ResponseSpec(
@@ -338,14 +292,17 @@ def test_conditional_content_type(
                 status_code=HTTPStatus.CREATED,
             ),
         )
-        def put(self) -> HttpResponse:
+        def put(
+            self,
+            parsed_body: Body[Annotated[_RequestModel, 'other comment']],
+        ) -> HttpResponse:
             if self.request.accepts(ContentType.json):
                 return self.to_response(
-                    self.parsed_body.root['key'],
+                    parsed_body.root['key'],
                     status_code=HTTPStatus.CREATED,
                 )
             return self.to_response(
-                self.parsed_body.root,
+                parsed_body.root,
                 status_code=HTTPStatus.CREATED,
             )
 
@@ -402,13 +359,13 @@ def test_wrong_conditional_content_type(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
+            parsed_body: Body[_RequestModel],
         ) -> Annotated[
             dict[str, str] | str,
             conditional_type({
@@ -419,8 +376,8 @@ def test_wrong_conditional_content_type(
         ]:
             # ERROR! Type to content logic is reversed:
             if self.request.accepts(ContentType.json):
-                return self.parsed_body.root['key']
-            return self.parsed_body.root
+                return parsed_body.root['key']
+            return parsed_body.root
 
         @validate(
             ResponseSpec(
@@ -435,15 +392,15 @@ def test_wrong_conditional_content_type(
                 status_code=HTTPStatus.CREATED,
             ),
         )
-        def put(self) -> HttpResponse:
+        def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
             # ERROR! Type to content logic is reversed:
             if self.request.accepts(ContentType.json):
                 return self.to_response(
-                    self.parsed_body.root['key'],
+                    parsed_body.root['key'],
                     status_code=HTTPStatus.CREATED,
                 )
             return self.to_response(
-                self.parsed_body.root,
+                parsed_body.root,
                 status_code=HTTPStatus.CREATED,
             )
 
@@ -547,23 +504,25 @@ def test_conditional_body_model(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[
-            Annotated[
-                _RequestModel | str,
-                conditional_type({
-                    ContentType.json: str,
-                    ContentType.xml: _RequestModel,
-                }),
-            ]
-        ],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
-            if isinstance(self.parsed_body, _RequestModel):
-                return self.parsed_body.root
-            return {'key': self.parsed_body}
+        def post(
+            self,
+            parsed_body: Body[
+                Annotated[
+                    _RequestModel | str,
+                    conditional_type({
+                        ContentType.json: str,
+                        ContentType.xml: _RequestModel,
+                    }),
+                ]
+            ],
+        ) -> dict[str, str]:
+            if isinstance(parsed_body, _RequestModel):
+                return parsed_body.root
+            return {'key': parsed_body}
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
@@ -638,22 +597,22 @@ def test_conditional_body_model_wrong(
     """Ensures conditional body models validates correctly."""
 
     @final
-    class _Controller(
-        Controller[PydanticSerializer],
-        Body[
-            Annotated[
-                _RequestModel | dict[str, str],
-                conditional_type({
-                    ContentType.json: dict[str, str],
-                    ContentType.xml: _RequestModel,
-                }),
-            ]
-        ],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
+        def post(
+            self,
+            parsed_body: Body[
+                Annotated[
+                    _RequestModel | dict[str, str],
+                    conditional_type({
+                        ContentType.json: dict[str, str],
+                        ContentType.xml: _RequestModel,
+                    }),
+                ]
+            ],
+        ) -> dict[str, str]:
             raise NotImplementedError
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
@@ -724,7 +683,6 @@ def test_conditional_error_model(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -736,7 +694,7 @@ def test_conditional_error_model(
             }),
         ]
 
-        def post(self) -> str:
+        def post(self, parsed_body: Body[_RequestModel]) -> str:
             raise NotImplementedError
 
         @override
@@ -811,7 +769,6 @@ def test_conditional_error_model_wrong(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -823,7 +780,7 @@ def test_conditional_error_model_wrong(
             }),
         ]
 
-        def post(self) -> str:
+        def post(self, parsed_body: Body[_RequestModel]) -> str:
             raise NotImplementedError
 
         @override

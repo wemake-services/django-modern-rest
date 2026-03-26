@@ -139,6 +139,6 @@ def test_negotiation_invalid_xml(
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json() == snapshot({
         'detail': [
-            {'msg': 'unclosed token: line 1, column 0', 'type': 'value_error'},
+            {'msg': 'unclosed element(s) found', 'type': 'value_error'},
         ],
     })

@@ -29,6 +29,11 @@
   },
   "plugins": [
     {
+      "name": "dmr-from-drf",
+      "source": "./dmr-from-drf",
+      "description": "Migrate Django REST Framework APIs to django-modern-rest"
+    },
+    {
       "name": "dmr-from-django-ninja",
       "source": "./dmr-from-django-ninja",
       "description": "Migrate Django Ninja APIs to django-modern-rest"

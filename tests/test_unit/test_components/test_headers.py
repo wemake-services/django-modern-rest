@@ -21,10 +21,12 @@ class _MyPydanticModel(pydantic.BaseModel):
 @final
 class _SplitCommasController(
     Controller[PydanticSerializer],
-    Headers[_MyPydanticModel],
 ):
-    def get(self) -> _MyPydanticModel:
-        return self.parsed_headers
+    def get(
+        self,
+        parsed_headers: Headers[_MyPydanticModel],
+    ) -> _MyPydanticModel:
+        return parsed_headers
 
 
 def test_tags_split_commas(dmr_rf: DMRRequestFactory) -> None:

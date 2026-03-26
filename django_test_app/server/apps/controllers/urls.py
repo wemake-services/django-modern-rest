@@ -1,6 +1,6 @@
 from django.urls import re_path
 
-from dmr.routing import Router, compose_blueprints, path
+from dmr.routing import Router, path
 from server.apps.controllers import views
 
 router = Router(
@@ -8,28 +8,22 @@ router = Router(
     [
         path(
             'user/',
-            compose_blueprints(
-                views.UserCreateBlueprint,
-                views.UserListBlueprint,
-            ).as_view(),
+            views.UsersController.as_view(),
             name='users',
         ),
         path(
             'user/<int:user_id>/',
-            compose_blueprints(
-                views.UserReplaceBlueprint,
-                views.UserUpdateBlueprint,
-            ).as_view(),
+            views.UserUpdateController.as_view(),
             name='user_update',
         ),
         re_path(
             r'user/direct/re/(?P<user_id>\d+)/$',
-            compose_blueprints(views.UserUpdateBlueprint).as_view(),
+            views.UserUpdateController.as_view(),
             name='user_update_direct_re',
         ),
         path(
             'user/direct/<int:user_id>/',
-            compose_blueprints(views.UserUpdateBlueprint).as_view(),
+            views.UserUpdateController.as_view(),
             name='user_update_direct',
         ),
         path(

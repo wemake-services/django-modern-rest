@@ -5,12 +5,14 @@ from dmr.openapi.views import (
     OpenAPIJsonView,
     RedocView,
     ScalarView,
+    StoplightView,
     SwaggerView,
 )
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, build_404_handler, build_500_handler, path
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
+from server.apps.etag import urls as etag_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
@@ -62,6 +64,13 @@ router = Router(
                 namespace='django_session_auth',
             ),
         ),
+        path(
+            etag_urls.router.prefix,
+            include(
+                (etag_urls.router.urls, 'etag'),
+                namespace='etag',
+            ),
+        ),
     ],
 )
 
@@ -73,6 +82,7 @@ urlpatterns = [
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
+    path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
 ]
 
 handler404 = build_404_handler(

@@ -6,8 +6,8 @@ Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication
 .. warning::
 
   HTTP Basic Auth is very insecure.
-  It is better than nothing, but is enough enough for nearly all real use-cases.
-  Please, condider using :doc:`jwt` instead.
+  It is better than nothing, but is enough for nearly all real use-cases.
+  Please, consider using :doc:`jwt` instead.
 
 
 Requiring auth
@@ -35,7 +35,7 @@ Let's check that the auth works:
   :linenos:
   :language: python
 
-Any other authentication method will be better then the one above.
+Any other authentication method will be better than the one above.
 Consider using :doc:`jwt` instead.
 
 

@@ -1,7 +1,7 @@
 Uploading files
 ===============
 
-There are several way of how users can send files to a REST API:
+There are several ways for users can send files to a REST API:
 
 1. Via ``multipart/form-data`` requests.
    It supports passing multiple files at once,
@@ -9,14 +9,14 @@ There are several way of how users can send files to a REST API:
    It is the best option for 95% of cases. This way requires our
    :class:`~dmr.parsers.MultiPartParser` to be used
 2. Via direct requests with a single file and a concrete content-type metadata
-3. Via base64 encoded strings inside a json / xml files.
-   Is only suitable for really small files
+3. Via base64-encoded strings inside a JSON or XML files.
+   It is only suitable for really small files
 
 Currently we support only the first option.
-The second option is not supported yet, but can be in the future releases.
+The second option is not supported yet, but it may be supported in future releases.
 Currently users can implement their own :class:`~dmr.parsers.Parser` to do that.
-While the third way has no specific support,
-but is possible to be implemented by users directly.
+While the third way has no specific support, but it can be implemented
+by users directly.
 
 .. danger::
 
@@ -24,7 +24,7 @@ but is possible to be implemented by users directly.
   For most cases it would be a better idea to use S3-like system
   to upload user-generated content.
 
-  Sync uploads must not ever be used.
+  Sync uploads must never be used.
   Even very small amount of traffic will completely block your app.
 
 
@@ -33,7 +33,7 @@ Parsing files
 
 .. note::
 
-  Parsed ``FileMetadata`` is available as ``self.parsed_file_metadata``.
+  Parsed ``FileMetadata`` parameter must be named ``parsed_file_metadata``.
   While file objects themselves are available as ``self.request.FILES``.
   See :attr:`django.http.HttpRequest.FILES` for more info.
 
@@ -73,7 +73,7 @@ What happens in this example?
 1. We define a ``FileMetadata`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.FileMetadata` component,
+2. Next, we use :data:`~dmr.components.FileMetadata` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_file_metadata``
@@ -118,8 +118,8 @@ This is also supported:
   :language: python
   :linenos:
 
-To do that also define :class:`~dmr.components.Body` component
-in the same controller / blueprint.
+To do that also define :data:`~dmr.components.Body` component
+in the same controller.
 
 
 Sending files with json as a body parameter
@@ -143,6 +143,8 @@ However, this can be done with ``msgspec`` as well.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.FileMetadata
+.. autodata:: dmr.components.FileMetadata
+
+.. autoclass:: dmr.components.FileMetadataComponent
   :members:
   :show-inheritance:

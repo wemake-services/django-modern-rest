@@ -1,19 +1,16 @@
-from collections.abc import Set
+import types
 from typing import TYPE_CHECKING
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.serializer import BaseSerializer
+from dmr.validation.endpoint_metadata import validate_method_name
 
 if TYPE_CHECKING:
-    from dmr.controller import Blueprint, Controller
+    from dmr.controller import Controller
 
 
 class ControllerValidator:
-    """
-    Validates that controller is created correctly.
-
-    Also validates possible composed blueprints.
-    """
+    """Validates that controller is created correctly."""
 
     __slots__ = ()
 
@@ -24,7 +21,8 @@ class ControllerValidator:
         """Run the validation."""
         is_async = self._validate_endpoints_color(controller)
         self._validate_error_handlers(controller, is_async=is_async)
-        self._validate_blueprints(controller, is_async=is_async)
+        self._validate_meta_mixins(controller)
+        self._validate_non_endpoints(controller)
         return is_async
 
     def _validate_endpoints_color(
@@ -49,95 +47,61 @@ class ControllerValidator:
             )
         return is_async
 
-    def _validate_blueprints(
-        self,
-        controller: type['Controller[BaseSerializer]'],
-        *,
-        is_async: bool | None,
-    ) -> None:
-        if not controller.blueprints:
-            return
-
-        controller_methods = controller._existing_http_methods.keys()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        endpoints: set[str] = set()
-        for blueprint in controller.blueprints:
-            if controller._component_parsers and blueprint._component_parsers:  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                raise EndpointMetadataError(
-                    f'Cannot have component parsers in both {controller=} '
-                    f'and {blueprint=}, only one of them can have them, '
-                    'we recommend to put parsing into blueprints',
-                )
-            if controller.serializer is not blueprint.serializer:
-                raise EndpointMetadataError(
-                    'Composing blueprints with different serializer types '
-                    f'is not supported: {controller.serializer} '
-                    f'and {blueprint.serializer}',
-                )
-
-            # `is_async` can't be `None` now, since we have at least one
-            # correct blueprint.
-            assert is_async is not None  # noqa: S101
-            self._validate_error_handlers(blueprint, is_async=is_async)
-
-            endpoints.update(
-                self._check_blueprint_methods(
-                    blueprint,
-                    endpoints,
-                    controller,
-                    controller_methods,
-                ),
-            )
-
-    def _check_blueprint_methods(
-        self,
-        blueprint: type['Blueprint[BaseSerializer]'],
-        endpoints: set[str],
-        controller: type['Controller[BaseSerializer]'],
-        controller_methods: Set[str],
-    ) -> Set[str]:
-        blueprint_methods = blueprint._existing_http_methods.keys()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        if not blueprint_methods:
-            raise EndpointMetadataError(
-                f'{blueprint} must have at least one endpoint to be composed',
-            )
-        method_intersection = blueprint_methods & controller_methods
-        if method_intersection:
-            raise EndpointMetadataError(
-                f'{blueprint} have {method_intersection!r} common methods '
-                f'with {controller}',
-            )
-        method_intersection = endpoints & blueprint_methods
-        if method_intersection:
-            raise EndpointMetadataError(
-                f'Blueprints have {method_intersection!r} common methods, '
-                'while all endpoints must be unique',
-            )
-        return blueprint_methods
-
     def _validate_error_handlers(
         self,
-        blueprint: type['Blueprint[BaseSerializer]'],
+        controller: type['Controller[BaseSerializer]'],
         *,
         is_async: bool | None,
     ) -> None:
         if is_async is None:
             return
 
-        handle_error_overridden = 'handle_error' in blueprint.__dict__
+        handle_error_overridden = 'handle_error' in controller.__dict__
         handle_async_error_overridden = (
-            'handle_async_error' in blueprint.__dict__
+            'handle_async_error' in controller.__dict__
         )
 
         if is_async and handle_error_overridden:
             raise EndpointMetadataError(
-                f'{blueprint!r} has async endpoints but overrides '
+                f'{controller!r} has async endpoints but overrides '
                 '`handle_error` (sync handler). '
                 'Use `handle_async_error` instead',
             )
 
         if not is_async and handle_async_error_overridden:
             raise EndpointMetadataError(
-                f'{blueprint!r} has sync endpoints but overrides '
+                f'{controller!r} has sync endpoints but overrides '
                 '`handle_async_error` (async handler). '
                 'Use `handle_error` instead',
             )
+
+    def _validate_meta_mixins(
+        self,
+        controller: type['Controller[BaseSerializer]'],
+    ) -> None:
+        from dmr.options_mixins import (  # noqa: PLC0415
+            AsyncMetaMixin,
+            MetaMixin,
+        )
+
+        if (
+            issubclass(controller, MetaMixin)
+            and issubclass(controller, AsyncMetaMixin)  # type: ignore[unreachable]
+        ):
+            raise EndpointMetadataError(
+                f'Use only one mixin, not both meta mixins in {controller!r}',
+            )
+
+    def _validate_non_endpoints(
+        self,
+        controller: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for dir_item in dir(controller):  # noqa: WPS421
+            method = getattr(controller, dir_item, None)
+            if not isinstance(method, types.FunctionType):
+                continue
+            if getattr(method, '__dmr_payload__', None):
+                validate_method_name(
+                    method.__name__,
+                    allowed_http_methods=controller.allowed_http_methods,
+                )

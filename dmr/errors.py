@@ -157,14 +157,14 @@ AsyncErrorHandler: TypeAlias = Callable[
 
 
 _MethodSyncHandler: TypeAlias = Callable[
-    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
     ['Any', 'Endpoint', 'Controller[Any]', Exception],
     HttpResponse,
 ]
 
 _MethodAsyncHandler: TypeAlias = Callable[
-    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
     ['Any', 'Endpoint', 'Controller[Any]', Exception],
     Awaitable[HttpResponse],
@@ -183,7 +183,7 @@ def wrap_handler(
     method: _MethodSyncHandler | _MethodAsyncHandler,
 ) -> SyncErrorHandler | AsyncErrorHandler:
     """
-    Utility function to wrap controller / blueprint methods.
+    Utility function to wrap controller methods.
 
     It is used to wrap an existing controller method
     and pass it as ``error_handler=`` argument to an endpoint.
@@ -197,7 +197,7 @@ def wrap_handler(
             exc: Exception,
         ) -> HttpResponse:
             return await method(  # type: ignore[no-any-return]
-                controller.active_blueprint,
+                controller,
                 endpoint,
                 controller,
                 exc,
@@ -212,7 +212,7 @@ def wrap_handler(
             exc: Exception,
         ) -> HttpResponse:
             return method(  # type: ignore[return-value]
-                controller.active_blueprint,
+                controller,
                 endpoint,
                 controller,
                 exc,
@@ -246,9 +246,8 @@ def global_error_handler(
        :meth:`~dmr.endpoint.Endpoint.handle_error`
        and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
        methods
-    2. Per blueprint handlers
-    3. Per controller handlers
-    4. This global handler, specified via the configuration
+    2. Per controller handlers
+    3. This global handler, specified via the configuration
 
     If some exception cannot be handled, it is just reraised.
 
@@ -260,9 +259,6 @@ def global_error_handler(
     Returns:
         :class:`~django.http.HttpResponse` with proper response for this error.
         Or raise *exc* back.
-
-    You can access active blueprint
-    via :attr:`~dmr.controller.Controller.active_blueprint`.
 
     Here's an example that will produce
     ``{'detail': [{'msg': 'inf', 'type': 'user_msg'}]}``
@@ -309,4 +305,4 @@ def global_error_handler(
             controller.format_error(exc),
             status_code=exc.status_code,
         )
-    raise  # noqa: PLE0704
+    raise exc from None
