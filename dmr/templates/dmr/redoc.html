@@ -17,7 +17,7 @@
   {% if redoc_cdn %}
     <script src="{{ redoc_cdn }}"></script>
   {% else %}
-    <script src="{% static 'dmr/redoc/redoc.standalone.js' %}"></script>
+    <script src="{% static 'dmr/redoc/2.5.2/redoc.standalone.js' %}"></script>
   {% endif %}
   <script>
     Redoc.init({{ schema | safe }}, {}, document.getElementById('redoc-container'));

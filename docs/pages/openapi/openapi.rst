@@ -3,9 +3,9 @@ OpenAPI
 
 We support OpenAPI versions from ``3.0`` all the way up including ``3.2``.
 
-Default OpenAPI version is ``3.1``, because as of right now (12-03-2026)
-Swagger / Scalar / Redoc do not fully support ``3.2`` yet.
-See `the progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
+By default, we use OpenAPI ``3.1``, since tooling such as Swagger, Scalar,
+and Redoc does not yet fully support the latest specification.
+You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
 
 Setting up OpenAPI views
 ------------------------
@@ -18,6 +18,8 @@ We support:
   with :class:`~dmr.openapi.views.RedocView`
 - `Scalar <https://github.com/scalar/scalar>`_
   with :class:`~dmr.openapi.views.ScalarView`
+- `Stoplight Elements <https://github.com/stoplightio/elements>`_
+  with :class:`~dmr.openapi.views.StoplightView`
 - ``openapi.json`` with :class:`~dmr.openapi.views.OpenAPIJsonView`
 
 Here's how it works:

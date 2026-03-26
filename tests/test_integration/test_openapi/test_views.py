@@ -1,4 +1,5 @@
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
+from types import MappingProxyType
 from typing import Final
 
 import pytest
@@ -35,50 +36,60 @@ def _modify_cdn_settings(
             'scalar': (
                 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js'
             ),
+            'stoplight': 'https://unpkg.com/@stoplight/elements@9.0.16',
         },
     }
 
 
-_ENDPOINTS: Final = (
-    ('openapi', HTTPStatus.OK, 'application/json'),
-    ('redoc', HTTPStatus.OK, 'text/html'),
-    ('swagger', HTTPStatus.OK, 'text/html'),
-    ('scalar', HTTPStatus.OK, 'text/html'),
-)
+_ENDPOINTS: Final = MappingProxyType({
+    'openapi': 'application/json',
+    'redoc': 'text/html',
+    'swagger': 'text/html',
+    'scalar': 'text/html',
+    'stoplight': 'text/html',
+})
 
 
 @pytest.mark.parametrize(
-    ('endpoint_name', 'expected_status', 'expected_content_type'),
-    _ENDPOINTS,
+    ('endpoint_name', 'expected_content_type'),
+    _ENDPOINTS.items(),
 )
 def test_endpoints(
     dmr_client: DMRClient,
     *,
     endpoint_name: str,
-    expected_status: int,
     expected_content_type: str,
 ) -> None:
     """Ensure that endpoints work."""
     response = dmr_client.get(reverse(endpoint_name))
 
-    assert response.status_code == expected_status
+    assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == expected_content_type
 
 
 @pytest.mark.parametrize(
-    ('endpoint_name', 'expected_status'),
-    [(endpoint[0], HTTPStatus.METHOD_NOT_ALLOWED) for endpoint in _ENDPOINTS],
+    'endpoint_name',
+    _ENDPOINTS.keys(),
+)
+@pytest.mark.parametrize(
+    'method_name',
+    [
+        HTTPMethod.POST,
+        HTTPMethod.PUT,
+        HTTPMethod.PATCH,
+        HTTPMethod.DELETE,
+    ],
 )
 def test_wrong_method(
     dmr_client: DMRClient,
     *,
     endpoint_name: str,
-    expected_status: int,
+    method_name: str,
 ) -> None:
     """Ensure that wrong HTTP method is correctly handled."""
-    response = dmr_client.post(reverse(endpoint_name))
+    response = dmr_client.generic(method_name, reverse(endpoint_name))
 
-    assert response.status_code == expected_status
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
 def test_returns_correct_structure(dmr_client: DMRClient) -> None:
