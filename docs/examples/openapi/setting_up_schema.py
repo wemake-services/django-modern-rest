@@ -5,6 +5,7 @@ from dmr.openapi.views import (
     OpenAPIJsonView,
     RedocView,
     ScalarView,
+    StoplightView,
     SwaggerView,
 )
 from dmr.routing import Router, path
@@ -24,6 +25,7 @@ urlpatterns = [
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
+    path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
 ]
 
 # openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
