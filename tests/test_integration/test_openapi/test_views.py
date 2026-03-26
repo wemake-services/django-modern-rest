@@ -36,7 +36,7 @@ def _modify_cdn_settings(
             'scalar': (
                 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js'
             ),
-            'stoplight': 'https://unpkg.com/@stoplight/elements/',
+            'stoplight': 'https://unpkg.com/@stoplight/elements@9.0.16',
         },
     }
 

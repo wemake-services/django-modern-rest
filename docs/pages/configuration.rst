@@ -366,7 +366,7 @@ OpenAPI
     ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.1',
     ...         'redoc': 'https://cdn.redoc.ly/redoc/2.5.2/bundles/redoc.standalone.js',
     ...         'scalar': 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js',
-    ...         'stoplight': 'https://unpkg.com/@stoplight/elements/',
+    ...         'stoplight': 'https://unpkg.com/@stoplight/elements@9.0.16',
     ...     },
     ... }
 
