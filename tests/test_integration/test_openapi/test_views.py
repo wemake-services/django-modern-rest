@@ -1,5 +1,6 @@
 from http import HTTPMethod, HTTPStatus
 from types import MappingProxyType
+from typing import Final
 
 import pytest
 from django.conf import LazySettings
@@ -40,7 +41,7 @@ def _modify_cdn_settings(
     }
 
 
-_ENDPOINTS = MappingProxyType({
+_ENDPOINTS: Final = MappingProxyType({
     'openapi': 'application/json',
     'redoc': 'text/html',
     'swagger': 'text/html',
