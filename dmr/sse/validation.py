@@ -96,6 +96,8 @@ _EventPipeline: TypeAlias = Callable[
 
 
 class StreamValidator:
+    __slots__ = ('_event_model', '_serializer')
+
     validation_pipeline: ClassVar[Sequence[_EventPipeline]] = (
         # Order is important:
         validate_event_type,

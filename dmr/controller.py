@@ -146,22 +146,12 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     def __init_subclass__(cls) -> None:
         """Construct a controller."""
         super().__init_subclass__()
-        type_args = infer_type_args(cls, Controller)
-        if not type_args:
-            raise UnsolvableAnnotationsError(
-                f'Type args {type_args} are not correct for {cls}, '
-                'at least 1 type arg must be provided',
-            )
-        if isinstance(type_args[0], TypeVar):
-            return  # This is a generic subclass of a controller.
-        if not issubclass(type_args[0], BaseSerializer):
-            # TODO: test `Controller[BaseSerializer]`
-            raise UnsolvableAnnotationsError(
-                f'Type arg {type_args[0]} is not correct for {cls}, '
-                'it must be a BaseSerializer subclass',
-            )
+        serializer = cls._infer_serializer()
+        if serializer is None:
+            return  # this is an abstract controller
+
         cls.is_abstract = False
-        cls.serializer = type_args[0]
+        cls.serializer = serializer
         cls.settings_validator_cls(serializer=cls.serializer)()
 
         # Now it is validated that we don't have intersections.
@@ -507,6 +497,24 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         return cls._is_async is True
 
     # Protected API:
+
+    @classmethod
+    def _infer_serializer(cls) -> type[BaseSerializer] | None:
+        type_args = infer_type_args(cls, Controller)
+        if not type_args:
+            raise UnsolvableAnnotationsError(
+                f'Type args {type_args} are not correct for {cls}, '
+                'at least 1 type arg must be provided',
+            )
+        serializer = type_args[0]
+        if isinstance(serializer, TypeVar):
+            return None  # This is a generic subclass of a controller.
+        if not issubclass(serializer, BaseSerializer):
+            raise UnsolvableAnnotationsError(
+                f'Type arg {serializer} is not correct for {cls}, '
+                'it must be a BaseSerializer subclass',
+            )
+        return serializer  # type: ignore[no-any-return]
 
     @classmethod
     def _maybe_wrap(

@@ -1,7 +1,19 @@
 import dataclasses
-from collections.abc import AsyncIterator, Mapping, Set
+from collections.abc import (
+    AsyncIterator,
+    Mapping,
+    Set,
+)
 from http import HTTPStatus
-from typing import Any, Generic, Literal, NamedTuple, Protocol, final, overload
+from typing import (
+    Any,
+    Generic,
+    Literal,
+    NamedTuple,
+    Protocol,
+    final,
+    overload,
+)
 
 from typing_extensions import TypeVar, override
 
@@ -209,6 +221,10 @@ class SSEResponseSpec(ResponseSpec):
     limit_to_content_types: Set[str] | None = dataclasses.field(
         kw_only=True,
         default_factory=lambda: {ContentType.event_stream},
+    )
+    is_stream: Literal[True] = dataclasses.field(
+        kw_only=True,
+        default=True,
     )
 
     @override

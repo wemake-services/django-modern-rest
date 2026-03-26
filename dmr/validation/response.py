@@ -218,6 +218,9 @@ class ResponseValidator:  # noqa: WPS214
         else:
             model = schema.return_type
 
+        if schema.is_stream:
+            return  # We can't validate stream returns below this point.
+
         try:
             self.serializer.from_python(
                 structured,

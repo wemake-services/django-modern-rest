@@ -2,7 +2,15 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping, Set
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Annotated, Any, TypeAlias, TypeVar, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    TypeAlias,
+    TypeVar,
+    get_origin,
+)
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
@@ -71,6 +79,10 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+    is_stream: bool = dataclasses.field(
+        kw_only=True,
+        default=False,
+    )
 
     # Metadata:
     description: str | None = dataclasses.field(
@@ -127,6 +139,9 @@ class ResponseModification:
     We use this structure to modify the default response.
     """
 
+    # Class-level API:
+    response_spec_cls: ClassVar[type[ResponseSpec]] = ResponseSpec
+
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus
@@ -139,8 +154,8 @@ class ResponseModification:
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
-        return ResponseSpec(
-            return_type=self.return_type,
+        return self.response_spec_cls(
+            return_type=self.infer_return_type(),
             status_code=self.status_code,
             headers=(
                 None
@@ -162,6 +177,10 @@ class ResponseModification:
             description=self.description,
             links=self.links,
         )
+
+    def infer_return_type(self) -> Any:
+        """Infers return type if it needs some extra love."""
+        return self.return_type
 
     def actionable_headers(self) -> Mapping[str, 'NewHeader'] | None:
         """Returns an optional mapping of headers that should be added."""

@@ -1,4 +1,5 @@
 import dataclasses
+import typing as ty
 from collections.abc import (
     AsyncIterator,
     Awaitable,
@@ -8,19 +9,23 @@ from collections.abc import (
 )
 from functools import wraps
 from http import HTTPStatus
-from typing import Any, ClassVar, get_args
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from typing_extensions import TypeVar, override
 
 from dmr.components import ComponentParser, Cookies, Headers, Path, Query
-from dmr.controller import Blueprint, Controller
+from dmr.controller import Controller
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.negotiation import force_request_renderer
-from dmr.internal.types import call_init_subclass
-from dmr.metadata import EndpointMetadata, ResponseSpec, get_annotated_metadata
+from dmr.internal.types import call_init_subclass, is_stream_annotation
+from dmr.metadata import (
+    EndpointMetadata,
+    ResponseModification,
+    ResponseSpec,
+    get_annotated_metadata,
+)
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth
 from dmr.serializer import BaseSerializer
@@ -30,13 +35,16 @@ from dmr.sse.renderer import SSERenderer
 from dmr.sse.stream import SSEStreamingResponse
 from dmr.sse.validation import StreamValidator
 from dmr.types import parse_return_annotation
+from dmr.validation.response import ValidatedModification
 
 
 class SSEEndpointMetadata(EndpointMetadata):
     """Endpoint metadata for SSE."""
 
+    __slots__ = ()
+
     # Abstract attribute:
-    default_renderer: ClassVar[Renderer]
+    default_renderer: ty.ClassVar[Renderer]
 
     @override
     def collect_response_specs(
@@ -63,7 +71,24 @@ class SSEEndpointMetadata(EndpointMetadata):
         ]
 
 
+class _SSEResponseModification(ResponseModification):
+    response_spec_cls = SSEResponseSpec
+
+    __slots__ = ()
+
+    @override
+    def infer_return_type(self) -> ty.Any:
+        if is_stream_annotation(self.return_type):
+            return ty.get_args(self.return_type)[0]
+        return super().infer_return_type()
+
+
 class _SSEEndpoint(Endpoint):
+
+    __slots__ = ()
+
+    response_modification_cls = _SSEResponseModification
+
     @override
     def _pass_existing_response(
         self,
@@ -82,13 +107,31 @@ class _SSEEndpoint(Endpoint):
 
         return response
 
-    def _resolve_event_model(self, response: HttpResponseBase) -> Any:
+    @override
+    def _build_new_response(
+        self,
+        controller: Controller[BaseSerializer],
+        validated: ValidatedModification,
+    ) -> HttpResponseBase:
+        assert isinstance(controller, _BaseSSEController)
+        return self._pass_existing_response(
+            controller.to_sse_response(
+                validated.raw_data,
+                status_code=validated.status_code,
+                headers=validated.headers,
+                cookies=validated.cookies,
+            ),
+        )
+
+    def _resolve_event_model(self, response: HttpResponseBase) -> ty.Any:
         try:
             return self.metadata.responses[
                 HTTPStatus(response.status_code)
             ].return_type
-        except KeyError:
-            return Any
+        except (KeyError, ValueError):
+            # This can happen if `validate_responses` is `False`,
+            # or when `status_code` is custom.
+            return ty.Any
 
 
 _SerializerT_co = TypeVar(
@@ -100,18 +143,21 @@ _SerializerT_co = TypeVar(
 
 class _BaseSSEController(Controller[_SerializerT_co]):
     # Custom attributes for the streaming responses:
-    regular_renderer: ClassVar[Renderer] = default_renderer
-    sse_streaming_response_cls: ClassVar[type[SSEStreamingResponse]] = (
+    regular_renderer: ty.ClassVar[Renderer] = default_renderer
+    sse_streaming_response_cls: ty.ClassVar[type[SSEStreamingResponse]] = (
         SSEStreamingResponse
     )
-    metadata_cls: ClassVar[type[SSEEndpointMetadata]] = SSEEndpointMetadata
+    metadata_cls: ty.ClassVar[type[SSEEndpointMetadata]] = SSEEndpointMetadata
 
-    # Set in `__init_subclass__`:
-    validate_events: ClassVar[bool]
-    sse_renderer: ClassVar[SSERenderer]
+    # Set in `__init_subclass__` on non abstract controllers:
+    sse_renderer: ty.ClassVar[SSERenderer]
 
     @override
     def __init_subclass__(cls) -> None:
+        serializer = cls._infer_serializer()
+        if serializer is None:
+            return  # this is an abstract controller
+
         metadata_cls = cls.metadata_cls
         metadata_cls = type(
             f'_{cls.__qualname__}@{metadata_cls.__qualname__}',
@@ -123,21 +169,18 @@ class _BaseSSEController(Controller[_SerializerT_co]):
             (_SSEEndpoint,),
             {'metadata_cls': metadata_cls},
         )
+        cls.sse_renderer = SSERenderer(serializer, cls.regular_renderer)
+        cls.renderers = (cls.sse_renderer, cls.regular_renderer, *cls.renderers)
 
-        # Now, instantiate the serializer and several required parts:
-        call_init_subclass(Blueprint, cls)
-
-        # TODO: handle abstract controllers:
-        cls.sse_renderer = SSERenderer(cls.serializer, cls.regular_renderer)
-        cls.renderers = (cls.regular_renderer, cls.sse_renderer)
-
-        # Now we have everything and can create `api_endpoints`:
+        # Now we have everything and we can create `api_endpoints`:
         call_init_subclass(Controller, cls)
+
+        # TODO: run validation
 
     @override
     def to_error(
         self,
-        raw_data: Any,
+        raw_data: ty.Any,
         *,
         status_code: HTTPStatus,
         headers: Mapping[str, str] | None = None,
@@ -386,7 +429,7 @@ def _build_controller(  # noqa: WPS211, WPS234
     _regular_renderer: Renderer,
     _sse_renderer: SSERenderer,
     _sse_streaming_response_cls: type[SSEStreamingResponse],
-    _event_model: Any,
+    _event_model: ty.Any,
     _metadata_cls: type[SSEEndpointMetadata],
 ) -> type[Controller[_SerializerT]]:
     # Some parameters names have a `_` prefix, because writing
@@ -410,7 +453,7 @@ def _build_controller(  # noqa: WPS211, WPS234
             validate_responses=validate_responses,
             auth=auth,
         )
-        async def get(self, **kwargs: Any) -> SSEStreamingResponse:
+        async def get(self, **kwargs: ty.Any) -> SSEStreamingResponse:
             context = SSEContext(
                 kwargs.get('parsed_path'),
                 kwargs.get('parsed_query'),
@@ -451,9 +494,9 @@ def _build_controller(  # noqa: WPS211, WPS234
     return SSEController  # pyright: ignore[reportReturnType]
 
 
-def _resolve_event_model(func: Callable[..., Any]) -> Any:
+def _resolve_event_model(func: Callable[..., ty.Any]) -> ty.Any:
     return_type = parse_return_annotation(func)
-    type_args = get_args(return_type)
+    type_args = ty.get_args(return_type)
     if not type_args:
         raise UnsolvableAnnotationsError(
             'Cannot determine event data model for runtime validation, '
