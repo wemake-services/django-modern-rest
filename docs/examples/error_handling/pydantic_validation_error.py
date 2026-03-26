@@ -17,4 +17,4 @@ class PongController(Controller[PydanticSerializer]):
         return Pong(message='wrong')
 
 
-# run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "assert-error-text": "Internal server error", "fail-with-body": false}  # noqa: ERA001, E501

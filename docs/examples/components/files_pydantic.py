@@ -30,5 +30,5 @@ class FileController(Controller[PydanticSerializer]):
 
 
 # run: {"controller": "FileController", "url": "/api/users/", "method": "put", "headers": {"Content-Type": "multipart/form-data"}, "files": {"receipt": "receipt.txt", "rules": "rules.txt"}, "body": {}}  # noqa: ERA001, E501
-# run: {"controller": "FileController", "url": "/api/users/", "method": "put", "headers": {"Content-Type": "multipart/form-data"}, "files": {"receipt": "wrong.json"}, "body": {}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "FileController", "url": "/api/users/", "method": "put", "headers": {"Content-Type": "multipart/form-data"}, "files": {"receipt": "wrong.json"}, "body": {}, "curl_args": ["-D", "-"], "assert-error-text": "receipt", "fail-with-body": false}  # noqa: ERA001, E501
 # openapi: {"controller": "FileController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

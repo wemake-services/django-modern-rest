@@ -37,4 +37,4 @@ class PongController(Controller[PydanticSerializer]):
         return super().handle_error(endpoint, controller, exc)
 
 
-# run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "assert-error-text": "Validation error", "fail-with-body": false}  # noqa: ERA001, E501

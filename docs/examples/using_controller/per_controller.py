@@ -41,4 +41,4 @@ class UserController(
 
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "my-api"}, "url": "/api/user/"}  # noqa: ERA001, E501
-# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "not-my-api"}, "url": "/api/user/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "not-my-api"}, "url": "/api/user/", "curl_args": ["-D", "-"], "assert-error-text": "Wrong API consumer", "fail-with-body": false}  # noqa: ERA001, E501

@@ -16,4 +16,4 @@ class UsersController(Controller[PydanticSerializer]):
         raise NotAuthenticatedError  # demo for the custom error translation
 
 
-# run: {"controller": "UsersController", "method": "post", "headers": {"Accept-Language": "ru"}, "url": "/api/lang/", "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "UsersController", "method": "post", "headers": {"Accept-Language": "ru"}, "url": "/api/lang/", "assert-error-text": "security", "fail-with-body": false}  # noqa: ERA001, E501

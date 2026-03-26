@@ -41,4 +41,4 @@ class ExampleController(
 
 # run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/xml", "Accept": "application/xml"}, "body": {"root": {"one": "first"}}}  # noqa: E501, ERA001
 # run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/json", "Accept": "application/json"}, "body": {"one": "first"}}  # noqa: E501, ERA001
-# run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/json", "Accept": "application/json"}, "body": {"root": {"mixin-json-content-type": "with-xml-format"}}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: E501, ERA001
+# run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/json", "Accept": "application/json"}, "body": {"root": {"mixin-json-content-type": "with-xml-format"}}, "curl_args": ["-D", "-"], "assert-error-text": "root", "fail-with-body": false}  # noqa: E501, ERA001
