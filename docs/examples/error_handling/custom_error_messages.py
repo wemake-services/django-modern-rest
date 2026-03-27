@@ -52,6 +52,6 @@ class ApiController(Controller[PydanticSerializer]):
         )
 
 
-# run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/",  "fail-with-body": false}  # noqa: ERA001, E501
-# run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/", "assert-error-text": "test msg", "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "assert-error-text": "errors", "fail-with-body": false}  # noqa: ERA001, E501
 # openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

@@ -630,13 +630,14 @@ def _exec_openapi_examples(
     return '\n\n'.join(openapi_results)
 
 
-def _process_single_example(
+def _process_single_example(  # noqa: WPS210
     app_file: Path,
     run_args: _AppRunArgs,
     port: int,
     url_path: str,
 ) -> str:
     """Process a single example configuration."""
+    assert_error_text: str | None = run_args.pop('assert-error-text', None)
     args, clean_args = _build_curl_request(app_file, run_args, port, url_path)
 
     proc = subprocess.run(  # noqa: PLW1510, S603
@@ -666,6 +667,19 @@ def _process_single_example(
                 args,
             )
         return ''
+
+    if assert_error_text is not None and assert_error_text not in proc.stdout:
+        raise _StartupError(
+            (
+                (
+                    f'Expected error text {assert_error_text!r} not found '
+                    f'in example {app_file} output'
+                ),
+                args,
+                proc.stdout,
+                proc.stderr,
+            ),
+        )
 
     clean_args_string = shlex.join(clean_args)
     return '\n'.join((f'$ {clean_args_string}', *stdout))

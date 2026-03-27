@@ -42,8 +42,8 @@ class MathController(Controller[PydanticSerializer]):
         self,
         parsed_body: Body[TwoNumbers],
     ) -> float:  # <- has only default error handling
-        return parsed_body.left * parsed_body.right
+        return parsed_body.left / parsed_body.right
 
 
-# run: {"controller": "MathController", "method": "patch", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
-# run: {"controller": "MathController", "method": "post", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "MathController", "method": "patch", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "assert-error-text": "division by zero", "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "MathController", "method": "post", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "assert-error-text": "Internal server error", "fail-with-body": false}  # noqa: ERA001, E501

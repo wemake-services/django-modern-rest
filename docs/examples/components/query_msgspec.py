@@ -15,5 +15,5 @@ class ApiController(Controller[MsgspecSerializer]):
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc&count=10"}  # noqa: ERA001, E501
-# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc", "curl_args": ["-D", "-"], "assert-error-text": "count", "fail-with-body": false}  # noqa: ERA001, E501
 # openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

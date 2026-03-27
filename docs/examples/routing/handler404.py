@@ -31,4 +31,4 @@ urlpatterns = [
 handler404 = build_404_handler(router.prefix, serializer=PydanticSerializer)
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "correct@example.com"}, "url": "/api/user/", "use_urlpatterns": true}  # noqa: ERA001, E501
-# run: {"controller": "UserController", "method": "post", "body": {"email": "correct@old-domain.com"}, "url": "/api/wrong/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "correct@old-domain.com"}, "url": "/api/wrong/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "assert-error-text": "Page not found", "fail-with-body": false}  # noqa: ERA001, E501

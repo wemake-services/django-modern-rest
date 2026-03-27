@@ -26,5 +26,5 @@ async def no_validation(
     return SSEResponse(events(), headers={'X-Example': 'value'})
 
 
-# run: {"controller": "with_validation", "method": "get", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "with_validation", "method": "get", "curl_args": ["-D", "-"], "assert-error-text": "x-example", "fail-with-body": false}  # noqa: ERA001, E501
 # run: {"controller": "no_validation", "method": "get"}  # noqa: ERA001

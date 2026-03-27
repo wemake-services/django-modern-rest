@@ -60,5 +60,5 @@ class ExampleController(
         }
 
 
-# run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Accept": "application/json"}, "body": {}, "fail-with-body": false}  # noqa: E501, ERA001
-# run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Accept": "application/xml"}, "body": {}, "fail-with-body": false}  # noqa: E501, ERA001
+# run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Accept": "application/json"}, "body": {}, "assert-error-text": "root", "fail-with-body": false}  # noqa: E501, ERA001
+# run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Accept": "application/xml"}, "body": {}, "assert-error-text": "xml_errors", "fail-with-body": false}  # noqa: E501, ERA001

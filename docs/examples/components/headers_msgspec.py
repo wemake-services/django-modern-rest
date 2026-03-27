@@ -15,5 +15,5 @@ class ApiController(Controller[MsgspecSerializer]):
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "headers": {"Cache-Control": "max-age=0"}}  # noqa: ERA001, E501
-# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "headers": {"Cache-Control": "max-age=0", "X-Client-Id": "wrong"}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "headers": {"Cache-Control": "max-age=0", "X-Client-Id": "wrong"}, "curl_args": ["-D", "-"], "assert-error-text": "X-Client-Id", "fail-with-body": false}  # noqa: ERA001, E501
 # openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

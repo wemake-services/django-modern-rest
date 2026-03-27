@@ -10,4 +10,4 @@ class APIController(Controller[PydanticSerializer]):
         return 'authed'
 
 
-# run: {"controller": "APIController", "method": "get", "url": "/api/example/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "APIController", "method": "get", "url": "/api/example/", "curl_args": ["-D", "-"], "assert-error-text": "Not authenticated", "fail-with-body": false}  # noqa: ERA001, E501

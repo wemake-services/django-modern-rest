@@ -303,6 +303,17 @@ addopts = [
 plugins = ["covdefaults"]
 
 
+[tool.slotscheck]
+# https://slotscheck.readthedocs.io/en/latest/configuration.html
+strict-imports = false
+exclude-modules = '''
+(
+  dmr\.security\.jwt\.blocklist
+  |dmr\.security\.django_session\.views
+)
+'''
+
+
 [tool.mypy]
 # The mypy configurations: http://bit.ly/2zEl9WI
 strict = true

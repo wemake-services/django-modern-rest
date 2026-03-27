@@ -20,8 +20,7 @@ lint: ## Run linting checks
 	$(POETRY) run ruff check --exit-non-zero-on-fix
 	$(POETRY) run ruff format --check --diff
 	$(POETRY) run flake8 .
-	$(POETRY) run slotscheck --no-strict-imports -v -m dmr \
-		--exclude-modules 'dmr\.security\.jwt\.blocklist|dmr\.security\.django_session\.views'
+	$(POETRY) run slotscheck -v -m dmr
 	$(POETRY) run lint-imports
 
 .PHONY: type-check

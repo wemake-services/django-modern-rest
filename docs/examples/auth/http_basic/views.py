@@ -18,5 +18,5 @@ class BillController(
         return f'Processing bill: {parsed_body["bill"]}'
 
 
-# run: {"controller": "BillController", "method": "post", "body": {"bill": "parking"}, "url": "/api/username/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "BillController", "method": "post", "body": {"bill": "parking"}, "url": "/api/username/", "curl_args": ["-D", "-"], "assert-error-text": "Not authenticated", "fail-with-body": false}  # noqa: ERA001, E501
 # run: {"controller": "BillController", "method": "post", "body": {"bill": "parking"}, "url": "/api/username/", "headers": {"Authorization": "Basic YWRtaW46cGFzcw=="}}  # noqa: ERA001, E501

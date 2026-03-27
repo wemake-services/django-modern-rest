@@ -34,4 +34,4 @@ async def user_events(
 
 # run: {"controller": "user_events", "method": "get"}  # noqa: ERA001
 # run: {"controller": "user_events", "method": "get", "headers": {"Last-Event-ID": 5}}  # noqa: ERA001, E501
-# run: {"controller": "user_events", "method": "get", "headers": {"Last-Event-ID": "abc"}, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "user_events", "method": "get", "headers": {"Last-Event-ID": "abc"}, "curl_args": ["-D", "-"], "assert-error-text": "last_event_id", "fail-with-body": false}  # noqa: ERA001, E501
