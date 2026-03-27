@@ -71,4 +71,4 @@ def test_pass_both_context_and_config() -> None:
     config = default_config()
     context = OpenAPIContext(config)
     with pytest.raises(ValueError, match='Passing both'):
-        build_schema(router, context=context, config=config)
+        build_schema(router, context=context, config=config)  # type: ignore[call-overload]
