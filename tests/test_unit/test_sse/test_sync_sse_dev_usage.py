@@ -9,7 +9,7 @@ from django.conf import LazySettings
 from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.sse import (
+from dmr.streaming import (
     SSECloseConnectionError,
     SSEContext,
     SSEResponse,

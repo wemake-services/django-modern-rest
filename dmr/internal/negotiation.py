@@ -120,13 +120,13 @@ def negotiate_renderer(
     if request.headers.get('Accept') is None:
         return fallback
 
-    renderer_keys = renderers.keys()
+    renderer_keys = list(renderers.keys())
     renderer_type = request.get_preferred_type(renderer_keys)
     if renderer_type is None:
         raise NotAcceptableError(
             _CANNOT_SERIALIZE_MSG.format(
                 accepted_types=repr(request.accepted_types),
-                supported=repr(list(renderer_keys)),
+                supported=repr(renderer_keys),
             ),
         )
     return renderers[renderer_type]

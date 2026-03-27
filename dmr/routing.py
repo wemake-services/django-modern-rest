@@ -110,7 +110,7 @@ def build_404_handler(  # noqa: WPS114
     renderer_by_type = {
         renderer.content_type: renderer
         for renderer in renderers_list
-        if not renderer.is_stream
+        if not renderer.streaming
     }
     default_renderer = next(iter(renderer_by_type.values()))
 
@@ -192,7 +192,7 @@ def build_500_handler(  # noqa: WPS114
     renderer_by_type = {
         renderer.content_type: renderer
         for renderer in renderers_list
-        if not renderer.is_stream
+        if not renderer.streaming
     }
     default_renderer = next(iter(renderer_by_type.values()))
 

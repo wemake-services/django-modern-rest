@@ -7,7 +7,7 @@ from django.http import HttpRequest
 
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
+from dmr.streaming import SSEContext, SSEResponse, SSEvent, sse
 
 
 async def _valid_events() -> AsyncIterator[SSEvent[bytes]]:

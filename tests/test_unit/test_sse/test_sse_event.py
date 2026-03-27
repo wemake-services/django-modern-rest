@@ -9,7 +9,7 @@ from dmr.cookies import CookieSpec, NewCookie
 from dmr.headers import HeaderSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.sse import (
+from dmr.streaming import (
     SSECloseConnectionError,
     SSEContext,
     SSEResponse,

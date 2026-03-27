@@ -1,65 +1,57 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 from http import HTTPStatus
 from typing import Any
 
 import pytest
-from django.http import HttpRequest
+from typing_extensions import override
 
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.sse import (
-    SSE,
-    SSEContext,
-    SSEResponse,
-    SSEStreamingResponse,
-    SSEvent,
-    sse,
-)
+from dmr.streaming.sse import SSE, SSEController, SSEvent
+from dmr.streaming.sse.stream import SSEStreamingResponse
+from dmr.streaming.sse.validation import SSEPipeline, SSEStreamingValidator
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
 
-def _positive_numbers(
-    event: SSE,
-    model: Any,
-    serializer: type['BaseSerializer'],
-) -> SSE:
-    if isinstance(event.data, int) and event.data < 0:
-        raise ValueError(f'Negative number found: {event.data}')
-    return event
+class _PositiveStreamingValidator(SSEStreamingValidator):
+    @override
+    def validation_pipeline(self) -> Iterable[SSEPipeline]:
+        return (
+            *super().validation_pipeline(),
+            self._positive_numbers,
+        )
+
+    def _positive_numbers(
+        self,
+        event: SSE,
+        model: Any,
+        serializer: type[BaseSerializer],
+    ) -> SSE:
+        if isinstance(event.data, int) and event.data < 0:
+            raise ValueError(f'Negative number found: {event.data}')
+        return event
 
 
-class _PositiveStreamingResponse(SSEStreamingResponse):
-    validation_pipeline = (
-        *SSEStreamingResponse.validation_pipeline,
-        _positive_numbers,
-    )
+class _ClassBasedSSE(SSEController[PydanticSerializer]):
+    streaming_validator_cls = _PositiveStreamingValidator
 
+    async def get(self) -> AsyncIterator[SSEvent[int]]:
+        return self._valid_events()
 
-async def _valid_events() -> AsyncIterator[SSEvent[int]]:
-    yield SSEvent(1)
-    yield SSEvent(-1)
-
-
-@sse(
-    PydanticSerializer,
-    sse_streaming_response_cls=_PositiveStreamingResponse,
-)
-async def _valid_sse(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[SSEvent[int]]:
-    return SSEResponse(_valid_events())
+    async def _valid_events(self) -> AsyncIterator[SSEvent[int]]:
+        yield SSEvent(1)
+        yield SSEvent(-1)
 
 
 @pytest.mark.asyncio
-async def test_sse_extra_validation_response(
+async def test_sse_validation_bubbles_exc(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
-    """Ensures that valid sse produces valid results."""
+    """Ensures that validation errors bubble up when not handled."""
     request = dmr_async_rf.get('/whatever/')
 
-    response = await dmr_async_rf.wrap(_valid_sse.as_view()(request))
+    response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming

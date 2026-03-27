@@ -7,9 +7,9 @@ from typing_extensions import override
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.negotiation import ContentType
-from dmr.parsers import _NoOpParser  # pyright: ignore[reportPrivateUsage]
 from dmr.renderers import Renderer
-from dmr.sse.metadata import SSE
+from dmr.streaming.renderer import StreamingRenderer
+from dmr.streaming.sse.metadata import SSE
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -18,7 +18,7 @@ _DEFAULT_SEPARATOR: Final = b'\r\n'
 _LINE_BREAK_RE: Final = re.compile(rb'\r\n|\r|\n')
 
 
-class SSERenderer(Renderer):
+class SSERenderer(StreamingRenderer):
     """
     Renders response as a stream of SSE.
 
@@ -28,13 +28,10 @@ class SSERenderer(Renderer):
     __slots__ = (
         '_encoding',
         '_linebreak',
-        '_regular_renderer',
         '_sep',
-        '_serializer',
     )
 
     content_type = ContentType.event_stream
-    is_stream = True
 
     def __init__(
         self,
@@ -56,8 +53,7 @@ class SSERenderer(Renderer):
             linebreak: How to process new lines in event's data.
 
         """
-        self._serializer = serializer
-        self._regular_renderer = regular_renderer
+        super().__init__(serializer, regular_renderer)
         self._sep = sep
         self._encoding = encoding
         self._linebreak = linebreak
@@ -76,11 +72,6 @@ class SSERenderer(Renderer):
                 'SSERenderer can only render SSE protocol instances, '
                 f'got {type(to_serialize)}',
             ) from None
-
-    @property
-    @override
-    def validation_parser(self) -> _NoOpParser:
-        return _NoOpParser(self.content_type)
 
     def _render_event(self, to_serialize: SSE) -> bytes:  # noqa: WPS213, C901
         # We use BytesIO, because our json renderer returns `bytes`.

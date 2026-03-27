@@ -1,6 +1,6 @@
 from typing import assert_type
 
-from dmr.sse import SSE, SSEvent
+from dmr.streaming import SSE, SSEvent
 
 event: SSE = SSEvent(event='test')
 

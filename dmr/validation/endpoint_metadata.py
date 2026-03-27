@@ -263,6 +263,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -288,11 +289,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             headers=payload.headers,
             cookies=payload.cookies,
             status_code=(
-                infer_status_code(method)
+                infer_status_code(
+                    method,
+                    streaming=self.controller_cls.streaming,
+                )
                 if payload.status_code is None
                 else payload.status_code
             ),
-            is_stream=self.controller_cls.is_stream,
+            streaming=self.controller_cls.streaming,
             description=payload.response_description,
             links=payload.links,
         )
@@ -310,6 +314,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -328,13 +333,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         endpoint: str,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
-        status_code = infer_status_code(method)
+        status_code = infer_status_code(
+            method,
+            streaming=self.controller_cls.streaming,
+        )
         modification = self.response_modification_cls(
             return_type=return_annotation,
             status_code=status_code,
             headers=None,
             cookies=None,
-            is_stream=self.controller_cls.is_stream,
+            streaming=self.controller_cls.streaming,
             description=None,
             links=None,
         )
@@ -352,6 +360,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
         )
@@ -463,6 +472,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return resolve_setting(  # type: ignore[no-any-return]
             Settings.validate_responses,
         )
+
+    def _build_validate_events(self) -> bool:
+        if self.payload and self.payload.validate_events is not None:
+            return self.payload.validate_events
+        if self.controller_cls.validate_events is not None:
+            return self.controller_cls.validate_events
+        settings_value = resolve_setting(Settings.validate_events)
+        if settings_value is not None:
+            return settings_value  # type: ignore[no-any-return]
+        return self._build_validate_responses()
 
     def _build_error_handler(
         self,

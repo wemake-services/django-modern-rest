@@ -16,7 +16,13 @@ from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.serializer import BaseSerializer
-from dmr.sse import SSEContext, SSEResponse, SSEStreamingResponse, SSEvent, sse
+from dmr.streaming import (
+    SSEContext,
+    SSEResponse,
+    SSEStreamingResponse,
+    SSEvent,
+    sse,
+)
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 

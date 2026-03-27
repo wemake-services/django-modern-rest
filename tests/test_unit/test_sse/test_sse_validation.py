@@ -14,7 +14,7 @@ from dmr.errors import ErrorModel, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.sse import (
+from dmr.streaming import (
     SSEContext,
     SSEResponse,
     SSEResponseSpec,

@@ -2,7 +2,7 @@ from typing import final
 
 
 @final
-class SSECloseConnectionError(Exception):
+class StreamCloseConnectionError(Exception):
     """
     Raised when we need to imediatelly close the response stream.
 

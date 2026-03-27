@@ -18,8 +18,8 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
         used_for_response: bool = False,
     ) -> SchemaDef | None:
         """Proxies the JSON schema generation to pydantic itself."""
-        from dmr.plugins.pydantic.serializer import (  # noqa: PLC0415; pyright: ignore[reportPrivateUsage]
-            _get_cached_type_adapter,
+        from dmr.plugins.pydantic.serializer import (  # noqa: PLC0415
+            _get_cached_type_adapter,  # pyright: ignore[reportPrivateUsage]
         )
 
         try:

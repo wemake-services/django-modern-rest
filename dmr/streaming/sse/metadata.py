@@ -1,14 +1,7 @@
 import dataclasses
-from collections.abc import Mapping
-from http import HTTPStatus
-from typing import Any, Generic, Literal, Protocol, final, overload
+from typing import Any, Generic, Literal, Protocol, TypeVar, final, overload
 
-from typing_extensions import TypeVar
-
-from dmr.headers import HeaderSpec
-from dmr.metadata import ResponseSpec
-from dmr.openapi.objects import Link, Reference
-from dmr.sse.validation import check_event_field
+from dmr.streaming.sse.validation import check_event_field
 
 _DataT_co = TypeVar('_DataT_co', covariant=True)
 
@@ -183,32 +176,3 @@ class SSEvent(Generic[_DataT_co]):
         *data* can only be ``bytes``.
         """
         return self._serialize
-
-
-def make_stream_spec(
-    return_type: Any,
-    *,
-    content_type: str,
-    status_code: HTTPStatus = HTTPStatus.OK,
-    headers: Mapping[str, 'HeaderSpec'] | None = None,
-    cookies: Mapping[str, 'CookieSpec'] | None = None,
-    links: dict[str, 'Link | Reference'] | None = None,
-    description: str | None = None,
-) -> ResponseSpec:
-    headers = {
-        'Cache-Control': HeaderSpec(),
-        'X-Accel-Buffering': HeaderSpec(),
-        # WSGI cannot provide `Connection` header in `DEBUG` mode:
-        'Connection': HeaderSpec(skip_validation=True),
-        **(headers or {}),
-    }
-    return ResponseSpec(
-        return_type,
-        status_code=status_code,
-        headers=headers,
-        cookies=cookies,
-        is_stream=True,
-        limit_to_content_types={content_type},
-        links=links,
-        description=description,
-    )

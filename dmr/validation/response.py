@@ -218,7 +218,7 @@ class ResponseValidator:  # noqa: WPS214
         else:
             model = schema.return_type
 
-        if schema.is_stream:
+        if schema.streaming:
             return  # We can't validate stream returns below this point.
 
         try:

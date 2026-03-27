@@ -150,7 +150,7 @@ class Endpoint:  # noqa: WPS214
         self.response_negotiator = self.response_negotiator_cls(
             self.metadata,
             controller_cls.serializer,
-            is_stream=controller_cls.is_stream,
+            streaming=controller_cls.streaming,
         )
 
         # We need a func before any wrappers, but with metadata:
@@ -437,6 +437,7 @@ class Endpoint:  # noqa: WPS214
     ) -> HttpResponseBase:
         if isinstance(response_data, HttpResponseBase):
             return self._pass_existing_response(
+                controller,
                 self.response_validator.validate_response(
                     self,
                     controller,
@@ -453,6 +454,7 @@ class Endpoint:  # noqa: WPS214
 
     def _pass_existing_response(
         self,
+        controller: 'Controller[BaseSerializer]',
         response: HttpResponseBase,
     ) -> HttpResponseBase:
         # By default does nothing.
@@ -503,6 +505,7 @@ def validate(  # noqa: WPS234
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -529,6 +532,7 @@ def validate(
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -554,6 +558,7 @@ def validate(
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
@@ -579,6 +584,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -643,6 +649,10 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
         error_handler: Callback function to be called
@@ -686,6 +696,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             responses=[response, *responses],
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             parsers=parsers,
@@ -782,6 +793,7 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -808,6 +820,7 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -834,6 +847,7 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
@@ -860,6 +874,7 @@ def modify(  # noqa: WPS211
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
@@ -908,6 +923,10 @@ def modify(  # noqa: WPS211
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         extra_responses: List of extra responses that this endpoint can return.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
@@ -958,6 +977,7 @@ def modify(  # noqa: WPS211
             responses=extra_responses,
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             parsers=parsers,

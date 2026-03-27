@@ -2,14 +2,7 @@ import datetime as dt
 import secrets
 from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import (
-    Any,
-    Final,
-    TypeAlias,
-    TypedDict,
-    Unpack,
-    final,
-)
+from typing import Any, Final, TypeAlias, TypedDict, Unpack, final
 
 import pytest
 from django.conf import LazySettings

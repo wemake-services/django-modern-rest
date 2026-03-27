@@ -12,7 +12,13 @@ from typing_extensions import TypedDict
 from dmr.components import Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.sse import SSEContext, SSEResponse, SSEStreamingResponse, SSEvent, sse
+from dmr.streaming import (
+    SSEContext,
+    SSEResponse,
+    SSEStreamingResponse,
+    SSEvent,
+    sse,
+)
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 

@@ -59,7 +59,7 @@ class ResponseSpec:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
-        is_stream: Are we working with the stream response?
+        streaming: Are we working with the stream response?
         limit_to_content_types: This response can only happen
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
@@ -84,7 +84,7 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
-    is_stream: bool = dataclasses.field(
+    streaming: bool = dataclasses.field(
         kw_only=True,
         default=False,
     )
@@ -118,10 +118,10 @@ class ResponseSpec:
             metadata,
             serializer,
             context,
-            schema_field_name='item_schema' if self.is_stream else 'schema',
+            schema_field_name='item_schema' if self.streaming else 'schema',
             # Despite the fact that it looks like a response,
             # produced stream events are not regular responses.
-            used_for_response=not self.is_stream,
+            used_for_response=not self.streaming,
         )
 
 
@@ -151,7 +151,7 @@ class ResponseModification:
             Headers passed here will be added to the final response.
         cookies: Shows *cookies* in the documentation.
             New cookies passed here will be added to the final response.
-        is_stream: Are we working with the stream response?
+        streaming: Are we working with the stream response?
         description: Text comment about what this response represents.
         links: Possible links to other OpenAPI operations.
 
@@ -166,7 +166,7 @@ class ResponseModification:
     status_code: HTTPStatus
     headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
     cookies: Mapping[str, 'NewCookie | CookieSpec'] | None
-    is_stream: bool
+    streaming: bool
 
     # Metadata:
     description: str | None
@@ -193,7 +193,7 @@ class ResponseModification:
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),
-            is_stream=self.is_stream,
+            streaming=self.streaming,
             # Metadata:
             description=self.description,
             links=self.links,
@@ -201,7 +201,7 @@ class ResponseModification:
 
     def infer_return_type(self) -> Any:
         """Infers return type if it needs some extra love."""
-        if self.is_stream:
+        if self.streaming:
             origin = get_origin(self.return_type)
             type_args = get_args(self.return_type)
             if origin in _ASYNC_ITERATOR_TYPES:
@@ -307,6 +307,10 @@ class EndpointMetadata:
             that are allowed for this endpoint.
         semantic_responses: Should semantic responses
             from different providers be collected?
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -350,6 +354,7 @@ class EndpointMetadata:
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
+    validate_events: bool
 
     # OpenAPI documentation fields:
     summary: str | None = None
@@ -383,10 +388,10 @@ class EndpointMetadata:
         # for error responses, so we will limit error responses
         # to be only returned by non-stream ones.
         # If there are no stream renderers, nothing will happen.
-        non_stream_renderers = {
+        non_streaming_renderers = {
             renderer.content_type
             for renderer in self.renderers.values()
-            if not renderer.is_stream
+            if not renderer.streaming
         }
         # Do not limit anything, if there are no stream renderers:
         return [
@@ -394,8 +399,8 @@ class EndpointMetadata:
                 response,
                 limit_to_content_types=(
                     None
-                    if len(non_stream_renderers) == len(self.renderers)
-                    else non_stream_renderers
+                    if len(non_streaming_renderers) == len(self.renderers)
+                    else non_streaming_renderers
                 ),
             )
             for response in all_responses

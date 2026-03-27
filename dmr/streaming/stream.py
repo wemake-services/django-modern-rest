@@ -6,20 +6,16 @@ from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
 
-from dmr.errors import ErrorModel
-from dmr.exceptions import ValidationError
 from dmr.internal.io import aiter_to_iter, maybe_aclosing
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
-from dmr.sse.exceptions import SSECloseConnectionError
-from dmr.sse.metadata import SSE, SSEvent
-from dmr.sse.renderer import SSERenderer
+from dmr.streaming.exceptions import StreamCloseConnectionError
 
 if TYPE_CHECKING:
-    from dmr.sse.validation import StreamValidator
+    from dmr.streaming.validation import StreamingValidator
 
 
-class SSEStreamingResponse(HttpResponseBase):
+class StreamingResponse(HttpResponseBase):
     """
     Our own response subclass to mark that we explicitly return SSE.
 
@@ -36,29 +32,27 @@ class SSEStreamingResponse(HttpResponseBase):
 
     def __init__(  # noqa: WPS211
         self,
-        streaming_content: AsyncIterator[SSE],
+        streaming_content: AsyncIterator[Any],
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
-        sse_renderer: SSERenderer,
+        streaming_renderer: Renderer,
         *,
-        validate_events: bool | None,
         headers: Mapping[str, str] | None = None,
         status_code: HTTPStatus = HTTPStatus.OK,
-        stream_validator: 'StreamValidator | None' = None,
+        streaming_validator: 'StreamingValidator | None' = None,
     ) -> None:
         """
-        Create the SSE streaming response.
+        Create the streaming response.
 
         Arguments:
             streaming_content: Events producing async iterator.
             serializer: Serializer type to handle event's data.
             regular_renderer: Render python objects to text format.
-            sse_renderer: Render events to bytes according to the SSE protocol.
-            validate_events: Should all produced events be validated
-                against *event_model*.
+            streaming_renderer: Render events to bytes according
+                to streaming protocol rules.
             headers: Headers to be set on the response.
             status_code: Status code for the response.
-            stream_validator: Stream validator for events.
+            streaming_validator: Stream validator for events.
 
         """
         headers = {} if headers is None else dict(headers)
@@ -66,7 +60,7 @@ class SSEStreamingResponse(HttpResponseBase):
         # to use str type.
         headers.update({
             'Cache-Control': 'no-cache',
-            'Content-Type': str(sse_renderer.content_type),
+            'Content-Type': str(streaming_renderer.content_type),
             'X-Accel-Buffering': 'no',
         })
         if not settings.DEBUG:
@@ -81,14 +75,13 @@ class SSEStreamingResponse(HttpResponseBase):
         self._streaming_content = streaming_content
         self.serializer = serializer
         self.regular_renderer = regular_renderer
-        self.sse_renderer = sse_renderer
-        self.validate_events = validate_events
-        self.stream_validator = stream_validator
+        self.streaming_renderer = streaming_renderer
+        self.streaming_validator = streaming_validator
 
     @override
     def __iter__(self) -> Iterator[bytes]:
         """
-        In development it is useful to have sync interface for SSE.
+        In development it is useful to have sync interface for streaming.
 
         This is a part of the WSGI handler protocol.
 
@@ -96,7 +89,8 @@ class SSEStreamingResponse(HttpResponseBase):
 
             Do not use this in production!
             We even added a special error to catch this.
-            In production you must use ASGI servers like ``uvicorn`` with SSE.
+            In production you must use ASGI servers
+            like ``uvicorn`` with streaming.
 
         This implementation has a lot of limitations.
         Be careful even in development.
@@ -104,7 +98,9 @@ class SSEStreamingResponse(HttpResponseBase):
         """
         # NOTE: DO NOT USE IN PRODUCTION
         if not settings.DEBUG:
-            raise RuntimeError('Do not use WSGI with SSE in production')
+            raise RuntimeError(
+                'Do not use WSGI with event streaming in production',
+            )
 
         return aiter_to_iter(self._produce_events())
 
@@ -124,17 +120,13 @@ class SSEStreamingResponse(HttpResponseBase):
         self,
         event: Any,
         exc: Exception,
-    ) -> SSE:
+    ) -> Any:
         """
         Handles errors that can happen while sending events.
 
         Return alternative event that will indicate what error has happened.
         By default does nothing and just reraises the exception.
         """
-        if isinstance(exc, ValidationError):
-            # TODO: change to accept `controller.format_error`,
-            # so it can be changed accordingly
-            return SSEvent(ErrorModel(detail=exc.payload), event='error')
         raise exc from None
 
     async def _produce_events(self) -> AsyncIterator[bytes]:
@@ -143,15 +135,15 @@ class SSEStreamingResponse(HttpResponseBase):
                 async for event in self._streaming_content:
                     yield self.serializer.serialize(
                         self._apply_validator(event),
-                        renderer=self.sse_renderer,
+                        renderer=self.streaming_renderer,
                     )
-            except SSECloseConnectionError:
+            except StreamCloseConnectionError:
                 self.close()
 
-    def _apply_validator(self, event: SSE) -> SSE:
-        if self.stream_validator is None:
+    def _apply_validator(self, event: Any) -> Any:
+        if self.streaming_validator is None:
             return event
         try:
-            return self.stream_validator.apply_event_pipeline(event)
+            return self.streaming_validator.apply_event_pipeline(event)
         except Exception as exc:
             return self.handle_event_error(event, exc)

@@ -2,7 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
@@ -36,7 +36,7 @@ class Renderer(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
-    is_stream: ClassVar[bool] = False
+    streaming: ClassVar[bool] = False
     """Whether or not this renderer is used for streaming responses."""
 
     @abc.abstractmethod
