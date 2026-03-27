@@ -97,11 +97,6 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
     )
 
 
-def force_request_renderer(request: HttpRequest, renderer: 'Renderer') -> None:
-    """Forces *renderer* to be used for the *request*."""
-    request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
-
-
 def negotiate_renderer(
     request: HttpRequest,
     renderers: Mapping[str, 'Renderer'],

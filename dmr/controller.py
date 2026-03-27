@@ -271,14 +271,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         raw :class:`django.http.HttpResponse` objects.
         Does the usual validation, no "second validation" problem exists.
         """
-        print(raw_data)
-        print(
-            renderer,
-            request_renderer(
-                self.request,
-                use_nonstreaming_renderer=True,
-            ),
-        )
         return build_response(
             self.serializer,
             raw_data=raw_data,

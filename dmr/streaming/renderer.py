@@ -36,4 +36,4 @@ class StreamingRenderer(Renderer):
     @property
     @override
     def validation_parser(self) -> _NoOpParser:
-        return _NoOpParser(self.content_type)
+        raise NotImplementedError('StreamingRenderer must not return a parser')

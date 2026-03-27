@@ -100,12 +100,12 @@ class StreamingController(Controller[_SerializerT_co]):
     streaming = True
     endpoint_cls = _StreamingEndpoint
 
-    # Set in `__init_subclasses__`:
-    streaming_renderer: ClassVar[StreamingRenderer]
-
     # Custom attributes to be set in subclasses:
     streaming_response_cls: ClassVar[type[StreamingResponse]]
     streaming_validator_cls: ClassVar[type[StreamingValidator]]
+
+    # Set in `__init_subclasses__`:
+    _streaming_renderer: ClassVar[StreamingRenderer]
 
     @override
     def __init_subclass__(cls) -> None:
@@ -113,9 +113,9 @@ class StreamingController(Controller[_SerializerT_co]):
         if serializer is None:
             return  # this is an abstract controller
 
-        cls.streaming_renderer = cls.streaming_renderer(serializer)
+        cls._streaming_renderer = cls.streaming_renderer(serializer)
         cls.renderers = (
-            cls.streaming_renderer,
+            cls._streaming_renderer,
             *(cls.renderers or resolve_setting(Settings.renderers)),
         )
 
@@ -146,7 +146,7 @@ class StreamingController(Controller[_SerializerT_co]):
             status_code=status_code,
             serializer=self.serializer,
             regular_renderer=default_renderer,
-            streaming_renderer=self.streaming_renderer,
+            streaming_renderer=self._streaming_renderer,
         )
         for cookie_key, cookie in (cookies or {}).items():
             streaming_response.set_cookie(

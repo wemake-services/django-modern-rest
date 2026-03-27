@@ -76,43 +76,48 @@ class StreamingResponse(HttpResponseBase):
         self.streaming_renderer = streaming_renderer
         self.streaming_validator = streaming_validator
 
-    @override
-    def __iter__(self) -> Iterator[bytes]:
-        """
-        In development it is useful to have sync interface for streaming.
+    # Why?
+    # Because it is only used by ASGI / WSGI handlers which don't care
+    # about typing at all. But, it helps to prevent different user erros.
+    if not TYPE_CHECKING:
 
-        This is a part of the WSGI handler protocol.
+        @override
+        def __iter__(self) -> Iterator[bytes]:
+            """
+            In development it is useful to have sync interface for streaming.
 
-        .. danger::
+            This is a part of the WSGI handler protocol.
 
-            Do not use this in production!
-            We even added a special error to catch this.
-            In production you must use ASGI servers
-            like ``uvicorn`` with streaming.
+            .. danger::
 
-        This implementation has a lot of limitations.
-        Be careful even in development.
+                Do not use this in production!
+                We even added a special error to catch this.
+                In production you must use ASGI servers
+                like ``uvicorn`` with streaming.
 
-        """
-        # NOTE: DO NOT USE IN PRODUCTION
-        if not settings.DEBUG:
-            raise RuntimeError(
-                'Do not use WSGI with event streaming in production',
-            )
+            This implementation has a lot of limitations.
+            Be careful even in development.
 
-        return aiter_to_iter(self._produce_events())
+            """
+            # NOTE: DO NOT USE IN PRODUCTION
+            if not settings.DEBUG:
+                raise RuntimeError(
+                    'Do not use WSGI with event streaming in production',
+                )
 
-    def __aiter__(self) -> AsyncIterator[bytes]:
-        """
-        ASGI handler protocol for streaming responses.
+            return aiter_to_iter(self._produce_events())
 
-        When ``streaming`` is ``True``, ASGI handler will async iterate over
-        the response object.
+        def __aiter__(self) -> AsyncIterator[bytes]:
+            """
+            ASGI handler protocol for streaming responses.
 
-        When doing so, we will be inside the ASGI handler already.
-        No DMR error handling will work.
-        """
-        return self._produce_events()
+            When ``streaming`` is ``True``, ASGI handler will async iterate over
+            the response object.
+
+            When doing so, we will be inside the ASGI handler already.
+            No DMR error handling will work.
+            """
+            return self._produce_events()
 
     def handle_event_error(
         self,

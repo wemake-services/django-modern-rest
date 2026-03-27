@@ -199,12 +199,18 @@ class ResponseModification:
 
     def infer_return_type(self) -> Any:
         """Infers return type if it needs some extra love."""
+        from dmr.exceptions import UnsolvableAnnotationsError
+
         if self.streaming:
             origin = get_origin(self.return_type)
             type_args = get_args(self.return_type)
-            if origin in _ASYNC_ITERATOR_TYPES:
+            if type_args and origin in _ASYNC_ITERATOR_TYPES:
                 return type_args[0]
-            raise RuntimeError  # TODO: raise
+            raise UnsolvableAnnotationsError(
+                'Cannot infer streaming item annotation from '
+                f'{self.return_type}, we require the return type to be '
+                'AsyncIterator or AsyncGenerator',
+            )
 
         return self.return_type
 

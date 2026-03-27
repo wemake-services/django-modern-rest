@@ -30,10 +30,6 @@ except ImportError:  # pragma: no cover
     MsgspecSerializer = None
 
 
-async def _events() -> AsyncIterator[SSEvent[int]]:
-    yield SSEvent(1)
-
-
 class _ClassBasedSSE(SSEController[PydanticSerializer]):
     @validate(
         streaming_response_spec(
@@ -42,10 +38,10 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
         ),
     )
     async def get(self) -> StreamingResponse:
-        return self.to_stream(_events())
+        raise NotImplementedError
 
     async def post(self) -> AsyncIterator[SSEvent[int]]:
-        return _events()
+        raise NotImplementedError
 
 
 def test_sse_schema(snapshot: SnapshotAssertion) -> None:
