@@ -51,11 +51,6 @@ if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
 
-_UNNAMED_PATH_PARAMS_MSG: Final = _(
-    'Path {cls} with field_model={field_model}'
-    ' does not allow unnamed path parameters'
-    ' args={args}',
-)
 _UNSUPPORTED_FILE_PARSER_MSG: Final = _(
     'Trying to parse files with {parser_name}'
     ' that does not support'
@@ -609,6 +604,17 @@ class PathComponent(ComponentParser):
       ``def get(self, request, user_id: str): ...``
 
     In ``django-modern-rest`` there's now a way to validate this in runtime.
+
+    When using unnamed URL groups via :func:`django.urls.re_path`,
+    the component returns ``(args, kwargs)`` as a tuple.
+    Use :class:`pydantic.RootModel` to parse both:
+
+    .. code:: python
+
+        >>> ArgsType = tuple[tuple[int, ...], UserPath]
+        >>> class ArgsPath(pydantic.RootModel[ArgsType]):
+        ...     pass
+
     """
 
     __slots__ = ()
@@ -653,13 +659,7 @@ class PathComponent(ComponentParser):
         field_model: Any,
     ) -> Any:
         if controller.args:
-            raise RequestSerializationError(
-                _UNNAMED_PATH_PARAMS_MSG.format(
-                    cls=type(controller),
-                    field_model=repr(field_model),
-                    args=repr(controller.args),
-                ),
-            )
+            return (controller.args, controller.kwargs)
         return controller.kwargs
 
     @override

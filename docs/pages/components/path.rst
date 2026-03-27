@@ -64,8 +64,9 @@ When do you need to parse path parameters into models?
 1. When you need typed path parameter model
 2. When they have more metadata then regular Django can provide.
    For example: only positive integers. Or ``str`` with an exact length
-3. When you only need ``self.kwargs`` to be parsed,
-   because ``Path`` does not support variadic url args from ``self.args``
+3. When you need ``self.kwargs`` to be parsed,
+   or both ``self.args`` and ``self.kwargs``
+   when using unnamed :func:`django.urls.re_path` groups
 
 You can define ``Path`` parameters
 the same way you define :data:`~dmr.components.Headers`,
@@ -115,6 +116,39 @@ What is the difference from the raw ``path()`` model?
 
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
   We don't automatically validate it.
+
+
+Using Path component with unnamed URL groups
+---------------------------------------------
+
+When using :func:`django.urls.re_path` with unnamed regular expression groups,
+Django passes captured segments as positional ``args``
+instead of keyword ``kwargs``.
+
+The :data:`~dmr.components.Path` component supports this:
+when ``request.args`` is present the component returns
+``(args, kwargs)`` as a tuple.
+
+Define your path model as a :class:`pydantic.RootModel`
+wrapping ``tuple[ArgsType, KwargsType]``:
+
+.. literalinclude:: /examples/components/path_args.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+What happens in this example?
+
+1. We define a ``RootModel`` whose root type is
+   ``tuple[tuple[int, ...], dict[str, str]]``.
+   The first element represents unnamed positional args,
+   the second represents named kwargs (empty here).
+2. The component detects ``request.args`` and returns the tuple
+   ``(args, kwargs)`` so the model can validate both parts at once.
+
+.. seealso::
+
+  https://docs.djangoproject.com/en/stable/topics/http/urls/#using-unnamed-regular-expression-groups
 
 
 Customizing OpenAPI metadata for Path

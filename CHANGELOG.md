@@ -89,6 +89,9 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 
 ### Features
 
+- Added support for unnamed `re_path` URL groups in the `Path` component.
+  When `request.args` is present, the component returns `(args, kwargs)` as
+  a tuple so users can validate both via `pydantic.RootModel`
 - Added `@attrs.define` official support, #706
 - Added `msgpack` parser and renderer, #630
 - Added `i18n` support for user-facing error messages

@@ -20,15 +20,6 @@ msgstr ""
 #: dmr/components.py:54
 #, python-brace-format
 msgid ""
-"Path {cls} with field_model={field_model} does not allow unnamed path "
-"parameters args={args}"
-msgstr ""
-"O caminho {cls} com field_model={field_model} não permite parâmetros de "
-"caminho sem nome args={args}"
-
-#: dmr/components.py:59
-#, python-brace-format
-msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
