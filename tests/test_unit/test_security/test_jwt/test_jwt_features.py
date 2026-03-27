@@ -1,8 +1,15 @@
 import datetime as dt
 import secrets
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import Any, Final, TypeAlias, final
+from typing import (
+    Any,
+    Final,
+    TypeAlias,
+    TypedDict,
+    Unpack,
+    final,
+)
 
 import pytest
 from django.conf import LazySettings
@@ -30,18 +37,27 @@ def user(faker: Faker) -> User:
 _TokenBuilder: TypeAlias = Callable[..., str]
 
 
+class _TokenData(TypedDict, total=False):
+    sub: str
+    exp: dt.datetime
+    iat: dt.datetime
+    iss: str
+    aud: str | Sequence[str]
+    jti: str
+    extras: dict[str, Any]
+
+
 @pytest.fixture
 def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
-    def factory(**kwargs: Any) -> str:
+    def factory(**kwargs: Unpack[_TokenData]) -> str:
+        exp_date = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+
+        kwargs.setdefault('sub', str(user.pk))
+        kwargs.setdefault('exp', exp_date)
         return JWToken(
-            sub=str(user.pk),
-            exp=kwargs.pop(
-                'exp',
-                dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
-            ),
-            **kwargs,  # TODO: create a protocol for kwargs
+            **kwargs,
         ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
 
     return factory

@@ -49,3 +49,11 @@ def test_controller_empty() -> None:
 
     class _Custom(Controller[PydanticSerializer]):
         """Empty."""
+
+
+def test_controller_base_serializer() -> None:
+    """Ensure that we can't create controllers with BaseSerizliser itself."""
+    with pytest.raises(UnsolvableAnnotationsError, match='BaseSerializer'):
+
+        class _Custom(Controller[BaseSerializer]):
+            """Empty."""

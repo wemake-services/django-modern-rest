@@ -511,7 +511,10 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         serializer = type_args[0]
         if isinstance(serializer, TypeVar):
             return None  # This is a generic subclass of a controller.
-        if not issubclass(serializer, BaseSerializer):
+        if (
+            not issubclass(serializer, BaseSerializer)
+            or serializer is BaseSerializer
+        ):
             raise UnsolvableAnnotationsError(
                 f'Type arg {serializer} is not correct for {cls}, '
                 'it must be a BaseSerializer subclass',

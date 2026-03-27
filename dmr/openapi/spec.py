@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
@@ -8,10 +8,21 @@ if TYPE_CHECKING:
     from dmr.routing import Router
 
 
+@overload
+def build_schema(router: 'Router', *, context: OpenAPIContext) -> OpenAPI: ...
+
+
+@overload
 def build_schema(
     router: 'Router',
     *,
-    # TODO: this can be an overloaded function:
+    config: OpenAPIConfig | None = None,
+) -> OpenAPI: ...
+
+
+def build_schema(
+    router: 'Router',
+    *,
     context: OpenAPIContext | None = None,
     config: OpenAPIConfig | None = None,
 ) -> OpenAPI:
