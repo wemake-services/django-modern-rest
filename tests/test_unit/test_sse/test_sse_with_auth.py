@@ -1,58 +1,34 @@
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import Final, TypeAlias
 
 import pytest
 from django.contrib.auth.models import User
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionAsyncAuth
-from dmr.serializer import BaseSerializer
-from dmr.streaming import (
-    SSEContext,
-    SSEResponse,
-    SSEStreamingResponse,
-    SSEvent,
-    sse,
-)
+from dmr.streaming.sse import SSEController, SSEvent
+from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
-_Serializes: TypeAlias = list[type[BaseSerializer]]
-serializers: Final[_Serializes] = [
-    PydanticSerializer,
-]
 
-try:
-    from dmr.plugins.msgspec import MsgspecSerializer
-except ImportError:  # pragma: no cover
-    pass  # noqa: WPS420
-else:  # pragma: no cover
-    serializers.append(MsgspecSerializer)
+class _ClassBasedSSE(SSEController[PydanticSerializer]):
+    auth = [DjangoSessionAsyncAuth()]
 
+    async def get(self) -> AsyncIterator[SSEvent[bytes]]:
+        user = await self.request.auser()
+        assert user.is_authenticated
+        return self._events(user.get_username())
 
-async def _events(username: str) -> AsyncIterator[SSEvent[bytes]]:
-    yield SSEvent(b'user', id=username, serialize=False)
+    async def _events(self, username: str) -> AsyncIterator[SSEvent[bytes]]:
+        yield SSEvent(b'user', id=username, serialize=False)
 
 
 async def _resolve(user: User) -> User:
     return user
-
-
-@sse(
-    PydanticSerializer,
-    auth=[DjangoSessionAsyncAuth()],
-)
-async def _sse_components(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[SSEvent[bytes]]:
-    user = await request.auser()
-    assert user.is_authenticated
-    return SSEResponse(_events(user.get_username()))
 
 
 @pytest.mark.asyncio
@@ -63,7 +39,7 @@ async def test_sse_with_auth_failure(
     request = dmr_async_rf.get('/whatever')
 
     response = await dmr_async_rf.wrap(
-        _sse_components.as_view()(request),
+        _ClassBasedSSE.as_view()(request),
     )
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -83,7 +59,7 @@ async def test_sse_with_auth_success(
     request.auser = lambda: _resolve(User(username=username))
 
     response = await dmr_async_rf.wrap(
-        _sse_components.as_view()(request),
+        _ClassBasedSSE.as_view()(request),
     )
 
     assert isinstance(response, SSEStreamingResponse)

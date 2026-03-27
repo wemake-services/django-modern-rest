@@ -4,7 +4,7 @@ from typing import TypeAlias
 
 import pytest
 
-from dmr import validate
+from dmr import modify, validate
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.streaming import StreamingResponse, streaming_response_spec
@@ -34,6 +34,7 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
     async def post(self) -> AsyncIterator[_EventsType]:
         return _valid_events()
 
+    @modify(status_code=HTTPStatus.OK)
     async def put(self) -> AsyncIterator[_EventsType]:
         return _valid_events()
 
@@ -53,6 +54,16 @@ async def test_valid_sse_different_methods(
     method: HTTPMethod,
 ) -> None:
     """Ensures that valid sse produces valid results."""
+    endpoint = _ClassBasedSSE.api_endpoints[str(method)]
+    assert endpoint.metadata.responses
+    default_response = endpoint.metadata.responses[HTTPStatus.OK]
+    assert default_response.headers
+    assert default_response.headers.keys() == {
+        'Cache-Control',
+        'Connection',
+        'X-Accel-Buffering',
+    }
+
     request = dmr_async_rf.generic(str(method), '/whatever/')
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))

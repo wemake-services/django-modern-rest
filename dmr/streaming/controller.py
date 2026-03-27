@@ -13,6 +13,7 @@ from dmr.endpoint import Endpoint
 from dmr.internal.types import call_init_subclass
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
+from dmr.streaming.metadata import StreamResponseModification
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.stream import StreamingResponse
 from dmr.streaming.validation import StreamingValidator
@@ -20,6 +21,8 @@ from dmr.validation.response import ValidatedModification
 
 
 class _StreamingEndpoint(Endpoint):
+    response_modification_cls = StreamResponseModification
+
     __slots__ = ()
 
     @override

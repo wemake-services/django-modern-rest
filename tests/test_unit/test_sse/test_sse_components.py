@@ -2,23 +2,18 @@ import dataclasses
 import json
 from collections.abc import AsyncIterator
 from http import HTTPStatus
-from typing import Any, Final, TypeAlias
+from typing import Final, TypeAlias
 
 import pydantic
 import pytest
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from typing_extensions import TypedDict
 
-from dmr.components import Cookies, Headers, Path, Query
+from dmr import Body, Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.streaming import (
-    SSEContext,
-    SSEResponse,
-    SSEStreamingResponse,
-    SSEvent,
-    sse,
-)
+from dmr.streaming.sse import SSEController, SSEvent
+from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -61,40 +56,31 @@ async def test_sse_parses_all_components(
 ) -> None:
     """Ensures that sse can parse all components."""
 
-    @sse(
-        PydanticSerializer,
-        path=Path[_PathModel],
-        query=Query[_QueryModel],
-        headers=Headers[_HeaderModel],
-        cookies=Cookies[dict[str, str]],
-    )
-    async def _sse_components(
-        request: HttpRequest,
-        context: SSEContext[
-            _PathModel,
-            _QueryModel,
-            _HeaderModel,
-            dict[str, str],
-        ],
-    ) -> SSEResponse[_ListStrEvent]:
-        assert context.parsed_path == {'user_id': 1, 'stream_name': 'abc'}
-        assert context.parsed_query == _QueryModel(filter='python')
-        assert context.parsed_headers == _HeaderModel(whatever='yes')
-        assert context.parsed_cookies == {'session_id': 'unique'}
-        return SSEResponse(_empty_events())
+    class _ClassBasedSSE(SSEController[PydanticSerializer]):
+        async def post(
+            self,
+            parsed_path: Path[_PathModel],
+            parsed_query: Query[_QueryModel],
+            parsed_headers: Headers[_HeaderModel],
+            parsed_cookies: Cookies[dict[str, str]],
+            parsed_body: Body[list[int]],
+        ) -> AsyncIterator[_ListStrEvent]:
+            assert parsed_path == {'user_id': 1, 'stream_name': 'abc'}
+            assert parsed_query == _QueryModel(filter='python')
+            assert parsed_headers == _HeaderModel(whatever='yes')
+            assert parsed_cookies == {'session_id': 'unique'}
+            assert parsed_body == [1, 2, 3]
+            return _empty_events()
 
-    request = dmr_async_rf.get(
+    request = dmr_async_rf.post(
         '/whatever/?filter=python',
-        headers={
-            'whatever': 'yes',
-        },
+        headers={'whatever': 'yes'},
+        data=[1, 2, 3],
     )
-    request.COOKIES = {
-        'session_id': 'unique',
-    }
+    request.COOKIES = {'session_id': 'unique'}
 
     response = await dmr_async_rf.wrap(
-        _sse_components.as_view()(request, user_id=1, stream_name='abc'),
+        _ClassBasedSSE.as_view()(request, user_id=1, stream_name='abc'),
     )
 
     assert isinstance(response, SSEStreamingResponse)
@@ -112,20 +98,17 @@ async def test_sse_parsing_error(
 ) -> None:
     """Ensures that sse can parse all components."""
 
-    @sse(
-        serializer,
-        path=Path[_PathModel],
-    )
-    async def _sse_components(
-        request: HttpRequest,
-        context: SSEContext[_PathModel],
-    ) -> SSEResponse[Any]:
-        raise NotImplementedError
+    class _ClassBasedSSE(SSEController[serializer]):  # type: ignore[valid-type]
+        async def get(
+            self,
+            parsed_path: Path[_PathModel],
+        ) -> AsyncIterator[_ListStrEvent]:
+            raise NotImplementedError
 
     request = dmr_async_rf.get('/whatever/')
 
     response = await dmr_async_rf.wrap(
-        _sse_components.as_view()(request, user_id='abc'),
+        _ClassBasedSSE.as_view()(request, user_id='abc'),
     )
 
     assert isinstance(response, HttpResponse)

@@ -59,7 +59,10 @@ class ResponseValidator:  # noqa: WPS214
         if not self.metadata.validate_responses:
             return response
         schema = self._get_response_schema(response.status_code)
-        renderer = request_renderer(controller.request)
+        renderer = request_renderer(
+            controller.request,
+            use_nonstreaming_renderer=True,
+        )
         parser = response_validation_negotiator(
             controller.request,
             response,

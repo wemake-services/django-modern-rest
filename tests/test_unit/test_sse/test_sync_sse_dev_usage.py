@@ -4,36 +4,22 @@ from collections.abc import AsyncIterator
 from http import HTTPStatus
 
 import pytest
-from asgiref.sync import async_to_sync
 from django.conf import LazySettings
-from django.http import HttpRequest
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.streaming import (
-    SSECloseConnectionError,
-    SSEContext,
-    SSEResponse,
-    SSEStreamingResponse,
-    SSEvent,
-    sse,
-)
+from dmr.streaming import StreamingCloseError
+from dmr.streaming.sse import SSEController, SSEvent
+from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRRequestFactory
 
 
-async def _valid_events() -> AsyncIterator[SSEvent[str | bytes | int]]:
-    yield SSEvent('event')
-    await asyncio.sleep(0.1)  # simulate work
-    yield SSEvent(b'second', serialize=False)
-    await asyncio.sleep(0.1)
-    yield SSEvent(3)
-
-
-@sse(PydanticSerializer)
-async def _valid_sse(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[SSEvent[str | bytes | int]]:
-    return SSEResponse(_valid_events())
+class _ClassBasedSSE(SSEController[PydanticSerializer]):
+    async def get(self) -> AsyncIterator[SSEvent[str | bytes | int]]:
+        yield SSEvent('event')
+        await asyncio.sleep(0.1)  # simulate work
+        yield SSEvent(b'second', serialize=False)
+        await asyncio.sleep(0.1)
+        yield SSEvent(3)
 
 
 def _get_sync_content(response: SSEStreamingResponse) -> bytes:
@@ -51,9 +37,7 @@ def test_sync_sse_dev(
     settings.DEBUG = True
     request = dmr_rf.get('/whatever/')
 
-    response: SSEStreamingResponse = async_to_sync(
-        _valid_sse.as_view(),  # type: ignore[arg-type]
-    )(request)
+    response = _ClassBasedSSE.as_view()(request)
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
@@ -78,9 +62,7 @@ def test_sync_sse_prod(
     settings.DEBUG = False
     request = dmr_rf.get('/whatever/')
 
-    response: SSEStreamingResponse = async_to_sync(
-        _valid_sse.as_view(),  # type: ignore[arg-type]
-    )(request)
+    response = _ClassBasedSSE.as_view()(request)
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
@@ -93,23 +75,16 @@ def test_sync_sse_prod(
     }
     with pytest.raises(
         RuntimeError,
-        match='Do not use WSGI with SSE in production',
+        match='Do not use WSGI with event streaming in production',
     ):
         _get_sync_content(response)
 
 
-async def _events_with_close() -> AsyncIterator[SSEvent[bytes]]:
-    yield SSEvent(b'event', serialize=False)
-    yield SSEvent(b'second', serialize=False)
-    raise SSECloseConnectionError
-
-
-@sse(PydanticSerializer)
-async def _sse_with_close(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[SSEvent[bytes]]:
-    return SSEResponse(_events_with_close())
+class _SSEWithClose(SSEController[PydanticSerializer]):
+    async def get(self) -> AsyncIterator[SSEvent[str | bytes | int]]:
+        yield SSEvent(b'event', serialize=False)
+        yield SSEvent(b'second', serialize=False)
+        raise StreamingCloseError
 
 
 def test_sync_sse_dev_with_close(
@@ -120,9 +95,7 @@ def test_sync_sse_dev_with_close(
     settings.DEBUG = True
     request = dmr_rf.get('/whatever/')
 
-    response: SSEStreamingResponse = async_to_sync(
-        _sse_with_close.as_view(),  # type: ignore[arg-type]
-    )(request)
+    response = _SSEWithClose.as_view()(request)
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming

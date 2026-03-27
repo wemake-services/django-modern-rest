@@ -673,10 +673,12 @@ class EndpointMetadataValidator:
         *,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[ResponseSpec]:
-        all_responses = _build_responses(
-            payload=payload,
-            controller_cls=controller_cls,
-            modification=self.metadata.modification,
+        all_responses = self._limit_stream_responses(
+            _build_responses(
+                payload=payload,
+                controller_cls=controller_cls,
+                modification=self.metadata.modification,
+            ),
         )
         existing_responses = {
             response.status_code: response for response in all_responses
@@ -688,6 +690,29 @@ class EndpointMetadataValidator:
             ),
         )
         return all_responses
+
+    def _limit_stream_responses(
+        self,
+        responses: list[ResponseSpec],
+    ) -> list[ResponseSpec]:
+        streaming_renderers = {
+            renderer.content_type
+            for renderer in self.metadata.renderers.values()
+            if renderer.streaming
+        }
+
+        limited = []
+        for response in responses:
+            if response.streaming:
+                limited.append(
+                    dataclasses.replace(
+                        response,
+                        limit_to_content_types=streaming_renderers,
+                    ),
+                )
+            else:
+                limited.append(response)
+        return limited
 
     def _validate_components(
         self,

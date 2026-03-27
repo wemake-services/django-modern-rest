@@ -11,7 +11,6 @@ from typing import (
     Final,
     TypeAlias,
     TypeVar,
-    final,
     get_args,
     get_origin,
 )
@@ -133,7 +132,6 @@ _ASYNC_ITERATOR_TYPES: Final = frozenset((
 ))
 
 
-@final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ResponseModification:
     """

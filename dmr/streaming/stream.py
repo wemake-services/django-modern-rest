@@ -9,7 +9,7 @@ from typing_extensions import override
 from dmr.internal.io import aiter_to_iter, maybe_aclosing
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
-from dmr.streaming.exceptions import StreamCloseConnectionError
+from dmr.streaming.exceptions import StreamingCloseError
 
 if TYPE_CHECKING:
     from dmr.streaming.validation import StreamingValidator
@@ -67,9 +67,7 @@ class StreamingResponse(HttpResponseBase):
             # This will not work with the wsgi,
             # which is the default protocol for `runserver`.
             # See `wsgiref` and `is_hop_by_hop` function.
-            headers.update({
-                'Connection': 'keep-alive',
-            })
+            headers.update({'Connection': 'keep-alive'})
 
         super().__init__(headers=headers, status=status_code)
         self._streaming_content = streaming_content
@@ -137,7 +135,7 @@ class StreamingResponse(HttpResponseBase):
                         self._apply_validator(event),
                         renderer=self.streaming_renderer,
                     )
-            except StreamCloseConnectionError:
+            except StreamingCloseError:
                 self.close()
 
     def _apply_validator(self, event: Any) -> Any:

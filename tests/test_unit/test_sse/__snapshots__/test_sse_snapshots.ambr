@@ -3,14 +3,26 @@
   '''
   {
     "info": {
-      "title": "SSE Complex Pydantic <odels",
+      "title": "SSE Complex Pydantic models",
       "version": "1.0"
     },
     "openapi": "3.2.0",
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexSseApiV1Complex",
+          "operationId": "getComplexsseApiV1Complex",
+          "parameters": [
+            {
+              "deprecated": false,
+              "name": "X-Header",
+              "in": "header",
+              "schema": {
+                "type": "string",
+                "title": "X-Header"
+              },
+              "required": true
+            }
+          ],
           "responses": {
             "200": {
               "description": "OK",
@@ -45,6 +57,16 @@
                         "$ref": "#/components/schemas/_PaymentEvent"
                       }
                     ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -207,7 +229,7 @@
     "paths": {
       "/api/v1/overridden": {
         "get": {
-          "operationId": "getOverriddenSseApiV1Overridden",
+          "operationId": "getOverridensseApiV1Overridden",
           "responses": {
             "200": {
               "description": "OK",
@@ -345,7 +367,63 @@
     "paths": {
       "/api/v1/sse": {
         "get": {
-          "operationId": "getValidSseApiV1Sse",
+          "operationId": "getClassbasedsseApiV1Sse",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "headers": {
+                "Cache-Control": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Accel-Buffering": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Connection": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "text/event-stream": {
+                  "itemSchema": {
+                    "$ref": "#/components/schemas/SSEvent"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "operationId": "postClassbasedsseApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",

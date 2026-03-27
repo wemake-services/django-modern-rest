@@ -5,24 +5,21 @@ from typing import Literal, TypeAlias
 
 import pydantic
 import pytest
-from django.http import HttpRequest
 from django.urls import path
 from pydantic.json_schema import JsonSchemaValue, SkipJsonSchema
 from pydantic_core import core_schema as cs
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
+from dmr import Headers, validate
+from dmr.negotiation import ContentType
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.serializer import BaseSerializer
-from dmr.streaming import (
-    SSEContext,
-    SSEResponse,
-    SSEStreamingResponse,
-    SSEvent,
-    sse,
-)
+from dmr.streaming import StreamingResponse, streaming_response_spec
+from dmr.streaming.sse import SSEController, SSEvent
+from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -37,35 +34,18 @@ async def _events() -> AsyncIterator[SSEvent[int]]:
     yield SSEvent(1)
 
 
-@sse(PydanticSerializer)
-async def _valid_sse(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[SSEvent[int]]:
-    return SSEResponse(_events())
-
-
-@pytest.mark.asyncio
-async def test_valid_sse_implemenetation(
-    dmr_async_rf: DMRAsyncRequestFactory,
-) -> None:
-    """Ensures that valid sse produces valid results."""
-    request = dmr_async_rf.get('/whatever/')
-
-    response = await dmr_async_rf.wrap(
-        _valid_sse.as_view()(request),
+class _ClassBasedSSE(SSEController[PydanticSerializer]):
+    @validate(
+        streaming_response_spec(
+            SSEvent[int],
+            content_type=ContentType.event_stream,
+        ),
     )
+    async def get(self) -> StreamingResponse:
+        return self.to_stream(_events())
 
-    assert isinstance(response, SSEStreamingResponse)
-    assert response.streaming
-    assert response.status_code == HTTPStatus.OK
-    assert response.headers == {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'text/event-stream',
-        'X-Accel-Buffering': 'no',
-        'Connection': 'keep-alive',
-    }
-    assert await get_streaming_content(response) == b'data: 1\r\n\r\n'
+    async def post(self) -> AsyncIterator[SSEvent[int]]:
+        return _events()
 
 
 def test_sse_schema(snapshot: SnapshotAssertion) -> None:
@@ -75,7 +55,7 @@ def test_sse_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('/sse', _valid_sse.as_view())],
+                    [path('/sse', _ClassBasedSSE.as_view())],
                 ),
                 config=OpenAPIConfig(
                     title='SSE Test',
@@ -118,8 +98,8 @@ class _PaymentEvent(_BaseEvent):
 _PossibleEvents: TypeAlias = _UserEvent | _PaymentEvent
 
 
-async def _complex_events() -> AsyncIterator[_PossibleEvents]:
-    yield _UserEvent(id=1, data='sobolevn')
+async def _complex_events(x_header: str) -> AsyncIterator[_PossibleEvents]:
+    yield _UserEvent(id=1, data=x_header)
     yield _PaymentEvent(
         data=_Payment(  # pyright: ignore[reportArgumentType]
             amount=10,
@@ -128,12 +108,16 @@ async def _complex_events() -> AsyncIterator[_PossibleEvents]:
     )
 
 
-@sse(PydanticSerializer)
-async def _complex_sse(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[_PossibleEvents]:
-    return SSEResponse(_complex_events())
+class _HeaderModel(pydantic.BaseModel):
+    x_header: str = pydantic.Field(alias='X-Header')
+
+
+class _ComplexSSE(SSEController[PydanticSerializer]):
+    async def get(
+        self,
+        parsed_headers: Headers[_HeaderModel],
+    ) -> AsyncIterator[_PossibleEvents]:
+        return _complex_events(parsed_headers.x_header)
 
 
 @pytest.mark.asyncio
@@ -141,9 +125,9 @@ async def test_complex_sse_implementation(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that valid sse produces valid results."""
-    request = dmr_async_rf.get('/whatever/')
+    request = dmr_async_rf.get('/whatever/', headers={'X-Header': 'sobolevn'})
 
-    response = await dmr_async_rf.wrap(_complex_sse.as_view()(request))
+    response = await dmr_async_rf.wrap(_ComplexSSE.as_view()(request))
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
@@ -184,10 +168,10 @@ def test_complex_sse_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('/complex', _complex_sse.as_view())],
+                    [path('/complex', _ComplexSSE.as_view())],
                 ),
                 config=OpenAPIConfig(
-                    title='SSE Complex Pydantic <odels',
+                    title='SSE Complex Pydantic models',
                     version='1.0',
                     openapi_version='3.2.0',
                 ),
@@ -231,12 +215,9 @@ async def _overridden_events() -> AsyncIterator[_OverriddenEvent]:
     yield _OverriddenEvent(data=b'test')
 
 
-@sse(PydanticSerializer)
-async def _overridden_sse(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[_OverriddenEvent]:
-    return SSEResponse(_overridden_events())
+class _OverridenSSE(SSEController[PydanticSerializer]):
+    async def get(self) -> AsyncIterator[_OverriddenEvent]:
+        return _overridden_events()
 
 
 @pytest.mark.asyncio
@@ -246,7 +227,7 @@ async def test_overridden_sse_implementation(
     """Ensures that valid sse produces valid results."""
     request = dmr_async_rf.get('/whatever/')
 
-    response = await dmr_async_rf.wrap(_overridden_sse.as_view()(request))
+    response = await dmr_async_rf.wrap(_OverridenSSE.as_view()(request))
 
     assert isinstance(response, SSEStreamingResponse)
     assert response.streaming
@@ -267,7 +248,7 @@ def test_overridden_sse_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('/overridden', _overridden_sse.as_view())],
+                    [path('/overridden', _OverridenSSE.as_view())],
                 ),
                 config=OpenAPIConfig(
                     title='SSE Overridden Pydantic models',
