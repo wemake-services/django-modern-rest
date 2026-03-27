@@ -48,7 +48,7 @@ class _SSEEndpoint(Endpoint):
     ) -> HttpResponseBase:
         assert isinstance(controller, SSEController)
         return self._pass_existing_response(
-            controller.to_sse_response(
+            controller.to_stream(
                 validated.raw_data,
                 status_code=validated.status_code,
                 headers=validated.headers,
@@ -99,7 +99,6 @@ class SSEController(Controller[_SerializerT_co]):
         if serializer is None:
             return  # this is an abstract controller
 
-        renderers = cls.renderers or resolve_setting(Settings.renderes)
         cls.renderers = (
             cls.stream_renderer(),
             *(cls.renderers or resolve_setting(Settings.renderes)),
@@ -114,7 +113,7 @@ class SSEController(Controller[_SerializerT_co]):
     def stream_renderer(cls) -> Renderer:
         return SSERenderer(cls.serializer, default_renderer)
 
-    def to_sse_response(  # TODO: to_stream
+    def to_stream(
         self,
         streaming_content: AsyncIterator[SSE],
         *,
