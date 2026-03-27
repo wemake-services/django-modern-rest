@@ -127,10 +127,11 @@ instead of keyword ``kwargs``.
 
 The :data:`~dmr.components.Path` component supports this:
 when ``request.args`` is present the component returns
-``(args, kwargs)`` as a tuple.
+``args`` as a tuple instead of ``kwargs``.
 
-Define your path model as a :class:`pydantic.RootModel`
-wrapping ``tuple[ArgsType, KwargsType]``:
+For example, if you are using ``pydantic``,
+you can define your path model as a :class:`pydantic.RootModel`
+wrapping the args tuple type:
 
 .. literalinclude:: /examples/components/path_args.py
   :caption: views.py
@@ -140,11 +141,13 @@ wrapping ``tuple[ArgsType, KwargsType]``:
 What happens in this example?
 
 1. We define a ``RootModel`` whose root type is
-   ``tuple[tuple[int, ...], dict[str, str]]``.
-   The first element represents unnamed positional args,
-   the second represents named kwargs (empty here).
-2. The component detects ``request.args`` and returns the tuple
-   ``(args, kwargs)`` so the model can validate both parts at once.
+   ``tuple[int, ...]``.
+   This represents the unnamed positional args.
+2. The component detects ``request.args`` and returns
+   the args tuple so the model can validate it.
+3. When named groups are present (via ``(?P<name>...)``),
+   Django discards unnamed groups and passes only kwargs.
+   In that case the component returns kwargs as usual.
 
 .. seealso::
 

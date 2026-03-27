@@ -606,12 +606,12 @@ class PathComponent(ComponentParser):
     In ``django-modern-rest`` there's now a way to validate this in runtime.
 
     When using unnamed URL groups via :func:`django.urls.re_path`,
-    the component returns ``(args, kwargs)`` as a tuple.
-    Use :class:`pydantic.RootModel` to parse both:
+    the component returns ``args`` as a tuple instead of ``kwargs``.
+    Use :class:`pydantic.RootModel` to parse them:
 
     .. code:: python
 
-        >>> ArgsType = tuple[tuple[int, ...], UserPath]
+        >>> ArgsType = tuple[int, ...]
         >>> class ArgsPath(pydantic.RootModel[ArgsType]):
         ...     pass
 
@@ -659,7 +659,7 @@ class PathComponent(ComponentParser):
         field_model: Any,
     ) -> Any:
         if controller.args:
-            return (controller.args, controller.kwargs)
+            return controller.args
         return controller.kwargs
 
     @override

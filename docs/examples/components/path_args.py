@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 import pydantic
 from django.urls import include, re_path
 
@@ -7,18 +9,22 @@ from dmr.openapi.views import OpenAPIJsonView
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, path
 
-_IntArgs = tuple[int, ...]
-_ArgsRoot = tuple[_IntArgs, dict[str, str]]
-
-
-class _ArgsPath(pydantic.RootModel[_ArgsRoot]):
-    """Accepts unnamed regex groups as a tuple of ints plus empty kwargs."""
+_IntArgs: TypeAlias = tuple[int, ...]
+_PathModel: TypeAlias = pydantic.RootModel[_IntArgs]
 
 
 class ItemController(Controller[PydanticSerializer]):
-    def get(self, parsed_path: Path[_ArgsPath]) -> list[int]:
-        args, _kwargs = parsed_path.root
-        return list(args)
+    def get(self, parsed_path: Path[_PathModel]) -> list[int]:
+        return list(parsed_path.root)
+
+
+class _DayPath(pydantic.BaseModel):
+    day: int
+
+
+class DayItemController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_DayPath]) -> _DayPath:
+        return parsed_path
 
 
 router = Router(
@@ -28,6 +34,11 @@ router = Router(
             r'^items/(\d+)/(\d+)/$',
             ItemController.as_view(),
             name='items',
+        ),
+        re_path(
+            r'^items/(\d+)/(\d+)/(?P<day>[0-9]{2})/$',
+            DayItemController.as_view(),
+            name='day-items',
         ),
     ],
 )
@@ -39,3 +50,5 @@ urlpatterns = [
 ]
 
 # run: {"controller": "ItemController", "method": "get", "url": "/api/items/10/20/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# run: {"controller": "DayItemController", "method": "get", "url": "/api/items/10/20/25/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501

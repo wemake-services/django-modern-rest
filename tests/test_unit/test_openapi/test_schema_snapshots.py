@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import Annotated, ClassVar, TypeAlias
 
 import pydantic
+import pytest
 from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
@@ -266,6 +267,41 @@ def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
                         re_path(
                             r'^articles/(?P<year>[0-9]{4})/(?P<slug>[\w-]+)/$',
                             _GetPostController.as_view(),
+                        ),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+_ArgsPathType: TypeAlias = pydantic.RootModel[tuple[int, ...]]
+
+
+class _ArgsPathController(Controller[PydanticSerializer]):
+    def get(
+        self,
+        parsed_path: Path[_ArgsPathType],
+    ) -> list[int]:
+        return list(parsed_path.root)  # pragma: no cover
+
+
+@pytest.mark.xfail(
+    reason='OpenAPI schema generation does not handle unnamed groups',
+)
+def test_args_path_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for unnamed re_path args."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        re_path(
+                            r'^items/(\d+)/(\d+)/$',
+                            _ArgsPathController.as_view(),
                         ),
                     ],
                 ),
