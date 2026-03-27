@@ -162,7 +162,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         if type_args[0] is BaseSerializer:
             raise UnsolvableAnnotationsError(
                 f'Type arg {type_args[0]} is not correct for {cls}, '
-                'it cannot be a BaseSerializer itself',
+                'it must be a BaseSerializer subclass',
             )
         cls.is_abstract = False
         cls.serializer = type_args[0]
