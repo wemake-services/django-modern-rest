@@ -34,6 +34,7 @@ class SSERenderer(Renderer):
     )
 
     content_type = ContentType.event_stream
+    is_stream = True
 
     def __init__(
         self,

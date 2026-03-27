@@ -36,6 +36,9 @@ class Renderer(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
+    is_stream: ClassVar[bool] = False
+    """Whether or not this renderer is used for streaming responses."""
+
     @abc.abstractmethod
     def render(
         self,

@@ -59,9 +59,9 @@ class RequestNegotiator:
         Based on ``Content-Type`` header.
 
         Called in runtime.
-        Must work for O(1) because of that.
+        Must work for O(1) for the best case scenario because of that.
 
-        Must set ``_dmr_parser`` request attribute
+        Must set ``__dmr_parser__`` request attribute
         if the negotiation is successful.
 
         Returns:
@@ -107,19 +107,43 @@ class RequestNegotiator:
 class ResponseNegotiator:
     """Selects a correct renderer for a response body."""
 
-    __slots__ = ('_default', '_renderer_keys', '_renderers', '_serializer')
+    __slots__ = (
+        '_default',
+        '_error_default',
+        '_is_stream',
+        '_non_stream_renderers',
+        '_renderer_keys',
+        '_renderers',
+        '_serializer',
+    )
 
     def __init__(
         self,
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
+        *,
+        is_stream: bool,
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
+        self._is_stream = is_stream
         self._renderers = metadata.renderers
+        self._non_stream_renderers = {
+            renderer_type: renderer
+            for renderer_type, renderer in metadata.renderers.items()
+            if not renderer.is_stream
+        }
         self._renderer_keys = list(self._renderers.keys())
+        if self._is_stream and not self._non_stream_renderers:
+            raise EndpointMetadataError(
+                'At least one non-stream renderer is required '
+                f'for stream responses, found: {self._renderer_keys!r}',
+            )
+
         # The last configured parser is the most specific one:
         self._default = next(iter(self._renderers.values()))
+        # The second one is suitable for errors if it is a stream:
+        self._error_default = next(iter_renderers) if self._is_stream else None
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
@@ -133,8 +157,9 @@ class ResponseNegotiator:
         We use :meth:`django.http.HttpRequest.get_preferred_type` inside.
         So, we have exactly the same negotiation rules as django has.
 
-        Must set ``_dmr_renderer`` request attribute
+        Must set ``__dmr_renderer__`` request attribute
         if the negotiation is successful.
+        Can set ``__dmr_errror_renderer__`` if working with streaming responses.
 
         Returns:
             Renderer class for this response.
@@ -149,6 +174,12 @@ class ResponseNegotiator:
             default=self._default,
         )
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
+        if self._is_stream:
+            request.__dmr_error_renderer__ = _negotiate_renderer(  # type: ignore[attr-defined]
+                request,
+                self._non_stream_renderers,
+                default=self._error_default,
+            )
         return renderer
 
 
@@ -168,16 +199,30 @@ def request_parser(request: HttpRequest) -> Parser | None:
 
 def request_renderer(request: HttpRequest) -> Renderer | None:
     """
-    Get parser used to parse this request.
+    Get pre-negotiated renderer.
+
+    First, tries a special ``__dmr_error_renderer__`` case,
+    which will be different for ``is_stream`` responses.
+    For example: for SSE controllers ``__dmr_error_renderer__``
+    will be just ``json`` or ``xml``.
+    It is not used for REST endpoints.
+
+    While ``__dmr_renderer__`` will be whatever ``Accept`` header
+    contains as the first value.
 
     .. note::
 
-        Since request rendering is only used when using raw endpoints,
-        there might be no request renderer. Also, renderer is chosen late
-        in the life-cycle of the request handling, so there might not be
-        a request renderer *yet*.
+        There might not be a response renderer that fits what client has asked.
+        So, it can return ``None``.
 
     """
+    # There can be a separate error response renderer negotiated
+    # for streaming response.
+    error_renderer = getattr(request, '__dmr_errror_renderer__', None)
+    if error_renderer is not None:
+        return error_renderer
+
+    # Fallback to the default one:
     return getattr(request, '__dmr_renderer__', None)
 
 

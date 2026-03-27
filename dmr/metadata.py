@@ -1,14 +1,18 @@
 import dataclasses
+import typing as ty
 from abc import abstractmethod
-from collections.abc import Mapping, Set
+from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Set
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
     ClassVar,
+    Final,
     TypeAlias,
     TypeVar,
+    final,
+    get_args,
     get_origin,
 )
 
@@ -55,6 +59,7 @@ class ResponseSpec:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
+        is_stream: Are we working with the stream response?
         limit_to_content_types: This response can only happen
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
@@ -113,9 +118,22 @@ class ResponseSpec:
             metadata,
             serializer,
             context,
+            schema_field_name='item_schema' if self.is_stream else 'schema',
+            # Despite the fact that it looks like a response,
+            # produced stream events are not regular responses.
+            used_for_response=not self.is_stream,
         )
 
 
+_ASYNC_ITERATOR_TYPES: Final = frozenset((
+    AsyncGenerator,
+    AsyncIterator,
+    ty.AsyncIterator,
+    ty.AsyncGenerator,
+))
+
+
+@final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ResponseModification:
     """
@@ -133,6 +151,7 @@ class ResponseModification:
             Headers passed here will be added to the final response.
         cookies: Shows *cookies* in the documentation.
             New cookies passed here will be added to the final response.
+        is_stream: Are we working with the stream response?
         description: Text comment about what this response represents.
         links: Possible links to other OpenAPI operations.
 
@@ -147,6 +166,7 @@ class ResponseModification:
     status_code: HTTPStatus
     headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
     cookies: Mapping[str, 'NewCookie | CookieSpec'] | None
+    is_stream: bool
 
     # Metadata:
     description: str | None
@@ -173,6 +193,7 @@ class ResponseModification:
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),
+            is_stream=self.is_stream,
             # Metadata:
             description=self.description,
             links=self.links,
@@ -180,6 +201,13 @@ class ResponseModification:
 
     def infer_return_type(self) -> Any:
         """Infers return type if it needs some extra love."""
+        if self.is_stream:
+            origin = get_origin(self.return_type)
+            type_args = get_args(self.return_type)
+            if origin in _ASYNC_ITERATOR_TYPES:
+                return type_args[0]
+            raise RuntimeError  # TODO: raise
+
         return self.return_type
 
     def actionable_headers(self) -> Mapping[str, 'NewHeader'] | None:
@@ -350,7 +378,28 @@ class EndpointMetadata:
             existing_responses.update({
                 response.status_code: response for response in responses
             })
-        return all_responses
+
+        # We we have stream renderers, we know that they can't be used
+        # for error responses, so we will limit error responses
+        # to be only returned by non-stream ones.
+        # If there are no stream renderers, nothing will happen.
+        non_stream_renderers = {
+            renderer.content_type
+            for renderer in self.renderers.values()
+            if not renderer.is_stream
+        }
+        # Do not limit anything, if there are no stream renderers:
+        return [
+            dataclasses.replace(
+                response,
+                limit_to_content_types=(
+                    None
+                    if len(non_stream_renderers) == len(self.renderers)
+                    else non_stream_renderers
+                ),
+            )
+            for response in all_responses
+        ]
 
     def response_spec_providers(self) -> list[type[ResponseSpecProvider]]:
         """

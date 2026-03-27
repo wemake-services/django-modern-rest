@@ -1,16 +1,6 @@
-from collections.abc import (
-    Callable,
-    Sequence,
-)
+from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Final,
-    TypeAlias,
-    get_args,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, get_args
 
 from dmr.exceptions import ValidationError
 from dmr.serializer import BaseSerializer

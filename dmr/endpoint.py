@@ -150,6 +150,7 @@ class Endpoint:  # noqa: WPS214
         self.response_negotiator = self.response_negotiator_cls(
             self.metadata,
             controller_cls.serializer,
+            is_stream=controller_cls.is_stream,
         )
 
         # We need a func before any wrappers, but with metadata:

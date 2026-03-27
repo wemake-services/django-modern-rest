@@ -115,19 +115,18 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    renderer_keys = list(renderers.keys())
     fallback = next(iter(renderers.values())) if default is None else default
 
     if request.headers.get('Accept') is None:
         return fallback
 
+    renderer_keys = renderers.keys()
     renderer_type = request.get_preferred_type(renderer_keys)
     if renderer_type is None:
-        supported = renderer_keys
         raise NotAcceptableError(
             _CANNOT_SERIALIZE_MSG.format(
                 accepted_types=repr(request.accepted_types),
-                supported=repr(supported),
+                supported=repr(list(renderer_keys)),
             ),
         )
     return renderers[renderer_type]

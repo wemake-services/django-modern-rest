@@ -1,29 +1,13 @@
 import dataclasses
-from collections.abc import (
-    AsyncIterator,
-    Mapping,
-    Set,
-)
+from collections.abc import Mapping
 from http import HTTPStatus
-from typing import (
-    Any,
-    Generic,
-    Literal,
-    NamedTuple,
-    Protocol,
-    final,
-    overload,
-)
+from typing import Any, Generic, Literal, Protocol, final, overload
 
-from typing_extensions import TypeVar, override
+from typing_extensions import TypeVar
 
-from dmr.cookies import NewCookie
 from dmr.headers import HeaderSpec
-from dmr.metadata import EndpointMetadata, ResponseSpec
-from dmr.negotiation import ContentType
-from dmr.openapi import OpenAPIContext
-from dmr.openapi.objects import Response
-from dmr.serializer import BaseSerializer
+from dmr.metadata import ResponseSpec
+from dmr.openapi.objects import Link, Reference
 from dmr.sse.validation import check_event_field
 
 _DataT_co = TypeVar('_DataT_co', covariant=True)
@@ -201,99 +185,30 @@ class SSEvent(Generic[_DataT_co]):
         return self._serialize
 
 
-@dataclasses.dataclass(slots=True, frozen=True)
-class SSEResponseSpec(ResponseSpec):
-    """Subclass to represent the SSE response specification."""
-
-    status_code: Literal[HTTPStatus.OK] = dataclasses.field(
-        kw_only=True,
-        default=HTTPStatus.OK,
+def make_stream_spec(
+    return_type: Any,
+    *,
+    content_type: str,
+    status_code: HTTPStatus = HTTPStatus.OK,
+    headers: Mapping[str, 'HeaderSpec'] | None = None,
+    cookies: Mapping[str, 'CookieSpec'] | None = None,
+    links: dict[str, 'Link | Reference'] | None = None,
+    description: str | None = None,
+) -> ResponseSpec:
+    headers = {
+        'Cache-Control': HeaderSpec(),
+        'X-Accel-Buffering': HeaderSpec(),
+        # WSGI cannot provide `Connection` header in `DEBUG` mode:
+        'Connection': HeaderSpec(skip_validation=True),
+        **(headers or {}),
+    }
+    return ResponseSpec(
+        return_type,
+        status_code=status_code,
+        headers=headers,
+        cookies=cookies,
+        is_stream=True,
+        limit_to_content_types={content_type},
+        links=links,
+        description=description,
     )
-    headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
-        kw_only=True,
-        default_factory=lambda: {
-            'Cache-Control': HeaderSpec(),
-            'X-Accel-Buffering': HeaderSpec(),
-            # wsgi cannot provide `Connection` header in `DEBUG`:
-            'Connection': HeaderSpec(skip_validation=True),
-        },
-    )
-    limit_to_content_types: Set[str] | None = dataclasses.field(
-        kw_only=True,
-        default_factory=lambda: {ContentType.event_stream},
-    )
-    is_stream: Literal[True] = dataclasses.field(
-        kw_only=True,
-        default=True,
-    )
-
-    @override
-    def get_schema(
-        self,
-        metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
-        context: OpenAPIContext,
-    ) -> Response:
-        """Customizes how response's schemas are rendered."""
-        return context.generators.response.get_schema(
-            self,
-            metadata,
-            serializer,
-            context,
-            schema_field_name='item_schema',
-            # Despite the fact that it looks like a response,
-            # produced events are not regular responses.
-            used_for_response=False,
-        )
-
-
-_EventT_co = TypeVar('_EventT_co', bound=SSE, covariant=True)
-
-
-@final
-@dataclasses.dataclass(slots=True, frozen=True)
-class SSEResponse(Generic[_EventT_co]):
-    """
-    Future response representation.
-
-    Not a real response.
-    We need this type, because creating
-    :class:`dmr.sse.stream.SSEStreamingResponse` is quite complex.
-    We don't want users to have a complicated API.
-    So, instead: return this metadata class,
-    we will transform it to the stream later on.
-
-    Attributes:
-        streaming_content: Async iterator of server sent events.
-        headers: Headers to be set on the response object.
-        cookies: Cookies to be set on the response object.
-        event_model: Optional explicit event model to be used
-            for the runtime validation of events' data.
-
-    """
-
-    streaming_content: AsyncIterator[_EventT_co]
-    headers: Mapping[str, str] | None = None
-    cookies: Mapping[str, NewCookie] | None = None
-
-
-_PathT = TypeVar('_PathT', default=None)
-_QueryT = TypeVar('_QueryT', default=None)
-_HeadersT = TypeVar('_HeadersT', default=None)
-_CookiesT = TypeVar('_CookiesT', default=None)
-
-
-@final
-class SSEContext(NamedTuple, Generic[_PathT, _QueryT, _HeadersT, _CookiesT]):
-    """
-    Parsed context for the SSE endpoint.
-
-    All properties always exist.
-    If some component parser is not passed, we provide ``None`` as a default.
-    All properties here have type vars that default to ``None`` as well.
-    """
-
-    parsed_path: _PathT
-    parsed_query: _QueryT
-    parsed_headers: _HeadersT
-    parsed_cookies: _CookiesT

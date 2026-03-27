@@ -91,6 +91,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type.
+        is_stream: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
@@ -128,6 +129,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
+    is_stream: ClassVar[bool] = False
 
     # OpenAPI:
     summary: ClassVar[str | None] = None

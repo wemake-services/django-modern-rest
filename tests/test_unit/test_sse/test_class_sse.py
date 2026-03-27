@@ -5,13 +5,11 @@ from typing import TypeAlias
 import pytest
 
 from dmr import validate
+from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.sse import (
-    SSEResponseSpec,
-    SSEStreamingResponse,
-    SSEvent,
-)
-from dmr.sse.builder import _BaseSSEController
+from dmr.sse import SSEStreamingResponse, SSEvent
+from dmr.sse.controller import SSEController
+from dmr.sse.metadata import make_stream_spec
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -23,8 +21,13 @@ async def _valid_events() -> AsyncIterator[_EventsType]:
     yield SSEvent(b'multiline\nbyte\nstring', serialize=False)
 
 
-class _ValidateBasedSSE(_BaseSSEController[PydanticSerializer]):
-    @validate(SSEResponseSpec(_EventsType))
+class _ValidateBasedSSE(SSEController[PydanticSerializer]):
+    @validate(
+        make_stream_spec(
+            _EventsType,
+            content_type=ContentType.event_stream,
+        ),
+    )
     async def get(self) -> SSEStreamingResponse:
         return self.to_sse_response(_valid_events())
 

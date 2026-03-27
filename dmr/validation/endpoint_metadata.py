@@ -292,6 +292,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 if payload.status_code is None
                 else payload.status_code
             ),
+            is_stream=self.controller_cls.is_stream,
             description=payload.response_description,
             links=payload.links,
         )
@@ -333,6 +334,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             status_code=status_code,
             headers=None,
             cookies=None,
+            is_stream=self.controller_cls.is_stream,
             description=None,
             links=None,
         )
