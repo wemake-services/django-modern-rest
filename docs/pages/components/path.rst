@@ -153,6 +153,12 @@ What happens in this example?
 
   https://docs.djangoproject.com/en/stable/topics/http/urls/#using-unnamed-regular-expression-groups
 
+.. note::
+
+  OpenAPI generation does not yet resolve unnamed ``re_path`` capture groups,
+  so the example above omits the embedded ``openapi.json`` preview that other
+  component examples include.
+
 
 Customizing OpenAPI metadata for Path
 -------------------------------------

@@ -51,4 +51,5 @@ urlpatterns = [
 
 # run: {"controller": "ItemController", "method": "get", "url": "/api/items/10/20/", "use_urlpatterns": true}  # noqa: ERA001, E501
 # run: {"controller": "DayItemController", "method": "get", "url": "/api/items/10/20/25/", "use_urlpatterns": true}  # noqa: ERA001, E501
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# No ``# openapi:`` preview: ``build_schema`` cannot yet resolve unnamed
+# ``re_path`` groups (see ``test_args_path_schema`` xfail in the test suite).
