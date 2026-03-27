@@ -377,11 +377,13 @@ async def test_event_response_validation(
 @pytest.mark.asyncio
 @pytest.mark.parametrize('serializer', serializers)
 @pytest.mark.parametrize('validate_responses', [True, False, None])
+@pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.POST])
 async def test_sse_api_error(
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     serializer: type[BaseSerializer],
     validate_responses: bool | None,
+    method: HTTPMethod,
 ) -> None:
     """Ensures that raising API errors is supported in SSE."""
 
@@ -397,7 +399,13 @@ async def test_sse_api_error(
                 status_code=HTTPStatus.CONFLICT,
             )
 
-    request = dmr_async_rf.get('/whatever/')
+        async def post(self) -> StreamingResponse:
+            return self.to_error(
+                format_error('API Error'),
+                status_code=HTTPStatus.CONFLICT,
+            )
+
+    request = dmr_async_rf.generic(str(method), '/whatever/')
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
