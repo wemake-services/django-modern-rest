@@ -14,7 +14,9 @@ def build_schema(router: 'Router', *, context: OpenAPIContext) -> OpenAPI: ...
 
 @overload
 def build_schema(
-    router: 'Router', *, config: OpenAPIConfig | None = None
+    router: 'Router',
+    *,
+    config: OpenAPIConfig | None = None,
 ) -> OpenAPI: ...
 
 
