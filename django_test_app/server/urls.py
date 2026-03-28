@@ -18,11 +18,7 @@ from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
 from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.config import get_config
-
-try:
-    from dmr.openapi.views import OpenAPIYamlView
-except ImportError:  # pragma: no cover
-    OpenAPIYamlView = None
+from dmr.openapi.views.yaml import OpenAPIYamlView
 
 router = Router(
     prefix='api/',
@@ -90,14 +86,13 @@ urlpatterns = [
     path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
 ]
 
-if OpenAPIYamlView is not None:
-    urlpatterns.append(
-        path(
-            'docs/openapi.yaml/',
-            OpenAPIYamlView.as_view(schema),
-            name='openapi-yaml',
-        ),
-    )
+urlpatterns.append(
+    path(
+        'docs/openapi.yaml/',
+        OpenAPIYamlView.as_view(schema),
+        name='openapi-yaml',
+    ),
+)
 
 handler404 = build_404_handler(
     router.prefix,

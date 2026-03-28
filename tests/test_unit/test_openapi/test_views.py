@@ -18,7 +18,7 @@ from dmr.routing import Router
 from dmr.test import DMRRequestFactory
 
 try:
-    from dmr.openapi.views import OpenAPIYamlView
+    from dmr.openapi.views.yaml import OpenAPIYamlView
 except ImportError:  # pragma: no cover
     OpenAPIYamlView = None
 

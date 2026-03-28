@@ -10,7 +10,7 @@ from dmr.settings import Settings
 from dmr.test import DMRClient
 
 try:
-    from dmr.openapi.views import OpenAPIYamlView
+    from dmr.openapi.views.yaml import OpenAPIYamlView
 except ImportError:  # pragma: no cover
     OpenAPIYamlView = None
 
