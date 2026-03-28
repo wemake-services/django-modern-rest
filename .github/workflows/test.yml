@@ -73,9 +73,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.12']
         django-version:
-          - 'Django~=5.2.0'
           - 'Django~=6.0.0'
 
     steps:

@@ -28,4 +28,4 @@ urlpatterns = [
     path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
 ]
 
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

@@ -11,4 +11,4 @@ class APIController(Controller[PydanticSerializer]):
         return 'will not have semantic responses'
 
 
-# openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001

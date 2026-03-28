@@ -74,7 +74,7 @@ jwt = ["pyjwt"]
 openapi = ["openapi-spec-validator", "polyfactory"]
 
 [tool.poetry.group.dev.dependencies]
-django = { version = "^6.0", python = ">=3.12" }
+django = "^5.2"
 django-stubs = { version = ">=6.0,<6.1", extras = ["compatible-mypy"] }
 types-docutils = "^0.22"
 pyright = "^1.1"
@@ -99,12 +99,12 @@ dirty-equals = "^0.11"
 faker = "^40.1"
 inline-snapshot = "^0.32"
 syrupy = "^5.1"
-schemathesis = "^4.12"
-tracecov = "^0.19.3"
+schemathesis = "<4.14"
+tracecov = "^0.19"
 polyfactory = "^3.2"
 
 httpx = "^0.28"
-xmltodict-rs = "^0.13.9"
+xmltodict-rs = "^0.13"
 
 [tool.poetry.group.docs]
 optional = true
@@ -113,7 +113,7 @@ optional = true
 sphinx = "^9.0"
 sphinx-autodoc-typehints = "^3.0"
 sphinx-iconify = "^0.3"
-sphinx-tabs = "^3.4"
+sphinx-tabs = "^3.5"
 sphinx-contributors = "^0.2"
 sphinx-copybutton = "^0.5"
 sphinx-design = "^0.7"
@@ -121,16 +121,14 @@ sphinxcontrib-mermaid = "^2.0"
 sphinx-llms-txt = "^0.7"
 myst-parser = "^5.0"
 shibuya = "^2026.1"
-# TODO: remove when `sphinx-tabs` is fixed:
-# https://github.com/executablebooks/sphinx-tabs/issues/212
-docutils = "0.21.2"
+docutils = "^0.22"
 
 # Needed for our extension:
 uvicorn = "^0.41"
 httpx = "^0.28"
 
 # Needed for examples:
-xmltodict-rs = "^0.13.9"
+xmltodict-rs = "^0.13"
 django-mantle = "^26.6"
 
 
