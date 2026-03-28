@@ -105,6 +105,7 @@ polyfactory = "^3.2"
 
 httpx = "^0.28"
 xmltodict-rs = "^0.13"
+pytest-codspeed = "^4.3.0"
 
 [tool.poetry.group.docs]
 optional = true
