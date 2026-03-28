@@ -17,6 +17,11 @@ from dmr.openapi.views import (
 from dmr.routing import Router
 from dmr.test import DMRRequestFactory
 
+try:
+    from dmr.openapi.views import OpenAPIYamlView
+except ImportError:  # pragma: no cover
+    OpenAPIYamlView = None
+
 
 def test_json_view(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that ``OpenAPIJsonView`` returns correct JSON response."""
@@ -34,6 +39,36 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
         'paths': {},
         'components': {'schemas': {}, 'securitySchemes': {}},
     })
+
+
+@pytest.mark.skipif(
+    OpenAPIYamlView is None,
+    reason='`msgspec` is required for OpenAPIYamlView',
+)
+def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
+    """Ensure that ``OpenAPIYamlView`` returns correct YAML response."""
+    assert OpenAPIYamlView is not None
+
+    schema = build_schema(Router('', []))
+    request = dmr_rf.get('/whatever/')
+
+    response = OpenAPIYamlView.as_view(schema)(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert response['Content-Type'] == 'application/yaml'
+    assert response.content.decode('utf-8') == snapshot(
+        """\
+info:
+  title: Django Modern Rest
+  version: 0.1.0
+openapi: 3.1.0
+paths: {}
+components:
+  schemas: {}
+  securitySchemes: {}
+""",
+    )
 
 
 @pytest.mark.parametrize(

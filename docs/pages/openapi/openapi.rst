@@ -21,6 +21,7 @@ We support:
 - `Stoplight Elements <https://github.com/stoplightio/elements>`_
   with :class:`~dmr.openapi.views.StoplightView`
 - ``openapi.json`` with :class:`~dmr.openapi.views.OpenAPIJsonView`
+- ``openapi.yaml`` with ``OpenAPIYamlView`` when ``msgspec`` is installed
 
 Here's how it works:
 
@@ -77,6 +78,11 @@ What happens in the example above?
     ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0',
     ...     },
     ... }
+
+.. note::
+
+  ``openapi.yaml`` is only available when ``msgspec`` is installed,
+  because YAML dumping uses ``msgspec.yaml``.
 
 
 Customizing OpenAPI config

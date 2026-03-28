@@ -9,6 +9,11 @@ from django.urls import reverse
 from dmr.settings import Settings
 from dmr.test import DMRClient
 
+try:
+    from dmr.openapi.views import OpenAPIYamlView
+except ImportError:  # pragma: no cover
+    OpenAPIYamlView = None
+
 
 @pytest.fixture(params=[True, False], name='use_cdn')
 def use_cdn(request: pytest.FixtureRequest) -> bool:
@@ -48,6 +53,12 @@ _ENDPOINTS: Final = MappingProxyType({
     'scalar': 'text/html',
     'stoplight': 'text/html',
 })
+
+if OpenAPIYamlView is not None:
+    _ENDPOINTS = MappingProxyType({
+        **_ENDPOINTS,
+        'openapi-yaml': 'application/yaml',
+    })
 
 
 @pytest.mark.parametrize(
@@ -97,3 +108,14 @@ def test_returns_correct_structure(dmr_client: DMRClient) -> None:
     response = dmr_client.get(reverse('openapi'))
 
     assert response.json()['openapi'] == '3.1.0'
+
+
+@pytest.mark.skipif(
+    OpenAPIYamlView is None,
+    reason='`msgspec` is required for OpenAPI YAML endpoint',
+)
+def test_yaml_endpoint_returns_correct_structure(dmr_client: DMRClient) -> None:
+    """Ensure that OpenAPI YAML endpoint returns correct structure."""
+    response = dmr_client.get(reverse('openapi-yaml'))
+
+    assert 'openapi: 3.1.0' in response.content.decode('utf-8')

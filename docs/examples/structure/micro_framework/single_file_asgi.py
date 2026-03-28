@@ -9,7 +9,7 @@ from django.urls import include
 
 from dmr import Body, Controller
 from dmr.openapi import build_schema
-from dmr.openapi.views import OpenAPIJsonView, SwaggerView
+from dmr.openapi.views import OpenAPIJsonView, OpenAPIYamlView, SwaggerView
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, path
 
@@ -62,6 +62,11 @@ schema = build_schema(router)
 urlpatterns = [
     path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
+    path(
+        'docs/openapi.yaml/',
+        OpenAPIYamlView.as_view(schema),
+        name='openapi-yaml',
+    ),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
 ]
 
@@ -71,4 +76,4 @@ if __name__ == '__main__':
     execute_from_command_line(sys.argv)
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wemake.services"}, "url": "/api/user/", "use_urlpatterns": true}  # noqa: ERA001, E501
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.yaml/", "use_urlpatterns": true}  # noqa: ERA001, E501
