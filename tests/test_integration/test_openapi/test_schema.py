@@ -1,19 +1,50 @@
+from typing import TYPE_CHECKING
+
 import pytest
 import schemathesis as st
 import tracecov
 from django.conf import LazySettings
 from django.urls import reverse
-from schemathesis.specs.openapi.schemas import OpenApiSchema
 from tracecov.schemathesis import helpers
 
 from django_test_app.server.wsgi import application
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+    from schemathesis.specs.openapi.schemas import OpenApiSchema
+
+
+@st.auth()
+class JWTAuth:
+    """Fetch JWT access token and apply it as Bearer auth header."""
+
+    def get(self, case: st.Case, ctx: st.AuthContext) -> str:
+        """Retrieve JWT token from the auth endpoint."""
+        from dmr.test import DMRClient  # noqa: PLC0415
+
+        response = DMRClient().post(
+            reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+            data={
+                'username': 'admin',
+                'password': 'password',
+            },
+        )
+        return response.json()['access_token']  # type: ignore[no-any-return]
+
+    def set(self, case: st.Case, data: str, ctx: st.AuthContext) -> None:
+        """Set the JWT token in the request ``Authorization`` header."""
+        case.headers['Authorization'] = f'Bearer {data}'
 
 
 # The `db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
+# The `admin_user` fixture is required here so that `JWTAuth` can use
+# its credentials (username and password) for authentication.
+# This follows the `pytest-django` pattern for creating user fixtures:
+# https://github.com/pytest-dev/pytest-django/blob/main/pytest_django/fixtures.py#L483
 @pytest.fixture
-def api_schema(db: None) -> 'OpenApiSchema':
+def api_schema(db: None, admin_user: 'User') -> 'OpenApiSchema':
     """Load OpenAPI schema as a pytest fixture."""
     return st.openapi.from_wsgi(reverse('openapi'), application)
 
