@@ -60,10 +60,6 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    MsgspecSerializer is None,
-    reason='regular json formats it differently',
-)
 @pytest.mark.parametrize(
     'method',
     [
@@ -213,6 +209,42 @@ async def test_sse_close_error(
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
         b'event: first\r\ndata: 1\r\n\r\n'
+    )
+
+
+class _SSEWithNewlines(SSEController[PydanticSerializer]):
+    async def get(self) -> AsyncIterator[SSEvent[Any]]:
+        return self._events()
+
+    async def _events(self) -> AsyncIterator[SSEvent[Any]]:
+        yield SSEvent({'newline in key\n': 1})
+        yield SSEvent(['list item with\nnewline'])
+        yield SSEvent('new\r\nline in str')
+        yield SSEvent(b'new\r\nline in bytes', serialize=False)
+
+
+@pytest.mark.asyncio
+async def test_sse_newlines_in_data(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that newlines in different data."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_SSEWithNewlines.as_view()(request))
+
+    assert isinstance(response, StreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert await get_streaming_content(response) == (
+        b'data: {"newline in key\\n":1}\r\n'  # noqa: WPS342
+        b'\r\n'
+        b'data: ["list item with\\nnewline"]\r\n'  # noqa: WPS342
+        b'\r\n'
+        b'data: "new\\r\\nline in str"\r\n'  # noqa: WPS342
+        b'\r\n'
+        b'data: new\r\n'
+        b'data: line in bytes\r\n'
+        b'\r\n'
     )
 
 
