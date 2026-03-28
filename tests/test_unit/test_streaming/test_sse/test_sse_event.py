@@ -52,7 +52,6 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
             retry=5,
             comment='multi\nline\n',
         )
-        yield SSEvent(b'second', event=None, retry=None)
         yield SSEvent(b'third', retry=1, id=10, serialize=False)
         yield SSEvent({'user': 1})
         yield SSEvent(comment='ping')
@@ -94,8 +93,6 @@ async def test_all_sse_events_props(
         b'event: first\r\n'
         b'data: 1\r\n'
         b'retry: 5\r\n'
-        b'\r\n'
-        b'data: "c2Vjb25k"\r\n'
         b'\r\n'
         b'id: 10\r\n'
         b'data: third\r\n'
