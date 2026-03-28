@@ -1,7 +1,7 @@
-<!-- 
+<!--
 AI Policy.
 
-Copied from 
+Copied from
 https://github.com/astral-sh/.github/blob/main/AI_POLICY.md
 undert MIT license.
 
