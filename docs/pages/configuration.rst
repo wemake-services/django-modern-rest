@@ -300,7 +300,7 @@ Streaming
 
   Should we validate the events in all streams?
   Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
-  for convience if this value is ``None``.
+  for convenience if this value is ``None``.
 
   To disable the event validation globally, use:
 

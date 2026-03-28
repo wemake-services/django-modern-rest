@@ -14,7 +14,7 @@ When to use SSE? When you have a single directional stream of events.
 These events are sent over a single HTTP connection.
 
 We base our API around :class:`dmr.streaming.sse.controller.SSEController`
-type which is a sligtly modified subclass
+type which is a slightly modified subclass
 of a regular :class:`~dmr.controller.Controller`.
 
 Streaming controllers support all the same features:
@@ -247,7 +247,7 @@ How does we know the model for events to be validated against?
 - It might be specified as the ``return_type``
   in the :class:`~dmr.metadata.ResponseSpec` of ``@validate``
   for the given status code
-- It might be speficied as the type argument to generic
+- It might be specified as the type argument to generic
   :class:`collections.abc.AsyncIterator` return type
   in ``@modify`` styled endpoint.
 

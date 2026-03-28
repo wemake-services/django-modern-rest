@@ -65,7 +65,7 @@ class StreamingValidator:
         *,
         validate_events: bool,
     ) -> None:
-        """Initiailize the validator."""
+        """Initialize the validator."""
         self._event_model = event_model
         self._serializer = serializer
         self._validate_events = validate_events

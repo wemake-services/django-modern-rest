@@ -81,7 +81,7 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
 
     # Why?
     # Because it is only used by ASGI / WSGI handlers which don't care
-    # about typing at all. But, it helps to prevent different user erros.
+    # about typing at all. But, it helps to prevent different user errors.
     if not TYPE_CHECKING:  # pragma: no branch  # noqa: WPS604
 
         @override

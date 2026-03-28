@@ -55,7 +55,7 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
 async def test_sse_validation(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
-    """Ensures that validation errors renderes."""
+    """Ensures that validation errors render correctly."""
     request = dmr_async_rf.get('/whatever/')
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
