@@ -1,3 +1,4 @@
+import sys
 import typing
 from collections.abc import AsyncGenerator, AsyncIterator
 
@@ -11,10 +12,18 @@ from dmr.streaming.sse import SSEController
 @pytest.mark.parametrize(
     'annotation',
     [
-        AsyncGenerator,
-        AsyncIterator,
-        typing.AsyncIterator,
-        typing.AsyncGenerator,
+        AsyncGenerator[str, None],
+        AsyncIterator[int],
+        typing.AsyncIterator[str],
+        typing.AsyncGenerator[bytes, object],
+        *(
+            []
+            if sys.version_info < (3, 13)
+            else [
+                AsyncGenerator[float],
+                typing.AsyncGenerator[typing.Any],
+            ]
+        ),
     ],
 )
 def test_type_annotation(
@@ -24,7 +33,7 @@ def test_type_annotation(
     """Ensures that all correct type annotations work."""
 
     class _ClassBasedSSE(SSEController[PydanticSerializer]):
-        async def get(self) -> annotation[str]:  # pyright: ignore[reportInvalidTypeForm]
+        async def get(self) -> annotation:  # pyright: ignore[reportInvalidTypeForm]
             raise NotImplementedError
 
 

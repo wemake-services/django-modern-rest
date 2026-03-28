@@ -172,6 +172,8 @@ class JsonRenderer(Renderer):
             to_serialize,
             cls=self._encoder_cls,
             serializer_hook=serializer_hook,
+            # We need this flag to produce the same results as `msgspec`:
+            separators=(',', ':'),
         ).encode('utf8')
 
     @property

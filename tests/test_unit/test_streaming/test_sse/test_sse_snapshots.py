@@ -133,27 +133,15 @@ async def test_complex_sse_implementation(
         'X-Accel-Buffering': 'no',
         'Connection': 'keep-alive',
     }
-    if MsgspecSerializer is None:  # pragma: no cover
-        # Slightly different format:
-        assert await get_streaming_content(response) == (
-            b'id: 1\r\n'
-            b'event: user\r\n'
-            b'data: "sobolevn"\r\n'
-            b'\r\n'
-            b'event: payment\r\n'
-            b'data: {"amount": 10, "currency": "$"}\r\n'
-            b'\r\n'
-        )
-    else:  # pragma: no cover
-        assert await get_streaming_content(response) == (
-            b'id: 1\r\n'
-            b'event: user\r\n'
-            b'data: "sobolevn"\r\n'
-            b'\r\n'
-            b'event: payment\r\n'
-            b'data: {"amount":10,"currency":"$"}\r\n'
-            b'\r\n'
-        )
+    assert await get_streaming_content(response) == (
+        b'id: 1\r\n'
+        b'event: user\r\n'
+        b'data: "sobolevn"\r\n'
+        b'\r\n'
+        b'event: payment\r\n'
+        b'data: {"amount":10,"currency":"$"}\r\n'
+        b'\r\n'
+    )
 
 
 def test_complex_sse_schema(snapshot: SnapshotAssertion) -> None:

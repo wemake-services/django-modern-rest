@@ -22,6 +22,10 @@ but with a deprecation period.
 3. We removed `drm.routing.compose_blueprints` function,
    because there no `Blueprint`s anymore :)
 
+4. We completely changed our SSE and streaming API, see #736
+   Old API was removed, new one was introduced.
+   `dmr.sse` package was moved to `dmr.streaming.sse`
+
 We always ship AI prompts to all breaking changes.
 So, it would be easier for you to migrate
 to a newer version using AI tool of your choice.
@@ -86,11 +90,85 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 
 3. Replace all `Blueprint` and `compose_blueprints` references with a new API:
   Instead you must use `Controller` and different methods under a single class
+4. Now, change all `@sse`-based controllers to new `SSEController` API, from:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+  from django.http import HttpRequest
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
+
+
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
+
+
+  async def produce_user_events(
+      request_headers: HeaderModel,
+  ) -> AsyncIterator[SSEvent[str]]:
+      if request_headers.last_event_id:
+          yield SSEvent(f'starting from {request_headers.last_event_id}')
+      else:
+          yield SSEvent('starting from scratch')
+
+
+  @sse(MsgspecSerializer, headers=Headers[HeaderModel])
+  async def user_events(
+      request: HttpRequest,
+      context: SSEContext[None, None, HeaderModel],
+  ) -> SSEResponse[SSEvent[str]]:
+      return SSEResponse(produce_user_events(context.parsed_headers))
+  ```
+
+  To:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.streaming.sse import SSEController, SSEvent
+
+
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
+
+
+  class UserEventsController(SSEController[MsgspecSerializer]):
+      def get(
+          self,
+          parsed_headers: Headers[HeaderModel],
+      ) -> AsyncIterator[SSEvent[str]]:
+          return self.produce_user_events(parsed_headers)
+
+      async def produce_user_events(
+          self,
+          parsed_headers: HeaderModel,
+      ) -> AsyncIterator[SSEvent[str]]:
+          if parsed_headers.last_event_id is None:
+              yield SSEvent('starting from scratch')
+          else:
+              yield SSEvent(f'starting from {parsed_headers.last_event_id}')
+  ```
+5. Replace old `dmr.sse` imports with new `dmr.streaming.sse` alternatives
 
 ### Features
 
 - Added `@attrs.define` official support, #706
 - Added `msgpack` parser and renderer, #630
+- Added `SSE` support for non-`GET` methods, `Body` component parsing, #736
 - Added `i18n` support for user-facing error messages
   using Django's `gettext_lazy`, #426
 - Added `MediaType` validation for the default `encoding` field
@@ -117,6 +195,8 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Added `$dmr-from-drf` AI agent skill, #744
 - Added ETag usage docs, #699
 - Added multiple translations for the user-facing error messages, #718
+- Now `MsgspecJsonRenderer` and `JsonRenderer` produce
+  the same `json` string in terms of whitespaces, #736
 
 
 ## Version 0.3.0 (2026-03-17)

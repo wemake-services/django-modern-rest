@@ -53,4 +53,4 @@ def test_parser_order(rf: RequestFactory) -> None:
     assert isinstance(request_renderer(real_request), JsonRenderer)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert response.content == snapshot(b'{"a": "b"}')
+    assert response.content == snapshot(b'{"a":"b"}')

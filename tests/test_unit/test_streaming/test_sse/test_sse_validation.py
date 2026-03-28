@@ -73,25 +73,14 @@ async def test_valid_sse(
         'X-Accel-Buffering': 'no',
         'Connection': 'keep-alive',
     }
-    # Two renderers have a slightly different format:
-    if MsgspecSerializer is None:  # pragma: no cover
-        assert await get_streaming_content(response) == (
-            b'data: {"email": "first@example.com"}\r\n'
-            b'\r\n'
-            b'data: multiline\r\n'
-            b'data: byte\r\n'
-            b'data: string\r\n'
-            b'\r\n'
-        )
-    else:  # pragma: no cover
-        assert await get_streaming_content(response) == (
-            b'data: {"email":"first@example.com"}\r\n'
-            b'\r\n'
-            b'data: multiline\r\n'
-            b'data: byte\r\n'
-            b'data: string\r\n'
-            b'\r\n'
-        )
+    assert await get_streaming_content(response) == (
+        b'data: {"email":"first@example.com"}\r\n'
+        b'\r\n'
+        b'data: multiline\r\n'
+        b'data: byte\r\n'
+        b'data: string\r\n'
+        b'\r\n'
+    )
 
 
 _OptionFlagsType: TypeAlias = tuple[
