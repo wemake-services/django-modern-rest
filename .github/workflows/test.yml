@@ -75,6 +75,7 @@ jobs:
       matrix:
         python-version: ['3.13']
         django-version:
+          - 'Django~=5.2.0'
           - 'Django~=6.0.0'
 
     steps:
