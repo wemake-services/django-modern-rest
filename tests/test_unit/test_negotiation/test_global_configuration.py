@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, final
+from typing import Annotated, Any, Final, final
 
 import pydantic
 import pytest
@@ -36,7 +36,7 @@ class _RequestModel(pydantic.BaseModel):
     root: dict[str, str]
 
 
-_xml_data = """<?xml version="1.0" encoding="utf-8"?>
+_xml_data: Final = """<?xml version="1.0" encoding="utf-8"?>
 <root>
     <key>value</key>
 </root>"""
@@ -86,7 +86,7 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
         ),
         (
             {'Content-Type': 'application/json', 'Accept': 'application/xml'},
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
@@ -95,7 +95,7 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml,application/json',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
@@ -104,43 +104,43 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
                 'Content-Type': 'application/json',
                 'Accept': 'application/json,application/xml',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml;q=0.7,application/json;q=0.9',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml+pretty;q=0.7,application/json;q=0.9',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {},
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
         (
             {'Accept': 'application/xml,application/json'},
-            b'{"root": {"key": "value"}}',
+            b'{"root": {"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
@@ -172,8 +172,7 @@ def test_per_controller_customization(
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
-    request = dmr_rf.generic(
-        'POST',
+    request = dmr_rf.post(
         '/whatever/',
         headers=request_headers,
         data=request_data,
@@ -487,7 +486,7 @@ def test_missing_conditional_content_type(
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             b'"value"',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
     ],
 )
@@ -664,7 +663,7 @@ class _CustomXmlErrorModel(TypedDict):
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             {'Content-Type': 'application/json'},
             (
-                b'{"json_errors": [{"reason": '
+                b'{"json_errors":[{"reason":'
                 b'"Input should be a valid dictionary or instance '
                 b"of _RequestModel: ['parsed_body']\"}]}"
             ),
@@ -753,7 +752,7 @@ def test_conditional_error_model(
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             {'Content-Type': 'application/json'},
-            b'{"xml_errors": {"json_errors": "Field required"}}',
+            b'{"xml_errors":{"json_errors":"Field required"}}',
         ),
     ],
 )

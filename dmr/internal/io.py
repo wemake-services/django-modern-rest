@@ -1,7 +1,7 @@
 import asyncio
-from collections.abc import AsyncIterator, Iterator
-from contextlib import closing
-from typing import TYPE_CHECKING, TypeVar
+from collections.abc import AsyncIterable, AsyncIterator, Iterator
+from contextlib import aclosing, closing, nullcontext
+from typing import TYPE_CHECKING, Any, TypeVar
 
 _ItemT = TypeVar('_ItemT')
 
@@ -47,3 +47,17 @@ def aiter_to_iter(aiterator: AsyncIterator[_ItemT]) -> Iterator[_ItemT]:
             pass  # noqa: WPS420
         else:
             loop.run_until_complete(aclose())  # pyright: ignore[reportUnknownArgumentType]
+
+
+def maybe_aclosing(
+    streaming_content: AsyncIterable[Any],
+) -> aclosing[Any] | nullcontext[Any]:
+    """Possibly close the async iterator if it is possible."""
+    # We want to close any async generators after they are fully used.
+    # Why? Because they can be cancelled at any point
+    # and not do any cleanup.
+    return (
+        aclosing(streaming_content)
+        if hasattr(streaming_content, 'aclose')
+        else nullcontext()
+    )

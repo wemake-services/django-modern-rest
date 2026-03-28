@@ -152,7 +152,7 @@ class TypeVarInference:
         Run the inference.
 
         Returns:
-            Mapping of type vars to its inferenced valued.
+            Mapping of type vars to its inferenced values.
             It can still be a type variable, if no real values are provided.
 
         """

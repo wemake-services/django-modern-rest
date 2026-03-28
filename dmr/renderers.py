@@ -2,7 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
@@ -35,6 +35,9 @@ class Renderer(ResponseSpecProvider):
 
     Must be defined for all subclasses.
     """
+
+    streaming: ClassVar[bool] = False
+    """Whether or not this renderer is used for streaming responses."""
 
     @abc.abstractmethod
     def render(
@@ -169,6 +172,8 @@ class JsonRenderer(Renderer):
             to_serialize,
             cls=self._encoder_cls,
             serializer_hook=serializer_hook,
+            # We need this flag to produce the same results as `msgspec`:
+            separators=(',', ':'),
         ).encode('utf8')
 
     @property

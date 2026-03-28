@@ -123,8 +123,8 @@ def test_format_error_parameter(dmr_rf: DMRRequestFactory) -> None:
             {'Accept': 'application/json'},
             {'Content-Type': 'application/json'},
             (
-                b'{"detail": [{"msg": "Internal server error", '
-                b'"type": "internal_error"}]}'
+                b'{"detail":[{"msg":"Internal server error",'
+                b'"type":"internal_error"}]}'
             ),
         ),
         (
@@ -149,8 +149,8 @@ def test_format_error_parameter(dmr_rf: DMRRequestFactory) -> None:
             {'Accept': 'application/json, application/xml'},
             {'Content-Type': 'application/json'},
             (
-                b'{"detail": [{"msg": "Internal server error", '
-                b'"type": "internal_error"}]}'
+                b'{"detail":[{"msg":"Internal server error",'
+                b'"type":"internal_error"}]}'
             ),
         ),
     ],

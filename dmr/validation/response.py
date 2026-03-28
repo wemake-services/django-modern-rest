@@ -59,7 +59,10 @@ class ResponseValidator:  # noqa: WPS214
         if not self.metadata.validate_responses:
             return response
         schema = self._get_response_schema(response.status_code)
-        renderer = request_renderer(controller.request)
+        renderer = request_renderer(
+            controller.request,
+            use_nonstreaming_renderer=True,
+        )
         parser = response_validation_negotiator(
             controller.request,
             response,
@@ -218,6 +221,9 @@ class ResponseValidator:  # noqa: WPS214
         else:
             model = schema.return_type
 
+        if schema.streaming:
+            return  # We can't validate stream returns below this point.
+
         try:
             self.serializer.from_python(
                 structured,
@@ -228,7 +234,6 @@ class ResponseValidator:  # noqa: WPS214
         except self.serializer.validation_error as exc:
             raise ValidationError(
                 self.serializer.serialize_validation_error(exc),
-                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             ) from None
 
     def _validate_response_headers(  # noqa: WPS210

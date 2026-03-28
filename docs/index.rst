@@ -177,7 +177,6 @@ Here are our amazing people who made this project possible.
   pages/reusable-code.rst
   pages/integrations.rst
   pages/internalization.rst
-  pages/sse.rst
   pages/testing.rst
 
 
@@ -189,6 +188,15 @@ Here are our amazing people who made this project possible.
   pages/auth/http-basic.rst
   pages/auth/django-session.rst
   pages/auth/jwt.rst
+
+
+.. toctree::
+  :caption: Streaming
+  :hidden:
+
+  pages/streaming/common.rst
+  pages/streaming/sse.rst
+  pages/streaming/jsonl.rst
 
 
 .. toctree::
