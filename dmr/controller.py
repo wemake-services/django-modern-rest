@@ -69,6 +69,10 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Works in runtime, can be disabled for better performance.
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
@@ -91,6 +95,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type.
+        streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
@@ -118,6 +123,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     semantic_responses: ClassVar[bool | None] = None
+    validate_events: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
@@ -128,6 +134,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
+    streaming: ClassVar[bool] = False
 
     # OpenAPI:
     summary: ClassVar[str | None] = None
@@ -146,26 +153,12 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     def __init_subclass__(cls) -> None:
         """Construct a controller."""
         super().__init_subclass__()
-        type_args = infer_type_args(cls, Controller)
-        if not type_args:
-            raise UnsolvableAnnotationsError(
-                f'Type args {type_args} are not correct for {cls}, '
-                'at least 1 type arg must be provided',
-            )
-        if isinstance(type_args[0], TypeVar):  # noqa: WPS204
-            return  # This is a generic subclass of a controller.
-        if not issubclass(type_args[0], BaseSerializer):
-            raise UnsolvableAnnotationsError(
-                f'Type arg {type_args[0]} is not correct for {cls}, '
-                'it must be a BaseSerializer subclass',
-            )
-        if type_args[0] is BaseSerializer:
-            raise UnsolvableAnnotationsError(
-                f'Type arg {type_args[0]} is not correct for {cls}, '
-                'it must be a BaseSerializer subclass',
-            )
+        serializer = cls._infer_serializer()
+        if serializer is None:
+            return  # this is an abstract controller
+
         cls.is_abstract = False
-        cls.serializer = type_args[0]
+        cls.serializer = serializer
         cls.settings_validator_cls(serializer=cls.serializer)()
 
         # Now it is validated that we don't have intersections.
@@ -284,7 +277,13 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             headers=headers,
             cookies=cookies,
             status_code=status_code,
-            renderer=renderer or request_renderer(self.request),
+            renderer=(
+                renderer
+                or request_renderer(
+                    self.request,
+                    use_nonstreaming_renderer=True,
+                )
+            ),
         )
 
     def format_error(
@@ -511,6 +510,27 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         return cls._is_async is True
 
     # Protected API:
+
+    @classmethod
+    def _infer_serializer(cls) -> type[_SerializerT_co] | None:
+        type_args = infer_type_args(cls, Controller)
+        if not type_args:
+            raise UnsolvableAnnotationsError(
+                f'Type args {type_args} are not correct for {cls}, '
+                'at least 1 type arg must be provided',
+            )
+        serializer = type_args[0]
+        if isinstance(serializer, TypeVar):
+            return None  # This is a generic subclass of a controller.
+        if (
+            not issubclass(serializer, BaseSerializer)
+            or serializer is BaseSerializer
+        ):
+            raise UnsolvableAnnotationsError(
+                f'Type arg {serializer} is not correct for {cls}, '
+                'it must be a BaseSerializer subclass',
+            )
+        return serializer  # type: ignore[no-any-return]
 
     @classmethod
     def _maybe_wrap(

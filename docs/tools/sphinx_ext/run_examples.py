@@ -54,6 +54,7 @@ from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+from dmr.openapi import OpenAPIConfig
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import build_404_handler, build_500_handler
 from dmr.settings import Settings, clear_settings_cache
@@ -615,6 +616,11 @@ def _exec_openapi_examples(
         with (
             override_settings(
                 DMR_SETTINGS={
+                    Settings.openapi_config: OpenAPIConfig(
+                        title='Django Modern Rest',
+                        version='0.1.0',
+                        openapi_version='3.2.0',
+                    ),
                     Settings.openapi_examples_seed: openapi_args.get(
                         'openapi_examples_seed',
                     ),
@@ -668,7 +674,11 @@ def _process_single_example(  # noqa: WPS210
             )
         return ''
 
-    if assert_error_text is not None and assert_error_text not in proc.stdout:
+    if (
+        assert_error_text is not None
+        and not settings.DEBUG
+        and assert_error_text not in proc.stdout
+    ):
         raise _StartupError(
             (
                 (

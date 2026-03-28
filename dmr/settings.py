@@ -57,6 +57,7 @@ class Settings(enum.StrEnum):
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     semantic_responses = 'semantic_responses'
+    validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
@@ -103,6 +104,7 @@ class SettingsDict(TypedDict, total=False):
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     semantic_responses: bool
+    validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
     openapi_config: 'OpenAPIConfig'
@@ -133,6 +135,8 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
     Settings.semantic_responses: True,
+    # Defaults to the `validate_responses` setting if `None`:
+    Settings.validate_events: None,
     Settings.responses: [],  # global responses, for response validation
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:

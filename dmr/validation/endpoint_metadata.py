@@ -263,6 +263,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -288,10 +289,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             headers=payload.headers,
             cookies=payload.cookies,
             status_code=(
-                infer_status_code(method)
+                infer_status_code(
+                    method,
+                    streaming=self.controller_cls.streaming,
+                )
                 if payload.status_code is None
                 else payload.status_code
             ),
+            streaming=self.controller_cls.streaming,
             description=payload.response_description,
             links=payload.links,
         )
@@ -309,6 +314,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=payload.tags,
@@ -327,12 +333,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         endpoint: str,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
-        status_code = infer_status_code(method)
+        status_code = infer_status_code(
+            method,
+            streaming=self.controller_cls.streaming,
+        )
         modification = self.response_modification_cls(
             return_type=return_annotation,
             status_code=status_code,
             headers=None,
             cookies=None,
+            streaming=self.controller_cls.streaming,
             description=None,
             links=None,
         )
@@ -350,6 +360,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
         )
@@ -461,6 +472,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return resolve_setting(  # type: ignore[no-any-return]
             Settings.validate_responses,
         )
+
+    def _build_validate_events(self) -> bool:
+        if self.payload and self.payload.validate_events is not None:
+            return self.payload.validate_events
+        if self.controller_cls.validate_events is not None:
+            return self.controller_cls.validate_events
+        settings_value = resolve_setting(Settings.validate_events)
+        if settings_value is not None:
+            return settings_value  # type: ignore[no-any-return]
+        return self._build_validate_responses()
 
     def _build_error_handler(
         self,
@@ -652,10 +673,12 @@ class EndpointMetadataValidator:
         *,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[ResponseSpec]:
-        all_responses = _build_responses(
-            payload=payload,
-            controller_cls=controller_cls,
-            modification=self.metadata.modification,
+        all_responses = self._limit_stream_responses(
+            _build_responses(
+                payload=payload,
+                controller_cls=controller_cls,
+                modification=self.metadata.modification,
+            ),
         )
         existing_responses = {
             response.status_code: response for response in all_responses
@@ -667,6 +690,29 @@ class EndpointMetadataValidator:
             ),
         )
         return all_responses
+
+    def _limit_stream_responses(
+        self,
+        responses: list[ResponseSpec],
+    ) -> list[ResponseSpec]:
+        streaming_renderers = {
+            renderer.content_type
+            for renderer in self.metadata.renderers.values()
+            if renderer.streaming
+        }
+
+        limited: list[ResponseSpec] = []
+        for response in responses:
+            if response.streaming:
+                limited.append(
+                    dataclasses.replace(
+                        response,
+                        limit_to_content_types=streaming_renderers,
+                    ),
+                )
+            else:
+                limited.append(response)
+        return limited
 
     def _validate_components(
         self,

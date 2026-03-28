@@ -291,6 +291,27 @@ HTTP Spec validation
   :members:
 
 
+Streaming
+---------
+
+.. data:: dmr.settings.Settings.validate_events
+
+  Default: ``None``
+
+  Should we validate the events in all streams?
+  Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
+  for convenience if this value is ``None``.
+
+  To disable the event validation globally, use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.validate_events: False,
+    ... }
+
+
 OpenAPI
 -------
 
@@ -307,7 +328,6 @@ OpenAPI
   .. code-block:: python
     :caption: settings.py
 
-    >>> from dmr.settings import HttpSpec
     >>> from dmr.openapi.config import OpenAPIConfig
 
     >>> DMR_SETTINGS = {
