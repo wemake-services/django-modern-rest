@@ -1,7 +1,9 @@
 from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, overload
 from urllib.parse import urlsplit
+
+from typing_extensions import TypeVar
 
 from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
