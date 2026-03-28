@@ -11,6 +11,19 @@ if TYPE_CHECKING:
 
 
 class StreamingRenderer(Renderer):
+    """
+    Base class for all streaming responses.
+
+    It is different from the regular :class:`~dmr.renderers.Renderer`
+    in several ways:
+
+    1. We need to initialize this renderer with a subrenderer,
+       which will render the individual events itself
+    2. Serializer is needed to serialize events
+    3. Validator is needed to optionally validate events
+
+    """
+
     streaming: ClassVar[Literal[True]] = True  # pyright: ignore[reportIncompatibleVariableOverride]
 
     __slots__ = (

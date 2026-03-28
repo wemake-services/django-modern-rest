@@ -52,6 +52,7 @@ def aiter_to_iter(aiterator: AsyncIterator[_ItemT]) -> Iterator[_ItemT]:
 def maybe_aclosing(
     streaming_content: AsyncIterable[Any],
 ) -> aclosing[Any] | nullcontext[Any]:
+    """Possibly close the async iterator if it is possible."""
     # We want to close any async generators after they are fully used.
     # Why? Because they can be cancelled at any point
     # and not do any cleanup.

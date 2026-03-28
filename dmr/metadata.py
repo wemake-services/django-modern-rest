@@ -199,7 +199,7 @@ class ResponseModification:
 
     def infer_return_type(self) -> Any:
         """Infers return type if it needs some extra love."""
-        from dmr.exceptions import UnsolvableAnnotationsError
+        from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
 
         if self.streaming:
             origin = get_origin(self.return_type)

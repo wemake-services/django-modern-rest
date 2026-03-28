@@ -104,6 +104,12 @@ class StreamingController(Controller[_SerializerT_co]):
     # TODO: validate that endpoints can't contain `yield event` themself.
 
     async def handle_event_error(self, exc: Exception) -> Any:
+        """
+        Error handler for the events.
+
+        Is called when the :class:`~dmr.streaming.stream.StreamingResponse`
+        is iterated in the ASGI handler.
+        """
         raise exc from None
 
     def to_stream(
@@ -118,6 +124,7 @@ class StreamingController(Controller[_SerializerT_co]):
         streaming_renderer: StreamingRenderer | None = None,
         streaming_validator: StreamingValidator | None = None,
     ) -> StreamingResponse:
+        """Convert streaming content to a streaming response."""
         # We are sure that it is a `StreamingRenderer` at this point
         streaming_renderer = cast(  # type: ignore[assignment]
             StreamingResponse,  # TODO: provide a new api?

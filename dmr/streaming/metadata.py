@@ -45,6 +45,11 @@ def streaming_response_spec(
     links: dict[str, 'Link | Reference'] | None = None,
     description: str | None = None,
 ) -> ResponseSpec:
+    """
+    Helper function to create a ``ResponseSpec`` instance for streaming.
+
+    Reduces the boilerplate, but does nothing special.
+    """
     headers = {
         **STREAMING_HEADERS_SPEC,
         **(headers or {}),

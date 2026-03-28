@@ -95,14 +95,20 @@ class StreamingValidator:
         controller: 'StreamingController[BaseSerializer]',
         status_code: HTTPStatus,
     ) -> Self:
+        """
+        Construct validator from a controller instance.
+
+        Inferences event type model from the endpoint metadata.
+        Also knows whether or not the events validation is turned on or not.
+        """
         method = controller.request.method
         # for mypy: it can't be `None` at this point
         assert method is not None  # noqa: S101
         metadata = controller.api_endpoints[method].metadata
 
         return cls(
-            _resolve_event_model(metadata, status_code),
-            controller.serializer,
+            event_model=_resolve_event_model(metadata, status_code),
+            serializer=controller.serializer,
             validate_events=metadata.validate_events,
         )
 

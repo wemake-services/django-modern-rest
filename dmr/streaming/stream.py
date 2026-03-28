@@ -123,6 +123,7 @@ class StreamingResponse(HttpResponseBase):
             return self._produce_events()
 
         def close(self) -> None:
+            """Closes the response and cleans up all references."""
             super().close()
             # Explicitly break ref cycles:
             self._controller = None
@@ -167,5 +168,5 @@ class StreamingResponse(HttpResponseBase):
         """
         try:
             return await self._controller.handle_event_error(exc)
-        except Exception:
-            raise
+        except Exception as sub:
+            raise sub from exc
