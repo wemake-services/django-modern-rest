@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator, Iterator, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final
@@ -8,10 +9,12 @@ from typing_extensions import override
 
 from dmr.internal.io import aiter_to_iter, maybe_aclosing
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer
 from dmr.streaming.exceptions import StreamingCloseError
 
 if TYPE_CHECKING:
+    from dmr.serializer import BaseSerializer
+    from dmr.streaming.controller import StreamingController
+    from dmr.streaming.renderer import StreamingRenderer
     from dmr.streaming.validation import StreamingValidator
 
 
@@ -33,26 +36,26 @@ class StreamingResponse(HttpResponseBase):
     def __init__(  # noqa: WPS211
         self,
         streaming_content: AsyncIterator[Any],
-        serializer: type['BaseSerializer'],
-        regular_renderer: Renderer,
-        streaming_renderer: Renderer,
+        controller: 'StreamingController[BaseSerializer]',
         *,
+        regular_renderer: Renderer,
+        streaming_renderer: 'StreamingRenderer',
+        streaming_validator: 'StreamingValidator',
         headers: Mapping[str, str] | None = None,
         status_code: HTTPStatus = HTTPStatus.OK,
-        streaming_validator: 'StreamingValidator | None' = None,
     ) -> None:
         """
         Create the streaming response.
 
         Arguments:
             streaming_content: Events producing async iterator.
-            serializer: Serializer type to handle event's data.
+            controller: Controller to handle event's data.
             regular_renderer: Render python objects to text format.
             streaming_renderer: Render events to bytes according
                 to streaming protocol rules.
+            streaming_validator: Stream validator for events.
             headers: Headers to be set on the response.
             status_code: Status code for the response.
-            streaming_validator: Stream validator for events.
 
         """
         headers = {} if headers is None else dict(headers)
@@ -71,7 +74,7 @@ class StreamingResponse(HttpResponseBase):
 
         super().__init__(headers=headers, status=status_code)
         self._streaming_content = streaming_content
-        self.serializer = serializer
+        self._controller = controller
         self.regular_renderer = regular_renderer
         self.streaming_renderer = streaming_renderer
         self.streaming_validator = streaming_validator
@@ -79,7 +82,7 @@ class StreamingResponse(HttpResponseBase):
     # Why?
     # Because it is only used by ASGI / WSGI handlers which don't care
     # about typing at all. But, it helps to prevent different user erros.
-    if not TYPE_CHECKING:
+    if not TYPE_CHECKING:  # pragma: no branch
 
         @override
         def __iter__(self) -> Iterator[bytes]:
@@ -119,9 +122,41 @@ class StreamingResponse(HttpResponseBase):
             """
             return self._produce_events()
 
-    def handle_event_error(
+        def close(self) -> None:
+            super().close()
+            # Explicitly break ref cycles:
+            self._controller = None
+            self.regular_renderer = None
+            self.streaming_renderer = None
+            self.streaming_validator = None
+
+    async def _produce_events(self) -> AsyncIterator[bytes]:
+        async with maybe_aclosing(self._streaming_content):
+            while True:
+                try:
+                    event = self._apply_validator(
+                        await anext(self._streaming_content),
+                    )
+                except (
+                    StreamingCloseError,
+                    asyncio.CancelledError,
+                    StopAsyncIteration,
+                ):
+                    self.close()
+                    break
+                except Exception as exc:
+                    event = await self._handle_event_error(exc)
+
+                yield self._controller.serializer.serialize(
+                    event,
+                    renderer=self.streaming_renderer,
+                )
+
+    def _apply_validator(self, event: Any) -> Any:
+        return self.streaming_validator.apply_event_pipeline(event)
+
+    async def _handle_event_error(
         self,
-        event: Any,
         exc: Exception,
     ) -> Any:
         """
@@ -130,23 +165,7 @@ class StreamingResponse(HttpResponseBase):
         Return alternative event that will indicate what error has happened.
         By default does nothing and just reraises the exception.
         """
-        raise exc from None
-
-    async def _produce_events(self) -> AsyncIterator[bytes]:
-        async with maybe_aclosing(self._streaming_content):
-            try:
-                async for event in self._streaming_content:
-                    yield self.serializer.serialize(
-                        self._apply_validator(event),
-                        renderer=self.streaming_renderer,
-                    )
-            except StreamingCloseError:
-                self.close()
-
-    def _apply_validator(self, event: Any) -> Any:
-        if self.streaming_validator is None:
-            return event
         try:
-            return self.streaming_validator.apply_event_pipeline(event)
-        except Exception as exc:
-            return self.handle_event_error(event, exc)
+            return await self._controller.handle_event_error(exc)
+        except Exception:
+            raise

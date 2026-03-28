@@ -1,10 +1,10 @@
 from collections.abc import AsyncIterator
 
 from django.http import HttpRequest
+from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.security.django_session import DjangoSessionAsyncAuth
-from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
 async def produce_user_events(username: str) -> AsyncIterator[SSEvent[str]]:

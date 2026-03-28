@@ -701,7 +701,7 @@ class EndpointMetadataValidator:
             if renderer.streaming
         }
 
-        limited = []
+        limited: list[ResponseSpec] = []
         for response in responses:
             if response.streaming:
                 limited.append(

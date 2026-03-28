@@ -24,7 +24,7 @@ def test_type_annotation(
     """Ensures that all correct type annotations work."""
 
     class _ClassBasedSSE(SSEController[PydanticSerializer]):
-        async def get(self) -> annotation[str]:
+        async def get(self) -> annotation[str]:  # pyright: ignore[reportInvalidTypeForm]
             raise NotImplementedError
 
 
@@ -40,6 +40,12 @@ def test_type_annotation(
         typing.Iterator[None],
         typing.Iterable,
         typing.Iterable[str],
+        typing.Generator,
+        typing.Generator[int, int, int],
+        None,
+        int,
+        typing.Any,
+        typing.Literal,
     ],
 )
 def test_wrong_type_annotation(
@@ -53,5 +59,5 @@ def test_wrong_type_annotation(
     ):
 
         class _ClassBasedSSE(SSEController[PydanticSerializer]):
-            async def get(self) -> annotation:
+            async def get(self) -> annotation:  # pyright: ignore[reportInvalidTypeForm]
                 raise NotImplementedError

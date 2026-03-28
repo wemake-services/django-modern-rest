@@ -1,13 +1,15 @@
-from typing import TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from typing_extensions import override
 
+from dmr.errors import ErrorType
+from dmr.exceptions import ValidationError
 from dmr.serializer import BaseSerializer
 from dmr.settings import default_renderer
 from dmr.streaming.controller import StreamingController
 from dmr.streaming.renderer import StreamingRenderer
+from dmr.streaming.sse.metadata import SSEvent
 from dmr.streaming.sse.renderer import SSERenderer
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.streaming.sse.validation import SSEStreamingValidator
 
 _SerializerT_co = TypeVar(
@@ -32,13 +34,35 @@ class SSEController(StreamingController[_SerializerT_co]):
 
     """
 
-    streaming_response_cls = SSEStreamingResponse
-    streaming_validator_cls = SSEStreamingValidator
+    streaming_validator_cls: ClassVar[type[SSEStreamingValidator]] = (
+        SSEStreamingValidator
+    )
 
     @override
     @classmethod
-    def streaming_renderer(
+    def streaming_renderers(
         cls,
-        serializer: type[_SerializerT_co],
-    ) -> StreamingRenderer:
-        return SSERenderer(serializer, default_renderer)
+        serializer: type[BaseSerializer],
+    ) -> list[StreamingRenderer]:
+        return [
+            SSERenderer(
+                serializer,
+                default_renderer,
+                cls.streaming_validator_cls,
+            ),
+        ]
+
+    @override
+    async def handle_event_error(self, exc: Exception) -> Any:
+        """
+        Handles errors that can happen while sending events.
+
+        Return alternative event that will indicate what error has happened.
+        By default does nothing and just reraises the exception.
+        """
+        if isinstance(exc, ValidationError):
+            return SSEvent(
+                self.format_error(exc, error_type=ErrorType.streaming),
+                event='error',
+            )
+        return await super().handle_event_error(exc)

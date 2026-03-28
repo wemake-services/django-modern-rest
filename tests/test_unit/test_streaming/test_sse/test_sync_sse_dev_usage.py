@@ -8,9 +8,8 @@ from asgiref.sync import async_to_sync
 from django.conf import LazySettings
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.streaming import StreamingCloseError
+from dmr.streaming import StreamingCloseError, StreamingResponse
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRRequestFactory
 
 
@@ -29,7 +28,7 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
         yield SSEvent(3)
 
 
-def _get_sync_content(response: SSEStreamingResponse) -> bytes:
+def _get_sync_content(response: StreamingResponse) -> bytes:
     buffer = io.BytesIO()
     for chunk in response:
         buffer.write(chunk)
@@ -47,11 +46,11 @@ def test_sync_sse_dev(
     settings.DEBUG = True
     request = dmr_rf.generic(str(method), '/whatever/')
 
-    response: SSEStreamingResponse = async_to_sync(
+    response: StreamingResponse = async_to_sync(
         _ClassBasedSSE.as_view(),  # type: ignore[arg-type]
     )(request)
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert not response.closed
     assert response.status_code == HTTPStatus.OK
@@ -63,7 +62,7 @@ def test_sync_sse_dev(
     assert _get_sync_content(response) == (
         b'data: "event"\r\n\r\ndata: second\r\n\r\ndata: 3\r\n\r\n'
     )
-    assert not response.closed
+    assert response.closed
 
 
 @pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.POST])
@@ -77,11 +76,11 @@ def test_sync_sse_prod(
     settings.DEBUG = False
     request = dmr_rf.generic(str(method), '/whatever/')
 
-    response: SSEStreamingResponse = async_to_sync(
+    response: StreamingResponse = async_to_sync(
         _ClassBasedSSE.as_view(),  # type: ignore[arg-type]
     )(request)
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -115,7 +114,7 @@ def test_sync_sse_dev_from_sync_method(
 
     response = _SyncClassBasedSSE.as_view()(request)
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert not response.closed
     assert response.status_code == HTTPStatus.OK
@@ -125,7 +124,7 @@ def test_sync_sse_dev_from_sync_method(
         'X-Accel-Buffering': 'no',
     }
     assert _get_sync_content(response) == (b'data: "event"\r\n\r\n')
-    assert not response.closed
+    assert response.closed
 
 
 def test_sync_sse_prod_from_sync_method(
@@ -138,7 +137,7 @@ def test_sync_sse_prod_from_sync_method(
 
     response = _SyncClassBasedSSE.as_view()(request)
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -171,7 +170,7 @@ def test_sync_sse_dev_with_close(
 
     response = _SSEWithClose.as_view()(request)
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert not response.closed
     assert response.status_code == HTTPStatus.OK

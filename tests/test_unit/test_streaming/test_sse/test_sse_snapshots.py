@@ -19,7 +19,6 @@ from dmr.routing import Router
 from dmr.serializer import BaseSerializer
 from dmr.streaming import StreamingResponse, streaming_response_spec
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -125,7 +124,7 @@ async def test_complex_sse_implementation(
 
     response = await dmr_async_rf.wrap(_ComplexSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -225,7 +224,7 @@ async def test_overridden_sse_implementation(
 
     response = await dmr_async_rf.wrap(_OverridenSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {

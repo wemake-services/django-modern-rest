@@ -9,8 +9,8 @@ from inline_snapshot import snapshot
 
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionAsyncAuth
+from dmr.streaming import StreamingResponse
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -62,7 +62,7 @@ async def test_sse_with_auth_success(
         _ClassBasedSSE.as_view()(request),
     )
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
 

@@ -67,7 +67,7 @@ class ValidationError(Exception):
         self,
         payload: list['ErrorDetail'],
         *,
-        status_code: HTTPStatus,
+        status_code: HTTPStatus = HTTPStatus.UNPROCESSABLE_ENTITY,
     ) -> None:
         """Set required status code attribute."""
         # No empty items are allowed:

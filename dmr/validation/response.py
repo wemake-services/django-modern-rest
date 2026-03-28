@@ -234,7 +234,6 @@ class ResponseValidator:  # noqa: WPS214
         except self.serializer.validation_error as exc:
             raise ValidationError(
                 self.serializer.serialize_validation_error(exc),
-                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             ) from None
 
     def _validate_response_headers(  # noqa: WPS210

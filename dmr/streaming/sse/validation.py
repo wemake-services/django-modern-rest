@@ -1,5 +1,4 @@
 from collections.abc import Callable, Iterable
-from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final, TypeAlias, get_args
 
 from typing_extensions import override
@@ -18,11 +17,7 @@ def validate_event_data(
     model: Any,
     serializer: type['BaseSerializer'],
 ) -> Any:
-    """
-    Injects itself into the stream of SSE to validate the events.
-
-    Validates ``SSEvent.data`` to be of the given type arg.
-    """
+    """Validates ``SSEvent.data`` to be of the given type arg."""
     from dmr.streaming.sse.metadata import SSEvent  # noqa: PLC0415
 
     if not isinstance(event, SSEvent):
@@ -43,7 +38,6 @@ def validate_event_data(
     except serializer.validation_error as exc:
         raise ValidationError(
             serializer.serialize_validation_error(exc),
-            status_code=HTTPStatus.OK,
         ) from None
     return event  # pyright: ignore[reportUnknownVariableType]
 
@@ -55,10 +49,13 @@ SSEPipeline: TypeAlias = Callable[
 
 
 class SSEStreamingValidator(StreamingValidator):
+    """Injects itself into the stream of SSE to validate the events."""
+
     __slots__ = ()
 
     @override
     def validation_pipeline(self) -> Iterable[SSEPipeline]:
+        """Validate the event type and the event payload."""
         return (
             # Order is important:
             validate_event_type,

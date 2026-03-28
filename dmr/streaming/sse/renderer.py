@@ -13,6 +13,7 @@ from dmr.streaming.sse.metadata import SSE
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
+    from dmr.streaming.validation import StreamingValidator
 
 _DEFAULT_SEPARATOR: Final = b'\r\n'
 _LINE_BREAK_RE: Final = re.compile(rb'\r\n|\r|\n')
@@ -37,6 +38,7 @@ class SSERenderer(StreamingRenderer):
         self,
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,
+        streaming_validator_cls: type['StreamingValidator'],
         *,
         sep: bytes = _DEFAULT_SEPARATOR,
         encoding: str = 'utf-8',
@@ -48,12 +50,13 @@ class SSERenderer(StreamingRenderer):
         Arguments:
             serializer: Serializer type to use for the SSE event internal data.
             regular_renderer: Renderer for the SSE event internal data.
+            streaming_validator_cls: Stream validator class.
             sep: Line and events separator.
             encoding: Encoding to convert string data into bytes.
             linebreak: How to process new lines in event's data.
 
         """
-        super().__init__(serializer, regular_renderer)
+        super().__init__(serializer, regular_renderer, streaming_validator_cls)
         self._sep = sep
         self._encoding = encoding
         self._linebreak = linebreak

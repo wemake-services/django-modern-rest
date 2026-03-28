@@ -9,7 +9,6 @@ from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.streaming import StreamingResponse, streaming_response_spec
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -68,7 +67,7 @@ async def test_valid_sse_different_methods(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -110,7 +109,7 @@ async def test_valid_sse_validate_post(
 
     response = await dmr_async_rf.wrap(_PostValidateSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {

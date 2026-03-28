@@ -253,7 +253,7 @@ Metadata
 Stream
 ~~~~~~
 
-.. autoclass:: dmr.sse.stream.SSEStreamingResponse
+.. autoclass:: dmr.sse.stream.StreamingResponse
   :members:
 
 

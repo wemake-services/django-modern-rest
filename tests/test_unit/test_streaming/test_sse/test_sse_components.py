@@ -12,8 +12,8 @@ from typing_extensions import TypedDict
 from dmr import Body, Cookies, Headers, Path, Query
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
+from dmr.streaming import StreamingResponse
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -83,7 +83,7 @@ async def test_sse_parses_all_components(
         _ClassBasedSSE.as_view()(request, user_id=1, stream_name='abc'),
     )
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == b'data: ["authed"]\r\n\r\n'

@@ -436,13 +436,10 @@ class Endpoint:  # noqa: WPS214
         response_data: Any | HttpResponseBase,
     ) -> HttpResponseBase:
         if isinstance(response_data, HttpResponseBase):
-            return self._pass_existing_response(
+            return self.response_validator.validate_response(
+                self,
                 controller,
-                self.response_validator.validate_response(
-                    self,
-                    controller,
-                    response_data,
-                ),
+                response_data,
             )
 
         validated = self.response_validator.validate_modification(
@@ -451,14 +448,6 @@ class Endpoint:  # noqa: WPS214
             response_data,
         )
         return self._build_new_response(controller, validated)
-
-    def _pass_existing_response(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        response: HttpResponseBase,
-    ) -> HttpResponseBase:
-        # By default does nothing.
-        return response
 
     def _build_new_response(
         self,

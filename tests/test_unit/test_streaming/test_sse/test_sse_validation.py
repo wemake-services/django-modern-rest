@@ -19,7 +19,6 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.streaming import StreamingResponse, streaming_response_spec
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -65,7 +64,7 @@ async def test_valid_sse(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -155,7 +154,7 @@ async def test_wrong_event_type(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -220,7 +219,7 @@ async def test_wrong_event_type_endpoint(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -262,7 +261,7 @@ async def test_event_generic_validation(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -298,7 +297,7 @@ async def test_event_generic_validation_skip(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -337,7 +336,7 @@ async def test_event_validation_from_settings(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -390,7 +389,12 @@ async def test_sse_api_error(
     class _ClassBasedSSE(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
-        responses = (ResponseSpec(ErrorModel, status_code=HTTPStatus.CONFLICT),)
+        responses = (
+            ResponseSpec(
+                return_type=ErrorModel,
+                status_code=HTTPStatus.CONFLICT,
+            ),
+        )
 
         @modify(validate_responses=validate_responses)
         async def get(self) -> AsyncIterator[SSEvent[str]]:
@@ -399,7 +403,7 @@ async def test_sse_api_error(
                 status_code=HTTPStatus.CONFLICT,
             )
 
-        async def post(self) -> StreamingResponse:
+        async def post(self) -> HttpResponse:
             return self.to_error(
                 format_error('API Error'),
                 status_code=HTTPStatus.CONFLICT,
@@ -534,7 +538,7 @@ async def test_missing_event_model(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -571,7 +575,7 @@ async def test_valid_sse_aiter_magic(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {

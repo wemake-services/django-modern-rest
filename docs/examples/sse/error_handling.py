@@ -2,8 +2,6 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from django.http import HttpRequest
-
-from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.sse import (
     SSECloseConnectionError,
     SSEContext,
@@ -11,6 +9,8 @@ from dmr.sse import (
     SSEvent,
     sse,
 )
+
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 async def produce_user_events() -> AsyncIterator[SSEvent[bytes]]:

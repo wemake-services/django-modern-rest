@@ -16,7 +16,6 @@ from dmr.streaming import (
     streaming_response_spec,
 )
 from dmr.streaming.sse import SSEController, SSEvent
-from dmr.streaming.sse.stream import SSEStreamingResponse
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
 
@@ -88,7 +87,7 @@ async def test_all_sse_events_props(
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
@@ -156,7 +155,7 @@ async def test_sse_with_headers_and_cookies(
         _SSEWithHeadersAndCookies.as_view()(request),
     )
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
@@ -209,7 +208,7 @@ async def test_sse_close_error(
 
     response = await dmr_async_rf.wrap(_SSEWithClose.as_view()(request))
 
-    assert isinstance(response, SSEStreamingResponse)
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (

@@ -2,10 +2,10 @@ from collections.abc import AsyncIterator
 
 import msgspec
 from django.http import HttpRequest
+from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 from dmr.components import Headers
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
 class HeaderModel(msgspec.Struct):

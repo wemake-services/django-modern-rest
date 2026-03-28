@@ -1,9 +1,9 @@
 from collections.abc import AsyncIterator
 
 from django.http import HttpRequest
+from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
 async def produce_events() -> AsyncIterator[SSEvent[str]]:

@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, final
+from typing import Annotated, Any, Final, final
 
 import pydantic
 import pytest
@@ -36,7 +36,7 @@ class _RequestModel(pydantic.BaseModel):
     root: dict[str, str]
 
 
-_xml_data = """<?xml version="1.0" encoding="utf-8"?>
+_xml_data: Final = """<?xml version="1.0" encoding="utf-8"?>
 <root>
     <key>value</key>
 </root>"""
@@ -172,8 +172,7 @@ def test_per_controller_customization(
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
-    request = dmr_rf.generic(
-        'POST',
+    request = dmr_rf.post(
         '/whatever/',
         headers=request_headers,
         data=request_data,

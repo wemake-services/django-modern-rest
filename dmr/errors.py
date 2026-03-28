@@ -44,6 +44,7 @@ class ErrorType(enum.StrEnum):
         security: Raised when security related error happens.
         user_msg: Raised for custom errors from users.
         not_found: Raised when we can't find controller.
+        streaming: Happens when we stream events.
 
     """
 
@@ -53,6 +54,7 @@ class ErrorType(enum.StrEnum):
     security = 'security'
     user_msg = 'user_msg'
     not_found = 'not_found'
+    streaming = 'streaming'
 
 
 class ErrorDetail(TypedDict):
