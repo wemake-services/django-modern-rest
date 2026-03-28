@@ -3,12 +3,11 @@ from http import HTTPMethod, HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, overload
 from urllib.parse import urlsplit
 
-from typing_extensions import TypeVar
-
 from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
 from django.utils.encoding import iri_to_uri
 from django.utils.http import MAX_URL_REDIRECT_LENGTH
+from typing_extensions import TypeVar
 
 from dmr.cookies import NewCookie
 from dmr.settings import Settings, resolve_setting
