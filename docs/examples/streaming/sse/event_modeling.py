@@ -2,12 +2,11 @@ from collections.abc import AsyncIterator
 from typing import Literal, TypeAlias
 
 import pydantic
-from django.http import HttpRequest
-from dmr.sse import SSEContext, SSEResponse, sse
 from pydantic.json_schema import SkipJsonSchema
 
 from dmr.errors import ErrorModel
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.streaming.sse import SSEController
 
 
 class _BaseEvent(pydantic.BaseModel):
@@ -58,23 +57,20 @@ class ErrorEvent(_BaseEvent):
 _PossibleEvents: TypeAlias = UserEvent | PaymentEvent | PingEvent | ErrorEvent
 
 
-async def complex_events() -> AsyncIterator[_PossibleEvents]:
-    yield UserEvent(id=1, data='sobolevn')
-    yield PaymentEvent(
-        data=_Payment(
-            amount=10,
-            currency='$',
-        ).model_dump_json(),
-    )
-    yield PingEvent()
+class ComplexEventsController(SSEController[PydanticSerializer]):
+    def get(self) -> AsyncIterator[_PossibleEvents]:
+        return self.complex_events()
+
+    async def complex_events(self) -> AsyncIterator[_PossibleEvents]:
+        yield UserEvent(id=1, data='sobolevn')
+        yield PaymentEvent(
+            data=_Payment(
+                amount=10,
+                currency='$',
+            ).model_dump_json(),
+        )
+        yield PingEvent()
 
 
-@sse(PydanticSerializer)
-async def complex_sse(
-    request: HttpRequest,
-    context: SSEContext,
-) -> SSEResponse[_PossibleEvents]:
-    return SSEResponse(complex_events())
-
-
-# run: {"controller": "complex_sse", "method": "get"}  # noqa: ERA001
+# run: {"controller": "ComplexEventsController", "method": "get"}  # noqa: ERA001, E501
+# openapi: {"controller": "ComplexEventsController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

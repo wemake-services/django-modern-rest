@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from typing_extensions import override
 
-from dmr.errors import ErrorType, format_error
+from dmr.errors import ErrorDetail, ErrorType
 from dmr.exceptions import ValidationError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
@@ -32,9 +32,9 @@ class _PositiveStreamingValidator(SSEStreamingValidator):
     ) -> SSE:
         if isinstance(event.data, int) and event.data < 0:
             raise ValidationError([
-                format_error(
-                    f'Negative number found: {event.data}',
-                    error_type=ErrorType.streaming,
+                ErrorDetail(
+                    msg=f'Negative number found: {event.data}',
+                    type=ErrorType.streaming,
                 ),
             ])
         return event
@@ -67,8 +67,8 @@ async def test_sse_validation(
         b'data: 1\r\n'
         b'\r\n'
         b'event: error\r\n'
-        b'data: {"detail":[{"detail":[{"msg":"Negative number found: -1",'
-        b'"type":"streaming"}]}]}\r\n'
+        b'data: {"detail":[{"msg":"Negative number found: -1",'
+        b'"type":"streaming"}]}\r\n'
         b'\r\n'
     )
 
