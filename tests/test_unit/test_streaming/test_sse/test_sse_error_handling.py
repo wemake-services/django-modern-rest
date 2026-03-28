@@ -16,18 +16,18 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
     async def get(self) -> AsyncIterator[SSEvent[float]]:
         return self._valid_events()
 
-    async def _valid_events(self) -> AsyncIterator[SSEvent[float]]:
-        yield SSEvent(1)
-        # Error here:
-        yield SSEvent(1 / 0)
-        # Won't be sent:
-        yield SSEvent(2)  # pragma: no cover
-
     @override
     async def handle_event_error(self, exc: Exception) -> Any:
         if isinstance(exc, ZeroDivisionError):  # pragma: no branch
             return SSEvent(b'zero divizion', event='error', serialize=False)
         return await super().handle_event_error(exc)  # pragma: no cover
+
+    async def _valid_events(self) -> AsyncIterator[SSEvent[float]]:
+        yield SSEvent(1)
+        # Error here:
+        yield SSEvent(1 / 0)  # noqa: WPS344
+        # Won't be sent:
+        yield SSEvent(2)  # pragma: no cover
 
 
 @pytest.mark.asyncio

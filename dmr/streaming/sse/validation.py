@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Final, TypeAlias, get_args
 from typing_extensions import override
 
 from dmr.exceptions import ValidationError
-from dmr.serializer import BaseSerializer
 from dmr.streaming.validation import StreamingValidator, validate_event_type
 
 if TYPE_CHECKING:

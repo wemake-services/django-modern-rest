@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from dmr.streaming.validation import StreamingValidator
 
 
-class StreamingResponse(HttpResponseBase):
+class StreamingResponse(HttpResponseBase):  # noqa: WPS338
     """
     Our own response subclass to mark that we explicitly return SSE.
 
@@ -82,7 +82,7 @@ class StreamingResponse(HttpResponseBase):
     # Why?
     # Because it is only used by ASGI / WSGI handlers which don't care
     # about typing at all. But, it helps to prevent different user erros.
-    if not TYPE_CHECKING:  # pragma: no branch
+    if not TYPE_CHECKING:  # pragma: no branch  # noqa: WPS604
 
         @override
         def __iter__(self) -> Iterator[bytes]:

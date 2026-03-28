@@ -112,7 +112,7 @@ class StreamingController(Controller[_SerializerT_co]):
         """
         raise exc from None
 
-    def to_stream(
+    def to_stream(  # noqa: WPS211
         self,
         streaming_content: AsyncIterator[Any],
         *,

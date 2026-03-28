@@ -192,7 +192,7 @@ async def test_wrong_event_type_endpoint(
     """Ensures that wrong event types are validated."""
 
     async def _wrong_type_events() -> AsyncIterator[Any]:
-        yield None
+        yield
 
     class _ClassBasedSSE(
         SSEController[serializer],  # type: ignore[valid-type]

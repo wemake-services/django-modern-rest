@@ -35,7 +35,7 @@ class StreamResponseModification(ResponseModification):
             object.__setattr__(self, 'headers', STREAMING_HEADERS_SPEC)
 
 
-def streaming_response_spec(
+def streaming_response_spec(  # noqa: WPS211
     return_type: Any,
     *,
     content_type: str,

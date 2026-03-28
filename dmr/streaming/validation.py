@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 from dmr.exceptions import ValidationError
 from dmr.metadata import EndpointMetadata
-from dmr.serializer import BaseSerializer
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer

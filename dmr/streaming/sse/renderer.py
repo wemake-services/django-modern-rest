@@ -34,7 +34,7 @@ class SSERenderer(StreamingRenderer):
 
     content_type = ContentType.event_stream
 
-    def __init__(
+    def __init__(  # noqa: WPS211
         self,
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,

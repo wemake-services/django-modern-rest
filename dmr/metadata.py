@@ -3,7 +3,7 @@ import typing as ty
 from abc import abstractmethod
 from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Set
 from http import HTTPStatus
-from typing import (
+from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Annotated,
     Any,
