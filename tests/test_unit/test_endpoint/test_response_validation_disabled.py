@@ -16,9 +16,9 @@ from dmr.test import DMRRequestFactory
 
 @pytest.fixture(autouse=True)
 def _disable_response_validation(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
 ) -> None:
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.validate_responses: False,
     }
 

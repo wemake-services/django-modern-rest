@@ -10,10 +10,10 @@ from dmr.settings import Settings
 
 
 def test_empty_parsers(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
 ) -> None:
     """Ensure that always has to be at least one parser type."""
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.parsers: [],
         Settings.renderers: [JsonRenderer()],
     }
@@ -26,10 +26,10 @@ def test_empty_parsers(
 
 
 def test_empty_renderers(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
 ) -> None:
     """Ensure that always has to be at least one renderer type."""
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.parsers: [JsonParser()],
         Settings.renderers: [],
     }

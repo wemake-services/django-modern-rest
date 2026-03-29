@@ -28,7 +28,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
 
 
 @pytest.mark.parametrize(
-    'dmr_settings_params',
+    'dmr_settings',
     [
         # Structure:
         {'validate_responses': None},
@@ -44,13 +44,13 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
 )
 @pytest.mark.parametrize('serializer', serializers)
 def test_wrong_settings_validation(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
     *,
-    dmr_settings_params: dict[str, Any],
+    dmr_settings: dict[str, Any],
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures invalid settings raise an error."""
-    dmr_settings.DMR_SETTINGS = dmr_settings_params
+    settings.DMR_SETTINGS = dmr_settings
 
     with pytest.raises(EndpointMetadataError, match='Settings'):
 
@@ -60,7 +60,7 @@ def test_wrong_settings_validation(
 
 
 @pytest.mark.parametrize(
-    'dmr_settings_params',
+    'dmr_settings',
     [
         # Structure:
         {},
@@ -69,13 +69,13 @@ def test_wrong_settings_validation(
 )
 @pytest.mark.parametrize('serializer', serializers)
 def test_correct_settings_validation(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
     *,
-    dmr_settings_params: dict[str, Any],
+    dmr_settings: dict[str, Any],
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures correct settings passes."""
-    dmr_settings.DMR_SETTINGS = dmr_settings_params
+    settings.DMR_SETTINGS = dmr_settings
 
     class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
         def post(self) -> int:
@@ -84,12 +84,12 @@ def test_correct_settings_validation(
 
 @pytest.mark.parametrize('serializer', serializers)
 def test_default_settings_validation(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
     *,
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures default settings passes."""
-    del dmr_settings.DMR_SETTINGS  # noqa: WPS420
+    del settings.DMR_SETTINGS  # noqa: WPS420
 
     class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
         def post(self) -> int:

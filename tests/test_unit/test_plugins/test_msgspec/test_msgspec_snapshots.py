@@ -148,10 +148,10 @@ class _ExampleController(Controller[MsgspecSerializer]):
 
 def test_example_schema(
     snapshot: SnapshotAssertion,
-    dmr_settings: LazySettings,
+    settings: LazySettings,
 ) -> None:
     """Ensure that schema with examples is correctly generated."""
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.openapi_examples_seed: 5,
     }
 

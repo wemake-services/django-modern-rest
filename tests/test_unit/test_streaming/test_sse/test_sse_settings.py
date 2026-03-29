@@ -20,10 +20,10 @@ from tests.infra.xml_format import XmlParser, XmlRenderer
 
 
 def test_single_streaming_renderer(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
 ) -> None:
     """Ensure that streaming renderer can't be the only one."""
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.renderers: [
             SSERenderer(
                 PydanticSerializer,
@@ -97,7 +97,7 @@ class _BodyModel(pydantic.BaseModel):
     ],
 )
 async def test_sse_negotiation(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     request_headers: dict[str, str],
@@ -106,7 +106,7 @@ async def test_sse_negotiation(
     expected_content: bytes,
 ) -> None:
     """Ensures that content negotiation work for error messages."""
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.renderers: [XmlRenderer(), default_renderer],
         Settings.parsers: [XmlParser(), default_parser],
     }

@@ -1,7 +1,8 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
-from django.conf import LazySettings
+from pytest_django.fixtures import SettingsWrapper
+from pytest_django.lazy_django import skip_if_no_django
 
 try:
     import pytest
@@ -70,9 +71,10 @@ def dmr_clean_settings() -> Iterator[None]:
 
 
 @pytest.fixture
-def dmr_settings(
-    settings: LazySettings,
-    dmr_clean_settings: None,
-) -> LazySettings:
+def settings(dmr_clean_settings: None) -> Iterator[SettingsWrapper]:
     """Customized version of :function:`pytest_django.fixtures.settings`."""
-    return settings
+    skip_if_no_django()
+
+    wrapper = SettingsWrapper()
+    yield wrapper
+    wrapper.finalize()

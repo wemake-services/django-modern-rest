@@ -32,8 +32,8 @@ class _HttpBasicAuth(HttpBasicSyncAuth):
 
 
 @pytest.fixture(autouse=True)
-def _setup_auth(dmr_settings: LazySettings) -> None:
-    dmr_settings.DMR_SETTINGS = {
+def _setup_auth(settings: LazySettings) -> None:
+    settings.DMR_SETTINGS = {
         Settings.auth: [_HttpBasicAuth()],
     }
 

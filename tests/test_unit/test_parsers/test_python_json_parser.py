@@ -18,9 +18,9 @@ from dmr.test import DMRRequestFactory
 
 @pytest.fixture(autouse=True)
 def _clear_parser_and_renderer(
-    dmr_settings: LazySettings,
+    settings: LazySettings,
 ) -> None:
-    dmr_settings.DMR_SETTINGS = {
+    settings.DMR_SETTINGS = {
         Settings.parsers: [JsonParser()],
         Settings.renderers: [JsonRenderer()],
     }
