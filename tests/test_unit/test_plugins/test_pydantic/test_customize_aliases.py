@@ -113,7 +113,7 @@ def test_custom_alias_serialization_by_alias(
 
 
 @final
-class _UnserializableController(Controller[_NoAliasPydanticSerializer]):
+class _UnserializableController(Controller[PydanticSerializer]):
     def post(self) -> dict[str, Any]:
         return {'a': object()}
 

@@ -1,5 +1,7 @@
 from contextlib import suppress
-from typing import Any, Literal, get_origin, get_type_hints
+from typing import Any, Literal, get_origin
+
+from typing_extensions import get_type_hints
 
 
 def content_types(model: Any, property_name: str) -> str | None:

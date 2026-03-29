@@ -12,7 +12,7 @@ from inline_snapshot import snapshot
 
 from dmr import APIError, ResponseSpec, modify, validate
 from dmr.errors import ErrorModel, format_error
-from dmr.exceptions import EndpointMetadataError
+from dmr.exceptions import DataRenderingError
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
@@ -156,7 +156,7 @@ async def test_wrong_event_type(
         contextlib.nullcontext()
         if expected
         else pytest.raises(
-            EndpointMetadataError,
+            DataRenderingError,
             match='SSERenderer can only render SSE',
         )
     ):
@@ -221,7 +221,7 @@ async def test_wrong_event_type_endpoint(
         contextlib.nullcontext()
         if expected
         else pytest.raises(
-            EndpointMetadataError,
+            DataRenderingError,
             match='SSERenderer can only render SSE',
         )
     ):

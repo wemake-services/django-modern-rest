@@ -9,7 +9,6 @@ from dmr.cookies import CookieSpec, NewCookie
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.serializer import BaseSerializer
 from dmr.streaming import (
     StreamingCloseError,
     StreamingResponse,
@@ -18,12 +17,6 @@ from dmr.streaming import (
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
-
-MsgspecSerializer: type[BaseSerializer] | None
-try:
-    from dmr.plugins.msgspec import MsgspecSerializer
-except ImportError:  # pragma: no cover
-    MsgspecSerializer = None
 
 
 class _ClassBasedSSE(SSEController[PydanticSerializer]):

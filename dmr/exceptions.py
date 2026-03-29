@@ -35,7 +35,14 @@ class EndpointMetadataError(Exception):
 
 @final
 class DataParsingError(Exception):
-    """Raised when json/xml data cannot be parsed."""
+    """Raised when input data cannot be parsed."""
+
+
+@final
+class DataRenderingError(Exception):
+    """Raised when output data cannot be properly renderer."""
+
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @final

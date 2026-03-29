@@ -17,6 +17,7 @@ from django.utils.encoding import force_str
 from typing_extensions import TypedDict
 
 from dmr.exceptions import (
+    DataRenderingError,
     InternalServerError,
     NotAcceptableError,
     NotAuthenticatedError,
@@ -88,8 +89,7 @@ def format_error(  # noqa: C901, WPS231
     Default implementation.
 
     Args:
-        error: A serialization exception like a validation error or
-            a ``dmr.exceptions.DataParsingError``.
+        error: A serialization exception like a validation error.
         loc: Location where this error happened.
             Like ``"headers"``, or ``"field_name"``,
             or ``["parsed_headers", "header_name"]``.
@@ -129,7 +129,7 @@ def format_error(  # noqa: C901, WPS231
             msg.update({'type': str(error_type)})
         return {'detail': [msg]}
 
-    if isinstance(error, InternalServerError):
+    if isinstance(error, (InternalServerError, DataRenderingError)):
         return {
             'detail': [
                 {
@@ -231,6 +231,7 @@ _default_handled_excs: Final = (
     NotAcceptableError,
     ValidationError,
     InternalServerError,
+    DataRenderingError,
 )
 
 

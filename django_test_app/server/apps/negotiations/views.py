@@ -10,32 +10,14 @@ from typing_extensions import override
 
 from dmr import Body, Controller, ResponseSpec, validate
 from dmr.exceptions import (
-    InternalServerError,
+    DataRenderingError,
     RequestSerializationError,
 )
 from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
-
-# Used for different test setups:
-try:  # pragma: no cover
-    from dmr.plugins.msgspec import (
-        MsgspecJsonParser as JsonParser,
-    )
-except ImportError:  # pragma: no cover
-    from dmr.parsers import (  # type: ignore[assignment]
-        JsonParser,
-    )
-
-try:  # pragma: no cover
-    from dmr.plugins.msgspec import (
-        MsgspecJsonRenderer as JsonRenderer,
-    )
-except ImportError:  # pragma: no cover
-    from dmr.renderers import (  # type: ignore[assignment]
-        JsonRenderer,
-    )
+from dmr.settings import default_parser, default_renderer
 
 _CallableAny: TypeAlias = Callable[..., Any]
 
@@ -112,7 +94,7 @@ class XmlRenderer(Renderer):
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
             try:  # noqa: SIM105
                 xml_value = serializer_hook(xml_value)
-            except InternalServerError:
+            except DataRenderingError:
                 pass  # noqa: WPS420
             return xml_key, xml_value
 
@@ -127,8 +109,8 @@ class _RequestModel(pydantic.BaseModel):
 
 @final
 class ContentNegotiationController(Controller[PydanticSerializer]):
-    parsers = (JsonParser(), XmlParser())
-    renderers = (JsonRenderer(), XmlRenderer())
+    parsers = (default_parser, XmlParser())
+    renderers = (default_renderer, XmlRenderer())
 
     def post(
         self,

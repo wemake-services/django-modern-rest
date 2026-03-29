@@ -217,6 +217,8 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Fixed that `404` was not documented in the OpenAPI
   when `Path` component was not used, but `URLPattern` had parameters, #685
 - Fixed `ValueError` on operation id generation, #685
+- Fixed that we were using `typing.get_type_hints` in some places,
+  now always using `typing_extensions.get_type_hints`
 
 ### Misc
 

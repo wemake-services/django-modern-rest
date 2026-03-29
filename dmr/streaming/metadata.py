@@ -38,7 +38,7 @@ class StreamResponseModification(ResponseModification):
 def streaming_response_spec(  # noqa: WPS211
     return_type: Any,
     *,
-    content_type: str,
+    content_type: str | set[str],
     status_code: HTTPStatus = HTTPStatus.OK,
     headers: Mapping[str, 'HeaderSpec'] | None = None,
     cookies: Mapping[str, 'CookieSpec'] | None = None,
@@ -60,7 +60,9 @@ def streaming_response_spec(  # noqa: WPS211
         headers=headers,
         cookies=cookies,
         streaming=True,
-        limit_to_content_types={content_type},
+        limit_to_content_types=(
+            content_type if isinstance(content_type, set) else {content_type}
+        ),
         links=links,
         description=description,
     )

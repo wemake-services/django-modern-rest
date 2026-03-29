@@ -5,7 +5,6 @@ root_package = dmr
 include_external_packages = True
 exclude_type_checking_imports = True
 
-
 [importlinter:contract:layers]
 name = Layered architecture of our project
 type = layers
@@ -40,7 +39,6 @@ ignore_imports =
   dmr.settings -> dmr.openapi.config
   # Response generation:
   dmr.openapi.generators.response -> dmr.negotiation
-
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins
@@ -85,6 +83,20 @@ type = independence
 modules =
   dmr.plugins.*
 
+[importlinter:streaming:layers]
+name = Enforce correct layers in streaming
+type = layers
+
+containers =
+  dmr.streaming
+
+layers =
+  sse | jsonl
+  controller
+  stream | renderer
+  metadata
+  validation
+  exceptions
 
 [importlinter:openapi:layers]
 name = Layered architecture of OpenAPI schema generation

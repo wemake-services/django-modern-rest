@@ -1,0 +1,358 @@
+# serializer version: 1
+# name: test_complex_jsonl_schema
+  '''
+  {
+    "info": {
+      "title": "Jsonl Complex Pydantic models",
+      "version": "1.0"
+    },
+    "openapi": "3.2.0",
+    "paths": {
+      "/api/v1/complex": {
+        "get": {
+          "operationId": "getComplexjsonlApiV1Complex",
+          "parameters": [
+            {
+              "deprecated": false,
+              "name": "X-Header",
+              "in": "header",
+              "schema": {
+                "type": "string",
+                "title": "X-Header"
+              },
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "headers": {
+                "Cache-Control": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Accel-Buffering": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Connection": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/jsonl": {
+                  "itemSchema": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/_UserEvent"
+                      },
+                      {
+                        "$ref": "#/components/schemas/_PaymentEvent"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_PaymentEvent": {
+          "properties": {
+            "amount": {
+              "type": "integer",
+              "title": "Amount"
+            }
+          },
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "title": "_PaymentEvent"
+        },
+        "_UserEvent": {
+          "properties": {
+            "username": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          "type": "object",
+          "required": [
+            "username"
+          ],
+          "title": "_UserEvent"
+        }
+      },
+      "securitySchemes": {}
+    }
+  }
+  '''
+# ---
+# name: test_jsonl_default_schema
+  '''
+  {
+    "info": {
+      "title": "JsonL Test",
+      "version": "1.0"
+    },
+    "openapi": "3.2.0",
+    "paths": {
+      "/api/v1/jsonl": {
+        "get": {
+          "operationId": "getClassbasedjsonlApiV1Jsonl",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "headers": {
+                "Cache-Control": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Accel-Buffering": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Connection": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/jsonl": {
+                  "itemSchema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "operationId": "postClassbasedjsonlApiV1Jsonl",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "headers": {
+                "Cache-Control": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Accel-Buffering": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Connection": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/jsonl": {
+                  "itemSchema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        }
+      },
+      "securitySchemes": {}
+    }
+  }
+  '''
+# ---

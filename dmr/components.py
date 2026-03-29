@@ -1,7 +1,7 @@
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import (  # noqa: WPS235
+from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
@@ -9,11 +9,10 @@ from typing import (  # noqa: WPS235
     Final,
     TypeAlias,
     TypeVar,
-    get_type_hints,
 )
 
 from django.utils.translation import gettext_lazy as _
-from typing_extensions import override
+from typing_extensions import get_type_hints, override
 
 from dmr.exceptions import (
     DataParsingError,

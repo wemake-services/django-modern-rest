@@ -316,6 +316,25 @@ for `this purpose <https://docs.pydantic.dev/latest/concepts/json_schema/#implem
   Use :func:`dmr.streaming.sse.validation.check_event_field` to do that.
 
 
+Best practices
+--------------
+
+``django-modern-rest`` implements a bunch of best practices for streaming SSE:
+
+- ``Connection: keep-alive`` header keeps the connection open
+- ``Cache-Control: no-cache`` header prevents caching the stream response
+- ``X-Accel-Buffering: no`` header prevents `proxy response buffering
+  <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering>`_
+  in some proxy servers like Nginx
+- Every 15 seconds we send ``: ping`` keep-alive events,
+  when there hasn't been any message,
+  to prevent some servers from closing the connection as inactive.
+  This is a direct recommendation from `the SSE spec <https://html.spec.whatwg.org/multipage/server-sent-events.html#authoring-notes>`_
+
+
+Everything just works out of the box, you don't have to do anything.
+
+
 API Reference
 -------------
 

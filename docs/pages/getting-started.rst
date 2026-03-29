@@ -92,12 +92,12 @@ Usecases we officially support:
 
 We support several custom agent skills:
 
-- ``dmr-openapi-skeleton`` to generate
+- ``$dmr-openapi-skeleton`` to generate
   a :doc:`working project boilerplate <ai/spec-first>`
   from a single ``openapi.json`` file (the "Spec First" approach)
-- ``dmr-from-django-ninja`` to help with
+- ``$dmr-from-django-ninja`` to help with
   :doc:`migrating from Django Ninja <ai/dmr-from-ninja>`
-- ``dmr-from-drf`` to help with
+- ``$dmr-from-drf`` to help with
   :doc:`migrating from Django REST Framework <ai/dmr-from-drf>`
 
 

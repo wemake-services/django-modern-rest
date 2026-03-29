@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 from typing_extensions import override
 
-from dmr.exceptions import EndpointMetadataError
+from dmr.exceptions import DataRenderingError
 from dmr.negotiation import ContentType
 from dmr.renderers import Renderer
 from dmr.streaming.renderer import StreamingRenderer
@@ -67,11 +67,11 @@ class SSERenderer(StreamingRenderer):
         to_serialize: Any,
         serializer_hook: Callable[[Any], Any],
     ) -> bytes:
-        """Render a single event in the SSE chain of events."""
+        """Render a single event in the SSE stream of events."""
         try:
             return self._render_event(to_serialize)
         except AttributeError:
-            raise EndpointMetadataError(
+            raise DataRenderingError(
                 'SSERenderer can only render SSE protocol instances, '
                 f'got {type(to_serialize)}',
             ) from None

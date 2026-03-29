@@ -8,10 +8,9 @@ from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import default_renderer
 from dmr.streaming.controller import StreamingController
+from dmr.streaming.jsonl.renderer import JsonLinesRenderer
+from dmr.streaming.jsonl.validation import JsonLinesStreamingValidator
 from dmr.streaming.renderer import StreamingRenderer
-from dmr.streaming.sse.metadata import SSEvent
-from dmr.streaming.sse.renderer import SSERenderer
-from dmr.streaming.sse.validation import SSEStreamingValidator
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -20,9 +19,13 @@ _SerializerT_co = TypeVar(
 )
 
 
-class SSEController(StreamingController[_SerializerT_co]):
+class JsonLinesController(StreamingController[_SerializerT_co]):
     """
-    Controller for streaming Server Sent Events (SSE).
+    Controller for streaming json lines (JsonL).
+
+    .. seealso::
+
+        Json Lines standard: https://jsonlines.org
 
     .. danger::
 
@@ -36,8 +39,8 @@ class SSEController(StreamingController[_SerializerT_co]):
     """
 
     streaming_default_renderer: ClassVar[Renderer] = default_renderer
-    streaming_validator_cls: ClassVar[type[SSEStreamingValidator]] = (
-        SSEStreamingValidator
+    streaming_validator_cls: ClassVar[type[JsonLinesStreamingValidator]] = (
+        JsonLinesStreamingValidator
     )
 
     @override
@@ -47,7 +50,7 @@ class SSEController(StreamingController[_SerializerT_co]):
         serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> list[StreamingRenderer]:
         return [
-            SSERenderer(
+            JsonLinesRenderer(
                 serializer,
                 cls.streaming_default_renderer,
                 cls.streaming_validator_cls,
@@ -63,8 +66,5 @@ class SSEController(StreamingController[_SerializerT_co]):
         By default does nothing and just reraises the exception.
         """
         if isinstance(exc, ValidationError):
-            return SSEvent(
-                self.format_error(exc, error_type=ErrorType.streaming),
-                event='error',
-            )
+            return self.format_error(exc, error_type=ErrorType.streaming)
         return await super().handle_event_error(exc)

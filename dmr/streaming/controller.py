@@ -97,7 +97,7 @@ class StreamingController(Controller[_SerializerT_co]):
     @abc.abstractmethod
     def streaming_renderers(
         cls,
-        serializer: type[BaseSerializer],
+        serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> Iterable[StreamingRenderer]:
         """Returns the streaming renderer."""
 

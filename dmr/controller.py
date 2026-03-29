@@ -297,8 +297,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         Convert error to the common format.
 
         Args:
-            error: A serialization exception like a validation error or
-                a ``dmr.exceptions.DataParsingError``.
+            error: A serialization exception like a validation error.
             loc: Location where this error happened.
                 Like ``"headers"``, or ``"field_name"``,
                 or ``["parsed_headers", "header_name"]``.
