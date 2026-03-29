@@ -29,9 +29,7 @@ class _UserDocument(pydantic.BaseModel, Generic[_ModelT]):
     user: _ModelT
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     parsers = (MsgspecJsonParser(), XmlParser())
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
 
