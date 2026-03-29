@@ -65,12 +65,22 @@ class StreamingController(Controller[_SerializerT_co]):
 
     # Customizable attributes for subclasses:
     streaming_ping_seconds: ClassVar[float | None] = None
+    """
+    Optional ping keep alive event support.
+
+    Some servers might close long living connections with no activity.
+    Specify number in second how long should we wait between events.
+    If we wait longer, we will send a ping event.
+    The payload of the ping event is defined in
+    :meth:`~dmr.streaming.controller.StreamingController.ping_event`.
+
+    By default it is disabled. It is only enabled in the SSE streaming.
+    """
+
     streaming_response_cls: ClassVar[type[StreamingResponse]] = (
         StreamingResponse
     )
-
-    # Set in `__init_subclasses__`:
-    _streaming_renderer: ClassVar[StreamingRenderer]
+    """Streaming response type to customize."""
 
     @override
     def __init_subclass__(cls) -> None:
@@ -86,6 +96,7 @@ class StreamingController(Controller[_SerializerT_co]):
         # Now we have everything and we can create `api_endpoints`:
         call_init_subclass(Controller, cls)
         # TODO: run extra validation?
+        # TODO: validate that endpoints can't contain `yield event` themself.
 
     @classmethod
     @abc.abstractmethod
@@ -94,8 +105,6 @@ class StreamingController(Controller[_SerializerT_co]):
         serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> Iterable[StreamingRenderer]:
         """Returns the streaming renderer."""
-
-    # TODO: validate that endpoints can't contain `yield event` themself.
 
     async def handle_event_error(self, exc: Exception) -> Any:
         """

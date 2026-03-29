@@ -15,10 +15,15 @@ class UserEventsController(SSEController[MsgspecSerializer]):
         return self.produce_user_events()
 
     async def produce_user_events(self) -> AsyncIterator[SSEvent[_User]]:
-        # You can send complex data, including json.
-        # All SSEvent fields can be customized:
+        # You can send any complex data that can be serialized
+        # by the controller's serializer,
+        # all SSEvent fields can be customized:
         yield SSEvent(
             _User(email='first@example.com'),
+            event='user',
+        )
+        yield SSEvent(
+            _User(email='second@example.com'),
             event='user',
         )
 

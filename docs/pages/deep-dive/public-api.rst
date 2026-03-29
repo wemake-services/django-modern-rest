@@ -143,7 +143,10 @@ Exceptions
 Utilities
 ---------
 
+.. autodata:: dmr.types.Json
+
 .. autoclass:: dmr.types.Empty
+  :members:
 
 .. autodata:: dmr.types.EmptyObj
 

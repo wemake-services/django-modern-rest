@@ -169,6 +169,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Added `@attrs.define` official support, #706
 - Added `msgpack` parser and renderer, #630
 - Added `JsonLines` or `JsonL` support, #607
+- Added `ping` events to `SSE` streaming, #606
 - Added `SSE` support for non-`GET` methods, `Body` component parsing, #736
 - Added `i18n` support for user-facing error messages
   using Django's `gettext_lazy`, #426

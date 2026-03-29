@@ -30,7 +30,19 @@ else:
     # It will still be rendered as `{}` in OpenAPI.
     # Which means that it can be any valid json.
     Json: TypeAlias = Any
-    """Type alias for JSON data."""
+    """
+    Recursive type alias for JSON data.
+
+    What is JSON? Integers, floats, booleans, strings,
+    list of them and dicts of them, which keys are always strings.
+
+    In runtime it is always :data:`typing.Any`
+    because of the parsing complexity,
+    while in type checking it correctly defined.
+
+    We don't recommend using it for anything serious,
+    it is better to define real models instead.
+    """
 
 
 @final

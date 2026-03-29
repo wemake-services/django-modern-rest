@@ -3,50 +3,31 @@ Server Sent Events
 
 Standard: https://html.spec.whatwg.org/multipage/server-sent-events.html
 
-Our SSE implementation allows users to follow the standard above
+Our ``SSE`` implementation allows users to follow the standard above
 or fully customize the experience for custom needs.
 
 
 Using SSE
 ---------
 
-When to use SSE? When you have a single directional stream of events.
-These events are sent over a single HTTP connection.
-
-We base our API around :class:`dmr.streaming.sse.controller.SSEController`
-type which is a slightly modified subclass
-of a regular :class:`~dmr.controller.Controller`.
-
-Streaming controllers support all the same features:
-
-- Different HTTP async or sync methods
-- Components parsing
-- Auth
-- Error handling (including special error handling for events)
-- Optional response validation (including events validation)
-- etc
-
-We utilize :class:`collections.abc.AsyncIterator`
-protocol to model event sources.
-
 You can use SSE with both :func:`~dmr.endpoint.validate`
 and :func:`~dmr.endpoint.modify` style endpoints:
 
 .. tabs::
 
-    .. tab:: modify
+  .. tab:: modify
 
-        .. literalinclude:: /examples/streaming/sse/usage_modify.py
-          :language: python
-          :caption: views.py
-          :linenos:
+    .. literalinclude:: /examples/streaming/sse/usage_modify.py
+      :language: python
+      :caption: views.py
+      :linenos:
 
-    .. tab:: validate
+  .. tab:: validate
 
-        .. literalinclude:: /examples/streaming/sse/usage_validate.py
-          :language: python
-          :caption: views.py
-          :linenos:
+    .. literalinclude:: /examples/streaming/sse/usage_validate.py
+      :language: python
+      :caption: views.py
+      :linenos:
 
 
 What happens in these examples?
@@ -69,19 +50,19 @@ What happens in these examples?
 
 .. important::
 
-  Our SSE implementation will not work with a WSGI handler in production.
-  Why? Because SSE is a long-living connection by design.
+  Our streaming implementation will not work with a WSGI handler in production.
+  Why? Because streaming is a long-living connection by design.
   WSGI handlers have very limited number of connections.
   Basically ``number_of_workers * number_of_threads``,
-  just a very small number of SSE clients will completely
+  just a very small number of streaming clients will completely
   block all other work on the server.
 
-  **Use ASGI** for SSE endpoints.
+  **Use ASGI** for all streaming endpoints.
   This will give you the best of two worlds: simple sync Django
   for the major part of your code base and some async endpoints where you need them.
   See our :doc:`guide <../structure/sync-and-async>`.
 
-  However, we allow running SSE with WSGI
+  However, we allow running streaming with WSGI
   if ``settings.DEBUG is True`` for local development and testing.
   In a very *limited* compatibility mode.
 
@@ -115,6 +96,10 @@ with the :data:`~dmr.components.Headers` component.
   Use ``Last-Event-ID`` header to handle reconnects to start sending
   events to the client from the last consumed one.
 
+.. seealso::
+
+  Read our :doc:`../components/index` guide.
+
 
 Auth
 ----
@@ -140,118 +125,9 @@ Here's an example with
 If you don't use ``EventSource`` API, you can use any other auth
 of your choice, all of them will just work.
 
+.. seealso::
 
-Handling errors
----------------
-
-Streaming controllers have two layers of error handling:
-
-1. Default error handling works the same way for request / response
-   phase, see :doc:`../error-handling` for more information
-2. Per-event error handling, which starts when the streaming connection
-   is established and the events are produced.
-   Such errors are handled in
-   :meth:`~dmr.streaming.controller.StreamingController.handle_event_error`
-   method
-
-The second layer of event error handling is unique
-for streaming controllers.
-
-It works for several cases:
-
-1. When event validation fails (mostly useful in development)
-2. When there's an error in the event producer
-
-Let's see how it can be customized.
-
-.. literalinclude:: /examples/streaming/sse/error_handling.py
-   :language: python
-   :caption: views.py
-   :linenos:
-
-.. warning::
-
-  Please, note that new events won't be produced if the error happens
-  in the async generator itself. If you want to handle errors there as well,
-  use ``try/except`` right inside the event producing async generator.
-
-Handling disconnects
-~~~~~~~~~~~~~~~~~~~~
-
-If you need to immediately close the response stream, you can raise
-:exc:`~dmr.streaming.exceptions.StreamingCloseError`
-or :exc:`asyncio.CancelledError`
-inside the events producing async iterator.
-
-Async clients can disconnect at any time.
-We always handle this error gracefully.
-
-See Django docs: https://docs.djangoproject.com/en/stable/ref/request-response/#request-response-streaming-disconnect
-
-
-Validation
-----------
-
-All our regular :ref:`response validation rules <response_validation>`
-are applied to the SSE controllers as well.
-We strictly validate that all headers / cookies / etc
-are listed in the endpoint's metadata.
-
-We follow the regular rules for response validation and it can be disabled
-by setting ``validate_responses=False`` on the needed level.
-
-We also validate **events structure**, when streaming them to end users.
-It is recommended to be turned on in development and turned off in production.
-
-Rules:
-
-- If endpoint specified ``validate_events`` boolean value, we use it
-- If endpoint does not specify this flag, but controller does, we use it
-- If controller does not specify this flag, but settings does, we use it
-- If no explicit ``validate_events`` boolean value is specified, we fallback
-  to ``validate_responses`` value
-
-.. tabs::
-
-    .. tab:: per endpoint
-
-        Both  :func:`~dmr.endpoint.validate` and :func:`~dmr.endpoint.modify`
-        support this flag:
-
-        .. literalinclude:: /examples/streaming/sse/per_endpoint.py
-          :language: python
-          :caption: views.py
-          :linenos:
-
-    .. tab:: per controller
-
-        .. literalinclude:: /examples/streaming/sse/per_controller.py
-          :language: python
-          :caption: views.py
-          :linenos:
-
-    .. tab:: per settings
-
-        See :data:`~dmr.settings.Settings.validate_events` setting.
-
-        .. code-block:: python
-          :caption: settings.py
-
-          >>> from dmr.settings import Settings
-
-          >>> DMR_SETTINGS = {Settings.validate_events: False}
-
-
-How does we know the model for events to be validated against?
-
-- It might be specified as the ``return_type``
-  in the :class:`~dmr.metadata.ResponseSpec` of ``@validate``
-  for the given status code
-- It might be specified as the type argument to generic
-  :class:`collections.abc.AsyncIterator` return type
-  in ``@modify`` styled endpoint.
-
-We fallback to :data:`typing.Any` if we can't inference the event model.
+  Read our :doc:`../auth/common` guide.
 
 
 Serializing events

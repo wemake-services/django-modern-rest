@@ -5,7 +5,7 @@ from dmr import validate
 from dmr.negotiation import ContentType
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.streaming import StreamingResponse, streaming_response_spec
-from dmr.streaming.sse import SSEController, SSEvent
+from dmr.streaming.jsonl import JsonLinesController
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -13,28 +13,21 @@ class _User:
     email: str
 
 
-class UserEventsController(SSEController[MsgspecSerializer]):
+class UserEventsController(JsonLinesController[MsgspecSerializer]):
     @validate(
         streaming_response_spec(
-            SSEvent[_User],
-            content_type=ContentType.event_stream,
+            _User,
+            content_type=ContentType.jsonl,
         ),
     )
     async def get(self) -> StreamingResponse:
         return self.to_stream(self.produce_user_events())
 
-    async def produce_user_events(self) -> AsyncIterator[SSEvent[_User]]:
+    async def produce_user_events(self) -> AsyncIterator[_User]:
         # You can send any complex data that can be serialized
-        # by the controller's serializer,
-        # all SSEvent fields can be customized:
-        yield SSEvent(
-            _User(email='first@example.com'),
-            event='user',
-        )
-        yield SSEvent(
-            _User(email='second@example.com'),
-            event='user',
-        )
+        # by the controller's serializer:
+        yield _User(email='first@example.com')
+        yield _User(email='second@example.com')
 
 
 # run: {"controller": "UserEventsController", "method": "get", "url": "/api/user/events/"}  # noqa: ERA001, E501

@@ -36,10 +36,15 @@ class SSEController(StreamingController[_SerializerT_co]):
     """
 
     streaming_ping_seconds = 15.0
+
+    # Custom attributes:
     streaming_default_renderer: ClassVar[Renderer] = default_renderer
+    """Default renderer for event ``body`` field."""
+
     streaming_validator_cls: ClassVar[type[SSEStreamingValidator]] = (
         SSEStreamingValidator
     )
+    """Validator for events, only active when ``validate_events`` is set."""
 
     @override
     @classmethod
