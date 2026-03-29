@@ -7,6 +7,7 @@ from typing_extensions import override
 
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.renderers import JsonRenderer
 from dmr.settings import default_renderer
 from dmr.streaming import StreamingController, StreamingResponse
 from dmr.streaming.jsonl.renderer import JsonLinesRenderer
@@ -80,6 +81,9 @@ async def test_valid_sse_different_methods(
         'application/jsonl',
         'text/event-stream',
     }
+
+    if isinstance(default_renderer, JsonRenderer):  # pragma: no cover
+        pytest.skip(reason='JsonRenderer cannot render dataclasses')
 
     request = dmr_async_rf.get(
         '/whatever/',
