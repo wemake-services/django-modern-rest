@@ -14,28 +14,6 @@ if TYPE_CHECKING:
     from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 
-@st.auth()
-class JWTAuth:
-    """Fetch JWT access token and apply it as Bearer auth header."""
-
-    def get(self, case: st.Case, ctx: st.AuthContext) -> str:
-        """Retrieve JWT token from the auth endpoint."""
-        from dmr.test import DMRClient  # noqa: PLC0415
-
-        response = DMRClient().post(
-            reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-            data={
-                'username': 'admin',
-                'password': 'password',
-            },
-        )
-        return response.json()['access_token']  # type: ignore[no-any-return]
-
-    def set(self, case: st.Case, data: str, ctx: st.AuthContext) -> None:
-        """Set the JWT token in the request ``Authorization`` header."""
-        case.headers['Authorization'] = f'Bearer {data}'
-
-
 # The `db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.

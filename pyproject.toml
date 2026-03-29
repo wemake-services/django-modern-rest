@@ -99,7 +99,7 @@ dirty-equals = "^0.11"
 faker = "^40.1"
 inline-snapshot = "^0.32"
 syrupy = "^5.1"
-schemathesis = "<4.14"
+schemathesis = "^4.14"
 tracecov = "^0.19"
 polyfactory = "^3.2"
 
