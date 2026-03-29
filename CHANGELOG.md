@@ -8,7 +8,9 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
-## WIP
+## Version 0.4.0 (2026-03-29)
+
+AKA "The first version that I enjoy".
 
 ### Breaking changes
 
