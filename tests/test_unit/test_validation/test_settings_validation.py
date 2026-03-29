@@ -28,7 +28,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
 
 
 @pytest.mark.parametrize(
-    'dmr_settings',
+    'dmr_settings_params',
     [
         # Structure:
         {'validate_responses': None},
@@ -44,14 +44,13 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
 )
 @pytest.mark.parametrize('serializer', serializers)
 def test_wrong_settings_validation(
-    settings: LazySettings,
-    dmr_clean_settings: None,
+    dmr_settings: LazySettings,
     *,
-    dmr_settings: dict[str, Any],
+    dmr_settings_params: dict[str, Any],
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures invalid settings raise an error."""
-    settings.DMR_SETTINGS = dmr_settings
+    dmr_settings.DMR_SETTINGS = dmr_settings_params
 
     with pytest.raises(EndpointMetadataError, match='Settings'):
 
@@ -61,7 +60,7 @@ def test_wrong_settings_validation(
 
 
 @pytest.mark.parametrize(
-    'dmr_settings',
+    'dmr_settings_params',
     [
         # Structure:
         {},
@@ -70,14 +69,13 @@ def test_wrong_settings_validation(
 )
 @pytest.mark.parametrize('serializer', serializers)
 def test_correct_settings_validation(
-    settings: LazySettings,
-    dmr_clean_settings: None,
+    dmr_settings: LazySettings,
     *,
-    dmr_settings: dict[str, Any],
+    dmr_settings_params: dict[str, Any],
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures correct settings passes."""
-    settings.DMR_SETTINGS = dmr_settings
+    dmr_settings.DMR_SETTINGS = dmr_settings_params
 
     class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
         def post(self) -> int:
@@ -86,12 +84,12 @@ def test_correct_settings_validation(
 
 @pytest.mark.parametrize('serializer', serializers)
 def test_default_settings_validation(
-    settings: LazySettings,
+    dmr_settings: LazySettings,
     *,
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures default settings passes."""
-    del settings.DMR_SETTINGS  # noqa: WPS420
+    del dmr_settings.DMR_SETTINGS  # noqa: WPS420
 
     class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
         def post(self) -> int:

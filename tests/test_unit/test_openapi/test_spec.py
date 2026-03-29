@@ -12,11 +12,10 @@ from dmr.routing import Router
 
 
 def test_config_raises_wrong_type(
-    dmr_clean_settings: None,
-    settings: LazySettings,
+    dmr_settings: LazySettings,
 ) -> None:
     """Ensure that ``TypeError`` raised with wrong config type."""
-    settings.DMR_SETTINGS = {'openapi_config': 'not-an-object'}
+    dmr_settings.DMR_SETTINGS = {'openapi_config': 'not-an-object'}
 
     with pytest.raises(
         TypeError,
@@ -26,11 +25,10 @@ def test_config_raises_wrong_type(
 
 
 def test_schema_nested_objects_can_be_mutated(
-    dmr_clean_settings: None,
-    settings: LazySettings,
+    dmr_settings: LazySettings,
 ) -> None:
     """Ensure schema nested objects can be modified in place."""
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         'openapi_config': OpenAPIConfig(
             title='Original',
             version='1.0.0',
@@ -45,11 +43,10 @@ def test_schema_nested_objects_can_be_mutated(
 
 
 def test_schema_collections_can_be_mutated(
-    dmr_clean_settings: None,
-    settings: LazySettings,
+    dmr_settings: LazySettings,
 ) -> None:
     """Ensure schema collections can be modified in place."""
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         'openapi_config': OpenAPIConfig(
             title='Original',
             version='1.0.0',

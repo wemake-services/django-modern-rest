@@ -302,13 +302,12 @@ async def test_event_generic_validation_skip(
 @pytest.mark.parametrize('serializer', serializers)
 async def test_event_validation_from_settings(
     dmr_async_rf: DMRAsyncRequestFactory,
-    settings: LazySettings,
-    dmr_clean_settings: None,
+    dmr_settings: LazySettings,
     *,
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures that global settings can be used to disable event validation."""
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         Settings.validate_events: False,
     }
 

@@ -43,11 +43,10 @@ class _UserController(
 @pytest.mark.freeze_time('02-11-2025 10:15:00')
 def test_user_schema_with_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
-    settings: LazySettings,
+    dmr_settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for user controller."""
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         Settings.openapi_examples_seed: 5,
     }
 
@@ -80,11 +79,10 @@ class _ExistingExampleController(Controller[PydanticSerializer]):
 
 def test_user_schema_with_existing_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
-    settings: LazySettings,
+    dmr_settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for existing examples controller."""
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         Settings.openapi_examples_seed: 5,
     }
 
@@ -132,11 +130,10 @@ class _ExistingBodyExamplesController(
 
 def test_schema_with_body_existing_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
-    settings: LazySettings,
+    dmr_settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for existing examples in body."""
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         Settings.openapi_examples_seed: 5,
     }
 

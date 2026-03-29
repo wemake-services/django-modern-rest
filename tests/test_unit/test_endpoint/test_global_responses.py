@@ -14,10 +14,9 @@ from dmr.test import DMRRequestFactory
 
 @pytest.fixture(autouse=True)
 def _set_global_responses(
-    settings: LazySettings,
-    dmr_clean_settings: None,
+    dmr_settings: LazySettings,
 ) -> None:
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         'responses': [
             ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED),
         ],

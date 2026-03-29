@@ -18,16 +18,15 @@ def use_cdn(request: pytest.FixtureRequest) -> bool:
 
 @pytest.fixture(autouse=True, params=[True, False])
 def _modify_cdn_settings(
-    settings: LazySettings,
+    dmr_settings: LazySettings,
     request: pytest.FixtureRequest,
-    dmr_clean_settings: None,
     *,
     use_cdn: bool,
 ) -> None:
     if not use_cdn:
         return
 
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         Settings.openapi_static_cdn: {
             'swagger': ('https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.1'),
             'redoc': (

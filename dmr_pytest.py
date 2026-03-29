@@ -1,6 +1,8 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
+from django.conf import LazySettings
+
 try:
     import pytest
 except ImportError:  # pragma: no cover
@@ -65,3 +67,12 @@ def dmr_clean_settings() -> Iterator[None]:
     clear_settings_cache()
     yield
     clear_settings_cache()
+
+
+@pytest.fixture
+def dmr_settings(
+    settings: LazySettings,
+    dmr_clean_settings: None,
+) -> LazySettings:
+    """Customized version of :function:`pytest_django.fixtures.settings`."""
+    return settings

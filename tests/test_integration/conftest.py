@@ -15,15 +15,14 @@ def tracecov_map() -> tracecov.CoverageMap:
 
 @pytest.fixture(autouse=True, params=[True, False])
 def _modify_integration_settings(
-    settings: LazySettings,
+    dmr_settings: LazySettings,
     request: pytest.FixtureRequest,
-    dmr_clean_settings: None,
 ) -> None:
     # Django common settings:
-    settings.DEBUG = request.param  # We run tests in both modes.
+    dmr_settings.DEBUG = request.param  # We run tests in both modes.
     # Our own settings:
-    settings.DMR_SETTINGS = {
+    dmr_settings.DMR_SETTINGS = {
         Settings.openapi_examples_seed: 1,
         # It might be already defined in some other place:
-        **getattr(settings, 'DMR_SETTINGS', {}),
+        **getattr(dmr_settings, 'DMR_SETTINGS', {}),
     }
