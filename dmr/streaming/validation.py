@@ -116,10 +116,10 @@ def _resolve_event_model(
     metadata: EndpointMetadata,
     status_code: HTTPStatus,
 ) -> Any:
-
     try:
         return metadata.responses[status_code].return_type
     except (KeyError, ValueError):
+        # TODO: fail with error if `validate_events=True`
         # This can happen if `validate_responses` is `False`,
         # or when `status_code` is custom.
         return Any

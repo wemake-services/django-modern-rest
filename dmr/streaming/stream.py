@@ -25,8 +25,9 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
     Converts events to ``bytes`` with the help of a passed serializer
     and renderer types.
 
-    We don't inherit from the ``StreamingResponse`` here, because
-    it has a strict API for streaming that we can't use.
+    We don't inherit from :class:`django.http.StreamingHttpResponse`
+    here, because it has a strict API for streaming
+    that we can't use or customize.
     """
 
     #: Part of the the ASGI handler protocol. Will trigger `__aiter__`

@@ -312,18 +312,21 @@ Controllers
 
 .. autoclass:: dmr.streaming.controller.StreamingController
   :members:
+  :show-inheritance:
 
 Responses
 ~~~~~~~~~
 
 .. autoclass:: dmr.streaming.stream.StreamingResponse
   :members:
+  :show-inheritance:
 
 Renderers
 ~~~~~~~~~
 
 .. autoclass:: dmr.streaming.renderer.StreamingRenderer
   :members:
+  :show-inheritance:
 
 Validation
 ~~~~~~~~~~
