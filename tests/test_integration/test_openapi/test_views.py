@@ -15,7 +15,6 @@ except ImportError:  # pragma: no cover
     OpenAPIYamlView = None
     _HAS_YAML = False
 else:
-    from dmr.openapi.views.yaml import OpenAPIYamlView
     _HAS_YAML = yaml_dumps is not None
 
 
