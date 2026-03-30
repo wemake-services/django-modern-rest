@@ -78,5 +78,5 @@ class SSEController(StreamingController[_SerializerT_co]):
 
     @override
     def ping_event(self) -> Any | None:
-        """Return a ping event to be generated if this streaming needs it."""
+        """Return a ping event's payload."""
         return SSEvent(comment='ping')
