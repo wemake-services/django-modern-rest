@@ -2,8 +2,8 @@ from typing import ClassVar
 
 from django.http import HttpRequest, HttpResponse
 
-from dmr.plugins.msgspec.yaml import yaml_dumps
 from dmr.openapi.views.base import OpenAPIView
+from dmr.plugins.msgspec.yaml import yaml_dumps
 
 
 class OpenAPIYamlView(OpenAPIView):

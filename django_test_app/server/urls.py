@@ -8,6 +8,7 @@ from dmr.openapi.views import (
     StoplightView,
     SwaggerView,
 )
+from dmr.openapi.views.yaml import OpenAPIYamlView
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, build_404_handler, build_500_handler, path
 from server.apps.controllers import urls as controllers_urls
@@ -18,7 +19,6 @@ from server.apps.middlewares import urls as middleware_urls
 from server.apps.models_example import urls as models_example_urls
 from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.config import get_config
-from dmr.openapi.views.yaml import OpenAPIYamlView
 
 router = Router(
     prefix='api/',
