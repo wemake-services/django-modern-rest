@@ -61,7 +61,7 @@ class MsgspecJsonParser(Parser):
 
 # Cached singleton: MsgspecJsonParser is stateless,
 # no need to recreate per call.
-_json_validation_parser: MsgspecJsonParser = MsgspecJsonParser()
+_msgspec_json_validation_parser: MsgspecJsonParser = MsgspecJsonParser()
 
 
 class MsgspecJsonRenderer(Renderer):
@@ -91,7 +91,7 @@ class MsgspecJsonRenderer(Renderer):
     @override
     def validation_parser(self) -> MsgspecJsonParser:
         """Msgspec can parse this."""
-        return _json_validation_parser
+        return _msgspec_json_validation_parser
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)

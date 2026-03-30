@@ -119,9 +119,7 @@ def negotiate_renderer(
     if request.headers.get('Accept') is None:
         return fallback
 
-    keys = (
-        list(renderers.keys()) if renderer_keys is None else renderer_keys
-    )
+    keys = list(renderers.keys()) if renderer_keys is None else renderer_keys
     renderer_type = request.get_preferred_type(keys)
     if renderer_type is None:
         raise NotAcceptableError(
