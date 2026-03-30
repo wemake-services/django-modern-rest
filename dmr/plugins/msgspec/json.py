@@ -59,6 +59,11 @@ class MsgspecJsonParser(Parser):
             raise DataParsingError(str(exc)) from exc
 
 
+# Cached singleton: MsgspecJsonParser is stateless,
+# no need to recreate per call.
+_json_validation_parser: MsgspecJsonParser = MsgspecJsonParser()
+
+
 class MsgspecJsonRenderer(Renderer):
     """Renders json bodies using ``msgspec``."""
 
@@ -86,7 +91,7 @@ class MsgspecJsonRenderer(Renderer):
     @override
     def validation_parser(self) -> MsgspecJsonParser:
         """Msgspec can parse this."""
-        return MsgspecJsonParser()
+        return _json_validation_parser
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)

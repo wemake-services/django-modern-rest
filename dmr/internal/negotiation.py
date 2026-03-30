@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest, MediaType
@@ -102,6 +102,7 @@ def negotiate_renderer(
     renderers: Mapping[str, 'Renderer'],
     *,
     default: 'Renderer | None' = None,
+    renderer_keys: Sequence[str] | None = None,
 ) -> 'Renderer':
     """
     Choose a renderer by the request's Accept header.
@@ -109,19 +110,24 @@ def negotiate_renderer(
     When Accept is missing, returns *default* (or the first renderer).
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
+
+    *renderer_keys* may be passed to avoid rebuilding the key list on
+    every call when the caller already has a pre-computed sequence.
     """
     fallback = next(iter(renderers.values())) if default is None else default
 
     if request.headers.get('Accept') is None:
         return fallback
 
-    renderer_keys = list(renderers.keys())
-    renderer_type = request.get_preferred_type(renderer_keys)
+    keys = (
+        list(renderers.keys()) if renderer_keys is None else renderer_keys
+    )
+    renderer_type = request.get_preferred_type(keys)
     if renderer_type is None:
         raise NotAcceptableError(
             _CANNOT_SERIALIZE_MSG.format(
                 accepted_types=repr(request.accepted_types),
-                supported=repr(renderer_keys),
+                supported=repr(keys),
             ),
         )
     return renderers[renderer_type]

@@ -110,6 +110,7 @@ class ResponseNegotiator:
     __slots__ = (
         '_default',
         '_non_streaming_default',
+        '_non_streaming_renderer_keys',
         '_non_streaming_renderers',
         '_renderer_keys',
         '_renderers',
@@ -135,6 +136,9 @@ class ResponseNegotiator:
             if not renderer.streaming
         }
         self._renderer_keys = list(self._renderers.keys())
+        self._non_streaming_renderer_keys = list(
+            self._non_streaming_renderers.keys(),
+        )
         if self._streaming and not self._non_streaming_renderers:
             raise EndpointMetadataError(
                 'At least one non-stream renderer is required '
@@ -178,6 +182,7 @@ class ResponseNegotiator:
             request,
             self._renderers,
             default=self._default,
+            renderer_keys=self._renderer_keys,
         )
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
         if self._streaming:
@@ -185,6 +190,7 @@ class ResponseNegotiator:
                 request,
                 self._non_streaming_renderers,
                 default=self._non_streaming_default,
+                renderer_keys=self._non_streaming_renderer_keys,
             )
         return renderer
 

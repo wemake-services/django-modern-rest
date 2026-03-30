@@ -59,6 +59,10 @@ class MsgpackParser(Parser):
             raise DataParsingError(str(exc)) from exc
 
 
+# Cached singleton: MsgpackParser is stateless, no need to recreate per call.
+_msgpack_validation_parser: MsgpackParser = MsgpackParser()
+
+
 class MsgpackRenderer(Renderer):
     """Renders ``msgpack`` bodies using ``msgspec``."""
 
@@ -86,7 +90,7 @@ class MsgpackRenderer(Renderer):
     @override
     def validation_parser(self) -> MsgpackParser:
         """Msgspec can parse this."""
-        return MsgpackParser()
+        return _msgpack_validation_parser
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)

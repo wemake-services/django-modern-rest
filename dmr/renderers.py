@@ -123,6 +123,10 @@ class _DMREncoder(DjangoJSONEncoder):
             raise
 
 
+# Cached singleton: JsonParser is stateless, no need to recreate per call.
+_json_validation_parser: JsonParser = JsonParser()
+
+
 class JsonRenderer(Renderer):
     """
     Fallback implementation of a json renderer.
@@ -180,7 +184,7 @@ class JsonRenderer(Renderer):
     @override
     def validation_parser(self) -> JsonParser:
         """Regular json parser can parse this."""
-        return JsonParser()
+        return _json_validation_parser
 
 
 class FileRenderer(Renderer):
@@ -196,11 +200,12 @@ class FileRenderer(Renderer):
 
     """
 
-    __slots__ = ('content_type',)
+    __slots__ = ('_cached_validation_parser', 'content_type')
 
     def __init__(self, content_type: str = '*/*') -> None:
         """Users can customize content types that this renderer works with."""
         self.content_type = content_type
+        self._cached_validation_parser = _NoOpParser(content_type)
 
     @override
     def render(
@@ -218,4 +223,4 @@ class FileRenderer(Renderer):
     @override
     def validation_parser(self) -> _NoOpParser:
         """Since there's nothing to parse, we return a no-op."""
-        return _NoOpParser(self.content_type)
+        return self._cached_validation_parser
