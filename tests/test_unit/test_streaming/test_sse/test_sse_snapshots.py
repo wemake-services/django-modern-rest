@@ -16,17 +16,10 @@ from dmr.negotiation import ContentType
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.serializer import BaseSerializer
 from dmr.streaming import StreamingResponse, streaming_response_spec
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
-
-MsgspecSerializer: type[BaseSerializer] | None
-try:
-    from dmr.plugins.msgspec import MsgspecSerializer
-except ImportError:  # pragma: no cover
-    MsgspecSerializer = None
 
 
 class _ClassBasedSSE(SSEController[PydanticSerializer]):

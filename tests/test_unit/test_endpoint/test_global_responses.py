@@ -15,7 +15,6 @@ from dmr.test import DMRRequestFactory
 @pytest.fixture(autouse=True)
 def _set_global_responses(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
         'responses': [

@@ -18,7 +18,7 @@ from typing_extensions import TypedDict, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
-from dmr.exceptions import InternalServerError
+from dmr.exceptions import DataRenderingError
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
@@ -127,7 +127,7 @@ class PydanticSerializer(BaseSerializer):
                 cls.serialize_hook,
             )
         except pydantic_core.PydanticSerializationError as exc:
-            raise InternalServerError(str(exc)) from None
+            raise DataRenderingError(str(exc)) from None
 
     @override
     @classmethod

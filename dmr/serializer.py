@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from dmr.errors import ErrorDetail
-from dmr.exceptions import InternalServerError, RequestSerializationError
+from dmr.exceptions import DataRenderingError, RequestSerializationError
 from dmr.parsers import Parser, Raw
 from dmr.renderers import Renderer
 
@@ -73,7 +73,7 @@ class BaseSerializer:  # noqa: WPS214
         """
         if isinstance(to_serialize, (set, frozenset)):
             return list(to_serialize)  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-        raise InternalServerError(
+        raise DataRenderingError(
             f'Value {to_serialize} of type {type(to_serialize)} '
             'is not supported',
         )

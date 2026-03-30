@@ -253,7 +253,8 @@ class ContentType(enum.StrEnum):
         x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
         multipart_form_data: ``'multipart/form-data'`` format.
         msgpack: ``'application/msgpack'`` format.
-        event_stream: ``'text/event-stream'`` format for SSE.
+        event_stream: ``'text/event-stream'`` format for SSE streaming.
+        jsonl: ``'application/jsonl'`` format for JSON Lines streaming.
 
     """
 
@@ -263,6 +264,7 @@ class ContentType(enum.StrEnum):
     multipart_form_data = 'multipart/form-data'
     msgpack = 'application/msgpack'
     event_stream = 'text/event-stream'
+    jsonl = 'application/jsonl'
 
 
 def conditional_type(

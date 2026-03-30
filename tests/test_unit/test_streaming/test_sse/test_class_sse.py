@@ -93,19 +93,11 @@ class _PostValidateSSE(SSEController[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    'method',
-    [
-        HTTPMethod.POST,
-    ],
-)
 async def test_valid_sse_validate_post(
     dmr_async_rf: DMRAsyncRequestFactory,
-    *,
-    method: HTTPMethod,
 ) -> None:
     """Ensures that valid sse produces valid results."""
-    request = dmr_async_rf.generic(str(method), '/whatever/')
+    request = dmr_async_rf.post('/whatever/')
 
     response = await dmr_async_rf.wrap(_PostValidateSSE.as_view()(request))
 

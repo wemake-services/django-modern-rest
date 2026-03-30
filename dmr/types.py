@@ -1,10 +1,12 @@
 import dataclasses
 from collections.abc import Callable, Iterator
-from typing import (
+from typing import (  # noqa: WPS235
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Final,
     Generic,
+    TypeAlias,
     TypeVar,
     final,
     get_args,
@@ -14,6 +16,33 @@ from typing import (
 from typing_extensions import get_original_bases, get_type_hints
 
 from dmr.exceptions import UnsolvableAnnotationsError
+
+if TYPE_CHECKING:
+    # During type checking it is a recursive alias, so we can be sure
+    # that json is always correct
+    Json: TypeAlias = (
+        str | int | float | bool | list['Json'] | dict[str, 'Json'] | None  # noqa: WPS221
+    )
+else:
+    # However, in runtime this is not a recursive type for speed.
+    # There might also be problems in validating a recursive type alias
+    # with some serializers.
+    # It will still be rendered as `{}` in OpenAPI.
+    # Which means that it can be any valid json.
+    Json: TypeAlias = Any
+    """
+    Recursive type alias for JSON data.
+
+    What is JSON? Integers, floats, booleans, strings,
+    list of them and dicts of them, which keys are always strings.
+
+    In runtime it is always :data:`typing.Any`
+    because of the parsing complexity,
+    while in type checking it correctly defined.
+
+    We don't recommend using it for anything serious,
+    it is better to define real models instead.
+    """
 
 
 @final

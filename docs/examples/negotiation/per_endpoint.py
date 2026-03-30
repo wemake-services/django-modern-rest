@@ -28,9 +28,7 @@ class _UserDocument(pydantic.BaseModel, Generic[_ModelT]):
     user: _ModelT
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     @modify(parsers=[XmlParser()], renderers=[XmlRenderer()])
     def post(
         self,

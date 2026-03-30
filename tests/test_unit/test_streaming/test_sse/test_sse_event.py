@@ -9,7 +9,6 @@ from dmr.cookies import CookieSpec, NewCookie
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.serializer import BaseSerializer
 from dmr.streaming import (
     StreamingCloseError,
     StreamingResponse,
@@ -18,12 +17,6 @@ from dmr.streaming import (
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
-
-MsgspecSerializer: type[BaseSerializer] | None
-try:
-    from dmr.plugins.msgspec import MsgspecSerializer
-except ImportError:  # pragma: no cover
-    MsgspecSerializer = None
 
 
 class _ClassBasedSSE(SSEController[PydanticSerializer]):
@@ -52,7 +45,6 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
             retry=5,
             comment='multi\nline\n',
         )
-        yield SSEvent(b'second', event=None, retry=None)
         yield SSEvent(b'third', retry=1, id=10, serialize=False)
         yield SSEvent({'user': 1})
         yield SSEvent(comment='ping')
@@ -60,10 +52,6 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    MsgspecSerializer is None,
-    reason='regular json formats it differently',
-)
 @pytest.mark.parametrize(
     'method',
     [
@@ -98,8 +86,6 @@ async def test_all_sse_events_props(
         b'event: first\r\n'
         b'data: 1\r\n'
         b'retry: 5\r\n'
-        b'\r\n'
-        b'data: "c2Vjb25k"\r\n'
         b'\r\n'
         b'id: 10\r\n'
         b'data: third\r\n'
@@ -213,6 +199,42 @@ async def test_sse_close_error(
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
         b'event: first\r\ndata: 1\r\n\r\n'
+    )
+
+
+class _SSEWithNewlines(SSEController[PydanticSerializer]):
+    async def get(self) -> AsyncIterator[SSEvent[Any]]:
+        return self._events()
+
+    async def _events(self) -> AsyncIterator[SSEvent[Any]]:
+        yield SSEvent({'newline in key\n': 1})
+        yield SSEvent(['list item with\nnewline'])
+        yield SSEvent('new\r\nline in str')
+        yield SSEvent(b'new\r\nline in bytes', serialize=False)
+
+
+@pytest.mark.asyncio
+async def test_sse_newlines_in_data(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that newlines in different data."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_SSEWithNewlines.as_view()(request))
+
+    assert isinstance(response, StreamingResponse)
+    assert response.streaming
+    assert response.status_code == HTTPStatus.OK
+    assert await get_streaming_content(response) == (
+        b'data: {"newline in key\\n":1}\r\n'  # noqa: WPS342
+        b'\r\n'
+        b'data: ["list item with\\nnewline"]\r\n'  # noqa: WPS342
+        b'\r\n'
+        b'data: "new\\r\\nline in str"\r\n'  # noqa: WPS342
+        b'\r\n'
+        b'data: new\r\n'
+        b'data: line in bytes\r\n'
+        b'\r\n'
     )
 
 

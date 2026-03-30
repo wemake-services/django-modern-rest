@@ -45,7 +45,6 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
 @pytest.mark.parametrize('serializer', serializers)
 def test_wrong_settings_validation(
     settings: LazySettings,
-    dmr_clean_settings: None,
     *,
     dmr_settings: dict[str, Any],
     serializer: type[BaseSerializer],
@@ -71,7 +70,6 @@ def test_wrong_settings_validation(
 @pytest.mark.parametrize('serializer', serializers)
 def test_correct_settings_validation(
     settings: LazySettings,
-    dmr_clean_settings: None,
     *,
     dmr_settings: dict[str, Any],
     serializer: type[BaseSerializer],

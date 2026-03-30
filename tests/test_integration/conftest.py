@@ -17,7 +17,6 @@ def tracecov_map() -> tracecov.CoverageMap:
 def _modify_integration_settings(
     settings: LazySettings,
     request: pytest.FixtureRequest,
-    dmr_clean_settings: None,
 ) -> None:
     # Django common settings:
     settings.DEBUG = request.param  # We run tests in both modes.

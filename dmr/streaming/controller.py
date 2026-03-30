@@ -56,27 +56,31 @@ class StreamingController(Controller[_SerializerT_co]):
     """
     Base class for all streaming controllers.
 
-    .. danger::
-
-        WSGI handers do not support streaming responses,
-        by default. You would need to use ASGI handler for streaming endpoints.
-
-        We allow running streaming during
-        ``settings.DEBUG`` builds for debugging.
-        But, in production we will raise :exc:`RuntimeError`
-        when WSGI handler will be detected used together with SSE.
+    It can be used directly, but the most use-cases will be fine
+    with just using the specific streaming protocol.
     """
 
     streaming = True
     endpoint_cls = _StreamingEndpoint
 
     # Customizable attributes for subclasses:
+    streaming_ping_seconds: ClassVar[float | None] = None
+    """
+    Optional ping keep alive event support.
+
+    Some servers might close long living connections with no activity.
+    Specify number in second how long should we wait between events.
+    If we wait longer, we will send a ping event.
+    The payload of the ping event is defined in
+    :meth:`~dmr.streaming.controller.StreamingController.ping_event`.
+
+    By default it is disabled. It is only enabled in the SSE streaming.
+    """
+
     streaming_response_cls: ClassVar[type[StreamingResponse]] = (
         StreamingResponse
     )
-
-    # Set in `__init_subclasses__`:
-    _streaming_renderer: ClassVar[StreamingRenderer]
+    """Streaming response type to customize."""
 
     @override
     def __init_subclass__(cls) -> None:
@@ -92,16 +96,15 @@ class StreamingController(Controller[_SerializerT_co]):
         # Now we have everything and we can create `api_endpoints`:
         call_init_subclass(Controller, cls)
         # TODO: run extra validation?
+        # TODO: validate that endpoints can't contain `yield event` themself.
 
     @classmethod
     @abc.abstractmethod
     def streaming_renderers(
         cls,
-        serializer: type[BaseSerializer],
+        serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> Iterable[StreamingRenderer]:
         """Returns the streaming renderer."""
-
-    # TODO: validate that endpoints can't contain `yield event` themself.
 
     async def handle_event_error(self, exc: Exception) -> Any:
         """
@@ -154,3 +157,13 @@ class StreamingController(Controller[_SerializerT_co]):
                 **cookie.as_dict(),
             )
         return streaming_response
+
+    def ping_event(self) -> Any | None:
+        """
+        Return a ping event to be generated if this streaming needs it.
+
+        By default pings are disabled for ``StreamingController`` types.
+        Pings must be explicitly enabled in subclasses.
+
+        If ``streaming_ping_seconds`` is set, this method will be called.
+        """

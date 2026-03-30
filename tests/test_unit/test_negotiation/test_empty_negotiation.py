@@ -11,7 +11,6 @@ from dmr.settings import Settings
 
 def test_empty_parsers(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     """Ensure that always has to be at least one parser type."""
     settings.DMR_SETTINGS = {
@@ -28,7 +27,6 @@ def test_empty_parsers(
 
 def test_empty_renderers(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     """Ensure that always has to be at least one renderer type."""
     settings.DMR_SETTINGS = {

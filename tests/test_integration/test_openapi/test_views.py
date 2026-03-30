@@ -31,7 +31,6 @@ def use_cdn(request: pytest.FixtureRequest) -> bool:
 def _modify_cdn_settings(
     settings: LazySettings,
     request: pytest.FixtureRequest,
-    dmr_clean_settings: None,
     *,
     use_cdn: bool,
 ) -> None:

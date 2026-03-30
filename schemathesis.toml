@@ -9,3 +9,10 @@ fail-on = true
 [auth.openapi.http_basic]
 username = 'test'
 password = 'pass'
+
+[auth.dynamic.openapi.jwt]
+path = '/api/jwt-auth/jwt-obtain-access-refresh-sync/'
+# These are default user credentials from
+# https://github.com/pytest-dev/pytest-django
+payload = { username = 'admin', password = 'password' }
+extract_selector = '/access_token'

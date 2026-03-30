@@ -6,7 +6,8 @@ import xmltodict_rs as xmltodict
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.exceptions import InternalServerError, RequestSerializationError
+from dmr.exceptions import DataRenderingError, RequestSerializationError
+from dmr.negotiation import ContentType
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.renderers import Renderer
 
@@ -15,7 +16,7 @@ from dmr.renderers import Renderer
 class XmlParser(Parser):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def parse(
@@ -55,7 +56,7 @@ class XmlParser(Parser):
 class XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def render(
@@ -83,7 +84,7 @@ class XmlRenderer(Renderer):
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
             try:  # noqa: SIM105
                 xml_value = serializer_hook(xml_value)
-            except InternalServerError:
+            except DataRenderingError:
                 pass  # noqa: WPS420
             return xml_key, xml_value
 

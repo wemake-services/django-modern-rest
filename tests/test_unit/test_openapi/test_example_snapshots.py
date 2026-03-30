@@ -43,7 +43,6 @@ class _UserController(
 @pytest.mark.freeze_time('02-11-2025 10:15:00')
 def test_user_schema_with_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for user controller."""
@@ -80,7 +79,6 @@ class _ExistingExampleController(Controller[PydanticSerializer]):
 
 def test_user_schema_with_existing_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for existing examples controller."""
@@ -132,7 +130,6 @@ class _ExistingBodyExamplesController(
 
 def test_schema_with_body_existing_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for existing examples in body."""

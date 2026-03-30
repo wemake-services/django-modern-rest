@@ -11,6 +11,7 @@ from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.exceptions import (
+    DataRenderingError,
     InternalServerError,
     NotAuthenticatedError,
     ResponseSchemaError,
@@ -415,9 +416,10 @@ class Endpoint:  # noqa: WPS214
         """
         try:
             return self._validate_response(controller, raw_data)
-        except (
+        except (  # noqa: WPS239
             ResponseSchemaError,
             ValidationError,
+            DataRenderingError,
             InternalServerError,
         ) as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`

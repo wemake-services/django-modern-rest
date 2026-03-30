@@ -67,4 +67,4 @@ urlpatterns = [
 # run: {"controller": "PostController", "method": "get", "url": "/api/user/1/post/8b36dfc2-f168-47db-827a-7ae323539936/", "use_urlpatterns": true}  # noqa: ERA001, E501
 # run: {"controller": "PostController", "method": "get", "url": "/api/user/1/post/wrong/", "use_urlpatterns": true, "assert-error-text": "Page not found", "fail-with-body": false}  # noqa: ERA001, E501
 # run: {"controller": "PostController", "method": "get", "url": "/api/user/0/post/8b36dfc2-f168-47db-827a-7ae323539936/", "use_urlpatterns": true, "assert-error-text": "Page not found", "fail-with-body": false}  # noqa: ERA001, E501
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

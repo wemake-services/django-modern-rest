@@ -72,5 +72,5 @@ class ComplexEventsController(SSEController[PydanticSerializer]):
         yield PingEvent()
 
 
-# run: {"controller": "ComplexEventsController", "method": "get"}  # noqa: ERA001, E501
+# run: {"controller": "ComplexEventsController", "method": "get"}  # noqa: ERA001
 # openapi: {"controller": "ComplexEventsController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

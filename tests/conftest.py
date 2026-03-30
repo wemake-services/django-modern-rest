@@ -5,6 +5,7 @@ from django.utils import translation
 
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
+from dmr_pytest import settings  # noqa: F401
 
 
 @pytest.fixture

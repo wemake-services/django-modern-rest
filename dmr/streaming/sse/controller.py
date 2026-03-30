@@ -4,6 +4,7 @@ from typing_extensions import override
 
 from dmr.errors import ErrorType
 from dmr.exceptions import ValidationError
+from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import default_renderer
 from dmr.streaming.controller import StreamingController
@@ -26,28 +27,35 @@ class SSEController(StreamingController[_SerializerT_co]):
     .. danger::
 
         WSGI handers do not support streaming responses, including SSE,
-        by default. You would need to use ASGI handler for SSE endpoints.
+        by default. You would need to use ASGI handler for streaming endpoints.
 
         We allow running SSE during ``settings.DEBUG`` builds for debugging.
         But, in production we will raise :exc:`RuntimeError`
-        when WSGI handler will be detected used together with SSE.
+        when WSGI handler will be detected used together with streaming.
 
     """
+
+    streaming_ping_seconds = 15.0
+
+    # Custom attributes:
+    streaming_default_renderer: ClassVar[Renderer] = default_renderer
+    """Default renderer for event ``body`` field."""
 
     streaming_validator_cls: ClassVar[type[SSEStreamingValidator]] = (
         SSEStreamingValidator
     )
+    """Validator for events, only active when ``validate_events`` is set."""
 
     @override
     @classmethod
     def streaming_renderers(
         cls,
-        serializer: type[BaseSerializer],
+        serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> list[StreamingRenderer]:
         return [
             SSERenderer(
                 serializer,
-                default_renderer,
+                cls.streaming_default_renderer,
                 cls.streaming_validator_cls,
             ),
         ]
@@ -66,3 +74,8 @@ class SSEController(StreamingController[_SerializerT_co]):
                 event='error',
             )
         return await super().handle_event_error(exc)
+
+    @override
+    def ping_event(self) -> Any | None:
+        """Return a ping event to be generated if this streaming needs it."""
+        return SSEvent(comment='ping')

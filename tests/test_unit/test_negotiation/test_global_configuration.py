@@ -24,7 +24,6 @@ from tests.infra.xml_format import XmlParser, XmlRenderer
 @pytest.fixture(autouse=True)
 def _setup_parser_and_renderer(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
         Settings.parsers: [XmlParser()],

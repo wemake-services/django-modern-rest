@@ -106,7 +106,6 @@ async def test_async_session_auth_failure(
 
 def test_global_settings_override(
     settings: LazySettings,
-    dmr_clean_settings: None,
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensure that you can override global `[]` auth value from settings."""

@@ -132,26 +132,78 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
             self.streaming_validator = None
 
     async def _produce_events(self) -> AsyncIterator[bytes]:
-        async with maybe_aclosing(self._streaming_content):
-            while True:
-                try:
-                    event = self._apply_validator(
-                        await anext(self._streaming_content),
-                    )
-                except (
-                    StreamingCloseError,
-                    asyncio.CancelledError,
-                    StopAsyncIteration,
-                ):
-                    self.close()
-                    break
-                except Exception as exc:
-                    event = await self._handle_event_error(exc)
+        event_producer = (
+            self._produce_events_no_ping
+            if self._controller.streaming_ping_seconds is None
+            else self._produce_events_with_ping
+        )
+        events = event_producer()
+        async with (
+            maybe_aclosing(self._streaming_content),
+            maybe_aclosing(events),
+        ):
+            try:
+                # This async for will never "exit" normally, because
+                # we raise an exception after the last event.
+                async for event in events:  # pragma: no branch
+                    yield event
+            except StreamingCloseError:
+                pass  # noqa: WPS420
+            finally:
+                self.close()
 
-                yield self._controller.serializer.serialize(
-                    event,
-                    renderer=self.streaming_renderer,
-                )
+    async def _produce_events_no_ping(self) -> AsyncIterator[Any]:
+        while True:
+            yield self._controller.serializer.serialize(
+                await self._next_event(),
+                renderer=self.streaming_renderer,
+            )
+
+    async def _produce_events_with_ping(self) -> AsyncIterator[Any]:
+        # for mypy: just checked above
+        assert self._controller.streaming_ping_seconds is not None  # noqa: S101
+
+        event_task: asyncio.Task[Any] | None = None
+
+        while True:
+            if event_task is None:
+                event_task = asyncio.ensure_future(self._next_event())
+
+            ping_task: asyncio.Task[None] = asyncio.ensure_future(
+                asyncio.sleep(self._controller.streaming_ping_seconds),
+            )
+            done, _ = await asyncio.wait(
+                [event_task, ping_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            if ping_task in done and event_task not in done:
+                # Ping fired before the next real event: send the
+                # ping comment and do not touch the original task.
+                event = self._controller.ping_event()
+            else:
+                # Event fired before the ping:
+                try:  # noqa: WPS501
+                    event = event_task.result()
+                finally:
+                    # Now we need to clean the task, because
+                    # we would need a new event on the next iteration:
+                    event_task = None
+
+            yield self._controller.serializer.serialize(
+                event,
+                renderer=self.streaming_renderer,
+            )
+
+    async def _next_event(self) -> Any:
+        try:
+            return self._apply_validator(
+                await anext(self._streaming_content),
+            )
+        except (asyncio.CancelledError, StopAsyncIteration):
+            raise StreamingCloseError from None
+        except Exception as exc:
+            return await self._handle_event_error(exc)
 
     def _apply_validator(self, event: Any) -> Any:
         return self.streaming_validator.apply_event_pipeline(event)

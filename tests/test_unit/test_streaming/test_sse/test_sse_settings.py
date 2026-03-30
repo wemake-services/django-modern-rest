@@ -21,7 +21,6 @@ from tests.infra.xml_format import XmlParser, XmlRenderer
 
 def test_single_streaming_renderer(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     """Ensure that streaming renderer can't be the only one."""
     settings.DMR_SETTINGS = {
@@ -99,7 +98,6 @@ class _BodyModel(pydantic.BaseModel):
 )
 async def test_sse_negotiation(
     settings: LazySettings,
-    dmr_clean_settings: None,  # TODO: rework `settings` fixture to include it
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     request_headers: dict[str, str],

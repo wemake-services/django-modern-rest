@@ -20,4 +20,4 @@ class ApiController(Controller[MsgspecSerializer]):
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc&regular=null"}  # noqa: ERA001, E501
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=null&regular=null"}  # noqa: ERA001, E501
-# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
