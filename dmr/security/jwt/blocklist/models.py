@@ -31,7 +31,7 @@ class BlocklistedJWToken(models.Model):
         unique=True,
         max_length=255,
     )
-    expires_at: _DateTimeField = models.DateTimeField(db_index=True)
+    expires_at: _DateTimeField = models.DateTimeField()
     created_at: _DateTimeField = models.DateTimeField(
         auto_now_add=True,
     )
