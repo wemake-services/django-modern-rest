@@ -104,7 +104,7 @@ class StreamingController(Controller[_SerializerT_co]):
         cls,
         serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> Iterable[StreamingRenderer]:
-        """Returns the streaming renderer."""
+        """Returns the iterable of streaming renderers for this controller."""
 
     async def handle_event_error(self, exc: Exception) -> Any:
         """
