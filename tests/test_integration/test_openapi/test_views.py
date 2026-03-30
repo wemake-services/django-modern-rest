@@ -15,8 +15,8 @@ except ImportError:  # pragma: no cover
     OpenAPIYamlView = None
     _HAS_YAML = False
 else:
-    _ = yaml_dumps
-    _HAS_YAML = True
+    from dmr.openapi.views.yaml import OpenAPIYamlView
+    _HAS_YAML = yaml_dumps is not None
 
 
 @pytest.fixture(params=[True, False], name='use_cdn')

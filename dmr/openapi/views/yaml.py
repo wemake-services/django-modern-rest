@@ -18,11 +18,10 @@ class OpenAPIYamlView(OpenAPIView):
     """
 
     content_type: ClassVar[str] = 'application/yaml'
-    dumps = staticmethod(yaml_dumps)
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema as YAML response."""
         return HttpResponse(
-            content=self.dumps(self.schema.convert()),
+            content=yaml_dumps(self.schema.convert()),
             content_type=self.content_type,
         )

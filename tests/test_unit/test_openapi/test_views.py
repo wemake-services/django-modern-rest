@@ -25,8 +25,7 @@ except ImportError:  # pragma: no cover
 else:
     from dmr.openapi.views.yaml import OpenAPIYamlView
 
-    _ = yaml_dumps
-    _HAS_YAML = True
+    _HAS_YAML = yaml_dumps is not None
 
 
 def test_json_view(dmr_rf: DMRRequestFactory) -> None:
