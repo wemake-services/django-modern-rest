@@ -165,6 +165,13 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :linenos:
         :emphasize-lines: 2, 5, 8, 12, 16, 20
 
+.. important::
+
+  You can choose a serializer per controller, which will give you
+  the freedom to choose the best serializer and model for the job.
+  ``msgspec`` gives you more speed,
+  while ``pydantic`` gives you more flexibility.
+
 
 In this example:
 
