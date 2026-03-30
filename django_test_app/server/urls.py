@@ -84,15 +84,12 @@ urlpatterns = [
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
     path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
-]
-
-urlpatterns.append(
     path(
         'docs/openapi.yaml/',
         OpenAPIYamlView.as_view(schema),
         name='openapi-yaml',
     ),
-)
+]
 
 handler404 = build_404_handler(
     router.prefix,

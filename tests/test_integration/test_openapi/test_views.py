@@ -10,9 +10,15 @@ from dmr.settings import Settings
 from dmr.test import DMRClient
 
 try:
-    from dmr.openapi.views.yaml import OpenAPIYamlView
+    from dmr.plugins.msgspec.yaml import yaml_dumps
 except ImportError:  # pragma: no cover
     OpenAPIYamlView = None
+    _HAS_YAML = False
+else:
+    from dmr.openapi.views.yaml import OpenAPIYamlView
+
+    _ = yaml_dumps
+    _HAS_YAML = True
 
 
 @pytest.fixture(params=[True, False], name='use_cdn')
@@ -54,7 +60,7 @@ _ENDPOINTS: Final = MappingProxyType({
     'stoplight': 'text/html',
 })
 
-if OpenAPIYamlView is not None:
+if _HAS_YAML:
     _ENDPOINTS = MappingProxyType({
         **_ENDPOINTS,
         'openapi-yaml': 'application/yaml',
@@ -103,7 +109,7 @@ def test_wrong_method(
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
-def test_returns_correct_structure(dmr_client: DMRClient) -> None:
+def test_json_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
     response = dmr_client.get(reverse('openapi'))
 
@@ -111,10 +117,10 @@ def test_returns_correct_structure(dmr_client: DMRClient) -> None:
 
 
 @pytest.mark.skipif(
-    OpenAPIYamlView is None,
+    not _HAS_YAML,
     reason='`msgspec` is required for OpenAPI YAML endpoint',
 )
-def test_yaml_endpoint_returns_correct_structure(dmr_client: DMRClient) -> None:
+def test_yaml_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI YAML endpoint returns correct structure."""
     response = dmr_client.get(reverse('openapi-yaml'))
 

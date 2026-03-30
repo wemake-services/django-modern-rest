@@ -18,9 +18,15 @@ from dmr.routing import Router
 from dmr.test import DMRRequestFactory
 
 try:
-    from dmr.openapi.views.yaml import OpenAPIYamlView
+    from dmr.plugins.msgspec.yaml import yaml_dumps
 except ImportError:  # pragma: no cover
     OpenAPIYamlView = None
+    _HAS_YAML = False
+else:
+    from dmr.openapi.views.yaml import OpenAPIYamlView
+
+    _ = yaml_dumps
+    _HAS_YAML = True
 
 
 def test_json_view(dmr_rf: DMRRequestFactory) -> None:
@@ -42,13 +48,11 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
 
 
 @pytest.mark.skipif(
-    OpenAPIYamlView is None,
+    not _HAS_YAML,
     reason='`msgspec` is required for OpenAPIYamlView',
 )
 def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that ``OpenAPIYamlView`` returns correct YAML response."""
-    assert OpenAPIYamlView is not None
-
     schema = build_schema(Router('', []))
     request = dmr_rf.get('/whatever/')
 
