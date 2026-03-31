@@ -13,14 +13,14 @@ but with a deprecation period.
 This release will focus on better errors, performance, and stability.
 No breaking changes will be made.
 
+### Features
+
+- Provide officail `NamedTuple` support, #774
+
 ### Fixes
 
 - Fixed `StreamingValidator` swallowing errors
   when `validate_events` was `True`, but no event model was resolved
-
-### Misc
-
-- Test and declare officail NamedTuple support #774
 
 
 ## Version 0.4.0 (2026-03-29)
