@@ -1,0 +1,75 @@
+name: Build binary wheels
+
+# Runs on every push to master and on all pull requests.
+# Can also be triggered manually from the GitHub UI.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest        # Linux x86_64
+          - ubuntu-24.04-arm     # Linux aarch64
+          - macos-latest         # macOS x86_64 + arm64 (universal2)
+          - windows-latest       # Windows x86_64
+          - windows-11-arm       # Windows ARM64
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: pypa/cibuildwheel@v3.3.1
+        with:
+          config-file: cibuildwheel.toml
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: dist-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+          overwrite: true
+
+  # Also build the pure-Python wheel and the source distribution so that
+  # unsupported platforms automatically fall back to the pure-Python
+  # implementation when pip installs from PyPI.
+  build_pure:
+    name: Pure-Python wheel + sdist
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install build
+        run: pip install build
+
+      - name: Build sdist and pure-Python wheel
+        # DMR_USE_MYPYC is intentionally NOT set here.
+        run: python -m build --sdist --wheel
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: dist-pure
+          path: dist/
+          overwrite: true

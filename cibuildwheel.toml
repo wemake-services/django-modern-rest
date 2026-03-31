@@ -1,0 +1,31 @@
+# cibuildwheel configuration for django-modern-rest binary wheels.
+# Docs: https://cibuildwheel.readthedocs.io/en/stable/configuration/
+#
+# Only CPython wheels are built (mypyc does not support PyPy).
+# 32-bit targets and musl/Alpine Linux are skipped — negligible benefit.
+
+[tool.cibuildwheel]
+# Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
+build = "cp3{11,12,13,14}-*"
+skip = [
+  "*-win32",
+  "*-manylinux_i686",
+  "*-musllinux*",
+]
+build-verbosity = 1
+
+# Install mypy (provides mypyc) and the package's runtime deps so that
+# mypyc can type-check dmr/internal/_negotiation.py during compilation.
+before-build = "pip install 'mypy>=1.0' 'django>=5.2' 'typing_extensions>=4'"
+
+[tool.cibuildwheel.environment]
+# Signal to build.py that mypyc compilation is desired.
+DMR_USE_MYPYC = "1"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+
+[tool.cibuildwheel.macos]
+# Build universal2 wheels covering both Intel and Apple Silicon in one file.
+archs = ["x86_64", "arm64", "universal2"]
