@@ -164,6 +164,17 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :language: python
         :linenos:
         :emphasize-lines: 2, 5, 8, 12, 16, 20
+    
+    .. tab:: NamedTuple
+
+      We support :class:`typing.NamedTuple`
+      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+
+      .. literalinclude:: /examples/getting_started/named_tuple_controller.py
+        :caption: views.py
+        :language: python
+        :linenos:
+        :emphasize-lines: 2, 8, 12
 
 .. important::
 

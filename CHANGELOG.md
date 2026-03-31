@@ -18,6 +18,10 @@ No breaking changes will be made.
 - Fixed `StreamingValidator` swallowing errors
   when `validate_events` was `True`, but no event model was resolved
 
+### Misc
+
+- Test and declare officail NamedTuple support #774
+
 
 ## Version 0.4.0 (2026-03-29)
 
