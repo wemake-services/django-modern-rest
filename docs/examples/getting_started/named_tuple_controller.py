@@ -14,7 +14,7 @@ class UserModel(NamedTuple):
     uid: uuid.UUID
 
 
-class UserControler(
+class UserController(
     Controller[PydanticSerializer],
 ):
     def post(self, parsed_body: Body[UserCreateModel]) -> UserModel:

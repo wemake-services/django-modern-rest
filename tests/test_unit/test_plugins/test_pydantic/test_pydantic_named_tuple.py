@@ -47,7 +47,7 @@ def test_named_tuple_pydantic_serialization(
 
 
 def test_named_tuple_arbitrary_types(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures by arbitrary types in named tuple produce clear errors."""
+    """Ensures arbitrary types in a NamedTuple produce clear errors."""
     request_data = {
         'uid': 1,
         'email': 2,

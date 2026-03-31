@@ -15,7 +15,7 @@ No breaking changes will be made.
 
 ### Features
 
-- Provide officail `NamedTuple` support, #774
+- Provide official `NamedTuple` support, #774
 
 ### Fixes
 
