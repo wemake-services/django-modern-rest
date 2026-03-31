@@ -164,7 +164,7 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :language: python
         :linenos:
         :emphasize-lines: 2, 5, 8, 12, 16, 20
-    
+
     .. tab:: NamedTuple
 
       We support :class:`typing.NamedTuple`
