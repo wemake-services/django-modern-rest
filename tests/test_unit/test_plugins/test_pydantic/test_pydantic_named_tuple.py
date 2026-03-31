@@ -5,7 +5,6 @@ from typing import NamedTuple, final
 
 from dirty_equals import IsStr, IsUUID
 from django.http import HttpResponse
-from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
