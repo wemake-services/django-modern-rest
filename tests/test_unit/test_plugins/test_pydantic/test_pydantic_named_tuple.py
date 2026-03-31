@@ -3,6 +3,7 @@ import uuid
 from http import HTTPStatus
 from typing import NamedTuple, final
 
+from dirty_equals import IsUUID
 from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
@@ -28,12 +29,11 @@ class _FieldsController(
 
 def test_named_tuple_pydantic_serialization(
     dmr_rf: DMRRequestFactory,
-    faker: Faker,
 ) -> None:
     """Ensures that named tuple pydantic serialization works well."""
     request_data = {
         'uid': uuid.uuid4(),
-        'email': faker.email(),
+        'email': 'user@example.com',
     }
 
     request = dmr_rf.post('/whatever/', data=request_data)
@@ -41,11 +41,10 @@ def test_named_tuple_pydantic_serialization(
     response = _FieldsController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-
-    response_content = json.loads(response.content)
     assert response.status_code == HTTPStatus.CREATED
-    assert str(request_data['uid']) in response_content
-    assert request_data['email'] in response_content
+    assert json.loads(response.content) == snapshot(
+        [IsUUID, 'user@example.com'],
+    )
 
 
 def test_named_tuple_arbitrary_types(dmr_rf: DMRRequestFactory) -> None:
