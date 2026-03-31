@@ -144,10 +144,8 @@ class ResponseNegotiator:
         # The last configured parser is the most specific one:
         self._default = next(iter(self._renderers.values()))
         # The second one is suitable for errors if it is a stream:
-        self._non_streaming_default = (
-            next(iter(self._non_streaming_renderers.values()))
-            if self._streaming
-            else None
+        self._non_streaming_default = next(
+            iter(self._non_streaming_renderers.values()),
         )
 
     def __call__(self, request: HttpRequest) -> Renderer:

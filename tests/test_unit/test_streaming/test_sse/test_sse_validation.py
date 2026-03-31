@@ -12,7 +12,7 @@ from inline_snapshot import snapshot
 
 from dmr import APIError, ResponseSpec, modify, validate
 from dmr.errors import ErrorModel, format_error
-from dmr.exceptions import DataRenderingError
+from dmr.exceptions import DataRenderingError, EndpointMetadataError
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
@@ -501,13 +501,13 @@ async def test_missing_event_model(
     *,
     serializer: type[BaseSerializer],
 ) -> None:
-    """Ensures that missing event model defaults to `Any`."""
+    """Ensures that missing event model defaults to ``Any`` when non strict."""
 
     class _ClassBasedSSE(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = True
+        validate_events = False
 
         @validate(
             streaming_response_spec(
@@ -536,6 +536,40 @@ async def test_missing_event_model(
         'Connection': 'keep-alive',
     }
     assert await get_streaming_content(response) == b'data: "string"\r\n\r\n'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_missing_event_model_strict(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that missing event model raise when ``validate_events``."""
+
+    class _ClassBasedSSE(
+        SSEController[serializer],  # type: ignore[valid-type]
+    ):
+        validate_responses = False
+        validate_events = True
+
+        @validate(
+            streaming_response_spec(
+                int,
+                status_code=HTTPStatus.CREATED,
+                content_type=ContentType.event_stream,
+            ),
+        )
+        async def get(self) -> StreamingResponse:
+            return self.to_stream(self._events())
+
+        async def _events(self) -> AsyncIterator[SSEvent[str]]:
+            yield SSEvent('string')  # pragma: no cover
+
+    request = dmr_async_rf.get('/whatever/')
+
+    with pytest.raises(EndpointMetadataError, match='OK: 200'):
+        await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
 
 class _Events:

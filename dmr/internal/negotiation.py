@@ -101,7 +101,7 @@ def negotiate_renderer(
     request: HttpRequest,
     renderers: Mapping[str, 'Renderer'],
     *,
-    default: 'Renderer | None' = None,
+    default: 'Renderer',
 ) -> 'Renderer':
     """
     Choose a renderer by the request's Accept header.
@@ -110,18 +110,15 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    fallback = next(iter(renderers.values())) if default is None else default
-
     if request.headers.get('Accept') is None:
-        return fallback
+        return default
 
-    renderer_keys = list(renderers.keys())
-    renderer_type = request.get_preferred_type(renderer_keys)
+    renderer_type = request.get_preferred_type(renderers)  # type: ignore[arg-type]
     if renderer_type is None:
         raise NotAcceptableError(
             _CANNOT_SERIALIZE_MSG.format(
                 accepted_types=repr(request.accepted_types),
-                supported=repr(renderer_keys),
+                supported=repr(list(renderers)),
             ),
         )
     return renderers[renderer_type]

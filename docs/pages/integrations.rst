@@ -15,7 +15,7 @@ Let's say you have these models that you already work with:
   :linenos:
 
 Now, let's create an API that will work with your models.
-To do that the first thing you need to do is to create
+The first thing you need to do is to create
 your API serializers / deserializers.
 
 While it may seems that this is a redundant duplication of code, and that it
@@ -24,7 +24,7 @@ but that's actually the **opposite**.
 
 Because models and serialization
 schemes must change independenly. Otherwise, your API would
-be a mess and will change unexpectedly, when you create a new migration.
+be a mess and will change unexpectedly, when you create a new model field.
 This problem happened to me too many times.
 
 .. literalinclude:: ../../django_test_app/server/apps/models_example/serializers.py

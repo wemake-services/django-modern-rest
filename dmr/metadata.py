@@ -277,6 +277,8 @@ class EndpointMetadata:
     Base class for common endpoint metadata.
 
     Attributes:
+        endpoint_name: Text representation of an endpoint
+            name for better error messages.
         responses: Mapping of HTTP method to response description.
             All possible responses that this API can return.
             Used for OpenAPI spec generation and for response validation.
@@ -346,6 +348,7 @@ class EndpointMetadata:
 
     """
 
+    endpoint_name: str
     responses: dict[HTTPStatus, ResponseSpec]
     validate_responses: bool | None
     method: str

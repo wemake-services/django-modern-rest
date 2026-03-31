@@ -8,6 +8,17 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
+## WIP
+
+This release will focus on better errors, performance, and stability.
+No breaking changes will be made.
+
+### Fixes
+
+- Fixed `StreamingValidator` swallowing errors
+  when `validate_events` was `True`, but no event model was resolved
+
+
 ## Version 0.4.0 (2026-03-29)
 
 AKA "The first version that I enjoy".

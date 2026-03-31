@@ -58,7 +58,6 @@ class _ResponseListValidator:  # noqa: WPS214
     """Validates responses metadata."""
 
     metadata: EndpointMetadata
-    endpoint: str
 
     def __call__(
         self,
@@ -74,6 +73,7 @@ class _ResponseListValidator:  # noqa: WPS214
         self,
         responses: list[ResponseSpec],
     ) -> None:
+        endpoint_name = self.metadata.endpoint_name
         # Now, check if we have any conflicts in responses.
         # For example: same status code, mismatching metadata.
         unique: dict[HTTPStatus, ResponseSpec] = {}
@@ -81,7 +81,7 @@ class _ResponseListValidator:  # noqa: WPS214
             existing_response = unique.get(response.status_code)
             if existing_response is not None and existing_response != response:
                 raise EndpointMetadataError(
-                    f'Endpoint {self.endpoint!r} has multiple responses '
+                    f'Endpoint {endpoint_name!r} has multiple responses '
                     f'for {response.status_code=}, but with different '
                     f'metadata: {response} and {existing_response}',
                 )
@@ -91,6 +91,7 @@ class _ResponseListValidator:  # noqa: WPS214
         self,
         responses: list[ResponseSpec],
     ) -> None:
+        endpoint_name = self.metadata.endpoint_name
         for response in responses:
             if response.headers is None:
                 continue
@@ -98,18 +99,19 @@ class _ResponseListValidator:  # noqa: WPS214
                 if header_name.lower() == 'set-cookie':
                     raise EndpointMetadataError(
                         f'Cannot use "Set-Cookie" header in {response}, use '
-                        f'`cookies=` parameter instead in {self.endpoint!r}',
+                        f'`cookies=` parameter instead in {endpoint_name!r}',
                     )
                 if isinstance(header, NewHeader):  # type: ignore[unreachable]
                     raise EndpointMetadataError(
                         f'Cannot use `NewHeader` in {response} , use '
-                        f'`HeaderSpec` instead in {self.endpoint!r}',
+                        f'`HeaderSpec` instead in {endpoint_name!r}',
                     )
 
     def _validate_cookie_descriptions(
         self,
         responses: list[ResponseSpec],
     ) -> None:
+        endpoint_name = self.metadata.endpoint_name
         for response in responses:
             if response.cookies is None:
                 continue
@@ -119,7 +121,7 @@ class _ResponseListValidator:  # noqa: WPS214
             ):
                 raise EndpointMetadataError(
                     f'Cannot use `NewCookie` in {response} , '
-                    f'use `CookieSpec` instead in {self.endpoint!r}',
+                    f'use `CookieSpec` instead in {endpoint_name!r}',
                 )
 
     def _validate_http_spec(
@@ -131,18 +133,14 @@ class _ResponseListValidator:  # noqa: WPS214
             HttpSpec.empty_response_body
             not in self.metadata.no_validate_http_spec
         ):
-            self._check_empty_response_body(
-                responses,
-                endpoint=self.endpoint,
-            )
+            self._check_empty_response_body(responses)
         # TODO: add more checks
 
     def _check_empty_response_body(
         self,
         responses: list[ResponseSpec],
-        *,
-        endpoint: str,
     ) -> None:
+        endpoint_name = self.metadata.endpoint_name
         # For status codes < 100 or 204, 304 statuses,
         # no response body is allowed.
         # If you specify a return annotation other than None,
@@ -155,7 +153,7 @@ class _ResponseListValidator:  # noqa: WPS214
             ):
                 raise EndpointMetadataError(
                     f'Can only return `None` not {response.return_type} '
-                    f'from an endpoint {endpoint!r} '
+                    f'from an endpoint {endpoint_name!r} '
                     f'with status code {response.status_code}',
                 )
 
@@ -187,6 +185,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     response_modification_cls: type[ResponseModification]
     component_parsers: list[ComponentParserSpec]
 
+    # Internal fields:
+    endpoint_name: str = dataclasses.field(init=False)
+
     def __call__(self) -> EndpointMetadata:
         """Do the validation."""
         return_annotation = infer_annotation(
@@ -210,18 +211,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             allowed_http_methods=allowed_http_methods,
         )
         self.func.__name__ = method  # we can change it :)
-        endpoint = str(self.func)
+        self.func.__qualname__ = method
+        object.__setattr__(self, 'endpoint_name', self._build_endpoint_name())
 
-        self._validate_return_annotation(
-            return_annotation,
-            endpoint=endpoint,
-        )
+        self._validate_return_annotation(return_annotation)
 
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
                 method,
-                endpoint=endpoint,
                 allowed_http_methods=allowed_http_methods,
             )
         if isinstance(self.payload, ModifyEndpointPayload):
@@ -229,14 +227,12 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 self.payload,
                 method,
                 return_annotation,
-                endpoint=endpoint,
                 allowed_http_methods=allowed_http_methods,
             )
         if self.payload is None:
             return self._from_raw_data(
                 method,
                 return_annotation,
-                endpoint=endpoint,
                 allowed_http_methods=allowed_http_methods,
             )
         assert_never(self.payload)
@@ -245,21 +241,20 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         payload: ValidateEndpointPayload,
         method: str,
-        *,
-        endpoint: str,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         summary, description = self._build_description()
         return self.metadata_cls(
+            endpoint_name=self.endpoint_name,
             responses={},
             method=method,
             validate_responses=self._build_validate_responses(),
             modification=None,
-            error_handler=self._build_error_handler(endpoint=endpoint),
+            error_handler=self._build_error_handler(),
             component_parsers=self.component_parsers,
-            parsers=self._build_parsers(endpoint=endpoint),
-            renderers=self._build_renderers(endpoint=endpoint),
-            auth=self._build_auth(endpoint=endpoint),
+            parsers=self._build_parsers(),
+            renderers=self._build_renderers(),
+            auth=self._build_auth(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -280,10 +275,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         method: str,
         return_annotation: Any,
         *,
-        endpoint: str,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
-        self._validate_new_http_parts(payload, endpoint=endpoint)
+        self._validate_new_http_parts(payload)
         modification = self.response_modification_cls(
             return_type=return_annotation,
             headers=payload.headers,
@@ -302,15 +296,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         summary, description = self._build_description()
         return self.metadata_cls(
+            endpoint_name=self.endpoint_name,
             responses={},
             validate_responses=self._build_validate_responses(),
             method=method,
             modification=modification,
-            error_handler=self._build_error_handler(endpoint=endpoint),
+            error_handler=self._build_error_handler(),
             component_parsers=self.component_parsers,
-            parsers=self._build_parsers(endpoint=endpoint),
-            renderers=self._build_renderers(endpoint=endpoint),
-            auth=self._build_auth(endpoint=endpoint),
+            parsers=self._build_parsers(),
+            renderers=self._build_renderers(),
+            auth=self._build_auth(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -330,7 +325,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         method: str,
         return_annotation: Any,
         *,
-        endpoint: str,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         status_code = infer_status_code(
@@ -348,15 +342,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         summary, description = self._build_description()
         return self.metadata_cls(
+            endpoint_name=self.endpoint_name,
             responses={},
             validate_responses=self._build_validate_responses(),
             method=method,
             modification=modification,
             error_handler=None,
             component_parsers=self.component_parsers,
-            parsers=self._build_parsers(endpoint=endpoint),
-            renderers=self._build_renderers(endpoint=endpoint),
-            auth=self._build_auth(endpoint=endpoint),
+            parsers=self._build_parsers(),
+            renderers=self._build_renderers(),
+            auth=self._build_auth(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -365,68 +360,69 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             description=description,
         )
 
-    def _build_parsers(self, *, endpoint: str) -> dict[str, Parser]:
+    def _build_endpoint_name(self) -> str:
+        controller_name = self.controller_cls.__qualname__
+        func_name = self.func.__name__
+        return f'{controller_name}.{func_name}'
+
+    def _build_parsers(self) -> dict[str, Parser]:
         if self.payload and self.payload.parsers:
             return {
-                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                typ.content_type: self._check_supported(typ)
                 for typ in self.payload.parsers
             }
         if self.controller_cls.parsers:
             return {
-                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                typ.content_type: self._check_supported(typ)
                 for typ in self.controller_cls.parsers
             }
         settings_types = resolve_setting(Settings.parsers)
         if not settings_types:
             # This is the last place we look at, it must be present:
             raise EndpointMetadataError(
-                f'{endpoint!r} must have at least one parser '
+                f'{self.endpoint_name!r} must have at least one parser '
                 'configured in settings',
             )
         return {
-            typ.content_type: self._check_supported(typ, endpoint=endpoint)
+            typ.content_type: self._check_supported(typ)
             for typ in settings_types
         }
 
-    def _build_renderers(self, *, endpoint: str) -> dict[str, Renderer]:
+    def _build_renderers(self) -> dict[str, Renderer]:
         if self.payload and self.payload.renderers:
             return {
-                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                typ.content_type: self._check_supported(typ)
                 for typ in self.payload.renderers
             }
         if self.controller_cls.renderers:
             return {
-                typ.content_type: self._check_supported(typ, endpoint=endpoint)
+                typ.content_type: self._check_supported(typ)
                 for typ in self.controller_cls.renderers
             }
         settings_types = resolve_setting(Settings.renderers)
         if not settings_types:
             # This is the last place we look at, it must be present:
             raise EndpointMetadataError(
-                f'{endpoint!r} must have at least one renderer '
+                f'{self.endpoint_name!r} must have at least one renderer '
                 'configured in settings',
             )
         return {
-            typ.content_type: self._check_supported(typ, endpoint=endpoint)
+            typ.content_type: self._check_supported(typ)
             for typ in settings_types
         }
 
     def _check_supported(
         self,
         pluggable: _PluggableT,
-        *,
-        endpoint: str,
     ) -> _PluggableT:
         if self.controller_cls.serializer.is_supported(pluggable):
             return pluggable
         raise EndpointMetadataError(
-            f'{endpoint!r} serializer does not support {pluggable!r}',
+            f'{self.endpoint_name!r} serializer does not support {pluggable!r}',
         )
 
     def _build_auth(  # noqa: WPS231
         self,
-        *,
-        endpoint: str,
     ) -> list[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
         settings_auth: Sequence[SyncAuth | AsyncAuth] = resolve_setting(
@@ -450,7 +446,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         ):
             raise EndpointMetadataError(
                 f'All auth instances must be subtypes of {base_type!r} '
-                f'for {endpoint=}',
+                f'for {self.endpoint_name=}',
             )
         # We are doing this as late as possible to still
         # have the full validation logic even if some value is None.
@@ -485,19 +481,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_error_handler(
         self,
-        *,
-        endpoint: str,
     ) -> 'SyncErrorHandler | AsyncErrorHandler | None':
         if self.payload is None or self.payload.error_handler is None:
             return None
         if inspect.iscoroutinefunction(self.func):
             if not inspect.iscoroutinefunction(self.payload.error_handler):
                 raise EndpointMetadataError(
-                    f'Cannot pass sync `error_handler` to async {endpoint}',
+                    'Cannot pass sync `error_handler` '
+                    f'to async {self.endpoint_name!r}',
                 )
         elif inspect.iscoroutinefunction(self.payload.error_handler):
             raise EndpointMetadataError(
-                f'Cannot pass async `error_handler` to sync {endpoint}',
+                'Cannot pass async `error_handler` '
+                f'to sync {self.endpoint_name!r}',
             )
         return self.payload.error_handler
 
@@ -560,15 +556,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _validate_new_http_parts(
         self,
         payload: ModifyEndpointPayload,
-        *,
-        endpoint: str,
     ) -> None:
         if payload.headers is not None and any(
             isinstance(header, HeaderSpec) and not header.skip_validation
             for header in payload.headers.values()
         ):
             raise EndpointMetadataError(
-                f'Since {endpoint!r} returns raw data, '
+                f'Since {self.endpoint_name!r} returns raw data, '
                 f'it is not possible to use `HeaderSpec` '
                 'because there are no existing headers to describe. Use '
                 '`NewHeader` to add new headers to the response. '
@@ -579,7 +573,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             for cookie in payload.cookies.values()
         ):
             raise EndpointMetadataError(
-                f'Since {endpoint!r} returns raw data, '
+                f'Since {self.endpoint_name!r} returns raw data, '
                 f'it is not possible to use `CookieSpec` '
                 'because there are no existing cookies to describe. Use '
                 '`NewCookie` to add new cookies to the response. '
@@ -589,13 +583,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _validate_return_annotation(
         self,
         return_annotation: Any,
-        *,
-        endpoint: str,
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponseBase):
             if isinstance(self.payload, ModifyEndpointPayload):
                 raise EndpointMetadataError(
-                    f'{endpoint!r} returns HttpResponseBase '
+                    f'{self.endpoint_name!r} returns HttpResponseBase '
                     'it cannot be used with `@modify`. '
                     'Maybe you meant `@validate`?',
                 )
@@ -606,7 +598,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 controller_cls=self.controller_cls,
             ):
                 raise EndpointMetadataError(
-                    f'{endpoint!r} returns HttpResponse '
+                    f'{self.endpoint_name!r} returns HttpResponse '
                     'and has no configured responses, '
                     'it requires `@validate` decorator with '
                     'at least one configured `ResponseSpec`',
@@ -618,7 +610,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         if isinstance(self.payload, ValidateEndpointPayload):
             raise EndpointMetadataError(
-                f'{endpoint!r} returns raw data, '
+                f'{self.endpoint_name!r} returns raw data, '
                 'it requires `@modify` decorator instead of `@validate`',
             )
 
@@ -647,7 +639,6 @@ class EndpointMetadataValidator:
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """Collect and validate all responses."""
-        endpoint = str(func)
         responses = self._resolve_all_responses(
             payload,
             controller_cls=controller_cls,
@@ -660,11 +651,10 @@ class EndpointMetadataValidator:
             'responses',
             self.response_list_validator_cls(
                 metadata=self.metadata,
-                endpoint=endpoint,
             )(responses),
         )
         # After that we can do some other validation:
-        self._validate_request_http_spec(endpoint=endpoint)
+        self._validate_request_http_spec()
         self._validate_components(controller_cls)
 
     def _resolve_all_responses(
@@ -721,23 +711,15 @@ class EndpointMetadataValidator:
         for component, _model, _metadata in self.metadata.component_parsers:
             component.validate(controller_cls, self.metadata)
 
-    def _validate_request_http_spec(
-        self,
-        *,
-        endpoint: str,
-    ) -> None:
+    def _validate_request_http_spec(self) -> None:
         """Validate HTTP spec rules for request."""
         if (
             HttpSpec.empty_request_body
             not in self.metadata.no_validate_http_spec
         ):
-            self._check_empty_request_body(endpoint=endpoint)
+            self._check_empty_request_body()
 
-    def _check_empty_request_body(
-        self,
-        *,
-        endpoint: str,
-    ) -> None:
+    def _check_empty_request_body(self) -> None:
         """Validate that methods without body don't use Body component.
 
         According to HTTP spec, methods like GET, HEAD, DELETE, CONNECT, TRACE
@@ -753,9 +735,10 @@ class EndpointMetadataValidator:
             for component in self.metadata.component_parsers
         )
         if has_body:
+            endpoint_name = self.metadata.endpoint_name
             raise EndpointMetadataError(
                 f'HTTP method {method!r} cannot have a request body, '
-                f'but endpoint {endpoint!r} uses Body component. '
+                f'but endpoint {endpoint_name!r} uses Body component. '
                 f'Either remove Body component or use a different HTTP method '
                 f'like POST, PUT, or PATCH.',
             )
