@@ -607,7 +607,7 @@ class PathComponent(ComponentParser):
     - ``user_id`` is defined as ``str`` in the view function:
       ``def get(self, request, user_id: str): ...``
 
-    In ``django-modern-rest`` there's now a way to validate this in runtime.
+    In ``django-modern-rest`` there's no way to validate this in runtime.
     """
 
     __slots__ = ()

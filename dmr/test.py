@@ -106,7 +106,7 @@ class DMRAsyncRequestFactory(_DMRMixin, AsyncRequestFactory):
             Utility method for testing.
 
             Pretends to wrap async controllers into async functions for typing.
-            But in reallity does nothing.
+            But in reality does nothing.
 
             This happens due to the fact that ``View`` is typed as sync object.
             """

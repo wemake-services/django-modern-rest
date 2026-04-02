@@ -23,7 +23,7 @@
 
 - [x] [Blazingly fast](https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html)
 - [x] Supports `django>=5.2`
-- [x] Supports `pydantic2`, `msgspec`, `attrs`, `dataclasses`, `TypedDict` as model schemas, but not bound to any of the these libraries
+- [x] Supports `pydantic2`, `msgspec`, `attrs`, `dataclasses`, `TypedDict` as model schemas, but not bound to any of these libraries
 - [x] Supports async Django without any `sync_to_async` calls inside, tested to work with free-threading builds
 - [x] Fully typed and checked with `mypy`, `pyright`, and `pyrefly` in strict modes
 - [x] Supports content negotiation, has default implementations for `json`, `msgpack`, SSE, Json Lines, and more

@@ -54,7 +54,7 @@ DMR_SPAWN_METHOD=spawn poetry run make -C docs clean html
 We use [trunk based](https://trunkbaseddevelopment.com/)
 development (we also sometimes call it `wemake-git-flow`).
 
-What the point of this method?
+What is the point of this method?
 
 1. We use protected `master` branch,
    so the only way to push your code is via pull request

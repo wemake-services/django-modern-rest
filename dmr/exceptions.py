@@ -22,7 +22,7 @@ class UnsolvableAnnotationsError(Exception):
 @final
 class NegotiationDefinitionError(Exception):
     """
-    Raised when we create correct negotiation protocol.
+    Raised when we can't create a correct negotiation protocol.
 
     Only raised during import time.
     """

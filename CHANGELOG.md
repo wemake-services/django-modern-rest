@@ -36,7 +36,7 @@ AKA "The first version that I enjoy".
    It was used to compose different classes with different parsing strategies.
    Since, it was only used for different parsing rules
 
-3. We removed `drm.routing.compose_blueprints` function,
+3. We removed `dmr.routing.compose_blueprints` function,
    because there no `Blueprint`s anymore :)
 
 4. We completely changed our SSE and streaming API, see #736
@@ -194,7 +194,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
 - Added `MediaTypeMetadata` metadata item to set required parameters
   for the `MediaType` request body
-  for `Body` and `FileMedata` components, #695 and #698
+  for `Body` and `FileMetadata` components, #695 and #698
 - Added support for Swagger, Redoc, and Scalar CDN configuration, #678
 - Added TraceCov integration for API coverage tracking in test suites,
   including automatic request tracking for `dmr_client` and

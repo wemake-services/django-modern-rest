@@ -22,7 +22,7 @@ OptionsResponse: Final = ResponseSpec(
 
 class MetaMixin:
     """
-    Mixing that provides default ``meta`` method or ``OPTIONS`` http method.
+    Mixin that provides default ``meta`` method or ``OPTIONS`` http method.
 
     Use it for sync controllers.
 
@@ -53,7 +53,7 @@ class MetaMixin:
 
 class AsyncMetaMixin:
     """
-    Mixing that provides default ``meta`` method or ``OPTIONS`` http method.
+    Mixin that provides default ``meta`` method or ``OPTIONS`` http method.
 
     Use it for async controllers.
 

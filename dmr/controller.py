@@ -100,7 +100,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
             Is ``True`` by default.
-        summary: A short summary of what the this path item does.
+        summary: A short summary of what this path item does.
         description: A verbose explanation of the path item behavior.
         servers: An alternative servers array to service this path item.
         request: Current :class:`~django.http.HttpRequest` instance.
