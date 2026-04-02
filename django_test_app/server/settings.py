@@ -38,7 +38,8 @@ ALLOWED_HOSTS = [
 
 INSTALLED_APPS = [
     # Custom:
-    'server.apps.models_example',
+    'server.apps.model_simple',
+    'server.apps.model_fk',
     'server.apps.middlewares',
     'server.apps.controllers',
     'server.apps.openapi',

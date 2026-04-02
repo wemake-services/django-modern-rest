@@ -246,6 +246,7 @@ class _BaseBuilder:  # noqa: WPS214
         if settings.configured:
             return
 
+        sys.path.insert(1, str(_BASE_DIR / 'django_test_app'))
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
@@ -257,6 +258,8 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
+                'server.apps.model_simple',
+                'server.apps.model_fk',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -282,6 +285,7 @@ class _BaseBuilder:  # noqa: WPS214
                     'NAME': '_build/test.db',
                 },
             },
+            DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',

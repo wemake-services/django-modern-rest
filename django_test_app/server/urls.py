@@ -15,7 +15,8 @@ from server.apps.django_session_auth import urls as django_session_auth_urls
 from server.apps.etag import urls as etag_urls
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
-from server.apps.models_example import urls as models_example_urls
+from server.apps.model_fk import urls as model_fk_urls
+from server.apps.model_simple import urls as model_simple_urls
 from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.config import get_config
 
@@ -23,10 +24,17 @@ router = Router(
     prefix='api/',
     urls=[
         path(
-            models_example_urls.router.prefix,
+            model_simple_urls.router.prefix,
             include(
-                (models_example_urls.router.urls, 'models_example'),
-                namespace='model_examples',
+                (model_simple_urls.router.urls, 'model_simple'),
+                namespace='model_simple',
+            ),
+        ),
+        path(
+            model_fk_urls.router.prefix,
+            include(
+                (model_fk_urls.router.urls, 'model_fk'),
+                namespace='model_fk',
             ),
         ),
         path(

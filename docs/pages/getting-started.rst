@@ -117,7 +117,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 3, 6, 22
 
     .. tab:: pydantic
 
@@ -128,7 +127,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 3, 6, 22
 
     .. tab:: attrs
 
@@ -139,7 +137,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 3, 6, 9, 14, 19, 25
 
     .. tab:: dataclasses
 
@@ -151,7 +148,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 1, 5, 8, 13, 19
 
     .. tab:: TypedDict
 
@@ -163,7 +159,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 2, 5, 8, 12, 16, 20
 
     .. tab:: NamedTuple
 
@@ -174,7 +169,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 2, 8, 12
 
 .. important::
 
@@ -186,15 +180,13 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
 In this example:
 
-1. We defined regular ``pydantic``, ``msgspec``, or ``attrs`` models
+1. We defined regular ``pydantic``, ``msgspec``, or whatever models
    that we will use for our API
 2. We added two component parsers: one for request's
    :data:`~dmr.components.Body` and one
    for :data:`~dmr.components.Headers`
    which will parse them into the typed models
-   (:class:`pydantic.BaseModel`, :class:`msgspec.Struct`,
-   :func:`attrs.define`, or defined with any other supported way) that we pass
-   to these components as type parameters
+   that we pass to these components as type parameters
 3. Next we created
    a :class:`~dmr.controller.Controller` class
    with :class:`~dmr.plugins.pydantic.PydanticSerializer`

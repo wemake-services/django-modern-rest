@@ -20,15 +20,6 @@ class UnsolvableAnnotationsError(Exception):
 
 
 @final
-class NegotiationDefinitionError(Exception):
-    """
-    Raised when we create correct negotiation protocol.
-
-    Only raised during import time.
-    """
-
-
-@final
 class EndpointMetadataError(Exception):
     """Raised when user didn't specify some required endpoint metadata."""
 

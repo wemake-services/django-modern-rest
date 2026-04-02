@@ -170,6 +170,7 @@ Here are our amazing people who made this project possible.
   pages/components/index
   pages/configuration.rst
   pages/plugins.rst
+  pages/queryset.rst
   pages/negotiation.rst
   pages/error-handling.rst
   pages/middleware.rst
