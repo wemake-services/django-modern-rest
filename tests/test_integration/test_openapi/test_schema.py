@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 
-# The `db` fixture is required to enable database access.
+# The `transactional_db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
 # The `admin_user` fixture is required here so that `JWTAuth` can use
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 # This follows the `pytest-django` pattern for creating user fixtures:
 # https://github.com/pytest-dev/pytest-django/blob/main/pytest_django/fixtures.py#L483
 @pytest.fixture
-def api_schema(db: None, admin_user: 'User') -> 'OpenApiSchema':
+def api_schema(transactional_db: None, admin_user: 'User') -> 'OpenApiSchema':
     """Load OpenAPI schema as a pytest fixture."""
     return st.openapi.from_wsgi(reverse('openapi'), application)
 

@@ -9,7 +9,10 @@ from dmr.endpoint import Endpoint
 from dmr.errors import ErrorType
 from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
-from server.apps.model_simple.serializers import UserCreateSchema, UserSchema
+from server.apps.model_simple.serializers import (
+    SimpleUserCreateSchema,
+    SimpleUserSchema,
+)
 from server.apps.model_simple.services import (
     UniqueConstraintError,
     user_create_service,
@@ -19,10 +22,10 @@ from server.apps.model_simple.services import (
 
 @final
 class UserController(Controller[PydanticSerializer]):
-    def get(self) -> list[UserSchema]:
+    def get(self) -> list[SimpleUserSchema]:
         """List existing users."""
         return [
-            UserSchema(
+            SimpleUserSchema(
                 id=user.pk,
                 email=user.email,
                 customer_service_uid=user.customer_service_uid,
@@ -39,10 +42,13 @@ class UserController(Controller[PydanticSerializer]):
             ),
         ],
     )
-    def post(self, parsed_body: Body[UserCreateSchema]) -> UserSchema:
+    def post(
+        self,
+        parsed_body: Body[SimpleUserCreateSchema],
+    ) -> SimpleUserSchema:
         """Create new user."""
         user = user_create_service(parsed_body)
-        return UserSchema(
+        return SimpleUserSchema(
             id=user.pk,
             email=user.email,
             customer_service_uid=user.customer_service_uid,
