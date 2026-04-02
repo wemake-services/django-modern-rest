@@ -20,7 +20,7 @@ class UniqueConstraintError(Exception):
 
 
 @final
-@attrs.define
+@attrs.define(frozen=True)
 class TagsCreate:
     def __call__(self, tags: list[TagSchema]) -> Iterable[Tag]:
         """Service for creating new tags with unique names."""
@@ -38,7 +38,7 @@ class TagsCreate:
 
 
 @final
-@attrs.define
+@attrs.define(frozen=True)
 class RoleCreate:
     def __call__(self, role_schema: RoleSchema) -> Role:
         """Service for getting an existing role or creating a new one."""
@@ -47,7 +47,7 @@ class RoleCreate:
 
 
 @final
-@attrs.define
+@attrs.define(frozen=True)
 class UserCreate:
     _role_create: RoleCreate
     _tags_create: TagsCreate
@@ -77,7 +77,7 @@ class UserCreate:
 
 
 @final
-@attrs.define
+@attrs.define(frozen=True)
 class UserList:
     _mapper: UserMap
 
