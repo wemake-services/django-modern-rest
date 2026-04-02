@@ -23,7 +23,7 @@ class UniqueConstraintError(Exception):
 @attrs.define
 class TagsCreate:
     def __call__(self, tags: list[TagSchema]) -> Iterable[Tag]:
-        """Service for creating new tags wiht unique names."""
+        """Service for creating new tags with unique names."""
         tags_names = {tag.name for tag in tags}
         # Create new tags and ignore existing ones in 1 query:
         Tag.objects.bulk_create(
@@ -41,7 +41,7 @@ class TagsCreate:
 @attrs.define
 class RoleCreate:
     def __call__(self, role_schema: RoleSchema) -> Role:
-        """Service for geting an existing role or creating a new one."""
+        """Service for getting an existing role or creating a new one."""
         role, _ = Role.objects.get_or_create(name=role_schema.name)
         return role
 
