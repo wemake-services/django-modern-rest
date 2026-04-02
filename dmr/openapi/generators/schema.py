@@ -159,7 +159,7 @@ class SchemaGenerator:
             return (
                 self._context.registries.schema.maybe_resolve_reference(
                     reference,
-                    resoltion_context=_build_resolution_context(components),
+                    resolution_context=_build_resolution_context(components),
                 )
                 if skip_registration
                 else reference

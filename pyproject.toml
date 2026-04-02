@@ -80,7 +80,6 @@ types-docutils = "^0.22"
 pyright = "^1.1"
 pyrefly = "^0.57"
 
-codespell = "^2.4"
 wemake-python-styleguide = "^1.6"
 ruff = "^0.15"
 import-linter = "^2.5"
@@ -370,5 +369,39 @@ project-excludes = ["typesafety/assert_type/test_sse/test_sse_decorator.py"]
 
 
 [tool.codespell]
-# codespell configuration: https://pypi.org/project/codespell
-skip = '__pycache__,_build,.mypy_cache,swagger-*.js,dmr/static/*,*.js,*.css,*.min.*,*.msgpack,dmr/locale'
+# codespell configuration: https://github.com/codespell-project/codespell
+skip = [
+    "__pycache__",
+    "_build",
+    ".mypy_cache",
+    "swagger-*.js",
+    "dmr/static/*",
+    "*.js",
+    "*.css",
+    "*.min.*",
+    "*.msgpack",
+    "dmr/locale/**",
+    "*.lock",
+    "benchmarks/*.json"
+]
+
+
+[tool.typos.files]
+# typos configuration: https://github.com/crate-ci/typos/
+extend-exclude = [
+    "__pycache__",
+    "_build",
+    ".mypy_cache",
+    "swagger-*.js",
+    "dmr/static",
+    "*.js",
+    "*.css",
+    "*.min.*",
+    "*.msgpack",
+    "dmr/locale",
+    "*.lock",
+    "benchmarks/*.json"
+]
+
+[tool.typos.default.extend-identifiers]
+_SerT = "_SerT"

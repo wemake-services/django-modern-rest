@@ -114,7 +114,6 @@ def test_body_parse_invalid_json(dmr_rf: DMRRequestFactory) -> None:
 
 class _TagsForceList(pydantic.BaseModel):
     __dmr_force_list__: ClassVar[frozenset[str]] = frozenset(('tags', 'simple'))
-    __dmr_conver_null__: ClassVar[frozenset[str]] = frozenset(('null', 'tags'))
 
     simple: list[str]
     tags: list[str | None]

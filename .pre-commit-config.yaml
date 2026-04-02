@@ -25,6 +25,7 @@ repos:
     hooks:
       - id: shellcheck
         args: ["--severity=style"]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.8
     hooks:
@@ -45,6 +46,18 @@ repos:
       - id: mbake-format
         args: ["--config=.github/bake.toml"]
       - id: mbake-validate
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.45.0
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+    - id: codespell
+      additional_dependencies:
+        - tomli
 
   # Should be applied after all autofixes:
   - repo: https://github.com/pre-commit/pre-commit-hooks

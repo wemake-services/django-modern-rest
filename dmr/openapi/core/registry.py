@@ -101,13 +101,13 @@ class SchemaRegistry:
         self,
         reference: Reference | Schema,
         *,
-        resoltion_context: dict[str, Schema] | None = None,
+        resolution_context: dict[str, Schema] | None = None,
     ) -> Schema:
         """Resolve reference and return a schema back."""
         if isinstance(reference, Schema):
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
-        return (resoltion_context or self.schemas)[schema_name]
+        return (resolution_context or self.schemas)[schema_name]
 
     def try_unregister(self, schema_name: str | None) -> None:
         """Try to unregister the schema by name."""

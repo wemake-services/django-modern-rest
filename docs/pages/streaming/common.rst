@@ -284,7 +284,7 @@ then you can use the regular :doc:`../negotiation` process.
 
 Send different ``Accept`` headers to get different event streams back:
 
-.. literalinclude:: /examples/streaming/streaming_negotiaion.py
+.. literalinclude:: /examples/streaming/streaming_negotiation.py
   :language: python
   :caption: views.py
   :linenos:
