@@ -71,8 +71,8 @@ to get the incoming data and return the response.
 
 You can use any schema type, including :class:`pydantic.BaseModel`,
 :func:`attrs.define`, :class:`typing.TypedDict`, etc.
-For this example we will use :class:`msgspec.Struct`,
-because it is the fastest one:
+For this example we will use ``pydantic``, because
+it is the most familiar tools for the most programmers:
 
 .. literalinclude:: ../../django_test_app/server/apps/model_simple/serializers.py
   :caption: serializers.py
@@ -123,9 +123,9 @@ Now, we can define views that will use everything from the above.
 
   .. tab:: Minimalistic
 
-    Just convert models from attributes, using the builtin converter:
-    :func:`msgspec.convert`.
-    For ``pydantic`` one can use ``.model_validate()`` method.
+    Just convert models from attributes,
+    using the builtin  ``.model_validate()`` converter.
+    For ``msgspec`` one can use :func:`msgspec.convert`.
 
     - The main reason to use this approach is that it is short and easy
     - The main reason not to use this approach is that errors will only show up
@@ -138,10 +138,10 @@ Now, we can define views that will use everything from the above.
       .. code-block::
 
         Traceback (most recent call last):
-          File "server/apps/model_simple/views/minimalistic.py", line 41
-            return msgspec.convert(
-            ~~~~~~~^^^^^^^^^^^^^^^^
-        msgspec.ValidationError: Object missing required field `customer_service_uid`
+          File "server/apps/model_simple/views/minimalistic.py", line 42
+            return UserSchema.model_validate(
+            ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+        pydantic.ValidationError: Object missing required field `customer_service_uid`
 
     .. literalinclude:: ../../django_test_app/server/apps/model_simple/views/minimalistic.py
       :caption: views.py

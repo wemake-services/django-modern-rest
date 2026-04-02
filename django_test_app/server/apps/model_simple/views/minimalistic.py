@@ -1,7 +1,7 @@
 from http import HTTPStatus
-from typing import final
+from typing import Final, final
 
-import msgspec
+import pydantic
 from django.http import HttpResponse
 from typing_extensions import override
 
@@ -9,7 +9,7 @@ from dmr import Body, Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorType
 from dmr.metadata import ResponseSpec
-from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.model_simple.serializers import UserCreateSchema, UserSchema
 from server.apps.model_simple.services import (
     UniqueConstraintError,
@@ -17,15 +17,15 @@ from server.apps.model_simple.services import (
     user_list_service,
 )
 
+_UserList: Final = pydantic.TypeAdapter(list[UserSchema])
+
 
 @final
-class UserController(Controller[MsgspecSerializer]):
+class UserController(Controller[PydanticSerializer]):
     def get(self) -> list[UserSchema]:
         """List existing users."""
-        return msgspec.convert(
-            # FIXME: eagerly converting queryset to json is very dangerous
-            list(user_list_service()),
-            type=list[UserSchema],
+        return _UserList.validate_python(
+            user_list_service(),
             from_attributes=True,
         )
 
@@ -39,9 +39,8 @@ class UserController(Controller[MsgspecSerializer]):
     )
     def post(self, parsed_body: Body[UserCreateSchema]) -> UserSchema:
         """Create new user."""
-        return msgspec.convert(
+        return UserSchema.model_validate(
             user_create_service(parsed_body),
-            type=UserSchema,
             from_attributes=True,
         )
 
@@ -49,7 +48,7 @@ class UserController(Controller[MsgspecSerializer]):
     def handle_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[MsgspecSerializer],
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         # Handle custom errors that can happen in this controller:

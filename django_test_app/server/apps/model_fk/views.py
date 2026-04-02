@@ -8,7 +8,7 @@ from dmr import Body, Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorType
 from dmr.metadata import ResponseSpec
-from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.model_fk.implemented import HasContainer
 from server.apps.model_fk.serializers import UserCreateSchema, UserSchema
 from server.apps.model_fk.services import (
@@ -19,7 +19,7 @@ from server.apps.model_fk.services import (
 
 
 @final
-class UserController(HasContainer, Controller[MsgspecSerializer]):
+class UserController(HasContainer, Controller[PydanticSerializer]):
     def get(self) -> list[UserSchema]:
         """List existing users."""
         return self.resolve(UserList)()
@@ -40,7 +40,7 @@ class UserController(HasContainer, Controller[MsgspecSerializer]):
     def handle_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[MsgspecSerializer],
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         # Handle custom errors that can happen in this controller:

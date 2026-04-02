@@ -1,22 +1,22 @@
 import datetime as dt
 from typing import Annotated, TypeAlias, final
 
-import msgspec
+import pydantic
 
-DatabaseId: TypeAlias = Annotated[int, msgspec.Meta(gt=0)]
+DatabaseId: TypeAlias = Annotated[int, pydantic.Field(gt=0)]
 
 
 @final
-class TagSchema(msgspec.Struct):
+class TagSchema(pydantic.BaseModel):
     name: str
 
 
 @final
-class RoleSchema(msgspec.Struct):
+class RoleSchema(pydantic.BaseModel):
     name: str
 
 
-class UserCreateSchema(msgspec.Struct):
+class UserCreateSchema(pydantic.BaseModel):
     email: str
     role: RoleSchema
     tags: list[TagSchema]

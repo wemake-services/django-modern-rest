@@ -8,7 +8,7 @@ from dmr import Body, Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorType
 from dmr.metadata import ResponseSpec
-from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.model_simple.serializers import UserCreateSchema, UserSchema
 from server.apps.model_simple.services import (
     UniqueConstraintError,
@@ -18,7 +18,7 @@ from server.apps.model_simple.services import (
 
 
 @final
-class UserController(Controller[MsgspecSerializer]):
+class UserController(Controller[PydanticSerializer]):
     def get(self) -> list[UserSchema]:
         """List existing users."""
         return [
@@ -53,7 +53,7 @@ class UserController(Controller[MsgspecSerializer]):
     def handle_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[MsgspecSerializer],
+        controller: Controller[PydanticSerializer],
         exc: Exception,
     ) -> HttpResponse:
         # Handle custom errors that can happen in this controller:
