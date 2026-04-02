@@ -382,7 +382,7 @@ skip = [
     "*.msgpack",
     "dmr/locale/**",
     "*.lock",
-    "benchmarks/*.json"
+    "benchmarks/*.json",
 ]
 
 
@@ -400,7 +400,7 @@ extend-exclude = [
     "*.msgpack",
     "dmr/locale",
     "*.lock",
-    "benchmarks/*.json"
+    "benchmarks/*.json",
 ]
 
 [tool.typos.default.extend-identifiers]
