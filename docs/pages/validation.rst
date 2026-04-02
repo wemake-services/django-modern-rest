@@ -48,11 +48,11 @@ per-controller, and globally.
 
 .. warning::
 
-  We don't recommend overriding any of this settings by default.
+  We don't recommend overriding any of these settings by default.
   It only makes sense to change, when implementing some
   old legacy API the "same" way as it used to be.
 
-  And only you need this for a very specific reason.
+  And only when you need this for a very specific reason.
 
 .. tabs::
 

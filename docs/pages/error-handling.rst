@@ -171,7 +171,7 @@ for different content types.
 Handling validation errors from models
 --------------------------------------
 
-When creating models with, for example , :class:`pydantic.BaseModel`,
+When creating models with, for example, :class:`pydantic.BaseModel`,
 your validation can fail. This error will not be handled by design.
 
 Why? Because catching all specific validation errors for a specific serializer

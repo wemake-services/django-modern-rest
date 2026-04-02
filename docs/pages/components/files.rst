@@ -1,7 +1,7 @@
 Uploading files
 ===============
 
-There are several ways for users can send files to a REST API:
+There are several ways users can send files to a REST API:
 
 1. Via ``multipart/form-data`` requests.
    It supports passing multiple files at once,
@@ -25,7 +25,7 @@ by users directly.
   to upload user-generated content.
 
   Sync uploads must never be used.
-  Even very small amount of traffic will completely block your app.
+  Even a very small amount of traffic will completely block your app.
 
 
 Parsing files

@@ -17,7 +17,7 @@ Requiring auth
 
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
-We provide two classes to require JWT auth in you API:
+We provide two classes to require JWT auth in your API:
 
 - :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
 - :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views

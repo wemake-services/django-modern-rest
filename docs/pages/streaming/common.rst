@@ -4,8 +4,8 @@ Streaming
 What is a stream?
 -----------------
 
-Streaming is a bit different from a regular REST APIs.
-REST APIs always returns the whole data in its response.
+Streaming is a bit different from regular REST APIs.
+REST APIs always return the whole data in their response.
 
 Streaming establishes a persistent connection,
 accepts headers with the content type
@@ -208,7 +208,7 @@ Rules:
 
   .. tab:: per endpoint
 
-    Both  :func:`~dmr.endpoint.validate` and :func:`~dmr.endpoint.modify`
+    Both :func:`~dmr.endpoint.validate` and :func:`~dmr.endpoint.modify`
     support this flag:
 
     .. literalinclude:: /examples/streaming/sse/per_endpoint.py
@@ -235,7 +235,7 @@ Rules:
       >>> DMR_SETTINGS = {Settings.validate_events: False}
 
 
-How does we know the model for events to be validated against?
+How do we know the model for events to be validated against?
 
 - It might be specified as the ``return_type``
   in the :class:`~dmr.metadata.ResponseSpec` of ``@validate``
@@ -244,7 +244,7 @@ How does we know the model for events to be validated against?
   :class:`collections.abc.AsyncIterator` return type
   in ``@modify`` styled endpoint.
 
-We fallback to :data:`typing.Any` if we can't inference the event model.
+We fallback to :data:`typing.Any` if we can't infer the event model.
 
 
 Further reading

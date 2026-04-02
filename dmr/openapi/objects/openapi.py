@@ -56,7 +56,7 @@ class OpenAPI:
 
 
 def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:
-    """Converts any dataclass object into a json schema."""
+    """Converts any dataclass object into a JSON schema."""
     schema: ConvertedSchema = {}
 
     for field in fields(to_convert):

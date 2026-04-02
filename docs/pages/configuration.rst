@@ -214,7 +214,7 @@ Error handling
 
   Globally handle all errors in the application.
   You can use real object or string path for the object to be imported.
-  Here's our error handling hieracy:
+  Here's our error handling hierarchy:
 
   1. Per-endpoint with
      :meth:`~dmr.endpoint.Endpoint.handle_error`

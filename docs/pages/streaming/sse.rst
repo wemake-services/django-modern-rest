@@ -35,8 +35,8 @@ What happens in these examples?
 1. We define an event producing method ``produce_user_events``
    yielding events one by one.
    It returns an :class:`collections.abc.AsyncIterator` instance
-2. It must produces instances of :class:`dmr.streaming.sse.metadata.SSEvent`,
-   which will be renderer into the stream
+2. It must produce instances of :class:`dmr.streaming.sse.metadata.SSEvent`,
+   which will be rendered into the stream
 3. We define a special :class:`~dmr.streaming.sse.controller.SSEController`
    class that has regular ``get`` HTTP endpoint. In ``@modify`` example
    it returns the async generator directly, while in ``@validate`` example

@@ -1,7 +1,7 @@
 Reusable code
 =============
 
-One of the worst thing about current generation of
+One of the worst things about the current generation of
 Python REST frameworks is code re-usability.
 
 - ``django-rest-framework`` is very flexible, but all the flexibility

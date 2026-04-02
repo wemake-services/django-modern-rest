@@ -47,7 +47,7 @@ def load_schema(
     serializer: type['BaseSerializer'] | None = None,
 ) -> Schema:
     """
-    Load schema from python's dict into a dataclass.
+    Load schema from Python's dict into a dataclass.
 
     Sadly, we can't use ``serializer.from_python`` until
     this problem with ``msgspec`` is fixed:

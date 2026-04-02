@@ -27,11 +27,11 @@ class OperationIdRegistry:
     """Registry for OpenAPI operation IDs."""
 
     def __init__(self) -> None:
-        """Initialize an empty operation ids registry."""
+        """Initialize an empty operation ID registry."""
         self._operation_ids: set[str] = set()
 
     def register(self, operation_id: str) -> None:
-        """Register a operation ID in the registry."""
+        """Register an operation ID in the registry."""
         if operation_id in self._operation_ids:
             raise ValueError(
                 f'Operation ID {operation_id!r} is already registered in the '

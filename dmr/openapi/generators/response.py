@@ -30,7 +30,7 @@ class ResponseGenerator:
     ) -> Responses:
         """Generate responses from response specs."""
         return {
-            # Deletegate call to `ResponseSpec`, so it can change
+            # Delegate call to `ResponseSpec`, so it can change
             # how the spec is generated.
             str(status_code.value): response_spec.get_schema(
                 metadata,

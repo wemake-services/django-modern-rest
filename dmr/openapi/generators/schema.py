@@ -55,7 +55,7 @@ class SchemaGenerator:
         2. If nothing is found, we try to find any existing schema references
         3. Next, we try to get a model schema from a serializer.
            If it exists, we create an internal reference and return it.
-           The next time it will returned as a reference, cached.
+           The next time it will be returned as a reference, cached.
         4. If nothing worked, we raise an error
 
         Raises:
@@ -96,7 +96,7 @@ class SchemaGenerator:
             )
         raise UnsolvableAnnotationsError(
             f'Cannot generate OpenAPI schema from {annotation}, '
-            'consider registerting it as described in your serializer',
+            'consider registering it as described in your serializer',
         )
 
     def _resolve_schema_override(
@@ -153,7 +153,7 @@ class SchemaGenerator:
                 # it might still miss the examples:
                 self._maybe_generate_example(reference, annotation, serializer)
 
-            # When we create skip registration, we need
+            # When skip registration is requested, we need
             # real schemas back, not references,
             # because there's no registered schema under the reference.
             return (

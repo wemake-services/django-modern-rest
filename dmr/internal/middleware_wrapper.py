@@ -106,7 +106,7 @@ def create_async_dispatch(
         # (returning HttpResponse) or async (returning Awaitable[HttpResponse]).
         # We need to check the actual return type at runtime and await it only
         # if it's a coroutine/awaitable, otherwise we'd get
-        # "cannot await non-coroutine" error.
+        # a "cannot await non-coroutine" error.
         if inspect.isawaitable(response):
             response = await response
         return apply_converter(response, converter)

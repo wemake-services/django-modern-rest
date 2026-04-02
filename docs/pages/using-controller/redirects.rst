@@ -1,7 +1,7 @@
 Returning redirects
 ===================
 
-We support returning redirects from API endpoins with
+We support returning redirects from API endpoints with
 :class:`~dmr.response.APIRedirectError` exception:
 
 .. literalinclude:: /examples/using_controller/redirect_error.py
@@ -12,7 +12,7 @@ We support returning redirects from API endpoins with
 .. note::
 
   :class:`~dmr.response.APIError` does not support ``3xx`` status codes.
-  Redirect are different from regular errors.
+  Redirects are different from regular errors.
 
 The second way is to use
 default Django's :class:`django.http.HttpResponseRedirect`:

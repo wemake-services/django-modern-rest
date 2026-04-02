@@ -18,12 +18,12 @@ Now, let's create an API that will work with your models.
 The first thing you need to do is to create
 your API serializers / deserializers.
 
-While it may seems that this is a redundant duplication of code, and that it
+While it may seem that this is a redundant duplication of code, and that it
 should be possible to build serialization schemas out of Django models,
-but that's actually the **opposite**.
+that's actually the **opposite**.
 
 Because models and serialization
-schemes must change independenly. Otherwise, your API would
+schemas must change independently. Otherwise, your API would
 be a mess and will change unexpectedly, when you create a new model field.
 This problem happened to me too many times.
 

@@ -25,7 +25,7 @@ _CANNOT_SERIALIZE_MSG: Final = _(
 @dataclasses.dataclass(slots=True, frozen=True)
 class ConditionalType:
     """
-    Internal type that we use as a metadata.
+    Internal type that we use as metadata.
 
     Public API is to use
     :func:`dmr.negotiation.conditional_type` instead of this.
@@ -39,15 +39,15 @@ class ConditionalType:
 
     def __post_init__(self) -> None:
         """
-        Post process passed objects.
+        Post-process passed objects.
 
         What we do here:
         1. We have to have `_ConditionalType` hashable, so it can be cached
-        2. We pass dict as pairs of tuples
+        2. We pass a dict as pairs of tuples
         3. Then we pre-compute the dict back
 
-        It wastes extra memory, but we are fine with that.
-        Because objects will be rather small.
+        It wastes extra memory, but we are fine with that,
+        because objects will be rather small.
         It is Python after all!
         """
         object.__setattr__(self, 'computed', dict(self._original))

@@ -34,7 +34,7 @@ class SerializerContext:
         strict_validation: Whether or not to validate payloads in strict mode.
             Strict mode in some serializers does
             not allow implicit type conversions.
-            Defaults to ``None``. Which means that we decide
+            Defaults to ``None``, which means that we decide
             on a per-field basis if it is set, if not then on a per-model basis.
     """
 

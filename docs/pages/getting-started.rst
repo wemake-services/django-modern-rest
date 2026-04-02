@@ -69,8 +69,8 @@ Extras for different features:
 LLMs support
 ------------
 
-Are you using AI for the assistant coding?
-We got you covered, use this files for the context to make sure that the LLM
+Are you using AI for assisted coding?
+We got you covered, use these files for context to make sure that the LLM
 knows our framework:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
@@ -82,13 +82,13 @@ We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
 for up-to-date docs for the LLMs.
 
-Usecases we officially support:
+Use cases we officially support:
 
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
 - AI-guided migrations for any API changes.
   We break something? We provide a prompt for you, so you can automatically
-  upgrade to a newer version using AI tool for your choice
+  upgrade to a newer version using an AI tool of your choice
 
 We support several custom agent skills:
 
@@ -276,7 +276,7 @@ But, this is too simple for my use-case!
 
 What is great about Django is that it scales.
 You can start with a single file app and scale it up to a full
-featured monolith with scrict context boundaries, DDD, reusable apps, etc.
+featured monolith with strict context boundaries, DDD, reusable apps, etc.
 
 We recommend starting new big projects with
 https://github.com/wemake-services/wemake-django-template

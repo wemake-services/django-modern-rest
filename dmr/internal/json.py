@@ -33,7 +33,7 @@ else:
 
 def json_dumps(schema: 'ConvertedSchema') -> 'DumpedSchema':
     """
-    Serialize `ConvertedSchema` to decoded JSON string.
+    Serialize `ConvertedSchema` to a decoded JSON string.
 
     Args:
         schema: Converted OpenAPI schema to be serialized.

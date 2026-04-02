@@ -10,8 +10,8 @@ the same way you define :data:`~dmr.components.Query`,
 
   Parsed ``Header`` parameter must be named ``parsed_headers``.
 
-Since most headers uses ``-`` to separate words, but a variable
-like ``cache-controll`` is not a valid variable name in Python.
+Since most headers use ``-`` to separate words, but a variable
+like ``cache-control`` is not a valid variable name in Python.
 So, you would have to use aliases for field names.
 Remember, that headers are also case insensitive:
 
@@ -69,7 +69,7 @@ which needs to be split by a ``','`` char:
   :language: python
   :linenos:
 
-We don't inference ``__dmr_split_commas__`` value in any way,
+We don't infer ``__dmr_split_commas__`` value in any way,
 it is up to users to set.
 
 .. danger::
