@@ -148,7 +148,7 @@ class BaseSerializer:  # noqa: WPS214
         structured: Any,
     ) -> Any:
         """
-        Unarse *structured* data from a model into Python primitives.
+        Unstructure *structured* data from a model into Python primitives.
 
         Args:
             structured: Model instance.

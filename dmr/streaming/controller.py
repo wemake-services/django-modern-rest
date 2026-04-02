@@ -8,7 +8,7 @@ from django.http import HttpResponseBase
 from typing_extensions import override
 
 from dmr.controller import Controller
-from dmr.cookies import NewCookie
+from dmr.cookies import NewCookie, set_cookies
 from dmr.endpoint import Endpoint
 from dmr.internal.types import call_init_subclass
 from dmr.negotiation import request_renderer
@@ -169,12 +169,7 @@ class StreamingController(Controller[_SerializerT_co]):
                 )
             ),
         )
-        # TODO: move to `set_cookies` function?
-        for cookie_key, cookie in (cookies or {}).items():
-            streaming_response.set_cookie(
-                cookie_key,
-                **cookie.as_dict(),
-            )
+        set_cookies(streaming_response, cookies)
         return streaming_response
 
     def ping_event(self) -> Any | None:

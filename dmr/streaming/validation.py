@@ -42,7 +42,7 @@ class StreamingValidator:
     """
     Injects itself into the stream of SSE to validate the events.
 
-    This is very different from the the any other validator. Why?
+    This is very different from any other validator. Why?
 
     1. Because we send just one response. No events can be produced
        at all for a long period of time. Some events can be correct,

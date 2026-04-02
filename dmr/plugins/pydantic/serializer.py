@@ -76,7 +76,7 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
     @classmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
         """Create models for return types for validation."""
-        # Just build all `TypeAdapater` instances
+        # Just build all `TypeAdapter` instances
         # during import time and cache them for later use in runtime.
         for response in metadata.responses.values():
             _get_cached_type_adapter(response.return_type)

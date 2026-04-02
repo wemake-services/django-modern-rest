@@ -80,7 +80,6 @@ types-docutils = "^0.22"
 pyright = "^1.1"
 pyrefly = "^0.57"
 
-codespell = "^2.4"
 wemake-python-styleguide = "^1.6"
 ruff = "^0.15"
 import-linter = "^2.5"
@@ -156,7 +155,7 @@ select = [
   "ASYNC",
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
-  "C90",  # maccabe
+  "C90",  # mccabe
   "COM",  # flake8-commas
   "D",    # pydocstyle
   "DTZ",  # flake8-datetimez
@@ -183,7 +182,7 @@ select = [
   "RSE",  # flake8-raise
   "RUF",  # ruff
   "S",    # flake8-bandit
-  "SIM",  # flake8-simpify
+  "SIM",  # flake8-simplify
   "SLF",  # flake8-self
   "SLOT", # flake8-slots
   "T100", # flake8-debugger
@@ -371,5 +370,39 @@ project-excludes = ["typesafety/assert_type/test_sse/test_sse_decorator.py"]
 
 
 [tool.codespell]
-# codespell configuration: https://pypi.org/project/codespell
-skip = '__pycache__,_build,.mypy_cache,swagger-*.js,dmr/static/*,*.js,*.css,*.min.*,*.msgpack,dmr/locale'
+# codespell configuration: https://github.com/codespell-project/codespell
+skip = [
+    "__pycache__",
+    "_build",
+    ".mypy_cache",
+    "swagger-*.js",
+    "dmr/static/*",
+    "*.js",
+    "*.css",
+    "*.min.*",
+    "*.msgpack",
+    "dmr/locale/**",
+    "*.lock",
+    "benchmarks/*.json",
+]
+
+
+[tool.typos.files]
+# typos configuration: https://github.com/crate-ci/typos/
+extend-exclude = [
+    "__pycache__",
+    "_build",
+    ".mypy_cache",
+    "swagger-*.js",
+    "dmr/static",
+    "*.js",
+    "*.css",
+    "*.min.*",
+    "*.msgpack",
+    "dmr/locale",
+    "*.lock",
+    "benchmarks/*.json",
+]
+
+[tool.typos.default.extend-identifiers]
+_SerT = "_SerT"

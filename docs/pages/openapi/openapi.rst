@@ -271,7 +271,7 @@ Top level API
 This is how OpenAPI spec is generated, top level overview:
 
 .. mermaid::
-  :caption: Error handling logic
+  :caption: OpenAPI spec generation
   :config: {"theme": "forest"}
 
   graph

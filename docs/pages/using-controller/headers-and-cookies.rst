@@ -114,5 +114,5 @@ It is used to describe cookies that:
 
 .. important::
 
-  Coookie definitions are case sensitive according to the HTTP spec.
+  Cookie definitions are case sensitive according to the HTTP spec.
   ``Session`` and ``session`` are two different cookies.

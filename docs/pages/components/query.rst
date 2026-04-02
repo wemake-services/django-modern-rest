@@ -63,7 +63,7 @@ All other values will be regular single values:
   :language: python
   :linenos:
 
-We don't inference ``__dmr_force_list__`` value in any way,
+We don't infer ``__dmr_force_list__`` value in any way,
 it is up to users to set.
 
 
@@ -82,7 +82,7 @@ that into ``__dmr_cast_null__``:
   :language: python
   :linenos:
 
-We don't inference ``__dmr_cast_null__`` value in any way,
+We don't infer ``__dmr_cast_null__`` value in any way,
 it is up to users to set.
 
 

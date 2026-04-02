@@ -156,7 +156,7 @@ going back to the less specific:
         :linenos:
         :emphasize-lines: 6-7
 
-First parsers / renders definition found, starting from the top,
+First parsers / renderers definition found, starting from the top,
 will win and be used for the endpoint.
 
 You can also modify
@@ -188,7 +188,7 @@ And here's how our test ``xml`` parser and renderer are defined:
 Using different schemes for different content types
 ---------------------------------------------------
 
-Sometimes we have to accept different schemes based on the content type.
+Sometimes we have to accept different schemas based on the content type.
 `According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
 :data:`~dmr.components.Body`
 should support different content types.

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 @dataclass(unsafe_hash=True, kw_only=True)
 class ParameterMetadata:
-    """Describes a metadata for a single operation parameter."""
+    """Describes metadata for a single operation parameter."""
 
     description: str | None = None
     deprecated: bool = False

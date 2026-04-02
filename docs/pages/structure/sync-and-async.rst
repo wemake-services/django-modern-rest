@@ -46,7 +46,7 @@ How to properly isolate these two applications?
 
 1. Create two files for urls: ``urls.py`` for default sync mode
    and ``async_urls.py`` for async mode.
-   Make sure that async urls have a unique ulr prefix: ``/async/``
+   Make sure that async urls have a unique URL prefix: ``/async/``
 2. Create two settings file (we recommend using
    `django-split-settings <https://github.com/wemake-services/django-split-settings>`_
    for that

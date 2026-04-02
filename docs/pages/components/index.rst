@@ -3,7 +3,7 @@ Components
 
 ``django-modern-rest`` utilizes component approach to parse all
 the unstructured things like headers, body, and cookies
-into a string typed and validated model.
+into a strongly typed and validated model.
 
 To use a component, you can just add it as a parameter
 to your endpoint method inside a :class:`~dmr.controller.Controller`.
@@ -24,7 +24,7 @@ How does it work?
   :exc:`~dmr.exceptions.RequestSerializationError`
   and return a beautiful error message for the user
 
-You can use existing ones or create our own.
+You can use existing ones or create your own.
 
 .. note::
 
@@ -44,7 +44,7 @@ All components consist of two parts:
    which knows how to provide the required data for itself, build OpenAPI
    schemas and etc. For example: :class:`~dmr.components.QueryComponent`
 2. The second part is a :data:`typing.Annotated` based annotation that
-   has an instance component parser instance as a metadata.
+   has a component parser instance as metadata.
    These annotations will be used by the end users.
    For example, :data:`~dmr.components.Query`
 

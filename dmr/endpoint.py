@@ -260,7 +260,7 @@ class Endpoint:  # noqa: WPS214
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> Operation:
-        """Builde an OpenAPI Operation from an endpoint."""
+        """Build an OpenAPI Operation from an endpoint."""
         operation_id = self.get_operation_id(
             path,
             controller_name,
@@ -739,7 +739,7 @@ class _ModifySyncCallable(Protocol):
     @deprecated(
         # It is not actually deprecated, but impossible for the day one.
         # But, this is the only way to trigger a typing error.
-        'Passing sync `error_hanlder` to `@modify` requires sync endpoint',
+        'Passing sync `error_handler` to `@modify` requires sync endpoint',
     )
     def __call__(
         self,

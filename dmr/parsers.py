@@ -58,7 +58,7 @@ class Parser(ResponseSpecProvider):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
-            model: Model that reprensents the final result's structure.
+            model: Model that represents the final result's structure.
 
         Returns:
             Simple python object with primitive parts.
@@ -120,7 +120,7 @@ class JsonParser(Parser):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
-            model: Model that reprensents the final result's structure.
+            model: Model that represents the final result's structure.
 
         Returns:
             Decoded object.
@@ -202,7 +202,7 @@ class MultiPartParser(
     """
     Parses multipart form data.
 
-    In reallity this is a quite tricky parser.
+    In reality this is a quite tricky parser.
     Since, Django already parses ``multipart/form-data`` content natively,
     there's no reason to duplicate its work.
     So, we return original Django's content.
@@ -254,7 +254,7 @@ class FormUrlEncodedParser(
     """
     Parses www urlencoded forms.
 
-    In reallity this is a quite tricky parser.
+    In reality this is a quite tricky parser.
     Since, Django already parses ``application/x-www-form-urlencoded``
     content natively, there's no reason to duplicate its work.
     So, we return original Django's content.

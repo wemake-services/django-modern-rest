@@ -83,7 +83,7 @@ What happens in this example?
    by the :class:`~dmr.serializer.BaseSerializer` support
 2. Next, we use :data:`~dmr.components.Body` component,
    provide the model as a type parameter,
-   and subclass it when definiting :class:`~dmr.controller.Controller` type
+   and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_body`` that will have the correct model type
 
 
@@ -187,7 +187,7 @@ To solve this, one can use a different magic attribute:
   We split all data by ``','``, if your data contains ``','`` as a regular
   value, it might be corrupted.
 
-  Be careful to use this with fields which does not contain ``','``.
+  Be careful to use this with fields which do not contain ``','``.
   Like list of ints, uuids, or slugs.
 
 Casting nulls

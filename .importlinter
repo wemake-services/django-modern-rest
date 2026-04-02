@@ -48,7 +48,7 @@ source_modules =
   dmr
 
 forbidden_modules =
-  # optinal deps:
+  # Optional deps:
   pydantic
   msgspec
   jwt

@@ -7,7 +7,7 @@ Use this repository structure as the default target when the user asks for code 
 - Read `django_test_app/server/apps/controllers/` for controllers, typed components, and router naming.
 - Read `django_test_app/server/apps/models_example/` for a small multi-file app with `serializers.py`, `views.py`, and `urls.py`.
 - Read `django_test_app/server/urls.py` for root router inclusion and OpenAPI docs wiring.
-- Read `tests/test_integration/test_contollers/` and `tests/test_integration/test_openapi/` for the expected smoke-test style.
+- Read `tests/test_integration/test_controllers/` and `tests/test_integration/test_openapi/` for the expected smoke-test style.
 
 ## Default File Layout for a Generated App
 

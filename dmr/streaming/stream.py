@@ -30,7 +30,7 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
     that we can't use or customize.
     """
 
-    #: Part of the the ASGI handler protocol. Will trigger `__aiter__`
+    #: Part of the ASGI handler protocol. Will trigger `__aiter__`
     streaming: Final = True  # type: ignore[misc]
     is_async: Final = True
 

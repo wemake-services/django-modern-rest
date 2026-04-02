@@ -141,7 +141,7 @@ class _ControllerLevelAPIError(Controller[PydanticSerializer]):
         raise APIError(1, status_code=HTTPStatus.PAYMENT_REQUIRED)
 
 
-def test_valid_api_error_contoller_level(
+def test_valid_api_error_controller_level(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures validation can validate api errors on controllers."""

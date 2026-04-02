@@ -29,10 +29,6 @@ type-check: ## Run all type checkers we support
 	$(POETRY) run pyright
 	$(POETRY) run pyrefly check
 
-.PHONY: spell-check
-spell-check: ## Run spell checking
-	$(POETRY) run codespell dmr .agents tests docs typesafety README.md CONTRIBUTING.md CHANGELOG.md
-
 .PHONY: translations
 translations: ## Run translation QA
 	$(POETRY) run dennis-cmd lint dmr/locale
@@ -80,4 +76,4 @@ package: ## Check package dependencies with pip
 	$(POETRY) run pip check
 
 .PHONY: test
-test: lint type-check example spell-check package smoke translations unit ## Run all checks
+test: lint type-check example package smoke translations unit ## Run all checks

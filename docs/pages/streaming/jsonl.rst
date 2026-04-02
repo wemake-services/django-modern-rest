@@ -34,8 +34,8 @@ What happens in these examples?
 1. We define an event producing method ``produce_user_events``
    yielding events one by one.
    It returns an :class:`collections.abc.AsyncIterator` instance
-2. It must produces instances of objects that can be serialized to ``json``
-   with a serializer of your choice. These events will be renderer into a stream
+2. It must produce instances of objects that can be serialized to ``json``
+   with a serializer of your choice. These events will be rendered into a stream
 3. We define a special
    :class:`~dmr.streaming.jsonl.controller.JsonLinesController`
    class that has regular ``get`` HTTP endpoint. In ``@modify`` example
@@ -114,7 +114,7 @@ Here's an example with
 Best practices
 --------------
 
-``django-modern-rest`` implements a bunch of best practices for streaming SSE:
+``django-modern-rest`` implements a bunch of best practices for streaming JsonLines:
 
 - ``Connection: keep-alive`` header keeps the connection open
 - ``Cache-Control: no-cache`` header prevents caching the stream response
@@ -128,7 +128,7 @@ for them is not well defined in ``jsonl``.
 
 You can enable them by changing
 :attr:`~dmr.streaming.controller.StreamingController.streaming_ping_seconds`
-to the maximum number of second before the ``ping`` event happens.
+to the maximum number of seconds before the ``ping`` event happens.
 And :meth:`~dmr.streaming.controller.StreamingController.ping_event`
 for the event payload.
 

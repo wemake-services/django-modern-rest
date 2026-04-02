@@ -12,7 +12,7 @@ async def _valid_events() -> AsyncIterator[SSEvent[bytes]]:
     yield SSEvent(b'multiline\nbyte\nstring', serialize=False)
 
 
-class _InalidController(SSEController[PydanticSerializer]):
+class _InvalidController(SSEController[PydanticSerializer]):
     @validate(
         streaming_response_spec(
             SSEvent[bytes],

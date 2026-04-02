@@ -150,7 +150,7 @@ class ResponseNegotiator:
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
-        Negotiates which parser to use for parsing this request.
+        Negotiates which renderer to use for rendering this response.
 
         Based on ``Accept`` header.
 
