@@ -11,7 +11,7 @@ from server.apps.model_fk.services import (
     UserList,
 )
 
-_T = TypeVar('_T')
+_ItemT = TypeVar('_ItemT')
 
 
 class HasContainer:
@@ -21,6 +21,9 @@ class HasContainer:
         super().__init__(*args, **kwargs)
         # Will be created in import-time:
         self._container = self._create_container()
+
+    def resolve(self, thing: type[_ItemT]) -> _ItemT:
+        return self._container.resolve(thing)  # type: ignore[no-any-return]
 
     def _create_container(self) -> punq.Container:
         container = punq.Container()
@@ -34,6 +37,3 @@ class HasContainer:
         container.register(UserList)
 
         return container
-
-    def resolve(self, thing: type[_T]) -> _T:
-        return self._container.resolve(thing)  # type: ignore[no-any-return]
