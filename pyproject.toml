@@ -167,13 +167,17 @@ build-verbosity = 1
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
-test-command = 'pytest {project}'
+test-command = 'pytest'
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
 CC = "clang"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+before-build = ["yum install -y clang"]
 
 
 [tool.ruff]
