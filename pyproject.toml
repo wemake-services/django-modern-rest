@@ -167,7 +167,7 @@ build-verbosity = 1
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
-test-command = 'pytest'
+test-command = "pytest {project}/tests --addopt=''"
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOKS_ENABLE = "1"
