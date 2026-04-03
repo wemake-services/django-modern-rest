@@ -1,4 +1,5 @@
 from collections.abc import Callable, Mapping
+from dataclasses import is_dataclass
 from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
@@ -135,6 +136,10 @@ class PydanticSerializer(BaseSerializer):
         """Customize how some objects are serialized into simple objects."""
         if isinstance(to_serialize, pydantic.BaseModel):
             return to_serialize.model_dump(**cls.model_dump_kwargs)
+        if is_dataclass(to_serialize):
+            return _get_cached_type_adapter(type(to_serialize)).dump_python(
+                to_serialize,
+            )
         return super().serialize_hook(to_serialize)
 
     @override

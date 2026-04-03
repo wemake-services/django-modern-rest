@@ -20,11 +20,13 @@ No breaking changes will be made.
 ### Fixes
 
 - Fixed `StreamingValidator` swallowing errors
-  when `validate_events` was `True`, but no event model was resolved
+  when `validate_events` was `True`, but no event model was resolved, #780
+- Fixed `dataclass` instances serialization with `PydanticSerializer`
+  without `msgspec` json renderer, #795
 
 ### Misc
 
-- Added `QuerySet` tutorial
+- Added `QuerySet` tutorial, #792
 
 
 ## Version 0.4.0 (2026-03-29)
