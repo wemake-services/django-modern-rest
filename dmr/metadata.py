@@ -313,6 +313,8 @@ class EndpointMetadata:
             that are allowed for this endpoint.
         semantic_responses: Should semantic responses
             from different providers be collected?
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -361,6 +363,7 @@ class EndpointMetadata:
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
+    exclude_semantic_responses: Set[int]
     validate_events: bool
 
     # OpenAPI documentation fields:
@@ -386,6 +389,11 @@ class EndpointMetadata:
                 controller_cls,
                 existing_responses,
             )
+            responses = [
+                response
+                for response in responses
+                if response.status_code not in self.exclude_semantic_responses
+            ]
             all_responses.extend(responses)
             existing_responses.update({
                 response.status_code: response for response in responses

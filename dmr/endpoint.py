@@ -496,6 +496,7 @@ def validate(  # noqa: WPS234
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -523,6 +524,7 @@ def validate(
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     parsers: Sequence[Parser] | None = None,
@@ -549,6 +551,7 @@ def validate(
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: None = None,
@@ -575,6 +578,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
@@ -640,6 +644,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -687,6 +693,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             responses=[response, *responses],
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
@@ -784,6 +791,7 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -811,6 +819,7 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -838,6 +847,7 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -865,6 +875,7 @@ def modify(  # noqa: WPS211
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[int] | None = None,
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
     no_validate_http_spec: Set[HttpSpec] | None = None,
@@ -914,6 +925,8 @@ def modify(  # noqa: WPS211
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -968,6 +981,7 @@ def modify(  # noqa: WPS211
             responses=extra_responses,
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,

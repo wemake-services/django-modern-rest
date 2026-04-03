@@ -69,6 +69,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Works in runtime, can be disabled for better performance.
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -123,6 +125,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     semantic_responses: ClassVar[bool | None] = None
+    exclude_semantic_responses: ClassVar[Set[int]] = frozenset()
     validate_events: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
     allowed_http_methods: ClassVar[Set[str]] = frozenset(

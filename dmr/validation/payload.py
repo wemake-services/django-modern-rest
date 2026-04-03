@@ -39,6 +39,7 @@ class _BasePayload:
     # Common fields:
     validate_responses: bool | None = None
     semantic_responses: bool | None = None
+    exclude_semantic_responses: Set[int] | None = None
     validate_events: bool | None = None
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None
     no_validate_http_spec: Set[HttpSpec] | None = None
