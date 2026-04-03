@@ -2,14 +2,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 import schemathesis as st
-import tracecov
 from django.conf import LazySettings
 from django.urls import reverse
-from tracecov.schemathesis import helpers
 
 from django_test_app.server.wsgi import application
 
 if TYPE_CHECKING:
+    import tracecov
     from django.contrib.auth.models import User
     from schemathesis.specs.openapi.schemas import OpenApiSchema
 
@@ -34,15 +33,13 @@ schema = st.pytest.from_fixture('api_schema')
 def test_schemathesis(
     case: st.Case,
     settings: LazySettings,
-    tracecov_map: tracecov.CoverageMap,
+    tracecov_map: 'tracecov.CoverageMap | None',
 ) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
-    if settings.DEBUG:
-        pytest.skip(
-            reason=(
-                'Django with DEBUG=True and schemathesis are hard to integrate'
-            ),
-        )
+    if settings.DEBUG or tracecov_map is None:
+        pytest.skip(reason='DEBUG=True or missing `tracecov`')
+
+    from tracecov.schemathesis import helpers  # noqa: PLC0415
 
     response = case.call_and_validate()
     # Record interaction for `tracecov` report:
