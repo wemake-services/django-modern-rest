@@ -9,7 +9,8 @@ build:
       - asdf install uv latest
       - asdf global uv latest
       - uv export
-        --only-group docs
+        --all-extras
+        --group docs
         --format=requirements.txt
         --output-file=requirements.txt
 
