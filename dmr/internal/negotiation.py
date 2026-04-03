@@ -6,6 +6,7 @@ from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 from django.utils.translation import gettext_lazy as _
 
+from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError
 
 if TYPE_CHECKING:
@@ -110,10 +111,11 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    if request.headers.get('Accept') is None:
+    accept = request.headers.get('Accept')
+    if accept is None:
         return default
 
-    renderer_type = request.get_preferred_type(renderers)  # type: ignore[arg-type]
+    renderer_type = accepted_type(accept, renderers)
     if renderer_type is None:
         raise NotAcceptableError(
             _CANNOT_SERIALIZE_MSG.format(

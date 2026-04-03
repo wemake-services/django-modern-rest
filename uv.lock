@@ -558,6 +558,7 @@ dev = [
     { name = "syrupy" },
     { name = "tracecov" },
     { name = "types-docutils" },
+    { name = "types-setuptools" },
     { name = "wemake-python-styleguide" },
     { name = "xmltodict-rs" },
 ]
@@ -626,6 +627,7 @@ dev = [
     { name = "syrupy", specifier = ">=5.1,<6" },
     { name = "tracecov", specifier = ">=0.19,<0.20" },
     { name = "types-docutils", specifier = ">=0.22,<0.23" },
+    { name = "types-setuptools", specifier = ">=82,<83" },
     { name = "wemake-python-styleguide", specifier = ">=1.6,<2" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
@@ -2664,6 +2666,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7e/69/3c51b36d04da19b92f9e815be12753125bd8bc247ba0470a982e6979e71c/types_pyyaml-6.0.12.20250915.tar.gz", hash = "sha256:0f8b54a528c303f0e6f7165687dd33fafa81c807fcac23f632b63aa624ced1d3", size = 17522, upload-time = "2025-09-15T03:01:00.728Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/e0/1eed384f02555dde685fff1a1ac805c1c7dcb6dd019c916fe659b1c1f9ec/types_pyyaml-6.0.12.20250915-py3-none-any.whl", hash = "sha256:e7d4d9e064e89a3b3cae120b4990cd370874d2bf12fa5f46c97018dd5d3c9ab6", size = 20338, upload-time = "2025-09-15T03:00:59.218Z" },
+]
+
+[[package]]
+name = "types-setuptools"
+version = "82.0.0.20260402"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/f8/74f8a76b4311e70772c0df8f2d432040a3b0facd7bcce6b72b0b26e1746b/types_setuptools-82.0.0.20260402.tar.gz", hash = "sha256:63d2b10ba7958396ad79bbc24d2f6311484e452daad4637ffd40407983a27069", size = 44805, upload-time = "2026-04-02T04:17:49.229Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0e/e9/22451997f70ac2c5f18dc5f988750c986011fb049d9021767277119e63fa/types_setuptools-82.0.0.20260402-py3-none-any.whl", hash = "sha256:4b9a9f6c3c4c65107a3956ad6a6acbccec38e398ff6d5f78d5df7f103dadb8d6", size = 68429, upload-time = "2026-04-02T04:17:48.11Z" },
 ]
 
 [[package]]
