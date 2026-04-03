@@ -110,7 +110,7 @@ docs = [
   "docutils>=0.22,<0.23",
 
   # Needed for our extension:
-  "uvicorn>=0.41,<0.42",
+  "uvicorn>=0.41,<0.43",
   "httpx>=0.28,<0.29",
 
   # Needed for examples:
