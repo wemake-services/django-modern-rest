@@ -4,9 +4,11 @@ from typing import final
 import attrs
 from django.db import IntegrityError, transaction
 
+from dmr.pagination import Paginated
 from server.apps.model_fk.mappers import UserMap
 from server.apps.model_fk.models import Role, Tag, User
 from server.apps.model_fk.serializers import (
+    PageQuery,
     RoleSchema,
     TagSchema,
     UserCreateSchema,
@@ -81,8 +83,9 @@ class UserCreate:
 class UserList:
     _mapper: UserMap
 
-    def __call__(self) -> list[UserSchema]:
+    def __call__(self, parsed_query: PageQuery) -> Paginated[UserSchema]:
         """Return all users."""
         return self._mapper.multiple(
             User.objects.select_related('role').prefetch_related('tags').all(),
+            parsed_query,
         )

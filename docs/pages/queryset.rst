@@ -228,8 +228,13 @@ In this example, it would be easier to start with ``views.py``:
   :language: python
   :linenos:
 
-In this example we used `punq <https://github.com/bobthemighty/punq>`_
-as a simplistic DI container to show how big projects really handle such cases.
+What happens here?
+
+1. We refactored our views to only run an instance of a specific service,
+   which we get using ``HasContainer.resolve`` call, which is our DI
+2. We now don't construct any serializer schemas inside our views,
+   we move to its independent infra layer
+3. We now use :ref:`pagination` to list all users
 
 Our views here are reduced to a single line of code, which do everything
 inside the business logic. Exactly the way it should
@@ -238,10 +243,15 @@ be for scalable and reliable applications.
 DI
 ~~
 
+In this example we use `punq <https://github.com/bobthemighty/punq>`_
+as a simplistic DI container to show how big projects really handle such cases.
+
 .. note::
 
   You are not forced to use ``punq``, we don't enforce any DI framework.
   Our principle is to :ref:`bring-your-own-di`.
+
+The DI part looks like this:
 
 .. literalinclude:: ../../django_test_app/server/apps/model_fk/implemented.py
   :caption: views.py
@@ -252,7 +262,8 @@ What happens here?
 
 1. We define a class that will be used as a mixin for all future controllers
 2. This class provides a pre-built container with all the dependencies
-3. Users can call ``self.resolve`` to resolve specific dependencies
+3. Users can call ``self.resolve`` inside controllers
+   to resolve specific dependencies
 
 Now, let's see how we create objects in the database.
 
@@ -260,11 +271,13 @@ Services
 ~~~~~~~~
 
 Again, this is just an example. You are not forced
-to create any service-based architecture.
+to create this specific service-based architecture.
+Use whatever layers separation practice as you want.
 Our big example uses `usecases <https://github.com/wemake-services/wemake-django-template/tree/master/%7B%7Bcookiecutter.project_name%7D%7D/server/apps/main/logic/usecases>`_
-as the main logic entity and entry points.
+as the main logic entities and entry points.
 
-However, our ``services.py`` are rather simple.
+However, our ``services.py`` is the simplest and the shortest way.
+That's why we are using them as an example:
 
 .. literalinclude:: ../../django_test_app/server/apps/model_fk/services.py
   :caption: services.py
@@ -274,7 +287,8 @@ However, our ``services.py`` are rather simple.
 What happens here?
 
 1. We define three services: one per create operation
-2. Some of them have dependencies defined as dataclass fields
+2. Some of them have dependencies defined as dataclass fields,
+   like ``_mapper: UserMap``, these fields will be resolved by our DI
 3. Each service does just a single thing, it would be easy to compose them
 
 Now we are ready for the final layer: mapping of the created database models.
@@ -298,7 +312,7 @@ Mappers just map database models into serialization schemas.
   Or it can do some small representation logic, like combining
   ``first_name`` and ``last_name`` of users into ``full_name``.
 
-  Or handle :ref:`pagination`.
+  Or handle :ref:`pagination`, as we do in this example.
 
 .. literalinclude:: ../../django_test_app/server/apps/model_fk/mappers.py
   :caption: mappers.py
@@ -306,7 +320,12 @@ Mappers just map database models into serialization schemas.
   :linenos:
 
 Now we have a fully working application.
-With composable and flexible schemas.
+With composable and flexible schemas, which will:
+
+1. Report any type errors early
+2. Be customizable to the core
+3. Can be used in a good architecture in big real business apps
+4. Change indepedently from models
 
 
 Conclusions

@@ -7,6 +7,12 @@ DatabaseId: TypeAlias = Annotated[int, pydantic.Field(gt=0)]
 
 
 @final
+class PageQuery(pydantic.BaseModel):
+    page_size: int = pydantic.Field(default=10, ge=1, le=100)
+    page: int = pydantic.Field(default=1, ge=1)
+
+
+@final
 class TagSchema(pydantic.BaseModel):
     name: str
 

@@ -4,13 +4,18 @@ from typing import final
 from django.http import HttpResponse
 from typing_extensions import override
 
-from dmr import Body, Controller, modify
+from dmr import Body, Controller, Query, modify
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorType
 from dmr.metadata import ResponseSpec
+from dmr.pagination import Paginated
 from dmr.plugins.pydantic import PydanticSerializer
 from server.apps.model_fk.implemented import HasContainer
-from server.apps.model_fk.serializers import UserCreateSchema, UserSchema
+from server.apps.model_fk.serializers import (
+    PageQuery,
+    UserCreateSchema,
+    UserSchema,
+)
 from server.apps.model_fk.services import (
     UniqueConstraintError,
     UserCreate,
@@ -20,9 +25,9 @@ from server.apps.model_fk.services import (
 
 @final
 class UserController(HasContainer, Controller[PydanticSerializer]):
-    def get(self) -> list[UserSchema]:
+    def get(self, parsed_query: Query[PageQuery]) -> Paginated[UserSchema]:
         """List existing users."""
-        return self.resolve(UserList)()
+        return self.resolve(UserList)(parsed_query)
 
     @modify(
         extra_responses=[
