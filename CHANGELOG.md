@@ -16,7 +16,7 @@ No breaking changes will be made.
 ### Features
 
 - Provide official `NamedTuple` support, #774
-- Provide `timezone` and `pydantic-extra-types` with `[pydantic]` extra, 
+- Provide `timezone` and `pydantic-extra-types` with `[pydantic]` extra, #802
 
 ### Fixes
 
