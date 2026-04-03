@@ -29,6 +29,14 @@ keywords = [
 ]
 
 classifiers = [
+  'Programming Language :: Python',
+  'Programming Language :: Python :: Implementation :: CPython',
+  'Programming Language :: Python :: 3',
+  'Programming Language :: Python :: 3 :: Only',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.14',
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
@@ -46,14 +54,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pydantic = ["pydantic[email]>=2.12"]
+pydantic = ["pydantic[email,timezone]>=2.12", "pydantic-extra-types"]
 msgspec = ["msgspec>=0.19"]
 attrs = ["msgspec>=0.19", "attrs>=26.0"]
 jwt = ["pyjwt[crypto]>=2.11"]
 openapi = ["openapi-spec-validator>=0.8", "polyfactory>=3.2"]
 
 [project.urls]
+Homepage = "https://django-modern-rest.readthedocs.io/en/latest/"
 Repository = "https://github.com/wemake-services/django-modern-rest"
+Funding = "https://github.com/sponsors/wemake-services"
+"Release notes" = "https://github.com/wemake-services/django-modern-rest/releases"
 
 [project.entry-points."pytest11"]
 # We need this structure because otherwise `pytest` ruins the coverage report.
