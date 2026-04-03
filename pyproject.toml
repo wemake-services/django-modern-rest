@@ -165,6 +165,7 @@ skip = [
 ]
 build-verbosity = 1
 
+test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
 test-command = 'pytest {project}'
 
