@@ -325,7 +325,7 @@ With composable and flexible schemas, which will:
 1. Report any type errors early
 2. Be customizable to the core
 3. Can be used in a good architecture in big real business apps
-4. Change indepedently from models
+4. Change independently from models
 
 
 Conclusions
