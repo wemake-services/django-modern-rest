@@ -1,6 +1,4 @@
 SHELL := /usr/bin/env bash
-# Override with, for example: POETRY='uvx poetry' make test
-POETRY ?= poetry
 
 .DEFAULT_GOAL := help
 
@@ -13,55 +11,55 @@ help: ## Show the help message
 
 .PHONY: format
 format: ## Format code with ruff
-	$(POETRY) run ruff format && $(POETRY) run ruff check && $(POETRY) run ruff format
+	uv run ruff format && uv run ruff check && uv run ruff format
 
 .PHONY: lint
 lint: ## Run linting checks
-	$(POETRY) run ruff check --exit-non-zero-on-fix
-	$(POETRY) run ruff format --check --diff
-	$(POETRY) run flake8 .
-	$(POETRY) run slotscheck -v -m dmr
-	$(POETRY) run lint-imports
+	uv run ruff check --exit-non-zero-on-fix
+	uv run ruff format --check --diff
+	uv run flake8 .
+	uv run slotscheck -v -m dmr
+	uv run lint-imports
 
 .PHONY: type-check
 type-check: ## Run all type checkers we support
-	$(POETRY) run mypy .
-	$(POETRY) run pyright
-	$(POETRY) run pyrefly check
+	uv run mypy .
+	uv run pyright
+	uv run pyrefly check
 
 .PHONY: translations
 translations: ## Run translation QA
-	$(POETRY) run dennis-cmd lint dmr/locale
-	$(POETRY) run django-admin compilemessages --ignore dmr || true
-	$(POETRY) run django-admin compilemessages
+	uv run dennis-cmd lint dmr/locale
+	uv run django-admin compilemessages --ignore dmr || true
+	uv run django-admin compilemessages
 
 .PHONY: unit
 unit: ## Run unit tests with pytest
-	$(POETRY) run pytest --inline-snapshot=disable
+	uv run pytest --inline-snapshot=disable
 
 .PHONY: smoke
 smoke: ## Run smoke tests (check that package can be imported without `django.setup`)
-	$(POETRY) run python -c 'from dmr import Controller'
+	uv run python -c 'from dmr import Controller'
 	# Checks that renderers and parsers can be imported
 	# from settings without `.setup()` call:
-	$(POETRY) run python -c 'from dmr.renderers import *'
-	$(POETRY) run python -c 'from dmr.parsers import *'
+	uv run python -c 'from dmr.renderers import *'
+	uv run python -c 'from dmr.parsers import *'
 	# Checks that auth can be imported from settings without `.setup()` call:
-	$(POETRY) run python -c 'from dmr.security import *'
-	$(POETRY) run python -c 'from dmr.security.django_session import *'
-	$(POETRY) run python -c 'from dmr.security.jwt import *'
-	$(POETRY) run python -c 'from dmr.openapi.config import *'
-	$(POETRY) run python -c 'from dmr.openapi.objects import *'
+	uv run python -c 'from dmr.security import *'
+	uv run python -c 'from dmr.security.django_session import *'
+	uv run python -c 'from dmr.security.jwt import *'
+	uv run python -c 'from dmr.openapi.config import *'
+	uv run python -c 'from dmr.openapi.objects import *'
 	# Settings itself can be imported with `.setup()`:
-	$(POETRY) run python -c 'from dmr import settings'
+	uv run python -c 'from dmr import settings'
 
 .PHONY: example
 example: ## Run QA tools on example code
 	( cd django_test_app \
-		&& $(POETRY) run mypy --config-file mypy.ini \
-		&& $(POETRY) run python manage.py makemigrations --dry-run --check \
+		&& uv run mypy --config-file mypy.ini \
+		&& uv run python manage.py makemigrations --dry-run --check \
 		)
-	PYTHONPATH='docs/' $(POETRY) run pytest -o addopts='' \
+	PYTHONPATH='docs/' uv run pytest -o addopts='' \
 	  --suppress-no-test-exit-code \
 	  docs/examples/testing/polyfactory_usage.py \
 	  docs/examples/testing/django_builtin_client.py \
@@ -69,11 +67,11 @@ example: ## Run QA tools on example code
 
 .PHONY: example-run
 example-run: ## Run example app
-	cd django_test_app && $(POETRY) run python manage.py runserver
+	cd django_test_app && uv run python manage.py runserver
 
 .PHONY: package
 package: ## Check package dependencies with pip
-	$(POETRY) run pip check
+	uv run pip check
 
 .PHONY: test
 test: lint type-check example package smoke translations unit ## Run all checks

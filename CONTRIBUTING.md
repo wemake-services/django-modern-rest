@@ -2,17 +2,16 @@
 
 ## Dependencies
 
-We use [poetry](https://github.com/python-poetry/poetry) to manage the dependencies.
+We use [uv](https://github.com/astral-sh/uv) to manage the dependencies.
 
-To install them you would need to run `install` command:
+To install them you would need to run `sync` command:
 
 ```bash
-poetry install --all-extras --all-groups
+uv sync --all-extras --all-groups
 ```
 
 To activate your `virtualenv`
-run `eval "$(poetry env activate)"`
-or `source .venv/bin/activate`.
+run `source .venv/bin/activate`.
 
 ## One magic command
 
@@ -39,14 +38,14 @@ These steps are mandatory during the CI.
 To build docs locally:
 
 ```bash
-poetry run make -C docs clean html
+uv run make -C docs clean html
 ```
 
 If docs build fails on macOS with multiprocessing-related errors while
 running examples, force the start method explicitly:
 
 ```bash
-DMR_SPAWN_METHOD=spawn poetry run make -C docs clean html
+DMR_SPAWN_METHOD=spawn uv run make -C docs clean html
 ```
 
 ## Submitting your code
@@ -88,7 +87,7 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
 
 1. Generate a `.po` file for your [locale](https://docs.djangoproject.com/en/stable/topics/i18n/#term-locale-name):
    ```bash
-   poetry run django-admin makemessages --locale <lang>
+   uv run django-admin makemessages --locale <lang>
    ```
 2. Fill in the `msgstr` values in `dmr/locale/<lang>/LC_MESSAGES/django.po`
 3. Compile and validate all translations:
