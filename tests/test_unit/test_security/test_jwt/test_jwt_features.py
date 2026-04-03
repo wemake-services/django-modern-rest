@@ -8,24 +8,12 @@ import pytest
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from faker import Faker
 from freezegun.api import FrozenDateTimeFactory
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import JWTAsyncAuth, JWToken, JWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-
-
-@pytest.fixture
-def user(faker: Faker) -> User:
-    """Create fake user for tests."""
-    return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        faker.password(),
-    )
-
 
 _TokenBuilder: TypeAlias = Callable[..., str]
 
@@ -41,13 +29,13 @@ class _TokenData(TypedDict, total=False):
 
 
 @pytest.fixture
-def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
+def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
     def factory(**kwargs: Unpack[_TokenData]) -> str:
         exp_date = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
 
-        kwargs.setdefault('sub', str(user.pk))
+        kwargs.setdefault('sub', str(admin_user.pk))
         kwargs.setdefault('exp', exp_date)
         return JWToken(
             **kwargs,

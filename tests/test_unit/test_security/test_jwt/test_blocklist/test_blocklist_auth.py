@@ -10,7 +10,6 @@ from django.apps import apps
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Controller, modify
@@ -42,27 +41,17 @@ def test_is_installed() -> None:
     assert apps.is_installed('dmr.security.jwt.blocklist')
 
 
-@pytest.fixture
-def user(faker: Faker) -> User:
-    """Create fake user for tests."""
-    return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        faker.password(),
-    )
-
-
 class _TokenBuilder(Protocol):
     def __call__(self, **kwargs: Unpack[_JWTokenKwargs]) -> str: ...
 
 
 @pytest.fixture
-def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
+def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
     def factory(**kwargs: Unpack[_JWTokenKwargs]) -> str:
         token = JWToken(
-            sub=str(user.pk),
+            sub=str(admin_user.pk),
             **kwargs,
         )
 
