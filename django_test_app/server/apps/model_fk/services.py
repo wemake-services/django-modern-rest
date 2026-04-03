@@ -86,6 +86,12 @@ class UserList:
     def __call__(self, parsed_query: PageQuery) -> Paginated[UserSchema]:
         """Return all users."""
         return self._mapper.multiple(
-            User.objects.select_related('role').prefetch_related('tags').all(),
+            (
+                User.objects
+                .select_related('role')
+                .prefetch_related('tags')
+                .order_by('id')
+                .all()  # it is still lazy
+            ),
             parsed_query,
         )
