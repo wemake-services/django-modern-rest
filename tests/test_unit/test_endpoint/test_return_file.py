@@ -12,7 +12,10 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
-_FILEPATH: Final = 'docs/examples/components/receipt.txt'
+_FILEPATH: Final = (
+    pathlib.Path(__file__).parent.parent.parent.parent
+    / 'docs/examples/components/receipt.txt'
+)
 
 
 @final
