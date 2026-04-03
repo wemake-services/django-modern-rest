@@ -67,7 +67,7 @@ dev = [
   "django-stubs[compatible-mypy]>=6.0,<6.0.2",
   "types-docutils>=0.22,<0.23",
   "pyright>=1.1,<2",
-  "pyrefly>=0.57,<0.58",
+  "pyrefly>=0.57,<0.59",
 
   "wemake-python-styleguide>=1.6,<2",
   "ruff>=0.15,<0.16",
