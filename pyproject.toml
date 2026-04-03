@@ -121,7 +121,7 @@ docs = [
 
 
 [tool.hatch.build.targets.wheel]
-packages = ["dmr", "dmr_pytest.py"]
+only-include = ["dmr", "dmr_pytest.py"]
 
 [tool.hatch.build.targets.sdist]
 include = [

@@ -541,6 +541,7 @@ dev = [
     { name = "import-linter" },
     { name = "inline-snapshot" },
     { name = "polyfactory" },
+    { name = "punq" },
     { name = "pyrefly" },
     { name = "pyright" },
     { name = "pytest" },
@@ -564,6 +565,7 @@ docs = [
     { name = "docutils" },
     { name = "httpx" },
     { name = "myst-parser" },
+    { name = "punq" },
     { name = "shibuya" },
     { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -606,6 +608,7 @@ dev = [
     { name = "import-linter", specifier = ">=2.5,<3" },
     { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
+    { name = "punq", specifier = ">=0.7,<0.8" },
     { name = "pyrefly", specifier = ">=0.57,<0.58" },
     { name = "pyright", specifier = ">=1.1,<2" },
     { name = "pytest", specifier = ">=9.0,<10" },
@@ -629,6 +632,7 @@ docs = [
     { name = "docutils", specifier = ">=0.22,<0.23" },
     { name = "httpx", specifier = ">=0.28,<0.29" },
     { name = "myst-parser", specifier = ">=5.0,<6" },
+    { name = "punq", specifier = ">=0.7,<0.8" },
     { name = "shibuya", specifier = ">=2026.1,<2027" },
     { name = "sphinx", specifier = ">=9.0,<10" },
     { name = "sphinx-autodoc-typehints", specifier = ">=3.0,<4" },
@@ -1551,6 +1555,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/85/68/7717bd9e63ed254617a7d3dc9260904fb736d6ea203e58ffddcb186c64e4/polyfactory-3.3.0.tar.gz", hash = "sha256:237258b6ff43edf362ffd1f68086bb796466f786adfa002b0ac256dbf2246e9a", size = 348668, upload-time = "2026-02-22T09:46:28.01Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dd/34/b6f19941adcdaf415b5e8a8d577499f5b6a76b59cbae37f9b125a9ffe9f2/polyfactory-3.3.0-py3-none-any.whl", hash = "sha256:686abcaa761930d3df87b91e95b26b8d8cb9fdbbbe0b03d5f918acff5c72606e", size = 62707, upload-time = "2026-02-22T09:46:25.985Z" },
+]
+
+[[package]]
+name = "punq"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/f1/c31e86ce1ab85837d8e6a6868163bae3afaef01c49d45f1bfa479c1a5b90/punq-0.7.0.tar.gz", hash = "sha256:bb7a6cc75a2e7d51b861b0e11f4830a12617b3ee33dbced9ce2be6a98ba39d63", size = 7254, upload-time = "2023-11-06T10:45:19.945Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/6a/c89602766d4416371eb801c3de89eda45fcea4435836ba7c01d1da88d47a/punq-0.7.0-py3-none-any.whl", hash = "sha256:7e0aca446c36a73674ec3fc078ec5e90e7a172ee349537d075ff20d73c3b1810", size = 7719, upload-time = "2023-11-06T10:45:18.118Z" },
 ]
 
 [[package]]
