@@ -23,3 +23,4 @@ Criteria:
 4. Is rather simple and does not have a lot of magic,
    otherwise - compilation will not have much effect
 5. Does not have complex typing
+6. Have no external dependencies

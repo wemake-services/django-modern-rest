@@ -132,9 +132,6 @@ docs = [
 ]
 
 
-[tool.hatch.build.targets.wheel]
-only-include = ["dmr", "dmr_pytest.py"]
-
 [tool.hatch.build.targets.sdist]
 include = [
   "dmr/",
@@ -143,9 +140,39 @@ include = [
   "licenses/*.txt",
 ]
 
-[tool.setuptools]
-# Used for `mypyc`:
-packages = ['dmr']
+[tool.hatch.build.targets.wheel]
+only-include = ["dmr", "dmr_pytest.py"]
+# Note that we change the behaviour of this flag below
+macos-max-compat = true
+
+
+[tool.hatch.build.targets.wheel.hooks.mypyc]
+enable-by-default = true
+dependencies = ["hatch-mypyc", "mypy"]
+include = ["dmr/compiled"]
+require-runtime-dependencies = true
+mypy-args = ["--ignore-missing-imports"]
+options = { debug_level = "0" }
+
+
+[tool.cibuildwheel]
+# Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
+build = "cp3{11,12,13,14}-*"
+skip = [
+  "*-win32",
+  "*-manylinux_i686",
+  "*-musllinux*",
+]
+build-verbosity = 1
+
+test-groups = ['dev']
+test-command = 'pytest {project}'
+
+[tool.cibuildwheel.environment]
+HATCH_BUILD_HOOKS_ENABLE = "1"
+MYPYC_OPT_LEVEL = "3"
+MYPYC_DEBUG_LEVEL = "0"
+CC = "clang"
 
 
 [tool.ruff]
