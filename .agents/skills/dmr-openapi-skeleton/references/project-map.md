@@ -58,7 +58,7 @@ Use these defaults when the spec does not imply real business logic:
 - Add JWT extras only when required.
 - Do not add `'dmr'` to `INSTALLED_APPS` unless static OpenAPI assets must be served.
 - Do not add extra validation libraries by default just to compare generated and source schemas.
-- Keep generated projects on Python `3.11+` and Django `5.2+`.
+- Keep generated projects on Python `3.11+` and Django `4.2+`.
 
 ## Testing Scope
 

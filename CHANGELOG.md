@@ -15,6 +15,7 @@ No breaking changes will be made.
 
 ### Features
 
+- Provide older Django versions `4.2`, `5.0`, `5.1` support, #803
 - Provide official `NamedTuple` support, #774
 - Provide `timezone` and `pydantic-extra-types` with `[pydantic]` extra, #802
 
