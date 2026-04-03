@@ -256,14 +256,14 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.3.1"
+version = "8.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/75/31212c6bf2503fdf920d87fee5d7a86a2e3bcf444984126f13d8e4016804/click-8.3.2.tar.gz", hash = "sha256:14162b8b3b3550a7d479eafa77dfd3c38d9dc8951f6f69c78913a8f9a7540fd5", size = 302856, upload-time = "2026-04-03T19:14:45.118Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/78/01c019cdb5d6498122777c1a43056ebb3ebfeef2076d9d026bfe15583b2b/click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6", size = 108274, upload-time = "2025-11-15T20:45:41.139Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/20/71885d8b97d4f3dde17b1fdb92dbd4908b00541c5a3379787137285f602e/click-8.3.2-py3-none-any.whl", hash = "sha256:1924d2c27c5653561cd2cae4548d1406039cb79b858b747cfea24924bbc1616d", size = 108379, upload-time = "2026-04-03T19:14:43.505Z" },
 ]
 
 [[package]]
@@ -556,7 +556,6 @@ dev = [
     { name = "schemathesis" },
     { name = "slotscheck" },
     { name = "syrupy" },
-    { name = "tracecov" },
     { name = "types-docutils" },
     { name = "types-setuptools" },
     { name = "wemake-python-styleguide" },
@@ -582,6 +581,9 @@ docs = [
     { name = "sphinxcontrib-mermaid" },
     { name = "uvicorn" },
     { name = "xmltodict-rs" },
+]
+integration = [
+    { name = "tracecov" },
 ]
 
 [package.metadata]
@@ -625,7 +627,6 @@ dev = [
     { name = "schemathesis", specifier = ">=4.14,<5" },
     { name = "slotscheck", specifier = ">=0.19,<0.20" },
     { name = "syrupy", specifier = ">=5.1,<6" },
-    { name = "tracecov", specifier = ">=0.19,<0.20" },
     { name = "types-docutils", specifier = ">=0.22,<0.23" },
     { name = "types-setuptools", specifier = ">=82,<83" },
     { name = "wemake-python-styleguide", specifier = ">=1.6,<2" },
@@ -650,6 +651,7 @@ docs = [
     { name = "uvicorn", specifier = ">=0.41,<0.43" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
+integration = [{ name = "tracecov", specifier = ">=0.19,<0.20" }]
 
 [[package]]
 name = "django-readers"
