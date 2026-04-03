@@ -11,6 +11,8 @@ class PageQuery(pydantic.BaseModel):
     page_size: int = pydantic.Field(default=10, ge=1, le=100)
     page: int = pydantic.Field(default=1, ge=1)
 
+    model_config = pydantic.ConfigDict(extra='forbid')
+
 
 @final
 class TagSchema(pydantic.BaseModel):

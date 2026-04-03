@@ -38,13 +38,21 @@ def test_user_create_models_example(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
-    response_json = response.json()
-    assert len(response_json) == 1
-    assert response_json[0] == {
-        **request_data,
-        'id': IsPositiveInt,
-        'tags': IsList(*request_data['tags'], check_order=False),
-        'created_at': IsDatetime(iso_string=True),
+    assert response.json() == {
+        'count': 1,
+        'num_pages': 1,
+        'per_page': 10,
+        'page': {
+            'number': 1,
+            'object_list': [
+                {
+                    **request_data,
+                    'id': IsPositiveInt,
+                    'tags': IsList(*request_data['tags'], check_order=False),
+                    'created_at': IsDatetime(iso_string=True),
+                },
+            ],
+        },
     }
 
 

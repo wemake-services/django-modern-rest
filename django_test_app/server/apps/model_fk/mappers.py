@@ -1,7 +1,7 @@
 from typing import final
 
 import attrs
-from django.core.paginator import Paginator
+from django.core.paginator import EmptyPage, Paginator
 from django.db.models import QuerySet
 
 from dmr.pagination import Page, Paginated
@@ -51,12 +51,15 @@ class UserMap:
         users: QuerySet[User],
         parsed_query: PageQuery,
     ) -> Paginated[UserSchema]:
-        # Paginate users:
+        # Logic to paginate users:
         paginator = Paginator(users, parsed_query.page_size)
-        object_list = [
-            self.single(user)
-            for user in paginator.page(parsed_query.page).object_list
-        ]
+        try:
+            object_list = [
+                self.single(user)
+                for user in paginator.page(parsed_query.page).object_list
+            ]
+        except EmptyPage:
+            object_list = []
         return Paginated(
             count=paginator.count,
             num_pages=paginator.num_pages,
