@@ -636,7 +636,7 @@ docs = [
     { name = "shibuya", specifier = ">=2026.1,<2027" },
     { name = "sphinx", specifier = ">=9.0,<10" },
     { name = "sphinx-autodoc-typehints", specifier = ">=3.0,<4" },
-    { name = "sphinx-contributors", specifier = ">=0.2,<0.3" },
+    { name = "sphinx-contributors", specifier = ">=0.2,<0.4" },
     { name = "sphinx-copybutton", specifier = ">=0.5,<0.6" },
     { name = "sphinx-design", specifier = ">=0.7,<0.8" },
     { name = "sphinx-iconify", specifier = ">=0.3,<0.4" },
@@ -2337,15 +2337,16 @@ wheels = [
 
 [[package]]
 name = "sphinx-contributors"
-version = "0.2.7"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "requests" },
     { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/21/9d/7505ca9f128ab5a0b38fc51e57d428a54f28767596e99c05a26155ea603a/sphinx_contributors-0.2.7.tar.gz", hash = "sha256:aace731366096f2104a06eca77b9354b11768ddec149d699520c254f09cbb4f4", size = 394864, upload-time = "2023-01-10T16:43:37.53Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/68/53a8170828c2e175e5333560d413c7721c323ba9ffbbc86c3c8346f6eb4b/sphinx_contributors-0.3.0.tar.gz", hash = "sha256:9b8c94fb5c1f851719a3abb9e15281c34f511b8aba71c97ac9c30bcb14f907fd", size = 399495, upload-time = "2026-03-20T15:15:39.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/95/573aeae3e67ab90a4600b3758fba9d06bad9e7d68d76959e8018762c2858/sphinx_contributors-0.2.7-py3-none-any.whl", hash = "sha256:f409295eb22f05606528ff3a9b93b4ae076d93d3153de13ff47bfcdd1c792463", size = 4669, upload-time = "2023-01-10T16:43:31.775Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/bd/b6c802bf3fa12cf60dc1685412a934c562426e3cc414d4d8c1c536ddad8a/sphinx_contributors-0.3.0-py3-none-any.whl", hash = "sha256:fd762cf65d4b931f4e073c1a0ae37aa5881b8a01788fb633963ba6b104c1e90b", size = 5595, upload-time = "2026-03-20T15:15:37.904Z" },
 ]
 
 [[package]]
