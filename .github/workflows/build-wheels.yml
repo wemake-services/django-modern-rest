@@ -1,4 +1,4 @@
-name: Build binary wheels
+name: Test compiled with mypyc
 
 # Runs on every push to master and on all pull requests.
 # Can also be triggered manually from the GitHub UI.
@@ -24,11 +24,10 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          # TODO: add ubuntu-24.04-arm and windows-11-arm
           - ubuntu-latest        # Linux x86_64
-          - ubuntu-24.04-arm     # Linux aarch64
           - macos-latest         # macOS x86_64 + arm64 (universal2)
           - windows-latest       # Windows x86_64
-          - windows-11-arm       # Windows ARM64
 
     steps:
       - uses: actions/checkout@v6
@@ -38,12 +37,6 @@ jobs:
       - uses: pypa/cibuildwheel@v3.4.1
         with:
           config-file: pyproject.toml
-
-      - uses: actions/upload-artifact@v6
-        with:
-          name: dist-${{ matrix.os }}
-          path: ./wheelhouse/*.whl
-          overwrite: true
 
   # Also build the pure-Python wheel and the source distribution so that
   # unsupported platforms automatically fall back to the pure-Python
@@ -67,9 +60,3 @@ jobs:
       - name: Build sdist and pure-Python wheel
         # DMR_USE_MYPYC is intentionally NOT set here.
         run: python -m build --sdist --wheel
-
-      - uses: actions/upload-artifact@v6
-        with:
-          name: dist-pure
-          path: dist/
-          overwrite: true
