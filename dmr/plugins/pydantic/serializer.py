@@ -137,7 +137,9 @@ class PydanticSerializer(BaseSerializer):
         if isinstance(to_serialize, pydantic.BaseModel):
             return to_serialize.model_dump(**cls.model_dump_kwargs)
         if is_dataclass(to_serialize):
-            return _get_cached_type_adapter(type(to_serialize)).dump_python(
+            return _get_cached_type_adapter(
+                type(to_serialize),  # type: ignore[arg-type]
+            ).dump_python(
                 to_serialize,
             )
         return super().serialize_hook(to_serialize)
