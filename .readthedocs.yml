@@ -11,6 +11,7 @@ build:
       - uv export
         --all-extras
         --group docs
+        --no-emit-project
         --format=requirements.txt
         --output-file=requirements.txt
 
