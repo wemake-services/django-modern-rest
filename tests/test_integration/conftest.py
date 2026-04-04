@@ -14,7 +14,7 @@ def tracecov_map() -> 'tracecov.CoverageMap | None':
     """Provide the session ``tracecov`` coverage map for tests."""
     try:
         import tracecov  # noqa: PLC0415
-    except ImportError:
+    except ImportError:  # pragma: no cover
         return None
 
     from django_test_app.server.urls import schema  # noqa: PLC0415

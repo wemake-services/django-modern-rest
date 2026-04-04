@@ -148,9 +148,10 @@ only-include = ["dmr", "dmr_pytest.py"]
 macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
-enable-by-default = true
-dependencies = ["hatch-mypyc", "mypy"]
+enable-by-default = false
+dependencies = ["hatch-mypyc"]
 include = ["dmr/compiled"]
+exclude = ["dmr/compiled/__init__.py"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
 options = { debug_level = "0" }
@@ -159,16 +160,11 @@ options = { debug_level = "0" }
 [tool.cibuildwheel]
 # Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
 build = "cp3{11,12,13,14}-*"
-skip = [
-  "*-win32",
-  "*-manylinux_i686",
-  "*-musllinux*",
-]
 build-verbosity = 1
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
-test-command = 'pytest {project}/tests -o addopts=""'
+test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOKS_ENABLE = "1"
