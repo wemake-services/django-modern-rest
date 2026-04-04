@@ -66,6 +66,10 @@ def test_negotiation_compiled(
     monkeypatch.setenv('DMR_USE_COMPILED', '1')
 
     with clean_modules(_COMPILED_MODULES):
+        from dmr.compiled import negotiation  # noqa: PLC0415
+
+        assert negotiation.__file__.endswith('.so')
+
         from dmr.compiled import accepted_type  # noqa: PLC0415
 
         assert '_pure' not in accepted_type.__module__

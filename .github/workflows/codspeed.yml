@@ -14,6 +14,10 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # Always run with mypyc compilation:
+  HATCH_BUILD_HOOKS_ENABLE: 1
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,7 +42,7 @@ jobs:
     - name: Install dependencies
       run: |
         # Build with `mypyc` enabled:
-        HATCH_BUILD_HOOKS_ENABLE="1" uv sync --all-extras --group integration
+        uv sync --all-extras --group integration
 
     - name: Run benchmarks
       uses: CodSpeedHQ/action@v4

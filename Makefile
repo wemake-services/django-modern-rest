@@ -80,7 +80,7 @@ benchmarks-type-check: ## Run type check on benches
 
 .PHONY: benchmarks
 benchmarks: ## Run feature benches
-	uv run uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
+	uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
 
 .PHONY: test
 test: lint type-check example benchmarks-type-check package smoke translations unit ## Run all checks
