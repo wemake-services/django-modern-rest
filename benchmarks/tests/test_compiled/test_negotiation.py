@@ -13,7 +13,11 @@ _CleanModules: TypeAlias = Callable[
     AbstractContextManager[dict[str, ModuleType]],
 ]
 
-_COMPILED_MODULES: Final = frozenset(('dmr.envs', 'dmr.compiled'))
+_COMPILED_MODULES: Final = frozenset((
+    'dmr.envs',
+    'dmr.compiled',
+    'dmr._compiled',
+))
 
 
 @pytest.fixture
@@ -67,7 +71,7 @@ def test_negotiation_compiled(
     monkeypatch.setenv('DMR_USE_COMPILED', '1')
 
     with clean_modules(_COMPILED_MODULES):
-        from dmr.compiled import negotiation  # noqa: PLC0415
+        from dmr._compiled import negotiation  # noqa: PLC0415, PLC2701
 
         assert negotiation.__file__.endswith('.so')
 

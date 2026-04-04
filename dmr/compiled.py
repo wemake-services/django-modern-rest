@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 from dmr.envs import USE_COMPILED
 
 if TYPE_CHECKING:
-    from dmr.compiled.negotiation import accepted_type as accepted_type
+    from dmr._compiled.negotiation import accepted_type as accepted_type
 
 if USE_COMPILED:
-    from dmr.compiled.negotiation import accepted_type  # noqa: WPS474
+    from dmr._compiled.negotiation import accepted_type  # noqa: WPS474
 else:
     import sys
     import types
@@ -18,11 +18,11 @@ else:
         )
         from pathlib import Path  # noqa: PLC0415
 
-        submodule_name = f'dmr.compiled._{submodule}_pure'
+        submodule_name = f'dmr._compiled._{submodule}_pure'
 
         spec = spec_from_file_location(
             submodule_name,
-            Path(__file__).parent / f'{submodule}.py',
+            Path(__file__).parent / '_compiled' / f'{submodule}.py',
         )
         if spec is None or spec.loader is None:  # pragma: no cover
             raise ImportError(

@@ -85,7 +85,7 @@ benchmarks: ## Run feature benches
 .PHONY: clean
 clean: ## Clean all build files
 	rm -rf build/ dist/
-	find dmr/compiled -type f -name '*.so' | xargs rm -rf
+	find dmr/_compiled -type f -name '*.so' | xargs rm -rf
 
 .PHONY: test
 test: lint type-check example benchmarks-type-check package smoke translations unit ## Run all checks
