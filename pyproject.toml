@@ -174,7 +174,7 @@ skip = [
     "cp31?t-*", # mypyc doesn't have great support for free threaded builds
 ]
 
-before-all = 'uv pip install hatch && HATCH_BUILD_HOOKS_ENABLE=1 uv run python -m hatch build'
+before-all = 'HATCH_BUILD_HOOKS_ENABLE=1 python -m hatch build'
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
