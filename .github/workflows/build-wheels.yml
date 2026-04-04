@@ -20,9 +20,6 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      # Always run with mypyc compilation:
-      HATCH_BUILD_HOOKS_ENABLE: 1
 
     strategy:
       fail-fast: false
@@ -43,7 +40,6 @@ jobs:
       - uses: pypa/cibuildwheel@v3.4.1
         with:
           config-file: pyproject.toml
-          before-all: uv pip install hatch && uv run python -m hatch build
 
   # Also build the pure-Python wheel and the source distribution so that
   # unsupported platforms automatically fall back to the pure-Python
