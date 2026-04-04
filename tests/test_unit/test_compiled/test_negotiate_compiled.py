@@ -101,7 +101,7 @@ def test_accept_correct_import() -> None:
         assert isinstance(accepted_type, FunctionType)
 
     with pytest.raises((AttributeError, TypeError), match='int'):
-        accepted_type(1, 2)
+        accepted_type(1, 2)  # type: ignore[arg-type]
 
 
 def test_accept_correct_type() -> None:  # pragma: no cover
