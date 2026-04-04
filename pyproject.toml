@@ -153,7 +153,7 @@ only-include = ["dmr", "dmr_pytest.py"]
 macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
-enable-by-default = true
+enable-by-default = false
 dependencies = ["hatch-mypyc"]
 include = ["dmr/compiled"]
 exclude = ["dmr/compiled/__init__.py"]

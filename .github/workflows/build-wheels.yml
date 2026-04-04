@@ -1,7 +1,5 @@
 name: Test compiled with mypyc
 
-# Runs on every push to master and on all pull requests.
-# Can also be triggered manually from the GitHub UI.
 on:
   push:
     branches:
@@ -17,9 +15,6 @@ permissions:
   contents: read
 
 jobs:
-  # Also build the pure-Python wheel and the source distribution so that
-  # unsupported platforms automatically fall back to the pure-Python
-  # implementation when pip installs from PyPI.
   build_pure:
     name: Pure-Python wheel + sdist
     runs-on: ubuntu-latest
