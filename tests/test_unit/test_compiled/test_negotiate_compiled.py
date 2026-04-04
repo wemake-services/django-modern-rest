@@ -1,7 +1,8 @@
+import os
 import sys
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
-from types import FunctionType, ModuleType
+from types import BuiltinFunctionType, FunctionType, ModuleType
 from typing import TypeAlias
 
 import pytest
@@ -98,3 +99,13 @@ def test_accept_correct_import() -> None:
     else:  # pragma: no cover
         assert '_pure' in accepted_type.__module__, USE_COMPILED
         assert isinstance(accepted_type, FunctionType)
+
+
+def test_accept_correct_type() -> None:  # pragma: no cover
+    """Ensure that the default import is correct."""
+    from dmr.compiled import accepted_type  # noqa: PLC0415
+
+    enabled = os.environ.get('HATCH_BUILD_HOOKS_ENABLE')
+    if enabled is None:
+        pytest.skip(reason='This test only runs in cibuildwheel')
+    assert isinstance(accepted_type, BuiltinFunctionType), enabled
