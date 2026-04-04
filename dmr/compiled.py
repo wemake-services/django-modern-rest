@@ -1,3 +1,10 @@
+"""
+Re-exports compiled parts.
+
+Uses smart exporting: define ``USE_COMPILED=0`` env var
+to disable compiled parts.
+"""
+
 from typing import TYPE_CHECKING
 
 from dmr.envs import USE_COMPILED

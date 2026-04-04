@@ -53,19 +53,16 @@ _UTF8_REQUIRED_MSG: Final = _(
 
 
 def parse_headers(
-    headers: 'CaseInsensitiveMapping[str]',
-    *,
+    headers: CaseInsensitiveMapping[str],
     split_commas: frozenset[str],
-) -> 'CaseInsensitiveMapping[Any]':
+) -> CaseInsensitiveMapping[str | list[str]]:
     """
     Split headers specified in *split_commas* on ``','`` char.
 
     Make sure that all headers in *split_commas* have lower-case names.
+    Do not pass empty *split_commas* parameter.
     """
-    if not split_commas:
-        return headers
-
-    parsed_headers: dict[str, Any] = {}
+    parsed_headers: dict[str, str | list[str]] = {}
     for header_key, header_value in headers.items():
         if header_key.lower() in split_commas:
             parsed_headers[header_key] = header_value.split(',')

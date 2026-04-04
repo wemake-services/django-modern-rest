@@ -1,42 +1,13 @@
-import sys
-from collections.abc import Callable, Iterator, Set
-from contextlib import AbstractContextManager, contextmanager
-from types import ModuleType
-from typing import Final, TypeAlias
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from django.http import HttpRequest
 from pytest_codspeed import BenchmarkFixture
 
-_CleanModules: TypeAlias = Callable[
-    [set[str]],
-    AbstractContextManager[dict[str, ModuleType]],
-]
-
-_COMPILED_MODULES: Final = frozenset((
-    'dmr.envs',
-    'dmr.compiled',
-    'dmr._compiled',
-))
-
-
-@pytest.fixture
-def clean_modules() -> _CleanModules:
-    """Fixture to clean required modules."""
-
-    @contextmanager
-    def factory(names: Set[str]) -> Iterator[dict[str, ModuleType]]:
-        orig_modules = {}
-        prefixes = tuple(f'{name}.' for name in names)
-        for modname in list(sys.modules):
-            if modname in names or modname.startswith(prefixes):
-                orig_modules[modname] = sys.modules.pop(modname)
-
-        yield orig_modules
-
-        sys.modules.update(orig_modules)
-
-    return factory
+if TYPE_CHECKING:
+    from conftest import CleanModules
 
 
 _ACCEPTED_TYPE_CASES: Final = (
@@ -64,13 +35,13 @@ _ACCEPTED_TYPE_CASES: Final = (
 def test_negotiation_compiled(
     benchmark: BenchmarkFixture,
     monkeypatch: pytest.MonkeyPatch,
-    clean_modules: _CleanModules,
+    clean_modules: CleanModules,
 ) -> None:
     """Test compiled version of the negotiation protocol."""
 
     monkeypatch.setenv('DMR_USE_COMPILED', '1')
 
-    with clean_modules(_COMPILED_MODULES):
+    with clean_modules():
         from dmr._compiled import negotiation  # noqa: PLC0415, PLC2701
 
         assert negotiation.__file__.endswith('.so')
@@ -88,13 +59,13 @@ def test_negotiation_compiled(
 def test_negotiation_raw(
     benchmark: BenchmarkFixture,
     monkeypatch: pytest.MonkeyPatch,
-    clean_modules: _CleanModules,
+    clean_modules: CleanModules,
 ) -> None:
     """Test raw version of the negotiation protocol."""
 
     monkeypatch.setenv('DMR_USE_COMPILED', '0')
 
-    with clean_modules(_COMPILED_MODULES):
+    with clean_modules():
         from dmr.compiled import accepted_type  # noqa: PLC0415
 
         assert '_pure' in accepted_type.__module__

@@ -76,7 +76,7 @@ package: ## Check package dependencies with pip
 
 .PHONY: benchmarks-type-check
 benchmarks-type-check: ## Run type check on benches
-	uv run mypy -p benchmarks.tests
+	cd benchmarks && uv run mypy tests/
 
 .PHONY: benchmarks
 benchmarks: mypyc ## Run feature benches

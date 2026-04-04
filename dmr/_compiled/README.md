@@ -10,6 +10,7 @@ But, we still provide a fallback to regular Python code:
 2. Some runtimes run Python code faster than compiled
 3. Some people might prefer to monkeypatch something in regular Python code
 
+
 ## What we compile
 
 We only compile code that makes sense to be compiled.
@@ -24,3 +25,8 @@ Criteria:
    otherwise - compilation will not have much effect
 5. Does not have complex typing
 6. Have no external dependencies
+
+
+## How
+
+Run `make mypyc` to run the compilation.
