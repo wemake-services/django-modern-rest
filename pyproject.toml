@@ -339,6 +339,8 @@ addopts = [
   "--ignore=typesafety/assert_type",
   # Ignores optional deps:
   "--ignore=dmr/plugins/msgspec",
+  # Ignores compiled:
+  "--ignore=dmr/compiled",
 ]
 
 

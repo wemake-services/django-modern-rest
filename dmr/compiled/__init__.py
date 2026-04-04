@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from dmr.envs import USE_COMPILED as USE_COMPILED
+from dmr.envs import USE_COMPILED
 
 if TYPE_CHECKING:
     from dmr.compiled.negotiation import accepted_type as accepted_type
@@ -34,6 +34,7 @@ else:
 
         return mod
 
+    # Add new objects here:
     _mod = _import_pure('negotiation')
     accepted_type = _mod.accepted_type
 

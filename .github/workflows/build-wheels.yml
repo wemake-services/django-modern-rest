@@ -17,27 +17,6 @@ permissions:
   contents: read
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          # TODO: add ubuntu-24.04-arm and musl?
-          - ubuntu-latest        # Linux x86_64
-          - macos-latest         # macOS x86_64 + arm64 (universal2)
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - uses: pypa/cibuildwheel@v3.4.1
-        with:
-          config-file: pyproject.toml
-
   # Also build the pure-Python wheel and the source distribution so that
   # unsupported platforms automatically fall back to the pure-Python
   # implementation when pip installs from PyPI.
