@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatch", "hatch-mypyc"]
+requires = ["hatch", "hatch-mypyc", "hatchling"]
 build-backend = "hatchling.build"
 
 
