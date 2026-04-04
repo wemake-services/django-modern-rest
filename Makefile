@@ -84,7 +84,7 @@ benchmarks: mypyc ## Run feature benches
 
 .PHONY: mypyc
 mypyc: clean ## Compile code with mypyc
-	HATCH_BUILD_HOOKS_ENABLE=1 uv run python -m hatch build
+	HATCH_BUILD_HOOKS_ENABLE=1 uv run python -m build --wheel
 
 .PHONY: clean
 clean: ## Clean all build files
