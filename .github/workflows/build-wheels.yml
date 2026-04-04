@@ -41,18 +41,7 @@ jobs:
         if: |
           github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
-          alias cibuildwheel='uv run cibuildwheel'
-          alias pyp='uv run pyp'
-          {
-            cibuildwheel --print-build-identifiers --platform linux \
-            | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
-            && cibuildwheel --print-build-identifiers --platform macos \
-            | pyp 'json.dumps({"only": x, "os": "macos-latest"})' \
-            && cibuildwheel --print-build-identifiers --platform windows \
-            | pyp 'json.dumps({"only": x, "os": "windows-latest"})' \
-            && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
-            | pyp 'json.dumps({"only": x, "os": "windows-11-arm"})'
-          } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+          uv run bash .github/workflows/build-release-matrix.sh
         env:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64 arm64
@@ -62,12 +51,7 @@ jobs:
         if: |
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
-          alias cibuildwheel='uv run cibuildwheel'
-          alias pyp='uv run pyp'
-          {
-            CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
-            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
-          } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+          uv run bash .github/workflows/build-pr-matrix.sh
         env:
           CIBW_ARCHS_LINUX: x86_64
 
