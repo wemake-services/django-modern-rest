@@ -21,12 +21,12 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@6
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Set up latest Python
-        uses: actions/setup-python@6
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
