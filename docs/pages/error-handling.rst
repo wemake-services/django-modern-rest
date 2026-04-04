@@ -91,6 +91,12 @@ Let's create custom error handling for the whole controller:
   :language: python
   :linenos:
 
+In this example we are using `zapros <https://github.com/kap-sh/zapros>`_
+HTTP client to proxy an HTTP ``GET`` and ``POST``
+requests to some other API service.
+If we fail to send a request and raise a specific HTTP client error,
+we return an error with ``424`` error code.
+
 
 Going further
 -------------
