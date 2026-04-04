@@ -710,7 +710,6 @@ dev = [
     { name = "django" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "faker" },
-    { name = "httpx" },
     { name = "import-linter" },
     { name = "inline-snapshot" },
     { name = "polyfactory" },
@@ -736,7 +735,6 @@ dev = [
 docs = [
     { name = "django-mantle" },
     { name = "docutils" },
-    { name = "httpx" },
     { name = "myst-parser" },
     { name = "punq" },
     { name = "shibuya" },
@@ -753,6 +751,7 @@ docs = [
     { name = "sphinxcontrib-mermaid" },
     { name = "uvicorn" },
     { name = "xmltodict-rs" },
+    { name = "zapros" },
 ]
 integration = [
     { name = "pytest-codspeed" },
@@ -787,7 +786,6 @@ dev = [
     { name = "django", specifier = ">=5.2,<6" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.0.2" },
     { name = "faker", specifier = ">=40.1,<41" },
-    { name = "httpx", specifier = ">=0.28,<0.29" },
     { name = "import-linter", specifier = ">=2.5,<3" },
     { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
@@ -813,7 +811,6 @@ dev = [
 docs = [
     { name = "django-mantle", specifier = ">=26.6,<27" },
     { name = "docutils", specifier = ">=0.22,<0.23" },
-    { name = "httpx", specifier = ">=0.28,<0.29" },
     { name = "myst-parser", specifier = ">=5.0,<6" },
     { name = "punq", specifier = ">=0.7,<0.8" },
     { name = "shibuya", specifier = ">=2026.1,<2027" },
@@ -828,6 +825,7 @@ docs = [
     { name = "sphinxcontrib-mermaid", specifier = ">=2.0,<3" },
     { name = "uvicorn", specifier = ">=0.41,<0.43" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
+    { name = "zapros", specifier = "==0.5" },
 ]
 integration = [
     { name = "pytest-codspeed", specifier = ">=4.3,<5" },
@@ -2377,6 +2375,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pywhatwgurl"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/d2/ce0fffb9eb66ea2f88d20d7c3841b017d25559b6b617bce566811fe0bb48/pywhatwgurl-0.1.1.tar.gz", hash = "sha256:65c85da35367511c12a4dd87fecaf08aa3ae564259055b37b4ae53429289fcf6", size = 155366, upload-time = "2026-04-03T08:20:13.984Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/2f/6e14535f7532c836c1200ea53785570d3c37128719ff62915d0971e00598/pywhatwgurl-0.1.1-py3-none-any.whl", hash = "sha256:d67072d3f702f899e6e5de074e7fa14b5c9c5c85f616c6016c4eef9c94113d5f", size = 26605, upload-time = "2026-04-03T08:20:12.46Z" },
+]
+
+[[package]]
 name = "pywin32-ctypes"
 version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3414,6 +3424,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1a/e8/07010870b5561916da5dd83c2e9634459e1d2ad88622d2d50ac49e90c84a/xmltodict_rs-0.13.9-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:d7190af39295c3237779c96d8f00919b803650475632bbbf2f746823eeaea1b0", size = 470205, upload-time = "2026-03-23T14:10:29.851Z" },
     { url = "https://files.pythonhosted.org/packages/fe/aa/6e9cd068574449a64489f186a45d68b6882c83e40af0df5eadc4d1ecdb17/xmltodict_rs-0.13.9-cp314-cp314t-win32.whl", hash = "sha256:d40e6e5a6dbc0ef12f550cf5a86bd01357e3c479f51a3dbd259e0895bc784b43", size = 152177, upload-time = "2026-03-23T14:10:46.604Z" },
     { url = "https://files.pythonhosted.org/packages/c2/ca/4baa6e83a1daf68e5ca176de9789982c45d89c26a611def778786ccd63fb/xmltodict_rs-0.13.9-cp314-cp314t-win_amd64.whl", hash = "sha256:98ac53108e72a4e952ee0b89475ccf85dd16de78970c771c3564be556e208f23", size = 203181, upload-time = "2026-03-23T14:10:39.255Z" },
+]
+
+[[package]]
+name = "zapros"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "h11" },
+    { name = "pywhatwgurl" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/3e/aa290fc94b88ed279042cd1bb97232b247ac820eee20a23119488b504629/zapros-0.5.0.tar.gz", hash = "sha256:3e48ca1744a2768f41069856db11d0014dd1342f54a1322fcb93ab8e61e865e3", size = 70265, upload-time = "2026-04-04T18:56:01.522Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/67/40d47fd28a64715d2ae179dabc005f18d52cc08555bf0c4035db0c1f6640/zapros-0.5.0-py3-none-any.whl", hash = "sha256:cd38bd1f178e6ce236b4c77e0023b76cf1965c2171bf59f194aa1d605836107d", size = 61640, upload-time = "2026-04-04T18:56:00.027Z" },
 ]
 
 [[package]]

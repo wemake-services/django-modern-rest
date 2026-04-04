@@ -29,9 +29,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
 import django
-import httpx
 import uvicorn
 import xmltodict_rs as xmltodict
+import zapros
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
@@ -523,17 +523,21 @@ def _resolve_example_file_for_execution(file_path: Path) -> Path:
 
 def _wait_for_app_startup(port: int, proc: multiprocessing.Process) -> None:
     """Wait for app to start up and become responsive."""
-    for _ in range(100):
-        if proc.exitcode is not None:
-            raise _StartupError(
-                f'App worker exited during startup with {proc.exitcode}',
-            )
-        try:
-            httpx.get(f'http://127.0.0.1:{port}', timeout=0.1)
-        except httpx.TransportError:
-            time.sleep(0.1)
-        else:
-            return
+    with zapros.Client() as client:
+        for _ in range(100):
+            if proc.exitcode is not None:
+                raise _StartupError(
+                    f'App worker exited during startup with {proc.exitcode}',
+                )
+            try:
+                client.get(
+                    f'http://127.0.0.1:{port}',
+                    context={'timeouts': {'connect': 0.1}},
+                )
+            except zapros.ZaprosError:
+                time.sleep(0.1)
+            else:
+                return
     raise _StartupError(f'App failed to come online on port {port}')
 
 
