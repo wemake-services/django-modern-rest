@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch"]
 build-backend = "hatchling.build"
 
 
@@ -76,18 +76,8 @@ dmr = "dmr_pytest"
 
 
 [dependency-groups]
-dev = [
+unit-test = [
   "django>=5.2,<6",
-  "django-stubs[compatible-mypy]>=6.0,<6.0.2",
-  "types-docutils>=0.22,<0.23",
-  "types-setuptools>=82,<83",
-  "pyright>=1.1,<2",
-  "pyrefly>=0.57,<0.59",
-  "wemake-python-styleguide>=1.6,<2",
-  "ruff>=0.15,<0.16",
-  "import-linter>=2.5,<3",
-  "slotscheck>=0.19,<0.20",
-  "dennis>=1.2,<2",
   "pytest>=9.0,<10",
   "pytest-cov>=7.0,<8",
   "covdefaults>=2.3,<3",
@@ -100,9 +90,23 @@ dev = [
   "faker>=40.1,<41",
   "inline-snapshot>=0.32,<0.33",
   "syrupy>=5.1,<6",
-  "schemathesis>=4.14,<5",
   "polyfactory>=3.2,<4",
   "xmltodict-rs>=0.13,<0.14",
+]
+dev = [
+  { include-group = "unit-test" },
+  "django-stubs[compatible-mypy]>=6.0,<6.0.2",
+  "types-docutils>=0.22,<0.23",
+  "types-setuptools>=82,<83",
+  "pyright>=1.1,<2",
+  "pyrefly>=0.57,<0.59",
+  "wemake-python-styleguide>=1.6,<2",
+  "ruff>=0.15,<0.16",
+  "import-linter>=2.5,<3",
+  "slotscheck>=0.19,<0.20",
+  "dennis>=1.2,<2",
+  "schemathesis>=4.14,<5",
+  "httpx>=0.28,<0.29",
   "punq>=0.7,<0.8",
 ]
 integration = [
@@ -110,7 +114,7 @@ integration = [
   "pytest-codspeed>=4.3,<5",
 ]
 build = [
-  "cibuildwheel>3.4,<4",
+  "cibuildwheel==3.4.1",
   "pypyp>=1.3,<2",
   "hatch>=1.6,<2",
 ]
@@ -153,12 +157,11 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc"]
-include = ["dmr/compiled"]
-exclude = ["dmr/compiled/__init__.py"]
+dependencies = ["hatch-mypyc", "mypy==1.19.1"]
+include = ["dmr/_compiled"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
-options = { debug_level = "0" }
+options = { debug_level = "0", opt_level = "3" }
 
 
 [tool.cibuildwheel]
@@ -166,21 +169,32 @@ options = { debug_level = "0" }
 build = "cp3{11,12,13,14}-*"
 build-verbosity = 1
 skip = [
-    "*-manylinux_i686",
-    "*-musllinux_*",
-    "*-win32",
-    "pp*",
-    "cp31?t-*", # mypyc doesn't have great support for free threaded builds
+  "cp313t-*",
+  "*-win32",
+  "*-musllinux_aarch64",
 ]
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
-test-groups = ['dev']
+test-groups = ['unit-test']
 test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+musllinux-x86_64-image = "musllinux_1_2"
+before-all = [
+  "yum install -y llvm-toolset || yum -v install -y llvm-toolset",
+]
+
 [tool.cibuildwheel.environment]
-HATCH_BUILD_HOOK_ENABLE = "1"
-MYPYC_OPT_LEVEL = "3"
-MYPYC_DEBUG_LEVEL = "0"
+HATCH_BUILD_HOOKS_ENABLE = "1"
+CC="clang"
+
+[[tool.cibuildwheel.overrides]]
+select = "*musllinux*"
+before-all = [
+  "apk add --no-cache clang",
+]
 
 
 [tool.ruff]
@@ -339,7 +353,7 @@ addopts = [
   # Ignores optional deps:
   "--ignore=dmr/plugins/msgspec",
   # Ignores compiled:
-  "--ignore=dmr/compiled",
+  "--ignore=dmr/_compiled",
 ]
 
 

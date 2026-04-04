@@ -15,6 +15,74 @@ permissions:
   contents: read
 
 jobs:
+  configure:
+    name: generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up latest Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.0.0
+
+      - name: Install dependencies
+        run: |
+          uv sync --group build
+
+      - name: generate matrix
+        if: |
+          github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+        run: |
+          uv run bash .github/workflows/build-release-matrix.sh
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_ARCHS_WINDOWS: AMD64
+
+      - name: generate matrix (PR)
+        if: |
+          github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+        run: |
+          uv run bash .github/workflows/build-pr-matrix.sh
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+
+      - id: set-matrix
+        run: echo "include=$(cat /tmp/matrix)" | tee -a "$GITHUB_OUTPUT"
+
+  mypyc:
+    name: mypyc wheels ${{ matrix.only }}
+    needs: configure
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.configure.outputs.include) }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Keep cibuildwheel version in sync with pyproject.toml
+      - uses: pypa/cibuildwheel@v3.4.1
+        with:
+          only: ${{ matrix.only }}
+
+      - name: Upload wheels as workflow artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.only }}-mypyc-wheels
+          path: wheelhouse/
+
   build_pure:
     name: Pure-Python wheel + sdist
     runs-on: ubuntu-latest

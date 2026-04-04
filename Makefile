@@ -76,16 +76,20 @@ package: ## Check package dependencies with pip
 
 .PHONY: benchmarks-type-check
 benchmarks-type-check: ## Run type check on benches
-	uv run mypy -p benchmarks.tests
+	cd benchmarks && uv run mypy tests/
 
 .PHONY: benchmarks
-benchmarks: ## Run feature benches
+benchmarks: mypyc ## Run feature benches
 	uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
+
+.PHONY: mypyc
+mypyc: clean ## Compile code with mypyc
+	HATCH_BUILD_HOOKS_ENABLE=1 uv run python -m build --wheel
 
 .PHONY: clean
 clean: ## Clean all build files
 	rm -rf build/ dist/
-	find dmr/compiled -type f -name '*.so' | xargs rm -rf
+	find dmr/_compiled -type f -name '*.so' | xargs rm -rf
 
 .PHONY: test
 test: lint type-check example benchmarks-type-check package smoke translations unit ## Run all checks
