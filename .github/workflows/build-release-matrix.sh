@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
 {
   cibuildwheel --print-build-identifiers --platform linux \
   | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \

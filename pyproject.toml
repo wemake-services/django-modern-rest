@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatch", "hatchling"]
 build-backend = "hatchling.build"
 
 
@@ -158,7 +158,7 @@ dependencies = ["hatch-mypyc"]
 include = ["dmr/_compiled"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
-options = { debug_level = "0" }
+options = { debug_level = "0", opt_level = "3" }
 
 
 [tool.cibuildwheel]
@@ -179,8 +179,6 @@ test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOK_ENABLE = "1"
-MYPYC_OPT_LEVEL = "3"
-MYPYC_DEBUG_LEVEL = "0"
 
 
 [tool.ruff]
