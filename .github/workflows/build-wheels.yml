@@ -39,7 +39,7 @@ jobs:
 
       - name: Install hatch
         # Since we need to run `hatch build` before the work begins
-        run: pip install hatch hatch-mypyc
+        run: pip install hatch
 
       - uses: pypa/cibuildwheel@v3.4.1
         with:
