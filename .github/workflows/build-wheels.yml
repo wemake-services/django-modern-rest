@@ -70,29 +70,29 @@ jobs:
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a "$GITHUB_OUTPUT"
 
-    mypyc:
-      name: mypyc wheels ${{ matrix.only }}
-      needs: configure
-      runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          include: ${{ fromJson(needs.configure.outputs.include) }}
+  mypyc:
+    name: mypyc wheels ${{ matrix.only }}
+    needs: configure
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.configure.outputs.include) }}
 
-      steps:
-        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-          with:
-            persist-credentials: false
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-        # Keep cibuildwheel version in sync with pyproject.toml
-        - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3.1
-          with:
-            only: ${{ matrix.only }}
+      # Keep cibuildwheel version in sync with pyproject.toml
+      - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3.1
+        with:
+          only: ${{ matrix.only }}
 
-        - name: Upload wheels as workflow artifacts
-          uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-          with:
-            name: ${{ matrix.only }}-mypyc-wheels
-            path: wheelhouse/
+      - name: Upload wheels as workflow artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: ${{ matrix.only }}-mypyc-wheels
+          path: wheelhouse/
 
   build_pure:
     name: Pure-Python wheel + sdist
