@@ -758,6 +758,23 @@ integration = [
     { name = "pytest-codspeed" },
     { name = "tracecov" },
 ]
+unit-test = [
+    { name = "covdefaults" },
+    { name = "dirty-equals" },
+    { name = "django" },
+    { name = "faker" },
+    { name = "inline-snapshot" },
+    { name = "polyfactory" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-custom-exit-code" },
+    { name = "pytest-django" },
+    { name = "pytest-freezer" },
+    { name = "pytest-randomly" },
+    { name = "syrupy" },
+    { name = "xmltodict-rs" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -832,6 +849,23 @@ docs = [
 integration = [
     { name = "pytest-codspeed", specifier = ">=4.3,<5" },
     { name = "tracecov", specifier = ">=0.19,<0.20" },
+]
+unit-test = [
+    { name = "covdefaults", specifier = ">=2.3,<3" },
+    { name = "dirty-equals", specifier = ">=0.11,<0.12" },
+    { name = "django", specifier = ">=5.2,<6" },
+    { name = "faker", specifier = ">=40.1,<41" },
+    { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
+    { name = "polyfactory", specifier = ">=3.2,<4" },
+    { name = "pytest", specifier = ">=9.0,<10" },
+    { name = "pytest-asyncio", specifier = ">=1.2,<2" },
+    { name = "pytest-cov", specifier = ">=7.0,<8" },
+    { name = "pytest-custom-exit-code", specifier = ">=0.3,<0.4" },
+    { name = "pytest-django", specifier = ">=4.8,<5" },
+    { name = "pytest-freezer", specifier = ">=0.4,<0.5" },
+    { name = "pytest-randomly", specifier = ">=4.0,<5" },
+    { name = "syrupy", specifier = ">=5.1,<6" },
+    { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 
 [[package]]

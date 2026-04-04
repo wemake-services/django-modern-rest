@@ -76,18 +76,8 @@ dmr = "dmr_pytest"
 
 
 [dependency-groups]
-dev = [
+unit-test = [
   "django>=5.2,<6",
-  "django-stubs[compatible-mypy]>=6.0,<6.0.2",
-  "types-docutils>=0.22,<0.23",
-  "types-setuptools>=82,<83",
-  "pyright>=1.1,<2",
-  "pyrefly>=0.57,<0.59",
-  "wemake-python-styleguide>=1.6,<2",
-  "ruff>=0.15,<0.16",
-  "import-linter>=2.5,<3",
-  "slotscheck>=0.19,<0.20",
-  "dennis>=1.2,<2",
   "pytest>=9.0,<10",
   "pytest-cov>=7.0,<8",
   "covdefaults>=2.3,<3",
@@ -100,10 +90,23 @@ dev = [
   "faker>=40.1,<41",
   "inline-snapshot>=0.32,<0.33",
   "syrupy>=5.1,<6",
-  "schemathesis>=4.14,<5",
   "polyfactory>=3.2,<4",
-  "httpx>=0.28,<0.29",
   "xmltodict-rs>=0.13,<0.14",
+]
+dev = [
+  { include-group = "unit-test" },
+  "django-stubs[compatible-mypy]>=6.0,<6.0.2",
+  "types-docutils>=0.22,<0.23",
+  "types-setuptools>=82,<83",
+  "pyright>=1.1,<2",
+  "pyrefly>=0.57,<0.59",
+  "wemake-python-styleguide>=1.6,<2",
+  "ruff>=0.15,<0.16",
+  "import-linter>=2.5,<3",
+  "slotscheck>=0.19,<0.20",
+  "dennis>=1.2,<2",
+  "schemathesis>=4.14,<5",
+  "httpx>=0.28,<0.29",
   "punq>=0.7,<0.8",
 ]
 integration = [
@@ -172,7 +175,7 @@ skip = [
 ]
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
-test-groups = ['dev']
+test-groups = ['unit-test']
 test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
 [tool.cibuildwheel.linux]
@@ -182,10 +185,6 @@ musllinux-x86_64-image = "musllinux_1_2"
 before-all = [
   "yum install -y llvm-toolset || yum -v install -y llvm-toolset",
 ]
-
-[tool.cibuildwheel.windows.environment]
-MYPYC_OPT_LEVEL = "2"
-MYPYC_DEBUG_LEVEL = "0"
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOKS_ENABLE = "1"
