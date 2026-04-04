@@ -84,17 +84,20 @@ class _MediaTypeHeader:
         self.priority = self._get_priority()
 
     def match(self, other: '_MediaTypeHeader') -> bool:
-        return next(
-            (
-                False
-                for key, param_value in self.qparams.items()
-                if key != 'q' and param_value != other.qparams.get(key)
-            ),
-            False
-            if self.subtype != '*' and other.subtype not in {'*', self.subtype}
-            else (
-                self.maintype == '*' or other.maintype in {'*', other.maintype}
-            ),
+        for key, param_value in self.qparams.items():
+            if key != 'q' and param_value != other.qparams.get(key):
+                return False
+
+        if (
+            self.subtype != '*'  # noqa: PLR1714
+            and other.subtype != '*'
+            and self.subtype != other.subtype
+        ):
+            return False
+        return (
+            self.maintype == '*'  # noqa: PLR1714
+            or other.maintype == '*'
+            or self.maintype == other.maintype
         )
 
     def as_string(self, maintype: str, subtype: str) -> str:

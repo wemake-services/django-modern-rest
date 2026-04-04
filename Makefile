@@ -79,8 +79,12 @@ benchmarks-type-check: ## Run type check on benches
 	uv run mypy -p benchmarks.tests
 
 .PHONY: benchmarks
-benchmarks: ## Run feature benches
+benchmarks: mypyc ## Run feature benches
 	uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
+
+.PHONY: mypyc
+mypyc: clean ## Compile code with mypyc
+	HATCH_BUILD_HOOKS_ENABLE=1 python -m hatch build
 
 .PHONY: clean
 clean: ## Clean all build files

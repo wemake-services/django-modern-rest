@@ -16,8 +16,7 @@ We also ship some optimized C-extensions together with our Python code.
 If you want to build them run:
 
 ```bash
-make clean
-HATCH_BUILD_HOOKS_ENABLE=1 python -m hatch build
+make mypyc
 ```
 
 This will build `dmr.compiled` extensions
