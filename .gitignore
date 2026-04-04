@@ -257,5 +257,8 @@ artifacts/
 # safety:
 .safety/
 
-# PyCharm
+# PyCharm:
 .idea/
+
+# CodSpeed:
+.codspeed/

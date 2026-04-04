@@ -71,6 +71,9 @@ Why so fast?
 - We utilize :func:`msgspec.json.decode` and :func:`msgspec.json.encode`
   to parse json, it is the fastest json parsing tool in Python land
 - We can support :class:`msgspec.Struct` models, which are faster than pydantic
+- We compile some hot paths of the framework
+  with `mypyc <https://mypyc.readthedocs.io/en/latest/>`_ to C code,
+  while keeping fallback Python code in-place
 - We provide :func:`django.urls.path` drop-in :doc:`../routing` replacement
   which is `x51 times <https://habr.com/ru/companies/tochka/articles/822431/>`_
   as fast as the default one

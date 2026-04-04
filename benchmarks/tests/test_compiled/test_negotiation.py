@@ -5,6 +5,7 @@ from types import ModuleType
 from typing import Final, TypeAlias
 
 import pytest
+from django.http import HttpRequest
 from pytest_codspeed import BenchmarkFixture
 
 _CleanModules: TypeAlias = Callable[
@@ -98,3 +99,16 @@ def test_negotiation_raw(
         def factory() -> None:
             for accept, provided_types, expected in _ACCEPTED_TYPE_CASES:
                 assert accepted_type(accept, provided_types) == expected
+
+
+def test_negotiation_django_native(
+    benchmark: BenchmarkFixture,
+) -> None:
+    """Test Django native version of the negotiation protocol."""
+
+    @benchmark
+    def factory() -> None:
+        for accept, provided_types, _expected in _ACCEPTED_TYPE_CASES:
+            request = HttpRequest()
+            request.META = {'HTTP_ACCEPT': accept}
+            request.get_preferred_type(provided_types)

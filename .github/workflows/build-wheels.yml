@@ -20,6 +20,10 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      # Always run with mypyc compilation:
+      HATCH_BUILD_HOOKS_ENABLE: 1
+
     strategy:
       fail-fast: false
       matrix:
@@ -57,5 +61,4 @@ jobs:
         run: pip install build
 
       - name: Build sdist and pure-Python wheel
-        # DMR_USE_MYPYC is intentionally NOT set here.
         run: python -m build --sdist --wheel
