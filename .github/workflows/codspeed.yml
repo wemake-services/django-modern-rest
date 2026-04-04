@@ -38,7 +38,8 @@ jobs:
     - name: Install dependencies
       run: |
         # Build with `mypyc` enabled:
-        HATCH_BUILD_HOOKS_ENABLE=1 uv sync --all-extras --group integration
+        HATCH_BUILD_HOOKS_ENABLE=1 uv sync --all-extras \
+          --group integration --group build
 
     - name: Run benchmarks
       uses: CodSpeedHQ/action@v4
