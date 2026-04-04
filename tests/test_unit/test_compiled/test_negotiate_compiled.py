@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
-from types import ModuleType
+from types import FunctionType, ModuleType
 from typing import TypeAlias
 
 import pytest
@@ -82,6 +82,7 @@ def test_accept_best_match(
             )
         else:
             assert '_pure' in accepted_type.__module__, (USE_COMPILED, compiled)
+            assert isinstance(accepted_type, FunctionType)
 
         # The function itself:
         assert accepted_type(accept, provided_types) == best_match
@@ -96,3 +97,4 @@ def test_accept_correct_import() -> None:
         assert '_pure' not in accepted_type.__module__, USE_COMPILED
     else:  # pragma: no cover
         assert '_pure' in accepted_type.__module__, USE_COMPILED
+        assert isinstance(accepted_type, FunctionType)

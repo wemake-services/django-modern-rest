@@ -82,5 +82,10 @@ benchmarks-type-check: ## Run type check on benches
 benchmarks: ## Run feature benches
 	uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
 
+.PHONY: clean
+clean: ## Clean all build files
+	rm -rf build/ dist/
+	find dmr/compiled -type f -name '*.so' | xargs rm -rf
+
 .PHONY: test
 test: lint type-check example benchmarks-type-check package smoke translations unit ## Run all checks

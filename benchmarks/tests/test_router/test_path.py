@@ -1,8 +1,7 @@
 from collections.abc import Callable
 from contextlib import suppress
-from typing import Literal, assert_never, Final
+from typing import Final, Literal, assert_never
 
-import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import Resolver404, URLPattern, include
 from django.urls import path as django_path
@@ -83,6 +82,7 @@ def _pick_url(case: Literal['best', 'avg', 'worst']) -> str:
             return 'api/no-such-path/'
         case other:
             assert_never(other)
+
 
 _REPEAT: Final = 1_000
 

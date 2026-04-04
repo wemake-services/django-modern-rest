@@ -10,6 +10,21 @@ To install them you would need to run `sync` command:
 uv sync --all-extras --all-groups
 ```
 
+### Compilation with mypyc
+
+We also ship some optimized C-extensions together with our Python code.
+If you want to build them run:
+
+```bash
+make clean
+HATCH_BUILD_HOOKS_ENABLE=1 python -m hatch build
+```
+
+This will build `dmr.compiled` extensions
+with [`mypyc`](https://mypyc.readthedocs.io/en/latest/).
+
+### venv
+
 To activate your `virtualenv`
 run `source .venv/bin/activate`.
 
