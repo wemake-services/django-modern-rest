@@ -25,6 +25,7 @@ No breaking changes will be made.
   when `validate_events` was `True`, but no event model was resolved, #780
 - Fixed `dataclass` instances serialization with `PydanticSerializer`
   without `msgspec` json renderer, #795
+- Fixed missing `password` OpenAPI format, #805
 
 ### Misc
 
