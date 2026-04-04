@@ -85,3 +85,16 @@ def test_accept_best_match(
 
         # The function itself:
         assert accepted_type(accept, provided_types) == best_match
+
+
+def test_accept_correct_import() -> None:
+    """Ensure that the default import is correct."""
+
+    from dmr.compiled import accepted_type  # noqa: PLC0415
+    from dmr.envs import USE_COMPILED  # noqa: PLC0415
+
+    if USE_COMPILED:  # pragma: no cover
+        assert '_pure' not in accepted_type.__module__, USE_COMPILED
+    else:  # pragma: no cover
+        assert '_pure' in accepted_type.__module__, USE_COMPILED
+
