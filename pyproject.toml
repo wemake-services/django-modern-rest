@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch", "hatch-mypyc"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 
@@ -153,7 +153,7 @@ only-include = ["dmr", "dmr_pytest.py"]
 macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
-enable-by-default = false
+enable-by-default = true
 dependencies = ["hatch-mypyc"]
 include = ["dmr/compiled"]
 exclude = ["dmr/compiled/__init__.py"]
@@ -174,8 +174,6 @@ skip = [
     "pp*",
     "cp31?t-*", # mypyc doesn't have great support for free threaded builds
 ]
-
-before-all = 'hatch build'
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
