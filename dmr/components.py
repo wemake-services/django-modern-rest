@@ -528,7 +528,7 @@ class HeadersComponent(ComponentParser):
             '__dmr_split_commas__',
             None,
         )
-        if split_commas is None:
+        if not split_commas:
             return controller.request.headers
         return parse_headers(
             controller.request.headers,
