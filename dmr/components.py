@@ -523,11 +523,13 @@ class HeadersComponent(ComponentParser):
         *,
         field_model: Any,
     ) -> Any:
-        split_commas: frozenset[str] = getattr(
+        split_commas: frozenset[str] | None = getattr(
             field_model,
             '__dmr_split_commas__',
-            frozenset(),
+            None,
         )
+        if split_commas is None:
+            return controller.request.headers
         return parse_headers(
             controller.request.headers,
             split_commas=split_commas,

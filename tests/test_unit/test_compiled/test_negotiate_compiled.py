@@ -100,6 +100,9 @@ def test_accept_correct_import() -> None:
         assert '_pure' in accepted_type.__module__, USE_COMPILED
         assert isinstance(accepted_type, FunctionType)
 
+    with pytest.raises((AttributeError, TypeError), match='int'):
+        accepted_type(1, 2)
+
 
 def test_accept_correct_type() -> None:  # pragma: no cover
     """Ensure that the default import is correct."""
