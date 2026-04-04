@@ -1,6 +1,34 @@
 import sys
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, contextmanager
+from types import ModuleType
+from typing import TypeAlias
 
 import pytest
+
+_CleanModules: TypeAlias = Callable[
+    [set[str]],
+    AbstractContextManager[dict[str, ModuleType]],
+]
+
+
+@pytest.fixture
+def clean_modules() -> _CleanModules:
+    """Fixture to clean required modules."""
+
+    @contextmanager
+    def factory(names: set[str]) -> Iterator[dict[str, ModuleType]]:
+        orig_modules = {}
+        prefixes = tuple(f'{name}.' for name in names)
+        for modname in list(sys.modules):
+            if modname in names or modname.startswith(prefixes):
+                orig_modules[modname] = sys.modules.pop(modname)
+
+        yield orig_modules
+
+        sys.modules.update(orig_modules)
+
+    return factory
 
 
 @pytest.mark.parametrize(
@@ -32,6 +60,7 @@ import pytest
 @pytest.mark.parametrize('compiled', [True, False])
 def test_accept_best_match(
     monkeypatch: pytest.MonkeyPatch,
+    clean_modules: _CleanModules,
     *,
     accept: str,
     provided_types: list[str],
@@ -41,17 +70,18 @@ def test_accept_best_match(
     """Ensure that selection of accepted type works correctly."""
     # Our setup, it can be compiled or not:
     monkeypatch.setenv('DMR_USE_COMPILED', str(int(compiled)))
-    sys.modules.pop('dmr.envs', None)
-    sys.modules.pop('dmr.compiled', None)
+    with clean_modules({'dmr.envs', 'dmr.compiled'}):
+        from dmr.compiled import accepted_type  # noqa: PLC0415
+        from dmr.envs import USE_COMPILED  # noqa: PLC0415
 
-    from dmr.compiled import accepted_type  # noqa: PLC0415
-    from dmr.envs import USE_COMPILED  # noqa: PLC0415
+        assert USE_COMPILED is compiled
+        if compiled:
+            assert '_pure' not in accepted_type.__module__, (
+                USE_COMPILED,
+                compiled,
+            )
+        else:
+            assert '_pure' in accepted_type.__module__, (USE_COMPILED, compiled)
 
-    assert USE_COMPILED is compiled
-    if compiled:
-        assert '_pure' not in accepted_type.__module__, (USE_COMPILED, compiled)
-    else:
-        assert '_pure' in accepted_type.__module__, (USE_COMPILED, compiled)
-
-    # The function itself:
-    assert accepted_type(accept, provided_types) == best_match
+        # The function itself:
+        assert accepted_type(accept, provided_types) == best_match
