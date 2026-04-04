@@ -109,3 +109,11 @@ Summary
     1.98 ± 0.02 times faster than dmr-worst
     2.58 ± 0.02 times faster than django-worst
 ```
+
+
+## CodSpeed
+
+We run tests in `./tests/` using https://github.com/CodSpeedHQ/pytest-codspeed
+and upload results to https://codspeed.io/wemake-services/django-modern-rest
+
+See `../.github/w`

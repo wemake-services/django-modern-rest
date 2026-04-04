@@ -108,6 +108,10 @@ dev = [
 ]
 integration = [
   "tracecov>=0.19,<0.20",
+  "pytest-codspeed>=4.3,<5",
+]
+build = [
+  "cibuildwheel>3.4,<4",
 ]
 docs = [
   "sphinx>=9.0,<10",
@@ -161,6 +165,13 @@ options = { debug_level = "0" }
 # Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
 build = "cp3{11,12,13,14}-*"
 build-verbosity = 1
+skip = [
+    "*-manylinux_i686",
+    "*-musllinux_*",
+    "*-win32",
+    "pp*",
+    "cp31?t-*", # mypyc doesn't have great support for free threaded builds
+]
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']

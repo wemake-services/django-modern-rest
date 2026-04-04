@@ -71,7 +71,16 @@ example-run: ## Run example app
 
 .PHONY: package
 package: ## Check package dependencies with pip
-	uv run pip check
+	uv pip check
+	uv --preview-features audit audit
+
+.PHONY: benchmarks-type-check
+benchmarks-type-check: ## Run type check on benches
+	uv run mypy -p benchmarks.tests
+
+.PHONY: benchmarks
+benchmarks: ## Run feature benches
+	uv run uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
 
 .PHONY: test
-test: lint type-check example package smoke translations unit ## Run all checks
+test: lint type-check example benchmarks-type-check package smoke translations unit ## Run all checks
