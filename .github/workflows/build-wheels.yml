@@ -38,7 +38,8 @@ jobs:
         uses: astral-sh/setup-uv@v8.0.0
 
       - name: Install hatch
-        run: pip install hatch
+        # Since we need to run `hatch build` before the work begins
+        run: pip install hatch hatch-mypyc
 
       - uses: pypa/cibuildwheel@v3.4.1
         with:
