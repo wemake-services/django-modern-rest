@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatch", "hatchling"]
+requires = ["hatch", "hatch-mypyc"]
 build-backend = "hatchling.build"
 
 
@@ -166,19 +166,24 @@ options = { debug_level = "0", opt_level = "3" }
 build = "cp3{11,12,13,14}-*"
 build-verbosity = 1
 skip = [
-    "*-manylinux_i686",
-    "*-musllinux_*",
-    "*-win32",
-    "pp*",
-    "cp31?t-*", # mypyc doesn't have great support for free threaded builds
+  "*-manylinux_i686",
+  "*-musllinux_*",
+  "*-win32",
+  "pp*",
+  "cp31?t-*", # mypyc doesn't have great support for free threaded builds
 ]
 
 test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
 test-groups = ['dev']
 test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+before-build = ["yum install -y clang"]
+
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOK_ENABLE = "1"
+CC = "clang"
 
 
 [tool.ruff]
