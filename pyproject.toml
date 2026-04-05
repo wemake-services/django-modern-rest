@@ -174,7 +174,6 @@ build-verbosity = 1
 skip = [
   "cp313t-*",
   "*-win32",
-  "*-musllinux_aarch64",
 ]
 
 before-test = [
