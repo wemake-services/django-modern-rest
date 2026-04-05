@@ -1,4 +1,5 @@
 import pathlib
+import sys
 from collections.abc import Iterator
 from http import HTTPStatus
 from typing import Final, final
@@ -45,7 +46,8 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
         'Content-Type': 'text/plain',
-        'Content-Length': '16',
+        # win32 uses `/r/n` as a line break, others use `/n`:
+        'Content-Length': '17' if sys.platform == 'win32' else '16',
         'Content-Disposition': 'attachment; filename="receipt.txt"',
     }
     assert isinstance(response.streaming_content, Iterator)
@@ -79,7 +81,8 @@ async def test_return_file_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {
         'Content-Type': 'text/plain',
-        'Content-Length': '16',
+        # win32 uses `/r/n` as a line break, others use `/n`:
+        'Content-Length': '17' if sys.platform == 'win32' else '16',
         'Content-Disposition': 'attachment; filename="receipt.txt"',
     }
     assert isinstance(response.streaming_content, Iterator)
