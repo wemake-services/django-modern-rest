@@ -121,7 +121,7 @@ def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
         return False
 
 
-class AnnotationsInferenceContext:
+class AnnotationsContext:
     """
     Annotation evaluation context.
 

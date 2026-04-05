@@ -6,7 +6,7 @@ from dmr.openapi.views.base import OpenAPIView
 
 try:
     import yaml
-except ImportError:
+except ImportError:  # pragma: no cover
     print(  # noqa: WPS421
         'Looks like `pyyaml` is not installed, '
         "consider using `pip install 'django-modern-rest[openapi]'`",

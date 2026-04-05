@@ -152,7 +152,7 @@ Utilities
 
 .. autodata:: dmr.types.EmptyObj
 
-.. autoclass:: dmr.types.AnnotationsInferenceContext
+.. autoclass:: dmr.types.AnnotationsContext
   :members:
 
 .. autoclass:: dmr.types.TypeVarInference

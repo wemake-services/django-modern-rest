@@ -28,7 +28,8 @@ No breaking changes will be made.
 - Added `exclude_semantic_responses` options, #786
 - Added an option to override `exclude_semantic_responses`
   and `no_validate_http_spec` settings with `None`
-- Added a new way to resolve annotations for controllers, #787
+- Added a new way to resolve annotations for controllers: 
+  `AnnotationsContext`, #787
 - Added `yaml` view for OpenAPI schema, #745
 
 ### Fixes
@@ -44,7 +45,6 @@ No breaking changes will be made.
 
 - Added `QuerySet` tutorial, #792
 - Migrated from `poetry` to `uv` for dependency management
-
 
 
 ## Version 0.4.0 (2026-03-29)

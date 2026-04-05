@@ -11,7 +11,7 @@ from typing_extensions import Format
 from dmr import Controller
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.types import AnnotationsInferenceContext
+from dmr.types import AnnotationsContext
 
 if TYPE_CHECKING:
     from django.http import HttpResponse
@@ -52,27 +52,27 @@ def test_solvable_response_annotations() -> None:
 
 
 def test_annotation_inference_context() -> None:
-    """Ensure that AnnotationsInferenceContext works correctly."""
-    assert AnnotationsInferenceContext()(
+    """Ensure that AnnotationsContext works correctly."""
+    assert AnnotationsContext()(
         test_solvable_response_annotations,
     ) == {'return': types.NoneType}
 
     def some_function() -> 'Undefined': ...  # type: ignore[name-defined]  # noqa: F821, UP037
 
     with pytest.raises(UnsolvableAnnotationsError, match='cannot be solved'):
-        AnnotationsInferenceContext()(some_function)
+        AnnotationsContext()(some_function)
 
-    assert AnnotationsInferenceContext(globalns={'Undefined': int})(
+    assert AnnotationsContext(globalns={'Undefined': int})(
         some_function,
     ) == {'return': int}
 
 
 @pytest.mark.skipif(sys.version_info < (3, 14), reason='format added in 3.14')
 def test_annotation_inference_context314() -> None:  # pragma: no cover
-    """Ensure that AnnotationsInferenceContext works correctly with format."""
+    """Ensure that AnnotationsContext works correctly with format."""
 
     def some_function() -> 'Undefined': ...  # type: ignore[name-defined]  # noqa: F821, UP037
 
-    assert AnnotationsInferenceContext(format=Format.STRING)(
+    assert AnnotationsContext(format=Format.STRING)(
         some_function,
     ) == {'return': "'Undefined'"}

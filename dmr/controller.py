@@ -25,7 +25,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import AnnotationsInferenceContext, infer_type_args
+from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -140,9 +140,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     streaming: ClassVar[bool] = False
-    annotations_context: ClassVar[AnnotationsInferenceContext] = (
-        AnnotationsInferenceContext()
-    )
+    annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
     summary: ClassVar[str | None] = None
