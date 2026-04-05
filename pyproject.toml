@@ -177,8 +177,8 @@ skip = [
   "*-musllinux_aarch64",
 ]
 
-before-test = ['uv sync --group unit-test --no-group dev --all-extras']
-test-command = 'uv run pytest {project}/tests/test_unit -o addopts=""'
+before-test = ['uv export --format requirements.txt --group unit-test --no-group dev --all-extras > _temp_reqs.txt && uv pip install -r _temp_reqs.txt']
+test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"

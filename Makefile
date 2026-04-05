@@ -70,7 +70,8 @@ example-run: ## Run example app
 	cd django_test_app && uv run python manage.py runserver
 
 .PHONY: package
-package: ## Check package dependencies with pip
+package: ## Check package dependencies
+	uv sync --all-groups --all-extras --locked --check
 	uv pip check
 	uv --preview-features audit audit
 
@@ -84,7 +85,7 @@ benchmarks: mypyc ## Run feature benches
 
 .PHONY: mypyc
 mypyc: clean ## Compile code with mypyc
-	HATCH_BUILD_HOOKS_ENABLE=1 uv run python -m build --wheel
+	HATCH_BUILD_HOOKS_ENABLE=1 uv build --wheel
 
 .PHONY: clean
 clean: ## Clean all build files
