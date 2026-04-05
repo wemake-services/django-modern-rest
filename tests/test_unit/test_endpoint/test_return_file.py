@@ -20,7 +20,7 @@ _FILEPATH: Final = (
 
 _FILE_CONTENT: Final = _FILEPATH.read_bytes()
 # win32 uses `\r\n` as a line break, others use `\n`:
-_CONTENT_LENGHT: Final = str(len(_FILE_CONTENT))
+_CONTENT_LENGTH: Final = str(len(_FILE_CONTENT))
 
 
 @final
@@ -51,7 +51,7 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
         assert response.status_code == HTTPStatus.OK
         assert response.headers == {
             'Content-Type': 'text/plain',
-            'Content-Length': _CONTENT_LENGHT,
+            'Content-Length': _CONTENT_LENGTH,
             'Content-Disposition': 'attachment; filename="receipt.txt"',
         }
         assert isinstance(response.streaming_content, Iterator)
@@ -85,7 +85,7 @@ async def test_return_file_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
         assert response.status_code == HTTPStatus.OK
         assert response.headers == {
             'Content-Type': 'text/plain',
-            'Content-Length': _CONTENT_LENGHT,
+            'Content-Length': _CONTENT_LENGTH,
             'Content-Disposition': 'attachment; filename="receipt.txt"',
         }
         assert isinstance(response.streaming_content, Iterator)
