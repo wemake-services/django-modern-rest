@@ -7,6 +7,8 @@ set -euo pipefail
   | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
   && cibuildwheel --print-build-identifiers --platform linux --archs aarch64 \
   | pyp 'json.dumps({"only": x, "os": "ubuntu-24.04-arm"})' \
+  && cibuildwheel --print-build-identifiers --platform linux --archs ARM64 \
+  | pyp 'json.dumps({"only": x, "os": "ubuntu-24.04-arm"})' \
   && cibuildwheel --print-build-identifiers --platform macos \
   | pyp 'json.dumps({"only": x, "os": "macos-latest"})' \
   && cibuildwheel --print-build-identifiers --platform windows \
