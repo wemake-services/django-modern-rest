@@ -1,6 +1,8 @@
 name: Test compiled with mypyc
 
 on:
+  release:
+    types: published
   push:
     branches:
       - master
@@ -13,6 +15,9 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  PROJECT: https://pypi.org/project/django-modern-rest
 
 jobs:
   configure:
@@ -42,18 +47,12 @@ jobs:
           github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           uv run bash .github/workflows/build-release-matrix.sh
-        env:
-          CIBW_ARCHS_LINUX: x86_64
-          CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_ARCHS_WINDOWS: AMD64
 
       - name: generate matrix (PR)
         if: |
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           uv run bash .github/workflows/build-pr-matrix.sh
-        env:
-          CIBW_ARCHS_LINUX: x86_64
 
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a "$GITHUB_OUTPUT"
@@ -103,4 +102,52 @@ jobs:
         run: pip install build
 
       - name: Build sdist and pure-Python wheel
-        run: python -m build --sdist --wheel
+        run: uv build --sdist --wheel
+
+      - name: Upload wheels as workflow artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+  publish-mypyc:
+    if: github.event_name == 'release'
+    needs: mypyc
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: "*-mypyc-wheels"
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@v1
+        with:
+          packages-dir: wheelhouse/
+          verbose: true
+
+  publish-pure:
+    if: github.event_name == 'release'
+    needs: build_pure
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@v1
+        with:
+          verbose: true

@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+CIBW_ARCHS_LINUX='x86_64'
+
 {
   CIBW_BUILD="cp311-*" cibuildwheel --print-build-identifiers --platform linux \
   | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \

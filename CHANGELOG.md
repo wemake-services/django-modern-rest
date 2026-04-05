@@ -8,7 +8,7 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
-## WIP
+## Version 0.5.0 (2026-04-05)
 
 AKA "The first compiled version".
 
@@ -45,6 +45,7 @@ No breaking changes will be made.
 
 - Added `QuerySet` tutorial, #792
 - Migrated from `poetry` to `uv` for dependency management
+- Sets up automated secure publishing to PyPI
 
 
 ## Version 0.4.0 (2026-03-29)
