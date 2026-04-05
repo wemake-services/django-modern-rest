@@ -169,7 +169,8 @@ class AnnotationsInferenceContext:
             'localns': self._localns,
             'include_extras': self._include_extras,
         }
-        if self._format is not None:
+        # No cover, because it is only available in 3.14+
+        if self._format is not None:  # pragma: no cover
             type_hints_params['format'] = self._format
 
         try:
