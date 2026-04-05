@@ -96,7 +96,7 @@ First non ``None`` value wins:
         >>> from dmr.settings import Settings, DMR_SETTINGS
 
         >>> DMR_SETTINGS = {Settings.semantic_responses: False}
-  
+
   .. tabs::
 
     .. tab:: exclude per endpoint
