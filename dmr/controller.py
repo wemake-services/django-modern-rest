@@ -122,10 +122,10 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     csrf_exempt: ClassVar[bool] = True
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
-    no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
+    no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     semantic_responses: ClassVar[bool | None] = None
-    exclude_semantic_responses: ClassVar[Set[int]] = frozenset()
+    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
     validate_events: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
     allowed_http_methods: ClassVar[Set[str]] = frozenset(

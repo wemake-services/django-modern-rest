@@ -213,7 +213,19 @@ Response handling
   .. code-block:: python
     :caption: settings.py
 
-    >> DMR_SETTINGS = {Settings.exclude_semantic_responses: frozenset((422,))}
+    >>> from http import HTTPStatus
+
+    >> DMR_SETTINGS = {
+    ...    Settings.exclude_semantic_responses: {
+    ...        HTTPStatus.CONFLICT,
+    ...    },
+    ... }
+
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``exclude_semantic_responses=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all responses back again.
 
 
 Error handling
@@ -295,6 +307,12 @@ HTTP Spec validation
     ...         HttpSpec.empty_request_body,
     ...     },
     ... }
+
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``no_validate_http_spec=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all validation back again.
 
 
 .. autoclass:: dmr.settings.HttpSpec

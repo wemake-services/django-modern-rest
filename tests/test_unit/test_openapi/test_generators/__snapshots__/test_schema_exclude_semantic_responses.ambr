@@ -10,7 +10,7 @@
     "paths": {
       "/api/items": {
         "get": {
-          "operationId": "getTestOpenapiSpecExcludeSemanticResponsesLocalsSimplecontrollerApiItems",
+          "operationId": "getSimplecontrollerApiItems",
           "responses": {
             "200": {
               "description": "OK",
@@ -21,16 +21,6 @@
                       "type": "integer"
                     },
                     "type": "array"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }

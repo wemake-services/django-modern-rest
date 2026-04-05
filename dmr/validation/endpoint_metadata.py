@@ -51,6 +51,7 @@ _HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
 ))
 
 _PluggableT = TypeVar('_PluggableT', bound=Parser | Renderer)
+_ItemT = TypeVar('_ItemT')
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -501,16 +502,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return self.payload.error_handler
 
     def _build_no_validate_http_spec(self) -> frozenset[HttpSpec]:
-        payload_spec: Set[HttpSpec] = (
-            (self.payload.no_validate_http_spec or set())
-            if self.payload
-            else set()
+        return self._build_optional_set(
+            self.payload.no_validate_http_spec if self.payload else set(),
+            self.controller_cls.no_validate_http_spec,
+            resolve_setting(Settings.no_validate_http_spec),
         )
-        return frozenset((
-            *payload_spec,
-            *self.controller_cls.no_validate_http_spec,
-            *resolve_setting(Settings.no_validate_http_spec),
-        ))
 
     def _build_semantic_responses(self) -> bool:
         if self.payload and self.payload.semantic_responses is not None:
@@ -519,17 +515,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return self.controller_cls.semantic_responses
         return resolve_setting(Settings.semantic_responses)  # type: ignore[no-any-return]
 
-    def _build_exclude_semantic_responses(self) -> Set[int]:
-        payload_excluded_responses: Set[int] = (
-            (self.payload.exclude_semantic_responses or set())
-            if self.payload
-            else set()
+    def _build_exclude_semantic_responses(self) -> frozenset[HTTPStatus]:
+        return self._build_optional_set(
+            self.payload.exclude_semantic_responses if self.payload else set(),
+            self.controller_cls.exclude_semantic_responses,
+            resolve_setting(Settings.exclude_semantic_responses),
         )
-        return frozenset((
-            *payload_excluded_responses,
-            *self.controller_cls.exclude_semantic_responses,
-            *resolve_setting(Settings.no_validate_http_spec),
-        ))
+
+    def _build_optional_set(
+        self,
+        *sets: Set[_ItemT] | None,
+    ) -> frozenset[_ItemT]:
+        result_set: set[_ItemT] = set()
+        for set_like in sets:
+            if set_like is None:
+                return frozenset()
+            result_set.update(set_like)
+        return frozenset(result_set)
 
     def _build_description(self) -> tuple[str | None, str | None]:
         """

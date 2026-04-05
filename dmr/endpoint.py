@@ -496,9 +496,9 @@ def validate(  # noqa: WPS234
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -524,9 +524,9 @@ def validate(
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -551,9 +551,9 @@ def validate(
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -578,9 +578,9 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -644,7 +644,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
-        exclude_semantic_responses: Set of semantic responses
+        exclude_semantic_responses: Set of semantic responses status codes
             that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
@@ -791,10 +791,10 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -819,10 +819,10 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -847,10 +847,10 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -875,10 +875,10 @@ def modify(  # noqa: WPS211
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[int] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -925,7 +925,7 @@ def modify(  # noqa: WPS211
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
-        exclude_semantic_responses: Set of semantic responses
+        exclude_semantic_responses: Set of semantic responses status codes
             that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.

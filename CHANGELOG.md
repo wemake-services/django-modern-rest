@@ -10,14 +10,24 @@ but with a deprecation period.
 
 ## WIP
 
+AKA "The first comiled version".
+
 This release will focus on better errors, performance, and stability.
 No breaking changes will be made.
 
 ### Features
 
-- Provide older Django versions `4.2`, `5.0`, `5.1` support, #803
-- Provide official `NamedTuple` support, #774
-- Provide `timezone` and `pydantic-extra-types` with `[pydantic]` extra, #802
+- Added `mypyc` support for compiling parts of the framework
+  to run significantly faster, for example our compiled content
+  negotiation is now 35 times faster then the Django's default one, #202
+  See our https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#mypyc-compilation docs about that
+- Added older Django versions `4.2`, `5.0`, `5.1` support, #803
+- Added official `NamedTuple` support, #774
+- Added `timezone` and `pydantic-extra-types` dependencies
+  with `[pydantic]` extra, #802
+- Added `exclude_semantic_responses` options, #786
+- Added an option to override `exclude_semantic_responses`
+  and `no_validate_http_spec` settings with `None`
 
 ### Fixes
 
@@ -211,6 +221,7 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   including automatic request tracking for `dmr_client` and
   `dmr_async_client`, #735.
 - Added Stoplight Elements UI for OpenAPI documentation, #748
+- Added better `settings` fixture support for `pytest` plugin, #769
 
 ### Bugfixes
 

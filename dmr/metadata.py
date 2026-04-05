@@ -363,7 +363,7 @@ class EndpointMetadata:
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
-    exclude_semantic_responses: Set[int]
+    exclude_semantic_responses: frozenset[HTTPStatus]
     validate_events: bool
 
     # OpenAPI documentation fields:

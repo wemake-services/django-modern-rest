@@ -40,6 +40,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'responses': [{}]},
         {'openapi_config': []},
         {'global_error_handler': None},
+        {'exclude_semantic_responses': 1},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)

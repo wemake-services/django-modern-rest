@@ -2,6 +2,7 @@ import enum
 import importlib
 from collections.abc import Callable, Mapping, Sequence, Set
 from functools import lru_cache
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
@@ -105,7 +106,7 @@ class SettingsDict(TypedDict, total=False):
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     semantic_responses: bool
-    exclude_semantic_responses: Set[int]
+    exclude_semantic_responses: Set[HTTPStatus]
     validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
