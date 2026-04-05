@@ -204,6 +204,17 @@ Response handling
 
     >>> DMR_SETTINGS = {Settings.semantic_responses: False}
 
+.. data:: dmr.settings.Settings.exclude_semantic_responses
+
+  Default: ``frozenset()``
+
+  Pass any status code, that you wanna exclude from semantic responses.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >> DMR_SETTINGS = {Settings.exclude_semantic_responses: frozenset((422,))}
+
 
 Error handling
 --------------
