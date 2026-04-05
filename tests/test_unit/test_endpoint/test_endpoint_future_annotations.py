@@ -75,4 +75,4 @@ def test_annotation_inference_context314() -> None:  # pragma: no cover
 
     assert AnnotationsInferenceContext(format=Format.STRING)(
         some_function,
-    ) == {'return': 'Undefined'}
+    ) == {'return': "'Undefined'"}
