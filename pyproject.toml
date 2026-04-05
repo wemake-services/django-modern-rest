@@ -77,23 +77,23 @@ dmr = "dmr_pytest"
 
 [dependency-groups]
 # This is a special group, it has special rules.
-# It is run in `cibuildwheel` and must not have a complex version format.
+# It is insatlled in `cibuildwheel` and must be minimal.
 unit-test = [
-  "django<6",
-  "pytest<10",
-  "pytest-cov<8",
-  "covdefaults<3",
-  "pytest-randomly<5",
-  "pytest-django<5",
-  "pytest-asyncio<2",
-  "pytest-custom-exit-code<0.4",
-  "pytest-freezer<0.5",
-  "dirty-equals<0.12",
-  "faker<41",
-  "inline-snapshot<0.33",
-  "syrupy<6",
-  "polyfactory<4",
-  "xmltodict-rs<0.14",
+  "django>=5.2,<6",
+  "pytest>=9.0,<10",
+  "pytest-cov>=7.0,<8",
+  "covdefaults>=2.3,<3",
+  "pytest-randomly>=4.0,<5",
+  "pytest-django>=4.8,<5",
+  "pytest-asyncio>=1.2,<2",
+  "pytest-custom-exit-code>=0.3,<0.4",
+  "pytest-freezer>=0.4,<0.5",
+  "dirty-equals>=0.11,<0.12",
+  "faker>=40.1,<41",
+  "inline-snapshot>=0.32,<0.33",
+  "syrupy>=5.1,<6",
+  "polyfactory>=3.2,<4",
+  "xmltodict-rs>=0.13,<0.14",
 ]
 dev = [
   { include-group = "unit-test" },
@@ -177,8 +177,7 @@ skip = [
   "*-musllinux_aarch64",
 ]
 
-test-extras = ['pydantic', 'msgspec', 'attrs', 'jwt', 'openapi']
-test-groups = ['unit-test']
+before-test = ['uv sync --group unit-test --no-group dev --all-extras']
 test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
 [tool.cibuildwheel.linux]
