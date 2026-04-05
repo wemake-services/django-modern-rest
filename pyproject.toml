@@ -61,7 +61,7 @@ pydantic = ["pydantic[email,timezone]>=2.12", "pydantic-extra-types"]
 msgspec = ["msgspec>=0.19"]
 attrs = ["msgspec>=0.19", "attrs>=26.0"]
 jwt = ["pyjwt[crypto]>=2.11"]
-openapi = ["openapi-spec-validator>=0.8", "polyfactory>=3.2"]
+openapi = ["openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml"]
 
 [project.urls]
 Homepage = "https://django-modern-rest.readthedocs.io/en/latest/"
@@ -100,6 +100,7 @@ dev = [
   "django-stubs[compatible-mypy]>=6.0,<6.0.2",
   "types-docutils>=0.22,<0.23",
   "types-setuptools>=82,<83",
+  "types-pyyaml>=6.0,<7",
   "pyright>=1.1,<2",
   "pyrefly>=0.57,<0.59",
   "wemake-python-styleguide>=1.6,<2",

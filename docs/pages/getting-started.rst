@@ -43,7 +43,8 @@ Extras for different features:
 - ``'django-modern-rest[jwt]'`` for
   `jwt <https://pyjwt.readthedocs.io>`_ support
 - ``'django-modern-rest[openapi]'`` for
-  `OpenAPI schema validation <https://github.com/python-openapi/openapi-spec-validator>`_
+  `OpenAPI schema validation <https://github.com/python-openapi/openapi-spec-validator>`_,
+  ``yaml`` view for OpenAPI schema,
   and better examples generation
 
 

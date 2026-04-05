@@ -54,6 +54,7 @@ forbidden_modules =
   jwt
   openapi_spec_validator
   polyfactory
+  yaml
   attrs
   attr
   # internal modules:
@@ -74,6 +75,8 @@ ignore_imports =
   dmr.openapi.objects.openapi -> openapi_spec_validator
   # Examples generation:
   dmr.openapi.mappers.example -> polyfactory
+  # Yaml:
+  dmr.openapi.views.yaml -> yaml
   # Optional json support from msgspec:
   dmr.settings -> msgspec
   dmr.internal.json -> msgspec

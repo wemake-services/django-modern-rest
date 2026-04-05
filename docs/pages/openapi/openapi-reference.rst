@@ -162,3 +162,6 @@ Existing views
 
 .. autoclass:: dmr.openapi.views.OpenAPIJsonView
   :members:
+
+.. autoclass:: dmr.openapi.views.yaml.OpenAPIYamlView
+  :members:

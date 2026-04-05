@@ -3,19 +3,12 @@ from types import MappingProxyType
 from typing import Final
 
 import pytest
+import yaml
 from django.conf import LazySettings
 from django.urls import reverse
 
 from dmr.settings import Settings
 from dmr.test import DMRClient
-
-try:
-    from dmr.plugins.msgspec.yaml import yaml_dumps
-except ImportError:  # pragma: no cover
-    OpenAPIYamlView = None
-    _HAS_YAML = False
-else:
-    _HAS_YAML = yaml_dumps is not None
 
 
 @pytest.fixture(params=[True, False], name='use_cdn')
@@ -54,13 +47,8 @@ _ENDPOINTS: Final = MappingProxyType({
     'swagger': 'text/html',
     'scalar': 'text/html',
     'stoplight': 'text/html',
+    'openapi-yaml': 'application/yaml',
 })
-
-if _HAS_YAML:
-    _ENDPOINTS = MappingProxyType({
-        **_ENDPOINTS,
-        'openapi-yaml': 'application/yaml',
-    })
 
 
 @pytest.mark.parametrize(
@@ -109,15 +97,13 @@ def test_json_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
     response = dmr_client.get(reverse('openapi'))
 
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['openapi'] == '3.1.0'
 
 
-@pytest.mark.skipif(
-    not _HAS_YAML,
-    reason='`msgspec` is required for OpenAPI YAML endpoint',
-)
 def test_yaml_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI YAML endpoint returns correct structure."""
     response = dmr_client.get(reverse('openapi-yaml'))
 
-    assert 'openapi: 3.1.0' in response.content.decode('utf-8')
+    assert response.headers['Content-Type'] == 'application/yaml'
+    assert yaml.safe_load(response.content)['openapi'] == '3.1.0'

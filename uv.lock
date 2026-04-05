@@ -691,6 +691,7 @@ msgspec = [
 openapi = [
     { name = "openapi-spec-validator" },
     { name = "polyfactory" },
+    { name = "pyyaml" },
 ]
 pydantic = [
     { name = "pydantic", extra = ["email", "timezone"] },
@@ -729,6 +730,7 @@ dev = [
     { name = "slotscheck" },
     { name = "syrupy" },
     { name = "types-docutils" },
+    { name = "types-pyyaml" },
     { name = "types-setuptools" },
     { name = "wemake-python-styleguide" },
     { name = "xmltodict-rs" },
@@ -787,6 +789,7 @@ requires-dist = [
     { name = "pydantic", extras = ["email", "timezone"], marker = "extra == 'pydantic'", specifier = ">=2.12" },
     { name = "pydantic-extra-types", marker = "extra == 'pydantic'" },
     { name = "pyjwt", extras = ["crypto"], marker = "extra == 'jwt'", specifier = ">=2.11" },
+    { name = "pyyaml", marker = "extra == 'openapi'" },
     { name = "typing-extensions", specifier = ">=4" },
 ]
 provides-extras = ["pydantic", "msgspec", "attrs", "jwt", "openapi"]
@@ -823,6 +826,7 @@ dev = [
     { name = "slotscheck", specifier = ">=0.19,<0.20" },
     { name = "syrupy", specifier = ">=5.1,<6" },
     { name = "types-docutils", specifier = ">=0.22,<0.23" },
+    { name = "types-pyyaml", specifier = ">=6.0,<7" },
     { name = "types-setuptools", specifier = ">=82,<83" },
     { name = "wemake-python-styleguide", specifier = ">=1.6,<2" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },

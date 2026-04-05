@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 import pytest
+import yaml
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
@@ -14,18 +15,9 @@ from dmr.openapi.views import (
     StoplightView,
     SwaggerView,
 )
+from dmr.openapi.views.yaml import OpenAPIYamlView
 from dmr.routing import Router
 from dmr.test import DMRRequestFactory
-
-try:
-    from dmr.plugins.msgspec.yaml import yaml_dumps
-except ImportError:  # pragma: no cover
-    OpenAPIYamlView = None
-    _HAS_YAML = False
-else:
-    from dmr.openapi.views.yaml import OpenAPIYamlView
-
-    _HAS_YAML = yaml_dumps is not None
 
 
 def test_json_view(dmr_rf: DMRRequestFactory) -> None:
@@ -46,10 +38,6 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
     })
 
 
-@pytest.mark.skipif(
-    not _HAS_YAML,
-    reason='`msgspec` is required for OpenAPIYamlView',
-)
 def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that ``OpenAPIYamlView`` returns correct YAML response."""
     schema = build_schema(Router('', []))
@@ -60,18 +48,12 @@ def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert response['Content-Type'] == 'application/yaml'
-    assert response.content.decode('utf-8') == snapshot(
-        """\
-info:
-  title: Django Modern Rest
-  version: 0.1.0
-openapi: 3.1.0
-paths: {}
-components:
-  schemas: {}
-  securitySchemes: {}
-""",
-    )
+    assert yaml.safe_load(response.content) == snapshot({
+        'components': {'schemas': {}, 'securitySchemes': {}},
+        'info': {'title': 'Django Modern Rest', 'version': '0.1.0'},
+        'openapi': '3.1.0',
+        'paths': {},
+    })
 
 
 @pytest.mark.parametrize(
