@@ -46,7 +46,7 @@ No breaking changes will be made.
 - Added `QuerySet` tutorial, #792
 - Migrated from `poetry` to `uv` for dependency management
 - Set up automated secure publishing to PyPI, #823
-- Added CodSpeed integration for continous performance monitoring, #810
+- Added CodSpeed integration for continuous performance monitoring, #810
 
 
 ## Version 0.4.0 (2026-03-29)
