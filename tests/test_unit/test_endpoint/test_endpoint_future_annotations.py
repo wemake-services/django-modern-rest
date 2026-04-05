@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import sys
 import types
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
 
 import pytest
+from typing_extensions import Format
 
 from dmr import Controller
 from dmr.exceptions import UnsolvableAnnotationsError
@@ -63,3 +65,14 @@ def test_annotation_inference_context() -> None:
     assert AnnotationsInferenceContext(globalns={'Undefined': int})(
         some_function,
     ) == {'return': int}
+
+
+@pytest.mark.skipif(sys.version_info < (3, 14), reason='format added in 3.14')
+def test_annotation_inference_context314() -> None:  # pragma: no cover
+    """Ensure that AnnotationsInferenceContext works correctly with format."""
+
+    def some_function() -> 'Undefined': ...  # type: ignore[name-defined]  # noqa: F821, UP037
+
+    assert AnnotationsInferenceContext(format=Format.STRING)(
+        some_function,
+    ) == {'return': 'Undefined'}
