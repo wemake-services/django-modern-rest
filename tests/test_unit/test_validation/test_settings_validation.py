@@ -63,9 +63,14 @@ def test_wrong_settings_validation(
 @pytest.mark.parametrize(
     'dmr_settings',
     [
-        # Structure:
+        # Extras:
         {},
         {'extra': True},
+        # Values:
+        {'no_validate_http_spec': set()},
+        {'no_validate_http_spec': frozenset()},
+        {'exclude_semantic_responses': set()},
+        {'exclude_semantic_responses': frozenset()},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)
