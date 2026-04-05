@@ -56,7 +56,7 @@ class ResponseValidator:  # noqa: WPS214
         response: _ResponseT,
     ) -> _ResponseT:
         """Validate response based on provided schema."""
-        if not self.metadata.validate_responses:
+        if not self._should_validate_responses():
             return response
         schema = self._get_response_schema(response.status_code)
         renderer = request_renderer(
@@ -111,7 +111,7 @@ class ResponseValidator:  # noqa: WPS214
             cookies=self.metadata.modification.actionable_cookies(),
             renderer=renderer,
         )
-        if not self.metadata.validate_responses:
+        if not self._should_validate_responses():
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(
@@ -120,6 +120,9 @@ class ResponseValidator:  # noqa: WPS214
             content_type=renderer.content_type,
         )
         return all_response_data
+
+    def _should_validate_responses(self) -> bool:
+        return self.metadata.validate_responses is True
 
     def _get_response_schema(
         self,

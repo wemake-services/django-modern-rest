@@ -3,14 +3,28 @@ from typing import TYPE_CHECKING
 import pytest
 import schemathesis as st
 from django.conf import LazySettings
+from django.contrib.auth.models import User
 from django.urls import reverse
+from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 from django_test_app.server.wsgi import application
+from dmr.validation import ResponseValidator
 
 if TYPE_CHECKING:
     import tracecov
-    from django.contrib.auth.models import User
-    from schemathesis.specs.openapi.schemas import OpenApiSchema
+
+
+@pytest.fixture(autouse=True)
+def _patch_response_validation(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Patches the response validator class to never validate the responses,
+    # despite their settings. This is needed to test schematesis's
+    # response schema validation and compatibility between two. Not ours schema.
+    # https://github.com/wemake-services/django-modern-rest/issues/776
+    monkeypatch.setattr(
+        ResponseValidator,
+        '_should_validate_responses',
+        lambda *args, **kwargs: False,
+    )
 
 
 # The `transactional_db` fixture is required to enable database access.
@@ -21,7 +35,7 @@ if TYPE_CHECKING:
 # This follows the `pytest-django` pattern for creating user fixtures:
 # https://github.com/pytest-dev/pytest-django/blob/main/pytest_django/fixtures.py#L483
 @pytest.fixture
-def api_schema(transactional_db: None, admin_user: 'User') -> 'OpenApiSchema':
+def api_schema(transactional_db: None, admin_user: User) -> OpenApiSchema:
     """Load OpenAPI schema as a pytest fixture."""
     return st.openapi.from_wsgi(reverse('openapi'), application)
 

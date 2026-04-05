@@ -8,6 +8,13 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
+## WIP
+
+### Fixes
+
+- Fixed package metadata, #824
+
+
 ## Version 0.5.0 (2026-04-05)
 
 AKA "The first compiled version".
