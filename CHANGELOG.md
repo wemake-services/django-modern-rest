@@ -28,7 +28,7 @@ No breaking changes will be made.
 - Added `exclude_semantic_responses` options, #786
 - Added an option to override `exclude_semantic_responses`
   and `no_validate_http_spec` settings with `None`
-- Added a new way to resolve annotations for controllers: 
+- Added a new way to resolve annotations for controllers:
   `AnnotationsContext`, #787
 - Added `yaml` view for OpenAPI schema, #745
 
