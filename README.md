@@ -44,13 +44,15 @@
 
 ---------
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="80%" height="auto" />
-  <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg#gh-dark-mode-only" alt="Benchmark - Dark" width="80%" height="auto" />
-</div>
-
 <p align="center">
-  <em>Sync mode</em>
+   <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html">
+      <picture>
+         <source srcset="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg" alt="Benchmark - Dark" width="80%" height="auto" media="(prefers-color-scheme: dark)">
+         <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Benchmark - Light" width="80%" height="auto" />
+      </picture>
+   </a>
+
+   <em>Sync mode</em>
 </p>
 
 
