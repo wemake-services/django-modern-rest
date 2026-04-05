@@ -12,7 +12,6 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.files import FileBody
-from dmr.headers import build_headers
 from dmr.internal.negotiation import (
     media_by_precedence,
     response_validation_negotiator,
@@ -104,10 +103,7 @@ class ResponseValidator:  # noqa: WPS214
         all_response_data = ValidatedModification(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,
-            headers=build_headers(
-                self.metadata.modification,
-                renderer,
-            ),
+            headers=self.metadata.modification.build_headers(renderer),
             cookies=self.metadata.modification.actionable_cookies(),
             renderer=renderer,
         )

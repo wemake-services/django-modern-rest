@@ -1,9 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
-
-if TYPE_CHECKING:
-    from dmr.metadata import ResponseModification
-    from dmr.renderers import Renderer
+from typing import TYPE_CHECKING, ClassVar, Literal, final
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -80,19 +76,3 @@ class HeaderSpec(_BaseResponseHeader):
     def to_spec(self) -> 'HeaderSpec':
         """Needed for API compat with `NewHeader`."""
         return self
-
-
-def build_headers(
-    modification: 'ResponseModification',
-    renderer: 'Renderer',
-) -> dict[str, str]:
-    """Returns headers with values for raw data endpoints."""
-    result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
-    headers = modification.actionable_headers()
-    if not headers:
-        return result_headers
-    result_headers.update({
-        header_name: response_header.value
-        for header_name, response_header in headers.items()
-    })
-    return result_headers

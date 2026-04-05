@@ -238,6 +238,21 @@ class ResponseModification:
             }
         )
 
+    def build_headers(
+        self,
+        renderer: 'Renderer',
+    ) -> dict[str, str]:
+        """Returns headers with values for raw data endpoints."""
+        result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
+        headers = self.actionable_headers()
+        if not headers:
+            return result_headers
+        result_headers.update({
+            header_name: response_header.value
+            for header_name, response_header in headers.items()
+        })
+        return result_headers
+
 
 class ResponseSpecProvider:
     """Base abstract class to provide extra response schemas."""
