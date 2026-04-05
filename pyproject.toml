@@ -167,7 +167,7 @@ options = { debug_level = "0", opt_level = "3" }
 [tool.cibuildwheel]
 # Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
 build = "cp3{11,12,13,14}-*"
-build-frontend = "build[uv]"
+build-frontend = "uv"
 build-verbosity = 1
 skip = [
   "cp313t-*",
