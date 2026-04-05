@@ -99,7 +99,7 @@ class ComponentParserBuilder:
             self._find_components(type_annotations),
         )
 
-    def _find_components(
+    def _find_components(  # noqa: WPS231
         self,
         type_annotations: dict[str, Any],
     ) -> list[ComponentParserSpec]:  # noqa: WPS231

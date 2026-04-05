@@ -164,16 +164,16 @@ class AnnotationsInferenceContext:
                 or when the annotation does not exist.
 
         """
-        parameters: dict[str, Any] = {
+        type_hints_params: dict[str, Any] = {
             'globalns': self._global_namespace(endpoint_func),
             'localns': self._localns,
             'include_extras': self._include_extras,
         }
         if self._format is not None:
-            parameters['format'] = self._format
+            type_hints_params['format'] = self._format
 
         try:
-            return get_type_hints(endpoint_func, **parameters)
+            return get_type_hints(endpoint_func, **type_hints_params)
         except Exception as exc:
             raise UnsolvableAnnotationsError(
                 f'Annotations of {endpoint_func!r} cannot be solved',
