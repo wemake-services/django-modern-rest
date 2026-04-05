@@ -9,6 +9,7 @@ from django.utils.encoding import force_str
 from django.views import defaults
 from typing_extensions import override
 
+from dmr.compiled import match_impl
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
 from dmr.openapi.collector import controller_mapping_collector
@@ -249,14 +250,7 @@ class _PrefixRoutePattern(RoutePattern):
         self,
         path: str,
     ) -> _RouteMatch | None:
-        if self._is_static:
-            if self._is_endpoint and path == self._prefix:
-                return '', (), {}
-            if not self._is_endpoint and path.startswith(self._prefix):
-                return path[len(self._prefix) :], (), {}
-        elif path.startswith(self._prefix):
-            return super().match(path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-        return None
+        return match_impl(self, path)
 
 
 # NOTE: keep in sync with `django-stubs`!
