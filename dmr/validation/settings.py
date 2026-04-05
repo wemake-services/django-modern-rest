@@ -61,7 +61,13 @@ class SettingsValidator:
             self.serializer.from_python(
                 {
                     # msgspec does not like `StrEnum` keys:
-                    str(setting_key): setting_value
+                    str(setting_key): (
+                        # For some reason `pydantic` does not validate
+                        # `set[str]` against `collections.abc.Set[str]`
+                        frozenset(setting_value)  # pyright: ignore[reportUnknownArgumentType]
+                        if isinstance(setting_value, set)
+                        else setting_value
+                    )
                     for setting_key, setting_value in settings.items()
                 },
                 model=_SettingsModel,

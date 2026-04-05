@@ -1,80 +1,6 @@
 Integrations
 ============
 
-Serializing QuerySets into models
----------------------------------
-
-Django is built around its :class:`~django.db.models.query.QuerySet` type.
-Of course, we have to make sure that it is supported.
-
-Let's say you have these models that you already work with:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/models.py
-  :caption: models.py
-  :language: python
-  :linenos:
-
-Now, let's create an API that will work with your models.
-To do that the first thing you need to do is to create
-your API serializers / deserializers.
-
-While it may seems that this is a redundant duplication of code, and that it
-should be possible to build serialization schemas out of Django models,
-but that's actually the **opposite**.
-
-Because models and serialization
-schemes must change independenly. Otherwise, your API would
-be a mess and will change unexpectedly, when you create a new migration.
-This problem happened to me too many times.
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/serializers.py
-  :caption: serializers.py
-  :language: python
-  :linenos:
-
-.. important::
-
-  Models and QuerySets can't be serialized to json by default.
-  This is a design choice, this is a feature.
-
-  Why?
-
-  Because Models and QuerySets are not designed for serialization,
-  they are designed for the database access. Mixing these two layers
-  will **complicate**, not simplify, your app.
-
-Now, let's create a service to build your model instances:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/services.py
-  :caption: services.py
-  :language: python
-  :linenos:
-
-Here's how the final :class:`~dmr.controller.Controller`
-would look like:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/views.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-Now you have your REST API that returns fully typed model responses
-and can work with :class:`~django.db.models.query.QuerySet`
-and :class:`~django.db.models.Model` instances.
-
-django-mantle
-~~~~~~~~~~~~~
-
-If you want to automate this part and automatically
-convert ``QuerySet`` into typed models, you can use
-`django-mantle <https://noumenal.es/mantle/>`_
-which is built just for this purpose:
-
-.. literalinclude:: /examples/integrations/django_mantle.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
 
 CSRF
 ----
@@ -94,6 +20,8 @@ By default we exempt all controllers from CSRF checks, unless:
    will require CSRF as well. Because using Django sessions
    without CSRF is not secure
 
+
+.. _bring-your-own-di:
 
 Bring your own DI
 -----------------
@@ -136,6 +64,8 @@ See our
 to learn how typing works, how ``mypy`` is configured,
 how ``django-stubs`` is used.
 
+
+.. _pagination:
 
 Pagination
 ----------

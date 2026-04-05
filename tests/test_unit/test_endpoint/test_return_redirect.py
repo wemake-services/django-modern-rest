@@ -3,16 +3,13 @@ from typing import Final, final
 
 import pytest
 from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse_lazy
 
 from dmr import APIRedirectError, Controller, HeaderSpec, modify, validate
 from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
-_REDIRECT_URL: Final = reverse_lazy(
-    'api:jwt_auth:jwt_obtain_access_refresh_sync',
-)
+_REDIRECT_URL: Final = '/redirect/url/example'
 _REDIRECT_SPEC: Final = ResponseSpec(
     None,
     status_code=HTTPStatus.FOUND,

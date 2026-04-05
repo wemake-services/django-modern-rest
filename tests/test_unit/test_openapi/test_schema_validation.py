@@ -1,5 +1,3 @@
-import re
-
 import pytest
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -50,9 +48,7 @@ class _WrongAuth(SyncAuth):
         return SecurityRequirement()
 
 
-class _UserController(
-    Controller[PydanticSerializer],
-):
+class _UserController(Controller[PydanticSerializer]):
     @modify(auth=[_WrongAuth()])
     def post(self) -> str:
         raise NotImplementedError
@@ -65,10 +61,7 @@ def test_schema_validation(snapshot: SnapshotAssertion) -> None:
         [path('user/', _UserController.as_view())],
     )
 
-    with pytest.raises(
-        OpenAPIValidationError,
-        match=re.escape('instance["components"]["securitySchemes"]["wrong"]'),
-    ):
+    with pytest.raises(OpenAPIValidationError, match='Wrong'):
         build_schema(router).convert()
 
     # It is possible to disable the validation:

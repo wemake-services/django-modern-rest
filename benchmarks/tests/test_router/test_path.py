@@ -1,12 +1,12 @@
-import argparse
 from collections.abc import Callable
 from contextlib import suppress
-from typing import Any, Final, Literal, assert_never
+from typing import Final, Literal, assert_never
 
 from django.http import HttpRequest, HttpResponse
 from django.urls import Resolver404, URLPattern, include
 from django.urls import path as django_path
 from django.urls.resolvers import RegexPattern, URLResolver
+from pytest_codspeed import BenchmarkFixture
 
 from dmr.routing import path as dmr_path
 
@@ -84,36 +84,34 @@ def _pick_url(case: Literal['best', 'avg', 'worst']) -> str:
             assert_never(other)
 
 
-def _bench(resolve: Callable[[str], Any], url: str, repeat: int) -> None:
-    for _ in range(repeat):
-        with suppress(Resolver404):
-            resolve(url)
+_REPEAT: Final = 1_000
 
 
-_REPEAT: Final = 1_000_100
+def test_router_path_native(
+    benchmark: BenchmarkFixture,
+) -> None:
+    """Test Django native version of the ``path`` function."""
+
+    resolver = _build_resolver(django_path)
+
+    @benchmark
+    def factory() -> None:
+        for _repeat in range(_REPEAT):
+            for bench_case in ('best', 'avg', 'worst'):
+                with suppress(Resolver404):
+                    resolver.resolve(_pick_url(bench_case))
 
 
-def main() -> None:
-    """Run the URL resolver benchmark."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--impl', choices=['dmr', 'django'], required=True)
-    parser.add_argument(
-        '--case',
-        choices=['best', 'avg', 'worst'],
-        required=True,
-    )
-    parser.add_argument('--repeat', type=int, default=_REPEAT)
-    args = parser.parse_args()
-    match args.impl:
-        case 'dmr':
-            path = dmr_path
-        case 'django':
-            path = django_path
-        case other:
-            raise ValueError(f"Unknown impl '{other}'")
-    resolver = _build_resolver(path)
-    _bench(resolver.resolve, _pick_url(args.case), args.repeat)
+def test_router_path_dmr(
+    benchmark: BenchmarkFixture,
+) -> None:
+    """Test custom DMR version of the ``path`` function."""
 
+    resolver = _build_resolver(dmr_path)
 
-if __name__ == '__main__':
-    main()
+    @benchmark
+    def factory() -> None:
+        for _repeat in range(_REPEAT):
+            for bench_case in ('best', 'avg', 'worst'):
+                with suppress(Resolver404):
+                    resolver.resolve(_pick_url(bench_case))

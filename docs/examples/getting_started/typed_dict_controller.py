@@ -16,9 +16,7 @@ class UserModel(UserCreateModel):
 HeaderModel = TypedDict('HeaderModel', {'X-API-Consumer': str})
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     def post(
         self,
         parsed_body: Body[UserCreateModel],

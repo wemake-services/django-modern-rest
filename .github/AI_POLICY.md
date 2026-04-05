@@ -40,4 +40,4 @@ the time to ensure it reflects your own voice and ideas. If using AI for
 translation, we recommend writing in your native language and including the AI
 translation in a quote block.
 
-P.S. Respectfully copied from [Astral](https://github.com/astral-sh/.github/blob/main/AI_POLICY.md) team under MIT license.
+P.S. Respectfully copied from [Astral](https://github.com/astral-sh/.github/blob/main/AI_POLICY.md) team.

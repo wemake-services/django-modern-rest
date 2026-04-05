@@ -18,9 +18,7 @@ class HeaderModel(pydantic.BaseModel):
     consumer: str = pydantic.Field(alias='X-API-Consumer')
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     def post(
         self,
         parsed_body: Body[UserCreateModel],

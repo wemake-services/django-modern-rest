@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Any,
@@ -13,7 +13,7 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import get_original_bases, get_type_hints
+from typing_extensions import Format, get_original_bases, get_type_hints
 
 from dmr.exceptions import UnsolvableAnnotationsError
 
@@ -100,38 +100,6 @@ def infer_bases(
     ]
 
 
-def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
-    """
-    Parse function annotation and returns the return type.
-
-    Args:
-        endpoint_func: function with return type annotation.
-
-    Returns:
-        Function's parsed and solved return type.
-
-    Raises:
-        UnsolvableAnnotationsError: when annotation can't be solved
-            or when the annotation does not exist.
-    """
-    try:
-        return_annotation = get_type_hints(
-            endpoint_func,
-            globalns=endpoint_func.__globals__,
-            include_extras=True,
-        ).get('return', EmptyObj)
-    except (TypeError, NameError, ValueError) as exc:
-        raise UnsolvableAnnotationsError(
-            f'Annotations of {endpoint_func!r} cannot be solved',
-        ) from exc
-
-    if return_annotation is EmptyObj:
-        raise UnsolvableAnnotationsError(
-            f'Function {endpoint_func!r} is missing return type annotation',
-        )
-    return return_annotation
-
-
 def infer_annotation(annotation: Any, context: type[Any]) -> Any:
     """Infers annotation in the class definition context."""
     if not isinstance(annotation, TypeVar):
@@ -151,6 +119,72 @@ def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
         )
     except TypeError:
         return False
+
+
+class AnnotationsInferenceContext:
+    """
+    Annotation evaluation context.
+
+    Use this type to change how controllers resolve
+    type hints of their endpoints.
+
+    For example, one can change this function
+    to use :func:`inspect.get_annotations` function.
+    Or to have some pre-defined global names.
+    """
+
+    __slots__ = ('_format', '_globalns', '_include_extras', '_localns')
+
+    def __init__(
+        self,
+        *,
+        globalns: dict[str, Any] | None = None,
+        localns: Mapping[str, Any] | None = None,
+        include_extras: bool = True,
+        format: Format | None = None,  # noqa: A002
+    ) -> None:
+        """Create the context for the future annotations."""
+        self._globalns = globalns
+        self._localns = localns
+        self._include_extras = include_extras
+        self._format = format
+
+    def __call__(self, endpoint_func: Callable[..., Any]) -> dict[str, Any]:
+        """
+        Get the annotations.
+
+        Args:
+            endpoint_func: function with return type annotation.
+
+        Returns:
+            Function's parsed and solved return type.
+
+        Raises:
+            UnsolvableAnnotationsError: when annotation can't be solved
+                or when the annotation does not exist.
+
+        """
+        type_hints_params: dict[str, Any] = {
+            'globalns': self._global_namespace(endpoint_func),
+            'localns': self._localns,
+            'include_extras': self._include_extras,
+        }
+        # No cover, because it is only available in 3.14+
+        if self._format is not None:  # pragma: no cover
+            type_hints_params['format'] = self._format
+
+        try:
+            return get_type_hints(endpoint_func, **type_hints_params)
+        except Exception as exc:
+            raise UnsolvableAnnotationsError(
+                f'Annotations of {endpoint_func!r} cannot be solved',
+            ) from exc
+
+    def _global_namespace(
+        self,
+        endpoint_func: Callable[..., Any],
+    ) -> dict[str, Any]:
+        return self._globalns or endpoint_func.__globals__
 
 
 class TypeVarInference:

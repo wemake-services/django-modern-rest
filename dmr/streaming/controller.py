@@ -8,7 +8,7 @@ from django.http import HttpResponseBase
 from typing_extensions import override
 
 from dmr.controller import Controller
-from dmr.cookies import NewCookie
+from dmr.cookies import NewCookie, set_cookies
 from dmr.endpoint import Endpoint
 from dmr.internal.types import call_init_subclass
 from dmr.negotiation import request_renderer
@@ -104,7 +104,7 @@ class StreamingController(Controller[_SerializerT_co]):
         cls,
         serializer: type[_SerializerT_co],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> Iterable[StreamingRenderer]:
-        """Returns the streaming renderer."""
+        """Returns the iterable of streaming renderers for this controller."""
 
     async def handle_event_error(self, exc: Exception) -> Any:
         """
@@ -122,12 +122,30 @@ class StreamingController(Controller[_SerializerT_co]):
         status_code: HTTPStatus = HTTPStatus.OK,
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
-        validate_events: bool | None = None,
         regular_renderer: Renderer | None = None,
         streaming_renderer: StreamingRenderer | None = None,
         streaming_validator: StreamingValidator | None = None,
     ) -> StreamingResponse:
-        """Convert streaming content to a streaming response."""
+        """
+        Convert streaming content to a streaming response.
+
+        Parameters:
+            streaming_content: Async iterator which
+                will produce the streaming events.
+            status_code: Response status code. Defaults to ``200``.
+            headers: Response extra headers.
+            cookies: Response cookies.
+            regular_renderer: Renderer instance to render event payloads.
+            streaming_renderer: StreamingRenderer instance
+                to render the event stream.
+            streaming_validator: StreamingValidator instance to validate events
+                one by one if ``validate_events`` is set to ``True``.
+
+        Returns:
+            :class:`~dmr.streaming.stream.StreamingResponse` instance
+            with all the required properties set.
+
+        """
         # We are sure that it is a `StreamingRenderer` at this point
         streaming_renderer = cast(  # type: ignore[assignment]
             StreamingResponse,  # TODO: provide a new api?
@@ -151,11 +169,7 @@ class StreamingController(Controller[_SerializerT_co]):
                 )
             ),
         )
-        for cookie_key, cookie in (cookies or {}).items():
-            streaming_response.set_cookie(
-                cookie_key,
-                **cookie.as_dict(),
-            )
+        set_cookies(streaming_response, cookies)
         return streaming_response
 
     def ping_event(self) -> Any | None:

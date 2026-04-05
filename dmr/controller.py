@@ -25,7 +25,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import infer_type_args
+from dmr.types import AnnotationsInferenceContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -69,6 +69,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Works in runtime, can be disabled for better performance.
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -97,10 +99,12 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             exact serializer type.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
+        annotations_context: Inference context to call
+            :func:`typing.get_type_hints` for this controller.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
             Is ``True`` by default.
-        summary: A short summary of what the this path item does.
+        summary: A short summary of what this path item does.
         description: A verbose explanation of the path item behavior.
         servers: An alternative servers array to service this path item.
         request: Current :class:`~django.http.HttpRequest` instance.
@@ -120,9 +124,10 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     csrf_exempt: ClassVar[bool] = True
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
-    no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
+    no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     semantic_responses: ClassVar[bool | None] = None
+    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
     validate_events: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
@@ -135,6 +140,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     streaming: ClassVar[bool] = False
+    annotations_context: ClassVar[AnnotationsInferenceContext] = (
+        AnnotationsInferenceContext()
+    )
 
     # OpenAPI:
     summary: ClassVar[str | None] = None

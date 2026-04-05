@@ -17,7 +17,7 @@ _DEFAULT_SEPARATOR: Final = b'\n'
 
 class JsonLinesRenderer(StreamingRenderer):
     """
-    Renders response as a stream of json liens.
+    Renders response as a stream of json lines.
 
     Uses sub-renderer to render events' data into the correct format.
     """

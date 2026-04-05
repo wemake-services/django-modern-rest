@@ -191,7 +191,7 @@ async def _overridden_events() -> AsyncIterator[_OverriddenEvent]:
     yield _OverriddenEvent(data=b'test')
 
 
-class _OverridenSSE(SSEController[PydanticSerializer]):
+class _OverriddenSSE(SSEController[PydanticSerializer]):
     async def get(self) -> AsyncIterator[_OverriddenEvent]:
         return _overridden_events()
 
@@ -203,7 +203,7 @@ async def test_overridden_sse_implementation(
     """Ensures that valid sse produces valid results."""
     request = dmr_async_rf.get('/whatever/')
 
-    response = await dmr_async_rf.wrap(_OverridenSSE.as_view()(request))
+    response = await dmr_async_rf.wrap(_OverriddenSSE.as_view()(request))
 
     assert isinstance(response, StreamingResponse)
     assert response.streaming
@@ -224,7 +224,7 @@ def test_overridden_sse_schema(snapshot: SnapshotAssertion) -> None:
             build_schema(
                 Router(
                     'api/v1/',
-                    [path('/overridden', _OverridenSSE.as_view())],
+                    [path('/overridden', _OverriddenSSE.as_view())],
                 ),
                 config=OpenAPIConfig(
                     title='SSE Overridden Pydantic models',

@@ -1,4 +1,4 @@
-# Parts of the code in this directory is taken from
+# Parts of the code in this directory are taken from
 # https://github.com/litestar-org/litestar/tree/main/litestar/openapi/spec
 # under MIT license.
 

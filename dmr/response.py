@@ -9,7 +9,7 @@ from django.utils.encoding import iri_to_uri
 from django.utils.http import MAX_URL_REDIRECT_LENGTH
 from typing_extensions import TypeVar
 
-from dmr.cookies import NewCookie
+from dmr.cookies import NewCookie, set_cookies
 from dmr.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
@@ -253,9 +253,7 @@ def build_response(  # noqa: WPS210, WPS211
         status=status,
         headers=response_headers,
     )
-    if cookies:
-        for cookie_key, cookie in cookies.items():
-            response.set_cookie(cookie_key, **cookie.as_dict())
+    set_cookies(response, cookies)
     return response
 
 

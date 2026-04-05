@@ -52,22 +52,6 @@ class _SimpleUserOutput(_SimpleUserInput):
 
 
 @final
-class _UserPath(pydantic.BaseModel):
-    user_id: Annotated[int, pydantic.Field(ge=1)]
-
-
-@final
-class _ConstrainedUserSchema(pydantic.BaseModel):
-    username: str = pydantic.Field(
-        min_length=3,
-        max_length=20,  # noqa: WPS432
-        pattern=r'^[a-z0-9_]+$',
-    )
-    age: int = pydantic.Field(ge=18, le=100, strict=True)  # noqa: WPS432
-    score: float = pydantic.Field(gt=0, le=10, strict=True)  # noqa: WPS432
-
-
-@final
 class UsersController(Controller[PydanticSerializer]):
     def post(
         self,
@@ -89,6 +73,11 @@ class UsersController(Controller[PydanticSerializer]):
             _SimpleUserInput(email='first@example.org', age=1),
             _SimpleUserInput(email='second@example.org', age=2),
         ]
+
+
+@final
+class _UserPath(pydantic.BaseModel):
+    user_id: Annotated[int, pydantic.Field(ge=1)]
 
 
 @final
@@ -163,6 +152,17 @@ class AsyncParseHeadersController(Controller[PydanticSerializer]):
         parsed_headers: Headers[_CustomHeaders],
     ) -> _CustomHeaders:
         return parsed_headers
+
+
+@final
+class _ConstrainedUserSchema(pydantic.BaseModel):
+    username: str = pydantic.Field(
+        min_length=3,
+        max_length=20,  # noqa: WPS432
+        pattern=r'^[a-z0-9_]+$',
+    )
+    age: int = pydantic.Field(ge=18, le=100, strict=True)  # noqa: WPS432
+    score: float = pydantic.Field(gt=0, le=10, strict=True)  # noqa: WPS432
 
 
 @final

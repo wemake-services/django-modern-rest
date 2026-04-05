@@ -36,6 +36,7 @@ class SSEController(StreamingController[_SerializerT_co]):
     """
 
     streaming_ping_seconds = 15.0
+    """Send ping keep alive events every 15 seconds."""
 
     # Custom attributes:
     streaming_default_renderer: ClassVar[Renderer] = default_renderer
@@ -77,5 +78,5 @@ class SSEController(StreamingController[_SerializerT_co]):
 
     @override
     def ping_event(self) -> Any | None:
-        """Return a ping event to be generated if this streaming needs it."""
+        """Return a ping event's payload."""
         return SSEvent(comment='ping')

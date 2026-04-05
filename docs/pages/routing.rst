@@ -5,7 +5,7 @@ Our :term:`Controller` is built without knowing anything
 about its future URL. Why so?
 
 1. Because Django already has an amazing URL
-   `routing system <https://docs.djangoproject.com/en/5.2/topics/http/urls/>`_
+   `routing system <https://docs.djangoproject.com/en/stable/topics/http/urls/>`_
    and we don't need to duplicate it
 2. Because all controllers might be used in multiple URLs,
    for example in ``/api/v1/`` and ``/api/v2/``.

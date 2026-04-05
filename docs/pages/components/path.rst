@@ -29,7 +29,7 @@ What happens here?
 4. We define an api url with :func:`django.urls.path`
    (or with :func:`django.urls.re_path`)
    and a common Django syntax for path parameters:
-   ``'user/<int:user_id>/post/<uuid:post_id/'``
+   ``'user/<int:user_id>/post/<uuid:post_id>/'``
 
 Django supports multiple pre-defined path converter types:
 ``int``, ``uuid``, ``str``, ``slug``, ``path``.
@@ -46,7 +46,7 @@ use :data:`~dmr.components.Path` component with a model.
 
 .. note::
 
-  If you are using custom url convereters
+  If you are using custom URL converters
   and :func:`django.urls.register_converter`,
   we won't know your url parameter schema type in advance.
   We default to ``str`` type for all url converters.
@@ -62,7 +62,7 @@ Using Path component and parsing models
 When do you need to parse path parameters into models?
 
 1. When you need typed path parameter model
-2. When they have more metadata then regular Django can provide.
+2. When they have more metadata than regular Django can provide.
    For example: only positive integers. Or ``str`` with an exact length
 3. When you only need ``self.kwargs`` to be parsed,
    because ``Path`` does not support variadic url args from ``self.args``
@@ -109,7 +109,7 @@ What is the difference from the raw ``path()`` model?
 1. ``Path`` component automatically injects ``404`` error into the final schema
 2. It performs a second validation of the ``self.kwargs``
    with new extra metadata from the ``Path`` model
-3. It add ``self.parsed_path`` attribute
+3. It adds ``self.parsed_path`` attribute
 
 .. important::
 

@@ -5,21 +5,10 @@ import pytest
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.urls import reverse
-from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr.security.jwt import JWToken
 from dmr.test import DMRClient
-
-
-@pytest.fixture
-def user(faker: Faker) -> User:
-    """Create fake user for tests."""
-    return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        faker.password(),
-    )
 
 
 @pytest.mark.parametrize(
@@ -72,15 +61,14 @@ def test_wrong_jwt_header(
 )
 def test_valid_auth(
     dmr_client: DMRClient,
-    user: User,
+    admin_user: User,
     settings: LazySettings,
-    faker: Faker,
     *,
     url: str,
 ) -> None:
     """Ensures that correct jwt auth works."""
     token = JWToken(
-        sub=str(user.pk),
+        sub=str(admin_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
     ).encode(settings.SECRET_KEY, algorithm='HS256')
     response = dmr_client.post(
@@ -94,9 +82,9 @@ def test_valid_auth(
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
-        'username': user.username,
-        'email': user.email,
-        'is_active': user.is_active,
+        'username': admin_user.username,
+        'email': admin_user.email,
+        'is_active': admin_user.is_active,
     }
 
 
@@ -145,16 +133,16 @@ def test_missing_user(
 def test_inactive_user(
     dmr_client: DMRClient,
     settings: LazySettings,
-    user: User,
+    admin_user: User,
     *,
     url: str,
 ) -> None:
     """Ensures that missing user raises."""
-    user.is_active = False
-    user.save(update_fields=['is_active'])
+    admin_user.is_active = False
+    admin_user.save(update_fields=['is_active'])
 
     token = JWToken(
-        sub=str(user.pk),
+        sub=str(admin_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
     ).encode(settings.SECRET_KEY, algorithm='HS256')
     response = dmr_client.post(

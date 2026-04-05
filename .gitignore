@@ -236,6 +236,7 @@ fabric.properties
 # Artifacts:
 .gitlab/.svn/
 artifacts/
+wheelhouse/
 
 # mypy:
 .mypy_cache/
@@ -257,5 +258,8 @@ artifacts/
 # safety:
 .safety/
 
-# PyCharm
+# PyCharm:
 .idea/
+
+# CodSpeed:
+.codspeed/

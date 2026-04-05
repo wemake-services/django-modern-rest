@@ -14,7 +14,7 @@ from dmr.test import DMRRequestFactory
 
 @final
 class _MyController(Controller[PydanticSerializer]):
-    @endpoint_decorator(login_required())
+    @endpoint_decorator(login_required(login_url='./test/login/'))
     @modify(
         validate_responses=False,  # we need this, because of the content-type
         extra_responses=[

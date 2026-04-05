@@ -31,7 +31,7 @@ class NewHeader(_BaseResponseHeader):
 
     Attributes:
         description: Documentation, why this header is needed and what it does.
-        deprecated: Whethere this header is deprecated.
+        deprecated: Whether this header is deprecated.
         example: Documentation, what can be given as values in this header.
         value: value to be set in this new header.
 
@@ -59,7 +59,7 @@ class HeaderSpec(_BaseResponseHeader):
 
     Attributes:
         description: Documentation, why this header is needed and what it does.
-        deprecated: Whethere this header is deprecated.
+        deprecated: Whether this header is deprecated.
         example: Documentation, what can be given as values in this header.
         required: Whether or not this header can be missing.
         skip_validation: Is true, when header is only used for schema purposes,

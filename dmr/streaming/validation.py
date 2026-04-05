@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Self, TypeVar
 
-from dmr.exceptions import ValidationError
+from dmr.exceptions import EndpointMetadataError, ValidationError
 from dmr.metadata import EndpointMetadata
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ class StreamingValidator:
     """
     Injects itself into the stream of SSE to validate the events.
 
-    This is very different from the the any other validator. Why?
+    This is very different from any other validator. Why?
 
     1. Because we send just one response. No events can be produced
        at all for a long period of time. Some events can be correct,
@@ -116,10 +116,12 @@ def _resolve_event_model(
     metadata: EndpointMetadata,
     status_code: HTTPStatus,
 ) -> Any:
-
     try:
         return metadata.responses[status_code].return_type
     except (KeyError, ValueError):
-        # This can happen if `validate_responses` is `False`,
-        # or when `status_code` is custom.
+        if metadata.validate_events:
+            raise EndpointMetadataError(
+                'Cannot resolve event model for endpoint '
+                f'{metadata.endpoint_name!r} and {status_code=}',
+            ) from None
         return Any

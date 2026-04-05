@@ -8,7 +8,7 @@ Installation
 Works for:
 
 - Python 3.11+
-- Django 5.2+
+- Django 4.2+
 
 .. tabs::
 
@@ -69,8 +69,8 @@ Extras for different features:
 LLMs support
 ------------
 
-Are you using AI for the assistant coding?
-We got you covered, use this files for the context to make sure that the LLM
+Are you using AI for assisted coding?
+We got you covered, use these files for context to make sure that the LLM
 knows our framework:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
@@ -82,13 +82,13 @@ We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
 for up-to-date docs for the LLMs.
 
-Usecases we officially support:
+Use cases we officially support:
 
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
 - AI-guided migrations for any API changes.
   We break something? We provide a prompt for you, so you can automatically
-  upgrade to a newer version using AI tool for your choice
+  upgrade to a newer version using an AI tool of your choice
 
 We support several custom agent skills:
 
@@ -117,7 +117,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 3, 6, 22
 
     .. tab:: pydantic
 
@@ -128,7 +127,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 3, 6, 22
 
     .. tab:: attrs
 
@@ -139,7 +137,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 3, 6, 9, 14, 19, 25
 
     .. tab:: dataclasses
 
@@ -151,7 +148,6 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 1, 5, 8, 13, 19
 
     .. tab:: TypedDict
 
@@ -163,20 +159,34 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
         :caption: views.py
         :language: python
         :linenos:
-        :emphasize-lines: 2, 5, 8, 12, 16, 20
+
+    .. tab:: NamedTuple
+
+      We support :class:`typing.NamedTuple`
+      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+
+      .. literalinclude:: /examples/getting_started/named_tuple_controller.py
+        :caption: views.py
+        :language: python
+        :linenos:
+
+.. important::
+
+  You can choose a serializer per controller, which will give you
+  the freedom to choose the best serializer and model for the job.
+  ``msgspec`` gives you more speed,
+  while ``pydantic`` gives you more flexibility.
 
 
 In this example:
 
-1. We defined regular ``pydantic``, ``msgspec``, or ``attrs`` models
+1. We defined regular ``pydantic``, ``msgspec``, or whatever models
    that we will use for our API
 2. We added two component parsers: one for request's
    :data:`~dmr.components.Body` and one
    for :data:`~dmr.components.Headers`
    which will parse them into the typed models
-   (:class:`pydantic.BaseModel`, :class:`msgspec.Struct`,
-   :func:`attrs.define`, or defined with any other supported way) that we pass
-   to these components as type parameters
+   that we pass to these components as type parameters
 3. Next we created
    a :class:`~dmr.controller.Controller` class
    with :class:`~dmr.plugins.pydantic.PydanticSerializer`
@@ -258,7 +268,7 @@ But, this is too simple for my use-case!
 
 What is great about Django is that it scales.
 You can start with a single file app and scale it up to a full
-featured monolith with scrict context boundaries, DDD, reusable apps, etc.
+featured monolith with strict context boundaries, DDD, reusable apps, etc.
 
 We recommend starting new big projects with
 https://github.com/wemake-services/wemake-django-template

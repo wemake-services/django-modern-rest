@@ -8,6 +8,44 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
+## WIP
+
+AKA "The first compiled version".
+
+This release will focus on better errors, performance, and stability.
+No breaking changes will be made.
+
+### Features
+
+- Added `mypyc` support for compiling parts of the framework
+  to run significantly faster, for example our compiled content
+  negotiation is now 35 times faster then the Django's default one, #202
+  See our https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#mypyc-compilation docs about that
+- Added older Django versions `4.2`, `5.0`, `5.1` official support, #803
+- Added official `NamedTuple` support, #774
+- Added `timezone` and `pydantic-extra-types` dependencies
+  with `[pydantic]` extra, #802
+- Added `exclude_semantic_responses` options, #786
+- Added an option to override `exclude_semantic_responses`
+  and `no_validate_http_spec` settings with `None`
+- Added a new way to resolve annotations for controllers, #787
+
+### Fixes
+
+- Fixed `StreamingValidator` swallowing errors
+  when `validate_events` was `True`, but no event model was resolved, #780
+- Fixed `dataclass` instances serialization with `PydanticSerializer`
+  without `msgspec` json renderer, #795
+- Fixed missing `password` OpenAPI format, #805
+- Fixes incorrect settings validation, #821
+
+### Misc
+
+- Added `QuerySet` tutorial, #792
+- Migrated from `poetry` to `uv` for dependency management
+
+
+
 ## Version 0.4.0 (2026-03-29)
 
 AKA "The first version that I enjoy".
@@ -21,7 +59,7 @@ AKA "The first version that I enjoy".
    It was used to compose different classes with different parsing strategies.
    Since, it was only used for different parsing rules
 
-3. We removed `drm.routing.compose_blueprints` function,
+3. We removed `dmr.routing.compose_blueprints` function,
    because there no `Blueprint`s anymore :)
 
 4. We completely changed our SSE and streaming API, see #736
@@ -179,12 +217,13 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
 - Added `MediaTypeMetadata` metadata item to set required parameters
   for the `MediaType` request body
-  for `Body` and `FileMedata` components, #695 and #698
+  for `Body` and `FileMetadata` components, #695 and #698
 - Added support for Swagger, Redoc, and Scalar CDN configuration, #678
 - Added TraceCov integration for API coverage tracking in test suites,
   including automatic request tracking for `dmr_client` and
   `dmr_async_client`, #735.
 - Added Stoplight Elements UI for OpenAPI documentation, #748
+- Added better `settings` fixture support for `pytest` plugin, #769
 
 ### Bugfixes
 

@@ -12,7 +12,7 @@ from dmr.test import DMRRequestFactory
 
 
 @final
-@dispatch_decorator(login_required())
+@dispatch_decorator(login_required(login_url='./test/login'))
 class _MyController(Controller[PydanticSerializer]):
     def get(self) -> str:
         """Simulates `post` method."""

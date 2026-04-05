@@ -105,7 +105,15 @@ class RequestNegotiator:
 
 
 class ResponseNegotiator:
-    """Selects a correct renderer for a response body."""
+    """
+    Selects a correct renderer for a response body.
+
+    .. versionchanged:: 0.5.0
+        Now it uses a custom algorithm that is x30 times faster
+        (when compiled with :ref:`mypyc`) then the original
+        :meth:`django.http.HttpRequest.get_preferred_type` way we used before.
+
+    """
 
     __slots__ = (
         '_default',
@@ -144,15 +152,13 @@ class ResponseNegotiator:
         # The last configured parser is the most specific one:
         self._default = next(iter(self._renderers.values()))
         # The second one is suitable for errors if it is a stream:
-        self._non_streaming_default = (
-            next(iter(self._non_streaming_renderers.values()))
-            if self._streaming
-            else None
+        self._non_streaming_default = next(
+            iter(self._non_streaming_renderers.values()),
         )
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
-        Negotiates which parser to use for parsing this request.
+        Negotiates which renderer to use for rendering this response.
 
         Based on ``Accept`` header.
 

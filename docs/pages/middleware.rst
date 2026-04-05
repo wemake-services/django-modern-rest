@@ -1,7 +1,7 @@
 Middleware
 ==========
 
-As by our main principle, you can use any default
+As per our main principle, you can use any default
 Django middleware with your API. But, it has several minor problems by default:
 
 1. Any middleware responses won't show up in your schema

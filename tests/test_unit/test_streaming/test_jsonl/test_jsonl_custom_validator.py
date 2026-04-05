@@ -72,7 +72,7 @@ async def test_jsonl_validation(
     )
 
 
-class _UnhandeledValidator(JsonLinesStreamingValidator):
+class _UnhandledValidator(JsonLinesStreamingValidator):
     @override
     def validation_pipeline(self) -> Iterable[JsonLinesPipeline]:
         return (
@@ -91,8 +91,8 @@ class _UnhandeledValidator(JsonLinesStreamingValidator):
         return event
 
 
-class _UnhandeledError(JsonLinesController[PydanticSerializer]):
-    streaming_validator_cls = _UnhandeledValidator
+class _UnhandledError(JsonLinesController[PydanticSerializer]):
+    streaming_validator_cls = _UnhandledValidator
 
     async def get(self) -> AsyncIterator[int]:
         return self._valid_events()
@@ -109,7 +109,7 @@ async def test_jsonl_validation_bubbles_unhandled(
     """Ensures that validation errors bubble up when not handled."""
     request = dmr_async_rf.get('/whatever/')
 
-    response = await dmr_async_rf.wrap(_UnhandeledError.as_view()(request))
+    response = await dmr_async_rf.wrap(_UnhandledError.as_view()(request))
 
     assert isinstance(response, StreamingResponse)
     assert response.streaming

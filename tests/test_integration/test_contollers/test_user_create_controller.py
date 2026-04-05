@@ -25,7 +25,7 @@ def test_user_create_view(
     """Ensure that routes without path parameters work."""
     base_url = reverse('api:controllers:users')
     start_from_query = '' if start_from is None else f'&start_from={start_from}'
-    request_data = {'email': faker.email(), 'age': faker.random_int()}
+    request_data = {'email': faker.email(), 'age': faker.random_int(min=1)}
     response = dmr_client.post(
         f'{base_url}?q=text{start_from_query}',
         headers={'X-API-Token': 'token'},

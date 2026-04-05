@@ -277,6 +277,10 @@ class EndpointMetadata:
     Base class for common endpoint metadata.
 
     Attributes:
+        endpoint_name: Text representation of an endpoint
+            name for better error messages.
+        type_annotations: Unmodified unnotations of the endpoint function,
+            returned by the resolution method.
         responses: Mapping of HTTP method to response description.
             All possible responses that this API can return.
             Used for OpenAPI spec generation and for response validation.
@@ -311,6 +315,8 @@ class EndpointMetadata:
             that are allowed for this endpoint.
         semantic_responses: Should semantic responses
             from different providers be collected?
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -346,6 +352,8 @@ class EndpointMetadata:
 
     """
 
+    endpoint_name: str
+    type_annotations: dict[str, Any]
     responses: dict[HTTPStatus, ResponseSpec]
     validate_responses: bool | None
     method: str
@@ -358,6 +366,7 @@ class EndpointMetadata:
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
+    exclude_semantic_responses: frozenset[HTTPStatus]
     validate_events: bool
 
     # OpenAPI documentation fields:
@@ -383,6 +392,11 @@ class EndpointMetadata:
                 controller_cls,
                 existing_responses,
             )
+            responses = [
+                response
+                for response in responses
+                if response.status_code not in self.exclude_semantic_responses
+            ]
             all_responses.extend(responses)
             existing_responses.update({
                 response.status_code: response for response in responses

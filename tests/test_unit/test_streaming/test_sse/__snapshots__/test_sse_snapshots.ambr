@@ -229,7 +229,7 @@
     "paths": {
       "/api/v1/overridden": {
         "get": {
-          "operationId": "getOverridensseApiV1Overridden",
+          "operationId": "getOverriddensseApiV1Overridden",
           "responses": {
             "200": {
               "description": "OK",

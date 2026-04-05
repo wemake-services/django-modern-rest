@@ -54,6 +54,8 @@ Response, headers and cookies
 .. autoclass:: dmr.cookies.NewCookie
   :members:
 
+.. autofunction:: dmr.cookies.set_cookies
+
 
 Validation
 ----------
@@ -149,6 +151,9 @@ Utilities
   :members:
 
 .. autodata:: dmr.types.EmptyObj
+
+.. autoclass:: dmr.types.AnnotationsInferenceContext
+  :members:
 
 .. autoclass:: dmr.types.TypeVarInference
   :members:

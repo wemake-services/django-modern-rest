@@ -204,6 +204,29 @@ Response handling
 
     >>> DMR_SETTINGS = {Settings.semantic_responses: False}
 
+.. data:: dmr.settings.Settings.exclude_semantic_responses
+
+  Default: ``frozenset()``
+
+  Pass any status code, that you wanna exclude from semantic responses.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from http import HTTPStatus
+
+    >> DMR_SETTINGS = {
+    ...    Settings.exclude_semantic_responses: {
+    ...        HTTPStatus.CONFLICT,
+    ...    },
+    ... }
+
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``exclude_semantic_responses=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all responses back again.
+
 
 Error handling
 --------------
@@ -214,7 +237,7 @@ Error handling
 
   Globally handle all errors in the application.
   You can use real object or string path for the object to be imported.
-  Here's our error handling hieracy:
+  Here's our error handling hierarchy:
 
   1. Per-endpoint with
      :meth:`~dmr.endpoint.Endpoint.handle_error`
@@ -284,6 +307,12 @@ HTTP Spec validation
     ...         HttpSpec.empty_request_body,
     ...     },
     ... }
+
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``no_validate_http_spec=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all validation back again.
 
 
 .. autoclass:: dmr.settings.HttpSpec
@@ -438,6 +467,17 @@ Environment variables
   You can control the size / memory usage with this setting.
 
   Increase if you have a lot of different return types.
+
+.. envvar:: DMR_USE_COMPILED
+
+  Default: ``1``
+
+  We compile some modules to C-extensions with :ref:`mypyc`.
+  If you want to disable the extensions and fallback to pure Python
+  implementation, set this variable to ``0``.
+
+  It is only recommended for debugging.
+  It should be set to ``1`` in production for maximum speed.
 
 
 API Reference

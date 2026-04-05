@@ -27,6 +27,7 @@ class OpenAPIFormat(enum.StrEnum):
     UUID = 'uuid'
     REGEX = 'regex'
     BINARY = 'binary'
+    PASSWORD = 'password'  # noqa: S105
 
 
 @final

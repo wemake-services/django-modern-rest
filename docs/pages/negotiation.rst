@@ -84,8 +84,8 @@ Here's how we select a renderer:
    which is the first specified renderer for the endpoint,
    aka the most specific one
 3. If there's an ``Accept`` header,
-   we use :meth:`django.http.HttpRequest.get_preferred_type` method
-   to match the best accepted type, based on ``'specificity', 'quality'``,
+   we use all renderers specified for this endpoint
+   to match the best accepted type, based on ``quality, specificity``,
    the first match wins
 4. If no renderer fits for the accepted content types, we raise
    :exc:`~dmr.exceptions.ResponseSchemaError`
@@ -156,7 +156,7 @@ going back to the less specific:
         :linenos:
         :emphasize-lines: 6-7
 
-First parsers / renders definition found, starting from the top,
+First parsers / renderers definition found, starting from the top,
 will win and be used for the endpoint.
 
 You can also modify
@@ -188,7 +188,7 @@ And here's how our test ``xml`` parser and renderer are defined:
 Using different schemes for different content types
 ---------------------------------------------------
 
-Sometimes we have to accept different schemes based on the content type.
+Sometimes we have to accept different schemas based on the content type.
 `According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
 :data:`~dmr.components.Body`
 should support different content types.

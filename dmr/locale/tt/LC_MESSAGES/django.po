@@ -1,0 +1,92 @@
+# django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the PACKAGE package.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-30 23:33+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: dmr/components.py:54
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"{cls} юлы field_model={field_model} белән исемсез args={args} юл "
+"параметрларын тыела"
+
+#: dmr/components.py:59
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"Файлларны SupportsFileParsing беркетмәсен хупламаган {parser_name} "
+"белән сүтерергә тырышу"
+
+#: dmr/controller.py:32
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "Ысул {method} тыелган, рөхсәт ителгәннәр ысуллар: {allowed}"
+
+#: dmr/exceptions.py:10
+msgid "Not authenticated"
+msgstr "Аутентификация ясылмаган"
+
+#: dmr/exceptions.py:57
+msgid "Internal server error"
+msgstr "Эчке сервер хатасы"
+
+#: dmr/internal/django.py:49
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"'application/x-www-form-urlencoded' эчтәлек типы булган HTTP сораулары UTF-8 "
+"кодировкасы белән булырга тиеш."
+
+#: dmr/internal/negotiation.py:18
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Кабул ителгән {accepted_types} типлар белән җавап гәүдәсен сериализацияне "
+"ясарга булмый, хуплаган типлар={supported}"
+
+#: dmr/negotiation.py:20
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"{content_type} эчтәлек типы белән сорау гәүдәсен сүтеп булмый, "
+"көтелгән тип={expected}"
+
+#: dmr/security/django_session/auth.py:22
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF уңышсыз: {reason}"
+
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr "BlocklistedJWToken"
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr "BlocklistedJWTokens"
+
+#: dmr/serializer.py:16
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "{target_type} өчен {type} типындагы {value} кыйммәте хупланмый"

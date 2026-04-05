@@ -1,7 +1,7 @@
 Internalization
 ===============
 
-``django-modern-rest`` support optional ``i18n`` feature
+``django-modern-rest`` supports optional ``i18n`` feature
 which is provided by the Django itself.
 
 Docs: https://docs.djangoproject.com/en/stable/topics/i18n/

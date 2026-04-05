@@ -29,9 +29,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
 import django
-import httpx
 import uvicorn
 import xmltodict_rs as xmltodict
+import zapros
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
@@ -246,6 +246,7 @@ class _BaseBuilder:  # noqa: WPS214
         if settings.configured:
             return
 
+        sys.path.insert(1, str(_BASE_DIR / 'django_test_app'))
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
@@ -257,6 +258,8 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
+                'server.apps.model_simple',
+                'server.apps.model_fk',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -282,6 +285,7 @@ class _BaseBuilder:  # noqa: WPS214
                     'NAME': '_build/test.db',
                 },
             },
+            DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
@@ -519,17 +523,21 @@ def _resolve_example_file_for_execution(file_path: Path) -> Path:
 
 def _wait_for_app_startup(port: int, proc: multiprocessing.Process) -> None:
     """Wait for app to start up and become responsive."""
-    for _ in range(100):
-        if proc.exitcode is not None:
-            raise _StartupError(
-                f'App worker exited during startup with {proc.exitcode}',
-            )
-        try:
-            httpx.get(f'http://127.0.0.1:{port}', timeout=0.1)
-        except httpx.TransportError:
-            time.sleep(0.1)
-        else:
-            return
+    with zapros.Client() as client:
+        for _ in range(100):
+            if proc.exitcode is not None:
+                raise _StartupError(
+                    f'App worker exited during startup with {proc.exitcode}',
+                )
+            try:
+                client.get(
+                    f'http://127.0.0.1:{port}',
+                    context={'timeouts': {'connect': 0.1}},
+                )
+            except zapros.ZaprosError:
+                time.sleep(0.1)
+            else:
+                return
     raise _StartupError(f'App failed to come online on port {port}')
 
 

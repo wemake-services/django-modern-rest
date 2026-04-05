@@ -10,20 +10,25 @@ from dmr.test import DMRClient
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:model_simple:user_minimalistic'),
+        reverse('api:model_simple:user_detailed'),
+    ],
+)
 def test_user_create_models_example(
     dmr_client: DMRClient,
     faker: Faker,
+    *,
+    url: str,
 ) -> None:
     """Ensure that model route works."""
     request_data = {
         'email': faker.email(),
-        'role': {'name': faker.name()},
-        'tags': [{'name': faker.name()}, {'name': faker.name()}],
+        'customer_service_uid': faker.uuid4(),
     }
-    response = dmr_client.post(
-        reverse('api:models_example:user_model_create'),
-        data=request_data,
-    )
+    response = dmr_client.post(url, data=request_data)
 
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers['Content-Type'] == 'application/json'
@@ -33,33 +38,46 @@ def test_user_create_models_example(
         'created_at': IsDatetime(iso_string=True),
     }
 
+    response = dmr_client.get(url)
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    response_json = response.json()
+    assert len(response_json) == 1
+    assert response_json[0] == {
+        **request_data,
+        'id': IsPositiveInt,
+        'created_at': IsDatetime(iso_string=True),
+    }
+
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:model_simple:user_minimalistic'),
+        reverse('api:model_simple:user_detailed'),
+    ],
+)
 def test_user_create_unique_email_error(
     dmr_client: DMRClient,
     faker: Faker,
+    *,
+    url: str,
 ) -> None:
     """Ensure that unique email error is handled."""
-    email = faker.email()
     request_data = {
-        'email': email,
-        'role': {'name': faker.name()},
-        'tags': [{'name': faker.name()}],
+        'email': faker.email(),
+        'customer_service_uid': faker.uuid4(),
     }
-    dmr_client.post(
-        reverse('api:models_example:user_model_create'),
-        data=request_data,
-    )
-    response = dmr_client.post(
-        reverse('api:models_example:user_model_create'),
-        data=request_data,
-    )
+    dmr_client.post(url, data=request_data)
+    response = dmr_client.post(url, data=request_data)
 
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == snapshot({
         'detail': [
             {
-                'msg': 'User email must be unique',
+                'msg': 'User `email` and `customer_service_uid` must be unique',
                 'type': 'value_error',
             },
         ],
