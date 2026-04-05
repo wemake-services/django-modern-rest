@@ -76,22 +76,24 @@ dmr = "dmr_pytest"
 
 
 [dependency-groups]
+# This is a special group, it has special rules.
+# It is run in `cibuildwheel` and must not have a complex version format.
 unit-test = [
-  "django",
-  "pytest",
-  "pytest-cov",
-  "covdefaults",
-  "pytest-randomly",
-  "pytest-django",
-  "pytest-asyncio",
-  "pytest-custom-exit-code",
-  "pytest-freezer",
-  "dirty-equals",
-  "faker",
-  "inline-snapshot",
-  "syrupy",
-  "polyfactory",
-  "xmltodict-rs",
+  "django<6",
+  "pytest<10",
+  "pytest-cov<8",
+  "covdefaults<3",
+  "pytest-randomly<5",
+  "pytest-django<5",
+  "pytest-asyncio<2",
+  "pytest-custom-exit-code<0.4",
+  "pytest-freezer<0.5",
+  "dirty-equals<0.12",
+  "faker<41",
+  "inline-snapshot<0.33",
+  "syrupy<6",
+  "polyfactory<4",
+  "xmltodict-rs<0.14",
 ]
 dev = [
   { include-group = "unit-test" },
