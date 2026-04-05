@@ -25,6 +25,16 @@
                 }
               }
             },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {

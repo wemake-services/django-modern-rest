@@ -520,11 +520,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return resolve_setting(Settings.semantic_responses)  # type: ignore[no-any-return]
 
     def _build_exclude_semantic_responses(self) -> Set[int]:
-        if self.payload and self.payload.exclude_semantic_responses:
-            return self.payload.exclude_semantic_responses
-        if self.controller_cls.exclude_semantic_responses:
-            return self.controller_cls.exclude_semantic_responses
-        return resolve_setting(Settings.exclude_semantic_responses)  # type: ignore[no-any-return]
+        payload_excluded_responses: Set[int] = (
+            (self.payload.exclude_semantic_responses or set())
+            if self.payload
+            else set()
+        )
+        return frozenset((
+            *payload_excluded_responses,
+            *self.controller_cls.exclude_semantic_responses,
+            *resolve_setting(Settings.no_validate_http_spec),
+        ))
 
     def _build_description(self) -> tuple[str | None, str | None]:
         """
