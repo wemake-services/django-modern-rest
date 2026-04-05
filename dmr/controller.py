@@ -25,7 +25,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import infer_type_args
+from dmr.types import AnnotationsInferenceContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -99,6 +99,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             exact serializer type.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
+        annotations_context: Inference context to call
+            :func:`typing.get_type_hints` for this controller.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
             Is ``True`` by default.
@@ -138,6 +140,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     streaming: ClassVar[bool] = False
+    annotations_context: ClassVar[AnnotationsInferenceContext] = (
+        AnnotationsInferenceContext()
+    )
 
     # OpenAPI:
     summary: ClassVar[str | None] = None

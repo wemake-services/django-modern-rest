@@ -24,7 +24,8 @@ _TypeMapResult: TypeAlias = tuple[
 
 
 class SerializerContext:
-    """Parse and bind request components for a controller.
+    """
+    Parse and bind request components for a controller.
 
     This context collects raw data for all registered components, validates
     the combined payload in a single call using a cached TypedDict model,
@@ -36,6 +37,7 @@ class SerializerContext:
             not allow implicit type conversions.
             Defaults to ``None``, which means that we decide
             on a per-field basis if it is set, if not then on a per-model basis.
+
     """
 
     # Public API:
@@ -60,12 +62,13 @@ class SerializerContext:
         self,
         func: Callable[..., Any],
         controller_cls: type['Controller[BaseSerializer]'],
+        type_annotations: dict[str, Any],
     ) -> None:
         """Eagerly build context for a given controller and serializer."""
         self.component_parsers = self.component_builder_cls(
             func,
             controller_cls,
-        )()
+        )(type_annotations)
 
         specs, type_map, content_mapping = self._build_type_map(func)
         self._specs = specs

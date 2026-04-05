@@ -279,6 +279,8 @@ class EndpointMetadata:
     Attributes:
         endpoint_name: Text representation of an endpoint
             name for better error messages.
+        type_annotations: Unmodified unnotations of the endpoint function,
+            returned by the resolution method.
         responses: Mapping of HTTP method to response description.
             All possible responses that this API can return.
             Used for OpenAPI spec generation and for response validation.
@@ -351,6 +353,7 @@ class EndpointMetadata:
     """
 
     endpoint_name: str
+    type_annotations: dict[str, Any]
     responses: dict[HTTPStatus, ResponseSpec]
     validate_responses: bool | None
     method: str

@@ -21,13 +21,14 @@ No breaking changes will be made.
   to run significantly faster, for example our compiled content
   negotiation is now 35 times faster then the Django's default one, #202
   See our https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#mypyc-compilation docs about that
-- Added older Django versions `4.2`, `5.0`, `5.1` support, #803
+- Added older Django versions `4.2`, `5.0`, `5.1` official support, #803
 - Added official `NamedTuple` support, #774
 - Added `timezone` and `pydantic-extra-types` dependencies
   with `[pydantic]` extra, #802
 - Added `exclude_semantic_responses` options, #786
 - Added an option to override `exclude_semantic_responses`
   and `no_validate_http_spec` settings with `None`
+- Added a new way to resolve annotations for controllers, #787
 
 ### Fixes
 
@@ -36,6 +37,7 @@ No breaking changes will be made.
 - Fixed `dataclass` instances serialization with `PydanticSerializer`
   without `msgspec` json renderer, #795
 - Fixed missing `password` OpenAPI format, #805
+- Fixes incorrect settings validation, #821
 
 ### Misc
 

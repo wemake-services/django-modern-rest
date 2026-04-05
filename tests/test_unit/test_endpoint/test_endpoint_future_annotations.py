@@ -9,7 +9,7 @@ import pytest
 from dmr import Controller
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.types import parse_return_annotation
+from dmr.types import AnnotationsInferenceContext
 
 if TYPE_CHECKING:
     from django.http import HttpResponse
@@ -49,14 +49,17 @@ def test_solvable_response_annotations() -> None:
     assert metadata.responses[HTTPStatus.OK].return_type == _RegularAlias
 
 
-def test_parse_return_annotation() -> None:
-    """Ensure that parse_return_annotation works correctly."""
-    assert (
-        parse_return_annotation(test_solvable_response_annotations)
-        is types.NoneType
-    )
+def test_annotation_inference_context() -> None:
+    """Ensure that AnnotationsInferenceContext works correctly."""
+    assert AnnotationsInferenceContext()(
+        test_solvable_response_annotations,
+    ) == {'return': types.NoneType}
 
     def some_function() -> 'Undefined': ...  # type: ignore[name-defined]  # noqa: F821, UP037
 
     with pytest.raises(UnsolvableAnnotationsError, match='cannot be solved'):
-        parse_return_annotation(some_function)
+        AnnotationsInferenceContext()(some_function)
+
+    assert AnnotationsInferenceContext(globalns={'Undefined': int})(
+        some_function,
+    ) == {'return': int}

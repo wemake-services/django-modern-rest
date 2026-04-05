@@ -114,9 +114,11 @@ class Endpoint:  # noqa: WPS214
             because its instance is reused for all requests.
 
         """
+        type_annotations = controller_cls.annotations_context(func)
         self._serializer_context = self.serializer_context_cls(
             func,
             controller_cls,
+            type_annotations,
         )
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
@@ -136,6 +138,7 @@ class Endpoint:  # noqa: WPS214
             metadata_cls=self.metadata_cls,
             response_modification_cls=self.response_modification_cls,
             component_parsers=self._serializer_context.component_parsers,
+            type_annotations=type_annotations,
         )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
