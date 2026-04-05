@@ -4,7 +4,7 @@ from dmr.streaming.jsonl import Json
 
 
 # Correct:
-async def _valid_events() -> AsyncIterator[Json]:
+async def valid_events() -> AsyncIterator[Json]:
     yield 1
     yield 5.0
     yield 'a'
@@ -15,7 +15,7 @@ async def _valid_events() -> AsyncIterator[Json]:
     yield {'key': {'nested': [1, None]}}
 
 
-async def _wrong_events() -> AsyncIterator[Json]:
+async def wrong_events() -> AsyncIterator[Json]:
     yield object()  # type: ignore[misc]
     yield 1j  # type: ignore[misc]
     yield b''  # type: ignore[misc]

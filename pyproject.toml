@@ -280,7 +280,7 @@ flake8-quotes.inline-quotes = "single"
 mccabe.max-complexity = 6
 pydocstyle.convention = "google"
 
-# For `django_test_app` only:
+# For `django_test_app` and `docs` only:
 isort.known-first-party = ["server", "examples"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -299,19 +299,19 @@ isort.known-first-party = ["server", "examples"]
 "docs/examples/**/*.py" = ["D1", "S1"]
 # Allow benchmarks to not have docs and do scripting:
 "benchmarks/**/*.py" = ["D", "S"]
+"typesafety/**/*.py" = ["D"]
 
 
 [tool.pytest.ini_options]
-# Django options:
-# https://pytest-django.readthedocs.io/en/latest/
-DJANGO_SETTINGS_MODULE = "server.settings"
-
 # pytest config: http://doc.pytest.org/en/latest/customize.html
-
 # Strict `@xfail` by default:
 xfail_strict = true
 # Fail on warnings:
 filterwarnings = ["error"]
+
+# Django options:
+# https://pytest-django.readthedocs.io/en/latest/
+DJANGO_SETTINGS_MODULE = "server.settings"
 
 # PYTHONPATH configuration:
 pythonpath = ["django_test_app"]
@@ -418,52 +418,48 @@ exclude = [
   # It has a lot of ugly code:
   "dmr/internal/django.py",
 ]
-strict = ["dmr/**/*"]
+strict = ["dmr/**/*", "typesafety/**/*"]
 venvPath = "."
 venv = ".venv"
 
 
 [tool.pyrefly]
-ignore-missing-imports = ["*"]
+# Docs: https://pyrefly.org
 project-includes = ["dmr", "typesafety"]
-# TODO: refactor SSE API
-project-excludes = ["typesafety/assert_type/test_sse/test_sse_decorator.py"]
 
 
 [tool.codespell]
 # codespell configuration: https://github.com/codespell-project/codespell
 skip = [
-    "__pycache__",
-    "_build",
-    ".mypy_cache",
-    "swagger-*.js",
-    "dmr/static/*",
-    "*.js",
-    "*.css",
-    "*.min.*",
-    "*.msgpack",
-    "dmr/locale/**",
-    "*.lock",
-    "benchmarks/*.json",
+  "__pycache__",
+  "_build",
+  ".mypy_cache",
+  "swagger-*.js",
+  "dmr/static/*",
+  "*.js",
+  "*.css",
+  "*.min.*",
+  "*.msgpack",
+  "dmr/locale/**",
+  "*.lock",
+  "benchmarks/*.json",
 ]
 
 
-[tool.typos.files]
+[tool.typos]
 # typos configuration: https://github.com/crate-ci/typos/
-extend-exclude = [
-    "__pycache__",
-    "_build",
-    ".mypy_cache",
-    "swagger-*.js",
-    "dmr/static",
-    "*.js",
-    "*.css",
-    "*.min.*",
-    "*.msgpack",
-    "dmr/locale",
-    "*.lock",
-    "benchmarks/*.json",
+files.extend-exclude = [
+  "__pycache__",
+  "_build",
+  ".mypy_cache",
+  "swagger-*.js",
+  "dmr/static",
+  "*.js",
+  "*.css",
+  "*.min.*",
+  "*.msgpack",
+  "dmr/locale",
+  "*.lock",
+  "benchmarks/*.json",
 ]
-
-[tool.typos.default.extend-identifiers]
-_SerT = "_SerT"
+default.extend-identifiers = { _SerT = "_SerT" }

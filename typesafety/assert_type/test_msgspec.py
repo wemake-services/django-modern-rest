@@ -19,7 +19,7 @@ class _QueryModel(msgspec.Struct):
     search: str
 
 
-class _MyController(Controller[MsgspecSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     def get(
         self,
         parsed_body: Body[dict[str, int]],

@@ -23,7 +23,7 @@ class _Model(pydantic.BaseModel):
     field: str
 
 
-class _CorrectModifyController(Controller[PydanticSerializer]):
+class CorrectModifyController(Controller[PydanticSerializer]):
     @modify(status_code=HTTPStatus.OK, description='Test GET endpoint')
     def get(self) -> str:
         return 'Done'
@@ -57,7 +57,7 @@ class _CorrectModifyController(Controller[PydanticSerializer]):
         return 1
 
 
-class _CorrectValidateController(Controller[PydanticSerializer]):
+class CorrectValidateController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         description='Test get endpoint',
@@ -86,7 +86,7 @@ class _CorrectValidateController(Controller[PydanticSerializer]):
         return JsonResponse([])
 
 
-class _WrongModifyController(Controller[PydanticSerializer]):
+class WrongModifyController(Controller[PydanticSerializer]):
     @modify(status_code=HTTPStatus.OK)  # type: ignore[deprecated]
     def get(self) -> JsonResponse:
         return JsonResponse([])
@@ -100,7 +100,7 @@ class _WrongModifyController(Controller[PydanticSerializer]):
         return HttpResponse()
 
 
-class _WrongValidateController(Controller[PydanticSerializer]):
+class WrongValidateController(Controller[PydanticSerializer]):
     @validate(  # type: ignore[type-var]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
     )
@@ -133,7 +133,7 @@ class _WrongValidateController(Controller[PydanticSerializer]):
         return JsonResponse([])
 
 
-class _WrongAuthMixedController(Controller[PydanticSerializer]):
+class WrongAuthMixedController(Controller[PydanticSerializer]):
     @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
     def get(self) -> str:
         return 'mixed'
