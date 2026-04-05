@@ -84,8 +84,8 @@ Here's how we select a renderer:
    which is the first specified renderer for the endpoint,
    aka the most specific one
 3. If there's an ``Accept`` header,
-   we use :meth:`django.http.HttpRequest.get_preferred_type` method
-   to match the best accepted type, based on ``'specificity', 'quality'``,
+   we use all renderers specified for this endpoint
+   to match the best accepted type, based on ``quality, specificity``,
    the first match wins
 4. If no renderer fits for the accepted content types, we raise
    :exc:`~dmr.exceptions.ResponseSchemaError`

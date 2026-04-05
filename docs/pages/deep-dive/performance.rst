@@ -71,7 +71,7 @@ Why so fast?
 - We utilize :func:`msgspec.json.decode` and :func:`msgspec.json.encode`
   to parse json, it is the fastest json parsing tool in Python land
 - We can support :class:`msgspec.Struct` models, which are faster than pydantic
-- We compile some hot paths of the framework
+- We :ref:`compile <mypyc>` some hot paths of the framework
   with `mypyc <https://mypyc.readthedocs.io/en/latest/>`_ to C code,
   while keeping fallback Python code in-place
 - We provide :func:`django.urls.path` drop-in :doc:`../routing` replacement
@@ -85,6 +85,7 @@ Why so fast?
 
 Async
 ~~~~~
+
 .. chartjs::
 
   {
@@ -150,6 +151,72 @@ so it can be on par (or even faster!)
 with the fastest python web frameworks in existence.
 
 While keeping 100% of compatibility with the older libs and tools.
+
+
+.. _mypyc:
+
+mypyc compilation
+-----------------
+
+We compile several parts of the framework with ``mypyc``.
+What does it mean?
+
+1. We still write all code in good old pure Python
+2. We add annotations to all code anyway
+3. We then compile some modules from annotated Python to C with ``mypyc``
+4. It starts to work from 4 to 10 times faster for free
+5. We ship pre-built wheels with the built binaries for multiple platforms
+6. For platforms with binary deps, it is possible to disable binary parts
+   and switch to Python code with :envvar:`DMR_USE_COMPILED` set to ``0``,
+   for example when you need to debug something
+7. For unsupported platforms / ``sdist`` installs,
+   we still ship pure Python code
+
+What do we compile?
+
+We only compile code that makes sense to be compiled.
+Criteria:
+
+1. Does not have IO
+2. Does not have a lot of compiled / uncompiled context switches. For example,
+   compiled code that frequently calls Python code
+   will most like be slower in the result
+3. Is executed on the hot path. Not in import time,
+   but in request's handing phase
+4. Is rather simple and does not have a lot of magic,
+   otherwise - compilation will not have much effect
+5. Does not have complex typing
+6. Have no external dependencies
+7. It shows a decent speedup in a micro-benchmark
+
+Compiled features
+~~~~~~~~~~~~~~~~~
+
+- ``Accept`` header parsing and content negotiation
+
+Supported platforms
+~~~~~~~~~~~~~~~~~~~
+
+Wheels are available for:
+
+- Linux (via both the manylinux and musllinux standards)
+- macOS (both x86_64 and aarch64)
+- 64-bit versions of Windows (AMD only, ARM is not supported at the moment)
+
+We support wheels for all supported Python versions.
+
+``django-modern-rest`` is a pure Python project, so any "unsupported" platforms
+will just fall back to the slower pure Python wheel available on PyPI.
+
+If you want to force
+`sdist <https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist>`_
+build, pass ``--no-binary django-modern-rest``,
+however this might only be useful in very strange cases.
+
+Building your own wheels from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run ``make wheel`` to run the compilation.
 
 
 Technical details

@@ -105,7 +105,15 @@ class RequestNegotiator:
 
 
 class ResponseNegotiator:
-    """Selects a correct renderer for a response body."""
+    """
+    Selects a correct renderer for a response body.
+
+    .. versionchanged:: 0.5.0
+        Now it uses a custom algorithm that is x30 times faster
+        (when compiled with :ref:`mypyc`) then the original
+        :meth:`django.http.HttpRequest.get_preferred_type` way we used before.
+
+    """
 
     __slots__ = (
         '_default',

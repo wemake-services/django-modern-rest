@@ -439,6 +439,17 @@ Environment variables
 
   Increase if you have a lot of different return types.
 
+.. envvar:: DMR_USE_COMPILED
+
+  Default: ``1``
+
+  We compile some modules to C-extensions with :ref:`mypyc`.
+  If you want to disable the extensions and fallback to pure Python
+  implementation, set this variable to ``0``.
+
+  It is only recommended for debugging.
+  It should be set to ``1`` in production for maximum speed.
+
 
 API Reference
 -------------

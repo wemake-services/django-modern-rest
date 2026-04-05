@@ -55,6 +55,11 @@ def clean_modules() -> _CleanModules:
             ['text/plain', 'text/html'],
             'text/plain',
         ),
+        (
+            'text/*;q=0.3, text/html;q=0.7, text/html;level=1, */*;q=0.5',
+            ['text/plain', 'text/html'],
+            'text/html',
+        ),
         ('text/*,text/html', ['text/plain', 'text/html'], 'text/html'),
     ],
 )

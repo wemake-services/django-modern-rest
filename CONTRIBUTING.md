@@ -1,5 +1,6 @@
 # How to contribute
 
+
 ## Dependencies
 
 We use [uv](https://github.com/astral-sh/uv) to manage the dependencies.
@@ -10,26 +11,28 @@ To install them you would need to run `sync` command:
 uv sync --all-extras --all-groups
 ```
 
-### Compilation with mypyc
-
-We also ship some optimized C-extensions together with our Python code.
-If you want to build them run:
-
-```bash
-make mypyc
-```
-
-This will build `dmr.compiled` extensions
-with [`mypyc`](https://mypyc.readthedocs.io/en/latest/).
-
 ### venv
 
 To activate your `virtualenv`
 run `source .venv/bin/activate`.
 
+### Compilation with mypyc, building a wheel
+
+We also ship some optimized C-extensions together with our Python code.
+If you want to build them run:
+
+```bash
+make wheel
+```
+
+This will build `dmr.compiled` extensions
+with [`mypyc`](https://mypyc.readthedocs.io/en/latest/).
+
+
 ## One magic command
 
-Run `make test` to run everything we have!
+After you installed the deps, run `make test` to run everything we have!
+
 
 ## Tests
 
@@ -47,6 +50,7 @@ make lint
 
 These steps are mandatory during the CI.
 
+
 ## Documentation
 
 To build docs locally:
@@ -61,6 +65,7 @@ running examples, force the start method explicitly:
 ```bash
 DMR_SPAWN_METHOD=spawn uv run make -C docs clean html
 ```
+
 
 ## Submitting your code
 
@@ -93,6 +98,7 @@ Before submitting your code please do the following steps:
 5. Update `CHANGELOG.md` with a quick summary of your changes
 6. Run `make test` again to make sure it is still working
 
+
 ## Translations
 
 We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
@@ -118,6 +124,7 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
    make translations
    ```
 3. Commit both `django.po` and `django.mo` files
+
 
 ## Other help
 
