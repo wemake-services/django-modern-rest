@@ -64,7 +64,7 @@ class SettingsValidator:
                     str(setting_key): (
                         # For some reason `pydantic` does not validate
                         # `set[str]` against `collections.abc.Set[str]`
-                        frozenset(setting_value)
+                        frozenset(setting_value)  # pyright: ignore[reportUnknownArgumentType]
                         if isinstance(setting_value, set)
                         else setting_value
                     )
