@@ -158,7 +158,7 @@ def test_empty_request_body_no_body_method_works() -> None:
 
 
 def test_empty_request_body_override() -> None:
-    """Ensure that validation can be overriden."""
+    """Ensure that validation can be overridden."""
     with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
         class _Controller(Controller[PydanticSerializer]):

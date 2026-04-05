@@ -10,7 +10,7 @@ but with a deprecation period.
 
 ## WIP
 
-AKA "The first comiled version".
+AKA "The first compiled version".
 
 This release will focus on better errors, performance, and stability.
 No breaking changes will be made.
