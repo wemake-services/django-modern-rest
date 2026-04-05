@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, ClassVar, Literal, final
+from typing import ClassVar, Literal, final
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
