@@ -16,7 +16,7 @@ for the :term:`controller` definition.
 
     .. code:: python
 
-      >>> from dmr.plugins.msgspec import MsgspecSerializer
+      from dmr.plugins.msgspec import MsgspecSerializer
 
   .. tab:: pydantic
 
@@ -28,7 +28,7 @@ for the :term:`controller` definition.
 
     .. code:: python
 
-      >>> from dmr.plugins.pydantic import PydanticSerializer
+      from dmr.plugins.pydantic import PydanticSerializer
 
 
 Customizing serializers
