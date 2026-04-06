@@ -12,4 +12,4 @@ class SyncMetaController(
 
 
 # run: {"controller": "SyncMetaController", "method": "options", "url": "/api/settings/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
-# openapi: {"controller": "SyncMetaController", "openapi_url": "/docs/openapi.json/"}  # noqa: E501
+# openapi: {"controller": "SyncMetaController", "openapi_url": "/docs/openapi.json/"}  # noqa: E501, ERA001

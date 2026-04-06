@@ -12,4 +12,4 @@ class AsyncMetaController(
 
 
 # run: {"controller": "AsyncMetaController", "method": "options", "url": "/api/settings/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
-# openapi: {"controller": "AsyncMetaController", "openapi_url": "/docs/openapi.json/"}  # noqa: E501
+# openapi: {"controller": "AsyncMetaController", "openapi_url": "/docs/openapi.json/"}  # noqa: E501, ERA001

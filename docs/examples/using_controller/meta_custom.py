@@ -34,4 +34,4 @@ class SettingsController(Controller[MsgspecSerializer]):
 
 
 # run: {"controller": "SettingsController", "method": "options", "url": "/api/settings/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
-# openapi: {"controller": "SettingsController", "openapi_url": "/docs/openapi.json/"}  # noqa: E501
+# openapi: {"controller": "SettingsController", "openapi_url": "/docs/openapi.json/"}  # noqa: E501, ERA001
