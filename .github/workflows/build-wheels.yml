@@ -7,6 +7,12 @@ on:
     branches:
       - master
   pull_request:
+    paths:
+      - "dmr/**"
+      - "tests/test_unit/**"
+      - ".github/workflows/build-wheels.yml"
+      - "pyproject.toml"
+      - "uv.lock"
   workflow_dispatch:
 
 concurrency:

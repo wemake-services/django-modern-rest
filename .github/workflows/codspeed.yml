@@ -5,6 +5,12 @@ on:
     branches:
       - master
   pull_request:
+    paths:
+      - "dmr/**"
+      - "benchmarks/**"
+      - ".github/workflows/codspeed.yml"
+      - "pyproject.toml"
+      - "uv.lock"
   workflow_dispatch:
 
 concurrency:
