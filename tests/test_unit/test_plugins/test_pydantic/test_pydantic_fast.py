@@ -1,5 +1,6 @@
 import json
 from http import HTTPStatus
+from typing import Any
 
 import pydantic
 import pytest
@@ -66,6 +67,26 @@ def test_body_error(
     })
 
 
+def test_invalid_json(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that body validation works."""
+    request = dmr_rf.put('/whatever/', data=b'{$(#')
+
+    response = _UserController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Invalid JSON: key must be a string at line 1 column 2',
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 class _WrongUserController(Controller[PydanticFastSerializer]):
     def get(self) -> _User:
         return {}  # type: ignore[return-value]
@@ -91,6 +112,27 @@ def test_response_error(
             },
             {'msg': 'Field required', 'loc': ['age'], 'type': 'value_error'},
         ],
+    })
+
+
+class _UnserializableController(Controller[PydanticFastSerializer]):
+    def get(self) -> Any:
+        return object()  # type: ignore[return-value]
+
+
+def test_unserializable_error(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures that unserializable objects raise."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _UnserializableController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Internal server error'}],
     })
 
 

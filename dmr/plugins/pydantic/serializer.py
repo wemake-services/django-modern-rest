@@ -19,7 +19,7 @@ from typing_extensions import TypedDict, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
-from dmr.exceptions import DataRenderingError
+from dmr.exceptions import DataParsingError, DataRenderingError
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
@@ -280,7 +280,10 @@ class PydanticFastSerializer(PydanticSerializer):
 
         *renderer* parameter is always ignored.
         """
-        return _get_cached_type_adapter(Any).dump_json(structure)
+        try:
+            return _get_cached_type_adapter(Any).dump_json(structure)
+        except pydantic_core.PydanticSerializationError as exc:
+            raise DataRenderingError(str(exc)) from exc
 
     @classmethod
     @override
@@ -297,7 +300,10 @@ class PydanticFastSerializer(PydanticSerializer):
 
         *parser* parameter is always ignored.
         """
-        return _get_cached_type_adapter(Any).validate_json(buffer)
+        try:
+            return _get_cached_type_adapter(Any).validate_json(buffer)
+        except pydantic_core.ValidationError as exc:
+            raise DataParsingError(exc.errors()[0]['msg']) from exc
 
     @classmethod
     @override
