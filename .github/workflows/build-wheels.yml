@@ -11,6 +11,7 @@ on:
       - "dmr/**"
       - "tests/test_unit/**"
       - ".github/workflows/build-wheels.yml"
+      - ".github/workflows/*.sh"
       - "pyproject.toml"
       - "uv.lock"
   workflow_dispatch:
