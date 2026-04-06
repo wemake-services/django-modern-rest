@@ -13,5 +13,8 @@ from dmr.plugins.pydantic.serializer import (
     PydanticEndpointOptimizer as PydanticEndpointOptimizer,
 )
 from dmr.plugins.pydantic.serializer import (
+    PydanticFastSerializer as PydanticFastSerializer,
+)
+from dmr.plugins.pydantic.serializer import (
     PydanticSerializer as PydanticSerializer,
 )

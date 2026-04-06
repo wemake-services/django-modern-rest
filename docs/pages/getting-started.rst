@@ -12,23 +12,23 @@ Works for:
 
 .. tabs::
 
-    .. tab:: :iconify:`material-icon-theme:uv` uv
+  .. tab:: :iconify:`material-icon-theme:uv` uv
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            uv add django-modern-rest
+      uv add django-modern-rest
 
-    .. tab:: :iconify:`devicon:poetry` poetry
+  .. tab:: :iconify:`devicon:poetry` poetry
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            poetry add django-modern-rest
+      poetry add django-modern-rest
 
-    .. tab:: :iconify:`devicon:pypi` pip
+  .. tab:: :iconify:`devicon:pypi` pip
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            pip install django-modern-rest
+      pip install django-modern-rest
 
 
 Extras for different serializers:
@@ -43,8 +43,7 @@ Extras for different features:
 - ``'django-modern-rest[jwt]'`` for
   `jwt <https://pyjwt.readthedocs.io>`_ support
 - ``'django-modern-rest[openapi]'`` for
-  `OpenAPI schema validation <https://github.com/python-openapi/openapi-spec-validator>`_,
-  ``yaml`` view for OpenAPI schema,
+  `OpenAPI schema validation <https://github.com/python-openapi/openapi-spec-validator>`_
   and better examples generation
 
 
@@ -109,67 +108,73 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      We support :class:`msgspec.Struct`
-      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    We support :class:`msgspec.Struct`
+    via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
 
-      .. literalinclude:: /examples/getting_started/msgspec_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/getting_started/msgspec_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      We support :class:`pydantic.BaseModel`
-      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    We support :class:`pydantic.BaseModel`
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      .. literalinclude:: /examples/getting_started/pydantic_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. tip::
 
-    .. tab:: attrs
+      If you only use ``json`` :doc:`parsers and renderers <negotiation>`,
+      it would be faster to use
+      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` instead.
 
-      We support :func:`attrs.define`
-      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    .. literalinclude:: /examples/getting_started/pydantic_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/attrs_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
+  .. tab:: attrs
 
-    .. tab:: dataclasses
+    We support :func:`attrs.define`
+    via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
 
-      We support :func:`dataclasses.dataclass` via both
-      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    .. literalinclude:: /examples/getting_started/attrs_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/dataclasses_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
+  .. tab:: dataclasses
 
-    .. tab:: TypedDict
+    We support :func:`dataclasses.dataclass` via both
+    :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      We support :class:`typing.TypedDict` via both
-      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    .. literalinclude:: /examples/getting_started/dataclasses_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/typed_dict_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
+  .. tab:: TypedDict
 
-    .. tab:: NamedTuple
+    We support :class:`typing.TypedDict` via both
+    :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      We support :class:`typing.NamedTuple`
-      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    .. literalinclude:: /examples/getting_started/typed_dict_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/named_tuple_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
+  .. tab:: NamedTuple
+
+    We support :class:`typing.NamedTuple`
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+
+    .. literalinclude:: /examples/getting_started/named_tuple_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
 .. important::
 

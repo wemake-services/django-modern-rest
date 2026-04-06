@@ -10,6 +10,11 @@ but with a deprecation period.
 
 ## WIP
 
+### Features
+
+- Added `PydanticFastSerializer` to serialize and deserialize ``json``
+  objects directly, #830
+
 ### Fixes
 
 - Fixed package metadata, #824

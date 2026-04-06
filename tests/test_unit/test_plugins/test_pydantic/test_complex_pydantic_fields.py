@@ -12,7 +12,11 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import ModelDumpKwargs, PydanticSerializer
+from dmr.plugins.pydantic import (
+    ModelDumpKwargs,
+    PydanticFastSerializer,
+    PydanticSerializer,
+)
 from dmr.test import DMRRequestFactory
 
 
@@ -26,19 +30,24 @@ class _BodyModel(pydantic.BaseModel):
     extra: pydantic.Json[Any]
 
 
-@final
-class _ComplexFieldsController(
-    Controller[PydanticSerializer],
-):
-    def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
-        return parsed_body
-
-
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
 def test_complex_pydantic_serialization(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
+    *,
+    serializer: type[PydanticSerializer],
 ) -> None:
     """Ensures by default all complex fields work."""
+
+    class _ComplexFieldsController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
+            return parsed_body
+
     request_data = {
         'uid': uuid.uuid4(),
         'email': faker.email(),
@@ -219,15 +228,20 @@ def test_complex_pydantic_out_object(
         (tuple[str, ...], ('a', 'b')),
     ],
 )
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
 def test_complex_pydantic_out_valid_object(
     dmr_rf: DMRRequestFactory,
     *,
     typ: Any,
     return_value: Any,
+    serializer: type[PydanticSerializer],
 ) -> None:
     """Ensures by most builtin types work."""
 
-    class _TypeOutputController(Controller[PydanticSerializer]):
+    class _TypeOutputController(Controller[serializer]):  # type: ignore[valid-type]
         def get(self) -> typ:  # pyright: ignore[reportInvalidTypeForm]
             return return_value
 

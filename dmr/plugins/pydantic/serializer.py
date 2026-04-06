@@ -253,6 +253,63 @@ class PydanticSerializer(BaseSerializer):
         )
 
 
+class PydanticFastSerializer(PydanticSerializer):
+    """
+    Fast pydantic serializer for cases when you only work with json.
+
+    Does not use ``parser`` and ``renderer`` passed objects, does not use
+    :meth:`dmr.plugins.pyndatic.PydanticSerializer.serialize_hook` and
+    :meth:`dmr.plugins.pyndatic.PydanticSerializer.deserialize_hook`
+    method.
+
+    Is built for optimiziations only, use with caution.
+
+    Only works with ``application/json`` content type.
+
+    .. versionadded:: 0.6.0
+
+        See :issue:`830`.
+
+    """
+
+    @classmethod
+    @override
+    def serialize(cls, structure: Any, *, renderer: Renderer) -> bytes:
+        """
+        Fast way to serializer pyndatic models into json bytestring.
+
+        *renderer* parameter is always ignored.
+        """
+        return _get_cached_type_adapter(Any).dump_json(structure)
+
+    @classmethod
+    @override
+    def deserialize(
+        cls,
+        buffer: Raw,
+        *,
+        parser: Parser,
+        request: HttpRequest,
+        model: Any,
+    ) -> Any:
+        """
+        Fast way to serializer pyndatic models into json bytestring.
+
+        *parser* parameter is always ignored.
+        """
+        return _get_cached_type_adapter(model).validate_json(buffer)
+
+    @classmethod
+    @override
+    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+        """
+        Is this parser or renderer supported?
+
+        We only support ``json`` parsers and renderers.
+        """
+        return pluggable.content_type == 'application/json'
+
+
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
     """

@@ -194,6 +194,9 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.PydanticSerializer
   :members:
 
+.. autoclass:: dmr.plugins.pydantic.PydanticFastSerializer
+  :members:
+
 .. autoclass:: dmr.plugins.pydantic.serializer.PydanticEndpointOptimizer
   :members:
 

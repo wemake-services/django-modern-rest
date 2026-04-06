@@ -12,17 +12,23 @@ for the :term:`controller` definition.
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. code:: python
+    .. code:: python
 
-        from dmr.plugins.msgspec import MsgspecSerializer
+      >>> from dmr.plugins.msgspec import MsgspecSerializer
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. code:: python
+    .. tip::
 
-        from dmr.plugins.pydantic import PydanticSerializer
+      If you only use ``json`` :doc:`parsers and renderers <negotiation>`,
+      it would be faster to use
+      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` instead.
+
+    .. code:: python
+
+      >>> from dmr.plugins.pydantic import PydanticSerializer
 
 
 Customizing serializers
@@ -100,4 +106,48 @@ third-party serializers of your choice, like:
 - https://github.com/reagento/adaptix
 - etc
 
-TODO
+Follow the API of :class:`~dmr.plugins.pydantic.PydanticSerializer`
+and :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+
+You would need to:
+
+- Provide a way to serializer and deserialize your models
+- Provide serializer error converter by overriding
+  :meth:`~dmr.serializer.BaseSerializer.serialize_validation_error` method
+- Provide a way to get the OpenAPI / JsonSchema schema from your models,
+  see :class:`dmr.serializer.BaseSchemaGenerator`. Example implementations:
+  :class:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator`
+  and :class:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator`
+
+
+Plugin-specific information
+---------------------------
+
+pydantic
+~~~~~~~~
+
+``pydantic`` plugin contains one extra serializer optimized for ``json`` usage.
+Our regular API requires :doc:`parsers and renderers <negotiation>`
+to format the final response,
+so you can negotiate the request and response formats.
+
+However, for cases when you only have ``json`` requests
+and responses (which is quite common), use
+:class:`~dmr.plugins.pydantic.PydanticFastSerializer`.
+
+.. warning::
+
+  It will ignore all parsers and serializers and use the ``pydantic``
+  own way to serialize and deserialize objects to ``json`` bytestring.
+
+It will work from **3 up 10 times** faster dependening on the data
+then the common serializer.
+
+.. literalinclude:: /examples/plugins/pydantic_fast.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 12
+
+No API changes are required to use it
+if you don't use other request / response formats.
