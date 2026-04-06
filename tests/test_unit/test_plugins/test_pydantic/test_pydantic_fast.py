@@ -30,7 +30,7 @@ def test_body_parses(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures that parsing and renderering works."""
+    """Ensures that parsing and rendering works."""
     request_data = {'username': faker.name(), 'age': faker.pyint()}
 
     request = dmr_rf.put('/whatever/', data=request_data)
