@@ -63,7 +63,7 @@ def test_complex_pydantic_serialization(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
-    assert json.loads(response.content)
+    assert json.loads(response.content).keys() == request_data.keys()
     assert json.loads(response.content)['extra'] == {'key': 'value'}
 
 
