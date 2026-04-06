@@ -11,9 +11,11 @@ from dmr.envs import USE_COMPILED
 
 if TYPE_CHECKING:
     from dmr._compiled.negotiation import accepted_type as accepted_type
+    from dmr._compiled.sse import render_event_impl as render_event_impl
 
 if USE_COMPILED:
     from dmr._compiled.negotiation import accepted_type  # noqa: WPS474
+    from dmr._compiled.sse import render_event_impl  # noqa: WPS474
 else:
     import sys
     import types
@@ -44,5 +46,7 @@ else:
     # Add new objects here:
     _mod = _import_pure('negotiation')
     accepted_type = _mod.accepted_type
+    _mod2 = _import_pure('sse')
+    render_event_impl = _mod2.render_event_impl
 
-    del sys, types, _import_pure, _mod  # noqa: WPS420
+    del sys, types, _import_pure, _mod, _mod2  # noqa: WPS420

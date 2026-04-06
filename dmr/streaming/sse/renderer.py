@@ -1,10 +1,12 @@
+# flake8: noqa WPS336
+from io import BytesIO
 import re
 from collections.abc import Callable
-from io import BytesIO
 from typing import TYPE_CHECKING, Any, Final
 
 from typing_extensions import override
 
+from dmr.compiled import render_event_impl
 from dmr.exceptions import DataRenderingError
 from dmr.negotiation import ContentType
 from dmr.renderers import Renderer
@@ -29,6 +31,7 @@ class SSERenderer(StreamingRenderer):
     __slots__ = (
         '_encoding',
         '_linebreak',
+        '_linebreak_is_newline',
         '_sep',
     )
 
@@ -60,6 +63,7 @@ class SSERenderer(StreamingRenderer):
         self._sep = sep
         self._encoding = encoding
         self._linebreak = linebreak
+        self._linebreak_is_newline = self._linebreak is _LINE_BREAK_RE
 
     @override
     def render(
@@ -69,7 +73,11 @@ class SSERenderer(StreamingRenderer):
     ) -> bytes:
         """Render a single event in the SSE stream of events."""
         try:
-            return self._render_event(to_serialize)
+            return (
+                self._render_event_fast(to_serialize)
+                if self._linebreak_is_newline
+                else self._render_event(to_serialize)
+            )
         except AttributeError:
             raise DataRenderingError(
                 'SSERenderer can only render SSE protocol instances, '
@@ -93,16 +101,12 @@ class SSERenderer(StreamingRenderer):
 
         if to_serialize.id is not None:
             buffer.write(b'id: ')
-            buffer.write(
-                str(to_serialize.id).encode(self._encoding),
-            )
+            buffer.write(str(to_serialize.id).encode(self._encoding))
             buffer.write(self._sep)
 
         if to_serialize.event is not None:
             buffer.write(b'event: ')
-            buffer.write(
-                to_serialize.event.encode(self._encoding),
-            )
+            buffer.write(to_serialize.event.encode(self._encoding))
             buffer.write(self._sep)
 
         if to_serialize.data is not None:
@@ -126,3 +130,24 @@ class SSERenderer(StreamingRenderer):
 
         buffer.write(self._sep)
         return buffer.getvalue()
+
+    def _render_event_fast(self, to_serialize: SSE) -> bytes:
+        data = None
+        if to_serialize.data is not None:
+            data = (
+                self._serializer.serialize(
+                    to_serialize.data,
+                    renderer=self._regular_renderer,
+                )
+                if to_serialize.should_serialize_data
+                else to_serialize.data
+            )
+        return render_event_impl(
+            self._sep,
+            self._encoding,
+            data,
+            to_serialize.event,
+            to_serialize.id,
+            to_serialize.retry,
+            to_serialize.comment,
+        )
