@@ -60,6 +60,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
@@ -88,6 +89,15 @@ intersphinx_mapping = {
     ),
     'attrs': ('https://www.attrs.org/en/stable/', None),
 }
+
+# Extlinks:
+extlinks = {
+    'issue': (
+        'https://github.com/wemake-services/django-modern-rest/issues/%s',
+        'issue %s',
+    ),
+}
+
 
 # Napoleon:
 napoleon_google_docstring = True

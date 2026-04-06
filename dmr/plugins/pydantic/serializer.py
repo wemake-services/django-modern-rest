@@ -258,8 +258,8 @@ class PydanticFastSerializer(PydanticSerializer):
     Fast pydantic serializer for cases when you only work with json.
 
     Does not use ``parser`` and ``renderer`` passed objects, does not use
-    :meth:`dmr.plugins.pyndatic.PydanticSerializer.serialize_hook` and
-    :meth:`dmr.plugins.pyndatic.PydanticSerializer.deserialize_hook`
+    ``dmr.plugins.pyndatic.PydanticSerializer.serialize_hook`` and
+    ``dmr.plugins.pyndatic.PydanticSerializer.deserialize_hook``
     method.
 
     Is built for optimizations only, use with caution.
