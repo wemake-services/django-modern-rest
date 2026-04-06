@@ -11,7 +11,6 @@ def render_event_impl(
     comment: str | None,
 ) -> bytes:
     parts = bytearray()
-    chunk: bytes
 
     if comment is not None:
         comment_raw = comment.encode(encoding)
