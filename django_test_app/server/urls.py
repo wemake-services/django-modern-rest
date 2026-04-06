@@ -87,16 +87,20 @@ schema = build_schema(router, config=get_config())
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'server'), namespace='api')),
-    path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
+    path(
+        'docs/openapi.json/',
+        OpenAPIJsonView.as_view(schema),
+        name='openapi_json',
+    ),
+    path(
+        'docs/openapi.yaml/',
+        OpenAPIYamlView.as_view(schema),
+        name='openapi_yaml',
+    ),
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
     path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
-    path(
-        'docs/openapi.yaml/',
-        OpenAPIYamlView.as_view(schema),
-        name='openapi-yaml',
-    ),
 ]
 
 handler404 = build_404_handler(

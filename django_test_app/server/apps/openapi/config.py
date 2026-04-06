@@ -8,15 +8,17 @@ from dmr.openapi.objects import (
 
 def get_config() -> OpenAPIConfig:
     return OpenAPIConfig(
-        title='Test API',
+        title='Framework Demo API',
         version='1.0.0',
-        summary='Test App Summary',
-        description='Test App Description',
-        terms_of_service='Test App Terms of Service',
-        contact=Contact(name='Test Contact', email='test@test.com'),
-        license=License(name='Test License', identifier='license'),
+        summary='Demo API for framework features',
+        description=(
+            'Test application showcasing core functionality of the framework.'
+        ),
+        terms_of_service='Usage is intended for testing purposes only.',
+        contact=Contact(name='Core Developer', email='mail@sobolevn.me'),
+        license=License(name='MIT License', identifier='MIT'),
         external_docs=ExternalDocumentation(
-            url='https://test.com',
-            description='Test External Documentation',
+            url='https://django-modern-rest.readthedocs.io/',
+            description='Main documentation and guides',
         ),
     )
