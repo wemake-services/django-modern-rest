@@ -262,7 +262,7 @@ class PydanticFastSerializer(PydanticSerializer):
     :meth:`dmr.plugins.pyndatic.PydanticSerializer.deserialize_hook`
     method.
 
-    Is built for optimiziations only, use with caution.
+    Is built for optimizations only, use with caution.
 
     Only works with ``application/json`` content type.
 

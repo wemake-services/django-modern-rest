@@ -140,7 +140,7 @@ and responses (which is quite common), use
   It will ignore all parsers and serializers and use the ``pydantic``
   own way to serialize and deserialize objects to ``json`` bytestring.
 
-It will work from **3 up 10 times** faster dependening on the data
+It will work from **3 up 10 times** faster depending on the data
 then the common serializer.
 
 .. literalinclude:: /examples/plugins/pydantic_fast.py
