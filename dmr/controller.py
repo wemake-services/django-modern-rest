@@ -148,8 +148,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     servers: ClassVar[Sequence[Server] | None] = None
 
     # Public instance API:
-    request: HttpRequest
-    args: tuple[Any, ...]
     kwargs: dict[str, Any]
 
     # Protected API:

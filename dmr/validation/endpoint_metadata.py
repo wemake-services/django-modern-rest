@@ -24,11 +24,7 @@ from dmr.response import infer_status_code
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
-from dmr.types import (
-    EmptyObj,
-    infer_annotation,
-    is_safe_subclass,
-)
+from dmr.types import EmptyObj, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,

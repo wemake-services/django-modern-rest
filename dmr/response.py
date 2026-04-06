@@ -246,6 +246,8 @@ def build_response(  # noqa: WPS210, WPS211
 
     response = HttpResponse(
         content=(
+            # This is done here, because only `HttpResponse` body needs this
+            # modification. While `JsonL` and `SSE` need `null` as events.
             b''
             if raw_data is None
             else serializer.serialize(raw_data, renderer=renderer)

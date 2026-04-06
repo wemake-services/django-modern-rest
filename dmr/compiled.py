@@ -1,7 +1,7 @@
 """
 Re-exports compiled parts.
 
-Uses smart exporting: define ``USE_COMPILED=0`` env var
+Uses smart exporting: define :envvar:`DMR_USE_COMPILED`` with ``0`` value
 to disable compiled parts.
 """
 
