@@ -117,7 +117,7 @@ def test_response_error(
 
 class _UnserializableController(Controller[PydanticFastSerializer]):
     def get(self) -> Any:
-        return object()  # type: ignore[return-value]
+        return object()
 
 
 def test_unserializable_error(
