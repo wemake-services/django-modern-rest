@@ -214,8 +214,8 @@ What's next?
 .. toctree::
    :hidden:
 
+   validation.rst
    headers-and-cookies.rst
    redirects.rst
    files.rst
    meta.rst
-   validation.rst

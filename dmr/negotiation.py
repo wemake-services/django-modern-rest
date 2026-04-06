@@ -81,6 +81,7 @@ class RequestNegotiator:
         return parser
 
     def _decide(self, request: HttpRequest) -> Parser:
+        # TODO: compile this code
         if request.content_type is None:
             return self._default
         # Try the exact match first, since it is faster, O(1):

@@ -10,9 +10,7 @@ class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.OK,
         # Add explicit header:

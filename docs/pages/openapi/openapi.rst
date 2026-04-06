@@ -121,28 +121,28 @@ To customize a schema, use the native methods.
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      Docs: https://jcristharif.com/msgspec/jsonschema.html
+    Docs: https://jcristharif.com/msgspec/jsonschema.html
 
-      .. literalinclude:: /examples/openapi/msgspec_customization.py
-        :caption: dtos.py
-        :language: python
-        :linenos:
-        :no-imports-spoiler:
+    .. literalinclude:: /examples/openapi/msgspec_customization.py
+      :caption: dtos.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      Docs: https://docs.pydantic.dev/latest/concepts/json_schema
+    Docs: https://docs.pydantic.dev/latest/concepts/json_schema
 
-      .. literalinclude:: /examples/openapi/pydantic_customization.py
-        :caption: dtos.py
-        :language: python
-        :linenos:
-        :no-imports-spoiler:
+    .. literalinclude:: /examples/openapi/pydantic_customization.py
+      :caption: dtos.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
 
-      You can completely redefine the schema generation with
-      overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
+    You can completely redefine the schema generation with
+    overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
 
 .. note::
 

@@ -8,9 +8,7 @@ class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     @modify(
         # Add explicit cookie:
         cookies={'user_created': NewCookie(value='true', max_age=1000)},

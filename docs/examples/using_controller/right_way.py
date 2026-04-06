@@ -15,9 +15,7 @@ class HeaderModel(msgspec.Struct):
     consumer: str = msgspec.field(name='X-API-Consumer')
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     @modify(
         extra_responses=[
             ResponseSpec(
