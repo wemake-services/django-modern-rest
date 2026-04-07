@@ -88,7 +88,7 @@ def test_pydantic_dataclasses_validates(
         parsers = (JsonParser(),)
 
         def get(self, parsed_query: Query[model]) -> model:  # type: ignore[valid-type]
-            return parsed_query
+            raise NotImplementedError
 
     request = dmr_rf.get(
         '/whatever/?query=a&number=b&color=wrong',

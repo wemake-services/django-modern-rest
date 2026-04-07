@@ -23,14 +23,14 @@ No breaking changes in this release.
   objects directly, #830
 - Added support for complex `pydantic` fields inside
   `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
-  and `msgspec` parsers / renderers
+  and `msgspec` parsers / renderers, #842
 - Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
-  for `MsgspecSerializer` and `PydanticSerializer`
+  for `MsgspecSerializer` and `PydanticSerializer`, #842
 
 ### Fixes
 
 - Fixed package metadata, #824
-- Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`
+- Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
 
 ### Misc
 

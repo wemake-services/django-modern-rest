@@ -81,7 +81,7 @@ def test_default_alias_serialization_by_name(
 
     class _AliasController(Controller[serializer]):  # type: ignore[valid-type]
         def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
-            return parsed_body
+            raise NotImplementedError
 
     request_data = {'full_name': faker.name()}
 
