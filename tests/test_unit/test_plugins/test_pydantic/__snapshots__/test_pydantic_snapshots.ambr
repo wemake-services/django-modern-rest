@@ -194,10 +194,10 @@
               "format": "phone",
               "title": "Phone"
             },
-            "preffered_color": {
+            "preferred_color": {
               "type": "string",
               "format": "color",
-              "title": "Preffered Color"
+              "title": "Preferred Color"
             }
           },
           "type": "object",
@@ -205,7 +205,7 @@
             "email",
             "password",
             "phone",
-            "preffered_color"
+            "preferred_color"
           ],
           "title": "_UserModel"
         }

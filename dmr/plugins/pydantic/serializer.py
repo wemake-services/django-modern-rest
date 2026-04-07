@@ -44,7 +44,7 @@ _IncEx: TypeAlias = (
 class ToJsonKwargs(TypedDict, total=False):
     """Keyword arguments for pydantic's model dump method."""
 
-    # `mode` is expicitly left out. It is always `json`.
+    # `mode` is explicitly left out. It is always `json`.
     include: _IncEx | None
     exclude: _IncEx | None
     context: Any | None
@@ -63,7 +63,7 @@ class ToJsonKwargs(TypedDict, total=False):
 class ToModelKwargs(TypedDict, total=False):
     """Keyword arguments for pydantic's python object validation method."""
 
-    # `from_attributes` is expicitly left out. It is always `False`.
+    # `from_attributes` is explicitly left out. It is always `False`.
     extra: ExtraValues | None
     context: Any | None
     experimental_allow_partial: bool | Literal['off', 'on', 'trailing-strings']

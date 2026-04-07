@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class ToModelKwargs(TypedDict, total=False):
     """Custom serializer API options, taken by :func:`msgspec.convert`."""
 
-    # `from_attributes` is expicitly left out. It is always `False`.
+    # `from_attributes` is explicitly left out. It is always `False`.
     builtin_types: Iterable[type] | None
     str_keys: bool
 

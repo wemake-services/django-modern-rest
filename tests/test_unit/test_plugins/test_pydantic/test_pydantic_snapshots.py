@@ -16,7 +16,7 @@ class _UserModel(pydantic.BaseModel):
     email: pydantic.EmailStr
     password: pydantic.SecretStr
     phone: PhoneNumber
-    preffered_color: Color
+    preferred_color: Color
 
 
 class _UserController(Controller[PydanticSerializer]):
