@@ -10,14 +10,31 @@ but with a deprecation period.
 
 ## WIP
 
+AKA "The Pydantic revenge".
+
+In this release we significantly increase the performance of `pydantic`
+workflows by introducing `PydanticFastSerializer`.
+
+No breaking changes in this release.
+
 ### Features
 
 - Added `PydanticFastSerializer` to serialize and deserialize ``json``
   objects directly, #830
+- Added support for complex `pydantic` fields inside
+  `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
+  and `msgspec` parsers / renderers
+- Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
+  for `MsgspecSerializer` and `PydanticSerializer`
 
 ### Fixes
 
 - Fixed package metadata, #824
+- Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`
+
+### Misc
+
+- Improved "Plugins" section in the docs, #835
 
 
 ## Version 0.5.0 (2026-04-05)
@@ -25,7 +42,8 @@ but with a deprecation period.
 AKA "The first compiled version".
 
 This release will focus on better errors, performance, and stability.
-No breaking changes will be made.
+
+No breaking changes in this release.
 
 ### Features
 

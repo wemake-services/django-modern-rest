@@ -4,7 +4,15 @@ from typing import final
 
 @final
 class OpenAPIFormat(enum.StrEnum):
-    """OpenAPI format."""
+    """
+    OpenAPI format.
+
+    .. seealso::
+
+        Spec:
+        https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#page-13
+
+    """
 
     DATE = 'date'
     DATE_TIME = 'date-time'
@@ -28,6 +36,11 @@ class OpenAPIFormat(enum.StrEnum):
     REGEX = 'regex'
     BINARY = 'binary'
     PASSWORD = 'password'  # noqa: S105
+    # Technically, these formats are removed from the spec,
+    # however, `pydantic` still uses them:
+    PHONE = 'phone'
+    COLOR = 'color'
+    STYLE = 'style'
 
 
 @final

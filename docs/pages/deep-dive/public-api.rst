@@ -203,6 +203,12 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
   :members:
 
+.. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.serializer.ToModelKwargs
+  :members:
+
 Msgspec
 ~~~~~~~
 
@@ -213,4 +219,10 @@ Msgspec
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.ToJsonKwargs
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.ToModelKwargs
   :members:

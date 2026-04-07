@@ -188,12 +188,24 @@
               "format": "password",
               "title": "Password",
               "writeOnly": true
+            },
+            "phone": {
+              "type": "string",
+              "format": "phone",
+              "title": "Phone"
+            },
+            "preffered_color": {
+              "type": "string",
+              "format": "color",
+              "title": "Preffered Color"
             }
           },
           "type": "object",
           "required": [
             "email",
-            "password"
+            "password",
+            "phone",
+            "preffered_color"
           ],
           "title": "_UserModel"
         }

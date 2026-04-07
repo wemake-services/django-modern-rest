@@ -138,6 +138,8 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
     We support :func:`attrs.define`
     via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    See `msgspec docs <https://jcristharif.com/msgspec/supported-types.html#attrs>`_
+    on ``attrs`` support.
 
     .. literalinclude:: /examples/getting_started/attrs_controller.py
       :caption: views.py

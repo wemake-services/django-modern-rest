@@ -120,11 +120,11 @@ You would need to:
   and :class:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator`
 
 
-Plugin-specific information
----------------------------
+Pydantic plugin
+---------------
 
-pydantic
-~~~~~~~~
+PydanticFastSerializer
+~~~~~~~~~~~~~~~~~~~~~~
 
 ``pydantic`` plugin contains one extra serializer optimized for ``json`` usage.
 Our regular API requires :doc:`parsers and renderers <negotiation>`
@@ -151,3 +151,44 @@ then the common serializer.
 
 No API changes are required to use it
 if you don't use other request / response formats.
+
+Serialization / deserialization flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We have to special attributes to change how ``pydantic`` serializes data:
+
+1. :attr:`~dmr.plugins.pydantic.PydanticSerializer.to_json_kwargs`
+   for serialization purposes
+2. :attr:`~dmr.plugins.pydantic.PydanticSerializer.to_model_kwargs`
+   for deserialization purposes
+
+By default these flags only pass ``{'by_alias': True}``
+to support field aliases, when they are defined.
+
+For example, when working with :class:`pydantic.types.Json`,
+one can set ``round_trip`` to ``True``
+(which is not passed by default,
+because it disables :func:`computed fields <pydantic.fields.computed_field>`):
+
+.. literalinclude:: /examples/plugins/pydantic_round_trip.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. seealso::
+
+  Docs: https://docs.pydantic.dev/2.3/usage/types/json/
+
+
+Msgspec plugin
+--------------
+
+attrs support
+~~~~~~~~~~~~~
+
+We support :func:`attrs.define` via ``msgspec`` compatibility layer.
+It has its own limitations.
+See `msgspec docs <https://jcristharif.com/msgspec/supported-types.html#attrs>`_.
+
+Native support of ``attrs`` can be implemented in the future
+with its own serializer.

@@ -7,8 +7,6 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from dmr.plugins.pydantic.serializer import FromPythonKwargs as FromPythonKwargs
-from dmr.plugins.pydantic.serializer import ModelDumpKwargs as ModelDumpKwargs
 from dmr.plugins.pydantic.serializer import (
     PydanticEndpointOptimizer as PydanticEndpointOptimizer,
 )

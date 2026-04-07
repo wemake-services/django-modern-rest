@@ -46,7 +46,7 @@ class ResponseValidator:  # noqa: WPS214
 
     # Public class-level API:
     strict_validation: ClassVar[bool] = True
-    from_python_kwargs: ClassVar[Mapping[str, Any]] = {}
+    to_model_kwargs: ClassVar[Mapping[str, Any]] = {}
 
     def validate_response(
         self,
@@ -228,7 +228,7 @@ class ResponseValidator:  # noqa: WPS214
                 structured,
                 model,
                 strict=self.strict_validation,
-                **self.from_python_kwargs,
+                **self.to_model_kwargs,
             )
         except self.serializer.validation_error as exc:
             raise ValidationError(

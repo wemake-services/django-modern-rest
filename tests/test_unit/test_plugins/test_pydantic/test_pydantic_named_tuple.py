@@ -3,6 +3,7 @@ import uuid
 from http import HTTPStatus
 from typing import NamedTuple, final
 
+import pydantic
 from dirty_equals import IsStr, IsUUID
 from django.http import HttpResponse
 from faker import Faker
@@ -16,13 +17,11 @@ from dmr.test import DMRRequestFactory
 @final
 class _BodyModel(NamedTuple):
     uid: uuid.UUID
-    email: str
+    email: pydantic.EmailStr
 
 
 @final
-class _FieldsController(
-    Controller[PydanticSerializer],
-):
+class _FieldsController(Controller[PydanticSerializer]):
     def post(self, parsed_body: Body[_BodyModel]) -> _BodyModel:
         return parsed_body
 

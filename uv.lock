@@ -613,6 +613,7 @@ dev = [
     { name = "httpx" },
     { name = "import-linter" },
     { name = "inline-snapshot" },
+    { name = "phonenumbers" },
     { name = "polyfactory" },
     { name = "punq" },
     { name = "pyrefly" },
@@ -708,6 +709,7 @@ dev = [
     { name = "httpx", specifier = ">=0.28,<0.29" },
     { name = "import-linter", specifier = ">=2.5,<3" },
     { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
+    { name = "phonenumbers", specifier = ">=9.0,<10" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
     { name = "punq", specifier = ">=0.7,<0.8" },
     { name = "pyrefly", specifier = ">=0.57,<0.59" },
@@ -1676,6 +1678,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fa/36/e27608899f9b8d4dff0617b2d9ab17ca5608956ca44461ac14ac48b44015/pathspec-1.0.4.tar.gz", hash = "sha256:0210e2ae8a21a9137c0d470578cb0e595af87edaa6ebf12ff176f14a02e0e645", size = 131200, upload-time = "2026-01-27T03:59:46.938Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/3c/2c197d226f9ea224a9ab8d197933f9da0ae0aac5b6e0f884e2b8d9c8e9f7/pathspec-1.0.4-py3-none-any.whl", hash = "sha256:fb6ae2fd4e7c921a165808a552060e722767cfa526f99ca5156ed2ce45a5c723", size = 55206, upload-time = "2026-01-27T03:59:45.137Z" },
+]
+
+[[package]]
+name = "phonenumbers"
+version = "9.0.27"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/d7/8e743354071ab0d6e265370b47a8b0ecc70f35f4e225eb74eecab141aa9f/phonenumbers-9.0.27.tar.gz", hash = "sha256:f99f533cfb052546d181f6dbd981bfbdd6a1527784585482173ff95ae6d1602e", size = 2298619, upload-time = "2026-04-01T11:13:15.535Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/40/c6948bbeceb18c45472d4011b705bd3ca4f29b055373eb4733ddc1a85d8b/phonenumbers-9.0.27-py2.py3-none-any.whl", hash = "sha256:a7ba9f362e2fe8e2d6756e415cf44f4c8f0c33b40ba07b27a8450909021d7e37", size = 2585047, upload-time = "2026-04-01T11:13:12.575Z" },
 ]
 
 [[package]]
