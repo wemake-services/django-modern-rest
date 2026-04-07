@@ -36,7 +36,7 @@
 - [x] Supports `openapi` 3.1+ schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
-- [x] 100% test coverage with 1700+ of carefully designed unit, integration, and property-based tests
+- [x] 100% test coverage with 1900+ of carefully designed unit, integration, and property-based tests
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
 - [x] Great docs
 - [x] No AI slop, but [built for the LLM era](https://django-modern-rest.readthedocs.io/en/latest/pages/getting-started.html#llms-support)
