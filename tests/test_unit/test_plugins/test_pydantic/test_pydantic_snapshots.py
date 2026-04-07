@@ -3,7 +3,6 @@ import json
 import pydantic
 from django.urls import path
 from pydantic_extra_types import Color
-from pydantic_extra_types.phone_numbers import PhoneNumber
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller
@@ -15,7 +14,6 @@ from dmr.routing import Router
 class _UserModel(pydantic.BaseModel):
     email: pydantic.EmailStr
     password: pydantic.SecretStr
-    phone: PhoneNumber
     preferred_color: Color
 
 

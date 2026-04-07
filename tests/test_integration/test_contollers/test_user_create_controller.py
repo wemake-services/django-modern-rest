@@ -99,9 +99,14 @@ def test_constrained_user_view(dmr_client: DMRClient, faker: Faker) -> None:
         'username': faker.bothify('???###').lower(),
         'age': faker.random_int(min=18, max=50),  # noqa: WPS432
         'score': faker.pyfloat(min_value=1, max_value=5),  # noqa: WPS432
+        'phone': '+79991112233',
     }
+
     response = dmr_client.post(
         reverse('api:controllers:constrained_user_create'),
         data=request_data,
     )
-    assert response.status_code == HTTPStatus.CREATED
+
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == {**request_data, 'phone': 'tel:+7-999-111-22-33'}
