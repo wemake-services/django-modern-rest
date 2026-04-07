@@ -6,7 +6,7 @@ from typing import Annotated, Any, ClassVar, TypeAlias, final
 
 import pydantic
 from django.http import HttpResponse
-# from pydantic_extra_types.phone_numbers import PhoneNumber
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from dmr import (
     Body,
@@ -164,7 +164,7 @@ class _ConstrainedUserSchema(pydantic.BaseModel):
     )
     age: int = pydantic.Field(ge=18, le=100, strict=True)  # noqa: WPS432
     score: float = pydantic.Field(gt=0, le=10, strict=True)  # noqa: WPS432
-    # phone: PhoneNumber
+    phone: PhoneNumber
 
 
 @final
