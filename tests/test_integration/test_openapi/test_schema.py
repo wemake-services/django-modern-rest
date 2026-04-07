@@ -46,7 +46,7 @@ schema = st.pytest.from_fixture('api_schema')
 # Register custom strategies:
 st.openapi.format(
     'phone',
-    strategies.from_regex(r'\+7-495-[1-9]{3}-[0-9]{2}-[0-9]{2}'),
+    strategies.from_regex(r'^\+7-495-[1-9]{3}-[0-9]{2}-[0-9]{2}$'),
 )
 
 
