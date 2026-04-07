@@ -1,3 +1,5 @@
+import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 import pytest
@@ -26,6 +28,14 @@ def _patch_response_validation(monkeypatch: pytest.MonkeyPatch) -> None:
         '_should_validate_responses',
         lambda *args, **kwargs: False,
     )
+
+
+@pytest.fixture(autouse=True)
+def _disable_logging(settings: LazySettings) -> Iterator[None]:
+    # Logging has too much output with schemathesis:
+    logging.disable(logging.CRITICAL)
+    yield
+    logging.disable(logging.NOTSET)
 
 
 # The `transactional_db` fixture is required to enable database access.
