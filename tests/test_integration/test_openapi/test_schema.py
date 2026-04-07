@@ -5,6 +5,7 @@ import schemathesis as st
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.urls import reverse
+from hypothesis import strategies
 from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 from django_test_app.server.wsgi import application
@@ -41,6 +42,9 @@ def api_schema(transactional_db: None, admin_user: User) -> OpenApiSchema:
 
 
 schema = st.pytest.from_fixture('api_schema')
+
+# Register custom strategies:
+st.openapi.format('phone', strategies.from_regex(r'\+7-\d{3}-\d{3}-\d{4}'))
 
 
 @schema.parametrize()
