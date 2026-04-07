@@ -44,7 +44,10 @@ def api_schema(transactional_db: None, admin_user: User) -> OpenApiSchema:
 schema = st.pytest.from_fixture('api_schema')
 
 # Register custom strategies:
-st.openapi.format('phone', strategies.from_regex(r'\+7-\d{3}-\d{3}-\d{4}'))
+st.openapi.format(
+    'phone',
+    strategies.from_regex(r'\+7-\d{3}-\d{3}-\d{2}-\d{2}'),
+)
 
 
 @schema.parametrize()
