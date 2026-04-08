@@ -134,7 +134,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.13.0
+        uses: pypa/gh-action-pypi-publish@v1.14.0
         with:
           packages-dir: wheelhouse/
           verbose: true
@@ -155,6 +155,6 @@ jobs:
           path: dist/
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.13.0
+        uses: pypa/gh-action-pypi-publish@v1.14.0
         with:
           verbose: true
