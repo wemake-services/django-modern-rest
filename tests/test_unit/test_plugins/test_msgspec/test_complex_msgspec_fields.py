@@ -1,9 +1,13 @@
 import uuid
 
+import pytest
 from dirty_equals import IsStr
 from faker import Faker
 
-from dmr.plugins.msgspec import MsgspecSerializer
+try:
+    from dmr.plugins.msgspec import MsgspecSerializer
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 
 def test_to_python_complex_values(faker: Faker) -> None:
