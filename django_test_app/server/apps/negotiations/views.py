@@ -9,6 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
 from dmr import Body, Controller, ResponseSpec, validate
+from dmr.compiled import request_accepts
 from dmr.exceptions import (
     DataRenderingError,
     RequestSerializationError,
@@ -122,7 +123,7 @@ class ContentNegotiationController(Controller[PydanticSerializer]):
             ContentType.xml: _RequestModel,
         }),
     ]:
-        if self.request.accepts(ContentType.json):
+        if request_accepts(self.request, ContentType.json):
             return [
                 parsed_body.payment_method_id,
                 parsed_body.payment_amount,
@@ -142,7 +143,7 @@ class ContentNegotiationController(Controller[PydanticSerializer]):
         ),
     )
     def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
-        if self.request.accepts(ContentType.json):
+        if request_accepts(self.request, ContentType.json):
             return self.to_response(
                 [
                     parsed_body.payment_method_id,

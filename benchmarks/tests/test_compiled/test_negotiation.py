@@ -87,3 +87,63 @@ def test_negotiation_django_native(
             request = HttpRequest()
             request.META = {'HTTP_ACCEPT': accept}
             request.get_preferred_type(provided_types)
+
+
+def test_request_accepts_compiled(
+    benchmark: BenchmarkFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    clean_modules: CleanModules,
+) -> None:
+    """Test compiled version of the header_value_matches_media_type impl"""
+
+    monkeypatch.setenv('DMR_USE_COMPILED', '1')
+
+    with clean_modules():
+        from dmr._compiled import negotiation  # noqa: PLC0415, PLC2701
+
+        assert negotiation.__file__.endswith('.so')
+
+        from dmr.compiled import header_value_matches_media_type  # noqa: I001, PLC0415
+
+        assert '_pure' not in header_value_matches_media_type.__module__
+
+        @benchmark
+        def factory() -> None:
+            for accept, provided_types, _ in _ACCEPTED_TYPE_CASES:
+                for media_type in provided_types:
+                    header_value_matches_media_type(accept, media_type)
+
+
+def test_request_accepts_raw(
+    benchmark: BenchmarkFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    clean_modules: CleanModules,
+) -> None:
+    """Test raw version of the header_value_matches_media_type impl."""
+
+    monkeypatch.setenv('DMR_USE_COMPILED', '0')
+
+    with clean_modules():
+        from dmr.compiled import header_value_matches_media_type  # noqa: I001, PLC0415
+
+        assert '_pure' in header_value_matches_media_type.__module__
+
+        @benchmark
+        def factory() -> None:
+            for accept, provided_types, _ in _ACCEPTED_TYPE_CASES:
+                for media_type in provided_types:
+                    header_value_matches_media_type(accept, media_type)
+
+
+def test_request_accepts_django_native(
+    benchmark: BenchmarkFixture,
+) -> None:
+    """Test Django native version of the negotiation protocol."""
+
+    @benchmark
+    def factory() -> None:
+        for accept, provided_types, _expected in _ACCEPTED_TYPE_CASES:
+            request = HttpRequest()
+            request.META = {'HTTP_ACCEPT': accept}
+            for media_type in provided_types:
+                request.accepts(media_type)

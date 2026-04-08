@@ -24,8 +24,8 @@
 # SOFTWARE.
 
 import re
-from collections.abc import Iterable
-from typing import Final, final
+from collections.abc import Iterable, Mapping
+from typing import Final, Protocol, final
 
 
 def accepted_type(
@@ -63,6 +63,24 @@ def accepted_type(
                 # by concrete parts from the provided type:
                 return provided.as_string(accepted.maintype, accepted.subtype)
     return None
+
+
+class _HasHeadersAsMapping(Protocol):
+    @property
+    def headers(self) -> Mapping[str, str]: ...
+
+
+def header_value_matches_media_type(header_value: str, media_type: str) -> bool:
+    """Does the client accept a response in the given media type?"""
+    return accepted_type(header_value, (media_type,)) is not None
+
+
+def request_accepts(request: _HasHeadersAsMapping, media_type: str) -> bool:
+    """Does the client accept a response in the given media type?"""
+    header_value = request.headers.get('Accepts')
+    if not header_value:
+        return False
+    return header_value_matches_media_type(header_value, media_type)
 
 
 @final
