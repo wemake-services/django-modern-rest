@@ -281,7 +281,8 @@ async def test_per_controller_customization_async(
         renderers = [XmlRenderer(), JsonRenderer()]
 
         async def post(
-            self, parsed_body: Body[_RequestModel],
+            self,
+            parsed_body: Body[_RequestModel],
         ) -> dict[str, str]:
             parser = request_parser(self.request)
             assert parser
