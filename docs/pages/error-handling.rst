@@ -301,3 +301,14 @@ API Reference
   :members:
 
 .. autofunction:: dmr.errors.format_error
+
+
+Problem Details API
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.problem_details.ProblemDetailsError
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.problem_details.ProblemDetailsModel
+  :members:
