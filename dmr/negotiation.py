@@ -278,7 +278,7 @@ class ContentType(enum.StrEnum):
 
 
 def conditional_type(
-    mapping: Mapping[ContentType, Any],
+    mapping: Mapping[str | ContentType, Any],
 ) -> _ConditionalType:
     """
     Create conditional validation for different content types.
@@ -293,7 +293,14 @@ def conditional_type(
             'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
-    return _ConditionalType(tuple(mapping.items()))
+    return _ConditionalType(
+        tuple(
+            {
+                str(mapping_key): mapping_value
+                for mapping_key, mapping_value in mapping.items()
+            }.items(),
+        ),
+    )
 
 
 def get_conditional_types(

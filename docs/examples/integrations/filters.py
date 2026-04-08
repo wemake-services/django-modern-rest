@@ -37,4 +37,4 @@ class UsersController(Controller[PydanticSerializer]):
 
 
 # run: {"controller": "UsersController", "method": "get", "url": "/api/users/", "populate_db": true}  # noqa: ERA001, E501
-# openapi: {"controller": "UsersController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001
+# openapi: {"controller": "UsersController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001, E501

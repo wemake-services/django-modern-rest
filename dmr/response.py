@@ -73,7 +73,7 @@ class APIError(Exception, Generic[_ItemT]):
         raw_data: _ItemT,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | None = None,
+        headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> None:
         """Create response from parts."""
