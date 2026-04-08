@@ -4,10 +4,10 @@ Integrations
 .. warning::
 
   In the future - some integrations from this list my be included
-  into the core `django-modern-rest` package. Or ship as plugins.
+  into the core ``django-modern-rest`` package. Or ship as plugins.
 
   If you are interested in something:
-  `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`.
+  `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
 
 
 CSRF
@@ -132,7 +132,7 @@ Throttling
 ----------
 
 One can use
-`django-smart-limit <https://github.com/YasserShkeir/django-smart-ratelimit>`.
+`django-smart-limit <https://github.com/YasserShkeir/django-smart-ratelimit>`_.
 Or any other native Django plugin for this task.
 
 
