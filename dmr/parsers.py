@@ -2,6 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, TypeAlias, final
 
 from django.core.exceptions import BadRequest, TooManyFilesSent
@@ -98,10 +99,14 @@ class JsonParser(Parser):
 
     """
 
-    __slots__ = ()
+    __slots__ = ('_json_module',)
 
     content_type = 'application/json'
     """Works with ``json`` only."""
+
+    def __init__(self, json_module: ModuleType = json) -> None:
+        """Init the parser with an optional custom json module."""
+        self._json_module = json_module
 
     @override
     def parse(
@@ -130,7 +135,7 @@ class JsonParser(Parser):
 
         """
         try:
-            return json.loads(to_deserialize)
+            return self._json_module.loads(to_deserialize)
         except (ValueError, TypeError) as exc:
             # Corner case: when deserializing an empty body,
             # return `None` instead.

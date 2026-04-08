@@ -2,6 +2,7 @@ import abc
 import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -139,6 +140,7 @@ class JsonRenderer(Renderer):
 
     __slots__ = (
         '_encoder_cls',
+        '_json_module',
         'content_type',
     )
 
@@ -147,10 +149,12 @@ class JsonRenderer(Renderer):
         content_type: str = 'application/json',
         *,
         encoder_cls: type[DjangoJSONEncoder] = _DMREncoder,
+        json_module: ModuleType = json,
     ) -> None:
         """Init the renderer with all defaults."""
         self.content_type = content_type
         self._encoder_cls = encoder_cls
+        self._json_module = json_module
 
     @override
     def render(
@@ -171,6 +175,16 @@ class JsonRenderer(Renderer):
         # msgspec returns `bytes`, we prefer to use `bytes` by default
         # and not to create extra strings when not needed in "fast" mode.
         # We don't really care about raw json implementation. It is a fallback.
+        if self._json_module is not json:
+            # Alternative json modules like orjson return bytes directly
+            # and use `default=` instead of `cls=` for custom serialization.
+            result = self._json_module.dumps(
+                to_serialize,
+                default=serializer_hook,
+            )
+            if isinstance(result, bytes):
+                return result
+            return result.encode('utf8')
         return json.dumps(
             to_serialize,
             cls=self._encoder_cls,
@@ -183,7 +197,7 @@ class JsonRenderer(Renderer):
     @override
     def validation_parser(self) -> JsonParser:
         """Regular json parser can parse this."""
-        return JsonParser()
+        return JsonParser(json_module=self._json_module)
 
 
 class FileRenderer(Renderer):

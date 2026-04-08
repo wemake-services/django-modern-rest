@@ -25,6 +25,8 @@ No breaking changes in this release.
 - Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
   for `msgspec` and `pydantic` serializers, #842
 - Added "Problem Details" or RFC-9457 support, #78
+- Added customizable `json_module` parameter to `JsonParser` and `JsonRenderer`
+  to support alternative JSON backends like `orjson`, #857
 
 ### Fixes
 

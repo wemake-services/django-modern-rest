@@ -95,6 +95,7 @@ unit-test = [
   "syrupy>=5.1,<6",
   "polyfactory>=3.2,<4",
   "xmltodict-rs>=0.13,<0.14",
+  "orjson>=3.10,<4",
 ]
 dev = [
   { include-group = "unit-test" },
