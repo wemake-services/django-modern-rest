@@ -50,7 +50,7 @@ class ProblemDetailsError(APIError[ProblemDetailsModel]):
        the proper Problem Details description. But, if it is not requested
        directly, we will return our regular :class:`dmr.errors.ErrorModel`
 
-    Both use-cases are indepedent. You can decide what to use per controller.
+    Both use-cases are independent. You can decide what to use per controller.
     """
 
     content_type: ClassVar[str] = ContentType.json_problem_details
@@ -88,7 +88,7 @@ class ProblemDetailsError(APIError[ProblemDetailsModel]):
             show_detail: Should we include the detail field to the end payload?
 
         Note that *detail* and *status_code* are required fields
-        due to technial reasons, but you can disable them in the output
+        due to technical reasons, but you can disable them in the output
         via *show_status* and *show_detail*
         if you don't need them for some reason.
         """

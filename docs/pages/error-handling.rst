@@ -230,7 +230,7 @@ To do so, you would need a slightly more difficult setup:
    to your error responses
 2. Define several :class:`~dmr.renderers.Renderer` types,
    including the one which will handle ``application/problem+json``
-3. Raise a consitional exception:
+3. Raise a conditional exception:
    use :meth:`~dmr.problem_details.ProblemDetailsError.conditional_error`
    to only raise Problem Details when the correct accepted type is passed
 4. Convert other message to the Problem Details format
