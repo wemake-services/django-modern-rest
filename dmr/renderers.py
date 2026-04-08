@@ -137,16 +137,19 @@ class JsonRenderer(Renderer):
 
     """
 
-    __slots__ = ('_encoder_cls',)
-
-    content_type = 'application/json'
-    """Works with ``json`` only."""
+    __slots__ = (
+        '_encoder_cls',
+        'content_type',
+    )
 
     def __init__(
         self,
+        content_type: str = 'application/json',
+        *,
         encoder_cls: type[DjangoJSONEncoder] = _DMREncoder,
     ) -> None:
         """Init the renderer with all defaults."""
+        self.content_type = content_type
         self._encoder_cls = encoder_cls
 
     @override

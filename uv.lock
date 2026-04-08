@@ -541,16 +541,28 @@ wheels = [
 
 [[package]]
 name = "django"
-version = "5.2.12"
+version = "5.2.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "sqlparse" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/55/b9445fc0695b03746f355c05b2eecc54c34e05198c686f4fc4406b722b52/django-5.2.12.tar.gz", hash = "sha256:6b809af7165c73eff5ce1c87fdae75d4da6520d6667f86401ecf55b681eb1eeb", size = 10860574, upload-time = "2026-03-03T13:56:05.509Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/c5/c69e338eb2959f641045802e5ea87ca4bf5ac90c5fd08953ca10742fad51/django-5.2.13.tar.gz", hash = "sha256:a31589db5188d074c63f0945c3888fad104627dfcc236fb2b97f71f89da33bc4", size = 10890368, upload-time = "2026-04-07T14:02:15.072Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/32/4b144e125678efccf5d5b61581de1c4088d6b0286e46096e3b8de0d556c8/django-5.2.12-py3-none-any.whl", hash = "sha256:4853482f395c3a151937f6991272540fcbf531464f254a347bf7c89f53c8cff7", size = 8310245, upload-time = "2026-03-03T13:56:01.174Z" },
+    { url = "https://files.pythonhosted.org/packages/59/b1/51ab36b2eefcf8cdb9338c7188668a157e29e30306bfc98a379704c9e10d/django-5.2.13-py3-none-any.whl", hash = "sha256:5788fce61da23788a8ce6f02583765ab060d396720924789f97fa42119d37f7a", size = 8310982, upload-time = "2026-04-07T14:02:08.883Z" },
+]
+
+[[package]]
+name = "django-filter"
+version = "25.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2c/e4/465d2699cd388c0005fb8d6ae6709f239917c6d8790ac35719676fffdcf3/django_filter-25.2.tar.gz", hash = "sha256:760e984a931f4468d096f5541787efb8998c61217b73006163bf2f9523fe8f23", size = 143818, upload-time = "2025-10-05T09:51:31.521Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/40/6a02495c5658beb1f31eb09952d8aa12ef3c2a66342331ce3a35f7132439/django_filter-25.2-py3-none-any.whl", hash = "sha256:9c0f8609057309bba611062fe1b720b4a873652541192d232dd28970383633e3", size = 94145, upload-time = "2025-10-05T09:51:29.728Z" },
 ]
 
 [[package]]
@@ -629,6 +641,7 @@ dev = [
     { name = "schemathesis" },
     { name = "slotscheck" },
     { name = "syrupy" },
+    { name = "types-django-filter" },
     { name = "types-docutils" },
     { name = "types-pyyaml" },
     { name = "types-setuptools" },
@@ -636,6 +649,7 @@ dev = [
     { name = "xmltodict-rs" },
 ]
 docs = [
+    { name = "django-filter" },
     { name = "django-mantle" },
     { name = "docutils" },
     { name = "myst-parser" },
@@ -725,6 +739,7 @@ dev = [
     { name = "schemathesis", specifier = ">=4.14,<5" },
     { name = "slotscheck", specifier = ">=0.19,<0.20" },
     { name = "syrupy", specifier = ">=5.1,<6" },
+    { name = "types-django-filter", specifier = ">=25.2,<26" },
     { name = "types-docutils", specifier = ">=0.22,<0.23" },
     { name = "types-pyyaml", specifier = ">=6.0,<7" },
     { name = "types-setuptools", specifier = ">=82,<83" },
@@ -732,6 +747,7 @@ dev = [
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 docs = [
+    { name = "django-filter", specifier = ">=25.2,<26" },
     { name = "django-mantle", specifier = ">=26.6,<27" },
     { name = "docutils", specifier = ">=0.22,<0.23" },
     { name = "myst-parser", specifier = ">=5.0,<6" },
@@ -2014,7 +2030,7 @@ wheels = [
 
 [[package]]
 name = "pytest"
-version = "9.0.2"
+version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
@@ -2023,9 +2039,9 @@ dependencies = [
     { name = "pluggy" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/db/7ef3487e0fb0049ddb5ce41d3a49c235bf9ad299b6a25d5780a89f19230f/pytest-9.0.2.tar.gz", hash = "sha256:75186651a92bd89611d1d9fc20f0b4345fd827c41ccd5c299a868a05d70edf11", size = 1568901, upload-time = "2025-12-06T21:30:51.014Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/0d/549bd94f1a0a402dc8cf64563a117c0f3765662e2e668477624baeec44d5/pytest-9.0.3.tar.gz", hash = "sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c", size = 1572165, upload-time = "2026-04-07T17:16:18.027Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/ab/b3226f0bd7cdcf710fbede2b3548584366da3b19b5021e74f5bde2a8fa3f/pytest-9.0.2-py3-none-any.whl", hash = "sha256:711ffd45bf766d5264d487b917733b453d917afd2b0ad65223959f59089f875b", size = 374801, upload-time = "2025-12-06T21:30:49.154Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/24/a372aaf5c9b7208e7112038812994107bc65a84cd00e0354a88c2c77a617/pytest-9.0.3-py3-none-any.whl", hash = "sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9", size = 375249, upload-time = "2026-04-07T17:16:16.13Z" },
 ]
 
 [[package]]
@@ -2879,6 +2895,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6d/6e/dcfa8ca7f11c5b9fa4727b872789469e77d2ec3c117bb92d12e78f0578d3/tracecov_community-0.19.3-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:b455709ff9e17ee962519d2f4a562b111e2fe9e758ec43564a78268639825ffb", size = 3880501, upload-time = "2026-03-24T23:07:13.197Z" },
     { url = "https://files.pythonhosted.org/packages/17/31/fcfc207508e7104027022f6d602c8d908309be752ede5a290c3c784c514a/tracecov_community-0.19.3-cp314-cp314t-win_amd64.whl", hash = "sha256:67123623ba699698d330df4e07e65e0788ae3f70b1e9e305f28efb1e48d417e4", size = 3718752, upload-time = "2026-03-24T23:06:59.318Z" },
     { url = "https://files.pythonhosted.org/packages/24/e9/ede68799e49490e967f66e58d7034c7ed5ba5b4a6632634faeb48a9d4b49/tracecov_community-0.19.3-py3-none-any.whl", hash = "sha256:91ed961184ae3aa7421a2a573dc954757c2904289b6469257d616e154510480d", size = 1435, upload-time = "2026-03-24T23:07:18.37Z" },
+]
+
+[[package]]
+name = "types-django-filter"
+version = "25.2.0.20260402"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django-stubs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7b/0f/fd5cd8075776e74f39a599340eb55d5c1282f3d6e1c70debe5b7459efbb7/types_django_filter-25.2.0.20260402.tar.gz", hash = "sha256:0476aafce04288373599785348930c688085c94c736059f04f2cc692fee9d36a", size = 15762, upload-time = "2026-04-02T04:20:47.126Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ca/c8/d7dff500c5172fae880b96a64875aa3fa333952a5e68093d57dc4041bcbf/types_django_filter-25.2.0.20260402-py3-none-any.whl", hash = "sha256:7b8740fe3594e8c0f5ff15643ac53e074af3e436db9236e573c9c8b5b5b07b23", size = 19347, upload-time = "2026-04-02T04:20:46.231Z" },
 ]
 
 [[package]]

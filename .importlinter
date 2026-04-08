@@ -13,6 +13,9 @@ containers =
   dmr
 
 layers =
+  # Top level or so called "independent" modules:
+  problem_details
+  # Regular modules:
   routing
   controller
   options_mixins

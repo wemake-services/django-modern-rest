@@ -262,6 +262,8 @@ class ContentType(enum.StrEnum):
         msgpack: ``'application/msgpack'`` format.
         event_stream: ``'text/event-stream'`` format for SSE streaming.
         jsonl: ``'application/jsonl'`` format for JSON Lines streaming.
+        json_problem_details: ``'application/problem+json'`` format
+            for RFC 9457.
 
     """
 
@@ -272,6 +274,7 @@ class ContentType(enum.StrEnum):
     msgpack = 'application/msgpack'
     event_stream = 'text/event-stream'
     jsonl = 'application/jsonl'
+    json_problem_details = 'application/problem+json'
 
 
 def conditional_type(

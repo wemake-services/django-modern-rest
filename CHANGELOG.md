@@ -10,9 +10,7 @@ but with a deprecation period.
 
 ## WIP
 
-AKA "The Pydantic revenge".
-
-In this release we significantly increase the performance of `pydantic`
+In this release we significantly increased the performance of `pydantic`
 workflows by introducing `PydanticFastSerializer`.
 
 No breaking changes in this release.
@@ -25,7 +23,7 @@ No breaking changes in this release.
   `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
   and `msgspec` parsers / renderers, #842
 - Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
-  for `MsgspecSerializer` and `PydanticSerializer`, #842
+  for `msgspec` and `pydantic` serializers, #842
 
 ### Fixes
 

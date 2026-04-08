@@ -1,6 +1,14 @@
 Integrations
 ============
 
+.. warning::
+
+  In the future - some integrations from this list my be included
+  into the core `django-modern-rest` package. Or ship as plugins.
+
+  If you are interested in something:
+  `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`.
+
 
 CSRF
 ----
@@ -70,10 +78,10 @@ how ``django-stubs`` is used.
 Pagination
 ----------
 
-We don't ship our own pagination.
-We (as our main design goal suggests) provide support
-for any existing pagination plugin for Django.
-Including the built-in :class:`django.core.paginator.Paginator`.
+Limit Offset pagination
+~~~~~~~~~~~~~~~~~~~~~~~
+
+We support built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 
@@ -85,6 +93,19 @@ To do so, we only provide metadata for the default pagination:
 If you are using a different pagination system, you can define
 your own metadata / models and use them with our framework.
 
+Cursor pagination
+~~~~~~~~~~~~~~~~~
+
+We also support any other pagination library.
+
+Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_
+or even your custom implementation.
+
+Any Django-compatible tool should work out of the box.
+
+Interface
+~~~~~~~~~
+
 .. autoclass:: dmr.pagination.Paginated
   :members:
 
@@ -92,52 +113,29 @@ your own metadata / models and use them with our framework.
   :members:
 
 
-django-filters
---------------
+Filters
+-------
 
 No special integration with
 `django-filter <https://github.com/carltongibson/django-filter>`_
 is required.
 
-Everything just works.
+Everything just works:
 
-.. code-block:: python
+.. literalinclude:: /examples/integrations/filters.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
-  import django_filters
-  import pydantic
-  from dmr import Controller, Query
-  from dmr.plugins.pydantic import PydanticSerializer
 
-  from your_app.models import User
+Throttling
+----------
 
-  class UserFilter(django_filters.FilterSet):
-      class Meta:
-          model = User
-          fields = ('is_active',)
+One can use `django-rate-limit <https://django-ratelimit.readthedocs.io/en/stable/usage.html#class-based-views>`.
 
-  # Create query model for better docs:
-  class QueryModel(pydantic.BaseModel):
-      is_active: bool
+Or any other native Django plugin for this task.
 
-  class UserModel(pydantic.BaseModel):
-      username: str
-      email: str
-      is_active: bool
-
-  class UserListController(
-      Controller[PydanticSerializer],
-      Query[QueryModel],
-  ):
-      def get(self) -> list[UserModel]:
-          # Still pass `.GET` for API compatibility:
-          user_filter = UserFilter(
-               self.request.GET,
-               queryset=User.objects.all(),
-          )
-          return [
-              UserModel.model_validate(user, from_attributes=True)
-              for user in user_filter.qs
-          ]
+Most likely, we will provide our own solution for this.
 
 
 Health Checks
