@@ -24,6 +24,7 @@ No breaking changes in this release.
   and `msgspec` parsers / renderers, #842
 - Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
   for `msgspec` and `pydantic` serializers, #842
+- Added "Problem Details" or RFC-9457 support, #78
 
 ### Fixes
 
@@ -34,6 +35,7 @@ No breaking changes in this release.
 ### Misc
 
 - Improved "Plugins" section in the docs, #835
+- Bumped `msgspec` to `0.21.0`
 
 
 ## Version 0.5.0 (2026-04-05)

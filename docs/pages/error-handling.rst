@@ -220,7 +220,8 @@ How does it work?
 1. When user sends a request with ``Accept`` header
    with ``application/problem+json`` content type,
    we will return Problem Details errors
-2. When ``application/json`` or any other content type is
+2. When ``application/json`` or any other content type is sent,
+   we return regular :class:`~dmr.errors.ErrorModel` error payloads
 
 To do so, you would need a slightly more difficult setup:
 
