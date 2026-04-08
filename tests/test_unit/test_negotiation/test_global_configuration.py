@@ -17,7 +17,7 @@ from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.settings import Settings
-from dmr.test import DMRRequestFactory
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from tests.infra.xml_format import XmlParser, XmlRenderer
 
 
@@ -178,6 +178,127 @@ def test_per_controller_customization(
     )
 
     response = _BothController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == expected_headers
+    assert response.content == expected_data
+
+
+@pytest.mark.parametrize(
+    ('request_headers', 'request_data', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Content-Type': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/xml'},
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml,application/json',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json,application/xml',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml;q=0.7,application/json;q=0.9',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml+pretty;q=0.7,application/json;q=0.9',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {},
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Accept': 'application/xml,application/json'},
+            b'{"root": {"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_per_controller_customization_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    request_data: Any,
+    expected_headers: dict[str, str],
+    expected_data: Any,
+) -> None:
+    """Ensures we can change per-controller parsers and renderers."""
+
+    @final
+    class _BothController(
+        Controller[PydanticSerializer],
+    ):
+        parsers = [XmlParser(), JsonParser()]
+        renderers = [XmlRenderer(), JsonRenderer()]
+
+        async def post(
+            self,
+            parsed_body: Body[_RequestModel],
+        ) -> dict[str, str]:
+            parser = request_parser(self.request)
+            assert parser
+            assert parser.content_type == request.content_type
+            return parsed_body.root
+
+    assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
+    assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
+
+    request = dmr_async_rf.post(
+        '/whatever/',
+        headers=request_headers,
+        data=request_data,
+    )
+
+    response = await dmr_async_rf.wrap(_BothController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
