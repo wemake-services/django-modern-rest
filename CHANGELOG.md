@@ -31,7 +31,7 @@ No breaking changes in this release.
 
 - Fixed package metadata, #824
 - Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
-- Fixes Django 5.2.13+ compat in `DMRAsyncRequestFactory`, 
+- Fixes Django 5.2.13+ compat in `DMRAsyncRequestFactory`, #853
 
 ### Misc
 
