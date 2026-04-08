@@ -40,7 +40,7 @@ class ProblemDetailsError(Exception):
         # Required data:
         detail: str,
         status_code: HTTPStatus,
-        # Promblem details fields:
+        # Problem details fields:
         type: str | None = None,  # noqa: A002
         title: str | None = None,
         instance: str | None = None,
@@ -118,7 +118,7 @@ class ProblemDetailsError(Exception):
         detail: str,
         *,
         status_code: HTTPStatus,
-        # Promblem details fields:
+        # Problem details fields:
         type: str | None = None,  # noqa: A002
         title: str | None = None,
         instance: str | None = None,
