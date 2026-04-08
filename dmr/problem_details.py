@@ -181,7 +181,6 @@ class ProblemDetailsError(APIError[ProblemDetailsModel]):
             }),
         ]
 
-    # TODO: make an overload maybe?
     @classmethod
     def format_error(
         cls,
