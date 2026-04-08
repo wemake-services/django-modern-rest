@@ -155,6 +155,9 @@ def test_sync_sse_prod_from_sync_method(
 
 class _SSEWithClose(SSEController[PydanticSerializer]):
     async def get(self) -> AsyncIterator[SSEvent[str | bytes | int]]:
+        return self._events()
+
+    async def _events(self) -> AsyncIterator[SSEvent[str | bytes | int]]:
         yield SSEvent(b'event', serialize=False)
         yield SSEvent(b'second', serialize=False)
         raise StreamingCloseError
@@ -168,7 +171,9 @@ def test_sync_sse_dev_with_close(
     settings.DEBUG = True
     request = dmr_rf.get('/whatever/')
 
-    response = _SSEWithClose.as_view()(request)
+    response: StreamingResponse = async_to_sync(
+        _SSEWithClose.as_view(),  # type: ignore[arg-type]
+    )(request)
 
     assert isinstance(response, StreamingResponse)
     assert response.streaming

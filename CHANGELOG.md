@@ -26,6 +26,7 @@ No breaking changes in this release.
   and `msgspec` parsers / renderers, #842
 - Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
   for `MsgspecSerializer` and `PydanticSerializer`, #842
+- Add endpoint validator to prevent async generator HTTP endpoints, #843
 
 ### Fixes
 

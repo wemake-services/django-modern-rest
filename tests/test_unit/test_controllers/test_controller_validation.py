@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from http import HTTPStatus
 from typing import Any
 
@@ -8,7 +9,9 @@ from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin
+from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic.serializer import PydanticEndpointOptimizer
 
 
 def test_controller_either_sync_or_async() -> None:
@@ -174,3 +177,37 @@ def test_no_endpoints_with_error_handler() -> None:
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
+
+
+def test_endpoint_rejects_async_gen() -> None:
+    """Ensure endpoints cannot be async generators."""
+
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is an async generator',
+    ):
+
+        class _BadController(Controller[_NoOpPydanticSerializer]):
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
+
+
+def test_msgspec_rejects_async_gen() -> None:
+    """Ensure msgspec controllers cannot define async generator endpoints."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is an async generator',
+    ):
+
+        class _BadController(Controller[MsgspecSerializer]):
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
