@@ -89,29 +89,46 @@ def test_negotiation_django_native(
             request.get_preferred_type(provided_types)
 
 
+_REQUEST_ACCEPTS_CASES: Final = (
+    ('text/plain', 'text/plain', True),
+    ('text/plain', 'text/html', False),
+    ('text/*', 'text/html', True),
+    ('*/*', 'text/html', True),
+    ('text/plain;p=test', 'text/plain;p=test', True),
+    ('text/plain', 'text/*', True),
+    ('text/html', '*/*', True),
+    ('text/plain;q=0.8,text/html', 'text/plain', True),
+    ('text/plain;q=0.8,text/html', 'text/html', True),
+    ('text/plain;q=ab,text/html', 'text/plain', True),
+    ('text/plain;q=ab,text/html', 'text/html', True),
+    ('text/*,text/html', 'text/plain', True),
+    ('text/*,text/html', 'text/html', True),
+)
+
+
 def test_request_accepts_compiled(
     benchmark: BenchmarkFixture,
     monkeypatch: pytest.MonkeyPatch,
     clean_modules: CleanModules,
 ) -> None:
-    """Test compiled version of the header_value_matches_media_type impl"""
+    """Test compiled version of request_accepts."""
 
     monkeypatch.setenv('DMR_USE_COMPILED', '1')
 
     with clean_modules():
-        from dmr._compiled import negotiation  # noqa: PLC0415, PLC2701
+        from dmr._compiled import negotiation  # noqa: I001, PLC0415, PLC2701
+        from dmr.compiled import header_value_matches_media_type  # noqa: PLC0415
 
         assert negotiation.__file__.endswith('.so')
-
-        from dmr.compiled import header_value_matches_media_type  # noqa: I001, PLC0415
-
         assert '_pure' not in header_value_matches_media_type.__module__
 
         @benchmark
         def factory() -> None:
-            for accept, provided_types, _ in _ACCEPTED_TYPE_CASES:
-                for media_type in provided_types:
+            for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
+                assert (
                     header_value_matches_media_type(accept, media_type)
+                    == expected
+                )
 
 
 def test_request_accepts_raw(
@@ -119,7 +136,7 @@ def test_request_accepts_raw(
     monkeypatch: pytest.MonkeyPatch,
     clean_modules: CleanModules,
 ) -> None:
-    """Test raw version of the header_value_matches_media_type impl."""
+    """Test raw version of request_accepts."""
 
     monkeypatch.setenv('DMR_USE_COMPILED', '0')
 
@@ -130,20 +147,21 @@ def test_request_accepts_raw(
 
         @benchmark
         def factory() -> None:
-            for accept, provided_types, _ in _ACCEPTED_TYPE_CASES:
-                for media_type in provided_types:
+            for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
+                assert (
                     header_value_matches_media_type(accept, media_type)
+                    == expected
+                )
 
 
 def test_request_accepts_django_native(
     benchmark: BenchmarkFixture,
 ) -> None:
-    """Test Django native version of the negotiation protocol."""
+    """Test Django native version of request.accepts."""
 
     @benchmark
     def factory() -> None:
-        for accept, provided_types, _expected in _ACCEPTED_TYPE_CASES:
+        for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
             request = HttpRequest()
             request.META = {'HTTP_ACCEPT': accept}
-            for media_type in provided_types:
-                request.accepts(media_type)
+            assert request.accepts(media_type) == expected

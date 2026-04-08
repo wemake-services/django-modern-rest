@@ -71,16 +71,15 @@ class _HasHeadersAsMapping(Protocol):
 
 
 def header_value_matches_media_type(header_value: str, media_type: str) -> bool:
-    """Does the client accept a response in the given media type?"""
     return accepted_type(header_value, (media_type,)) is not None
 
 
 def request_accepts(request: _HasHeadersAsMapping, media_type: str) -> bool:
     """Does the client accept a response in the given media type?"""
-    header_value = request.headers.get('Accepts')
-    if not header_value:
-        return False
-    return header_value_matches_media_type(header_value, media_type)
+    return header_value_matches_media_type(
+        request.headers.get('Accept', '*/*'),
+        media_type,
+    )
 
 
 @final
