@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import Annotated, Any, ClassVar, Final, TypeVar
+from typing import Annotated, Any, ClassVar, Final
 
 from typing_extensions import TypedDict
 
@@ -33,9 +33,6 @@ class ProblemDetailsModel(TypedDict, total=False):
     type: str
     title: str
     instance: str
-
-
-_ErrorModelT = TypeVar('_ErrorModelT')
 
 
 class ProblemDetailsError(APIError[ProblemDetailsModel]):
