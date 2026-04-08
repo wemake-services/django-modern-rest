@@ -317,3 +317,11 @@ def get_conditional_types(
     if metadata:
         return metadata.computed
     return None
+
+
+def accepts(request: HttpRequest, content_type: str) -> bool:
+    """Determine whether this *request* accepts a given *content_type*."""
+    renderer = request_renderer(request)
+    # TODO: refactor after
+    # https://github.com/wemake-services/django-modern-rest/pull/854
+    return renderer is not None and renderer.content_type == content_type

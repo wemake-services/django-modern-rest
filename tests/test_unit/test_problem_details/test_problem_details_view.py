@@ -1,5 +1,6 @@
 import json
 from http import HTTPStatus
+from typing import Any
 
 import pydantic
 import pytest
@@ -11,9 +12,8 @@ from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
 from dmr import Controller, Query, ResponseSpec
-from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType
-from dmr.negotiation import ContentType
+from dmr.negotiation import ContentType, accepts
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.problem_details import ProblemDetailsError, ProblemDetailsModel
@@ -33,7 +33,7 @@ class _ProblemDetailsController(Controller[PydanticSerializer]):
         JsonRenderer(ContentType.json_problem_details),
     )
 
-    error_model = ProblemDetailsError.build_error_model({
+    error_model = ProblemDetailsError.error_model({
         ContentType.json: ErrorModel,
     })
 
@@ -44,7 +44,7 @@ class _ProblemDetailsController(Controller[PydanticSerializer]):
     auth = (DjangoSessionAsyncAuth(),)
 
     async def get(self, parsed_query: Query[_QueryModel]) -> str:
-        raise ProblemDetailsError.build_error(
+        raise ProblemDetailsError.conditional_error(
             (
                 f'Your current balance is {parsed_query.number}, '
                 'but the price is 15'
@@ -58,38 +58,24 @@ class _ProblemDetailsController(Controller[PydanticSerializer]):
         )
 
     @override
-    async def handle_async_error(
-        self,
-        endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
-        exc: Exception,
-    ) -> HttpResponse:
-        if isinstance(exc, ProblemDetailsError):
-            return exc.to_error(controller)
-        return await super().handle_async_error(
-            endpoint,
-            controller,
-            exc,
-        )
-
-    @override
     def format_error(
         self,
         error: str | Exception,
         *,
         loc: str | list[str | int] | None = None,
         error_type: str | ErrorType | None = None,
-    ) -> ErrorModel | ProblemDetailsModel:
-        return ProblemDetailsError.format_error(
-            error,
-            loc=loc,
-            error_type=error_type,
-            title='From format_error',
-            controller=self,
-        )
+    ) -> Any:
+        if accepts(self.request, ContentType.json_problem_details):
+            return ProblemDetailsError.format_error(
+                error,
+                loc=loc,
+                error_type=error_type,
+                title='From format_error',
+            )
+        return super().format_error(error, loc=loc, error_type=error_type)
 
 
-async def _resolve(user: User) -> User:
+async def _resolve(user: User | AnonymousUser) -> User | AnonymousUser:
     return user
 
 
@@ -115,6 +101,7 @@ async def test_conditional_error_details(
     }
     assert json.loads(response.content) == snapshot({
         'detail': 'Your current balance is 0, but the price is 15',
+        'status': 402,
         'type': 'https://example.com/probs/out-of-credit',
         'title': 'Not enough funds',
         'instance': '/account/users/1/',
@@ -124,13 +111,22 @@ async def test_conditional_error_details(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'request_headers',
+    [
+        {},
+        {'Accept': str(ContentType.json)},
+    ],
+)
 async def test_problem_details_default_error(
     dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    request_headers: dict[str, str],
 ) -> None:
     """Test that error details render correctly for conditional types."""
     request = dmr_async_rf.get(
         '/whatever/',
-        headers={'Accept': str(ContentType.json)},
+        headers=request_headers,
     )
     request.auser = lambda: _resolve(User())
 
@@ -144,7 +140,12 @@ async def test_problem_details_default_error(
         'Content-Type': str(ContentType.json),
     }
     assert json.loads(response.content) == snapshot({
-        'detail': [{'msg': 'Your current balance is 0, but the price is 15'}],
+        'detail': [
+            {
+                'msg': 'Your current balance is 0, but the price is 15',
+                'type': 'https://example.com/probs/out-of-credit',
+            },
+        ],
     })
 
 
@@ -170,22 +171,32 @@ async def test_builtin_error_problem_details(
     }
     assert json.loads(response.content) == snapshot({
         'detail': (
-            'Input should be a valid integer, unable '
-            'to parse string as an integer'
+            'Input should be a valid integer, unable to '
+            'parse string as an integer'
         ),
+        'status': 400,
         'type': 'value_error',
         'title': 'From format_error',
     })
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'request_headers',
+    [
+        {},
+        {'Accept': str(ContentType.json)},
+    ],
+)
 async def test_builtin_error_validation(
     dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    request_headers: dict[str, str],
 ) -> None:
     """Test that error details correctly render default errors."""
     request = dmr_async_rf.get(
         '/whatever/?number=a',
-        headers={'Accept': str(ContentType.json)},
+        headers=request_headers,
     )
     request.auser = lambda: _resolve(User())
 
@@ -234,6 +245,7 @@ async def test_builtin_error_auth(
     }
     assert json.loads(response.content) == snapshot({
         'detail': 'Not authenticated',
+        'status': 401,
         'type': 'security',
         'title': 'From format_error',
     })
@@ -247,7 +259,7 @@ class _ProblemDetailsDefaultController(Controller[PydanticSerializer]):
     )
 
     async def get(self, parsed_query: Query[_QueryModel]) -> str:
-        raise ProblemDetailsError.build_error(
+        raise ProblemDetailsError(
             (
                 f'Your current balance is {parsed_query.number}, '
                 'but the price is 15'
@@ -260,18 +272,18 @@ class _ProblemDetailsDefaultController(Controller[PydanticSerializer]):
         )
 
     @override
-    async def handle_async_error(
+    def format_error(
         self,
-        endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
-        exc: Exception,
-    ) -> HttpResponse:
-        if isinstance(exc, ProblemDetailsError):
-            return exc.to_error(controller)
-        return await super().handle_async_error(
-            endpoint,
-            controller,
-            exc,
+        error: str | Exception,
+        *,
+        loc: str | list[str | int] | None = None,
+        error_type: str | ErrorType | None = None,
+    ) -> Any:
+        return ProblemDetailsError.format_error(
+            error,
+            loc=loc,
+            error_type=error_type,
+            title='From format_error',
         )
 
 
@@ -291,6 +303,7 @@ async def test_problem_details_as_default(
     assert response.headers == {'Content-Type': str(ContentType.json)}
     assert json.loads(response.content) == snapshot({
         'detail': 'Your current balance is 0, but the price is 15',
+        'status': 402,
         'type': 'https://example.com/probs/out-of-credit',
         'title': 'Not enough funds',
         'instance': '/account/users/1/',
@@ -304,22 +317,23 @@ async def test_problem_details_as_default_validation(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Test that error details can be a default error model."""
-    request = dmr_async_rf.get('/whatever/?number=1')
+    request = dmr_async_rf.get('/whatever/?number=a')
 
     response = await dmr_async_rf.wrap(
         _ProblemDetailsDefaultController.as_view()(request),
     )
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED, response.content
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == {'Content-Type': str(ContentType.json)}
     assert json.loads(response.content) == snapshot({
-        'detail': 'Your current balance is 1, but the price is 15',
-        'type': 'https://example.com/probs/out-of-credit',
-        'title': 'Not enough funds',
-        'instance': '/account/users/1/',
-        'balance': 1,
-        'price': 15,
+        'detail': (
+            'Input should be a valid integer, unable '
+            'to parse string as an integer'
+        ),
+        'status': 400,
+        'type': 'value_error',
+        'title': 'From format_error',
     })
 
 
@@ -330,40 +344,30 @@ class _ProblemDetailsValidationController(Controller[PydanticSerializer]):
     )
 
     async def get(self, parsed_query: Query[_QueryModel]) -> str:
-        raise ProblemDetailsError.build_error(
+        raise ProblemDetailsError(
             (
                 f'Your current balance is {parsed_query.number}, '
                 'but the price is 15'
             ),
             status_code=HTTPStatus.PAYMENT_REQUIRED,
-            type='https://example.com/probs/out-of-credit',
-            title='Not enough funds',
-            instance='/account/users/1/',
-            extra={'balance': parsed_query.number, 'price': 15},
-        )
-
-    @override
-    async def handle_async_error(
-        self,
-        endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
-        exc: Exception,
-    ) -> HttpResponse:
-        if isinstance(exc, ProblemDetailsError):
-            return exc.to_error(controller)
-        return await super().handle_async_error(
-            endpoint,
-            controller,
-            exc,
         )
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'request_headers',
+    [
+        {},
+        {'Accept': str(ContentType.json)},
+    ],
+)
 async def test_problem_details_spec_validation(
     dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    request_headers: dict[str, str],
 ) -> None:
     """Test that controller validates invalid error models."""
-    request = dmr_async_rf.get('/whatever/')
+    request = dmr_async_rf.get('/whatever/', headers=request_headers)
 
     response = await dmr_async_rf.wrap(
         _ProblemDetailsValidationController.as_view()(request),

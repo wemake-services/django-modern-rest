@@ -23,6 +23,9 @@ class UserModel(pydantic.BaseModel):
     is_active: bool
 
 
+_UserList = pydantic.TypeAdapter(list[UserModel])
+
+
 class UsersController(Controller[PydanticSerializer]):
     def get(self, parsed_query: Query[QueryModel]) -> list[UserModel]:
         # Still pass `.GET` for API compatibility:
@@ -30,11 +33,8 @@ class UsersController(Controller[PydanticSerializer]):
             self.request.GET,
             queryset=User.objects.all(),
         )
-        return [
-            UserModel.model_validate(user, from_attributes=True)
-            for user in user_filter.qs
-        ]
+        return _UserList.validate_python(user_filter.qs, from_attributes=True)
 
 
-# run: {"controller": "UsersController", "method": "get", "url": "/api/users/", "populate_db": true}  # noqa: ERA001, E501
+# run: {"controller": "UsersController", "method": "get", "url": "/api/users/", "query": "?is_active=1", "populate_db": true}  # noqa: ERA001, E501
 # openapi: {"controller": "UsersController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001, E501

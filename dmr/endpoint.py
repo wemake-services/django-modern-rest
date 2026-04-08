@@ -340,6 +340,7 @@ class Endpoint:  # noqa: WPS214
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = await self.handle_async_error(controller, exc)
@@ -376,6 +377,7 @@ class Endpoint:  # noqa: WPS214
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = self.handle_error(controller, exc)

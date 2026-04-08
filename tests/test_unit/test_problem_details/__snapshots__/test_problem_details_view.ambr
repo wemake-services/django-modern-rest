@@ -337,42 +337,26 @@
               "type": "string",
               "title": "Detail"
             },
+            "status": {
+              "type": "integer",
+              "title": "Status"
+            },
             "type": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
               "title": "Type"
             },
             "title": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
               "title": "Title"
             },
             "instance": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
               "title": "Instance"
             }
           },
           "type": "object",
-          "title": "ProblemDetailsModel"
+          "title": "ProblemDetailsModel",
+          "description": "Error payload model for Problem Details.\n\nSee https://datatracker.ietf.org/doc/html/rfc9457\nfor the detailed description of each field."
         }
       },
       "securitySchemes": {

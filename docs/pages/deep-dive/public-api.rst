@@ -185,6 +185,17 @@ Testing
   :members:
 
 
+Problem Details
+---------------
+
+.. autoclass:: dmr.problem_details.ProblemDetailsError
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.problem_details.ProblemDetailsModel
+  :members:
+
+
 Plugins
 -------
 

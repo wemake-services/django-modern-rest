@@ -307,5 +307,8 @@ def global_error_handler(
         return controller.to_error(
             controller.format_error(exc),
             status_code=exc.status_code,
+            headers=getattr(exc, 'headers', None),
+            cookies=getattr(exc, 'cookies', None),
+            renderer=getattr(exc, 'renderer', None),
         )
     raise exc from None

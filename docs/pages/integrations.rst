@@ -131,24 +131,24 @@ Everything just works:
 Throttling
 ----------
 
-One can use `django-rate-limit <https://django-ratelimit.readthedocs.io/en/stable/usage.html#class-based-views>`.
-
+One can use
+`django-smart-limit <https://github.com/YasserShkeir/django-smart-ratelimit>`.
 Or any other native Django plugin for this task.
-
-Most likely, we will provide our own solution for this.
 
 
 Health Checks
 -------------
 
-We recommend using `django-health-check <https://github.com/codingjoe/django-health-check>`_
+We recommend using
+`django-health-check <https://github.com/codingjoe/django-health-check>`_
 for monitoring your application's health.
 
 No special integration is required — the package works out-of-the-box with
 ``django-modern-rest``. Simply install it, include its URLs in your main
 urlconf, and add the desired check apps to ``INSTALLED_APPS``.
 
-For advanced configuration, please refer to the `django-health-check documentation <https://codingjoe.dev/django-health-check>`_.
+For advanced configuration, please refer to the
+`django-health-check documentation <https://codingjoe.dev/django-health-check>`_.
 
 
 CORS Headers

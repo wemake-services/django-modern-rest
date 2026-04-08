@@ -185,6 +185,8 @@ And here's how our test ``xml`` parser and renderer are defined:
   prefer more tested and battle-proven solutions.
 
 
+.. _conditional-types:
+
 Using different schemes for different content types
 ---------------------------------------------------
 
