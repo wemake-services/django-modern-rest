@@ -58,9 +58,19 @@ class _DMRMixin:  # noqa: WPS338
             **kwargs,
         ):
             if isinstance(self, AsyncRequestFactory) or content_type is None:
-                content_type = (kwargs.get('headers', {}) or {}).get(
-                    'Content-Type',
-                    self.default_content_type,
+                # See https://github.com/django/django/commit/caf90a971f09323775ed0cacf94eadaf39d040e0
+                # Django versions 5.2.12 and 5.2.13 behave differently now:
+                headers = kwargs.get('headers', {}) or {}
+                content_type = (
+                    headers.pop(
+                        'Content-Type',
+                        self.default_content_type,
+                    )
+                    if isinstance(self, AsyncRequestFactory)
+                    else headers.get(
+                        'Content-Type',
+                        self.default_content_type,
+                    )
                 )
             return super().generic(
                 method,
