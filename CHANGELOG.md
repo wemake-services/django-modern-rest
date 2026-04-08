@@ -31,6 +31,7 @@ No breaking changes in this release.
 
 - Fixed package metadata, #824
 - Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
+- Fixed `to_python()` serialization for complex values, #850
 
 ### Misc
 
