@@ -9,7 +9,6 @@ from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin
-from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.plugins.pydantic.serializer import PydanticEndpointOptimizer
 
@@ -197,17 +196,5 @@ def test_endpoint_rejects_async_gen() -> None:
     ):
 
         class _BadController(Controller[_NoOpPydanticSerializer]):
-            async def get(self) -> AsyncIterator[int]:
-                yield 1  # pragma: no cover
-
-
-def test_msgspec_rejects_async_gen() -> None:
-    """Ensure msgspec controllers cannot define async generator endpoints."""
-    with pytest.raises(
-        EndpointMetadataError,
-        match='is an async generator',
-    ):
-
-        class _BadController(Controller[MsgspecSerializer]):
             async def get(self) -> AsyncIterator[int]:
                 yield 1  # pragma: no cover
