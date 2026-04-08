@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from django.http import HttpRequest, HttpResponse
 
+from dmr.internal.json import json_dumps
 from dmr.openapi.views.base import OpenAPIView
 
 

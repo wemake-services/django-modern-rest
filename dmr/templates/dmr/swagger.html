@@ -1,7 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <title>{{ title|default:"Swagger UI" }}</title>
@@ -14,37 +13,21 @@
     <link rel="icon" type="image/png" href="{% static 'dmr/swagger/5.32.1/favicon-16x16.png' %}" sizes="16x16" />
   {% endif %}
 </head>
-
 <body>
-  <div id="swagger-ui"></div>
-  {% if swagger_cdn %}
-    <script src="{{ swagger_cdn }}/swagger-ui-bundle.js" charset="UTF-8"> </script>
-    <script src="{{ swagger_cdn }}/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
-  {% else %}
-    <script src="{% static 'dmr/swagger/5.32.1/swagger-ui-bundle.js' %}" charset="UTF-8"> </script>
-    <script src="{% static 'dmr/swagger/5.32.1/swagger-ui-standalone-preset.js' %}" charset="UTF-8"> </script>
-  {% endif %}
-  <script>
-    window.onload = function () {
-      window.ui = SwaggerUIBundle({
-        spec: {{ schema | safe }},
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout",
-        requestInterceptor: (req) => {
-          req.headers['X-CSRFToken'] = '{{ csrf_token }}';
-          return req;
-        }
-      });
-    };
-  </script>
-</body>
+  <div
+    id="swagger-app"
+    data-csrf-token="{{ csrf_token }}"
+  ></div>
+  {{ schema|json_script:"swagger-schema" }}
 
+  {% if swagger_cdn %}
+    <script src="{{ swagger_cdn }}/swagger-ui-bundle.js" charset="UTF-8"></script>
+    <script src="{{ swagger_cdn }}/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+  {% else %}
+    <script src="{% static 'dmr/swagger/5.32.1/swagger-ui-bundle.js' %}" charset="UTF-8"></script>
+    <script src="{% static 'dmr/swagger/5.32.1/swagger-ui-standalone-preset.js' %}" charset="UTF-8"></script>
+  {% endif %}
+
+  <script src="{% static 'dmr/swagger/init.js' %}"></script>
+</body>
 </html>

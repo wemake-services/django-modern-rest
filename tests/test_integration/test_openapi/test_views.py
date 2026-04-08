@@ -93,6 +93,29 @@ def test_wrong_method(
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
+@pytest.mark.parametrize(
+    'endpoint_name',
+    [
+        name
+        for name, content_type in _ENDPOINTS.items()
+        if content_type == 'text/html'
+    ],
+)
+def test_html_returns_correct_structure(
+    dmr_client: DMRClient,
+    *,
+    endpoint_name: str,
+) -> None:
+    """Ensure that HTML endpoints return expected basic HTML tags."""
+    response = dmr_client.get(reverse(endpoint_name))
+    html_content = response.content.decode()
+
+    assert '<!DOCTYPE html>' in html_content
+    assert '<html' in html_content
+    assert '<head>' in html_content
+    assert '<body>' in html_content
+
+
 def test_json_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
     response = dmr_client.get(reverse('openapi_json'))

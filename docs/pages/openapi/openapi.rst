@@ -62,7 +62,7 @@ What happens in the example above?
 
 .. note::
 
-  By default Swagger, Redoc, and Scalar use bundled static assets
+  By default Swagger, Redoc, Stoplight, and Scalar use bundled static assets
   that are shipped with ``django-modern-rest`` and served by Django.
   To switch any renderer to a CDN, configure
   :data:`dmr.settings.Settings.openapi_static_cdn`.
@@ -71,6 +71,12 @@ What happens in the example above?
   Exact bundled versions and license texts are documented in ``licenses/``.
 
   You can also modify the exact versions that we use for each tool this way.
+
+  The UI shipped by ``django-modern-rest`` are prepared for
+  stricter ``Content-Security-Policy`` setups.
+  However, final CSP compatibility still depends on the upstream renderer
+  bundle you choose, since Swagger UI / Redoc / Scalar / Stoplight can still
+  have their own runtime constraints outside of DMR's templates.
 
   Example:
 
