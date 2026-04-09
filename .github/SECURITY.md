@@ -7,7 +7,7 @@
    with [Bandit](https://docs.astral.sh/ruff/rules/#flake8-bandit-s)
    security tool
 2. We use strict [CodeQL](https://codeql.github.com) security checks on GitHub
-3. We update our dependencies regulary, however, we use a cooldown of 7 days
+3. We update our dependencies regularly, however, we use a cooldown of 7 days
    to limit the chances of a 0 day vulnerability
 4. We check for known CVEs in our dependencies using [`uv audit`](https://docs.astral.sh/uv/reference/cli/#uv-audit)
    tool and GitHub's [Dependabot security audit](https://docs.github.com/en/code-security/concepts/security-at-scale/auditing-security-alerts)
