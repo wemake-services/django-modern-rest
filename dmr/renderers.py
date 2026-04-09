@@ -1,14 +1,12 @@
 import abc
-import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
+from dmr.internal.json import JsonModule, NativeJson
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.parsers import (
     JsonParser,
@@ -104,26 +102,6 @@ class Renderer(ResponseSpecProvider):
         ]
 
 
-class _DMREncoder(DjangoJSONEncoder):
-    def __init__(
-        self,
-        *args: Any,
-        serializer_hook: Callable[[Any], Any] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self._serializer_hook = serializer_hook
-
-    @override
-    def default(self, o: Any) -> Any:  # noqa: WPS111
-        try:
-            return super().default(o)
-        except TypeError:
-            if self._serializer_hook:
-                return self._serializer_hook(o)
-            raise
-
-
 class JsonRenderer(Renderer):
     """
     Fallback implementation of a json renderer.
@@ -136,10 +114,19 @@ class JsonRenderer(Renderer):
         It is slow and has less features.
         We won't add any complex objects support to this renderer.
 
+    Alternative ``json`` implementations can be provided:
+
+    .. code:: python
+
+        >>> import orjson
+        >>> from dmr.renderers import JsonRenderer
+
+        >>> parser = JsonRenderer(json_module=orjson)
+
+    See :ref:`alternative-json` for more info.
     """
 
     __slots__ = (
-        '_encoder_cls',
         '_json_module',
         'content_type',
     )
@@ -148,13 +135,15 @@ class JsonRenderer(Renderer):
         self,
         content_type: str = 'application/json',
         *,
-        encoder_cls: type[DjangoJSONEncoder] = _DMREncoder,
-        json_module: ModuleType = json,
+        json_module: JsonModule = NativeJson,
     ) -> None:
         """Init the renderer with all defaults."""
         self.content_type = content_type
-        self._encoder_cls = encoder_cls
         self._json_module = json_module
+        # Sanity check:
+        assert self._json_module.dumps, (  # type: ignore[truthy-function]  # noqa: S101
+            'Passed json module does not have `.dumps` method'
+        )
 
     @override
     def render(
@@ -171,27 +160,12 @@ class JsonRenderer(Renderer):
 
         Returns:
             JSON as bytes.
+
         """
         # msgspec returns `bytes`, we prefer to use `bytes` by default
         # and not to create extra strings when not needed in "fast" mode.
         # We don't really care about raw json implementation. It is a fallback.
-        if self._json_module is not json:
-            # Alternative json modules like orjson return bytes directly
-            # and use `default=` instead of `cls=` for custom serialization.
-            result = self._json_module.dumps(
-                to_serialize,
-                default=serializer_hook,
-            )
-            if isinstance(result, bytes):
-                return result
-            return result.encode('utf8')
-        return json.dumps(
-            to_serialize,
-            cls=self._encoder_cls,
-            serializer_hook=serializer_hook,
-            # We need this flag to produce the same results as `msgspec`:
-            separators=(',', ':'),
-        ).encode('utf8')
+        return self._json_module.dumps(to_serialize, default=serializer_hook)
 
     @property
     @override

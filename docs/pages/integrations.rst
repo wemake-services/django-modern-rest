@@ -12,33 +12,6 @@ Big list of Django integrations: https://github.com/wsvincent/awesome-django
   `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
 
 
-Alternative JSON backends
--------------------------
-
-By default, ``JsonParser`` and ``JsonRenderer`` use Python's built-in
-``json`` module. You can swap in a faster backend like
-`orjson <https://github.com/ijl/orjson>`_ by passing the ``json_module``
-parameter:
-
-.. code-block:: python
-
-    import orjson
-
-    from dmr.parsers import JsonParser
-    from dmr.renderers import JsonRenderer
-    from dmr.settings import Settings
-
-    DMR_SETTINGS = {
-        Settings.parsers: [JsonParser(json_module=orjson)],
-        Settings.renderers: [JsonRenderer(json_module=orjson)],
-    }
-
-Any module that exposes ``loads(data)`` and ``dumps(obj, *, default=...)``
-is supported. ``orjson`` is the recommended alternative because it returns
-``bytes`` directly, avoiding an extra encode step, and is significantly
-faster than the standard library ``json``.
-
-
 CSRF
 ----
 

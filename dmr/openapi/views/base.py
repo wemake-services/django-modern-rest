@@ -7,7 +7,7 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
-from dmr.internal.json import json_dumps
+from dmr.internal.json import json_dump_schema
 
 if TYPE_CHECKING:
     from dmr.openapi.objects import OpenAPI
@@ -32,13 +32,13 @@ class OpenAPIView(View):
 
     Attributes:
         dumps: Callable that converts a converted OpenAPI schema into a string.
-            Defaults to :func:`dmr.internal.json.json_dumps`.
+            Defaults to :func:`dmr.internal.json.json_dump_schema`.
         schema: The OpenAPI schema associated with this view. Set when
             :meth:`as_view` is called.
     """
 
     # Public API:
-    dumps: SchemaDumper = staticmethod(json_dumps)  # noqa: WPS421
+    dumps: SchemaDumper = staticmethod(json_dump_schema)  # noqa: WPS421
 
     # Private API:
     _schema: 'OpenAPI | None' = None

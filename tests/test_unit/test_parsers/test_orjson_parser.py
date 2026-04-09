@@ -7,6 +7,7 @@ import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 from faker import Faker
+from inline_snapshot import snapshot
 
 from dmr import Body, Controller
 from dmr.parsers import JsonParser
@@ -17,7 +18,7 @@ from dmr.test import DMRRequestFactory
 
 
 @pytest.fixture(autouse=True)
-def _clear_parser_and_renderer(
+def _orjson_parser_and_renderer(
     settings: LazySettings,
 ) -> None:
     settings.DMR_SETTINGS = {
@@ -26,8 +27,23 @@ def _clear_parser_and_renderer(
     }
 
 
+@pytest.mark.parametrize(
+    'request_headers',
+    [
+        {},
+        {
+            'Content-Type': 'application/json',
+        },
+        {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+    ],
+)
 def test_orjson_parser_parses_valid_json(
     dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
 ) -> None:
     """Ensures orjson can parse valid JSON request bodies."""
 
@@ -37,10 +53,7 @@ def test_orjson_parser_parses_valid_json(
 
     request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
+        headers=request_headers,
         data=orjson.dumps({'key': 'value'}),
     )
 
@@ -62,10 +75,7 @@ def test_orjson_parser_empty_body(
 
     request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
+        headers={'Content-Type': 'application/json'},
         data=b'',
     )
 
@@ -87,10 +97,6 @@ def test_orjson_parser_invalid_json(
 
     request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
         data=b'{><!$',
     )
 
@@ -119,10 +125,6 @@ def test_orjson_parser_complex_data(
 
     request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
         data=orjson.dumps(request_data),
     )
 
@@ -133,24 +135,36 @@ def test_orjson_parser_complex_data(
     assert json.loads(response.content) == request_data
 
 
-def test_orjson_renderer_returns_bytes(
+def test_orjson_parser_validation(
     dmr_rf: DMRRequestFactory,
+    faker: Faker,
 ) -> None:
-    """Ensures that the orjson renderer produces valid JSON bytes."""
+    """Ensures orjson can handle complex pydantic model data."""
 
     class _Controller(Controller[PydanticSerializer]):
-        def get(self) -> dict[str, str]:
-            return {'hello': 'world'}
+        def post(self, parsed_body: Body[_UserModel]) -> _UserModel:
+            return parsed_body
 
-    request = dmr_rf.get(
+    request_data = {'username': faker.name(), 'age': 'wrong'}
+
+    request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Accept': 'application/json',
-        },
+        data=orjson.dumps(request_data),
     )
 
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert json.loads(response.content) == {'hello': 'world'}
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Input should be a valid integer, unable '
+                    'to parse string as an integer'
+                ),
+                'loc': ['parsed_body', 'age'],
+                'type': 'value_error',
+            },
+        ],
+    })

@@ -36,3 +36,4 @@ class ExampleController(
 
 # run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/xml", "Accept": "application/xml"}, "body": {"root": {"one": "first"}}}  # noqa: E501, ERA001
 # run: {"controller": "ExampleController", "method": "post", "url": "/api/example/", "headers": {"Content-Type": "application/json", "Accept": "application/json"}, "body": {"root": {"one": "first"}}}  # noqa: E501, ERA001
+# openapi: {"controller": "ExampleController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001, E501

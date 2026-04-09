@@ -116,6 +116,35 @@ Here's how we select a renderer:
   fallbacks to settings-defined renderers in some error cases.
 
 
+.. _alternative-json:
+
+Alternative JSON backends
+-------------------------
+
+By default, we use ``msgspec`` if it installed.
+When it is not, we fallback to :class:`~dmr.parsers.JsonParser`
+and :class:`~dmr.renderers.JsonRenderer` types, which use native pure Python
+:mod:`json` with limited features support and very low performance.
+
+For users, who does not want to use ``msgspec``, but prefer
+`orjson <https://github.com/ijl/orjson>`_ for some reason,
+we provide the following API:
+
+.. literalinclude:: /examples/negotiation/orjson_integration.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Any module that exposes API that fits :class:`~dmr.internal.json.JsonModule`
+is supported. If some API does not fit exactly, you can create
+a small wrapper that would fit, like :class:`~dmr.internal.json.NativeJson`.
+
+``orjson`` is the recommended alternative because
+it is really fast, returns ``bytes`` directly,
+avoiding an extra encode step, and is significantly
+faster than the standard library ``json``.
+
+
 Customizing negotiation process
 -------------------------------
 
@@ -132,29 +161,29 @@ going back to the less specific:
 
 .. tabs::
 
-    .. tab:: per endpoint
+  .. tab:: per endpoint
 
-      .. literalinclude:: /examples/negotiation/per_endpoint.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 35
+    .. literalinclude:: /examples/negotiation/per_endpoint.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 35
 
-    .. tab:: per controller
+  .. tab:: per controller
 
-      .. literalinclude:: /examples/negotiation/per_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 39-40
+    .. literalinclude:: /examples/negotiation/per_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 39-40
 
-    .. tab:: per settings
+  .. tab:: per settings
 
-      .. literalinclude:: /examples/negotiation/settings.py
-        :caption: settings.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 6-7
+    .. literalinclude:: /examples/negotiation/settings.py
+      :caption: settings.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 6-7
 
 First parsers / renderers definition found, starting from the top,
 will win and be used for the endpoint.
@@ -335,8 +364,6 @@ Renderers
 
 Advanced API
 ------------
-
-
 
 .. autoclass:: dmr.parsers.SupportsFileParsing
   :members:

@@ -165,6 +165,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.streaming.controller._StreamingEndpoint'),
     # Unsolvable imports:
     (_PY_CLASS, 'AbstractBaseUser'),
+    (_PY_CLASS, 'Raw'),
     # Undocumented in Django:
     (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
