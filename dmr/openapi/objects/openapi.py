@@ -63,7 +63,7 @@ class OpenAPI:
         return spec
 
 
-def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:
+def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:  # noqa: WPS231
     """Converts any dataclass object into a JSON schema."""
     schema: ConvertedSchema = {}
 

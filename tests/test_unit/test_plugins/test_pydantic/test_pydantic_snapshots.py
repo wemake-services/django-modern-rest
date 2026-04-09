@@ -70,7 +70,7 @@ class _UserDocument(pydantic.BaseModel, Generic[_ModelT]):
 
     @classmethod
     @override
-    def model_parametrized_name(cls, params: tuple[type[Any], ...]) -> str:
+    def model_parametrized_name(cls, params: tuple[type[Any], ...]) -> str:  # noqa: WPS110
         return (
             super()
             .model_parametrized_name(params)
