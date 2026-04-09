@@ -718,7 +718,7 @@ dev = [
     { name = "dennis", specifier = ">=1.2,<2" },
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
     { name = "django", specifier = ">=5.2,<6" },
-    { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.0.3" },
+    { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.0.2" },
     { name = "faker", specifier = ">=40.1,<41" },
     { name = "httpx", specifier = ">=0.28,<0.29" },
     { name = "import-linter", specifier = ">=2.5,<3" },
@@ -764,7 +764,7 @@ docs = [
     { name = "sphinxcontrib-mermaid", specifier = ">=2.0,<3" },
     { name = "uvicorn", specifier = ">=0.41,<0.43" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
-    { name = "zapros", specifier = "==0.5" },
+    { name = "zapros", specifier = ">=0.5,<0.6" },
 ]
 integration = [
     { name = "pytest-codspeed", specifier = ">=4.3,<5" },
@@ -802,7 +802,7 @@ wheels = [
 
 [[package]]
 name = "django-stubs"
-version = "6.0.2"
+version = "6.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
@@ -810,9 +810,9 @@ dependencies = [
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/03/b2/f0214d86180f937c8e3358ff831b20f0634d95bd77436b18861c647e15bc/django_stubs-6.0.2.tar.gz", hash = "sha256:56d43b5e3741563af0063e5b6283f908c625b0439aa06314268673699d1bdccd", size = 274742, upload-time = "2026-04-01T08:27:35.092Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/9a/78b442ab9254436b3195bffaf4e52d54aa32ac2b47ee1f8481f4614abb01/django_stubs-6.0.1.tar.gz", hash = "sha256:e1ca63634221b57a55e16562b9b6d1849aeee2cabfd0fc026084dbe8aa893366", size = 272906, upload-time = "2026-03-18T08:10:18.366Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/e7/8f2aaa22eac7fa18db3aca0e7b651ccf5ac79a2021bf67e75a16934a7076/django_stubs-6.0.2-py3-none-any.whl", hash = "sha256:c3bc84d80421758f3b2ad9e1358e001d719388a8eb106e67c873e606216108d4", size = 538234, upload-time = "2026-04-01T08:27:33.411Z" },
+    { url = "https://files.pythonhosted.org/packages/43/be/e9280ae94339f49d17af63b2ec508c9f11031196426a04cbdec1b0878d4a/django_stubs-6.0.1-py3-none-any.whl", hash = "sha256:d885044bd0876610f3eb969d6b5ed22f386002a879fdcb369cd8efa0502dbbce", size = 535867, upload-time = "2026-03-18T08:10:16.192Z" },
 ]
 
 [package.optional-dependencies]
@@ -1707,11 +1707,11 @@ wheels = [
 
 [[package]]
 name = "platformdirs"
-version = "4.9.4"
+version = "4.9.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/19/56/8d4c30c8a1d07013911a8fdbd8f89440ef9f08d07a1b50ab8ca8be5a20f9/platformdirs-4.9.4.tar.gz", hash = "sha256:1ec356301b7dc906d83f371c8f487070e99d3ccf9e501686456394622a01a934", size = 28737, upload-time = "2026-03-05T18:34:13.271Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/4a/0883b8e3802965322523f0b200ecf33d31f10991d0401162f4b23c698b42/platformdirs-4.9.6.tar.gz", hash = "sha256:3bfa75b0ad0db84096ae777218481852c0ebc6c727b3168c1b9e0118e458cf0a", size = 29400, upload-time = "2026-04-09T00:04:10.812Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/d7/97f7e3a6abb67d8080dd406fd4df842c2be0efaf712d1c899c32a075027c/platformdirs-4.9.4-py3-none-any.whl", hash = "sha256:68a9a4619a666ea6439f2ff250c12a853cd1cbd5158d258bd824a7df6be2f868", size = 21216, upload-time = "2026-03-05T18:34:12.172Z" },
+    { url = "https://files.pythonhosted.org/packages/75/a6/a0a304dc33b49145b21f4808d763822111e67d1c3a32b524a1baf947b6e1/platformdirs-4.9.6-py3-none-any.whl", hash = "sha256:e61adb1d5e5cb3441b4b7710bea7e4c12250ca49439228cc1021c00dcfac0917", size = 21348, upload-time = "2026-04-09T00:04:09.463Z" },
 ]
 
 [[package]]
@@ -3121,14 +3121,14 @@ wheels = [
 
 [[package]]
 name = "zapros"
-version = "0.5.0"
+version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "h11" },
     { name = "pywhatwgurl" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/3e/aa290fc94b88ed279042cd1bb97232b247ac820eee20a23119488b504629/zapros-0.5.0.tar.gz", hash = "sha256:3e48ca1744a2768f41069856db11d0014dd1342f54a1322fcb93ab8e61e865e3", size = 70265, upload-time = "2026-04-04T18:56:01.522Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/d9/aa3cab73ce21a7fbef87abcaf4e8f08419f540011b8e00d684da6aea5f6e/zapros-0.5.1.tar.gz", hash = "sha256:21995e1fc14ed7723eba2cf55381351917515a4199d1f8110e9e3eeccc07e4d6", size = 73447, upload-time = "2026-04-08T13:36:33.14Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/67/40d47fd28a64715d2ae179dabc005f18d52cc08555bf0c4035db0c1f6640/zapros-0.5.0-py3-none-any.whl", hash = "sha256:cd38bd1f178e6ce236b4c77e0023b76cf1965c2171bf59f194aa1d605836107d", size = 61640, upload-time = "2026-04-04T18:56:00.027Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/42/c0bb7217e91ae75728500aac482b7e6fbfab47a2da16fd1183a47c47cffd/zapros-0.5.1-py3-none-any.whl", hash = "sha256:d26ec25206c30450f4e9d2653d1cdd731b70e3275f5d96ae5e8939b769438641", size = 64605, upload-time = "2026-04-08T13:36:31.959Z" },
 ]
