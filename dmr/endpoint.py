@@ -393,7 +393,7 @@ class Endpoint:  # noqa: WPS214
             assert isinstance(auth, SyncAuth)  # noqa: S101
             authed_by = auth(self, controller)
             if authed_by is not None:
-                controller.request.auth = authed_by  # type: ignore[attr-defined]
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
 
@@ -408,7 +408,7 @@ class Endpoint:  # noqa: WPS214
             assert isinstance(auth, AsyncAuth)  # noqa: S101
             authed_by = await auth(self, controller)  # noqa: WPS476
             if authed_by is not None:
-                controller.request.auth = authed_by  # type: ignore[attr-defined]
+                controller.request.__drm_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
 

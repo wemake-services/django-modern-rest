@@ -201,7 +201,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
     ) -> None:
         """Set current user as authed for this request."""
         request.user = user
-        request.jwt = token  # type: ignore[attr-defined]
+        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
 
     def _uses_standard_http_bearer_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP bearer auth."""
