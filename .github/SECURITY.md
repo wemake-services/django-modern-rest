@@ -12,7 +12,7 @@
 4. We check for known CVEs in our dependencies using [`uv audit`](https://docs.astral.sh/uv/reference/cli/#uv-audit)
    tool and GitHub's [Dependabot security audit](https://docs.github.com/en/code-security/concepts/security-at-scale/auditing-security-alerts)
    feature
-5. We do not allow AI generated slop to polute the repository
+5. We do not allow AI generated slop to pollute the repository
 6. We follow all RFCs and guidelines for the features we expose
 7. We don't write anything from scratch, if we use JWT feature,
    we use `pyjwt` as a trusted dependency
@@ -42,7 +42,7 @@ I do consulting for 10+ years now, so I can surely help your company.
 ## Reporting a Vulnerability
 
 We take security vulnerabilities very seriously.
-To reach the response team, fill in our vulnerability form at 
+To reach the response team, fill in our vulnerability form at
 https://github.com/wemake-services/django-modern-rest/security/advisories/new
 
 Only the response team members will see your report,
