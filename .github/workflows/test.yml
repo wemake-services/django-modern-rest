@@ -44,7 +44,7 @@ jobs:
         sudo apt install -y gettext
 
         # Python deps:
-        uv sync --all-extras --group dev
+        uv sync --all-extras --all-groups
 
     - name: Run checks
       env:
