@@ -45,6 +45,10 @@ jobs:
 
         # Python deps:
         uv sync --all-extras --all-groups
+        # We don't install `orjson` in `pyproject.toml`,
+        # because we run `3.14t` as well and it cannot be installed there :(
+        # No way to exclude the platform on a file level.
+        uv pip install orjson || true
 
     - name: Run checks
       env:
