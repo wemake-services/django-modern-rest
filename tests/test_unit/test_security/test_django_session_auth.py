@@ -11,6 +11,7 @@ from inline_snapshot import snapshot
 from dmr import Controller, modify
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security import request_auth
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
@@ -36,6 +37,8 @@ def test_sync_session_auth_success(
     response = _SyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert isinstance(request_auth(request), DjangoSessionSyncAuth)
+    assert isinstance(request_auth(request, strict=True), DjangoSessionSyncAuth)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == 'authed'
@@ -51,6 +54,9 @@ def test_sync_session_auth_failure(
     response = _SyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert request_auth(request) is None
+    with pytest.raises(AttributeError, match='auth'):
+        request_auth(request, strict=True)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
@@ -81,6 +87,11 @@ async def test_async_session_auth_success(
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
+    assert isinstance(request_auth(request), DjangoSessionAsyncAuth)
+    assert isinstance(
+        request_auth(request, strict=True),
+        DjangoSessionAsyncAuth,
+    )
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == 'authed'
@@ -97,6 +108,9 @@ async def test_async_session_auth_failure(
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
+    assert request_auth(request) is None
+    with pytest.raises(AttributeError, match='auth'):
+        request_auth(request, strict=True)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({

@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, Generic, TypeAlias, TypeVar
+from typing import Annotated, Any, Generic, Self, TypeAlias, TypeVar
 
 import pytest
 from django.core.exceptions import DisallowedRedirect
@@ -237,7 +237,7 @@ class _TestSyncAuth(SyncAuth):
         self,
         endpoint: Endpoint,
         controller: Controller[BaseSerializer],
-    ) -> Any | None:
+    ) -> Self | None:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
     @property
@@ -259,7 +259,7 @@ class _TestAsyncAuth(AsyncAuth):
         self,
         endpoint: Endpoint,
         controller: Controller[BaseSerializer],
-    ) -> Any | None:
+    ) -> Self | None:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
     @property

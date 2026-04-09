@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Self, final
 
 from typing_extensions import override
 
@@ -19,9 +19,9 @@ class HttpBasicAsync(HttpBasicAsyncAuth):
         controller: 'Controller[BaseSerializer]',
         username: str,
         password: str,
-    ) -> Any | None:
+    ) -> Self | None:
         if username == 'test' and password == 'pass':  # noqa: S105
-            return True
+            return self
         return None
 
 
@@ -34,7 +34,7 @@ class HttpBasicSync(HttpBasicSyncAuth):
         controller: 'Controller[BaseSerializer]',
         username: str,
         password: str,
-    ) -> Any | None:
+    ) -> Self | None:
         if username == 'test' and password == 'pass':  # noqa: S105
-            return True
+            return self
         return None

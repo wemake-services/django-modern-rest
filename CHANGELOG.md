@@ -7,11 +7,24 @@ all the things without any notices.
 After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
+What is a public API for us (all criteria must be met)?
+
+1. Things that have public names
+2. Things that live in public modules
+3. Things that don't live in `internal/` or `compiled/`
+4. Things that are explicitly documented in the docs
+
+Later on we will make the API more stable and decrease the amount
+of requirements for an API to count as public.
+
 
 ## WIP
 
 ### Features
 
+- *Breaking*: `get_jwt` is renamed to `request_jwt`
+- Now `request.auth` is set on all successful auth worflows
+- Adds `request_auth` helper function
 - Allow individual `OpenAPI` views to skip schema validation, #867
 
 ### Fixes

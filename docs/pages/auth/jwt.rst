@@ -142,7 +142,7 @@ API Reference
   :members:
   :inherited-members:
 
-.. autofunction:: dmr.security.jwt.auth.get_jwt
+.. autofunction:: dmr.security.jwt.auth.request_jwt
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

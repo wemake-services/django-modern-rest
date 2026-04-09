@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Literal, Self, overload
 
+from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -64,7 +65,7 @@ class SyncAuth(_BaseAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Put your auth business logic here.
 
@@ -94,7 +95,7 @@ class AsyncAuth(_BaseAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Put your auth business logic here.
 
@@ -107,3 +108,31 @@ class AsyncAuth(_BaseAuth):
         when some data is missing or has wrong format.
         Return any other value if the auth succeeded.
         """
+
+
+@overload
+def request_auth(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+) -> SyncAuth | AsyncAuth: ...
+
+
+@overload
+def request_auth(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> SyncAuth | AsyncAuth | None: ...
+
+
+def request_auth(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> SyncAuth | AsyncAuth | None:
+    """Return the auth instance that was used to auth this request."""
+    auth = getattr(request, 'auth', None)
+    if auth is None and strict:
+        raise AttributeError('auth')
+    return auth

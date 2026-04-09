@@ -4,7 +4,7 @@
 # https://github.com/litestar-org/litestar/blob/main/LICENSE
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Self, overload
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
@@ -229,12 +229,13 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> 'AbstractBaseUser | None':
+    ) -> Self | None:
         """Does check for the correct jwt token."""
         token = self.prepare_token(controller.request)
         if token is None:
             return None
-        return self.authenticate(controller.request, token)
+        self.authenticate(controller.request, token)
+        return self
 
     def authenticate(
         self,
@@ -276,12 +277,13 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> 'AbstractBaseUser | None':
+    ) -> Self | None:
         """Does check for the correct jwt token."""
         token = self.prepare_token(controller.request)
         if token is None:
             return None
-        return await self.authenticate(controller.request, token)
+        await self.authenticate(controller.request, token)
+        return self
 
     async def authenticate(
         self,
@@ -317,6 +319,25 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
             raise NotAuthenticatedError
 
 
-def get_jwt(request: HttpRequest) -> JWToken:
+@overload
+def request_jwt(request: HttpRequest, *, strict: Literal[True]) -> JWToken: ...
+
+
+@overload
+def request_jwt(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> JWToken | None: ...
+
+
+def request_jwt(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> JWToken | None:
     """Returns a JWToken from request, if it was authed with it."""
-    return request.jwt  # type: ignore[attr-defined, no-any-return]
+    jwt = getattr(request, 'jwt', None)
+    if jwt is None and strict:
+        raise AttributeError('jwt')
+    return jwt
