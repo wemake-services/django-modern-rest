@@ -20,7 +20,7 @@ from dmr.test import DMRRequestFactory
 _json_modules: Final[list[JsonModule]] = [NativeJson]
 
 try:  # pragma: no cover
-    import orjson
+    import orjson  # type: ignore[import-not-found, unused-ignore]
 except ImportError:  # pragma: no cover
     pass  # noqa: WPS420
 else:  # pragma: no cover

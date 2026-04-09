@@ -97,15 +97,7 @@ class JsonParser(Parser):
         It is slow and has less features.
         We won't add any complex objects support to this parser.
 
-    Alternative ``json`` implementations can be provided:
-
-    .. code:: python
-
-        >>> import orjson
-        >>> from dmr.parsers import JsonParser
-
-        >>> parser = JsonParser(json_module=orjson)
-
+    Alternative ``json`` implementations can be provided.
     See :ref:`alternative-json` for more info.
     """
 

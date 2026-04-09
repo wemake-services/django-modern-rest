@@ -1,4 +1,4 @@
-import orjson
+import orjson  # type: ignore[import-not-found, unused-ignore]
 import pydantic
 
 from dmr import Body, Controller
