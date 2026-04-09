@@ -22,9 +22,9 @@ of requirements for an API to count as public.
 
 ### Features
 
-- *Breaking*: `get_jwt` is renamed to `request_jwt`
-- Now `request.auth` is set on all successful auth worflows
-- Adds `request_auth` helper function
+- *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+- Now `request.auth` is set on all successful auth worflows, #868
+- Adds `request_auth` helper function, #868
 - Allow individual `OpenAPI` views to skip schema validation, #867
 
 ### Fixes
