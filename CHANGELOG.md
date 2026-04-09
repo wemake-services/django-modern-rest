@@ -12,11 +12,11 @@ but with a deprecation period.
 
 ### Features
 
-- Allow individual `OpenAPI` views to skip schema validation
+- Allow individual `OpenAPI` views to skip schema validation, #867
 
 ### Fixes
 
-- Fixed that `OpenAPI` was revalidate on every `.convert` call
+- Fixed that `OpenAPI` was revalidate on every `.convert` call, #867
 
 
 ## Version 0.6.0 (2026-04-09)
