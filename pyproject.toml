@@ -98,7 +98,7 @@ unit-test = [
 ]
 dev = [
   { include-group = "unit-test" },
-  "django-stubs[compatible-mypy]>=6.0,<6.0.2",
+  "django-stubs[compatible-mypy]>=6.0,<6.0.3",
   "types-docutils>=0.22,<0.23",
   "types-setuptools>=82,<83",
   "types-pyyaml>=6.0,<7",
