@@ -98,7 +98,7 @@ def test_constrained_user_view(dmr_client: DMRClient, faker: Faker) -> None:
     request_data = {
         'username': faker.bothify('???###').lower(),
         'age': faker.random_int(min=18, max=50),  # noqa: WPS432
-        'score': faker.pyfloat(min_value=1, max_value=5),  # noqa: WPS432
+        'score': faker.pyint(min_value=1, max_value=5),  # noqa: WPS432
         'phone': '+79991112233',
     }
 
