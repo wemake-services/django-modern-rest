@@ -36,6 +36,7 @@ No breaking changes in this release.
 
 - Improved "Plugins" section in the docs, #835
 - Bumped `msgspec` to `0.21.0`, #856
+- Added official `SECURITY.md` policy
 
 
 ## Version 0.5.0 (2026-04-05)

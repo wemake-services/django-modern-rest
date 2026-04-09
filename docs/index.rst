@@ -233,6 +233,7 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/performance.rst
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
+  pages/deep-dive/security.rst
   pages/deep-dive/changelog.rst
   pages/deep-dive/contributing.rst
 

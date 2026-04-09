@@ -1,6 +1,8 @@
 Integrations
 ============
 
+Big list of Django integrations: https://github.com/wsvincent/awesome-django
+
 .. warning::
 
   In the future - some integrations from this list my be included
@@ -180,3 +182,10 @@ and :func:`django.views.decorators.http.condition`.
 .. seealso::
 
     https://docs.djangoproject.com/en/stable/topics/conditional-view-processing
+
+
+HTMX
+----
+
+Works with `django-htmx <https://github.com/adamchainz/django-htmx>`_
+out of the box.

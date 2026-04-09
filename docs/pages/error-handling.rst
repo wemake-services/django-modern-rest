@@ -141,6 +141,11 @@ The same error handling logic can be represented as a diagram:
       GlobalHandler -->|raises| Reraises[Reraises error];
       Error ---->|No| Success[Successful response];
 
+.. note::
+
+  If :ref:`handler500` is configured, it will catch all unhandled errors
+  in the provided scope and return ``500`` errors with the correct payload.
+
 
 .. _customizing-error-messages:
 
