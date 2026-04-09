@@ -30,6 +30,7 @@ keywords = [
 classifiers = [
   'Programming Language :: Python',
   'Programming Language :: Python :: Implementation :: CPython',
+  'Programming Language :: Python :: Implementation :: PyPy',
   'Programming Language :: Python :: 3',
   'Programming Language :: Python :: 3 :: Only',
   'Programming Language :: Python :: 3.11',

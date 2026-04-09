@@ -23,6 +23,7 @@ of requirements for an API to count as public.
 ### Features
 
 - *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+- Added official PyPy 3.11+ support, #870
 - Now `request.auth` is set on all successful auth workflows, #868
 - Added `request_auth` helper function, #868
 - Added `strict` parameter to `request_renderer` and `request_parser`,
