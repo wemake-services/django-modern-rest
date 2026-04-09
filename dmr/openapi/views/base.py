@@ -42,6 +42,7 @@ class OpenAPIView(View):
 
     # Private API:
     _schema: 'OpenAPI | None' = None
+    _skip_validation: bool | None = None
 
     @property
     def schema(self) -> 'OpenAPI':
@@ -58,11 +59,19 @@ class OpenAPIView(View):
         assert self._schema is not None  # noqa: S101
         return self._schema
 
+    @property
+    def skip_validation(self) -> bool:
+        """Return whether or not we should skip validation for this view."""
+        # An assertion is used to guarantee that the value has been set.
+        assert self._skip_validation is not None  # noqa: S101
+        return self._skip_validation
+
     @override
     @classmethod
     def as_view(  # type: ignore[override]
         cls,
         schema: 'OpenAPI',
+        skip_validation: bool = False,
         **initkwargs: Any,
     ) -> Callable[..., 'HttpResponseBase']:
         """
@@ -72,4 +81,8 @@ class OpenAPIView(View):
         :class:`~dmr.openapi.objects.OpenAPI` instance, store it on the
         view class, and then return the configured view callable.
         """
-        return super().as_view(_schema=schema, **initkwargs)
+        return super().as_view(
+            _schema=schema,
+            _skip_validation=skip_validation,
+            **initkwargs,
+        )

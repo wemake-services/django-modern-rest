@@ -8,6 +8,17 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
+## WIP
+
+### Features
+
+- Allow individual `OpenAPI` views to skip schema validation
+
+### Fixes
+
+- Fixed that `OpenAPI` was revalidate on every `.convert` call
+
+
 ## Version 0.6.0 (2026-04-09)
 
 In this release we significantly increased the performance of `pydantic`
