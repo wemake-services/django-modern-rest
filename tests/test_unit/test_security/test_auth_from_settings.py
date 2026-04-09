@@ -104,7 +104,7 @@ def test_sync_basic_auth_failure(
 
     assert isinstance(response, HttpResponse)
     assert request_auth(request) is None
-    with pytest.raises(AttributeError, match='auth'):
+    with pytest.raises(AttributeError, match='__dmr_auth__'):
         request_auth(request, strict=True)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content

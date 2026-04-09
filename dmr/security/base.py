@@ -131,8 +131,13 @@ def request_auth(
     *,
     strict: bool = False,
 ) -> SyncAuth | AsyncAuth | None:
-    """Return the auth instance that was used to auth this request."""
-    auth = getattr(request, 'auth', None)
+    """
+    Return the auth instance that was used to auth this request.
+
+    When *strict* is passed and *request* has no auth,
+    we raise :exc:`AttributeError`.
+    """
+    auth = getattr(request, '__dmr_auth__', None)
     if auth is None and strict:
-        raise AttributeError('auth')
+        raise AttributeError('__dmr_auth__')
     return auth

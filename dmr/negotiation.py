@@ -1,6 +1,6 @@
 import enum
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Final, final
+from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
@@ -196,9 +196,32 @@ class ResponseNegotiator:
         return renderer
 
 
-def request_parser(request: HttpRequest) -> Parser | None:
+@overload
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+) -> Parser: ...
+
+
+@overload
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> Parser | None: ...
+
+
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> Parser | None:
     """
     Get parser used to parse this request.
+
+    When *strict* is passed and *request* has no parser,
+    we raise :exc:`AttributeError`.
 
     .. note::
 
@@ -207,12 +230,34 @@ def request_parser(request: HttpRequest) -> Parser | None:
         there might be no parser at all.
 
     """
-    return getattr(request, '__dmr_parser__', None)
+    parser = getattr(request, '__dmr_parser__', None)
+    if parser is None and strict:
+        raise AttributeError('__dmr_parser__')
+    return parser
+
+
+@overload
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer: ...
+
+
+@overload
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer | None: ...
 
 
 def request_renderer(
     request: HttpRequest,
     *,
+    strict: bool = False,
     use_nonstreaming_renderer: bool = False,
 ) -> Renderer | None:
     """
@@ -226,6 +271,9 @@ def request_renderer(
 
     While ``__dmr_renderer__`` will be whatever ``Accept`` header
     contains as the first value.
+
+    When *strict* is passed and *request* has no renderer,
+    we raise :exc:`AttributeError`.
 
     .. note::
 
@@ -245,7 +293,10 @@ def request_renderer(
             return nonstreaming_renderer  # type: ignore[no-any-return]
 
     # Fallback to the default one:
-    return getattr(request, '__dmr_renderer__', None)
+    renderer = getattr(request, '__dmr_renderer__', None)
+    if renderer is None and strict:
+        raise AttributeError('__dmr_renderer__')
+    return renderer
 
 
 @final

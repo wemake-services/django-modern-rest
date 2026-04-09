@@ -97,9 +97,7 @@ class ResponseValidator:  # noqa: WPS214
                 'without associated `@modify` usage.',
             )
 
-        renderer = request_renderer(controller.request)
-        # Renderer is present at this point, 100%
-        assert renderer is not None  # noqa: S101
+        renderer = request_renderer(controller.request, strict=True)
         all_response_data = ValidatedModification(
             raw_data=structured,
             status_code=self.metadata.modification.status_code,

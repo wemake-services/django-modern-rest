@@ -155,10 +155,10 @@ def test_blocklist_sync_mixin_unauthorized(
 
     assert isinstance(response, HttpResponse)
     assert request_auth(request) is None
-    with pytest.raises(AttributeError, match='auth'):
+    with pytest.raises(AttributeError, match='__dmr_auth__'):
         request_auth(request, strict=True)
     assert request_jwt(request) is None
-    with pytest.raises(AttributeError, match='jwt'):
+    with pytest.raises(AttributeError, match='__dmr_jwt__'):
         request_jwt(request, strict=True)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED

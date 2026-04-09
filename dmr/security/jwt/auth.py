@@ -336,8 +336,13 @@ def request_jwt(
     *,
     strict: bool = False,
 ) -> JWToken | None:
-    """Returns a JWToken from request, if it was authed with it."""
-    jwt = getattr(request, 'jwt', None)
+    """
+    Returns a JWToken from request, if it was authed with it.
+
+    When *strict* is passed and *request* has no jwt token,
+    we raise :exc:`AttributeError`.
+    """
+    jwt = getattr(request, '__dmr_jwt__', None)
     if jwt is None and strict:
-        raise AttributeError('jwt')
+        raise AttributeError('__dmr_jwt__')
     return jwt
