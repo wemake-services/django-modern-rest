@@ -3,7 +3,7 @@ from typing import Annotated
 import pydantic
 
 from dmr import Body, Controller
-from dmr.compiled import request_accepts
+from dmr.compiled import accepted_header
 from dmr.negotiation import ContentType, conditional_type
 from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticSerializer
@@ -30,7 +30,7 @@ class ExampleController(
             ContentType.xml: dict[str, str],
         }),
     ]:
-        if request_accepts(self.request, ContentType.json):
+        if accepted_header(self.request.headers, ContentType.json):
             return list(parsed_body.root.values())
         return parsed_body.root
 

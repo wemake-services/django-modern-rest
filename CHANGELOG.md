@@ -64,6 +64,7 @@ Apply this change to the code that uses `django-modern-rest`:
   `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
   now avoid inline scripts in DMR-managed templates.
   Final CSP compatibility still depends on the upstream renderer bundle.
+- Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
 
 ### Fixes
 

@@ -4,7 +4,7 @@ from typing import Annotated
 
 from typing_extensions import override
 
-from dmr.compiled import request_accepts
+from dmr.compiled import accepted_header
 from dmr.negotiation import ContentType, conditional_type
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import default_renderer
@@ -54,7 +54,10 @@ class EventStreaming(StreamingController[PydanticSerializer]):
     async def _valid_events(self) -> AsyncIterator[SSEvent[Json] | Json]:
         async with aclosing(self._source()) as source:
             async for event in source:
-                if request_accepts(self.request, ContentType.event_stream):
+                if accepted_header(
+                    self.request.headers,
+                    ContentType.event_stream,
+                ):
                     yield SSEvent(event)
                 else:
                     yield event

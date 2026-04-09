@@ -25,7 +25,7 @@
 
 import re
 from collections.abc import Iterable, Mapping
-from typing import Final, Protocol, final
+from typing import Final, final
 
 
 def accepted_type(
@@ -48,11 +48,14 @@ def accepted_type(
         Otherwise the provided type is returned as-is.
 
     """
-    accepted_types = sorted(
-        [_MediaTypeHeader(typ) for typ in accept_value.split(',')],
-        key=_by_priority,
-        reverse=True,
-    )
+    if ',' in accept_value:
+        accepted_types = sorted(
+            [_MediaTypeHeader(typ) for typ in accept_value.split(',')],
+            key=_by_priority,
+            reverse=True,
+        )
+    else:
+        accepted_types = [_MediaTypeHeader(accept_value)]
 
     types = [_MediaTypeHeader(typ) for typ in provided_types]
 
@@ -65,20 +68,45 @@ def accepted_type(
     return None
 
 
-class _HasHeadersAsMapping(Protocol):
-    @property
-    def headers(self) -> Mapping[str, str]: ...
+def accepted_header(headers: Mapping[str, str], media_type: str) -> bool:
+    """
+    Does the client accept a response in the given media type?
 
+    This is a faster alternative to Django's ``HttpRequest.accepts``.
 
-def header_value_matches_media_type(header_value: str, media_type: str) -> bool:
-    return accepted_type(header_value, (media_type,)) is not None
+    Args:
+        headers: A mapping containing HTTP headers. The ``Accept``
+            header is used if present, otherwise ``*/*`` is assumed.
+        media_type: The media type to check, e.g. ``"application/json"``.
 
+    Returns:
+        ``True`` if the media type is accepted according to the
+        ``Accept`` header, otherwise ``False``.
 
-def request_accepts(request: _HasHeadersAsMapping, media_type: str) -> bool:
-    """Does the client accept a response in the given media type?"""
-    return header_value_matches_media_type(
-        request.headers.get('Accept', '*/*'),
-        media_type,
+    For example:
+
+        .. code:: python
+
+            >>> from django.http import HttpRequest
+            >>> request = HttpRequest()
+            >>> request.META = {'HTTP_ACCEPT': 'application/json'}
+            >>> accepts_media_type(
+            ...     request.headers, 'text/plain'
+            ... )  # equivalent to request.accepts("text/plain")
+            False
+            >>> accepts_media_type(
+            ...     {'Accept': 'application/json,text/html;q=0.8'},
+            ...     'application/json',
+            ... )  # can be called with any headers-like mapping
+            True
+
+    """
+    return (
+        accepted_type(
+            headers.get('Accept', '*/*'),
+            (media_type,),
+        )
+        is not None
     )
 
 

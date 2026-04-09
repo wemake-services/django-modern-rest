@@ -3,7 +3,7 @@ from http import HTTPStatus
 import pydantic
 
 from dmr import APIError, Controller, Query, ResponseSpec
-from dmr.compiled import request_accepts
+from dmr.compiled import accepted_header
 from dmr.negotiation import ContentType
 from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticSerializer
@@ -31,7 +31,7 @@ class ExampleController(Controller[PydanticSerializer]):
     )
 
     def get(self, parsed_query: Query[_QueryModel]) -> str:
-        if request_accepts(self.request, ContentType.json):
+        if accepted_header(self.request.headers, ContentType.json):
             if parsed_query.show_error:
                 # This is explicitly wrong:
                 # `PAYMENT_REQUIRED` cannot happen with `json`,

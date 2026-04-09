@@ -103,58 +103,57 @@ _REQUEST_ACCEPTS_CASES: Final = (
     ('text/plain;q=ab,text/html', 'text/html', True),
     ('text/*,text/html', 'text/plain', True),
     ('text/*,text/html', 'text/html', True),
+    ('application/json', 'text/plain', False),
 )
 
 
-def test_request_accepts_compiled(
+def test_accepted_header_compiled(
     benchmark: BenchmarkFixture,
     monkeypatch: pytest.MonkeyPatch,
     clean_modules: CleanModules,
 ) -> None:
-    """Test compiled version of request_accepts."""
+    """Test compiled version of accepted_header."""
 
     monkeypatch.setenv('DMR_USE_COMPILED', '1')
 
     with clean_modules():
-        from dmr._compiled import negotiation  # noqa: I001, PLC0415, PLC2701
-        from dmr.compiled import header_value_matches_media_type  # noqa: PLC0415
+        from dmr._compiled import negotiation  # noqa: PLC0415, PLC2701
+        from dmr.compiled import accepted_header  # noqa: PLC0415
 
         assert negotiation.__file__.endswith('.so')
-        assert '_pure' not in header_value_matches_media_type.__module__
+        assert '_pure' not in accepted_header.__module__
 
         @benchmark
         def factory() -> None:
             for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
                 assert (
-                    header_value_matches_media_type(accept, media_type)
-                    == expected
+                    accepted_header({'Accept': accept}, media_type) == expected
                 )
 
 
-def test_request_accepts_raw(
+def test_accepted_header_raw(
     benchmark: BenchmarkFixture,
     monkeypatch: pytest.MonkeyPatch,
     clean_modules: CleanModules,
 ) -> None:
-    """Test raw version of request_accepts."""
+    """Test raw version of accepted_header."""
 
     monkeypatch.setenv('DMR_USE_COMPILED', '0')
 
     with clean_modules():
-        from dmr.compiled import header_value_matches_media_type  # noqa: I001, PLC0415
+        from dmr.compiled import accepted_header  # noqa: PLC0415
 
-        assert '_pure' in header_value_matches_media_type.__module__
+        assert '_pure' in accepted_header.__module__
 
         @benchmark
         def factory() -> None:
             for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
                 assert (
-                    header_value_matches_media_type(accept, media_type)
-                    == expected
+                    accepted_header({'Accept': accept}, media_type) == expected
                 )
 
 
-def test_request_accepts_django_native(
+def test_accepted_header_django_native(
     benchmark: BenchmarkFixture,
 ) -> None:
     """Test Django native version of request.accepts."""

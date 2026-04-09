@@ -10,17 +10,13 @@ from typing import TYPE_CHECKING
 from dmr.envs import USE_COMPILED
 
 if TYPE_CHECKING:
+    from dmr._compiled.negotiation import accepted_header as accepted_header
     from dmr._compiled.negotiation import accepted_type as accepted_type
-    from dmr._compiled.negotiation import (
-        header_value_matches_media_type as header_value_matches_media_type,
-    )
-    from dmr._compiled.negotiation import request_accepts as request_accepts
 
 if USE_COMPILED:
     from dmr._compiled.negotiation import (  # noqa: WPS474
+        accepted_header,
         accepted_type,
-        header_value_matches_media_type,
-        request_accepts,
     )
 else:
     import sys
@@ -52,7 +48,6 @@ else:
     # Add new objects here:
     _mod = _import_pure('negotiation')
     accepted_type = _mod.accepted_type
-    request_accepts = _mod.request_accepts
-    header_value_matches_media_type = _mod.header_value_matches_media_type
+    accepted_header = _mod.accepted_header
 
     del sys, types, _import_pure, _mod  # noqa: WPS420
