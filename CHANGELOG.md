@@ -26,7 +26,7 @@ of requirements for an API to count as public.
 - Now `request.auth` is set on all successful auth workflows, #868
 - Added `request_auth` helper function, #868
 - Added `strict` parameter to `request_renderer` and `request_parser`,
-  added `@overload`s to both of these functions
+  added `@overload`s to both of these functions, #869
 - Allow individual `OpenAPI` views to skip schema validation, #867
 
 ### Fixes
