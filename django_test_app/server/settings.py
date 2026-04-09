@@ -154,7 +154,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # https://django-csp.readthedocs.io/en/latest/configuration.html
 
 CONTENT_SECURITY_POLICY = {
-    'EXCLUDE_URL_PREFIXES': ['/docs'],
+    'EXCLUDE_URL_PREFIXES': [
+        '/docs/swagger/',
+        '/docs/stoplight/',
+        '/docs/scalar/',
+        '/docs/redoc/',
+    ],
     'DIRECTIVES': {
         'default-src': [NONE],
         'script-src': [SELF],

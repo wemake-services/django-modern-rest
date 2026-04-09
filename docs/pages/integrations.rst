@@ -163,6 +163,45 @@ is required.
 Everything just works.
 
 
+.. _content_security_policy:
+
+Content Security Policy (CSP)
+-----------------------------
+
+No special integration with
+`django-csp <https://github.com/mozilla/django-csp>`_
+is required.
+
+Everything just works, but there is one important nuance:
+``django-modern-rest`` itself only controls Django templates and local
+initialization files. If you use OpenAPI UI renderers, final CSP compatibility
+still depends on the upstream frontend bundle you choose.
+
+The OpenAPI UI templates shipped by ``django-modern-rest`` avoid inline
+``<script>`` blocks and pass schema data via Django's
+:func:`django.utils.html.json_script`, so DMR's own templates work well with
+stricter CSP setups.
+
+Known caveats:
+
+- Some upstream OpenAPI bundles inject styles at runtime, so a very strict
+  policy can still break the page.
+- When CSP is a hard requirement, start with local bundled assets and test
+  the exact renderer and version you plan to deploy.
+
+Example ``django-csp`` setup:
+
+.. literalinclude:: /../django_test_app/server/settings.py
+  :caption: settings.py
+  :language: python
+  :linenos:
+  :no-imports-spoiler:
+  :lines: 156-171
+
+If you use OpenAPI UIs, see :doc:`openapi/openapi`
+for renderer-specific guidance.
+
+
 Conditional requests (ETag)
 ---------------------------
 

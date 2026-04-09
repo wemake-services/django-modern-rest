@@ -72,12 +72,6 @@ What happens in the example above?
 
   You can also modify the exact versions that we use for each tool this way.
 
-  The UI shipped by ``django-modern-rest`` are prepared for
-  stricter ``Content-Security-Policy`` setups.
-  However, final CSP compatibility still depends on the upstream renderer
-  bundle you choose, since Swagger UI / Redoc / Scalar / Stoplight can still
-  have their own runtime constraints outside of DMR's templates.
-
   Example:
 
   .. code-block:: python
@@ -91,6 +85,33 @@ What happens in the example above?
     ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0',
     ...     },
     ... }
+
+
+Choosing a renderer and CSP
+---------------------------
+
+For the general ``Content-Security-Policy`` setup with Django, see
+:ref:`content_security_policy`.
+
+For OpenAPI specifically, the main thing to keep in mind is that final CSP
+compatibility still depends on the upstream renderer bundle you choose.
+
+In general:
+
+- :class:`~dmr.openapi.views.SwaggerView` is usually the best default when
+  you want interactive docs with "try it out" support.
+- :class:`~dmr.openapi.views.RedocView` is a good fit for mostly read-only,
+  reference-style documentation.
+- :class:`~dmr.openapi.views.ScalarView` and
+  :class:`~dmr.openapi.views.StoplightView` are worth considering when you
+  prefer their UI, but they tend to be more opinionated frontends with more
+  moving parts.
+
+Known caveats:
+
+- If you switch to CDN assets, your CSP must allow those remote origins too.
+- In practice, Swagger and Redoc are usually easier starting points than more
+  feature-heavy frontend bundles.
 
 
 Customizing OpenAPI config
