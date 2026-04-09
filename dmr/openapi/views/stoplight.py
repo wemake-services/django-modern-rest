@@ -33,7 +33,7 @@ class StoplightView(OpenAPIView):
             self.template_name,
             context={
                 'title': self.schema.info.title,
-                'schema': self.dumps(
+                'schema': (
                     self.schema.convert(skip_validation=self.skip_validation),
                 ),
                 'stoplight_cdn': cdn_config.get('stoplight'),

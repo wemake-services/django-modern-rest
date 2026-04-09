@@ -7,8 +7,6 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
-from dmr.internal.json import json_dump_schema
-
 if TYPE_CHECKING:
     from dmr.openapi.objects import OpenAPI
     from dmr.openapi.objects.openapi import ConvertedSchema
@@ -36,9 +34,6 @@ class OpenAPIView(View):
         schema: The OpenAPI schema associated with this view. Set when
             :meth:`as_view` is called.
     """
-
-    # Public API:
-    dumps: SchemaDumper = staticmethod(json_dump_schema)  # noqa: WPS421
 
     # Private API:
     _schema: 'OpenAPI | None' = None
