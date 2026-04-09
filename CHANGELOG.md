@@ -8,7 +8,7 @@ After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
 
-## WIP
+## Version 0.6.0 (2026-04-09)
 
 In this release we significantly increased the performance of `pydantic`
 workflows by introducing `PydanticFastSerializer`.
