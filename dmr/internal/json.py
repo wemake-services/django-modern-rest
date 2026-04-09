@@ -25,9 +25,11 @@ class JsonModule(Protocol):
         default: Callable[[Any], Any] | None = None,
     ) -> bytes:
         """How data should be serialized."""
+        raise NotImplementedError
 
     def loads(self, to_deserialize: Any, /) -> Any:
         """How data should be deserialized."""
+        raise NotImplementedError
 
 
 class _DMREncoder(DjangoJSONEncoder):
