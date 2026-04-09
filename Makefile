@@ -72,7 +72,7 @@ example-run: ## Run example app
 .PHONY: package
 package: ## Check package dependencies
 	# TODO: remove this once we can support `orjson` in `pyproject.toml`
-	[[ "$(uv run python --version)" != *t ]] && uv sync --all-groups --all-extras --locked --check
+	[[ "$(uv run python --version)" != *14* ]] && uv sync --all-groups --all-extras --locked --check
 	uv pip check
 	uv --preview-features audit audit
 
