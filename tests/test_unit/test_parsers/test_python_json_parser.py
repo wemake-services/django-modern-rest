@@ -24,7 +24,7 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     pass  # noqa: WPS420
 else:  # pragma: no cover
-    _json_modules.append(orjson)
+    _json_modules.append(orjson)  # pyright: ignore[reportArgumentType]
 
 
 @pytest.fixture(params=_json_modules)
