@@ -69,14 +69,14 @@ class SyncAuth(_BaseAuth):
         """
         Put your auth business logic here.
 
+        Return ``self`` if the login attempt was successful.
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exceptions.PermissionDenied`
+        Raise :exc:`dmr.exceptions.NotAuthenticatedError`
         to immediately fail the login without trying other authes.
         Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
-        Return any other value if the auth succeeded.
         """
 
 
@@ -99,14 +99,14 @@ class AsyncAuth(_BaseAuth):
         """
         Put your auth business logic here.
 
+        Return ``self`` if the login attempt was successful.
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exceptions.PermissionDenied`
+        Raise :exc:`dmr.exceptions.NotAuthenticatedError`
         to immediately fail the login without trying other authes.
         Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
-        Return any other value if the auth succeeded.
         """
 
 

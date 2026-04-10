@@ -5,10 +5,11 @@
 
 We use [uv](https://github.com/astral-sh/uv) to manage the dependencies.
 
-To install them you would need to run `sync` command:
+To install them you would need to run `uv sync --all-groups --all-extras`
+command or:
 
 ```bash
-uv sync --all-extras --all-groups
+make install
 ```
 
 ### venv

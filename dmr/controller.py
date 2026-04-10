@@ -25,6 +25,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
+from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -92,6 +93,12 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
+        throttling: Sequence of throttle instances to be used for this controller.
+            Sync controllers must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async controllers must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this controller.
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
@@ -137,6 +144,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     parsers: ClassVar[Sequence[Parser]] = ()
     renderers: ClassVar[Sequence[Renderer]] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    throttling: ClassVar[
+        Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
+    ] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     streaming: ClassVar[bool] = False

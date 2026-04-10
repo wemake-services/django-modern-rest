@@ -5,8 +5,8 @@ Big list of Django integrations: https://github.com/wsvincent/awesome-django
 
 .. warning::
 
-  In the future - some integrations from this list my be included
-  into the core ``django-modern-rest`` package. Or ship as plugins.
+  In the future - some integrations from this list might be included
+  into the core of ``django-modern-rest`` package. Or ship as plugins.
 
   If you are interested in something:
   `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
@@ -128,14 +128,6 @@ Everything just works:
   :caption: views.py
   :language: python
   :linenos:
-
-
-Throttling
-----------
-
-One can use
-`django-smart-limit <https://github.com/YasserShkeir/django-smart-ratelimit>`_.
-Or any other native Django plugin for this task.
 
 
 Health Checks

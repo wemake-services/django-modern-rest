@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from dmr.security.base import AsyncAuth, SyncAuth
     from dmr.serializer import BaseSerializer
     from dmr.settings import HttpSpec
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
 ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
@@ -324,6 +325,12 @@ class EndpointMetadata:
             of :class:`dmr.security.AsyncAuth`.
             When set it to ``None`` it means that auth
             is disabled for this endpoint.
+        throttling: Sequence of throttle instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async endpoints must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this endpoint.
         no_validate_http_spec: Set of checks that user wants
             to disable for validation in this endpoint.
         allowed_http_methods: Set of extra HTTP methods
@@ -378,6 +385,7 @@ class EndpointMetadata:
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     auth: list['SyncAuth | AsyncAuth'] | None
+    throttling: list['SyncThrottle | AsyncThrottle'] | None
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
@@ -463,6 +471,7 @@ class EndpointMetadata:
             *[type(parser) for parser in self.parsers.values()],
             *[type(renderer) for renderer in self.renderers.values()],
             *[type(auth) for auth in (self.auth or [])],
+            *[type(throttling) for throttling in (self.throttling or [])],
         ]
 
 

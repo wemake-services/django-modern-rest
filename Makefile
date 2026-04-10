@@ -9,6 +9,10 @@ help: ## Show the help message
 	@echo 'Available targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+.PHONY: install
+install: ## Install all dependencies
+	uv sync --all-groups --all-extras
+
 .PHONY: format
 format: ## Format code with ruff
 	uv run ruff format && uv run ruff check && uv run ruff format

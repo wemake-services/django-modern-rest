@@ -3,7 +3,14 @@ import inspect
 from collections.abc import Callable, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeVar,
+    assert_never,
+)
 
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponseBase
@@ -24,6 +31,7 @@ from dmr.response import infer_status_code
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
+from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.types import EmptyObj, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
@@ -255,6 +263,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
+            throttling=self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -308,6 +317,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
+            throttling=self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -356,6 +366,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
+            throttling=self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -437,8 +448,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         auth = [
             *payload_auth,
             *(self.controller_cls.auth or ()),
-            # TODO: maybe we should wrap auth handlers in global settings
-            # in `sync_to_async` and `async_to_sync`?
             *settings_auth,
         ]
         # Validate that auth matches the sync / async endpoints:
@@ -464,6 +473,49 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         ):
             return None
         return auth
+
+    def _build_throttling(  # noqa: WPS231
+        self,
+    ) -> list[SyncThrottle | AsyncThrottle] | None:
+        payload_throttling = (
+            () if self.payload is None else (self.payload.throttling or ())
+        )
+        settings_throttling: Sequence[SyncThrottle | AsyncThrottle] = (
+            resolve_setting(
+                Settings.throttling,
+            )
+        )
+
+        throttling = [
+            *payload_throttling,
+            *(self.controller_cls.throttling or ()),
+            *settings_throttling,
+        ]
+        # Validate that throttling matches the sync / async endpoints:
+        base_type = (
+            AsyncThrottle
+            if inspect.iscoroutinefunction(self.func)
+            else SyncThrottle
+        )
+        if not all(
+            isinstance(throttling_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for throttling_instance in throttling
+        ):
+            raise EndpointMetadataError(
+                f'All throttling instances must be subtypes of {base_type!r} '
+                f'for {self.endpoint_name=}',
+            )
+        # We are doing this as late as possible to still
+        # have the full validation logic even if some value is None.
+        if (
+            (self.payload and self.payload.throttling is None)  # noqa: WPS222
+            or self.controller_cls.throttling is None
+            # Empty throttling list means that no throttling is configured
+            # and it is just None.
+            or not throttling
+        ):
+            return None
+        return throttling
 
     def _build_validate_responses(self) -> bool:
         if self.payload and self.payload.validate_responses is not None:

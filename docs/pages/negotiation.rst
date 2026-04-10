@@ -136,7 +136,7 @@ we provide the following API:
   :linenos:
 
 Any module that exposes API that fits :class:`~dmr.internal.json.JsonModule`
-is supported. If some API does not fit exactly, you can create
+protocol is supported. If some API does not fit exactly, you can create
 a small wrapper that would fit, like :class:`~dmr.internal.json.NativeJson`.
 
 ``orjson`` is the recommended alternative because

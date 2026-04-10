@@ -14,6 +14,7 @@ from dmr.settings import (
     SettingsDict,
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
+from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.types import EmptyObj
 
 
@@ -27,6 +28,7 @@ class _SettingsModel(SettingsDict, total=False):
     parsers: Sequence[Any]  # type: ignore[misc]
     renderers: Sequence[Any]  # type: ignore[misc]
     auth: Sequence[Any]  # type: ignore[misc]
+    throttling: Sequence[Any]  # type: ignore[misc]
     responses: Sequence[Any]  # type: ignore[misc]
     openapi_config: Any  # type: ignore[misc]
     global_error_handler: Any  # type: ignore[misc]
@@ -106,6 +108,18 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.auth must all be SyncAuth or AsyncAuth instances',
+            )
+
+        # Throttling:
+        if not all(
+            isinstance(throttling, (SyncThrottle, AsyncThrottle))
+            for throttling in settings.get('throttling', [])
+        ):
+            raise EndpointMetadataError(
+                (
+                    'Settings.throttling must all be SyncThrottle '
+                    'or AsyncThrottle instances'
+                ),
             )
 
         # Responses:

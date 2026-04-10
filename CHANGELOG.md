@@ -32,7 +32,7 @@ of requirements for an API to count as public.
 
 ### Fixes
 
-- Fixed that `OpenAPI` was revalidate on every `.convert` call, #867
+- Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
 
 
 ## Version 0.6.0 (2026-04-09)

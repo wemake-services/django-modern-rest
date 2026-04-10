@@ -44,7 +44,7 @@ jobs:
         sudo apt install -y gettext
 
         # Python deps:
-        uv sync --all-extras --all-groups
+        make install
         # We don't install `orjson` in `pyproject.toml`,
         # because we run `3.14t` as well and it cannot be installed there :(
         # No way to exclude the platform on a file level.
