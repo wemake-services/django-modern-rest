@@ -1,0 +1,4 @@
+# Build HTML documentation
+docs:
+    uv run python -msphinx -M clean . _build -W
+    uv run python -msphinx -M html . _build -W

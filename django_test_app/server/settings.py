@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+from csp.constants import NONE, SELF
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,19 +49,24 @@ INSTALLED_APPS = [
     'server.apps.jwt_auth',
     'server.apps.django_session_auth',
     'server.apps.etag',
-    # django:
+    # Django:
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # dmr:
+    # DMR:
     'dmr',
     'dmr.security.jwt.blocklist',
+    # Third party:
+    'csp',
 ]
 
 MIDDLEWARE = [
+    # Content Security Policy:
+    'csp.middleware.CSPMiddleware',
+    # Django:
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -142,3 +149,23 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Content Security Policy:
+# https://django-csp.readthedocs.io/en/latest/configuration.html
+
+CONTENT_SECURITY_POLICY = {
+    'EXCLUDE_URL_PREFIXES': [
+        '/docs/swagger/',
+        '/docs/stoplight/',
+        '/docs/scalar/',
+        '/docs/redoc/',
+    ],
+    'DIRECTIVES': {
+        'default-src': [NONE],
+        'script-src': [SELF],
+        'style-src': [SELF],
+        'img-src': [SELF],
+        'font-src': [SELF],
+        'connect-src': [],
+    },
+}

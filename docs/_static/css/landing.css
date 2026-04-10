@@ -1,0 +1,116 @@
+/* Subtle green radial glow from the top, spanning the full page */
+body {
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(45, 164, 78, 0.09) 0%,
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+
+html.dark body {
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(63, 185, 80, 0.09) 0%,
+    transparent 60%
+  );
+}
+
+/* Tighten hero spacing */
+.yue {
+  padding-bottom: 1rem !important;
+}
+
+.yue section:first-of-type h1 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Badges, tagline, buttons, section labels */
+div.badges {
+  margin-bottom: 0.75rem;
+}
+
+p.lead {
+  margin-bottom: 0.25rem;
+}
+
+div.buttons {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+p.rubric {
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Testimonials */
+.testimonials.container {
+  width: 100%;
+  max-width: none;
+}
+
+@media (min-width: 768px) {
+  .testimonials.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: stretch;
+  }
+}
+
+.testimonials.container > blockquote.epigraph {
+  position: relative;
+  padding-top: 0.25rem;
+}
+
+.testimonials.container > blockquote.epigraph::before {
+  content: "\201C";
+  position: absolute;
+  top: -2rem;
+  left: -0.75rem;
+  font-size: 9rem;
+  line-height: 1;
+  color: rgba(45, 164, 78, 0.13);
+  font-family: Georgia, serif;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+html.dark .testimonials.container > blockquote.epigraph::before {
+  color: rgba(63, 185, 80, 0.13);
+}
+
+.testimonials.container > blockquote.epigraph code {
+  white-space: nowrap;
+}
+
+.testimonials.container > blockquote.epigraph > p {
+  position: relative;
+  z-index: 1;
+}
+
+.testimonials.container > blockquote.epigraph .attribution {
+  position: relative;
+  z-index: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2da44e;
+}
+
+html.dark .testimonials.container > blockquote.epigraph .attribution {
+  color: #3fb950;
+}
+
+/* Contributors: center the avatar grid */
+section#contributors .rounded-image.container,
+section#contributors .sphinx-contributors.container {
+  width: 100%;
+  max-width: none;
+}
+
+.sphinx-contributors--avatars .sphinx-contributors_list {
+  justify-content: center !important;
+}

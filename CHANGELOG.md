@@ -20,6 +20,14 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Breaking changes
+
+1. Removed public `OpenAPIView.dumps` customization hook, #847
+   If you customized schema output for `OpenAPIJsonView`, subclass
+   the concrete view and override `.get()` instead.
+   For JSON output, use `dmr.openapi.core.dump.json_dump`
+   if you need the framework's default serializer.
+
 ### Features
 
 - *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
@@ -30,10 +38,18 @@ of requirements for an API to count as public.
 - Added `strict` parameter to `request_renderer` and `request_parser`,
   added `@overload`s to both of these functions, #869
 - Allow individual `OpenAPI` views to skip schema validation, #867
+- Added CSP-friendly templates for shipped `OpenAPI` UI views, #847
+  `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
+  now avoid inline scripts in DMR-managed templates.
+  Final CSP compatibility still depends on the upstream renderer bundle.
 
 ### Fixes
 
 - Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
+
+### Misc
+
+- Switched from `Make` to [`just`](https://github.com/casey/just) as a command runner
 
 
 ## Version 0.6.0 (2026-04-09)

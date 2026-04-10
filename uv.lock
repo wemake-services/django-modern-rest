@@ -554,6 +554,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-csp"
+version = "4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/db/23567744dff2169aadb095f726088074476b24dfff5a759ffcf6389cf401/django_csp-4.0.tar.gz", hash = "sha256:b27010bb702eb20a3dad329178df2b61a2b82d338b70fbdc13c3a3bd28712833", size = 20028, upload-time = "2025-04-02T16:41:46.721Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/a4/736ab90ee527a23e194d1ce7358c6bcced66381ced83c28268b4aea236f7/django_csp-4.0-py3-none-any.whl", hash = "sha256:d5a0a05463a6b75a4f1fc1828c58c89af8db9364d09fc6e12f122b4d7f3d00dc", size = 25689, upload-time = "2025-04-02T16:41:45.689Z" },
+]
+
+[[package]]
 name = "django-filter"
 version = "25.2"
 source = { registry = "https://pypi.org/simple" }
@@ -620,6 +633,7 @@ dev = [
     { name = "dennis" },
     { name = "dirty-equals" },
     { name = "django" },
+    { name = "django-csp" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "faker" },
     { name = "httpx" },
@@ -681,6 +695,7 @@ unit-test = [
     { name = "covdefaults" },
     { name = "dirty-equals" },
     { name = "django" },
+    { name = "django-csp" },
     { name = "faker" },
     { name = "inline-snapshot" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'" },
@@ -722,6 +737,7 @@ dev = [
     { name = "dennis", specifier = ">=1.2,<2" },
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
     { name = "django", specifier = ">=5.2,<6" },
+    { name = "django-csp", specifier = ">=4.0,<5.0" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.0.2" },
     { name = "faker", specifier = ">=40.1,<41" },
     { name = "httpx", specifier = ">=0.28,<0.29" },
@@ -781,6 +797,7 @@ unit-test = [
     { name = "covdefaults", specifier = ">=2.3,<3" },
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
     { name = "django", specifier = ">=5.2,<6" },
+    { name = "django-csp", specifier = ">=4.0,<5.0" },
     { name = "faker", specifier = ">=40.1,<41" },
     { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'", specifier = ">=3.11,<4" },

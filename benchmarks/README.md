@@ -61,7 +61,7 @@ Run from `benchmarks/` directory:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-make bench
+just bench::bench
 ```
 
 
@@ -98,4 +98,4 @@ and upload results to https://codspeed.io/wemake-services/django-modern-rest
 
 See [`codspeed.yml`](https://github.com/wemake-services/django-modern-rest/blob/master/.github/workflows/codspeed.yml) workflow.
 
-Run `make -C .. benchmarks` (or `make benchmarks` from the root dir) to run them.
+Run `just benchmarks` from the root dir to run them.

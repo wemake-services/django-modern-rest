@@ -5,22 +5,18 @@
   <meta charset="UTF-8">
   <title>{{ title|default:"ReDoc" }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'dmr/redoc/init.css' %}">
 </head>
 <body>
-  <div id="redoc-container"></div>
+  <div id="redoc-app"></div>
+  {{ schema|json_script:"redoc-schema" }}
+
   {% if redoc_cdn %}
     <script src="{{ redoc_cdn }}"></script>
   {% else %}
     <script src="{% static 'dmr/redoc/2.5.2/redoc.standalone.js' %}"></script>
   {% endif %}
-  <script>
-    Redoc.init({{ schema | safe }}, {}, document.getElementById('redoc-container'));
-  </script>
+
+  <script src="{% static 'dmr/redoc/init.js' %}"></script>
 </body>
 </html>
