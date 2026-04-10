@@ -161,6 +161,8 @@ Here are our amazing people who made this project possible.
     .. contributors:: wemake-services/django-modern-rest
         :avatars:
         :contributions:
+        :names:
+        :exclude: dependabot[bot],pre-commit-ci[bot],Copilot
 
 
 .. toctree::
