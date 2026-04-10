@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from http import HTTPStatus
 from typing import Any
 
@@ -197,4 +197,26 @@ def test_endpoint_rejects_async_gen() -> None:
 
         class _BadController(Controller[_NoOpPydanticSerializer]):
             async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
+
+
+def test_endpoint_rejects_sync_gen() -> None:
+    """Ensure endpoints cannot be sync generators."""
+
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a sync generator',
+    ):
+
+        class _BadController(Controller[_NoOpPydanticSerializer]):
+            def get(self) -> Iterator[int]:
                 yield 1  # pragma: no cover

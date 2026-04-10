@@ -1,5 +1,5 @@
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from http import HTTPMethod, HTTPStatus
 from typing import final
 
@@ -219,4 +219,16 @@ def test_msgspec_rejects_async_gen() -> None:
 
         class _BadController(Controller[MsgspecSerializer]):
             async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
+
+
+def test_msgspec_rejects_sync_gen() -> None:
+    """Ensure msgspec controllers cannot define sync generator endpoints."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a sync generator',
+    ):
+
+        class _BadController(Controller[MsgspecSerializer]):
+            def get(self) -> Iterator[int]:
                 yield 1  # pragma: no cover
