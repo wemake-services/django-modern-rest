@@ -363,12 +363,7 @@ def get_conditional_types(
     return None
 
 
-def accepts(
-    request: HttpRequest,
-    content_type: str,
-    *,
-    strict: bool = True,
-) -> bool:
+def accepts(request: HttpRequest, content_type: str) -> bool:
     """Determine whether this *request* accepts a given *content_type*."""
     renderer = request_renderer(request)
     # TODO: refactor after
