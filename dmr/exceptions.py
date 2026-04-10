@@ -112,7 +112,7 @@ class NotAuthenticatedError(Exception):
     def __init__(self, msg: str | Promise | None = None) -> None:
         """Provides default error message."""
         # Circular import:
-        from dmr.errors import ErrorType
+        from dmr.errors import ErrorType  # noqa: PLC0415
 
         super().__init__(msg or self.default_message)
         self.error_type = ErrorType.security
@@ -133,7 +133,7 @@ class TooManyRequestsError(Exception):
     ) -> None:
         """Provides default error message."""
         # Circular import:
-        from dmr.errors import ErrorType
+        from dmr.errors import ErrorType  # noqa: PLC0415
 
         super().__init__(msg or self.default_message)
         self.headers = headers

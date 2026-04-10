@@ -93,7 +93,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
-        throttling: Sequence of throttle instances to be used for this controller.
+        throttling: Sequence of throttle instances to be used.
             Sync controllers must use instances
             of :class:`dmr.throttling.SyncThrottle`.
             Async controllers must use instances

@@ -3,7 +3,6 @@ from http import HTTPStatus
 from typing import Final
 
 import pytest
-from django.core.cache import cache
 from django.http import HttpResponse
 
 from dmr import Controller
@@ -17,11 +16,6 @@ from dmr.throttling.cache_keys import remote_address
 _ATTEMPTS: Final = 5
 
 
-@pytest.fixture(autouse=True)
-def _clean_cache() -> None:
-    cache.clear()
-
-
 def _fake_remote_address(
     endpoint: 'Endpoint',
     controller: 'Controller[BaseSerializer]',
@@ -32,7 +26,7 @@ def _fake_remote_address(
 
 class _SyncController(Controller[PydanticSerializer]):
     throttling = [
-        SyncThrottle((1, Rate.second), cache_key=_fake_remote_address),
+        SyncThrottle(1, Rate.second, cache_key=_fake_remote_address),
     ]
 
     def get(self) -> str:
@@ -54,7 +48,7 @@ def test_throttle_no_remote_address(
 
 class _AsyncController(Controller[PydanticSerializer]):
     throttling = [
-        AsyncThrottle((1, Rate.second), cache_key=_fake_remote_address),
+        AsyncThrottle(1, Rate.second, cache_key=_fake_remote_address),
     ]
 
     async def get(self) -> str:

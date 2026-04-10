@@ -3,7 +3,7 @@ import enum
 import threading
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, TypeAlias, final, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypeAlias, final
 
 from typing_extensions import override
 
@@ -42,7 +42,6 @@ _CacheKey: TypeAlias = Callable[
 
 
 class _BaseThrottle(ResponseSpecProvider):
-
     header_prefix: ClassVar[str] = ''
 
     __slots__ = (
@@ -57,15 +56,16 @@ class _BaseThrottle(ResponseSpecProvider):
 
     def __init__(
         self,
-        rate: tuple[int, int],
+        max_requests: int,
+        rate: Rate | int,
         *,
         cache_key: _CacheKey | None = None,
         number_of_proxies: int | None = None,
         backend: BaseThrottleBackend | None = None,
         algorithm: BaseThrottleAlgorithm | None = None,
     ) -> None:
-        self._max_requests = rate[0]
-        self._duration_in_seconds = rate[1]
+        self._max_requests = max_requests
+        self._duration_in_seconds = rate
         # Default implementations of the logical parts:
         self._cache_key = cache_key or remote_address
         self._backend = backend or DjangoCacheBaseThrottleBackend()
@@ -84,7 +84,6 @@ class _BaseThrottle(ResponseSpecProvider):
             return None
 
         metadata = endpoint.metadata
-        controller_name = type(controller).__qualname__
         backend_name = type(self._backend).__qualname__
         algorith_name = type(self._algorithm).__qualname__
         cache_key_name = getattr(self._cache_key, '__qualname__', '')

@@ -16,7 +16,7 @@ def test_throttle_sync_mix(
         class _SyncEndpointController(
             Controller[PydanticSerializer],
         ):
-            throttling = (AsyncThrottle((1, Rate.second)),)
+            throttling = (AsyncThrottle(1, Rate.second),)
 
             def get(self) -> str:
                 raise NotImplementedError
@@ -31,7 +31,7 @@ def test_throttle_async_mix(
         class _AsyncEndpointController(
             Controller[PydanticSerializer],
         ):
-            throttling = (SyncThrottle((1, Rate.second)),)
+            throttling = (SyncThrottle(1, Rate.second),)
 
             async def get(self) -> str:
                 raise NotImplementedError

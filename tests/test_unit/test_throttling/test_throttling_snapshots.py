@@ -3,19 +3,34 @@ import json
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Controller
+from dmr import Controller, modify
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 
 
-class _SyncEndpointController(Controller[PydanticSerializer]):
+class _SyncController(Controller[PydanticSerializer]):
     throttling = [
-        SyncThrottle((1, Rate.second)),
+        SyncThrottle(1, Rate.second),
     ]
 
     def get(self) -> str:
+        raise NotImplementedError
+
+
+class _XAsyncThrottle(AsyncThrottle):
+    header_prefix = 'X-'
+
+
+class _AsyncController(Controller[PydanticSerializer]):
+    @modify(
+        throttling=[
+            _XAsyncThrottle(1, Rate.second),
+            _XAsyncThrottle(5, Rate.minute),
+        ],
+    )
+    async def get(self) -> str:
         raise NotImplementedError
 
 
@@ -27,7 +42,8 @@ def test_throttled_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/v1/',
                     [
-                        path('/user', _SyncEndpointController.as_view()),
+                        path('/sync', _SyncController.as_view()),
+                        path('/async', _AsyncController.as_view()),
                     ],
                 ),
             ).convert(),

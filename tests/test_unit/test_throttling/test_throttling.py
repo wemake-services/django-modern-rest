@@ -4,7 +4,6 @@ from typing import Final, TypeAlias
 
 import pytest
 from django.conf import LazySettings
-from django.core.cache import cache
 from django.http import HttpResponse
 from freezegun.api import FrozenDateTimeFactory
 from inline_snapshot import snapshot
@@ -32,11 +31,6 @@ else:  # pragma: no cover
 _ATTEMPTS: Final = 5
 
 
-@pytest.fixture(autouse=True)
-def _clean_cache() -> None:
-    cache.clear()
-
-
 @pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.PUT])
 @pytest.mark.parametrize('serializer', serializers)
 def test_throttle_sync_per_endpoint(
@@ -51,13 +45,13 @@ def test_throttle_sync_per_endpoint(
     class _SyncEndpointController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
-        @modify(throttling=[SyncThrottle((1, Rate.second))])
+        @modify(throttling=[SyncThrottle(1, Rate.second)])
         def get(self) -> str:
             return 'inside'
 
         @validate(
             ResponseSpec(str, status_code=HTTPStatus.OK),
-            throttling=[SyncThrottle((1, Rate.second))],
+            throttling=[SyncThrottle(1, Rate.second)],
         )
         def put(self) -> HttpResponse:
             return self.to_response('inside')
@@ -118,7 +112,7 @@ async def test_throttle_async_per_controller(
     class _AsyncController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
-        throttling = [AsyncThrottle((1, Rate.second))]
+        throttling = [AsyncThrottle(1, Rate.second)]
 
         async def get(self) -> str:
             return 'inside'
@@ -162,7 +156,7 @@ async def test_throttle_settings_override(
 ) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
-        Settings.throttling: [AsyncThrottle((1, Rate.second))],
+        Settings.throttling: [AsyncThrottle(1, Rate.second)],
     }
 
     class _DisabledController(
@@ -188,7 +182,7 @@ async def test_throttle_async_per_settings(
 ) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
-        Settings.throttling: [AsyncThrottle((_ATTEMPTS, Rate.second))],
+        Settings.throttling: [AsyncThrottle(_ATTEMPTS, Rate.second)],
     }
 
     class _AsyncController(
@@ -232,15 +226,15 @@ def test_throttle_sync_multiple_sources(
 ) -> None:
     """Ensures that sync throttling from settings work."""
     settings.DMR_SETTINGS = {
-        Settings.throttling: [SyncThrottle((_ATTEMPTS, Rate.second))],
+        Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
     }
 
     class _SyncController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
         throttling = [
-            SyncThrottle((10, Rate.minute)),
-            SyncThrottle((10, Rate.hour)),
+            SyncThrottle(10, Rate.minute),
+            SyncThrottle(10, Rate.hour),
         ]
 
         def get(self) -> str:
@@ -290,7 +284,7 @@ def test_throttle_sync_rates(
 
     class _SyncController(Controller[PydanticSerializer]):
         throttling = [
-            SyncThrottle((1, rate)),
+            SyncThrottle(1, rate),
         ]
 
         def get(self) -> str:
