@@ -10,9 +10,21 @@ but with a deprecation period.
 
 ## WIP
 
+### Breaking changes
+
+1. Removed public `OpenAPIView.dumps` customization hook, #847
+   If you customized schema output for `OpenAPIJsonView`, subclass
+   the concrete view and override `.get()` instead.
+   For JSON output, use `dmr.openapi.core.dump.json_dump`
+   if you need the framework's default serializer.
+
 ### Features
 
 - Allow individual `OpenAPI` views to skip schema validation, #867
+- Added CSP-friendly templates for shipped `OpenAPI` UI views, #847
+  `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
+  now avoid inline scripts in DMR-managed templates.
+  Final CSP compatibility still depends on the upstream renderer bundle.
 
 ### Fixes
 
