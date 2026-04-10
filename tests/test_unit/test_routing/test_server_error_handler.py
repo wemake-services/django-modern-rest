@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.errors import ErrorType
+from dmr.negotiation import request_renderer
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.routing import build_500_handler
@@ -189,6 +190,9 @@ def test_not_acceptable(dmr_rf: DMRRequestFactory) -> None:
     response = view(request)
 
     assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
+    assert request_renderer(request) is None
+    with pytest.raises(AttributeError, match='__dmr_renderer__'):
+        request_renderer(request, strict=True)
     assert response['Content-Type'] == 'application/json'
     assert json.loads(response.content) == snapshot({
         'detail': [

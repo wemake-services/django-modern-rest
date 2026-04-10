@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from base64 import b64decode, b64encode
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Self
 from urllib.parse import unquote
 
 from typing_extensions import override
@@ -115,7 +115,7 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """Does the login routine."""
         login_data = self._get_username_and_password(controller)
         if login_data is None:
@@ -129,7 +129,7 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
         controller: 'Controller[BaseSerializer]',
         username: str,
         password: str,
-    ) -> Any | None:
+    ) -> Self | None:
         """Override this method to provide an actual user/password check."""
         raise NotImplementedError
 
@@ -160,7 +160,7 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """Does the login routine."""
         login_data = self._get_username_and_password(controller)
         if login_data is None:
@@ -174,7 +174,7 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
         controller: 'Controller[BaseSerializer]',
         username: str,
         password: str,
-    ) -> Any | None:
+    ) -> Self | None:
         """Override this method to provide an actual user/password check."""
         raise NotImplementedError
 

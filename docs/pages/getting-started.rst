@@ -7,7 +7,7 @@ Installation
 
 Works for:
 
-- Python 3.11+
+- CPython 3.11+ or PyPy 3.11+
 - Django 4.2+
 
 .. tabs::

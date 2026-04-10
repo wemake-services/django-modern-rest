@@ -160,3 +160,5 @@ API Reference
 .. autoclass:: dmr.security.AsyncAuth
   :members:
   :inherited-members:
+
+.. autofunction:: dmr.security.request_auth

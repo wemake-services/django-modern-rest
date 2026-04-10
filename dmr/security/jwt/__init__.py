@@ -13,5 +13,5 @@ except ImportError:  # pragma: no cover
 
 from dmr.security.jwt.auth import JWTAsyncAuth as JWTAsyncAuth
 from dmr.security.jwt.auth import JWTSyncAuth as JWTSyncAuth
-from dmr.security.jwt.auth import get_jwt as get_jwt
+from dmr.security.jwt.auth import request_jwt as request_jwt
 from dmr.security.jwt.token import JWToken as JWToken
