@@ -126,9 +126,7 @@ def test_accepted_header_compiled(
         @benchmark
         def factory() -> None:
             for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
-                assert (
-                    accepted_header({'Accept': accept}, media_type) == expected
-                )
+                assert accepted_header(accept, media_type) == expected
 
 
 def test_accepted_header_raw(
@@ -148,9 +146,7 @@ def test_accepted_header_raw(
         @benchmark
         def factory() -> None:
             for accept, media_type, expected in _REQUEST_ACCEPTS_CASES:
-                assert (
-                    accepted_header({'Accept': accept}, media_type) == expected
-                )
+                assert accepted_header(accept, media_type) == expected
 
 
 def test_accepted_header_django_native(

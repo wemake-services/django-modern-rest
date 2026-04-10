@@ -9,12 +9,11 @@ from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
 from dmr import Body, Controller, ResponseSpec, validate
-from dmr.compiled import accepted_header
 from dmr.exceptions import (
     DataRenderingError,
     RequestSerializationError,
 )
-from dmr.negotiation import ContentType, conditional_type
+from dmr.negotiation import ContentType, accepts, conditional_type
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
@@ -123,7 +122,7 @@ class ContentNegotiationController(Controller[PydanticSerializer]):
             ContentType.xml: _RequestModel,
         }),
     ]:
-        if accepted_header(self.request.headers, ContentType.json):
+        if accepts(self.request, ContentType.json):
             return [
                 parsed_body.payment_method_id,
                 parsed_body.payment_amount,
@@ -143,7 +142,7 @@ class ContentNegotiationController(Controller[PydanticSerializer]):
         ),
     )
     def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
-        if accepted_header(self.request.headers, ContentType.json):
+        if accepts(self.request, ContentType.json):
             return self.to_response(
                 [
                     parsed_body.payment_method_id,

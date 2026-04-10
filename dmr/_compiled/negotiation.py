@@ -24,7 +24,7 @@
 # SOFTWARE.
 
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 from typing import Final, final
 
 
@@ -49,8 +49,10 @@ def accepted_type(
 
     """
     if ',' in accept_value:
-        accepted_types = sorted(
-            [_MediaTypeHeader(typ) for typ in accept_value.split(',')],
+        accepted_types = [
+            _MediaTypeHeader(typ) for typ in accept_value.split(',')
+        ]
+        accepted_types.sort(
             key=_by_priority,
             reverse=True,
         )
@@ -68,15 +70,14 @@ def accepted_type(
     return None
 
 
-def accepted_header(headers: Mapping[str, str], media_type: str) -> bool:
+def accepted_header(accept_header_value: str, media_type: str) -> bool:
     """
     Does the client accept a response in the given media type?
 
     This is a faster alternative to Django's ``HttpRequest.accepts``.
 
     Args:
-        headers: A mapping containing HTTP headers. The ``Accept``
-            header is used if present, otherwise ``*/*`` is assumed.
+        accept_header_value: The value of ``Accept`` header.
         media_type: The media type to check, e.g. ``"application/json"``.
 
     Returns:
@@ -91,11 +92,11 @@ def accepted_header(headers: Mapping[str, str], media_type: str) -> bool:
             >>> request = HttpRequest()
             >>> request.META = {'HTTP_ACCEPT': 'application/json'}
             >>> accepts_media_type(
-            ...     request.headers, 'text/plain'
+            ...     request.headers.get('Accept'), 'text/plain'
             ... )  # equivalent to request.accepts("text/plain")
             False
             >>> accepts_media_type(
-            ...     {'Accept': 'application/json,text/html;q=0.8'},
+            ...     'application/json,text/html;q=0.8',
             ...     'application/json',
             ... )  # can be called with any headers-like mapping
             True
@@ -103,7 +104,7 @@ def accepted_header(headers: Mapping[str, str], media_type: str) -> bool:
     """
     return (
         accepted_type(
-            headers.get('Accept', '*/*'),
+            accept_header_value,
             (media_type,),
         )
         is not None
@@ -119,7 +120,9 @@ class _MediaTypeHeader:
     def __init__(self, type_str: str) -> None:
         # preserve the original parameters, because the order might be
         # changed in the dict
-        self.params_str = ''.join(type_str.partition(';')[1:])
+        self.params_str = (
+            f';{type_str.partition(";")[2]}' if ';' in type_str else ''
+        )
 
         full_type, qparams = _parse_content_header(type_str)
         self.qparams = qparams

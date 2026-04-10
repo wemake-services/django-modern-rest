@@ -11,9 +11,13 @@ from inline_snapshot import snapshot
 from typing_extensions import TypedDict, override
 
 from dmr import Body, Controller, ResponseSpec, modify, validate
-from dmr.compiled import accepted_header
 from dmr.errors import ErrorType
-from dmr.negotiation import ContentType, conditional_type, request_parser
+from dmr.negotiation import (
+    ContentType,
+    accepts,
+    conditional_type,
+    request_parser,
+)
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -404,7 +408,7 @@ def test_conditional_content_type(
                 ContentType.xml: dict[str, str],
             }),
         ]:
-            if accepted_header(self.request.headers, ContentType.json):
+            if accepts(request, ContentType.json):
                 return parsed_body.root['key']
             return parsed_body.root
 
@@ -424,7 +428,7 @@ def test_conditional_content_type(
             self,
             parsed_body: Body[Annotated[_RequestModel, 'other comment']],
         ) -> HttpResponse:
-            if accepted_header(self.request.headers, ContentType.json):
+            if accepts(request, ContentType.json):
                 return self.to_response(
                     parsed_body.root['key'],
                     status_code=HTTPStatus.CREATED,
@@ -503,7 +507,7 @@ def test_wrong_conditional_content_type(
             }),
         ]:
             # ERROR! Type to content logic is reversed:
-            if accepted_header(self.request.headers, ContentType.json):
+            if accepts(request, ContentType.json):
                 return parsed_body.root['key']
             return parsed_body.root
 
@@ -522,7 +526,7 @@ def test_wrong_conditional_content_type(
         )
         def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
             # ERROR! Type to content logic is reversed:
-            if accepted_header(self.request.headers, ContentType.json):
+            if accepts(request, ContentType.json):
                 return self.to_response(
                     parsed_body.root['key'],
                     status_code=HTTPStatus.CREATED,
@@ -838,7 +842,7 @@ def test_conditional_error_model(
                 loc=loc,
                 error_type=error_type,
             )
-            if accepted_header(self.request.headers, ContentType.json):
+            if accepts(request, ContentType.json):
                 return {
                     'json_errors': [
                         {'reason': f'{detail["msg"]}: {detail["loc"]}'}
@@ -925,7 +929,7 @@ def test_conditional_error_model_wrong(
                 error_type=error_type,
             )
             # NOTE: we change the formats to trigger the validation:
-            if accepted_header(self.request.headers, ContentType.xml):
+            if accepts(request, ContentType.xml):
                 return {
                     'json_errors': [
                         {'reason': f'{detail["msg"]}: {detail["loc"]}'}
