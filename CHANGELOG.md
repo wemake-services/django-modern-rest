@@ -50,8 +50,10 @@ No breaking changes in this release.
   `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
   and `msgspec` parsers / renderers, #842
 - Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
-  for `MsgspecSerializer` and `PydanticSerializer`, #842
-- Add endpoint validator to prevent async generator HTTP endpoints, #843
+  for `msgspec` and `pydantic` serializers, #842
+- Added "Problem Details" or RFC-9457 support, #78
+- Added customizable `json_module` parameter to `JsonParser` and `JsonRenderer`
+  to support alternative JSON backends like `orjson`, #857
 
 ### Fixes
 
