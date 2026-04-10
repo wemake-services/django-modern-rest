@@ -7,7 +7,7 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
-from dmr.internal.json import json_dumps
+from dmr.internal.json import json_dump_schema
 
 if TYPE_CHECKING:
     from dmr.openapi.objects import OpenAPI
@@ -32,16 +32,17 @@ class OpenAPIView(View):
 
     Attributes:
         dumps: Callable that converts a converted OpenAPI schema into a string.
-            Defaults to :func:`dmr.internal.json.json_dumps`.
+            Defaults to :func:`dmr.internal.json.json_dump_schema`.
         schema: The OpenAPI schema associated with this view. Set when
             :meth:`as_view` is called.
     """
 
     # Public API:
-    dumps: SchemaDumper = staticmethod(json_dumps)  # noqa: WPS421
+    dumps: SchemaDumper = staticmethod(json_dump_schema)  # noqa: WPS421
 
     # Private API:
     _schema: 'OpenAPI | None' = None
+    _skip_validation: bool | None = None
 
     @property
     def schema(self) -> 'OpenAPI':
@@ -58,11 +59,19 @@ class OpenAPIView(View):
         assert self._schema is not None  # noqa: S101
         return self._schema
 
+    @property
+    def skip_validation(self) -> bool:
+        """Return whether or not we should skip validation for this view."""
+        # An assertion is used to guarantee that the value has been set.
+        assert self._skip_validation is not None  # noqa: S101
+        return self._skip_validation
+
     @override
     @classmethod
     def as_view(  # type: ignore[override]
         cls,
         schema: 'OpenAPI',
+        skip_validation: bool = False,
         **initkwargs: Any,
     ) -> Callable[..., 'HttpResponseBase']:
         """
@@ -72,4 +81,8 @@ class OpenAPIView(View):
         :class:`~dmr.openapi.objects.OpenAPI` instance, store it on the
         view class, and then return the configured view callable.
         """
-        return super().as_view(_schema=schema, **initkwargs)
+        return super().as_view(
+            _schema=schema,
+            _skip_validation=skip_validation,
+            **initkwargs,
+        )

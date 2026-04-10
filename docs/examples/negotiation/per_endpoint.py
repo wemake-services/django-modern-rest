@@ -44,3 +44,4 @@ class UserController(Controller[PydanticSerializer]):
 
 
 # run: {"controller": "UserController", "method": "post", "url": "/api/user/", "headers": {"Content-Type": "application/xml", "Accept": "application/xml"}, "body": {"user": {"email": "user@example.com", "profile": {"age": 28}}}}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json", "skip_validation": true}  # noqa: ERA001, E501

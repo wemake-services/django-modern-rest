@@ -11,7 +11,6 @@ from dmr.exceptions import NotAcceptableError
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
-    from dmr.negotiation import ContentType
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
 
@@ -32,7 +31,7 @@ class ConditionalType:
     :func:`dmr.negotiation.conditional_type` instead of this.
     """
 
-    _original: tuple[tuple['ContentType', Any], ...]
+    _original: tuple[tuple[str, Any], ...]
     computed: Mapping[str, Any] = dataclasses.field(
         hash=False,
         init=False,

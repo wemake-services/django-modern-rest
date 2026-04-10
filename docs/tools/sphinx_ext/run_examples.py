@@ -250,7 +250,7 @@ class _BaseBuilder:  # noqa: WPS214
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=False,
+            DEBUG=True,
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
@@ -408,7 +408,10 @@ class _OpenAPIBuilder(_BaseBuilder):
         urlpatterns.append(
             path(
                 self.config['openapi_url'].lstrip('/'),
-                OpenAPIJsonView.as_view(schema),
+                OpenAPIJsonView.as_view(
+                    schema,
+                    skip_validation=self.config.get('skip_validation', False),
+                ),
             ),
         )
         return urlpatterns

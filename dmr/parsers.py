@@ -1,5 +1,4 @@
 import abc
-import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, final
@@ -11,6 +10,7 @@ from typing_extensions import override
 
 from dmr.exceptions import DataParsingError, RequestSerializationError
 from dmr.internal.django import parse_as_post
+from dmr.internal.json import JsonModule, NativeJson
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
@@ -92,16 +92,33 @@ class JsonParser(Parser):
 
     .. warning::
 
-        It is not recommended to be used directly.
+        It is not recommended to be used directly
+        when using default ``json`` module.
         It is slow and has less features.
         We won't add any complex objects support to this parser.
 
+    Alternative ``json`` implementations can be provided.
+    See :ref:`alternative-json` for more info.
     """
 
-    __slots__ = ()
+    __slots__ = (
+        '_json_module',
+        'content_type',
+    )
 
-    content_type = 'application/json'
-    """Works with ``json`` only."""
+    def __init__(
+        self,
+        content_type: str = 'application/json',
+        *,
+        json_module: JsonModule = NativeJson,
+    ) -> None:
+        """Init the parser with an optional custom json module."""
+        self.content_type = content_type
+        self._json_module = json_module
+        # Sanity check:
+        assert self._json_module.loads, (  # type: ignore[truthy-function]  # noqa: S101
+            'Passed json module does not have `.loads` method'
+        )
 
     @override
     def parse(
@@ -130,8 +147,8 @@ class JsonParser(Parser):
 
         """
         try:
-            return json.loads(to_deserialize)
-        except (ValueError, TypeError) as exc:
+            return self._json_module.loads(to_deserialize)
+        except Exception as exc:
             # Corner case: when deserializing an empty body,
             # return `None` instead.
             # We do this here, because we don't want

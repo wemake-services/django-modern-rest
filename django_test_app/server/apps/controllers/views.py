@@ -163,7 +163,7 @@ class _ConstrainedUserSchema(pydantic.BaseModel):
         pattern=r'^[a-z0-9_]+$',
     )
     age: int = pydantic.Field(ge=18, le=100, strict=True)  # noqa: WPS432
-    score: float = pydantic.Field(gt=0, le=10, strict=True)  # noqa: WPS432
+    score: int = pydantic.Field(gt=0, le=10, strict=True)  # noqa: WPS432
     phone: PhoneNumber
 
 

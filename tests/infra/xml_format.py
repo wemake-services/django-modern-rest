@@ -53,9 +53,11 @@ class XmlRenderer(Renderer):
     Not intended for production use.
     """
 
-    __slots__ = ()
+    __slots__ = ('content_type',)
 
-    content_type = 'application/xml'
+    def __init__(self, content_type: str = 'application/xml') -> None:
+        """Initialize the content type."""
+        self.content_type = content_type
 
     @override
     def render(

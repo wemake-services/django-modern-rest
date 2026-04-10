@@ -165,6 +165,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.streaming.controller._StreamingEndpoint'),
     # Unsolvable imports:
     (_PY_CLASS, 'AbstractBaseUser'),
+    (_PY_CLASS, 'Raw'),
     # Undocumented in Django:
     (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
@@ -256,6 +257,7 @@ html_context = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = ['css/landing.css']
 html_js_files = [
     'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
 ]

@@ -1,0 +1,39 @@
+name: Bug
+description: Create a report to help us improve
+labels: 'bug'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Awesome that you are using our project!
+        But, it is sad that something does not work for you :(
+
+        We will try to fix it as soon as possible.
+        Do you want your bug / features to be resolved faster?
+
+        Please consider supporting our collective:
+        👉  https://github.com/sponsors/wemake-services
+  - type: textarea
+    attributes:
+      label: "What's wrong?"
+      description: "Please, explain your problem"
+    validations:
+      required: True
+  - type: textarea
+    attributes:
+      label: "How it should be?"
+      description: "Please, explain how do you expect it to be"
+    validations:
+      required: True
+  - type: textarea
+    attributes:
+      label: "Used versions"
+      description: "What version of DMR do you use? Provide `pip --version && pip freeze`"
+    validations:
+      required: True
+  - type: textarea
+    attributes:
+      label: "OS information"
+      description: "Your OS name and version"
+    validations:
+      required: True

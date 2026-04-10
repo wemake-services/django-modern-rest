@@ -10,12 +10,10 @@ class UserCreateModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     async def post(self, parsed_body: Body[UserCreateModel]) -> UserCreateModel:
-        if 'old-domain.com' in parsed_body.email:
-            raise RuntimeError('This error will not be handled')
+        if parsed_body.email.endswith('@old-domain.com'):
+            raise RuntimeError('This error will be handled by handler500')
         return parsed_body
 
 

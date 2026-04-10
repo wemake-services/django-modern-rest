@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr.openapi import build_schema
+from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.views import (
     OpenAPIJsonView,
     OpenAPIView,
@@ -75,3 +76,32 @@ def test_html_view(
     assert response.status_code == HTTPStatus.OK
     assert response['Content-Type'] == 'text/html'
     assert '<html' in response.content.decode('utf-8').lower()
+
+
+@pytest.mark.parametrize(
+    'view_class',
+    [
+        RedocView,
+        SwaggerView,
+        ScalarView,
+        StoplightView,
+        OpenAPIJsonView,
+        OpenAPIYamlView,
+    ],
+)
+def test_skip_validation(
+    dmr_rf: DMRRequestFactory,
+    *,
+    view_class: type[OpenAPIView],
+) -> None:
+    """Ensure that views can skip validation."""
+    schema = build_schema(
+        Router('', []),
+        config=OpenAPIConfig(title='A', version='B', openapi_version='wrong'),
+    )
+    request = dmr_rf.get('/whatever/')
+
+    response = view_class.as_view(schema, skip_validation=True)(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK

@@ -239,6 +239,7 @@ class PydanticSerializer(BaseSerializer):
         """
         return _get_cached_type_adapter(Any).dump_python(
             structured,
+            mode='json',
             **cls.to_json_kwargs,
         )
 

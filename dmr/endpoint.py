@@ -340,6 +340,7 @@ class Endpoint:  # noqa: WPS214
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = await self.handle_async_error(controller, exc)
@@ -376,6 +377,7 @@ class Endpoint:  # noqa: WPS214
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = self.handle_error(controller, exc)
@@ -389,7 +391,9 @@ class Endpoint:  # noqa: WPS214
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, SyncAuth)  # noqa: S101
-            if auth(self, controller) is not None:
+            authed_by = auth(self, controller)
+            if authed_by is not None:
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
 
@@ -402,7 +406,9 @@ class Endpoint:  # noqa: WPS214
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, AsyncAuth)  # noqa: S101
-            if (await auth(self, controller)) is not None:  # noqa: WPS476
+            authed_by = await auth(self, controller)  # noqa: WPS476
+            if authed_by is not None:
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
 

@@ -22,6 +22,7 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wemake-services/django-modern-rest)
+[![Telegram chat](https://img.shields.io/badge/chat-join-blue?logo=telegram)](https://t.me/django_modern_rest)
 </div>
 
 ## Features
@@ -32,11 +33,12 @@
 - [x] Supports async Django without any `sync_to_async` calls inside, tested to work with free-threading builds
 - [x] Fully typed and checked with `mypy`, `pyright`, and `pyrefly` in strict modes
 - [x] Supports content negotiation, has default implementations for `json`, `msgpack`, SSE, Json Lines, and more
-- [x] Strict schema validation of both requests and responses
-- [x] Supports `openapi` 3.1+ schema generation out of the box
+- [x] Strict schema validation of both requests and responses, including errors
+- [x] Supports OpenAPI 3.1 / 3.2 semantic schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage with 1900+ of carefully designed unit, integration, and property-based tests
+- [x] High [security standards](https://github.com/wemake-services/django-modern-rest/blob/master/.github/SECURITY.md)
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
 - [x] Great docs
 - [x] No AI slop, but [built for the LLM era](https://django-modern-rest.readthedocs.io/en/latest/pages/getting-started.html#llms-support)
@@ -72,7 +74,7 @@
 ## Installation
 
 Works for:
-- CPython 3.11+
+- CPython 3.11+ or PyPy 3.11+
 - Django 4.2+
 
 ```bash
@@ -99,26 +101,30 @@ The shortest example [(click here to copy the whole file)](https://github.com/we
 >>> import pydantic
 >>> from dmr import Body, Controller, Headers
 >>> # Or use `dmr.plugins.msgspec` or write your own!
->>> from dmr.plugins.pydantic import PydanticSerializer
+>>> from dmr.plugins.pydantic import PydanticFastSerializer
 
 >>> class UserCreateModel(pydantic.BaseModel):
 ...     email: str
 
 >>> class UserModel(UserCreateModel):
 ...     uid: uuid.UUID
+...     consumer: str
 
 >>> class HeaderModel(pydantic.BaseModel):
 ...     consumer: str = pydantic.Field(alias='X-API-Consumer')
 
->>> class UserController(Controller[PydanticSerializer]):
+>>> class UserController(Controller[PydanticFastSerializer]):
 ...     async def post(  # <- can be sync as well!
 ...         self,
 ...         parsed_body: Body[UserCreateModel],
 ...         parsed_headers: Headers[HeaderModel],
 ...     ) -> UserModel:
 ...         """All added props have the correct runtime and static types."""
-...         assert parsed_headers.consumer == 'my-api'
-...         return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
+...         return UserModel(
+...             uid=uuid.uuid4(),
+...             email=parsed_body.email,
+...             consumer=parsed_headers.consumer,
+...         )
 
 ```
 

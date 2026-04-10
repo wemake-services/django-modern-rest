@@ -33,7 +33,9 @@ class RedocView(OpenAPIView):
             self.template_name,
             context={
                 'title': self.schema.info.title,
-                'schema': self.dumps(self.schema.convert()),
+                'schema': self.dumps(
+                    self.schema.convert(skip_validation=self.skip_validation),
+                ),
                 'redoc_cdn': cdn_config.get('redoc'),
             },
             content_type=self.content_type,

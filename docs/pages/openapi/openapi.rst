@@ -141,8 +141,14 @@ To customize a schema, use the native methods.
       :linenos:
       :no-imports-spoiler:
 
-    You can completely redefine the schema generation with
-    overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
+    Common features:
+
+    - You can completely redefine the schema generation with providing
+      :class:`pydantic.json_schema.WithJsonSchema` annotation
+      or by overriding ``__get_pydantic_json_schema__`` method
+      on a pydantic model
+    - You can change the ``title`` of generics pydantic models
+      by redefining :meth:`pydantic.BaseModel.model_parametrized_name`
 
 .. note::
 

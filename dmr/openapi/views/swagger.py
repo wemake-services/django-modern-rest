@@ -33,7 +33,9 @@ class SwaggerView(OpenAPIView):
             self.template_name,
             context={
                 'title': self.schema.info.title,
-                'schema': self.dumps(self.schema.convert()),
+                'schema': self.dumps(
+                    self.schema.convert(skip_validation=self.skip_validation),
+                ),
                 'swagger_cdn': cdn_config.get('swagger'),
             },
             content_type=self.content_type,

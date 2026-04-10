@@ -1,0 +1,379 @@
+# serializer version: 1
+# name: test_problem_defaults_schema
+  '''
+  {
+    "info": {
+      "title": "Django Modern Rest",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/v1/with-negotiation": {
+        "get": {
+          "operationId": "getProblemdetailscontrollerApiV1WithNegotiation",
+          "parameters": [
+            {
+              "deprecated": false,
+              "name": "number",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Number",
+                "default": 0
+              }
+            }
+          ],
+          "responses": {
+            "402": {
+              "description": "Payment Required",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Raised when auth was not successful",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Raised when CSRF check failed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false,
+          "security": [
+            {
+              "django_session": [],
+              "csrf": []
+            }
+          ]
+        }
+      },
+      "/api/v1/default": {
+        "get": {
+          "operationId": "getProblemdetailsdefaultcontrollerApiV1Default",
+          "parameters": [
+            {
+              "deprecated": false,
+              "name": "number",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Number",
+                "default": 0
+              }
+            }
+          ],
+          "responses": {
+            "402": {
+              "description": "Payment Required",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/api/v1/regular": {
+        "get": {
+          "operationId": "getProblemdetailsvalidationcontrollerApiV1Regular",
+          "parameters": [
+            {
+              "deprecated": false,
+              "name": "number",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Number",
+                "default": 0
+              }
+            }
+          ],
+          "responses": {
+            "402": {
+              "description": "Payment Required",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "ProblemDetailsModel": {
+          "properties": {
+            "detail": {
+              "type": "string",
+              "title": "Detail"
+            },
+            "status": {
+              "type": "integer",
+              "title": "Status"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "title": {
+              "type": "string",
+              "title": "Title"
+            },
+            "instance": {
+              "type": "string",
+              "title": "Instance"
+            }
+          },
+          "type": "object",
+          "title": "ProblemDetailsModel",
+          "description": "Error payload model for Problem Details.\n\nSee https://datatracker.ietf.org/doc/html/rfc9457\nfor the detailed description of each field."
+        }
+      },
+      "securitySchemes": {
+        "django_session": {
+          "type": "apiKey",
+          "description": "Reusing standard Django auth flow for API",
+          "name": "sessionid",
+          "in": "cookie"
+        },
+        "csrf": {
+          "type": "apiKey",
+          "description": "CSRF protection",
+          "name": "csrftoken",
+          "in": "cookie"
+        }
+      }
+    }
+  }
+  '''
+# ---

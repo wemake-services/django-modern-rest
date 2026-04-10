@@ -7,12 +7,37 @@ all the things without any notices.
 After `Development Status :: 4 - Beta` we will still break things
 but with a deprecation period.
 
+What is a public API for us (all criteria must be met)?
+
+1. Things that have public names
+2. Things that live in public modules
+3. Things that don't live in `internal/` or `compiled/`
+4. Things that are explicitly documented in the docs
+
+Later on we will make the API more stable and decrease the amount
+of requirements for an API to count as public.
+
 
 ## WIP
 
-AKA "The Pydantic revenge".
+### Features
 
-In this release we significantly increase the performance of `pydantic`
+- *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+- Added official PyPy 3.11+ support, #870
+- Now `request.auth` is set on all successful auth workflows, #868
+- Added `request_auth` helper function, #868
+- Added `strict` parameter to `request_renderer` and `request_parser`,
+  added `@overload`s to both of these functions, #869
+- Allow individual `OpenAPI` views to skip schema validation, #867
+
+### Fixes
+
+- Fixed that `OpenAPI` was revalidate on every `.convert` call, #867
+
+
+## Version 0.6.0 (2026-04-09)
+
+In this release we significantly increased the performance of `pydantic`
 workflows by introducing `PydanticFastSerializer`.
 
 No breaking changes in this release.
@@ -32,10 +57,13 @@ No breaking changes in this release.
 
 - Fixed package metadata, #824
 - Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
+- Fixes Django 5.2.13+ compat in `DMRAsyncRequestFactory`, #853
 
 ### Misc
 
 - Improved "Plugins" section in the docs, #835
+- Bumped `msgspec` to `0.21.0`, #856
+- Added official `SECURITY.md` policy
 
 
 ## Version 0.5.0 (2026-04-05)

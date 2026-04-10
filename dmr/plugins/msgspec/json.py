@@ -62,7 +62,11 @@ class MsgspecJsonParser(Parser):
 class MsgspecJsonRenderer(Renderer):
     """Renders json bodies using ``msgspec``."""
 
-    content_type = 'application/json'
+    __slots__ = ('content_type',)
+
+    def __init__(self, content_type: str = 'application/json') -> None:
+        """Initialize the default content type."""
+        self.content_type = str(content_type)  # might be a string subclass
 
     @override
     def render(

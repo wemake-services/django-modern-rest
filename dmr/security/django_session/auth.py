@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Final, final
+from typing import TYPE_CHECKING, Final, Self, final
 
 from django.conf import settings
 from django.http import HttpRequest
@@ -132,7 +132,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """Does check for the existing request user."""
         return self.authenticate(endpoint, controller)
 
@@ -140,7 +140,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Override this method to provide other authentication logic.
 
@@ -151,7 +151,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
             return None
 
         self._ensure_csrf(controller)
-        return user
+        return self
 
 
 class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
@@ -172,7 +172,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """Does check for the existing request user."""
         return await self.authenticate(endpoint, controller)
 
@@ -180,7 +180,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Override this method to provide other authentication logic.
 
@@ -194,4 +194,4 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
             return None
 
         self._ensure_csrf(controller)
-        return user
+        return self
