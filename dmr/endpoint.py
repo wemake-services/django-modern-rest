@@ -114,9 +114,11 @@ class Endpoint:  # noqa: WPS214
             because its instance is reused for all requests.
 
         """
+        type_annotations = controller_cls.annotations_context(func)
         self._serializer_context = self.serializer_context_cls(
             func,
             controller_cls,
+            type_annotations,
         )
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
@@ -136,6 +138,7 @@ class Endpoint:  # noqa: WPS214
             metadata_cls=self.metadata_cls,
             response_modification_cls=self.response_modification_cls,
             component_parsers=self._serializer_context.component_parsers,
+            type_annotations=type_annotations,
         )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
@@ -260,7 +263,7 @@ class Endpoint:  # noqa: WPS214
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
     ) -> Operation:
-        """Builde an OpenAPI Operation from an endpoint."""
+        """Build an OpenAPI Operation from an endpoint."""
         operation_id = self.get_operation_id(
             path,
             controller_name,
@@ -337,6 +340,7 @@ class Endpoint:  # noqa: WPS214
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = await self.handle_async_error(controller, exc)
@@ -373,6 +377,7 @@ class Endpoint:  # noqa: WPS214
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = self.handle_error(controller, exc)
@@ -386,7 +391,9 @@ class Endpoint:  # noqa: WPS214
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, SyncAuth)  # noqa: S101
-            if auth(self, controller) is not None:
+            authed_by = auth(self, controller)
+            if authed_by is not None:
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
 
@@ -399,7 +406,9 @@ class Endpoint:  # noqa: WPS214
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, AsyncAuth)  # noqa: S101
-            if (await auth(self, controller)) is not None:  # noqa: WPS476
+            authed_by = await auth(self, controller)  # noqa: WPS476
+            if authed_by is not None:
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
 
@@ -496,8 +505,9 @@ def validate(  # noqa: WPS234
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -523,8 +533,9 @@ def validate(
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -549,8 +560,9 @@ def validate(
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -575,8 +587,9 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -640,6 +653,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        exclude_semantic_responses: Set of semantic responses status codes
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -687,6 +702,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             responses=[response, *responses],
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
@@ -739,7 +755,7 @@ class _ModifySyncCallable(Protocol):
     @deprecated(
         # It is not actually deprecated, but impossible for the day one.
         # But, this is the only way to trigger a typing error.
-        'Passing sync `error_hanlder` to `@modify` requires sync endpoint',
+        'Passing sync `error_handler` to `@modify` requires sync endpoint',
     )
     def __call__(
         self,
@@ -784,9 +800,10 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -811,9 +828,10 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
@@ -838,9 +856,10 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -865,9 +884,10 @@ def modify(  # noqa: WPS211
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
@@ -914,6 +934,8 @@ def modify(  # noqa: WPS211
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        exclude_semantic_responses: Set of semantic responses status codes
+            that user wants to disable.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -968,6 +990,7 @@ def modify(  # noqa: WPS211
             responses=extra_responses,
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,

@@ -1,79 +1,15 @@
 Integrations
 ============
 
-Serializing QuerySets into models
----------------------------------
+Big list of Django integrations: https://github.com/wsvincent/awesome-django
 
-Django is built around its :class:`~django.db.models.query.QuerySet` type.
-Of course, we have to make sure that it is supported.
+.. warning::
 
-Let's say you have these models that you already work with:
+  In the future - some integrations from this list my be included
+  into the core ``django-modern-rest`` package. Or ship as plugins.
 
-.. literalinclude:: ../../django_test_app/server/apps/models_example/models.py
-  :caption: models.py
-  :language: python
-  :linenos:
-
-Now, let's create an API that will work with your models.
-The first thing you need to do is to create
-your API serializers / deserializers.
-
-While it may seems that this is a redundant duplication of code, and that it
-should be possible to build serialization schemas out of Django models,
-but that's actually the **opposite**.
-
-Because models and serialization
-schemes must change independenly. Otherwise, your API would
-be a mess and will change unexpectedly, when you create a new model field.
-This problem happened to me too many times.
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/serializers.py
-  :caption: serializers.py
-  :language: python
-  :linenos:
-
-.. important::
-
-  Models and QuerySets can't be serialized to json by default.
-  This is a design choice, this is a feature.
-
-  Why?
-
-  Because Models and QuerySets are not designed for serialization,
-  they are designed for the database access. Mixing these two layers
-  will **complicate**, not simplify, your app.
-
-Now, let's create a service to build your model instances:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/services.py
-  :caption: services.py
-  :language: python
-  :linenos:
-
-Here's how the final :class:`~dmr.controller.Controller`
-would look like:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/views.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-Now you have your REST API that returns fully typed model responses
-and can work with :class:`~django.db.models.query.QuerySet`
-and :class:`~django.db.models.Model` instances.
-
-django-mantle
-~~~~~~~~~~~~~
-
-If you want to automate this part and automatically
-convert ``QuerySet`` into typed models, you can use
-`django-mantle <https://noumenal.es/mantle/>`_
-which is built just for this purpose:
-
-.. literalinclude:: /examples/integrations/django_mantle.py
-  :caption: views.py
-  :language: python
-  :linenos:
+  If you are interested in something:
+  `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
 
 
 CSRF
@@ -94,6 +30,8 @@ By default we exempt all controllers from CSRF checks, unless:
    will require CSRF as well. Because using Django sessions
    without CSRF is not secure
 
+
+.. _bring-your-own-di:
 
 Bring your own DI
 -----------------
@@ -137,13 +75,15 @@ to learn how typing works, how ``mypy`` is configured,
 how ``django-stubs`` is used.
 
 
+.. _pagination:
+
 Pagination
 ----------
 
-We don't ship our own pagination.
-We (as our main design goal suggests) provide support
-for any existing pagination plugin for Django.
-Including the built-in :class:`django.core.paginator.Paginator`.
+Limit Offset pagination
+~~~~~~~~~~~~~~~~~~~~~~~
+
+We support built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 
@@ -155,6 +95,19 @@ To do so, we only provide metadata for the default pagination:
 If you are using a different pagination system, you can define
 your own metadata / models and use them with our framework.
 
+Cursor pagination
+~~~~~~~~~~~~~~~~~
+
+We also support any other pagination library.
+
+Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_
+or even your custom implementation.
+
+Any Django-compatible tool should work out of the box.
+
+Interface
+~~~~~~~~~
+
 .. autoclass:: dmr.pagination.Paginated
   :members:
 
@@ -162,52 +115,42 @@ your own metadata / models and use them with our framework.
   :members:
 
 
-django-filters
---------------
+Filters
+-------
 
 No special integration with
 `django-filter <https://github.com/carltongibson/django-filter>`_
 is required.
 
-Everything just works.
+Everything just works:
 
-.. code-block:: python
+.. literalinclude:: /examples/integrations/filters.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
-  import django_filters
-  import pydantic
-  from dmr import Controller, Query
-  from dmr.plugins.pydantic import PydanticSerializer
 
-  from your_app.models import User
+Throttling
+----------
 
-  class UserFilter(django_filters.FilterSet):
-      class Meta:
-          model = User
-          fields = ('is_active',)
+One can use
+`django-smart-limit <https://github.com/YasserShkeir/django-smart-ratelimit>`_.
+Or any other native Django plugin for this task.
 
-  # Create query model for better docs:
-  class QueryModel(pydantic.BaseModel):
-      is_active: bool
 
-  class UserModel(pydantic.BaseModel):
-      username: str
-      email: str
-      is_active: bool
+Health Checks
+-------------
 
-  class UserListController(
-      Controller[PydanticSerializer],
-      Query[QueryModel],
-  ):
-      def get(self) -> list[UserModel]:
-          # Still pass `.GET` for API compatibility:
-          user_filter = UserFilter(
-               self.request.GET,
-               queryset=User.objects.all(),
-          )
-          return [
-              UserModel.model_validate(user, from_attributes=True)
-              for user in user_filter.qs
-          ]
+We recommend using
+`django-health-check <https://github.com/codingjoe/django-health-check>`_
+for monitoring your application's health.
+
+No special integration is required — the package works out-of-the-box with
+``django-modern-rest``. Simply install it, include its URLs in your main
+urlconf, and add the desired check apps to ``INSTALLED_APPS``.
+
+For advanced configuration, please refer to the
+`django-health-check documentation <https://codingjoe.dev/django-health-check>`_.
 
 
 CORS Headers
@@ -239,3 +182,10 @@ and :func:`django.views.decorators.http.condition`.
 .. seealso::
 
     https://docs.djangoproject.com/en/stable/topics/conditional-view-processing
+
+
+HTMX
+----
+
+Works with `django-htmx <https://github.com/adamchainz/django-htmx>`_
+out of the box.

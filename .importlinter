@@ -13,6 +13,9 @@ containers =
   dmr
 
 layers =
+  # Top level or so called "independent" modules:
+  problem_details
+  # Regular modules:
   routing
   controller
   options_mixins
@@ -48,12 +51,13 @@ source_modules =
   dmr
 
 forbidden_modules =
-  # optinal deps:
+  # Optional deps:
   pydantic
   msgspec
   jwt
   openapi_spec_validator
   polyfactory
+  yaml
   attrs
   attr
   # internal modules:
@@ -74,6 +78,8 @@ ignore_imports =
   dmr.openapi.objects.openapi -> openapi_spec_validator
   # Examples generation:
   dmr.openapi.mappers.example -> polyfactory
+  # Yaml:
+  dmr.openapi.views.yaml -> yaml
   # Optional json support from msgspec:
   dmr.settings -> msgspec
   dmr.internal.json -> msgspec

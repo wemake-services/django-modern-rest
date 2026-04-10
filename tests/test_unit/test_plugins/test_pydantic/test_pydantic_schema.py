@@ -2,7 +2,7 @@
 
 import enum
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, Final, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import pydantic
 import pytest
@@ -11,7 +11,7 @@ from typing_extensions import TypedDict
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
-from dmr.openapi.objects import OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 
 
@@ -19,22 +19,6 @@ from dmr.plugins.pydantic import PydanticSerializer
 def schema_generator(openapi_context: OpenAPIContext) -> SchemaGenerator:
     """Fixture for ``SchemaGenerator`` class."""
     return openapi_context.generators.schema
-
-
-class _TestClass:
-    attr: int
-
-
-class _TestTypedDict(TypedDict):
-    attr: int
-
-
-class _TestEnum(enum.IntEnum):
-    height = 1
-    width = 2
-
-
-_TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
 
 
 @pytest.mark.parametrize(
@@ -257,6 +241,11 @@ def test_annotated_objects(
     assert schema == expected_schema, source_type
 
 
+class _TestEnum(enum.IntEnum):
+    height = 1
+    width = 2
+
+
 def test_enum(
     schema_generator: SchemaGenerator,
     openapi_context: OpenAPIContext,
@@ -322,6 +311,11 @@ def test_literal_types(
     assert schema == expected_schema, source_type
 
 
+class _TestTypedDict(TypedDict):
+    attr: int
+    specific_field: pydantic.AnyHttpUrl
+
+
 def test_type_mapper_typeddict(
     schema_generator: SchemaGenerator,
     openapi_context: OpenAPIContext,
@@ -336,9 +330,21 @@ def test_type_mapper_typeddict(
     assert schema == Schema(
         type=OpenAPIType.OBJECT,
         title=_TestTypedDict.__qualname__,
-        required=['attr'],
-        properties={'attr': Schema(type=OpenAPIType.INTEGER, title='Attr')},
+        required=['attr', 'specific_field'],
+        properties={
+            'attr': Schema(type=OpenAPIType.INTEGER, title='Attr'),
+            'specific_field': Schema(
+                type=OpenAPIType.STRING,
+                min_length=1,
+                format=OpenAPIFormat.URI,
+                title='Specific Field',
+            ),
+        },
     )
+
+
+class _TestClass:
+    attr: int
 
 
 def test_unsupported_type(schema_generator: SchemaGenerator) -> None:

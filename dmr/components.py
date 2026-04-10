@@ -12,7 +12,7 @@ from typing import (
 )
 
 from django.utils.translation import gettext_lazy as _
-from typing_extensions import get_type_hints, override
+from typing_extensions import override
 
 from dmr.exceptions import (
     DataParsingError,
@@ -77,7 +77,7 @@ class ComponentParserBuilder:
     type vars as models at this point.
     """
 
-    __slots__ = ('_controller_cls', '_func')
+    __slots__ = ('_controller_cls', '_func', '_type_annotations')
 
     type_var_inference_cls: ClassVar[type[TypeVarInference]] = TypeVarInference
 
@@ -90,13 +90,21 @@ class ComponentParserBuilder:
         self._func = func
         self._controller_cls = controller_cls
 
-    def __call__(self) -> list[ComponentParserSpec]:
+    def __call__(
+        self,
+        type_annotations: dict[str, Any],
+    ) -> list[ComponentParserSpec]:
         """Run the building process, infer type vars if needed."""
-        return self._resolve_type_vars(self._find_components())
+        return self._resolve_type_vars(
+            self._find_components(type_annotations),
+        )
 
-    def _find_components(self) -> list[ComponentParserSpec]:  # noqa: WPS231
+    def _find_components(  # noqa: WPS231
+        self,
+        type_annotations: dict[str, Any],
+    ) -> list[ComponentParserSpec]:  # noqa: WPS231
         components: list[ComponentParserSpec] = []
-        for context_name, component in self._get_func_signature().items():
+        for context_name, component in type_annotations.items():
             if context_name == 'return':
                 continue
 
@@ -122,19 +130,6 @@ class ComponentParserBuilder:
             ))
 
         return components
-
-    def _get_func_signature(self) -> dict[str, Any]:
-        try:
-            # TODO: we get_type_hints twice, maybe we should optimize this?
-            return get_type_hints(
-                self._func,
-                # We need to get `Annotated` back:
-                include_extras=True,
-            )
-        except Exception as exc:
-            raise UnsolvableAnnotationsError(
-                f'Cannot get annotations of {self._func!r}',
-            ) from exc
 
     def _resolve_type_vars(
         self,
@@ -523,11 +518,13 @@ class HeadersComponent(ComponentParser):
         *,
         field_model: Any,
     ) -> Any:
-        split_commas: frozenset[str] = getattr(
+        split_commas: frozenset[str] | None = getattr(
             field_model,
             '__dmr_split_commas__',
-            frozenset(),
+            None,
         )
+        if not split_commas:
+            return controller.request.headers
         return parse_headers(
             controller.request.headers,
             split_commas=split_commas,

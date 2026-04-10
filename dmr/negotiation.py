@@ -1,6 +1,6 @@
 import enum
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Final, final
+from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
@@ -81,6 +81,7 @@ class RequestNegotiator:
         return parser
 
     def _decide(self, request: HttpRequest) -> Parser:
+        # TODO: compile this code
         if request.content_type is None:
             return self._default
         # Try the exact match first, since it is faster, O(1):
@@ -105,7 +106,15 @@ class RequestNegotiator:
 
 
 class ResponseNegotiator:
-    """Selects a correct renderer for a response body."""
+    """
+    Selects a correct renderer for a response body.
+
+    .. versionchanged:: 0.5.0
+        Now it uses a custom algorithm that is x30 times faster
+        (when compiled with :ref:`mypyc`) then the original
+        :meth:`django.http.HttpRequest.get_preferred_type` way we used before.
+
+    """
 
     __slots__ = (
         '_default',
@@ -150,7 +159,7 @@ class ResponseNegotiator:
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
-        Negotiates which parser to use for parsing this request.
+        Negotiates which renderer to use for rendering this response.
 
         Based on ``Accept`` header.
 
@@ -187,9 +196,32 @@ class ResponseNegotiator:
         return renderer
 
 
-def request_parser(request: HttpRequest) -> Parser | None:
+@overload
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+) -> Parser: ...
+
+
+@overload
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> Parser | None: ...
+
+
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> Parser | None:
     """
     Get parser used to parse this request.
+
+    When *strict* is passed and *request* has no parser,
+    we raise :exc:`AttributeError`.
 
     .. note::
 
@@ -198,12 +230,34 @@ def request_parser(request: HttpRequest) -> Parser | None:
         there might be no parser at all.
 
     """
-    return getattr(request, '__dmr_parser__', None)
+    parser = getattr(request, '__dmr_parser__', None)
+    if parser is None and strict:
+        raise AttributeError('__dmr_parser__')
+    return parser
+
+
+@overload
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer: ...
+
+
+@overload
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer | None: ...
 
 
 def request_renderer(
     request: HttpRequest,
     *,
+    strict: bool = False,
     use_nonstreaming_renderer: bool = False,
 ) -> Renderer | None:
     """
@@ -217,6 +271,9 @@ def request_renderer(
 
     While ``__dmr_renderer__`` will be whatever ``Accept`` header
     contains as the first value.
+
+    When *strict* is passed and *request* has no renderer,
+    we raise :exc:`AttributeError`.
 
     .. note::
 
@@ -236,7 +293,10 @@ def request_renderer(
             return nonstreaming_renderer  # type: ignore[no-any-return]
 
     # Fallback to the default one:
-    return getattr(request, '__dmr_renderer__', None)
+    renderer = getattr(request, '__dmr_renderer__', None)
+    if renderer is None and strict:
+        raise AttributeError('__dmr_renderer__')
+    return renderer
 
 
 @final
@@ -253,6 +313,8 @@ class ContentType(enum.StrEnum):
         msgpack: ``'application/msgpack'`` format.
         event_stream: ``'text/event-stream'`` format for SSE streaming.
         jsonl: ``'application/jsonl'`` format for JSON Lines streaming.
+        json_problem_details: ``'application/problem+json'`` format
+            for RFC 9457.
 
     """
 
@@ -263,10 +325,11 @@ class ContentType(enum.StrEnum):
     msgpack = 'application/msgpack'
     event_stream = 'text/event-stream'
     jsonl = 'application/jsonl'
+    json_problem_details = 'application/problem+json'
 
 
 def conditional_type(
-    mapping: Mapping[ContentType, Any],
+    mapping: Mapping[str | ContentType, Any],
 ) -> _ConditionalType:
     """
     Create conditional validation for different content types.
@@ -281,7 +344,14 @@ def conditional_type(
             'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
-    return _ConditionalType(tuple(mapping.items()))
+    return _ConditionalType(
+        tuple(
+            {
+                str(mapping_key): mapping_value
+                for mapping_key, mapping_value in mapping.items()
+            }.items(),
+        ),
+    )
 
 
 def get_conditional_types(
@@ -298,3 +368,11 @@ def get_conditional_types(
     if metadata:
         return metadata.computed
     return None
+
+
+def accepts(request: HttpRequest, content_type: str) -> bool:
+    """Determine whether this *request* accepts a given *content_type*."""
+    renderer = request_renderer(request)
+    # TODO: refactor after
+    # https://github.com/wemake-services/django-modern-rest/pull/854
+    return renderer is not None and renderer.content_type == content_type

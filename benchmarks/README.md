@@ -1,5 +1,7 @@
 # Benchmarks!
 
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/wemake-services/django-modern-rest?utm_source=badge)
+
 
 ## Important Notice
 
@@ -91,21 +93,9 @@ ab -c 20 -n 1000 -l -p payload.json \
 
 We also benchmark several our features that can be used independently.
 
-Pre-requirements:
-- [`hyperfine`](https://github.com/sharkdp/hyperfine)
+We run tests in `./tests/` using https://github.com/CodSpeedHQ/pytest-codspeed
+and upload results to https://codspeed.io/wemake-services/django-modern-rest
 
-### path replacement
+See [`codspeed.yml`](https://github.com/wemake-services/django-modern-rest/blob/master/.github/workflows/codspeed.yml) workflow.
 
-See our [routing guide](https://django-modern-rest.readthedocs.io/en/latest/pages/routing.html)
-
-`make -C benchmarks bench-resolver` produces:
-
-```
-Summary
-  dmr-best ran
-    1.09 ± 0.01 times faster than django-best
-    1.55 ± 0.01 times faster than dmr-avg
-    1.75 ± 0.01 times faster than django-avg
-    1.98 ± 0.02 times faster than dmr-worst
-    2.58 ± 0.02 times faster than django-worst
-```
+Run `make -C .. benchmarks` (or `make benchmarks` from the root dir) to run them.

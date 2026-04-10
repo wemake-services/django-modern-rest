@@ -7,21 +7,18 @@ from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Body, Controller
-from dmr.openapi import build_schema
-from dmr.routing import Router
-from dmr.settings import Settings
-
 try:
     import msgspec
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
-
-from dmr import Cookies, FileMetadata
+from dmr import Body, Controller, Cookies, FileMetadata
+from dmr.openapi import build_schema
 from dmr.parsers import MultiPartParser
 from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.routing import Router
 from dmr.security.jwt import JWTAsyncAuth
+from dmr.settings import Settings
 
 
 class _UserModel(msgspec.Struct):

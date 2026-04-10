@@ -29,9 +29,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
 import django
-import httpx
 import uvicorn
 import xmltodict_rs as xmltodict
+import zapros
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
@@ -246,10 +246,11 @@ class _BaseBuilder:  # noqa: WPS214
         if settings.configured:
             return
 
+        sys.path.insert(1, str(_BASE_DIR / 'django_test_app'))
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=False,
+            DEBUG=True,
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
@@ -257,6 +258,8 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
+                'server.apps.model_simple',
+                'server.apps.model_fk',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -282,6 +285,7 @@ class _BaseBuilder:  # noqa: WPS214
                     'NAME': '_build/test.db',
                 },
             },
+            DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
@@ -404,7 +408,10 @@ class _OpenAPIBuilder(_BaseBuilder):
         urlpatterns.append(
             path(
                 self.config['openapi_url'].lstrip('/'),
-                OpenAPIJsonView.as_view(schema),
+                OpenAPIJsonView.as_view(
+                    schema,
+                    skip_validation=self.config.get('skip_validation', False),
+                ),
             ),
         )
         return urlpatterns
@@ -519,21 +526,26 @@ def _resolve_example_file_for_execution(file_path: Path) -> Path:
 
 def _wait_for_app_startup(port: int, proc: multiprocessing.Process) -> None:
     """Wait for app to start up and become responsive."""
-    for _ in range(100):
-        if proc.exitcode is not None:
-            raise _StartupError(
-                f'App worker exited during startup with {proc.exitcode}',
-            )
-        try:
-            httpx.get(f'http://127.0.0.1:{port}', timeout=0.1)
-        except httpx.TransportError:
-            time.sleep(0.1)
-        else:
-            return
+    with zapros.Client() as client:
+        for _ in range(100):
+            if proc.exitcode is not None:
+                raise _StartupError(
+                    f'App worker exited during startup with {proc.exitcode}',
+                )
+            try:
+                client.get(
+                    f'http://127.0.0.1:{port}',
+                    context={'timeouts': {'connect': 0.1}},
+                )
+            except zapros.ZaprosError:
+                time.sleep(0.1)
+            else:
+                return
     raise _StartupError(f'App failed to come online on port {port}')
 
 
 def _extract_run_args(
+    file_path: Path,
     file_content: str,
 ) -> tuple[str, list[_AppRunArgs], list[_OpenAPIRunArgs]]:
     """Extract run args from a python file.
@@ -542,23 +554,30 @@ def _extract_run_args(
     and a list of argument lists.
     """
     new_lines, run_configs, openapi_configs = _split_example_lines(
+        file_path,
         file_content.splitlines(),
     )
     return '\n'.join(new_lines), run_configs, openapi_configs
 
 
 def _split_example_lines(
+    file_path: Path,
     lines: list[str],
 ) -> tuple[list[str], list[_AppRunArgs], list[_OpenAPIRunArgs]]:
     new_lines: list[str] = []
     run_configs: list[_AppRunArgs] = []
     openapi_configs: list[_OpenAPIRunArgs] = []
     for line in lines:
-        config = _extract_comment_config(line, _RGX_RUN)
+        config = _extract_comment_config(file_path, line, _RGX_RUN, 'run')
         if config is not None:
             run_configs.append(config)
             continue
-        config = _extract_comment_config(line, _RGX_OPENAPI)
+        config = _extract_comment_config(
+            file_path,
+            line,
+            _RGX_OPENAPI,
+            'openapi',
+        )
         if config is not None:
             openapi_configs.append(config)
             continue
@@ -568,8 +587,10 @@ def _split_example_lines(
 
 
 def _extract_comment_config(
+    file_path: Path,
     line: str,
     pattern: re.Pattern[str],
+    config_type: str,
 ) -> dict[str, Any] | None:
     match = pattern.match(line)
     if match is None:
@@ -578,7 +599,12 @@ def _extract_comment_config(
     run_stmt = match.group(1).lstrip()
     if '# noqa' in run_stmt:
         run_stmt = run_stmt.split('# noqa')[0]
-    return cast(dict[str, Any], json.loads(run_stmt))
+    try:
+        return cast(dict[str, Any], json.loads(run_stmt))
+    except Exception as exc:
+        raise _StartupError(
+            f'Cannot parse {config_type} in {file_path!s}',
+        ) from exc
 
 
 def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
@@ -1196,7 +1222,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         file_path: Path,
     ) -> tuple[str, list[_AppRunArgs], list[_OpenAPIRunArgs]]:
         file_content = file_path.read_text(encoding='utf-8')
-        return _extract_run_args(file_content)
+        return _extract_run_args(file_path, file_content)
 
     def _create_tmp_example_file(
         self,

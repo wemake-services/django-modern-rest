@@ -6,7 +6,7 @@ Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication
 .. warning::
 
   HTTP Basic Auth is very insecure.
-  It is better than nothing, but is enough for nearly all real use-cases.
+  It is better than nothing, but is not enough for nearly all real use-cases.
   Please, consider using :doc:`jwt` instead.
 
 

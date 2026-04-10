@@ -28,8 +28,11 @@
 # SOFTWARE.
 
 import dataclasses
+from collections.abc import Mapping
 from http.cookies import Morsel, SimpleCookie
 from typing import Any, ClassVar, Literal, final
+
+from django.http import HttpResponseBase
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -154,3 +157,13 @@ class NewCookie(_BaseCookie):
     def as_dict(self) -> dict[str, Any]:
         """Converts to a dictionary ."""
         return dataclasses.asdict(self)
+
+
+def set_cookies(
+    response: HttpResponseBase,
+    cookies: Mapping[str, NewCookie] | None,
+) -> None:
+    """Set cookies for the HTTP response."""
+    if cookies:
+        for cookie_key, cookie in cookies.items():
+            response.set_cookie(cookie_key, **cookie.as_dict())

@@ -15,9 +15,7 @@ class HeaderModel(msgspec.Struct):
     consumer: str = msgspec.field(name='X-API-Consumer')
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     def post(
         self,
         parsed_body: Body[UserModel],

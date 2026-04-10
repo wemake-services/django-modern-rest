@@ -10,7 +10,7 @@ from django.http import HttpResponseBase
 
 from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
-from dmr.exceptions import EndpointMetadataError
+from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import (
     ComponentParserSpec,
@@ -24,11 +24,7 @@ from dmr.response import infer_status_code
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
-from dmr.types import (
-    infer_annotation,
-    is_safe_subclass,
-    parse_return_annotation,
-)
+from dmr.types import EmptyObj, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
@@ -51,6 +47,7 @@ _HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
 ))
 
 _PluggableT = TypeVar('_PluggableT', bound=Parser | Renderer)
+_ItemT = TypeVar('_ItemT')
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -184,15 +181,17 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     metadata_cls: type[EndpointMetadata]
     response_modification_cls: type[ResponseModification]
     component_parsers: list[ComponentParserSpec]
+    type_annotations: dict[str, Any]
 
     # Internal fields:
     endpoint_name: str = dataclasses.field(init=False)
 
     def __call__(self) -> EndpointMetadata:
         """Do the validation."""
-        return_annotation = infer_annotation(
-            parse_return_annotation(self.func),
+        return_annotation = _resolve_return_annotation(
+            self.type_annotations,
             self.controller_cls,
+            self.func,
         )
         if self.payload is None and is_safe_subclass(
             return_annotation,
@@ -246,6 +245,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         summary, description = self._build_description()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
+            type_annotations=self.type_annotations,
             responses={},
             method=method,
             validate_responses=self._build_validate_responses(),
@@ -258,6 +258,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            exclude_semantic_responses=self._build_exclude_semantic_responses(),
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
@@ -297,6 +298,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         summary, description = self._build_description()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
+            type_annotations=self.type_annotations,
             responses={},
             validate_responses=self._build_validate_responses(),
             method=method,
@@ -309,6 +311,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            exclude_semantic_responses=self._build_exclude_semantic_responses(),
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
@@ -343,6 +346,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         summary, description = self._build_description()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
+            type_annotations=self.type_annotations,
             responses={},
             validate_responses=self._build_validate_responses(),
             method=method,
@@ -355,6 +359,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
+            exclude_semantic_responses=self._build_exclude_semantic_responses(),
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
@@ -498,16 +503,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return self.payload.error_handler
 
     def _build_no_validate_http_spec(self) -> frozenset[HttpSpec]:
-        payload_spec: Set[HttpSpec] = (
-            (self.payload.no_validate_http_spec or set())
-            if self.payload
-            else set()
+        return self._build_optional_set(
+            self.payload.no_validate_http_spec if self.payload else set(),
+            self.controller_cls.no_validate_http_spec,
+            resolve_setting(Settings.no_validate_http_spec),
         )
-        return frozenset((
-            *payload_spec,
-            *self.controller_cls.no_validate_http_spec,
-            *resolve_setting(Settings.no_validate_http_spec),
-        ))
 
     def _build_semantic_responses(self) -> bool:
         if self.payload and self.payload.semantic_responses is not None:
@@ -515,6 +515,24 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if self.controller_cls.semantic_responses is not None:
             return self.controller_cls.semantic_responses
         return resolve_setting(Settings.semantic_responses)  # type: ignore[no-any-return]
+
+    def _build_exclude_semantic_responses(self) -> frozenset[HTTPStatus]:
+        return self._build_optional_set(
+            self.payload.exclude_semantic_responses if self.payload else set(),
+            self.controller_cls.exclude_semantic_responses,
+            resolve_setting(Settings.exclude_semantic_responses),
+        )
+
+    def _build_optional_set(
+        self,
+        *sets: Set[_ItemT] | None,
+    ) -> frozenset[_ItemT]:
+        result_set: set[_ItemT] = set()
+        for set_like in sets:
+            if set_like is None:
+                return frozenset()
+            result_set.update(set_like)
+        return frozenset(result_set)
 
     def _build_description(self) -> tuple[str | None, str | None]:
         """
@@ -756,6 +774,19 @@ def _build_responses(
         *((payload.responses or []) if payload else []),
         *([] if modification is None else [modification.to_spec()]),
     ]
+
+
+def _resolve_return_annotation(
+    type_annotations: dict[str, Any],
+    controller_cls: type['Controller[BaseSerializer]'],
+    endpoint_func: Callable[..., Any],
+) -> Any:
+    return_annotation = type_annotations.get('return', EmptyObj)
+    if return_annotation is EmptyObj:
+        raise UnsolvableAnnotationsError(
+            f'Function {endpoint_func!r} is missing return type annotation',
+        )
+    return infer_annotation(return_annotation, controller_cls)
 
 
 def validate_method_name(

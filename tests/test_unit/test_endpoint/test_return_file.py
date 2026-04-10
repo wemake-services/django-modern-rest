@@ -1,5 +1,6 @@
 import pathlib
 from collections.abc import Iterator
+from contextlib import closing
 from http import HTTPStatus
 from typing import Final, final
 
@@ -12,7 +13,14 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
-_FILEPATH: Final = 'docs/examples/components/receipt.txt'
+_FILEPATH: Final = (
+    pathlib.Path(__file__).parent.parent.parent.parent
+    / 'docs/examples/components/receipt.txt'
+)
+
+_FILE_CONTENT: Final = _FILEPATH.read_bytes()
+# win32 uses `\r\n` as a line break, others use `\n`:
+_CONTENT_LENGTH: Final = str(len(_FILE_CONTENT))
 
 
 @final
@@ -37,17 +45,17 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
 
     response = _FileSyncController.as_view()(request)
 
-    assert isinstance(response, FileResponse)
-    assert not response.is_async
-    assert response.status_code == HTTPStatus.OK
-    assert response.headers == {
-        'Content-Type': 'text/plain',
-        'Content-Length': '16',
-        'Content-Disposition': 'attachment; filename="receipt.txt"',
-    }
-    assert isinstance(response.streaming_content, Iterator)
-    assert response.getvalue() == b'Example receipt\n'
-    response.close()
+    with closing(response):
+        assert isinstance(response, FileResponse)
+        assert not response.is_async
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers == {
+            'Content-Type': 'text/plain',
+            'Content-Length': _CONTENT_LENGTH,
+            'Content-Disposition': 'attachment; filename="receipt.txt"',
+        }
+        assert isinstance(response.streaming_content, Iterator)
+        assert response.getvalue() == _FILE_CONTENT
 
 
 @final
@@ -72,13 +80,13 @@ async def test_return_file_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
 
     response = await dmr_async_rf.wrap(_FileAsyncController.as_view()(request))
 
-    assert isinstance(response, FileResponse)
-    assert response.status_code == HTTPStatus.OK
-    assert response.headers == {
-        'Content-Type': 'text/plain',
-        'Content-Length': '16',
-        'Content-Disposition': 'attachment; filename="receipt.txt"',
-    }
-    assert isinstance(response.streaming_content, Iterator)
-    assert response.getvalue() == b'Example receipt\n'
-    response.close()
+    with closing(response):
+        assert isinstance(response, FileResponse)
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers == {
+            'Content-Type': 'text/plain',
+            'Content-Length': _CONTENT_LENGTH,
+            'Content-Disposition': 'attachment; filename="receipt.txt"',
+        }
+        assert isinstance(response.streaming_content, Iterator)
+        assert response.getvalue() == _FILE_CONTENT

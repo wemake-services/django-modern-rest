@@ -6,11 +6,11 @@ from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 from django.utils.translation import gettext_lazy as _
 
+from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
-    from dmr.negotiation import ContentType
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
 
@@ -25,13 +25,13 @@ _CANNOT_SERIALIZE_MSG: Final = _(
 @dataclasses.dataclass(slots=True, frozen=True)
 class ConditionalType:
     """
-    Internal type that we use as a metadata.
+    Internal type that we use as metadata.
 
     Public API is to use
     :func:`dmr.negotiation.conditional_type` instead of this.
     """
 
-    _original: tuple[tuple['ContentType', Any], ...]
+    _original: tuple[tuple[str, Any], ...]
     computed: Mapping[str, Any] = dataclasses.field(
         hash=False,
         init=False,
@@ -39,15 +39,15 @@ class ConditionalType:
 
     def __post_init__(self) -> None:
         """
-        Post process passed objects.
+        Post-process passed objects.
 
         What we do here:
         1. We have to have `_ConditionalType` hashable, so it can be cached
-        2. We pass dict as pairs of tuples
+        2. We pass a dict as pairs of tuples
         3. Then we pre-compute the dict back
 
-        It wastes extra memory, but we are fine with that.
-        Because objects will be rather small.
+        It wastes extra memory, but we are fine with that,
+        because objects will be rather small.
         It is Python after all!
         """
         object.__setattr__(self, 'computed', dict(self._original))
@@ -110,10 +110,11 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    if request.headers.get('Accept') is None:
+    accept = request.headers.get('Accept')
+    if accept is None:
         return default
 
-    renderer_type = request.get_preferred_type(renderers)  # type: ignore[arg-type]
+    renderer_type = accepted_type(accept, renderers)
     if renderer_type is None:
         raise NotAcceptableError(
             _CANNOT_SERIALIZE_MSG.format(

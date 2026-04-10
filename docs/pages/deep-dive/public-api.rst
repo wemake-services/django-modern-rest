@@ -54,6 +54,8 @@ Response, headers and cookies
 .. autoclass:: dmr.cookies.NewCookie
   :members:
 
+.. autofunction:: dmr.cookies.set_cookies
+
 
 Validation
 ----------
@@ -150,6 +152,9 @@ Utilities
 
 .. autodata:: dmr.types.EmptyObj
 
+.. autoclass:: dmr.types.AnnotationsContext
+  :members:
+
 .. autoclass:: dmr.types.TypeVarInference
   :members:
 
@@ -189,10 +194,19 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.PydanticSerializer
   :members:
 
+.. autoclass:: dmr.plugins.pydantic.PydanticFastSerializer
+  :members:
+
 .. autoclass:: dmr.plugins.pydantic.serializer.PydanticEndpointOptimizer
   :members:
 
 .. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.serializer.ToModelKwargs
   :members:
 
 Msgspec
@@ -205,4 +219,10 @@ Msgspec
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.ToJsonKwargs
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.ToModelKwargs
   :members:

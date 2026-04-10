@@ -91,6 +91,12 @@ Let's create custom error handling for the whole controller:
   :language: python
   :linenos:
 
+In this example we are using `zapros <https://github.com/kap-sh/zapros>`_
+HTTP client to proxy an HTTP ``GET`` and ``POST``
+requests to some other API service.
+If we fail to send a request and raise a specific HTTP client error,
+we return an error with ``424`` error code.
+
 
 Going further
 -------------
@@ -135,6 +141,11 @@ The same error handling logic can be represented as a diagram:
       GlobalHandler -->|raises| Reraises[Reraises error];
       Error ---->|No| Success[Successful response];
 
+.. note::
+
+  If :ref:`handler500` is configured, it will catch all unhandled errors
+  in the provided scope and return ``500`` errors with the correct payload.
+
 
 .. _customizing-error-messages:
 
@@ -168,10 +179,86 @@ docs about how to use different error models
 for different content types.
 
 
+Problem Details
+---------------
+
+.. seealso::
+
+  RFC: https://datatracker.ietf.org/doc/html/rfc9457
+
+``django-modern-rest`` supports customizing of all error message
+inside the framework, including builtin ones.
+
+:class:`~dmr.problem_details.ProblemDetailsError`
+is a great example of how it can be done.
+
+It is a regular subclass of :class:`~dmr.response.APIError`,
+which does not have any special handling inside our framework.
+This is done on purpose, so we can be sure that users also can
+to customize their exceptions any way they need.
+
+We support two main use-cases for Problem Details.
+
+Always raising Problem Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To always use :class:`~dmr.problem_details.ProblemDetailsError`
+inside your controller you would need to:
+
+1. Define :attr:`~dmr.controller.Controller.error_model` attribute
+   as :class:`~dmr.problem_details.ProblemDetailsModel`
+2. Raise an exception itself, pass all the required fields
+3. Convert other message to the Problem Details format
+   using :meth:`~dmr.controller.Controller.format_error` method
+
+.. literalinclude:: /examples/error_handling/problem_details.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Conditionally raising Problem Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another way is to :doc:`negotiate <negotiation>` the error response format.
+How does it work?
+
+1. When user sends a request with ``Accept`` header
+   with ``application/problem+json`` content type,
+   we will return Problem Details errors
+2. When ``application/json`` or any other content type is sent,
+   we return regular :class:`~dmr.errors.ErrorModel` error payloads
+
+To do so, you would need a slightly more difficult setup:
+
+1. Define :attr:`~dmr.controller.Controller.error_model` attribute
+   as the result of :meth:`~dmr.problem_details.ProblemDetailsError.error_model`
+   method call. It will add :ref:`conditional schema types <conditional-types>`
+   to your error responses
+2. Define several :class:`~dmr.renderers.Renderer` types,
+   including the one which will handle ``application/problem+json``
+3. Raise a conditional exception:
+   use :meth:`~dmr.problem_details.ProblemDetailsError.conditional_error`
+   to only raise Problem Details when the correct accepted type is passed
+4. Convert other message to the Problem Details format
+   using :meth:`~dmr.controller.Controller.format_error`
+   method when the correct accepted type is passed
+
+.. literalinclude:: /examples/error_handling/problem_details_negotiation.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. tip::
+
+  You can still make ``application/problem+json`` the default
+  and when ``application/json`` (or any other type) is explicitly requested
+  return the :class:`~dmr.errors.ErrorModel` errors.
+
+
 Handling validation errors from models
 --------------------------------------
 
-When creating models with, for example , :class:`pydantic.BaseModel`,
+When creating models with, for example, :class:`pydantic.BaseModel`,
 your validation can fail. This error will not be handled by design.
 
 Why? Because catching all specific validation errors for a specific serializer
@@ -220,3 +307,14 @@ API Reference
   :members:
 
 .. autofunction:: dmr.errors.format_error
+
+
+Problem Details API
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.problem_details.ProblemDetailsError
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.problem_details.ProblemDetailsModel
+  :members:

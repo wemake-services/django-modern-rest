@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Self
 
 from django.conf import settings
 from typing_extensions import override
@@ -17,12 +17,12 @@ class HttpBasicAsync(HttpBasicAsyncAuth):
         controller: 'Controller[BaseSerializer]',
         username: str,
         password: str,
-    ) -> Any | None:
+    ) -> Self | None:
         # Define `HTTP_BASIC_USERNAME` and `HTTP_BASIC_PASSWORD`
         # in your settings.py file:
         if (
             username == settings.HTTP_BASIC_USERNAME
             and password == settings.HTTP_BASIC_PASSWORD
         ):
-            return True
+            return self
         return None

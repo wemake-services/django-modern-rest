@@ -1,0 +1,160 @@
+name: Test compiled with mypyc
+
+on:
+  release:
+    types: published
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "dmr/**"
+      - "tests/test_unit/**"
+      - ".github/workflows/build-wheels.yml"
+      - ".github/workflows/*.sh"
+      - "pyproject.toml"
+      - "uv.lock"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PROJECT: https://pypi.org/project/django-modern-rest
+
+jobs:
+  configure:
+    name: generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up latest Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+      - name: Install dependencies
+        run: |
+          uv sync --group build
+
+      - name: generate matrix
+        if: |
+          github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+        run: |
+          uv run bash .github/workflows/build-release-matrix.sh
+
+      - name: generate matrix (PR)
+        if: |
+          github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+        run: |
+          uv run bash .github/workflows/build-pr-matrix.sh
+
+      - id: set-matrix
+        run: echo "include=$(cat /tmp/matrix)" | tee -a "$GITHUB_OUTPUT"
+
+  mypyc:
+    name: mypyc wheels ${{ matrix.only }}
+    needs: configure
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.configure.outputs.include) }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+      # Keep cibuildwheel version in sync with pyproject.toml
+      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+        with:
+          only: ${{ matrix.only }}
+
+      - name: Upload wheels as workflow artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: ${{ matrix.only }}-mypyc-wheels
+          path: wheelhouse/
+
+  build-pure:
+    name: Pure-Python wheel + sdist
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+      - name: Build sdist and pure-Python wheel
+        run: uv build --sdist --wheel
+
+      - name: Upload wheels as workflow artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+  publish-mypyc:
+    if: github.event_name == 'release'
+    needs: [mypyc, build-pure]
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: "*-mypyc-wheels"
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        with:
+          packages-dir: wheelhouse/
+          verbose: true
+
+  publish-pure:
+    if: github.event_name == 'release'
+    needs: [mypyc, build-pure]
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        with:
+          verbose: true

@@ -13,7 +13,7 @@ Requiring auth
 
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
-We provide two classes to require Django session auth in you API:
+We provide two classes to require Django session auth in your API:
 
 - :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
   for sync views

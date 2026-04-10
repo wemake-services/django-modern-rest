@@ -10,12 +10,12 @@ from django.apps import apps
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic.serializer import PydanticSerializer
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth, get_jwt
+from dmr.security import request_auth
+from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth, request_jwt
 from dmr.security.jwt.blocklist.auth import (
     JWTokenBlocklistAsyncMixin,
     JWTokenBlocklistSyncMixin,
@@ -42,27 +42,17 @@ def test_is_installed() -> None:
     assert apps.is_installed('dmr.security.jwt.blocklist')
 
 
-@pytest.fixture
-def user(faker: Faker) -> User:
-    """Create fake user for tests."""
-    return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        faker.password(),
-    )
-
-
 class _TokenBuilder(Protocol):
     def __call__(self, **kwargs: Unpack[_JWTokenKwargs]) -> str: ...
 
 
 @pytest.fixture
-def build_user_token(user: User, settings: LazySettings) -> _TokenBuilder:
+def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
     def factory(**kwargs: Unpack[_JWTokenKwargs]) -> str:
         token = JWToken(
-            sub=str(user.pk),
+            sub=str(admin_user.pk),
             **kwargs,
         )
 
@@ -79,7 +69,8 @@ class MyJWTSyncAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth):
 class _BlocklistSyncController(Controller[PydanticSerializer]):
     @modify(auth=[MyJWTSyncAuth()])
     def get(self) -> str:
-        assert isinstance(get_jwt(self.request), JWToken)
+        assert isinstance(request_jwt(self.request), JWToken)
+        assert isinstance(request_jwt(self.request, strict=True), JWToken)
         return 'authed'
 
 
@@ -136,6 +127,8 @@ def test_blocklist_sync_mixin_success(
     response = _BlocklistSyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert isinstance(request_auth(request), MyJWTSyncAuth)
+    assert isinstance(request_auth(request, strict=True), MyJWTSyncAuth)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK
 
@@ -161,6 +154,12 @@ def test_blocklist_sync_mixin_unauthorized(
     response = _BlocklistSyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert request_auth(request) is None
+    with pytest.raises(AttributeError, match='__dmr_auth__'):
+        request_auth(request, strict=True)
+    assert request_jwt(request) is None
+    with pytest.raises(AttributeError, match='__dmr_jwt__'):
+        request_jwt(request, strict=True)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert json.loads(response.content) == snapshot({

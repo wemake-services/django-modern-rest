@@ -31,7 +31,7 @@ def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
     return cast(
         dict[str, str],
-        tomllib.loads(pyproject.read_text())['tool']['poetry'],
+        tomllib.loads(pyproject.read_text())['project'],
     )
 
 
@@ -60,6 +60,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
@@ -88,6 +89,15 @@ intersphinx_mapping = {
     ),
     'attrs': ('https://www.attrs.org/en/stable/', None),
 }
+
+# Extlinks:
+extlinks = {
+    'issue': (
+        'https://github.com/wemake-services/django-modern-rest/issues/%s',
+        'issue %s',
+    ),
+}
+
 
 # Napoleon:
 napoleon_google_docstring = True
@@ -155,6 +165,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.streaming.controller._StreamingEndpoint'),
     # Unsolvable imports:
     (_PY_CLASS, 'AbstractBaseUser'),
+    (_PY_CLASS, 'Raw'),
     # Undocumented in Django:
     (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),

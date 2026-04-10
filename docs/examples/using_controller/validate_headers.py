@@ -12,9 +12,7 @@ class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(
             UserModel,

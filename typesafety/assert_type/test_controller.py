@@ -16,7 +16,7 @@ class _QueryModel(pydantic.BaseModel):
     search: str
 
 
-class _MyController(Controller[PydanticSerializer]):
+class MyController(Controller[PydanticSerializer]):
     def get(
         self,
         parsed_path: Path[dict[str, int]],
@@ -31,13 +31,13 @@ class _MyController(Controller[PydanticSerializer]):
         return 'Done'
 
 
-class _Handle405Correctly(Controller[PydanticSerializer]):
+class Handle405Correctly(Controller[PydanticSerializer]):
     def whatever(self, request: HttpRequest) -> None:
         self.http_method_not_allowed(request)  # type: ignore[deprecated]
         self.options(request)  # type: ignore[deprecated]
 
 
-class _OptionsController(Controller[PydanticSerializer]):
+class OptionsController(Controller[PydanticSerializer]):
     @override
     def options(self) -> HttpResponse:  # type: ignore[override]
         raise NotImplementedError

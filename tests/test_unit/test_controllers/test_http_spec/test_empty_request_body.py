@@ -155,3 +155,15 @@ def test_empty_request_body_no_body_method_works() -> None:
             raise NotImplementedError
 
     assert 'GET' in _Controller.api_endpoints
+
+
+def test_empty_request_body_override() -> None:
+    """Ensure that validation can be overridden."""
+    with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
+
+        class _Controller(Controller[PydanticSerializer]):
+            no_validate_http_spec = {HttpSpec.empty_request_body}
+
+            @modify(no_validate_http_spec=None)
+            def get(self, parsed_body: Body[_BodyModel]) -> str:
+                raise NotImplementedError

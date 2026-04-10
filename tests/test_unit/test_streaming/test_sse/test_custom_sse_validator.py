@@ -73,7 +73,7 @@ async def test_sse_validation(
     )
 
 
-class _UnhandeledValidator(SSEStreamingValidator):
+class _UnhandledValidator(SSEStreamingValidator):
     @override
     def validation_pipeline(self) -> Iterable[SSEPipeline]:
         return (
@@ -92,8 +92,8 @@ class _UnhandeledValidator(SSEStreamingValidator):
         return event
 
 
-class _UnhandeledSSE(SSEController[PydanticSerializer]):
-    streaming_validator_cls = _UnhandeledValidator
+class _UnhandledSSE(SSEController[PydanticSerializer]):
+    streaming_validator_cls = _UnhandledValidator
 
     async def get(self) -> AsyncIterator[SSEvent[int]]:
         return self._valid_events()
@@ -110,7 +110,7 @@ async def test_sse_validation_bubbles_unhandled(
     """Ensures that validation errors bubble up when not handled."""
     request = dmr_async_rf.get('/whatever/')
 
-    response = await dmr_async_rf.wrap(_UnhandeledSSE.as_view()(request))
+    response = await dmr_async_rf.wrap(_UnhandledSSE.as_view()(request))
 
     assert isinstance(response, StreamingResponse)
     assert response.streaming

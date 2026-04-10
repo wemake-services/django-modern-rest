@@ -7,6 +7,7 @@ By default, we use OpenAPI ``3.1``, since tooling such as Swagger, Scalar,
 and Redoc does not yet fully support the latest specification.
 You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
 
+
 Setting up OpenAPI views
 ------------------------
 
@@ -21,6 +22,13 @@ We support:
 - `Stoplight Elements <https://github.com/stoplightio/elements>`_
   with :class:`~dmr.openapi.views.StoplightView`
 - ``openapi.json`` with :class:`~dmr.openapi.views.OpenAPIJsonView`
+- ``openapi.yaml`` with :class:`~dmr.openapi.views.yaml.OpenAPIYamlView`
+  when ``[openapi]`` extra is installed
+
+.. important::
+
+  We always recommend installing ``'django-modern-rest[openapi]'``
+  extra when working with OpenAPI.
 
 Here's how it works:
 
@@ -113,28 +121,34 @@ To customize a schema, use the native methods.
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      Docs: https://jcristharif.com/msgspec/jsonschema.html
+    Docs: https://jcristharif.com/msgspec/jsonschema.html
 
-      .. literalinclude:: /examples/openapi/msgspec_customization.py
-        :caption: dtos.py
-        :language: python
-        :linenos:
-        :no-imports-spoiler:
+    .. literalinclude:: /examples/openapi/msgspec_customization.py
+      :caption: dtos.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      Docs: https://docs.pydantic.dev/latest/concepts/json_schema
+    Docs: https://docs.pydantic.dev/latest/concepts/json_schema
 
-      .. literalinclude:: /examples/openapi/pydantic_customization.py
-        :caption: dtos.py
-        :language: python
-        :linenos:
-        :no-imports-spoiler:
+    .. literalinclude:: /examples/openapi/pydantic_customization.py
+      :caption: dtos.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
 
-      You can completely redefine the schema generation with
-      overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
+    Common features:
+
+    - You can completely redefine the schema generation with providing
+      :class:`pydantic.json_schema.WithJsonSchema` annotation
+      or by overriding ``__get_pydantic_json_schema__`` method
+      on a pydantic model
+    - You can change the ``title`` of generics pydantic models
+      by redefining :meth:`pydantic.BaseModel.model_parametrized_name`
 
 .. note::
 
@@ -271,7 +285,7 @@ Top level API
 This is how OpenAPI spec is generated, top level overview:
 
 .. mermaid::
-  :caption: Error handling logic
+  :caption: OpenAPI spec generation
   :config: {"theme": "forest"}
 
   graph

@@ -1,4 +1,5 @@
 from collections.abc import Callable, Mapping
+from dataclasses import is_dataclass
 from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
@@ -6,6 +7,7 @@ from typing import (
     ClassVar,
     Literal,
     TypeAlias,
+    TypeVar,
     Union,
     final,
 )
@@ -18,7 +20,7 @@ from typing_extensions import TypedDict, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
-from dmr.exceptions import DataRenderingError
+from dmr.exceptions import DataParsingError, DataRenderingError
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
@@ -39,10 +41,10 @@ _IncEx: TypeAlias = (
 
 
 @final
-class ModelDumpKwargs(TypedDict, total=False):
+class ToJsonKwargs(TypedDict, total=False):
     """Keyword arguments for pydantic's model dump method."""
 
-    mode: Literal['json', 'python'] | str
+    # `mode` is explicitly left out. It is always `json`.
     include: _IncEx | None
     exclude: _IncEx | None
     context: Any | None
@@ -58,11 +60,11 @@ class ModelDumpKwargs(TypedDict, total=False):
 
 
 @final
-class FromPythonKwargs(TypedDict, total=False):
+class ToModelKwargs(TypedDict, total=False):
     """Keyword arguments for pydantic's python object validation method."""
 
+    # `from_attributes` is explicitly left out. It is always `False`.
     extra: ExtraValues | None
-    from_attributes: bool | None
     context: Any | None
     experimental_allow_partial: bool | Literal['off', 'on', 'trailing-strings']
     by_alias: bool | None
@@ -76,10 +78,12 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
     @classmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
         """Create models for return types for validation."""
-        # Just build all `TypeAdapater` instances
+        # Just build all `TypeAdapter` instances
         # during import time and cache them for later use in runtime.
         for response in metadata.responses.values():
             _get_cached_type_adapter(response.return_type)
+        # It is used in many places:
+        _get_cached_type_adapter(Any)
 
 
 class PydanticSerializer(BaseSerializer):
@@ -93,6 +97,12 @@ class PydanticSerializer(BaseSerializer):
 
         pip install 'django-modern-rest[pydantic]'
 
+    Attributes:
+        to_json_kwargs: Dictionary of kwargs that will be passed
+            to model serialization callbacks.
+        to_model_kwargs: Dictionary of kwargs that will be passed
+            to model deserialization callbacks.
+
     """
 
     __slots__ = ()
@@ -103,12 +113,11 @@ class PydanticSerializer(BaseSerializer):
     schema_generator = PydanticSchemaGenerator
 
     # Custom API:
-
-    model_dump_kwargs: ClassVar[ModelDumpKwargs] = {
+    to_json_kwargs: ClassVar[ToJsonKwargs] = {
         'by_alias': True,
-        'mode': 'json',
     }
-    from_python_kwargs: ClassVar[FromPythonKwargs] = {
+
+    to_model_kwargs: ClassVar[ToModelKwargs] = {
         'by_alias': True,
     }
 
@@ -134,7 +143,20 @@ class PydanticSerializer(BaseSerializer):
     def serialize_hook(cls, to_serialize: Any) -> Any:
         """Customize how some objects are serialized into simple objects."""
         if isinstance(to_serialize, pydantic.BaseModel):
-            return to_serialize.model_dump(**cls.model_dump_kwargs)
+            return to_serialize.model_dump(mode='json', **cls.to_json_kwargs)
+        # We support dataclasses here, because raw `JsonRenderer`
+        # does not support them, however, we use them in multiple places inside:
+        if is_dataclass(to_serialize):
+            return _get_cached_type_adapter(
+                type(to_serialize),  # type: ignore[arg-type]
+            ).dump_python(
+                to_serialize,
+            )
+        # This is a pydantic field inside a `TypedDict`, `@dataclass`, etc:
+        if hasattr(to_serialize, '__get_pydantic_core_schema__'):
+            return _get_cached_type_adapter(
+                type(to_serialize),  # type: ignore[arg-type]
+            ).dump_python(to_serialize, mode='json', **cls.to_json_kwargs)
         return super().serialize_hook(to_serialize)
 
     @override
@@ -196,7 +218,7 @@ class PydanticSerializer(BaseSerializer):
         return adapter.validate_python(
             unstructured,
             strict=strict,
-            **cls.from_python_kwargs,
+            **cls.to_model_kwargs,
         )
 
     @override
@@ -217,8 +239,8 @@ class PydanticSerializer(BaseSerializer):
         """
         return _get_cached_type_adapter(Any).dump_python(
             structured,
-            # To be in sync with `msgspec`:
             mode='json',
+            **cls.to_json_kwargs,
         )
 
     @override
@@ -246,8 +268,81 @@ class PydanticSerializer(BaseSerializer):
         )
 
 
+class PydanticFastSerializer(PydanticSerializer):
+    """
+    Fast pydantic serializer for cases when you only work with json.
+
+    Does not use ``parser`` and ``renderer`` passed objects, does not use
+    ``dmr.plugins.pyndatic.PydanticSerializer.serialize_hook`` and
+    ``dmr.plugins.pyndatic.PydanticSerializer.deserialize_hook``
+    method.
+
+    Is built for optimizations only, use with caution.
+
+    Only works with ``application/json`` content type.
+
+    .. versionadded:: 0.6.0
+
+        See :issue:`830`.
+
+    """
+
+    @classmethod
+    @override
+    def serialize(cls, structure: Any, *, renderer: Renderer) -> bytes:
+        """
+        Fast way to serializer pyndatic models into json bytestring.
+
+        *renderer* parameter is always ignored.
+        """
+        try:
+            return _get_cached_type_adapter(Any).dump_json(
+                structure,
+                fallback=cls.serialize_hook,
+                **cls.to_json_kwargs,  # type: ignore[misc]
+            )
+        except pydantic_core.PydanticSerializationError as exc:
+            raise DataRenderingError(str(exc)) from exc
+
+    @classmethod
+    @override
+    def deserialize(
+        cls,
+        buffer: Raw,
+        *,
+        parser: Parser,
+        request: HttpRequest,
+        model: Any,
+    ) -> Any:
+        """
+        Fast way to serializer pyndatic models into json bytestring.
+
+        *parser* parameter is always ignored.
+        """
+        try:
+            return _get_cached_type_adapter(Any).validate_json(
+                buffer,
+                **cls.to_model_kwargs,
+            )
+        except pydantic_core.ValidationError as exc:
+            raise DataParsingError(exc.errors()[0]['msg']) from exc
+
+    @classmethod
+    @override
+    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+        """
+        Is this parser or renderer supported?
+
+        We only support ``json`` parsers and renderers.
+        """
+        return pluggable.content_type == 'application/json'
+
+
+_ModelT = TypeVar('_ModelT')
+
+
 @lru_cache(maxsize=MAX_CACHE_SIZE)
-def _get_cached_type_adapter(model: Any) -> pydantic.TypeAdapter[Any]:
+def _get_cached_type_adapter(model: _ModelT) -> pydantic.TypeAdapter[_ModelT]:
     """
     It is expensive to create, reuse existing ones.
 

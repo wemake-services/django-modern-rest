@@ -3,6 +3,7 @@ from types import MappingProxyType
 from typing import Final
 
 import pytest
+import yaml
 from django.conf import LazySettings
 from django.urls import reverse
 
@@ -41,11 +42,12 @@ def _modify_cdn_settings(
 
 
 _ENDPOINTS: Final = MappingProxyType({
-    'openapi': 'application/json',
-    'redoc': 'text/html',
+    'openapi_json': 'application/json',
+    'openapi_yaml': 'application/yaml',
+    'stoplight': 'text/html',
     'swagger': 'text/html',
     'scalar': 'text/html',
-    'stoplight': 'text/html',
+    'redoc': 'text/html',
 })
 
 
@@ -91,8 +93,17 @@ def test_wrong_method(
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
-def test_returns_correct_structure(dmr_client: DMRClient) -> None:
+def test_json_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
-    response = dmr_client.get(reverse('openapi'))
+    response = dmr_client.get(reverse('openapi_json'))
 
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['openapi'] == '3.1.0'
+
+
+def test_yaml_returns_correct_structure(dmr_client: DMRClient) -> None:
+    """Ensure that OpenAPI YAML endpoint returns correct structure."""
+    response = dmr_client.get(reverse('openapi_yaml'))
+
+    assert response.headers['Content-Type'] == 'application/yaml'
+    assert yaml.safe_load(response.content)['openapi'] == '3.1.0'

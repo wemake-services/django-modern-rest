@@ -1,4 +1,4 @@
-from typing import Any, Final
+from typing import Final, Self
 
 import pytest
 from inline_snapshot import snapshot
@@ -23,7 +23,7 @@ class _NoSchemeAuth(SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         raise NotImplementedError
 
     @property
@@ -43,7 +43,7 @@ class _WithSchemeAuth(SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         raise NotImplementedError
 
     @property

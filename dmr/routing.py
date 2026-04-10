@@ -76,7 +76,7 @@ def build_404_handler(  # noqa: WPS114
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest, Exception], HttpResponse]:
     """
-    Create a 404 handler that returns an response with content negotiation.
+    Create a 404 handler that returns a response with content negotiation.
 
     All prefixes are normalized to start with a leading slash.
     If the request path matches any of them, a 404 response is returned
@@ -158,7 +158,7 @@ def build_500_handler(  # noqa: WPS114
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest], HttpResponse]:
     """
-    Create a 500 handler that returns an response with content negotiation.
+    Create a 500 handler that returns a response with content negotiation.
 
     All prefixes are normalized to start with a leading slash.
     If the request path matches any of them, a 500 response is returned

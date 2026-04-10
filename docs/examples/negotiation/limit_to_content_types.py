@@ -46,3 +46,4 @@ class ExampleController(Controller[PydanticSerializer]):
 # run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/json"}, "assert-error-text": "wrong", "fail-with-body": false}  # noqa: E501, ERA001
 # run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/xml"}, "assert-error-text": "wrong", "fail-with-body": false}  # noqa: E501, ERA001
 # run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/json"}, "query": "?show_error=1", "curl_args": ["-D", "-"], "assert-error-text": "value_error", "fail-with-body": false}  # noqa: E501, ERA001
+# openapi: {"controller": "ExampleController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001, E501

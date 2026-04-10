@@ -43,7 +43,7 @@ Primary framework documentation:
 - When generating Pydantic-based code, install at least `django-modern-rest[pydantic]`.
 - Prefer to include `django-modern-rest[msgspec]` as well, even for Pydantic projects, because local docs recommend `msgspec` for faster JSON parsing and rendering.
 - Include `django-modern-rest[jwt]` only when the OpenAPI security model and the user request require JWT support.
-- Target Python `3.11+` and Django `5.2+`.
+- Target Python `3.11+` and Django `4.2+`.
 - Do not add `'dmr'` to `INSTALLED_APPS` unless the generated project must serve static files for OpenAPI docs.
 - Do not install extra schema-validation libraries just to compare source and built specs. Avoid adding `django-modern-rest[openapi]`, `openapi-spec-validator`, or `schemathesis` unless the repository already has them or the user explicitly asks for them.
 - When `wemake-django-template` is used, layer the generated DTOs, controllers, routers, docs wiring, and tests on top of its structure instead of rebuilding the project shell by hand.

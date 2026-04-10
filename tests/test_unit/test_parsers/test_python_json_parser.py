@@ -1,5 +1,6 @@
 import json
 from http import HTTPStatus
+from typing import Final
 
 import pydantic
 import pytest
@@ -9,20 +10,37 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr import Body, Controller
+from dmr.internal.json import JsonModule, NativeJson
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.settings import Settings
 from dmr.test import DMRRequestFactory
 
+_json_modules: Final[list[JsonModule]] = [NativeJson]
+
+try:  # pragma: no cover
+    import orjson  # type: ignore[import-not-found, unused-ignore]
+except ImportError:  # pragma: no cover
+    pass  # noqa: WPS420
+else:  # pragma: no cover
+    _json_modules.append(orjson)  # pyright: ignore[reportArgumentType]
+
+
+@pytest.fixture(params=_json_modules)
+def json_module(request: pytest.FixtureRequest) -> JsonModule:
+    """Parametrize json modules."""
+    return request.param  # type: ignore[no-any-return]
+
 
 @pytest.fixture(autouse=True)
 def _clear_parser_and_renderer(
     settings: LazySettings,
+    json_module: JsonModule,
 ) -> None:
     settings.DMR_SETTINGS = {
-        Settings.parsers: [JsonParser()],
-        Settings.renderers: [JsonRenderer()],
+        Settings.parsers: [JsonParser(json_module=json_module)],
+        Settings.renderers: [JsonRenderer(json_module=json_module)],
     }
 
 
@@ -43,8 +61,22 @@ def test_native_json_metadata() -> None:
     assert len(metadata.renderers) == 1
 
 
+@pytest.mark.parametrize(
+    'request_headers',
+    [
+        {
+            'Content-Type': 'application/json',
+        },
+        {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+    ],
+)
 def test_empty_request_data(
     dmr_rf: DMRRequestFactory,
+    *,
+    request_headers: dict[str, str],
 ) -> None:
     """Ensures we can send empty bytes to our json parser."""
 
@@ -64,10 +96,7 @@ def test_empty_request_data(
 
     request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
+        headers=request_headers,
         data=b'',
     )
 
@@ -105,17 +134,7 @@ def test_wrong_request_data(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    'Expecting property name enclosed in double quotes: '
-                    'line 1 column 2 (char 1)'
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
+    assert json.loads(response.content)['detail']
 
 
 class _UserModel(pydantic.BaseModel):
@@ -128,9 +147,24 @@ class _RequestModel(pydantic.BaseModel):
     user: _UserModel
 
 
+@pytest.mark.parametrize(
+    'request_headers',
+    [
+        {},
+        {
+            'Content-Type': 'application/json',
+        },
+        {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+    ],
+)
 def test_complex_request_data(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
+    *,
+    request_headers: dict[str, str],
 ) -> None:
     """Ensures we that complex data can be in models."""
 
@@ -151,10 +185,7 @@ def test_complex_request_data(
 
     request = dmr_rf.post(
         '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
+        headers=request_headers,
         data=json.dumps(request_data),
     )
 
@@ -202,3 +233,40 @@ def test_complex_direct_return_data(
     assert response.headers == {'Content-Type': 'application/json'}
 
     assert sorted(json.loads(response.content)) == sorted(request_data)
+
+
+def test_json_parser_validation(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures orjson can handle complex pydantic model data."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        def post(self, parsed_body: Body[_UserModel]) -> _UserModel:
+            raise NotImplementedError
+
+    request_data = {'username': faker.name()}
+
+    request = dmr_rf.post(
+        '/whatever/',
+        data=json.dumps(request_data),
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Field required',
+                'loc': ['parsed_body', 'tags'],
+                'type': 'value_error',
+            },
+            {
+                'msg': 'Field required',
+                'loc': ['parsed_body', 'groups'],
+                'type': 'value_error',
+            },
+        ],
+    })

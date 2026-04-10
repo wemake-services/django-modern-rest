@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-import httpx
+import zapros
 from django.http import HttpResponse
 from typing_extensions import override
 
@@ -33,7 +33,7 @@ class ProxyController(Controller[PydanticSerializer]):
         exc: Exception,
     ) -> HttpResponse:
         # Will handle errors in all endpoints.
-        if isinstance(exc, httpx.HTTPError):
+        if isinstance(exc, zapros.ZaprosError):
             return self.to_error(
                 'Request to example.com failed',
                 status_code=HTTPStatus.FAILED_DEPENDENCY,
@@ -45,5 +45,5 @@ class ProxyController(Controller[PydanticSerializer]):
             exc,
         )
 
-    def _client(self) -> httpx.AsyncClient:
-        return httpx.AsyncClient()
+    def _client(self) -> zapros.AsyncClient:
+        return zapros.AsyncClient()

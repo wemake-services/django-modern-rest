@@ -7,28 +7,28 @@ Installation
 
 Works for:
 
-- Python 3.11+
-- Django 5.2+
+- CPython 3.11+ or PyPy 3.11+
+- Django 4.2+
 
 .. tabs::
 
-    .. tab:: :iconify:`material-icon-theme:uv` uv
+  .. tab:: :iconify:`material-icon-theme:uv` uv
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            uv add django-modern-rest
+      uv add django-modern-rest
 
-    .. tab:: :iconify:`devicon:poetry` poetry
+  .. tab:: :iconify:`devicon:poetry` poetry
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            poetry add django-modern-rest
+      poetry add django-modern-rest
 
-    .. tab:: :iconify:`devicon:pypi` pip
+  .. tab:: :iconify:`devicon:pypi` pip
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            pip install django-modern-rest
+      pip install django-modern-rest
 
 
 Extras for different serializers:
@@ -69,8 +69,8 @@ Extras for different features:
 LLMs support
 ------------
 
-Are you using AI for the assistant coding?
-We got you covered, use this files for the context to make sure that the LLM
+Are you using AI for assisted coding?
+We got you covered, use these files for context to make sure that the LLM
 knows our framework:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
@@ -82,13 +82,13 @@ We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
 for up-to-date docs for the LLMs.
 
-Usecases we officially support:
+Use cases we officially support:
 
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
 - AI-guided migrations for any API changes.
   We break something? We provide a prompt for you, so you can automatically
-  upgrade to a newer version using AI tool for your choice
+  upgrade to a newer version using an AI tool of your choice
 
 We support several custom agent skills:
 
@@ -108,73 +108,75 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      We support :class:`msgspec.Struct`
-      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    We support :class:`msgspec.Struct`
+    via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
 
-      .. literalinclude:: /examples/getting_started/msgspec_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 3, 6, 22
+    .. literalinclude:: /examples/getting_started/msgspec_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      We support :class:`pydantic.BaseModel`
-      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    We support :class:`pydantic.BaseModel`
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      .. literalinclude:: /examples/getting_started/pydantic_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 3, 6, 22
+    .. tip::
 
-    .. tab:: attrs
+      If you only use ``json`` :doc:`parsers and renderers <negotiation>`,
+      it would be faster to use
+      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` instead.
 
-      We support :func:`attrs.define`
-      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    .. literalinclude:: /examples/getting_started/pydantic_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/attrs_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 3, 6, 9, 14, 19, 25
+  .. tab:: attrs
 
-    .. tab:: dataclasses
+    We support :func:`attrs.define`
+    via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    See `msgspec docs <https://jcristharif.com/msgspec/supported-types.html#attrs>`_
+    on ``attrs`` support.
 
-      We support :func:`dataclasses.dataclass` via both
-      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    .. literalinclude:: /examples/getting_started/attrs_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/dataclasses_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 1, 5, 8, 13, 19
+  .. tab:: dataclasses
 
-    .. tab:: TypedDict
+    We support :func:`dataclasses.dataclass` via both
+    :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      We support :class:`typing.TypedDict` via both
-      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    .. literalinclude:: /examples/getting_started/dataclasses_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/typed_dict_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 2, 5, 8, 12, 16, 20
+  .. tab:: TypedDict
 
-    .. tab:: NamedTuple
+    We support :class:`typing.TypedDict` via both
+    :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      We support :class:`typing.NamedTuple`
-      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    .. literalinclude:: /examples/getting_started/typed_dict_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-      .. literalinclude:: /examples/getting_started/named_tuple_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 2, 8, 12
+  .. tab:: NamedTuple
+
+    We support :class:`typing.NamedTuple`
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+
+    .. literalinclude:: /examples/getting_started/named_tuple_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
 .. important::
 
@@ -186,15 +188,13 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
 In this example:
 
-1. We defined regular ``pydantic``, ``msgspec``, or ``attrs`` models
+1. We defined regular ``pydantic``, ``msgspec``, or whatever models
    that we will use for our API
 2. We added two component parsers: one for request's
    :data:`~dmr.components.Body` and one
    for :data:`~dmr.components.Headers`
    which will parse them into the typed models
-   (:class:`pydantic.BaseModel`, :class:`msgspec.Struct`,
-   :func:`attrs.define`, or defined with any other supported way) that we pass
-   to these components as type parameters
+   that we pass to these components as type parameters
 3. Next we created
    a :class:`~dmr.controller.Controller` class
    with :class:`~dmr.plugins.pydantic.PydanticSerializer`
@@ -276,7 +276,7 @@ But, this is too simple for my use-case!
 
 What is great about Django is that it scales.
 You can start with a single file app and scale it up to a full
-featured monolith with scrict context boundaries, DDD, reusable apps, etc.
+featured monolith with strict context boundaries, DDD, reusable apps, etc.
 
 We recommend starting new big projects with
 https://github.com/wemake-services/wemake-django-template

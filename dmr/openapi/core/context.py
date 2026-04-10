@@ -84,7 +84,7 @@ class OpenAPIContext:
         override: bool = False,
     ) -> None:
         """
-        Register top level annotation resolution into an OpenAPI schema.
+        Register top-level annotation resolution into an OpenAPI schema.
 
         You can pass either a schema object itself, a reference, or a callback
         that returns schema, reference, or ``None`` to fallback
@@ -92,9 +92,9 @@ class OpenAPIContext:
 
         .. warning::
 
-            This only works for the top level annotations with direct matches.
+            This only works for the top-level annotations with direct matches.
             For example: when you register ``User`` to have a specific schema,
-            it will take effect only on cases where ``User`` is used directly.
+            it will take effect only in cases where ``User`` is used directly.
             ``list[User]`` will use the default serializer
             schema resolution strategy.
 

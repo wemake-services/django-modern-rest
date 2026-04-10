@@ -1,9 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
-
-if TYPE_CHECKING:
-    from dmr.metadata import ResponseModification
-    from dmr.renderers import Renderer
+from typing import ClassVar, Literal, final
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -31,7 +27,7 @@ class NewHeader(_BaseResponseHeader):
 
     Attributes:
         description: Documentation, why this header is needed and what it does.
-        deprecated: Whethere this header is deprecated.
+        deprecated: Whether this header is deprecated.
         example: Documentation, what can be given as values in this header.
         value: value to be set in this new header.
 
@@ -59,7 +55,7 @@ class HeaderSpec(_BaseResponseHeader):
 
     Attributes:
         description: Documentation, why this header is needed and what it does.
-        deprecated: Whethere this header is deprecated.
+        deprecated: Whether this header is deprecated.
         example: Documentation, what can be given as values in this header.
         required: Whether or not this header can be missing.
         skip_validation: Is true, when header is only used for schema purposes,
@@ -80,19 +76,3 @@ class HeaderSpec(_BaseResponseHeader):
     def to_spec(self) -> 'HeaderSpec':
         """Needed for API compat with `NewHeader`."""
         return self
-
-
-def build_headers(
-    modification: 'ResponseModification',
-    renderer: 'Renderer',
-) -> dict[str, str]:
-    """Returns headers with values for raw data endpoints."""
-    result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
-    headers = modification.actionable_headers()
-    if not headers:
-        return result_headers
-    result_headers.update({
-        header_name: response_header.value
-        for header_name, response_header in headers.items()
-    })
-    return result_headers

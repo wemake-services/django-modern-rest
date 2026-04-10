@@ -35,7 +35,7 @@ class MsgspecJsonParser(Parser):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
-            model: Model that reprensents the final result's structure.
+            model: Model that represents the final result's structure.
 
         Returns:
             Simple python object with primitive parts.
@@ -62,7 +62,11 @@ class MsgspecJsonParser(Parser):
 class MsgspecJsonRenderer(Renderer):
     """Renders json bodies using ``msgspec``."""
 
-    content_type = 'application/json'
+    __slots__ = ('content_type',)
+
+    def __init__(self, content_type: str = 'application/json') -> None:
+        """Initialize the default content type."""
+        self.content_type = str(content_type)  # might be a string subclass
 
     @override
     def render(

@@ -15,9 +15,7 @@ class HeaderModel(msgspec.Struct):
     consumer: str = msgspec.field(name='X-API-Consumer')
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     # Now, we won't validate all endpoints in this controller:
     validate_responses = False
 

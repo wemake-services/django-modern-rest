@@ -35,7 +35,7 @@ class MsgpackParser(Parser):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
-            model: Model that reprensents the final result's structure.
+            model: Model that represents the final result's structure.
 
         Returns:
             Simple python object with primitive parts.

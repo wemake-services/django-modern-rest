@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, ClassVar, NotRequired
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import msgspec
 from django.http import HttpRequest
@@ -15,12 +15,18 @@ if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
 
 
-class MsgspecConvertOptions(TypedDict):
-    """Custom serializer API options, taken by `msgpec.convert`."""
+class ToModelKwargs(TypedDict, total=False):
+    """Custom serializer API options, taken by :func:`msgspec.convert`."""
 
-    from_attributes: NotRequired[bool]
-    builtin_types: NotRequired[Iterable[type] | None]
-    str_keys: NotRequired[bool]
+    # `from_attributes` is explicitly left out. It is always `False`.
+    builtin_types: Iterable[type] | None
+    str_keys: bool
+
+
+class ToJsonKwargs(ToModelKwargs, total=False):
+    """Custom deserializer API options, taken by :func:`msgspec.to_builtins`."""
+
+    order: Literal['deterministic', 'sorted'] | None
 
 
 class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
@@ -46,6 +52,12 @@ class MsgspecSerializer(BaseSerializer):
 
         pip install 'django-modern-rest[msgspec]'
 
+    Attributes:
+        to_json_kwargs: Dictionary of kwargs that will be passed
+            to model serialization callbacks.
+        to_model_kwargs: Dictionary of kwargs that will be passed
+            to model deserialization callbacks.
+
     """
 
     __slots__ = ()
@@ -56,7 +68,8 @@ class MsgspecSerializer(BaseSerializer):
     schema_generator = MsgspecSchemaGenerator
 
     # Custom API:
-    convert_kwargs: ClassVar[MsgspecConvertOptions] = {}
+    to_json_kwargs: ClassVar[ToJsonKwargs] = {}
+    to_model_kwargs: ClassVar[ToModelKwargs] = {}
 
     @override
     @classmethod
@@ -121,7 +134,7 @@ class MsgspecSerializer(BaseSerializer):
             model,
             strict=strict or False,
             dec_hook=cls.deserialize_hook,
-            **cls.convert_kwargs,
+            **cls.to_model_kwargs,
         )
 
     @override
@@ -143,6 +156,7 @@ class MsgspecSerializer(BaseSerializer):
         return msgspec.to_builtins(
             structured,
             enc_hook=cls.serialize_hook,
+            **cls.to_json_kwargs,
         )
 
     @override
