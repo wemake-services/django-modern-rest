@@ -924,7 +924,7 @@ def test_conditional_error_model_wrong(
                 error_type=error_type,
             )
             # NOTE: we change the formats to trigger the validation:
-            if request.accepts(ContentType.xml):
+            if self.request.accepts(ContentType.xml):
                 return {
                     'json_errors': [
                         {'reason': f'{detail["msg"]}: {detail["loc"]}'}
