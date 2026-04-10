@@ -3,9 +3,16 @@
 
 ## Dependencies
 
-We use [uv](https://github.com/astral-sh/uv) to manage the dependencies.
+We use [uv](https://github.com/astral-sh/uv) to manage the dependencies
+and [just](https://github.com/casey/just) as a command runner.
 
-To install them you would need to run `sync` command:
+To install `just` run:
+
+```bash
+uv tool install rust-just
+```
+
+To install project dependencies run:
 
 ```bash
 uv sync --all-extras --all-groups
@@ -22,7 +29,7 @@ We also ship some optimized C-extensions together with our Python code.
 If you want to build them run:
 
 ```bash
-make wheel
+just mypyc
 ```
 
 This will build `dmr.compiled` extensions
@@ -31,7 +38,13 @@ with [`mypyc`](https://mypyc.readthedocs.io/en/latest/).
 
 ## One magic command
 
-After you installed the deps, run `make test` to run everything we have!
+After you installed the deps, run `just test` to run everything we have!
+
+To see all available commands:
+
+```bash
+just
+```
 
 
 ## Tests
@@ -39,13 +52,13 @@ After you installed the deps, run `make test` to run everything we have!
 To run tests:
 
 ```bash
-make unit
+just unit
 ```
 
 To run linting:
 
 ```bash
-make lint
+just lint
 ```
 
 These steps are mandatory during the CI.
@@ -56,14 +69,14 @@ These steps are mandatory during the CI.
 To build docs locally:
 
 ```bash
-uv run make -C docs clean html
+just docs
 ```
 
 If docs build fails on macOS with multiprocessing-related errors while
 running examples, force the start method explicitly:
 
 ```bash
-DMR_SPAWN_METHOD=spawn uv run make -C docs clean html
+DMR_SPAWN_METHOD=spawn just docs
 ```
 
 
@@ -91,12 +104,12 @@ In this method, the latest version of the app is always in the `master` branch.
 
 Before submitting your code please do the following steps:
 
-1. Run `make test` to make sure everything was working before
+1. Run `just test` to make sure everything was working before
 2. Add any changes you want
 3. Add tests for the new changes
 4. Edit documentation if you have changed something significant
 5. Update `CHANGELOG.md` with a quick summary of your changes
-6. Run `make test` again to make sure it is still working
+6. Run `just test` again to make sure it is still working
 
 
 ## Translations
@@ -112,7 +125,7 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
 2. Fill in the `msgstr` values in `dmr/locale/<lang>/LC_MESSAGES/django.po`
 3. Compile and validate all translations:
    ```bash
-   make translations
+   just translations
    ```
 4. Commit both `django.po` and `django.mo` files
 
@@ -121,7 +134,7 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
 1. Edit `dmr/locale/<lang>/LC_MESSAGES/django.po`
 2. Compile and validate:
    ```bash
-   make translations
+   just translations
    ```
 3. Commit both `django.po` and `django.mo` files
 

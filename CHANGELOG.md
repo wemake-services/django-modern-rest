@@ -34,6 +34,10 @@ of requirements for an API to count as public.
 
 - Fixed that `OpenAPI` was revalidate on every `.convert` call, #867
 
+### Misc
+
+- Switched from `Make` to [`just`](https://github.com/casey/just) as a command runner
+
 
 ## Version 0.6.0 (2026-04-09)
 
