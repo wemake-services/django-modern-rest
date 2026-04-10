@@ -5,7 +5,7 @@ from typing_extensions import override
 
 from dmr import Body, Controller
 from dmr.errors import ErrorModel, ErrorType
-from dmr.negotiation import ContentType, accepts, conditional_type
+from dmr.negotiation import ContentType, conditional_type
 from dmr.plugins.msgspec import MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticSerializer
 from examples.negotiation.negotiation import XmlRenderer
@@ -48,7 +48,7 @@ class ExampleController(
             loc=loc,
             error_type=error_type,
         )
-        if accepts(self.request, ContentType.json):
+        if self.request.accepts(ContentType.json):
             return original
         return {
             'xml_errors': {

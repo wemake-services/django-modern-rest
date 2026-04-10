@@ -104,6 +104,9 @@ _REQUEST_ACCEPTS_CASES: Final = (
     ('text/*,text/html', 'text/plain', True),
     ('text/*,text/html', 'text/html', True),
     ('application/json', 'text/plain', False),
+    ('', 'text/plain', False),
+    ('', '', False),
+    ('application/json', '', False),
 )
 
 

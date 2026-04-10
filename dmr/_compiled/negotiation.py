@@ -25,10 +25,11 @@
 
 import re
 from collections.abc import Iterable
+from operator import length_hint
 from typing import Final, final
 
 
-def accepted_type(
+def accepted_type(  # noqa: WPS231
     accept_value: str,
     provided_types: Iterable[str],
 ) -> str | None:
@@ -48,9 +49,12 @@ def accepted_type(
         Otherwise the provided type is returned as-is.
 
     """
+    if not accept_value or length_hint(provided_types) == 0:
+        return None
+
     if ',' in accept_value:
         accepted_types = [
-            _MediaTypeHeader(typ) for typ in accept_value.split(',')
+            _MediaTypeHeader(typ) for typ in accept_value.split(',') if typ
         ]
         accepted_types.sort(
             key=_by_priority,
@@ -59,7 +63,7 @@ def accepted_type(
     else:
         accepted_types = [_MediaTypeHeader(accept_value)]
 
-    types = [_MediaTypeHeader(typ) for typ in provided_types]
+    types = [_MediaTypeHeader(typ) for typ in provided_types if typ]
 
     for accepted in accepted_types:
         for provided in types:
@@ -102,6 +106,9 @@ def accepted_header(accept_header_value: str, media_type: str) -> bool:
             True
 
     """
+    if not accept_header_value or not media_type:
+        return False
+
     return (
         accepted_type(
             accept_header_value,
@@ -121,7 +128,7 @@ class _MediaTypeHeader:
         # preserve the original parameters, because the order might be
         # changed in the dict
         self.params_str = (
-            f';{type_str.partition(";")[2]}' if ';' in type_str else ''
+            f';{type_str.partition(";")[2]}' if ';' in type_str else ''  # noqa: WPS237
         )
 
         full_type, qparams = _parse_content_header(type_str)

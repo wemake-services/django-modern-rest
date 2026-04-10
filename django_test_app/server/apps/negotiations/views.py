@@ -13,7 +13,7 @@ from dmr.exceptions import (
     DataRenderingError,
     RequestSerializationError,
 )
-from dmr.negotiation import ContentType, accepts, conditional_type
+from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
@@ -122,7 +122,7 @@ class ContentNegotiationController(Controller[PydanticSerializer]):
             ContentType.xml: _RequestModel,
         }),
     ]:
-        if accepts(self.request, ContentType.json):
+        if self.request.accepts(ContentType.json):
             return [
                 parsed_body.payment_method_id,
                 parsed_body.payment_amount,
@@ -142,7 +142,7 @@ class ContentNegotiationController(Controller[PydanticSerializer]):
         ),
     )
     def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
-        if accepts(self.request, ContentType.json):
+        if self.request.accepts(ContentType.json):
             return self.to_response(
                 [
                     parsed_body.payment_method_id,

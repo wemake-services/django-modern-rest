@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from dmr.compiled import accepted_header
 from dmr.exceptions import EndpointMetadataError, RequestSerializationError
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
 from dmr.internal.negotiation import media_by_precedence
@@ -364,8 +363,14 @@ def get_conditional_types(
     return None
 
 
-def accepts(request: HttpRequest, content_type: str) -> bool:
+def accepts(
+    request: HttpRequest,
+    content_type: str,
+    *,
+    strict: bool = True,
+) -> bool:
     """Determine whether this *request* accepts a given *content_type*."""
+    renderer = request_renderer(request)
     # TODO: refactor after
     # https://github.com/wemake-services/django-modern-rest/pull/854
-    return accepted_header(request.headers.get('Accepts', '*/*'), content_type)
+    return renderer is not None and renderer.content_type == content_type

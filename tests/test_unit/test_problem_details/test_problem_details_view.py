@@ -13,7 +13,7 @@ from typing_extensions import override
 
 from dmr import Controller, Query, ResponseSpec
 from dmr.errors import ErrorModel, ErrorType
-from dmr.negotiation import ContentType, accepts
+from dmr.negotiation import ContentType
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.problem_details import ProblemDetailsError, ProblemDetailsModel
@@ -65,7 +65,7 @@ class _ProblemDetailsController(Controller[PydanticSerializer]):
         loc: str | list[str | int] | None = None,
         error_type: str | ErrorType | None = None,
     ) -> Any:
-        if accepts(self.request, ContentType.json_problem_details):
+        if self.request.accepts(ContentType.json_problem_details):
             return ProblemDetailsError.format_error(
                 error,
                 loc=loc,
