@@ -10,8 +10,6 @@
    :width: 700
    :align: center
 
-==================
-
 .. container:: badges
    :name: badges
 
@@ -60,27 +58,29 @@ and extend ``django-modern-rest`` framework.
 
 .. rubric:: Testimonials
 
-.. epigraph::
+.. container:: testimonials
 
-   | The one thing I really love about **django-modern-rest** is its pluggable
-   | serializers and validators. Frameworks that are tightly coupled
-   | with **pydantic** can be really painful to work with.
+   .. epigraph::
 
-   -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
+      The one thing I really love about ``django-modern-rest`` is its pluggable
+      serializers and validators. Frameworks that are tightly coupled
+      with ``pydantic`` can be really painful to work with.
 
-.. epigraph::
+      -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
 
-   | Using ``django-modern-rest`` has been a game-changer
-   | for my productivity. The strict type safety and schema validation
-   | for both requests and responses mean I spend less time debugging
-   | and more time building.
+   .. epigraph::
 
-   -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
+      Using ``django-modern-rest`` has been a game-changer
+      for my productivity. The strict type safety and schema validation
+      for both requests and responses mean I spend less time debugging
+      and more time building.
+
+      -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
 
 
-Main features include:
+.. rubric:: Main features include:
 
-.. grid:: 1 1 2 2
+.. grid:: 1 1 2 3
     :class-row: surface
     :padding: 0
     :gutter: 2
