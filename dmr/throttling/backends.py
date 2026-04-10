@@ -1,9 +1,8 @@
 import abc
-import dataclasses
 from typing import TYPE_CHECKING
 
 from django.core.cache import DEFAULT_CACHE_ALIAS, caches
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from dmr.settings import default_parser, default_renderer
 
@@ -12,15 +11,14 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
-@dataclasses.dataclass(slots=True, frozen=True)
-class CachedLimit:
+class CachedRateLimit(TypedDict):
     """Representation of a cached object's metadata."""
 
     reset: int
     history: list[int]
 
 
-class ThrottleBackend:
+class BaseThrottleBackend:
     __slots__ = ()
 
     @abc.abstractmethod
@@ -28,7 +26,7 @@ class ThrottleBackend:
         self,
         cache_key: str,
         controller: 'Controller[BaseSerializer]',
-    ) -> CachedLimit | None:
+    ) -> CachedRateLimit | None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -36,14 +34,14 @@ class ThrottleBackend:
         self,
         cache_key: str,
         controller: 'Controller[BaseSerializer]',
-    ) -> CachedLimit | None:
+    ) -> CachedRateLimit | None:
         raise NotImplementedError
 
     @abc.abstractmethod
     def set(
         self,
         cache_key: str,
-        cache_object: CachedLimit,
+        cache_object: CachedRateLimit,
         controller: 'Controller[BaseSerializer]',
         *,
         ttl_seconds: int,
@@ -54,7 +52,7 @@ class ThrottleBackend:
     async def aset(
         self,
         cache_key: str,
-        cache_object: CachedLimit,
+        cache_object: CachedRateLimit,
         controller: 'Controller[BaseSerializer]',
         *,
         ttl_seconds: int,
@@ -62,7 +60,7 @@ class ThrottleBackend:
         raise NotImplementedError
 
 
-class DjangoCacheThrottleBackend(ThrottleBackend):
+class DjangoCacheBaseThrottleBackend(BaseThrottleBackend):
     __slots__ = ('_cache',)
 
     def __init__(self, cache_name: str = DEFAULT_CACHE_ALIAS) -> None:
@@ -73,7 +71,7 @@ class DjangoCacheThrottleBackend(ThrottleBackend):
         self,
         cache_key: str,
         controller: 'Controller[BaseSerializer]',
-    ) -> CachedLimit | None:
+    ) -> CachedRateLimit | None:
         stored_cache = self._cache.get(cache_key)
         return self._load_cache(stored_cache, controller)
 
@@ -82,7 +80,7 @@ class DjangoCacheThrottleBackend(ThrottleBackend):
         self,
         cache_key: str,
         controller: 'Controller[BaseSerializer]',
-    ) -> CachedLimit | None:
+    ) -> CachedRateLimit | None:
         stored_cache = await self._cache.aget(cache_key)
         return self._load_cache(stored_cache, controller)
 
@@ -90,7 +88,7 @@ class DjangoCacheThrottleBackend(ThrottleBackend):
     def set(
         self,
         cache_key: str,
-        cache_object: CachedLimit,
+        cache_object: CachedRateLimit,
         controller: 'Controller[BaseSerializer]',
         *,
         ttl_seconds: int,
@@ -105,7 +103,7 @@ class DjangoCacheThrottleBackend(ThrottleBackend):
     async def aset(
         self,
         cache_key: str,
-        cache_object: CachedLimit,
+        cache_object: CachedRateLimit,
         controller: 'Controller[BaseSerializer]',
         *,
         ttl_seconds: int,
@@ -120,24 +118,20 @@ class DjangoCacheThrottleBackend(ThrottleBackend):
         self,
         stored_cache: bytes | None,
         controller: 'Controller[BaseSerializer]',
-    ) -> CachedLimit | None:
+    ) -> CachedRateLimit | None:
         if stored_cache is None:
             return None
 
-        return controller.serializer.from_python(  # type: ignore[no-any-return]
-            controller.serializer.deserialize(
-                stored_cache,
-                parser=default_parser,
-                request=controller.request,
-                model=CachedLimit,
-            ),
-            model=CachedLimit,
-            strict=None,
+        return controller.serializer.deserialize(  # type: ignore[no-any-return]
+            stored_cache,
+            parser=default_parser,
+            request=controller.request,
+            model=CachedRateLimit,
         )
 
     def _dump_cache(
         self,
-        cache_object: CachedLimit,
+        cache_object: CachedRateLimit,
         controller: 'Controller[BaseSerializer]',
     ) -> bytes:
         return controller.serializer.serialize(

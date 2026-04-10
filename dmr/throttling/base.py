@@ -3,7 +3,7 @@ import enum
 import threading
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, TypeAlias, final
+from typing import TYPE_CHECKING, TypeAlias, final, ClassVar
 
 from typing_extensions import override
 
@@ -11,10 +11,13 @@ from dmr.exceptions import TooManyRequestsError
 from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.throttling.algorithms import (
+    BaseThrottleAlgorithm,
     SimpleRate,
-    ThrottleAlgorithm,
 )
-from dmr.throttling.backends import DjangoCacheThrottleBackend, ThrottleBackend
+from dmr.throttling.backends import (
+    BaseThrottleBackend,
+    DjangoCacheBaseThrottleBackend,
+)
 from dmr.throttling.cache_keys import remote_address
 
 if TYPE_CHECKING:
@@ -39,6 +42,9 @@ _CacheKey: TypeAlias = Callable[
 
 
 class _BaseThrottle(ResponseSpecProvider):
+
+    header_prefix: ClassVar[str] = ''
+
     __slots__ = (
         '_algorithm',
         '_async_lock',
@@ -55,14 +61,14 @@ class _BaseThrottle(ResponseSpecProvider):
         *,
         cache_key: _CacheKey | None = None,
         number_of_proxies: int | None = None,
-        backend: ThrottleBackend | None = None,
-        algorithm: ThrottleAlgorithm | None = None,
+        backend: BaseThrottleBackend | None = None,
+        algorithm: BaseThrottleAlgorithm | None = None,
     ) -> None:
         self._max_requests = rate[0]
         self._duration_in_seconds = rate[1]
         # Default implementations of the logical parts:
         self._cache_key = cache_key or remote_address
-        self._backend = backend or DjangoCacheThrottleBackend()
+        self._backend = backend or DjangoCacheBaseThrottleBackend()
         self._algorithm = algorithm or SimpleRate()
         # Locks:
         self._sync_lock = threading.Lock()
@@ -79,17 +85,22 @@ class _BaseThrottle(ResponseSpecProvider):
 
         metadata = endpoint.metadata
         controller_name = type(controller).__qualname__
+        backend_name = type(self._backend).__qualname__
+        algorith_name = type(self._algorithm).__qualname__
         cache_key_name = getattr(self._cache_key, '__qualname__', '')
         return (
-            f'{metadata.operation_id}_{controller_name}_'
-            f'{cache_key_name}_{id(self)}_{cache_key}_'
+            f'{metadata.operation_id}_{metadata.method}_'
+            f'{backend_name}_{algorith_name}_'
+            f'{self._max_requests}_{self._duration_in_seconds}_'
+            f'{cache_key_name}_{cache_key}'
         )
 
     def headers(self, remaining: int, reset: int) -> dict[str, str]:
+        prefix = self.header_prefix
         return {
-            'RateLimit-Limit': str(self._max_requests),
-            'RateLimit-Remaining': str(remaining),
-            'RateLimit-Reset': str(reset),
+            f'{prefix}RateLimit-Limit': str(self._max_requests),
+            f'{prefix}RateLimit-Remaining': str(remaining),
+            f'{prefix}RateLimit-Reset': str(reset),
         }
 
     @override
@@ -114,19 +125,19 @@ class _BaseThrottle(ResponseSpecProvider):
     @classmethod
     def headers_spec(cls) -> dict[str, HeaderSpec]:
         return {
-            'RateLimit-Limit': HeaderSpec(
+            f'{cls.header_prefix}RateLimit-Limit': HeaderSpec(
                 description=(
                     'The maximum number of requests permitted '
                     'in the current time window'
                 ),
             ),
-            'RateLimit-Remaining': HeaderSpec(
+            f'{cls.header_prefix}RateLimit-Remaining': HeaderSpec(
                 description=(
                     'The number of requests remaining '
                     'in the current time window'
                 ),
             ),
-            'RateLimit-Reset': HeaderSpec(
+            f'{cls.header_prefix}RateLimit-Reset': HeaderSpec(
                 description=(
                     'The number of seconds until the current '
                     'rate limit window resets'
