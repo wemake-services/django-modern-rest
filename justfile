@@ -7,7 +7,7 @@ mod docs 'docs/justfile'
 
 # Install dependencies
 [group('dev')]
-format:
+install:
     uv sync --all-groups --all-extras
 
 # Format code with ruff
