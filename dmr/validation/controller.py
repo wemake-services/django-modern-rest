@@ -1,3 +1,4 @@
+import inspect
 import types
 from typing import TYPE_CHECKING
 
@@ -7,6 +8,27 @@ from dmr.validation.endpoint_metadata import validate_method_name
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+
+
+def _raise_if_generator_endpoint(
+    controller: type['Controller[BaseSerializer]'],
+    method_name: str,
+    method: types.FunctionType,
+) -> None:
+    if inspect.isasyncgenfunction(method):
+        raise EndpointMetadataError(
+            f'{controller!r}.{method_name} is an async generator. '
+            'HTTP endpoints cannot use `yield` in method body. '
+            'Return an iterator object instead, '
+            'for example: `return self._events()`',
+        )
+    if inspect.isgeneratorfunction(method):
+        raise EndpointMetadataError(
+            f'{controller!r}.{method_name} is a sync generator. '
+            'HTTP endpoints cannot use `yield` in method body. '
+            'Return an iterator object instead, '
+            'for example: `return self._events()`',
+        )
 
 
 class ControllerValidator:
@@ -19,11 +41,27 @@ class ControllerValidator:
         controller: type['Controller[BaseSerializer]'],
     ) -> bool | None:
         """Run the validation."""
+        self._validate_generator_endpoints(controller)
         is_async = self._validate_endpoints_color(controller)
         self._validate_error_handlers(controller, is_async=is_async)
         self._validate_meta_mixins(controller)
         self._validate_non_endpoints(controller)
         return is_async
+
+    def _validate_generator_endpoints(
+        self,
+        controller: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for method_name in controller.allowed_http_methods:
+            method = getattr(controller, method_name, None)
+            if not isinstance(method, types.FunctionType):
+                continue
+
+            _raise_if_generator_endpoint(
+                controller=controller,
+                method_name=method_name,
+                method=method,
+            )
 
     def _validate_endpoints_color(
         self,

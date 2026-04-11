@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator, Iterator
 from http import HTTPStatus
 from typing import Any
 
@@ -9,6 +10,9 @@ from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic.serializer import PydanticEndpointOptimizer
+from dmr.streaming.jsonl import JsonLinesController
+from dmr.streaming.sse import SSEController, SSEvent
 
 
 def test_controller_either_sync_or_async() -> None:
@@ -174,3 +178,91 @@ def test_no_endpoints_with_error_handler() -> None:
             exc: Exception,
         ) -> Any:
             raise NotImplementedError
+
+
+def test_endpoint_rejects_async_gen() -> None:
+    """Ensure endpoints cannot be async generators."""
+
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is an async generator',
+    ):
+
+        class _BadController(Controller[_NoOpPydanticSerializer]):
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
+
+
+def test_endpoint_rejects_sync_gen() -> None:
+    """Ensure endpoints cannot be sync generators."""
+
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a sync generator',
+    ):
+
+        class _BadController(Controller[_NoOpPydanticSerializer]):
+            def get(self) -> Iterator[int]:
+                yield 1  # pragma: no cover
+
+
+def test_sse_endpoint_rejects_async_gen() -> None:
+    """Ensure SSE endpoints also cannot be async generators."""
+
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is an async generator',
+    ):
+
+        class _BadController(SSEController[_NoOpPydanticSerializer]):
+            async def get(self) -> AsyncIterator[SSEvent[int]]:
+                yield SSEvent(1)  # pragma: no cover
+
+
+def test_jsonl_endpoint_rejects_async_gen() -> None:
+    """Ensure JsonLines endpoints also cannot be async generators."""
+
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is an async generator',
+    ):
+
+        class _BadController(JsonLinesController[_NoOpPydanticSerializer]):
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
