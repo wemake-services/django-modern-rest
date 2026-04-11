@@ -11,14 +11,8 @@ from typing_extensions import override
 from dmr.exceptions import TooManyRequestsError
 from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.throttling.algorithms import (
-    BaseThrottleAlgorithm,
-    SimpleRate,
-)
-from dmr.throttling.backends import (
-    BaseThrottleBackend,
-    DjangoCache,
-)
+from dmr.throttling.algorithms import BaseThrottleAlgorithm, SimpleRate
+from dmr.throttling.backends import BaseThrottleBackend, DjangoCache
 from dmr.throttling.cache_keys import BaseThrottleCacheKey, RemoteAddr
 from dmr.throttling.headers import (
     BaseResponseHeadersProvider,
@@ -121,7 +115,7 @@ class _BaseThrottle(ResponseSpecProvider):
         remaining: int,
         reset: int,
     ) -> dict[str, str]:
-        response_headers = {}
+        response_headers: dict[str, str] = {}
         for header_provider in self._response_headers:
             response_headers.update(
                 header_provider.response_headers(
@@ -135,7 +129,7 @@ class _BaseThrottle(ResponseSpecProvider):
         return response_headers
 
     def _headers_spec(self) -> dict[str, HeaderSpec]:
-        headers_spec = {}
+        headers_spec: dict[str, HeaderSpec] = {}
         for header_provider in self._response_headers:
             headers_spec.update(header_provider.provide_headers_specs())
         return headers_spec

@@ -3,14 +3,7 @@ import inspect
 from collections.abc import Callable, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Final,
-    TypeVar,
-    assert_never,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
 
 from django.contrib.admindocs.utils import parse_docstring
 from django.http import HttpResponseBase
@@ -263,7 +256,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
-            throttling=self._build_throttling(),
+            **self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -317,7 +310,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
-            throttling=self._build_throttling(),
+            **self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -366,7 +359,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
-            throttling=self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -374,6 +366,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
+            **self._build_throttling(),
         )
 
     def _build_endpoint_name(self) -> str:
@@ -474,9 +467,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return None
         return auth
 
-    def _build_throttling(  # noqa: WPS231
-        self,
-    ) -> tuple[SyncThrottle | AsyncThrottle, ...] | None:
+    def _build_throttling(self) -> dict[str, Any]:  # noqa: WPS231
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
@@ -488,11 +479,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         # We use tuple and not a list, because we expose `__dmr_throttling__`
         # to each request, so it would not be possible to mutate it by accident.
-        throttling = tuple(
+        throttling = [
             *payload_throttling,
             *(self.controller_cls.throttling or ()),
             *settings_throttling,
-        )
+        ]
         # Validate that throttling matches the sync / async endpoints:
         base_type = (
             AsyncThrottle
@@ -516,8 +507,24 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             # and it is just None.
             or not throttling
         ):
-            return None
-        return throttling
+            return {
+                'throttling_before_auth': None,
+                'throttling_after_auth': None,
+            }
+        return {
+            'throttling_before_auth': tuple(
+                throttling
+                for throttling in throttling
+                if throttling.cache_key.runs_before_auth
+            )
+            or None,
+            'throttling_after_auth': tuple(
+                throttling
+                for throttling in throttling
+                if not throttling.cache_key.runs_before_auth
+            )
+            or None,
+        }
 
     def _build_validate_responses(self) -> bool:
         if self.payload and self.payload.validate_responses is not None:

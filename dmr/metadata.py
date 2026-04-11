@@ -2,7 +2,6 @@ import dataclasses
 import typing as ty
 from abc import abstractmethod
 from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Set
-from functools import cached_property
 from http import HTTPStatus
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
@@ -384,7 +383,12 @@ class EndpointMetadata:
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     auth: list['SyncAuth | AsyncAuth'] | None
-    throttling: tuple['SyncThrottle | AsyncThrottle', ...] | None
+
+    # First line of throttling:
+    throttling_before_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+    # Second line of throttling:
+    throttling_after_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
@@ -400,11 +404,6 @@ class EndpointMetadata:
     external_docs: 'ExternalDocumentation | None' = None
     callbacks: dict[str, 'Callback | Reference'] | None = None
     servers: list['Server'] | None = None
-
-    def __post_init__(self) -> None:
-        """Trigger cache on start, not on first request."""
-        self.throttling_before_auth
-        self.throttling_after_auth
 
     def collect_response_specs(
         self,
@@ -475,34 +474,9 @@ class EndpointMetadata:
             *[parser for parser in self.parsers.values()],
             *[renderer for renderer in self.renderers.values()],
             *[auth for auth in (self.auth or [])],
-            *[throttling for throttling in (self.throttling or [])],
+            *[throttling for throttling in (self.throttling_before_auth or [])],
+            *[throttling for throttling in (self.throttling_after_auth or [])],
         ]
-
-    @cached_property
-    def throttling_before_auth(
-        self,
-    ) -> tuple['SyncThrottle | AsyncThrottle', ...] | None:
-        return (
-            tuple(
-                throttling
-                for throttling in (self.throttling or ())
-                if throttling.cache_key.runs_before_auth
-            )
-            or None
-        )
-
-    @cached_property
-    def throttling_after_auth(
-        self,
-    ) -> tuple['SyncThrottle | AsyncThrottle', ...] | None:
-        return (
-            tuple(
-                throttling
-                for throttling in (self.throttling or ())
-                if not throttling.cache_key.runs_before_auth
-            )
-            or None
-        )
 
 
 _MetadataT = TypeVar('_MetadataT')

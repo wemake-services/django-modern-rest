@@ -1,4 +1,5 @@
 import abc
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from typing_extensions import override
@@ -9,7 +10,9 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
-    from dmr.throttling.base import _BaseThrottle
+    from dmr.throttling.base import (
+        _BaseThrottle,  # pyright: ignore[reportPrivateUsage]
+    )
 
 
 class BaseResponseHeadersProvider:
@@ -50,8 +53,8 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
         reset: int,
     ) -> dict[str, str]:
         # Example headers:
-        # RateLimit-Policy: 30;w=60;name="ip", 100;w=3600;name="user"
-        # RateLimit: "problemPolicy";r=0;t=10
+        # `RateLimit-Policy: 30;w=60;name="ip", 100;w=3600;name="user"`
+        # `RateLimit: "problemPolicy";r=0;t=10`
 
         return {
             'RateLimit-Policy': ', '.join(
@@ -61,7 +64,12 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
                     f'name="{throttle.cache_key.name}"'
                 )
                 # However, it can't be `None`, since we are here:
-                for throttle in (endpoint.metadata.throttling or ())
+                for throttle in (
+                    chain(
+                        endpoint.metadata.throttling_before_auth or (),
+                        endpoint.metadata.throttling_after_auth or (),
+                    )
+                )
             ),
             'RateLimit': (
                 f'"{throttle.cache_key.name}";r={remaining};t={reset}'

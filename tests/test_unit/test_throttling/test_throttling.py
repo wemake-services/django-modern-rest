@@ -57,8 +57,9 @@ def test_throttle_sync_per_endpoint(
             return self.to_response('inside')
 
     metadata = _SyncEndpointController.api_endpoints[str(method)].metadata
-    assert metadata.throttling
-    assert len(metadata.throttling) == 1
+    assert metadata.throttling_before_auth
+    assert len(metadata.throttling_before_auth) == 1
+    assert metadata.throttling_after_auth is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
@@ -121,8 +122,9 @@ async def test_throttle_async_per_controller(
             return 'inside'
 
     metadata = _AsyncController.api_endpoints['GET'].metadata
-    assert metadata.throttling
-    assert len(metadata.throttling) == 1
+    assert metadata.throttling_before_auth
+    assert len(metadata.throttling_before_auth) == 1
+    assert metadata.throttling_after_auth is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
@@ -178,7 +180,8 @@ async def test_throttle_settings_override(
             raise NotImplementedError
 
     metadata = _DisabledPerController.api_endpoints['GET'].metadata
-    assert metadata.throttling is None
+    assert metadata.throttling_before_auth is None
+    assert metadata.throttling_after_auth is None
 
     class _DisabledPerEndpoint(Controller[PydanticSerializer]):
         throttling = [
@@ -191,7 +194,8 @@ async def test_throttle_settings_override(
             raise NotImplementedError
 
     metadata = _DisabledPerEndpoint.api_endpoints['GET'].metadata
-    assert metadata.throttling is None
+    assert metadata.throttling_before_auth is None
+    assert metadata.throttling_after_auth is None
 
 
 @pytest.mark.asyncio
@@ -276,8 +280,9 @@ def test_throttle_sync_multiple_sources(
             return 'inside'
 
     metadata = _SyncController.api_endpoints['GET'].metadata
-    assert metadata.throttling
-    assert len(metadata.throttling) == 3
+    assert metadata.throttling_before_auth
+    assert len(metadata.throttling_before_auth) == 3
+    assert metadata.throttling_after_auth is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
