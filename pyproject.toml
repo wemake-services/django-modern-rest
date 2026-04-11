@@ -87,6 +87,7 @@ dmr = "dmr_pytest"
 # It is installed in `cibuildwheel` and must be minimal.
 unit-test = [
   "django>=5.2,<6",
+  "django-csp>=4.0,<5.0",
   "pytest>=9.0,<10",
   "pytest-cov>=7.0,<8",
   "covdefaults>=2.3,<3",
