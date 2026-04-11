@@ -41,6 +41,8 @@ of requirements for an API to count as public.
   `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
   now avoid inline scripts in DMR-managed templates.
   Final CSP compatibility still depends on the upstream renderer bundle.
+- Added `tags` and `deprecated` parameters to `Router` for OpenAPI metadata,
+  #872. All operations in a router can now be grouped and marked as deprecated.
 
 ### Fixes
 

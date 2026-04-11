@@ -35,12 +35,30 @@ _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 class Router:
     """Collection of HTTP routes for REST framework."""
 
-    __slots__ = ('prefix', 'urls')
+    __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
 
-    def __init__(self, prefix: str, urls: Sequence[_AnyPattern]) -> None:
-        """Just stores the passed routes."""
+    def __init__(
+        self,
+        prefix: str,
+        urls: Sequence[_AnyPattern],
+        *,
+        tags: list[str] | None = None,
+        deprecated: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
+        """Initialize a router with routes and optional OpenAPI metadata.
+
+        Args:
+            prefix: URL prefix for all routes (e.g., 'api/v1/').
+            urls: Sequence of URL patterns and resolvers.
+            tags: Optional list of tags to group operations in OpenAPI.
+                These are merged with endpoint-level tags.
+            deprecated: Optional flag to mark all operations as deprecated.
+                Combines with endpoint-level deprecated flag using OR logic.
+        """
         self.prefix = prefix
         self.urls = urls
+        self.tags = tags or []
+        self.deprecated = deprecated
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
         """
@@ -57,7 +75,9 @@ class Router:
             self.urls,
             base_path=self.prefix,
         ):
-            paths_items[path] = controller.get_path_item(path, pattern, context)
+            paths_items[path] = controller.get_path_item(
+                path, pattern, context, router=self
+            )
 
         components = Components(
             schemas=context.registries.schema.schemas,
