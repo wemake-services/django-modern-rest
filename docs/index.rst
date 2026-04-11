@@ -183,7 +183,7 @@ Here are our amazing people who made this project possible.
   pages/validation.rst
   pages/reusable-code.rst
   pages/integrations.rst
-  pages/internalization.rst
+  pages/internationalization.rst
   pages/testing.rst
 
 
