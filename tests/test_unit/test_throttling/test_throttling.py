@@ -117,6 +117,9 @@ async def test_throttle_async_per_controller(
         async def get(self) -> str:
             return 'inside'
 
+        async def put(self) -> str:
+            return 'inside'
+
     metadata = _AsyncController.api_endpoints['GET'].metadata
     assert metadata.throttling
     assert len(metadata.throttling) == 1
@@ -131,6 +134,7 @@ async def test_throttle_async_per_controller(
         assert response.headers == {'Content-Type': 'application/json'}
         assert json.loads(response.content) == 'inside'
 
+    # This will fail:
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
     assert isinstance(response, HttpResponse)
@@ -147,6 +151,14 @@ async def test_throttle_async_per_controller(
         'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
     })
 
+    # But, `PUT` is still fine:
+    request = dmr_async_rf.put('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
+
 
 @pytest.mark.asyncio
 async def test_throttle_settings_override(
@@ -159,15 +171,26 @@ async def test_throttle_settings_override(
         Settings.throttling: [AsyncThrottle(1, Rate.second)],
     }
 
-    class _DisabledController(
-        Controller[PydanticSerializer],
-    ):
+    class _DisabledPerController(Controller[PydanticSerializer]):
         throttling = None
 
         async def get(self) -> str:
             raise NotImplementedError
 
-    metadata = _DisabledController.api_endpoints['GET'].metadata
+    metadata = _DisabledPerController.api_endpoints['GET'].metadata
+    assert metadata.throttling is None
+
+    class _DisabledPerEndpoint(Controller[PydanticSerializer]):
+        throttling = [
+            AsyncThrottle(10, Rate.minute),
+            AsyncThrottle(10, Rate.hour),
+        ]
+
+        @modify(throttling=None)
+        async def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _DisabledPerEndpoint.api_endpoints['GET'].metadata
     assert metadata.throttling is None
 
 
@@ -191,6 +214,9 @@ async def test_throttle_async_per_settings(
         async def get(self) -> str:
             return 'inside'
 
+        async def put(self) -> str:
+            return 'inside'
+
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
@@ -199,6 +225,7 @@ async def test_throttle_async_per_settings(
         assert response.headers == {'Content-Type': 'application/json'}
         assert json.loads(response.content) == 'inside'
 
+    # This will now fail:
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
     assert isinstance(response, HttpResponse)
@@ -214,6 +241,14 @@ async def test_throttle_async_per_settings(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
     })
+
+    # But, `PUT` is fine:
+    request = dmr_async_rf.put('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
 
 
 @pytest.mark.parametrize('serializer', serializers)
@@ -283,9 +318,7 @@ def test_throttle_sync_rates(
     """Ensures that rates work correctly."""
 
     class _SyncController(Controller[PydanticSerializer]):
-        throttling = [
-            SyncThrottle(1, rate),
-        ]
+        throttling = [SyncThrottle(1, rate)]
 
         def get(self) -> str:
             return 'inside'
@@ -318,7 +351,7 @@ def test_throttle_sync_rates(
     # Now, tick needed amount of seconds:
     freezer.tick(delta=int(rate))
 
-    # It ok again:
+    # It's ok again:
     request = dmr_rf.get('/whatever/')
     response = _SyncController.as_view()(request)
     assert isinstance(response, HttpResponse)

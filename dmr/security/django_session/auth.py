@@ -78,16 +78,15 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         return {self.security_scheme_name: [], self.csrf_scheme_name: []}
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
         return [
-            *cls._add_new_response(
+            *self._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=NotAuthenticatedError.status_code,
@@ -95,7 +94,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                 ),
                 existing_responses,
             ),
-            *cls._add_new_response(
+            *self._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=HTTPStatus.FORBIDDEN,

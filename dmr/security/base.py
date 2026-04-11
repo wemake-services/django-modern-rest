@@ -32,15 +32,14 @@ class _BaseAuth(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
-        return cls._add_new_response(
+        return self._add_new_response(
             ResponseSpec(
                 controller_cls.error_model,
                 status_code=NotAuthenticatedError.status_code,

@@ -31,6 +31,8 @@ of requirements for an API to count as public.
 ### Features
 
 - *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+- *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
+  an instance method, #877
 - Added official PyPy 3.11+ support, #870
 - Added `dmr.throttling` package, #877
 - Added `request.__drm_auth__` on all successful auth workflows, #868

@@ -22,6 +22,7 @@ def test_throttle_sync_real_time(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures sync per endpoint throttle."""
+    # First will pass:
     request = dmr_rf.get('/whatever/')
     response = _SyncEndpointController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -47,9 +48,7 @@ def test_throttle_sync_real_time(
     })
 
 
-class _AsyncController(
-    Controller[PydanticFastSerializer],
-):
+class _AsyncController(Controller[PydanticFastSerializer]):
     throttling = [AsyncThrottle(1, Rate.hour)]
 
     async def get(self) -> str:

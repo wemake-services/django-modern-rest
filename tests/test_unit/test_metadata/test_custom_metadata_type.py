@@ -17,7 +17,7 @@ from dmr.test import DMRRequestFactory
 
 class _NoExtrasMetadata(EndpointMetadata):
     @override
-    def response_spec_providers(self) -> list[type[ResponseSpecProvider]]:
+    def response_spec_providers(self) -> list[ResponseSpecProvider]:
         return []  # do not add any extra specs
 
 

@@ -3,14 +3,15 @@ import json
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Controller, modify
+from dmr import Controller
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 
-class _SyncController(Controller[PydanticSerializer]):
+class _DefaultController(Controller[PydanticSerializer]):
     throttling = [
         SyncThrottle(1, Rate.second),
     ]
@@ -19,18 +20,29 @@ class _SyncController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-class _XAsyncThrottle(AsyncThrottle):
-    header_prefix = 'X-'
+class _AllHeadersController(Controller[PydanticSerializer]):
+    throttling = [
+        SyncThrottle(
+            1,
+            Rate.second,
+            response_headers=(XRateLimit(), RateLimitIETFDraft(), RetryAfter()),
+        ),
+    ]
+
+    def get(self) -> str:
+        raise NotImplementedError
 
 
-class _AsyncController(Controller[PydanticSerializer]):
-    @modify(
-        throttling=[
-            _XAsyncThrottle(1, Rate.second),
-            _XAsyncThrottle(5, Rate.minute),
-        ],
-    )
-    async def get(self) -> str:
+class _NoHeadersController(Controller[PydanticSerializer]):
+    throttling = [
+        SyncThrottle(
+            1,
+            Rate.second,
+            response_headers=(),
+        ),
+    ]
+
+    def get(self) -> str:
         raise NotImplementedError
 
 
@@ -42,8 +54,9 @@ def test_throttled_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/v1/',
                     [
-                        path('/sync', _SyncController.as_view()),
-                        path('/async', _AsyncController.as_view()),
+                        path('/default', _DefaultController.as_view()),
+                        path('/all', _AllHeadersController.as_view()),
+                        path('/no', _NoHeadersController.as_view()),
                     ],
                 ),
             ).convert(),

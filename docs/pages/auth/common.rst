@@ -51,30 +51,30 @@ There are 4 ways to provide auth classes for an endpoint:
 
 .. tabs::
 
-    .. tab:: per endpoint
+  .. tab:: per endpoint
 
-      .. literalinclude:: /examples/auth/per_endpoint.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/auth/per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: per controller
+  .. tab:: per controller
 
-      .. literalinclude:: /examples/auth/per_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/auth/per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: per settings
+  .. tab:: per settings
 
-      .. code-block:: python
-        :caption: settings.py
-        :linenos:
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
 
-        >>> from dmr.settings import Settings, DMR_SETTINGS
-        >>> from dmr.security.django_session import DjangoSessionSyncAuth
+      >>> from dmr.settings import Settings, DMR_SETTINGS
+      >>> from dmr.security.django_session import DjangoSessionSyncAuth
 
-        >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
+      >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
 
 Providing several auth instances means that at least one of them must succeed.
 

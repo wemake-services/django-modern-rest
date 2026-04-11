@@ -4,6 +4,7 @@ from typing import Final
 
 import pytest
 from django.http import HttpResponse
+from typing_extensions import override
 
 from dmr import Controller
 from dmr.endpoint import Endpoint
@@ -11,29 +12,32 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.cache_keys import remote_address
+from dmr.throttling.cache_keys import RemoteAddr
 
 _ATTEMPTS: Final = 5
 
 
-def _fake_remote_address(
-    endpoint: 'Endpoint',
-    controller: 'Controller[BaseSerializer]',
-) -> str | None:
-    assert controller.request.META.pop('REMOTE_ADDR') == '127.0.0.1'
-    return remote_address(endpoint, controller)
+class _FakeRemoteAddr(RemoteAddr):
+    @override
+    def __call__(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> str | None:
+        assert controller.request.META.pop('RemoteAddr') == '127.0.0.1'
+        return super().__call__(endpoint, controller)
 
 
 class _SyncController(Controller[PydanticSerializer]):
     throttling = [
-        SyncThrottle(1, Rate.second, cache_key=_fake_remote_address),
+        SyncThrottle(1, Rate.second, cache_key=_FakeRemoteAddr()),
     ]
 
     def get(self) -> str:
         return 'inside'
 
 
-def test_throttle_no_remote_address(
+def test_throttle_no_limits(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that `None` disables the cache key."""
@@ -48,7 +52,7 @@ def test_throttle_no_remote_address(
 
 class _AsyncController(Controller[PydanticSerializer]):
     throttling = [
-        AsyncThrottle(1, Rate.second, cache_key=_fake_remote_address),
+        AsyncThrottle(1, Rate.second, cache_key=_FakeRemoteAddr()),
     ]
 
     async def get(self) -> str:
@@ -56,7 +60,7 @@ class _AsyncController(Controller[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-async def test_throttle_no_remote_address_async(
+async def test_throttle_no_limits_async(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that `None` disables the cache key in async."""

@@ -191,9 +191,8 @@ class ComponentParser(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -204,7 +203,7 @@ class ComponentParser(ResponseSpecProvider):
         For example, when parsing something, we always have an option
         to fail a parsing, if some request does not fit our model.
         """
-        return cls._add_new_response(
+        return self._add_new_response(
             ResponseSpec(
                 controller_cls.error_model,
                 status_code=RequestSerializationError.status_code,
@@ -611,9 +610,8 @@ class PathComponent(ComponentParser):
     context_name: ClassVar[str] = 'parsed_path'
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -630,7 +628,7 @@ class PathComponent(ComponentParser):
                 controller_cls,
                 existing_responses,
             ),
-            *cls._add_new_response(
+            *self._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=HTTPStatus.NOT_FOUND,

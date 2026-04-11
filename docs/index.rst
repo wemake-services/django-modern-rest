@@ -179,6 +179,7 @@ Here are our amazing people who made this project possible.
   pages/queryset.rst
   pages/negotiation.rst
   pages/error-handling.rst
+  pages/throttling.rst
   pages/middleware.rst
   pages/validation.rst
   pages/reusable-code.rst

@@ -53,6 +53,10 @@ smoke:
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
     uv run python -c 'from dmr.security.jwt import *'
+    uv run python -c 'from dmr.throttling import *'
+    uv run python -c 'from dmr.throttling.backends import *'
+    uv run python -c 'from dmr.throttling.algorithms import *'
+    uv run python -c 'from dmr.throttling.cache_keys import *'
     uv run python -c 'from dmr.openapi.config import *'
     uv run python -c 'from dmr.openapi.objects import *'
     # Settings itself can be imported with `.setup()`:
@@ -61,7 +65,9 @@ smoke:
 # Run QA tools on example code
 [group('testing')]
 example:
-    cd django_test_app && uv run mypy --config-file mypy.ini && uv run python manage.py makemigrations --dry-run --check
+    cd django_test_app \
+      && uv run mypy --config-file mypy.ini \
+      && uv run python manage.py makemigrations --dry-run --check
     PYTHONPATH='docs/' uv run pytest -o addopts='' \
       --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
@@ -77,7 +83,7 @@ example-run:
 [group('testing')]
 translations:
     uv run dennis-cmd lint dmr/locale
-    -uv run django-admin compilemessages --ignore dmr
+    uv run django-admin compilemessages --ignore dmr
     uv run django-admin compilemessages
 
 # Validate package dependencies and run security audit

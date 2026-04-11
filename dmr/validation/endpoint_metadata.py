@@ -476,7 +476,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_throttling(  # noqa: WPS231
         self,
-    ) -> list[SyncThrottle | AsyncThrottle] | None:
+    ) -> tuple[SyncThrottle | AsyncThrottle, ...] | None:
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
@@ -486,11 +486,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         )
 
-        throttling = [
+        # We use tuple and not a list, because we expose `__dmr_throttling__`
+        # to each request, so it would not be possible to mutate it by accident.
+        throttling = tuple(
             *payload_throttling,
             *(self.controller_cls.throttling or ()),
             *settings_throttling,
-        ]
+        )
         # Validate that throttling matches the sync / async endpoints:
         base_type = (
             AsyncThrottle
