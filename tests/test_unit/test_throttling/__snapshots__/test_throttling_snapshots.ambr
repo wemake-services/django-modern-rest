@@ -8,87 +8,9 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/sync": {
+      "/api/v1/default": {
         "get": {
-          "operationId": "getSynccontrollerApiV1Sync",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "429": {
-              "description": "Raised when throttling rate was hit",
-              "headers": {
-                "RateLimit-Limit": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "The maximum number of requests permitted in the current time window",
-                  "required": true
-                },
-                "RateLimit-Remaining": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "The number of requests remaining in the current time window",
-                  "required": true
-                },
-                "RateLimit-Reset": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "The number of seconds until the current rate limit window resets",
-                  "required": true
-                },
-                "Retry-After": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Indicates how long the user agent should wait before making a follow-up request",
-                  "required": true
-                }
-              },
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
-      },
-      "/api/v1/async": {
-        "get": {
-          "operationId": "getAsynccontrollerApiV1Async",
+          "operationId": "getDefaultcontrollerApiV1Default",
           "responses": {
             "200": {
               "description": "OK",
@@ -164,9 +86,9 @@
           "deprecated": false
         }
       },
-      "/api/v1/no-retry-after": {
+      "/api/v1/all": {
         "get": {
-          "operationId": "getNoretryaftercontrollerApiV1NoRetryAfter",
+          "operationId": "getAllheaderscontrollerApiV1All",
           "responses": {
             "200": {
               "description": "OK",
@@ -201,25 +123,46 @@
             "429": {
               "description": "Raised when throttling rate was hit",
               "headers": {
-                "RateLimit-Limit": {
+                "X-RateLimit-Limit": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "The maximum number of requests permitted in the current time window",
                   "required": true
                 },
-                "RateLimit-Remaining": {
+                "X-RateLimit-Remaining": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "The number of requests remaining in the current time window",
                   "required": true
                 },
-                "RateLimit-Reset": {
+                "X-RateLimit-Reset": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "The number of seconds until the current rate limit window resets",
+                  "required": true
+                },
+                "RateLimit-Policy": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Description of all rate limiting policies for this endpoint",
+                  "required": true
+                },
+                "RateLimit": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Current rate limiting state",
+                  "required": true
+                },
+                "Retry-After": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Indicates how long the user agent should wait before making a follow-up request",
                   "required": true
                 }
               },
@@ -235,9 +178,9 @@
           "deprecated": false
         }
       },
-      "/api/v1/no-headers": {
+      "/api/v1/no": {
         "get": {
-          "operationId": "getNoheaderscontrollerApiV1NoHeaders",
+          "operationId": "getNoheaderscontrollerApiV1No",
           "responses": {
             "200": {
               "description": "OK",

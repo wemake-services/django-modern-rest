@@ -33,4 +33,4 @@ class RemoteAddr(BaseThrottleCacheKey):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
-        return controller.request.META.get('RemoteAddr')
+        return controller.request.META.get('REMOTE_ADDR')

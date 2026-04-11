@@ -38,9 +38,10 @@ def test_throttle_sync_real_time(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Limit': '1',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': IsStr(),  # it might be around 3600
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': IsStr(),  # it might be around 3600
+        'Retry-After': IsStr(),
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({
@@ -76,9 +77,10 @@ async def test_throttle_async_per_controller(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Limit': '1',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': IsStr(),  # it might be around 3600
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': IsStr(),  # it might be around 3600
+        'Retry-After': IsStr(),
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({

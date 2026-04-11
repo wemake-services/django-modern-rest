@@ -64,7 +64,9 @@ class _BaseThrottle(ResponseSpecProvider):
         self._backend = backend or DjangoCache()
         self._algorithm = algorithm or SimpleRate()
         self._response_headers = (
-            [XRateLimit(), RetryAfter()] if response_headers is None else []
+            [XRateLimit(), RetryAfter()]
+            if response_headers is None
+            else response_headers
         )
         # Locks:
         self._sync_lock = threading.Lock()

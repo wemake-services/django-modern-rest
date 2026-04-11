@@ -24,7 +24,7 @@ class _FakeRemoteAddr(RemoteAddr):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
-        assert controller.request.META.pop('RemoteAddr') == '127.0.0.1'
+        assert controller.request.META.pop('REMOTE_ADDR') == '127.0.0.1'
         return super().__call__(endpoint, controller)
 
 

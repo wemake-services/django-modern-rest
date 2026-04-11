@@ -13,12 +13,8 @@ from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 
-class _XSyncThrottle(SyncThrottle):
-    header_prefix = 'X-'
-
-
 class _SyncEndpointController(Controller[PydanticSerializer]):
-    @modify(throttling=[_XSyncThrottle(1, Rate.second)])
+    @modify(throttling=[SyncThrottle(1, Rate.second)])
     def get(self) -> str:
         return 'inside'
 
@@ -55,14 +51,8 @@ def test_throttle_sync_x_prefix(
     })
 
 
-class _XAsyncThrottle(AsyncThrottle):
-    header_prefix = 'X-'
-
-
-class _AsyncController(
-    Controller[PydanticSerializer],
-):
-    throttling = [_XAsyncThrottle(1, Rate.second)]
+class _AsyncController(Controller[PydanticSerializer]):
+    throttling = [AsyncThrottle(1, Rate.second)]
 
     async def get(self) -> str:
         return 'inside'
@@ -148,3 +138,37 @@ class _SyncAllHeadersController(Controller[PydanticSerializer]):
     )
     def get(self) -> str:
         return 'inside'
+
+
+def test_throttle_sync_all_headers(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures all header rules."""
+    # First will pass:
+    request = dmr_rf.get('/whatever/')
+    response = _SyncAllHeadersController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
+
+    # This will fail:
+    request = dmr_rf.get('/whatever/')
+    response = _SyncAllHeadersController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers == {
+        'Retry-After': '1',
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'RateLimit-Policy': '1;w=1;name="RemoteAddr"',
+        'RateLimit': '"RemoteAddr";r=0;t=1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
+    })
