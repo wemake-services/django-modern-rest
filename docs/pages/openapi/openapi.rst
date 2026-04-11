@@ -235,6 +235,9 @@ set via :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`.
 Router tags are prepended to endpoint tags, and deprecated is set to ``True``
 if either the router or endpoint has it enabled.
 
+You can also set ``tags`` and ``deprecated`` at the individual endpoint level
+via :deco:`~dmr.endpoint.modify` to override or extend router-level settings.
+
 
 .. _customizing_parameter_openapi:
 

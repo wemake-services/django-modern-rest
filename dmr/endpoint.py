@@ -283,16 +283,19 @@ class Endpoint:  # noqa: WPS214
             serializer,
         )
 
-        tags = list(router.tags) if router and router.tags else []
-        if self.metadata.tags:
-            tags.extend(self.metadata.tags)
+        tags = [
+            *(self.metadata.tags or []),
+            *(router.tags if router else []),
+        ]
 
         return Operation(
             tags=tags or None,
             summary=self.metadata.summary,
             description=self.metadata.description,
-            deprecated=self.metadata.deprecated
-            or (router and router.deprecated),
+            deprecated=(
+                self.metadata.deprecated
+                or (router and router.deprecated)
+            ),
             security=security,
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
