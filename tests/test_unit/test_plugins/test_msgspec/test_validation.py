@@ -217,7 +217,7 @@ def test_msgspec_rejects_gens() -> None:
         match='is a generator',
     ):
 
-        class _BadController(Controller[MsgspecSerializer]):
+        class _BadAsyncController(Controller[MsgspecSerializer]):
             async def get(self) -> AsyncIterator[int]:
                 yield 1  # pragma: no cover
 
@@ -226,6 +226,6 @@ def test_msgspec_rejects_gens() -> None:
         match='is a generator',
     ):
 
-        class _BadController(Controller[MsgspecSerializer]):
+        class _BadSyncController(Controller[MsgspecSerializer]):
             def get(self) -> Iterator[int]:
                 yield 1  # pragma: no cover
