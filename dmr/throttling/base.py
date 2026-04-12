@@ -68,7 +68,7 @@ class _BaseThrottle(ResponseSpecProvider):
         response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
     ) -> None:
         """
-        Creates new trottling instance.
+        Creates new throttling instance.
 
         Parameters:
             max_requests: Maximum number of requests for the time window.
