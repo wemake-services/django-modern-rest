@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-modern-rest 0.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-24 22:05+0400\n"
+"POT-Creation-Date: 2026-04-12 14:30+0300\n"
 "PO-Revision-Date: 2026-03-24 22:15+0400\n"
 "Last-Translator: Emil Humbatov <emil4154515@gmail.com>\n"
 "Language-Team: Azerbaijani <az@li.org>\n"
@@ -35,7 +35,7 @@ msgstr ""
 "SupportsFileParsing protokolunu dəstəkləməyən {parser_name} ilə faylları "
 "parse etmək cəhdi"
 
-#: dmr/controller.py:45
+#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "{method} metoduna icazə verilmir, icazə verilənlər: {allowed}"
@@ -44,7 +44,11 @@ msgstr "{method} metoduna icazə verilmir, icazə verilənlər: {allowed}"
 msgid "Not authenticated"
 msgstr "Autentifikasiya olunmayıb"
 
-#: dmr/exceptions.py:50
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr ""
+
+#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Daxili server xətası"
 
@@ -65,7 +69,7 @@ msgstr ""
 "Qəbul edilən {accepted_types} tipləri ilə cavab gövdəsini (response body) "
 "serializasiya etmək mümkün deyil, dəstəklənən: {supported}"
 
-#: dmr/negotiation.py:25
+#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
@@ -74,7 +78,7 @@ msgstr ""
 "{content_type} kontent tipli sorğu gövdəsini (request body) parse etmək "
 "mümkün deyil, gözlənilən: {expected}"
 
-#: dmr/security/django_session/auth.py:26
+#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "CSRF uğursuz oldu: {reason}"
@@ -87,7 +91,7 @@ msgstr "BlocklistedJWToken"
 msgid "BlocklistedJWTokens"
 msgstr "BlocklistedJWTokens"
 
-#: dmr/serializer.py:27
+#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "{type} tipində olan {value} dəyəri {target_type} üçün dəstəklənmir"

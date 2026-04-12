@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-30 23:33+0300\n"
+"POT-Creation-Date: 2026-04-12 14:30+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
 #: dmr/components.py:54
 #, python-brace-format
 msgid ""
@@ -31,10 +32,10 @@ msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"Файлларны SupportsFileParsing беркетмәсен хупламаган {parser_name} "
-"белән сүтерергә тырышу"
+"Файлларны SupportsFileParsing беркетмәсен хупламаган {parser_name} белән "
+"сүтерергә тырышу"
 
-#: dmr/controller.py:32
+#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "Ысул {method} тыелган, рөхсәт ителгәннәр ысуллар: {allowed}"
@@ -43,7 +44,11 @@ msgstr "Ысул {method} тыелган, рөхсәт ителгәннәр ыс
 msgid "Not authenticated"
 msgstr "Аутентификация ясылмаган"
 
-#: dmr/exceptions.py:57
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr ""
+
+#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Эчке сервер хатасы"
 
@@ -70,8 +75,8 @@ msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"{content_type} эчтәлек типы белән сорау гәүдәсен сүтеп булмый, "
-"көтелгән тип={expected}"
+"{content_type} эчтәлек типы белән сорау гәүдәсен сүтеп булмый, көтелгән "
+"тип={expected}"
 
 #: dmr/security/django_session/auth.py:22
 #, python-brace-format

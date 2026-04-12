@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-22 13:58+0000\n"
+"POT-Creation-Date: 2026-04-12 14:30+0300\n"
 "PO-Revision-Date: 2026-04-08 12:00+0000\n"
 "Last-Translator: Nikolay Chillev\n"
 "Language-Team: Bulgarian\n"
@@ -32,19 +32,23 @@ msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"Опит за обработка на файлове с {parser_name}, който не поддържа "
-"протокола SupportsFileParsing"
+"Опит за обработка на файлове с {parser_name}, който не поддържа протокола "
+"SupportsFileParsing"
 
-#: dmr/controller.py:45
+#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "Методът {method} не е позволен, позволени: {allowed}"
 
-#: dmr/exceptions.py:11
+#: dmr/exceptions.py:10
 msgid "Not authenticated"
 msgstr "Не сте автентикирани"
 
-#: dmr/exceptions.py:51
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr ""
+
+#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Вътрешна грешка на сървъра"
 
@@ -53,8 +57,8 @@ msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"HTTP заявките с тип съдържание 'application/x-www-form-urlencoded' трябва "
-"да бъдат кодирани в UTF-8."
+"HTTP заявките с тип съдържание 'application/x-www-form-urlencoded' трябва да "
+"бъдат кодирани в UTF-8."
 
 #: dmr/internal/negotiation.py:18
 #, python-brace-format
@@ -62,19 +66,19 @@ msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
-"Тялото на отговора не може да бъде сериализирано с приети типове {accepted_types}, "
-"поддържани={supported}"
+"Тялото на отговора не може да бъде сериализирано с приети типове "
+"{accepted_types}, поддържани={supported}"
 
-#: dmr/negotiation.py:25
+#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"Тялото на заявката не може да бъде обработено с тип съдържание {content_type}, "
-"очаквани={expected}"
+"Тялото на заявката не може да бъде обработено с тип съдържание "
+"{content_type}, очаквани={expected}"
 
-#: dmr/security/django_session/auth.py:26
+#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "CSRF проверката е неуспешна: {reason}"
@@ -87,7 +91,7 @@ msgstr "BlocklistedJWToken"
 msgid "BlocklistedJWTokens"
 msgstr "BlocklistedJWTokens"
 
-#: dmr/serializer.py:27
+#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "Стойността {value} от тип {type} не се поддържа за {target_type}"

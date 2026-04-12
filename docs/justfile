@@ -9,11 +9,11 @@ builddir   := "_build"
 
 [private]
 sphinx +targets:
-    #!/usr/bin/env bash
-    for target in {{targets}}; do
-        uv run python -msphinx -M "$target" "{{sourcedir}}" \
-          "{{builddir}}" {{sphinxopts}}
-    done
+  #!/usr/bin/env bash
+  for target in {{targets}}; do
+    uv run python -msphinx -M "$target" "{{sourcedir}}" \
+      "{{builddir}}" {{sphinxopts}}
+  done
 
 # Show Sphinx help (default)
 _default: (sphinx "help")

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-22 16:39+0000\n"
+"POT-Creation-Date: 2026-04-12 14:30+0300\n"
 "PO-Revision-Date: 2026-03-22 00:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Nepali\n"
@@ -22,8 +22,8 @@ msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
 "parameters args={args}"
 msgstr ""
-"पथ {cls} जसमा field_model={field_model} छ, अनामित पथ "
-"प्यारामिटरहरू args={args} अनुमति दिँदैन"
+"पथ {cls} जसमा field_model={field_model} छ, अनामित पथ प्यारामिटरहरू args={args} "
+"अनुमति दिँदैन"
 
 #: dmr/components.py:59
 #, python-brace-format
@@ -31,19 +31,23 @@ msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"{parser_name} ले SupportsFileParsing प्रोटोकल समर्थन नगर्ने "
-"कारण फाइलहरू पार्स गर्न प्रयास गरिँदैछ"
+"{parser_name} ले SupportsFileParsing प्रोटोकल समर्थन नगर्ने कारण फाइलहरू पार्स गर्न "
+"प्रयास गरिँदैछ"
 
-#: dmr/controller.py:45
+#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "विधि {method} अनुमति छैन, अनुमति प्राप्त: {allowed}"
 
-#: dmr/exceptions.py:11
+#: dmr/exceptions.py:10
 msgid "Not authenticated"
 msgstr "प्रमाणीकरण भएको छैन"
 
-#: dmr/exceptions.py:51
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr ""
+
+#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "आन्तरिक सर्भर त्रुटि"
 
@@ -52,8 +56,8 @@ msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"'application/x-www-form-urlencoded' कन्टेन्ट प्रकारका HTTP अनुरोधहरू "
-"UTF-8 एन्कोड गरिएको हुनुपर्छ।"
+"'application/x-www-form-urlencoded' कन्टेन्ट प्रकारका HTTP अनुरोधहरू UTF-8 एन्कोड "
+"गरिएको हुनुपर्छ।"
 
 #: dmr/internal/negotiation.py:18
 #, python-brace-format
@@ -61,19 +65,18 @@ msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
-"स्वीकृत प्रकारहरू {accepted_types} सँग प्रतिक्रिया निकाय सिरियलाइज गर्न "
-"सकिँदैन, समर्थित={supported}"
+"स्वीकृत प्रकारहरू {accepted_types} सँग प्रतिक्रिया निकाय सिरियलाइज गर्न सकिँदैन, "
+"समर्थित={supported}"
 
-#: dmr/negotiation.py:25
+#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"कन्टेन्ट प्रकार {content_type} सँग अनुरोध निकाय पार्स गर्न "
-"सकिँदैन, अपेक्षित={expected}"
+"कन्टेन्ट प्रकार {content_type} सँग अनुरोध निकाय पार्स गर्न सकिँदैन, अपेक्षित={expected}"
 
-#: dmr/security/django_session/auth.py:26
+#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "CSRF असफल भयो: {reason}"
@@ -86,7 +89,7 @@ msgstr "अवरुद्ध JWT टोकन"
 msgid "BlocklistedJWTokens"
 msgstr "अवरुद्ध JWT टोकनहरू"
 
-#: dmr/serializer.py:27
+#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "{type} प्रकारको मान {value} लाई {target_type} को लागि समर्थन छैन"

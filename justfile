@@ -118,5 +118,14 @@ clean:
     rm -rf build/ dist/
     find dmr/_compiled -type f -name '*.so' | xargs rm -rf
 
+# Build docs
 [group('docs')]
 docs +targets='clean html': (_docs::build targets)
+
+# Add new translation strings
+[group('i18n')]
+makemessages:
+  #!/usr/bin/env bash
+  for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
+    uv run django-admin makemessages -l "$(basename "$target")"
+  done
