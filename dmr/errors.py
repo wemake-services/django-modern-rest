@@ -207,7 +207,7 @@ def wrap_handler(
 
     else:
 
-        @wraps(method)  # pyrefly: ignore[bad-argument-type]
+        @wraps(method)
         def decorator(
             endpoint: 'Endpoint',
             controller: 'Controller[BaseSerializer]',

@@ -20,6 +20,12 @@ class CachedRateLimit(TypedDict):
 
 
 class BaseThrottleBackend:
+    """
+    Base class for all throttling backends.
+
+    It must provide sync and async API for sync and async throttling classes.
+    """
+
     __slots__ = ()
 
     @abc.abstractmethod
@@ -29,6 +35,7 @@ class BaseThrottleBackend:
         controller: 'Controller[BaseSerializer]',
         cache_key: str,
     ) -> CachedRateLimit | None:
+        """Sync get the cached rate limit state."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -38,6 +45,7 @@ class BaseThrottleBackend:
         controller: 'Controller[BaseSerializer]',
         cache_key: str,
     ) -> CachedRateLimit | None:
+        """Async get the cached rate limit state."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -50,6 +58,7 @@ class BaseThrottleBackend:
         *,
         ttl_seconds: int,
     ) -> None:
+        """Sync set the cached rate limit state."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -62,13 +71,30 @@ class BaseThrottleBackend:
         *,
         ttl_seconds: int,
     ) -> None:
+        """Async set the cached rate limit state."""
         raise NotImplementedError
 
 
 class DjangoCache(BaseThrottleBackend):
+    """
+    Uses Django cache framework for storing the rate limiting state.
+
+    .. seealso::
+
+        https://docs.djangoproject.com/en/stable/topics/cache/
+
+    """
+
     __slots__ = ('_cache',)
 
     def __init__(self, cache_name: str = DEFAULT_CACHE_ALIAS) -> None:
+        """
+        Initialize the backend.
+
+        Parameters:
+            cache_name: Customize the Django cache to be used.
+
+        """
         self._cache = caches[cache_name]
 
     @override
@@ -78,6 +104,7 @@ class DjangoCache(BaseThrottleBackend):
         controller: 'Controller[BaseSerializer]',
         cache_key: str,
     ) -> CachedRateLimit | None:
+        """Sync get the cached rate limit state."""
         stored_cache = self._cache.get(cache_key)
         return self._load_cache(controller, stored_cache)
 
@@ -88,6 +115,7 @@ class DjangoCache(BaseThrottleBackend):
         controller: 'Controller[BaseSerializer]',
         cache_key: str,
     ) -> CachedRateLimit | None:
+        """Async get the cached rate limit state."""
         stored_cache = await self._cache.aget(cache_key)
         return self._load_cache(controller, stored_cache)
 
@@ -101,6 +129,7 @@ class DjangoCache(BaseThrottleBackend):
         *,
         ttl_seconds: int,
     ) -> None:
+        """Sync set the cached rate limit state."""
         self._cache.set(
             cache_key,
             self._dump_cache(controller, cache_object),
@@ -117,6 +146,7 @@ class DjangoCache(BaseThrottleBackend):
         *,
         ttl_seconds: int,
     ) -> None:
+        """Async set the cached rate limit state."""
         await self._cache.aset(
             cache_key,
             self._dump_cache(controller, cache_object),

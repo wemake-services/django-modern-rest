@@ -116,30 +116,43 @@ Exceptions
 
 .. autoexception:: dmr.exceptions.UnsolvableAnnotationsError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.EndpointMetadataError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.DataParsingError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.RequestSerializationError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.ResponseSchemaError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.ValidationError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.NotAcceptableError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.NotAuthenticatedError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.InternalServerError
   :members:
+  :show-inheritance:
+
+.. autoexception:: dmr.exceptions.TooManyRequestsError
+  :members:
+  :show-inheritance:
 
 
 Utilities

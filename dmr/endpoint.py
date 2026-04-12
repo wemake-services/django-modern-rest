@@ -423,7 +423,6 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
             throttle(self, controller)
-        controller.request.__dmr_throttling__ = self.metadata.throttling  # type: ignore[attr-defined]
 
     # Async checks:
 
@@ -470,7 +469,6 @@ class Endpoint:  # noqa: WPS214
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
             await throttle(self, controller)  # noqa: WPS476
-        controller.request.__dmr_throttling__ = self.metadata.throttling  # type: ignore[attr-defined]
 
     # Utils:
 

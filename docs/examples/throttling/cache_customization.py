@@ -1,10 +1,18 @@
-from dmr import Controller, modify
+from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.backends import DjangoCache
 
 
 class SyncController(Controller[PydanticSerializer]):
-    @modify(throttling=[SyncThrottle(1, Rate.minute)])
+    throttling = (
+        SyncThrottle(
+            max_requests=1,
+            durantion_in_seconds=Rate.minute,
+            backend=DjangoCache(cache_name='throttling'),
+        ),
+    )
+
     def get(self) -> str:
         return 'inside'
 

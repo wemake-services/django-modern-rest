@@ -3,9 +3,8 @@ import enum
 import threading
 from collections.abc import Iterable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Literal, final, overload
+from typing import TYPE_CHECKING, final
 
-from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import TooManyRequestsError
@@ -29,6 +28,17 @@ if TYPE_CHECKING:
 @final
 @enum.unique
 class Rate(enum.IntEnum):
+    """
+    Throttling rates in seconds.
+
+    Attributes:
+        second: 1 second.
+        minute: 60 seconds.
+        hour: 60 * 60 seconds.
+        day: 24 * 60 * 60 seconds.
+
+    """
+
     second = 1
     minute = 60 * second
     hour = 60 * minute
@@ -47,7 +57,7 @@ class _BaseThrottle(ResponseSpecProvider):
         'max_requests',
     )
 
-    def __init__(
+    def __init__(  # noqa: WPS211
         self,
         max_requests: int,
         durantion_in_seconds: Rate | int,
@@ -57,6 +67,24 @@ class _BaseThrottle(ResponseSpecProvider):
         algorithm: BaseThrottleAlgorithm | None = None,
         response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
     ) -> None:
+        """
+        Creates new trottling instance.
+
+        Parameters:
+            max_requests: Maximum number of requests for the time window.
+            durantion_in_seconds: Time window in seconds.
+            cache_key: Cache key to use.
+                Defaults to :class:`~dmr.throttling.cache_keys.RemoteAddr`.
+            backend: Storage backend to use.
+                Defaults to :class:`~dmr.throttling.backends.DjangoCache`.
+            algorithm: Algorithm to use.
+                Defaults to :class:`~dmr.throttling.algorithms.SimpleRate`.
+            response_headers: Iterable of response headers to use.
+                Defaults to a list of
+                :class:`~dmr.throttling.headers.XRateLimit`
+                and :class:`~dmr.throttling.headers.RetryAfter` instances.
+
+        """
         self.max_requests = max_requests
         self.duration_in_seconds = int(durantion_in_seconds)
         # Default implementations of the logical parts:
@@ -72,11 +100,12 @@ class _BaseThrottle(ResponseSpecProvider):
         self._sync_lock = threading.Lock()
         self._async_lock = asyncio.Lock()
 
-    def get_cache_key(
+    def full_cache_key(
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
+        """Get the full cache key value."""
         cache_key = self.cache_key(endpoint, controller)
         if cache_key is None:
             return None
@@ -117,6 +146,7 @@ class _BaseThrottle(ResponseSpecProvider):
         remaining: int,
         reset: int,
     ) -> dict[str, str]:
+        """Collects response headers for all ``response_headers`` classes."""
         response_headers: dict[str, str] = {}
         for header_provider in self._response_headers:
             response_headers.update(
@@ -138,6 +168,8 @@ class _BaseThrottle(ResponseSpecProvider):
 
 
 class SyncThrottle(_BaseThrottle):
+    """Sync throttle type for sync endpoints."""
+
     __slots__ = ()
 
     def __call__(
@@ -155,7 +187,7 @@ class SyncThrottle(_BaseThrottle):
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
         """
-        cache_key = self.get_cache_key(endpoint, controller)
+        cache_key = self.full_cache_key(endpoint, controller)
         if cache_key is None:
             return
         self.check(endpoint, controller, cache_key)
@@ -166,6 +198,7 @@ class SyncThrottle(_BaseThrottle):
         controller: 'Controller[BaseSerializer]',
         cache_key: str,
     ) -> None:
+        """Check whether this request has rate limiting quota left."""
         with self._sync_lock:
             cache_object = self._algorithm.access(
                 endpoint,
@@ -183,6 +216,8 @@ class SyncThrottle(_BaseThrottle):
 
 
 class AsyncThrottle(_BaseThrottle):
+    """Async throttle type for async endpoints."""
+
     __slots__ = ()
 
     async def __call__(
@@ -200,7 +235,7 @@ class AsyncThrottle(_BaseThrottle):
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
         """
-        cache_key = self.get_cache_key(endpoint, controller)
+        cache_key = self.full_cache_key(endpoint, controller)
         if cache_key is None:
             return
         await self.check(endpoint, controller, cache_key)
@@ -211,6 +246,7 @@ class AsyncThrottle(_BaseThrottle):
         controller: 'Controller[BaseSerializer]',
         cache_key: str,
     ) -> None:
+        """Check whether this request has rate limiting quota left."""
         async with self._async_lock:
             cache_object = self._algorithm.access(
                 endpoint,
@@ -225,36 +261,3 @@ class AsyncThrottle(_BaseThrottle):
                 self._algorithm.record(cache_object),
                 ttl_seconds=self.duration_in_seconds,
             )
-
-
-@overload
-def request_throttling(
-    request: HttpRequest,
-    *,
-    strict: Literal[True],
-) -> tuple[SyncThrottle | AsyncThrottle, ...]: ...
-
-
-@overload
-def request_throttling(
-    request: HttpRequest,
-    *,
-    strict: bool = False,
-) -> tuple[SyncThrottle | AsyncThrottle, ...] | None: ...
-
-
-def request_throttling(
-    request: HttpRequest,
-    *,
-    strict: bool = False,
-) -> tuple[SyncThrottle | AsyncThrottle, ...] | None:
-    """
-    Return the tuple of throttling instances that were for this request.
-
-    When *strict* is passed and *request* has no throttling,
-    we raise :exc:`AttributeError`.
-    """
-    throttling = getattr(request, '__dmr_throttling__', None)
-    if throttling is None and strict:
-        raise AttributeError('__dmr_throttling__')
-    return throttling

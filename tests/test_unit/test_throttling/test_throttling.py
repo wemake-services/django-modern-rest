@@ -79,9 +79,10 @@ def test_throttle_sync_per_endpoint(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Limit': '1',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': '1',
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({
@@ -130,7 +131,7 @@ async def test_throttle_async_per_controller(
     for _ in range(_ATTEMPTS):
         freezer.tick(delta=1)  # seconds
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}
@@ -144,9 +145,10 @@ async def test_throttle_async_per_controller(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Limit': '1',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': '1',
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({
@@ -223,7 +225,7 @@ async def test_throttle_async_per_settings(
 
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}
@@ -237,9 +239,10 @@ async def test_throttle_async_per_settings(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Limit': '5',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': '1',
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({
@@ -300,9 +303,10 @@ def test_throttle_sync_multiple_sources(
         response.headers
     )
     assert response.headers == {
-        'RateLimit-Limit': '5',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': '1',
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({
@@ -344,9 +348,10 @@ def test_throttle_sync_rates(
         response.headers
     )
     assert response.headers == {
-        'RateLimit-Limit': '1',
-        'RateLimit-Remaining': '0',
-        'RateLimit-Reset': str(int(rate)),
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': str(int(rate)),
+        'Retry-After': str(int(rate)),
         'Content-Type': 'application/json',
     }
     assert json.loads(response.content) == snapshot({

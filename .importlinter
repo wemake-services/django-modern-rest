@@ -91,14 +91,6 @@ type = independence
 modules =
   dmr.plugins.*
 
-[importlinter:contract:checks-independence]
-name = All checks must be independent
-type = independence
-
-modules =
-  dmr.security
-  dmr.throttling
-
 [importlinter:streaming:layers]
 name = Enforce correct layers in streaming
 type = layers

@@ -210,23 +210,20 @@ def test_msgspec_struct_renames_work(
     assert json.loads(response.content) == request_data
 
 
-def test_msgspec_rejects_async_gen() -> None:
-    """Ensure msgspec controllers cannot define async generator endpoints."""
+def test_msgspec_rejects_gens() -> None:
+    """Ensure msgspec controllers cannot define generator endpoints."""
     with pytest.raises(
         EndpointMetadataError,
-        match='is an async generator',
+        match='is a generator',
     ):
 
         class _BadController(Controller[MsgspecSerializer]):
             async def get(self) -> AsyncIterator[int]:
                 yield 1  # pragma: no cover
 
-
-def test_msgspec_rejects_sync_gen() -> None:
-    """Ensure msgspec controllers cannot define sync generator endpoints."""
     with pytest.raises(
         EndpointMetadataError,
-        match='is a sync generator',
+        match='is a generator',
     ):
 
         class _BadController(Controller[MsgspecSerializer]):

@@ -10,27 +10,6 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
 
 
-def _raise_if_generator_endpoint(
-    controller: type['Controller[BaseSerializer]'],
-    method_name: str,
-    method: types.FunctionType,
-) -> None:
-    if inspect.isasyncgenfunction(method):
-        raise EndpointMetadataError(
-            f'{controller!r}.{method_name} is an async generator. '
-            'HTTP endpoints cannot use `yield` in method body. '
-            'Return an iterator object instead, '
-            'for example: `return self._events()`',
-        )
-    if inspect.isgeneratorfunction(method):
-        raise EndpointMetadataError(
-            f'{controller!r}.{method_name} is a sync generator. '
-            'HTTP endpoints cannot use `yield` in method body. '
-            'Return an iterator object instead, '
-            'for example: `return self._events()`',
-        )
-
-
 class ControllerValidator:
     """Validates that controller is created correctly."""
 
@@ -54,14 +33,17 @@ class ControllerValidator:
     ) -> None:
         for method_name in controller.allowed_http_methods:
             method = getattr(controller, method_name, None)
-            if not isinstance(method, types.FunctionType):
-                continue
-
-            _raise_if_generator_endpoint(
-                controller=controller,
-                method_name=method_name,
-                method=method,
-            )
+            if isinstance(method, types.FunctionType) and (
+                inspect.isasyncgenfunction(method)
+                or inspect.isgeneratorfunction(method)
+            ):
+                raise EndpointMetadataError(
+                    f'{controller!r}.{method_name} is a generator. '
+                    'HTTP endpoints cannot use `yield` in their bodies. '
+                    'If you need a streaming response '
+                    'return an iterator object instead, '
+                    'for example: `return self._events()`',
+                )
 
     def _validate_endpoints_color(
         self,

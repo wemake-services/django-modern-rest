@@ -65,10 +65,6 @@ Will guard ``GET`` method with 2 throttling checks:
 1. Not more than 1 request per minute
 2. And not more than 5 requests per hour
 
-.. important::
-
-
-
 
 Customizing throttling
 ----------------------
@@ -88,7 +84,7 @@ timings by passing any amount of seconds that you wish:
   >>> from dmr.settings import Settings, DMR_SETTINGS
   >>> from dmr.throttling import SyncThrottle
 
-    >>> DMR_SETTINGS = {
+  >>> DMR_SETTINGS = {
   ...     Settings.throttling: [
   ...          SyncThrottle(
   ...              max_requests=5,
@@ -111,19 +107,6 @@ You can customize which cache name is used. For example:
   :caption: settings.py
   :linenos:
 
-  >>> from dmr.settings import Settings, DMR_SETTINGS
-  >>> from dmr.throttling import SyncThrottle, Rate
-  >>> from dmr.throttling.backends import DjangoCache
-
-  >>> DMR_SETTINGS = {
-  ...     Settings.throttling: [
-  ...          SyncThrottle(
-  ...              max_requests=5,
-  ...              durantion_in_seconds=Rate.second,
-  ...              backend=DjangoCache(cache_name='throttling'),
-  ...          ),
-  ...     ],
-  ... }
 
 You can also write your own backends, for example,
 to store throttling information in memory or somewhere else.
@@ -133,7 +116,7 @@ and override 4 methods.
 
 Full list of backends that we ship in ``django-modern-rest``:
 
-- :class:`~dmr.throttling.backends.DjangoCache`
+- :class:`~dmr.throttling.backends.DjangoCache`, default
 
 Algorithms
 ~~~~~~~~~~
@@ -150,88 +133,130 @@ and override 2 methods.
 
 Full list of algorithms that we ship in ``django-modern-rest``:
 
-- :class:`~dmr.throttling.algorithms.SimpleRate`
+- :class:`~dmr.throttling.algorithms.SimpleRate`, default
 
 Cache keys
 ~~~~~~~~~~
 
 Cache keys is what defines how requests are identified.
 
-By default we use :func:`dmr.throttling.cache_keys.RemoteAddr` function,
+By default we use :func:`dmr.throttling.cache_keys.RemoteAddr` cache key,
 which identifies requests by IP taken from
 `RemoteAddr <https://docs.djangoproject.com/en/6.0/ref/request-response/#django.http.HttpRequest.META>`_
 value from ``request.META``.
 
-You can write your own cache keys, they are regular functions that accept
-:class:`~dmr.endpoint.Endpoint` and :class:`~dmr.controller.Controller`
-as arguments and return a string or ``None``.
+You can write your own cache keys, they are subclasses
+of :class:`~dmr.throttling.cache_keys.BaseThrottleCacheKey`
+and must return a string or ``None``.
 
-If cache key returns ``None``, it means that no throttling
-will be applied to this request. It is useful to skip some requests,
-for example, from paid or superusers from throttling checks.
+If cache key returns ``None``, it means that this request
+will be skipped from this exact throttling check.
+However, other keys may still be applied.
+
+It is useful to skip some requests from throttling checks,
+for example, from paid or stuff users.
 
 Full list of cache keys that we ship in ``django-modern-rest``:
 
-- :class:`~dmr.throttling.cache_keys.RemoteAddr`
+- :class:`~dmr.throttling.cache_keys.RemoteAddr`, default
+
+When throttling is executed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Throttling is executed in two stages: before auth and after auth.
+Why? Because we need to:
+
+1. Protect auth from abusing requests and brute forcing
+2. Make sure we can base throttling rules based on the auth info
+
+.. mermaid::
+  :caption: Throttling execution
+  :config: {"theme": "forest"}
+
+  graph
+      Start[New request] --> BeforeThrottle[Throttling based on IP];
+      BeforeThrottle --> Auth[Auth];
+      Auth --> AfterThrottle[Throttling based on auth];
+
+All cache keys know when to execute by default, however you can customize this.
+For example, you can run some IP based throttling checks after the auth itself:
+
+.. literalinclude:: /examples/throttling/throttling_after_auth.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+.. warning::
+
+  It is **strongly** not recommended to have
+  auth without any throttling before it.
+
+  Auth must be protected from brute force and denial of service attacks!
+  For example, one can use
+  `django-axes <https://github.com/jazzband/django-axes>`_ for this.
+
+Note that it won't make any sense to run auth-based throttling before auth.
+So, customize it with care.
+
 
 Headers
 ~~~~~~~
 
-By default on ``429`` error we return three headers:
+By default on ``429`` error we return four headers:
 
-- ``RateLimit-Limit`` - The maximum number of requests permitted
+- ``X-RateLimit-Limit`` - The maximum number of requests permitted
   in the current time window
-- ``RateLimit-Remaining`` - The number of requests remaining
+- ``X-RateLimit-Remaining`` - The number of requests remaining
   in the current time window
-- ``RateLimit-Reset`` - The number of seconds until the current
+- ``X-RateLimit-Reset`` - The number of seconds until the current
   rate limit window resets
-
-You can customize the prefix of these headers. Because some APIs still
-use older ``X-RateLimit-Limit`` version with ``X-`` prefix.
-
-To do so, you can use :attr:`~dmr.throttling.SyncThrottle.header_prefix`
-attribute:
-
-.. literalinclude:: /examples/throttling/header_prefix.py
-  :caption: views.py
-  :linenos:
-  :language: python
-
-When ``header_prefix`` is set to ``None``, these headers are disabled.
-
-.. seealso::
-
-  https://www.ietf.org/archive/id/draft-polli-ratelimit-headers-02.html
+- ``Retry-After`` - The number of seconds until the current
+  rate limit window resets, see
+  `RFC-6585 <https://datatracker.ietf.org/doc/html/rfc6585#section-4>`_
+  and `RFC-7231 <https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.3>`_
 
 .. note::
 
-  We don't support the latest draft
-  https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html
-  but, it can be easily done by overriding several methods by users how need it.
+  Headers with ``X-`` prefix means that they are custom ones,
+  there's no spec behind them.
+  However, this convention is the most popular one as of right now.
 
-You can also customize whether
-we should automatically add ``Retry-After`` header, which we add by default.
-To disable this header, set
-:attr:`~dmr.throttling.SyncThrottle.header_include_retry_after`
-to ``False``:
+OpenAPI support is built in for this feature.
+All headers will provide the proper header specs for the ``429`` response.
 
-.. literalinclude:: /examples/throttling/header_include_retry_after.py
+You might want to customize the returned headers. To do so,
+you can pass ``response_headers`` argument to throttling classes
+with header classes that you want to support.
+
+For example, you can disable
+`Retry-After <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Retry-After>`_
+header with:
+
+.. literalinclude:: /examples/throttling/header_disable_retry_after.py
   :caption: views.py
   :linenos:
   :language: python
 
-.. seealso::
+Or if you want to support
+the `latest draft <https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html>`_
+about ``RateLimit`` and ``RateLimit-Policy`` headers, you can use:
 
-  https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Retry-After
-
-
-Adding ratelimit headers to responses
--------------------------------------
-
-.. literalinclude:: /examples/throttling/response_headers.py
+.. literalinclude:: /examples/throttling/header_ietf_draft.py
   :caption: views.py
   :linenos:
   :language: python
+
+You can also combine these headers with each other in any combinations.
+You can write your own classes with custom headers support.
+To do so, subclass :class:`dmr.throttling.headers.BaseResponseHeadersProvider`.
+
+You can completely disable any extra response headers by passing an empty list.
+
+Full list of header providers that we ship in ``django-modern-rest``:
+
+- :class:`~dmr.throttling.headers.XRateLimit`, default
+- :class:`~dmr.throttling.headers.RetryAfter`, default
+- :class:`~dmr.throttling.headers.RateLimitIETFDraft`
 
 
 Security
@@ -255,3 +280,63 @@ Key considerations:
 
 API Reference
 -------------
+
+Base
+~~~~
+
+.. autoclass:: dmr.throttling.SyncThrottle
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.throttling.AsyncThrottle
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.throttling.Rate
+  :members:
+
+Backends
+~~~~~~~~
+
+.. autoclass:: dmr.throttling.backends.CachedRateLimit
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.throttling.backends.BaseThrottleBackend
+  :members:
+
+.. autoclass:: dmr.throttling.backends.DjangoCache
+  :members:
+
+Algorithms
+~~~~~~~~~~
+
+.. autoclass:: dmr.throttling.algorithms.BaseThrottleAlgorithm
+  :members:
+
+.. autoclass:: dmr.throttling.algorithms.SimpleRate
+  :members:
+
+Cache keys
+~~~~~~~~~~
+
+.. autoclass:: dmr.throttling.cache_keys.BaseThrottleCacheKey
+  :members:
+
+.. autoclass:: dmr.throttling.cache_keys.RemoteAddr
+  :members:
+
+Headers
+~~~~~~~
+
+.. autoclass:: dmr.throttling.headers.BaseResponseHeadersProvider
+  :members:
+
+.. autoclass:: dmr.throttling.headers.XRateLimit
+  :members:
+
+.. autoclass:: dmr.throttling.headers.RetryAfter
+  :members:
+
+.. autoclass:: dmr.throttling.headers.RateLimitIETFDraft
+  :members:

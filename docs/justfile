@@ -1,4 +1,22 @@
-# Build HTML documentation
-docs:
-    uv run python -msphinx -M clean . _build -W
-    uv run python -msphinx -M html . _build -W
+# Minimal justfile for Sphinx documentation
+
+set positional-arguments
+
+# You can set these variables from the command line.
+sphinxopts := env("SPHINXOPTS", "-W")
+sourcedir  := "."
+builddir   := "_build"
+
+[private]
+sphinx +targets:
+    #!/usr/bin/env bash
+    for target in {{targets}}; do
+        uv run python -msphinx -M "$target" "{{sourcedir}}" \
+          "{{builddir}}" {{sphinxopts}}
+    done
+
+# Show Sphinx help (default)
+_default: (sphinx "help")
+
+# Pass-through: route any target to Sphinx
+build +targets='clean html': (sphinx targets)

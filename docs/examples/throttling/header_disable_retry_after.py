@@ -1,10 +1,13 @@
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.throttling import AsyncThrottle, Rate
+from dmr.throttling.headers import XRateLimit
 
 
 class AsyncController(Controller[PydanticSerializer]):
-    throttling = (AsyncThrottle(1, Rate.minute),)
+    throttling = (
+        AsyncThrottle(1, Rate.minute, response_headers=[XRateLimit()]),
+    )
 
     async def get(self) -> str:
         return 'inside'

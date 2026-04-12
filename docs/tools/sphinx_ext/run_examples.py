@@ -250,7 +250,7 @@ class _BaseBuilder:  # noqa: WPS214
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=True,
+            DEBUG=True,  # NOTE: this must be `False`
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
@@ -287,6 +287,14 @@ class _BaseBuilder:  # noqa: WPS214
             },
             DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
+           CACHES = {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                },
+                'throttling': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                },
+            },
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106

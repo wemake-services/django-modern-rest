@@ -25,6 +25,10 @@
       :alt: Coverage
       :target: https://codecov.io/gh/wemake-services/django-modern-rest
 
+    .. image:: https://img.shields.io/badge/no-slop-purple
+      :alt: No AI slop
+      :target: https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md
+
    .. image:: https://img.shields.io/pypi/pyversions/django-modern-rest.svg
       :alt: Supported Python versions
       :target: https://pypi.org/project/django-modern-rest

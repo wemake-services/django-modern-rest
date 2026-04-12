@@ -66,7 +66,7 @@ async def test_throttle_no_limits_async(
     """Ensures that `None` disables the cache key in async."""
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}

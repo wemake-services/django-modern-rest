@@ -1,10 +1,14 @@
-from dmr import Controller, modify
+from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.headers import RateLimitIETFDraft
 
 
 class SyncController(Controller[PydanticSerializer]):
-    @modify(throttling=[SyncThrottle(1, Rate.minute)])
+    throttling = (
+        SyncThrottle(1, Rate.minute, response_headers=[RateLimitIETFDraft()]),
+    )
+
     def get(self) -> str:
         return 'inside'
 

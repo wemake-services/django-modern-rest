@@ -471,11 +471,11 @@ class EndpointMetadata:
 
         return [
             *[spec[0] for spec in self.component_parsers],
-            *[parser for parser in self.parsers.values()],
-            *[renderer for renderer in self.renderers.values()],
-            *[auth for auth in (self.auth or [])],
-            *[throttling for throttling in (self.throttling_before_auth or [])],
-            *[throttling for throttling in (self.throttling_after_auth or [])],
+            *self.parsers.values(),
+            *self.renderers.values(),
+            *(self.auth or []),
+            *(self.throttling_before_auth or []),
+            *(self.throttling_after_auth or []),
         ]
 
 

@@ -14,7 +14,12 @@ if TYPE_CHECKING:
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
+# TODO: This file is pure logic. Maybe compile it?
+
+
 class BaseThrottleAlgorithm:
+    """Base class for all throttling algorithms."""
+
     __slots__ = ()
 
     @abc.abstractmethod
@@ -24,13 +29,33 @@ class BaseThrottleAlgorithm:
         controller: 'Controller[BaseSerializer]',
         throttle: 'SyncThrottle | AsyncThrottle',
         cache_object: CachedRateLimit | None,
-    ) -> CachedRateLimit: ...
+    ) -> CachedRateLimit:
+        """
+        Called when new access attempt is made.
+
+        Returns:
+            Cached rate limiting state.
+
+        Raises:
+            dmr.exceptions.TooManyRequestsError: when the limit is overused.
+
+        """
+        raise NotImplementedError
 
     @abc.abstractmethod
-    def record(self, cache_object: CachedRateLimit) -> CachedRateLimit: ...
+    def record(self, cache_object: CachedRateLimit) -> CachedRateLimit:
+        """Records successful access."""
+        raise NotImplementedError
 
 
 class SimpleRate(BaseThrottleAlgorithm):
+    """
+    Simple rate algorithm.
+
+    Defines a fixed window with a fixed amount of requests possible.
+    When window is expired, resets the count of requests.
+    """
+
     __slots__ = ()
 
     @override
@@ -41,6 +66,7 @@ class SimpleRate(BaseThrottleAlgorithm):
         throttle: 'SyncThrottle | AsyncThrottle',
         cache_object: CachedRateLimit | None,
     ) -> CachedRateLimit:
+        """Check access."""
         now = int(time.time())
         if cache_object is None or cache_object['reset'] <= now:
             # For this algorithm we use a single history
@@ -61,5 +87,6 @@ class SimpleRate(BaseThrottleAlgorithm):
 
     @override
     def record(self, cache_object: CachedRateLimit) -> CachedRateLimit:
+        """Record successful access."""
         cache_object['history'][0] += 1
         return cache_object

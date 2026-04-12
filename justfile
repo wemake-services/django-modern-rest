@@ -2,8 +2,11 @@
 _default:
     @just --list --unsorted --list-submodules
 
+# Benchmarks module
 mod bench 'benchmarks/justfile'
-mod docs 'docs/justfile'
+
+# Docs module
+mod _docs 'docs/justfile'
 
 # Install dependencies
 [group('dev')]
@@ -114,3 +117,6 @@ mypyc: clean
 clean:
     rm -rf build/ dist/
     find dmr/_compiled -type f -name '*.so' | xargs rm -rf
+
+[group('docs')]
+docs +targets='clean html': (_docs::build targets)
