@@ -291,7 +291,8 @@ class Endpoint:  # noqa: WPS214
             tags=tags or None,
             summary=self.metadata.summary,
             description=self.metadata.description,
-            deprecated=self.metadata.deprecated or (router and router.deprecated),
+            deprecated=self.metadata.deprecated
+            or (router and router.deprecated),
             security=security,
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,

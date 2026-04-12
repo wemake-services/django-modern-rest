@@ -43,7 +43,7 @@ class Router:
         urls: Sequence[_AnyPattern],
         *,
         tags: list[str] | None = None,
-        deprecated: bool = False,  # noqa: FBT001, FBT002
+        deprecated: bool = False,
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata.
 
@@ -76,7 +76,10 @@ class Router:
             base_path=self.prefix,
         ):
             paths_items[path] = controller.get_path_item(
-                path, pattern, context, router=self
+                path,
+                pattern,
+                context,
+                router=self,
             )
 
         components = Components(
