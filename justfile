@@ -86,7 +86,7 @@ example-run:
 [group('testing')]
 translations:
     uv run dennis-cmd lint dmr/locale
-    uv run django-admin compilemessages --ignore dmr
+    uv run django-admin compilemessages --ignore dmr || true
     uv run django-admin compilemessages
 
 # Validate package dependencies and run security audit
