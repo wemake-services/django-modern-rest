@@ -625,7 +625,7 @@ def _extract_comment_config(
         ) from exc
 
 
-def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
+def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:  # noqa: WPS210
     """
     Start a server with the example application, run the specified requests.
 
