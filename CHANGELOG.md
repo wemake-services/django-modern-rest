@@ -35,7 +35,7 @@ of requirements for an API to count as public.
 
 ```md
 Apply this change to the code that uses `django-modern-rest`:
-1. Replace `OpenAPIView.dumps` usage with `dmr.openapi.core.dump.json_dump` 
+1. Replace `OpenAPIView.dumps` usage with `dmr.openapi.core.dump.json_dump`
    usage
 2. Change `dmr.security.jwt.auth.get_jwt` function
    to use `dmr.security.jwt.auth.request_jwt` instead, if user expects
