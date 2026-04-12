@@ -88,7 +88,7 @@ timings by passing any amount of seconds that you wish:
   ...     Settings.throttling: [
   ...          SyncThrottle(
   ...              max_requests=5,
-  ...              durantion_in_seconds=10,
+  ...              duration_in_seconds=10,
   ...          ),
   ...     ],
   ... }

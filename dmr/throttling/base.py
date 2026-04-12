@@ -60,7 +60,7 @@ class _BaseThrottle(ResponseSpecProvider):
     def __init__(  # noqa: WPS211
         self,
         max_requests: int,
-        durantion_in_seconds: Rate | int,
+        duration_in_seconds: Rate | int,
         *,
         cache_key: BaseThrottleCacheKey | None = None,
         backend: BaseThrottleBackend | None = None,
@@ -72,7 +72,7 @@ class _BaseThrottle(ResponseSpecProvider):
 
         Parameters:
             max_requests: Maximum number of requests for the time window.
-            durantion_in_seconds: Time window in seconds.
+            duration_in_seconds: Time window in seconds.
             cache_key: Cache key to use.
                 Defaults to :class:`~dmr.throttling.cache_keys.RemoteAddr`.
             backend: Storage backend to use.
@@ -86,7 +86,7 @@ class _BaseThrottle(ResponseSpecProvider):
 
         """
         self.max_requests = max_requests
-        self.duration_in_seconds = int(durantion_in_seconds)
+        self.duration_in_seconds = int(duration_in_seconds)
         # Default implementations of the logical parts:
         self.cache_key = cache_key or RemoteAddr()
         self._backend = backend or DjangoCache()
@@ -112,11 +112,11 @@ class _BaseThrottle(ResponseSpecProvider):
 
         metadata = endpoint.metadata
         backend_name = type(self._backend).__qualname__
-        algorith_name = type(self._algorithm).__qualname__
+        algorithm_name = type(self._algorithm).__qualname__
         cache_key_name = type(self.cache_key).__qualname__
         return (
             f'{metadata.operation_id}::{metadata.method}::'
-            f'{backend_name}::{algorith_name}::'
+            f'{backend_name}::{algorithm_name}::'
             f'{cache_key_name}::{cache_key}::'
             f'{self.max_requests}::{self.duration_in_seconds}'
         )

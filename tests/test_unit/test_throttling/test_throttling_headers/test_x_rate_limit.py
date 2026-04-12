@@ -71,7 +71,7 @@ async def test_throttle_async_x_prefix(
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
 
-    # This wiil fail:
+    # This will fail:
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
     assert isinstance(response, HttpResponse)

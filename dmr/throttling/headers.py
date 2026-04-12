@@ -32,7 +32,7 @@ class BaseResponseHeadersProvider:
         remaining: int,
         reset: int,
     ) -> dict[str, str]:
-        """Return a dict of renderered headers to be added to the response."""
+        """Return a dict of rendered headers to be added to the response."""
         raise NotImplementedError
 
 
