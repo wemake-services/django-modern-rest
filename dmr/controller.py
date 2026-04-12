@@ -336,7 +336,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         By default - does nothing, only re-raises the passed error.
         Won't be called when using async endpoints.
         """
-        raise exc from None
+        raise  # noqa: PLE0704
 
     async def handle_async_error(
         self,
@@ -351,7 +351,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         By default - does nothing, only re-raises the passed error.
         Won't be called when using sync endpoints.
         """
-        raise exc from None
+        raise  # noqa: PLE0704
 
     @override
     @deprecated(

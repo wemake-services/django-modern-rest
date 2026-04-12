@@ -63,11 +63,11 @@ def test_sync_basic_auth_success(
 
     response = _Controller.as_view()(request)
 
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
     assert isinstance(request_auth(request), _HttpBasicAuth)
     assert isinstance(request_auth(request, strict=True), _HttpBasicAuth)
-    assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == 'authed'
 
 
@@ -103,11 +103,11 @@ def test_sync_basic_auth_failure(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
     assert request_auth(request) is None
     with pytest.raises(AttributeError, match='__dmr_auth__'):
         request_auth(request, strict=True)
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
@@ -135,9 +135,9 @@ def test_sync_auth_override_endpoint(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert request_auth(request) is None
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
     assert json.loads(response.content) == 'not authed'
 
 
@@ -164,7 +164,7 @@ def test_sync_auth_override_controller(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert request_auth(request) is None
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
     assert json.loads(response.content) == 'not authed'

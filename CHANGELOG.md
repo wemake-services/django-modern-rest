@@ -62,6 +62,7 @@ Apply this change to the code that uses `django-modern-rest`:
 ### Fixes
 
 - Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
+- Fixed missing `request.auser()` after `JWTAsyncAuth`
 
 ### Misc
 

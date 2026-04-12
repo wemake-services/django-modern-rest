@@ -312,4 +312,4 @@ def global_error_handler(
             cookies=getattr(exc, 'cookies', None),
             renderer=getattr(exc, 'renderer', None),
         )
-    raise exc from None
+    raise  # noqa: PLE0704
