@@ -287,12 +287,22 @@ class _BaseBuilder:  # noqa: WPS214
             },
             DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
-           CACHES = {
+            CACHES={
                 'default': {
-                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'BACKEND': (
+                        'django.core.cache.backends.filebased.FileBasedCache'
+                    ),
+                    'LOCATION': str(
+                        _BASE_DIR / 'docs' / '_build' / 'default.cache',
+                    ),
                 },
                 'throttling': {
-                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'BACKEND': (
+                        'django.core.cache.backends.filebased.FileBasedCache'
+                    ),
+                    'LOCATION': str(
+                        _BASE_DIR / 'docs' / '_build' / 'throttling.cache',
+                    ),
                 },
             },
             # Needed for HTTP Basic auth example:
@@ -635,6 +645,11 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
             )
             if example_result:
                 example_results.append(example_result)
+
+    from django.core.cache import caches  # noqa: PLC0415
+
+    for cache in caches.all():
+        cache.clear()
 
     return '\n\n'.join(example_results)
 

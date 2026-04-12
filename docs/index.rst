@@ -25,7 +25,7 @@
       :alt: Coverage
       :target: https://codecov.io/gh/wemake-services/django-modern-rest
 
-    .. image:: https://img.shields.io/badge/no-slop-purple
+   .. image:: https://img.shields.io/badge/no-slop-purple.svg
       :alt: No AI slop
       :target: https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md
 
@@ -41,7 +41,7 @@
       :alt: DeepWiki
       :target: https://deepwiki.com/wemake-services/django-modern-rest
 
-   .. image:: https://img.shields.io/badge/chat-join-blue?logo=telegram
+   .. image:: https://img.shields.io/badge/chat-join-blue.svg?logo=telegram
       :alt: Telegram Chat
       :target: https://t.me/django_modern_rest
 

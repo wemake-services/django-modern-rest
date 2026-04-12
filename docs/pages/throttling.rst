@@ -62,8 +62,8 @@ For example:
 
 Will guard ``GET`` method with 2 throttling checks:
 
-1. Not more than 1 request per minute
-2. And not more than 5 requests per hour
+1. Not more ``<=`` than 1 request per minute
+2. And not more ``<=`` than 5 requests per hour
 
 
 Customizing throttling
@@ -103,10 +103,10 @@ Backends are used to define where we store throttling data.
 By default we use :class:`dmr.throttling.backends.DjangoCache` as the backend.
 You can customize which cache name is used. For example:
 
-.. code-block:: python
-  :caption: settings.py
+.. literalinclude:: /examples/throttling/cache_customization.py
+  :caption: views.py
   :linenos:
-
+  :language: python
 
 You can also write your own backends, for example,
 to store throttling information in memory or somewhere else.
@@ -125,6 +125,8 @@ Algorithms are used to define the logic of how requests are counted.
 
 By default we use :class:`dmr.throttling.algorithms.SimpleRate`
 as the algorithm.
+It defines a fixed window with a fixed amount of requests possible.
+When window is expired, it resets the count of requests.
 
 You can also write your own algorithms.
 To do so, you would need to subclass
@@ -142,8 +144,13 @@ Cache keys is what defines how requests are identified.
 
 By default we use :func:`dmr.throttling.cache_keys.RemoteAddr` cache key,
 which identifies requests by IP taken from
-`RemoteAddr <https://docs.djangoproject.com/en/6.0/ref/request-response/#django.http.HttpRequest.META>`_
+`REMOTE_ADDR <https://docs.djangoproject.com/en/6.0/ref/request-response/#django.http.HttpRequest.META>`_
 value from ``request.META``.
+
+.. warning::
+
+  If you are using reverse proxies, make sure to correctly configure
+  how they pass request headers, to ``REMOTE_ADDR`` would be correct.
 
 You can write your own cache keys, they are subclasses
 of :class:`~dmr.throttling.cache_keys.BaseThrottleCacheKey`
@@ -166,8 +173,8 @@ When throttling is executed
 Throttling is executed in two stages: before auth and after auth.
 Why? Because we need to:
 
-1. Protect auth from abusing requests and brute forcing
-2. Make sure we can base throttling rules based on the auth info
+1. Protect auth from abusive requests and brute forcing
+2. Make sure we can base throttling rules on the auth info
 
 .. mermaid::
   :caption: Throttling execution
@@ -192,8 +199,11 @@ For example, you can run some IP based throttling checks after the auth itself:
   auth without any throttling before it.
 
   Auth must be protected from brute force and denial of service attacks!
-  For example, one can use
+  For example, one can also use
   `django-axes <https://github.com/jazzband/django-axes>`_ for this.
+
+  `wemake-django-template <https://github.com/wemake-services/wemake-django-template>`_
+  has this configured properly.
 
 Note that it won't make any sense to run auth-based throttling before auth.
 So, customize it with care.
@@ -202,7 +212,9 @@ So, customize it with care.
 Headers
 ~~~~~~~
 
-By default on ``429`` error we return four headers:
+By default on
+`429 Too Many Requests <https://developer.mozilla.org/de/docs/Web/HTTP/Reference/Status/429>`_
+error we return four headers:
 
 - ``X-RateLimit-Limit`` - The maximum number of requests permitted
   in the current time window
@@ -222,11 +234,12 @@ By default on ``429`` error we return four headers:
   However, this convention is the most popular one as of right now.
 
 OpenAPI support is built in for this feature.
-All headers will provide the proper header specs for the ``429`` response.
+All headers classes will provide the proper
+:class:`~dmr.headers.HeaderSpec` for the ``429`` response.
 
 You might want to customize the returned headers. To do so,
 you can pass ``response_headers`` argument to throttling classes
-with header classes that you want to support.
+with header classes that you actually want to support.
 
 For example, you can disable
 `Retry-After <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Retry-After>`_
