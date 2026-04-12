@@ -7,6 +7,9 @@ sphinxopts := env("SPHINXOPTS", "-W")
 sourcedir  := "."
 builddir   := "_build"
 
+# Show Sphinx help (default)
+_default: (sphinx 'help')
+
 [private]
 sphinx +targets:
   #!/usr/bin/env bash
@@ -14,9 +17,6 @@ sphinx +targets:
     uv run python -msphinx -M "$target" "{{sourcedir}}" \
       "{{builddir}}" {{sphinxopts}}
   done
-
-# Show Sphinx help (default)
-_default: (sphinx "help")
 
 # Pass-through: route any target to Sphinx
 build +targets='clean html': (sphinx targets)

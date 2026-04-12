@@ -26,13 +26,26 @@ of requirements for an API to count as public.
    If you customized schema output for `OpenAPIJsonView`, subclass
    the concrete view and override `.get()` instead.
    For JSON output, use `dmr.openapi.core.dump.json_dump`
-   if you need the framework's default serializer.
+   if you need the framework's default serializer
+2. *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+3. *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
+   an instance method, #877
+
+### Migration Prompt
+
+```md
+Apply this change to the code that uses `django-modern-rest`:
+1. Replace `OpenAPIView.dumps` usage with `dmr.openapi.core.dump.json_dump` 
+   usage
+2. Change `dmr.security.jwt.auth.get_jwt` function
+   to use `dmr.security.jwt.auth.request_jwt` instead, if user expects
+   to always get a token back, add `strict=True` argument
+3. Change `provide_response_specs` class method to be instance method,
+   replace all `cls` usage with `self`
+```
 
 ### Features
 
-- *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
-- *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
-  an instance method, #877
 - Added official PyPy 3.11+ support, #870
 - Added `dmr.throttling` package, #877
 - Added `request.__drm_auth__` on all successful auth workflows, #868
