@@ -256,7 +256,7 @@ class Endpoint:  # noqa: WPS214
             # And the last option is to handle error globally:
             return self._global_error_handler(controller, exc)
 
-    def get_schema(
+    def get_schema(  # noqa: WPS211
         self,
         path: str,
         pattern: URLPattern,
