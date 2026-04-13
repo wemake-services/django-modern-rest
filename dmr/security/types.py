@@ -16,4 +16,4 @@ class AuthenticatedHttpRequest(HttpRequest, Generic[_UserT]):
     Use it for trusted controllers only.
     """
 
-    user: _UserT
+    user: _UserT  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
