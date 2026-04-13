@@ -1,6 +1,5 @@
 import json
 from http import HTTPStatus
-from typing import Final
 
 import pytest
 from django.http import HttpResponse
@@ -14,8 +13,6 @@ from dmr.settings import default_renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from tests.infra.xml_format import XmlRenderer
-
-_ATTEMPTS: Final = 5
 
 
 class _SyncController(Controller[PydanticSerializer]):
