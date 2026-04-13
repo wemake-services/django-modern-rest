@@ -11,7 +11,7 @@ from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
-from dmr import (
+from dmr import (  # noqa: WPS235
     Body,
     Controller,
     CookieSpec,
