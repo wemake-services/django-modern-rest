@@ -62,7 +62,7 @@ class _AsyncController(Controller[PydanticSerializer]):
         renderers=(XmlRenderer(), default_renderer),
     )
     async def get(self) -> str:
-        return 'inside'
+        raise NotImplementedError
 
 
 @pytest.mark.asyncio
