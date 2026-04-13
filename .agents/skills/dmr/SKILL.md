@@ -90,8 +90,7 @@ from dmr.plugins.msgspec import MsgspecSerializer
 
 class UserController(Controller[MsgspecSerializer]):
     @modify(status_code=HTTPStatus.OK)
-    def put(self) -> UserModel:
-        ...
+    def put(self) -> UserModel: ...
 ```
 
 Should be rewritten as:
@@ -104,8 +103,7 @@ from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class UserController(Controller[MsgspecSerializer]):
-    def put(self) -> UserModel:
-        ...
+    def put(self) -> UserModel: ...
 ```
 
 Because no `@modify` features were actually used, since `status_code`
