@@ -293,7 +293,7 @@ class Endpoint:  # noqa: WPS214
             summary=self.metadata.summary,
             description=self.metadata.description,
             deprecated=(
-                self.metadata.deprecated or (router and router.deprecated)
+                self.metadata.deprecated or (router.deprecated if router else False)
             ),
             security=security,
             external_docs=self.metadata.external_docs,
