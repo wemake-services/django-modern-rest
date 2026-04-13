@@ -31,6 +31,6 @@ class UserController(Controller[PydanticSerializer]):
         )
 
 
-# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
-# run: {"controller": "UserController", "method": "put", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "put", "body": {"email": "user@wms.org"}, "url": "/api/user/"}  # noqa: ERA001, E501
 # openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
