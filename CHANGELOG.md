@@ -50,8 +50,13 @@ Apply this change to the code that uses `django-modern-rest`:
 - Added `dmr.throttling` package, #877
 - Added `request.__drm_auth__` on all successful auth workflows, #868
 - Added `request_auth` helper function, #868
+- Added `AuthenticatedHttpRequest` type for better
+  `request: AuthenticatedHttpRequest[User]`
+  type annotations in controllers, #888
 - Added `strict` parameter to `request_renderer` and `request_parser`,
   added `@overload`s to both of these functions, #869
+- Added `ResponseSpecMetadata` type to represent
+  headers and cookies with annotations, useful for error models, #882
 - Allow individual `OpenAPI` views to skip schema validation, #867
 - Added endpoint validator to prevent sync
   and async generator HTTP endpoints, #843
@@ -64,6 +69,7 @@ Apply this change to the code that uses `django-modern-rest`:
 
 - Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
 - Fixed missing `request.auser()` after `JWTAsyncAuth`, #884
+- Fixed `ParameterMetadata` missing `__slots__`
 
 ### Misc
 

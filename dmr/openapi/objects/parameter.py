@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.schema import Schema
 
 
-@dataclass(unsafe_hash=True, kw_only=True)
+@dataclass(unsafe_hash=True, kw_only=True, slots=True)
 class ParameterMetadata:
     """Describes metadata for a single operation parameter."""
 
@@ -22,7 +22,7 @@ class ParameterMetadata:
     examples: dict[str, 'Example | Reference'] | None = None
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Parameter(ParameterMetadata):
     """Describes a single operation parameter."""
 

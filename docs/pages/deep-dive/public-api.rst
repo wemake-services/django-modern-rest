@@ -34,6 +34,9 @@ Response, headers and cookies
 .. autoclass:: dmr.metadata.ResponseSpec
   :members:
 
+.. autoclass:: dmr.metadata.ResponseSpecMetadata
+  :members:
+
 .. autoclass:: dmr.metadata.ResponseModification
   :members:
 

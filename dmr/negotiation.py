@@ -344,14 +344,7 @@ def conditional_type(
             'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
-    return _ConditionalType(
-        tuple(
-            {
-                str(mapping_key): mapping_value
-                for mapping_key, mapping_value in mapping.items()
-            }.items(),
-        ),
-    )
+    return _ConditionalType(mapping)
 
 
 def get_conditional_types(

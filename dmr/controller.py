@@ -242,9 +242,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         self,
         raw_data: Any,
         *,
+        status_code: HTTPStatus | None = None,
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
-        status_code: HTTPStatus | None = None,
         renderer: Renderer | None = None,
     ) -> HttpResponse:
         """
@@ -280,14 +280,15 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         Helpful method to convert API error parts into an actual error.
 
         Always requires the error code to be passed.
+        Is an alias for ``to_response`` method with a siglightly different
+        signature and semantics.
 
         Should be always used instead of using
         raw :class:`django.http.HttpResponse` objects.
         Does the usual validation, no "second validation" problem exists.
         """
-        return build_response(
-            self.serializer,
-            raw_data=raw_data,
+        return self.to_response(
+            raw_data,
             headers=headers,
             cookies=cookies,
             status_code=status_code,

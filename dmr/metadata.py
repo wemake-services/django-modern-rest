@@ -99,6 +99,25 @@ class ResponseSpec:
         default=None,
     )
 
+    def __post_init__(self) -> None:
+        """If headers and cookies are not set, look for metadata and use it."""
+        metadata = get_annotated_metadata(
+            self.return_type,
+            None,
+            ResponseSpecMetadata,
+        )
+        if metadata is not None:
+            object.__setattr__(
+                self,
+                'headers',
+                {**(metadata.headers or {}), **(self.headers or {})},
+            )
+            object.__setattr__(
+                self,
+                'cookies',
+                {**(metadata.cookies or {}), **(self.cookies or {})},
+            )
+
     def get_schema(
         self,
         metadata: 'EndpointMetadata',
@@ -123,6 +142,32 @@ class ResponseSpec:
             # produced stream events are not regular responses.
             used_for_response=not self.streaming,
         )
+
+
+@dataclasses.dataclass(frozen=True, slots=True, eq=False)
+class ResponseSpecMetadata:
+    """
+    Special type to be used in ``Annotate`` to provide header and cookie specs.
+
+    Attributes:
+        headers: Shows *headers* in the documentation.
+            When passed, we validate that all given required headers are present
+            in the final response.
+        cookies: Shows *cookies* in the documentation.
+            When passed, we validate that all given required cookies are present
+            in the final response.
+    """
+
+    headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+        hash=False,
+    )
+    cookies: Mapping[str, 'CookieSpec'] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+        hash=False,
+    )
 
 
 _ASYNC_ITERATOR_TYPES: Final = frozenset((
