@@ -67,7 +67,7 @@ Apply this change to the code that uses `django-modern-rest`:
 
 ### Misc
 
-- Added `dmr` skill for agents to write better `django-modern-rest` code
+- Added `dmr` skill for agents to write better `django-modern-rest` code, #886
 - Switched from `Make` to [`just`](https://github.com/casey/just)
   as a command runner
 
