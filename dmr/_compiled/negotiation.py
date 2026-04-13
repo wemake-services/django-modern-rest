@@ -25,11 +25,10 @@
 
 import re
 from collections.abc import Iterable
-from operator import length_hint
 from typing import Final, final
 
 
-def accepted_type(  # noqa: WPS231
+def accepted_type(  # noqa: C901, WPS231
     accept_value: str,
     provided_types: Iterable[str],
 ) -> str | None:
@@ -49,7 +48,7 @@ def accepted_type(  # noqa: WPS231
         Otherwise the provided type is returned as-is.
 
     """
-    if not accept_value or length_hint(provided_types) == 0:
+    if not accept_value:
         return None
 
     if ',' in accept_value:
@@ -57,13 +56,16 @@ def accepted_type(  # noqa: WPS231
             _MediaTypeHeader(typ) for typ in accept_value.split(',') if typ
         ]
         accepted_types.sort(
-            key=_by_priority,
+            key=lambda media: media.priority,
             reverse=True,
         )
     else:
         accepted_types = [_MediaTypeHeader(accept_value)]
 
     types = [_MediaTypeHeader(typ) for typ in provided_types if typ]
+
+    if not types:
+        return None
 
     for accepted in accepted_types:
         for provided in types:
@@ -184,10 +186,6 @@ class _MediaTypeHeader:
             specificity = 3
 
         return quality, specificity
-
-
-def _by_priority(media: _MediaTypeHeader) -> tuple[int, int]:
-    return media.priority
 
 
 _token: Final = r"([\w!#$%&'*+\-.^_`|~]+)"  # noqa: S105
