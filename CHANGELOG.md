@@ -53,7 +53,8 @@ Apply this change to the code that uses `django-modern-rest`:
 - Added `strict` parameter to `request_renderer` and `request_parser`,
   added `@overload`s to both of these functions, #869
 - Allow individual `OpenAPI` views to skip schema validation, #867
-- Add endpoint validator to prevent async generator HTTP endpoints, #843
+- Added endpoint validator to prevent sync
+  and async generator HTTP endpoints, #843
 - Added CSP-friendly templates for shipped `OpenAPI` UI views, #847
   `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
   now avoid inline scripts in DMR-managed templates.
@@ -66,7 +67,9 @@ Apply this change to the code that uses `django-modern-rest`:
 
 ### Misc
 
-- Switched from `Make` to [`just`](https://github.com/casey/just) as a command runner
+- Added `dmr` skill for agents to write better `django-modern-rest` code
+- Switched from `Make` to [`just`](https://github.com/casey/just)
+  as a command runner
 
 
 ## Version 0.6.0 (2026-04-09)
