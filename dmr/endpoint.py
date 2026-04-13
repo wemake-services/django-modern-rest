@@ -327,9 +327,6 @@ class Endpoint:  # noqa: WPS214
             try:  # noqa: WPS229
                 controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
 
-                # Negotiate response:
-                self.response_negotiator(controller.request)
-
                 # Run checks:
                 await self._run_async_checks(controller)
 
@@ -366,9 +363,6 @@ class Endpoint:  # noqa: WPS214
             try:  # noqa: WPS229
                 controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
 
-                # Negotiate response:
-                self.response_negotiator(controller.request)
-
                 # Run checks:
                 self._run_checks(controller)
 
@@ -394,8 +388,13 @@ class Endpoint:  # noqa: WPS214
     # Sync checks:
 
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
+        # First round of throttling:
         self._run_throttle_before(controller)
+        # Negotiate response:
+        self.response_negotiator(controller.request)
+        # Auth:
         self._run_auth(controller)
+        # Second round of throttling:
         self._run_throttle_after(controller)
 
     def _run_throttle_before(
@@ -435,8 +434,13 @@ class Endpoint:  # noqa: WPS214
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> None:
+        # First round of throttling:
         await self._run_async_throttle_before(controller)
+        # Negotiate response:
+        self.response_negotiator(controller.request)
+        # Auth:
         await self._run_async_auth(controller)
+        # Second round of throttling:
         await self._run_async_throttle_after(controller)
 
     async def _run_async_throttle_before(

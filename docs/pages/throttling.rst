@@ -176,14 +176,19 @@ Why? Because we need to:
 1. Protect auth from abusive requests and brute forcing
 2. Make sure we can base throttling rules on the auth info
 
+The same can be said about content negotiation,
+it also must be protected by throttling.
+Otherwise, people can abuse content negotiation without any request limits.
+
 .. mermaid::
   :caption: Throttling execution
   :config: {"theme": "forest"}
 
   graph
-      Start[New request] --> BeforeThrottle[Throttling based on IP];
-      BeforeThrottle --> Auth[Auth];
-      Auth --> AfterThrottle[Throttling based on auth];
+      Start[New request] --> BeforeThrottle[Throttling based on IP or 429];
+      BeforeThrottle --> RendererNegotiation[Renderer is negotiated or 406];
+      RendererNegotiation --> Auth[Auth or 401];
+      Auth --> AfterThrottle[Throttling based on auth or 429];
 
 All cache keys know when to execute by default, however you can customize this.
 For example, you can run some IP based throttling checks after the auth itself:
