@@ -1,4 +1,4 @@
-name: test
+name: test-extras
 
 on:
   push:
