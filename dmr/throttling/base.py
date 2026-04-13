@@ -224,7 +224,7 @@ class SyncThrottle(_BaseThrottle):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> dict[str, str]:
-        """Report trottle usage stats."""
+        """Report throttle usage stats."""
         cache_key = self.full_cache_key(endpoint, controller)
         if cache_key is None:
             return {}
@@ -288,7 +288,7 @@ class AsyncThrottle(_BaseThrottle):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> dict[str, str]:
-        """Async report trottle usage stats."""
+        """Async report throttle usage stats."""
         cache_key = self.full_cache_key(endpoint, controller)
         if cache_key is None:
             return {}
@@ -329,7 +329,7 @@ class ThrottlingReport:
         """
         Report throttling all headers for a sync controller and endpoint.
 
-        Note that it will make N consequetive requests to cache.
+        Note that it will make N consecutive requests to cache.
         It might be rather long. Use the sync version with care.
         """
         endpoint = self._get_endpoint()

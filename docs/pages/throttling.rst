@@ -322,7 +322,7 @@ to add needed headers.
   when building header reports (where ``N`` is the number of throttle
   instances used for this endpoint).
 
-  It might be slow, dependending on the number of throttles and your cache.
+  It might be slow, depending on the number of throttles and your cache.
 
   It might also fail, we don't handle any errors
   in the reports building process.
@@ -342,7 +342,7 @@ of your error model:
   :language: python
 
 Method ``to_response`` is used for both successful and error responses.
-This way both your succesful responses
+This way both your successful responses
 and error responses will have the needed ratelimiting headers.
 
 
