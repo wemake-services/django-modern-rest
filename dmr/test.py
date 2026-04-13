@@ -48,7 +48,7 @@ class _DMRMixin:  # noqa: WPS338
                 content_type = self.default_content_type
             return super().delete(path, data, content_type, *args, **kwargs)
 
-        def generic(  # noqa: WPS211
+        def generic(
             self,
             method,
             path,

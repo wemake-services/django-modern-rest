@@ -211,7 +211,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             allowed_http_methods=allowed_http_methods,
         )
         self.func.__name__ = method  # we can change it :)
-        self.func.__qualname__ = method
         object.__setattr__(self, 'endpoint_name', self._build_endpoint_name())
 
         self._validate_return_annotation(return_annotation)
@@ -237,7 +236,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         assert_never(self.payload)
 
-    def _from_validate(  # noqa: WPS211
+    def _from_validate(
         self,
         payload: ValidateEndpointPayload,
         method: str,
@@ -359,6 +358,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
             auth=self._build_auth(),
+            **self._build_throttling(),
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -366,12 +366,17 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
-            **self._build_throttling(),
+            tags=None,
+            operation_id=None,
+            deprecated=False,
+            external_docs=None,
+            callbacks=None,
+            servers=None,
         )
 
     def _build_endpoint_name(self) -> str:
         controller_name = self.controller_cls.__qualname__
-        func_name = self.func.__name__
+        func_name = self.func.__name__  # `__qualname__` can be different
         return f'{controller_name}.{func_name}'
 
     def _build_parsers(self) -> dict[str, Parser]:

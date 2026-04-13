@@ -47,6 +47,17 @@ class BaseThrottleAlgorithm:
         """Records successful access."""
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def report_usage(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle | AsyncThrottle',
+        cache_object: CachedRateLimit | None,
+    ) -> dict[str, str]:
+        """Reports the throttling usage, but does not additionally increment."""
+        raise NotImplementedError
+
 
 class SimpleRate(BaseThrottleAlgorithm):
     """
@@ -67,20 +78,20 @@ class SimpleRate(BaseThrottleAlgorithm):
         cache_object: CachedRateLimit | None,
     ) -> CachedRateLimit:
         """Check access."""
-        now = int(time.time())
-        if cache_object is None or cache_object['reset'] <= now:
-            # For this algorithm we use a single history
-            # item which is the number of calls:
-            return {'history': [0], 'reset': now + throttle.duration_in_seconds}
-
-        requests = cache_object['history'][0]
-        if requests >= throttle.max_requests:
+        cache_object, now = self._process_cache(
+            endpoint,
+            controller,
+            throttle,
+            cache_object,
+        )
+        if cache_object['history'][0] >= throttle.max_requests:
             raise TooManyRequestsError(
-                headers=throttle.collect_response_headers(
+                headers=self._report_usage(
                     endpoint,
                     controller,
-                    remaining=throttle.max_requests - requests,
-                    reset=cache_object['reset'] - now,
+                    throttle,
+                    cache_object,
+                    now,
                 ),
             )
         return cache_object
@@ -90,3 +101,66 @@ class SimpleRate(BaseThrottleAlgorithm):
         """Record successful access."""
         cache_object['history'][0] += 1
         return cache_object
+
+    @override
+    def report_usage(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle | AsyncThrottle',
+        cache_object: CachedRateLimit | None,
+    ) -> dict[str, str]:
+        """Reports the throttling usage, but does not additionally increment."""
+        cache_object, now = self._process_cache(
+            endpoint,
+            controller,
+            throttle,
+            cache_object,
+        )
+        return self._report_usage(
+            endpoint,
+            controller,
+            throttle,
+            cache_object,
+            now,
+            report_all=False,
+        )
+
+    def _process_cache(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle | AsyncThrottle',
+        cache_object: CachedRateLimit | None,
+    ) -> tuple[CachedRateLimit, int]:
+        now = int(time.time())
+        if cache_object is None or cache_object['reset'] <= now:
+            # For this algorithm we use a single history
+            # item which is the number of calls:
+            return (
+                CachedRateLimit(
+                    history=[0],
+                    reset=now + throttle.duration_in_seconds,
+                ),
+                now,
+            )
+
+        return cache_object, now
+
+    def _report_usage(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle | AsyncThrottle',
+        cache_object: CachedRateLimit,
+        now: int,
+        *,
+        report_all: bool = True,
+    ) -> dict[str, str]:
+        return throttle.collect_response_headers(
+            endpoint,
+            controller,
+            remaining=throttle.max_requests - cache_object['history'][0],
+            reset=cache_object['reset'] - now,
+            report_all=report_all,
+        )

@@ -104,6 +104,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type.
+        is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
         annotations_context: Inference context to call
@@ -149,6 +150,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     ] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
+    is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
@@ -159,9 +161,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     # Public instance API:
     kwargs: dict[str, Any]
-
-    # Protected API:
-    _is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
 
     @override
     def __init_subclass__(cls) -> None:
@@ -183,7 +182,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             )
             for canonical, meth in cls._find_existing_http_methods().items()
         }
-        cls._is_async = cls.controller_validator_cls()(cls)
+        cls.is_async = cls.controller_validator_cls()(cls)
 
     @override
     @classmethod
@@ -521,7 +520,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
-        return cls._is_async is True
+        # This is a part of the `django.View` API, so it must be there.
+        return cls.is_async is True
 
     # Protected API:
 
@@ -552,7 +552,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         response: _ResponseT,
     ) -> _ResponseT:
         """Wraps response into a coroutine if this is an async controller."""
-        if cls._is_async:
+        if cls.is_async:
             return identity(response)
         return response
 

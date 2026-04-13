@@ -54,7 +54,7 @@ class BaseThrottleCacheKey:
         raise NotImplementedError
 
 
-@dataclasses.dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class RemoteAddr(BaseThrottleCacheKey):
     """
     Uses ``REMOTE_ADDR`` from ``request.META`` as a cache key.

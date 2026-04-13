@@ -1,6 +1,7 @@
 import asyncio
 import enum
 import threading
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, final
@@ -9,6 +10,7 @@ from typing_extensions import override
 
 from dmr.exceptions import TooManyRequestsError
 from dmr.headers import HeaderSpec
+from dmr.internal.endpoint import request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.throttling.algorithms import BaseThrottleAlgorithm, SimpleRate
 from dmr.throttling.backends import BaseThrottleBackend, DjangoCache
@@ -57,7 +59,7 @@ class _BaseThrottle(ResponseSpecProvider):
         'max_requests',
     )
 
-    def __init__(  # noqa: WPS211
+    def __init__(
         self,
         max_requests: int,
         duration_in_seconds: Rate | int,
@@ -145,6 +147,8 @@ class _BaseThrottle(ResponseSpecProvider):
         controller: 'Controller[BaseSerializer]',
         remaining: int,
         reset: int,
+        *,
+        report_all: bool = False,
     ) -> dict[str, str]:
         """Collects response headers for all ``response_headers`` classes."""
         response_headers: dict[str, str] = {}
@@ -156,6 +160,7 @@ class _BaseThrottle(ResponseSpecProvider):
                     self,
                     remaining,
                     reset,
+                    report_all=report_all,
                 ),
             )
         return response_headers
@@ -214,6 +219,22 @@ class SyncThrottle(_BaseThrottle):
                 ttl_seconds=self.duration_in_seconds,
             )
 
+    def report_usage(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> dict[str, str]:
+        """Report trottle usage stats."""
+        cache_key = self.full_cache_key(endpoint, controller)
+        if cache_key is None:
+            return {}
+        return self._algorithm.report_usage(
+            endpoint,
+            controller,
+            self,
+            self._backend.get(endpoint, controller, cache_key),
+        )
+
 
 class AsyncThrottle(_BaseThrottle):
     """Async throttle type for async endpoints."""
@@ -261,3 +282,102 @@ class AsyncThrottle(_BaseThrottle):
                 self._algorithm.record(cache_object),
                 ttl_seconds=self.duration_in_seconds,
             )
+
+    async def report_usage(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> dict[str, str]:
+        """Async report trottle usage stats."""
+        cache_key = self.full_cache_key(endpoint, controller)
+        if cache_key is None:
+            return {}
+        return self._algorithm.report_usage(
+            endpoint,
+            controller,
+            self,
+            await self._backend.aget(endpoint, controller, cache_key),
+        )
+
+
+class ThrottlingReport:
+    """
+    Get throttling data to be reported in response headers.
+
+    Unlike :exc:`dmr.exceptions.TooManyRequestsError`,
+    which reports the first stat for throttle that is failing,
+    it reports all stats for all throttles.
+
+    It will make N (which is the number of throttles) requests to cache.
+
+    .. warning::
+
+        This class does not handle exceptions at all.
+        Because we don't know how to report headers
+        for failing cache connections.
+        If you want to handle errors, catch them explicitly.
+
+    """
+
+    __slots__ = ('_controller',)
+
+    def __init__(self, controller: 'Controller[BaseSerializer]') -> None:
+        """Create throttling reporter."""
+        self._controller = controller
+
+    def report(self) -> dict[str, str]:
+        """
+        Report throttling all headers for a sync controller and endpoint.
+
+        Note that it will make N consequetive requests to cache.
+        It might be rather long. Use the sync version with care.
+        """
+        endpoint = self._get_endpoint()
+        if not endpoint.metadata.throttling:
+            return {}
+
+        result_headers: defaultdict[str, list[str]] = defaultdict(list)
+        for throttle in endpoint.metadata.throttling:
+            # for mypy: we are sure that it is sync now
+            assert isinstance(throttle, SyncThrottle)  # noqa: S101
+            for header_name, header_value in throttle.report_usage(
+                endpoint,
+                self._controller,
+            ).items():
+                result_headers[header_name].append(header_value)
+        return self._format_headers(result_headers)
+
+    async def areport(self) -> dict[str, str]:
+        """
+        Report throttling all headers for a async controller and endpoint.
+
+        Unlike sync version it makes parallel requests to cache
+        by utilizing :func:`asyncio.gather` function inside.
+        """
+        endpoint = self._get_endpoint()
+        if not endpoint.metadata.throttling:
+            return {}
+
+        result_headers: defaultdict[str, list[str]] = defaultdict(list)
+
+        # We can run all tasks in "parallel":
+        for report in await asyncio.gather(*[
+            throttle.report_usage(endpoint, self._controller)
+            for throttle in endpoint.metadata.throttling
+            if isinstance(throttle, AsyncThrottle)
+        ]):
+            for header_name, header_value in report.items():
+                result_headers[header_name].append(header_value)
+        return self._format_headers(result_headers)
+
+    def _get_endpoint(self) -> 'Endpoint':
+        return request_endpoint(self._controller.request, strict=True)
+
+    def _format_headers(
+        self,
+        headers: defaultdict[str, list[str]],
+    ) -> dict[str, str]:
+        return {
+            header_name: ', '.join(header_value)
+            for header_name, header_value in headers.items()
+        }

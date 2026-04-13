@@ -113,6 +113,14 @@ async def test_throttle_async_and_auth(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that async controllers work with throttling."""
+    metadata = _AsyncBothController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    assert metadata.throttling_after_auth
+    assert (
+        metadata.throttling
+        == metadata.throttling_before_auth + metadata.throttling_after_auth
+    )
+
     # This will trigger first `1/s` response:
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncBothController.as_view()(request))
@@ -188,6 +196,14 @@ def test_throttle_sync_before_auth(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that async controllers work with throttling."""
+    metadata = _SyncBothController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    assert metadata.throttling_after_auth
+    assert (
+        metadata.throttling
+        == metadata.throttling_before_auth + metadata.throttling_after_auth
+    )
+
     # This will trigger first `1/s` response:
     request = dmr_rf.get('/whatever/')
     response = _SyncBothController.as_view()(request)

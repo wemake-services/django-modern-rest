@@ -19,6 +19,7 @@ from dmr.exceptions import (
 )
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.internal.context import SerializerContext as SerializerContext
+from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
@@ -324,6 +325,8 @@ class Endpoint:  # noqa: WPS214
             **kwargs: Any,
         ) -> HttpResponseBase:
             try:  # noqa: WPS229
+                controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
+
                 # Negotiate response:
                 self.response_negotiator(controller.request)
 
@@ -361,6 +364,8 @@ class Endpoint:  # noqa: WPS214
             **kwargs: Any,
         ) -> HttpResponseBase:
             try:  # noqa: WPS229
+                controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
+
                 # Negotiate response:
                 self.response_negotiator(controller.request)
 

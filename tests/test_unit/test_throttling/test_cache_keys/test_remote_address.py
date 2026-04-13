@@ -11,7 +11,7 @@ from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
 from dmr.throttling.cache_keys import RemoteAddr
 
 _ATTEMPTS: Final = 5
@@ -24,7 +24,10 @@ class _FakeRemoteAddr(RemoteAddr):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
-        assert controller.request.META.pop('REMOTE_ADDR') == '127.0.0.1'
+        assert controller.request.META.pop('REMOTE_ADDR', None) in {
+            '127.0.0.1',
+            None,
+        }
         return super().__call__(endpoint, controller)
 
 
@@ -34,6 +37,7 @@ class _SyncController(Controller[PydanticSerializer]):
     ]
 
     def get(self) -> str:
+        assert ThrottlingReport(self).report() == {}
         return 'inside'
 
 
@@ -56,6 +60,7 @@ class _AsyncController(Controller[PydanticSerializer]):
     ]
 
     async def get(self) -> str:
+        assert await ThrottlingReport(self).areport() == {}
         return 'inside'
 
 
@@ -64,6 +69,9 @@ async def test_throttle_no_limits_async(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that `None` disables the cache key in async."""
+    metadata = _AsyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling == metadata.throttling_before_auth
+
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476

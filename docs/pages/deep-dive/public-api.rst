@@ -24,6 +24,8 @@ Endpoint
 
 .. autodecorator:: dmr.endpoint.validate
 
+.. autodecorator:: dmr.endpoint.request_endpoint
+
 
 Response, headers and cookies
 -----------------------------

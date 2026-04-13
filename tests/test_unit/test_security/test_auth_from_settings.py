@@ -49,6 +49,7 @@ def test_sync_basic_auth_success(
             return 'authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.throttling is None
     assert metadata.responses.keys() == {
         HTTPStatus.OK,
         HTTPStatus.UNAUTHORIZED,

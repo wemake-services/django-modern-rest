@@ -441,14 +441,32 @@ class EndpointMetadata:
     validate_events: bool
 
     # OpenAPI documentation fields:
-    summary: str | None = None
-    description: str | None = None
-    tags: list[str] | None = None
-    operation_id: str | None = None
-    deprecated: bool = False
-    external_docs: 'ExternalDocumentation | None' = None
-    callbacks: dict[str, 'Callback | Reference'] | None = None
-    servers: list['Server'] | None = None
+    summary: str | None
+    description: str | None
+    tags: list[str] | None
+    operation_id: str | None
+    deprecated: bool
+    external_docs: 'ExternalDocumentation | None'
+    callbacks: dict[str, 'Callback | Reference'] | None
+    servers: list['Server'] | None
+
+    # Pre-computed fields:
+    throttling: tuple['SyncThrottle | AsyncThrottle', ...] | None = (
+        dataclasses.field(init=False)
+    )
+
+    def __post_init__(self) -> None:
+        """Set pre-computed fields."""
+        # Combine throttling into a single element for convenience:
+        object.__setattr__(
+            self,
+            'throttling',
+            (
+                (self.throttling_before_auth or ())
+                + (self.throttling_after_auth or ())
+            )
+            or None,
+        )
 
     def collect_response_specs(
         self,

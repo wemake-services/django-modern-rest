@@ -13,6 +13,6 @@ class AsyncController(Controller[PydanticSerializer]):
         return 'inside'
 
 
-# run: {"controller": "AsyncController", "method": "get", "url": "/api/sync/"}  # noqa: ERA001
-# run: {"controller": "AsyncController", "method": "get", "url": "/api/sync/", "curl_args": ["-D", "-"], "assert-error-text": "Too many requests", "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "AsyncController", "method": "get", "url": "/api/async/"}  # noqa: ERA001
+# run: {"controller": "AsyncController", "method": "get", "url": "/api/async/", "curl_args": ["-D", "-"], "assert-error-text": "Too many requests", "fail-with-body": false}  # noqa: ERA001, E501
 # openapi: {"controller": "AsyncController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001, E501

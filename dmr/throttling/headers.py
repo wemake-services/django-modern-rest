@@ -1,5 +1,4 @@
 import abc
-from itertools import chain
 from typing import TYPE_CHECKING
 
 from typing_extensions import override
@@ -31,6 +30,8 @@ class BaseResponseHeadersProvider:
         throttle: '_BaseThrottle',
         remaining: int,
         reset: int,
+        *,
+        report_all: bool = True,
     ) -> dict[str, str]:
         """Return a dict of rendered headers to be added to the response."""
         raise NotImplementedError
@@ -70,6 +71,8 @@ class RetryAfter(BaseResponseHeadersProvider):
         throttle: '_BaseThrottle',
         remaining: int,
         reset: int,
+        *,
+        report_all: bool = True,
     ) -> dict[str, str]:
         """Returns the formatted response headers."""
         return {'Retry-After': str(reset)}
@@ -125,6 +128,8 @@ class XRateLimit(BaseResponseHeadersProvider):
         throttle: '_BaseThrottle',
         remaining: int,
         reset: int,
+        *,
+        report_all: bool = True,
     ) -> dict[str, str]:
         """Returns the formatted response headers."""
         return {
@@ -167,12 +172,16 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
         throttle: '_BaseThrottle',
         remaining: int,
         reset: int,
+        *,
+        report_all: bool = True,
     ) -> dict[str, str]:
         """Returns the formatted response headers."""
         # Example headers:
         # `RateLimit-Policy: 30;w=60;name="ip", 100;w=3600;name="user"`
         # `RateLimit: "problemPolicy";r=0;t=10`
-
+        throttles = (
+            (endpoint.metadata.throttling or ()) if report_all else [throttle]
+        )
         return {
             'RateLimit-Policy': ', '.join(
                 (
@@ -181,12 +190,7 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
                     f'name="{throttle.cache_key.name}"'
                 )
                 # However, it can't be `None`, since we are here:
-                for throttle in (
-                    chain(
-                        endpoint.metadata.throttling_before_auth or (),
-                        endpoint.metadata.throttling_after_auth or (),
-                    )
-                )
+                for throttle in throttles
             ),
             'RateLimit': (
                 f'"{throttle.cache_key.name}";r={remaining};t={reset}'  # noqa: WPS237
