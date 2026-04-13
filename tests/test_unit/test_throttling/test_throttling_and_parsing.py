@@ -10,10 +10,10 @@ from inline_snapshot import snapshot
 from dmr import Controller, modify
 from dmr.endpoint import request_endpoint
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.settings import default_renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from tests.infra.xml_format import XmlRenderer
-from dmr.settings import default_renderer
 
 _ATTEMPTS: Final = 5
 
