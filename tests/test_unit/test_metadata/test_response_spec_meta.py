@@ -11,18 +11,10 @@ from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
-from dmr import (  # noqa: WPS235
-    Body,
-    Controller,
-    CookieSpec,
-    HeaderSpec,
-    NewCookie,
-    NewHeader,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
+from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import ErrorModel
+from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import ResponseSpecMetadata
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer

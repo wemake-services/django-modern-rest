@@ -5,12 +5,7 @@ from typing import Annotated, Any
 from django.http import HttpResponse
 from typing_extensions import override
 
-from dmr import (
-    Body,
-    Controller,
-    HeaderSpec,
-    NewCookie,
-)
+from dmr import Body, Controller, HeaderSpec, NewCookie
 from dmr.errors import ErrorModel
 from dmr.metadata import ResponseSpecMetadata
 from dmr.plugins.pydantic import PydanticSerializer
