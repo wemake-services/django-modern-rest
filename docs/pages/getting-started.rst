@@ -92,6 +92,8 @@ Use cases we officially support:
 
 We support several custom agent skills:
 
+- ``$dmr`` to enforce ``django-modern-rest`` best practices
+  with fast and secure approaches
 - ``$dmr-openapi-skeleton`` to generate
   a :doc:`working project boilerplate <ai/spec-first>`
   from a single ``openapi.json`` file (the "Spec First" approach)

@@ -77,6 +77,8 @@ class UserController(Controller[MsgspecSerializer]):
 Because it does not use any of the validate features,
 like settings extra headers or cookies.
 
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/index.html
+
 ### Prefer implicit `@modify` over the explicit one
 
 A code like:
@@ -207,9 +209,11 @@ class UserController(Controller[PydanticFastSerializer]):
 
 Because `PydanticFastSerializer` is at least 3 times faster in this case.
 
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/public-api.html#dmr.plugins.pydantic.PydanticFastSerializer
+
 ### Never return Django `HttpResponse` directly — use `to_response`, `to_error`, or `APIError`
 
-Returning Django responses directly bypasses response validation, content negotiation, and header management.
+Returning Django responses directly bypasses content negotiation, cookie and header management.
 
 Wrong:
 
@@ -227,6 +231,7 @@ class UserController(Controller[MsgspecSerializer]):
         return HttpResponse(
             json.dumps({'email': 'user@example.com'}),
             content_type='application/json',
+            headers={'X-API-Token': 'some-token'},
             status=200,
         )
 ```
@@ -236,7 +241,9 @@ Correct:
 ```python
 import msgspec
 
-from dmr import Body, Controller, modify
+from django.http import HttpResponse
+
+from dmr import Body, Controller, validate
 from dmr.plugins.msgspec import MsgspecSerializer
 
 
@@ -245,11 +252,12 @@ class UserModel(msgspec.Struct):
 
 
 class UserController(Controller[MsgspecSerializer]):
-    def get(self) -> UserModel:
-        return UserModel(email='user@example.com')
+    def get(self) -> HttpResponse:
+        return self.to_response(
+            {'email': 'user@example.com'},
+            headers={'X-API-Token': 'some-token'},
+        )
 ```
-
-**Limitations:** `@validate` endpoints must return `HttpResponse` via `self.to_response()` — this rule applies to `@modify` / raw endpoints only.
 
 Docs: https://django-modern-rest.rtfd.io/en/latest/pages/using-controller/index.html
 
@@ -299,58 +307,9 @@ class UserController(Controller[MsgspecSerializer]):
         )
 ```
 
-**Limitations:** you don't need to catch `APIError` in error handlers — it has a default handler that converts it to `HttpResponse` automatically.
+You can also use `self.to_error` when using `@validate` endpoints.
 
 Docs: https://django-modern-rest.rtfd.io/en/latest/pages/error-handling.html
-
-### Use `TypeVar` for generic reusable controllers
-
-Using `TypeVar` for the serializer parameter lets you create controllers that work with any serializer plugin.
-
-Wrong:
-
-```python
-from typing_extensions import TypedDict
-
-from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
-
-
-class _ResponseBody(TypedDict):
-    message: str
-
-
-class ReusableController(Controller[PydanticSerializer]):
-    def get(self) -> _ResponseBody:
-        return {'message': 'hello'}
-```
-
-Correct:
-
-```python
-from typing import TypeVar
-
-from typing_extensions import TypedDict
-
-from dmr import Controller
-from dmr.serializer import BaseSerializer
-
-_SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
-
-
-class _ResponseBody(TypedDict):
-    message: str
-
-
-class ReusableController(Controller[_SerializerT]):
-    def get(self) -> _ResponseBody:
-        serializer_name = self.serializer.__name__
-        return {'message': f'hello from {serializer_name}'}
-```
-
-**Limitations:** concrete subclasses must specify the actual serializer type — schema generation and validation work on concrete types only.
-
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/reusable-code.html
 
 
 ## Routing
@@ -397,9 +356,12 @@ from django.urls import include
 from dmr.routing import Router, path
 from myapp.views import UserController
 
-router = Router('api/', [
-    path('user/', UserController.as_view(), name='users'),
-])
+router = Router(
+    'api/',
+    [
+        path('user/', UserController.as_view(), name='users'),
+    ],
+)
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'app'), namespace='api')),
@@ -412,19 +374,22 @@ Correct:
 ```python
 from django.urls import include
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.routing import Router, build_404_handler, path
 from myapp.views import UserController
 
-router = Router('api/', [
-    path('user/', UserController.as_view(), name='users'),
-])
+router = Router(
+    'api/',
+    [
+        path('user/', UserController.as_view(), name='users'),
+    ],
+)
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'app'), namespace='api')),
 ]
 
-handler404 = build_404_handler(router.prefix, serializer=PydanticSerializer)
+handler404 = build_404_handler(router.prefix, serializer=MsgspecSerializer)
 ```
 
 **Limitations:** overriding `handler404` has no effect while `DEBUG = True` — this is Django's default behavior.
@@ -443,9 +408,12 @@ from django.urls import include
 from dmr.routing import Router, path
 from myapp.views import UserController
 
-router = Router('api/', [
-    path('user/', UserController.as_view(), name='users'),
-])
+router = Router(
+    'api/',
+    [
+        path('user/', UserController.as_view(), name='users'),
+    ],
+)
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'app'), namespace='api')),
@@ -458,19 +426,22 @@ Correct:
 ```python
 from django.urls import include
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.routing import Router, build_500_handler, path
 from myapp.views import UserController
 
-router = Router('api/', [
-    path('user/', UserController.as_view(), name='users'),
-])
+router = Router(
+    'api/',
+    [
+        path('user/', UserController.as_view(), name='users'),
+    ],
+)
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'app'), namespace='api')),
 ]
 
-handler500 = build_500_handler(router.prefix, serializer=PydanticSerializer)
+handler500 = build_500_handler(router.prefix, serializer=MsgspecSerializer)
 ```
 
 **Limitations:** overriding `handler500` has no effect while `DEBUG = True` — this is Django's default behavior.
@@ -493,7 +464,7 @@ from django.http import HttpResponse
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -508,7 +479,7 @@ def sync_error_handler(
     )
 
 
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     @modify(error_handler=sync_error_handler)
     async def get(self) -> str:  # async endpoint with sync handler!
         return 'hello'
@@ -523,7 +494,7 @@ from django.http import HttpResponse
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -538,7 +509,7 @@ async def async_error_handler(
     )
 
 
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     @modify(error_handler=async_error_handler)
     async def get(self) -> str:
         return 'hello'
@@ -562,15 +533,15 @@ from typing_extensions import override
 
 from dmr import APIError, Controller
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     @override
     def handle_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
+        controller: Controller[MsgspecSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, APIError):  # unnecessary!
@@ -591,15 +562,15 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     @override
     def handle_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
+        controller: Controller[MsgspecSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, SomeSpecificError):
@@ -624,10 +595,10 @@ Wrong:
 from http import HTTPStatus
 
 from dmr import APIError, Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     def post(self) -> str:
         raise APIError(
             {'errors': [{'message': 'test'}]},  # ad-hoc format
@@ -645,7 +616,7 @@ from typing_extensions import TypedDict, override
 
 from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class CustomErrorDetail(TypedDict):
@@ -656,7 +627,7 @@ class CustomErrorModel(TypedDict):
     errors: list[CustomErrorDetail]
 
 
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[MsgspecSerializer]):
     error_model = CustomErrorModel
 
     @override
@@ -722,6 +693,59 @@ DMR_SETTINGS = {
 
 Docs: https://django-modern-rest.rtfd.io/en/latest/pages/validation.html
 
+### Do not disable response validation when retuning extra data
+
+Instead of disabling response validation when retuning some extra data,
+add new `ResponseSpec` objects.
+
+Wrong:
+
+```python
+from http import HTTPStatus
+
+from dmr import APIError, Body, Controller
+from dmr.plugins.msgspec import MsgspecSerializer
+
+
+class MyController(Controller[MsgspecSerializer]):
+    validate_responses = False
+
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
+        if not parsed_body:
+            raise APIError(
+                self.format_error('empty body'),
+                status_code=HTTPStatus.GONE,
+            )
+        return 'saved'
+```
+
+Correct:
+
+```python
+from http import HTTPStatus
+
+from dmr import APIError, Body, Controller, ResponseSpec, modify
+from dmr.plugins.msgspec import MsgspecSerializer
+
+
+class MyController(Controller[MsgspecSerializer]):
+    @modify(
+        extra_responses=[
+            ResponseSpec(
+                return_type=Controller.error_model,
+                status_code=HTTPStatus.GONE,
+            ),
+        ],
+    )
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
+        if not parsed_body:
+            raise APIError(
+                self.format_error('empty body'),
+                status_code=HTTPStatus.GONE,
+            )
+        return 'saved'
+```
+
 ### Don't override `HttpSpec` validation unless implementing legacy APIs
 
 `HttpSpec` validation is already disabled by default for problematic cases — overriding it should only be done for very specific legacy API compatibility reasons.
@@ -767,44 +791,6 @@ Docs: https://django-modern-rest.rtfd.io/en/latest/pages/validation.html
 
 ## Authentication
 
-### Disable auth per-endpoint, never globally via `Settings.auth = None`
-
-Setting `auth=None` on a specific endpoint makes that endpoint public while keeping all others protected.
-
-Wrong:
-
-```python
-# settings.py — this disables auth for ALL endpoints with no way to re-enable:
-from dmr.settings import Settings
-
-DMR_SETTINGS = {
-    Settings.auth: None,
-}
-```
-
-Correct:
-
-```python
-from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt import JWTAsyncAuth
-
-
-class APIController(Controller[PydanticSerializer]):
-    auth = (JWTAsyncAuth(),)
-
-    async def get(self) -> str:
-        return 'protected'
-
-    @modify(auth=[])
-    async def post(self) -> str:  # public endpoint (e.g., registration)
-        return 'public'
-```
-
-**Limitations:** multiple auth instances use OR logic — at least one must succeed for the request to be authenticated.
-
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/auth/common.html
-
 ### Use typed request for authenticated controllers
 
 Annotating `self.request` with a typed subclass of `HttpRequest` gives type-safe access to the authenticated user.
@@ -832,16 +818,13 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.security import AuthenticatedHttpRequest
 from dmr.security.django_session import DjangoSessionSyncAuth
 
 
-class AuthenticatedHttpRequest(HttpRequest):
-    user: User
-
-
-class APIController(Controller[PydanticSerializer]):
-    request: AuthenticatedHttpRequest
+class APIController(Controller[MsgspecSerializer]):
+    request: AuthenticatedHttpRequest[User]
     auth = (DjangoSessionSyncAuth(),)
 
     def get(self) -> str:
@@ -855,50 +838,6 @@ Docs: https://django-modern-rest.rtfd.io/en/latest/pages/auth/django-session.htm
 
 
 ## Throttling
-
-### Prefer HTTP proxy rate limiting over Django-level throttling
-
-HTTP proxy rate limiting (e.g., nginx, Cloudflare) is significantly faster and more secure than application-level throttling.
-
-Wrong:
-
-```python
-# Using Django-level throttling as the sole rate limiter for high-traffic public APIs:
-from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
-from dmr.throttling import SyncThrottle, Rate
-
-
-class PublicAPIController(Controller[PydanticSerializer]):
-    throttling = (SyncThrottle(100, Rate.minute),)
-
-    def get(self) -> str:
-        return 'data'
-```
-
-Correct:
-
-```python
-# Configure rate limiting at the proxy level (nginx, Cloudflare, etc.)
-# and use Django throttling only for fine-grained per-endpoint control:
-from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
-from dmr.throttling import SyncThrottle, Rate
-
-
-class PublicAPIController(Controller[PydanticSerializer]):
-    # Fine-grained throttle for expensive operations only:
-    @modify(throttling=[SyncThrottle(10, Rate.minute)])
-    def post(self) -> str:
-        return 'created'
-
-    def get(self) -> str:  # rate-limited by proxy
-        return 'data'
-```
-
-**Limitations:** this only applies when you have an HTTP proxy in front of Django — if Django is directly exposed, application-level throttling is necessary.
-
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/throttling.html
 
 ### Protect auth endpoints with throttling BEFORE authentication
 
@@ -946,7 +885,7 @@ class LoginController(Controller[PydanticSerializer]):
             SyncThrottle(
                 5,
                 Rate.minute,
-                cache_key=RemoteAddr(runs_before_auth=True),
+                cache_key=RemoteAddr(),
             ),
         ],
     )
@@ -961,6 +900,52 @@ Docs: https://django-modern-rest.rtfd.io/en/latest/pages/throttling.html
 
 ## Testing
 
+### Prefer `pytest` style test cases over `django.test.TestCase` ones
+
+Wrong:
+
+```python
+from django.test import TestCase
+from typing_extensions import override
+
+from dmr.test import DMRRequestFactory
+from myapp.views import UserController
+
+
+class TestUsers(TestCase):
+    @override
+    def setUp(self) -> None:
+        self.rf = DMRRequestFactory()
+
+    def test_create_user(self) -> None:
+        request = self.rf.get('/users/', content_type='application/json')
+
+        response = UserController.as_view()(request)
+        
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.CREATED
+```
+
+Correct: 
+
+```python
+from http import HTTPStatus
+
+from django.http import HttpResponse
+
+from dmr.test import DMRRequestFactory
+from myapp.views import UserController
+
+
+def test_create_user(dmr_rf: DMRRequestFactory) -> None:
+    request = dmr_rf.get('/users/')
+
+    response = UserController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+```
+
 ### Use `DMRClient` and `DMRRequestFactory` instead of plain Django test tools
 
 `DMRClient` and `DMRRequestFactory` default `Content-Type` to `application/json`, simplifying JSON API testing.
@@ -968,41 +953,41 @@ Docs: https://django-modern-rest.rtfd.io/en/latest/pages/throttling.html
 Wrong:
 
 ```python
-import json
+from http import HTTPStatus
 
-from django.test import TestCase
+from django.http import HttpResponse
+
+from django.test import RequestFactory
+from myapp.views import UserController
 
 
-class TestUsers(TestCase):
-    def test_create_user(self) -> None:
-        response = self.client.post(
-            '/users/',
-            data=json.dumps({'email': 'user@example.com', 'age': 20}),
-            content_type='application/json',
-        )
-        assert response.status_code == 201
+def test_create_user(rf: RequestFactory) -> None:
+    request = dmr_rf.get('/users/', content_type='application/json')
+
+    response = UserController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
 ```
 
 Correct:
 
 ```python
-from django.test import TestCase
-from typing_extensions import override
+from http import HTTPStatus
 
-from dmr.test import DMRClient
+from django.http import HttpResponse
+
+from dmr.test import DMRRequestFactory
+from myapp.views import UserController
 
 
-class TestUsers(TestCase):
-    @override
-    def setUp(self) -> None:
-        self.client = DMRClient()
+def test_create_user(dmr_rf: DMRRequestFactory) -> None:
+    request = dmr_rf.get('/users/')
 
-    def test_create_user(self) -> None:
-        response = self.client.post(
-            '/users/',
-            data={'email': 'user@example.com', 'age': 20},
-        )
-        assert response.status_code == 201
+    response = UserController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
 ```
 
 **Limitations:** for async controllers, use `DMRAsyncRequestFactory` and `DMRAsyncClient` instead.
@@ -1016,32 +1001,23 @@ Docs: https://django-modern-rest.rtfd.io/en/latest/pages/testing.html
 Wrong:
 
 ```python
-import json
+from http import HTTPStatus
 
-from django.test import TestCase
-from typing_extensions import override
+from django.http import HttpResponse
 
 from dmr.test import DMRClient
 
 
-class TestUsers(TestCase):
-    @override
-    def setUp(self) -> None:
-        self.client = DMRClient()
+def test_create_user(dmr_client: DMRClient) -> None:
+    response = dmr_client.get('/users/')
 
-    def test_create_user(self) -> None:
-        # Full HTTP request through URL routing and middleware:
-        response = self.client.post(
-            '/users/',
-            data={'email': 'user@example.com', 'age': 20},
-        )
-        assert response.status_code == 201
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
 ```
 
 Correct:
 
 ```python
-import json
 from http import HTTPStatus
 
 from django.http import HttpResponse
@@ -1050,15 +1026,13 @@ from dmr.test import DMRRequestFactory
 from myapp.views import UserController
 
 
-def test_create_user() -> None:
-    dmr_rf = DMRRequestFactory()
-    payload = {'email': 'user@example.com', 'age': 20}
+def test_create_user(dmr_rf: DMRRequestFactory) -> None:
+    request = dmr_rf.get('/users/')
 
-    request = dmr_rf.post('/users/', data=payload)
     response = UserController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.OK
 ```
 
 **Limitations:** `DMRRequestFactory` tests skip URL routing and middleware — use `DMRClient` when you need to test the full request/response cycle.
@@ -1127,24 +1101,13 @@ def test_get_users(dmr_client: DMRClient) -> None:
 def test_get_users_invalid(dmr_client: DMRClient) -> None:
     response = dmr_client.get('/api/users/?page=-1')
     assert response.status_code == 422
+
+
 # ... many more tests for each edge case
 ```
 
-Correct:
-
-```python
-import schemathesis
-from django.test.utils import override_settings
-
-
-@override_settings(ROOT_URLCONF='myapp.urls')
-def test_api(api_schema_url: str) -> None:
-    schema = schemathesis.from_url(api_schema_url)
-
-    @schema.parametrize()
-    def test_endpoint(case: schemathesis.Case) -> None:
-        case.call_and_validate()
-```
+Correct: use `schemathesis`. Check its officail docs for more details.
+https://schemathesis.readthedocs.io 
 
 **Limitations:** `schemathesis` is not bundled with `django-modern-rest` — install it separately with `uv add --group dev schemathesis`.
 
@@ -1163,11 +1126,11 @@ Wrong:
 from django.views.decorators.csrf import csrf_protect
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 @csrf_protect  # not tracked in OpenAPI, no response validation
-class ProtectedController(Controller[PydanticSerializer]):
+class ProtectedController(Controller[MsgspecSerializer]):
     def post(self) -> dict[str, str]:
         return {'message': 'created'}
 ```
@@ -1181,9 +1144,10 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect
 
 from dmr import Controller, ResponseSpec
+from dmr.response import build_response
 from dmr.decorators import wrap_middleware
-from dmr.errors import ErrorModel
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.errors import ErrorModel, format_error
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 @wrap_middleware(
@@ -1194,11 +1158,15 @@ from dmr.plugins.pydantic import PydanticSerializer
     ),
 )
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-    return response
+    return build_response(
+        MsgspecSerializer,
+        raw_data=format_error('csrf error'),
+        status_code=HTTPStatus.FORBIDDEN,
+    )
 
 
 @csrf_protect_json
-class ProtectedController(Controller[PydanticSerializer]):
+class ProtectedController(Controller[MsgspecSerializer]):
     responses = csrf_protect_json.responses
 
     def post(self) -> dict[str, str]:
@@ -1212,9 +1180,9 @@ Docs: https://django-modern-rest.rtfd.io/en/latest/pages/middleware.html
 
 ## Configuration
 
-### Enable `semantic_responses` for automatic error response documentation
+### Do not disable `semantic_responses`
 
-`semantic_responses=True` automatically injects common error responses (auth errors, validation errors, throttling) into your OpenAPI schema.
+`semantic_responses=True` (default) automatically injects common error responses (auth errors, validation errors, throttling) into your OpenAPI schema.
 
 Wrong:
 
@@ -1227,16 +1195,7 @@ DMR_SETTINGS = {
 }
 ```
 
-Correct:
-
-```python
-# settings.py:
-from dmr.settings import Settings
-
-DMR_SETTINGS = {
-    Settings.semantic_responses: True,
-}
-```
+Correct: do not override this setting, unless 100% required.
 
 **Limitations:** you can exclude specific status codes from semantic responses using `Settings.exclude_semantic_responses` if they don't apply to your API.
 
@@ -1389,92 +1348,6 @@ class UserController(Controller[MsgspecSerializer]):
 Docs: https://django-modern-rest.rtfd.io/en/latest/pages/components/index.html
 
 
-## Content negotiation
-
-### Set parsers and renderers per-controller or per-endpoint when needed
-
-Configuring content negotiation at the most specific level avoids affecting unrelated endpoints.
-
-Wrong:
-
-```python
-# settings.py — forcing XML support globally for one controller's needs:
-from dmr.settings import Settings
-from myapp.negotiation import XmlParser, XmlRenderer
-
-DMR_SETTINGS = {
-    Settings.parsers: [XmlParser()],
-    Settings.renderers: [XmlRenderer()],
-}
-```
-
-Correct:
-
-```python
-from dmr import Body, Controller
-from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
-from dmr.plugins.pydantic import PydanticSerializer
-from myapp.negotiation import XmlParser, XmlRenderer
-
-
-class UserController(Controller[PydanticSerializer]):
-    parsers = (MsgspecJsonParser(), XmlParser())
-    renderers = (MsgspecJsonRenderer(), XmlRenderer())
-
-    def post(self, parsed_body: Body[dict[str, str]]) -> dict[str, str]:
-        return parsed_body
-```
-
-**Limitations:** settings-level parsers/renderers still serve as the default fallback — always keep at least one parser and one renderer in global settings.
-
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/negotiation.html
-
-
-## Streaming
-
-### Only use streaming for single-directional event streams
-
-Streaming is designed for SSE and JSONL event streams (LLM responses, logs, telemetry) — don't use it for regular request/response patterns.
-
-Wrong:
-
-```python
-from collections.abc import AsyncIterator
-
-from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
-from dmr.streaming.sse import SSEController
-
-
-class UserController(SSEController[PydanticSerializer]):
-    async def get(self) -> AsyncIterator[dict[str, str]]:
-        # Using streaming for a single response:
-        yield {'email': 'user@example.com'}
-```
-
-Correct:
-
-```python
-import msgspec
-
-from dmr import Controller
-from dmr.plugins.msgspec import MsgspecSerializer
-
-
-class UserModel(msgspec.Struct):
-    email: str
-
-
-class UserController(Controller[MsgspecSerializer]):
-    def get(self) -> UserModel:
-        return UserModel(email='user@example.com')
-```
-
-**Limitations:** all streaming requires Django running in ASGI mode in production — streaming controllers won't work with WSGI.
-
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/streaming/common.html
-
-
 ## OpenAPI
 
 ### Add docstrings to controllers and endpoints for OpenAPI descriptions
@@ -1518,46 +1391,3 @@ class UserController(Controller[PydanticSerializer]):
 **Limitations:** docstrings only populate the `description` field in OpenAPI — use `@modify` or `@validate` for operation-level customization of other OpenAPI fields.
 
 Docs: https://django-modern-rest.rtfd.io/en/latest/pages/openapi/openapi.html
-
-
-## Integrations
-
-### CSRF is exempt by default — enable it explicitly for session-authenticated controllers
-
-Controllers have `csrf_exempt = True` by default, which is correct for token-based auth — set `csrf_exempt = False` only when using Django session auth.
-
-Wrong:
-
-```python
-from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.django_session import DjangoSessionSyncAuth
-
-
-class ProtectedController(Controller[PydanticSerializer]):
-    # csrf_exempt defaults to True, but session auth needs CSRF:
-    auth = (DjangoSessionSyncAuth(),)
-
-    def post(self) -> str:
-        return 'created'
-```
-
-Correct:
-
-```python
-from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.django_session import DjangoSessionSyncAuth
-
-
-class ProtectedController(Controller[PydanticSerializer]):
-    csrf_exempt = False
-    auth = (DjangoSessionSyncAuth(),)
-
-    def post(self) -> str:
-        return 'created'
-```
-
-**Limitations:** Django session auth automatically enables CSRF for security — for JWT or token auth, keep `csrf_exempt = True` (the default).
-
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/integrations.html

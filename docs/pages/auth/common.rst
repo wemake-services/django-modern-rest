@@ -162,3 +162,7 @@ API Reference
   :inherited-members:
 
 .. autofunction:: dmr.security.request_auth
+
+
+.. autoclass:: dmr.security.AuthenticatedHttpRequest
+  :members:
