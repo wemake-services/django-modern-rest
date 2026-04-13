@@ -921,12 +921,12 @@ class TestUsers(TestCase):
         request = self.rf.get('/users/', content_type='application/json')
 
         response = UserController.as_view()(request)
-        
+
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.CREATED
 ```
 
-Correct: 
+Correct:
 
 ```python
 from http import HTTPStatus
@@ -1106,8 +1106,8 @@ def test_get_users_invalid(dmr_client: DMRClient) -> None:
 # ... many more tests for each edge case
 ```
 
-Correct: use `schemathesis`. Check its officail docs for more details.
-https://schemathesis.readthedocs.io 
+Correct: use `schemathesis`. Check its official docs for more details.
+https://schemathesis.readthedocs.io
 
 **Limitations:** `schemathesis` is not bundled with `django-modern-rest` — install it separately with `uv add --group dev schemathesis`.
 
