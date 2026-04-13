@@ -508,7 +508,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         path: str,
         pattern: URLPattern,
         context: OpenAPIContext,
-        router: 'Router | None' = None,
+        router: 'Router',
     ) -> PathItem:
         """Generate OpenAPI spec for path items."""
         operations: dict[str, Any] = {
@@ -518,7 +518,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
                 cls.__qualname__,
                 cls.serializer,
                 context,
-                router=router,
+                router,
             )
             for method, endpoint in cls.api_endpoints.items()
         }

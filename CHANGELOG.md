@@ -30,6 +30,8 @@ of requirements for an API to count as public.
 2. *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
 3. *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
    an instance method, #877
+4. *Breaking*: new required `router` parameter added
+   to `Endpoint.get_schema` and `Controller.get_path_item`, #879
 
 ### Migration Prompt
 
@@ -42,6 +44,8 @@ Apply this change to the code that uses `django-modern-rest`:
    to always get a token back, add `strict=True` argument
 3. Change `provide_response_specs` class method to be instance method,
    replace all `cls` usage with `self`
+4. Add `router: Router` parameter to `Endpoint.get_schema`
+   and `Controller.get_path_item` methods
 ```
 
 ### Features

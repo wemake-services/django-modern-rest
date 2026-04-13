@@ -258,14 +258,14 @@ class Endpoint:  # noqa: WPS214
             # And the last option is to handle error globally:
             return self._global_error_handler(controller, exc)
 
-    def get_schema(  # noqa: WPS211
+    def get_schema(
         self,
         path: str,
         pattern: URLPattern,
         controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
-        router: 'Router | None' = None,
+        router: 'Router',
     ) -> Operation:
         """Build an OpenAPI Operation from an endpoint."""
         operation_id = self.get_operation_id(
@@ -286,18 +286,15 @@ class Endpoint:  # noqa: WPS214
         )
 
         tags = [
+            *router.tags,
             *(self.metadata.tags or []),
-            *(router.tags if router else []),
         ]
 
         return Operation(
             tags=tags or None,
             summary=self.metadata.summary,
             description=self.metadata.description,
-            deprecated=(
-                self.metadata.deprecated
-                or (router.deprecated if router else False)
-            ),
+            deprecated=self.metadata.deprecated or router.deprecated,
             security=security,
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
