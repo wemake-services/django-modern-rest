@@ -57,3 +57,17 @@ def test_controller_base_serializer() -> None:
 
         class _Custom(Controller[BaseSerializer]):
             """Empty."""
+
+
+def test_inherited_child_created_properly() -> None:
+    """Ensure that we can create inherited controllers."""
+
+    class _Custom(Controller[PydanticSerializer]):
+        """Empty parent controller."""
+
+    class _Final(_Custom):
+        """Empty child controller."""
+
+    assert not _Final.is_abstract
+    assert _Final.serializer is PydanticSerializer
+    assert _Final.api_endpoints == {}

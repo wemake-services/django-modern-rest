@@ -1,5 +1,6 @@
 import dataclasses
 from collections.abc import Callable, Iterator, Mapping
+from contextlib import suppress
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Any,
@@ -13,7 +14,7 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import Format, get_original_bases, get_type_hints
+from typing_extensions import Format, get_type_hints
 
 from dmr.exceptions import UnsolvableAnnotationsError
 
@@ -90,9 +91,24 @@ def infer_bases(
     use_origin: bool = True,
 ) -> list[Any]:
     """Infers ``__origin_bases__`` from the given type."""
+    bases: list[Any] = []
+
+    with suppress(AttributeError):
+        bases = orig_cls.__orig_bases__
+
+    try:
+        bases = bases or orig_cls.__dict__.get(
+            '__orig_bases__',
+            orig_cls.__bases__,
+        )
+    except AttributeError:
+        raise TypeError(
+            f'Expected an instance of type, not {type(orig_cls).__name__!r}',
+        ) from None
+
     return [
         base
-        for base in get_original_bases(orig_cls)
+        for base in bases
         if (
             (origin := get_origin(base) if use_origin else base)  # noqa: WPS509
             and is_safe_subclass(origin, given_type)
