@@ -1093,6 +1093,7 @@ from myapp.views import UserController, UserCreateModel
 
 
 class UserCreateModelFactory(ModelFactory[UserCreateModel]):
+    # Enables strict model validation during factory builds:
     __check_model__ = True
 
 
@@ -1137,8 +1138,8 @@ from django.test.utils import override_settings
 
 
 @override_settings(ROOT_URLCONF='myapp.urls')
-def test_api(api_schema: schemathesis.from_url) -> None:
-    schema = schemathesis.from_url(api_schema)
+def test_api(api_schema_url: str) -> None:
+    schema = schemathesis.from_url(api_schema_url)
 
     @schema.parametrize()
     def test_endpoint(case: schemathesis.Case) -> None:
