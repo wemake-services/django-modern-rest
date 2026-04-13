@@ -121,9 +121,8 @@ def do_wrap_dispatch(
 ) -> None:
     """Internal function to wrap dispatch in middleware."""
     original_dispatch = cls.dispatch
-    is_async = cls.view_is_async
 
-    if is_async:
+    if cls.is_async:
         cls.dispatch = create_async_dispatch(
             original_dispatch,
             middleware,

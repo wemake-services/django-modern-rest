@@ -9,7 +9,7 @@ from syrupy.assertion import SnapshotAssertion
 from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
-from dmr.openapi.objects import MediaTypeMetadata, ParameterMetadata
+from dmr.openapi.objects import Example, MediaTypeMetadata, ParameterMetadata
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -90,13 +90,26 @@ class _AuthedAndCookiesController(Controller[PydanticSerializer]):
         parsed_cookies: Cookies[
             Annotated[
                 _CookieModel,
-                ParameterMetadata(description='Cookies metadata'),
+                ParameterMetadata(description='Cookies metadata', examples={}),
             ]
         ],
         parsed_query: Query[
             Annotated[
                 _QueryModel,
-                ParameterMetadata(style='deepObject', explode=True),
+                ParameterMetadata(
+                    style='deepObject',
+                    explode=True,
+                    examples={
+                        'first': Example(
+                            summary='First example',
+                            value={
+                                'tags': ['a', 'b'],
+                                'query': 'abc',
+                                'regular': 1,
+                            },
+                        ),
+                    },
+                ),
             ]
         ],
     ) -> list[int]:

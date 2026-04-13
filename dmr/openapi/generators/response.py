@@ -40,7 +40,7 @@ class ResponseGenerator:
             for status_code, response_spec in metadata.responses.items()
         }
 
-    def get_schema(  # noqa: WPS211
+    def get_schema(
         self,
         response_spec: 'ResponseSpec',
         metadata: 'EndpointMetadata',
@@ -119,7 +119,7 @@ class ResponseGenerator:
             )
         return cookies
 
-    def _get_content(  # noqa: WPS211
+    def _get_content(
         self,
         response_spec: 'ResponseSpec',
         serializer: type['BaseSerializer'],

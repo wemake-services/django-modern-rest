@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
     from dmr.security import AsyncAuth, SyncAuth
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
@@ -55,6 +56,7 @@ class Settings(enum.StrEnum):
     parsers = 'parsers'
     renderers = 'renderers'
     auth = 'auth'
+    throttling = 'throttling'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     semantic_responses = 'semantic_responses'
@@ -103,6 +105,7 @@ class SettingsDict(TypedDict, total=False):
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
     auth: Sequence['AsyncAuth | SyncAuth']
+    throttling: Sequence['AsyncThrottle | SyncThrottle']
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     semantic_responses: bool
@@ -126,6 +129,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
     Settings.auth: [],
+    Settings.throttling: [],
     # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',

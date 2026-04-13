@@ -29,6 +29,11 @@
   },
   "plugins": [
     {
+      "name": "dmr",
+      "source": "./dmr",
+      "description": "Write the best DMR code possible with all the recommended best practices, avoiding common mistakes"
+    },
+    {
       "name": "dmr-from-drf",
       "source": "./dmr-from-drf",
       "description": "Migrate Django REST Framework APIs to django-modern-rest"

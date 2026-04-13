@@ -33,8 +33,8 @@ class ScalarView(OpenAPIView):
             self.template_name,
             context={
                 'title': self.schema.info.title,
-                'schema': (
-                    self.schema.convert(skip_validation=self.skip_validation),
+                'schema': self.schema.convert(
+                    skip_validation=self.skip_validation,
                 ),
                 'scalar_cdn': cdn_config.get('scalar'),
             },

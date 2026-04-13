@@ -135,7 +135,7 @@ class SerializerContext:
         name_prefix = controller_cls.__qualname__  # pyright: ignore[reportUnusedVariable]
 
         default_model = TypedDict(  # type: ignore[misc]
-            f'_{name_prefix}@ContextModel',  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[invalid-argument]
+            f'_{name_prefix}@ContextModel',  # pyright: ignore[reportArgumentType]
             type_map,
             total=True,
         )

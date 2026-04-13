@@ -30,7 +30,7 @@ class JsonLinesRenderer(StreamingRenderer):
 
     content_type = ContentType.jsonl
 
-    def __init__(  # noqa: WPS211
+    def __init__(
         self,
         serializer: type['BaseSerializer'],
         regular_renderer: Renderer,

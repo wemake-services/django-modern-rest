@@ -17,6 +17,7 @@ from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
+from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
 class _Model(pydantic.BaseModel):
@@ -134,6 +135,8 @@ class WrongValidateController(Controller[PydanticSerializer]):
 
 
 class WrongAuthMixedController(Controller[PydanticSerializer]):
+    auth = (DjangoSessionSyncAuth(), DjangoSessionAsyncAuth())  # type: ignore[assignment]
+
     @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
     def get(self) -> str:
         return 'mixed'
@@ -141,6 +144,21 @@ class WrongAuthMixedController(Controller[PydanticSerializer]):
     @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]
+    )
+    async def meta(self) -> HttpResponse:
+        return HttpResponse()
+
+
+class WrongThrottlingMixedController(Controller[PydanticSerializer]):
+    throttling = (SyncThrottle(1, 2), AsyncThrottle(1, 2))  # type: ignore[assignment]
+
+    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[arg-type]
+    def get(self) -> str:
+        return 'mixed'
+
+    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)],  # type: ignore[arg-type]
     )
     async def meta(self) -> HttpResponse:
         return HttpResponse()

@@ -131,7 +131,7 @@ class SSEvent(Generic[_DataT_co]):
         serialize: Literal[True] = True,
     ) -> None: ...
 
-    def __init__(  # noqa: WPS211
+    def __init__(
         self: 'SSEvent[Any]',
         data: _DataT_co | bytes | None = None,
         *,

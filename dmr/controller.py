@@ -33,6 +33,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
+from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -103,11 +104,18 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
+        throttling: Sequence of throttle instances to be used.
+            Sync controllers must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async controllers must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this controller.
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type.
+        is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
         annotations_context: Inference context to call
@@ -148,8 +156,12 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     parsers: ClassVar[Sequence[Parser]] = ()
     renderers: ClassVar[Sequence[Renderer]] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    throttling: ClassVar[
+        Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
+    ] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
+    is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
@@ -160,9 +172,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     # Public instance API:
     kwargs: dict[str, Any]
-
-    # Protected API:
-    _is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
 
     @override
     def __init_subclass__(cls) -> None:
@@ -184,7 +193,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             )
             for canonical, meth in cls._find_existing_http_methods().items()
         }
-        cls._is_async = cls.controller_validator_cls()(cls)
+        cls.is_async = cls.controller_validator_cls()(cls)
 
     @override
     @classmethod
@@ -243,9 +252,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         self,
         raw_data: Any,
         *,
+        status_code: HTTPStatus | None = None,
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
-        status_code: HTTPStatus | None = None,
         renderer: Renderer | None = None,
     ) -> HttpResponse:
         """
@@ -281,14 +290,15 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         Helpful method to convert API error parts into an actual error.
 
         Always requires the error code to be passed.
+        Is an alias for ``to_response`` method with a siglightly different
+        signature and semantics.
 
         Should be always used instead of using
         raw :class:`django.http.HttpResponse` objects.
         Does the usual validation, no "second validation" problem exists.
         """
-        return build_response(
-            self.serializer,
-            raw_data=raw_data,
+        return self.to_response(
+            raw_data,
             headers=headers,
             cookies=cookies,
             status_code=status_code,
@@ -337,7 +347,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         By default - does nothing, only re-raises the passed error.
         Won't be called when using async endpoints.
         """
-        raise exc from None
+        raise  # noqa: PLE0704
 
     async def handle_async_error(
         self,
@@ -352,7 +362,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         By default - does nothing, only re-raises the passed error.
         Won't be called when using sync endpoints.
         """
-        raise exc from None
+        raise  # noqa: PLE0704
 
     @override
     @deprecated(
@@ -523,7 +533,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
-        return cls._is_async is True
+        # This is a part of the `django.View` API, so it must be there.
+        return cls.is_async is True
 
     # Protected API:
 
@@ -554,7 +565,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         response: _ResponseT,
     ) -> _ResponseT:
         """Wraps response into a coroutine if this is an async controller."""
-        if cls._is_async:
+        if cls.is_async:
             return identity(response)
         return response
 

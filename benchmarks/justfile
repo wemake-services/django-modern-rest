@@ -1,6 +1,6 @@
 # Run HTTP load benchmarks
 bench:
-    python run_benchmark.py
+    uv run python run_benchmark.py
 
 # Run URL resolver benchmarks with hyperfine
 bench-resolver:

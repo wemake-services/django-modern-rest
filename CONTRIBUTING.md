@@ -6,6 +6,8 @@
 We use [uv](https://github.com/astral-sh/uv) to manage the dependencies
 and [just](https://github.com/casey/just) as a command runner.
 
+To install them you would need to run `uv sync --all-groups --all-extras`
+command or:
 To install `just` run:
 
 ```bash
@@ -15,7 +17,7 @@ uv tool install rust-just
 To install project dependencies run:
 
 ```bash
-uv sync --all-extras --all-groups
+just install
 ```
 
 ### venv

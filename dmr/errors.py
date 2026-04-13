@@ -23,6 +23,7 @@ from dmr.exceptions import (
     NotAuthenticatedError,
     RequestSerializationError,
     ResponseSchemaError,
+    TooManyRequestsError,
     ValidationError,
 )
 
@@ -43,6 +44,7 @@ class ErrorType(enum.StrEnum):
         internal_error: Raised when internal error happens.
         not_allowed: Raised when using unsupported http method. 405 alias.
         security: Raised when security related error happens.
+        ratelimit: Raised when ratelimit related error happens.
         user_msg: Raised for custom errors from users.
         not_found: Raised when we can't find controller.
         streaming: Happens when we stream events.
@@ -53,6 +55,7 @@ class ErrorType(enum.StrEnum):
     internal_error = 'internal_error'
     not_allowed = 'not_allowed'
     security = 'security'
+    ratelimit = 'ratelimit'
     user_msg = 'user_msg'
     not_found = 'not_found'
     streaming = 'streaming'
@@ -112,13 +115,10 @@ def format_error(  # noqa: C901, WPS231
             ResponseSchemaError,
             NotAcceptableError,
             NotAuthenticatedError,
+            TooManyRequestsError,
         ),
     ):
-        error_type = (
-            ErrorType.security
-            if isinstance(error, NotAuthenticatedError)
-            else ErrorType.value_error
-        )
+        error_type = getattr(error, 'error_type', ErrorType.value_error)
         error = str(error.args[0])
 
     if isinstance(error, str):
@@ -207,7 +207,7 @@ def wrap_handler(
 
     else:
 
-        @wraps(method)  # pyrefly: ignore[bad-argument-type]
+        @wraps(method)
         def decorator(
             endpoint: 'Endpoint',
             controller: 'Controller[BaseSerializer]',
@@ -232,6 +232,7 @@ _default_handled_excs: Final = (
     ValidationError,
     InternalServerError,
     DataRenderingError,
+    TooManyRequestsError,
 )
 
 
@@ -311,4 +312,4 @@ def global_error_handler(
             cookies=getattr(exc, 'cookies', None),
             renderer=getattr(exc, 'renderer', None),
         )
-    raise exc from None
+    raise  # noqa: PLE0704

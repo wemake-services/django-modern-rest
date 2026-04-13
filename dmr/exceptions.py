@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from dmr.errors import ErrorDetail
 
 _NOT_AUTHENTICATED_MSG: Final = _('Not authenticated')
+_TOO_MANY_REQUESTS: Final = _('Too many requests')
 
 
 @final
@@ -110,4 +111,30 @@ class NotAuthenticatedError(Exception):
 
     def __init__(self, msg: str | Promise | None = None) -> None:
         """Provides default error message."""
+        # Circular import:
+        from dmr.errors import ErrorType  # noqa: PLC0415
+
         super().__init__(msg or self.default_message)
+        self.error_type = ErrorType.security
+
+
+@final
+class TooManyRequestsError(Exception):
+    """Raised when user fails the throttling check."""
+
+    default_message: ClassVar[str | Promise] = _TOO_MANY_REQUESTS
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.TOO_MANY_REQUESTS
+
+    def __init__(
+        self,
+        msg: str | Promise | None = None,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        """Provides default error message."""
+        # Circular import:
+        from dmr.errors import ErrorType  # noqa: PLC0415
+
+        super().__init__(msg or self.default_message)
+        self.headers = headers
+        self.error_type = ErrorType.ratelimit

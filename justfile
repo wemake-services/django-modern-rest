@@ -2,8 +2,16 @@
 _default:
     @just --list --unsorted --list-submodules
 
+# Benchmarks module
 mod bench 'benchmarks/justfile'
-mod docs 'docs/justfile'
+
+# Docs module
+mod _docs 'docs/justfile'
+
+# Install dependencies
+[group('dev')]
+install:
+    uv sync --all-groups --all-extras
 
 # Format code with ruff
 [group('dev')]
@@ -48,6 +56,10 @@ smoke:
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
     uv run python -c 'from dmr.security.jwt import *'
+    uv run python -c 'from dmr.throttling import *'
+    uv run python -c 'from dmr.throttling.backends import *'
+    uv run python -c 'from dmr.throttling.algorithms import *'
+    uv run python -c 'from dmr.throttling.cache_keys import *'
     uv run python -c 'from dmr.openapi.config import *'
     uv run python -c 'from dmr.openapi.objects import *'
     # Settings itself can be imported with `.setup()`:
@@ -56,7 +68,9 @@ smoke:
 # Run QA tools on example code
 [group('testing')]
 example:
-    cd django_test_app && uv run mypy --config-file mypy.ini && uv run python manage.py makemigrations --dry-run --check
+    cd django_test_app \
+      && uv run mypy --config-file mypy.ini \
+      && uv run python manage.py makemigrations --dry-run --check
     PYTHONPATH='docs/' uv run pytest -o addopts='' \
       --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
@@ -72,7 +86,7 @@ example-run:
 [group('testing')]
 translations:
     uv run dennis-cmd lint dmr/locale
-    -uv run django-admin compilemessages --ignore dmr
+    uv run django-admin compilemessages --ignore dmr || true
     uv run django-admin compilemessages
 
 # Validate package dependencies and run security audit
@@ -103,3 +117,15 @@ mypyc: clean
 clean:
     rm -rf build/ dist/
     find dmr/_compiled -type f -name '*.so' | xargs rm -rf
+
+# Build docs
+[group('docs')]
+docs +targets='clean html': (_docs::build targets)
+
+# Add new translation strings
+[group('i18n')]
+makemessages:
+  #!/usr/bin/env bash
+  for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
+    uv run django-admin makemessages -l "$(basename "$target")"
+  done

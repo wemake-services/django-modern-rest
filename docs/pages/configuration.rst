@@ -280,9 +280,30 @@ Authentication
 
   All auth types must be importable in settings.
 
-  .. note::
 
-    All auth classes must support initialization without parameters.
+Throttling
+----------
+
+.. data:: dmr.settings.Settings.throttling
+
+  Default: ``[]``
+
+  Configure throttling rules for the whole API.
+
+  To enable throttling for all endpoints you can use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from dmr.throttling import SyncThrottle, Rate
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.throttling: [
+    ...         SyncThrottle(10, Rate.second),
+    ...     ],
+    ... }
+
+  All throttle types must be importable in settings.
 
 
 HTTP Spec validation

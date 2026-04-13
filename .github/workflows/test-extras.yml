@@ -1,0 +1,181 @@
+name: test-extras
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "dmr/**"
+      - "tests/**"
+      - "django_test_app/**"
+      - ".github/workflows/test-extras.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pypy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['pypy3.11']
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+    - name: Install dependencies
+      run: |
+        uv sync --group unit-test --no-group dev \
+          --no-extra msgspec --no-extra attrs --all-extras
+
+    - name: Run checks
+      run: uv run --no-sync pytest tests/test_unit -o addopts=""
+
+
+  test-django-versions:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12']
+        django-version:
+          - 'Django~=4.2.0'
+          - 'Django~=5.1.0'
+          - 'Django~=6.0.0'
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+    - name: Install just
+      run: uv tool install rust-just
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --group integration
+        uv pip install "${{ matrix.django-version }}"
+
+    - name: Run checks
+      run: just smoke unit
+
+
+  build-no-msgspec:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.14']
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+    - name: Install just
+      run: uv tool install rust-just
+
+    - name: Install dependencies
+      run: uv sync --no-extra msgspec --no-extra attrs --all-extras --group integration
+
+    - name: Run checks
+      run: |
+        just smoke example
+        uv run pytest --cov-fail-under=90
+
+
+  build-no-pydantic:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+    - name: Install just
+      run: uv tool install rust-just
+
+    - name: Install dependencies
+      run: uv sync --no-extra pydantic --all-extras --group integration
+
+    - name: Run checks
+      run: |
+        just smoke
+        uv run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
+
+
+  build-no-serializers:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+    - name: Install just
+      run: uv tool install rust-just
+
+    - name: Install dependencies
+      run: uv sync --extra jwt
+
+    - name: Run checks
+      run: just smoke

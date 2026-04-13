@@ -33,8 +33,8 @@ class RedocView(OpenAPIView):
             self.template_name,
             context={
                 'title': self.schema.info.title,
-                'schema': (
-                    self.schema.convert(skip_validation=self.skip_validation),
+                'schema': self.schema.convert(
+                    skip_validation=self.skip_validation,
                 ),
                 'redoc_cdn': cdn_config.get('redoc'),
             },

@@ -19,6 +19,7 @@ from dmr.exceptions import (
 )
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.internal.context import SerializerContext as SerializerContext
+from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
@@ -35,6 +36,7 @@ from dmr.response import APIError, APIRedirectError
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
+from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
@@ -333,6 +335,8 @@ class Endpoint:  # noqa: WPS214
             **kwargs: Any,
         ) -> HttpResponseBase:
             try:  # noqa: WPS229
+                controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
+
                 # Negotiate response:
                 self.response_negotiator(controller.request)
 
@@ -370,6 +374,8 @@ class Endpoint:  # noqa: WPS214
             **kwargs: Any,
         ) -> HttpResponseBase:
             try:  # noqa: WPS229
+                controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
+
                 # Negotiate response:
                 self.response_negotiator(controller.request)
 
@@ -395,8 +401,24 @@ class Endpoint:  # noqa: WPS214
 
         return decorator
 
+    # Sync checks:
+
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
-        # Run sync auth checks:
+        self._run_throttle_before(controller)
+        self._run_auth(controller)
+        self._run_throttle_after(controller)
+
+    def _run_throttle_before(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_before_auth is None:
+            return
+        for throttle in self.metadata.throttling_before_auth:
+            assert isinstance(throttle, SyncThrottle)  # noqa: S101
+            throttle(self, controller)
+
+    def _run_auth(self, controller: 'Controller[BaseSerializer]') -> None:
         if self.metadata.auth is None:
             return
         for auth in self.metadata.auth:
@@ -407,11 +429,41 @@ class Endpoint:  # noqa: WPS214
                 return
         raise NotAuthenticatedError
 
+    def _run_throttle_after(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_after_auth is None:
+            return
+        for throttle in self.metadata.throttling_after_auth:
+            assert isinstance(throttle, SyncThrottle)  # noqa: S101
+            throttle(self, controller)
+
+    # Async checks:
+
     async def _run_async_checks(
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> None:
-        # Run async auth checks:
+        await self._run_async_throttle_before(controller)
+        await self._run_async_auth(controller)
+        await self._run_async_throttle_after(controller)
+
+    async def _run_async_throttle_before(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_before_auth is None:
+            return
+        for throttle in self.metadata.throttling_before_auth:
+            assert isinstance(throttle, AsyncThrottle)  # noqa: S101
+            # We have to check them in sync one by one :(
+            await throttle(self, controller)  # noqa: WPS476
+
+    async def _run_async_auth(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
         if self.metadata.auth is None:
             return
         for auth in self.metadata.auth:
@@ -421,6 +473,19 @@ class Endpoint:  # noqa: WPS214
                 controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
+
+    async def _run_async_throttle_after(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_after_auth is None:
+            return
+        for throttle in self.metadata.throttling_after_auth:
+            assert isinstance(throttle, AsyncThrottle)  # noqa: S101
+            # We have to check them in sync one by one :(
+            await throttle(self, controller)  # noqa: WPS476
+
+    # Utils:
 
     def _make_http_response(
         self,
@@ -521,6 +586,7 @@ def validate(  # noqa: WPS234
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -549,6 +615,7 @@ def validate(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -577,6 +644,7 @@ def validate(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -604,6 +672,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -685,6 +754,12 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Async endpoints must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth for this endpoint.
+        throttling: Sequence of throttle instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async endpoints must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -719,6 +794,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             parsers=parsers,
             renderers=renderers,
             auth=auth,
+            throttling=throttling,
             summary=summary,
             description=description,
             tags=tags,
@@ -817,6 +893,7 @@ def modify(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -845,6 +922,7 @@ def modify(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -874,6 +952,7 @@ def modify(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -902,6 +981,7 @@ def modify(  # noqa: WPS211
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -967,6 +1047,12 @@ def modify(  # noqa: WPS211
             Async endpoints must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth for this endpoint.
+        throttling: Sequence of throttle instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async endpoints must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -1007,6 +1093,7 @@ def modify(  # noqa: WPS211
             parsers=parsers,
             renderers=renderers,
             auth=auth,
+            throttling=throttling,
             summary=summary,
             description=description,
             tags=tags,

@@ -59,6 +59,9 @@ def test_native_json_metadata() -> None:
     }
     assert len(metadata.parsers) == 1
     assert len(metadata.renderers) == 1
+    assert metadata.auth is None
+    assert metadata.throttling_before_auth is None
+    assert metadata.throttling_after_auth is None
 
 
 @pytest.mark.parametrize(

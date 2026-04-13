@@ -178,6 +178,32 @@ See :ref:`content negotiation <error-model-negotiation>`
 docs about how to use different error models
 for different content types.
 
+Customizing error headers and cookies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let's say you want to customize how all errors responses behave
+and add a header, for example, ``X-Error-Id`` from your error tracking system.
+
+How this can be done?
+
+.. literalinclude:: /examples/error_handling/custom_error_headers.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+To attach response headers or cookies to the error model
+we use :class:`~dmr.metadata.ResponseSpecMetadata`
+inside :data:`typing.Annotated` type.
+
+We also have to redefine :meth:`~dmr.controller.Controller.to_error`
+to add missing ``X-Error-Id`` headers for your error responses.
+
+You can do the same for all responses, not just failing ones.
+For this, override :meth:`~dmr.controller.Controller.to_response`.
+
+This can also be used to attach ``RateLimit`` headers
+and other :doc:`throttling` information.
+
 
 Problem Details
 ---------------

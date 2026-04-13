@@ -1,5 +1,5 @@
-Internalization
-===============
+Internationalization
+====================
 
 ``django-modern-rest`` supports optional ``i18n`` feature
 which is provided by the Django itself.
@@ -48,7 +48,7 @@ Setting the language code per request:
 Then any requests with ``Accept-Language`` header will set
 the required language for this specific response.
 
-.. literalinclude:: /examples/internalization/accept_language.py
+.. literalinclude:: /examples/internationalization/accept_language.py
   :caption: middleware.py
   :language: python
   :linenos:
@@ -98,7 +98,7 @@ Forcing constant API language
 If you have a website using some non-English ``LANGUAGE_CODE``
 and you want to add an API that will always use
 
-.. literalinclude:: /examples/internalization/force_en.py
+.. literalinclude:: /examples/internationalization/force_en.py
   :caption: middleware.py
   :language: python
   :linenos:

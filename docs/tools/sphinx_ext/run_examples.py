@@ -250,7 +250,7 @@ class _BaseBuilder:  # noqa: WPS214
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=True,
+            DEBUG=True,  # NOTE: this must be `False`
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
@@ -287,6 +287,24 @@ class _BaseBuilder:  # noqa: WPS214
             },
             DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
+            CACHES={
+                'default': {
+                    'BACKEND': (
+                        'django.core.cache.backends.filebased.FileBasedCache'
+                    ),
+                    'LOCATION': str(
+                        _BASE_DIR / 'docs' / '_build' / 'default.cache',
+                    ),
+                },
+                'throttling': {
+                    'BACKEND': (
+                        'django.core.cache.backends.filebased.FileBasedCache'
+                    ),
+                    'LOCATION': str(
+                        _BASE_DIR / 'docs' / '_build' / 'throttling.cache',
+                    ),
+                },
+            },
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
@@ -607,7 +625,7 @@ def _extract_comment_config(
         ) from exc
 
 
-def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
+def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:  # noqa: WPS210
     """
     Start a server with the example application, run the specified requests.
 
@@ -627,6 +645,11 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
             )
             if example_result:
                 example_results.append(example_result)
+
+    from django.core.cache import caches  # noqa: PLC0415
+
+    for cache in caches.all():
+        cache.clear()
 
     return '\n\n'.join(example_results)
 

@@ -60,9 +60,8 @@ class Renderer(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -70,7 +69,7 @@ class Renderer(ResponseSpecProvider):
         """Provides responses that can happen when data can't be rendered."""
         # This is technically not renderer's response, but it is the closest.
         response_validation = (
-            cls._add_new_response(
+            self._add_new_response(
                 ResponseSpec(
                     return_type=controller_cls.error_model,
                     status_code=ResponseSchemaError.status_code,
@@ -87,7 +86,7 @@ class Renderer(ResponseSpecProvider):
         )
         return [
             *response_validation,
-            *cls._add_new_response(
+            *self._add_new_response(
                 # When we face wrong `Accept` header, we raise 406 error:
                 ResponseSpec(
                     return_type=controller_cls.error_model,

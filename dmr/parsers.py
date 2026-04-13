@@ -69,9 +69,8 @@ class Parser(ResponseSpecProvider):
         """
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],

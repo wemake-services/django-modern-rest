@@ -83,6 +83,9 @@ Why so fast?
   with fewer checks, so we can have the best of two worlds:
   strict development workflow and fast runtime for real users
 
+We also support `PyPy <https://github.com/pypy/pypy>`_, which can be several
+orders of magnitude faster that CPython.
+
 Async
 ~~~~~
 

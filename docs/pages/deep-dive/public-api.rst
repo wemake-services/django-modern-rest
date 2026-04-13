@@ -24,6 +24,8 @@ Endpoint
 
 .. autodecorator:: dmr.endpoint.validate
 
+.. autodecorator:: dmr.endpoint.request_endpoint
+
 
 Response, headers and cookies
 -----------------------------
@@ -32,6 +34,9 @@ Response, headers and cookies
   :members:
 
 .. autoclass:: dmr.metadata.ResponseSpec
+  :members:
+
+.. autoclass:: dmr.metadata.ResponseSpecMetadata
   :members:
 
 .. autoclass:: dmr.metadata.ResponseModification
@@ -116,30 +121,43 @@ Exceptions
 
 .. autoexception:: dmr.exceptions.UnsolvableAnnotationsError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.EndpointMetadataError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.DataParsingError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.RequestSerializationError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.ResponseSchemaError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.ValidationError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.NotAcceptableError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.NotAuthenticatedError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.InternalServerError
   :members:
+  :show-inheritance:
+
+.. autoexception:: dmr.exceptions.TooManyRequestsError
+  :members:
+  :show-inheritance:
 
 
 Utilities

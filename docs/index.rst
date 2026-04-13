@@ -25,6 +25,10 @@
       :alt: Coverage
       :target: https://codecov.io/gh/wemake-services/django-modern-rest
 
+   .. image:: https://img.shields.io/badge/no-slop-purple.svg
+      :alt: No AI slop
+      :target: https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md
+
    .. image:: https://img.shields.io/pypi/pyversions/django-modern-rest.svg
       :alt: Supported Python versions
       :target: https://pypi.org/project/django-modern-rest
@@ -37,7 +41,7 @@
       :alt: DeepWiki
       :target: https://deepwiki.com/wemake-services/django-modern-rest
 
-   .. image:: https://img.shields.io/badge/chat-join-blue?logo=telegram
+   .. image:: https://img.shields.io/badge/chat-join-blue.svg?logo=telegram
       :alt: Telegram Chat
       :target: https://t.me/django_modern_rest
 
@@ -179,11 +183,12 @@ Here are our amazing people who made this project possible.
   pages/queryset.rst
   pages/negotiation.rst
   pages/error-handling.rst
+  pages/throttling.rst
   pages/middleware.rst
   pages/validation.rst
   pages/reusable-code.rst
   pages/integrations.rst
-  pages/internalization.rst
+  pages/internationalization.rst
   pages/testing.rst
 
 

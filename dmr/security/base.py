@@ -32,15 +32,14 @@ class _BaseAuth(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
-        return cls._add_new_response(
+        return self._add_new_response(
             ResponseSpec(
                 controller_cls.error_model,
                 status_code=NotAuthenticatedError.status_code,
@@ -69,14 +68,14 @@ class SyncAuth(_BaseAuth):
         """
         Put your auth business logic here.
 
+        Return ``self`` if the login attempt was successful.
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exceptions.PermissionDenied`
+        Raise :exc:`dmr.exceptions.NotAuthenticatedError`
         to immediately fail the login without trying other authes.
         Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
-        Return any other value if the auth succeeded.
         """
 
 
@@ -99,14 +98,14 @@ class AsyncAuth(_BaseAuth):
         """
         Put your auth business logic here.
 
+        Return ``self`` if the login attempt was successful.
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exceptions.PermissionDenied`
+        Raise :exc:`dmr.exceptions.NotAuthenticatedError`
         to immediately fail the login without trying other authes.
         Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
-        Return any other value if the auth succeeded.
         """
 
 

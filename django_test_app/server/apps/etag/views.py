@@ -99,3 +99,4 @@ class ConditionalETagController(Controller[PydanticSerializer]):
 # run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/example/1/", "url_pattern": "/api/example/<int:user_id>/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/example/1/", "url_pattern": "/api/example/<int:user_id>/", "headers": {"If-None-Match": "\"user-1-2026-03-23T12:30:00+00:00\""}, "curl_args": ["-D", "-"], "assert-error-text": "304", "fail-with-body": false}  # noqa: ERA001, E501
 # run: {"controller": "ConditionalETagController", "method": "get", "url": "/api/example/2/", "url_pattern": "/api/example/<int:user_id>/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "ConditionalETagController", "openapi_url": "/docs/openapi.json", "url_pattern": "/api/example/<int:user_id>/"}  # noqa: ERA001, E501

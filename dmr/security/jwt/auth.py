@@ -193,16 +193,6 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """
         return token.sub
 
-    def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: 'AbstractBaseUser',
-        token: JWToken,
-    ) -> None:
-        """Set current user as authed for this request."""
-        request.user = user
-        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
-
     def _uses_standard_http_bearer_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP bearer auth."""
         return (
@@ -266,6 +256,16 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         if not user.is_active:
             raise NotAuthenticatedError
 
+    def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: 'AbstractBaseUser',
+        token: JWToken,
+    ) -> None:
+        """Set current user as authed for this request."""
+        request.user = user
+        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
+
 
 class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     """Async jwt auth."""
@@ -293,7 +293,7 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         """Run all auth pipeline."""
         user = await self.get_user(token)
         await self.check_auth(user, token)
-        self.set_request_attrs(request, user, token)
+        await self.set_request_attrs(request, user, token)
         return user
 
     async def get_user(self, token: JWToken) -> 'AbstractBaseUser':
@@ -317,6 +317,21 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError
+
+    async def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: 'AbstractBaseUser',
+        token: JWToken,
+    ) -> None:
+        """Set current user as authed for this request."""
+        request.user = user
+
+        async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
+            return user
+
+        request.auser = auser
+        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
 
 
 @overload

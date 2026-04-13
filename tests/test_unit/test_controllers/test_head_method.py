@@ -1,10 +1,12 @@
 import json
 from http import HTTPStatus
 
+import pytest
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Controller, ResponseSpec, validate
+from dmr.endpoint import request_endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 
@@ -52,3 +54,6 @@ def test_no_explicit_head_method(dmr_rf: DMRRequestFactory) -> None:
             },
         ],
     })
+    assert request_endpoint(request) is None
+    with pytest.raises(AttributeError, match='__dmr_endpoint__'):
+        request_endpoint(request, strict=True)

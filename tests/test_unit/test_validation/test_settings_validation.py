@@ -37,6 +37,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'parsers': [1]},
         {'renderers': [None]},
         {'auth': ['auth']},
+        {'throttling': ['throttling']},
         {'responses': [{}]},
         {'openapi_config': []},
         {'global_error_handler': None},

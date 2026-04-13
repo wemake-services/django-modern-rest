@@ -148,7 +148,7 @@ docs = [
   "shibuya>=2026.1,<2027",
   "docutils>=0.22,<0.23",
   # Needed for our extension:
-  "uvicorn>=0.41,<0.43",
+  "uvicorn>=0.41,<0.44",
   "zapros>=0.5,<0.6",
   # Needed for examples:
   "xmltodict-rs>=0.13,<0.14",

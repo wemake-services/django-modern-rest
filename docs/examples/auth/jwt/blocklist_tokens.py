@@ -3,7 +3,7 @@ from django.http import HttpRequest
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import request_auth
+from dmr.security import AuthenticatedHttpRequest, request_auth
 from dmr.security.jwt import JWTAsyncAuth, request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistAsyncMixin
 
@@ -20,7 +20,7 @@ jwt_blocklist_auth = JWTAuthWithBlocklist()
 
 
 class APIController(Controller[PydanticSerializer]):
-    request: AuthenticatedRequest
+    request: AuthenticatedHttpRequest[User]
     auth = (jwt_blocklist_auth,)
 
     async def get(self) -> str:

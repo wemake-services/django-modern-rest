@@ -31,26 +31,7 @@ class ConditionalType:
     :func:`dmr.negotiation.conditional_type` instead of this.
     """
 
-    _original: tuple[tuple[str, Any], ...]
-    computed: Mapping[str, Any] = dataclasses.field(
-        hash=False,
-        init=False,
-    )
-
-    def __post_init__(self) -> None:
-        """
-        Post-process passed objects.
-
-        What we do here:
-        1. We have to have `_ConditionalType` hashable, so it can be cached
-        2. We pass a dict as pairs of tuples
-        3. Then we pre-compute the dict back
-
-        It wastes extra memory, but we are fine with that,
-        because objects will be rather small.
-        It is Python after all!
-        """
-        object.__setattr__(self, 'computed', dict(self._original))
+    computed: Mapping[str, Any] = dataclasses.field(hash=False)
 
 
 def response_validation_negotiator(

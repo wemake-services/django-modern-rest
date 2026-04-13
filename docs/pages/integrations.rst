@@ -5,8 +5,8 @@ Big list of Django integrations: https://github.com/wsvincent/awesome-django
 
 .. warning::
 
-  In the future - some integrations from this list my be included
-  into the core ``django-modern-rest`` package. Or ship as plugins.
+  In the future - some integrations from this list might be included
+  into the core of ``django-modern-rest`` package. Or ship as plugins.
 
   If you are interested in something:
   `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
@@ -130,14 +130,6 @@ Everything just works:
   :linenos:
 
 
-Throttling
-----------
-
-One can use
-`django-smart-limit <https://github.com/YasserShkeir/django-smart-ratelimit>`_.
-Or any other native Django plugin for this task.
-
-
 Health Checks
 -------------
 
@@ -189,14 +181,8 @@ Known caveats:
 - When CSP is a hard requirement, start with local bundled assets and test
   the exact renderer and version you plan to deploy.
 
-Example ``django-csp`` setup:
-
-.. literalinclude:: /../django_test_app/server/settings.py
-  :caption: settings.py
-  :language: python
-  :linenos:
-  :no-imports-spoiler:
-  :lines: 156-171
+Example ``django-csp`` setup can be found in
+`wemake-django-template <https://github.com/wemake-services/wemake-django-template/blob/master/%7B%7Bcookiecutter.project_name%7D%7D/server/settings/components/csp.py>`_.
 
 If you use OpenAPI UIs, see :doc:`openapi/openapi`
 for renderer-specific guidance.

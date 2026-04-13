@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-22 12:40-0300\n"
+"POT-Creation-Date: 2026-04-12 14:30+0300\n"
 "PO-Revision-Date: 2026-03-22 12:40-0300\n"
 "Last-Translator: Pablo Henrique Aguilar\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -35,16 +35,20 @@ msgstr ""
 "Tentando parsear arquivos com {parser_name} que não suporta o protocolo "
 "SupportsFileParsing"
 
-#: dmr/controller.py:45
+#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "Método {method} não é permitido, permitidos: {allowed}"
 
-#: dmr/exceptions.py:11
+#: dmr/exceptions.py:10
 msgid "Not authenticated"
 msgstr "Não autenticado"
 
-#: dmr/exceptions.py:51
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr ""
+
+#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Erro interno do servidor"
 
@@ -65,7 +69,7 @@ msgstr ""
 "Não é possível serializar o corpo da resposta com os tipos aceitos "
 "{accepted_types}, suportados={supported}"
 
-#: dmr/negotiation.py:25
+#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
@@ -74,7 +78,7 @@ msgstr ""
 "Não é possível parsear o corpo da requisição com o tipo de conteúdo "
 "{content_type}, esperado={expected}"
 
-#: dmr/security/django_session/auth.py:26
+#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "Falha no CSRF: {reason}"
@@ -87,7 +91,7 @@ msgstr "Token JWT Bloqueado"
 msgid "BlocklistedJWTokens"
 msgstr "Tokens JWT Bloqueados"
 
-#: dmr/serializer.py:27
+#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "O valor {value} do tipo {type} não é suportado para {target_type}"
