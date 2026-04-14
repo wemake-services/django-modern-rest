@@ -40,13 +40,11 @@ class _SSEventSlots:
 
 
 @final
-@dataclasses.dataclass(init=False)
+@dataclasses.dataclass(init=False, slots=True)
 class SSEvent(_SSEventSlots, Generic[_DataT_co]):
     """Server sent event payload."""
 
     # We keep the docstring short, because it is used in the schema.
-
-    __slots__ = ()
 
     # Fields declaration, `__init__` method is customized further:
     data: _DataT_co  # type: ignore[misc, unused-ignore]
@@ -186,7 +184,7 @@ class SSEvent(_SSEventSlots, Generic[_DataT_co]):
         self.id = id
         self.retry = retry
         self.comment = comment
-        self._serialize = serialize
+        self._serialize = serialize  # type: ignore[misc]
 
     @property
     def should_serialize_data(self) -> bool:
