@@ -1,6 +1,6 @@
 import abc
 import dataclasses
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import override
 
@@ -94,7 +94,6 @@ class UserPk(BaseThrottleCacheKey):
 
     exclude_superuser: bool = True
     exclude_stuff: bool = True
-    runs_before_auth: bool = False  # pyright: ignore[reportIncompatibleMethodOverride]
     name: str = 'UserPk'  # pyright: ignore[reportIncompatibleMethodOverride]
 
     @override
@@ -114,3 +113,8 @@ class UserPk(BaseThrottleCacheKey):
         if is_excluded or user_pk is None:
             return None
         return str(user_pk)
+
+    @property
+    @override
+    def runs_before_auth(self) -> Literal[False]:
+        return False

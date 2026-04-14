@@ -20,8 +20,6 @@ of requirements for an API to count as public.
 
 ## WIP
 
-1. Added `UserPk` cache key, #881
-
 ### Breaking changes
 
 1. Removed public `OpenAPIView.dumps` customization hook, #847
