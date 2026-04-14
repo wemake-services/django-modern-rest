@@ -83,9 +83,7 @@ ignore_imports =
   dmr.management.commands.dmr_export_schema -> yaml
   # Optional json support from msgspec:
   dmr.settings -> msgspec
-  dmr.openapi.dump -> msgspec
-  # Optional faster JSON encoding in test fixtures:
-  dmr.test -> msgspec
+  dmr.internal.json -> msgspec
 
 [importlinter:contract:plugins-independence]
 name = All `plugins` must be independent

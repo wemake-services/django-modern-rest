@@ -1,7 +1,5 @@
-import json
 from http import HTTPStatus
 from typing import final
-from unittest.mock import patch
 
 import pydantic
 import pytest
@@ -28,16 +26,7 @@ class _MyController(Controller[PydanticSerializer]):
 def test_encode_json_with_list_data(dmr_rf: DMRRequestFactory) -> None:
     """Ensures list data is JSON-encoded via `_DMRMixin._encode_json`."""
     request = dmr_rf.post('/whatever/', data=[1, 2, 3])
-    assert json.loads(request.body) == [1, 2, 3]
-
-
-def test_encode_json_fallback_without_msgspec(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures fallback to Django's encoder when msgspec is unavailable."""
-    with patch('dmr.test._msgspec', None):
-        request = dmr_rf.post('/whatever/', data={'key': 'value'})
-    assert json.loads(request.body) == {'key': 'value'}
+    assert request.body == b'[1,2,3]'
 
 
 def test_dmr_rf(dmr_rf: DMRRequestFactory, faker: Faker) -> None:

@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
+from dmr.openapi.dump import _wrap_bytes_dumper
+
 if TYPE_CHECKING:
     from dmr.parsers import Raw
 
@@ -73,3 +75,25 @@ class NativeJson:
     def loads(cls, to_deserialize: 'Raw', /) -> Any:
         """Internal method to load json as a simple object."""
         return json.loads(to_deserialize)
+
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    _json_dumps: 'SchemaDumper' = json.dumps  # noqa: F821
+else:
+    _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
+
+
+def json_dump(schema: dict[str, Any]) -> str:
+    """
+    Serialize `ConvertedSchema` to a decoded JSON string.
+
+    Args:
+        schema: Converted OpenAPI schema to be serialized.
+
+    Returns:
+        JSON string representation of the schema.
+
+    """
+    return _json_dumps(schema)
