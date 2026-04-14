@@ -696,7 +696,7 @@ class MyController(Controller[MsgspecSerializer]):
             )
 ```
 
-Correct: 
+Correct:
 
 ```python
 from http import HTTPStatus
