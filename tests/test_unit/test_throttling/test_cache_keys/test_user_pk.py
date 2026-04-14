@@ -53,6 +53,11 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
             HTTPStatus.OK,
         ),
         (
+            _SyncController,
+            AnonymousUser(),  # never rate limited
+            HTTPStatus.OK,
+        ),
+        (
             _NoExclusionsController,
             User(pk=4, is_superuser=True),
             HTTPStatus.TOO_MANY_REQUESTS,
