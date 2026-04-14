@@ -18,7 +18,7 @@ class CachedRateLimit(TypedDict):
 
     # We usually store `int(time.time())` result here:
     time: int
-    # We overly complecate the storage a bit, because this design
+    # We overly complicate the storage a bit, because this design
     # allows future potential algorithms to store requests as lists,
     # if it is needed.
     history: list[int]
