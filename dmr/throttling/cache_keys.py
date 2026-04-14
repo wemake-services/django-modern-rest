@@ -93,7 +93,7 @@ class UserPk(BaseThrottleCacheKey):
     """
 
     exclude_superuser: bool = True
-    exlude_stuff: bool = True
+    exclude_stuff: bool = True
     runs_before_auth: bool = False  # pyright: ignore[reportIncompatibleMethodOverride]
     name: str = 'UserPk'  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -109,7 +109,7 @@ class UserPk(BaseThrottleCacheKey):
         is_staff = getattr(user, 'is_staff', False)
         user_pk = getattr(user, 'pk', None)
         is_excluded = (self.exclude_superuser and is_superuser) or (
-            self.exlude_stuff and is_staff
+            self.exclude_stuff and is_staff
         )
         if is_excluded or user_pk is None:
             return None

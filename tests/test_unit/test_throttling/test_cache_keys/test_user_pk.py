@@ -26,7 +26,7 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
         SyncThrottle(
             1,
             Rate.second,
-            cache_key=UserPk(exclude_superuser=False, exlude_stuff=False),
+            cache_key=UserPk(exclude_superuser=False, exclude_stuff=False),
         ),
     ]
 
