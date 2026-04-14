@@ -26,30 +26,27 @@ class SSE(Protocol):
         raise NotImplementedError
 
 
+class _SSEventSlots:
+    # The only purpose of this class is to help constructing correct
+    # SSEvent dataclass with the correct slots.
+    __slots__ = (
+        '_serialize',
+        'comment',
+        'data',
+        'event',
+        'id',
+        'retry',
+    )
+
+
 @final
 @dataclasses.dataclass(init=False)
-class SSEvent(Generic[_DataT_co]):
-    """
-    Default implementation for the Server Sent Event.
+class SSEvent(_SSEventSlots, Generic[_DataT_co]):
+    """Server sent event payload."""
 
-    All parameters are optional, but at least one is required.
+    # We keep the docstring short, because it is used in the schema.
 
-    Attributes:
-        data: Event payload.
-        event: Event type.
-        id: Unique event's identification.
-        retry: The reconnection time.
-        comment: Comment about the event.
-
-    .. note::
-
-        It is recommended for end users to define their own types
-        that will be type-safe and will have the correct schema.
-
-    See also:
-        https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
-
-    """
+    __slots__ = ()
 
     # Fields declaration, `__init__` method is customized further:
     data: _DataT_co  # type: ignore[misc, unused-ignore]
@@ -141,7 +138,27 @@ class SSEvent(Generic[_DataT_co]):
         comment: str | None = None,
         serialize: bool = True,
     ) -> None:
-        """Initialize and validate the default SSE event."""
+        """
+        Default implementation for the Server Sent Event.
+
+        All parameters are optional, but at least one is required.
+
+        Attributes:
+            data: Event payload.
+            event: Event type.
+            id: Unique event's identification.
+            retry: The reconnection time.
+            comment: Comment about the event.
+
+        .. note::
+
+            It is recommended for end users to define their own types
+            that will be type-safe and will have the correct schema.
+
+        See also:
+            https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
+
+        """
         if not serialize and not isinstance(data, bytes):
             raise ValueError(
                 f'data must be an instance of "bytes", not {type(data)}, '

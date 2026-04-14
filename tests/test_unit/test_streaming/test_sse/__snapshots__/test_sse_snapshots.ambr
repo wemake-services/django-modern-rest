@@ -589,7 +589,8 @@
           "required": [
             "data"
           ],
-          "title": "SSEvent"
+          "title": "SSEvent",
+          "description": "Server sent event payload."
         }
       },
       "securitySchemes": {}
