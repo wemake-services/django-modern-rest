@@ -65,8 +65,8 @@ dependencies = [
 
 [project.optional-dependencies]
 pydantic = ["pydantic[email,timezone]>=2.12", "pydantic-extra-types"]
-msgspec = ["msgspec>=0.21"]
-attrs = ["msgspec>=0.21", "attrs>=26.0"]
+msgspec = ["msgspec>=0.21.1"]
+attrs = ["msgspec>=0.21.1", "attrs>=26.0"]
 jwt = ["pyjwt[crypto]>=2.11"]
 openapi = ["openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml"]
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from msgspec.json import schema_components
+from msgspec.json import schema
 from typing_extensions import override
 
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
@@ -20,12 +20,13 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     ) -> SchemaDef | None:
         """Proxies the JSON schema generation to msgspec itself."""
         try:
-            (out,), components = schema_components(
-                (model,),
+            out = schema(
+                model,
                 ref_template=ref_template + '{name}',  # noqa: WPS336
             )
         except Exception:
             return None
+        components = out.pop('$defs', {})
         return out, components
 
     @override
