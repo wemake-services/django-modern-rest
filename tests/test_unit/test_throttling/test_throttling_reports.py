@@ -49,6 +49,7 @@ class _ReportsController(Controller[PydanticSerializer]):
 
 def test_throttle_multiple_headers(
     dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that throttle information can be served on success."""
     request = dmr_rf.get('/whatever/')
@@ -97,6 +98,7 @@ class _AsyncReportsController(Controller[PydanticSerializer]):
 @pytest.mark.asyncio
 async def test_throttle_multiple_headers_async(
     dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that throttle information can be served on success."""
     request = dmr_async_rf.get('/whatever/')
@@ -149,6 +151,7 @@ class _MultipleThrottlesController(Controller[PydanticSerializer]):
 
 def test_throttle_multiple_throttles(
     dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that throttle information can be served on success."""
     request = dmr_rf.get('/whatever/')
@@ -197,6 +200,7 @@ class _AsyncMultipleThrottlesController(Controller[PydanticSerializer]):
 @pytest.mark.asyncio
 async def test_throttle_multiple_throttles_async(
     dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that throttle information can be served on success."""
     request = dmr_async_rf.get('/whatever/')
@@ -360,6 +364,7 @@ class _NoThrottleAsyncController(Controller[PydanticSerializer]):
 @pytest.mark.asyncio
 async def test_no_throttle_report_async(
     dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that no throttle produces empty reports."""
     request = dmr_async_rf.get('/whatever/')

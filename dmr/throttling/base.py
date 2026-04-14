@@ -1,7 +1,6 @@
 import asyncio
 import dataclasses
 import enum
-import threading
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from http import HTTPStatus
@@ -87,6 +86,13 @@ class _BaseThrottle(ResponseSpecProvider):
                 :class:`~dmr.throttling.headers.XRateLimit`
                 and :class:`~dmr.throttling.headers.RetryAfter` instances.
 
+        .. note::
+
+            It is really important for this class to have stateless instances.
+            Not even locks can be shared, because these instances can
+            be global. It is possible to use them in settings or per controller.
+            No state allowed.
+
         """
         self.max_requests = max_requests
         self.duration_in_seconds = int(duration_in_seconds)
@@ -99,9 +105,6 @@ class _BaseThrottle(ResponseSpecProvider):
             if response_headers is None
             else response_headers
         )
-        # Locks:
-        self._sync_lock = threading.Lock()
-        self._async_lock = asyncio.Lock()
 
     def full_cache_key(
         self,
@@ -205,25 +208,25 @@ class SyncThrottle(_BaseThrottle):
         cache_key: str,
     ) -> None:
         """Check whether this request has rate limiting quota left."""
-        with self._sync_lock:
-            cache_object = self._algorithm.access(
+        # NOTE: this is locked on endpoint.py level, don't worry:
+        cache_object = self._algorithm.access(
+            endpoint,
+            controller,
+            self,
+            self._backend.get(endpoint, controller, cache_key),
+        )
+        self._backend.set(
+            endpoint,
+            controller,
+            cache_key,
+            self._algorithm.record(
                 endpoint,
                 controller,
                 self,
-                self._backend.get(endpoint, controller, cache_key),
-            )
-            self._backend.set(
-                endpoint,
-                controller,
-                cache_key,
-                self._algorithm.record(
-                    endpoint,
-                    controller,
-                    self,
-                    cache_object,
-                ),
-                ttl_seconds=self.duration_in_seconds,
-            )
+                cache_object,
+            ),
+            ttl_seconds=self.duration_in_seconds,
+        )
 
     def report_usage(
         self,
@@ -274,25 +277,25 @@ class AsyncThrottle(_BaseThrottle):
         cache_key: str,
     ) -> None:
         """Check whether this request has rate limiting quota left."""
-        async with self._async_lock:
-            cache_object = self._algorithm.access(
+        # NOTE: this is locked on endpoint.py level, don't worry:
+        cache_object = self._algorithm.access(
+            endpoint,
+            controller,
+            self,
+            await self._backend.aget(endpoint, controller, cache_key),
+        )
+        await self._backend.aset(
+            endpoint,
+            controller,
+            cache_key,
+            self._algorithm.record(
                 endpoint,
                 controller,
                 self,
-                await self._backend.aget(endpoint, controller, cache_key),
-            )
-            await self._backend.aset(
-                endpoint,
-                controller,
-                cache_key,
-                self._algorithm.record(
-                    endpoint,
-                    controller,
-                    self,
-                    cache_object,
-                ),
-                ttl_seconds=self.duration_in_seconds,
-            )
+                cache_object,
+            ),
+            ttl_seconds=self.duration_in_seconds,
+        )
 
     async def report_usage(
         self,

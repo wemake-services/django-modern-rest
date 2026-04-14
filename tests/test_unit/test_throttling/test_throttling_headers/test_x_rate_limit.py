@@ -61,6 +61,7 @@ class _AsyncController(Controller[PydanticSerializer]):
 @pytest.mark.asyncio
 async def test_throttle_async_x_prefix(
     dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures custom throttle prefix async."""
     # This will pass:
