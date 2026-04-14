@@ -1,7 +1,8 @@
 import abc
+import dataclasses
 from typing import TYPE_CHECKING
 
-from django.core.cache import DEFAULT_CACHE_ALIAS, caches
+from django.core.cache import DEFAULT_CACHE_ALIAS, BaseCache, caches
 from typing_extensions import TypedDict, override
 
 from dmr.settings import default_parser, default_renderer
@@ -15,7 +16,11 @@ if TYPE_CHECKING:
 class CachedRateLimit(TypedDict):
     """Representation of a cached object's metadata."""
 
-    reset: int
+    # We usually store `int(time.time())` result here:
+    time: int
+    # We overly complicate the storage a bit, because this design
+    # allows future potential algorithms to store requests as lists,
+    # if it is needed.
     history: list[int]
 
 
@@ -75,6 +80,7 @@ class BaseThrottleBackend:
         raise NotImplementedError
 
 
+@dataclasses.dataclass(slots=True, frozen=True)
 class DjangoCache(BaseThrottleBackend):
     """
     Uses Django cache framework for storing the rate limiting state.
@@ -85,17 +91,14 @@ class DjangoCache(BaseThrottleBackend):
 
     """
 
-    __slots__ = ('_cache',)
+    cache_name: str = DEFAULT_CACHE_ALIAS
+    _cache: BaseCache = dataclasses.field(init=False)
 
-    def __init__(self, cache_name: str = DEFAULT_CACHE_ALIAS) -> None:
-        """
-        Initialize the backend.
-
-        Parameters:
-            cache_name: Customize the Django cache to be used.
-
-        """
-        self._cache = caches[cache_name]
+    def __post_init__(
+        self,
+    ) -> None:
+        """Initialize the cache backend."""
+        object.__setattr__(self, '_cache', caches[self.cache_name])
 
     @override
     def get(

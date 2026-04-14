@@ -17,8 +17,9 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
+from dmr.throttling.algorithms import LeakyBucket
 from dmr.throttling.cache_keys import RemoteAddr
-from dmr.throttling.headers import RateLimitIETFDraft, XRateLimit
+from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 _draft_headers: Final = RateLimitIETFDraft()
 _ratelimit_headers: Final = XRateLimit()
@@ -370,4 +371,64 @@ async def test_no_throttle_report_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
+
+
+_retry_after: Final = RetryAfter()
+
+
+class _AsyncLeakyBucketController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.OK,
+            headers={
+                **_draft_headers.provide_headers_specs(),
+                **_retry_after.provide_headers_specs(),
+            },
+        ),
+        throttling=[
+            AsyncThrottle(
+                1,
+                Rate.second,
+                response_headers=[_draft_headers, _retry_after],
+                cache_key=RemoteAddr(name='one'),
+                algorithm=LeakyBucket(),
+            ),
+            AsyncThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_draft_headers],
+                cache_key=RemoteAddr(name='two'),
+                algorithm=LeakyBucket(),
+            ),
+        ],
+    )
+    async def get(self) -> HttpResponse:
+        return self.to_response(
+            'inside',
+            headers=await ThrottlingReport(self).areport(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_leaky_bucket_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures that async throttle reports are correct for leaky bucket algo."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(
+        _AsyncLeakyBucketController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit': '"one";r=0;t=1, "two";r=4;t=12',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
     assert json.loads(response.content) == 'inside'

@@ -1,4 +1,5 @@
 import asyncio
+import dataclasses
 import enum
 import threading
 from collections import defaultdict
@@ -215,7 +216,12 @@ class SyncThrottle(_BaseThrottle):
                 endpoint,
                 controller,
                 cache_key,
-                self._algorithm.record(cache_object),
+                self._algorithm.record(
+                    endpoint,
+                    controller,
+                    self,
+                    cache_object,
+                ),
                 ttl_seconds=self.duration_in_seconds,
             )
 
@@ -279,7 +285,12 @@ class AsyncThrottle(_BaseThrottle):
                 endpoint,
                 controller,
                 cache_key,
-                self._algorithm.record(cache_object),
+                self._algorithm.record(
+                    endpoint,
+                    controller,
+                    self,
+                    cache_object,
+                ),
                 ttl_seconds=self.duration_in_seconds,
             )
 
@@ -300,6 +311,7 @@ class AsyncThrottle(_BaseThrottle):
         )
 
 
+@dataclasses.dataclass(slots=True, frozen=True)
 class ThrottlingReport:
     """
     Get throttling data to be reported in response headers.
@@ -319,11 +331,7 @@ class ThrottlingReport:
 
     """
 
-    __slots__ = ('_controller',)
-
-    def __init__(self, controller: 'Controller[BaseSerializer]') -> None:
-        """Create throttling reporter."""
-        self._controller = controller
+    controller: 'Controller[BaseSerializer]'
 
     def report(self) -> dict[str, str]:
         """
@@ -342,7 +350,7 @@ class ThrottlingReport:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
             for header_name, header_value in throttle.report_usage(
                 endpoint,
-                self._controller,
+                self.controller,
             ).items():
                 result_headers[header_name].append(header_value)
         return self._format_headers(result_headers)
@@ -362,7 +370,7 @@ class ThrottlingReport:
 
         # We can run all tasks in "parallel":
         for report in await asyncio.gather(*[
-            throttle.report_usage(endpoint, self._controller)
+            throttle.report_usage(endpoint, self.controller)
             for throttle in endpoint.metadata.throttling
             if isinstance(throttle, AsyncThrottle)
         ]):
@@ -371,7 +379,7 @@ class ThrottlingReport:
         return self._format_headers(result_headers)
 
     def _get_endpoint(self) -> 'Endpoint':
-        return request_endpoint(self._controller.request, strict=True)
+        return request_endpoint(self.controller.request, strict=True)
 
     def _format_headers(
         self,
