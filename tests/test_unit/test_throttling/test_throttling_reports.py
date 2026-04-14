@@ -414,6 +414,7 @@ class _AsyncLeakyBucketController(Controller[PydanticSerializer]):
 @pytest.mark.asyncio
 async def test_leaky_bucket_async(
     dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that async throttle reports are correct for leaky bucket algo."""
     request = dmr_async_rf.get('/whatever/')
