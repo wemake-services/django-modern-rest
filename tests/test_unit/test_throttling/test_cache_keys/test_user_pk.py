@@ -2,7 +2,7 @@ import json
 from http import HTTPStatus
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 
 from dmr import Controller
@@ -61,6 +61,11 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
             _NoExclusionsController,
             User(pk=5, is_staff=True),
             HTTPStatus.TOO_MANY_REQUESTS,
+        ),
+        (
+            _NoExclusionsController,
+            AnonymousUser(),
+            HTTPStatus.OK,
         ),
     ],
 )
