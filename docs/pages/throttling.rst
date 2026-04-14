@@ -128,14 +128,22 @@ as the algorithm.
 It defines a fixed window with a fixed amount of requests possible.
 When window is expired, it resets the count of requests.
 
+Here's how you can customize the algorithm for a throttling:
+
+.. literalinclude:: /examples/throttling/algorithm_customization.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
 You can also write your own algorithms.
 To do so, you would need to subclass
 :class:`dmr.throttling.algorithms.BaseThrottleAlgorithm`
-and override 2 methods.
+and override 3 methods.
 
 Full list of algorithms that we ship in ``django-modern-rest``:
 
 - :class:`~dmr.throttling.algorithms.SimpleRate`, default
+- :class:`~dmr.throttling.algorithms.LeakyBucket`
 
 Cache keys
 ~~~~~~~~~~
@@ -391,6 +399,9 @@ Algorithms
   :members:
 
 .. autoclass:: dmr.throttling.algorithms.SimpleRate
+  :members:
+
+.. autoclass:: dmr.throttling.algorithms.LeakyBucket
   :members:
 
 Cache keys
