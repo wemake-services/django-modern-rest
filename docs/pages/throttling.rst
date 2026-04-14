@@ -143,9 +143,10 @@ and override 3 methods.
 Full list of algorithms that we ship in ``django-modern-rest``:
 
 - :class:`~dmr.throttling.algorithms.SimpleRate`, default
-- :class:`~dmr.throttling.algorithms.LeakyBucket` where equests fill the bucket;
-  tokens leak at a steady rate. Unlike ``SimpleRate``, drains continuously
-  providing smoother rate-limiting without allowing bursts at window boundaries.
+- :class:`~dmr.throttling.algorithms.LeakyBucket` where requests fill
+  the bucket; tokens leak at a steady rate. Unlike ``SimpleRate``,
+  drains continuously providing smoother rate-limiting
+  without allowing bursts at window boundaries.
 
 Cache keys
 ~~~~~~~~~~
