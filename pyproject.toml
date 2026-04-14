@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 name = "django-modern-rest"
 description = "Modern REST framework for Django with types and async support"
 license = "MIT"
-version = "0.6.0"
+version = "0.7.0"
 
 authors = [
   {name = "Nikita Sobolev", email = "mail@sobolevn.me"},

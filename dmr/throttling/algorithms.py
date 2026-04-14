@@ -180,6 +180,11 @@ class LeakyBucket(BaseThrottleAlgorithm):
     as ``level * duration`` so all arithmetic stays integer-only.
     Each request adds ``duration`` scaled units to the level.
     Every elapsed second ``max_requests`` scaled units leak out.
+
+    .. seealso::
+
+        https://en.wikipedia.org/wiki/Leaky_bucket
+
     """
 
     __slots__ = ()

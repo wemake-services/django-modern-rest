@@ -10,10 +10,12 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class BaseThrottleCacheKey:
     """Base class for all cache keys."""
 
-    __slots__ = ()
+    runs_before_auth: bool
+    name: str
 
     @abc.abstractmethod
     def __call__(
@@ -28,28 +30,6 @@ class BaseThrottleCacheKey:
         If ``None`` is returned, this request
         will be skipped from this exact throttling check.
         However, other keys may still be applied.
-        """
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def runs_before_auth(self) -> bool:
-        """
-        When this throttle check runs? Before or after auth?
-
-        Change the default with care, because some cache key won't make
-        any sense before the auth.
-        """
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        """
-        Name to be rendered in headers and other case.
-
-        Customizes cache key / throttle name for some headers reports,
-        like ``RateLimit-Policy``.
         """
         raise NotImplementedError
 
@@ -70,8 +50,8 @@ class RemoteAddr(BaseThrottleCacheKey):
 
     """
 
-    runs_before_auth: bool = True  # pyright: ignore[reportIncompatibleMethodOverride]
-    name: str = 'RemoteAddr'  # pyright: ignore[reportIncompatibleMethodOverride]
+    runs_before_auth: bool = True
+    name: str = 'RemoteAddr'
 
     @override
     def __call__(
@@ -92,9 +72,11 @@ class UserPk(BaseThrottleCacheKey):
     from throttling checks or when ``pk`` is not set.
     """
 
+    # It can never be executed before `request.user` is set:
+    runs_before_auth: Literal[False] = False
+    name: str = 'UserPk'
     exclude_superuser: bool = True
     exclude_stuff: bool = True
-    name: str = 'UserPk'  # pyright: ignore[reportIncompatibleMethodOverride]
 
     @override
     def __call__(
@@ -104,17 +86,11 @@ class UserPk(BaseThrottleCacheKey):
     ) -> str | None:
         """Return ``request.user.pk`` when user should be throttled."""
         user = controller.request.user
-        is_superuser = getattr(user, 'is_superuser', False)
-        is_staff = getattr(user, 'is_staff', False)
         user_pk = getattr(user, 'pk', None)
-        is_excluded = (self.exclude_superuser and is_superuser) or (
-            self.exclude_stuff and is_staff
-        )
-        if is_excluded or user_pk is None:
+        if (
+            user_pk is None
+            or (getattr(user, 'is_superuser', False) and self.exclude_superuser)
+            or (getattr(user, 'is_staff', False) and self.exclude_stuff)
+        ):
             return None
         return str(user_pk)
-
-    @property
-    @override
-    def runs_before_auth(self) -> Literal[False]:
-        return False
