@@ -54,6 +54,10 @@ class Router:
                 These are merged with endpoint-level tags.
             deprecated: Optional flag to mark all operations as deprecated.
                 Combines with endpoint-level deprecated flag using OR logic.
+
+        .. versionchanged:: 0.7.0
+            Added *tags* and *deprecated* parameters.
+
         """
         self.prefix = prefix
         self.urls = urls

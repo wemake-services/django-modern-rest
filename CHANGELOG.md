@@ -18,6 +18,13 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Bugfixes
+
+- Fixed that `itemSchema` was possible to be rendered in OpenAPI `3.1.0`
+
+
 ## Version 0.7.0 (2026-04-14)
 
 ### Breaking changes
@@ -71,7 +78,7 @@ Apply this change to the code that uses `django-modern-rest`:
 - Added `tags` and `deprecated` parameters to `Router` for OpenAPI metadata,
   #872. All operations in a router can now be grouped and marked as deprecated.
 
-### Fixes
+### Bugfixes
 
 - Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
 - Fixed missing `request.auser()` after `JWTAsyncAuth`, #884
@@ -110,7 +117,7 @@ No breaking changes in this release.
 - Added customizable `json_module` parameter to `JsonParser` and `JsonRenderer`
   to support alternative JSON backends like `orjson`, #857
 
-### Fixes
+### Bugfixes
 
 - Fixed package metadata, #824
 - Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
@@ -148,7 +155,7 @@ No breaking changes in this release.
   `AnnotationsContext`, #787
 - Added `yaml` view for OpenAPI schema, #745
 
-### Fixes
+### Bugfixes
 
 - Fixed `StreamingValidator` swallowing errors
   when `validate_events` was `True`, but no event model was resolved, #780
