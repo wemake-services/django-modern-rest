@@ -34,6 +34,8 @@ def request_endpoint(
     we raise :exc:`AttributeError`.
     This can happen for ``405`` responses, for example.
     They don't have endpoints. All others do.
+
+    .. versionadded:: 0.7.0
     """
     endpoint = getattr(request, '__dmr_endpoint__', None)
     if endpoint is None and strict:

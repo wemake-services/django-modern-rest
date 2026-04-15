@@ -664,6 +664,74 @@ class MyController(Controller[MsgspecSerializer]):
 
 Docs: https://django-modern-rest.rtfd.io/en/latest/pages/error-handling.html
 
+### Do not handle errors in the endpoints body
+
+We have a separate layer in the app specifically for error handling.
+Instead of handling errors in place, prefer to use the error handling methods,
+like `handle_error` and `handle_async_error`.
+
+Wrong:
+
+```python
+from http import HTTPStatus
+
+from django.http import HttpResponse
+from typing_extensions import override
+
+from dmr import Controller
+from dmr.endpoint import Endpoint
+from dmr.plugins.msgspec import MsgspecSerializer
+
+from myapp import SomeSpecificError, some_logic
+
+
+class MyController(Controller[MsgspecSerializer]):
+    def get(self) -> str:
+        try:
+            return some_logic()
+        except SomeSpecificError:
+            return self.to_error(
+                self.format_error(str(exc)),
+                status_code=HTTPStatus.BAD_REQUEST,
+            )
+```
+
+Correct:
+
+```python
+from http import HTTPStatus
+
+from django.http import HttpResponse
+from typing_extensions import override
+
+from dmr import Controller
+from dmr.endpoint import Endpoint
+from dmr.plugins.msgspec import MsgspecSerializer
+
+from myapp import SomeSpecificError, some_logic
+
+
+class MyController(Controller[MsgspecSerializer]):
+    def get(self) -> str:
+        return some_logic()
+
+    @override
+    def handle_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[MsgspecSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        if isinstance(exc, SomeSpecificError):
+            return self.to_error(
+                self.format_error(str(exc)),
+                status_code=HTTPStatus.BAD_REQUEST,
+            )
+        raise exc from None
+```
+
+If error is handled in most controllers, you can move it to a global handler.
+
 
 ## Validation
 

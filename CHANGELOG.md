@@ -20,6 +20,17 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Features
+
+- Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
+
+### Bugfixes
+
+- Fixed that `itemSchema` was possible to be rendered in OpenAPI `3.1.0`
+
+
+## Version 0.7.0 (2026-04-14)
+
 ### Breaking changes
 
 1. Removed public `OpenAPIView.dumps` customization hook, #847
@@ -30,6 +41,8 @@ of requirements for an API to count as public.
 2. *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
 3. *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
    an instance method, #877
+4. *Breaking*: new required `router` parameter added
+   to `Endpoint.get_schema` and `Controller.get_path_item`, #879
 
 ### Migration Prompt
 
@@ -42,6 +55,8 @@ Apply this change to the code that uses `django-modern-rest`:
    to always get a token back, add `strict=True` argument
 3. Change `provide_response_specs` class method to be instance method,
    replace all `cls` usage with `self`
+4. Add `router: Router` parameter to `Endpoint.get_schema`
+   and `Controller.get_path_item` methods
 ```
 
 ### Features
@@ -64,13 +79,20 @@ Apply this change to the code that uses `django-modern-rest`:
   `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
   now avoid inline scripts in DMR-managed templates.
   Final CSP compatibility still depends on the upstream renderer bundle.
-- Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
+- Added `tags` and `deprecated` parameters to `Router` for OpenAPI metadata,
+  #872. All operations in a router can now be grouped and marked as deprecated.
 
-### Fixes
+### Bugfixes
 
 - Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
 - Fixed missing `request.auser()` after `JWTAsyncAuth`, #884
 - Fixed `ParameterMetadata` missing `__slots__`, #890
+- Fixed `SSEvent` missing `__slots__`, #901
+- Fixed `SSE` protocol typing, #894
+- Fixed a bug when we were treating controllers with
+  no `api_endpoints` as non-abstract, #894
+- Fixed a bug when you were not able to subclass
+  a controller with a serializer, #873
 
 ### Misc
 
@@ -99,7 +121,7 @@ No breaking changes in this release.
 - Added customizable `json_module` parameter to `JsonParser` and `JsonRenderer`
   to support alternative JSON backends like `orjson`, #857
 
-### Fixes
+### Bugfixes
 
 - Fixed package metadata, #824
 - Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
@@ -137,7 +159,7 @@ No breaking changes in this release.
   `AnnotationsContext`, #787
 - Added `yaml` view for OpenAPI schema, #745
 
-### Fixes
+### Bugfixes
 
 - Fixed `StreamingValidator` swallowing errors
   when `validate_events` was `True`, but no event model was resolved, #780

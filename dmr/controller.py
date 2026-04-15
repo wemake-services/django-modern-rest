@@ -1,6 +1,13 @@
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
-from typing import Any, ClassVar, Final, Generic, TypeAlias, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    Generic,
+    TypeVar,
+)
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -29,6 +36,9 @@ from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
+if TYPE_CHECKING:
+    from dmr.routing import Router
+
 _METHOD_NOT_ALLOWED_MSG: Final = _(
     'Method {method} is not allowed, allowed: {allowed}',
 )
@@ -40,8 +50,6 @@ _SerializerT_co = TypeVar(
 )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
-
-_EndpointFunc: TypeAlias = Callable[..., Any]
 
 
 class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
@@ -103,7 +111,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
-            exact serializer type.
+            exact serializer type or exact ``api_endpoints`` instances.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
@@ -170,7 +178,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         if serializer is None:
             return  # this is an abstract controller
 
-        cls.is_abstract = False
         cls.serializer = serializer
         cls.settings_validator_cls(serializer=cls.serializer)()
 
@@ -182,6 +189,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             )
             for canonical, meth in cls._find_existing_http_methods().items()
         }
+        cls.is_abstract = not bool(cls.api_endpoints)
         cls.is_async = cls.controller_validator_cls()(cls)
 
     @override
@@ -497,6 +505,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         path: str,
         pattern: URLPattern,
         context: OpenAPIContext,
+        router: 'Router',
     ) -> PathItem:
         """Generate OpenAPI spec for path items."""
         operations: dict[str, Any] = {
@@ -506,6 +515,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
                 cls.__qualname__,
                 cls.serializer,
                 context,
+                router,
             )
             for method, endpoint in cls.api_endpoints.items()
         }
@@ -527,6 +537,15 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     @classmethod
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:
+        existing_serializer: type[_SerializerT_co] | None = getattr(
+            cls,
+            'serializer',
+            None,
+        )
+        if existing_serializer is not None:
+            # It was already set by a base class. See #873
+            return existing_serializer
+
         type_args = infer_type_args(cls, Controller)
         if not type_args:
             raise UnsolvableAnnotationsError(

@@ -128,14 +128,25 @@ as the algorithm.
 It defines a fixed window with a fixed amount of requests possible.
 When window is expired, it resets the count of requests.
 
+Here's how you can customize the algorithm for a throttling:
+
+.. literalinclude:: /examples/throttling/algorithm_customization.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
 You can also write your own algorithms.
 To do so, you would need to subclass
 :class:`dmr.throttling.algorithms.BaseThrottleAlgorithm`
-and override 2 methods.
+and override 3 methods.
 
 Full list of algorithms that we ship in ``django-modern-rest``:
 
 - :class:`~dmr.throttling.algorithms.SimpleRate`, default
+- :class:`~dmr.throttling.algorithms.LeakyBucket` where requests fill
+  the bucket; tokens leak at a steady rate. Unlike ``SimpleRate``,
+  drains continuously providing smoother rate-limiting
+  without allowing bursts at window boundaries.
 
 Cache keys
 ~~~~~~~~~~
@@ -166,6 +177,12 @@ for example, from paid or stuff users.
 Full list of cache keys that we ship in ``django-modern-rest``:
 
 - :class:`~dmr.throttling.cache_keys.RemoteAddr`, default
+- :class:`~dmr.throttling.cache_keys.UserPk`, based on ``request.user``,
+  by default we use ``request.user.pk`` if it exists.
+  You can pass ``exclude_stuff`` argument as ``False``
+  to also limit ``is_stuff`` users,
+  or you can pass ``exclude_superuser`` argument as ``False``
+  to also limit super users
 
 When throttling is executed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,14 +193,19 @@ Why? Because we need to:
 1. Protect auth from abusive requests and brute forcing
 2. Make sure we can base throttling rules on the auth info
 
+The same can be said about content negotiation,
+it also must be protected by throttling.
+Otherwise, people can abuse content negotiation without any request limits.
+
 .. mermaid::
   :caption: Throttling execution
   :config: {"theme": "forest"}
 
   graph
-      Start[New request] --> BeforeThrottle[Throttling based on IP];
-      BeforeThrottle --> Auth[Auth];
-      Auth --> AfterThrottle[Throttling based on auth];
+      Start[New request] --> BeforeThrottle[Throttling based on IP or 429];
+      BeforeThrottle --> RendererNegotiation[Renderer is negotiated or 406];
+      RendererNegotiation --> Auth[Auth or 401];
+      Auth --> AfterThrottle[Throttling based on auth or 429];
 
 All cache keys know when to execute by default, however you can customize this.
 For example, you can run some IP based throttling checks after the auth itself:
@@ -388,6 +410,9 @@ Algorithms
 .. autoclass:: dmr.throttling.algorithms.SimpleRate
   :members:
 
+.. autoclass:: dmr.throttling.algorithms.LeakyBucket
+  :members:
+
 Cache keys
 ~~~~~~~~~~
 
@@ -395,6 +420,9 @@ Cache keys
   :members:
 
 .. autoclass:: dmr.throttling.cache_keys.RemoteAddr
+  :members:
+
+.. autoclass:: dmr.throttling.cache_keys.UserPk
   :members:
 
 Headers

@@ -17,6 +17,18 @@ if TYPE_CHECKING:
 
 
 class _BaseAuth(ResponseSpecProvider):
+    """
+    Base class for all auth instances.
+
+    .. note::
+
+        It is really important for this class to have stateless instances.
+        Not even locks can be shared, because these instances can
+        be global. It is possible to use them in settings or per controller.
+        No state allowed.
+
+    """
+
     __slots__ = ()
 
     @property

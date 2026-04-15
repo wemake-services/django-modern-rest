@@ -97,7 +97,11 @@ def test_skip_validation(
     """Ensure that views can skip validation."""
     schema = build_schema(
         Router('', []),
-        config=OpenAPIConfig(title='A', version='B', openapi_version='wrong'),
+        config=OpenAPIConfig(
+            title='A',
+            version='B',
+            openapi_version='wrong',  # type: ignore[arg-type]
+        ),
     )
     request = dmr_rf.get('/whatever/')
 

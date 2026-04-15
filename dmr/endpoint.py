@@ -1,4 +1,6 @@
+import asyncio
 import inspect
+import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
@@ -49,6 +51,7 @@ from dmr.validation import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.routing import Router
     from dmr.validation.response import ValidatedModification
 
 
@@ -61,8 +64,10 @@ class Endpoint:  # noqa: WPS214
     """
 
     __slots__ = (
+        '_async_lock',
         '_func',
         '_serializer_context',
+        '_sync_lock',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -114,6 +119,9 @@ class Endpoint:  # noqa: WPS214
 
             Endpoint object must **not** have any mutable instance state,
             because its instance is reused for all requests.
+            It is fine to have common locks for throttling, because
+            this way we guard cache concurrent access
+            from different thread / coroutines.
 
         """
         type_annotations = controller_cls.annotations_context(func)
@@ -166,6 +174,10 @@ class Endpoint:  # noqa: WPS214
         )
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
+
+        # Locks:
+        self._sync_lock = threading.Lock()
+        self._async_lock = asyncio.Lock()
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -264,6 +276,7 @@ class Endpoint:  # noqa: WPS214
         controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
+        router: 'Router',
     ) -> Operation:
         """Build an OpenAPI Operation from an endpoint."""
         operation_id = self.get_operation_id(
@@ -283,11 +296,16 @@ class Endpoint:  # noqa: WPS214
             serializer,
         )
 
+        tags = [
+            *router.tags,
+            *(self.metadata.tags or []),
+        ]
+
         return Operation(
-            tags=self.metadata.tags,
+            tags=tags or None,
             summary=self.metadata.summary,
             description=self.metadata.description,
-            deprecated=self.metadata.deprecated,
+            deprecated=self.metadata.deprecated or router.deprecated,
             security=security,
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
@@ -327,9 +345,6 @@ class Endpoint:  # noqa: WPS214
             try:  # noqa: WPS229
                 controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
 
-                # Negotiate response:
-                self.response_negotiator(controller.request)
-
                 # Run checks:
                 await self._run_async_checks(controller)
 
@@ -366,9 +381,6 @@ class Endpoint:  # noqa: WPS214
             try:  # noqa: WPS229
                 controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
 
-                # Negotiate response:
-                self.response_negotiator(controller.request)
-
                 # Run checks:
                 self._run_checks(controller)
 
@@ -394,8 +406,13 @@ class Endpoint:  # noqa: WPS214
     # Sync checks:
 
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
+        # First round of throttling:
         self._run_throttle_before(controller)
+        # Negotiate response:
+        self.response_negotiator(controller.request)
+        # Auth:
         self._run_auth(controller)
+        # Second round of throttling:
         self._run_throttle_after(controller)
 
     def _run_throttle_before(
@@ -406,7 +423,8 @@ class Endpoint:  # noqa: WPS214
             return
         for throttle in self.metadata.throttling_before_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
-            throttle(self, controller)
+            with self._sync_lock:
+                throttle(self, controller)
 
     def _run_auth(self, controller: 'Controller[BaseSerializer]') -> None:
         if self.metadata.auth is None:
@@ -427,7 +445,8 @@ class Endpoint:  # noqa: WPS214
             return
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
-            throttle(self, controller)
+            with self._sync_lock:
+                throttle(self, controller)
 
     # Async checks:
 
@@ -435,8 +454,13 @@ class Endpoint:  # noqa: WPS214
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> None:
+        # First round of throttling:
         await self._run_async_throttle_before(controller)
+        # Negotiate response:
+        self.response_negotiator(controller.request)
+        # Auth:
         await self._run_async_auth(controller)
+        # Second round of throttling:
         await self._run_async_throttle_after(controller)
 
     async def _run_async_throttle_before(
@@ -448,7 +472,8 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_before_auth:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
-            await throttle(self, controller)  # noqa: WPS476
+            async with self._async_lock:
+                await throttle(self, controller)  # noqa: WPS476
 
     async def _run_async_auth(
         self,
@@ -473,7 +498,8 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
-            await throttle(self, controller)  # noqa: WPS476
+            async with self._async_lock:
+                await throttle(self, controller)  # noqa: WPS476
 
     # Utils:
 

@@ -1,6 +1,6 @@
 ---
 name: Feature
-about: Request a new rule to be checked
+about: Request a new feature
 labels: 'feature'
 ---
 

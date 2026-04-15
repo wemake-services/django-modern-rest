@@ -14,6 +14,8 @@ class AuthenticatedHttpRequest(HttpRequest, Generic[_UserT]):
     Annotation for requests that used auth.
 
     Use it for trusted controllers only.
+
+    .. versionadded:: 0.7.0
     """
 
     user: _UserT  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]

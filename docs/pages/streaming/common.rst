@@ -121,6 +121,27 @@ Choose the one that fits your needs, or create your own format!
   in `ASGI mode in production <https://docs.djangoproject.com/en/6.0/howto/deployment/asgi>`_.
 
 
+OpenAPI
+-------
+
+We provide full OpenAPI schema support for streaming endpoints.
+We also support
+`itemSchema <https://spec.openapis.org/oas/v3.2.0.html#fixed-fields-11>`_
+schemas for individual events, when OpenAPI ``3.2.0`` version is used.
+
+Right now, the default version is ``3.1.0``, so you have
+to change the version number manually:
+
+.. literalinclude:: /examples/streaming/openapi.py
+  :language: python
+  :caption: views.py
+  :linenos:
+
+If you are using streaming, using ``3.2.0`` is a recommended way.
+In ``3.1.0`` we will produce regular ``schema`` definition,
+which is not the best way to describe events.
+
+
 Handling errors
 ---------------
 

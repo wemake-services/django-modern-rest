@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 name = "django-modern-rest"
 description = "Modern REST framework for Django with types and async support"
 license = "MIT"
-version = "0.6.0"
+version = "0.7.0"
 
 authors = [
   {name = "Nikita Sobolev", email = "mail@sobolevn.me"},
@@ -65,8 +65,8 @@ dependencies = [
 
 [project.optional-dependencies]
 pydantic = ["pydantic[email,timezone]>=2.12", "pydantic-extra-types"]
-msgspec = ["msgspec>=0.21"]
-attrs = ["msgspec>=0.21", "attrs>=26.0"]
+msgspec = ["msgspec>=0.21.1"]
+attrs = ["msgspec>=0.21.1", "attrs>=26.0"]
 jwt = ["pyjwt[crypto]>=2.11"]
 openapi = ["openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml"]
 
@@ -148,7 +148,7 @@ docs = [
   "shibuya>=2026.1,<2027",
   "docutils>=0.22,<0.23",
   # Needed for our extension:
-  "uvicorn>=0.41,<0.44",
+  "uvicorn>=0.41,<0.45",
   "zapros>=0.5,<0.6",
   # Needed for examples:
   "xmltodict-rs>=0.13,<0.14",

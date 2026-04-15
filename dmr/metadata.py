@@ -132,15 +132,18 @@ class ResponseSpec:
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
         """
+        item_schema = (
+            self.streaming and context.config.openapi_version_info >= (3, 2)
+        )
         return context.generators.response.get_schema(
             self,
             metadata,
             serializer,
             context,
-            schema_field_name='item_schema' if self.streaming else 'schema',
+            schema_field_name='item_schema' if item_schema else 'schema',
             # Despite the fact that it looks like a response,
             # produced stream events are not regular responses.
-            used_for_response=not self.streaming,
+            used_for_response=not item_schema,
         )
 
 
@@ -156,6 +159,8 @@ class ResponseSpecMetadata:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
+
+    .. versionadded:: 0.7.0
     """
 
     headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(

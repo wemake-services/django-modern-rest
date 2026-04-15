@@ -216,6 +216,28 @@ metadata.
   is used to generate summary and description
   for the :class:`~dmr.openapi.objects.Operation`.
 
+Customizing router-level metadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`~dmr.routing.Router` supports ``tags`` and ``deprecated`` parameters
+to apply OpenAPI metadata to all operations in the router:
+
+.. literalinclude:: /examples/openapi/router_metadata.py
+  :caption: urls.py
+  :language: python
+  :linenos:
+
+- ``tags``: List of strings to group operations in OpenAPI documentation
+- ``deprecated``: Boolean flag to mark all operations in this router as deprecated
+
+These router-level settings are automatically merged with endpoint-level customizations
+set via :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`.
+Router tags are prepended to endpoint tags, and deprecated is set to ``True``
+if either the router or endpoint has it enabled.
+
+You can also set ``tags`` and ``deprecated`` at the individual endpoint level
+via :deco:`~dmr.endpoint.modify` to override or extend router-level settings.
+
 
 .. _customizing_parameter_openapi:
 
