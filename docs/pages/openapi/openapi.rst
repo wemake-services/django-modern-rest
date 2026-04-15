@@ -114,6 +114,36 @@ Known caveats:
   feature-heavy frontend bundles.
 
 
+Exporting the schema
+--------------------
+
+You can export the OpenAPI schema to stdout using the ``dmr_export_schema``
+management command. This is useful for sharing the schema, committing it to
+version control, or automating client generation.
+
+.. code-block:: bash
+
+  # Default JSON output:
+  python manage.py dmr_export_schema myapp.urls:schema
+
+  # Pretty-printed and sorted:
+  python manage.py dmr_export_schema myapp.urls:schema --indent 2 --sort-keys
+
+  # YAML output (requires 'django-modern-rest[openapi]'):
+  python manage.py dmr_export_schema myapp.urls:schema --format yaml --indent 2 --sort-keys
+
+The positional argument is the import path to your
+:class:`~dmr.openapi.objects.OpenAPI` instance,
+using a colon to separate the module from the attribute name
+(e.g. ``myapp.urls:schema``).
+
+Available options:
+
+- ``--format`` — ``json`` (default) or ``yaml``
+- ``--indent`` — number of spaces
+- ``--sort-keys`` — sort keys alphabetically in the output
+
+
 Customizing OpenAPI config
 --------------------------
 
