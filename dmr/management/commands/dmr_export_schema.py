@@ -1,9 +1,9 @@
 import json
 from typing import Any
-from typing_extensions import override
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils.module_loading import import_string
+from typing_extensions import override
 
 
 class Command(BaseCommand):
