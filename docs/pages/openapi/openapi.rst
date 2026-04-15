@@ -117,6 +117,11 @@ Known caveats:
 Exporting the schema
 --------------------
 
+.. note::
+
+   To use this feature, you must add ``'dmr'`` to ``INSTALLED_APPS`` in your
+   Django settings.
+
 You can export the OpenAPI schema to stdout using the ``dmr_export_schema``
 management command. This is useful for sharing the schema, committing it to
 version control, or automating client generation.
@@ -129,7 +134,7 @@ version control, or automating client generation.
   # Pretty-printed and sorted:
   python manage.py dmr_export_schema myapp.urls:schema --indent 2 --sort-keys
 
-  # YAML output (requires 'django-modern-rest[openapi]'):
+  # YAML output (requires 'django-modern-rest[openapi]' extra):
   python manage.py dmr_export_schema myapp.urls:schema --format yaml --indent 2 --sort-keys
 
 The positional argument is the import path to your

@@ -1,11 +1,12 @@
 import json
-from typing import Any
+from typing import Any, final
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils.module_loading import import_string
 from typing_extensions import override
 
 
+@final
 class Command(BaseCommand):
     """Management command to export an OpenAPI schema as JSON or YAML."""
 
@@ -49,7 +50,7 @@ class Command(BaseCommand):
         if options['format'] == 'yaml':
             try:
                 import yaml  # noqa: PLC0415
-            except ImportError as exc:
+            except ImportError as exc:  # pragma: no cover
                 raise CommandError(
                     'Looks like `pyyaml` is not installed, consider using '
                     "`pip install 'django-modern-rest[openapi]'`",
