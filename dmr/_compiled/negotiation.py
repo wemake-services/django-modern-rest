@@ -51,6 +51,11 @@ def accepted_type(  # noqa: C901, WPS231
     if not accept_value:
         return None
 
+    types = [_MediaTypeHeader(typ) for typ in provided_types if typ]
+
+    if not types:
+        return None
+
     if ',' in accept_value:
         accepted_types = [
             _MediaTypeHeader(typ) for typ in accept_value.split(',') if typ
@@ -62,11 +67,6 @@ def accepted_type(  # noqa: C901, WPS231
     else:
         accepted_types = [_MediaTypeHeader(accept_value)]
 
-    types = [_MediaTypeHeader(typ) for typ in provided_types if typ]
-
-    if not types:
-        return None
-
     for accepted in accepted_types:
         for provided in types:
             if provided.match(accepted):
@@ -76,14 +76,14 @@ def accepted_type(  # noqa: C901, WPS231
     return None
 
 
-def accepted_header(accept_header_value: str, media_type: str) -> bool:
+def accepted_header(accept_value: str, media_type: str) -> bool:
     """
     Does the client accept a response in the given media type?
 
     This is a faster alternative to Django's ``HttpRequest.accepts``.
 
     Args:
-        accept_header_value: The value of ``Accept`` header.
+        accept_value: The value of ``Accept`` header.
         media_type: The media type to check, e.g. ``"application/json"``.
 
     Returns:
@@ -97,27 +97,30 @@ def accepted_header(accept_header_value: str, media_type: str) -> bool:
             >>> from django.http import HttpRequest
             >>> request = HttpRequest()
             >>> request.META = {'HTTP_ACCEPT': 'application/json'}
-            >>> accepts_media_type(
+            >>> accepted_header(
             ...     request.headers.get('Accept'), 'text/plain'
             ... )  # equivalent to request.accepts("text/plain")
             False
-            >>> accepts_media_type(
+            >>> accepted_header(
             ...     'application/json,text/html;q=0.8',
             ...     'application/json',
             ... )  # can be called with any headers-like mapping
             True
 
     """
-    if not accept_header_value or not media_type:
+    if not accept_value or not media_type:
         return False
 
-    return (
-        accepted_type(
-            accept_header_value,
-            (media_type,),
-        )
-        is not None
-    )
+    provided = _MediaTypeHeader(media_type)
+
+    if ',' in accept_value:
+        for typ in accept_value.split(','):
+            if provided.match(_MediaTypeHeader(typ)):
+                return True
+    elif provided.match(_MediaTypeHeader(accept_value)):
+        return True
+
+    return False
 
 
 @final
