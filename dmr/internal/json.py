@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Any, Protocol
 from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
-from dmr.openapi.dump import _wrap_bytes_dumper
-
 if TYPE_CHECKING:
     from dmr.parsers import Raw
 
@@ -75,6 +73,22 @@ class NativeJson:
     def loads(cls, to_deserialize: 'Raw', /) -> Any:
         """Internal method to load json as a simple object."""
         return json.loads(to_deserialize)
+
+
+def _wrap_bytes_dumper(
+    dumper: Callable[['ConvertedSchema'], bytes],  # noqa: F821
+) -> 'SchemaDumper':  # noqa: F821
+    """
+    Wrap a bytes-returning JSON dumper to always return a UTF-8 string.
+
+    This is used to normalize different JSON backends (e.g. `msgspec`)
+    to a single `str`-based interface expected by `json_dump_schema`.
+    """
+
+    def wrapper(schema: 'ConvertedSchema') -> 'DumpedSchema':  # noqa: F821
+        return dumper(schema).decode('utf-8')
+
+    return wrapper
 
 
 try:
