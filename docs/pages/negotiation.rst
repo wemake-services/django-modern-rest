@@ -328,7 +328,9 @@ We support several layers of configuration:
       :linenos:
 
 Despite the fact that ``Content-Type`` is not validated,
-we still validate the response schema.
+we still validate the response schema. So, you must still provide correct
+renderers and parsers to do validation. Otherwise, you would have to also
+disable :ref:`response_validation`.
 
 .. warning::
 

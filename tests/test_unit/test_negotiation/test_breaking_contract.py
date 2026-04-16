@@ -114,7 +114,10 @@ def test_validate_negotiation_missing_renderer(
     )
     assert response.headers == {'Content-Type': 'application/xml'}
     assert response.content == snapshot(
-        b'<?xml version="1.0" encoding="utf-8"?>\n<detail>\n\t<msg>Response content type \'application/json\' is not listed as a possible to be returned [\'application/xml\']</msg>\n\t<type>value_error</type>\n</detail>',
+        b'<?xml version="1.0" encoding="utf-8"?>\n<detail>\n\t'
+        b"<msg>Response content type 'application/json' is not listed "
+        b"as a possible to be returned ['application/xml']</msg>\n\t"
+        b'<type>value_error</type>\n</detail>',
     )
 
 
@@ -200,7 +203,11 @@ def test_validate_negotiation_per_endpoint(
 @pytest.mark.parametrize('serializer', serializers)
 @pytest.mark.parametrize(
     'flags',
-    [{'validate_negotiation': False}, {'validate_responses': False}],
+    [
+        {'validate_negotiation': False},
+        {'validate_responses': False},
+        {'validate_negotiation': False, 'validate_responses': False},
+    ],
 )
 def test_validate_negotiation_per_settings(
     dmr_rf: DMRRequestFactory,
@@ -240,15 +247,10 @@ def test_validate_negotiation_per_settings(
 
 
 @pytest.mark.parametrize('serializer', serializers)
-@pytest.mark.parametrize(
-    'flags',
-    [{'validate_negotiation': False}],
-)
 def test_validate_negotiation_missing_type(
     dmr_rf: DMRRequestFactory,
     *,
     serializer: type[BaseSerializer],
-    flags: dict[str, Any],
 ) -> None:
     """Ensures we returning content type that is not support raises."""
 
@@ -260,7 +262,7 @@ def test_validate_negotiation_missing_type(
 
         @validate(
             ResponseSpec(dict[str, str], status_code=HTTPStatus.OK),
-            **flags,
+            validate_negotiation=False,
         )
         def post(self, parsed_body: Body[_RequestModel]) -> JsonResponse:
             return JsonResponse(parsed_body['root'], status=HTTPStatus.OK)

@@ -101,7 +101,7 @@ async def test_valid_sse_validate_post(
 
     response = await dmr_async_rf.wrap(_PostValidateSSE.as_view()(request))
 
-    assert isinstance(response, StreamingResponse), response.content
+    assert isinstance(response, StreamingResponse)
     assert response.streaming
     assert response.status_code == HTTPStatus.OK
     assert response.headers == {

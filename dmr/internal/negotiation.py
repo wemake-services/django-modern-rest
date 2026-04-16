@@ -59,11 +59,14 @@ def negotiatiate_response_validation(
     if renderer is not None:
         if content_type is None or renderer.content_type == content_type:
             return renderer.validation_parser
+
+        # If the content types do not match, we need to raise an error,
+        # most likely user made a mistake somewhere:
         if (
             renderer.content_type != content_type
             and metadata.validate_negotiation
-            # Logic for streaming renderers is a bit different
-            and not renderer.streaming
+            # Streaming responses have a different logic:
+            and not getattr(response, 'streaming', False)
         ):
             raise ResponseSchemaError(
                 _WRONG_NEGOTIATION_MSG.format(
@@ -74,7 +77,7 @@ def negotiatiate_response_validation(
 
     # Our last resort is to get the default renderer type.
     # It is always present.
-    return metadata.parsers.get(
+    return metadata.parsers.get(  # pyrefly: ignore[no-matching-overload]
         content_type,  # type: ignore[arg-type]
         # If nothing works, fallback to the default parser:
         next(iter(metadata.parsers.values())),

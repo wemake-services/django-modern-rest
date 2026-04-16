@@ -57,8 +57,8 @@ class ResponseValidator:  # noqa: WPS214
         """Validate response based on provided schema."""
         if not self._should_validate_responses():
             return response
-        self._validate_content_type(response, endpoint.metadata)
         schema = self._get_response_schema(response.status_code)
+        self._validate_content_type(response, endpoint.metadata)
         renderer = request_renderer(
             controller.request,
             use_nonstreaming_renderer=True,

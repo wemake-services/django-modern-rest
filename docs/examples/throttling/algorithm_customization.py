@@ -8,7 +8,7 @@ class SyncController(Controller[PydanticSerializer]):
     throttling = (
         SyncThrottle(
             max_requests=1,
-            duration_in_seconds=Rate.minute,
+            duration_in_seconds=Rate.hour,
             algorithm=LeakyBucket(),
         ),
     )

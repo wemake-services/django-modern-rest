@@ -4,9 +4,8 @@ from typing import TypedDict
 from django.http import JsonResponse
 
 from dmr import Body, Controller, ResponseSpec, validate
-from dmr.plugins.msgspec import (
-    MsgspecSerializer,
-)
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.settings import default_parser, default_renderer
 from examples.negotiation.negotiation import XmlParser, XmlRenderer
 
 
@@ -15,8 +14,8 @@ class _UserInputData(TypedDict):
 
 
 class UserController(Controller[MsgspecSerializer]):
-    parsers = (XmlParser(),)
-    renderers = (XmlRenderer(),)
+    parsers = (XmlParser(), default_parser)
+    renderers = (XmlRenderer(), default_renderer)
 
     @validate(
         ResponseSpec(_UserInputData, status_code=HTTPStatus.OK),
