@@ -75,8 +75,12 @@ To use the bundled UI pages:
 - if you serve bundled assets locally, add
   ``'django.contrib.staticfiles'`` to ``INSTALLED_APPS``
 - configure Django templates so app templates can be discovered, for example
-  with ``APP_DIRS = True``
-- set ``STATIC_URL``
+  by enabling
+  `APP_DIRS <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-TEMPLATES-APP_DIRS>`_
+  in the Django template backend
+- set
+  `STATIC_URL <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-STATIC_URL>`_
+  so Django can generate URLs for bundled static assets
 
 In development, this is usually enough when using Django's development server.
 
