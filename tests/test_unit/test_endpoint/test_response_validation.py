@@ -128,8 +128,8 @@ def test_validate_status_code(
         'detail': [
             {
                 'msg': (
-                    'Returned status code 200 is not specified '
-                    'in the list of allowed status codes: [201, 422, 406]'
+                    "Response content type 'text/html; charset=utf-8' is not "
+                    "listed as a possible to be returned ['application/json']"
                 ),
                 'type': 'value_error',
             },
@@ -418,9 +418,17 @@ def test_return_unsupported_response(
     response = _UnsupportedResponseController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
-        'detail': [{'msg': 'Internal server error'}],
+        'detail': [
+            {
+                'msg': (
+                    "Response content type 'text/html; charset=utf-8' is not "
+                    "listed as a possible to be returned ['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
     })
 
 

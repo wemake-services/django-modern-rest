@@ -366,6 +366,9 @@ class EndpointMetadata:
         renderers: List of instances to be used for this endpoint
             to render response's body. All instances must be of subtypes
             of :class:`~dmr.renderers.Renderer`.
+        validate_negotiation: Should we validate that returned response's
+            ``Content-Type`` header matches the one
+            that we inferred in the negotiation process?
         auth: list of auth instances to be used for this endpoint.
             Sync endpoints must use instances
             of :class:`dmr.security.SyncAuth`.
@@ -432,6 +435,7 @@ class EndpointMetadata:
     component_parsers: list[ComponentParserSpec]
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
+    validate_negotiation: bool
     auth: list['SyncAuth | AsyncAuth'] | None
 
     # First line of throttling:

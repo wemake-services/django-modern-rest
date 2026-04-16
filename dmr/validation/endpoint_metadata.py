@@ -243,6 +243,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         summary, description = self._build_description()
+        throttling_before_auth, throttling_after_auth = self._build_throttling()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -254,8 +255,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             component_parsers=self.component_parsers,
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
+            validate_negotiation=self._build_validate_negotiation(),
             auth=self._build_auth(),
-            **self._build_throttling(),
+            throttling_before_auth=throttling_before_auth,
+            throttling_after_auth=throttling_after_auth,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -297,6 +300,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             links=payload.links,
         )
         summary, description = self._build_description()
+        throttling_before_auth, throttling_after_auth = self._build_throttling()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -308,8 +312,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             component_parsers=self.component_parsers,
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
+            validate_negotiation=self._build_validate_negotiation(),
             auth=self._build_auth(),
-            **self._build_throttling(),
+            throttling_before_auth=throttling_before_auth,
+            throttling_after_auth=throttling_after_auth,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -332,13 +338,12 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         *,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
-        status_code = infer_status_code(
-            method,
-            streaming=self.controller_cls.streaming,
-        )
         modification = self.response_modification_cls(
             return_type=return_annotation,
-            status_code=status_code,
+            status_code=infer_status_code(
+                method,
+                streaming=self.controller_cls.streaming,
+            ),
             headers=None,
             cookies=None,
             streaming=self.controller_cls.streaming,
@@ -346,6 +351,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             links=None,
         )
         summary, description = self._build_description()
+        throttling_before_auth, throttling_after_auth = self._build_throttling()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -357,8 +363,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             component_parsers=self.component_parsers,
             parsers=self._build_parsers(),
             renderers=self._build_renderers(),
+            validate_negotiation=self._build_validate_negotiation(),
             auth=self._build_auth(),
-            **self._build_throttling(),
+            throttling_before_auth=throttling_before_auth,
+            throttling_after_auth=throttling_after_auth,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -435,6 +443,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             f'{self.endpoint_name!r} serializer does not support {pluggable!r}',
         )
 
+    def _build_validate_negotiation(self) -> bool:
+        if self.payload and self.payload.validate_negotiation is not None:
+            return self.payload.validate_negotiation
+        if self.controller_cls.validate_negotiation is not None:
+            return self.controller_cls.validate_negotiation
+        settings_value = resolve_setting(Settings.validate_negotiation)
+        if settings_value is not None:
+            return settings_value  # type: ignore[no-any-return]
+        return self._build_validate_responses()
+
     def _build_auth(  # noqa: WPS231
         self,
     ) -> list[SyncAuth | AsyncAuth] | None:
@@ -472,7 +490,12 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return None
         return auth
 
-    def _build_throttling(self) -> dict[str, Any]:  # noqa: WPS231
+    def _build_throttling(  # noqa: WPS231
+        self,
+    ) -> tuple[
+        tuple[SyncThrottle | AsyncThrottle, ...] | None,
+        tuple[SyncThrottle | AsyncThrottle, ...] | None,
+    ]:
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
@@ -512,24 +535,21 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             # and it is just None.
             or not throttling
         ):
-            return {
-                'throttling_before_auth': None,
-                'throttling_after_auth': None,
-            }
-        return {
-            'throttling_before_auth': tuple(
+            return (None, None)
+        return (
+            tuple(
                 throttling
                 for throttling in throttling
                 if throttling.cache_key.runs_before_auth
             )
             or None,
-            'throttling_after_auth': tuple(
+            tuple(
                 throttling
                 for throttling in throttling
                 if not throttling.cache_key.runs_before_auth
             )
             or None,
-        }
+        )
 
     def _build_validate_responses(self) -> bool:
         if self.payload and self.payload.validate_responses is not None:

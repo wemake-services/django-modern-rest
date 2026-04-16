@@ -14,7 +14,7 @@ from dmr.exceptions import (
 from dmr.files import FileBody
 from dmr.internal.negotiation import (
     media_by_precedence,
-    response_validation_negotiator,
+    negotiatiate_response_validation,
 )
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import get_conditional_types, request_renderer
@@ -57,12 +57,13 @@ class ResponseValidator:  # noqa: WPS214
         """Validate response based on provided schema."""
         if not self._should_validate_responses():
             return response
+        self._validate_content_type(response, endpoint.metadata)
         schema = self._get_response_schema(response.status_code)
         renderer = request_renderer(
             controller.request,
             use_nonstreaming_renderer=True,
         )
-        parser = response_validation_negotiator(
+        parser = negotiatiate_response_validation(
             controller.request,
             response,
             renderer,
@@ -78,7 +79,6 @@ class ResponseValidator:  # noqa: WPS214
         )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
-        self._validate_content_type(response, endpoint.metadata)
         return response
 
     def validate_modification(
@@ -143,7 +143,7 @@ class ResponseValidator:  # noqa: WPS214
     ) -> None:
         if isinstance(response, HttpResponse):
             # When we have a regular response, we deserialize
-            # its content, it is quite clear.
+            # its content the regular way.
             structured = self.serializer.deserialize(
                 response.content,
                 parser=parser,
@@ -172,11 +172,10 @@ class ResponseValidator:  # noqa: WPS214
             # Here's the tricky part:
             # 1. We first try to use the actual Content-Type from the response
             # 2. But, there might be no Content-Type header yet
-            # 3. So, we fallback to the renderer's content type
-            # 4. And if there's no renderer, we fallback to the default parser
+            # 3. So, we fallback to the default parser
             content_type=response.headers.get(
                 'Content-Type',
-                getattr(renderer, 'content_type', parser.content_type),
+                parser.content_type,
             ),
         )
 

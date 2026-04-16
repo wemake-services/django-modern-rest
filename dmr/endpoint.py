@@ -4,11 +4,11 @@ import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Never, overload
+from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
-from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
+from typing_extensions import ParamSpec, TypeVar
 
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
@@ -21,7 +21,14 @@ from dmr.exceptions import (
 )
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.internal.context import SerializerContext as SerializerContext
-from dmr.internal.endpoint import request_endpoint as request_endpoint
+from dmr.internal.endpoint import (
+    ModifyAnyCallable,
+    ModifyAsyncCallable,
+    ModifySyncCallable,
+)
+from dmr.internal.endpoint import (
+    request_endpoint as request_endpoint,
+)
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
@@ -601,6 +608,7 @@ def validate(  # noqa: WPS234
     no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -630,6 +638,7 @@ def validate(
     no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -659,6 +668,7 @@ def validate(
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -687,6 +697,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -764,6 +775,9 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~dmr.renderers.Renderer`.
+        validate_negotiation: Should we validate that returned response's
+            ``Content-Type`` header matches the one
+            that we inferred in the negotiation process?
         auth: Sequence of auth instances to be used for this endpoint.
             Sync endpoints must use instances
             of :class:`dmr.security.SyncAuth`.
@@ -809,6 +823,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             error_handler=error_handler,
             parsers=parsers,
             renderers=renderers,
+            validate_negotiation=validate_negotiation,
             auth=auth,
             throttling=throttling,
             summary=summary,
@@ -821,75 +836,6 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             servers=servers,
         ),
     )
-
-
-class _ModifyAsyncCallable(Protocol):
-    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
-
-    @overload
-    @deprecated(
-        # It is not actually deprecated, but impossible for the day one.
-        # But, this is the only way to trigger a typing error.
-        'Do not use `@modify` decorator with `HttpResponse` return type',
-    )
-    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
-
-    @overload
-    def __call__(
-        self,
-        func: Callable[_ParamT, Awaitable[_ReturnT]],
-        /,
-    ) -> Callable[_ParamT, _ReturnT]: ...
-
-
-class _ModifySyncCallable(Protocol):
-    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
-
-    @overload
-    @deprecated(
-        # It is not actually deprecated, but impossible for the day one.
-        # But, this is the only way to trigger a typing error.
-        'Do not use `@modify` decorator with `HttpResponse` return type',
-    )
-    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
-
-    @overload
-    @deprecated(
-        # It is not actually deprecated, but impossible for the day one.
-        # But, this is the only way to trigger a typing error.
-        'Passing sync `error_handler` to `@modify` requires sync endpoint',
-    )
-    def __call__(
-        self,
-        func: Callable[_ParamT, Awaitable[_ReturnT]],
-        /,
-    ) -> Never: ...
-
-    @overload
-    def __call__(
-        self,
-        func: Callable[_ParamT, _ReturnT],
-        /,
-    ) -> Callable[_ParamT, _ReturnT]: ...
-
-
-class _ModifyAnyCallable(Protocol):
-    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
-
-    @overload
-    @deprecated(
-        # It is not actually deprecated, but impossible for the day one.
-        # But, this is the only way to trigger a typing error.
-        'Do not use `@modify` decorator with `HttpResponse` return type',
-    )
-    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
-
-    @overload
-    def __call__(
-        self,
-        func: Callable[_ParamT, _ReturnT],
-        /,
-    ) -> Callable[_ParamT, _ReturnT]: ...
 
 
 @overload
@@ -908,6 +854,7 @@ def modify(
     no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -919,7 +866,7 @@ def modify(
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
     response_description: str | None = None,
-) -> _ModifyAsyncCallable: ...
+) -> ModifyAsyncCallable: ...
 
 
 @overload
@@ -937,6 +884,7 @@ def modify(
     no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -949,7 +897,7 @@ def modify(
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
-) -> _ModifySyncCallable: ...
+) -> ModifySyncCallable: ...
 
 
 @overload
@@ -967,6 +915,7 @@ def modify(
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -979,7 +928,7 @@ def modify(
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
-) -> _ModifyAnyCallable: ...
+) -> ModifyAnyCallable: ...
 
 
 def modify(  # noqa: WPS211
@@ -996,6 +945,7 @@ def modify(  # noqa: WPS211
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
@@ -1008,7 +958,7 @@ def modify(  # noqa: WPS211
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
-) -> _ModifyAsyncCallable | _ModifySyncCallable | _ModifyAnyCallable:
+) -> ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
 
@@ -1057,6 +1007,9 @@ def modify(  # noqa: WPS211
         renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~dmr.renderers.Renderer`.
+        validate_negotiation: Should we validate that returned response's
+            ``Content-Type`` header matches the one
+            that we inferred in the negotiation process?
         auth: Sequence of auth instances to be used for this endpoint.
             Sync endpoints must use instances
             of :class:`dmr.security.SyncAuth`.
@@ -1108,6 +1061,7 @@ def modify(  # noqa: WPS211
             error_handler=error_handler,
             parsers=parsers,
             renderers=renderers,
+            validate_negotiation=validate_negotiation,
             auth=auth,
             throttling=throttling,
             summary=summary,

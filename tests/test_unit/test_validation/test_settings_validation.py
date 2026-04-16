@@ -5,13 +5,14 @@ from django.conf import LazySettings
 
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.validation import SettingsValidator
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
     PydanticSerializer,
+    PydanticFastSerializer,
 ]
 
 try:
@@ -36,6 +37,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         # Instances:
         {'parsers': [1]},
         {'renderers': [None]},
+        {'validate_negotiation': 'true'},
         {'auth': ['auth']},
         {'throttling': ['throttling']},
         {'responses': [{}]},

@@ -1,9 +1,88 @@
-from typing import TYPE_CHECKING, Literal, overload
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING, Literal, Never, overload
 
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseBase
+from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 
 if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
+
+
+_ParamT = ParamSpec('_ParamT')
+_ReturnT = TypeVar('_ReturnT')
+_ResponseT = TypeVar(
+    '_ResponseT',
+    bound=HttpResponseBase | Awaitable[HttpResponseBase],
+)
+
+
+class ModifySyncCallable(Protocol):
+    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Do not use `@modify` decorator with `HttpResponse` return type',
+    )
+    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Passing sync `error_handler` to `@modify` requires sync endpoint',
+    )
+    def __call__(
+        self,
+        func: Callable[_ParamT, Awaitable[_ReturnT]],
+        /,
+    ) -> Never: ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable[_ParamT, _ReturnT],
+        /,
+    ) -> Callable[_ParamT, _ReturnT]: ...
+
+
+class ModifyAsyncCallable(Protocol):
+    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Do not use `@modify` decorator with `HttpResponse` return type',
+    )
+    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable[_ParamT, Awaitable[_ReturnT]],
+        /,
+    ) -> Callable[_ParamT, _ReturnT]: ...
+
+
+class ModifyAnyCallable(Protocol):
+    """Make `@modify` on functions returning `HttpResponse` unrepresentable."""
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Do not use `@modify` decorator with `HttpResponse` return type',
+    )
+    def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable[_ParamT, _ReturnT],
+        /,
+    ) -> Callable[_ParamT, _ReturnT]: ...
 
 
 @overload

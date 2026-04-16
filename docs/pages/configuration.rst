@@ -79,10 +79,6 @@ Content negotiation
   to serialize data from the requested text format,
   like json or xml, into python object.
 
-  By default uses ``json`` module for deserialization
-  if ``msgspec`` is not installed.
-  And uses ``msgspec.json`` if ``msgspec`` is installed.
-
   Custom configuration example, let's say you want to always use ``ujson``:
 
   .. code-block:: python
@@ -100,10 +96,6 @@ Content negotiation
   of :class:`~dmr.renderers.Renderer`
   to serialize python objects to the requested text format, like json or xml.
 
-  By default uses ``json`` module for serialization
-  if ``msgspec`` is not installed.
-  And uses ``msgspec.json`` if ``msgspec`` is installed which are faster.
-
   Custom configuration example, let's say you want to always use ``ujson``:
 
   .. code-block:: python
@@ -111,6 +103,29 @@ Content negotiation
 
     >>> from dmr.renderers import JsonRenderer
     >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer()]}
+
+.. data:: dmr.settings.Settings.validate_negotiation
+
+  Default: ``None``
+
+  Should we validate content negotiation?
+  Meaning: ``django-modern-rest`` finds which parser and which renderer
+  to use based on ``Content-Type`` and ``Accept`` headers.
+  However, by mistake people can return responses with wrong ``Content-Type``
+  if they construct responses manually.
+  See :doc:`negotiation` for more info.
+
+  Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
+  for convenience if this value is ``None``.
+
+  To disable the content negotiation validation globally, use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.validate_negotiation: False,
+    ... }
 
 
 Response handling

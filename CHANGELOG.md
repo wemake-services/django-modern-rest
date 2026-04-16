@@ -20,6 +20,11 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Features
+
+- Added `validate_negotiation` metadata flag, so we can explicitly validate,
+  that returned response followed the negotiation process, #711
+
 ### Bugfixes
 
 - Fixed that `itemSchema` was possible to be rendered
