@@ -25,7 +25,6 @@ schema = build_schema(router)
 urlpatterns = [
     # Mount the actual API endpoints.
     path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
-
     # Machine-readable schema outputs for tooling and client generation.
     path(
         'docs/openapi.json/',
@@ -37,7 +36,6 @@ urlpatterns = [
         OpenAPIYamlView.as_view(schema),
         name='openapi_yaml',
     ),
-
     # Human-friendly documentation UIs backed by the same schema.
     path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
