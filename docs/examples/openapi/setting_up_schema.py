@@ -32,9 +32,9 @@ urlpatterns = [
         OpenAPIJsonView.as_view(schema),
         name='openapi_json',
     ),
-    path(
+    path(  # Requires the `django-modern-rest[openapi]` extra.
         'docs/openapi.yaml/',
-        OpenAPIYamlView.as_view(schema),  # Requires the `django-modern-rest[openapi]` extra.
+        OpenAPIYamlView.as_view(schema),
         name='openapi_yaml',
     ),
 

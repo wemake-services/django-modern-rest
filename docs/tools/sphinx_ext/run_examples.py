@@ -421,7 +421,7 @@ class _OpenAPIBuilder(_BaseBuilder):
                 path(url_path, controller_cls.as_view()),
             ],
         )
-        schema = build_schema(router)
+        schema = build_schema(router, config=OpenAPIConfig(title='', version='', openapi_version='3.2.0'))
 
         urlpatterns.append(
             path(
