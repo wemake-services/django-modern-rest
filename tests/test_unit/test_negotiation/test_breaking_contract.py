@@ -1,11 +1,12 @@
 import json
 from http import HTTPStatus
-from typing import Any, Final, TypeAlias, TypedDict
+from typing import Any, Final, TypeAlias
 
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse, JsonResponse
 from inline_snapshot import snapshot
+from typing_extensions import TypedDict
 
 from dmr import Body, Controller, ResponseSpec, validate
 from dmr.plugins.pydantic import PydanticSerializer
