@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 Callback: TypeAlias = dict[str, Union['PathItem', 'Reference']]
 """
-A map of possible out-of band callbacks related to the parent operation.
+A map of possible out-of-band callbacks related to the parent operation.
 
 Each value in the map is a Path Item Object that describes a set of requests
 that may be initiated by the API provider and the expected responses.

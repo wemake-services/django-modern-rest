@@ -1,4 +1,5 @@
 import json
+from collections.abc import AsyncIterator, Iterator
 from http import HTTPMethod, HTTPStatus
 from typing import final
 
@@ -13,13 +14,8 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
+from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRRequestFactory
 
@@ -38,11 +34,10 @@ class _ReturnModel(msgspec.Struct):
 @final
 class _ModelController(
     Controller[MsgspecSerializer],
-    Body[_InputModel],
 ):
-    def post(self) -> _ReturnModel:
-        first_name = self.parsed_body.first_name
-        last_name = self.parsed_body.last_name
+    def post(self, parsed_body: Body[_InputModel]) -> _ReturnModel:
+        first_name = parsed_body.first_name
+        last_name = parsed_body.last_name
         return _ReturnModel(full_name=f'{first_name} {last_name}')
 
 
@@ -161,10 +156,9 @@ class _ByNameModel(msgspec.Struct):
 @final
 class _ByNameController(
     Controller[MsgspecSerializer],
-    Body[_ByNameModel],
 ):
-    def post(self) -> _ByNameModel:
-        return _ByNameModel(first_name=self.parsed_body.first_name)
+    def post(self, parsed_body: Body[_ByNameModel]) -> _ByNameModel:
+        return _ByNameModel(first_name=parsed_body.first_name)
 
 
 def test_msgspec_field_names_work(
@@ -192,12 +186,11 @@ class _CamelCaseModel(msgspec.Struct, rename='camel'):
 @final
 class _CamelCaseController(
     Controller[MsgspecSerializer],
-    Body[_CamelCaseModel],
 ):
-    def post(self) -> _CamelCaseModel:
+    def post(self, parsed_body: Body[_CamelCaseModel]) -> _CamelCaseModel:
         return _CamelCaseModel(
-            first_name=self.parsed_body.first_name,
-            last_name=self.parsed_body.last_name,
+            first_name=parsed_body.first_name,
+            last_name=parsed_body.last_name,
         )
 
 
@@ -215,3 +208,24 @@ def test_msgspec_struct_renames_work(
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == request_data
+
+
+def test_msgspec_rejects_gens() -> None:
+    """Ensure msgspec controllers cannot define generator endpoints."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a generator',
+    ):
+
+        class _BadAsyncController(Controller[MsgspecSerializer]):
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a generator',
+    ):
+
+        class _BadSyncController(Controller[MsgspecSerializer]):
+            def get(self) -> Iterator[int]:
+                yield 1  # pragma: no cover

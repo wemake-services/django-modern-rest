@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
@@ -15,9 +15,10 @@ class CustomErrorModel(TypedDict):
     errors: list[CustomErrorDetail]
 
 
-class _CustomErrorMixin:
+class ApiController(Controller[PydanticSerializer]):
     error_model = CustomErrorModel
 
+    @override
     def format_error(
         self,
         error: str | Exception,
@@ -36,12 +37,6 @@ class _CustomErrorMixin:
             ],
         }
 
-
-class ApiController(
-    _CustomErrorMixin,
-    Controller[PydanticSerializer],
-    Body[dict[str, str]],
-):
     @modify(
         extra_responses=[
             ResponseSpec(
@@ -50,13 +45,13 @@ class ApiController(
             ),
         ],
     )
-    def post(self) -> str:
+    def post(self, parsed_body: Body[dict[str, str]]) -> str:
         raise APIError(
             self.format_error('test msg'),
             status_code=HTTPStatus.PAYMENT_REQUIRED,
         )
 
 
-# run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/",  "fail-with-body": false}  # noqa: ERA001, E501
-# run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "fail-with-body": false}  # noqa: ERA001, E501
-# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "method": "post", "body": {}, "url": "/api/example/", "assert-error-text": "test msg", "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "method": "post", "body": [], "url": "/api/example/", "assert-error-text": "errors", "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001

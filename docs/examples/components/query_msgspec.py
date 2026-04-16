@@ -9,14 +9,11 @@ class _QueryModel(msgspec.Struct):
     count: int
 
 
-class ApiController(
-    Controller[MsgspecSerializer],
-    Query[_QueryModel],
-):
-    def get(self) -> _QueryModel:
-        return self.parsed_query
+class ApiController(Controller[MsgspecSerializer]):
+    def get(self, parsed_query: Query[_QueryModel]) -> _QueryModel:
+        return parsed_query
 
 
 # run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc&count=10"}  # noqa: ERA001, E501
-# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
-# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# run: {"controller": "ApiController", "url": "/api/users/", "method": "get", "query": "?query=abc", "curl_args": ["-D", "-"], "assert-error-text": "count", "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"controller": "ApiController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001

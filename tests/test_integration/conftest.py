@@ -1,14 +1,31 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from django.conf import LazySettings
 
 from dmr.settings import Settings
+
+if TYPE_CHECKING:
+    import tracecov
+
+
+@pytest.fixture(scope='session')
+def tracecov_map() -> 'tracecov.CoverageMap | None':
+    """Provide the session ``tracecov`` coverage map for tests."""
+    try:
+        import tracecov  # noqa: PLC0415
+    except ImportError:  # pragma: no cover
+        return None
+
+    from django_test_app.server.urls import schema  # noqa: PLC0415
+
+    return tracecov.CoverageMap.from_dict(schema.convert())
 
 
 @pytest.fixture(autouse=True, params=[True, False])
 def _modify_integration_settings(
     settings: LazySettings,
     request: pytest.FixtureRequest,
-    dmr_clean_settings: None,
 ) -> None:
     # Django common settings:
     settings.DEBUG = request.param  # We run tests in both modes.

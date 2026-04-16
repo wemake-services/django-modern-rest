@@ -1,14 +1,10 @@
+import asyncio
 import inspect
+import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Never,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Never, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -17,12 +13,15 @@ from typing_extensions import ParamSpec, Protocol, TypeVar, deprecated
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.exceptions import (
+    DataRenderingError,
     InternalServerError,
     NotAuthenticatedError,
     ResponseSchemaError,
     ValidationError,
 )
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.context import SerializerContext as SerializerContext
+from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
@@ -39,6 +38,7 @@ from dmr.response import APIError, APIRedirectError
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
+from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
@@ -49,8 +49,9 @@ from dmr.validation import (
 )
 
 if TYPE_CHECKING:
-    from dmr.controller import Blueprint, Controller
+    from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.routing import Router
     from dmr.validation.response import ValidatedModification
 
 
@@ -63,7 +64,10 @@ class Endpoint:  # noqa: WPS214
     """
 
     __slots__ = (
+        '_async_lock',
         '_func',
+        '_serializer_context',
+        '_sync_lock',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -75,6 +79,9 @@ class Endpoint:  # noqa: WPS214
     _func: Callable[..., Any]
 
     # Class API:
+    serializer_context_cls: ClassVar[type[SerializerContext]] = (
+        SerializerContext
+    )
     metadata_builder_cls: ClassVar[type[EndpointMetadataBuilder]] = (
         EndpointMetadataBuilder
     )
@@ -99,7 +106,6 @@ class Endpoint:  # noqa: WPS214
         self,
         func: Callable[..., Any],
         *,
-        blueprint_cls: type['Blueprint[BaseSerializer]'] | None,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """
@@ -108,15 +114,22 @@ class Endpoint:  # noqa: WPS214
         Args:
             func: Entrypoint handler. An actual function to be called.
             controller_cls: ``Controller`` class that this endpoint belongs to.
-            blueprint_cls: ``Blueprint`` class that this endpoint
-                might belong to.
 
         .. danger::
 
             Endpoint object must **not** have any mutable instance state,
             because its instance is reused for all requests.
+            It is fine to have common locks for throttling, because
+            this way we guard cache concurrent access
+            from different thread / coroutines.
 
         """
+        type_annotations = controller_cls.annotations_context(func)
+        self._serializer_context = self.serializer_context_cls(
+            func,
+            controller_cls,
+            type_annotations,
+        )
         # We need to add payloads to functions that don't have it,
         # since decorator is optional:
         payload: Payload = getattr(func, '__dmr_payload__', None)
@@ -130,16 +143,16 @@ class Endpoint:  # noqa: WPS214
         # Done!
         metadata = self.metadata_builder_cls(
             payload=payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
             response_modification_cls=self.response_modification_cls,
+            component_parsers=self._serializer_context.component_parsers,
+            type_annotations=type_annotations,
         )()
         self.metadata_validator_cls(metadata=metadata)(
             func,
             payload=payload,
-            blueprint_cls=blueprint_cls,
             controller_cls=controller_cls,
         )
         func.__metadata__ = metadata  # type: ignore[attr-defined]
@@ -151,6 +164,7 @@ class Endpoint:  # noqa: WPS214
         self.response_negotiator = self.response_negotiator_cls(
             self.metadata,
             controller_cls.serializer,
+            streaming=controller_cls.streaming,
         )
 
         # We need a func before any wrappers, but with metadata:
@@ -160,6 +174,10 @@ class Endpoint:  # noqa: WPS214
         )
         # We can now run endpoint's optimization:
         controller_cls.serializer.optimizer.optimize_endpoint(metadata)
+
+        # Locks:
+        self._sync_lock = threading.Lock()
+        self._async_lock = asyncio.Lock()
 
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
@@ -205,16 +223,7 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if controller.blueprint:
-            try:
-                return controller.blueprint.handle_error(
-                    self,
-                    controller,
-                    exc,
-                )
-            except Exception:  # noqa: S110
-                pass  # noqa: WPS420
-        # Per-endpoint error handler and per-blueprint handlers didn't work.
+        # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
             return controller.handle_error(
@@ -248,16 +257,7 @@ class Endpoint:  # noqa: WPS214
             except Exception:  # noqa: S110
                 # We don't use `suppress` here for speed.
                 pass  # noqa: WPS420
-        if controller.blueprint:
-            try:
-                return await controller.blueprint.handle_async_error(
-                    self,
-                    controller,
-                    exc,
-                )
-            except Exception:  # noqa: S110
-                pass  # noqa: WPS420
-        # Per-endpoint error handler and per-blueprint handlers didn't work.
+        # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
             return await controller.handle_async_error(
@@ -276,8 +276,9 @@ class Endpoint:  # noqa: WPS214
         controller_name: str,
         serializer: type[BaseSerializer],
         context: 'OpenAPIContext',
+        router: 'Router',
     ) -> Operation:
-        """Builde an OpenAPI Operation from an endpoint."""
+        """Build an OpenAPI Operation from an endpoint."""
         operation_id = self.get_operation_id(
             path,
             controller_name,
@@ -295,11 +296,16 @@ class Endpoint:  # noqa: WPS214
             serializer,
         )
 
+        tags = [
+            *router.tags,
+            *(self.metadata.tags or []),
+        ]
+
         return Operation(
-            tags=self.metadata.tags,
+            tags=tags or None,
             summary=self.metadata.summary,
             description=self.metadata.description,
-            deprecated=self.metadata.deprecated,
+            deprecated=self.metadata.deprecated or router.deprecated,
             security=security,
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
@@ -336,28 +342,24 @@ class Endpoint:  # noqa: WPS214
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
-            active_blueprint = controller.active_blueprint
             try:  # noqa: WPS229
-                # Negotiate response:
-                self.response_negotiator(controller.request)
+                controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
 
                 # Run checks:
                 await self._run_async_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    self,
-                    active_blueprint,
-                )
+                context = self._serializer_context(self, controller)
 
                 # Return response:
-                func_result = await func(active_blueprint)
+                func_result = await func(controller, **context)
             except (APIError, APIRedirectError) as exc:
-                func_result = active_blueprint.to_error(
+                func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = await self.handle_async_error(controller, exc)
@@ -376,29 +378,24 @@ class Endpoint:  # noqa: WPS214
             *args: Any,
             **kwargs: Any,
         ) -> HttpResponseBase:
-            active_blueprint = controller.active_blueprint
-
             try:  # noqa: WPS229
-                # Negotiate response:
-                self.response_negotiator(controller.request)
+                controller.request.__dmr_endpoint__ = self  # type: ignore[attr-defined]
 
                 # Run checks:
                 self._run_checks(controller)
 
                 # Parse request:
-                active_blueprint._serializer_context(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    self,
-                    active_blueprint,
-                )
+                context = self._serializer_context(self, controller)
 
                 # Return response:
-                func_result = func(active_blueprint)
+                func_result = func(controller, **context)
             except (APIError, APIRedirectError) as exc:
-                func_result = active_blueprint.to_error(
+                func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
                     headers=exc.headers,
                     cookies=getattr(exc, 'cookies', None),
+                    renderer=getattr(exc, 'renderer', None),
                 )
             except Exception as exc:
                 func_result = self.handle_error(controller, exc)
@@ -406,28 +403,105 @@ class Endpoint:  # noqa: WPS214
 
         return decorator
 
+    # Sync checks:
+
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
-        # Run sync auth checks:
+        # First round of throttling:
+        self._run_throttle_before(controller)
+        # Negotiate response:
+        self.response_negotiator(controller.request)
+        # Auth:
+        self._run_auth(controller)
+        # Second round of throttling:
+        self._run_throttle_after(controller)
+
+    def _run_throttle_before(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_before_auth is None:
+            return
+        for throttle in self.metadata.throttling_before_auth:
+            assert isinstance(throttle, SyncThrottle)  # noqa: S101
+            with self._sync_lock:
+                throttle(self, controller)
+
+    def _run_auth(self, controller: 'Controller[BaseSerializer]') -> None:
         if self.metadata.auth is None:
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, SyncAuth)  # noqa: S101
-            if auth(self, controller) is not None:
+            authed_by = auth(self, controller)
+            if authed_by is not None:
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
+
+    def _run_throttle_after(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_after_auth is None:
+            return
+        for throttle in self.metadata.throttling_after_auth:
+            assert isinstance(throttle, SyncThrottle)  # noqa: S101
+            with self._sync_lock:
+                throttle(self, controller)
+
+    # Async checks:
 
     async def _run_async_checks(
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> None:
-        # Run async auth checks:
+        # First round of throttling:
+        await self._run_async_throttle_before(controller)
+        # Negotiate response:
+        self.response_negotiator(controller.request)
+        # Auth:
+        await self._run_async_auth(controller)
+        # Second round of throttling:
+        await self._run_async_throttle_after(controller)
+
+    async def _run_async_throttle_before(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_before_auth is None:
+            return
+        for throttle in self.metadata.throttling_before_auth:
+            assert isinstance(throttle, AsyncThrottle)  # noqa: S101
+            # We have to check them in sync one by one :(
+            async with self._async_lock:
+                await throttle(self, controller)  # noqa: WPS476
+
+    async def _run_async_auth(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
         if self.metadata.auth is None:
             return
         for auth in self.metadata.auth:
             assert isinstance(auth, AsyncAuth)  # noqa: S101
-            if (await auth(self, controller)) is not None:  # noqa: WPS476
+            authed_by = await auth(self, controller)  # noqa: WPS476
+            if authed_by is not None:
+                controller.request.__dmr_auth__ = authed_by  # type: ignore[attr-defined]
                 return
         raise NotAuthenticatedError
+
+    async def _run_async_throttle_after(
+        self,
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        if self.metadata.throttling_after_auth is None:
+            return
+        for throttle in self.metadata.throttling_after_auth:
+            assert isinstance(throttle, AsyncThrottle)  # noqa: S101
+            # We have to check them in sync one by one :(
+            async with self._async_lock:
+                await throttle(self, controller)  # noqa: WPS476
+
+    # Utils:
 
     def _make_http_response(
         self,
@@ -442,9 +516,10 @@ class Endpoint:  # noqa: WPS214
         """
         try:
             return self._validate_response(controller, raw_data)
-        except (
+        except (  # noqa: WPS239
             ResponseSchemaError,
             ValidationError,
+            DataRenderingError,
             InternalServerError,
         ) as exc:
             # We can't call `self.handle_error` or `self.handle_async_error`
@@ -460,19 +535,19 @@ class Endpoint:  # noqa: WPS214
     def _validate_response(
         self,
         controller: 'Controller[BaseSerializer]',
-        raw_data: Any | HttpResponseBase,
+        response_data: Any | HttpResponseBase,
     ) -> HttpResponseBase:
-        if isinstance(raw_data, HttpResponseBase):
+        if isinstance(response_data, HttpResponseBase):
             return self.response_validator.validate_response(
                 self,
                 controller,
-                raw_data,
+                response_data,
             )
 
         validated = self.response_validator.validate_modification(
             self,
             controller,
-            raw_data,
+            response_data,
         )
         return self._build_new_response(controller, validated)
 
@@ -521,10 +596,13 @@ def validate(  # noqa: WPS234
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -547,10 +625,13 @@ def validate(
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -572,11 +653,14 @@ def validate(
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -597,11 +681,14 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -661,6 +748,12 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        exclude_semantic_responses: Set of semantic responses status codes
+            that user wants to disable.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
         error_handler: Callback function to be called
@@ -677,6 +770,12 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Async endpoints must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth for this endpoint.
+        throttling: Sequence of throttle instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async endpoints must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -704,11 +803,14 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             responses=[response, *responses],
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            exclude_semantic_responses=exclude_semantic_responses,
+            validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             parsers=parsers,
             renderers=renderers,
             auth=auth,
+            throttling=throttling,
             summary=summary,
             description=description,
             tags=tags,
@@ -755,7 +857,7 @@ class _ModifySyncCallable(Protocol):
     @deprecated(
         # It is not actually deprecated, but impossible for the day one.
         # But, this is the only way to trigger a typing error.
-        'Passing sync `error_hanlder` to `@modify` requires sync endpoint',
+        'Passing sync `error_handler` to `@modify` requires sync endpoint',
     )
     def __call__(
         self,
@@ -800,11 +902,14 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -826,11 +931,14 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -852,12 +960,15 @@ def modify(
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -878,12 +989,15 @@ def modify(  # noqa: WPS211
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
     semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
     extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -926,6 +1040,12 @@ def modify(  # noqa: WPS211
             Here we only store the per endpoint information.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+        exclude_semantic_responses: Set of semantic responses status codes
+            that user wants to disable.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         extra_responses: List of extra responses that this endpoint can return.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
@@ -943,6 +1063,12 @@ def modify(  # noqa: WPS211
             Async endpoints must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth for this endpoint.
+        throttling: Sequence of throttle instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async endpoints must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this endpoint.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -976,11 +1102,14 @@ def modify(  # noqa: WPS211
             responses=extra_responses,
             validate_responses=validate_responses,
             semantic_responses=semantic_responses,
+            exclude_semantic_responses=exclude_semantic_responses,
+            validate_events=validate_events,
             no_validate_http_spec=no_validate_http_spec,
             error_handler=error_handler,
             parsers=parsers,
             renderers=renderers,
             auth=auth,
+            throttling=throttling,
             summary=summary,
             description=description,
             tags=tags,

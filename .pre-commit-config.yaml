@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.0
+    rev: 0.37.1
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -8,14 +8,14 @@ repos:
       - id: check-readthedocs
 
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.11
+    rev: v1.7.12
     hooks:
       - id: actionlint
         additional_dependencies:
           - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.23.1
+    rev: v1.24.0
     hooks:
       - id: zizmor
         args: ["--no-progress", "--fix"]
@@ -25,8 +25,9 @@ repos:
     hooks:
       - id: shellcheck
         args: ["--severity=style"]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.7
+    rev: v0.15.10
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
@@ -39,12 +40,22 @@ repos:
         args: ["--enable=all", "--disable=line-too-long"]
         files: ^docs/
 
-  - repo: https://github.com/EbodShojaei/bake
-    rev: v1.4.5
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.45.1
     hooks:
-      - id: mbake-format
-        args: ["--config=.github/bake.toml"]
-      - id: mbake-validate
+      - id: typos
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.2
+    hooks:
+    - id: codespell
+      additional_dependencies:
+        - tomli
+
+  - repo: https://github.com/instrumentl/pre-commit-just
+    rev: v0.1
+    hooks:
+      - id: format-justfile
 
   # Should be applied after all autofixes:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -52,6 +63,7 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        exclude: \.msgpack$
       - id: check-yaml
       - id: check-toml
       - id: check-xml

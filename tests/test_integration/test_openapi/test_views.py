@@ -1,7 +1,9 @@
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
+from types import MappingProxyType
 from typing import Final
 
 import pytest
+import yaml
 from django.conf import LazySettings
 from django.urls import reverse
 
@@ -19,7 +21,6 @@ def use_cdn(request: pytest.FixtureRequest) -> bool:
 def _modify_cdn_settings(
     settings: LazySettings,
     request: pytest.FixtureRequest,
-    dmr_clean_settings: None,
     *,
     use_cdn: bool,
 ) -> None:
@@ -35,54 +36,97 @@ def _modify_cdn_settings(
             'scalar': (
                 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js'
             ),
+            'stoplight': 'https://unpkg.com/@stoplight/elements@9.0.16',
         },
     }
 
 
-_ENDPOINTS: Final = (
-    ('openapi', HTTPStatus.OK, 'application/json'),
-    ('redoc', HTTPStatus.OK, 'text/html'),
-    ('swagger', HTTPStatus.OK, 'text/html'),
-    ('scalar', HTTPStatus.OK, 'text/html'),
-)
+_ENDPOINTS: Final = MappingProxyType({
+    'openapi_json': 'application/json',
+    'openapi_yaml': 'application/yaml',
+    'stoplight': 'text/html',
+    'swagger': 'text/html',
+    'scalar': 'text/html',
+    'redoc': 'text/html',
+})
 
 
 @pytest.mark.parametrize(
-    ('endpoint_name', 'expected_status', 'expected_content_type'),
-    _ENDPOINTS,
+    ('endpoint_name', 'expected_content_type'),
+    _ENDPOINTS.items(),
 )
 def test_endpoints(
     dmr_client: DMRClient,
     *,
     endpoint_name: str,
-    expected_status: int,
     expected_content_type: str,
 ) -> None:
     """Ensure that endpoints work."""
     response = dmr_client.get(reverse(endpoint_name))
 
-    assert response.status_code == expected_status
+    assert response.status_code == HTTPStatus.OK
     assert response.headers['Content-Type'] == expected_content_type
 
 
 @pytest.mark.parametrize(
-    ('endpoint_name', 'expected_status'),
-    [(endpoint[0], HTTPStatus.METHOD_NOT_ALLOWED) for endpoint in _ENDPOINTS],
+    'endpoint_name',
+    _ENDPOINTS.keys(),
+)
+@pytest.mark.parametrize(
+    'method_name',
+    [
+        HTTPMethod.POST,
+        HTTPMethod.PUT,
+        HTTPMethod.PATCH,
+        HTTPMethod.DELETE,
+    ],
 )
 def test_wrong_method(
     dmr_client: DMRClient,
     *,
     endpoint_name: str,
-    expected_status: int,
+    method_name: str,
 ) -> None:
     """Ensure that wrong HTTP method is correctly handled."""
-    response = dmr_client.post(reverse(endpoint_name))
+    response = dmr_client.generic(method_name, reverse(endpoint_name))
 
-    assert response.status_code == expected_status
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
-def test_returns_correct_structure(dmr_client: DMRClient) -> None:
+@pytest.mark.parametrize(
+    'endpoint_name',
+    [
+        name
+        for name, content_type in _ENDPOINTS.items()
+        if content_type == 'text/html'
+    ],
+)
+def test_html_returns_correct_structure(
+    dmr_client: DMRClient,
+    *,
+    endpoint_name: str,
+) -> None:
+    """Ensure that HTML endpoints return expected basic HTML tags."""
+    response = dmr_client.get(reverse(endpoint_name))
+    html_content = response.content.decode()
+
+    assert '<!DOCTYPE html>' in html_content
+    assert '<html' in html_content
+    assert '<head>' in html_content
+    assert '<body>' in html_content
+
+
+def test_json_returns_correct_structure(dmr_client: DMRClient) -> None:
     """Ensure that OpenAPI JSON endpoint returns correct structure."""
-    response = dmr_client.get(reverse('openapi'))
+    response = dmr_client.get(reverse('openapi_json'))
 
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['openapi'] == '3.1.0'
+
+
+def test_yaml_returns_correct_structure(dmr_client: DMRClient) -> None:
+    """Ensure that OpenAPI YAML endpoint returns correct structure."""
+    response = dmr_client.get(reverse('openapi_yaml'))
+
+    assert response.headers['Content-Type'] == 'application/yaml'
+    assert yaml.safe_load(response.content)['openapi'] == '3.1.0'

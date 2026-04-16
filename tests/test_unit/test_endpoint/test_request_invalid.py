@@ -11,6 +11,7 @@ from inline_snapshot import snapshot
 
 from dmr import Body, Controller
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.negotiation import request_parser
 from dmr.plugins.pydantic import PydanticSerializer
 
 
@@ -22,11 +23,13 @@ class _MyPydanticModel(pydantic.BaseModel):
 @final
 class _WrongPydanticBodyController(
     Controller[PydanticSerializer],
-    Body[_MyPydanticModel],
 ):
     """All body of these methods are not correct."""
 
-    def post(self) -> str:  # pragma: no cover
+    def post(
+        self,
+        parsed_body: Body[_MyPydanticModel],
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
@@ -41,6 +44,9 @@ def test_invalid_request_body(rf: RequestFactory, faker: Faker) -> None:
     response = _WrongPydanticBodyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
+    assert request_parser(request) is None
+    with pytest.raises(AttributeError, match='__dmr_parser__'):
+        request_parser(request, strict=True)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert json.loads(response.content) == snapshot({
         'detail': [

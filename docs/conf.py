@@ -31,7 +31,7 @@ def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
     return cast(
         dict[str, str],
-        tomllib.loads(pyproject.read_text())['tool']['poetry'],
+        tomllib.loads(pyproject.read_text())['project'],
     )
 
 
@@ -60,6 +60,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
     # https://github.com/executablebooks/MyST-Parser
     'myst_parser',
     # 3rd party, order matters:
@@ -89,6 +90,15 @@ intersphinx_mapping = {
     'attrs': ('https://www.attrs.org/en/stable/', None),
 }
 
+# Extlinks:
+extlinks = {
+    'issue': (
+        'https://github.com/wemake-services/django-modern-rest/issues/%s',
+        'issue %s',
+    ),
+}
+
+
 # Napoleon:
 napoleon_google_docstring = True
 napoleon_include_special_with_doc = True
@@ -116,12 +126,12 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.response._ItemT'),
     (_PY_CLASS, 'dmr.internal.middleware_wrapper._TypeT'),
     (_PY_CLASS, '_SerializerT'),
-    (_PY_CLASS, '_BlueprintCls'),
     (_PY_CLASS, 'SyncErrorHandler'),
     (_PY_CLASS, 'AsyncErrorHandler'),
     (_PY_CLASS, '_MethodSyncHandler'),
     (_PY_CLASS, '_MethodAsyncHandler'),
     (_PY_CLASS, 'BlocklistedJWToken'),
+    (_PY_CLASS, '_BaseThrottle'),
     (_PY_CLASS, '_StrOrPromise'),
     (_PY_CLASS, 'dmr.validation.response._ResponseT'),
     (_PY_CLASS, 'dmr.decorators._ReturnT'),
@@ -142,27 +152,26 @@ nitpick_ignore = [
     (_PY_OBJ, 'dmr.components._CookiesT'),
     (_PY_OBJ, 'dmr.components._FileMetadataT'),
     (_PY_CLASS, 'dmr.pagination._ModelT'),
-    (_PY_CLASS, 'dmr.sse.metadata._EventT_co'),
-    (_PY_CLASS, 'dmr.sse.metadata._DataT_co'),
-    (_PY_CLASS, 'dmr.sse.metadata._PathT'),
-    (_PY_CLASS, 'dmr.sse.metadata._QueryT'),
-    (_PY_CLASS, 'dmr.sse.metadata._HeadersT'),
-    (_PY_CLASS, 'dmr.sse.metadata._CookiesT'),
-    (_PY_CLASS, 'dmr.sse.builder._PathT'),
-    (_PY_CLASS, 'dmr.sse.builder._QueryT'),
-    (_PY_CLASS, 'dmr.sse.builder._HeadersT'),
-    (_PY_CLASS, 'dmr.sse.builder._CookiesT'),
-    (_PY_CLASS, 'dmr.sse.builder._SerializerT'),
     (_PY_CLASS, 'dmr.controller._SerializerT_co'),
     (_PY_OBJ, 'dmr.controller._SerializerT_co'),
+    (_PY_CLASS, 'dmr.streaming.controller._SerializerT_co'),
+    (_PY_OBJ, 'dmr.streaming.controller._SerializerT_co'),
+    (_PY_OBJ, 'dmr.streaming.sse.controller._SerializerT_co'),
+    (_PY_CLASS, 'dmr.streaming.sse.controller._SerializerT_co'),
+    (_PY_OBJ, 'dmr.streaming.jsonl.controller._SerializerT_co'),
+    (_PY_CLASS, 'dmr.streaming.jsonl.controller._SerializerT_co'),
+    (_PY_CLASS, 'dmr.streaming.sse.metadata._DataT_co'),
     # Explicitly protected names:
     (_PY_CLASS, 'dmr.parsers._NoOpParser'),
+    (_PY_CLASS, 'dmr.streaming.controller._StreamingEndpoint'),
     # Unsolvable imports:
     (_PY_CLASS, 'AbstractBaseUser'),
+    (_PY_CLASS, 'Raw'),
     # Undocumented in Django:
     (_PY_CLASS, 'django.urls.resolvers.URLPattern'),
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
     (_PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
+    (_PY_CLASS, 'django.utils.functional.Promise'),
     # OpenAPI types used in TYPE_CHECKING blocks:
     (_PY_CLASS, 'SecurityRequirement'),
     (_PY_CLASS, 'ExternalDocumentation'),
@@ -249,6 +258,7 @@ html_context = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = ['css/landing.css']
 html_js_files = [
     'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
 ]

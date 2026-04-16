@@ -4,15 +4,10 @@ Public API
 Controller
 ----------
 
-.. autoclass:: dmr.controller.Blueprint
-  :members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
-  :show-inheritance:
-
 .. autoclass:: dmr.controller.Controller
   :members:
+  :exclude-members: controller_validator_cls, endpoint_cls, error_model, settings_validator_cls
   :inherited-members:
-  :exclude-members: endpoint_cls, serializer_context_cls, blueprint_validator_cls, controller_validator_cls, settings_validator_cls, error_model
   :show-inheritance:
 
 
@@ -29,6 +24,8 @@ Endpoint
 
 .. autodecorator:: dmr.endpoint.validate
 
+.. autodecorator:: dmr.endpoint.request_endpoint
+
 
 Response, headers and cookies
 -----------------------------
@@ -39,13 +36,13 @@ Response, headers and cookies
 .. autoclass:: dmr.metadata.ResponseSpec
   :members:
 
+.. autoclass:: dmr.metadata.ResponseSpecMetadata
+  :members:
+
 .. autoclass:: dmr.metadata.ResponseModification
   :members:
 
 .. autoexception:: dmr.response.APIError
-  :members:
-
-.. autoexception:: dmr.response.APIRedirectError
   :members:
 
 .. autofunction:: dmr.response.build_response
@@ -61,6 +58,8 @@ Response, headers and cookies
 
 .. autoclass:: dmr.cookies.NewCookie
   :members:
+
+.. autofunction:: dmr.cookies.set_cookies
 
 
 Validation
@@ -84,10 +83,13 @@ Serialization
 .. autoclass:: dmr.serializer.BaseEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.serializer.SerializerContext
+.. autoclass:: dmr.endpoint.SerializerContext
   :members:
 
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.components.ComponentParserBuilder
   :members:
 
 
@@ -96,8 +98,6 @@ Routing
 
 .. autoclass:: dmr.routing.Router
   :members:
-
-.. autofunction:: dmr.routing.compose_blueprints
 
 .. autofunction:: dmr.routing.build_404_handler
 
@@ -121,38 +121,60 @@ Exceptions
 
 .. autoexception:: dmr.exceptions.UnsolvableAnnotationsError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.EndpointMetadataError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.DataParsingError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.RequestSerializationError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.ResponseSchemaError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.ValidationError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.NotAcceptableError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.NotAuthenticatedError
   :members:
+  :show-inheritance:
 
 .. autoexception:: dmr.exceptions.InternalServerError
   :members:
+  :show-inheritance:
+
+.. autoexception:: dmr.exceptions.TooManyRequestsError
+  :members:
+  :show-inheritance:
 
 
 Utilities
 ---------
 
+.. autodata:: dmr.types.Json
+
 .. autoclass:: dmr.types.Empty
+  :members:
 
 .. autodata:: dmr.types.EmptyObj
+
+.. autoclass:: dmr.types.AnnotationsContext
+  :members:
+
+.. autoclass:: dmr.types.TypeVarInference
+  :members:
 
 
 Decorators
@@ -190,10 +212,19 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.PydanticSerializer
   :members:
 
+.. autoclass:: dmr.plugins.pydantic.PydanticFastSerializer
+  :members:
+
 .. autoclass:: dmr.plugins.pydantic.serializer.PydanticEndpointOptimizer
   :members:
 
 .. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
+  :members:
+
+.. autoclass:: dmr.plugins.pydantic.serializer.ToModelKwargs
   :members:
 
 Msgspec
@@ -206,4 +237,10 @@ Msgspec
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.ToJsonKwargs
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.serializer.ToModelKwargs
   :members:

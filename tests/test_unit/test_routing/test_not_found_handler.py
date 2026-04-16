@@ -190,7 +190,7 @@ def test_format_error_parameter(dmr_rf: DMRRequestFactory) -> None:
         (
             {'Accept': 'application/json'},
             {'Content-Type': 'application/json'},
-            b'{"detail": [{"msg": "Page not found", "type": "not_found"}]}',
+            b'{"detail":[{"msg":"Page not found","type":"not_found"}]}',
         ),
         (
             {'Accept': 'application/xml'},
@@ -211,7 +211,7 @@ def test_format_error_parameter(dmr_rf: DMRRequestFactory) -> None:
         (
             {'Accept': 'application/json, application/xml'},
             {'Content-Type': 'application/json'},
-            b'{"detail": [{"msg": "Page not found", "type": "not_found"}]}',
+            b'{"detail":[{"msg":"Page not found","type":"not_found"}]}',
         ),
     ],
 )

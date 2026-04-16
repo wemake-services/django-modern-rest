@@ -1,12 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAlias,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 try:
     from openapi_spec_validator import validate as _validate_spec
@@ -17,16 +12,12 @@ if TYPE_CHECKING:
     from _typeshed import DataclassInstance
 
     from dmr.openapi.objects.components import Components
-    from dmr.openapi.objects.external_documentation import (
-        ExternalDocumentation,
-    )
+    from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.info import Info
     from dmr.openapi.objects.path_item import PathItem
     from dmr.openapi.objects.paths import Paths
     from dmr.openapi.objects.reference import Reference
-    from dmr.openapi.objects.security_requirement import (
-        SecurityRequirement,
-    )
+    from dmr.openapi.objects.security_requirement import SecurityRequirement
     from dmr.openapi.objects.server import Server
     from dmr.openapi.objects.tag import Tag
 
@@ -51,6 +42,8 @@ class OpenAPI:
     tags: list['Tag'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
 
+    _validated: bool = False
+
     def convert(self, *, skip_validation: bool = False) -> ConvertedSchema:
         """
         Convert the object to OpenAPI schema dictionary.
@@ -59,18 +52,24 @@ class OpenAPI:
         and *skip_validation* is falsy.
         """
         spec = convert(self)
-        if not skip_validation and _validate_spec is not None:
+        if (
+            not skip_validation
+            and not self._validated
+            and _validate_spec is not None
+        ):
             _validate_spec(spec)
+            # Do not revalidate the same spec.
+            self._validated = True
         return spec
 
 
-def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:
-    """Converts any dataclass object into a json schema."""
+def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:  # noqa: WPS231
+    """Converts any dataclass object into a JSON schema."""
     schema: ConvertedSchema = {}
 
     for field in fields(to_convert):
         schema_value = getattr(to_convert, field.name, None)
-        if schema_value is None:
+        if field.name.startswith('_') or schema_value is None:
             continue
         if field.name == 'required' and not schema_value:
             continue  # Skip empty `required` field

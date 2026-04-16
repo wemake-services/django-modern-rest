@@ -9,7 +9,7 @@ from dmr.test import DMRClient
 
 def test_user_update_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that async ``put`` routes work."""
-    user_id = faker.random_int()
+    user_id = faker.random_int(min=1)
     response = dmr_client.put(
         reverse('api:controllers:user_update', kwargs={'user_id': user_id}),
     )
@@ -21,7 +21,7 @@ def test_user_update_view(dmr_client: DMRClient, faker: Faker) -> None:
 
 def test_user_replace_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that async ``patch`` routes work."""
-    user_id = faker.unique.random_int()
+    user_id = faker.unique.random_int(min=1)
     email = faker.email()
     response = dmr_client.patch(
         reverse('api:controllers:user_update', kwargs={'user_id': user_id}),

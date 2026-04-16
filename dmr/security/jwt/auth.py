@@ -4,18 +4,14 @@
 # https://github.com/litestar-org/litestar/blob/main/LICENSE
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Self, overload
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -197,16 +193,6 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """
         return token.sub
 
-    def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: 'AbstractBaseUser',
-        token: JWToken,
-    ) -> None:
-        """Set current user as authed for this request."""
-        request.user = user
-        request.jwt = token  # type: ignore[attr-defined]
-
     def _uses_standard_http_bearer_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP bearer auth."""
         return (
@@ -233,12 +219,13 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> 'AbstractBaseUser | None':
+    ) -> Self | None:
         """Does check for the correct jwt token."""
         token = self.prepare_token(controller.request)
         if token is None:
             return None
-        return self.authenticate(controller.request, token)
+        self.authenticate(controller.request, token)
+        return self
 
     def authenticate(
         self,
@@ -269,6 +256,16 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         if not user.is_active:
             raise NotAuthenticatedError
 
+    def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: 'AbstractBaseUser',
+        token: JWToken,
+    ) -> None:
+        """Set current user as authed for this request."""
+        request.user = user
+        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
+
 
 class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     """Async jwt auth."""
@@ -280,12 +277,13 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> 'AbstractBaseUser | None':
+    ) -> Self | None:
         """Does check for the correct jwt token."""
         token = self.prepare_token(controller.request)
         if token is None:
             return None
-        return await self.authenticate(controller.request, token)
+        await self.authenticate(controller.request, token)
+        return self
 
     async def authenticate(
         self,
@@ -295,7 +293,7 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         """Run all auth pipeline."""
         user = await self.get_user(token)
         await self.check_auth(user, token)
-        self.set_request_attrs(request, user, token)
+        await self.set_request_attrs(request, user, token)
         return user
 
     async def get_user(self, token: JWToken) -> 'AbstractBaseUser':
@@ -320,7 +318,46 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         if not user.is_active:
             raise NotAuthenticatedError
 
+    async def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: 'AbstractBaseUser',
+        token: JWToken,
+    ) -> None:
+        """Set current user as authed for this request."""
+        request.user = user
 
-def get_jwt(request: HttpRequest) -> JWToken:
-    """Returns a JWToken from request, if it was authed with it."""
-    return request.jwt  # type: ignore[attr-defined, no-any-return]
+        async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
+            return user
+
+        request.auser = auser
+        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
+
+
+@overload
+def request_jwt(request: HttpRequest, *, strict: Literal[True]) -> JWToken: ...
+
+
+@overload
+def request_jwt(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> JWToken | None: ...
+
+
+def request_jwt(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> JWToken | None:
+    """
+    Returns a JWToken from request, if it was authed with it.
+
+    When *strict* is passed and *request* has no jwt token,
+    we raise :exc:`AttributeError`.
+    """
+    jwt = getattr(request, '__dmr_jwt__', None)
+    if jwt is None and strict:
+        raise AttributeError('__dmr_jwt__')
+    return jwt

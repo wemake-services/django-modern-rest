@@ -1,86 +1,22 @@
 Integrations
 ============
 
-Serializing QuerySets into models
----------------------------------
+Big list of Django integrations: https://github.com/wsvincent/awesome-django
 
-Django is built around its :class:`~django.db.models.query.QuerySet` type.
-Of course, we have to make sure that it is supported.
+.. warning::
 
-Let's say you have these models that you already work with:
+  In the future - some integrations from this list might be included
+  into the core of ``django-modern-rest`` package. Or ship as plugins.
 
-.. literalinclude:: ../../django_test_app/server/apps/models_example/models.py
-  :caption: models.py
-  :language: python
-  :linenos:
-
-Now, let's create an API that will work with your models.
-To do that the first thing you need to do is to create
-your API serializers / deserializers.
-
-While it may seems that this is a redundant duplication of code, and that it
-should be possible to build serialization schemas out of Django models,
-but that's actually the **opposite**.
-
-Because models and serialization
-schemes must change independenly. Otherwise, your API would
-be a mess and will change unexpectedly, when you create a new migration.
-This problem happened to me too many times.
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/serializers.py
-  :caption: serializers.py
-  :language: python
-  :linenos:
-
-.. important::
-
-  Models and QuerySets can't be serialized to json by default.
-  This is a design choice, this is a feature.
-
-  Why?
-
-  Because Models and QuerySets are not designed for serialization,
-  they are designed for the database access. Mixing these two layers
-  will **complicate**, not simplify, your app.
-
-Now, let's create a service to build your model instances:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/services.py
-  :caption: services.py
-  :language: python
-  :linenos:
-
-Here's how the final :class:`~dmr.controller.Controller`
-would look like:
-
-.. literalinclude:: ../../django_test_app/server/apps/models_example/views.py
-  :caption: views.py
-  :language: python
-  :linenos:
-
-Now you have your REST API that returns fully typed model responses
-and can work with :class:`~django.db.models.query.QuerySet`
-and :class:`~django.db.models.Model` instances.
-
-django-mantle
-~~~~~~~~~~~~~
-
-If you want to automate this part and automatically
-convert ``QuerySet`` into typed models, you can use
-`django-mantle <https://noumenal.es/mantle/>`_
-which is built just for this purpose:
-
-.. literalinclude:: /examples/integrations/django_mantel.py
-  :caption: views.py
-  :language: python
-  :linenos:
+  If you are interested in something:
+  `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
 
 
 CSRF
 ----
 
 Django supports
-`Cross Site Request Forgery <https://docs.djangoproject.com/en/6.0/ref/csrf/>`_
+`Cross Site Request Forgery <https://docs.djangoproject.com/en/stable/ref/csrf/>`_
 protection.
 
 By default we exempt all controllers from CSRF checks, unless:
@@ -94,6 +30,8 @@ By default we exempt all controllers from CSRF checks, unless:
    will require CSRF as well. Because using Django sessions
    without CSRF is not secure
 
+
+.. _bring-your-own-di:
 
 Bring your own DI
 -----------------
@@ -126,7 +64,7 @@ So, when you use ``mypy``, you will need
 to install ``django-stubs`` together with ``django-modern-rest``
 to have the best type checking experience.
 
-This package is included into ``pyright`` by default. No actions are required.
+This package is included in ``pyright`` by default. No actions are required.
 
 We check ``django-modern-rest`` code with ``mypy`` and ``pyright``
 strict modes in CI, so be sure to have the best typing possible.
@@ -137,13 +75,15 @@ to learn how typing works, how ``mypy`` is configured,
 how ``django-stubs`` is used.
 
 
+.. _pagination:
+
 Pagination
 ----------
 
-We don't ship our own pagination.
-We (as our main design goal suggests) provide support
-for any existing pagination plugin for Django.
-Including builtin :class:`django.core.paginator.Paginator`.
+Limit Offset pagination
+~~~~~~~~~~~~~~~~~~~~~~~
+
+We support built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 
@@ -155,6 +95,19 @@ To do so, we only provide metadata for the default pagination:
 If you are using a different pagination system, you can define
 your own metadata / models and use them with our framework.
 
+Cursor pagination
+~~~~~~~~~~~~~~~~~
+
+We also support any other pagination library.
+
+Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_
+or even your custom implementation.
+
+Any Django-compatible tool should work out of the box.
+
+Interface
+~~~~~~~~~
+
 .. autoclass:: dmr.pagination.Paginated
   :members:
 
@@ -162,52 +115,34 @@ your own metadata / models and use them with our framework.
   :members:
 
 
-django-filters
---------------
+Filters
+-------
 
 No special integration with
 `django-filter <https://github.com/carltongibson/django-filter>`_
 is required.
 
-Everything just works.
+Everything just works:
 
-.. code-block:: python
+.. literalinclude:: /examples/integrations/filters.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
-  import django_filters
-  import pydantic
-  from dmr import Controller, Query
-  from dmr.plugins.pydantic import PydanticSerializer
 
-  from your_app.models import User
+Health Checks
+-------------
 
-  class UserFilter(django_filters.FilterSet):
-      class Meta:
-          model = User
-          fields = ('is_active',)
+We recommend using
+`django-health-check <https://github.com/codingjoe/django-health-check>`_
+for monitoring your application's health.
 
-  # Create query model for better docs:
-  class QueryModel(pydantic.BaseModel):
-      is_active: bool
+No special integration is required — the package works out-of-the-box with
+``django-modern-rest``. Simply install it, include its URLs in your main
+urlconf, and add the desired check apps to ``INSTALLED_APPS``.
 
-  class UserModel(pydantic.BaseModel):
-      username: str
-      email: str
-      is_active: bool
-
-  class UserListController(
-      Controller[PydanticSerializer],
-      Query[QueryModel],
-  ):
-      def get(self) -> list[UserModel]:
-          # Still pass `.GET` for API compatibility:
-          user_filter = UserFilter(
-               self.request.GET,
-               queryset=User.objects.all(),
-          )
-          return [
-              UserModel.model_validate(user, from_attributes=True)
-              for user in user_filter.qs
-          ]
+For advanced configuration, please refer to the
+`django-health-check documentation <https://codingjoe.dev/django-health-check>`_.
 
 
 CORS Headers
@@ -220,7 +155,62 @@ is required.
 Everything just works.
 
 
-ETag
+.. _content_security_policy:
+
+Content Security Policy (CSP)
+-----------------------------
+
+No special integration with
+`django-csp <https://github.com/mozilla/django-csp>`_
+is required.
+
+Everything just works, but there is one important nuance:
+``django-modern-rest`` itself only controls Django templates and local
+initialization files. If you use OpenAPI UI renderers, final CSP compatibility
+still depends on the upstream frontend bundle you choose.
+
+The OpenAPI UI templates shipped by ``django-modern-rest`` avoid inline
+``<script>`` blocks and pass schema data via Django's
+:func:`django.utils.html.json_script`, so DMR's own templates work well with
+stricter CSP setups.
+
+Known caveats:
+
+- Some upstream OpenAPI bundles inject styles at runtime, so a very strict
+  policy can still break the page.
+- When CSP is a hard requirement, start with local bundled assets and test
+  the exact renderer and version you plan to deploy.
+
+Example ``django-csp`` setup can be found in
+`wemake-django-template <https://github.com/wemake-services/wemake-django-template/blob/master/%7B%7Bcookiecutter.project_name%7D%7D/server/settings/components/csp.py>`_.
+
+If you use OpenAPI UIs, see :doc:`openapi/openapi`
+for renderer-specific guidance.
+
+
+Conditional requests (ETag)
+---------------------------
+
+Django has built-in support for conditional request processing
+(``If-None-Match``, ``If-Modified-Since``, ``304 Not Modified``):
+
+With ``django-modern-rest`` you can integrate it via
+:func:`~dmr.decorators.wrap_middleware`
+and :func:`django.views.decorators.http.condition`.
+
+
+.. literalinclude:: ../../django_test_app/server/apps/etag/views.py
+  :caption: etag.py
+  :language: python
+  :linenos:
+
+.. seealso::
+
+    https://docs.djangoproject.com/en/stable/topics/conditional-view-processing
+
+
+HTMX
 ----
 
-TODO
+Works with `django-htmx <https://github.com/adamchainz/django-htmx>`_
+out of the box.

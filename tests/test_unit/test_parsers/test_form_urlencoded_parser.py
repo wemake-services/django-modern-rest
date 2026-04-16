@@ -20,18 +20,18 @@ class _User(pydantic.BaseModel):
     age: int
 
 
-class _UserController(Controller[PydanticSerializer], Body[_User]):
+class _UserController(Controller[PydanticSerializer]):
     parsers = (FormUrlEncodedParser(),)
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self) -> _User:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_User]) -> _User:
+        return parsed_body
 
-    def put(self) -> _User:
-        return self.parsed_body
+    def put(self, parsed_body: Body[_User]) -> _User:
+        return parsed_body
 
-    def patch(self) -> _User:
-        return self.parsed_body
+    def patch(self, parsed_body: Body[_User]) -> _User:
+        return parsed_body
 
 
 @pytest.mark.parametrize(

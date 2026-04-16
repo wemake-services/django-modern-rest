@@ -1,17 +1,14 @@
 from abc import abstractmethod
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Literal, Self, overload
 
+from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -20,6 +17,18 @@ if TYPE_CHECKING:
 
 
 class _BaseAuth(ResponseSpecProvider):
+    """
+    Base class for all auth instances.
+
+    .. note::
+
+        It is really important for this class to have stateless instances.
+        Not even locks can be shared, because these instances can
+        be global. It is possible to use them in settings or per controller.
+        No state allowed.
+
+    """
+
     __slots__ = ()
 
     @property
@@ -35,15 +44,14 @@ class _BaseAuth(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
-        return cls._add_new_response(
+        return self._add_new_response(
             ResponseSpec(
                 controller_cls.error_model,
                 status_code=NotAuthenticatedError.status_code,
@@ -68,18 +76,18 @@ class SyncAuth(_BaseAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Put your auth business logic here.
 
+        Return ``self`` if the login attempt was successful.
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exceptions.PermissionDenied`
+        Raise :exc:`dmr.exceptions.NotAuthenticatedError`
         to immediately fail the login without trying other authes.
         Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
-        Return any other value if the auth succeeded.
         """
 
 
@@ -98,16 +106,49 @@ class AsyncAuth(_BaseAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Put your auth business logic here.
 
+        Return ``self`` if the login attempt was successful.
         Return ``None`` if login attempt failed and we need
         to try another authes.
-        Raise :exc:`django.core.exceptions.PermissionDenied`
+        Raise :exc:`dmr.exceptions.NotAuthenticatedError`
         to immediately fail the login without trying other authes.
         Raise :exc:`dmr.response.APIError`
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
-        Return any other value if the auth succeeded.
         """
+
+
+@overload
+def request_auth(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+) -> SyncAuth | AsyncAuth: ...
+
+
+@overload
+def request_auth(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> SyncAuth | AsyncAuth | None: ...
+
+
+def request_auth(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> SyncAuth | AsyncAuth | None:
+    """
+    Return the auth instance that was used to auth this request.
+
+    When *strict* is passed and *request* has no auth,
+    we raise :exc:`AttributeError`.
+    """
+    auth = getattr(request, '__dmr_auth__', None)
+    if auth is None and strict:
+        raise AttributeError('__dmr_auth__')
+    return auth

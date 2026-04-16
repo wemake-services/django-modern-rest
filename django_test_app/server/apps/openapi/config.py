@@ -3,26 +3,22 @@ from dmr.openapi.objects import (
     Contact,
     ExternalDocumentation,
     License,
-    Tag,
 )
 
 
 def get_config() -> OpenAPIConfig:
     return OpenAPIConfig(
-        title='Test API',
+        title='Framework Demo API',
         version='1.0.0',
-        summary='Test Summary',
-        description='Test Description',
-        terms_of_service='Test Terms of Service',
-        contact=Contact(name='Test Contact', email='test@test.com'),
-        license=License(name='Test License', identifier='license'),
-        external_docs=ExternalDocumentation(
-            url='https://test.com',
-            description='Test External Documentation',
+        summary='Demo API for framework features',
+        description=(
+            'Test application showcasing core functionality of the framework.'
         ),
-        servers=[],
-        tags=[
-            Tag(name='Test Tag', description='Tag Description'),
-            Tag(name='Test Tag 2', description='Tag 2 Description'),
-        ],
+        terms_of_service='Usage is intended for testing purposes only.',
+        contact=Contact(name='Core Developer', email='mail@sobolevn.me'),
+        license=License(name='MIT License', identifier='MIT'),
+        external_docs=ExternalDocumentation(
+            url='https://django-modern-rest.readthedocs.io/',
+            description='Main documentation and guides',
+        ),
     )

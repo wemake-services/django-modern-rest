@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+from csp.constants import NONE, SELF
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,26 +39,40 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'server.apps.models_example',
+    # Custom:
+    'server.apps.model_simple',
+    'server.apps.model_fk',
     'server.apps.middlewares',
     'server.apps.controllers',
     'server.apps.openapi',
+    'server.apps.negotiations',
+    'server.apps.jwt_auth',
+    'server.apps.django_session_auth',
+    'server.apps.etag',
+    # Django:
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'dmr.apps.DjangoModernRestConfig',
+    # DMR:
+    'dmr',
     'dmr.security.jwt.blocklist',
+    # Third party:
+    'csp',
 ]
 
 MIDDLEWARE = [
+    # Content Security Policy:
+    'csp.middleware.CSPMiddleware',
+    # Django:
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -109,6 +125,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+LOCALE_PATHS = ['../dmr/locale/']
+
+LANGUAGES = (
+    ('en-us', 'English'),
+    ('ru-ru', 'Russian'),
+    ('kk-kz', 'Kazakh'),
+)
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -125,3 +149,23 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Content Security Policy:
+# https://django-csp.readthedocs.io/en/latest/configuration.html
+
+CONTENT_SECURITY_POLICY = {
+    'EXCLUDE_URL_PREFIXES': [
+        '/docs/swagger/',
+        '/docs/stoplight/',
+        '/docs/scalar/',
+        '/docs/redoc/',
+    ],
+    'DIRECTIVES': {
+        'default-src': [NONE],
+        'script-src': [SELF],
+        'style-src': [SELF],
+        'img-src': [SELF],
+        'font-src': [SELF],
+        'connect-src': [],
+    },
+}

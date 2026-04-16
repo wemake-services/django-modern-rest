@@ -11,6 +11,8 @@ except ImportError:  # pragma: no cover
 
 if TYPE_CHECKING:
     # We can't import it directly, because it will ruin our coverage measures.
+    from django.conf import LazySettings
+
     from dmr.test import (
         DMRAsyncClient,
         DMRAsyncRequestFactory,
@@ -20,19 +22,25 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def dmr_client() -> 'DMRClient':
+def dmr_client(request: pytest.FixtureRequest) -> 'DMRClient':
     """Customized version of :class:`django.test.Client`."""
+    from dmr.internal.test import maybe_track_client
     from dmr.test import DMRClient
 
-    return DMRClient()
+    client = DMRClient()
+    maybe_track_client(request, client)
+    return client
 
 
 @pytest.fixture
-def dmr_async_client() -> 'DMRAsyncClient':
+def dmr_async_client(request: pytest.FixtureRequest) -> 'DMRAsyncClient':
     """Customized version of :class:`django.test.AsyncClient`."""
+    from dmr.internal.test import maybe_track_client
     from dmr.test import DMRAsyncClient
 
-    return DMRAsyncClient()
+    client = DMRAsyncClient()
+    maybe_track_client(request, client)
+    return client
 
 
 @pytest.fixture
@@ -59,3 +67,12 @@ def dmr_clean_settings() -> Iterator[None]:
     clear_settings_cache()
     yield
     clear_settings_cache()
+
+
+@pytest.fixture
+def settings(
+    settings: 'LazySettings',
+    dmr_clean_settings: None,
+) -> 'LazySettings':
+    """Customized version of :func:`pytest_django.fixtures.settings`."""
+    return settings

@@ -2,13 +2,13 @@ Query parameters
 ================
 
 You can define ``Query`` parameters
-the same way you define :class:`~dmr.components.Headers`,
-:class:`~dmr.components.Path` and
-:class:`~dmr.components.Cookies` parameters.
+the same way you define :data:`~dmr.components.Headers`,
+:data:`~dmr.components.Path` and
+:data:`~dmr.components.Cookies` parameters.
 
 .. note::
 
-  Parsed ``Query`` is available as ``self.parsed_query``.
+  Parsed ``Query`` parameter must be named ``parsed_query``.
 
 This is how you can parse ``Query`` parameters:
 
@@ -33,7 +33,7 @@ What happens in this example?
 1. We define a ``Query`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.Query` component,
+2. Next, we use :data:`~dmr.components.Query` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_query`` that will have the correct model type
@@ -63,7 +63,7 @@ All other values will be regular single values:
   :language: python
   :linenos:
 
-We don't inference ``__dmr_force_list__`` value in any way,
+We don't infer ``__dmr_force_list__`` value in any way,
 it is up to users to set.
 
 
@@ -82,13 +82,15 @@ that into ``__dmr_cast_null__``:
   :language: python
   :linenos:
 
-We don't inference ``__dmr_cast_null__`` value in any way,
+We don't infer ``__dmr_cast_null__`` value in any way,
 it is up to users to set.
 
 
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Query
+.. autodata:: dmr.components.Query
+
+.. autoclass:: dmr.components.QueryComponent
   :members:
   :show-inheritance:

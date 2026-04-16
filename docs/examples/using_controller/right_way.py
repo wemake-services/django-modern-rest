@@ -1,0 +1,47 @@
+from http import HTTPStatus
+
+import msgspec
+
+from dmr import APIError, Body, Controller, Headers, ResponseSpec, modify
+from dmr.errors import ErrorModel, ErrorType
+from dmr.plugins.msgspec import MsgspecSerializer
+
+
+class UserModel(msgspec.Struct):
+    email: str
+
+
+class HeaderModel(msgspec.Struct):
+    consumer: str = msgspec.field(name='X-API-Consumer')
+
+
+class UserController(Controller[MsgspecSerializer]):
+    @modify(
+        extra_responses=[
+            ResponseSpec(
+                ErrorModel,
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            ),
+        ],
+    )
+    def post(
+        self,
+        parsed_body: Body[UserModel],
+        parsed_headers: Headers[HeaderModel],
+    ) -> UserModel:
+        if parsed_headers.consumer != 'my-api':
+            # Notice that this response is now documented in the spec,
+            # no error will happen, no need to disable the validation.
+            raise APIError(
+                self.format_error(
+                    'Wrong API consumer',
+                    error_type=ErrorType.user_msg,
+                ),
+                status_code=HTTPStatus.PAYMENT_REQUIRED,
+            )
+        # This response will be documented by default:
+        return parsed_body
+
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "my-api"}, "url": "/api/user/"}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "headers": {"X-API-Consumer": "not-my-api"}, "url": "/api/user/", "curl_args": ["-D", "-"], "assert-error-text": "Wrong API consumer", "fail-with-body": false}  # noqa: ERA001, E501

@@ -10,8 +10,6 @@
    :width: 700
    :align: center
 
-==================
-
 .. container:: badges
    :name: badges
 
@@ -27,6 +25,10 @@
       :alt: Coverage
       :target: https://codecov.io/gh/wemake-services/django-modern-rest
 
+   .. image:: https://img.shields.io/badge/no-slop-purple.svg
+      :alt: No AI slop
+      :target: https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md
+
    .. image:: https://img.shields.io/pypi/pyversions/django-modern-rest.svg
       :alt: Supported Python versions
       :target: https://pypi.org/project/django-modern-rest
@@ -38,6 +40,10 @@
    .. image:: https://deepwiki.com/badge.svg
       :alt: DeepWiki
       :target: https://deepwiki.com/wemake-services/django-modern-rest
+
+   .. image:: https://img.shields.io/badge/chat-join-blue.svg?logo=telegram
+      :alt: Telegram Chat
+      :target: https://t.me/django_modern_rest
 
 
 .. rst-class:: lead
@@ -56,27 +62,29 @@ and extend ``django-modern-rest`` framework.
 
 .. rubric:: Testimonials
 
-.. epigraph::
+.. container:: testimonials
 
-   | The one thing I really love about **django-modern-rest** is its pluggable
-   | serializers and validators. Frameworks that are tightly coupled
-   | with **pydantic** can be really painful to work with.
+   .. epigraph::
 
-   -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
+      The one thing I really love about ``django-modern-rest`` is its pluggable
+      serializers and validators. Frameworks that are tightly coupled
+      with ``pydantic`` can be really painful to work with.
 
-.. epigraph::
+      -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
 
-   | Using ``django-modern-rest`` has been a game-changer
-   | for my productivity. The strict type safety and schema validation
-   | for both requests and responses mean I spend less time debugging
-   | and more time building.
+   .. epigraph::
 
-   -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
+      Using ``django-modern-rest`` has been a game-changer
+      for my productivity. The strict type safety and schema validation
+      for both requests and responses mean I spend less time debugging
+      and more time building.
+
+      -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
 
 
-Main features include:
+.. rubric:: Main features include:
 
-.. grid:: 1 1 2 2
+.. grid:: 1 1 2 3
     :class-row: surface
     :padding: 0
     :gutter: 2
@@ -157,27 +165,30 @@ Here are our amazing people who made this project possible.
     .. contributors:: wemake-services/django-modern-rest
         :avatars:
         :contributions:
+        :names:
+        :exclude: dependabot[bot],pre-commit-ci[bot],Copilot
 
 
 .. toctree::
-  :caption: Getting starting guides
+  :caption: Getting started guides
   :hidden:
 
   pages/getting-started.rst
   pages/core-concepts.rst
-  pages/using-controller.rst
-  pages/responses/index
+  pages/using-controller/index
   pages/routing.rst
-  pages/configuration.rst
   pages/components/index
+  pages/configuration.rst
   pages/plugins.rst
+  pages/queryset.rst
   pages/negotiation.rst
   pages/error-handling.rst
+  pages/throttling.rst
   pages/middleware.rst
   pages/validation.rst
   pages/reusable-code.rst
   pages/integrations.rst
-  pages/sse.rst
+  pages/internationalization.rst
   pages/testing.rst
 
 
@@ -192,12 +203,30 @@ Here are our amazing people who made this project possible.
 
 
 .. toctree::
+  :caption: Streaming
+  :hidden:
+
+  pages/streaming/common.rst
+  pages/streaming/sse.rst
+  pages/streaming/jsonl.rst
+
+
+.. toctree::
   :caption: OpenAPI
   :hidden:
 
   pages/openapi/schema.rst
   pages/openapi/openapi.rst
   pages/openapi/openapi-reference.rst
+
+
+.. toctree::
+  :caption: AI and LLMs
+  :hidden:
+
+  pages/ai/spec-first.rst
+  pages/ai/dmr-from-ninja.rst
+  pages/ai/dmr-from-drf.rst
 
 
 .. toctree::
@@ -215,15 +244,9 @@ Here are our amazing people who made this project possible.
   pages/deep-dive/performance.rst
   pages/deep-dive/public-api.rst
   pages/deep-dive/internal-api.rst
+  pages/deep-dive/security.rst
   pages/deep-dive/changelog.rst
-
-
-.. toctree::
-  :caption: AI and LLMs
-  :hidden:
-
-  pages/ai/spec-first.rst
-  pages/ai/dmr-from-ninja.rst
+  pages/deep-dive/contributing.rst
 
 
 .. toctree::

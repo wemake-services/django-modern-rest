@@ -63,7 +63,6 @@ class _BaseObtainTokensSettings(_BaseTokenSettings):
 class _BaseTokenController(
     _BaseObtainTokensSettings,
     Controller[_SerializerT],
-    Body[_ObtainTokensT],
 ):
     def create_jwt_token(  # noqa: WPS211
         self,
@@ -98,7 +97,7 @@ class _BaseTokenController(
 
 
 class ObtainTokensSyncController(
-    _BaseTokenController[_SerializerT, _ObtainTokensT],
+    _BaseTokenController[_SerializerT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
     """
@@ -128,15 +127,15 @@ class ObtainTokensSyncController(
     )
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self) -> _TokensResponseT:
+    def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
-        return self.login()
+        return self.login(parsed_body)
 
-    def login(self) -> _TokensResponseT:
+    def login(self, parsed_body: _ObtainTokensT) -> _TokensResponseT:
         """Perform the sync login routine for user."""
         user = authenticate(
             self.request,
-            **self.convert_auth_payload(self.parsed_body),
+            **self.convert_auth_payload(parsed_body),
         )
         if user is None:
             raise NotAuthenticatedError
@@ -165,7 +164,7 @@ class ObtainTokensSyncController(
 
 
 class ObtainTokensAsyncController(
-    _BaseTokenController[_SerializerT, _ObtainTokensT],
+    _BaseTokenController[_SerializerT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
     """
@@ -195,15 +194,15 @@ class ObtainTokensAsyncController(
     )
 
     @modify(status_code=HTTPStatus.OK)
-    async def post(self) -> _TokensResponseT:
+    async def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
-        return await self.login()
+        return await self.login(parsed_body)
 
-    async def login(self) -> _TokensResponseT:
+    async def login(self, parsed_body: _ObtainTokensT) -> _TokensResponseT:
         """Perform the async login routine for user."""
         user = await aauthenticate(
             self.request,
-            **(await self.convert_auth_payload(self.parsed_body)),
+            **(await self.convert_auth_payload(parsed_body)),
         )
         if user is None:
             raise NotAuthenticatedError

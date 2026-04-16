@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.request_body import RequestBody
     from dmr.openapi.objects.response import Response
     from dmr.openapi.objects.schema import Schema
-    from dmr.openapi.objects.security_scheme import (
-        SecurityScheme,
-    )
+    from dmr.openapi.objects.security_scheme import SecurityScheme
 
 
 @dataclass(kw_only=True, slots=True)

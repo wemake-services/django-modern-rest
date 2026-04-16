@@ -7,21 +7,18 @@ from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Body, Controller
-from dmr.openapi import build_schema
-from dmr.routing import Router
-from dmr.settings import Settings
-
 try:
     import msgspec
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
-
-from dmr import Cookies, FileMetadata
+from dmr import Body, Controller, Cookies, FileMetadata
+from dmr.openapi import build_schema
 from dmr.parsers import MultiPartParser
 from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.routing import Router
 from dmr.security.jwt import JWTAsyncAuth
+from dmr.settings import Settings
 
 
 class _UserModel(msgspec.Struct):
@@ -35,11 +32,10 @@ class _UserModel(msgspec.Struct):
 
 class _UserController(
     Controller[MsgspecSerializer],
-    Body[dict[str, int]],
 ):
     summary = 'Handles users'
 
-    def post(self) -> _UserModel:
+    def post(self, parsed_body: Body[dict[str, int]]) -> _UserModel:
         raise NotImplementedError
 
 
@@ -66,11 +62,10 @@ class _CookieModel(msgspec.Struct):
 
 class _AuthedAndCookiesController(
     Controller[MsgspecSerializer],
-    Cookies[_CookieModel],
 ):
     auth = (JWTAsyncAuth(),)
 
-    async def get(self) -> list[int]:
+    async def get(self, parsed_cookies: Cookies[_CookieModel]) -> list[int]:
         raise NotImplementedError
 
 
@@ -102,11 +97,13 @@ class _SeveralFiles(msgspec.Struct):
 
 class _FileController(
     Controller[MsgspecSerializer],
-    FileMetadata[_SeveralFiles],
 ):
     parsers = (MultiPartParser(),)
 
-    async def get(self) -> list[int]:
+    async def get(
+        self,
+        parsed_file_metadata: FileMetadata[_SeveralFiles],
+    ) -> list[int]:
         raise NotImplementedError
 
 
@@ -148,7 +145,6 @@ class _ExampleController(Controller[MsgspecSerializer]):
 
 def test_example_schema(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema with examples is correctly generated."""

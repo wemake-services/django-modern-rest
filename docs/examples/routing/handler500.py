@@ -10,14 +10,11 @@ class UserCreateModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(
-    Controller[PydanticSerializer],
-    Body[UserCreateModel],
-):
-    async def post(self) -> UserCreateModel:
-        if 'old-domain.com' in self.parsed_body.email:
-            raise RuntimeError('This error will not be handled')
-        return self.parsed_body
+class UserController(Controller[PydanticSerializer]):
+    async def post(self, parsed_body: Body[UserCreateModel]) -> UserCreateModel:
+        if parsed_body.email.endswith('@old-domain.com'):
+            raise RuntimeError('This error will be handled by handler500')
+        return parsed_body
 
 
 router = Router(
@@ -34,4 +31,4 @@ urlpatterns = [
 handler500 = build_500_handler(router.prefix, serializer=PydanticSerializer)
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "correct@example.com"}, "url": "/api/user/", "use_urlpatterns": true}  # noqa: ERA001, E501
-# run: {"controller": "UserController", "method": "post", "body": {"email": "correct@old-domain.com"}, "url": "/api/user/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "correct@old-domain.com"}, "url": "/api/user/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "assert-error-text": "Internal server error", "fail-with-body": false}  # noqa: ERA001, E501

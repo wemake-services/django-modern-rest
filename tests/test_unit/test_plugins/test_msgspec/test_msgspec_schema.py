@@ -83,6 +83,7 @@ def test_simple_types(
             Schema(
                 type=OpenAPIType.ARRAY,
                 items=Schema(type=OpenAPIType.NUMBER),
+                unique_items=True,
             ),
         ),
         (
@@ -90,6 +91,7 @@ def test_simple_types(
             Schema(
                 type=OpenAPIType.ARRAY,
                 items=Schema(type=OpenAPIType.STRING),
+                unique_items=True,
             ),
         ),
         # `Iterable[T]` is not supported by `msgspec`

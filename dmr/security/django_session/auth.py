@@ -1,18 +1,15 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Final, Self, final
 
 from django.conf import settings
 from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.metadata import (
-    EndpointMetadata,
-    ResponseSpec,
-    ResponseSpecProvider,
-)
+from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.response import APIError
 from dmr.security.base import AsyncAuth, SyncAuth
@@ -21,6 +18,8 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
+
+_CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
 
 
 @final
@@ -79,16 +78,15 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         return {self.security_scheme_name: [], self.csrf_scheme_name: []}
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
         return [
-            *cls._add_new_response(
+            *self._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=NotAuthenticatedError.status_code,
@@ -96,7 +94,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                 ),
                 existing_responses,
             ),
-            *cls._add_new_response(
+            *self._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=HTTPStatus.FORBIDDEN,
@@ -110,7 +108,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         reason = _get_csrf_failure_reason(controller.request)
         if reason:
             raise APIError(
-                controller.format_error(f'CSRF Failed: {reason}'),
+                controller.format_error(_CSRF_FAILED_MSG.format(reason=reason)),
                 status_code=HTTPStatus.FORBIDDEN,
             )
 
@@ -122,7 +120,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
     This class is used for sync endpoints.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -133,7 +131,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """Does check for the existing request user."""
         return self.authenticate(endpoint, controller)
 
@@ -141,7 +139,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Override this method to provide other authentication logic.
 
@@ -152,7 +150,7 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
             return None
 
         self._ensure_csrf(controller)
-        return user
+        return self
 
 
 class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
@@ -162,7 +160,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
     This class is used for async endpoints.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/topics/auth/
+        https://docs.djangoproject.com/en/stable/topics/auth/
 
     """
 
@@ -173,7 +171,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """Does check for the existing request user."""
         return await self.authenticate(endpoint, controller)
 
@@ -181,7 +179,7 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         """
         Override this method to provide other authentication logic.
 
@@ -195,4 +193,4 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
             return None
 
         self._ensure_csrf(controller)
-        return user
+        return self

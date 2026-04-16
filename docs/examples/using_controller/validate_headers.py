@@ -1,0 +1,42 @@
+import uuid
+from http import HTTPStatus
+
+import pydantic
+from django.http import HttpResponse
+
+from dmr import Body, Controller, HeaderSpec, ResponseSpec, validate
+from dmr.plugins.pydantic import PydanticSerializer
+
+
+class UserModel(pydantic.BaseModel):
+    email: str
+
+
+class UserController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            UserModel,
+            status_code=HTTPStatus.OK,
+            headers={
+                'X-Created': HeaderSpec(),
+                'X-Our-Domain': HeaderSpec(required=False),
+            },
+        ),
+    )
+    def post(self, parsed_body: Body[UserModel]) -> HttpResponse:
+        uid = uuid.uuid4()
+        # This response would have an explicit status code `200`
+        # and one required header `X-Created` and one optional `X-Our-Domain`:
+        headers = {'X-Created': str(uid)}
+        if '@ourdomain.com' in parsed_body.email:
+            headers['X-Our-Domain'] = 'true'
+        return self.to_response(
+            parsed_body,
+            status_code=HTTPStatus.OK,
+            headers=headers,
+        )
+
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@wms.org"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# run: {"controller": "UserController", "method": "post", "body": {"email": "user@ourdomain.com"}, "url": "/api/user/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

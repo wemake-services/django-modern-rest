@@ -1,16 +1,17 @@
 import abc
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     Any,
     ClassVar,
-    Generic,
+    Final,
     TypeAlias,
     TypeVar,
-    get_args,
 )
 
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import (
@@ -26,6 +27,7 @@ from dmr.internal.django import (
     parse_headers,
 )
 from dmr.metadata import (
+    ComponentParserSpec,
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
@@ -40,13 +42,24 @@ from dmr.openapi.objects import (
     RequestBody,
 )
 from dmr.parsers import SupportsDjangoDefaultParsing, SupportsFileParsing
-from dmr.types import TypeVarInference, infer_bases, is_safe_subclass
+from dmr.types import TypeVarInference
 
 if TYPE_CHECKING:
-    from dmr.controller import Blueprint, Controller
+    from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
+
+_UNNAMED_PATH_PARAMS_MSG: Final = _(
+    'Path {cls} with field_model={field_model}'
+    ' does not allow unnamed path parameters'
+    ' args={args}',
+)
+_UNSUPPORTED_FILE_PARSER_MSG: Final = _(
+    'Trying to parse files with {parser_name}'
+    ' that does not support'
+    ' SupportsFileParsing protocol',
+)
 
 _QueryT = TypeVar('_QueryT')
 _BodyT = TypeVar('_BodyT')
@@ -54,12 +67,6 @@ _HeadersT = TypeVar('_HeadersT')
 _PathT = TypeVar('_PathT')
 _CookiesT = TypeVar('_CookiesT')
 _FileMetadataT = TypeVar('_FileMetadataT')
-
-
-ComponentParserSpec: TypeAlias = tuple[
-    type['ComponentParser'],
-    tuple[Any, ...],
-]
 
 
 class ComponentParserBuilder:
@@ -70,78 +77,89 @@ class ComponentParserBuilder:
     type vars as models at this point.
     """
 
-    __slots__ = ('_blueprint_cls', '_ignore_cls')
+    __slots__ = ('_controller_cls', '_func', '_type_annotations')
 
     type_var_inference_cls: ClassVar[type[TypeVarInference]] = TypeVarInference
 
     def __init__(
         self,
-        blueprint_cls: type['Blueprint[BaseSerializer]'],
-        ignore_cls: type['Blueprint[BaseSerializer]'],
+        func: Callable[..., Any],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         """Initialize the builder."""
-        self._blueprint_cls = blueprint_cls
-        self._ignore_cls = ignore_cls
+        self._func = func
+        self._controller_cls = controller_cls
 
-    def __call__(self) -> list[ComponentParserSpec]:
-        """Run the building process, infer type vars if needed."""
-        self._validate_args(self._find_components(use_origin=False))
-        components = self._find_components()
-        return self._resolve_type_vars(components)
-
-    def _find_components(
+    def __call__(
         self,
-        *,
-        use_origin: bool = True,
-    ) -> list[type['ComponentParser']]:
-        return [
-            orig
-            for base in self._blueprint_cls.__mro__
-            for orig in infer_bases(
-                base,
-                ComponentParser,
-                use_origin=use_origin,
-            )
-            # When type is a subclass of `Blueprint`, it means that
-            # a component parser type was already mixed in.
-            if not is_safe_subclass(orig, self._ignore_cls)
-        ]
+        type_annotations: dict[str, Any],
+    ) -> list[ComponentParserSpec]:
+        """Run the building process, infer type vars if needed."""
+        return self._resolve_type_vars(
+            self._find_components(type_annotations),
+        )
 
-    def _validate_args(self, components: list[type['ComponentParser']]) -> None:
-        for component_cls in components:
-            if component_cls is ComponentParser:
+    def _find_components(  # noqa: WPS231
+        self,
+        type_annotations: dict[str, Any],
+    ) -> list[ComponentParserSpec]:  # noqa: WPS231
+        components: list[ComponentParserSpec] = []
+        for context_name, component in type_annotations.items():
+            if context_name == 'return':
                 continue
 
-            if not get_args(component_cls):
+            metadata = get_annotated_metadata(
+                component,
+                (),
+                ComponentParser,  # type: ignore[type-abstract]
+            )
+            if metadata is None:
+                continue
+
+            if context_name != metadata.context_name:
                 raise UnsolvableAnnotationsError(
-                    f'Component {component_cls!r} in {self._blueprint_cls!r} '
-                    'must have at least 1 type argument, given 0',
+                    f'Parameter name for {metadata} must always be '
+                    f'{metadata.context_name} not {context_name!r} '
+                    f'in {self._controller_cls!r}',
                 )
+
+            components.append((
+                metadata,
+                component.__origin__,
+                component.__metadata__,
+            ))
+
+        return components
 
     def _resolve_type_vars(
         self,
-        components: list[type['ComponentParser']],
+        components: list[ComponentParserSpec],
     ) -> list[ComponentParserSpec]:
         return [self._resolve_component(component) for component in components]
 
     def _resolve_component(
         self,
-        component: type['ComponentParser'],
+        component_spec: ComponentParserSpec,
     ) -> ComponentParserSpec:
-        type_params = getattr(component, '__parameters__', None)
-        if not type_params:
+        if not isinstance(component_spec[1], TypeVar):
             # Component is not generic, just return whatever it has.
-            return (component, get_args(component))
+            return component_spec
 
-        type_map = self.type_var_inference_cls(component, self._blueprint_cls)()
+        type_map = self.type_var_inference_cls(
+            component_spec[1],
+            self._controller_cls,
+        )()
         return (
-            component,
-            tuple(type_map[type_param] for type_param in type_params),
+            component_spec[0],
+            type_map[component_spec[1]],
+            component_spec[2],
         )
 
 
 class ComponentParser(ResponseSpecProvider):
     """Base abstract provider for request components."""
+
+    __slots__ = ()
 
     # Public API:
     context_name: ClassVar[str]
@@ -152,12 +170,11 @@ class ComponentParser(ResponseSpecProvider):
     will live under a dict field with this name.
     """
 
-    @classmethod
     @abc.abstractmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> Any | tuple[Any, ...]:
@@ -174,9 +191,8 @@ class ComponentParser(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -187,7 +203,7 @@ class ComponentParser(ResponseSpecProvider):
         For example, when parsing something, we always have an option
         to fail a parsing, if some request does not fit our model.
         """
-        return cls._add_new_response(
+        return self._add_new_response(
             ResponseSpec(
                 controller_cls.error_model,
                 status_code=RequestSerializationError.status_code,
@@ -196,8 +212,11 @@ class ComponentParser(ResponseSpecProvider):
             existing_responses,
         )
 
-    @classmethod
-    def conditional_types(cls, model: Any) -> Mapping[str, Any]:
+    def conditional_types(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+    ) -> Mapping[str, Any]:
         """
         Provide conditional parsing types based on content type.
 
@@ -209,8 +228,11 @@ class ComponentParser(ResponseSpecProvider):
         """
         return {}
 
-    @classmethod
-    def validate(cls, metadata: EndpointMetadata) -> None:
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
         """
         Validates that the component is correctly defined.
 
@@ -218,11 +240,11 @@ class ComponentParser(ResponseSpecProvider):
         Runs in import time.
         """
 
-    @classmethod
     @abc.abstractmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
@@ -231,7 +253,7 @@ class ComponentParser(ResponseSpecProvider):
         raise NotImplementedError
 
 
-class Query(ComponentParser, Generic[_QueryT]):
+class QueryComponent(ComponentParser):
     """
     Parses query params of the request.
 
@@ -247,26 +269,24 @@ class Query(ComponentParser, Generic[_QueryT]):
         ...     category: str
         ...     reversed: bool
 
-        >>> class ProductListController(
-        ...     Query[ProductQuery],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class ProductListController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_query: Query[ProductQuery]) -> str:
+        ...         return parsed_query.category
 
     Will parse a request like ``?category=cars&reversed=true``
     into ``ProductQuery`` model.
 
-    You can access parsed query as ``self.parsed_query`` attribute.
+    Parameter for ``Query`` component must be named ``parsed_query``.
     """
 
-    parsed_query: _QueryT
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_query'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> dict[str, Any]:
@@ -281,29 +301,34 @@ class Query(ComponentParser, Generic[_QueryT]):
             frozenset(),
         )
         return convert_multi_value_dict(
-            blueprint.request.GET,
+            controller.request.GET,
             force_list=force_list,
             cast_null=cast_null,
         )
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='query',
         )
 
 
-class Body(ComponentParser, Generic[_BodyT]):
+Query: TypeAlias = Annotated[_QueryT, QueryComponent()]
+"""Annotated alias for parsing query parameters."""
+
+
+class BodyComponent(ComponentParser):
     """
     Parses body of the request.
 
@@ -319,15 +344,14 @@ class Body(ComponentParser, Generic[_BodyT]):
         ...     email: str
         ...     age: int
 
-        >>> class UserCreateController(
-        ...     Body[UserCreateInput],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class UserCreateController(Controller[PydanticSerializer]):
+        ...     def post(self, parsed_body: Body[UserCreateInput]) -> str:
+        ...         return parsed_body.email
 
     Will parse a body like ``{'email': 'user@example.org', 'age': 18}`` into
     ``UserCreateInput`` model.
 
-    You can access parsed body as ``self.parsed_body`` attribute.
+    Parameter for ``Body`` component must be named ``parsed_body``.
 
     When working with parsers that support
     :class:`dmr.parsers.SupportsDjangoDefaultParsing` interface,
@@ -336,27 +360,26 @@ class Body(ComponentParser, Generic[_BodyT]):
     that will be split by ``','`` char.
     """
 
-    parsed_body: _BodyT
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_body'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> Any:
-        parser = endpoint.request_negotiator(blueprint.request)
+        parser = endpoint.request_negotiator(controller.request)
         if isinstance(parser, SupportsDjangoDefaultParsing):
             # Special case, since this is the default content type
             # for Django's request body, it is already parsed.
             # No double work will be done:
-            blueprint.serializer.deserialize(
+            controller.serializer.deserialize(
                 b'',  # it does not matter what to send here.
                 parser=parser,
-                request=blueprint.request,
+                request=controller.request,
                 model=field_model,
             )
             # Django's native parsing is a mess:
@@ -376,25 +399,28 @@ class Body(ComponentParser, Generic[_BodyT]):
                 frozenset(),
             )
             return convert_multi_value_dict(
-                blueprint.request.POST,
+                controller.request.POST,
                 force_list=force_list,
                 cast_null=cast_null,
                 split_commas=split_commas,
             )
 
         try:
-            return blueprint.serializer.deserialize(
-                blueprint.request.body,
+            return controller.serializer.deserialize(
+                controller.request.body,
                 parser=parser,
-                request=blueprint.request,
+                request=controller.request,
                 model=field_model,
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None
 
     @override
-    @classmethod
-    def conditional_types(cls, model: Any) -> Mapping[str, Any]:
+    def conditional_types(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+    ) -> Mapping[str, Any]:
         """
         Provide conditional parsing types based on content type.
 
@@ -403,19 +429,19 @@ class Body(ComponentParser, Generic[_BodyT]):
         with :func:`dmr.negotiation.conditional_type`
         we treat the body as conditional. Otherwise, returns an empty dict.
         """
-        return get_conditional_types(model) or {}
+        return get_conditional_types(model, model_meta) or {}
 
     @override
-    @classmethod
     def get_schema(  # noqa: WPS210
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(model, serializer)
-        conditional_types = cls.conditional_types(model)
+        conditional_types = self.conditional_types(model, model_meta)
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
@@ -428,6 +454,7 @@ class Body(ComponentParser, Generic[_BodyT]):
             media_type_meta = (
                 get_annotated_metadata(
                     conditional_types.get(parser.content_type, model),
+                    model_meta,
                     MediaTypeMetadata,
                 )
                 or MediaTypeMetadata()
@@ -450,7 +477,11 @@ class Body(ComponentParser, Generic[_BodyT]):
         )
 
 
-class Headers(ComponentParser, Generic[_HeadersT]):
+Body: TypeAlias = Annotated[_BodyT, BodyComponent()]
+"""Annotated alias for parsing requests bodies."""
+
+
+class HeadersComponent(ComponentParser):
     """
     Parses request headers.
 
@@ -465,57 +496,62 @@ class Headers(ComponentParser, Generic[_HeadersT]):
         >>> class AuthHeaders(pydantic.BaseModel):
         ...     token: str = pydantic.Field(alias='X-API-Token')
 
-        >>> class UserCreateController(
-        ...     Headers[AuthHeaders],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class UserCreateController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_headers: Headers[AuthHeaders]) -> str:
+        ...         return parsed_headers.token
 
     Will parse request headers like ``Token: secret`` into ``AuthHeaders``
     model.
 
-    You can access parsed headers as ``self.parsed_headers`` attribute.
+    Parameter for ``Headers`` component must be named ``parsed_headers``.
     """
 
-    parsed_headers: _HeadersT
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_headers'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> Any:
-        split_commas: frozenset[str] = getattr(
+        split_commas: frozenset[str] | None = getattr(
             field_model,
             '__dmr_split_commas__',
-            frozenset(),
+            None,
         )
+        if not split_commas:
+            return controller.request.headers
         return parse_headers(
-            blueprint.request.headers,
+            controller.request.headers,
             split_commas=split_commas,
         )
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='header',
         )
 
 
-class Path(ComponentParser, Generic[_PathT]):
+Headers: TypeAlias = Annotated[_HeadersT, HeadersComponent()]
+"""Annotated alias for parsing header parameters."""
+
+
+class PathComponent(ComponentParser):
     """
     Parses the url part of the request.
 
@@ -532,10 +568,9 @@ class Path(ComponentParser, Generic[_PathT]):
         >>> class UserPath(pydantic.BaseModel):
         ...     user_id: int
 
-        >>> class UserUpdateController(
-        ...     Path[UserPath],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
+        >>> class UserUpdateController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_path: Path[UserPath]) -> int:
+        ...         return parsed_path.user_id
 
         >>> router = Router(
         ...     'api/',
@@ -559,8 +594,7 @@ class Path(ComponentParser, Generic[_PathT]):
     which will be translated into ``{'user_id': 100}``
     into ``UserPath`` model.
 
-    If your controller class inherits from ``Path`` - then you can access
-    parsed paths parameters as ``self.parsed_path`` attribute.
+    Parameter for ``Path`` component must be named ``parsed_path``.
 
     It is way stricter than the original Django's routing system.
     For example, django allows to such cases:
@@ -572,13 +606,12 @@ class Path(ComponentParser, Generic[_PathT]):
     In ``django-modern-rest`` there's now a way to validate this in runtime.
     """
 
-    parsed_path: _PathT
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_path'
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -595,7 +628,7 @@ class Path(ComponentParser, Generic[_PathT]):
                 controller_cls,
                 existing_responses,
             ),
-            *cls._add_new_response(
+            *self._add_new_response(
                 ResponseSpec(
                     controller_cls.error_model,
                     status_code=HTTPStatus.NOT_FOUND,
@@ -606,39 +639,46 @@ class Path(ComponentParser, Generic[_PathT]):
         ]
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> Any:
-        if blueprint.args:
+        if controller.args:
             raise RequestSerializationError(
-                f'Path {cls} with {field_model=} does not allow '
-                f'unnamed path parameters {blueprint.args=}',
+                _UNNAMED_PATH_PARAMS_MSG.format(
+                    cls=type(controller),
+                    field_model=repr(field_model),
+                    args=repr(controller.args),
+                ),
             )
-        return blueprint.kwargs
+        return controller.kwargs
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='path',
         )
 
 
-class Cookies(ComponentParser, Generic[_CookiesT]):
+Path: TypeAlias = Annotated[_PathT, PathComponent()]
+"""Annotated alias for parsing path parameters."""
+
+
+class CookiesComponent(ComponentParser):
     """
     Parses the cookies from :attr:`django.http.HttpRequest.COOKIES`.
 
@@ -653,16 +693,14 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
         >>> class UserSession(pydantic.BaseModel):
         ...     session_id: int
 
-        >>> class UserUpdateController(
-        ...     Cookies[UserSession],
-        ...     Controller[PydanticSerializer],
-        ... ): ...
-
+        >>> class UserUpdateController(Controller[PydanticSerializer]):
+        ...     def get(self, parsed_cookies: Cookies[UserSession]) -> int:
+        ...         return parsed_cookies.session_id
 
     Will parse a request header like ``Cookie: session_id=123``
     into a model ``UserSession``.
 
-    You can access parsed cookies as ``self.parsed_cookies`` attribute.
+    Parameter for ``Cookies`` component must be named ``parsed_cookies``.
 
     .. seealso::
 
@@ -670,43 +708,47 @@ class Cookies(ComponentParser, Generic[_CookiesT]):
 
     """
 
-    parsed_cookies: _CookiesT
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_cookies'
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> Any:
-        return blueprint.request.COOKIES
+        return controller.request.COOKIES
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
+            model_meta,
             serializer,
             context,
             param_in='cookie',
         )
 
 
-class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
+Cookies: TypeAlias = Annotated[_CookiesT, CookiesComponent()]
+"""Annotated alias for parsing cookie parameters."""
+
+
+class FileMetadataComponent(ComponentParser):
     """
     Parses files metadata from :attr:`django.http.HttpRequest.FILES`.
 
     Django handles files itself natively, we don't need to do anything
-    in ``django_modern_rest``. Everything just works, including all
+    in ``django-modern-rest``. Everything just works, including all
     Django's advanced file features like customizing the storage backends.
 
     But, we need a way to represent and validate the metadata.
@@ -732,18 +774,20 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         ...     receipt: TextFile
         ...     contract: TextFile
 
-        >>> class ContractController(
-        ...     FileMetadata[ContractPayload],
-        ...     Controller[PydanticSerializer],
-        ... ):
+        >>> class ContractController(Controller[PydanticSerializer]):
         ...     parsers = (MultiPartParser(),)
         ...
-        ...     def post(self) -> str:
+        ...     def post(
+        ...         self, parsed_file_metadata: FileMetadata[ContractPayload]
+        ...     ) -> str:
         ...         return 'Valid files!'
 
     What attributes are available to be validated?
     See :class:`django.core.files.uploadedfile.UploadedFile`
     for the full list of metadata attributes.
+
+    Parameter for ``FileMetadata`` component
+    must be named ``parsed_file_metadata``.
 
     Users can customize how they want their file metadata values:
     as single values or as lists of values.
@@ -764,33 +808,33 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
     This will parse a ``multipart/form-data`` request with potentially multiple
     receipts and a single contract files.
 
-    You can access parsed files' metadata
-    as ``self.parsed_file_metadata`` attribute.
-
     .. seealso::
 
-        https://docs.djangoproject.com/en/6.0/topics/http/file-uploads/
+        https://docs.djangoproject.com/en/stable/topics/http/file-uploads/
 
     """
 
-    parsed_file_metadata: _FileMetadataT
+    __slots__ = ('schema_metadata',)
     context_name: ClassVar[str] = 'parsed_file_metadata'
-    schema_metadata: ClassVar[type[FileBody]] = FileBody
+
+    def __init__(self, schema_metadata: type[FileBody] = FileBody) -> None:
+        """Provide model type for a schema generation."""
+        self.schema_metadata = schema_metadata
 
     @override
-    @classmethod
     def provide_context_data(
-        cls,
+        self,
         endpoint: 'Endpoint',
-        blueprint: 'Blueprint[BaseSerializer]',
+        controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
     ) -> Mapping[str, Any]:
-        parser = endpoint.request_negotiator(blueprint.request)
+        parser = endpoint.request_negotiator(controller.request)
         if not isinstance(parser, SupportsFileParsing):
             raise RequestSerializationError(
-                f'Trying to parse files with {type(parser).__name__!r} '
-                'that does not support SupportsFileParsing protocol',
+                _UNSUPPORTED_FILE_PARSER_MSG.format(
+                    parser_name=repr(type(parser).__name__),
+                ),
             )
 
         # NOTE: double parsing does not happen.
@@ -799,10 +843,10 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         #    parsing and reuse it
         # 2. It is a single component: we reuse `request.FILES`
         #    when it is possible.
-        blueprint.serializer.deserialize(
+        controller.serializer.deserialize(
             b'',  # it does not matter what to send here.
             parser=parser,
-            request=blueprint.request,
+            request=controller.request,
             model=field_model,
         )
 
@@ -811,11 +855,14 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
             '__dmr_force_list__',
             frozenset(),
         )
-        return extract_files_metadata(blueprint.request.FILES, force_list)
+        return extract_files_metadata(controller.request.FILES, force_list)
 
     @override
-    @classmethod
-    def validate(cls, metadata: EndpointMetadata) -> None:
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
         """
         Validates that the component is correctly defined.
 
@@ -831,13 +878,16 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         ):
             hint = list(metadata.parsers.keys())
             raise EndpointMetadataError(
-                f'Class {cls!r} requires at least one parser '
+                f'Class {controller_cls!r} requires at least one parser '
                 f'that can parse files, found: {hint}',
             )
 
     @override
-    @classmethod
-    def conditional_types(cls, model: Any) -> Mapping[str, Any]:
+    def conditional_types(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+    ) -> Mapping[str, Any]:
         """
         Provide conditional parsing types based on content type.
 
@@ -848,13 +898,13 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
         """
         # TODO: test conditional file models and add `application/ocet-stream`
         # parser support to test it.
-        return get_conditional_types(model) or {}
+        return get_conditional_types(model, model_meta) or {}
 
     @override
-    @classmethod
     def get_schema(
-        cls,
+        self,
         model: Any,
+        model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
@@ -869,15 +919,17 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
                 conditional_model,
                 serializer,
             )
-            for content_type, conditional_model in cls.conditional_types(
+            for content_type, conditional_model in self.conditional_types(
                 model,
+                model_meta,
             ).items()
         }
         return RequestBody(
             content={
-                parser.content_type: cls.schema_metadata.media_type(
+                parser.content_type: self.schema_metadata.media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
+                    model_meta,
                     parser,
                     context,
                 )
@@ -888,3 +940,10 @@ class FileMetadata(ComponentParser, Generic[_FileMetadataT]):
                 schema,
             ).description,
         )
+
+
+FileMetadata: TypeAlias = Annotated[
+    _FileMetadataT,
+    FileMetadataComponent(),
+]
+"""Annotated alias for parsing file metadata."""

@@ -11,6 +11,7 @@ from inline_snapshot import snapshot
 from dmr import Controller, modify
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security import request_auth
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
@@ -36,8 +37,10 @@ def test_sync_session_auth_success(
     response = _SyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert isinstance(request_auth(request), DjangoSessionSyncAuth)
+    assert isinstance(request_auth(request, strict=True), DjangoSessionSyncAuth)
     assert json.loads(response.content) == 'authed'
 
 
@@ -51,8 +54,11 @@ def test_sync_session_auth_failure(
     response = _SyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
+    with pytest.raises(AttributeError, match='__dmr_auth__'):
+        request_auth(request, strict=True)
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
@@ -81,8 +87,13 @@ async def test_async_session_auth_success(
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert isinstance(request_auth(request), DjangoSessionAsyncAuth)
+    assert isinstance(
+        request_auth(request, strict=True),
+        DjangoSessionAsyncAuth,
+    )
     assert json.loads(response.content) == 'authed'
 
 
@@ -97,8 +108,11 @@ async def test_async_session_auth_failure(
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
+    with pytest.raises(AttributeError, match='__dmr_auth__'):
+        request_auth(request, strict=True)
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
@@ -106,7 +120,6 @@ async def test_async_session_auth_failure(
 
 def test_global_settings_override(
     settings: LazySettings,
-    dmr_clean_settings: None,
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensure that you can override global `[]` auth value from settings."""
@@ -125,8 +138,8 @@ def test_global_settings_override(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'authed'
 
     request = dmr_rf.get('/whatever/')
@@ -135,8 +148,8 @@ def test_global_settings_override(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })

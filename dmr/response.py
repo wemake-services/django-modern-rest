@@ -9,7 +9,7 @@ from django.utils.encoding import iri_to_uri
 from django.utils.http import MAX_URL_REDIRECT_LENGTH
 from typing_extensions import TypeVar
 
-from dmr.cookies import NewCookie
+from dmr.cookies import NewCookie, set_cookies
 from dmr.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ class APIError(Exception, Generic[_ItemT]):
         raw_data: _ItemT,
         *,
         status_code: HTTPStatus,
-        headers: dict[str, str] | None = None,
+        headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
     ) -> None:
         """Create response from parts."""
@@ -246,6 +246,8 @@ def build_response(  # noqa: WPS210, WPS211
 
     response = HttpResponse(
         content=(
+            # This is done here, because only `HttpResponse` body needs this
+            # modification. While `JsonL` and `SSE` need `null` as events.
             b''
             if raw_data is None
             else serializer.serialize(raw_data, renderer=renderer)
@@ -253,13 +255,15 @@ def build_response(  # noqa: WPS210, WPS211
         status=status,
         headers=response_headers,
     )
-    if cookies:
-        for cookie_key, cookie in cookies.items():
-            response.set_cookie(cookie_key, **cookie.as_dict())
+    set_cookies(response, cookies)
     return response
 
 
-def infer_status_code(method_name: HTTPMethod | str) -> HTTPStatus:
+def infer_status_code(
+    method_name: HTTPMethod | str,
+    *,
+    streaming: bool = False,
+) -> HTTPStatus:
     """
     Infer status code based on method name.
 
@@ -272,11 +276,14 @@ def infer_status_code(method_name: HTTPMethod | str) -> HTTPStatus:
 
     >>> infer_status_code('get')
     <HTTPStatus.OK: 200>
+
+    >>> infer_status_code('post', streaming=True)
+    <HTTPStatus.OK: 200>
     """
     if isinstance(method_name, HTTPMethod):
         method = method_name
     else:
         method = HTTPMethod(method_name.upper())
-    if method is HTTPMethod.POST:
+    if not streaming and method is HTTPMethod.POST:
         return HTTPStatus.CREATED
     return HTTPStatus.OK

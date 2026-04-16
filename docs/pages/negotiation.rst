@@ -1,7 +1,7 @@
 Content negotiation
 ===================
 
-``django_modern_rest`` supports content negotiation.
+``django-modern-rest`` supports content negotiation.
 
 We have two abstractions to do that:
 
@@ -23,12 +23,36 @@ to use ``msgspec`` if it is installed (recommended).
 We fallback to pure-python implementation if ``msgspec`` is not installed.
 
 
+Supported content types
+-----------------------
+
+We ship several pre-defined parsers and renderers.
+
+Parsers:
+
+- ``application/json`` with :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
+  and :class:`~dmr.parsers.JsonParser`
+- ``application/msgpack`` with :class:`~dmr.plugins.msgspec.MsgpackParser`
+- ``multipart/form-data`` with :class:`~dmr.parsers.MultiPartParser`
+- ``application/x-www-form-urlencoded``
+  with :class:`~dmr.parsers.FormUrlEncodedParser`
+
+Renderers:
+
+- ``application/json`` with :class:`~dmr.plugins.msgspec.MsgspecJsonRenderer`
+  and :class:`~dmr.renderers.JsonRenderer`
+- ``application/msgpack`` with :class:`~dmr.plugins.msgspec.MsgpackRenderer`
+- ``*/*`` with :class:`~dmr.renderers.FileRenderer`
+
+You can :ref:`write your own <custom-parsers-and-renderers>`!
+
+
 How parser and renderer are selected
 ------------------------------------
 
 We select a :class:`~dmr.parsers.Parser` instance
-if there's a :class:`~dmr.components.Body`
-or :class:`~dmr.components.FileMetadata` components to parse.
+if there's a :data:`~dmr.components.Body`
+or :data:`~dmr.components.FileMetadata` components to parse.
 Otherwise, for performance reasons, no parser is selected at all.
 Nothing to parse - no parser is selected.
 
@@ -60,8 +84,8 @@ Here's how we select a renderer:
    which is the first specified renderer for the endpoint,
    aka the most specific one
 3. If there's an ``Accept`` header,
-   we use :meth:`django.http.HttpRequest.get_preferred_type` method
-   to match the best accepted type, based on ``'specificity', 'quality'``,
+   we use all renderers specified for this endpoint
+   to match the best accepted type, based on ``quality, specificity``,
    the first match wins
 4. If no renderer fits for the accepted content types, we raise
    :exc:`~dmr.exceptions.ResponseSchemaError`
@@ -92,6 +116,35 @@ Here's how we select a renderer:
   fallbacks to settings-defined renderers in some error cases.
 
 
+.. _alternative-json:
+
+Alternative JSON backends
+-------------------------
+
+By default, we use ``msgspec`` if it installed.
+When it is not, we fallback to :class:`~dmr.parsers.JsonParser`
+and :class:`~dmr.renderers.JsonRenderer` types, which use native pure Python
+:mod:`json` with limited features support and very low performance.
+
+For users, who does not want to use ``msgspec``, but prefer
+`orjson <https://github.com/ijl/orjson>`_ for some reason,
+we provide the following API:
+
+.. literalinclude:: /examples/negotiation/orjson_integration.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Any module that exposes API that fits :class:`~dmr.internal.json.JsonModule`
+protocol is supported. If some API does not fit exactly, you can create
+a small wrapper that would fit, like :class:`~dmr.internal.json.NativeJson`.
+
+``orjson`` is the recommended alternative because
+it is really fast, returns ``bytes`` directly,
+avoiding an extra encode step, and is significantly
+faster than the standard library ``json``.
+
+
 Customizing negotiation process
 -------------------------------
 
@@ -108,39 +161,31 @@ going back to the less specific:
 
 .. tabs::
 
-    .. tab:: per endpoint
+  .. tab:: per endpoint
 
-      .. literalinclude:: /examples/negotiation/per_endpoint.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 35
+    .. literalinclude:: /examples/negotiation/per_endpoint.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 35
 
-    .. tab:: per blueprint
+  .. tab:: per controller
 
-      .. literalinclude:: /examples/negotiation/per_blueprint.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 39-40
+    .. literalinclude:: /examples/negotiation/per_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 39-40
 
-    .. tab:: per controller
+  .. tab:: per settings
 
-      .. literalinclude:: /examples/negotiation/per_controller.py
-        :caption: views.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 39-40
+    .. literalinclude:: /examples/negotiation/settings.py
+      :caption: settings.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 6-7
 
-    .. tab:: per settings
-
-      .. literalinclude:: /examples/negotiation/settings.py
-        :caption: settings.py
-        :language: python
-        :linenos:
-        :emphasize-lines: 6-7
-
-First parsers / renders definition found, starting from the top,
+First parsers / renderers definition found, starting from the top,
 will win and be used for the endpoint.
 
 You can also modify
@@ -150,6 +195,8 @@ to completely change the negotiation logic to fit your needs.
 
 This is possible on per-controller level.
 
+
+.. _custom-parsers-and-renderers:
 
 Writing custom parsers and renderers
 ------------------------------------
@@ -167,12 +214,14 @@ And here's how our test ``xml`` parser and renderer are defined:
   prefer more tested and battle-proven solutions.
 
 
+.. _conditional-types:
+
 Using different schemes for different content types
 ---------------------------------------------------
 
-Sometimes we have to accept different schemes based on the content type.
+Sometimes we have to accept different schemas based on the content type.
 `According to the OpenAPI spec <https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/#requestbody-content-and-media-types>`_,
-:class:`~dmr.components.Body`
+:data:`~dmr.components.Body`
 should support different content types.
 
 We utilize :data:`typing.Annotated`
@@ -222,7 +271,7 @@ and :func:`dmr.negotiation.conditional_type`:
    :linenos:
 
 Note that you would also have to customize
-:meth:`~dmr.controller.Blueprint.format_error`
+:meth:`~dmr.controller.Controller.format_error`
 accordingly.
 
 
@@ -285,6 +334,9 @@ Parsers
 .. autoclass:: dmr.plugins.msgspec.MsgspecJsonParser
   :members:
 
+.. autoclass:: dmr.plugins.msgspec.MsgpackParser
+  :members:
+
 .. autoclass:: dmr.parsers.JsonParser
   :members:
 
@@ -300,6 +352,9 @@ Renderers
 .. autoclass:: dmr.plugins.msgspec.MsgspecJsonRenderer
   :members:
 
+.. autoclass:: dmr.plugins.msgspec.MsgpackRenderer
+  :members:
+
 .. autoclass:: dmr.renderers.JsonRenderer
   :members:
 
@@ -309,8 +364,6 @@ Renderers
 
 Advanced API
 ------------
-
-
 
 .. autoclass:: dmr.parsers.SupportsFileParsing
   :members:

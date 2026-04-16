@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, final
+from typing import Annotated, Any, Final, final
 
 import pydantic
 import pytest
@@ -10,32 +10,20 @@ from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict, override
 
-from dmr import (
-    Blueprint,
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.errors import ErrorType
-from dmr.negotiation import (
-    ContentType,
-    conditional_type,
-    request_parser,
-)
+from dmr.negotiation import ContentType, conditional_type, request_parser
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.settings import Settings
-from dmr.test import DMRRequestFactory
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from tests.infra.xml_format import XmlParser, XmlRenderer
 
 
 @pytest.fixture(autouse=True)
 def _setup_parser_and_renderer(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
         Settings.parsers: [XmlParser()],
@@ -47,7 +35,7 @@ class _RequestModel(pydantic.BaseModel):
     root: dict[str, str]
 
 
-_xml_data = """<?xml version="1.0" encoding="utf-8"?>
+_xml_data: Final = """<?xml version="1.0" encoding="utf-8"?>
 <root>
     <key>value</key>
 </root>"""
@@ -59,10 +47,9 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
     @final
     class _XmlController(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
-        def post(self) -> dict[str, str]:
-            return self.parsed_body.root
+        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
+            return parsed_body.root
 
     request = rf.generic(
         'POST',
@@ -98,7 +85,7 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
         ),
         (
             {'Content-Type': 'application/json', 'Accept': 'application/xml'},
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
@@ -107,7 +94,7 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml,application/json',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
@@ -116,43 +103,43 @@ def test_xml_parser_renderer(rf: RequestFactory) -> None:
                 'Content-Type': 'application/json',
                 'Accept': 'application/json,application/xml',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml;q=0.7,application/json;q=0.9',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {
                 'Content-Type': 'application/json',
                 'Accept': 'application/xml+pretty;q=0.7,application/json;q=0.9',
             },
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
         (
             {},
-            b'{"root": {"key": "value"}}',
+            b'{"root":{"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
         (
             {'Accept': 'application/xml,application/json'},
-            b'{"root": {"key": "value"}}',
+            b'{"root": {"key":"value"}}',
             {'Content-Type': 'application/xml'},
             b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
         ),
@@ -171,22 +158,24 @@ def test_per_controller_customization(
     @final
     class _BothController(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
+        def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
             parser = request_parser(self.request)
             assert parser
             assert parser.content_type == request.content_type
-            return self.parsed_body.root
+            assert (
+                request_parser(self.request, strict=True).content_type
+                == request.content_type
+            )
+            return parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
-    request = dmr_rf.generic(
-        'POST',
+    request = dmr_rf.post(
         '/whatever/',
         headers=request_headers,
         data=request_data,
@@ -200,40 +189,129 @@ def test_per_controller_customization(
     assert response.content == expected_data
 
 
-def test_per_blueprint_customization(
-    dmr_rf: DMRRequestFactory,
+@pytest.mark.parametrize(
+    ('request_headers', 'request_data', 'expected_headers', 'expected_data'),
+    [
+        (
+            {'Content-Type': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/xml', 'Accept': 'application/xml'},
+            _xml_data,
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/xml'},
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml,application/json',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json,application/xml',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml;q=0.7,application/json;q=0.9',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/xml+pretty;q=0.7,application/json;q=0.9',
+            },
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/json'},
+            b'{"key":"value"}',
+        ),
+        (
+            {},
+            b'{"root":{"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+        (
+            {'Accept': 'application/xml,application/json'},
+            b'{"root": {"key":"value"}}',
+            {'Content-Type': 'application/xml'},
+            b'<?xml version="1.0" encoding="utf-8"?>\n<key>value</key>',
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_per_controller_customization_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    request_headers: dict[str, str],
+    request_data: Any,
+    expected_headers: dict[str, str],
+    expected_data: Any,
 ) -> None:
-    """Ensures we can change per-blueprint parsers and renderers."""
+    """Ensures we can change per-controller parsers and renderers."""
 
     @final
-    class _Blueprint(Blueprint[PydanticSerializer], Body[_RequestModel]):
+    class _BothController(
+        Controller[PydanticSerializer],
+    ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
-            return self.parsed_body.root
-
-    @final
-    class _BothController(Controller[PydanticSerializer]):
-        blueprints = [_Blueprint]
+        async def post(
+            self,
+            parsed_body: Body[_RequestModel],
+        ) -> dict[str, str]:
+            parser = request_parser(self.request)
+            assert parser
+            assert parser.content_type == request.content_type
+            assert (
+                request_parser(self.request, strict=True).content_type
+                == request.content_type
+            )
+            return parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
 
-    request_data = {'root': {'key': 'value'}}
-
-    request = dmr_rf.post(
+    request = dmr_async_rf.post(
         '/whatever/',
-        headers={'Content-Type': 'application/json'},
-        data=json.dumps(request_data),
+        headers=request_headers,
+        data=request_data,
     )
 
-    response = _BothController.as_view()(request)
+    response = await dmr_async_rf.wrap(_BothController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
-    assert response.headers == {'Content-Type': 'application/xml'}
-    assert b'<key>value</key>' in response.content
+    assert response.headers == expected_headers
+    assert response.content == expected_data
 
 
 def test_per_endpoint_customization(
@@ -242,13 +320,16 @@ def test_per_endpoint_customization(
     """Ensures we can change per-endpoint parsers and renderers."""
 
     @final
-    class _BothController(Controller[PydanticSerializer], Body[_RequestModel]):
+    class _BothController(Controller[PydanticSerializer]):
         @modify(
             parsers=[XmlParser(), JsonParser()],
             renderers=[XmlRenderer(), JsonRenderer()],
         )
-        def post(self) -> dict[str, str]:
-            return self.parsed_body.root
+        def post(
+            self,
+            parsed_body: Body[_RequestModel],
+        ) -> Annotated[dict[str, str], 'comment']:
+            return parsed_body.root
 
     assert len(_BothController.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_BothController.api_endpoints['POST'].metadata.renderers) == 2
@@ -307,13 +388,13 @@ def test_conditional_content_type(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[Annotated[_RequestModel, 'other comment']],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
+            parsed_body: Body[Annotated[_RequestModel, 'other comment']],
         ) -> Annotated[
             dict[str, str] | str,
             'comment',
@@ -323,8 +404,8 @@ def test_conditional_content_type(
             }),
         ]:
             if self.request.accepts(ContentType.json):
-                return self.parsed_body.root['key']
-            return self.parsed_body.root
+                return parsed_body.root['key']
+            return parsed_body.root
 
         @validate(
             ResponseSpec(
@@ -338,14 +419,17 @@ def test_conditional_content_type(
                 status_code=HTTPStatus.CREATED,
             ),
         )
-        def put(self) -> HttpResponse:
+        def put(
+            self,
+            parsed_body: Body[Annotated[_RequestModel, 'other comment']],
+        ) -> HttpResponse:
             if self.request.accepts(ContentType.json):
                 return self.to_response(
-                    self.parsed_body.root['key'],
+                    parsed_body.root['key'],
                     status_code=HTTPStatus.CREATED,
                 )
             return self.to_response(
-                self.parsed_body.root,
+                parsed_body.root,
                 status_code=HTTPStatus.CREATED,
             )
 
@@ -402,13 +486,13 @@ def test_wrong_conditional_content_type(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
         def post(
             self,
+            parsed_body: Body[_RequestModel],
         ) -> Annotated[
             dict[str, str] | str,
             conditional_type({
@@ -419,8 +503,8 @@ def test_wrong_conditional_content_type(
         ]:
             # ERROR! Type to content logic is reversed:
             if self.request.accepts(ContentType.json):
-                return self.parsed_body.root['key']
-            return self.parsed_body.root
+                return parsed_body.root['key']
+            return parsed_body.root
 
         @validate(
             ResponseSpec(
@@ -435,15 +519,15 @@ def test_wrong_conditional_content_type(
                 status_code=HTTPStatus.CREATED,
             ),
         )
-        def put(self) -> HttpResponse:
+        def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
             # ERROR! Type to content logic is reversed:
             if self.request.accepts(ContentType.json):
                 return self.to_response(
-                    self.parsed_body.root['key'],
+                    parsed_body.root['key'],
                     status_code=HTTPStatus.CREATED,
                 )
             return self.to_response(
-                self.parsed_body.root,
+                parsed_body.root,
                 status_code=HTTPStatus.CREATED,
             )
 
@@ -530,7 +614,7 @@ def test_missing_conditional_content_type(
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             b'"value"',
             {'Content-Type': 'application/json'},
-            b'{"key": "value"}',
+            b'{"key":"value"}',
         ),
     ],
 )
@@ -547,23 +631,25 @@ def test_conditional_body_model(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[
-            Annotated[
-                _RequestModel | str,
-                conditional_type({
-                    ContentType.json: str,
-                    ContentType.xml: _RequestModel,
-                }),
-            ]
-        ],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
-            if isinstance(self.parsed_body, _RequestModel):
-                return self.parsed_body.root
-            return {'key': self.parsed_body}
+        def post(
+            self,
+            parsed_body: Body[
+                Annotated[
+                    _RequestModel | str,
+                    conditional_type({
+                        ContentType.json: str,
+                        ContentType.xml: _RequestModel,
+                    }),
+                ]
+            ],
+        ) -> dict[str, str]:
+            if isinstance(parsed_body, _RequestModel):
+                return parsed_body.root
+            return {'key': parsed_body}
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
     assert len(_Controller.api_endpoints['POST'].metadata.renderers) == 2
@@ -638,22 +724,22 @@ def test_conditional_body_model_wrong(
     """Ensures conditional body models validates correctly."""
 
     @final
-    class _Controller(
-        Controller[PydanticSerializer],
-        Body[
-            Annotated[
-                _RequestModel | dict[str, str],
-                conditional_type({
-                    ContentType.json: dict[str, str],
-                    ContentType.xml: _RequestModel,
-                }),
-            ]
-        ],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
-        def post(self) -> dict[str, str]:
+        def post(
+            self,
+            parsed_body: Body[
+                Annotated[
+                    _RequestModel | dict[str, str],
+                    conditional_type({
+                        ContentType.json: dict[str, str],
+                        ContentType.xml: _RequestModel,
+                    }),
+                ]
+            ],
+        ) -> dict[str, str]:
             raise NotImplementedError
 
     assert len(_Controller.api_endpoints['POST'].metadata.parsers) == 2
@@ -705,7 +791,7 @@ class _CustomXmlErrorModel(TypedDict):
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             {'Content-Type': 'application/json'},
             (
-                b'{"json_errors": [{"reason": '
+                b'{"json_errors":[{"reason":'
                 b'"Input should be a valid dictionary or instance '
                 b"of _RequestModel: ['parsed_body']\"}]}"
             ),
@@ -724,7 +810,6 @@ def test_conditional_error_model(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -736,7 +821,7 @@ def test_conditional_error_model(
             }),
         ]
 
-        def post(self) -> str:
+        def post(self, parsed_body: Body[_RequestModel]) -> str:
             raise NotImplementedError
 
         @override
@@ -795,7 +880,7 @@ def test_conditional_error_model(
         (
             {'Content-Type': 'application/json', 'Accept': 'application/json'},
             {'Content-Type': 'application/json'},
-            b'{"xml_errors": {"json_errors": "Field required"}}',
+            b'{"xml_errors":{"json_errors":"Field required"}}',
         ),
     ],
 )
@@ -811,7 +896,6 @@ def test_conditional_error_model_wrong(
     @final
     class _Controller(
         Controller[PydanticSerializer],
-        Body[_RequestModel],
     ):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -823,7 +907,7 @@ def test_conditional_error_model_wrong(
             }),
         ]
 
-        def post(self) -> str:
+        def post(self, parsed_body: Body[_RequestModel]) -> str:
             raise NotImplementedError
 
         @override

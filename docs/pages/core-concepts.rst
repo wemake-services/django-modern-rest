@@ -10,25 +10,20 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
     is a single API route. It is defined
     by its name – HTTP method – and its :term:`Metadata`, what response schema
     it returns, what status codes it can return, etc.
-
-  Blueprint
-    :class:`~dmr.controller.Blueprint` is a building block
-    for composition of different HTTP methods and parsing rules under
-    one resulting URL.
+    Each endpoint might have different :term:`Component` types
+    for parsing the inputs.
 
   Controller
     :class:`~dmr.controller.Controller`
     is a collection of one or more :term:`endpoints <Endpoint>`
     with the same set of :term:`components <Component>`.
     Controller is a subclass of :class:`~django.views.generic.base.View`, so
-    it can be used in a routing.
-    Controller can also be composed of different :term:`blueprints <Blueprint>`,
-    so different parsing rules can share one final URL.
+    it can be used in a routing directly.
 
   Component
     Controllers parse data via components like
-    :class:`~dmr.components.Body`
-    or :class:`~dmr.components.Headers`.
+    :data:`~dmr.components.Body`
+    or :data:`~dmr.components.Headers`.
     You can write your own components.
 
   Metadata
@@ -44,8 +39,9 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 
   Routing
     Routing is a mapping of URLs to controllers.
-    If some controllers need the same URLs, but different data parsing, we can
-    :doc:`compose <routing>` them.
+    We use default Django's URL routing.
+    Controllers might have many URLs, for example:
+    ``/api/v1/users/`` and ``/api/v2/users/``
 
 Example:
 
@@ -99,7 +95,7 @@ Next up
     :gutter: 2
 
     .. grid-item-card:: :octicon:`rocket` Using Controller
-      :link: using-controller
+      :link: using-controller/index
       :link-type: doc
 
       Learn how controllers work.

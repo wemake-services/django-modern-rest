@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 from django.conf import LazySettings
+from django.utils.encoding import force_str
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import (
@@ -140,7 +141,7 @@ def test_format_error_from_ise_no_debug(
     formatted = format_error(exc)
 
     assert formatted == {
-        'detail': [{'msg': InternalServerError.default_message}],
+        'detail': [{'msg': force_str(InternalServerError.default_message)}],
     }
 
 

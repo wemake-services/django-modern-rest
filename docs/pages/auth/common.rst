@@ -5,7 +5,7 @@ How authentication works
 
 We support both:
 
-1. Checking that user requests contains required auth credentials
+1. Checking that user requests contain required auth credentials
 2. Boilerplate code for views that provide credentials for users
 
 
@@ -24,7 +24,7 @@ There are two main base classes for auth:
   Sync controllers can't directly use async auth.
   And async controllers can't directly use sync auth.
 
-All auth - that we are going to use - will be instances for these two classes
+All auth - that we are going to use - will be instances of these two classes
 (and their subclasses).
 
 All of them have unified API:
@@ -35,7 +35,7 @@ All of them have unified API:
   then we consider auth instance to succeed. If it returns ``None``,
   we try the next one in the chain (if any).
   If it raises :exc:`~dmr.exceptions.NotAuthenticatedError`
-  then we imidiatelly stop and return the error response.
+  then we immediately stop and return the error response.
   Async auth has async ``__call__``, sync auth has sync one.
 - :meth:`~dmr.security.SyncAuth.security_schemes`
   provides OpenAPI spec to define this auth method in the spec.
@@ -43,7 +43,7 @@ All of them have unified API:
   provides OpenAPI spec to indicate what kind of auth will
   be required for each endpoint using this auth.
 
-Some class provide configuration to be adjusted when creating instances.
+Some classes provide configuration to be adjusted when creating instances.
 For example: :class:`~dmr.security.jwt.auth.JWTSyncAuth`
 contains multiple options in its ``__init__`` method.
 
@@ -51,37 +51,30 @@ There are 4 ways to provide auth classes for an endpoint:
 
 .. tabs::
 
-    .. tab:: per endpoint
+  .. tab:: per endpoint
 
-      .. literalinclude:: /examples/auth/per_endpoint.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/auth/per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: per blueprint
+  .. tab:: per controller
 
-      .. literalinclude:: /examples/auth/per_blueprint.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/auth/per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: per controller
+  .. tab:: per settings
 
-      .. literalinclude:: /examples/auth/per_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
 
-    .. tab:: per settings
+      >>> from dmr.settings import Settings, DMR_SETTINGS
+      >>> from dmr.security.django_session import DjangoSessionSyncAuth
 
-      .. code-block:: python
-        :caption: settings.py
-        :linenos:
-
-        >>> from dmr.settings import Settings, DMR_SETTINGS
-        >>> from dmr.security.django_session import DjangoSessionSyncAuth
-
-        >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
+      >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
 
 Providing several auth instances means that at least one of them must succeed.
 
@@ -94,7 +87,7 @@ in settings and then disable auth per specific endpoints
 like ``/registration`` and ``/login``.
 
 To do so, set ``auth=None`` for the specific
-endpoints / blueprints / controllers that should not have auth.
+endpoints / controllers that should not have auth.
 
 Setting ``None`` as ``auth`` in any place will always disable
 all auth in further layers.
@@ -118,12 +111,12 @@ It should be placed inside your code, not ours.
 
 Making proper abstractions inside your own code base will allow you to:
 
-- Make is super specific for your usecase
+- Make it super specific for your usecase
 - Make it optimized
 - Make it clean and consistent with other business rules you will have
 
 Yes, these permissions can look cool in a framework on paper,
-but they do not surve a good purpose in large codebases in reality.
+but they do not serve a good purpose in large codebases in reality.
 
 Focus on your **domain**, not on framework.
 
@@ -167,3 +160,9 @@ API Reference
 .. autoclass:: dmr.security.AsyncAuth
   :members:
   :inherited-members:
+
+.. autofunction:: dmr.security.request_auth
+
+
+.. autoclass:: dmr.security.AuthenticatedHttpRequest
+  :members:

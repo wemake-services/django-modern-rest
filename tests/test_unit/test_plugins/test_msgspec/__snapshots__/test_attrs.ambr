@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_auth_and_cookies_schema
+# name: test_attrs_schema
   '''
   {
     "info": {
@@ -8,9 +8,9 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/cookies": {
+      "/api/attrs": {
         "post": {
-          "operationId": "postUsercontrollerApiCookies",
+          "operationId": "postUsercontrollerApiAttrs",
           "requestBody": {
             "content": {
               "application/json": {
@@ -69,6 +69,51 @@
     },
     "components": {
       "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "msg": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
         "_UserModel": {
           "properties": {
             "email": {
@@ -132,51 +177,6 @@
             1
           ],
           "title": "_UserStatus"
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
-        },
-        "ErrorDetail": {
-          "properties": {
-            "loc": {
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            "msg": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "required": [
-            "msg"
-          ],
-          "title": "ErrorDetail",
-          "description": "Base schema for error details description."
         }
       },
       "securitySchemes": {}

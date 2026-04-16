@@ -12,7 +12,6 @@ from dmr.routing import Router
 
 
 def test_config_raises_wrong_type(
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that ``TypeError`` raised with wrong config type."""
@@ -26,7 +25,6 @@ def test_config_raises_wrong_type(
 
 
 def test_schema_nested_objects_can_be_mutated(
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure schema nested objects can be modified in place."""
@@ -45,7 +43,6 @@ def test_schema_nested_objects_can_be_mutated(
 
 
 def test_schema_collections_can_be_mutated(
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure schema collections can be modified in place."""
@@ -71,4 +68,4 @@ def test_pass_both_context_and_config() -> None:
     config = default_config()
     context = OpenAPIContext(config)
     with pytest.raises(ValueError, match='Passing both'):
-        build_schema(router, context=context, config=config)
+        build_schema(router, context=context, config=config)  # type: ignore[call-overload]

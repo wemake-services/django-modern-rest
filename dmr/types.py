@@ -1,19 +1,48 @@
 import dataclasses
-from collections.abc import Callable, Iterator
-from typing import (
+from collections.abc import Callable, Iterator, Mapping
+from typing import (  # noqa: WPS235
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Final,
     Generic,
+    TypeAlias,
     TypeVar,
     final,
     get_args,
     get_origin,
 )
 
-from typing_extensions import get_original_bases, get_type_hints
+from typing_extensions import Format, get_original_bases, get_type_hints
 
 from dmr.exceptions import UnsolvableAnnotationsError
+
+if TYPE_CHECKING:
+    # During type checking it is a recursive alias, so we can be sure
+    # that json is always correct
+    Json: TypeAlias = (
+        str | int | float | bool | list['Json'] | dict[str, 'Json'] | None  # noqa: WPS221
+    )
+else:
+    # However, in runtime this is not a recursive type for speed.
+    # There might also be problems in validating a recursive type alias
+    # with some serializers.
+    # It will still be rendered as `{}` in OpenAPI.
+    # Which means that it can be any valid json.
+    Json: TypeAlias = Any
+    """
+    Recursive type alias for JSON data.
+
+    What is JSON? Integers, floats, booleans, strings,
+    list of them and dicts of them, which keys are always strings.
+
+    In runtime it is always :data:`typing.Any`
+    because of the parsing complexity,
+    while in type checking it correctly defined.
+
+    We don't recommend using it for anything serious,
+    it is better to define real models instead.
+    """
 
 
 @final
@@ -35,8 +64,15 @@ def infer_type_args(
 
     .. code:: python
 
-        class MyController(Query[MyModel]):
-            ...
+        >>> import pydantic
+        >>> from dmr import Controller
+        >>> from dmr.plugins.pydantic import PydanticSerializer
+
+        >>> class MyController(Controller[PydanticSerializer]): ...
+
+        >>> assert infer_type_args(MyController, Controller) == (
+        ...     PydanticSerializer,
+        ... )
 
     Will return ``(MyModel, )`` for ``Query`` as *given_type*.
     """
@@ -64,38 +100,6 @@ def infer_bases(
     ]
 
 
-def parse_return_annotation(endpoint_func: Callable[..., Any]) -> Any:
-    """
-    Parse function annotation and returns the return type.
-
-    Args:
-        endpoint_func: function with return type annotation.
-
-    Returns:
-        Function's parsed and solved return type.
-
-    Raises:
-        UnsolvableAnnotationsError: when annotation can't be solved
-            or when the annotation does not exist.
-    """
-    try:
-        return_annotation = get_type_hints(
-            endpoint_func,
-            globalns=endpoint_func.__globals__,
-            include_extras=True,
-        ).get('return', EmptyObj)
-    except (TypeError, NameError, ValueError) as exc:
-        raise UnsolvableAnnotationsError(
-            f'Annotations of {endpoint_func!r} cannot be solved',
-        ) from exc
-
-    if return_annotation is EmptyObj:
-        raise UnsolvableAnnotationsError(
-            f'Function {endpoint_func!r} is missing return type annotation',
-        )
-    return return_annotation
-
-
 def infer_annotation(annotation: Any, context: type[Any]) -> Any:
     """Infers annotation in the class definition context."""
     if not isinstance(annotation, TypeVar):
@@ -117,6 +121,72 @@ def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
         return False
 
 
+class AnnotationsContext:
+    """
+    Annotation evaluation context.
+
+    Use this type to change how controllers resolve
+    type hints of their endpoints.
+
+    For example, one can change this function
+    to use :func:`inspect.get_annotations` function.
+    Or to have some pre-defined global names.
+    """
+
+    __slots__ = ('_format', '_globalns', '_include_extras', '_localns')
+
+    def __init__(
+        self,
+        *,
+        globalns: dict[str, Any] | None = None,
+        localns: Mapping[str, Any] | None = None,
+        include_extras: bool = True,
+        format: Format | None = None,  # noqa: A002
+    ) -> None:
+        """Create the context for the future annotations."""
+        self._globalns = globalns
+        self._localns = localns
+        self._include_extras = include_extras
+        self._format = format
+
+    def __call__(self, endpoint_func: Callable[..., Any]) -> dict[str, Any]:
+        """
+        Get the annotations.
+
+        Args:
+            endpoint_func: function with return type annotation.
+
+        Returns:
+            Function's parsed and solved return type.
+
+        Raises:
+            UnsolvableAnnotationsError: when annotation can't be solved
+                or when the annotation does not exist.
+
+        """
+        type_hints_params: dict[str, Any] = {
+            'globalns': self._global_namespace(endpoint_func),
+            'localns': self._localns,
+            'include_extras': self._include_extras,
+        }
+        # No cover, because it is only available in 3.14+
+        if self._format is not None:  # pragma: no cover
+            type_hints_params['format'] = self._format
+
+        try:
+            return get_type_hints(endpoint_func, **type_hints_params)
+        except Exception as exc:
+            raise UnsolvableAnnotationsError(
+                f'Annotations of {endpoint_func!r} cannot be solved',
+            ) from exc
+
+    def _global_namespace(
+        self,
+        endpoint_func: Callable[..., Any],
+    ) -> dict[str, Any]:
+        return self._globalns or endpoint_func.__globals__
+
+
 class TypeVarInference:
     """Inferences type variables to the applied real type values."""
 
@@ -126,14 +196,14 @@ class TypeVarInference:
 
     def __init__(
         self,
-        to_infer: type[Any] | TypeVar,
+        to_infer: TypeVar,
         context: type[Any],
     ) -> None:
         """
         Prepare the inference.
 
         Args:
-            to_infer: class or type var which needs to be inferred.
+            to_infer: type var which needs to be inferred.
             context: its usage in inheritance with real type values provided.
 
         """
@@ -145,27 +215,15 @@ class TypeVarInference:
         Run the inference.
 
         Returns:
-            Mapping of type vars to its inferenced valued.
+            Mapping of type vars to its inferenced values.
             It can still be a type variable, if no real values are provided.
 
         """
-        if isinstance(self._to_infer, TypeVar):
-            type_map = {self._to_infer.__name__: self._to_infer}
-            type_parameters = (self._to_infer,)
-        else:
-            # We match type params by name, because they can be a bit different,
-            # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
-            # This also ignore variance and stuff.
-            type_map = {
-                type_param.__name__: type_arg
-                for type_param, type_arg in zip(
-                    self._to_infer.__parameters__,
-                    get_args(self._to_infer),
-                    strict=True,
-                )
-                if isinstance(type_param, TypeVar)
-            }
-            type_parameters = self._to_infer.__parameters__
+        # We match type params by name, because they can be a bit different,
+        # like `__type_params__` in >=3.12 and `TypeVar` in <=3.11.
+        # This also ignore variance and stuff.
+        type_map = {self._to_infer.__name__: self._to_infer}
+        type_parameters = (self._to_infer,)
 
         for base in reversed(list(self._resolve_orig_bases(self._context))):
             # We apply type params in the "reversed mro order".

@@ -1,34 +1,18 @@
+from collections.abc import AsyncIterator, Iterator
 from http import HTTPStatus
 from typing import Any
 
 import pytest
 from typing_extensions import override
 
-from dmr import (
-    Blueprint,
-    Body,
-    Controller,
-    Cookies,
-    Headers,
-    Path,
-    Query,
-    ResponseSpec,
-)
+from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import compose_blueprints
-
-
-class _SyncBlueprint(Blueprint[PydanticSerializer]):
-    def get(self) -> str:
-        raise NotImplementedError
-
-
-class _AsyncBlueprint(Blueprint[PydanticSerializer]):
-    async def get(self) -> str:
-        raise NotImplementedError
+from dmr.plugins.pydantic.serializer import PydanticEndpointOptimizer
+from dmr.streaming.jsonl import JsonLinesController
+from dmr.streaming.sse import SSEController
 
 
 def test_controller_either_sync_or_async() -> None:
@@ -63,17 +47,7 @@ def test_controller_duplicate_responses() -> None:
                 raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    'base_class',
-    [
-        Blueprint[PydanticSerializer],
-        Controller[PydanticSerializer],
-    ],
-)
-def test_controller_have_either_mixins(
-    *,
-    base_class: type[Any],
-) -> None:
+def test_controller_have_either_mixins() -> None:
     """Ensure that controllers does not have both mixins."""
     with pytest.raises(
         EndpointMetadataError,
@@ -83,7 +57,7 @@ def test_controller_have_either_mixins(
         class _MixedController(  # type: ignore[misc]
             AsyncMetaMixin,
             MetaMixin,
-            base_class,  # type: ignore[misc]
+            Controller[PydanticSerializer],
         ):
             async def post(self) -> list[str]:
                 raise NotImplementedError
@@ -96,7 +70,7 @@ def test_controller_have_either_mixins(
         class _MixedController2(  # type: ignore[misc]
             MetaMixin,
             AsyncMetaMixin,
-            base_class,  # type: ignore[misc]
+            Controller[PydanticSerializer],
         ):
             def post(self) -> list[str]:
                 raise NotImplementedError
@@ -178,192 +152,12 @@ def test_async_controller_async_error_handler() -> None:
             raise NotImplementedError
 
 
-def test_sync_blueprint_async_error_handler() -> None:
-    """Ensure sync blueprints cannot override handle_async_error."""
-
-    class _BadBlueprint(Blueprint[PydanticSerializer]):
-        @override
-        async def handle_async_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-        def get(self) -> str:
-            raise NotImplementedError
-
-    with pytest.raises(
-        EndpointMetadataError,
-        match='Use `handle_error` instead',
-    ):
-        compose_blueprints(_BadBlueprint)
-
-
-def test_async_blueprint_sync_error_handler() -> None:
-    """Ensure async blueprints cannot override handle_error."""
-
-    class _BadAsyncBlueprint(Blueprint[PydanticSerializer]):
-        @override
-        def handle_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-        async def get(self) -> str:
-            raise NotImplementedError
-
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r'Use `handle_async_error` instead',
-    ):
-        compose_blueprints(_BadAsyncBlueprint)
-
-
-def test_sync_blueprint_sync_error_handler() -> None:
-    """Ensure sync error handler works with sync blueprint."""
-
-    class _GoodSyncBlueprint(Blueprint[PydanticSerializer]):
-        @override
-        def handle_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-        def get(self) -> str:
-            raise NotImplementedError
-
-
-def test_async_blueprint_async_error_handler() -> None:
-    """Ensure sync error handler works with sync blueprint."""
-
-    class _GoodAsyncBlueprint(Blueprint[PydanticSerializer]):
-        @override
-        async def handle_async_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-        async def get(self) -> str:
-            raise NotImplementedError
-
-
-def test_async_bp_with_sync_handler_fails() -> None:
-    """Ensure controllers with async blueprints cannot use sync handle_error."""
-    with pytest.raises(
-        EndpointMetadataError,
-        match='Use `handle_async_error` instead',
-    ):
-
-        class _BadController(Controller[PydanticSerializer]):
-            blueprints = (_AsyncBlueprint,)
-
-            @override
-            def handle_error(
-                self,
-                endpoint: Endpoint,
-                controller: Controller[PydanticSerializer],
-                exc: Exception,
-            ) -> Any:
-                raise NotImplementedError
-
-
-def test_sync_bp_with_async_handler_fails() -> None:
-    """Ensure controllers with blueprints cannot use async error handler."""
-    with pytest.raises(
-        EndpointMetadataError,
-        match='Use `handle_error` instead',
-    ):
-
-        class _BadController(Controller[PydanticSerializer]):
-            blueprints = (_SyncBlueprint,)
-
-            @override
-            async def handle_async_error(
-                self,
-                endpoint: Endpoint,
-                controller: Controller[PydanticSerializer],
-                exc: Exception,
-            ) -> Any:
-                raise NotImplementedError
-
-
-def test_async_bp_with_async_handler_ok() -> None:
-    """Ensure controllers with async blueprints can use async error handler."""
-
-    class _GoodController(Controller[PydanticSerializer]):
-        blueprints = (_AsyncBlueprint,)
-
-        @override
-        async def handle_async_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-
-def test_sync_bp_with_sync_handler_ok() -> None:
-    """Ensure controllers with sync blueprints can use sync error handler."""
-
-    class _GoodController(Controller[PydanticSerializer]):
-        blueprints = (_SyncBlueprint,)
-
-        @override
-        def handle_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-
-def test_bp_no_endpoints_with_async_error_handler() -> None:
-    """Ensure BP without endpoints don't trigger error handler validation."""
-
-    class _EmptyBlueprint(Blueprint[PydanticSerializer]):
-        @override
-        async def handle_async_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-
 def test_no_endpoints_with_async_error_handler() -> None:
     """Ensure controller wo endpoints don't trigger error handler validation."""
 
     class _EmptyController(Controller[PydanticSerializer]):
         @override
         async def handle_async_error(
-            self,
-            endpoint: Endpoint,
-            controller: Controller[PydanticSerializer],
-            exc: Exception,
-        ) -> Any:
-            raise NotImplementedError
-
-
-def test_bp_no_endpoints_with_error_handler() -> None:
-    """Ensure BP without endpoints don't trigger error handler validation."""
-
-    class _EmptyBlueprint(Blueprint[PydanticSerializer]):
-        @override
-        def handle_error(
             self,
             endpoint: Endpoint,
             controller: Controller[PydanticSerializer],
@@ -386,36 +180,70 @@ def test_no_endpoints_with_error_handler() -> None:
             raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    'component_parser',
-    [
-        Body[dict[str, str]],
-        Query[dict[str, str]],
-        Path[dict[str, int]],
-        Headers[dict[str, str]],
-        Cookies[dict[str, str]],
-    ],
-)
-def test_blueprints_no_controller_parsing(
-    *,
-    component_parser: type[Any],
-) -> None:
-    """Ensure controllers with blueprints cannot have component parsers."""
+def test_endpoint_rejects_async_gen() -> None:
+    """Ensure endpoints cannot be async generators."""
 
-    class _Blueprint(
-        Blueprint[PydanticSerializer],
-        component_parser,  # type: ignore[misc]
-    ):
-        def post(self) -> str:
-            raise NotImplementedError
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
 
     with pytest.raises(
         EndpointMetadataError,
-        match='Cannot have component parsers in both',
+        match='is a generator',
+    ):
+
+        class _BadController(Controller[_NoOpPydanticSerializer]):
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover
+
+
+def test_endpoint_rejects_sync_gen() -> None:
+    """Ensure endpoints cannot be sync generators."""
+
+    # We need this to be able to ignore `Iterator[int]` serialization.
+    class _NoOpOptimizer(PydanticEndpointOptimizer):
+        @override
+        @classmethod
+        def optimize_endpoint(cls, metadata: Any) -> None:  # noqa: WPS324
+            return None  # noqa: WPS324
+
+    class _NoOpPydanticSerializer(PydanticSerializer):
+        optimizer = _NoOpOptimizer
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a generator',
+    ):
+
+        class _BadController(Controller[_NoOpPydanticSerializer]):
+            def get(self) -> Iterator[int]:
+                yield 1  # pragma: no cover
+
+
+@pytest.mark.parametrize(
+    'controller_cls',
+    [
+        SSEController,
+        JsonLinesController,
+    ],
+)
+def test_streaming_controller_async_validation(
+    *,
+    controller_cls: type[Controller[Any]],
+) -> None:
+    """Ensure streaming endpoints also cannot be async generators."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match='is a generator',
     ):
 
         class _BadController(
-            Controller[PydanticSerializer],
-            component_parser,  # type: ignore[misc]
+            controller_cls[PydanticSerializer],  # type: ignore[valid-type, misc]
         ):
-            blueprints = (_Blueprint,)
+            async def get(self) -> AsyncIterator[int]:
+                yield 1  # pragma: no cover

@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Any
+from typing import Self
 
 import pytest
 from django.conf import LazySettings
@@ -11,6 +11,7 @@ from typing_extensions import override
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.security import request_auth
 from dmr.security.http import HttpBasicSyncAuth, basic_auth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
@@ -25,14 +26,14 @@ class _HttpBasicAuth(HttpBasicSyncAuth):
         controller: Controller[BaseSerializer],
         username: str,
         password: str,
-    ) -> Any | None:
+    ) -> Self | None:
         if username == 'test' and password == 'pass':  # noqa: S105
-            return True
+            return self
         return None
 
 
 @pytest.fixture(autouse=True)
-def _setup_auth(settings: LazySettings, dmr_clean_settings: None) -> None:
+def _setup_auth(settings: LazySettings) -> None:
     settings.DMR_SETTINGS = {
         Settings.auth: [_HttpBasicAuth()],
     }
@@ -48,6 +49,7 @@ def test_sync_basic_auth_success(
             return 'authed'
 
     metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.throttling is None
     assert metadata.responses.keys() == {
         HTTPStatus.OK,
         HTTPStatus.UNAUTHORIZED,
@@ -63,8 +65,10 @@ def test_sync_basic_auth_success(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert isinstance(request_auth(request), _HttpBasicAuth)
+    assert isinstance(request_auth(request, strict=True), _HttpBasicAuth)
     assert json.loads(response.content) == 'authed'
 
 
@@ -100,8 +104,11 @@ def test_sync_basic_auth_failure(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
+    with pytest.raises(AttributeError, match='__dmr_auth__'):
+        request_auth(request, strict=True)
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
@@ -129,8 +136,9 @@ def test_sync_auth_override_endpoint(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
     assert json.loads(response.content) == 'not authed'
 
 
@@ -157,6 +165,7 @@ def test_sync_auth_override_controller(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert request_auth(request) is None
     assert json.loads(response.content) == 'not authed'

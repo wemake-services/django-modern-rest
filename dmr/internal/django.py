@@ -41,24 +41,28 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http.multipartparser import MultiPartParser, MultiPartParserError
 from django.http.request import HttpRequest, QueryDict
 from django.utils.datastructures import CaseInsensitiveMapping, MultiValueDict
+from django.utils.translation import gettext_lazy as _
 
 from dmr.exceptions import RequestSerializationError
 
+_UTF8_REQUIRED_MSG: Final = _(
+    'HTTP requests with the'
+    " 'application/x-www-form-urlencoded'"
+    ' content type must be UTF-8 encoded.',
+)
+
 
 def parse_headers(
-    headers: 'CaseInsensitiveMapping[str]',
-    *,
+    headers: CaseInsensitiveMapping[str],
     split_commas: frozenset[str],
-) -> 'CaseInsensitiveMapping[Any]':
+) -> CaseInsensitiveMapping[str | list[str]]:
     """
     Split headers specified in *split_commas* on ``','`` char.
 
     Make sure that all headers in *split_commas* have lower-case names.
+    Do not pass empty *split_commas* parameter.
     """
-    if not split_commas:
-        return headers
-
-    parsed_headers: dict[str, Any] = {}
+    parsed_headers: dict[str, str | list[str]] = {}
     for header_key, header_value in headers.items():
         if header_key.lower() in split_commas:
             parsed_headers[header_key] = header_value.split(',')
@@ -77,7 +81,7 @@ def convert_multi_value_dict(
     """
     Convert multi value dictionary to a regular one.
 
-    Utility function to parse django's
+    Utility function to parse Django's
     :class:`django.utils.datastructures.MultiValueDict`
     into a regular :class:`dict`. To do that, we require explicit *force_list*
     parameter to return lists as dict values. Otherwise, single value is set.
@@ -86,7 +90,7 @@ def convert_multi_value_dict(
     ``'null'`` into Python's ``None`` for fields in *cast_null*.
 
     If *split_commas* is passed, then we also split given field aliases
-    by ``','`` char. Be careful! If data can contain commas as a regular data,
+    by ``','`` char. Be careful! If data can contain commas as regular data,
     it can be corrupted. Use it when you are sure that no commas are possible.
     For example, with ``list[int]`` data.
 
@@ -139,7 +143,7 @@ def parse_as_post(request: HttpRequest) -> None:
     # This code is adapted from Django itself:
     if request.content_type == 'multipart/form-data':
         request_data = BytesIO(request.body)
-        # This was introduced in django6.1:
+        # This was introduced in Django 6.1:
         multipart_parser_cls = getattr(
             request,
             'multipart_parser_class',
@@ -170,13 +174,10 @@ def parse_as_post(request: HttpRequest) -> None:
     # so others should not be passed:
     assert request.content_type == 'application/x-www-form-urlencoded'  # noqa: S101
     # According to RFC 1866, the "application/x-www-form-urlencoded"
-    # content type does not have a charset and should be always treated
+    # content type does not have a charset and should always be treated
     # as UTF-8.
     if request.encoding is not None and request.encoding.lower() != 'utf-8':
-        raise RequestSerializationError(
-            "HTTP requests with the 'application/x-www-form-urlencoded' "
-            'content type must be UTF-8 encoded.',
-        )
+        raise RequestSerializationError(_UTF8_REQUIRED_MSG)
     request._post = QueryDict(request.body, encoding='utf-8')  # type: ignore[attr-defined]
     request._files = MultiValueDict()  # type: ignore[attr-defined]
 

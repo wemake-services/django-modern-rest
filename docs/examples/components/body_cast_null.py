@@ -19,11 +19,11 @@ class _User(pydantic.BaseModel):
     tags: list[str | None]
 
 
-class UserController(Controller[PydanticSerializer], Body[_User]):
+class UserController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
-    def post(self) -> _User:
-        return self.parsed_body
+    def post(self, parsed_body: Body[_User]) -> _User:
+        return parsed_body
 
 
 # run: {"controller": "UserController", "url": "/api/users/", "method": "post", "headers": {"Content-Type": "multipart/form-data"}, "body": {"username": "sobolevn", "promo_id": "1", "tags": ["python", "django"]}}  # noqa: ERA001, E501

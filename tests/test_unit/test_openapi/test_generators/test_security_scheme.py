@@ -1,4 +1,4 @@
-from typing import Any, Final
+from typing import Final, Self
 
 import pytest
 from inline_snapshot import snapshot
@@ -8,14 +8,8 @@ from dmr.controller import Controller
 from dmr.endpoint import Endpoint
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.generators.security_scheme import (
-    SecuritySchemeGenerator,
-)
-from dmr.openapi.objects import (
-    Reference,
-    SecurityRequirement,
-    SecurityScheme,
-)
+from dmr.openapi.generators.security_scheme import SecuritySchemeGenerator
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
@@ -29,7 +23,7 @@ class _NoSchemeAuth(SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         raise NotImplementedError
 
     @property
@@ -49,7 +43,7 @@ class _WithSchemeAuth(SyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> Any | None:
+    ) -> Self | None:
         raise NotImplementedError
 
     @property

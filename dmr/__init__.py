@@ -4,7 +4,6 @@ from dmr.components import FileMetadata as FileMetadata
 from dmr.components import Headers as Headers
 from dmr.components import Path as Path
 from dmr.components import Query as Query
-from dmr.controller import Blueprint as Blueprint
 from dmr.controller import Controller as Controller
 from dmr.cookies import CookieSpec as CookieSpec
 from dmr.cookies import NewCookie as NewCookie

@@ -15,9 +15,9 @@ Requiring auth
 
   Current user will always be accessible as ``self.request.user``.
 
-  Read more: https://docs.djangoproject.com/en/6.0/topics/auth/default/
+  Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
-We provide two classes to require JWT auth in you API:
+We provide two classes to require JWT auth in your API:
 
 - :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
 - :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views
@@ -142,7 +142,7 @@ API Reference
   :members:
   :inherited-members:
 
-.. autofunction:: dmr.security.jwt.auth.get_jwt
+.. autofunction:: dmr.security.jwt.auth.request_jwt
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal, TypeAlias, cast
 
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
@@ -11,6 +12,8 @@ from dmr.openapi.objects import (  # noqa: WPS235
     Server,
     Tag,
 )
+
+_SupportedOpenAPIVersions: TypeAlias = Literal['3.1.0', '3.2.0']
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -26,7 +29,7 @@ class OpenAPIConfig:
 
     title: str
     version: str
-    openapi_version: str = '3.1.0'
+    openapi_version: _SupportedOpenAPIVersions = '3.1.0'
 
     summary: str | None = None
     description: str | None = None
@@ -39,3 +42,15 @@ class OpenAPIConfig:
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
+
+    @property
+    def openapi_version_info(self) -> tuple[int, int, int]:
+        """
+        Returns the parsed OpenAPI version.
+
+        .. versionadded:: 0.8.0
+        """
+        return cast(
+            'tuple[int, int, int]',
+            tuple(map(int, self.openapi_version.split('.'))),
+        )

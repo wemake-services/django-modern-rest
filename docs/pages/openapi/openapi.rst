@@ -3,9 +3,10 @@ OpenAPI
 
 We support OpenAPI versions from ``3.0`` all the way up including ``3.2``.
 
-Default OpenAPI version is ``3.1``, because as of right now (12-03-2026)
-Swagger / Scalar / Redoc do not fully support ``3.2`` yet.
-See `the progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
+By default, we use OpenAPI ``3.1``, since tooling such as Swagger, Scalar,
+and Redoc does not yet fully support the latest specification.
+You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
+
 
 Setting up OpenAPI views
 ------------------------
@@ -18,7 +19,16 @@ We support:
   with :class:`~dmr.openapi.views.RedocView`
 - `Scalar <https://github.com/scalar/scalar>`_
   with :class:`~dmr.openapi.views.ScalarView`
+- `Stoplight Elements <https://github.com/stoplightio/elements>`_
+  with :class:`~dmr.openapi.views.StoplightView`
 - ``openapi.json`` with :class:`~dmr.openapi.views.OpenAPIJsonView`
+- ``openapi.yaml`` with :class:`~dmr.openapi.views.yaml.OpenAPIYamlView`
+  when ``[openapi]`` extra is installed
+
+.. important::
+
+  We always recommend installing ``'django-modern-rest[openapi]'``
+  extra when working with OpenAPI.
 
 Here's how it works:
 
@@ -52,7 +62,7 @@ What happens in the example above?
 
 .. note::
 
-  By default Swagger, Redoc, and Scalar use bundled static assets
+  By default Swagger, Redoc, Stoplight, and Scalar use bundled static assets
   that are shipped with ``django-modern-rest`` and served by Django.
   To switch any renderer to a CDN, configure
   :data:`dmr.settings.Settings.openapi_static_cdn`.
@@ -75,6 +85,33 @@ What happens in the example above?
     ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0',
     ...     },
     ... }
+
+
+Choosing a renderer and CSP
+---------------------------
+
+For the general ``Content-Security-Policy`` setup with Django, see
+:ref:`content_security_policy`.
+
+For OpenAPI specifically, the main thing to keep in mind is that final CSP
+compatibility still depends on the upstream renderer bundle you choose.
+
+In general:
+
+- :class:`~dmr.openapi.views.SwaggerView` is usually the best default when
+  you want interactive docs with "try it out" support.
+- :class:`~dmr.openapi.views.RedocView` is a good fit for mostly read-only,
+  reference-style documentation.
+- :class:`~dmr.openapi.views.ScalarView` and
+  :class:`~dmr.openapi.views.StoplightView` are worth considering when you
+  prefer their UI, but they tend to be more opinionated frontends with more
+  moving parts.
+
+Known caveats:
+
+- If you switch to CDN assets, your CSP must allow those remote origins too.
+- In practice, Swagger and Redoc are usually easier starting points than more
+  feature-heavy frontend bundles.
 
 
 Customizing OpenAPI config
@@ -111,28 +148,34 @@ To customize a schema, use the native methods.
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      Docs: https://jcristharif.com/msgspec/jsonschema.html
+    Docs: https://jcristharif.com/msgspec/jsonschema.html
 
-      .. literalinclude:: /examples/openapi/msgspec_customization.py
-        :caption: dtos.py
-        :language: python
-        :linenos:
-        :no-imports-spoiler:
+    .. literalinclude:: /examples/openapi/msgspec_customization.py
+      :caption: dtos.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      Docs: https://docs.pydantic.dev/latest/concepts/json_schema
+    Docs: https://docs.pydantic.dev/latest/concepts/json_schema
 
-      .. literalinclude:: /examples/openapi/pydantic_customization.py
-        :caption: dtos.py
-        :language: python
-        :linenos:
-        :no-imports-spoiler:
+    .. literalinclude:: /examples/openapi/pydantic_customization.py
+      :caption: dtos.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
 
-      You can completely redefine the schema generation with
-      overriding ``__get_pydantic_json_schema__`` method on a pydantic model.
+    Common features:
+
+    - You can completely redefine the schema generation with providing
+      :class:`pydantic.json_schema.WithJsonSchema` annotation
+      or by overriding ``__get_pydantic_json_schema__`` method
+      on a pydantic model
+    - You can change the ``title`` of generics pydantic models
+      by redefining :meth:`pydantic.BaseModel.model_parametrized_name`
 
 .. note::
 
@@ -173,6 +216,28 @@ metadata.
   is used to generate summary and description
   for the :class:`~dmr.openapi.objects.Operation`.
 
+Customizing router-level metadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`~dmr.routing.Router` supports ``tags`` and ``deprecated`` parameters
+to apply OpenAPI metadata to all operations in the router:
+
+.. literalinclude:: /examples/openapi/router_metadata.py
+  :caption: urls.py
+  :language: python
+  :linenos:
+
+- ``tags``: List of strings to group operations in OpenAPI documentation
+- ``deprecated``: Boolean flag to mark all operations in this router as deprecated
+
+These router-level settings are automatically merged with endpoint-level customizations
+set via :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`.
+Router tags are prepended to endpoint tags, and deprecated is set to ``True``
+if either the router or endpoint has it enabled.
+
+You can also set ``tags`` and ``deprecated`` at the individual endpoint level
+via :deco:`~dmr.endpoint.modify` to override or extend router-level settings.
+
 
 .. _customizing_parameter_openapi:
 
@@ -183,7 +248,7 @@ There are different styles and other features
 that :class:`~dmr.openapi.objects.Parameter` supports
 in `OpenAPI Parameters <https://learn.openapis.org/specification/parameters.html>`_.
 
-For example, if you want to change how :class:`~dmr.components.Query`
+For example, if you want to change how :data:`~dmr.components.Query`
 parameter is documented with the help
 of :class:`dmr.openapi.objects.ParameterMetadata` annotation:
 
@@ -202,7 +267,7 @@ There are different metadata fields, like ``examples`` and ``encoding``,
 that :class:`~dmr.openapi.objects.MediaType` supports
 in `OpenAPI MediaType <https://spec.openapis.org/oas/latest#media-type-object>`_.
 
-For example, if you want to change how :class:`~dmr.components.Body`
+For example, if you want to change how :data:`~dmr.components.Body`
 provides examples,
 you can use :class:`dmr.openapi.objects.MediaTypeMetadata` annotation:
 
@@ -218,7 +283,7 @@ We also support the same way for conditional types:
   :language: python
   :linenos:
 
-And for :class:`~dmr.components.FileMetadata`:
+And for :data:`~dmr.components.FileMetadata`:
 
 .. literalinclude:: /examples/openapi/request_files_customization.py
   :caption: views.py
@@ -269,7 +334,7 @@ Top level API
 This is how OpenAPI spec is generated, top level overview:
 
 .. mermaid::
-  :caption: Error handling logic
+  :caption: OpenAPI spec generation
   :config: {"theme": "forest"}
 
   graph

@@ -1,6 +1,6 @@
 ---
 name: dmr-from-django-ninja
-description: Migrate an existing Django API from django-ninja/ninja-extra to django-modern-rest while preserving routes, request/response contracts, auth, throttling, and test coverage. Use when replacing NinjaExtraAPI/api_controller/http_* handlers/ninja.Schema with dmr controllers/blueprints/routers and typed DTOs.
+description: Migrate an existing Django API from django-ninja/ninja-extra to django-modern-rest while preserving routes, request/response contracts, auth, throttling, and test coverage. Use when replacing NinjaExtraAPI/api_controller/http_* handlers/ninja.Schema with dmr controllers/routers and typed DTOs.
 ---
 
 # DMR from django-ninja
@@ -87,7 +87,7 @@ Choose one and record it before edits:
 ### 7. Translate handlers to DMR
 
 - Single operation: `Controller[...]`.
-- Multi-method path: blueprints + composition.
+- Multi-method path: controllers + composition.
 - Keep route names and URL shapes stable unless user requested drift.
 - Port exception behavior intentionally:
   - strict parity mode: preserve old statuses/payloads,
@@ -182,7 +182,7 @@ At each meaningful checkpoint and at completion, report in 3 sections:
 ## Output Checklist
 
 - Ninja root wiring replaced with DMR routing.
-- Ninja controllers/handlers replaced with DMR controllers/blueprints.
+- Ninja controllers/handlers replaced with DMR controllers.
 - `ninja.Schema` DTOs replaced for migrated endpoints.
 - Auth/throttle behavior preserved or explicitly drift-approved.
 - Project-native batteries were evaluated first and used where possible.

@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from dmr.openapi.objects.external_documentation import (
-        ExternalDocumentation,
-    )
+    from dmr.openapi.objects.external_documentation import ExternalDocumentation
 
 
 @dataclass(kw_only=True, slots=True)

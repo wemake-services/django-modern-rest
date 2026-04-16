@@ -81,14 +81,15 @@ class ComponentParserGenerator:
 
     def _call_component(
         self,
-        parser: type['ComponentParser'],
-        parser_args: tuple[Any, ...],
+        parser: 'ComponentParser',
+        model: Any,
+        model_meta: tuple[Any, ...],
         metadata: 'EndpointMetadata',
         serializer: type['BaseSerializer'],
     ) -> list[Parameter | Reference] | RequestBody:
-        model = parser_args[0] if len(parser_args) == 1 else parser_args
         return parser.get_schema(
             model,
+            model_meta,
             serializer=serializer,
             metadata=metadata,
             context=self._context,
@@ -124,6 +125,7 @@ class ComponentParserGenerator:
             params_list.extend(
                 self._context.generators.parameter(
                     TypedDict(f'{operation_id}_Path', schema),  # type: ignore[operator]
+                    (),
                     serializer,
                     self._context,
                     param_in='path',
@@ -141,6 +143,7 @@ class ComponentParserGenerator:
             params_list.extend(
                 self._context.generators.parameter(
                     TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                    (),
                     serializer,
                     self._context,
                     param_in='path',

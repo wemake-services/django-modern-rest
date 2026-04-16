@@ -4,38 +4,20 @@ from typing import Annotated, Any, TypeAlias, final
 from xml.parsers import expat
 
 import pydantic
-import xmltodict
+import xmltodict_rs as xmltodict
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
 from dmr import Body, Controller, ResponseSpec, validate
 from dmr.exceptions import (
-    InternalServerError,
+    DataRenderingError,
     RequestSerializationError,
 )
 from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
-
-# Used for different test setups:
-try:  # pragma: no cover
-    from dmr.plugins.msgspec import (
-        MsgspecJsonParser as JsonParser,
-    )
-except ImportError:  # pragma: no cover
-    from dmr.parsers import (  # type: ignore[assignment]
-        JsonParser,
-    )
-
-try:  # pragma: no cover
-    from dmr.plugins.msgspec import (
-        MsgspecJsonRenderer as JsonRenderer,
-    )
-except ImportError:  # pragma: no cover
-    from dmr.renderers import (  # type: ignore[assignment]
-        JsonRenderer,
-    )
+from dmr.settings import default_parser, default_renderer
 
 _CallableAny: TypeAlias = Callable[..., Any]
 
@@ -44,7 +26,7 @@ _CallableAny: TypeAlias = Callable[..., Any]
 class XmlParser(Parser):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def parse(
@@ -84,7 +66,7 @@ class XmlParser(Parser):
 class XmlRenderer(Renderer):
     __slots__ = ()
 
-    content_type = 'application/xml'
+    content_type = ContentType.xml
 
     @override
     def render(
@@ -112,7 +94,7 @@ class XmlRenderer(Renderer):
         def factory(xml_key: str, xml_value: Any) -> tuple[str, Any]:
             try:  # noqa: SIM105
                 xml_value = serializer_hook(xml_value)
-            except InternalServerError:
+            except DataRenderingError:
                 pass  # noqa: WPS420
             return xml_key, xml_value
 
@@ -126,15 +108,13 @@ class _RequestModel(pydantic.BaseModel):
 
 
 @final
-class ContentNegotiationController(
-    Controller[PydanticSerializer],
-    Body[_RequestModel],
-):
-    parsers = (JsonParser(), XmlParser())
-    renderers = (JsonRenderer(), XmlRenderer())
+class ContentNegotiationController(Controller[PydanticSerializer]):
+    parsers = (default_parser, XmlParser())
+    renderers = (default_renderer, XmlRenderer())
 
     def post(
         self,
+        parsed_body: Body[_RequestModel],
     ) -> Annotated[
         _RequestModel | list[str],
         conditional_type({
@@ -144,10 +124,10 @@ class ContentNegotiationController(
     ]:
         if self.request.accepts(ContentType.json):
             return [
-                self.parsed_body.payment_method_id,
-                self.parsed_body.payment_amount,
+                parsed_body.payment_method_id,
+                parsed_body.payment_amount,
             ]
-        return self.parsed_body
+        return parsed_body
 
     @validate(
         ResponseSpec(
@@ -161,16 +141,16 @@ class ContentNegotiationController(
             status_code=HTTPStatus.CREATED,
         ),
     )
-    def put(self) -> HttpResponse:
+    def put(self, parsed_body: Body[_RequestModel]) -> HttpResponse:
         if self.request.accepts(ContentType.json):
             return self.to_response(
                 [
-                    self.parsed_body.payment_method_id,
-                    self.parsed_body.payment_amount,
+                    parsed_body.payment_method_id,
+                    parsed_body.payment_amount,
                 ],
                 status_code=HTTPStatus.CREATED,
             )
         return self.to_response(
-            self.parsed_body,
+            parsed_body,
             status_code=HTTPStatus.CREATED,
         )

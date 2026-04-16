@@ -7,11 +7,7 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-from dmr import (
-    APIError,
-    Controller,
-    ResponseSpec,
-)
+from dmr import APIError, Controller, ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 
@@ -19,7 +15,6 @@ from dmr.test import DMRRequestFactory
 @pytest.fixture(autouse=True)
 def _set_global_responses(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
         'responses': [

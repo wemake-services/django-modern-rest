@@ -2,16 +2,16 @@ Header parameters
 =================
 
 You can define ``Headers`` parameters
-the same way you define :class:`~dmr.components.Query`,
-:class:`~dmr.components.Path` and
-:class:`~dmr.components.Cookies` parameters.
+the same way you define :data:`~dmr.components.Query`,
+:data:`~dmr.components.Path` and
+:data:`~dmr.components.Cookies` parameters.
 
 .. note::
 
-  Parsed ``Headers`` are available as ``self.parsed_headers``.
+  Parsed ``Header`` parameter must be named ``parsed_headers``.
 
-Since most headers uses ``-`` to separate words, but a variable
-like ``cache-controll`` is not a valid variable name in Python.
+Since most headers use ``-`` to separate words, but a variable
+like ``cache-control`` is not a valid variable name in Python.
 So, you would have to use aliases for field names.
 Remember, that headers are also case insensitive:
 
@@ -36,7 +36,7 @@ What happens in this example?
 1. We define a ``Headers`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.Headers` component,
+2. Next, we use :data:`~dmr.components.Headers` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_headers`` that will have the correct model type
@@ -69,7 +69,7 @@ which needs to be split by a ``','`` char:
   :language: python
   :linenos:
 
-We don't inference ``__dmr_split_commas__`` value in any way,
+We don't infer ``__dmr_split_commas__`` value in any way,
 it is up to users to set.
 
 .. danger::
@@ -94,6 +94,8 @@ See :ref:`customizing_parameter_openapi`.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Headers
+.. autodata:: dmr.components.Headers
+
+.. autoclass:: dmr.components.HeadersComponent
   :members:
   :show-inheritance:

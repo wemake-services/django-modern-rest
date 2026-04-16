@@ -1,8 +1,14 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, ClassVar, final
+from typing import TYPE_CHECKING, ClassVar, Final, final
+
+from django.utils.functional import Promise
+from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
     from dmr.errors import ErrorDetail
+
+_NOT_AUTHENTICATED_MSG: Final = _('Not authenticated')
+_TOO_MANY_REQUESTS: Final = _('Too many requests')
 
 
 @final
@@ -15,22 +21,20 @@ class UnsolvableAnnotationsError(Exception):
 
 
 @final
-class NegotiationDefinitionError(Exception):
-    """
-    Raised when we create correct negotiation protocol.
-
-    Only raised during import time.
-    """
-
-
-@final
 class EndpointMetadataError(Exception):
     """Raised when user didn't specify some required endpoint metadata."""
 
 
 @final
 class DataParsingError(Exception):
-    """Raised when json/xml data cannot be parsed."""
+    """Raised when input data cannot be parsed."""
+
+
+@final
+class DataRenderingError(Exception):
+    """Raised when output data cannot be properly renderer."""
+
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @final
@@ -42,7 +46,7 @@ class InternalServerError(Exception):
     If it disabled, we hust show a generic message.
     """
 
-    default_message: ClassVar[str] = 'Internal server error'
+    default_message: ClassVar[str | Promise] = _('Internal server error')
     status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -62,7 +66,7 @@ class ValidationError(Exception):
         self,
         payload: list['ErrorDetail'],
         *,
-        status_code: HTTPStatus,
+        status_code: HTTPStatus = HTTPStatus.UNPROCESSABLE_ENTITY,
     ) -> None:
         """Set required status code attribute."""
         # No empty items are allowed:
@@ -102,8 +106,35 @@ class NotAcceptableError(Exception):
 class NotAuthenticatedError(Exception):
     """Raised when we fail to authenticate a user."""
 
+    default_message: ClassVar[str | Promise] = _NOT_AUTHENTICATED_MSG
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNAUTHORIZED
 
-    def __init__(self, msg: str = 'Not authenticated') -> None:
+    def __init__(self, msg: str | Promise | None = None) -> None:
         """Provides default error message."""
-        super().__init__(msg)
+        # Circular import:
+        from dmr.errors import ErrorType  # noqa: PLC0415
+
+        super().__init__(msg or self.default_message)
+        self.error_type = ErrorType.security
+
+
+@final
+class TooManyRequestsError(Exception):
+    """Raised when user fails the throttling check."""
+
+    default_message: ClassVar[str | Promise] = _TOO_MANY_REQUESTS
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.TOO_MANY_REQUESTS
+
+    def __init__(
+        self,
+        msg: str | Promise | None = None,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        """Provides default error message."""
+        # Circular import:
+        from dmr.errors import ErrorType  # noqa: PLC0415
+
+        super().__init__(msg or self.default_message)
+        self.headers = headers
+        self.error_type = ErrorType.ratelimit

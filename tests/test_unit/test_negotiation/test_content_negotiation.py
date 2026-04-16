@@ -12,9 +12,10 @@ from dmr.negotiation import ContentType, conditional_type
     [
         {},
         {ContentType.json: str},
+        {'application/json': str},
     ],
 )
-def test_wrong_conditional_type(mapping: Mapping[ContentType, Any]) -> None:
+def test_wrong_conditional_type(mapping: Mapping[str, Any]) -> None:
     """Ensure that conditional_type require >=2 types."""
     with pytest.raises(EndpointMetadataError, match='>= 2'):
         conditional_type(mapping)

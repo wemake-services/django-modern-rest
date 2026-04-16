@@ -1,0 +1,22 @@
+# Minimal justfile for Sphinx documentation
+
+set positional-arguments
+
+# You can set these variables from the command line.
+sphinxopts := env("SPHINXOPTS", "-W")
+sourcedir  := "."
+builddir   := "_build"
+
+# Show Sphinx help (default)
+_default: (sphinx 'help')
+
+[private]
+sphinx +targets:
+  #!/usr/bin/env bash
+  for target in {{targets}}; do
+    uv run python -msphinx -M "$target" "{{sourcedir}}" \
+      "{{builddir}}" {{sphinxopts}}
+  done
+
+# Pass-through: route any target to Sphinx
+build +targets='clean html': (sphinx targets)

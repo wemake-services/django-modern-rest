@@ -16,12 +16,9 @@ class _PathModel(TypedDict):
     post_id: Annotated[int, msgspec.Meta(gt=0)]
 
 
-class PostController(
-    Controller[MsgspecSerializer],
-    Path[_PathModel],
-):
-    def get(self) -> _PathModel:
-        return self.parsed_path
+class PostController(Controller[MsgspecSerializer]):
+    def get(self, parsed_path: Path[_PathModel]) -> _PathModel:
+        return parsed_path
 
 
 router = Router(
@@ -45,5 +42,5 @@ urlpatterns = [
 ]
 
 # run: {"controller": "PostController", "method": "get", "url": "/api/user/abcd/post/1/", "use_urlpatterns": true}  # noqa: ERA001, E501
-# run: {"controller": "PostController", "method": "get", "url": "/api/user/abcd/post/0/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# run: {"controller": "PostController", "method": "get", "url": "/api/user/abcd/post/0/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "assert-error-text": "post_id", "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

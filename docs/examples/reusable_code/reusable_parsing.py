@@ -11,11 +11,10 @@ _ResponseBodyT = TypeVar('_ResponseBodyT')
 
 class ReusableController(
     Controller[_SerializerT],
-    Body[_RequestModelT],
     Generic[_SerializerT, _RequestModelT, _ResponseBodyT],
 ):
-    def post(self) -> _ResponseBodyT:
-        return self.convert(self.parsed_body)
+    def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseBodyT:
+        return self.convert(parsed_body)
 
     @abstractmethod
     def convert(self, parsed_body: _RequestModelT) -> _ResponseBodyT:

@@ -1,32 +1,375 @@
 # Version history
 
-We follow [Semantic Versions](https://semver.org/).
+We will follow [Semantic Versions](https://semver.org/) since ``1.0.0`` release.
+While in `Development Status :: 3 - Alpha` - we will break
+all the things without any notices.
+
+After `Development Status :: 4 - Beta` we will still break things
+but with a deprecation period.
+
+What is a public API for us (all criteria must be met)?
+
+1. Things that have public names
+2. Things that live in public modules
+3. Things that don't live in `internal/` or `compiled/`
+4. Things that are explicitly documented in the docs
+
+Later on we will make the API more stable and decrease the amount
+of requirements for an API to count as public.
 
 
 ## WIP
 
+### Bugfixes
+
+- Fixed that `itemSchema` was possible to be rendered
+  in OpenAPI `3.0.0` and `3.1.0`, #908
+- Fixed response validation when global error handler returns
+  `HttpResponse` with a different content type than the negotiated
+  renderer, #711
+
+
+## Version 0.7.0 (2026-04-14)
+
+### Breaking changes
+
+1. Removed public `OpenAPIView.dumps` customization hook, #847
+   If you customized schema output for `OpenAPIJsonView`, subclass
+   the concrete view and override `.get()` instead.
+   For JSON output, use `dmr.openapi.core.dump.json_dump`
+   if you need the framework's default serializer
+2. *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+3. *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
+   an instance method, #877
+4. *Breaking*: new required `router` parameter added
+   to `Endpoint.get_schema` and `Controller.get_path_item`, #879
+
+### Migration Prompt
+
+```md
+Apply this change to the code that uses `django-modern-rest`:
+1. Replace `OpenAPIView.dumps` usage with `dmr.openapi.core.dump.json_dump`
+   usage
+2. Change `dmr.security.jwt.auth.get_jwt` function
+   to use `dmr.security.jwt.auth.request_jwt` instead, if user expects
+   to always get a token back, add `strict=True` argument
+3. Change `provide_response_specs` class method to be instance method,
+   replace all `cls` usage with `self`
+4. Add `router: Router` parameter to `Endpoint.get_schema`
+   and `Controller.get_path_item` methods
+```
+
 ### Features
 
-- Added `@attrs.define` official support, #706
-- Added `MediaType` validation for the default `encoding` field
-  and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
-- Added `MediaTypeMetadata` metadata item to set required parameters
-  for the `MediaType` request body parameters
-  for `Body` and `FileMedata` components, #695 and #698
-- Added support for Swagger, Redoc, and Scalar CDN configuration, #678
+- Added official PyPy 3.11+ support, #870
+- Added `dmr.throttling` package, #877
+- Added `request.__drm_auth__` on all successful auth workflows, #868
+- Added `request_auth` helper function, #868
+- Added `AuthenticatedHttpRequest` type for better
+  `request: AuthenticatedHttpRequest[User]`
+  type annotations in controllers, #888
+- Added `strict` parameter to `request_renderer` and `request_parser`,
+  added `@overload`s to both of these functions, #869
+- Added `ResponseSpecMetadata` type to represent
+  headers and cookies with annotations, useful for error models, #882
+- Allow individual `OpenAPI` views to skip schema validation, #867
+- Added endpoint validator to prevent sync
+  and async generator HTTP endpoints, #843
+- Added CSP-friendly templates for shipped `OpenAPI` UI views, #847
+  `SwaggerView`, `RedocView`, `ScalarView`, and `StoplightView`
+  now avoid inline scripts in DMR-managed templates.
+  Final CSP compatibility still depends on the upstream renderer bundle.
+- Added `tags` and `deprecated` parameters to `Router` for OpenAPI metadata,
+  #872. All operations in a router can now be grouped and marked as deprecated.
 
 ### Bugfixes
 
-- Fixed `SSE` controllers `__name__` and `__doc__` generation, #700
+- Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
+- Fixed missing `request.auser()` after `JWTAsyncAuth`, #884
+- Fixed `ParameterMetadata` missing `__slots__`, #890
+- Fixed `SSEvent` missing `__slots__`, #901
+- Fixed `SSE` protocol typing, #894
+- Fixed a bug when we were treating controllers with
+  no `api_endpoints` as non-abstract, #894
+- Fixed a bug when you were not able to subclass
+  a controller with a serializer, #873
+
+### Misc
+
+- Added `dmr` skill for agents to write better `django-modern-rest` code, #886
+- Switched from `Make` to [`just`](https://github.com/casey/just)
+  as a command runner
+
+
+## Version 0.6.0 (2026-04-09)
+
+In this release we significantly increased the performance of `pydantic`
+workflows by introducing `PydanticFastSerializer`.
+
+No breaking changes in this release.
+
+### Features
+
+- Added `PydanticFastSerializer` to serialize and deserialize ``json``
+  objects directly, #830
+- Added support for complex `pydantic` fields inside
+  `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
+  and `msgspec` parsers / renderers, #842
+- Introduced official `to_json_kwargs` and `to_model_kwargs` class-level API
+  for `msgspec` and `pydantic` serializers, #842
+- Added "Problem Details" or RFC-9457 support, #78
+- Added customizable `json_module` parameter to `JsonParser` and `JsonRenderer`
+  to support alternative JSON backends like `orjson`, #857
+
+### Bugfixes
+
+- Fixed package metadata, #824
+- Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
+- Fixes Django 5.2.13+ compat in `DMRAsyncRequestFactory`, #853
+
+### Misc
+
+- Improved "Plugins" section in the docs, #835
+- Bumped `msgspec` to `0.21.0`, #856
+- Added official `SECURITY.md` policy
+
+
+## Version 0.5.0 (2026-04-05)
+
+AKA "The first compiled version".
+
+This release will focus on better errors, performance, and stability.
+
+No breaking changes in this release.
+
+### Features
+
+- Added `mypyc` support for compiling parts of the framework
+  to run significantly faster, for example our compiled content
+  negotiation is now 35 times faster then the Django's default one, #202
+  See our https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#mypyc-compilation docs about that
+- Added older Django versions `4.2`, `5.0`, `5.1` official support, #803
+- Added official `NamedTuple` support, #774
+- Added `timezone` and `pydantic-extra-types` dependencies
+  with `[pydantic]` extra, #802
+- Added `exclude_semantic_responses` options, #786
+- Added an option to override `exclude_semantic_responses`
+  and `no_validate_http_spec` settings with `None`
+- Added a new way to resolve annotations for controllers:
+  `AnnotationsContext`, #787
+- Added `yaml` view for OpenAPI schema, #745
+
+### Bugfixes
+
+- Fixed `StreamingValidator` swallowing errors
+  when `validate_events` was `True`, but no event model was resolved, #780
+- Fixed `dataclass` instances serialization with `PydanticSerializer`
+  without `msgspec` json renderer, #795
+- Fixed missing `password` OpenAPI format, #805
+- Fixes incorrect settings validation, #821
+
+### Misc
+
+- Added `QuerySet` tutorial, #792
+- Migrated from `poetry` to `uv` for dependency management
+- Set up automated secure publishing to PyPI, #823
+- Added CodSpeed integration for continuous performance monitoring, #810
+
+
+## Version 0.4.0 (2026-03-29)
+
+AKA "The first version that I enjoy".
+
+### Breaking changes
+
+1. We changed how components are defined in controllers, #738
+   Now components will be defined in method parameters, not in base classes.
+
+2. We removed `dmr.controller.Blueprint`, because it is not needed anymore.
+   It was used to compose different classes with different parsing strategies.
+   Since, it was only used for different parsing rules
+
+3. We removed `dmr.routing.compose_blueprints` function,
+   because there no `Blueprint`s anymore :)
+
+4. We completely changed our SSE and streaming API, see #736
+   Old API was removed, new one was introduced.
+   `dmr.sse` package was moved to `dmr.streaming.sse`
+
+We always ship AI prompts to all breaking changes.
+So, it would be easier for you to migrate
+to a newer version using AI tool of your choice.
+
+### Migration Prompt
+
+To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
+2. Convert component parsing from old class-based API to new method-based API.
+  Before:
+
+  ```python
+  from dmr import Blueprint, Body
+  from dmr.routing import compose_blueprints
+  from dmr.plugins.pydantic import PydanticSerializer
+
+
+  class UserCreateBlueprint(
+      Body[_UserInput],  # <- needs a request body
+      Blueprint[PydanticSerializer],
+  ):
+      def post(self) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+
+
+  class UserListBlueprint(Blueprint[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+
+
+  UsersController = compose_blueprints(UserCreateBlueprint, UserListBlueprint)
+  ```
+
+  To:
+
+  ```python
+  from dmr import Controller, Body
+  from dmr.plugins.pydantic import PydanticSerializer
+
+
+  class UsersController(Controller[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+
+      def post(self, parsed_body: Body[_UserInput]) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+  ```
+
+3. Replace all `Blueprint` and `compose_blueprints` references with a new API:
+  Instead you must use `Controller` and different methods under a single class
+4. Now, change all `@sse`-based controllers to new `SSEController` API, from:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+  from django.http import HttpRequest
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
+
+
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
+
+
+  async def produce_user_events(
+      request_headers: HeaderModel,
+  ) -> AsyncIterator[SSEvent[str]]:
+      if request_headers.last_event_id:
+          yield SSEvent(f'starting from {request_headers.last_event_id}')
+      else:
+          yield SSEvent('starting from scratch')
+
+
+  @sse(MsgspecSerializer, headers=Headers[HeaderModel])
+  async def user_events(
+      request: HttpRequest,
+      context: SSEContext[None, None, HeaderModel],
+  ) -> SSEResponse[SSEvent[str]]:
+      return SSEResponse(produce_user_events(context.parsed_headers))
+  ```
+
+  To:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.streaming.sse import SSEController, SSEvent
+
+
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
+
+
+  class UserEventsController(SSEController[MsgspecSerializer]):
+      def get(
+          self,
+          parsed_headers: Headers[HeaderModel],
+      ) -> AsyncIterator[SSEvent[str]]:
+          return self.produce_user_events(parsed_headers)
+
+      async def produce_user_events(
+          self,
+          parsed_headers: HeaderModel,
+      ) -> AsyncIterator[SSEvent[str]]:
+          if parsed_headers.last_event_id is None:
+              yield SSEvent('starting from scratch')
+          else:
+              yield SSEvent(f'starting from {parsed_headers.last_event_id}')
+  ```
+5. Replace old `dmr.sse` imports with new `dmr.streaming.sse` alternatives
+
+### Features
+
+- Added `@attrs.define` official support, #706
+- Added `msgpack` parser and renderer, #630
+- Added `JsonLines` or `JsonL` support, #607
+- Added `ping` events to `SSE` streaming, #606
+- Added `SSE` support for non-`GET` methods, `Body` component parsing, #736
+- Added `i18n` support for user-facing error messages
+  using Django's `gettext_lazy`, #426
+- Added `MediaType` validation for the default `encoding` field
+  and OpenAPI 3.2 `itemEncoding` and `prefixEncoding` fields, #695
+- Added `MediaTypeMetadata` metadata item to set required parameters
+  for the `MediaType` request body
+  for `Body` and `FileMetadata` components, #695 and #698
+- Added support for Swagger, Redoc, and Scalar CDN configuration, #678
+- Added TraceCov integration for API coverage tracking in test suites,
+  including automatic request tracking for `dmr_client` and
+  `dmr_async_client`, #735.
+- Added Stoplight Elements UI for OpenAPI documentation, #748
+- Added better `settings` fixture support for `pytest` plugin, #769
+
+### Bugfixes
+
+- Fixed `SSE` controllers `__name__` and `__doc__` generation
+  via `@sse` decorator, #700
 - Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
-- Fixed response validation when global error handler returns
-  `HttpResponse` with a different content type than the negotiated
-  renderer
 
 ### Misc
 
 - Added `$dmr-openapi-skeleton` AI agent skill, #693
 - Added `$dmr-from-django-ninja` AI agent skill, #693
+- Added `$dmr-from-drf` AI agent skill, #744
+- Added ETag usage docs, #699
+- Added multiple translations for the user-facing error messages, #718
+- Now `MsgspecJsonRenderer` and `JsonRenderer` produce
+  the same `json` string in terms of whitespaces, #736
 
 
 ## Version 0.3.0 (2026-03-17)

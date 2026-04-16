@@ -46,6 +46,9 @@ How do we build this semantic schema?
   You would still have the very basic OpenAPI schema,
   it would be similar to ones that FastAPI and others provide.
 
+  If you want to disable only some status code, use
+  :data:`~dmr.settings.Settings.exclude_semantic_responses`.
+
 The core part of the schema generation
 is :meth:`dmr.metadata.EndpointMetadata.collect_response_specs`
 which collects all the responses' metadata in a single place.
@@ -73,18 +76,9 @@ First non ``None`` value wins:
         :linenos:
         :language: python
 
-    .. tab:: per blueprint
-
-      Customize :attr:`~dmr.controller.Blueprint.semantic_responses` attribute.
-
-      .. literalinclude:: /examples/openapi/per_blueprint.py
-        :caption: views.py
-        :linenos:
-        :language: python
-
     .. tab:: per controller
 
-      Customize :attr:`~dmr.controller.Blueprint.semantic_responses` attribute.
+      Customize :attr:`~dmr.controller.Controller.semantic_responses` attribute.
 
       .. literalinclude:: /examples/openapi/per_controller.py
         :caption: views.py
@@ -102,3 +96,35 @@ First non ``None`` value wins:
         >>> from dmr.settings import Settings, DMR_SETTINGS
 
         >>> DMR_SETTINGS = {Settings.semantic_responses: False}
+
+  .. tabs::
+
+    .. tab:: exclude per endpoint
+      Pass ``exclude_semantic_responses`` parameter
+      to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+
+      .. literalinclude:: /examples/openapi/exclude_per_endpoint.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+    .. tab:: exclude per controller
+
+      Customize :attr:`~dmr.controller.Controller.exclude_semantic_responses` attribute.
+
+      .. literalinclude:: /examples/openapi/exclude_per_controller.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+    .. tab:: exclude per settings
+
+      Exclude some semantic responses globally:
+
+      .. code-block:: python
+        :caption: settings.py
+        :linenos:
+
+        >>> from dmr.settings import Settings, DMR_SETTINGS
+
+        >>> DMR_SETTINGS = {Settings.exclude_semantic_responses: frozenset((422,))}

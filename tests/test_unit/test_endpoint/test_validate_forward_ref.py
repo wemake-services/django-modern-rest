@@ -5,11 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from dmr import (
-    Controller,
-    ResponseSpec,
-    validate,
-)
+from dmr import Controller, ResponseSpec, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory

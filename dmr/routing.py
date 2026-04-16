@@ -1,18 +1,11 @@
-import types
 from collections.abc import Callable, Coroutine, Sequence
 from http import HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAlias,
-    TypeVar,
-    cast,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
+from django.utils.encoding import force_str
 from django.views import defaults
 from typing_extensions import override
 
@@ -26,14 +19,11 @@ if TYPE_CHECKING:
         _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
     )
 
-    from dmr.controller import Blueprint, Controller
     from dmr.internal.types import FormatError
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.options_mixins import AsyncMetaMixin, MetaMixin
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
 
-_BlueprintCls: TypeAlias = type['Blueprint[_SerializerT]']
 _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
@@ -45,12 +35,34 @@ _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 class Router:
     """Collection of HTTP routes for REST framework."""
 
-    __slots__ = ('prefix', 'urls')
+    __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
 
-    def __init__(self, prefix: str, urls: Sequence[_AnyPattern]) -> None:
-        """Just stores the passed routes."""
+    def __init__(
+        self,
+        prefix: str,
+        urls: Sequence[_AnyPattern],
+        *,
+        tags: list[str] | None = None,
+        deprecated: bool = False,
+    ) -> None:
+        """Initialize a router with routes and optional OpenAPI metadata.
+
+        Args:
+            prefix: URL prefix for all routes (e.g., 'api/v1/').
+            urls: Sequence of URL patterns and resolvers.
+            tags: Optional list of tags to group operations in OpenAPI.
+                These are merged with endpoint-level tags.
+            deprecated: Optional flag to mark all operations as deprecated.
+                Combines with endpoint-level deprecated flag using OR logic.
+
+        .. versionchanged:: 0.7.0
+            Added *tags* and *deprecated* parameters.
+
+        """
         self.prefix = prefix
         self.urls = urls
+        self.tags = tags or []
+        self.deprecated = deprecated
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
         """
@@ -67,7 +79,12 @@ class Router:
             self.urls,
             base_path=self.prefix,
         ):
-            paths_items[path] = controller.get_path_item(path, pattern, context)
+            paths_items[path] = controller.get_path_item(
+                path,
+                pattern,
+                context,
+                router=self,
+            )
 
         components = Components(
             schemas=context.registries.schema.schemas,
@@ -86,7 +103,7 @@ def build_404_handler(  # noqa: WPS114
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest, Exception], HttpResponse]:
     """
-    Create a 404 handler that returns an response with content negotiation.
+    Create a 404 handler that returns a response with content negotiation.
 
     All prefixes are normalized to start with a leading slash.
     If the request path matches any of them, a 404 response is returned
@@ -105,7 +122,7 @@ def build_404_handler(  # noqa: WPS114
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+        https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
@@ -118,7 +135,9 @@ def build_404_handler(  # noqa: WPS114
         resolve_setting(Settings.renderers) if renderers is None else renderers
     )
     renderer_by_type = {
-        renderer.content_type: renderer for renderer in renderers_list
+        renderer.content_type: renderer
+        for renderer in renderers_list
+        if not renderer.streaming
     }
     default_renderer = next(iter(renderer_by_type.values()))
 
@@ -166,7 +185,7 @@ def build_500_handler(  # noqa: WPS114
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest], HttpResponse]:
     """
-    Create a 500 handler that returns an response with content negotiation.
+    Create a 500 handler that returns a response with content negotiation.
 
     All prefixes are normalized to start with a leading slash.
     If the request path matches any of them, a 500 response is returned
@@ -185,7 +204,7 @@ def build_500_handler(  # noqa: WPS114
             :attr:`~dmr.settings.Settings.renderers` from settings.
 
     See also:
-        https://docs.djangoproject.com/en/6.0/ref/views/#the-500-server-error-view
+        https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
     """
     from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
@@ -198,7 +217,9 @@ def build_500_handler(  # noqa: WPS114
         resolve_setting(Settings.renderers) if renderers is None else renderers
     )
     renderer_by_type = {
-        renderer.content_type: renderer for renderer in renderers_list
+        renderer.content_type: renderer
+        for renderer in renderers_list
+        if not renderer.streaming
     }
     default_renderer = next(iter(renderer_by_type.values()))
 
@@ -223,65 +244,12 @@ def build_500_handler(  # noqa: WPS114
         return build_response(
             serializer=serializer,
             raw_data=format_error(
-                InternalServerError.default_message,
+                force_str(InternalServerError.default_message),
                 error_type=ErrorType.internal_error,
             ),
             status_code=InternalServerError.status_code,
             renderer=renderer,
         )
-
-    return factory
-
-
-def compose_blueprints(
-    # This seems like a strange design at first, but it actually allows:
-    # at least two pos-only controllers and then any amount of extra ones.
-    first_blueprint: '_BlueprintCls[_SerializerT]',
-    /,
-    *extra: '_BlueprintCls[_SerializerT]',
-    meta_mixin: type['MetaMixin | AsyncMetaMixin'] | None = None,
-) -> type['Controller[_SerializerT]']:
-    """
-    Combines several blueprints with different http methods into one controller.
-
-    That can be used a single URL route.
-
-    Args:
-        first_blueprint: First required blueprint class to compose.
-        extra: Other optional blueprint classes to compose.
-        meta_mixin: Type to add to support ``OPTIONS`` method.
-
-    Returns:
-        New controller class that has all the endpoints
-        from all composed blueprints.
-
-    Raises:
-        EndpointMetadataError: When blueprint validation fails.
-
-    """
-    from dmr.controller import Controller  # noqa: PLC0415
-
-    blueprints = [first_blueprint, *extra]
-    type_name = ', '.join(typ.__qualname__ for typ in blueprints)
-
-    serializer = first_blueprint.serializer
-    bases = [
-        *([meta_mixin] if meta_mixin else []),
-        Controller[serializer],  # type: ignore[valid-type]
-    ]
-    return types.new_class(
-        f'Composed@[{type_name}]',
-        bases,
-        exec_body=_body_builder(blueprints),
-    )
-
-
-def _body_builder(  # :)
-    blueprints: list['_BlueprintCls[_SerializerT]'],
-) -> Callable[[dict[str, Any]], object]:
-    def factory(ns: dict[str, Any]) -> object:
-        ns['blueprints'] = blueprints
-        return ns
 
     return factory
 

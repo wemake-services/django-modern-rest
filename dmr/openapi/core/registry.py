@@ -27,11 +27,11 @@ class OperationIdRegistry:
     """Registry for OpenAPI operation IDs."""
 
     def __init__(self) -> None:
-        """Initialize an empty operation ids registry."""
+        """Initialize an empty operation ID registry."""
         self._operation_ids: set[str] = set()
 
     def register(self, operation_id: str) -> None:
-        """Register a operation ID in the registry."""
+        """Register an operation ID in the registry."""
         if operation_id in self._operation_ids:
             raise ValueError(
                 f'Operation ID {operation_id!r} is already registered in the '
@@ -57,8 +57,8 @@ class SchemaRegistry:
     def schemas(self) -> dict[str, Schema]:
         """Return schemas by name."""
         return {
-            schema_name: schema[0]
-            for schema_name, schema in self._schemas.items()
+            schema_name: self._schemas[schema_name][0]
+            for schema_name in sorted(self._schemas)
         }
 
     def register(
@@ -101,13 +101,13 @@ class SchemaRegistry:
         self,
         reference: Reference | Schema,
         *,
-        resoltion_context: dict[str, Schema] | None = None,
+        resolution_context: dict[str, Schema] | None = None,
     ) -> Schema:
         """Resolve reference and return a schema back."""
         if isinstance(reference, Schema):
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
-        return (resoltion_context or self.schemas)[schema_name]
+        return (resolution_context or self.schemas)[schema_name]
 
     def try_unregister(self, schema_name: str | None) -> None:
         """Try to unregister the schema by name."""

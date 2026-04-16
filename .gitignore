@@ -101,7 +101,7 @@ wheels/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test / coverage / tracecov reports
 htmlcov/
 .tox/
 .coverage
@@ -112,9 +112,11 @@ coverage.xml
 *.cover
 .hypothesis/
 .ruff_cache/
+tracecov-report.md
+tracecov-report.html
 
 # Translations
-*.mo
+!*.mo
 *.pot
 
 # Django stuff:
@@ -234,6 +236,7 @@ fabric.properties
 # Artifacts:
 .gitlab/.svn/
 artifacts/
+wheelhouse/
 
 # mypy:
 .mypy_cache/
@@ -255,5 +258,8 @@ artifacts/
 # safety:
 .safety/
 
-# PyCharm
+# PyCharm:
 .idea/
+
+# CodSpeed:
+.codspeed/

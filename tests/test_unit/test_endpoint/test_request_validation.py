@@ -25,11 +25,13 @@ class _MyTypedDict(TypedDict):
 @final
 class _WrongPydanticBodyController(
     Controller[PydanticSerializer],
-    Body[_MyPydanticModel],
 ):
     """All body of these methods are not correct."""
 
-    def post(self) -> str:  # pragma: no cover
+    def post(
+        self,
+        parsed_body: Body[_MyPydanticModel],
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
@@ -37,11 +39,10 @@ class _WrongPydanticBodyController(
 @final
 class _WrongTypedDictBodyController(
     Controller[PydanticSerializer],
-    Body[_MyTypedDict],
 ):
     """All body of these methods are not correct."""
 
-    def post(self) -> str:  # pragma: no cover
+    def post(self, parsed_body: Body[_MyTypedDict]) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
@@ -49,11 +50,13 @@ class _WrongTypedDictBodyController(
 @final
 class _WrongPydanticQueryController(
     Controller[PydanticSerializer],
-    Query[_MyPydanticModel],
 ):
     """All query params of these methods are not correct."""
 
-    def get(self) -> str:  # pragma: no cover
+    def get(
+        self,
+        parsed_query: Query[_MyPydanticModel],
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 
@@ -66,11 +69,13 @@ class _MyPydanticHeaders(pydantic.BaseModel):
 @final
 class _WrongPydanticHeadersController(
     Controller[PydanticSerializer],
-    Headers[_MyPydanticHeaders],
 ):
     """All headers of these methods are not correct."""
 
-    def get(self) -> str:  # pragma: no cover
+    def get(
+        self,
+        parsed_headers: Headers[_MyPydanticHeaders],
+    ) -> str:  # pragma: no cover
         """Does not respect a body type."""
         return 'done'  # not an exception for a better test clarity
 

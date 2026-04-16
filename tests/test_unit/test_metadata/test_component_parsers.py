@@ -1,11 +1,12 @@
 from http import HTTPMethod, HTTPStatus
+from typing import Any, TypeAlias
 
 import pydantic
 import pytest
+from dirty_equals import IsInstance
 from django.http import HttpResponse
 
 from dmr import (  # noqa: WPS235
-    Blueprint,
     Body,
     Controller,
     Headers,
@@ -15,7 +16,15 @@ from dmr import (  # noqa: WPS235
     modify,
     validate,
 )
+from dmr.components import (
+    BodyComponent,
+    HeadersComponent,
+    PathComponent,
+    QueryComponent,
+)
 from dmr.plugins.pydantic import PydanticSerializer
+
+_ComponentTypes: TypeAlias = list[tuple[str, Any, tuple[Any, ...]]]
 
 
 class _QueryModel(pydantic.BaseModel):
@@ -61,18 +70,17 @@ def test_no_components(
 
 
 class _QueryController(
-    Query[_QueryModel],
     Controller[PydanticSerializer],
 ):
     @modify()
-    def get(self) -> list[int]:
+    def get(self, parsed_query: Query[_QueryModel]) -> list[int]:
         raise NotImplementedError
 
-    def post(self) -> list[str]:
+    def post(self, parsed_query: Query[_QueryModel]) -> list[str]:
         raise NotImplementedError
 
     @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
-    def put(self) -> HttpResponse:
+    def put(self, parsed_query: Query[_QueryModel]) -> HttpResponse:
         raise NotImplementedError
 
 
@@ -86,57 +94,57 @@ def test_single_component_query(
 ) -> None:
     """Ensure controller with Query component has it in component_parsers."""
     endpoint = _QueryController.api_endpoints[str(method)]
-    assert endpoint.metadata.component_parsers == [
-        (
-            Query[_QueryModel],
-            (_QueryModel,),
-        ),
-    ]
-
-
-class _GetBlueprint(  # noqa: WPS215
-    Query[_QueryModel],
-    Headers[_HeadersModel],
-    Path[_PathModel],
-    Blueprint[PydanticSerializer],
-):
-    """Blueprint for GET (method without Body)."""
-
-    @modify()
-    def get(self) -> list[int]:
-        raise NotImplementedError
-
-
-class _PostBlueprint(  # noqa: WPS215
-    Query[_QueryModel],
-    Body[_BodyModel],
-    Headers[_HeadersModel],
-    Path[_PathModel],
-    Blueprint[PydanticSerializer],
-):
-    """Blueprint for POST/PUT (methods with Body)."""
-
-    def post(self) -> list[str]:
-        raise NotImplementedError
-
-    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
-    def put(self) -> HttpResponse:
-        raise NotImplementedError
+    assert [
+        (component.context_name, model, meta)
+        for component, model, meta in endpoint.metadata.component_parsers
+    ] == [('parsed_query', _QueryModel, (IsInstance(QueryComponent),))]
 
 
 class _MultiComponentController(Controller[PydanticSerializer]):
-    blueprints = [_GetBlueprint, _PostBlueprint]
+    """Controller with endpoint-level components."""
+
+    @modify()
+    def get(
+        self,
+        parsed_query: Query[_QueryModel],
+        parsed_headers: Headers[_HeadersModel],
+        parsed_path: Path[_PathModel],
+    ) -> list[int]:
+        raise NotImplementedError
+
+    def post(
+        self,
+        parsed_query: Query[_QueryModel],
+        parsed_body: Body[_BodyModel],
+        parsed_headers: Headers[_HeadersModel],
+        parsed_path: Path[_PathModel],
+    ) -> list[str]:
+        raise NotImplementedError
+
+    @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
+    def put(
+        self,
+        parsed_query: Query[_QueryModel],
+        parsed_body: Body[_BodyModel],
+        parsed_headers: Headers[_HeadersModel],
+        parsed_path: Path[_PathModel],
+    ) -> HttpResponse:
+        raise NotImplementedError
 
 
 def test_multiple_components_get() -> None:
     """Ensure GET endpoint has components without Body."""
     endpoint = _MultiComponentController.api_endpoints['GET']
     assert isinstance(endpoint.metadata.component_parsers, list)
-    assert tuple(endpoint.metadata.component_parsers) == (
-        (Query[_QueryModel], (_QueryModel,)),
-        (Headers[_HeadersModel], (_HeadersModel,)),
-        (Path[_PathModel], (_PathModel,)),
-    )
+    components: _ComponentTypes = [
+        ('parsed_query', _QueryModel, (IsInstance(QueryComponent),)),
+        ('parsed_headers', _HeadersModel, (IsInstance(HeadersComponent),)),
+        ('parsed_path', _PathModel, (IsInstance(PathComponent),)),
+    ]
+    assert sorted(components) == sorted([
+        (component.context_name, model, meta)
+        for component, model, meta in endpoint.metadata.component_parsers
+    ])
 
 
 @pytest.mark.parametrize(
@@ -150,9 +158,13 @@ def test_multiple_components_with_body(
     """Ensure controller has all multiple components in component_parsers."""
     endpoint = _MultiComponentController.api_endpoints[str(method)]
     assert isinstance(endpoint.metadata.component_parsers, list)
-    assert tuple(endpoint.metadata.component_parsers) == (
-        (Query[_QueryModel], (_QueryModel,)),
-        (Body[_BodyModel], (_BodyModel,)),
-        (Headers[_HeadersModel], (_HeadersModel,)),
-        (Path[_PathModel], (_PathModel,)),
-    )
+    components: _ComponentTypes = [
+        ('parsed_query', _QueryModel, (IsInstance(QueryComponent),)),
+        ('parsed_headers', _HeadersModel, (IsInstance(HeadersComponent),)),
+        ('parsed_path', _PathModel, (IsInstance(PathComponent),)),
+        ('parsed_body', _BodyModel, (IsInstance(BodyComponent),)),
+    ]
+    assert sorted(components) == sorted([
+        (component.context_name, model, meta)
+        for component, model, meta in endpoint.metadata.component_parsers
+    ])

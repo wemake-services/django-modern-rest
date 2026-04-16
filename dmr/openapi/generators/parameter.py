@@ -17,6 +17,7 @@ class ParameterGenerator:
     def __call__(
         self,
         model: Any,
+        model_meta: tuple[Any, ...],
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
         *,
@@ -33,7 +34,7 @@ class ParameterGenerator:
                 skip_registration=True,
             ),
         )
-        metadata = get_annotated_metadata(model, ParameterMetadata)
+        metadata = get_annotated_metadata(model, model_meta, ParameterMetadata)
         return [  # pyright: ignore[reportReturnType]
             Parameter(
                 name=property_name,

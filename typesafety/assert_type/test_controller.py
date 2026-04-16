@@ -16,28 +16,28 @@ class _QueryModel(pydantic.BaseModel):
     search: str
 
 
-class _MyController(
-    Controller[PydanticSerializer],
-    Path[dict[str, int]],
-    Headers[_HeaderModel],
-    Query[_QueryModel],
-):
-    def get(self) -> str:
+class MyController(Controller[PydanticSerializer]):
+    def get(
+        self,
+        parsed_path: Path[dict[str, int]],
+        parsed_headers: Headers[_HeaderModel],
+        parsed_query: Query[_QueryModel],
+    ) -> str:
         """All added props have the correct types."""
         assert_type(self.request, HttpRequest)
-        assert_type(self.parsed_path, dict[str, int])
-        assert_type(self.parsed_headers, _HeaderModel)
-        assert_type(self.parsed_query, _QueryModel)
+        assert_type(parsed_path, dict[str, int])
+        assert_type(parsed_headers, _HeaderModel)
+        assert_type(parsed_query, _QueryModel)
         return 'Done'
 
 
-class _Handle405Correctly(Controller[PydanticSerializer]):
+class Handle405Correctly(Controller[PydanticSerializer]):
     def whatever(self, request: HttpRequest) -> None:
         self.http_method_not_allowed(request)  # type: ignore[deprecated]
         self.options(request)  # type: ignore[deprecated]
 
 
-class _OptionsController(Controller[PydanticSerializer]):
+class OptionsController(Controller[PydanticSerializer]):
     @override
     def options(self) -> HttpResponse:  # type: ignore[override]
         raise NotImplementedError

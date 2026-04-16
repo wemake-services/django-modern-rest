@@ -1,22 +1,22 @@
 from collections.abc import Callable, Mapping, Sequence, Set
-from functools import cached_property
 from http import HTTPMethod, HTTPStatus
 from typing import (
+    TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     Generic,
-    TypeAlias,
     TypeVar,
 )
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern
 from django.utils.functional import classproperty
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import deprecated, override
 
-from dmr.components import ComponentParserBuilder, ComponentParserSpec
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
@@ -30,13 +30,17 @@ from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.serializer import BaseSerializer, SerializerContext
+from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import infer_type_args
-from dmr.validation import (
-    BlueprintValidator,
-    ControllerValidator,
-    SettingsValidator,
+from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.types import AnnotationsContext, infer_type_args
+from dmr.validation import ControllerValidator, SettingsValidator
+
+if TYPE_CHECKING:
+    from dmr.routing import Router
+
+_METHOD_NOT_ALLOWED_MSG: Final = _(
+    'Method {method} is not allowed, allowed: {allowed}',
 )
 
 _SerializerT_co = TypeVar(
@@ -47,18 +51,13 @@ _SerializerT_co = TypeVar(
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
-_EndpointFunc: TypeAlias = Callable[..., Any]
 
-
-class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
+class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     """
-    Building block for the API, a collection of named endpoints.
+    Defines API views as controllers.
 
-    Use it when you want to compose several endpoints with different
-    parsing rules into one final controller.
-
-    It cannot be used directly in routing.
-    Before routing, it must be turned into a full-featured controller.
+    Controller is a :class:`django.views.generic.base.View` subclass
+    that should be used as a base for all REST endpoints.
 
     Attributes:
         endpoint_cls: Class to create endpoints with.
@@ -71,20 +70,20 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             To customize it: create a new class,
             subclass :class:`~dmr.serializer.BaseSerializer`,
             and pass the new type as a type argument to the controller.
-        serializer_context_cls: Class for the input model generation.
-            We combine all components like
-            :class:`~dmr.components.Headers`,
-            :class:`~dmr.components.Query`, etc into
-            one big model for faster validation and better error messages.
-        blueprint_validator_cls: Runs blueprint validation on definition.
         settings_validator_cls: Runs settings validation
-            once the first blueprint is created.
+            once the first controller is created.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         responses: List of responses schemas that this controller can return.
             Also customizable in endpoints and globally with ``'responses'``
             key in the settings.
@@ -102,32 +101,50 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
             Set it to ``None`` to disable auth of this controller.
+        throttling: Sequence of throttle instances to be used.
+            Sync controllers must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async controllers must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this controller.
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
-            exact serializer type.
+            exact serializer type or exact ``api_endpoints`` instances.
+        is_async: Whether or not this controller is async.
+        streaming: Does this controller work with streaming responses like SSE?
+        controller_validator_cls: Runs full controller validation on definition.
+        annotations_context: Inference context to call
+            :func:`typing.get_type_hints` for this controller.
+        api_endpoints: Dictionary of HTTPMethod name to controller instance.
+        csrf_exempt: Should this controller be exempted from the CSRF check?
+            Is ``True`` by default.
+        summary: A short summary of what this path item does.
+        description: A verbose explanation of the path item behavior.
+        servers: An alternative servers array to service this path item.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
 
     """
 
-    # Public API:
-    serializer: ClassVar[type[BaseSerializer]]
-    endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
-    serializer_context_cls: ClassVar[type[SerializerContext]] = (
-        SerializerContext
-    )
-    blueprint_validator_cls: ClassVar[type[BlueprintValidator]] = (
-        BlueprintValidator
+    # Public class-level API:
+    controller_validator_cls: ClassVar[type[ControllerValidator]] = (
+        ControllerValidator
     )
     settings_validator_cls: ClassVar[type[SettingsValidator]] = (
         SettingsValidator
     )
-    no_validate_http_spec: ClassVar[Set[HttpSpec]] = frozenset()
+    api_endpoints: ClassVar[Mapping[str, Endpoint]]
+    csrf_exempt: ClassVar[bool] = True
+    serializer: ClassVar[type[BaseSerializer]]
+    endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     semantic_responses: ClassVar[bool | None] = None
+    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
+    validate_events: ClassVar[bool | None] = None
     responses: ClassVar[Sequence[ResponseSpec]] = []
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
@@ -136,52 +153,62 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
     parsers: ClassVar[Sequence[Parser]] = ()
     renderers: ClassVar[Sequence[Renderer]] = ()
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    throttling: ClassVar[
+        Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
+    ] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
+    is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
+    streaming: ClassVar[bool] = False
+    annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
-    # Instance public API:
-    request: HttpRequest
-    args: tuple[Any, ...]
+    # OpenAPI:
+    summary: ClassVar[str | None] = None
+    description: ClassVar[str | None] = None
+    servers: ClassVar[Sequence[Server] | None] = None
+
+    # Public instance API:
     kwargs: dict[str, Any]
-
-    __slots__ = ('args', 'kwargs', 'request')
-
-    # Internal API:
-    _serializer_context: ClassVar[SerializerContext]
-    _component_parsers_builder_cls: ClassVar[type[ComponentParserBuilder]] = (
-        ComponentParserBuilder
-    )
-    _component_parsers: ClassVar[list[ComponentParserSpec]]
-    _existing_http_methods: ClassVar[dict[str, _EndpointFunc]]
 
     @override
     def __init_subclass__(cls) -> None:
-        """Build blueprint class from different parts."""
+        """Construct a controller."""
         super().__init_subclass__()
-        type_args = infer_type_args(cls, Blueprint)
-        if not type_args:
-            raise UnsolvableAnnotationsError(
-                f'Type args {type_args} are not correct for {cls}, '
-                'at least 1 type arg must be provided',
-            )
-        if isinstance(type_args[0], TypeVar):
-            return  # This is a generic subclass of a controller.
-        if not issubclass(type_args[0], BaseSerializer):
-            raise UnsolvableAnnotationsError(
-                f'Type arg {type_args[0]} is not correct for {cls}, '
-                'it must be a BaseSerializer subclass',
-            )
-        cls.is_abstract = False
-        cls.serializer = type_args[0]
-        cls.settings_validator_cls(serializer=cls.serializer)()
-        cls._component_parsers = cls._component_parsers_builder_cls(
-            cls,
-            Blueprint,
-        )()
-        cls._serializer_context = cls.serializer_context_cls(cls)
-        cls._existing_http_methods = cls._find_existing_http_methods()
-        cls.blueprint_validator_cls()(cls)
+        serializer = cls._infer_serializer()
+        if serializer is None:
+            return  # this is an abstract controller
 
+        cls.serializer = serializer
+        cls.settings_validator_cls(serializer=cls.serializer)()
+
+        # Now it is validated that we don't have intersections.
+        cls.api_endpoints = {
+            canonical: cls.endpoint_cls(
+                meth,
+                controller_cls=cls,
+            )
+            for canonical, meth in cls._find_existing_http_methods().items()
+        }
+        cls.is_abstract = not bool(cls.api_endpoints)
+        cls.is_async = cls.controller_validator_cls()(cls)
+
+    @override
+    @classmethod
+    def as_view(cls, **initkwargs: Any) -> Callable[..., HttpResponseBase]:
+        """
+        Returns a view function for the class-based view.
+
+        This override applies CSRF exemption to the view. Session-based
+        authentication will still be explicitly validated for CSRF,
+        while all other authentication methods will be CSRF-exempt.
+        """
+        return (
+            csrf_exempt(super().as_view(**initkwargs))
+            if cls.csrf_exempt
+            else super().as_view(**initkwargs)
+        )
+
+    @override
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         """
         Set request context.
@@ -189,19 +216,42 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Unlike :meth:`~django.views.generic.base.View.setup` does not set
         ``head`` method automatically.
 
-        Thread safety: there's only one blueprint instance per request.
+        Thread safety: there's only one controller instance per request.
         """
         self.request = request
         self.args = args
         self.kwargs = kwargs
 
+    @override
+    def dispatch(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponseBase:
+        """
+        Find an endpoint that serves this HTTP method and call it.
+
+        Return 405 if this method is not allowed.
+        """
+        # Fast path for method resolution:
+        method: str = request.method  # type: ignore[assignment]
+        endpoint = self.api_endpoints.get(method)
+        if endpoint is not None:
+            return endpoint(self, *args, **kwargs)
+        # This return is very special,
+        # since it does not have an attached endpoint.
+        # All other responses are handled on endpoint level
+        # with all the response type validation.
+        return self.handle_method_not_allowed(method)
+
     def to_response(
         self,
         raw_data: Any,
         *,
+        status_code: HTTPStatus | None = None,
         headers: Mapping[str, str] | None = None,
         cookies: Mapping[str, NewCookie] | None = None,
-        status_code: HTTPStatus | None = None,
         renderer: Renderer | None = None,
     ) -> HttpResponse:
         """
@@ -237,18 +287,25 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Helpful method to convert API error parts into an actual error.
 
         Always requires the error code to be passed.
+        Is an alias for ``to_response`` method with a siglightly different
+        signature and semantics.
 
         Should be always used instead of using
         raw :class:`django.http.HttpResponse` objects.
         Does the usual validation, no "second validation" problem exists.
         """
-        return build_response(
-            self.serializer,
-            raw_data=raw_data,
+        return self.to_response(
+            raw_data,
             headers=headers,
             cookies=cookies,
             status_code=status_code,
-            renderer=renderer or request_renderer(self.request),
+            renderer=(
+                renderer
+                or request_renderer(
+                    self.request,
+                    use_nonstreaming_renderer=True,
+                )
+            ),
         )
 
     def format_error(
@@ -262,8 +319,7 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Convert error to the common format.
 
         Args:
-            error: A serialization exception like a validation error or
-                a ``dmr.exceptions.DataParsingError``.
+            error: A serialization exception like a validation error.
             loc: Location where this error happened.
                 Like ``"headers"``, or ``"field_name"``,
                 or ``["parsed_headers", "header_name"]``.
@@ -287,9 +343,6 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Override this method to add custom error handling for sync execution.
         By default - does nothing, only re-raises the passed error.
         Won't be called when using async endpoints.
-
-        You can access active blueprint
-        via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
         raise  # noqa: PLE0704
 
@@ -305,171 +358,8 @@ class Blueprint(Generic[_SerializerT_co]):  # noqa: WPS214
         Override this method to add custom error handling for async execution.
         By default - does nothing, only re-raises the passed error.
         Won't be called when using sync endpoints.
-
-        You can access active blueprint
-        via :attr:`~dmr.controller.Controller.active_blueprint`.
         """
         raise  # noqa: PLE0704
-
-    # Protected API:
-
-    @classmethod
-    def _find_existing_http_methods(cls) -> dict[str, Callable[..., Any]]:
-        """
-        Returns what HTTP methods are implemented in this controller.
-
-        Returns both canonical http method name and our dsl name.
-        """
-        return {
-            # Rename `meta` back to `options`:
-            ('OPTIONS' if dsl_method == 'meta' else dsl_method.upper()): method
-            for dsl_method in cls.allowed_http_methods
-            if (method := getattr(cls, dsl_method, None)) is not None
-        }
-
-
-#: Type that we expect for a single blueprint composition.
-_BlueprintCls: TypeAlias = type[Blueprint[BaseSerializer]]
-
-#: Type for blueprints composition.
-_Blueprints: TypeAlias = Sequence[_BlueprintCls]
-
-
-class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
-    """
-    Defines API views as controllers.
-
-    Controller is both
-    a :class:`~dmr.controller.Blueprint`
-    a :class:`django.views.generic.base.View` subclass
-    that should be used in the final routing.
-
-    It has some extra API over the regular Blueprint.
-
-    Attributes:
-        controller_validator_cls: Runs full controller validation on definition.
-        api_endpoints: Dictionary of HTTPMethod name to controller instance.
-        csrf_exempt: Should this controller be exempted from the CSRF check?
-            Is ``True`` by default.
-        blueprints: A sequence of :class:`Blueprint` types
-            that should be composed together.
-        blueprint: Currently active blueprint instance if any.
-        summary: A short summary of what the this path item does.
-        description: A verbose explanation of the path item behavior.
-        servers: An alternative servers array to service this path item.
-
-    """
-
-    # Public class-level API:
-    blueprints: ClassVar[_Blueprints] = ()
-    controller_validator_cls: ClassVar[type[ControllerValidator]] = (
-        ControllerValidator
-    )
-    api_endpoints: ClassVar[Mapping[str, Endpoint]]
-    csrf_exempt: ClassVar[bool] = True
-
-    # OpenAPI:
-    summary: ClassVar[str | None] = None
-    description: ClassVar[str | None] = None
-    servers: ClassVar[Sequence[Server] | None] = None
-
-    # Public instance API:
-    blueprint: Blueprint[_SerializerT_co] | None
-
-    # Protected API:
-    _blueprint_per_method: ClassVar[Mapping[str, _BlueprintCls]]
-    _is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
-
-    @override
-    def __init_subclass__(cls) -> None:
-        """Collect blueprints if they exist."""
-        super().__init_subclass__()
-        if getattr(cls, 'serializer', None) is None:
-            return  # This is a generic controller
-
-        # Now it is validated that we don't have intersections.
-        cls.api_endpoints = {
-            canonical: cls.endpoint_cls(
-                meth,
-                blueprint_cls=None,
-                controller_cls=cls,
-            )
-            for canonical, meth in cls._existing_http_methods.items()
-        }
-        cls.api_endpoints.update({
-            canonical: cls.endpoint_cls(
-                meth,
-                blueprint_cls=blueprint_cls,
-                controller_cls=cls,
-            )
-            for blueprint_cls in cls.blueprints
-            for canonical, meth in blueprint_cls._existing_http_methods.items()  # noqa: SLF001
-        })
-        cls._blueprint_per_method = {
-            canonical: blueprint
-            for blueprint in cls.blueprints
-            for canonical in blueprint._existing_http_methods  # noqa: SLF001
-        }
-        cls._is_async = cls.controller_validator_cls()(cls)
-
-    @override
-    @classmethod
-    def as_view(cls, **initkwargs: Any) -> Callable[..., HttpResponseBase]:
-        """
-        Returns a view function for the class-based view.
-
-        This override applies CSRF exemption to the view. Session-based
-        authentication will still be explicitly validated for CSRF,
-        while all other authentication methods will be CSRF-exempt.
-        """
-        return (
-            csrf_exempt(super().as_view(**initkwargs))
-            if cls.csrf_exempt
-            else super().as_view(**initkwargs)
-        )
-
-    @override
-    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
-        """
-        Set up common attributes.
-
-        Thread safety: there's only one controller instance per request.
-        """
-        super().setup(request, *args, **kwargs)
-        # Controller is created once per request, so we can assign attributes.
-        blueprint = self._blueprint_per_method.get(  # pyrefly: ignore[no-matching-overload]
-            request.method,  # type: ignore[arg-type]
-        )
-        if blueprint:
-            instance = blueprint()
-            instance.setup(request, *args, **kwargs)
-            # We validate that serializers match during import time:
-            self.blueprint = instance  # type: ignore[assignment]
-        else:
-            self.blueprint = None
-
-    @override
-    def dispatch(
-        self,
-        request: HttpRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponseBase:
-        """
-        Find an endpoint that serves this HTTP method and call it.
-
-        Return 405 if this method is not allowed.
-        """
-        # Fast path for method resolution:
-        method: str = request.method  # type: ignore[assignment]
-        endpoint = self.api_endpoints.get(method)
-        if endpoint is not None:
-            return endpoint(self, *args, **kwargs)
-        # This return is very special,
-        # since it does not have an attached endpoint.
-        # All other responses are handled on endpoint level
-        # with all the response type validation.
-        return self.handle_method_not_allowed(method)
 
     @override
     @deprecated(
@@ -597,9 +487,9 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
             build_response(
                 self.serializer,
                 raw_data=self.format_error(
-                    (
-                        f'Method {method!r} is not allowed, '
-                        f'allowed: {allowed_methods!r}'
+                    _METHOD_NOT_ALLOWED_MSG.format(
+                        method=repr(method),
+                        allowed=repr(allowed_methods),
                     ),
                     error_type=ErrorType.not_allowed,
                 ),
@@ -615,6 +505,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         path: str,
         pattern: URLPattern,
         context: OpenAPIContext,
+        router: 'Router',
     ) -> PathItem:
         """Generate OpenAPI spec for path items."""
         operations: dict[str, Any] = {
@@ -624,6 +515,7 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
                 cls.__qualname__,
                 cls.serializer,
                 context,
+                router,
             )
             for method, endpoint in cls.api_endpoints.items()
         }
@@ -638,14 +530,40 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
     @override
     def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
-        return cls._is_async is True
-
-    @cached_property
-    def active_blueprint(self) -> Blueprint[_SerializerT_co]:
-        """Returns a blueprint if it was used, otherwise, returns self."""
-        return self.blueprint or self
+        # This is a part of the `django.View` API, so it must be there.
+        return cls.is_async is True
 
     # Protected API:
+
+    @classmethod
+    def _infer_serializer(cls) -> type[_SerializerT_co] | None:
+        existing_serializer: type[_SerializerT_co] | None = getattr(
+            cls,
+            'serializer',
+            None,
+        )
+        if existing_serializer is not None:
+            # It was already set by a base class. See #873
+            return existing_serializer
+
+        type_args = infer_type_args(cls, Controller)
+        if not type_args:
+            raise UnsolvableAnnotationsError(
+                f'Type args {type_args} are not correct for {cls}, '
+                'at least 1 type arg must be provided',
+            )
+        serializer = type_args[0]
+        if isinstance(serializer, TypeVar):
+            return None  # This is a generic subclass of a controller.
+        if (
+            not issubclass(serializer, BaseSerializer)
+            or serializer is BaseSerializer
+        ):
+            raise UnsolvableAnnotationsError(
+                f'Type arg {serializer} is not correct for {cls}, '
+                'it must be a BaseSerializer subclass',
+            )
+        return serializer  # type: ignore[no-any-return]
 
     @classmethod
     def _maybe_wrap(
@@ -653,6 +571,20 @@ class Controller(Blueprint[_SerializerT_co], View):  # noqa: WPS214
         response: _ResponseT,
     ) -> _ResponseT:
         """Wraps response into a coroutine if this is an async controller."""
-        if cls._is_async:
+        if cls.is_async:
             return identity(response)
         return response
+
+    @classmethod
+    def _find_existing_http_methods(cls) -> dict[str, Callable[..., Any]]:
+        """
+        Returns what HTTP methods are implemented in this controller.
+
+        Returns both canonical http method name and our dsl name.
+        """
+        return {
+            # Rename `meta` back to `options`:
+            ('OPTIONS' if dsl_method == 'meta' else dsl_method.upper()): method
+            for dsl_method in cls.allowed_http_methods
+            if (method := getattr(cls, dsl_method, None)) is not None
+        }

@@ -17,10 +17,10 @@ def test_user_update_direct_view(dmr_client: DMRClient, faker: Faker) -> None:
             'api:controllers:user_update_direct',
             kwargs={'user_id': user_id},
         ),
-        data={'email': email, 'age': faker.unique.random_int()},
+        data={'email': email, 'age': faker.unique.random_int(min=1)},
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {
         'email': email,
@@ -42,7 +42,7 @@ async def test_user_update_direct_view_async_client(
             'api:controllers:user_update_direct',
             kwargs={'user_id': user_id},
         ),
-        data={'email': email, 'age': faker.unique.random_int()},
+        data={'email': email, 'age': faker.unique.random_int(min=1)},
     )
 
     assert response.status_code == HTTPStatus.OK, response.content

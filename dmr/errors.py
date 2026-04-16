@@ -13,14 +13,17 @@ from typing import (
 )
 
 from django.http import HttpResponse
+from django.utils.encoding import force_str
 from typing_extensions import TypedDict
 
 from dmr.exceptions import (
+    DataRenderingError,
     InternalServerError,
     NotAcceptableError,
     NotAuthenticatedError,
     RequestSerializationError,
     ResponseSchemaError,
+    TooManyRequestsError,
     ValidationError,
 )
 
@@ -41,8 +44,10 @@ class ErrorType(enum.StrEnum):
         internal_error: Raised when internal error happens.
         not_allowed: Raised when using unsupported http method. 405 alias.
         security: Raised when security related error happens.
+        ratelimit: Raised when ratelimit related error happens.
         user_msg: Raised for custom errors from users.
         not_found: Raised when we can't find controller.
+        streaming: Happens when we stream events.
 
     """
 
@@ -50,8 +55,10 @@ class ErrorType(enum.StrEnum):
     internal_error = 'internal_error'
     not_allowed = 'not_allowed'
     security = 'security'
+    ratelimit = 'ratelimit'
     user_msg = 'user_msg'
     not_found = 'not_found'
+    streaming = 'streaming'
 
 
 class ErrorDetail(TypedDict):
@@ -85,8 +92,7 @@ def format_error(  # noqa: C901, WPS231
     Default implementation.
 
     Args:
-        error: A serialization exception like a validation error or
-            a ``dmr.exceptions.DataParsingError``.
+        error: A serialization exception like a validation error.
         loc: Location where this error happened.
             Like ``"headers"``, or ``"field_name"``,
             or ``["parsed_headers", "header_name"]``.
@@ -109,13 +115,10 @@ def format_error(  # noqa: C901, WPS231
             ResponseSchemaError,
             NotAcceptableError,
             NotAuthenticatedError,
+            TooManyRequestsError,
         ),
     ):
-        error_type = (
-            ErrorType.security
-            if isinstance(error, NotAuthenticatedError)
-            else ErrorType.value_error
-        )
+        error_type = getattr(error, 'error_type', ErrorType.value_error)
         error = str(error.args[0])
 
     if isinstance(error, str):
@@ -126,13 +129,13 @@ def format_error(  # noqa: C901, WPS231
             msg.update({'type': str(error_type)})
         return {'detail': [msg]}
 
-    if isinstance(error, InternalServerError):
+    if isinstance(error, (InternalServerError, DataRenderingError)):
         return {
             'detail': [
                 {
                     'msg': str(error)
                     if settings.DEBUG
-                    else InternalServerError.default_message,
+                    else force_str(InternalServerError.default_message),
                 },
             ],
         }
@@ -156,14 +159,14 @@ AsyncErrorHandler: TypeAlias = Callable[
 
 
 _MethodSyncHandler: TypeAlias = Callable[
-    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
     ['Any', 'Endpoint', 'Controller[Any]', Exception],
     HttpResponse,
 ]
 
 _MethodAsyncHandler: TypeAlias = Callable[
-    # This is not `Any`, this a `Blueprint[BaseSerializer]` instance,
+    # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
     ['Any', 'Endpoint', 'Controller[Any]', Exception],
     Awaitable[HttpResponse],
@@ -182,7 +185,7 @@ def wrap_handler(
     method: _MethodSyncHandler | _MethodAsyncHandler,
 ) -> SyncErrorHandler | AsyncErrorHandler:
     """
-    Utility function to wrap controller / blueprint methods.
+    Utility function to wrap controller methods.
 
     It is used to wrap an existing controller method
     and pass it as ``error_handler=`` argument to an endpoint.
@@ -196,7 +199,7 @@ def wrap_handler(
             exc: Exception,
         ) -> HttpResponse:
             return await method(  # type: ignore[no-any-return]
-                controller.active_blueprint,
+                controller,
                 endpoint,
                 controller,
                 exc,
@@ -204,14 +207,14 @@ def wrap_handler(
 
     else:
 
-        @wraps(method)  # pyrefly: ignore[bad-argument-type]
+        @wraps(method)
         def decorator(
             endpoint: 'Endpoint',
             controller: 'Controller[BaseSerializer]',
             exc: Exception,
         ) -> HttpResponse:
             return method(  # type: ignore[return-value]
-                controller.active_blueprint,
+                controller,
                 endpoint,
                 controller,
                 exc,
@@ -228,6 +231,8 @@ _default_handled_excs: Final = (
     NotAcceptableError,
     ValidationError,
     InternalServerError,
+    DataRenderingError,
+    TooManyRequestsError,
 )
 
 
@@ -245,9 +250,8 @@ def global_error_handler(
        :meth:`~dmr.endpoint.Endpoint.handle_error`
        and :meth:`~dmr.endpoint.Endpoint.handle_async_error`
        methods
-    2. Per blueprint handlers
-    3. Per controller handlers
-    4. This global handler, specified via the configuration
+    2. Per controller handlers
+    3. This global handler, specified via the configuration
 
     If some exception cannot be handled, it is just reraised.
 
@@ -259,9 +263,6 @@ def global_error_handler(
     Returns:
         :class:`~django.http.HttpResponse` with proper response for this error.
         Or raise *exc* back.
-
-    You can access active blueprint
-    via :attr:`~dmr.controller.Controller.active_blueprint`.
 
     Here's an example that will produce
     ``{'detail': [{'msg': 'inf', 'type': 'user_msg'}]}``
@@ -307,5 +308,8 @@ def global_error_handler(
         return controller.to_error(
             controller.format_error(exc),
             status_code=exc.status_code,
+            headers=getattr(exc, 'headers', None),
+            cookies=getattr(exc, 'cookies', None),
+            renderer=getattr(exc, 'renderer', None),
         )
     raise  # noqa: PLE0704

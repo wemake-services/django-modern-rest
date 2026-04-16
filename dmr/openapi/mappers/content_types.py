@@ -1,12 +1,14 @@
 from contextlib import suppress
-from typing import Any, Literal, get_origin, get_type_hints
+from typing import Any, Literal, get_origin
+
+from typing_extensions import get_type_hints
 
 
 def content_types(model: Any, property_name: str) -> str | None:
     """
     Get content types string from a model definition.
 
-    We mostly use this for :class:`dmr.components.FileMetadata` component.
+    We mostly use this for :data:`dmr.components.FileMetadata` component.
     We extract metadata from models like:
 
     .. code:: python
@@ -36,6 +38,6 @@ def content_types(model: Any, property_name: str) -> str | None:
         metadata = get_type_hints(model)[property_name]
         hints = get_type_hints(metadata)
         # We can't extract content types from anything other than `Literal`:
-        if get_origin(hints['content_type']) is Literal:
+        if get_origin(hints['content_type']) is Literal:  # type: ignore[comparison-overlap, unused-ignore]
             return ', '.join(hints['content_type'].__args__)
     return None

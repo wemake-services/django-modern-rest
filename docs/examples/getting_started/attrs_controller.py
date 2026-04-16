@@ -2,7 +2,7 @@ import uuid
 
 import attrs
 
-from dmr import Body, Controller, Headers
+from dmr import Body, Controller
 from dmr.plugins.msgspec import MsgspecSerializer
 
 
@@ -16,17 +16,10 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-@attrs.define
-class HeaderModel:
-    consumer: str = attrs.field(alias='X-API-Consumer')
+class UserController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: Body[UserCreateModel]) -> UserModel:
+        return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-    Body[UserCreateModel],
-    Headers[HeaderModel],
-):
-    def post(self) -> UserModel:
-        """All added props have the correct runtime and static types."""
-        assert self.parsed_headers.consumer == 'my-api'
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+# run: {"controller": "UserController", "method": "post", "url": "/api/user/", "body": {"email": "email@example.com"}}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001

@@ -1,13 +1,17 @@
 import dataclasses
+import typing as ty
 from abc import abstractmethod
-from collections.abc import Mapping, Set
+from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Set
 from http import HTTPStatus
-from typing import (
+from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Annotated,
     Any,
+    ClassVar,
+    Final,
     TypeAlias,
     TypeVar,
+    get_args,
     get_origin,
 )
 
@@ -31,8 +35,9 @@ if TYPE_CHECKING:
     from dmr.security.base import AsyncAuth, SyncAuth
     from dmr.serializer import BaseSerializer
     from dmr.settings import HttpSpec
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
-ComponentParserSpec: TypeAlias = tuple[type['ComponentParser'], tuple[Any, ...]]
+ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -54,6 +59,7 @@ class ResponseSpec:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
+        streaming: Are we working with the stream response?
         limit_to_content_types: This response can only happen
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
@@ -78,6 +84,10 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+    streaming: bool = dataclasses.field(
+        kw_only=True,
+        default=False,
+    )
 
     # Metadata:
     description: str | None = dataclasses.field(
@@ -88,6 +98,25 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
+
+    def __post_init__(self) -> None:
+        """If headers and cookies are not set, look for metadata and use it."""
+        metadata = get_annotated_metadata(
+            self.return_type,
+            None,
+            ResponseSpecMetadata,
+        )
+        if metadata is not None:
+            object.__setattr__(
+                self,
+                'headers',
+                {**(metadata.headers or {}), **(self.headers or {})},
+            )
+            object.__setattr__(
+                self,
+                'cookies',
+                {**(metadata.cookies or {}), **(self.cookies or {})},
+            )
 
     def get_schema(
         self,
@@ -103,12 +132,55 @@ class ResponseSpec:
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
         """
+        item_schema = (
+            self.streaming and context.config.openapi_version_info >= (3, 2)
+        )
         return context.generators.response.get_schema(
             self,
             metadata,
             serializer,
             context,
+            schema_field_name='item_schema' if item_schema else 'schema',
+            # Despite the fact that it looks like a response,
+            # produced stream events are not regular responses.
+            used_for_response=not item_schema,
         )
+
+
+@dataclasses.dataclass(frozen=True, slots=True, eq=False)
+class ResponseSpecMetadata:
+    """
+    Special type to be used in ``Annotate`` to provide header and cookie specs.
+
+    Attributes:
+        headers: Shows *headers* in the documentation.
+            When passed, we validate that all given required headers are present
+            in the final response.
+        cookies: Shows *cookies* in the documentation.
+            When passed, we validate that all given required cookies are present
+            in the final response.
+
+    .. versionadded:: 0.7.0
+    """
+
+    headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+        hash=False,
+    )
+    cookies: Mapping[str, 'CookieSpec'] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+        hash=False,
+    )
+
+
+_ASYNC_ITERATOR_TYPES: Final = frozenset((
+    AsyncGenerator,
+    AsyncIterator,
+    ty.AsyncIterator,
+    ty.AsyncGenerator,
+))
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -128,17 +200,22 @@ class ResponseModification:
             Headers passed here will be added to the final response.
         cookies: Shows *cookies* in the documentation.
             New cookies passed here will be added to the final response.
+        streaming: Are we working with the stream response?
         description: Text comment about what this response represents.
         links: Possible links to other OpenAPI operations.
 
     We use this structure to modify the default response.
     """
 
+    # Class-level API:
+    response_spec_cls: ClassVar[type[ResponseSpec]] = ResponseSpec
+
     # `type[T]` limits some type annotations, like `Literal[1]`:
     return_type: Any
     status_code: HTTPStatus
     headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
     cookies: Mapping[str, 'NewCookie | CookieSpec'] | None
+    streaming: bool
 
     # Metadata:
     description: str | None
@@ -146,8 +223,8 @@ class ResponseModification:
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
-        return ResponseSpec(
-            return_type=self.return_type,
+        return self.response_spec_cls(
+            return_type=self.infer_return_type(),
             status_code=self.status_code,
             headers=(
                 None
@@ -165,10 +242,28 @@ class ResponseModification:
                     for cookie_key, cookie in self.cookies.items()
                 }
             ),
+            streaming=self.streaming,
             # Metadata:
             description=self.description,
             links=self.links,
         )
+
+    def infer_return_type(self) -> Any:
+        """Infers return type if it needs some extra love."""
+        from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
+
+        if self.streaming:
+            origin = get_origin(self.return_type)
+            type_args = get_args(self.return_type)
+            if type_args and origin in _ASYNC_ITERATOR_TYPES:
+                return type_args[0]
+            raise UnsolvableAnnotationsError(
+                'Cannot infer streaming item annotation from '
+                f'{self.return_type}, we require the return type to be '
+                'AsyncIterator or AsyncGenerator',
+            )
+
+        return self.return_type
 
     def actionable_headers(self) -> Mapping[str, 'NewHeader'] | None:
         """Returns an optional mapping of headers that should be added."""
@@ -194,20 +289,31 @@ class ResponseModification:
             }
         )
 
+    def build_headers(
+        self,
+        renderer: 'Renderer',
+    ) -> dict[str, str]:
+        """Returns headers with values for raw data endpoints."""
+        result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
+        headers = self.actionable_headers()
+        if not headers:
+            return result_headers
+        result_headers.update({
+            header_name: response_header.value
+            for header_name, response_header in headers.items()
+        })
+        return result_headers
+
 
 class ResponseSpecProvider:
     """Base abstract class to provide extra response schemas."""
 
     __slots__ = ()
 
-    @classmethod
     @abstractmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: 'EndpointMetadata',
-        # Response spec can't be different inside different blueprints.
-        # It would be a nightmare to manage.
-        # So, controller is the unit of change.
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -219,9 +325,8 @@ class ResponseSpecProvider:
         """
         raise NotImplementedError
 
-    @classmethod
     def _add_new_response(
-        cls,
+        self,
         response: ResponseSpec,
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -236,6 +341,10 @@ class EndpointMetadata:
     Base class for common endpoint metadata.
 
     Attributes:
+        endpoint_name: Text representation of an endpoint
+            name for better error messages.
+        type_annotations: Unmodified unnotations of the endpoint function,
+            returned by the resolution method.
         responses: Mapping of HTTP method to response description.
             All possible responses that this API can return.
             Used for OpenAPI spec generation and for response validation.
@@ -264,12 +373,24 @@ class EndpointMetadata:
             of :class:`dmr.security.AsyncAuth`.
             When set it to ``None`` it means that auth
             is disabled for this endpoint.
+        throttling: Sequence of throttle instances to be used for this endpoint.
+            Sync endpoints must use instances
+            of :class:`dmr.throttling.SyncThrottle`.
+            Async endpoints must use instances
+            of :class:`dmr.throttling.AsyncThrottle`.
+            Set it to ``None`` to disable throttling of this endpoint.
         no_validate_http_spec: Set of checks that user wants
             to disable for validation in this endpoint.
         allowed_http_methods: Set of extra HTTP methods
             that are allowed for this endpoint.
         semantic_responses: Should semantic responses
             from different providers be collected?
+        exclude_semantic_responses: Set of semantic responses
+            that user wants to disable.
+        validate_events: Should this endpoint validate events?
+            If not set, defaults to the ``validate_responses`` value.
+            This value only matters if the response
+            will be a streaming response that supports event validation.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -301,6 +422,8 @@ class EndpointMetadata:
 
     """
 
+    endpoint_name: str
+    type_annotations: dict[str, Any]
     responses: dict[HTTPStatus, ResponseSpec]
     validate_responses: bool | None
     method: str
@@ -310,19 +433,45 @@ class EndpointMetadata:
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     auth: list['SyncAuth | AsyncAuth'] | None
+
+    # First line of throttling:
+    throttling_before_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+    # Second line of throttling:
+    throttling_after_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool
+    exclude_semantic_responses: frozenset[HTTPStatus]
+    validate_events: bool
 
     # OpenAPI documentation fields:
-    summary: str | None = None
-    description: str | None = None
-    tags: list[str] | None = None
-    operation_id: str | None = None
-    deprecated: bool = False
-    external_docs: 'ExternalDocumentation | None' = None
-    callbacks: dict[str, 'Callback | Reference'] | None = None
-    servers: list['Server'] | None = None
+    summary: str | None
+    description: str | None
+    tags: list[str] | None
+    operation_id: str | None
+    deprecated: bool
+    external_docs: 'ExternalDocumentation | None'
+    callbacks: dict[str, 'Callback | Reference'] | None
+    servers: list['Server'] | None
+
+    # Pre-computed fields:
+    throttling: tuple['SyncThrottle | AsyncThrottle', ...] | None = (
+        dataclasses.field(init=False)
+    )
+
+    def __post_init__(self) -> None:
+        """Set pre-computed fields."""
+        # Combine throttling into a single element for convenience:
+        object.__setattr__(
+            self,
+            'throttling',
+            (
+                (self.throttling_before_auth or ())
+                + (self.throttling_after_auth or ())
+            )
+            or None,
+        )
 
     def collect_response_specs(
         self,
@@ -337,13 +486,39 @@ class EndpointMetadata:
                 controller_cls,
                 existing_responses,
             )
+            responses = [
+                response
+                for response in responses
+                if response.status_code not in self.exclude_semantic_responses
+            ]
             all_responses.extend(responses)
             existing_responses.update({
                 response.status_code: response for response in responses
             })
-        return all_responses
 
-    def response_spec_providers(self) -> list[type[ResponseSpecProvider]]:
+        # We we have stream renderers, we know that they can't be used
+        # for error responses, so we will limit error responses
+        # to be only returned by non-stream ones.
+        # If there are no stream renderers, nothing will happen.
+        non_streaming_renderers = {
+            renderer.content_type
+            for renderer in self.renderers.values()
+            if not renderer.streaming
+        }
+        # Do not limit anything, if there are no stream renderers:
+        return [
+            dataclasses.replace(
+                response,
+                limit_to_content_types=(
+                    None
+                    if len(non_streaming_renderers) == len(self.renderers)
+                    else non_streaming_renderers
+                ),
+            )
+            for response in all_responses
+        ]
+
+    def response_spec_providers(self) -> list[ResponseSpecProvider]:
         """
         Determine: from where we should collect response schemas.
 
@@ -364,9 +539,11 @@ class EndpointMetadata:
 
         return [
             *[spec[0] for spec in self.component_parsers],
-            *[type(parser) for parser in self.parsers.values()],
-            *[type(renderer) for renderer in self.renderers.values()],
-            *[type(auth) for auth in (self.auth or [])],
+            *self.parsers.values(),
+            *self.renderers.values(),
+            *(self.auth or []),
+            *(self.throttling_before_auth or []),
+            *(self.throttling_after_auth or []),
         ]
 
 
@@ -375,6 +552,7 @@ _MetadataT = TypeVar('_MetadataT')
 
 def get_annotated_metadata(
     model: Any,
+    model_meta: tuple[Any, ...] | None,
     metadata_type: type[_MetadataT],
 ) -> _MetadataT | None:
     """
@@ -386,4 +564,8 @@ def get_annotated_metadata(
         for metadata in model.__metadata__:
             if isinstance(metadata, metadata_type):
                 return metadata
+
+    for metadata in model_meta or ():
+        if isinstance(metadata, metadata_type):
+            return metadata
     return None

@@ -29,9 +29,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 from urllib.parse import urlencode
 
 import django
-import httpx
 import uvicorn
-import xmltodict
+import xmltodict_rs as xmltodict
+import zapros
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
@@ -54,6 +54,7 @@ from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+from dmr.openapi import OpenAPIConfig
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import build_404_handler, build_500_handler
 from dmr.settings import Settings, clear_settings_cache
@@ -77,6 +78,8 @@ def _get_mp_context() -> Any:
 
 
 _MP_CONTEXT: Final = _get_mp_context()
+
+_BASE_DIR: Final = Path(__file__).parent.parent.parent.parent
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
@@ -216,6 +219,16 @@ def _get_available_port() -> int:
             return cast(int, sock.getsockname()[1])
 
 
+def _ensure_project_import_paths() -> None:
+    """Ensure external examples can import project modules."""
+    cwd = Path.cwd()
+    project_root = cwd.parent if cwd.name == 'docs' else cwd
+    for path_item in (project_root, project_root / 'django_test_app'):
+        path_string = str(path_item)
+        if path_item.exists() and path_string not in sys.path:
+            sys.path.insert(0, path_string)
+
+
 class _BaseBuilder:  # noqa: WPS214
     def __init__(self, file_path: Path, config: _AppRunArgs) -> None:
         """Initialize application builder with file path and configuration."""
@@ -233,10 +246,11 @@ class _BaseBuilder:  # noqa: WPS214
         if settings.configured:
             return
 
+        sys.path.insert(1, str(_BASE_DIR / 'django_test_app'))
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=False,
+            DEBUG=True,  # NOTE: this must be `False`
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
@@ -244,6 +258,8 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
+                'server.apps.model_simple',
+                'server.apps.model_fk',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -251,15 +267,44 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.middleware.common.CommonMiddleware',
                 'django.middleware.csrf.CsrfViewMiddleware',
                 'django.contrib.auth.middleware.AuthenticationMiddleware',
+                'django.middleware.locale.LocaleMiddleware',
+                'django.contrib.messages.middleware.MessageMiddleware',
+                'django.middleware.clickjacking.XFrameOptionsMiddleware',
             ],
             USE_TZ=True,
+            USE_I18N=True,
+            LANGUAGE_CODE='en-us',
+            LOCALE_PATHS=[str(_BASE_DIR / 'dmr' / 'locale')],
+            LANGUAGES=(
+                ('en', 'English'),
+                ('ru', 'Russian'),
+            ),
             DATABASES={
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': '_build/test.db',
                 },
             },
+            DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
             LOGGING_CONFIG=None,
+            CACHES={
+                'default': {
+                    'BACKEND': (
+                        'django.core.cache.backends.filebased.FileBasedCache'
+                    ),
+                    'LOCATION': str(
+                        _BASE_DIR / 'docs' / '_build' / 'default.cache',
+                    ),
+                },
+                'throttling': {
+                    'BACKEND': (
+                        'django.core.cache.backends.filebased.FileBasedCache'
+                    ),
+                    'LOCATION': str(
+                        _BASE_DIR / 'docs' / '_build' / 'throttling.cache',
+                    ),
+                },
+            },
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
@@ -287,6 +332,8 @@ class _BaseBuilder:  # noqa: WPS214
         db_populated = True
 
     def _build_app(self) -> ASGIHandler:
+        _ensure_project_import_paths()
+
         file_path_without_ext = self.file_path.with_suffix('')
         module_name = str(file_path_without_ext).replace(os.sep, '.')
 
@@ -338,7 +385,7 @@ class _BaseBuilder:  # noqa: WPS214
             return module.urlpatterns  # type: ignore[no-any-return]
 
         controller_cls = self._find_controller(module)
-        url_path = _get_url_path_from_run_args(
+        url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
         return [
@@ -364,7 +411,7 @@ class _OpenAPIBuilder(_BaseBuilder):
             return urlpatterns
 
         controller_cls = self._find_controller(module)
-        url_path = _get_url_path_from_run_args(
+        url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
 
@@ -379,7 +426,10 @@ class _OpenAPIBuilder(_BaseBuilder):
         urlpatterns.append(
             path(
                 self.config['openapi_url'].lstrip('/'),
-                OpenAPIJsonView.as_view(schema),
+                OpenAPIJsonView.as_view(
+                    schema,
+                    skip_validation=self.config.get('skip_validation', False),
+                ),
             ),
         )
         return urlpatterns
@@ -392,6 +442,14 @@ def _get_url_path_from_run_args(run_args: _AppRunArgs) -> str:
         return url
     controller_name = run_args['controller'].lower()
     return f'/api/{controller_name}/'
+
+
+def _get_route_path_from_run_args(run_args: _AppRunArgs) -> str:
+    url_pattern = run_args.get('url_pattern')
+    if url_pattern:
+        assert isinstance(url_pattern, str)  # noqa: S101
+        return url_pattern
+    return _get_url_path_from_run_args(run_args)
 
 
 @contextmanager
@@ -456,23 +514,56 @@ def _get_module_name(file_path: Path) -> str:
     return str(file_path.with_suffix('')).replace(os.sep, '.')
 
 
+def _resolve_tmp_example_relative_path(
+    file_path: Path,
+    docs_dir: Path,
+) -> Path:
+    """Return a stable relative path for temp examples inside docs/_build."""
+    if file_path.is_relative_to(docs_dir):
+        return file_path.relative_to(docs_dir)
+
+    project_root = docs_dir.parent
+    if file_path.is_relative_to(project_root):
+        return Path('_external') / file_path.relative_to(project_root)
+
+    return Path('_external') / file_path.name
+
+
+def _resolve_example_file_for_execution(file_path: Path) -> Path:
+    """Resolve example path for importing regardless of current cwd."""
+    cwd = Path.cwd()
+    if file_path.is_relative_to(cwd):
+        return file_path.relative_to(cwd)
+
+    project_root = cwd.parent if cwd.name == 'docs' else cwd
+    if file_path.is_relative_to(project_root):
+        return file_path.relative_to(project_root)
+
+    return file_path
+
+
 def _wait_for_app_startup(port: int, proc: multiprocessing.Process) -> None:
     """Wait for app to start up and become responsive."""
-    for _ in range(100):
-        if proc.exitcode is not None:
-            raise _StartupError(
-                f'App worker exited during startup with {proc.exitcode}',
-            )
-        try:
-            httpx.get(f'http://127.0.0.1:{port}', timeout=0.1)
-        except httpx.TransportError:
-            time.sleep(0.1)
-        else:
-            return
+    with zapros.Client() as client:
+        for _ in range(100):
+            if proc.exitcode is not None:
+                raise _StartupError(
+                    f'App worker exited during startup with {proc.exitcode}',
+                )
+            try:
+                client.get(
+                    f'http://127.0.0.1:{port}',
+                    context={'timeouts': {'connect': 0.1}},
+                )
+            except zapros.ZaprosError:
+                time.sleep(0.1)
+            else:
+                return
     raise _StartupError(f'App failed to come online on port {port}')
 
 
 def _extract_run_args(
+    file_path: Path,
     file_content: str,
 ) -> tuple[str, list[_AppRunArgs], list[_OpenAPIRunArgs]]:
     """Extract run args from a python file.
@@ -481,23 +572,30 @@ def _extract_run_args(
     and a list of argument lists.
     """
     new_lines, run_configs, openapi_configs = _split_example_lines(
+        file_path,
         file_content.splitlines(),
     )
     return '\n'.join(new_lines), run_configs, openapi_configs
 
 
 def _split_example_lines(
+    file_path: Path,
     lines: list[str],
 ) -> tuple[list[str], list[_AppRunArgs], list[_OpenAPIRunArgs]]:
     new_lines: list[str] = []
     run_configs: list[_AppRunArgs] = []
     openapi_configs: list[_OpenAPIRunArgs] = []
     for line in lines:
-        config = _extract_comment_config(line, _RGX_RUN)
+        config = _extract_comment_config(file_path, line, _RGX_RUN, 'run')
         if config is not None:
             run_configs.append(config)
             continue
-        config = _extract_comment_config(line, _RGX_OPENAPI)
+        config = _extract_comment_config(
+            file_path,
+            line,
+            _RGX_OPENAPI,
+            'openapi',
+        )
         if config is not None:
             openapi_configs.append(config)
             continue
@@ -507,8 +605,10 @@ def _split_example_lines(
 
 
 def _extract_comment_config(
+    file_path: Path,
     line: str,
     pattern: re.Pattern[str],
+    config_type: str,
 ) -> dict[str, Any] | None:
     match = pattern.match(line)
     if match is None:
@@ -517,10 +617,15 @@ def _extract_comment_config(
     run_stmt = match.group(1).lstrip()
     if '# noqa' in run_stmt:
         run_stmt = run_stmt.split('# noqa')[0]
-    return cast(dict[str, Any], json.loads(run_stmt))
+    try:
+        return cast(dict[str, Any], json.loads(run_stmt))
+    except Exception as exc:
+        raise _StartupError(
+            f'Cannot parse {config_type} in {file_path!s}',
+        ) from exc
 
 
-def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
+def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:  # noqa: WPS210
     """
     Start a server with the example application, run the specified requests.
 
@@ -541,6 +646,11 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:
             if example_result:
                 example_results.append(example_result)
 
+    from django.core.cache import caches  # noqa: PLC0415
+
+    for cache in caches.all():
+        cache.clear()
+
     return '\n\n'.join(example_results)
 
 
@@ -555,6 +665,11 @@ def _exec_openapi_examples(
         with (
             override_settings(
                 DMR_SETTINGS={
+                    Settings.openapi_config: OpenAPIConfig(
+                        title='Django Modern Rest',
+                        version='0.1.0',
+                        openapi_version='3.2.0',
+                    ),
                     Settings.openapi_examples_seed: openapi_args.get(
                         'openapi_examples_seed',
                     ),
@@ -570,13 +685,14 @@ def _exec_openapi_examples(
     return '\n\n'.join(openapi_results)
 
 
-def _process_single_example(
+def _process_single_example(  # noqa: WPS210
     app_file: Path,
     run_args: _AppRunArgs,
     port: int,
     url_path: str,
 ) -> str:
     """Process a single example configuration."""
+    assert_error_text: str | None = run_args.pop('assert-error-text', None)
     args, clean_args = _build_curl_request(app_file, run_args, port, url_path)
 
     proc = subprocess.run(  # noqa: PLW1510, S603
@@ -606,6 +722,23 @@ def _process_single_example(
                 args,
             )
         return ''
+
+    if (
+        assert_error_text is not None
+        and not settings.DEBUG
+        and assert_error_text not in proc.stdout
+    ):
+        raise _StartupError(
+            (
+                (
+                    f'Expected error text {assert_error_text!r} not found '
+                    f'in example {app_file} output'
+                ),
+                args,
+                proc.stdout,
+                proc.stderr,
+            ),
+        )
 
     clean_args_string = shlex.join(clean_args)
     return '\n'.join((f'$ {clean_args_string}', *stdout))
@@ -723,7 +856,7 @@ def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
         'Content-Type',
         None,
     )
-    if content_type == 'application/json' or content_type is None:
+    if content_type == 'application/json' or content_type is None:  # noqa: WPS223
         body_data = json.dumps(run_args['body'])
         args.extend(['-d', body_data])
         clean_args.extend(['-d', body_data])
@@ -752,6 +885,10 @@ def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
             clean_args.extend(['-F', f'{body_key}=@{body_value}'])
             body_value = str(app_file.parent / body_value)
             args.extend(['-F', f'{body_key}=@{body_value}'])
+    elif content_type == 'application/msgpack':
+        source = run_args['body']
+        args.extend(['--data-binary', f'@{source}'])
+        clean_args.extend(['--data-binary', f'@{source}'])
     else:
         raise RuntimeError(f'{content_type} is not supported')
 
@@ -853,7 +990,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
 
         nodes = self._generate_nodes(file_path, imports_data)
 
-        example_file = file_path.relative_to(Path.cwd())
+        example_file = _resolve_example_file_for_execution(file_path)
         executed_result = _exec_examples(example_file, run_args)
         openapi_result = _exec_openapi_examples(example_file, openapi_args)
 
@@ -1108,7 +1245,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         file_path: Path,
     ) -> tuple[str, list[_AppRunArgs], list[_OpenAPIRunArgs]]:
         file_content = file_path.read_text(encoding='utf-8')
-        return _extract_run_args(file_content)
+        return _extract_run_args(file_path, file_content)
 
     def _create_tmp_example_file(
         self,
@@ -1117,12 +1254,14 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     ) -> None:
         cwd = Path.cwd()
         docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
+        relative_example_path = _resolve_tmp_example_relative_path(
+            file_path,
+            docs_dir,
+        )
         tmp_file = (
             docs_dir
             / _PATH_TO_TMP_EXAMPLES
-            / str(
-                file_path.relative_to(docs_dir),
-            ).replace('/', '_')
+            / str(relative_example_path).replace('/', '_')
         )
 
         self.arguments[0] = f'/{tmp_file.relative_to(docs_dir)!s}'

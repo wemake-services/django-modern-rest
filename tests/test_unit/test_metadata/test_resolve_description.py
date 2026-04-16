@@ -5,7 +5,7 @@ from dmr.controller import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 
 
-class _PaylodDescriptionController(
+class _PayloadDescriptionController(
     Controller[PydanticSerializer],
 ):
     @modify(
@@ -16,7 +16,7 @@ class _PaylodDescriptionController(
         raise NotImplementedError
 
 
-class _PaylodDocDescriptionController(
+class _PayloadDocDescriptionController(
     Controller[PydanticSerializer],
 ):
     @modify(
@@ -31,7 +31,7 @@ class _PaylodDocDescriptionController(
         raise NotImplementedError
 
 
-class _PaylodDocOnlySummaryController(
+class _PayloadDocOnlySummaryController(
     Controller[PydanticSerializer],
 ):
     @modify(summary='Summary from payload.')
@@ -43,7 +43,7 @@ class _PaylodDocOnlySummaryController(
         raise NotImplementedError
 
 
-class _PaylodDocOnlyDescriptionController(
+class _PayloadDocOnlyDescriptionController(
     Controller[PydanticSerializer],
 ):
     @modify(description='Description from payload.')
@@ -99,22 +99,22 @@ class _RawDescriptionController(
     ('controller', 'expected_summary', 'expected_description'),
     [
         (
-            _PaylodDescriptionController,
+            _PayloadDescriptionController,
             'Summary from payload.',
             'Description from payload.',
         ),
         (
-            _PaylodDocDescriptionController,
+            _PayloadDocDescriptionController,
             'Summary from payload.',
             'Description from payload.',
         ),
         (
-            _PaylodDocOnlySummaryController,
+            _PayloadDocOnlySummaryController,
             'Summary from payload.',
             None,
         ),
         (
-            _PaylodDocOnlyDescriptionController,
+            _PayloadDocOnlyDescriptionController,
             None,
             'Description from payload.',
         ),

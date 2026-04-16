@@ -1,0 +1,4 @@
+contact_links:
+  - name: "Getting help"
+    about: "Ask questions about using django-modern-rest on Telegram"
+    url: "https://t.me/django_modern_rest"

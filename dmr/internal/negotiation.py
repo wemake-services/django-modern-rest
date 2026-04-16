@@ -1,49 +1,37 @@
 import dataclasses
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
+from django.utils.translation import gettext_lazy as _
 
+from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
-    from dmr.negotiation import ContentType
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
+
+_CANNOT_SERIALIZE_MSG: Final = _(
+    'Cannot serialize response body with'
+    ' accepted types {accepted_types},'
+    ' supported={supported}',
+)
 
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
 class ConditionalType:
     """
-    Internal type that we use as a metadata.
+    Internal type that we use as metadata.
 
     Public API is to use
     :func:`dmr.negotiation.conditional_type` instead of this.
     """
 
-    _original: tuple[tuple['ContentType', Any], ...]
-    computed: Mapping[str, Any] = dataclasses.field(
-        hash=False,
-        init=False,
-    )
-
-    def __post_init__(self) -> None:
-        """
-        Post process passed objects.
-
-        What we do here:
-        1. We have to have `_ConditionalType` hashable, so it can be cached
-        2. We pass dict as pairs of tuples
-        3. Then we pre-compute the dict back
-
-        It wastes extra memory, but we are fine with that.
-        Because objects will be rather small.
-        It is Python after all!
-        """
-        object.__setattr__(self, 'computed', dict(self._original))
+    computed: Mapping[str, Any] = dataclasses.field(hash=False)
 
 
 def response_validation_negotiator(
@@ -90,16 +78,11 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
     )
 
 
-def force_request_renderer(request: HttpRequest, renderer: 'Renderer') -> None:
-    """Forces *renderer* to be used for the *request*."""
-    request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
-
-
 def negotiate_renderer(
     request: HttpRequest,
     renderers: Mapping[str, 'Renderer'],
     *,
-    default: 'Renderer | None' = None,
+    default: 'Renderer',
 ) -> 'Renderer':
     """
     Choose a renderer by the request's Accept header.
@@ -108,18 +91,16 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    renderer_keys = list(renderers.keys())
-    fallback = next(iter(renderers.values())) if default is None else default
+    accept = request.headers.get('Accept')
+    if accept is None:
+        return default
 
-    if request.headers.get('Accept') is None:
-        return fallback
-
-    renderer_type = request.get_preferred_type(renderer_keys)
+    renderer_type = accepted_type(accept, renderers)
     if renderer_type is None:
-        supported = renderer_keys
         raise NotAcceptableError(
-            'Cannot serialize response body '
-            f'with accepted types {request.accepted_types!r}, '
-            f'{supported=!r}',
+            _CANNOT_SERIALIZE_MSG.format(
+                accepted_types=repr(request.accepted_types),
+                supported=repr(list(renderers)),
+            ),
         )
     return renderers[renderer_type]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DMR best practices"
+  short_description: "Write the best DMR code possible with all the recommended best practices, avoiding common mistakes"
+  default_prompt: "Use $dmr skill when writing code with django-modern-rest to increase code quality and follow the best practices"

@@ -4,7 +4,7 @@ Path parameters
 Using native Django path params
 -------------------------------
 
-You don't have to use :class:`~dmr.components.Path` to parse url parameters.
+You don't have to use :data:`~dmr.components.Path` to parse url parameters.
 By default Django puts all url parameters
 into ``self.args`` and ``self.kwargs``.
 
@@ -21,7 +21,7 @@ What happens here?
    dict with path params with no extra parsing from our side
 2. We define a custom :class:`~dmr.metadata.ResponseSpec`
    instance with ``404`` as a response code,
-   :class:`~dmr.components.Path` injects this response automatically,
+   :data:`~dmr.components.Path` injects this response automatically,
    but since we don't use – we have to do that manually
    for our :ref:`response_validation` to work
 3. We also show how one can use :class:`~dmr.response.APIError`
@@ -29,24 +29,24 @@ What happens here?
 4. We define an api url with :func:`django.urls.path`
    (or with :func:`django.urls.re_path`)
    and a common Django syntax for path parameters:
-   ``'user/<int:user_id>/post/<uuid:post_id/'``
+   ``'user/<int:user_id>/post/<uuid:post_id>/'``
 
 Django supports multiple pre-defined path converter types:
 ``int``, ``uuid``, ``str``, ``slug``, ``path``.
 
 .. seealso::
 
-  - https://docs.djangoproject.com/en/6.0/topics/http/urls/
-  - https://docs.djangoproject.com/en/6.0/ref/urlresolvers/
+  - https://docs.djangoproject.com/en/stable/topics/http/urls/
+  - https://docs.djangoproject.com/en/stable/ref/urlresolvers/
 
 The main downside of this method is that ``self.kwargs`` is typed
 as ``dict[str, Any]``. Which is not always ideal.
 If you need typed path parameters,
-use :class:`~dmr.components.Path` component with a model.
+use :data:`~dmr.components.Path` component with a model.
 
 .. note::
 
-  If you are using custom url convereters
+  If you are using custom URL converters
   and :func:`django.urls.register_converter`,
   we won't know your url parameter schema type in advance.
   We default to ``str`` type for all url converters.
@@ -62,19 +62,19 @@ Using Path component and parsing models
 When do you need to parse path parameters into models?
 
 1. When you need typed path parameter model
-2. When they have more metadata then regular Django can provide.
+2. When they have more metadata than regular Django can provide.
    For example: only positive integers. Or ``str`` with an exact length
 3. When you only need ``self.kwargs`` to be parsed,
    because ``Path`` does not support variadic url args from ``self.args``
 
 You can define ``Path`` parameters
-the same way you define :class:`~dmr.components.Headers`,
-:class:`~dmr.components.Query` and
-:class:`~dmr.components.Cookies` parameters.
+the same way you define :data:`~dmr.components.Headers`,
+:data:`~dmr.components.Query` and
+:data:`~dmr.components.Cookies` parameters.
 
 .. note::
 
-  Parsed ``Path`` is available as ``self.parsed_path``.
+  Parsed ``Path`` parameter must be named ``parsed_path``.
 
 This is how you can parse ``Path`` parameters into a model:
 
@@ -99,7 +99,7 @@ What happens in this example?
 1. We define a ``Path`` model using :class:`msgspec.Struct`
    or :class:`pydantic.BaseModel`. Other types are also supported:
    :class:`typing.TypedDict`, :func:`dataclasses.dataclass`, etc
-2. Next, we use :class:`~dmr.components.Path` component,
+2. Next, we use :data:`~dmr.components.Path` component,
    provide the model as a type parameter,
    and subclass it when defining :class:`~dmr.controller.Controller` type
 3. Then we use ``self.parsed_path`` that will have the correct model type
@@ -109,7 +109,7 @@ What is the difference from the raw ``path()`` model?
 1. ``Path`` component automatically injects ``404`` error into the final schema
 2. It performs a second validation of the ``self.kwargs``
    with new extra metadata from the ``Path`` model
-3. It add ``self.parsed_path`` attribute
+3. It adds ``self.parsed_path`` attribute
 
 .. important::
 
@@ -126,6 +126,8 @@ See :ref:`customizing_parameter_openapi`.
 API Reference
 -------------
 
-.. autoclass:: dmr.components.Path
+.. autodata:: dmr.components.Path
+
+.. autoclass:: dmr.components.PathComponent
   :members:
   :show-inheritance:

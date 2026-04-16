@@ -3,7 +3,8 @@ from django.http import HttpRequest
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt import JWTAsyncAuth, get_jwt
+from dmr.security import AuthenticatedHttpRequest, request_auth
+from dmr.security.jwt import JWTAsyncAuth, request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistAsyncMixin
 
 
@@ -19,11 +20,14 @@ jwt_blocklist_auth = JWTAuthWithBlocklist()
 
 
 class APIController(Controller[PydanticSerializer]):
-    request: AuthenticatedRequest
+    request: AuthenticatedHttpRequest[User]
     auth = (jwt_blocklist_auth,)
 
     async def get(self) -> str:
         # Disable tokens for users with old domain emails
         if self.request.user.email.endswith('@old-domain.com'):
-            await jwt_blocklist_auth.blocklist(get_jwt(self.request))
+            assert request_auth(self.request) is jwt_blocklist_auth
+            await jwt_blocklist_auth.blocklist(
+                request_jwt(self.request, strict=True),
+            )
         return 'authed'

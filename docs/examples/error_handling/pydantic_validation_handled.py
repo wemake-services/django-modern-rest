@@ -5,7 +5,7 @@ import pydantic
 from django.http import HttpResponse
 from typing_extensions import override
 
-from dmr import Controller
+from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 
@@ -15,6 +15,13 @@ class Pong(pydantic.BaseModel):
 
 
 class PongController(Controller[PydanticSerializer]):
+    responses = (
+        ResponseSpec(
+            Controller.error_model,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        ),
+    )
+
     def get(self) -> Pong:
         # This will trigger `pydantic.ValidationError`,
         # because `message` must be `'pong'`, not `'wrong'`:
@@ -37,4 +44,4 @@ class PongController(Controller[PydanticSerializer]):
         return super().handle_error(endpoint, controller, exc)
 
 
-# run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: ERA001, E501
+# run: {"controller": "PongController", "method": "get", "url": "/api/ping/", "curl_args": ["-D", "-"], "assert-error-text": "Validation error", "fail-with-body": false}  # noqa: ERA001, E501

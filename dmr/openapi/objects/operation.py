@@ -3,16 +3,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.callback import Callback
-    from dmr.openapi.objects.external_documentation import (
-        ExternalDocumentation,
-    )
+    from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.parameter import Parameter
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.request_body import RequestBody
     from dmr.openapi.objects.responses import Responses
-    from dmr.openapi.objects.security_requirement import (
-        SecurityRequirement,
-    )
+    from dmr.openapi.objects.security_requirement import SecurityRequirement
     from dmr.openapi.objects.server import Server
 
 

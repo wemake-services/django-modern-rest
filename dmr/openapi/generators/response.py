@@ -30,7 +30,7 @@ class ResponseGenerator:
     ) -> Responses:
         """Generate responses from response specs."""
         return {
-            # Deletegate call to `ResponseSpec`, so it can change
+            # Delegate call to `ResponseSpec`, so it can change
             # how the spec is generated.
             str(status_code.value): response_spec.get_schema(
                 metadata,
@@ -40,7 +40,7 @@ class ResponseGenerator:
             for status_code, response_spec in metadata.responses.items()
         }
 
-    def get_schema(  # noqa: WPS211
+    def get_schema(
         self,
         response_spec: 'ResponseSpec',
         metadata: 'EndpointMetadata',
@@ -119,7 +119,7 @@ class ResponseGenerator:
             )
         return cookies
 
-    def _get_content(  # noqa: WPS211
+    def _get_content(
         self,
         response_spec: 'ResponseSpec',
         serializer: type['BaseSerializer'],
@@ -132,7 +132,9 @@ class ResponseGenerator:
         # Import cycle:
         from dmr.negotiation import get_conditional_types  # noqa: PLC0415
 
-        return_types = get_conditional_types(response_spec.return_type) or {}
+        return_types = (
+            get_conditional_types(response_spec.return_type, ()) or {}
+        )
         return {
             renderer.content_type: MediaType(
                 **{  # type: ignore[arg-type]

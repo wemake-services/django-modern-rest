@@ -1,5 +1,4 @@
 import abc
-import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, final
@@ -11,6 +10,7 @@ from typing_extensions import override
 
 from dmr.exceptions import DataParsingError, RequestSerializationError
 from dmr.internal.django import parse_as_post
+from dmr.internal.json import JsonModule, NativeJson
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
-Raw: TypeAlias = str | bytes | bytearray
+Raw: TypeAlias = bytes | bytearray
 
 
 #: Type that represents the `deserializer` hook.
@@ -58,7 +58,7 @@ class Parser(ResponseSpecProvider):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
-            model: Model that reprensents the final result's structure.
+            model: Model that represents the final result's structure.
 
         Returns:
             Simple python object with primitive parts.
@@ -69,9 +69,8 @@ class Parser(ResponseSpecProvider):
         """
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -92,16 +91,33 @@ class JsonParser(Parser):
 
     .. warning::
 
-        It is not recommended to be used directly.
+        It is not recommended to be used directly
+        when using default ``json`` module.
         It is slow and has less features.
         We won't add any complex objects support to this parser.
 
+    Alternative ``json`` implementations can be provided.
+    See :ref:`alternative-json` for more info.
     """
 
-    __slots__ = ()
+    __slots__ = (
+        '_json_module',
+        'content_type',
+    )
 
-    content_type = 'application/json'
-    """Works with ``json`` only."""
+    def __init__(
+        self,
+        content_type: str = 'application/json',
+        *,
+        json_module: JsonModule = NativeJson,
+    ) -> None:
+        """Init the parser with an optional custom json module."""
+        self.content_type = content_type
+        self._json_module = json_module
+        # Sanity check:
+        assert self._json_module.loads, (  # type: ignore[truthy-function]  # noqa: S101
+            'Passed json module does not have `.loads` method'
+        )
 
     @override
     def parse(
@@ -120,7 +136,7 @@ class JsonParser(Parser):
             deserializer_hook: Hook to convert types
                 that are not natively supported.
             request: Django's original request with all the details.
-            model: Model that reprensents the final result's structure.
+            model: Model that represents the final result's structure.
 
         Returns:
             Decoded object.
@@ -130,8 +146,8 @@ class JsonParser(Parser):
 
         """
         try:
-            return json.loads(to_deserialize)
-        except (ValueError, TypeError) as exc:
+            return self._json_module.loads(to_deserialize)
+        except Exception as exc:
             # Corner case: when deserializing an empty body,
             # return `None` instead.
             # We do this here, because we don't want
@@ -202,7 +218,7 @@ class MultiPartParser(
     """
     Parses multipart form data.
 
-    In reallity this is a quite tricky parser.
+    In reality this is a quite tricky parser.
     Since, Django already parses ``multipart/form-data`` content natively,
     there's no reason to duplicate its work.
     So, we return original Django's content.
@@ -222,10 +238,7 @@ class MultiPartParser(
     ) -> None:
         """Returns parsed multipart form data."""
         # Circular import:
-        from dmr.settings import (  # noqa: PLC0415
-            Settings,
-            resolve_setting,
-        )
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         if (
             not getattr(request, '_dmr_parsed_as_post', False)
@@ -257,7 +270,7 @@ class FormUrlEncodedParser(
     """
     Parses www urlencoded forms.
 
-    In reallity this is a quite tricky parser.
+    In reality this is a quite tricky parser.
     Since, Django already parses ``application/x-www-form-urlencoded``
     content natively, there's no reason to duplicate its work.
     So, we return original Django's content.
@@ -277,10 +290,7 @@ class FormUrlEncodedParser(
     ) -> None:
         """Returns parsed form data."""
         # Circular import:
-        from dmr.settings import (  # noqa: PLC0415
-            Settings,
-            resolve_setting,
-        )
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         if (
             not getattr(request, '_dmr_parsed_as_post', False)

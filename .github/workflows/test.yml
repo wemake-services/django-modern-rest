@@ -20,185 +20,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12', '3.13', '3.14', '3.14t']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
         include:
           - python-version: '3.14t'
             force_free_gil: true
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install poetry
-      run: |
-        curl -sSL "https://install.python-poetry.org" | python
+    - name: Install uv
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
-        # Adding `poetry` to `$PATH`:
-        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
+    - name: Install just
+      run: uv tool install rust-just
 
     - name: Install dependencies
       run: |
-        poetry config virtualenvs.in-project true
-        poetry run pip install -U pip
-        poetry install --all-extras --all-groups
+        # System deps:
+        sudo apt install -y gettext
+
+        # Python deps:
+        just install
+        # We don't install `orjson` in `pyproject.toml`,
+        # because we run `3.14t` as well and it cannot be installed there :(
+        # No way to exclude the platform on a file level.
+        uv pip install orjson || true
 
     - name: Run checks
       env:
         PYTHON_GIL: ${{ matrix.force_free_gil && '0' || '1' }}
-      run: make test
+      run: just test
 
     # Upload coverage to codecov: https://codecov.io/
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
       with:
         files: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
 
-
-  test-django-versions:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.13']
-        django-version:
-          - 'Django~=6.0.0'
-
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install poetry
-      run: |
-        curl -sSL "https://install.python-poetry.org" | python
-
-        # Adding `poetry` to `$PATH`:
-        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
-
-    - name: Install dependencies
-      run: |
-        poetry config virtualenvs.in-project true
-        poetry run pip install -U pip
-        poetry install --all-extras
-        poetry run pip install -U "${{ matrix.django-version }}"
-
-    - name: Run checks
-      run: make smoke unit
-
-
-  build-no-msgspec:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.13', '3.14t']
-
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install poetry
-      run: |
-        curl -sSL "https://install.python-poetry.org" | python
-
-        # Adding `poetry` to `$PATH`:
-        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
-
-    - name: Install dependencies
-      run: |
-        poetry config virtualenvs.in-project true
-        poetry run pip install -U pip
-        poetry install --extras=pydantic --extras=jwt
-
-    - name: Run checks
-      run: |
-        make smoke example
-        poetry run pytest --cov-fail-under=90
-
-
-  build-no-pydantic:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.13', '3.14t']
-
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install poetry
-      run: |
-        curl -sSL "https://install.python-poetry.org" | python
-
-        # Adding `poetry` to `$PATH`:
-        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
-
-    - name: Install dependencies
-      run: |
-        poetry config virtualenvs.in-project true
-        poetry run pip install -U pip
-        poetry install --extras=msgspec --extras=attrs --extras=jwt
-
-    - name: Run checks
-      run: |
-        make smoke
-        poetry run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
-
-
-  build-no-serializers:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.14']
-
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install poetry
-      run: |
-        curl -sSL "https://install.python-poetry.org" | python
-
-        # Adding `poetry` to `$PATH`:
-        echo "$HOME/.poetry/bin" >> "$GITHUB_PATH"
-
-    - name: Install dependencies
-      run: |
-        poetry config virtualenvs.in-project true
-        poetry run pip install -U pip
-        poetry install --extras=jwt
-
-    - name: Run checks
-      run: make smoke
+    - name: Tracecov report
+      run: cat tracecov-report.md >> "$GITHUB_STEP_SUMMARY"

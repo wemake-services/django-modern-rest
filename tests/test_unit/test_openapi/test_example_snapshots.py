@@ -35,16 +35,14 @@ class _UserModel(pydantic.BaseModel):
 
 class _UserController(
     Controller[PydanticSerializer],
-    Body[dict[str, Any]],
 ):
-    def post(self) -> _UserModel:
+    def post(self, parsed_body: Body[dict[str, Any]]) -> _UserModel:
         raise NotImplementedError
 
 
 @pytest.mark.freeze_time('02-11-2025 10:15:00')
 def test_user_schema_with_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for user controller."""
@@ -81,7 +79,6 @@ class _ExistingExampleController(Controller[PydanticSerializer]):
 
 def test_user_schema_with_existing_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for existing examples controller."""
@@ -109,29 +106,30 @@ class _RegularBody(pydantic.BaseModel):
 
 
 class _ExistingBodyExamplesController(
-    Body[
-        Annotated[
-            _RegularBody,
-            MediaTypeMetadata(
-                examples={
-                    'start': Example(
-                        summary='hand written example',
-                        description='starting point',
-                        value={'coord_x': 0, 'coord_y': 0},
-                    ),
-                },
-            ),
-        ]
-    ],
     Controller[PydanticSerializer],
 ):
-    def post(self) -> int:
+    def post(
+        self,
+        parsed_body: Body[
+            Annotated[
+                _RegularBody,
+                MediaTypeMetadata(
+                    examples={
+                        'start': Example(
+                            summary='hand written example',
+                            description='starting point',
+                            value={'coord_x': 0, 'coord_y': 0},
+                        ),
+                    },
+                ),
+            ]
+        ],
+    ) -> int:
         raise NotImplementedError
 
 
 def test_schema_with_body_existing_examples(
     snapshot: SnapshotAssertion,
-    dmr_clean_settings: None,
     settings: LazySettings,
 ) -> None:
     """Ensure that schema is correct for existing examples in body."""

@@ -17,7 +17,6 @@ from dmr.settings import Settings
 @pytest.fixture(autouse=True)
 def _disable_semantic_responses(
     settings: LazySettings,
-    dmr_clean_settings: None,
 ) -> None:
     settings.DMR_SETTINGS = {
         Settings.semantic_responses: False,

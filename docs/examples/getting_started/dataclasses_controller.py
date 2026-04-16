@@ -15,11 +15,10 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-    # Dataclasses do not support field name aliases, so can't use Headers :(
-    Body[UserCreateModel],
-):
-    def post(self) -> UserModel:
-        """All added props have the correct runtime and static types."""
-        return UserModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+class UserController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: Body[UserCreateModel]) -> UserModel:
+        return UserModel(uid=uuid.uuid4(), email=parsed_body.email)
+
+
+# run: {"controller": "UserController", "method": "post", "url": "/api/user/", "body": {"email": "email@example.com"}}  # noqa: ERA001, E501
+# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001

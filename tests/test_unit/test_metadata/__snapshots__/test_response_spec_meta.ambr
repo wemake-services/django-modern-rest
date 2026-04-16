@@ -1,0 +1,327 @@
+# serializer version: 1
+# name: test_error_model_with_metadata_schema
+  '''
+  {
+    "info": {
+      "title": "Django Modern Rest",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/v1/header-and-cookie": {
+        "put": {
+          "operationId": "putHeaderandcookiecontrollerApiV1HeaderAndCookie",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_BodyModel"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Success": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/_BodyModel"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "patch": {
+          "operationId": "patchHeaderandcookiecontrollerApiV1HeaderAndCookie",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_BodyModel"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Success": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/_BodyModel"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "headers": {
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string",
+                    "example": "x-test=123"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_BodyModel": {
+          "properties": {
+            "number": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          "type": "object",
+          "required": [
+            "number"
+          ],
+          "title": "_BodyModel"
+        }
+      },
+      "securitySchemes": {}
+    }
+  }
+  '''
+# ---

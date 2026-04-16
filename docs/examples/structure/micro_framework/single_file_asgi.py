@@ -43,12 +43,12 @@ class UserResponseModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(
-    Controller[PydanticSerializer],
-    Body[UserCreateModel],
-):
-    async def post(self) -> UserResponseModel:
-        return UserResponseModel(uid=uuid.uuid4(), email=self.parsed_body.email)
+class UserController(Controller[PydanticSerializer]):
+    async def post(
+        self,
+        parsed_body: Body[UserCreateModel],
+    ) -> UserResponseModel:
+        return UserResponseModel(uid=uuid.uuid4(), email=parsed_body.email)
 
 
 router = Router(
@@ -71,4 +71,4 @@ if __name__ == '__main__':
     execute_from_command_line(sys.argv)
 
 # run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wemake.services"}, "url": "/api/user/", "use_urlpatterns": true}  # noqa: ERA001, E501
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

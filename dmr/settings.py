@@ -2,6 +2,7 @@ import enum
 import importlib
 from collections.abc import Callable, Mapping, Sequence, Set
 from functools import lru_cache
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
     from dmr.security import AsyncAuth, SyncAuth
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
@@ -54,9 +56,12 @@ class Settings(enum.StrEnum):
     parsers = 'parsers'
     renderers = 'renderers'
     auth = 'auth'
+    throttling = 'throttling'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     semantic_responses = 'semantic_responses'
+    exclude_semantic_responses = 'exclude_semantic_responses'
+    validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
@@ -71,7 +76,7 @@ class HttpSpec(enum.StrEnum):
     """
     Keys for our HTTP spec validation.
 
-    All rules can be disabled per endpoint, per blueprint, and per controller.
+    All rules can be disabled per endpoint and per controller.
     You can disable any of the validation rules we have here globally by:
 
     .. code:: python
@@ -100,9 +105,12 @@ class SettingsDict(TypedDict, total=False):
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
     auth: Sequence['AsyncAuth | SyncAuth']
+    throttling: Sequence['AsyncThrottle | SyncThrottle']
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     semantic_responses: bool
+    exclude_semantic_responses: Set[HTTPStatus]
+    validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
     openapi_config: 'OpenAPIConfig'
@@ -116,11 +124,12 @@ assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
 )
 
 
-#: Default settings for `django_modern_rest`.
+#: Default settings for `django-modern-rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
     Settings.auth: [],
+    Settings.throttling: [],
     # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
@@ -133,6 +142,9 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
     Settings.semantic_responses: True,
+    Settings.exclude_semantic_responses: frozenset(),
+    # Defaults to the `validate_responses` setting if `None`:
+    Settings.validate_events: None,
     Settings.responses: [],  # global responses, for response validation
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:

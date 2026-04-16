@@ -1,24 +1,26 @@
 import enum
 from collections.abc import Mapping
-from typing import Any, final
+from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 
 from django.http.request import HttpRequest
+from django.utils.translation import gettext_lazy as _
 
-from dmr.exceptions import (
-    EndpointMetadataError,
-    RequestSerializationError,
-)
-from dmr.internal.negotiation import (
-    ConditionalType as _ConditionalType,
-)
+from dmr.exceptions import EndpointMetadataError, RequestSerializationError
+from dmr.internal.negotiation import ConditionalType as _ConditionalType
 from dmr.internal.negotiation import media_by_precedence
-from dmr.internal.negotiation import (
-    negotiate_renderer as _negotiate_renderer,
-)
+from dmr.internal.negotiation import negotiate_renderer as _negotiate_renderer
 from dmr.metadata import EndpointMetadata, get_annotated_metadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
-from dmr.serializer import BaseSerializer
+
+if TYPE_CHECKING:
+    from dmr.serializer import BaseSerializer
+
+_CANNOT_PARSE_MSG: Final = _(
+    'Cannot parse request body with'
+    ' content type {content_type},'
+    ' expected={expected}',
+)
 
 
 class RequestNegotiator:
@@ -35,7 +37,7 @@ class RequestNegotiator:
     def __init__(
         self,
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        serializer: type['BaseSerializer'],
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
@@ -57,9 +59,9 @@ class RequestNegotiator:
         Based on ``Content-Type`` header.
 
         Called in runtime.
-        Must work for O(1) because of that.
+        Must work for O(1) for the best case scenario because of that.
 
-        Must set ``_dmr_parser`` request attribute
+        Must set ``__dmr_parser__`` request attribute
         if the negotiation is successful.
 
         Returns:
@@ -79,6 +81,7 @@ class RequestNegotiator:
         return parser
 
     def _decide(self, request: HttpRequest) -> Parser:
+        # TODO: compile this code
         if request.content_type is None:
             return self._default
         # Try the exact match first, since it is faster, O(1):
@@ -95,32 +98,68 @@ class RequestNegotiator:
         # No parsers found, raise an error:
         expected = list(self._parsers.keys())
         raise RequestSerializationError(
-            'Cannot parse request body '
-            f'with content type {request.content_type!r}, '
-            f'{expected=!r}',
+            _CANNOT_PARSE_MSG.format(
+                content_type=repr(request.content_type),
+                expected=repr(expected),
+            ),
         )
 
 
 class ResponseNegotiator:
-    """Selects a correct renderer for a response body."""
+    """
+    Selects a correct renderer for a response body.
 
-    __slots__ = ('_default', '_renderer_keys', '_renderers', '_serializer')
+    .. versionchanged:: 0.5.0
+        Now it uses a custom algorithm that is x30 times faster
+        (when compiled with :ref:`mypyc`) then the original
+        :meth:`django.http.HttpRequest.get_preferred_type` way we used before.
+
+    """
+
+    __slots__ = (
+        '_default',
+        '_non_streaming_default',
+        '_non_streaming_renderers',
+        '_renderer_keys',
+        '_renderers',
+        '_serializer',
+        '_streaming',
+    )
 
     def __init__(
         self,
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        serializer: type['BaseSerializer'],
+        *,
+        streaming: bool,
     ) -> None:
         """Initialization happens during an endpoint creation in import time."""
         self._serializer = serializer
+        # When `False`, no streaming related negotiation must happen.
+        self._streaming = streaming
         self._renderers = metadata.renderers
+        self._non_streaming_renderers = {
+            renderer_type: renderer
+            for renderer_type, renderer in metadata.renderers.items()
+            if not renderer.streaming
+        }
         self._renderer_keys = list(self._renderers.keys())
+        if self._streaming and not self._non_streaming_renderers:
+            raise EndpointMetadataError(
+                'At least one non-stream renderer is required '
+                f'for stream responses, found: {self._renderer_keys!r}',
+            )
+
         # The last configured parser is the most specific one:
         self._default = next(iter(self._renderers.values()))
+        # The second one is suitable for errors if it is a stream:
+        self._non_streaming_default = next(
+            iter(self._non_streaming_renderers.values()),
+        )
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
-        Negotiates which parser to use for parsing this request.
+        Negotiates which renderer to use for rendering this response.
 
         Based on ``Accept`` header.
 
@@ -130,8 +169,10 @@ class ResponseNegotiator:
         We use :meth:`django.http.HttpRequest.get_preferred_type` inside.
         So, we have exactly the same negotiation rules as django has.
 
-        Must set ``_dmr_renderer`` request attribute
+        Must set ``__dmr_renderer__`` request attribute
         if the negotiation is successful.
+        Can set ``__dmr_nonstreaming_renderer__`` if working
+        with streaming responses.
 
         Returns:
             Renderer class for this response.
@@ -146,36 +187,116 @@ class ResponseNegotiator:
             default=self._default,
         )
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
+        if self._streaming:
+            request.__dmr_nonstreaming_renderer__ = _negotiate_renderer(  # type: ignore[attr-defined]
+                request,
+                self._non_streaming_renderers,
+                default=self._non_streaming_default,
+            )
         return renderer
 
 
-def request_parser(request: HttpRequest) -> Parser | None:
+@overload
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+) -> Parser: ...
+
+
+@overload
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> Parser | None: ...
+
+
+def request_parser(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+) -> Parser | None:
     """
     Get parser used to parse this request.
+
+    When *strict* is passed and *request* has no parser,
+    we raise :exc:`AttributeError`.
 
     .. note::
 
         Since request parsing is only used when there's
-        a :class:`dmr.components.Body` component,
-        there might be no parser.
+        a :data:`dmr.components.Body` or similar component,
+        there might be no parser at all.
 
     """
-    return getattr(request, '__dmr_parser__', None)
+    parser = getattr(request, '__dmr_parser__', None)
+    if parser is None and strict:
+        raise AttributeError('__dmr_parser__')
+    return parser
 
 
-def request_renderer(request: HttpRequest) -> Renderer | None:
+@overload
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: Literal[True],
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer: ...
+
+
+@overload
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer | None: ...
+
+
+def request_renderer(
+    request: HttpRequest,
+    *,
+    strict: bool = False,
+    use_nonstreaming_renderer: bool = False,
+) -> Renderer | None:
     """
-    Get parser used to parse this request.
+    Get pre-negotiated renderer.
+
+    First, tries a special ``__dmr_nonstreaming_renderer__`` case,
+    which will be different for ``streaming`` responses.
+    For example: for SSE controllers ``__dmr_nonstreaming_renderer__``
+    will be just ``json`` or ``xml``.
+    It is not used for REST endpoints.
+
+    While ``__dmr_renderer__`` will be whatever ``Accept`` header
+    contains as the first value.
+
+    When *strict* is passed and *request* has no renderer,
+    we raise :exc:`AttributeError`.
 
     .. note::
 
-        Since request rendering is only used when using raw endpoints,
-        there might be no request renderer. Also, renderer is chosen late
-        in the life-cycle of the request handling, so there might not be
-        a request renderer *yet*.
+        There might not be a response renderer that fits what client has asked.
+        So, it can return ``None``.
 
     """
-    return getattr(request, '__dmr_renderer__', None)
+    if use_nonstreaming_renderer:
+        # There can be a separate non stream response renderer negotiated
+        # for streaming response.
+        nonstreaming_renderer = getattr(
+            request,
+            '__dmr_nonstreaming_renderer__',
+            None,
+        )
+        if nonstreaming_renderer is not None:
+            return nonstreaming_renderer  # type: ignore[no-any-return]
+
+    # Fallback to the default one:
+    renderer = getattr(request, '__dmr_renderer__', None)
+    if renderer is None and strict:
+        raise AttributeError('__dmr_renderer__')
+    return renderer
 
 
 @final
@@ -189,7 +310,11 @@ class ContentType(enum.StrEnum):
         xml: ``'application/xml'`` format.
         x_www_form_urlencoded: ``'application/x-www-form-urlencoded'`` format.
         multipart_form_data: ``'multipart/form-data'`` format.
-        event_stream: ``'text/event-stream'`` format for SSE.
+        msgpack: ``'application/msgpack'`` format.
+        event_stream: ``'text/event-stream'`` format for SSE streaming.
+        jsonl: ``'application/jsonl'`` format for JSON Lines streaming.
+        json_problem_details: ``'application/problem+json'`` format
+            for RFC 9457.
 
     """
 
@@ -197,11 +322,14 @@ class ContentType(enum.StrEnum):
     xml = 'application/xml'
     x_www_form_urlencoded = 'application/x-www-form-urlencoded'
     multipart_form_data = 'multipart/form-data'
+    msgpack = 'application/msgpack'
     event_stream = 'text/event-stream'
+    jsonl = 'application/jsonl'
+    json_problem_details = 'application/problem+json'
 
 
 def conditional_type(
-    mapping: Mapping[ContentType, Any],
+    mapping: Mapping[str | ContentType, Any],
 ) -> _ConditionalType:
     """
     Create conditional validation for different content types.
@@ -216,11 +344,12 @@ def conditional_type(
             'conditional_type must be called with a mapping of length >= 2, '
             f'got {mapping}',
         )
-    return _ConditionalType(tuple(mapping.items()))
+    return _ConditionalType(mapping)
 
 
 def get_conditional_types(
     model: Any,
+    model_meta: tuple[Any, ...],
 ) -> Mapping[str, Any] | None:
     """
     Returns possible conditional types.
@@ -228,7 +357,15 @@ def get_conditional_types(
     Conditional types are defined with :data:`typing.Annotated`
     and :func:`dmr.negotiation.conditional_type` helper.
     """
-    metadata = get_annotated_metadata(model, _ConditionalType)
+    metadata = get_annotated_metadata(model, model_meta, _ConditionalType)
     if metadata:
         return metadata.computed
     return None
+
+
+def accepts(request: HttpRequest, content_type: str) -> bool:
+    """Determine whether this *request* accepts a given *content_type*."""
+    renderer = request_renderer(request)
+    # TODO: refactor after
+    # https://github.com/wemake-services/django-modern-rest/pull/854
+    return renderer is not None and renderer.content_type == content_type

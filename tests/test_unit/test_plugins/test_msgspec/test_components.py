@@ -12,11 +12,7 @@ except ImportError:  # pragma: no cover
 from django.http import HttpResponse
 from faker import Faker
 
-from dmr import (
-    Controller,
-    Headers,
-    Query,
-)
+from dmr import Controller, Headers, Query
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRRequestFactory
 
@@ -32,14 +28,14 @@ class _QueryModel(msgspec.Struct):
 
 
 @final
-class _ComponentController(
-    Controller[MsgspecSerializer],
-    Headers[_HeadersModel],
-    Query[_QueryModel],
-):
-    def get(self) -> str:
-        first_name = self.parsed_headers.first_name
-        last_name = self.parsed_query.last_name
+class _ComponentController(Controller[MsgspecSerializer]):
+    def get(
+        self,
+        parsed_headers: Headers[_HeadersModel],
+        parsed_query: Query[_QueryModel],
+    ) -> str:
+        first_name = parsed_headers.first_name
+        last_name = parsed_query.last_name
         return f'{first_name} {last_name}'
 
 
@@ -75,10 +71,12 @@ class _ForceListQuery(msgspec.Struct):
 @final
 class _QueryListController(
     Controller[MsgspecSerializer],
-    Query[_ForceListQuery],
 ):
-    def get(self) -> str:
-        return ' '.join([self.parsed_query.regular, *self.parsed_query.query])
+    def get(
+        self,
+        parsed_query: Query[_ForceListQuery],
+    ) -> str:
+        return ' '.join([parsed_query.regular, *parsed_query.query])
 
 
 def test_msgspec_force_list_query(

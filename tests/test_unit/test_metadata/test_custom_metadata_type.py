@@ -7,13 +7,7 @@ from django.http import HttpResponse
 from django.middleware.csrf import get_token
 from typing_extensions import override
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpecProvider
 from dmr.plugins.pydantic import PydanticSerializer
@@ -23,7 +17,7 @@ from dmr.test import DMRRequestFactory
 
 class _NoExtrasMetadata(EndpointMetadata):
     @override
-    def response_spec_providers(self) -> list[type[ResponseSpecProvider]]:
+    def response_spec_providers(self) -> list[ResponseSpecProvider]:
         return []  # do not add any extra specs
 
 
@@ -33,20 +27,19 @@ class _NoExtrasEndpoint(Endpoint):
 
 class _NoExtrasController(
     Controller[PydanticSerializer],
-    Body[dict[str, str]],
 ):
     auth = (DjangoSessionSyncAuth(),)
     endpoint_cls = _NoExtrasEndpoint
 
     @validate(ResponseSpec(return_type=str, status_code=HTTPStatus.OK))
-    def post(self) -> HttpResponse:
+    def post(self, parsed_body: Body[dict[str, str]]) -> HttpResponse:
         return HttpResponse(b'"abc"', content_type='application/json')
 
-    def put(self) -> str:
+    def put(self, parsed_body: Body[dict[str, str]]) -> str:
         return 'abc'
 
     @modify()
-    def patch(self) -> str:
+    def patch(self, parsed_body: Body[dict[str, str]]) -> str:
         return 'abc'
 
 

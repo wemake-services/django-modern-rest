@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         Server,
     )
     from dmr.security.base import AsyncAuth, SyncAuth
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
@@ -39,11 +40,14 @@ class _BasePayload:
     # Common fields:
     validate_responses: bool | None = None
     semantic_responses: bool | None = None
+    exclude_semantic_responses: Set[HTTPStatus] | None = None
+    validate_events: bool | None = None
     error_handler: SyncErrorHandler | AsyncErrorHandler | None = None
     no_validate_http_spec: Set[HttpSpec] | None = None
     parsers: Sequence[Parser] | None = None
     renderers: Sequence[Renderer] | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
+    throttling: Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | None = ()
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

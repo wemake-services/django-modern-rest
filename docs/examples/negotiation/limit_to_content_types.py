@@ -13,7 +13,7 @@ class _QueryModel(pydantic.BaseModel):
     show_error: bool = False
 
 
-class ExampleController(Controller[PydanticSerializer], Query[_QueryModel]):
+class ExampleController(Controller[PydanticSerializer]):
     parsers = (MsgspecJsonParser(), XmlParser())
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
     responses = (
@@ -29,9 +29,9 @@ class ExampleController(Controller[PydanticSerializer], Query[_QueryModel]):
         ),
     )
 
-    def get(self) -> str:
+    def get(self, parsed_query: Query[_QueryModel]) -> str:
         if self.request.accepts(ContentType.json):
-            if self.parsed_query.show_error:
+            if parsed_query.show_error:
                 # This is explicitly wrong:
                 # `PAYMENT_REQUIRED` cannot happen with `json`,
                 # response validation will catch this:
@@ -43,6 +43,7 @@ class ExampleController(Controller[PydanticSerializer], Query[_QueryModel]):
         )
 
 
-# run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/json"}, "fail-with-body": false}  # noqa: E501, ERA001
-# run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/xml"}, "fail-with-body": false}  # noqa: E501, ERA001
-# run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/json"}, "query": "?show_error=1", "curl_args": ["-D", "-"], "fail-with-body": false}  # noqa: E501, ERA001
+# run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/json"}, "assert-error-text": "wrong", "fail-with-body": false}  # noqa: E501, ERA001
+# run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/xml"}, "assert-error-text": "wrong", "fail-with-body": false}  # noqa: E501, ERA001
+# run: {"controller": "ExampleController", "method": "get", "url": "/api/example/", "headers": {"Accept": "application/json"}, "query": "?show_error=1", "curl_args": ["-D", "-"], "assert-error-text": "value_error", "fail-with-body": false}  # noqa: E501, ERA001
+# openapi: {"controller": "ExampleController", "openapi_url": "/docs/openapi.json"}  # noqa: ERA001, E501

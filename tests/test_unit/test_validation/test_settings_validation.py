@@ -37,15 +37,16 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'parsers': [1]},
         {'renderers': [None]},
         {'auth': ['auth']},
+        {'throttling': ['throttling']},
         {'responses': [{}]},
         {'openapi_config': []},
         {'global_error_handler': None},
+        {'exclude_semantic_responses': 1},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)
 def test_wrong_settings_validation(
     settings: LazySettings,
-    dmr_clean_settings: None,
     *,
     dmr_settings: dict[str, Any],
     serializer: type[BaseSerializer],
@@ -63,15 +64,19 @@ def test_wrong_settings_validation(
 @pytest.mark.parametrize(
     'dmr_settings',
     [
-        # Structure:
+        # Extras:
         {},
         {'extra': True},
+        # Values:
+        {'no_validate_http_spec': set()},
+        {'no_validate_http_spec': frozenset()},
+        {'exclude_semantic_responses': set()},
+        {'exclude_semantic_responses': frozenset()},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)
 def test_correct_settings_validation(
     settings: LazySettings,
-    dmr_clean_settings: None,
     *,
     dmr_settings: dict[str, Any],
     serializer: type[BaseSerializer],

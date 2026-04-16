@@ -48,16 +48,15 @@ class _UserResponseModel(_UserModel):
 
 class _UserController(
     Controller[MsgspecSerializer],
-    Body[_UserModel],
 ):
-    def post(self) -> _UserResponseModel:
+    def post(self, parsed_body: Body[_UserModel]) -> _UserResponseModel:
         return _UserResponseModel(
             uid=uuid.uuid4(),
             status=_UserStatus.active,
-            email=self.parsed_body.email,
-            first_name=self.parsed_body.first_name,
-            last_name=self.parsed_body.last_name,
-            age=self.parsed_body.age,
+            email=parsed_body.email,
+            first_name=parsed_body.first_name,
+            last_name=parsed_body.last_name,
+            age=parsed_body.age,
         )
 
 
@@ -84,10 +83,7 @@ def test_correct_serializer(
     }
 
 
-def test_missing_fields(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
+def test_missing_fields(dmr_rf: DMRRequestFactory) -> None:
     """Ensures the missing fields raise."""
     request = dmr_rf.post('/whatever/', data={})
     response = _UserController.as_view()(request)
@@ -132,14 +128,14 @@ def test_wrong_types_serializer(
     })
 
 
-def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is correct for authed and cookies controller."""
+def test_attrs_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for attrs controller."""
     assert (
         json.dumps(
             build_schema(
                 Router(
                     'api/',
-                    [path('/cookies', _UserController.as_view())],
+                    [path('/attrs', _UserController.as_view())],
                 ),
             ).convert(),
             indent=2,

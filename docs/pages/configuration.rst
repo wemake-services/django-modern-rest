@@ -177,7 +177,7 @@ Response handling
   .. note::
 
     You can also switch off this validation per-controller
-    with :attr:`~dmr.controller.Blueprint.validate_responses`
+    with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.
@@ -204,6 +204,29 @@ Response handling
 
     >>> DMR_SETTINGS = {Settings.semantic_responses: False}
 
+.. data:: dmr.settings.Settings.exclude_semantic_responses
+
+  Default: ``frozenset()``
+
+  Pass any status code, that you wanna exclude from semantic responses.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from http import HTTPStatus
+
+    >> DMR_SETTINGS = {
+    ...    Settings.exclude_semantic_responses: {
+    ...        HTTPStatus.CONFLICT,
+    ...    },
+    ... }
+
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``exclude_semantic_responses=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all responses back again.
+
 
 Error handling
 --------------
@@ -214,7 +237,7 @@ Error handling
 
   Globally handle all errors in the application.
   You can use real object or string path for the object to be imported.
-  Here's our error handling hieracy:
+  Here's our error handling hierarchy:
 
   1. Per-endpoint with
      :meth:`~dmr.endpoint.Endpoint.handle_error`
@@ -257,9 +280,30 @@ Authentication
 
   All auth types must be importable in settings.
 
-  .. note::
 
-    All auth classes must support initialization without parameters.
+Throttling
+----------
+
+.. data:: dmr.settings.Settings.throttling
+
+  Default: ``[]``
+
+  Configure throttling rules for the whole API.
+
+  To enable throttling for all endpoints you can use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from dmr.throttling import SyncThrottle, Rate
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.throttling: [
+    ...         SyncThrottle(10, Rate.second),
+    ...     ],
+    ... }
+
+  All throttle types must be importable in settings.
 
 
 HTTP Spec validation
@@ -285,10 +329,37 @@ HTTP Spec validation
     ...     },
     ... }
 
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``no_validate_http_spec=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all validation back again.
+
 
 .. autoclass:: dmr.settings.HttpSpec
   :show-inheritance:
   :members:
+
+
+Streaming
+---------
+
+.. data:: dmr.settings.Settings.validate_events
+
+  Default: ``None``
+
+  Should we validate the events in all streams?
+  Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
+  for convenience if this value is ``None``.
+
+  To disable the event validation globally, use:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.validate_events: False,
+    ... }
 
 
 OpenAPI
@@ -307,7 +378,6 @@ OpenAPI
   .. code-block:: python
     :caption: settings.py
 
-    >>> from dmr.settings import HttpSpec
     >>> from dmr.openapi.config import OpenAPIConfig
 
     >>> DMR_SETTINGS = {
@@ -354,6 +424,7 @@ OpenAPI
   - ``swagger``: base URL to ``swagger-ui-dist`` (without file name)
   - ``redoc``: full URL to ``redoc.standalone.js``
   - ``scalar``: full URL to ``@scalar/api-reference`` standalone bundle
+  - ``stoplight``: base URL to ``@stoplight/elements`` (without file name)
 
   You can also modify the exact versions that we use for each tool this way.
 
@@ -365,6 +436,7 @@ OpenAPI
     ...         'swagger': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.1',
     ...         'redoc': 'https://cdn.redoc.ly/redoc/2.5.2/bundles/redoc.standalone.js',
     ...         'scalar': 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.49.2/dist/browser/standalone.js',
+    ...         'stoplight': 'https://unpkg.com/@stoplight/elements@9.0.16',
     ...     },
     ... }
 
@@ -383,8 +455,8 @@ Hacks
 
   Some parsers like :class:`~dmr.parsers.MultiPartParser`
   require ``.POST`` and ``.FILES`` to be set to work with
-  :class:`~dmr.components.Body`
-  and :class:`~dmr.components.FileMetadata`.
+  :data:`~dmr.components.Body`
+  and :data:`~dmr.components.FileMetadata`.
 
   However, we build REST APIs where more methods are in use, not just ``POST``.
   So, we use this setting to populate ``.POST`` and ``.FILES``
@@ -416,6 +488,17 @@ Environment variables
   You can control the size / memory usage with this setting.
 
   Increase if you have a lot of different return types.
+
+.. envvar:: DMR_USE_COMPILED
+
+  Default: ``1``
+
+  We compile some modules to C-extensions with :ref:`mypyc`.
+  If you want to disable the extensions and fallback to pure Python
+  implementation, set this variable to ``0``.
+
+  It is only recommended for debugging.
+  It should be set to ``1`` in production for maximum speed.
 
 
 API Reference

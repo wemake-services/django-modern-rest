@@ -2,10 +2,7 @@ import pytest
 from inline_snapshot import snapshot
 
 from dmr.openapi.objects import SecurityScheme
-from dmr.security.http import (
-    HttpBasicAsyncAuth,
-    HttpBasicSyncAuth,
-)
+from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])

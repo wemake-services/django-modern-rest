@@ -1,13 +1,12 @@
 import abc
-import json
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from django.core.serializers.json import DjangoJSONEncoder
 from typing_extensions import override
 
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
+from dmr.internal.json import JsonModule, NativeJson
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.parsers import (
     JsonParser,
@@ -36,6 +35,9 @@ class Renderer(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
+    streaming: ClassVar[bool] = False
+    """Whether or not this renderer is used for streaming responses."""
+
     @abc.abstractmethod
     def render(
         self,
@@ -58,9 +60,8 @@ class Renderer(ResponseSpecProvider):
         raise NotImplementedError
 
     @override
-    @classmethod
     def provide_response_specs(
-        cls,
+        self,
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
@@ -68,7 +69,7 @@ class Renderer(ResponseSpecProvider):
         """Provides responses that can happen when data can't be rendered."""
         # This is technically not renderer's response, but it is the closest.
         response_validation = (
-            cls._add_new_response(
+            self._add_new_response(
                 ResponseSpec(
                     return_type=controller_cls.error_model,
                     status_code=ResponseSchemaError.status_code,
@@ -85,7 +86,7 @@ class Renderer(ResponseSpecProvider):
         )
         return [
             *response_validation,
-            *cls._add_new_response(
+            *self._add_new_response(
                 # When we face wrong `Accept` header, we raise 406 error:
                 ResponseSpec(
                     return_type=controller_cls.error_model,
@@ -100,26 +101,6 @@ class Renderer(ResponseSpecProvider):
         ]
 
 
-class _DMREncoder(DjangoJSONEncoder):
-    def __init__(
-        self,
-        *args: Any,
-        serializer_hook: Callable[[Any], Any] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self._serializer_hook = serializer_hook
-
-    @override
-    def default(self, o: Any) -> Any:  # noqa: WPS111
-        try:
-            return super().default(o)
-        except TypeError:
-            if self._serializer_hook:
-                return self._serializer_hook(o)
-            raise
-
-
 class JsonRenderer(Renderer):
     """
     Fallback implementation of a json renderer.
@@ -132,19 +113,28 @@ class JsonRenderer(Renderer):
         It is slow and has less features.
         We won't add any complex objects support to this renderer.
 
+    Alternative ``json`` implementations can be provided.
+    See :ref:`alternative-json` for more info.
     """
 
-    __slots__ = ('_encoder_cls',)
-
-    content_type = 'application/json'
-    """Works with ``json`` only."""
+    __slots__ = (
+        '_json_module',
+        'content_type',
+    )
 
     def __init__(
         self,
-        encoder_cls: type[DjangoJSONEncoder] = _DMREncoder,
+        content_type: str = 'application/json',
+        *,
+        json_module: JsonModule = NativeJson,
     ) -> None:
         """Init the renderer with all defaults."""
-        self._encoder_cls = encoder_cls
+        self.content_type = content_type
+        self._json_module = json_module
+        # Sanity check:
+        assert self._json_module.dumps, (  # type: ignore[truthy-function]  # noqa: S101
+            'Passed json module does not have `.dumps` method'
+        )
 
     @override
     def render(
@@ -161,21 +151,18 @@ class JsonRenderer(Renderer):
 
         Returns:
             JSON as bytes.
+
         """
         # msgspec returns `bytes`, we prefer to use `bytes` by default
         # and not to create extra strings when not needed in "fast" mode.
         # We don't really care about raw json implementation. It is a fallback.
-        return json.dumps(
-            to_serialize,
-            cls=self._encoder_cls,
-            serializer_hook=serializer_hook,
-        ).encode('utf8')
+        return self._json_module.dumps(to_serialize, default=serializer_hook)
 
     @property
     @override
     def validation_parser(self) -> JsonParser:
         """Regular json parser can parse this."""
-        return JsonParser()
+        return JsonParser(json_module=self._json_module)
 
 
 class FileRenderer(Renderer):

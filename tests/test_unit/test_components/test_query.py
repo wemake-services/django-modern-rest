@@ -22,10 +22,9 @@ class _ForceListQuery(pydantic.BaseModel):
 @final
 class _QueryListController(
     Controller[PydanticSerializer],
-    Query[_ForceListQuery],
 ):
-    def get(self) -> str:
-        return ' '.join([self.parsed_query.regular, *self.parsed_query.query])
+    def get(self, parsed_query: Query[_ForceListQuery]) -> str:
+        return ' '.join([parsed_query.regular, *parsed_query.query])
 
 
 def test_force_list_multiple(
@@ -58,10 +57,9 @@ class _ForceListAllowEmpty(pydantic.BaseModel):
 @final
 class _QueryListEmptyController(
     Controller[PydanticSerializer],
-    Query[_ForceListAllowEmpty],
 ):
-    def get(self) -> str:
-        return ' '.join([self.parsed_query.regular, *self.parsed_query.query])
+    def get(self, parsed_query: Query[_ForceListAllowEmpty]) -> str:
+        return ' '.join([parsed_query.regular, *parsed_query.query])
 
 
 def test_force_list_zero(
@@ -90,10 +88,9 @@ class _TrimQuery(pydantic.BaseModel):
 @final
 class _TrimQueryController(
     Controller[PydanticSerializer],
-    Query[_TrimQuery],
 ):
-    def get(self) -> str:
-        return self.parsed_query.query
+    def get(self, parsed_query: Query[_TrimQuery]) -> str:
+        return parsed_query.query
 
 
 def test_trim_query(
@@ -130,19 +127,23 @@ class _EnableCastNullQuery(pydantic.BaseModel):
 @final
 class _DefaultCastNullController(
     Controller[PydanticSerializer],
-    Query[_DefaultCastNullQuery],
 ):
-    def get(self) -> _DefaultCastNullQuery:
-        return self.parsed_query
+    def get(
+        self,
+        parsed_query: Query[_DefaultCastNullQuery],
+    ) -> _DefaultCastNullQuery:
+        return parsed_query
 
 
 @final
 class _EnableCastNullController(
     Controller[PydanticSerializer],
-    Query[_EnableCastNullQuery],
 ):
-    def get(self) -> _EnableCastNullQuery:
-        return self.parsed_query
+    def get(
+        self,
+        parsed_query: Query[_EnableCastNullQuery],
+    ) -> _EnableCastNullQuery:
+        return parsed_query
 
 
 @pytest.mark.parametrize(

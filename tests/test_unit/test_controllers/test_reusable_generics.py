@@ -1,17 +1,16 @@
 import sys
 import textwrap
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 import pydantic
 import pytest
 
-from dmr import Blueprint, Body, Controller
+from dmr import Body, Controller
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import compose_blueprints
 from dmr.serializer import BaseSerializer
 
-_SerializerT = TypeVar('_SerializerT', bound=type[BaseSerializer])
+_SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 _ModelT = TypeVar('_ModelT')
 _OtherT = TypeVar('_OtherT')
 _ExtraT = TypeVar('_ExtraT')
@@ -21,25 +20,18 @@ class _BodyModel(pydantic.BaseModel):
     user: str
 
 
-@pytest.mark.parametrize(
-    'generic_type',
-    [
-        [],
-        [Generic[_SerializerT, _ModelT]],  # type: ignore[index]
-    ],
-)
-def test_several_layers(generic_type: list[Any]) -> None:
+def test_several_layers() -> None:
     """Ensure that we can support reusable generic controllers."""
 
     class _RegularType:
         """Is only needed for extra complexity."""
 
     class _BaseController(
-        Controller[_SerializerT],  # type: ignore[type-var]
-        Body[_ModelT],
-        *generic_type,  # type: ignore[misc]  # noqa: WPS606
+        Controller[_SerializerT],
+        Generic[_SerializerT, _ModelT],
     ):
-        """Intermediate controller type."""
+        def post(self, parsed_body: Body[_ModelT]) -> str:
+            raise NotImplementedError
 
     assert _BaseController.is_abstract
 
@@ -52,16 +44,15 @@ def test_several_layers(generic_type: list[Any]) -> None:
     assert ReusableController.is_abstract
 
     class OurController(
-        ReusableController[PydanticSerializer, _BodyModel],  # type: ignore[type-var]
+        ReusableController[PydanticSerializer, _BodyModel],
     ):
-        def post(self) -> str:
-            raise NotImplementedError
+        """Intermediate level."""
 
     assert not OurController.is_abstract
     assert OurController.serializer is PydanticSerializer
     metadata = OurController.api_endpoints['POST'].metadata
     assert len(metadata.component_parsers) == 1
-    assert metadata.component_parsers[0][1] == (_BodyModel,)
+    assert metadata.component_parsers[0][1] == _BodyModel
 
     class ReusableWithExtraType(
         _BaseController[_SerializerT, _ModelT],
@@ -72,71 +63,31 @@ def test_several_layers(generic_type: list[Any]) -> None:
         """Adding extra type vars just for the complexity."""
 
     class FinalController(
-        ReusableWithExtraType[PydanticSerializer, str, _BodyModel],  # type: ignore[type-var]
+        ReusableWithExtraType[PydanticSerializer, str, _BodyModel],
     ):
-        def post(self) -> str:
-            raise NotImplementedError
+        """Final level."""
 
     assert not FinalController.is_abstract
     assert FinalController.serializer is PydanticSerializer
     metadata = FinalController.api_endpoints['POST'].metadata
     assert len(metadata.component_parsers) == 1
-    assert metadata.component_parsers[0][1] == (_BodyModel,)
-
-
-def test_generic_blueprint() -> None:
-    """Ensure that we can use reusable generic blueprints."""
-
-    class _ReusableBlueprint(
-        Blueprint[_SerializerT],  # type: ignore[type-var]
-        Body[_ModelT],
-    ):
-        """Base blueprint to be reused."""
-
-    assert _ReusableBlueprint.is_abstract
-
-    class _ImplementedBlueprint(
-        _ReusableBlueprint[_SerializerT, _OtherT],
-    ):
-        def post(self) -> str:
-            raise NotImplementedError
-
-    assert _ImplementedBlueprint.is_abstract
-
-    class ExposedBlueprint(
-        _ImplementedBlueprint[_ExtraT, _BodyModel],  # type: ignore[type-var]
-    ):
-        """Does nothing, just messes up some type vars."""
-
-    assert ExposedBlueprint.is_abstract
-
-    class OurBlueprint(ExposedBlueprint[PydanticSerializer]):
-        """Ready to be used."""
-
-    assert not OurBlueprint.is_abstract
-    assert OurBlueprint.serializer is PydanticSerializer
-    controller = compose_blueprints(OurBlueprint)
-    metadata = controller.api_endpoints['POST'].metadata
-    assert len(metadata.component_parsers) == 1
-    assert metadata.component_parsers[0][1] == (_BodyModel,)
+    assert metadata.component_parsers[0][1] == _BodyModel
 
 
 def test_generic_parser_in_concrete_controller() -> None:
     """Ensure that we can't have generic parsers in concrente controllers."""
 
     class _BaseController(
-        Controller[_SerializerT],  # type: ignore[type-var]
-        Body[_ModelT],
+        Controller[_SerializerT],
+        Generic[_SerializerT, _ModelT],
     ):
-        """Intermediate controller type."""
+        def post(self, parsed_body: Body[_ModelT]) -> str:
+            raise NotImplementedError
 
     with pytest.raises(UnsolvableAnnotationsError, match='must be concrete'):
 
-        class ConcreteController(
-            _BaseController[PydanticSerializer, _ModelT],  # type: ignore[type-var]
-        ):
-            def post(self) -> str:
-                raise NotImplementedError
+        class ConcreteController(_BaseController[PydanticSerializer, _ModelT]):
+            """Must raise."""
 
 
 @pytest.mark.skipif(
@@ -153,8 +104,9 @@ def test_pep695_type_params() -> None:  # pragma: no cover
             """
             class _BaseController[_S: BaseSerializer, _M](
                 Controller[_S],
-                Body[_M],
-            ): ...
+            ):
+                def post(self, parsed_body: Body[_M]) -> str:
+                    ...
             """,
         ),
         ns,
@@ -175,9 +127,7 @@ def test_pep695_type_params() -> None:  # pragma: no cover
             """
             class OurController(
                 ReusableController[PydanticSerializer, _BodyModel],
-            ):
-                def post(self) -> str:
-                    raise NotImplementedError
+            ): ...
             """,
         ),
         ns,
@@ -188,4 +138,4 @@ def test_pep695_type_params() -> None:  # pragma: no cover
     assert controller.serializer is PydanticSerializer
     metadata = controller.api_endpoints['POST'].metadata
     assert len(metadata.component_parsers) == 1
-    assert metadata.component_parsers[0][1] == (_BodyModel,)
+    assert metadata.component_parsers[0][1] == _BodyModel

@@ -5,74 +5,21 @@ Our :term:`Controller` is built without knowing anything
 about its future URL. Why so?
 
 1. Because Django already has an amazing URL
-   `routing system <https://docs.djangoproject.com/en/5.2/topics/http/urls/>`_
+   `routing system <https://docs.djangoproject.com/en/stable/topics/http/urls/>`_
    and we don't need to duplicate it
 2. Because all controllers might be used in multiple URLs,
-   for example in ``api/v1`` and ``api/v2``. Our way allows any customizations
+   for example in ``/api/v1/`` and ``/api/v2/``.
+   Our design allows any possible customizations
 
-To register a controller what you do is:
-
-So, how do you compose different controllers with different parsing
-behaviours into a single URL? For this we use
-:func:`~dmr.routing.compose_blueprints` function:
-
-.. literalinclude:: /examples/routing/blueprints.py
-  :caption: urls.py
+.. literalinclude:: /examples/getting_started/urls.py
+  :caption: views.py
   :language: python
   :linenos:
 
 .. note::
 
   If you want to parse path parameters, see :doc:`components/path`
-  and :class:`dmr.components.Path`.
-
-However, there are several rules (and validation errors)
-attached to this behaviour:
-
-1. Controllers to be composed can't have duplicate endpoints, otherwise,
-   it would be not clear which endpoint from which controller needs to called.
-   This includes :ref:`meta <meta>` method for ``OPTION`` HTTP calls as well
-2. All controllers have to be either sync or async,
-   otherwise it would be hard to run them
-3. Controllers must have the same :term:`serializer`,
-   because otherwise parsing can probably error out
-4. Controllers to be composed must have at least one endpoint
-
-Controllers in ``django-modern-rest`` are not built
-to be extended, but composed from blueprints!
-
-
-.. _composed-meta:
-
-Handling meta endpoint
-----------------------
-
-When using :func:`~dmr.routing.compose_blueprints`,
-duplicate ``meta`` methods will be a import-time error. To solve this,
-remove ``meta`` method from individual controllers
-and use ``meta_mixin=`` keyword parameter to ``compose_blueprints``.
-
-Example:
-
-.. code:: python
-
-  from dmr import AsyncMetaMixin
-
-  composed = compose_blueprints(
-      UserPut,
-      UserPatch,
-      # If controllers are sync, use `MetaMixin`
-      meta_mixin=AsyncMetaMixin,
-  )
-
-This will create an ``async def meta`` endpoint in the composed controller.
-All methods from ``UserPut`` and ``UserPatch`` will be listed
-in the response's ``Allow`` header.
-
-.. warning::
-
-  As usually, we validate that the resulting ``Controller``
-  won't have a mix of sync and async endpoints.
+  and :data:`dmr.components.Path`.
 
 
 Handling 404 errors
@@ -91,7 +38,7 @@ But, we still want HTML 404 pages for non API views.
   while ``DEBUG = True`` is set.
 
   This is how Django behaves:
-  https://docs.djangoproject.com/en/6.0/ref/views/#the-404-page-not-found-view
+  https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
 To achieve this, you can use
 :func:`~dmr.routing.build_404_handler` helper.
@@ -100,7 +47,7 @@ prefixes (using the same serializer and renderers as your API), and falls back
 to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``
-(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/6.0/ref/settings/#root-urlconf>`_):
+(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf>`_):
 
 .. literalinclude:: /examples/routing/handler404.py
   :caption: urls.py
@@ -108,7 +55,7 @@ Here is how you can use it in your root ``urls.py``
   :linenos:
 
 This returns json responses for ``api/`` prefixed paths.
-But, will still return html responses for any other path.
+But, will still return regular Django HTML responses for any other path.
 
 
 .. _handler500:
@@ -129,7 +76,7 @@ But, we still want HTML 500 pages for non API views.
   while ``DEBUG = True`` is set.
 
   This is how Django behaves:
-  https://docs.djangoproject.com/en/6.0/ref/views/#the-500-server-error-view
+  https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
 To achieve this, you can use
 :func:`~dmr.routing.build_500_handler` helper.
@@ -138,7 +85,7 @@ prefixes (using the same serializer and renderers as your API), and falls back
 to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``
-(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/6.0/ref/settings/#root-urlconf>`_):
+(in your `ROOT_URLCONF <https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf>`_):
 
 .. literalinclude:: /examples/routing/handler500.py
   :caption: views.py
