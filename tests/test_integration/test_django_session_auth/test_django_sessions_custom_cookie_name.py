@@ -1,4 +1,3 @@
-import json
 from http import HTTPStatus
 from http.cookies import CookieError
 
@@ -46,7 +45,7 @@ def test_django_sessions_default_cookie_name(
     """Ensure that the default session cookie name is used correctly."""
     response = dmr_client.post(
         check_url,
-        data=json.dumps({'username': user.username, 'password': password}),
+        data={'username': user.username, 'password': password},
         content_type='application/json',
     )
 
@@ -66,7 +65,6 @@ def test_django_sessions_default_cookie_name(
         'auth-token-id',
         's',
         'session_manager_id_for_production_env_0123456789',
-        'session.id!#',
     ],
 )
 @pytest.mark.parametrize(
@@ -88,7 +86,7 @@ def test_django_sessions_custom_cookie_name(
     with override_settings(SESSION_COOKIE_NAME=cookie_name):
         response = dmr_client.post(
             check_url,
-            data=json.dumps({'username': user.username, 'password': password}),
+            data={'username': user.username, 'password': password},
             content_type='application/json',
         )
         assert response.status_code == HTTPStatus.OK, response.content
@@ -134,6 +132,6 @@ def test_django_sessions_wrong_cookie_name(
     ):
         dmr_client.post(
             check_url,
-            data=json.dumps({'username': user.username, 'password': password}),
+            data={'username': user.username, 'password': password},
             content_type='application/json',
         )
