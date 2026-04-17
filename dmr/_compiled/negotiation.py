@@ -174,7 +174,7 @@ class _MediaTypeHeader:
         subtype = subtype if self.subtype == '*' else self.subtype
         return f'{maintype}/{subtype}{self.params_str}'
 
-    @property  # don't use cached_propery since it's accesses only once
+    @property  # don't use cached_property since it's accessed only once
     def priority(self) -> tuple[int, int]:  # noqa: WPS231
         # Use fixed point values with two decimals to avoid problems
         # when comparing float values
