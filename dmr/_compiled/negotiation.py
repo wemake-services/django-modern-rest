@@ -22,7 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+# flake8: noqa: WPS232, WPS402
 import re
 from collections.abc import Iterable
 from typing import Final, final
@@ -64,19 +64,27 @@ def accepted_type(  # noqa: C901, WPS231
             key=lambda media: media.priority,
             reverse=True,
         )
+        for accepted in accepted_types:
+            for provided in types:
+                if provided.match(accepted):
+                    # Return the accepted type with wildcards replaced
+                    # by concrete parts from the provided type:
+                    return provided.as_string(
+                        accepted.maintype,
+                        accepted.subtype,
+                    )
     else:
-        accepted_types = [_MediaTypeHeader(accept_value)]
-
-    for accepted in accepted_types:
+        accepted = _MediaTypeHeader(accept_value)
         for provided in types:
-            if provided.match(accepted):
+            if provided.match(accepted):  # noqa: WPS441
                 # Return the accepted type with wildcards replaced
                 # by concrete parts from the provided type:
-                return provided.as_string(accepted.maintype, accepted.subtype)
+                return provided.as_string(accepted.maintype, accepted.subtype)  # noqa: WPS441
+
     return None
 
 
-def accepted_header(accept_value: str, media_type: str) -> bool:
+def accepted_header(accept_value: str, media_type: str) -> bool:  # noqa: C901, WPS231
     """
     Does the client accept a response in the given media type?
 
@@ -115,6 +123,8 @@ def accepted_header(accept_value: str, media_type: str) -> bool:
 
     if ',' in accept_value:
         for typ in accept_value.split(','):
+            if not typ:
+                continue
             if provided.match(_MediaTypeHeader(typ)):
                 return True
     elif provided.match(_MediaTypeHeader(accept_value)):
@@ -127,7 +137,7 @@ def accepted_header(accept_value: str, media_type: str) -> bool:
 class _MediaTypeHeader:
     """A helper class for ``Accept`` header parsing."""
 
-    __slots__ = ('maintype', 'params_str', 'priority', 'qparams', 'subtype')
+    __slots__ = ('maintype', 'params_str', 'qparams', 'subtype')
 
     def __init__(self, type_str: str) -> None:
         # preserve the original parameters, because the order might be
@@ -141,7 +151,6 @@ class _MediaTypeHeader:
         maintype, _, subtype = full_type.partition('/')
         self.maintype = maintype
         self.subtype = subtype
-        self.priority = self._get_priority()
 
     def match(self, other: '_MediaTypeHeader') -> bool:
         for key, param_value in self.qparams.items():
@@ -165,7 +174,8 @@ class _MediaTypeHeader:
         subtype = subtype if self.subtype == '*' else self.subtype
         return f'{maintype}/{subtype}{self.params_str}'
 
-    def _get_priority(self) -> tuple[int, int]:  # noqa: WPS231
+    @property  # don't use cached_propery since it's accesses only once
+    def priority(self) -> tuple[int, int]:  # noqa: WPS231
         # Use fixed point values with two decimals to avoid problems
         # when comparing float values
         quality = 100
