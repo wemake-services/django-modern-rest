@@ -23,10 +23,16 @@ of requirements for an API to count as public.
 ### Features
 
 - Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
+- Added `validate_negotiation` metadata flag, so we can explicitly validate,
+  that returned response followed the negotiation process, #711
 
 ### Bugfixes
 
-- Fixed that `itemSchema` was possible to be rendered in OpenAPI `3.1.0`
+- Fixed that `itemSchema` was possible to be rendered
+  in OpenAPI `3.0.0` and `3.1.0`, #908
+- Fixed response validation when global error handler returns
+  `HttpResponse` with a different content type than the negotiated
+  renderer, #711
 
 
 ## Version 0.7.0 (2026-04-14)
@@ -360,8 +366,6 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Fixed `SSE` controllers `__name__` and `__doc__` generation
   via `@sse` decorator, #700
 - Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
-- Fixed that we were using `typing.get_type_hints` in some places,
-  now always using `typing_extensions.get_type_hints`, #768
 
 ### Misc
 

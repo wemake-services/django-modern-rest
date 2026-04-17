@@ -46,6 +46,7 @@ class _BasePayload:
     no_validate_http_spec: Set[HttpSpec] | None = None
     parsers: Sequence[Parser] | None = None
     renderers: Sequence[Renderer] | None = None
+    validate_negotiation: bool | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
     throttling: Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | None = ()
 

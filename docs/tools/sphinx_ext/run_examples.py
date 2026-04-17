@@ -250,7 +250,7 @@ class _BaseBuilder:  # noqa: WPS214
         settings.configure(
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
-            DEBUG=True,  # NOTE: this must be `False`
+            DEBUG=False,  # NOTE: this must be `False`
             SECRET_KEY='dummy-key-for-examples',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',

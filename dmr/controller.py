@@ -95,6 +95,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         renderers: Sequence of renderers to be used for this controller
             to render response's body. All instances must be of subtypes
             of :class:`~dmr.renderers.Renderer`.
+        validate_negotiation: Should we validate that returned response's
+            ``Content-Type`` header matches the one
+            that we inferred in the negotiation process?
         auth: Sequence of auth instances to be used for this controller.
             Sync controllers must use instances
             of :class:`dmr.security.SyncAuth`.
@@ -152,6 +155,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     )
     parsers: ClassVar[Sequence[Parser]] = ()
     renderers: ClassVar[Sequence[Renderer]] = ()
+    validate_negotiation: ClassVar[bool | None] = None
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     throttling: ClassVar[
         Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None

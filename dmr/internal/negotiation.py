@@ -7,12 +7,17 @@ from django.http.response import HttpResponseBase
 from django.utils.translation import gettext_lazy as _
 
 from dmr.compiled import accepted_type
-from dmr.exceptions import NotAcceptableError
+from dmr.exceptions import NotAcceptableError, ResponseSchemaError
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
+
+_WRONG_NEGOTIATION_MSG: Final = _(
+    'Negotiated renderer {renderer_type} does not match'
+    ' returned content-type {content_type}',
+)
 
 _CANNOT_SERIALIZE_MSG: Final = _(
     'Cannot serialize response body with'
@@ -34,7 +39,7 @@ class ConditionalType:
     computed: Mapping[str, Any] = dataclasses.field(hash=False)
 
 
-def response_validation_negotiator(
+def negotiatiate_response_validation(
     request: HttpRequest,
     response: HttpResponseBase,
     renderer: 'Renderer | None',
@@ -47,21 +52,35 @@ def response_validation_negotiator(
     It should not be used in production directly.
     Think of it as an internal validation helper.
     """
-    parsers = metadata.parsers
-    if renderer is not None:
-        return renderer.validation_parser
-
     # `renderer` can be `None` when `Accept` header
     # is broken / missing / incorrect.
     # Then, we fallback to the types we know.
-    content_type = response.headers['Content-Type']
+    content_type = response.headers.get('Content-Type')
+    if renderer is not None:
+        if content_type is None or renderer.content_type == content_type:
+            return renderer.validation_parser
+
+        # If the content types do not match, we need to raise an error,
+        # most likely user made a mistake somewhere:
+        if (
+            renderer.content_type != content_type
+            and metadata.validate_negotiation
+            # Streaming responses have a different logic:
+            and not getattr(response, 'streaming', False)
+        ):
+            raise ResponseSchemaError(
+                _WRONG_NEGOTIATION_MSG.format(
+                    renderer_type=repr(renderer.content_type),
+                    content_type=repr(content_type),
+                ),
+            )
 
     # Our last resort is to get the default renderer type.
     # It is always present.
-    return parsers.get(
-        content_type,
+    return metadata.parsers.get(  # pyrefly: ignore[no-matching-overload]
+        content_type,  # type: ignore[arg-type]
         # If nothing works, fallback to the default parser:
-        next(iter(parsers.values())),
+        next(iter(metadata.parsers.values())),
     )
 
 

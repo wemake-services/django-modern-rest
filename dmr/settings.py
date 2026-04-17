@@ -55,6 +55,7 @@ class Settings(enum.StrEnum):
 
     parsers = 'parsers'
     renderers = 'renderers'
+    validate_negotiation = 'validate_negotiation'
     auth = 'auth'
     throttling = 'throttling'
     no_validate_http_spec = 'no_validate_http_spec'
@@ -104,6 +105,7 @@ class SettingsDict(TypedDict, total=False):
 
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
+    validate_negotiation: bool | None
     auth: Sequence['AsyncAuth | SyncAuth']
     throttling: Sequence['AsyncThrottle | SyncThrottle']
     no_validate_http_spec: Set[HttpSpec]
@@ -128,6 +130,8 @@ assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
+    # Defaults to the `validate_responses` setting if `None`:
+    Settings.validate_negotiation: None,
     Settings.auth: [],
     Settings.throttling: [],
     # OpenAPI settings:

@@ -9,7 +9,7 @@ from freezegun.api import FrozenDateTimeFactory
 from inline_snapshot import snapshot
 
 from dmr import Controller, ResponseSpec, modify, validate
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
@@ -18,6 +18,7 @@ from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
     PydanticSerializer,
+    PydanticFastSerializer,
 ]
 
 try:
