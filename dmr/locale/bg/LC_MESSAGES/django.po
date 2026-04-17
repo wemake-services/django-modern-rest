@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-12 14:30+0300\n"
+"POT-Creation-Date: 2026-04-17 08:59+0300\n"
 "PO-Revision-Date: 2026-04-08 12:00+0000\n"
 "Last-Translator: Nikolay Chillev\n"
 "Language-Team: Bulgarian\n"
@@ -17,7 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: dmr/components.py:54
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
@@ -26,7 +25,6 @@ msgstr ""
 "Пътят {cls} с field_model={field_model} не позволява неименувани параметри "
 "на пътя args={args}"
 
-#: dmr/components.py:59
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
@@ -35,24 +33,19 @@ msgstr ""
 "Опит за обработка на файлове с {parser_name}, който не поддържа протокола "
 "SupportsFileParsing"
 
-#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "Методът {method} не е позволен, позволени: {allowed}"
 
-#: dmr/exceptions.py:10
 msgid "Not authenticated"
 msgstr "Не сте автентикирани"
 
-#: dmr/exceptions.py:11
 msgid "Too many requests"
 msgstr ""
 
-#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Вътрешна грешка на сървъра"
 
-#: dmr/internal/django.py:49
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -60,7 +53,12 @@ msgstr ""
 "HTTP заявките с тип съдържание 'application/x-www-form-urlencoded' трябва да "
 "бъдат кодирани в UTF-8."
 
-#: dmr/internal/negotiation.py:18
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
@@ -69,7 +67,6 @@ msgstr ""
 "Тялото на отговора не може да бъде сериализирано с приети типове "
 "{accepted_types}, поддържани={supported}"
 
-#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
@@ -78,20 +75,16 @@ msgstr ""
 "Тялото на заявката не може да бъде обработено с тип съдържание "
 "{content_type}, очаквани={expected}"
 
-#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "CSRF проверката е неуспешна: {reason}"
 
-#: dmr/security/jwt/blocklist/models.py:44
 msgid "BlocklistedJWToken"
-msgstr "BlocklistedJWToken"
+msgstr ""
 
-#: dmr/security/jwt/blocklist/models.py:45
 msgid "BlocklistedJWTokens"
-msgstr "BlocklistedJWTokens"
+msgstr ""
 
-#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "Стойността {value} от тип {type} не се поддържа за {target_type}"

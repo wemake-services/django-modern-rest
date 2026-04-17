@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-12 14:21+0300\n"
+"POT-Creation-Date: 2026-04-17 09:00+0300\n"
 "PO-Revision-Date: 2026-03-22 13:58+0000\n"
 "Last-Translator: \n"
 "Language-Team: Russian\n"
@@ -18,7 +18,6 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: dmr/components.py:54
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
@@ -27,7 +26,6 @@ msgstr ""
 "Путь {cls} с field_model={field_model} не допускает безымянные параметры "
 "пути args={args}"
 
-#: dmr/components.py:59
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
@@ -36,24 +34,19 @@ msgstr ""
 "Попытка распарсить файлы с помощью {parser_name}, который не поддерживает "
 "протокол SupportsFileParsing"
 
-#: dmr/controller.py:33
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "Метод {method} не разрешён, разрешённые: {allowed}"
 
-#: dmr/exceptions.py:10
 msgid "Not authenticated"
 msgstr "Не аутентифицирован"
 
-#: dmr/exceptions.py:11
 msgid "Too many requests"
 msgstr "Слишком много запросов"
 
-#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Внутренняя ошибка сервера"
 
-#: dmr/internal/django.py:49
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -61,7 +54,12 @@ msgstr ""
 "HTTP-запросы с типом содержимого 'application/x-www-form-urlencoded' должны "
 "быть закодированы в UTF-8."
 
-#: dmr/internal/negotiation.py:18
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
@@ -70,7 +68,6 @@ msgstr ""
 "Невозможно сериализовать тело ответа с принятыми типами {accepted_types}, "
 "поддерживаемые={supported}"
 
-#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
@@ -79,20 +76,16 @@ msgstr ""
 "Невозможно распарсить тело запроса с типом содержимого {content_type}, "
 "ожидаемые={expected}"
 
-#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "Проверка CSRF не пройдена: {reason}"
 
-#: dmr/security/jwt/blocklist/models.py:44
 msgid "BlocklistedJWToken"
-msgstr "BlocklistedJWToken"
+msgstr "Заблокированный JWT токен"
 
-#: dmr/security/jwt/blocklist/models.py:45
 msgid "BlocklistedJWTokens"
-msgstr "BlocklistedJWTokens"
+msgstr "Заблокированные JWT токены"
 
-#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "Значение {value} типа {type} не поддерживается для {target_type}"

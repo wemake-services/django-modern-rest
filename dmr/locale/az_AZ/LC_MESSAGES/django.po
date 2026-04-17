@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 01:12+0400\n"
+"POT-Creation-Date: 2026-04-17 08:59+0300\n"
 "PO-Revision-Date: 2026-04-17 01:15+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Azerbaijani <az@li.org>\n"
@@ -17,7 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: .\dmr\components.py:54
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
@@ -26,7 +25,6 @@ msgstr ""
 "field_model={field_model} olan {cls} yolu adsız yol parametrlərinə "
 "(args={args}) icazə vermir"
 
-#: .\dmr\components.py:59
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
@@ -35,24 +33,19 @@ msgstr ""
 "Fayllar SupportsFileParsing protokolunu dəstəkləməyən {parser_name} ilə "
 "təhlil (parse) edilməyə çalışılır"
 
-#: .\dmr\controller.py:43
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "{method} metoduna icazə verilmir, icazə verilən: {allowed}"
 
-#: .\dmr\exceptions.py:10
 msgid "Not authenticated"
 msgstr "Autentifikasiya olunmayıb"
 
-#: .\dmr\exceptions.py:11
 msgid "Too many requests"
 msgstr "Çox sayda sorğu göndərilib"
 
-#: .\dmr\exceptions.py:49
 msgid "Internal server error"
 msgstr "Daxili server xətası"
 
-#: .\dmr\internal\django.py:49
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -60,7 +53,6 @@ msgstr ""
 "'application/x-www-form-urlencoded' məzmun tipli HTTP sorğuları UTF-8 ilə "
 "kodlaşdırılmalıdır."
 
-#: .\dmr\internal\negotiation.py:18
 #, python-brace-format
 msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
@@ -69,7 +61,6 @@ msgstr ""
 "Razılaşdırılmış renderer {renderer_type} qaytarılan content-type "
 "{content_type} ilə uyğun gəlmir"
 
-#: .\dmr\internal\negotiation.py:23
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
@@ -78,29 +69,24 @@ msgstr ""
 "Cavab gövdəsini qəbul edilən {accepted_types} tipləri ilə serializasiya "
 "etmək mümkün deyil, dəstəklənən={supported}"
 
-#: .\dmr\negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"{content_type} məzmun tipli sorğu gövdəsi təhlil edilə bilmir, gözlənilən="
-"{expected}"
+"{content_type} məzmun tipli sorğu gövdəsi təhlil edilə bilmir, "
+"gözlənilən={expected}"
 
-#: .\dmr\security\django_session\auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "CSRF xətası: {reason}"
 
-#: .\dmr\security\jwt\blocklist\models.py:44
 msgid "BlocklistedJWToken"
 msgstr "Bloklanmış JWT Token"
 
-#: .\dmr\security\jwt\blocklist\models.py:45
 msgid "BlocklistedJWTokens"
 msgstr "Bloklanmış JWT Tokenləri"
 
-#: .\dmr\serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "{type} tipindəki {value} dəyəri {target_type} üçün dəstəklənmir"
