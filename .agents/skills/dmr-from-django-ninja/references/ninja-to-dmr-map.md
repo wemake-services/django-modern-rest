@@ -24,7 +24,7 @@ Use this mapping when replacing transport-layer code.
 ## Contract parity reminders
 
 - Keep path and method shape.
-- Keep auth expectations and implement throttling in DMR via django-ratelimit, preserving prior limits and rate-limit headers.
+- Keep auth expectations with `dmr.security` and implement throttling in DMR via `dmr.throttling`, preserving prior limits and rate-limit headers.
 - DMR does not support QuerySet-to-BaseModel converters; AI must implement explicit mapping in `mappers.py` by default.
 - Keep status codes and response headers.
 - Keep `204` responses body-less.
