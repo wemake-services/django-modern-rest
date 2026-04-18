@@ -70,15 +70,15 @@ depend on both Django templates and static files.
 
 To use the bundled UI pages:
 
-- add ``'dmr'`` to ``INSTALLED_APPS``, so Django can discover the bundled
+- Add ``'dmr'`` to ``INSTALLED_APPS``, so Django can discover the bundled
   renderer templates
-- if you serve bundled assets locally, add
+- If you serve bundled assets locally, add
   ``'django.contrib.staticfiles'`` to ``INSTALLED_APPS``
-- configure Django templates so app templates can be discovered, for example
+- Configure Django templates so app templates can be discovered, for example
   by enabling
   `APP_DIRS <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-TEMPLATES-APP_DIRS>`_
   in the Django template backend
-- set
+- Set
   `STATIC_URL <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-STATIC_URL>`_
   so Django can generate URLs for bundled static assets
 
@@ -92,7 +92,8 @@ and the
 If you switch renderers to CDN assets via
 :data:`dmr.settings.Settings.openapi_static_cdn`,
 local static file serving is no longer required for those assets,
-but ``'dmr'`` and template discovery are **still required**.
+but adding ``'dmr'`` to the list of installed apps and template
+discovery are **still required**.
 
 .. note::
 
