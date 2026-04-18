@@ -22,6 +22,7 @@ of requirements for an API to count as public.
 
 ### Features
 
+- *Breaking*: Renamed `APIRedirectError` to `RedirectTo`
 - Added `validate_negotiation` metadata flag, so we can explicitly validate,
   that returned response followed the negotiation process, #711
 

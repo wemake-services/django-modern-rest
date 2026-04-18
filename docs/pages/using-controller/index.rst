@@ -8,16 +8,12 @@ Controllers consist of :class:`~dmr.endpoint.Endpoint` objects.
 Each HTTP method is an independent endpoint.
 
 The simplest way to create an endpoint is to define sync
-or async method with the right name:
+or async method with the right name (any HTTP method verb):
 
-.. code:: python
-
-  >>> from dmr import Controller
-  >>> from dmr.plugins.msgspec import MsgspecSerializer
-
-  >>> class MyController(Controller[MsgspecSerializer]):
-  ...     def post(self) -> str:
-  ...         return 'ok'
+.. literalinclude:: /examples/using_controller/first_example.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
 There will be several things that ``django-modern-rest`` will do for you here:
 

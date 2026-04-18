@@ -9,9 +9,7 @@ class _RequestModel(TypedDict):
     bill: str
 
 
-class BillController(
-    Controller[PydanticSerializer],
-):
+class BillController(Controller[PydanticSerializer]):
     auth = (HttpBasicAsync(),)
 
     async def post(self, parsed_body: Body[_RequestModel]) -> str:
@@ -20,3 +18,4 @@ class BillController(
 
 # run: {"controller": "BillController", "method": "post", "body": {"bill": "parking"}, "url": "/api/username/", "curl_args": ["-D", "-"], "assert-error-text": "Not authenticated", "fail-with-body": false}  # noqa: ERA001, E501
 # run: {"controller": "BillController", "method": "post", "body": {"bill": "parking"}, "url": "/api/username/", "headers": {"Authorization": "Basic YWRtaW46cGFzcw=="}}  # noqa: ERA001, E501
+# openapi: {"controller": "BillController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

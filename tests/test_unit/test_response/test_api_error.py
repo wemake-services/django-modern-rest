@@ -401,7 +401,7 @@ def test_api_error_with_cookies(
 
 def test_api_error_redirect_status() -> None:
     """Ensures that we can't create APIError with redirect status code."""
-    with pytest.raises(DisallowedRedirect, match='APIRedirectError'):
+    with pytest.raises(DisallowedRedirect, match='RedirectTo'):
         APIError('whatever', status_code=HTTPStatus.FOUND)
 
 

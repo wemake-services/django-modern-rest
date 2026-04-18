@@ -1,15 +1,10 @@
 from django.contrib.auth.models import User
-from django.http import HttpRequest
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest, request_auth
 from dmr.security.jwt import JWTAsyncAuth, request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistAsyncMixin
-
-
-class AuthenticatedRequest(HttpRequest):
-    user: User
 
 
 class JWTAuthWithBlocklist(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
@@ -31,3 +26,6 @@ class APIController(Controller[PydanticSerializer]):
                 request_jwt(self.request, strict=True),
             )
         return 'authed'
+
+
+# openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001

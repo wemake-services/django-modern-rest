@@ -14,3 +14,6 @@ class APIController(Controller[PydanticSerializer]):
         # Let's test that `User` has the correct type:
         assert self.request.user.username
         return 'authed'
+
+
+# openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
