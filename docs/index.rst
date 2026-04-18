@@ -64,22 +64,22 @@ and extend ``django-modern-rest`` framework.
 
 .. container:: testimonials
 
-   .. epigraph::
+  .. epigraph::
 
-      The one thing I really love about ``django-modern-rest`` is its pluggable
-      serializers and validators. Frameworks that are tightly coupled
-      with ``pydantic`` can be really painful to work with.
+    The one thing I really love about ``django-modern-rest`` is its pluggable
+    serializers and validators. Frameworks that are tightly coupled
+    with ``pydantic`` can be really painful to work with.
 
-      -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
+    -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
 
-   .. epigraph::
+  .. epigraph::
 
-      Using ``django-modern-rest`` has been a game-changer
-      for my productivity. The strict type safety and schema validation
-      for both requests and responses mean I spend less time debugging
-      and more time building.
+    Using ``django-modern-rest`` has been a game-changer
+    for my productivity. The strict type safety and schema validation
+    for both requests and responses mean I spend less time debugging
+    and more time building.
 
-      -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
+    -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
 
   .. epigraph::
 

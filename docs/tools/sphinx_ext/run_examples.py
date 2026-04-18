@@ -978,17 +978,19 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     @override
     def run(self) -> list[Node]:  # noqa: WPS210
         """Execute code examples and display results."""
-        file_path = Path(self.env.relfn2path(self.arguments[0])[1])
+        paths = self.env.relfn2path(self.arguments[0])
+        relative_path = Path(paths[0])
+        file_path = Path(paths[1])
         imports_data = self._get_imports_data(file_path)
         if not self._need_to_run(file_path):
-            return self._generate_nodes(file_path, imports_data)
+            return self._generate_nodes(relative_path, imports_data)
 
         clean_content, run_args, openapi_args = self._execute_code(file_path)
         if not run_args and not openapi_args:
-            return self._generate_nodes(file_path, imports_data)
+            return self._generate_nodes(relative_path, imports_data)
         self._create_tmp_example_file(file_path, clean_content)
 
-        nodes = self._generate_nodes(file_path, imports_data)
+        nodes = self._generate_nodes(relative_path, imports_data)
 
         example_file = _resolve_example_file_for_execution(file_path)
         executed_result = _exec_examples(example_file, run_args)
@@ -1152,8 +1154,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
 
     def _build_github_url(self, file_path: Path) -> str:
         """Build GitHub URL for the source file."""
-        docs_dir = self._get_docs_dir()
-        relative_path = self._get_source_relative_path(file_path, docs_dir)
+        relative_path = self._get_source_relative_path(file_path)
         return f'{self._get_source_base_url()}/{relative_path.as_posix()}'
 
     def _get_docs_dir(self) -> Path:
@@ -1163,10 +1164,17 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
     def _get_source_relative_path(
         self,
         file_path: Path,
-        docs_dir: Path,
     ) -> Path:
+        docs_dir = self._get_docs_dir()
         if file_path.is_relative_to(docs_dir):
             return Path('docs') / file_path.relative_to(docs_dir)
+
+        if not file_path.is_absolute():
+            return (
+                (_BASE_DIR / 'docs' / file_path)
+                .resolve(strict=True)
+                .relative_to(_BASE_DIR)
+            )
         return file_path
 
     def _get_source_base_url(self) -> str:
