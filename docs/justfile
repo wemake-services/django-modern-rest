@@ -1,4 +1,4 @@
-# Minimal justfile for Sphinx documentation
+# justfile for Sphinx documentation
 
 set positional-arguments
 
@@ -7,8 +7,8 @@ sphinxopts := env("SPHINXOPTS", "-W")
 sourcedir  := "."
 builddir   := "_build"
 
-# Show Sphinx help (default)
-_default: (sphinx 'help')
+# Default target
+default: help
 
 [private]
 sphinx +targets:
@@ -20,3 +20,31 @@ sphinx +targets:
 
 # Pass-through: route any target to Sphinx
 build +targets='clean html': (sphinx targets)
+
+# All Sphinx targets
+html: (sphinx 'html')
+dirhtml: (sphinx 'dirhtml')
+singlehtml: (sphinx 'singlehtml')
+pickle: (sphinx 'pickle')
+json: (sphinx 'json')
+htmlhelp: (sphinx 'htmlhelp')
+qthelp: (sphinx 'qthelp')
+devhelp: (sphinx 'devhelp')
+epub: (sphinx 'epub')
+latex: (sphinx 'latex')
+latexpdf: (sphinx 'latexpdf')
+latexpdfja: (sphinx 'latexpdfja')
+text: (sphinx 'text')
+man: (sphinx 'man')
+texinfo: (sphinx 'texinfo')
+info: (sphinx 'info')
+gettext: (sphinx 'gettext')
+changes: (sphinx 'changes')
+xml: (sphinx 'xml')
+pseudoxml: (sphinx 'pseudoxml')
+linkcheck: (sphinx 'linkcheck')
+doctest: (sphinx 'doctest')
+coverage: (sphinx 'coverage')
+clean: (sphinx 'clean')
+help:
+  @uv run python -msphinx -M help "{{sourcedir}}" "{{builddir}}" | sed 's/make target/just target/g; s/make \([^ ]*\)/just \1/g'
