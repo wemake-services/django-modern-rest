@@ -1012,6 +1012,8 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
             )
         if openapi_result:
             nodes.append(_create_openapi_admonition(openapi_result))
+        if settings.DEBUG:
+            raise ValueError('settings.DEBUG is set, turn it off')
         return nodes
 
     def _generate_nodes(

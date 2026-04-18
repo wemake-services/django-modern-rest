@@ -13,9 +13,9 @@ or async method with the right name:
 .. code:: python
 
   >>> from dmr import Controller
-  >>> from dmr.plugins.pydantic import PydanticSerializer
+  >>> from dmr.plugins.msgspec import MsgspecSerializer
 
-  >>> class MyController(Controller[PydanticSerializer]):
+  >>> class MyController(Controller[MsgspecSerializer]):
   ...     def post(self) -> str:
   ...         return 'ok'
 
