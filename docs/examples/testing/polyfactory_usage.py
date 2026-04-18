@@ -25,6 +25,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == {
         'uid': IsUUID,
         **request_data,
