@@ -113,7 +113,7 @@ integration = [
 dev = [
   { include-group = "unit-test" },
   { include-group = "integration" },
-  "django-stubs[compatible-mypy]>=6.0,<6.0.2",
+  "django-stubs[compatible-mypy]>=6.0,<6.1",
   "types-docutils>=0.22,<0.23",
   "types-setuptools>=82,<83",
   "types-pyyaml>=6.0,<7",
@@ -177,7 +177,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc", "mypy==1.19.1"]
+dependencies = ["hatch-mypyc", "mypy==1.20.1"]
 include = ["dmr/_compiled"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
@@ -427,6 +427,11 @@ enable_error_code = [
 plugins = [
   "pydantic.mypy",
 ]
+
+[[tool.mypy.overrides]]
+# TODO: remove after https://github.com/python/mypy/issues/21265
+module = "tests.*"
+warn_unreachable = false
 
 
 [tool.pyright]
