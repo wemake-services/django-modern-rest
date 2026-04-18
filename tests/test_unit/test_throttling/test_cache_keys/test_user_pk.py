@@ -25,7 +25,7 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
     throttling = [
         SyncThrottle(
             1,
-            Rate.second,
+            Rate.minute,
             cache_key=UserPk(exclude_superuser=False, exclude_stuff=False),
         ),
     ]
@@ -76,6 +76,7 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
 )
 def test_sync_throttle_user_pk_cases(
     dmr_rf: DMRRequestFactory,
+    *,
     controller_cls: type[Controller[PydanticSerializer]],
     user: User,
     expected_second: HTTPStatus,
