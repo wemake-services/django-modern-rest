@@ -41,7 +41,7 @@ msgid "Not authenticated"
 msgstr "प्रमाणित नहीं है"
 
 msgid "Too many requests"
-msgstr ""
+msgstr "बहुत अधिक अनुरोध"
 
 msgid "Internal server error"
 msgstr "आंतरिक सर्वर त्रुटि"
@@ -58,6 +58,7 @@ msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
 "{content_type}"
 msgstr ""
+"निर्धारित renderer {renderer_type} लौटाए गए content-type {content_type} से मेल नहीं खाता"
 
 #, python-brace-format
 msgid ""
