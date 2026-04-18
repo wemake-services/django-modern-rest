@@ -26,7 +26,7 @@ just install
 
 ### venv
 
-To activate your `virtualenv` run: 
+To activate your `virtualenv` run:
 
 ```bash
 source .venv/bin/activate
