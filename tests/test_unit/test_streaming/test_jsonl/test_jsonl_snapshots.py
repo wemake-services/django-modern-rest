@@ -126,3 +126,24 @@ def test_complex_jsonl_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+def test_complex_jsonl_schema310(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for complex JsonL and OpenAPI `3.1.0`."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('/complex', _ComplexJsonL.as_view())],
+                ),
+                config=OpenAPIConfig(
+                    title='JsonL Test',
+                    version='1.0',
+                    openapi_version='3.1.0',  # NOTE: older version
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )

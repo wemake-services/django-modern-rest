@@ -6,7 +6,6 @@ import pydantic
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
-from django.test import RequestFactory
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict, override
 
@@ -41,18 +40,14 @@ _xml_data: Final = """<?xml version="1.0" encoding="utf-8"?>
 </root>"""
 
 
-def test_xml_parser_renderer(rf: RequestFactory) -> None:
+def test_xml_parser_renderer(dmr_rf: DMRRequestFactory) -> None:
     """Ensures we can change global parsers and renderers."""
 
-    @final
-    class _XmlController(
-        Controller[PydanticSerializer],
-    ):
+    class _XmlController(Controller[PydanticSerializer]):
         def post(self, parsed_body: Body[_RequestModel]) -> dict[str, str]:
             return parsed_body.root
 
-    request = rf.generic(
-        'POST',
+    request = dmr_rf.post(
         '/whatever/',
         headers={'Content-Type': 'application/xml'},
         data=_xml_data,
@@ -155,10 +150,7 @@ def test_per_controller_customization(
 ) -> None:
     """Ensures we can change per-controller parsers and renderers."""
 
-    @final
-    class _BothController(
-        Controller[PydanticSerializer],
-    ):
+    class _BothController(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
@@ -277,10 +269,7 @@ async def test_per_controller_customization_async(
 ) -> None:
     """Ensures we can change per-controller parsers and renderers."""
 
-    @final
-    class _BothController(
-        Controller[PydanticSerializer],
-    ):
+    class _BothController(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
@@ -319,7 +308,6 @@ def test_per_endpoint_customization(
 ) -> None:
     """Ensures we can change per-endpoint parsers and renderers."""
 
-    @final
     class _BothController(Controller[PydanticSerializer]):
         @modify(
             parsers=[XmlParser(), JsonParser()],
@@ -385,10 +373,7 @@ def test_conditional_content_type(
 ) -> None:
     """Ensures conditional content types work correctly."""
 
-    @final
-    class _Controller(
-        Controller[PydanticSerializer],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
@@ -483,10 +468,7 @@ def test_wrong_conditional_content_type(
 ) -> None:
     """Ensures conditional content validation works correctly."""
 
-    @final
-    class _Controller(
-        Controller[PydanticSerializer],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
@@ -554,7 +536,6 @@ def test_missing_conditional_content_type(
 ) -> None:
     """Ensures conditional content might not have missing parts."""
 
-    @final
     class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -628,10 +609,7 @@ def test_conditional_body_model(
 ) -> None:
     """Ensures conditional body models work correctly."""
 
-    @final
-    class _Controller(
-        Controller[PydanticSerializer],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
 
@@ -723,7 +701,6 @@ def test_conditional_body_model_wrong(
 ) -> None:
     """Ensures conditional body models validates correctly."""
 
-    @final
     class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
@@ -807,10 +784,7 @@ def test_conditional_error_model(
 ) -> None:
     """Ensures conditional errors with content types work correctly."""
 
-    @final
-    class _Controller(
-        Controller[PydanticSerializer],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
         error_model = Annotated[
@@ -893,10 +867,7 @@ def test_conditional_error_model_wrong(
 ) -> None:
     """Ensures conditional errors are validated."""
 
-    @final
-    class _Controller(
-        Controller[PydanticSerializer],
-    ):
+    class _Controller(Controller[PydanticSerializer]):
         parsers = [XmlParser(), JsonParser()]
         renderers = [XmlRenderer(), JsonRenderer()]
         error_model = Annotated[

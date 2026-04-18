@@ -13,4 +13,4 @@ from dmr.headers import HeaderSpec as HeaderSpec
 from dmr.headers import NewHeader as NewHeader
 from dmr.metadata import ResponseSpec as ResponseSpec
 from dmr.response import APIError as APIError
-from dmr.response import APIRedirectError as APIRedirectError
+from dmr.response import RedirectTo as RedirectTo

@@ -177,7 +177,11 @@ class _BaseThrottle(ResponseSpecProvider):
 
 
 class SyncThrottle(_BaseThrottle):
-    """Sync throttle type for sync endpoints."""
+    """
+    Sync throttle type for sync endpoints.
+
+    .. versionadded:: 0.7.0
+    """
 
     __slots__ = ()
 
@@ -246,7 +250,11 @@ class SyncThrottle(_BaseThrottle):
 
 
 class AsyncThrottle(_BaseThrottle):
-    """Async throttle type for async endpoints."""
+    """
+    Async throttle type for async endpoints.
+
+    .. versionadded:: 0.7.0
+    """
 
     __slots__ = ()
 
@@ -332,6 +340,7 @@ class ThrottlingReport:
         for failing cache connections.
         If you want to handle errors, catch them explicitly.
 
+    .. versionadded:: 0.7.0
     """
 
     controller: 'Controller[BaseSerializer]'

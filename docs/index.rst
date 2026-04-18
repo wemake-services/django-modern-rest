@@ -81,6 +81,15 @@ and extend ``django-modern-rest`` framework.
 
       -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
 
+  .. epigraph::
+
+      I rarely see frameworks that treat their OpenAPI schema
+      as a first-class citizen. ``django-modern-rest`` not only generates
+      a schema that accurately reflects your code,
+      but also gives you the tools to verify it.
+
+      -- `Dmitry Dygalo <https://github.com/Stranger6667>`_, author of Schemathesis
+
 
 .. rubric:: Main features include:
 

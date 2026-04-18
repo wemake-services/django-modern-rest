@@ -14,7 +14,7 @@ from dmr.exceptions import (
 from dmr.files import FileBody
 from dmr.internal.negotiation import (
     media_by_precedence,
-    response_validation_negotiator,
+    negotiatiate_response_validation,
 )
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import get_conditional_types, request_renderer
@@ -58,11 +58,12 @@ class ResponseValidator:  # noqa: WPS214
         if not self._should_validate_responses():
             return response
         schema = self._get_response_schema(response.status_code)
+        self._validate_content_type(response, endpoint.metadata)
         renderer = request_renderer(
             controller.request,
             use_nonstreaming_renderer=True,
         )
-        parser = response_validation_negotiator(
+        parser = negotiatiate_response_validation(
             controller.request,
             response,
             renderer,
@@ -78,7 +79,6 @@ class ResponseValidator:  # noqa: WPS214
         )
         self._validate_response_headers(response, schema)
         self._validate_response_cookies(response, schema)
-        self._validate_content_type(response, endpoint.metadata)
         return response
 
     def validate_modification(
@@ -143,7 +143,7 @@ class ResponseValidator:  # noqa: WPS214
     ) -> None:
         if isinstance(response, HttpResponse):
             # When we have a regular response, we deserialize
-            # its content, it is quite clear.
+            # its content the regular way.
             structured = self.serializer.deserialize(
                 response.content,
                 parser=parser,
@@ -170,10 +170,13 @@ class ResponseValidator:  # noqa: WPS214
             structured,
             schema,
             # Here's the tricky part:
-            # 1. We first try to use the renderer's default content type
-            # 2. But, there might be no renderer yet
-            # 3. So, we fallback to the default parser in this case.
-            content_type=getattr(renderer, 'content_type', parser.content_type),
+            # 1. We first try to use the actual Content-Type from the response
+            # 2. But, there might be no Content-Type header yet
+            # 3. So, we fallback to the default parser
+            content_type=response.headers.get(
+                'Content-Type',
+                parser.content_type,
+            ),
         )
 
     def _validate_body(

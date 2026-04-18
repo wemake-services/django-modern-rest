@@ -128,8 +128,8 @@ def test_validate_status_code(
         'detail': [
             {
                 'msg': (
-                    'Returned status code 200 is not specified '
-                    'in the list of allowed status codes: [201, 422, 406]'
+                    'Returned status code 200 is not specified in the list '
+                    'of allowed status codes: [201, 422, 406]'
                 ),
                 'type': 'value_error',
             },
@@ -416,6 +416,36 @@ def test_return_unsupported_response(
     request = dmr_rf.get('/whatever/')
 
     response = _UnsupportedResponseController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "Response content type 'text/html; charset=utf-8' is not "
+                    "listed as a possible to be returned ['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+@final
+class _UnsupportedTrickyResponseController(Controller[PydanticSerializer]):
+    @validate(ResponseSpec(None, status_code=HTTPStatus.OK))
+    def get(self) -> HttpResponseBase:
+        return HttpResponseBase(content_type='application/json')
+
+
+def test_return_unsupported_response_tricky(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that retuning unsupported responses errors out."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _UnsupportedTrickyResponseController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR

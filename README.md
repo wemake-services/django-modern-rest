@@ -70,6 +70,9 @@
 
 — **[Josiah Kaviani](https://github.com/proofit404)**, Django core developer
 
+> I rarely see frameworks that treat their OpenAPI schema as a first-class citizen. `django-modern-rest` not only generates a schema that accurately reflects your code, but also gives you the tools to verify it.
+
+— **[Dmitry Dygalo](https://github.com/Stranger6667)**, author of Schemathesis
 
 ## Installation
 

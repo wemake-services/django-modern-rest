@@ -18,6 +18,23 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Features
+
+- *Breaking*: Renamed `APIRedirectError` to `RedirectTo`
+- Added `validate_negotiation` metadata flag, so we can explicitly validate,
+  that returned response followed the negotiation process, #711
+
+### Bugfixes
+
+- Fixed that `itemSchema` was possible to be rendered
+  in OpenAPI `3.0.0` and `3.1.0`, #908
+- Fixed response validation when global error handler returns
+  `HttpResponse` with a different content type than the negotiated
+  renderer, #711
+
+
 ## Version 0.7.0 (2026-04-14)
 
 ### Breaking changes
@@ -71,7 +88,7 @@ Apply this change to the code that uses `django-modern-rest`:
 - Added `tags` and `deprecated` parameters to `Router` for OpenAPI metadata,
   #872. All operations in a router can now be grouped and marked as deprecated.
 
-### Fixes
+### Bugfixes
 
 - Fixed that `OpenAPI` was revalidated on every `.convert` call, #867
 - Fixed missing `request.auser()` after `JWTAsyncAuth`, #884
@@ -110,7 +127,7 @@ No breaking changes in this release.
 - Added customizable `json_module` parameter to `JsonParser` and `JsonRenderer`
   to support alternative JSON backends like `orjson`, #857
 
-### Fixes
+### Bugfixes
 
 - Fixed package metadata, #824
 - Fixed missing `style`, `phone`, `color` formats from `OpenAPIFormat`, #842
@@ -148,7 +165,7 @@ No breaking changes in this release.
   `AnnotationsContext`, #787
 - Added `yaml` view for OpenAPI schema, #745
 
-### Fixes
+### Bugfixes
 
 - Fixed `StreamingValidator` swallowing errors
   when `validate_events` was `True`, but no event model was resolved, #780
@@ -349,8 +366,6 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 - Fixed `SSE` controllers `__name__` and `__doc__` generation
   via `@sse` decorator, #700
 - Fixed a bug where `FileMetadata` rendered list of schemas incorrectly, #698
-- Fixed that we were using `typing.get_type_hints` in some places,
-  now always using `typing_extensions.get_type_hints`, #768
 
 ### Misc
 

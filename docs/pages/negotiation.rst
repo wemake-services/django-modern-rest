@@ -290,6 +290,55 @@ attribute:
    :linenos:
 
 
+Disabling content negotiation validation
+----------------------------------------
+
+When :data:`~dmr.settings.Settings.validate_responses` is active,
+we also validate that the returned ``Content-Type`` header matches
+the negotiated content type.
+
+To disable this validation, if you for some reason,
+want to break the content negotiation protocol,
+you can set :data:`~dmr.settings.Settings.validate_negotiation`
+to ``False``.
+
+We support several layers of configuration:
+
+.. tabs::
+
+  .. tab:: per endpoint
+
+    .. literalinclude:: /examples/negotiation/validate_negotiation_endpoint.py
+      :caption: views.py
+      :language: python
+      :linenos:
+
+  .. tab:: per controller
+
+    .. literalinclude:: /examples/negotiation/validate_negotiation_controller.py
+      :caption: views.py
+      :language: python
+      :linenos:
+
+  .. tab:: per settings
+
+    .. literalinclude:: /examples/negotiation/validate_negotiation_settings.py
+      :caption: settings.py
+      :language: python
+      :linenos:
+
+Despite the fact that ``Content-Type`` is not validated,
+we still validate the response schema. So, you must still provide correct
+renderers and parsers to do validation. Otherwise, you would have to also
+disable :ref:`response_validation`.
+
+.. warning::
+
+  We do not ever recommend to do this in any sane setups.
+  This only makes sense for legacy API contracts that you want to migrate
+  to ``django-modern-rest``.
+
+
 Negotiation API
 ---------------
 

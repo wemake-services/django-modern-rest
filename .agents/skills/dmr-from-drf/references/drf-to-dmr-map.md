@@ -22,9 +22,9 @@ Use this mapping when replacing transport-layer code.
 
 ## Auth, permissions, throttling
 
-- authentication classes -> dmr auth backend wiring
+- authentication classes -> `dmr.security` auth backend wiring
 - permission classes (class/action specific) -> dmr auth/permission checks preserving endpoint semantics
-- throttle classes -> project-native rate limiting integration via dmr hooks
+- throttle classes -> project-native rate limiting via `dmr.throttling`, preserving prior limits and rate-limit headers
 - `@action` overrides (`permission_classes`, `authentication_classes`, `throttle_classes`, `serializer_class`) -> per-route DMR configuration with action-level parity
 
 ## Contract parity reminders

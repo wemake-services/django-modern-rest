@@ -80,7 +80,7 @@ class APIError(Exception, Generic[_ItemT]):
         if HTTPStatus.MULTIPLE_CHOICES <= status_code < HTTPStatus.BAD_REQUEST:
             raise DisallowedRedirect(
                 'APIError should not be used with redirects, '
-                'use APIRedirectError instead '
+                'use `RedirectTo` instead '
                 f'with status code {status_code!s}',
             )
 
@@ -91,9 +91,12 @@ class APIError(Exception, Generic[_ItemT]):
         self.cookies = cookies
 
 
-class APIRedirectError(Exception):
+class RedirectTo(Exception):  # noqa: N818
     """
-    Special class to fast return redirects from API.
+    Special class to redirect from ``@modify`` styled endpoints.
+
+    It is modeled as an exception, because you can't return ``HttpResponse``
+    subclasses from :func:`~dmr.endpoint.modify` endpoints.
 
     We model this class closely
     to match :class:`django.http.HttpResponseRedirect`.
@@ -104,7 +107,7 @@ class APIRedirectError(Exception):
 
         >>> from http import HTTPStatus
         >>> from dmr import (
-        ...     APIRedirectError,
+        ...     RedirectTo,
         ...     Controller,
         ...     ResponseSpec,
         ...     modify,
@@ -125,7 +128,7 @@ class APIRedirectError(Exception):
         ...     )
         ...     def get(self) -> str:
         ...         # This API endpoint is deprecated, use new one:
-        ...         raise APIRedirectError(
+        ...         raise RedirectTo(
         ...             '/api/new/users/',
         ...             status_code=HTTPStatus.FOUND,
         ...         )
@@ -162,7 +165,7 @@ class APIRedirectError(Exception):
             or status_code < HTTPStatus.MULTIPLE_CHOICES
         ):
             raise DisallowedRedirect(
-                'APIRedirectError might be used only with 3xx statuses, '
+                'RedirectTo might be used only with 3xx statuses, '
                 f'given: {status_code!s}',
             )
         super().__init__()

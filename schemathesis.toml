@@ -16,3 +16,7 @@ path = '/api/jwt-auth/jwt-obtain-access-refresh-sync/'
 # https://github.com/pytest-dev/pytest-django
 payload = { username = 'admin', password = 'password' }
 extract_selector = '/access_token'
+
+[output.sanitization]
+# We don't have any real data to hide, but it is easier to debug:
+enabled = false

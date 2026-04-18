@@ -132,15 +132,18 @@ class ResponseSpec:
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
         """
+        item_schema = (
+            self.streaming and context.config.openapi_version_info >= (3, 2)
+        )
         return context.generators.response.get_schema(
             self,
             metadata,
             serializer,
             context,
-            schema_field_name='item_schema' if self.streaming else 'schema',
+            schema_field_name='item_schema' if item_schema else 'schema',
             # Despite the fact that it looks like a response,
             # produced stream events are not regular responses.
-            used_for_response=not self.streaming,
+            used_for_response=not item_schema,
         )
 
 
@@ -156,6 +159,8 @@ class ResponseSpecMetadata:
         cookies: Shows *cookies* in the documentation.
             When passed, we validate that all given required cookies are present
             in the final response.
+
+    .. versionadded:: 0.7.0
     """
 
     headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
@@ -361,6 +366,9 @@ class EndpointMetadata:
         renderers: List of instances to be used for this endpoint
             to render response's body. All instances must be of subtypes
             of :class:`~dmr.renderers.Renderer`.
+        validate_negotiation: Should we validate that returned response's
+            ``Content-Type`` header matches the one
+            that we inferred in the negotiation process?
         auth: list of auth instances to be used for this endpoint.
             Sync endpoints must use instances
             of :class:`dmr.security.SyncAuth`.
@@ -427,6 +435,7 @@ class EndpointMetadata:
     component_parsers: list[ComponentParserSpec]
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
+    validate_negotiation: bool
     auth: list['SyncAuth | AsyncAuth'] | None
 
     # First line of throttling:

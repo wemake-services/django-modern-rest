@@ -41,5 +41,6 @@ def json_dump(schema: 'ConvertedSchema') -> 'DumpedSchema':
     Returns:
         JSON string representation of the schema.
 
+    .. versionadded:: 0.7.0
     """
     return _json_dumps(schema)

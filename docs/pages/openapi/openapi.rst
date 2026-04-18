@@ -1,11 +1,13 @@
 OpenAPI
 =======
 
-We support OpenAPI versions from ``3.0`` all the way up including ``3.2``.
+We support OpenAPI versions from ``3.0.0`` through ``3.2.0``.
 
-By default, we use OpenAPI ``3.1``, since tooling such as Swagger, Scalar,
-and Redoc does not yet fully support the latest specification.
-You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
+.. note::
+
+  By default, we use OpenAPI ``3.1.0``, since tooling such as Swagger, Scalar,
+  Redoc, and Stoplight does not yet fully support the latest specification.
+  You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
 
 
 Setting up OpenAPI views
@@ -27,8 +29,10 @@ We support:
 
 .. important::
 
-  We always recommend installing ``'django-modern-rest[openapi]'``
-  extra when working with OpenAPI.
+  We recommend installing ``'django-modern-rest[openapi]'`` when working with
+  OpenAPI. It enables schema validation, adds
+  :class:`~dmr.openapi.views.yaml.OpenAPIYamlView`, and supports
+  :ref:`automatic example generation <openapi-examples-generation>`.
 
 Here's how it works:
 
@@ -54,16 +58,47 @@ What happens in the example above?
    to :func:`require auth / role / permissions / etc <django.contrib.auth.decorators.login_required>`
    as all other regular Django views
 
-.. important::
+Requirements for OpenAPI UIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Make sure that ``'dmr'`` is listed in the ``INSTALLED_APPS``
-  and that static files are enabled,
-  so we can serve you the required static files.
+The HTML OpenAPI renderers
+(:class:`~dmr.openapi.views.SwaggerView`,
+:class:`~dmr.openapi.views.RedocView`,
+:class:`~dmr.openapi.views.ScalarView`, and
+:class:`~dmr.openapi.views.StoplightView`)
+depend on both Django templates and static files.
+
+To use the bundled UI pages:
+
+- Add ``'dmr'`` to ``INSTALLED_APPS``, so Django can discover the bundled
+  renderer templates
+- If you serve bundled assets locally, add
+  ``'django.contrib.staticfiles'`` to ``INSTALLED_APPS``
+- Configure Django templates so app templates can be discovered, for example
+  by enabling
+  `APP_DIRS <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-TEMPLATES-APP_DIRS>`_
+  in the Django template backend
+- Set
+  `STATIC_URL <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-STATIC_URL>`_
+  so Django can generate URLs for bundled static assets
+
+In development, this is usually enough when using Django's development server.
+
+In production, make sure your static files setup is correct as described in the
+`Django static files documentation <https://docs.djangoproject.com/en/stable/howto/static-files/>`_
+and the
+`staticfiles app reference <https://docs.djangoproject.com/en/stable/ref/contrib/staticfiles/>`_.
+
+If you switch renderers to CDN assets via
+:data:`dmr.settings.Settings.openapi_static_cdn`,
+local static file serving is no longer required for those assets,
+but adding ``'dmr'`` to the list of installed apps and template
+discovery are **still required**.
 
 .. note::
 
-  By default Swagger, Redoc, Stoplight, and Scalar use bundled static assets
-  that are shipped with ``django-modern-rest`` and served by Django.
+  By default, Swagger, Redoc, Stoplight, and Scalar use bundled static assets
+  shipped with ``django-modern-rest`` and served by Django.
   To switch any renderer to a CDN, configure
   :data:`dmr.settings.Settings.openapi_static_cdn`.
   Only renderers listed in that mapping will use CDN;
@@ -340,6 +375,8 @@ would look like so:
   :language: python
   :linenos:
 
+
+.. _openapi-examples-generation:
 
 Examples generation
 -------------------
