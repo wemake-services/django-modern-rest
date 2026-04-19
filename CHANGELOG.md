@@ -20,9 +20,10 @@ of requirements for an API to count as public.
 
 ## WIP
 
+- Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
+
 ### Features
 
-- Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
 - Added `validate_negotiation` metadata flag, so we can explicitly validate,
   that returned response followed the negotiation process, #711
 

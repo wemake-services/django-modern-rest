@@ -22,13 +22,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-# flake8: noqa: WPS232, WPS402
 import re
 from collections.abc import Iterable
 from typing import Final, final
 
 
-def accepted_type(  # noqa: C901, WPS231
+def accepted_type(  # noqa: C901
     accept_value: str,
     provided_types: Iterable[str],
 ) -> str | None:
@@ -84,7 +83,7 @@ def accepted_type(  # noqa: C901, WPS231
     return None
 
 
-def accepted_header(accept_value: str, media_type: str) -> bool:  # noqa: C901, WPS231
+def accepted_header(accept_value: str, media_type: str) -> bool:  # noqa: C901
     """
     Does the client accept a response in the given media type?
 
@@ -175,7 +174,7 @@ class _MediaTypeHeader:
         return f'{maintype}/{subtype}{self.params_str}'
 
     @property  # don't use cached_property since it's accessed only once
-    def priority(self) -> tuple[int, int]:  # noqa: WPS231
+    def priority(self) -> tuple[int, int]:
         # Use fixed point values with two decimals to avoid problems
         # when comparing float values
         quality = 100
