@@ -61,9 +61,11 @@ def clean_modules() -> _CleanModules:
             'text/html',
         ),
         ('text/*,text/html', ['text/plain', 'text/html'], 'text/html'),
+        ('text/*,text/html', ['application/json', 'application/xml'], None),
         ('', [], None),
-        ('text/plain', [], None),
+        ('text/plain,', [], None),
         ('', ['text/plain'], None),
+        ('application/json', ['text/plain', 'text/html'], None),
     ],
 )
 @pytest.mark.parametrize('compiled', [True, False])
@@ -146,6 +148,9 @@ def test_accept_correct_type() -> None:  # pragma: no cover
         ('application/json', 'text/plain', False),
         ('', 'text/plain', False),
         ('', '', False),
+        ('text/plain', ',,', False),
+        (',,', 'text/plain', False),
+        ('text/plain', 'application/json,application/xml', False),
         ('application/json', '', False),
     ],
 )
