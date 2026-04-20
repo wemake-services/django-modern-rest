@@ -124,7 +124,7 @@ def test_jwt_cache_key_is_hashed(
     token: JWToken,
 ) -> None:
     """Ensures `JwtToken` never exposes raw token data in cache key."""
-    raw_value = str(token if token.jti is None else token.jti)
+    raw_value = token.sub if token.jti is None else token.jti
     endpoint = _SyncController.api_endpoints['GET']
     controller = _SyncController()
     request = dmr_rf.get('/whatever/')
@@ -135,3 +135,4 @@ def test_jwt_cache_key_is_hashed(
 
     assert cache_key == hashlib.sha256(raw_value.encode('utf-8')).hexdigest()
     assert cache_key != raw_value
+    assert cache_key != str(token)

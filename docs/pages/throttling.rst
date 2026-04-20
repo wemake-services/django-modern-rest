@@ -185,7 +185,7 @@ Full list of cache keys that we ship in ``django-modern-rest``:
   to also limit super users
 - :class:`~dmr.throttling.cache_keys.JwtToken`, based on
   ``request.__dmr_jwt__``.
-  Uses ``jti`` claim when present and falls back to token string value.
+  Uses ``jti`` claim when present and falls back to ``sub`` claim.
   Raw value is hashed before being used as a cache key.
   Returns ``None`` when ``request.__dmr_jwt__`` is not set.
 
