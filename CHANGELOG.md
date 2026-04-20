@@ -35,6 +35,7 @@ of requirements for an API to count as public.
 - Fixed response validation when global error handler returns
   `HttpResponse` with a different content type than the negotiated
   renderer, #711
+- Fixed `collectstatic` failure when using `ManifestStaticFilesStorage`, #927
 
 
 ## Version 0.7.0 (2026-04-14)
