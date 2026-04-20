@@ -1,5 +1,7 @@
+import json
 from http import HTTPStatus
 from typing import final
+from unittest.mock import patch
 
 import pydantic
 import pytest
@@ -21,6 +23,13 @@ class _MyController(Controller[PydanticSerializer]):
     def post(self, parsed_body: Body[_BodyModel]) -> str:
         """Simulates `post` method."""
         return parsed_body.email
+
+
+def test_encode_json_fallback_without_msgspec(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures correct encoding when msgspec is unavailable (stdlib fallback)."""
+    with patch('dmr.internal.json._json_dumps', json.dumps):
+        request = dmr_rf.post('/whatever/', data={'key': 'value'})
+    assert json.loads(request.body) == {'key': 'value'}
 
 
 def test_encode_json_with_list_data(dmr_rf: DMRRequestFactory) -> None:
