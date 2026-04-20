@@ -136,3 +136,21 @@ def test_jwt_cache_key_is_hashed(
     assert cache_key == hashlib.sha256(raw_value.encode('utf-8')).hexdigest()
     assert cache_key != raw_value
     assert cache_key != str(token)
+
+
+def test_jwt_cache_key_is_none(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures `JwtToken` returns `None` when both claims are missing."""
+
+    class _TokenWithoutClaims:
+        jti = None
+        sub = None
+
+    endpoint = _SyncController.api_endpoints['GET']
+    controller = _SyncController()
+    request = dmr_rf.get('/whatever/')
+    request.__dmr_jwt__ = _TokenWithoutClaims()  # type: ignore[attr-defined]
+    controller.request = request
+
+    assert JwtToken()(endpoint, controller) is None
