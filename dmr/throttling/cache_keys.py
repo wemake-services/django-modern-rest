@@ -1,5 +1,6 @@
 import abc
 import dataclasses
+import hashlib
 from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import override
@@ -94,3 +95,31 @@ class UserPk(BaseThrottleCacheKey):
         ):
             return None
         return str(user_pk)
+
+
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class JwtToken(BaseThrottleCacheKey):
+    """
+    Uses a hash of ``request.__dmr_jwt__`` as a cache key.
+
+    Returns ``None`` when jwt token is not set on a request.
+    """
+
+    # It can never be executed before auth, since jwt token
+    # is attached by auth backends.
+    runs_before_auth: Literal[False] = False
+    name: str = 'JwtToken'
+
+    @override
+    def __call__(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> str | None:
+        """Return a hash of ``request.__dmr_jwt__`` as a cache key."""
+        jwt_token = getattr(controller.request, '__dmr_jwt__', None)
+        if jwt_token is None:
+            return None
+        jwt_id = getattr(jwt_token, 'jti', None)
+        raw_value = str(jwt_token if jwt_id is None else jwt_id)
+        return hashlib.sha256(raw_value.encode('utf-8')).hexdigest()
