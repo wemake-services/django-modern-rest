@@ -108,30 +108,30 @@ You have to install it with:
 
 .. tabs::
 
-    .. tab:: :iconify:`material-icon-theme:uv` uv
+  .. tab:: :iconify:`material-icon-theme:uv` uv
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            uv add --group dev schemathesis
+      uv add --group dev schemathesis
 
-    .. tab:: :iconify:`devicon:poetry` poetry
+  .. tab:: :iconify:`devicon:poetry` poetry
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            poetry add --group dev schemathesis
+      poetry add --group dev schemathesis
 
-    .. tab:: :iconify:`devicon:pypi` pip
+  .. tab:: :iconify:`devicon:pypi` pip
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            pip install schemathesis
+      pip install schemathesis
 
 
 Now, let's see how you can generate thousands of tests for your API
 with just several lines of python code:
 
-.. literalinclude:: /../tests/test_integration/test_openapi/test_schema.py
-  :caption: test_schema.py
+.. literalinclude:: ../../tests/test_integration/test_openapi/test_schema.py
+  :caption: tests/test_integration/test_openapi/test_schema.py
   :language: python
   :linenos:
 
@@ -147,7 +147,7 @@ What will happen here?
 You can also provide settings, like
 the number of generated tests, enabled rules, auth, etc:
 
-.. literalinclude:: /../schemathesis.toml
+.. literalinclude:: ../../schemathesis.toml
   :caption: schemathesis.toml
   :language: toml
   :linenos:
@@ -204,26 +204,27 @@ Official docs: https://docs.tracecov.sh/
 .. note::
 
   TraceCov is not bundled with the ``django-modern-rest``.
-  You have to install it with:
+  You have to install it.
 
-  .. tabs::
-      .. tab:: :iconify:`material-icon-theme:uv` uv
+.. tabs::
 
-          .. code-block:: bash
+  .. tab:: :iconify:`material-icon-theme:uv` uv
 
-              uv add --group dev tracecov
+    .. code-block:: bash
 
-      .. tab:: :iconify:`devicon:poetry` poetry
+        uv add --group dev tracecov
 
-          .. code-block:: bash
+  .. tab:: :iconify:`devicon:poetry` poetry
 
-              poetry add --group dev tracecov
+    .. code-block:: bash
 
-      .. tab:: :iconify:`devicon:pypi` pip
+        poetry add --group dev tracecov
 
-          .. code-block:: bash
+  .. tab:: :iconify:`devicon:pypi` pip
 
-              pip install tracecov
+    .. code-block:: bash
+
+        pip install tracecov
 
 
 Why is this better than regular coverage?
@@ -257,7 +258,7 @@ To enable tracking, define a session-scoped ``tracecov_map`` fixture.
 When ``tracecov_map`` is configured and TraceCov is installed, ``dmr_client``
 and ``dmr_async_client`` automatically register requests in ``tracecov``.
 
-.. literalinclude:: /../tests/test_integration/conftest.py
+.. literalinclude:: ../../tests/test_integration/conftest.py
   :caption: conftest.py
   :language: python
   :linenos:
@@ -269,7 +270,7 @@ To enable TraceCov recording for ``schemathesis`` runs, make sure your
 ``schemathesis`` test explicitly records validated interactions into
 ``tracecov_map`` via ``record_schemathesis_interactions(...)``.
 
-.. literalinclude:: /../tests/test_integration/test_openapi/test_schema.py
+.. literalinclude:: ../../tests/test_integration/test_openapi/test_schema.py
   :caption: test_schema.py
   :language: python
   :linenos:

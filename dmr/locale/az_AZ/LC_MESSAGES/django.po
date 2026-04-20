@@ -1,6 +1,7 @@
-# django-modern-rest.
-# Copyright (C) 2026, wemake.services
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
@@ -8,83 +9,84 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-17 08:59+0300\n"
-"PO-Revision-Date: 2026-04-08 12:00+0000\n"
-"Last-Translator: Nikolay Chillev\n"
-"Language-Team: Bulgarian\n"
-"Language: bg\n"
+"PO-Revision-Date: 2026-04-17 01:15+0400\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Azerbaijani <az@li.org>\n"
+"Language: az\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
 "parameters args={args}"
 msgstr ""
-"Пътят {cls} с field_model={field_model} не позволява неименувани параметри "
-"на пътя args={args}"
+"field_model={field_model} olan {cls} yolu adsız yol parametrlərinə "
+"(args={args}) icazə vermir"
 
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"Опит за обработка на файлове с {parser_name}, който не поддържа протокола "
-"SupportsFileParsing"
+"Fayllar SupportsFileParsing protokolunu dəstəkləməyən {parser_name} ilə "
+"təhlil (parse) edilməyə çalışılır"
 
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
-msgstr "Методът {method} не е позволен, позволени: {allowed}"
+msgstr "{method} metoduna icazə verilmir, icazə verilən: {allowed}"
 
 msgid "Not authenticated"
-msgstr "Не сте автентикирани"
+msgstr "Autentifikasiya olunmayıb"
 
 msgid "Too many requests"
-msgstr ""
+msgstr "Çox sayda sorğu göndərilib"
 
 msgid "Internal server error"
-msgstr "Вътрешна грешка на сървъра"
+msgstr "Daxili server xətası"
 
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"HTTP заявките с тип съдържание 'application/x-www-form-urlencoded' трябва да "
-"бъдат кодирани в UTF-8."
+"'application/x-www-form-urlencoded' məzmun tipli HTTP sorğuları UTF-8 ilə "
+"kodlaşdırılmalıdır."
 
 #, python-brace-format
 msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
 "{content_type}"
 msgstr ""
+"Razılaşdırılmış renderer {renderer_type} qaytarılan content-type "
+"{content_type} ilə uyğun gəlmir"
 
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
-"Тялото на отговора не може да бъде сериализирано с приети типове "
-"{accepted_types}, поддържани={supported}"
+"Cavab gövdəsini qəbul edilən {accepted_types} tipləri ilə serializasiya "
+"etmək mümkün deyil, dəstəklənən={supported}"
 
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"Тялото на заявката не може да бъде обработено с тип съдържание "
-"{content_type}, очаквани={expected}"
+"{content_type} məzmun tipli sorğu gövdəsi təhlil edilə bilmir, "
+"gözlənilən={expected}"
 
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
-msgstr "CSRF проверката е неуспешна: {reason}"
+msgstr "CSRF xətası: {reason}"
 
 msgid "BlocklistedJWToken"
-msgstr ""
+msgstr "Bloklanmış JWT Token"
 
 msgid "BlocklistedJWTokens"
-msgstr ""
+msgstr "Bloklanmış JWT Tokenləri"
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
-msgstr "Стойността {value} от тип {type} не се поддържа за {target_type}"
+msgstr "{type} tipindəki {value} dəyəri {target_type} üçün dəstəklənmir"

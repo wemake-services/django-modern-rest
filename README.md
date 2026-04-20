@@ -36,7 +36,7 @@
 - [x] Strict schema validation of both requests and responses, including errors
 - [x] Supports OpenAPI 3.1 / 3.2 semantic schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
-- [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), bundled `pytest` plugin, and default Django's testing primitives
+- [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), [tracecov](https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html#api-coverage-with-tracecov), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage with 2000+ of carefully designed unit, integration, and property-based tests
 - [x] High [security standards](https://github.com/wemake-services/django-modern-rest/blob/master/.github/SECURITY.md)
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
@@ -70,6 +70,9 @@
 
 — **[Josiah Kaviani](https://github.com/proofit404)**, Django core developer
 
+> I rarely see frameworks that treat their OpenAPI schema as a first-class citizen. `django-modern-rest` not only generates a schema that accurately reflects your code, but also gives you the tools to verify it.
+
+— **[Dmitry Dygalo](https://github.com/Stranger6667)**, author of Schemathesis
 
 ## Installation
 

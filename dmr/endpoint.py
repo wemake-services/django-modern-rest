@@ -41,7 +41,7 @@ from dmr.openapi.objects import (
 )
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
-from dmr.response import APIError, APIRedirectError
+from dmr.response import APIError, RedirectTo
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
@@ -360,7 +360,7 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = await func(controller, **context)
-            except (APIError, APIRedirectError) as exc:
+            except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
@@ -396,7 +396,7 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = func(controller, **context)
-            except (APIError, APIRedirectError) as exc:
+            except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,

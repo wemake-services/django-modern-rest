@@ -39,5 +39,5 @@ def content_types(model: Any, property_name: str) -> str | None:
         hints = get_type_hints(metadata)
         # We can't extract content types from anything other than `Literal`:
         if get_origin(hints['content_type']) is Literal:  # type: ignore[comparison-overlap, unused-ignore]
-            return ', '.join(hints['content_type'].__args__)
+            return ', '.join(hints['content_type'].__args__)  # type: ignore[unreachable,  unused-ignore]
     return None
