@@ -70,7 +70,8 @@ smoke:
 example:
     cd django_test_app \
       && uv run mypy --config-file mypy.ini \
-      && uv run python manage.py makemigrations --dry-run --check
+      && uv run python manage.py makemigrations --dry-run --check \
+      && uv run python manage.py collectstatic --dry-run
     PYTHONPATH='docs/' uv run pytest -o addopts='' \
       --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
