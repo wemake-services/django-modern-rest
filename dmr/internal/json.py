@@ -91,10 +91,14 @@ def _wrap_bytes_dumper(
     return wrapper
 
 
+def _compact_json_dumps(data: Any) -> str:
+    return json.dumps(data, separators=(',', ':'))
+
+
 try:
     import msgspec
 except ImportError:  # pragma: no cover
-    _json_dumps: Callable[[Any], str] = json.dumps
+    _json_dumps: Callable[[Any], str] = _compact_json_dumps
 else:
     _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
 
