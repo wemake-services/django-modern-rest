@@ -91,8 +91,7 @@ def _wrap_bytes_dumper(
     return wrapper
 
 
-def _compact_json_dumps(data: Any) -> str:
-    return json.dumps(data, separators=(',', ':'))
+_compact_json_dumps = _wrap_bytes_dumper(NativeJson.dumps)
 
 
 try:
