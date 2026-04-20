@@ -2,12 +2,27 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
+from django.test.client import JSON_CONTENT_TYPE_RE
+
+try:
+    import msgspec as _msgspec
+except ImportError:  # pragma: no cover
+    _msgspec = None  # type: ignore[assignment]
 
 _ThingT = TypeVar('_ThingT')
 
 
 class _DMRMixin:  # noqa: WPS338
     default_content_type: ClassVar[str] = 'application/json'
+
+    def _encode_json(self, data: Any, content_type: str) -> Any:
+        if (
+            _msgspec is not None  # type: ignore[redundant-expr]
+            and JSON_CONTENT_TYPE_RE.match(content_type)
+            and isinstance(data, (dict, list, tuple))
+        ):
+            return _msgspec.json.encode(data).decode()
+        return super()._encode_json(data, content_type)  # type: ignore[misc]
 
     if TYPE_CHECKING:  # noqa: WPS604  # pragma: no cover
 

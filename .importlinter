@@ -84,6 +84,8 @@ ignore_imports =
   # Optional json support from msgspec:
   dmr.settings -> msgspec
   dmr.openapi.dump -> msgspec
+  # Optional faster JSON encoding in test fixtures:
+  dmr.test -> msgspec
 
 [importlinter:contract:plugins-independence]
 name = All `plugins` must be independent

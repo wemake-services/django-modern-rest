@@ -37,6 +37,10 @@ of requirements for an API to count as public.
   renderer, #711
 - Fixed `collectstatic` failure when using `ManifestStaticFilesStorage`, #927
 
+### Misc
+
+- Optimized `dmr_client` and `dmr_rf` test fixtures to use `msgspec` for JSON encoding when available, #889
+
 
 ## Version 0.7.0 (2026-04-14)
 
