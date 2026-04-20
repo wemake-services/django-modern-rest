@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from dmr.internal.json import _json_dumps
+from dmr.internal.json import json_dump as _json_dump
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.openapi import ConvertedSchema
@@ -19,4 +19,4 @@ def json_dump(schema: 'ConvertedSchema') -> 'DumpedSchema':
 
     .. versionadded:: 0.7.0
     """
-    return _json_dumps(schema)
+    return _json_dump(schema)

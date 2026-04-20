@@ -76,17 +76,17 @@ class NativeJson:
 
 
 def _wrap_bytes_dumper(
-    dumper: Callable[['ConvertedSchema'], bytes],  # noqa: F821
-) -> 'SchemaDumper':  # noqa: F821
+    dumper: Callable[[Any], bytes],
+) -> Callable[[Any], str]:
     """
     Wrap a bytes-returning JSON dumper to always return a UTF-8 string.
 
     This is used to normalize different JSON backends (e.g. `msgspec`)
-    to a single `str`-based interface expected by `json_dump_schema`.
+    to a single `str`-based interface expected by `json_dump`.
     """
 
-    def wrapper(schema: 'ConvertedSchema') -> 'DumpedSchema':  # noqa: F821
-        return dumper(schema).decode('utf-8')
+    def wrapper(data: Any) -> str:
+        return dumper(data).decode('utf-8')
 
     return wrapper
 
@@ -94,17 +94,17 @@ def _wrap_bytes_dumper(
 try:
     import msgspec
 except ImportError:  # pragma: no cover
-    _json_dumps: 'SchemaDumper' = json.dumps  # noqa: F821
+    _json_dumps: Callable[[Any], str] = json.dumps
 else:
     _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
 
 
-def json_dump(schema: dict[str, Any]) -> str:
+def json_dump(schema: Any) -> str:
     """
-    Serialize `ConvertedSchema` to a decoded JSON string.
+    Serialize a JSON-serializable object to a string.
 
     Args:
-        schema: Converted OpenAPI schema to be serialized.
+        schema: JSON-serializable object to serialize.
 
     Returns:
         JSON string representation of the schema.

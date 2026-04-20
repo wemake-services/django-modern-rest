@@ -16,7 +16,7 @@ class _DMRMixin:  # noqa: WPS338
             content_type == self.default_content_type
             and not isinstance(data, (str, bytes))
         )
-        return json_dump(data) if should_encode else data  # type: ignore[arg-type]
+        return json_dump(data) if should_encode else data
 
     if TYPE_CHECKING:  # noqa: WPS604  # pragma: no cover
 
