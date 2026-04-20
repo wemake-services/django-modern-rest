@@ -28,7 +28,7 @@ class _MyController(Controller[PydanticSerializer]):
 def test_encode_json_fallback_without_msgspec(
     dmr_rf: DMRRequestFactory,
 ) -> None:
-    """Ensures correct encoding when msgspec is unavailable (stdlib fallback)."""
+    """Check correct encoding when msgspec is unavailable (stdlib fallback)."""
     with patch('dmr.internal.json._json_dumps', json.dumps):
         request = dmr_rf.post('/whatever/', data={'key': 'value'})
     assert json.loads(request.body) == {'key': 'value'}
