@@ -1,0 +1,107 @@
+# django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the PACKAGE package.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-20 14:42+0200\n"
+"PO-Revision-Date: 2026-04-20 14:42+0200\n"
+"Last-Translator: \n"
+"Language-Team: Belarusian\n"
+"Language: be\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: dmr/components.py:54
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"Шлях {cls} з field_model={field_model} не дазваляе безназоўныя параметры "
+"шляху args={args}"
+
+#: dmr/components.py:59
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"Спроба разбору файлаў з дапамогай {parser_name}, які не падтрымлівае "
+"пратакол SupportsFileParsing"
+
+#: dmr/controller.py:43
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "Метад {method} не дазволены, дазволеныя: {allowed}"
+
+#: dmr/exceptions.py:10
+msgid "Not authenticated"
+msgstr "Не аўтэнтыфікаваны"
+
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr "Занадта шмат запытаў"
+
+#: dmr/exceptions.py:49
+msgid "Internal server error"
+msgstr "Унутраная памылка сервера"
+
+#: dmr/internal/django.py:49
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"HTTP-запыты з тыпам змесціва 'application/x-www-form-urlencoded' павінны "
+"быць закадаваны ў UTF-8."
+
+#: dmr/internal/negotiation.py:18
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"Узгоднены рэндэрар {renderer_type} не адпавядае вернутаму тыпу змесціва "
+"{content_type}"
+
+#: dmr/internal/negotiation.py:23
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Немагчыма серыялізаваць цела адказу з прынятымі тыпамі {accepted_types}, "
+"падтрымлівамыя={supported}"
+
+#: dmr/negotiation.py:20
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"Немагчыма разабраць цела запыту з тыпам змесціва {content_type}, "
+"чаканы={expected}"
+
+#: dmr/security/django_session/auth.py:22
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "Збой праверкі CSRF: {reason}"
+
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr "Заблакіраваны JWT токен"
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr "Заблакіраваныя JWT токены"
+
+#: dmr/serializer.py:16
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "Значэнне {value} тыпу {type} не падтрымліваецца для {target_type}"
