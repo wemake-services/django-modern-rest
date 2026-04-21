@@ -164,7 +164,7 @@ def test_invalid_data(
 @pytest.mark.parametrize(
     ('typ', 'raw_data'),
     [
-        # We allow type convertions in this mode:
+        # We allow type conversions in this mode:
         (dt.datetime, '2026-04-20T21:37:41.707933Z'),
         (list[int], ['1', '2']),
     ],
