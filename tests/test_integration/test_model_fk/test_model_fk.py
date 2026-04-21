@@ -86,3 +86,22 @@ def test_user_create_unique_email_error(
             },
         ],
     })
+
+
+@pytest.mark.django_db
+def test_user_create_name_too_long(
+    dmr_client: DMRClient,
+    faker: Faker,
+) -> None:
+    """Ensure that name longer than 100 chars returns 422."""
+    long_name = 'a' * 101
+    request_data = {
+        'email': faker.email(),
+        'role': {'name': long_name},
+        'tags': [{'name': long_name}],
+    }
+    response = dmr_client.post(
+        reverse('api:model_fk:user'),
+        data=request_data,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
