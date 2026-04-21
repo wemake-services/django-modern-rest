@@ -69,8 +69,7 @@ It is kinda useful for request bodies, where you don't control the clients.
 
 Here's how we determine the default strictness for ``pydantic`` models:
 
-1. If
-   :attr:`~dmr.endpoint.SerializerContext.strict_validation`
+1. If :attr:`~dmr.endpoint.SerializerContext.strict_validation`
    is not ``None``, we return the serializer-level strictness
 2. Then ``pydantic`` looks at ``strict`` attribute
    in :class:`~pydantic.config.ConfigDict`

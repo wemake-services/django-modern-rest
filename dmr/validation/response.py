@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, final
+from typing import TYPE_CHECKING, Any, TypeVar, final
 
 from django.http import FileResponse, HttpResponse, HttpResponseBase
 
@@ -43,10 +43,6 @@ class ResponseValidator:  # noqa: WPS214
     # Public API:
     metadata: 'EndpointMetadata'
     serializer: type[BaseSerializer]
-
-    # Public class-level API:
-    strict_validation: ClassVar[bool] = True
-    to_model_kwargs: ClassVar[Mapping[str, Any]] = {}
 
     def validate_response(
         self,
@@ -112,6 +108,7 @@ class ResponseValidator:  # noqa: WPS214
             structured,
             schema,
             content_type=renderer.content_type,
+            strict=True,
         )
         return all_response_data
 
@@ -177,6 +174,7 @@ class ResponseValidator:  # noqa: WPS214
                 'Content-Type',
                 parser.content_type,
             ),
+            strict=None,
         )
 
     def _validate_body(
@@ -185,6 +183,7 @@ class ResponseValidator:  # noqa: WPS214
         schema: ResponseSpec,
         *,
         content_type: str,
+        strict: bool | None,
     ) -> None:
         """
         Does structured validation based on the provided schema.
@@ -193,6 +192,10 @@ class ResponseValidator:  # noqa: WPS214
             structured: data to be validated.
             schema: exact response description schema to be a validator.
             content_type: content type that is used for this body.
+            strict: should we apply strict validation rules?
+                Basically, we do for ``@modify`` responses and fallback
+                to default ``None`` on ``@validate`` responses, because
+                it is re-parsed from the response (xml or json, etc) body.
 
         Raises:
             ResponseSchemaError: When validation fails.
@@ -225,12 +228,7 @@ class ResponseValidator:  # noqa: WPS214
             return  # We can't validate stream returns below this point.
 
         try:
-            self.serializer.from_python(
-                structured,
-                model,
-                strict=self.strict_validation,
-                **self.to_model_kwargs,
-            )
+            self.serializer.from_python(structured, model, strict=strict)
         except self.serializer.validation_error as exc:
             raise ValidationError(
                 self.serializer.serialize_validation_error(exc),

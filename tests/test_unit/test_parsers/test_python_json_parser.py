@@ -1,6 +1,6 @@
 import datetime as dt
 import json
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 from typing import Final
 
 import pydantic
@@ -11,7 +11,7 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from dmr import Body, Controller
+from dmr import Body, Controller, ResponseSpec, validate
 from dmr.internal.json import JsonModule, NativeJson
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
@@ -292,11 +292,13 @@ class _ProductModel(pydantic.BaseModel):
         dt.timezone(offset=dt.timedelta(hours=-7), name='LA'),
     ],
 )
+@pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.PUT])
 def test_json_parser_return_validation(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
     *,
     timezone: dt.timezone,
+    method: HTTPMethod,
 ) -> None:
     """Ensures validation works for datetime fields with different timezones."""
 
@@ -309,7 +311,12 @@ def test_json_parser_return_validation(
                 updated_at=now,
             )
 
-    request = dmr_rf.get('/whatever/')
+        @validate(ResponseSpec(_ProductModel, status_code=HTTPStatus.OK))
+        def put(self) -> HttpResponse:
+            # See https://github.com/wemake-services/django-modern-rest/issues/938
+            return self.to_response(self.get())
+
+    request = dmr_rf.generic(str(method), '/whatever/')
 
     response = _Controller.as_view()(request)
 

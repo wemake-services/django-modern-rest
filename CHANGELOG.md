@@ -20,13 +20,13 @@ of requirements for an API to count as public.
 
 ## WIP
 
-- Added `accepted_header` as a faster alternative to `django`'s `HttpRequest.accepts`, #854
-
 ### Features
 
 - *Breaking*: Renamed `APIRedirectError` to `RedirectTo`
 - Added `validate_negotiation` metadata flag, so we can explicitly validate,
   that returned response followed the negotiation process, #711
+- Added `accepted_header` as a faster alternative
+  to `django`'s `HttpRequest.accepts`, #854
 
 ### Bugfixes
 
@@ -36,6 +36,7 @@ of requirements for an API to count as public.
   `HttpResponse` with a different content type than the negotiated
   renderer, #711
 - Fixed `collectstatic` failure when using `ManifestStaticFilesStorage`, #927
+- Fixed `datetime` validation when using `.to_response`, #938
 
 ### Misc
 
