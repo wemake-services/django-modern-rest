@@ -140,6 +140,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.decorators._TypeT'),
     (_PY_CLASS, 'dmr.internal.negotiation.ConditionalType'),
     (_PY_CLASS, 'dmr.security.jwt.views._ObtainTokensT'),
+    (_PY_CLASS, 'dmr.security.jwt.views._RefreshTokensT'),
     (_PY_CLASS, 'dmr.security.jwt.views._TokensResponseT'),
     (
         _PY_CLASS,
