@@ -22,6 +22,9 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added `RefreshTokenSyncController` and `RefreshTokenAsyncController`
+  to issue new access/refresh token pairs from a valid refresh token, #907
+
 - *Breaking*: Renamed `APIRedirectError` to `RedirectTo`
 - Added `validate_negotiation` metadata flag, so we can explicitly validate,
   that returned response followed the negotiation process, #711

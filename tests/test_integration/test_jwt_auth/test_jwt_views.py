@@ -391,3 +391,64 @@ def test_refresh_wrong_structure(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['detail']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+def test_refresh_deleted_user(
+    dmr_client: DMRClient,
+    user: User,
+    *,
+    url: str,
+) -> None:
+    """Ensures that a refresh token for a deleted user raises 401."""
+    token = JWToken(
+        sub=str(user.pk),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'refresh'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+    user.delete()
+
+    response = dmr_client.post(url, data={'refresh_token': token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+def test_refresh_inactive_user(
+    dmr_client: DMRClient,
+    user: User,
+    *,
+    url: str,
+) -> None:
+    """Ensures that a refresh token for an inactive user raises 401."""
+    token = JWToken(
+        sub=str(user.pk),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'refresh'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+    user.is_active = False
+    user.save()
+
+    response = dmr_client.post(url, data={'refresh_token': token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
