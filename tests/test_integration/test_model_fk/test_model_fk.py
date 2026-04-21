@@ -81,15 +81,13 @@ def test_user_create_name_too_long_rejected(
         if over_long_field == 'tag'
         else faker.name()
     )
-    request_data = {
-        'email': faker.email(),
-        'role': {'name': role_name},
-        'tags': [{'name': tag_name}],
-    }
-
     response = dmr_client.post(
         reverse('api:model_fk:user'),
-        data=request_data,
+        data={
+            'email': faker.email(),
+            'role': {'name': role_name},
+            'tags': [{'name': tag_name}],
+        },
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
