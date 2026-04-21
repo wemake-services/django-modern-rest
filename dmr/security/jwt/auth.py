@@ -263,8 +263,7 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         token: JWToken,
     ) -> None:
         """Set current user as authed for this request."""
-        request.user = user
-        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
+        set_request_attrs(request, user, token=token)
 
 
 class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
@@ -325,13 +324,7 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         token: JWToken,
     ) -> None:
         """Set current user as authed for this request."""
-        request.user = user
-
-        async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
-            return user
-
-        request.auser = auser
-        request.__dmr_jwt__ = token  # type: ignore[attr-defined]
+        set_request_attrs(request, user, token=token, include_auser=True)
 
 
 @overload
@@ -361,3 +354,24 @@ def request_jwt(
     if jwt is None and strict:
         raise AttributeError('__dmr_jwt__')
     return jwt
+
+
+def set_request_attrs(
+    request: HttpRequest,
+    user: 'AbstractBaseUser',
+    *,
+    token: JWToken | None = None,
+    include_auser: bool = False,
+) -> None:
+    """Set all required properties to the authed request."""
+    request.user = user
+
+    if include_auser:
+
+        async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
+            return user
+
+        request.auser = auser
+
+    if token is not None:
+        request.__dmr_jwt__ = token  # type: ignore[attr-defined]

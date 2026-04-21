@@ -22,9 +22,20 @@ def password(faker: Faker) -> str:
 def user(faker: Faker, password: str) -> User:
     """Create fake user for tests."""
     return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        password,
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=password,
+    )
+
+
+@pytest.fixture
+def inactive_user(faker: Faker, password: str) -> User:
+    """Create inactive fake user for tests."""
+    return User.objects.create_user(
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=password,
+        is_active=False,
     )
 
 
@@ -111,6 +122,34 @@ def test_correct_auth_params(
         'email': user.email,
         'is_active': user.is_active,
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
+    ],
+)
+def test_inactive_user(
+    dmr_client: DMRClient,
+    inactive_user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures that inactive users can't get in."""
+    response = dmr_client.post(
+        url,
+        data={'username': inactive_user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
 
 
 @pytest.mark.django_db

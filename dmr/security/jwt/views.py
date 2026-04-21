@@ -7,11 +7,14 @@ from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.http import HttpRequest
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
+from dmr.security.jwt.auth import set_request_attrs
 from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
 
@@ -139,8 +142,16 @@ class ObtainTokensSyncController(
         )
         if user is None:
             raise NotAuthenticatedError
-        self.request.user = user
+        self.set_request_attrs(self.request, user)
         return self.make_api_response()
+
+    def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+    ) -> None:
+        """Set current user as authed for this request."""
+        set_request_attrs(request, user)
 
     @abstractmethod
     def convert_auth_payload(
@@ -206,8 +217,16 @@ class ObtainTokensAsyncController(
         )
         if user is None:
             raise NotAuthenticatedError
-        self.request.user = user
+        await self.set_request_attrs(self.request, user)
         return await self.make_api_response()
+
+    async def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+    ) -> None:
+        """Set current user as authed for this request."""
+        set_request_attrs(request, user, include_auser=True)
 
     @abstractmethod
     async def convert_auth_payload(

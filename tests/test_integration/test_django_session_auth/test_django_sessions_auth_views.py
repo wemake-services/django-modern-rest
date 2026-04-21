@@ -20,9 +20,20 @@ def password(faker: Faker) -> str:
 def user(faker: Faker, password: str) -> User:
     """Create fake user for tests."""
     return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        password,
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=password,
+    )
+
+
+@pytest.fixture
+def inactive_user(faker: Faker, password: str) -> User:
+    """Create inactive fake user for tests."""
+    return User.objects.create_user(
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=password,
+        is_active=False,
     )
 
 
@@ -67,6 +78,32 @@ def test_correct_django_session(
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {'user_id': str(user.pk)}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+def test_inactive_user(
+    dmr_client: DMRClient,
+    inactive_user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures that inactice users can't get in."""
+    response = dmr_client.post(
+        url,
+        data={'username': inactive_user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies.get(settings.SESSION_COOKIE_NAME) is None
 
 
 @pytest.mark.django_db
