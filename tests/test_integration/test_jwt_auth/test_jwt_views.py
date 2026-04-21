@@ -1,3 +1,4 @@
+import datetime as dt
 from http import HTTPStatus
 
 import jwt
@@ -7,8 +8,10 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from faker import Faker
+from freezegun.api import FrozenDateTimeFactory
 from inline_snapshot import snapshot
 
+from dmr.security.jwt.token import JWToken
 from dmr.test import DMRClient
 
 
@@ -220,6 +223,170 @@ def test_wrong_auth_structure(
         url,
         data=auth_params,
     )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['detail']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'obtain_url',
+    [
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
+    ],
+)
+def test_refresh_valid_token(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    obtain_url: str,
+) -> None:
+    """Ensures that a valid refresh token returns a new token pair."""
+    obtain_response = dmr_client.post(
+        obtain_url,
+        data={'username': user.username, 'password': password},
+    )
+    assert obtain_response.status_code == HTTPStatus.OK
+    original_refresh = obtain_response.json()['refresh_token']
+
+    response = dmr_client.post(url, data={'refresh_token': original_refresh})
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    new_access = jwt.decode(
+        response.json()['access_token'],
+        key=settings.SECRET_KEY,
+        algorithms=['HS256'],
+    )
+    assert new_access == {
+        'sub': str(user.pk),
+        'exp': IsNumber(),
+        'iat': IsNumber(),
+        'jti': IsStr(),
+        'extras': {'type': 'access'},
+    }
+    new_refresh = jwt.decode(
+        response.json()['refresh_token'],
+        key=settings.SECRET_KEY,
+        algorithms=['HS256'],
+    )
+    assert new_refresh == {
+        'sub': str(user.pk),
+        'exp': IsNumber(),
+        'iat': IsNumber(),
+        'jti': IsStr(),
+        'extras': {'type': 'refresh'},
+    }
+    assert new_access['jti'] != new_refresh['jti']
+    assert (
+        new_access['jti']
+        != jwt.decode(
+            obtain_response.json()['access_token'],
+            key=settings.SECRET_KEY,
+            algorithms=['HS256'],
+        )['jti']
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+def test_refresh_with_access_token(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures posting an access token to the refresh endpoint raises 401."""
+    obtain_response = dmr_client.post(
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+        data={'username': user.username, 'password': password},
+    )
+    assert obtain_response.status_code == HTTPStatus.OK
+    access_token = obtain_response.json()['access_token']
+
+    response = dmr_client.post(url, data={'refresh_token': access_token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+def test_refresh_expired_token(
+    dmr_client: DMRClient,
+    user: User,
+    freezer: FrozenDateTimeFactory,
+    *,
+    url: str,
+) -> None:
+    """Ensures that an expired refresh token raises 401."""
+    expired_token = JWToken(
+        sub=str(user.pk),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(seconds=1),
+        extras={'type': 'refresh'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+
+    next_day = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+    freezer.move_to(next_day)
+
+    response = dmr_client.post(url, data={'refresh_token': expired_token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'body',
+    [
+        {'wrong_key': 'value'},
+        {'refresh': 'value'},
+        {},
+    ],
+)
+def test_refresh_wrong_structure(
+    dmr_client: DMRClient,
+    *,
+    url: str,
+    body: dict[str, str],
+) -> None:
+    """Ensures that incorrect body raises 400."""
+    response = dmr_client.post(url, data=body)
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers['Content-Type'] == 'application/json'

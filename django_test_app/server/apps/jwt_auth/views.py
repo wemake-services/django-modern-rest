@@ -13,6 +13,8 @@ from dmr.security.jwt.views import (
     ObtainTokensPayload,
     ObtainTokensResponse,
     ObtainTokensSyncController,
+    RefreshTokenAsyncController,
+    RefreshTokenSyncController,
 )
 
 
@@ -99,6 +101,48 @@ class ObtainAccessAndRefreshAsyncController(
         auser = await self.request.auser()
         assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
         return response
+
+
+class RefreshSyncController(
+    RefreshTokenSyncController[
+        PydanticSerializer,
+        ObtainTokensResponse,
+    ],
+):
+    @override
+    def make_api_response(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_jwt_token(
+                expiration=now + self.jwt_expiration,
+                token_type='access',  # noqa: S106
+            ),
+            'refresh_token': self.create_jwt_token(
+                expiration=now + self.jwt_refresh_expiration,
+                token_type='refresh',  # noqa: S106
+            ),
+        }
+
+
+class RefreshAsyncController(
+    RefreshTokenAsyncController[
+        PydanticSerializer,
+        ObtainTokensResponse,
+    ],
+):
+    @override
+    async def make_api_response(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_jwt_token(
+                expiration=now + self.jwt_expiration,
+                token_type='access',  # noqa: S106
+            ),
+            'refresh_token': self.create_jwt_token(
+                expiration=now + self.jwt_refresh_expiration,
+                token_type='refresh',  # noqa: S106
+            ),
+        }
 
 
 @final

@@ -15,6 +15,16 @@ router = Router(
             name='jwt_obtain_access_refresh_async',
         ),
         path(
+            'jwt-refresh-sync/',
+            views.RefreshSyncController.as_view(),
+            name='jwt_refresh_sync',
+        ),
+        path(
+            'jwt-refresh-async/',
+            views.RefreshAsyncController.as_view(),
+            name='jwt_refresh_async',
+        ),
+        path(
             'jwt-sync-auth/',
             views.ControllerWithJWTSyncAuth.as_view(),
             name='jwt_sync_auth',
