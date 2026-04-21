@@ -118,6 +118,12 @@ class RefreshSyncController(
 
     @override
     def make_api_response(self) -> ObtainTokensResponse:
+        assert (  # noqa: S101, PT018
+            self.request.user.is_authenticated and self.request.user.is_active
+        )
+        auser = async_to_sync(self.request.auser)()
+        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
+
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(
@@ -148,6 +154,12 @@ class RefreshAsyncController(
 
     @override
     async def make_api_response(self) -> ObtainTokensResponse:
+        assert (  # noqa: S101, PT018
+            self.request.user.is_authenticated and self.request.user.is_active
+        )
+        auser = await self.request.auser()
+        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
+
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(
