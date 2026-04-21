@@ -112,8 +112,11 @@ We provide two :ref:`reusable-controllers` for this:
 
 To use them, you only need to:
 
-1. Provide actual types for serializer and response body
+1. Provide actual types for serializer, request payload, and response body
 2. Redefine
+   :meth:`~dmr.security.jwt.views.RefreshTokenSyncController.convert_refresh_payload`
+   to extract the refresh token string from your request payload
+3. Redefine
    :meth:`~dmr.security.jwt.views.RefreshTokenSyncController.make_api_response`
    to return the new token pair in the format of your choice
 
@@ -193,10 +196,10 @@ Pre-defined views to fetch JWT tokens
   :show-inheritance:
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenSyncController
-  :members: post, refresh, make_api_response, create_jwt_token, make_jwt_id
+  :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenAsyncController
-  :members: post, refresh, make_api_response, create_jwt_token, make_jwt_id
+  :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenPayload
   :members:

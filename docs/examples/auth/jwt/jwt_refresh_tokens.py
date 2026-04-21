@@ -5,6 +5,7 @@ from typing_extensions import override
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt.views import (
     ObtainTokensResponse,
+    RefreshTokenPayload,
     RefreshTokenSyncController,
 )
 
@@ -13,9 +14,14 @@ from dmr.security.jwt.views import (
 class RefreshSyncController(
     RefreshTokenSyncController[
         PydanticSerializer,
+        RefreshTokenPayload,
         ObtainTokensResponse,
     ],
 ):
+    @override
+    def convert_refresh_payload(self, payload: RefreshTokenPayload) -> str:
+        return payload['refresh_token']
+
     @override
     def make_api_response(self) -> ObtainTokensResponse:
         now = dt.datetime.now(dt.UTC)

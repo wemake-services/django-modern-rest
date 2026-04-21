@@ -20,6 +20,7 @@ from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
 
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
+_RefreshTokensT = TypeVar('_RefreshTokensT', bound=Mapping[str, Any])
 _TokensResponseT = TypeVar('_TokensResponseT')
 _SerializerT = TypeVar(
     '_SerializerT',
@@ -95,6 +96,11 @@ class _BaseTokenController(
             headers=token_headers,
         )
 
+    def check_auth(self, user: Any) -> None:
+        """Run extra auth checks, raise if something is wrong."""
+        if user is None or not user.is_active:
+            raise NotAuthenticatedError
+
     def make_jwt_id(self) -> str | None:
         """Create unique token's jwt id."""
         return uuid.uuid4().hex
@@ -141,8 +147,8 @@ class ObtainTokensSyncController(
             self.request,
             **self.convert_auth_payload(parsed_body),
         )
-        if user is None:
-            raise NotAuthenticatedError
+        self.check_auth(user)
+        assert user is not None
         self.set_request_attrs(self.request, user)
         return self.make_api_response()
 
@@ -216,8 +222,8 @@ class ObtainTokensAsyncController(
             self.request,
             **(await self.convert_auth_payload(parsed_body)),
         )
-        if user is None:
-            raise NotAuthenticatedError
+        self.check_auth(user)
+        assert user is not None
         await self.set_request_attrs(self.request, user)
         return await self.make_api_response()
 
@@ -274,12 +280,12 @@ class _BaseRefreshTokenController(_BaseTokenController[_SerializerT]):
 
 class RefreshTokenSyncController(
     _BaseRefreshTokenController[_SerializerT],
-    Generic[_SerializerT, _TokensResponseT],
+    Generic[_SerializerT, _RefreshTokensT, _TokensResponseT],
 ):
     """
     Sync controller to refresh access and refresh tokens.
 
-    Accepts a *refresh_token* in the request body, validates it,
+    Accepts a refresh token in the request body, validates it,
     loads the user, and calls :meth:`make_api_response` to build the response.
 
     Attributes:
@@ -296,16 +302,16 @@ class RefreshTokenSyncController(
     )
 
     @modify(status_code=HTTPStatus.OK)
-    def post(self, parsed_body: Body[RefreshTokenPayload]) -> _TokensResponseT:
+    def post(self, parsed_body: Body[_RefreshTokensT]) -> _TokensResponseT:
         """Refresh tokens on POST."""
         return self.refresh(parsed_body)
 
-    def refresh(self, parsed_body: RefreshTokenPayload) -> _TokensResponseT:
+    def refresh(self, parsed_body: _RefreshTokensT) -> _TokensResponseT:
         """Validate the refresh token, load user, and return new tokens."""
         from django.contrib.auth import get_user_model  # noqa: PLC0415
 
         token = self._decode_and_validate_refresh_token(
-            parsed_body['refresh_token'],
+            self.convert_refresh_payload(parsed_body),
         )
         try:
             user = get_user_model().objects.get(**{
@@ -313,10 +319,14 @@ class RefreshTokenSyncController(
             })
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
-        if not user.is_active:
-            raise NotAuthenticatedError
+        self.check_auth(user)
         self.request.user = user
         return self.make_api_response()
+
+    @abstractmethod
+    def convert_refresh_payload(self, payload: _RefreshTokensT) -> str:
+        """Extract the refresh token string from the request payload."""
+        raise NotImplementedError
 
     @abstractmethod
     def make_api_response(self) -> _TokensResponseT:
@@ -326,12 +336,12 @@ class RefreshTokenSyncController(
 
 class RefreshTokenAsyncController(
     _BaseRefreshTokenController[_SerializerT],
-    Generic[_SerializerT, _TokensResponseT],
+    Generic[_SerializerT, _RefreshTokensT, _TokensResponseT],
 ):
     """
     Async controller to refresh access and refresh tokens.
 
-    Accepts a *refresh_token* in the request body, validates it,
+    Accepts a refresh token in the request body, validates it,
     loads the user, and calls :meth:`make_api_response` to build the response.
 
     Attributes:
@@ -350,20 +360,20 @@ class RefreshTokenAsyncController(
     @modify(status_code=HTTPStatus.OK)
     async def post(
         self,
-        parsed_body: Body[RefreshTokenPayload],
+        parsed_body: Body[_RefreshTokensT],
     ) -> _TokensResponseT:
         """Refresh tokens on POST."""
         return await self.refresh(parsed_body)
 
     async def refresh(
         self,
-        parsed_body: RefreshTokenPayload,
+        parsed_body: _RefreshTokensT,
     ) -> _TokensResponseT:
         """Validate the refresh token, load user, and return new tokens."""
         from django.contrib.auth import get_user_model  # noqa: PLC0415
 
         token = self._decode_and_validate_refresh_token(
-            parsed_body['refresh_token'],
+            await self.convert_refresh_payload(parsed_body),
         )
         try:
             user = await get_user_model().objects.aget(**{
@@ -371,10 +381,14 @@ class RefreshTokenAsyncController(
             })
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
-        if not user.is_active:
-            raise NotAuthenticatedError
+        self.check_auth(user)
         self.request.user = user
         return await self.make_api_response()
+
+    @abstractmethod
+    async def convert_refresh_payload(self, payload: _RefreshTokensT) -> str:
+        """Extract the refresh token string from the request payload."""
+        raise NotImplementedError
 
     @abstractmethod
     async def make_api_response(self) -> _TokensResponseT:

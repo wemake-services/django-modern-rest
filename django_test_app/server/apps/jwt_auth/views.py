@@ -14,6 +14,7 @@ from dmr.security.jwt.views import (
     ObtainTokensResponse,
     ObtainTokensSyncController,
     RefreshTokenAsyncController,
+    RefreshTokenPayload,
     RefreshTokenSyncController,
 )
 
@@ -103,12 +104,18 @@ class ObtainAccessAndRefreshAsyncController(
         return response
 
 
+@final
 class RefreshSyncController(
     RefreshTokenSyncController[
         PydanticSerializer,
+        RefreshTokenPayload,
         ObtainTokensResponse,
     ],
 ):
+    @override
+    def convert_refresh_payload(self, payload: RefreshTokenPayload) -> str:
+        return payload['refresh_token']
+
     @override
     def make_api_response(self) -> ObtainTokensResponse:
         now = dt.datetime.now(dt.UTC)
@@ -124,12 +131,21 @@ class RefreshSyncController(
         }
 
 
+@final
 class RefreshAsyncController(
     RefreshTokenAsyncController[
         PydanticSerializer,
+        RefreshTokenPayload,
         ObtainTokensResponse,
     ],
 ):
+    @override
+    async def convert_refresh_payload(
+        self,
+        payload: RefreshTokenPayload,
+    ) -> str:
+        return payload['refresh_token']
+
     @override
     async def make_api_response(self) -> ObtainTokensResponse:
         now = dt.datetime.now(dt.UTC)
