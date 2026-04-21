@@ -72,17 +72,19 @@ class _BaseTokenController(
     def create_jwt_token(  # noqa: WPS211
         self,
         *,
+        # Most frequent:
+        expiration: dt.datetime | None = None,
+        token_type: _TokenType | None = None,
+        # Less frequent:
         subject: str | None = None,
         issuer: str | None = None,
         audiences: str | Sequence[str] | None = None,
-        expiration: dt.datetime | None = None,
         jwt_id: str | None = None,
-        token_type: _TokenType | None = None,
         secret: str | None = None,
         algorithm: str | None = None,
         token_headers: dict[str, Any] | None = None,
     ) -> str:
-        """Create correct jwt token of a give *expiration* and *type*."""
+        """Create correct jwt token of a given *expiration* and *token_type*."""
         return self.jwt_token_cls(
             sub=subject or str(self.request.user.pk),
             exp=expiration or (dt.datetime.now(dt.UTC) + self.jwt_expiration),
@@ -286,6 +288,14 @@ class RefreshTokenSyncController(
     Attributes:
         jwt_user_id_field: User model field matched against ``token.sub``.
             Defaults to ``'pk'``.
+        jwt_audiences: String or sequence of string of audiences for JWT token.
+        jwt_issuer: String of who issued this JWT token.
+        jwt_algorithm: Default algorithm to use for token signing.
+        jwt_expiration: Default token expiration timedelta.
+        jwt_refresh_expiration: Default refresh token expiration timedelta.
+        jwt_secret: Alternative token secret for signing.
+            By default uses ``secret.SECRET_KEY``
+        jwt_token_cls: Possible custom JWT token class.
 
     """
 
@@ -355,6 +365,14 @@ class RefreshTokenAsyncController(
     Attributes:
         jwt_user_id_field: User model field matched against ``token.sub``.
             Defaults to ``'pk'``.
+        jwt_audiences: String or sequence of string of audiences for JWT token.
+        jwt_issuer: String of who issued this JWT token.
+        jwt_algorithm: Default algorithm to use for token signing.
+        jwt_expiration: Default token expiration timedelta.
+        jwt_refresh_expiration: Default refresh token expiration timedelta.
+        jwt_secret: Alternative token secret for signing.
+            By default uses ``secret.SECRET_KEY``
+        jwt_token_cls: Possible custom JWT token class.
 
     """
 
