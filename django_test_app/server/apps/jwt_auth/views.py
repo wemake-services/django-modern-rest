@@ -35,6 +35,12 @@ class ObtainAccessAndRefreshSyncController(
 
     @override
     def make_api_response(self) -> ObtainTokensResponse:
+        assert (  # noqa: S101, PT018
+            self.request.user.is_authenticated and self.request.user.is_active
+        )
+        auser = async_to_sync(self.request.auser)()
+        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
+
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(
@@ -46,18 +52,6 @@ class ObtainAccessAndRefreshSyncController(
                 token_type='refresh',  # noqa: S106
             ),
         }
-
-    @override
-    def login(self, parsed_body: ObtainTokensPayload) -> ObtainTokensResponse:
-        """This is needed only for test purpose."""
-        response = super().login(parsed_body)
-        # Testing:
-        assert (  # noqa: S101, PT018
-            self.request.user.is_authenticated and self.request.user.is_active
-        )
-        auser = async_to_sync(self.request.auser)()
-        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
-        return response
 
 
 class ObtainAccessAndRefreshAsyncController(
@@ -76,6 +70,12 @@ class ObtainAccessAndRefreshAsyncController(
 
     @override
     async def make_api_response(self) -> ObtainTokensResponse:
+        assert (  # noqa: S101, PT018
+            self.request.user.is_authenticated and self.request.user.is_active
+        )
+        auser = await self.request.auser()
+        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
+
         now = dt.datetime.now(dt.UTC)
         return {
             'access_token': self.create_jwt_token(
@@ -87,21 +87,6 @@ class ObtainAccessAndRefreshAsyncController(
                 token_type='refresh',  # noqa: S106
             ),
         }
-
-    @override
-    async def login(
-        self,
-        parsed_body: ObtainTokensPayload,
-    ) -> ObtainTokensResponse:
-        """This is needed only for test purpose."""
-        response = await super().login(parsed_body)
-        # Testing:
-        assert (  # noqa: S101, PT018
-            self.request.user.is_authenticated and self.request.user.is_active
-        )
-        auser = await self.request.auser()
-        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
-        return response
 
 
 @final
