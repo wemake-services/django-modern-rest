@@ -4,6 +4,7 @@ from http import HTTPStatus
 import pytest
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
+from freezegun.api import FrozenDateTimeFactory
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
@@ -76,6 +77,7 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
 )
 def test_sync_throttle_user_pk_cases(
     dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
     *,
     controller_cls: type[Controller[PydanticSerializer]],
     user: User,

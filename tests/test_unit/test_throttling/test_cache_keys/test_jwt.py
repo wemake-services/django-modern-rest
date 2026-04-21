@@ -6,6 +6,7 @@ from typing import Final
 
 import pytest
 from django.http import HttpResponse
+from freezegun.api import FrozenDateTimeFactory
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
@@ -54,6 +55,7 @@ _JWT_THROTTLE_CASES: Final = (
 )
 def test_sync_throttle_jwt_token_cases(
     dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
     *,
     set_jwt: bool,
     jwt_value: JWToken | None,
@@ -83,6 +85,7 @@ def test_sync_throttle_jwt_token_cases(
 )
 async def test_async_throttle_jwt_token_cases(
     dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
     *,
     set_jwt: bool,
     jwt_value: JWToken | None,
@@ -121,6 +124,8 @@ async def test_async_throttle_jwt_token_cases(
 )
 def test_jwt_cache_key_is_hashed(
     dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+    *,
     token: JWToken,
 ) -> None:
     """Ensures `JwtToken` never exposes raw token data in cache key."""
