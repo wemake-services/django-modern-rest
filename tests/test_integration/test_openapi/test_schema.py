@@ -1,4 +1,5 @@
 import logging
+import os
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
@@ -7,11 +8,17 @@ import schemathesis as st
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.urls import reverse
+from hypothesis import settings as h_settings
 from hypothesis import strategies
 from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 from django_test_app.server.wsgi import application
 from dmr.validation import ResponseValidator
+
+_LOCAL_MAX_EXAMPLES = 25
+_MAX_EXAMPLES = (
+    h_settings().max_examples if os.environ.get('CI') else _LOCAL_MAX_EXAMPLES
+)
 
 if TYPE_CHECKING:
     import tracecov
@@ -38,6 +45,14 @@ def _disable_logging(settings: LazySettings) -> Iterator[None]:
     logging.disable(logging.NOTSET)
 
 
+@pytest.fixture(autouse=True)
+def _modify_integration_settings(settings: LazySettings) -> None:
+    # Schemathesis tests only run meaningfully with DEBUG=False (the test
+    # explicitly skips when DEBUG=True), so there is no value in running
+    # the full suite twice via the parent conftest parametrisation.
+    settings.DEBUG = False
+
+
 # The `transactional_db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
@@ -61,6 +76,9 @@ st.openapi.format(
 
 
 @schema.parametrize()
+@h_settings(
+    max_examples=_MAX_EXAMPLES,
+)
 def test_schemathesis(
     case: st.Case,
     settings: LazySettings,
