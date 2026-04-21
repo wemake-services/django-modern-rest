@@ -31,5 +31,4 @@ class RefreshSyncController(
         }
 
 
-# run: {"controller": "RefreshSyncController", "method": "post", "url": "/api/auth/refresh/", "body": {"refresh_token": "..."}, "populate_db": true}  # noqa: ERA001, E501
 # openapi: {"controller": "RefreshSyncController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
