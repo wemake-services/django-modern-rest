@@ -83,13 +83,6 @@ example:
 example-run:
     cd django_test_app && uv run python manage.py runserver
 
-# Run translation QA
-[group('testing')]
-translations:
-    uv run dennis-cmd lint dmr/locale
-    uv run django-admin compilemessages --ignore dmr || true
-    uv run django-admin compilemessages
-
 # Validate package dependencies and run security audit
 [group('testing')]
 package:
@@ -131,3 +124,10 @@ makemessages:
     uv run django-admin makemessages -l "$(basename "$target")" \
       --add-location never
   done
+
+# Run translation QA
+[group('i18n')]
+translations:
+    uv run dennis-cmd lint dmr/locale
+    uv run django-admin compilemessages --ignore dmr || true
+    uv run django-admin compilemessages

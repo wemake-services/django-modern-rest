@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-21 08:28+0600\n"
+"POT-Creation-Date: 2026-04-21 10:35+0300\n"
 "PO-Revision-Date: 2026-04-21 08:28+0600\n"
 "Last-Translator: YOUR NAME <YOUR@EMAIL.COM>\n"
 "Language-Team: Kyrgyz\n"
@@ -16,7 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: dmr/components.py:54
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
@@ -25,41 +24,34 @@ msgstr ""
 "{cls} жолу field_model={field_model} менен аталбаган жол параметрлерине "
 "уруксат бербейт args={args}"
 
-#: dmr/components.py:59
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"SupportsFileParsing протоколун колдобогон {parser_name} аркылуу "
-"файлдарды талдоого аракет жасалууда"
+"SupportsFileParsing протоколун колдобогон {parser_name} аркылуу файлдарды "
+"талдоого аракет жасалууда"
 
-#: dmr/controller.py:43
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "{method} ыкмасына уруксат жок, уруксат берилгендер: {allowed}"
 
-#: dmr/exceptions.py:10
 msgid "Not authenticated"
 msgstr "Аутентификациядан өтүлгөн эмес"
 
-#: dmr/exceptions.py:11
 msgid "Too many requests"
 msgstr "Өтүнүчтөр өтө көп"
 
-#: dmr/exceptions.py:49
 msgid "Internal server error"
 msgstr "Сервердин ички катасы"
 
-#: dmr/internal/django.py:49
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"'application/x-www-form-urlencoded' мазмун түрүндөгү HTTP өтүнүчтөрү "
-"UTF-8 менен коддолушу керек."
+"'application/x-www-form-urlencoded' мазмун түрүндөгү HTTP өтүнүчтөрү UTF-8 "
+"менен коддолушу керек."
 
-#: dmr/internal/negotiation.py:18
 #, python-brace-format
 msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
@@ -68,16 +60,14 @@ msgstr ""
 "Макулдашылган рендерер {renderer_type} кайтарылган мазмун түрүнө "
 "{content_type} дал келбейт"
 
-#: dmr/internal/negotiation.py:23
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
-"Жооп денесин {accepted_types} кабыл алынган түрлөрү менен "
-"сериялаштыруу мүмкүн эмес, колдоолор={supported}"
+"Жооп денесин {accepted_types} кабыл алынган түрлөрү менен сериялаштыруу "
+"мүмкүн эмес, колдоолор={supported}"
 
-#: dmr/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
@@ -86,20 +76,16 @@ msgstr ""
 "{content_type} мазмун түрү менен өтүнүч денесин талдоо мүмкүн эмес, "
 "күтүлгөн={expected}"
 
-#: dmr/security/django_session/auth.py:22
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
 msgstr "CSRF катасы: {reason}"
 
-#: dmr/security/jwt/blocklist/models.py:44
 msgid "BlocklistedJWToken"
 msgstr "Бөгөттөлгөн JWT токен"
 
-#: dmr/security/jwt/blocklist/models.py:45
 msgid "BlocklistedJWTokens"
 msgstr "Бөгөттөлгөн JWT токендер"
 
-#: dmr/serializer.py:16
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "{type} түрүндөгү {value} мааниси {target_type} үчүн колдоолбойт"
