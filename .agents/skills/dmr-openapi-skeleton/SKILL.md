@@ -135,9 +135,9 @@ Primary framework documentation:
 - Prefer simple JSON output first. Generate negotiation-specific parser or renderer code only when the spec truly requires multiple representations or the repository already uses negotiation patterns.
 - Keep route names snake_case and stable. Derive them from `operationId` when possible.
 - For fresh projects, keep installation commands aligned with local docs:
-  `uv add django-modern-rest`,
-  `poetry add django-modern-rest`,
-  or `pip install django-modern-rest`,
+  `uv add 'django-modern-rest[msgspec, openapi]'`,
+  `poetry add 'django-modern-rest[msgspec, openapi]'`,
+  or `pip install 'django-modern-rest[msgspec, openapi]'`,
   then extend with extras as needed.
 - Preserve top-level source metadata with `OpenAPIConfig`: `title`, `version`, `summary`, `description`, `terms_of_service`, `contact`, `license`, `external_docs`, `servers`, and `tags`.
 - If the source spec uses multiple response media types such as `application/json` and `application/xml`, generate matching parsers and renderers or explicitly state that fidelity is partial. Do not silently collapse the contract to JSON-only.

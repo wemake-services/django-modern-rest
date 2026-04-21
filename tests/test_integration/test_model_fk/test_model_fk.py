@@ -68,16 +68,22 @@ def test_user_create_unique_email_error(
         'role': {'name': faker.name()},
         'tags': [{'name': faker.name()}],
     }
-    dmr_client.post(
-        reverse('api:model_fk:user'),
-        data=request_data,
-    )
+
+    # First request will succeed:
     response = dmr_client.post(
         reverse('api:model_fk:user'),
         data=request_data,
     )
 
-    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.status_code == HTTPStatus.CREATED, response.content
+
+    # Second request will fail:
+    response = dmr_client.post(
+        reverse('api:model_fk:user'),
+        data=request_data,
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT, response.content
     assert response.json() == snapshot({
         'detail': [
             {

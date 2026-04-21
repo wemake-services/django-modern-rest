@@ -1,9 +1,11 @@
+import datetime as dt
 import json
 from http import HTTPStatus
 from typing import Final
 
 import pydantic
 import pytest
+from dirty_equals import IsDatetime
 from django.conf import LazySettings
 from django.http import HttpResponse
 from faker import Faker
@@ -272,4 +274,49 @@ def test_json_parser_validation(
                 'type': 'value_error',
             },
         ],
+    })
+
+
+class _ProductModel(pydantic.BaseModel):
+    product: str
+    created_at: dt.datetime
+    updated_at: dt.datetime
+
+
+@pytest.mark.parametrize(
+    'timezone',
+    [
+        dt.UTC,
+        dt.timezone(offset=dt.timedelta(hours=3), name='MSK'),
+        dt.timezone(offset=dt.timedelta(hours=7), name='NSK'),
+        dt.timezone(offset=dt.timedelta(hours=-7), name='LA'),
+    ],
+)
+def test_json_parser_return_validation(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+    *,
+    timezone: dt.timezone,
+) -> None:
+    """Ensures validation works for datetime fields with different timezones."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        def get(self) -> _ProductModel:
+            now = dt.datetime.now(timezone)
+            return _ProductModel(
+                product='product',
+                created_at=now,
+                updated_at=now,
+            )
+
+    request = dmr_rf.get('/whatever/')
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == snapshot({
+        'product': 'product',
+        'created_at': IsDatetime(iso_string=True),
+        'updated_at': IsDatetime(iso_string=True),
     })
