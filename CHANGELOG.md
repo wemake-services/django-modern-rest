@@ -36,10 +36,6 @@ of requirements for an API to count as public.
   `HttpResponse` with a different content type than the negotiated
   renderer, #711
 - Fixed `collectstatic` failure when using `ManifestStaticFilesStorage`, #927
-- Fixed `TagSchema` and `RoleSchema` in the `model_fk` test app accepting
-  names longer than the `max_length=100` database constraint, which raised a
-  500 on PostgreSQL and silently truncated on SQLite instead of returning
-  422, #944
 
 ### Misc
 

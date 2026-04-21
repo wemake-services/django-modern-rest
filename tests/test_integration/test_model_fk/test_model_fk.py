@@ -70,8 +70,17 @@ def test_user_create_name_too_long_rejected(
     validation and failed at the database layer with an unhandled 500
     (PostgreSQL) or were silently truncated (SQLite).
     """
-    role_name = 'r' * 101 if over_long_field == 'role' else faker.name()
-    tag_name = 't' * 101 if over_long_field == 'tag' else faker.name()
+    min_chars = 101
+    role_name = (
+        faker.pystr(min_chars=min_chars, max_chars=min_chars + 10)
+        if over_long_field == 'role'
+        else faker.name()
+    )
+    tag_name = (
+        faker.pystr(min_chars=min_chars, max_chars=min_chars + 10)
+        if over_long_field == 'tag'
+        else faker.name()
+    )
     request_data = {
         'email': faker.email(),
         'role': {'name': role_name},
