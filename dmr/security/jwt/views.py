@@ -6,9 +6,9 @@ from http import HTTPStatus
 from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from typing_extensions import TypedDict
 
