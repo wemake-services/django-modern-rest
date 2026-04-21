@@ -38,7 +38,7 @@ of requirements for an API to count as public.
 - Fixed `collectstatic` failure when using `ManifestStaticFilesStorage`, #927
 - Fixed `datetime` validation when using `.to_response`, #938
 - Fixed a bug that `ObtainTokensAsyncController` was not setting
-  the `request.auser` attribute
+  the `request.auser` attribute, #953
 
 ### Misc
 
