@@ -95,7 +95,7 @@ def test_inactive_user(
     *,
     url: str,
 ) -> None:
-    """Ensures that inactice users can't get in."""
+    """Ensures that inactive users can't get in."""
     response = dmr_client.post(
         url,
         data={'username': inactive_user.username, 'password': password},
