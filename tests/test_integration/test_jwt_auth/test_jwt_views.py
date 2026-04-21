@@ -433,18 +433,16 @@ def test_refresh_deleted_user(
 )
 def test_refresh_inactive_user(
     dmr_client: DMRClient,
-    user: User,
+    inactive_user: User,
     *,
     url: str,
 ) -> None:
     """Ensures that a refresh token for an inactive user raises 401."""
     token = JWToken(
-        sub=str(user.pk),
+        sub=str(inactive_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         extras={'type': 'refresh'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
-    user.is_active = False
-    user.save()
 
     response = dmr_client.post(url, data={'refresh_token': token})
 

@@ -96,11 +96,6 @@ class _BaseTokenController(
             headers=token_headers,
         )
 
-    def check_auth(self, user: Any) -> None:
-        """Run extra auth checks, raise if something is wrong."""
-        if user is None or not user.is_active:
-            raise NotAuthenticatedError
-
     def make_jwt_id(self) -> str | None:
         """Create unique token's jwt id."""
         return uuid.uuid4().hex
@@ -147,8 +142,8 @@ class ObtainTokensSyncController(
             self.request,
             **self.convert_auth_payload(parsed_body),
         )
-        self.check_auth(user)
-        assert user is not None
+        if user is None:
+            raise NotAuthenticatedError
         self.set_request_attrs(self.request, user)
         return self.make_api_response()
 
@@ -222,8 +217,8 @@ class ObtainTokensAsyncController(
             self.request,
             **(await self.convert_auth_payload(parsed_body)),
         )
-        self.check_auth(user)
-        assert user is not None
+        if user is None:
+            raise NotAuthenticatedError
         await self.set_request_attrs(self.request, user)
         return await self.make_api_response()
 
@@ -320,8 +315,21 @@ class RefreshTokenSyncController(
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
         self.check_auth(user)
-        self.request.user = user
+        self.set_request_attrs(self.request, user)
         return self.make_api_response()
+
+    def check_auth(self, user: Any) -> None:
+        """Run extra auth checks, raise if something is wrong."""
+        if not user.is_active:
+            raise NotAuthenticatedError
+
+    def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+    ) -> None:
+        """Apply authed user to the current request."""
+        set_request_attrs(request, user)
 
     @abstractmethod
     def convert_refresh_payload(self, payload: _RefreshTokensT) -> str:
@@ -381,9 +389,22 @@ class RefreshTokenAsyncController(
             })
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
-        self.check_auth(user)
-        self.request.user = user
+        await self.check_auth(user)
+        await self.set_request_attrs(self.request, user)
         return await self.make_api_response()
+
+    async def check_auth(self, user: Any) -> None:
+        """Run extra auth checks, raise if something is wrong."""
+        if not user.is_active:
+            raise NotAuthenticatedError
+
+    async def set_request_attrs(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+    ) -> None:
+        """Apply authed user to the current request."""
+        set_request_attrs(request, user)
 
     @abstractmethod
     async def convert_refresh_payload(self, payload: _RefreshTokensT) -> str:
