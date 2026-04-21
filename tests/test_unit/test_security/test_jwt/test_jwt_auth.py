@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 import pydantic
 import pytest
+from asgiref.sync import async_to_sync
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -70,9 +71,13 @@ class _SyncController(Controller[PydanticFastSerializer]):
 
     def get(self, parsed_query: Query[_QueryModel]) -> str:
         assert self.request.user.is_authenticated
+        assert self.request.user.is_active
         assert self.request.user.pk == parsed_query.user_id
 
-        assert getattr(self.request, 'auser', None) is None
+        auser = async_to_sync(self.request.auser)()
+        assert auser.is_authenticated
+        assert auser.is_active
+        assert auser.pk == parsed_query.user_id
 
         assert request_jwt(self.request)
 

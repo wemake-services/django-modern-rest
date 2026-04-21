@@ -226,7 +226,7 @@ class ObtainTokensAsyncController(
         user: AbstractBaseUser,
     ) -> None:
         """Set current user as authed for this request."""
-        set_request_attrs(request, user, include_auser=True)
+        set_request_attrs(request, user)
 
     @abstractmethod
     async def convert_auth_payload(

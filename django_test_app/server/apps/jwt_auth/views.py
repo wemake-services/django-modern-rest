@@ -2,6 +2,7 @@ import datetime as dt
 from typing import final
 
 import pydantic
+from asgiref.sync import async_to_sync
 from typing_extensions import override
 
 from dmr import Controller
@@ -51,6 +52,8 @@ class ObtainAccessAndRefreshSyncController(
         assert (  # noqa: S101, PT018
             self.request.user.is_authenticated and self.request.user.is_active
         )
+        auser = async_to_sync(self.request.auser)()
+        assert auser.is_authenticated and auser.is_active  # noqa: S101, PT018
         return response
 
 
