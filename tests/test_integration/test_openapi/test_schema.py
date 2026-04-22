@@ -84,8 +84,8 @@ def test_schemathesis(
     tracecov_map: 'tracecov.CoverageMap | None',
 ) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
-    if tracecov_map is None:
-        pytest.skip(reason='Missing `tracecov`')
+    if tracecov_map is None:  # pragma: no cover
+        pytest.skip(reason='missing `tracecov`')
 
     from tracecov.schemathesis import helpers  # noqa: PLC0415
 

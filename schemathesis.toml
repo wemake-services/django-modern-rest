@@ -1,7 +1,3 @@
-[generation]
-# Limit the number of generated examples per API operation to keep tests fast.
-max-examples = 100
-
 [warnings]
 # Fail on any warning:
 fail-on = true
