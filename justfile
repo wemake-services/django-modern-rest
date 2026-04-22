@@ -37,7 +37,7 @@ test: lint type-check example benchmarks-type-check package smoke translations u
 type-check:
     uv run mypy .
     uv run pyright
-    uv run pyrefly check
+    uv run pyrefly check --remove-unused-ignores
 
 # Run unit tests
 [group('testing')]

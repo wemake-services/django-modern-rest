@@ -17,7 +17,7 @@ _EventsType: TypeAlias = SSEvent[dict[str, str] | bytes]
 
 async def _valid_events() -> AsyncIterator[_EventsType]:
     yield SSEvent({})
-    yield SSEvent(b'multiline\nbyte\nstring', serialize=False)
+    yield SSEvent(b'multiline\nbyte\nstring', serialize=False)  # pyrefly: ignore[no-matching-overload]
 
 
 class _ClassBasedSSE(SSEController[PydanticSerializer]):

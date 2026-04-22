@@ -23,7 +23,7 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
     async def _events(self) -> AsyncIterator[SSEvent[str | bytes | int]]:
         yield SSEvent('event')
         await asyncio.sleep(0.1)  # simulate work
-        yield SSEvent(b'second', serialize=False)
+        yield SSEvent(b'second', serialize=False)  # pyrefly: ignore[no-matching-overload]
         await asyncio.sleep(0.1)
         yield SSEvent(3)
 
@@ -158,8 +158,8 @@ class _SSEWithClose(SSEController[PydanticSerializer]):
         return self._events()
 
     async def _events(self) -> AsyncIterator[SSEvent[str | bytes | int]]:
-        yield SSEvent(b'event', serialize=False)
-        yield SSEvent(b'second', serialize=False)
+        yield SSEvent(b'event', serialize=False)  # pyrefly: ignore[no-matching-overload]
+        yield SSEvent(b'second', serialize=False)  # pyrefly: ignore[no-matching-overload]
         raise StreamingCloseError
 
 

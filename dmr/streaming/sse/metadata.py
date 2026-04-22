@@ -29,14 +29,9 @@ class SSE(Protocol):
 class _SSEventSlots:
     # The only purpose of this class is to help constructing correct
     # SSEvent dataclass with the correct slots.
-    __slots__ = (
-        '_serialize',
-        'comment',
-        'data',
-        'event',
-        'id',
-        'retry',
-    )
+    # Since, `_serialize` is not listed as the dataclass field,
+    # we need to set this slot by hands:
+    __slots__ = ('_serialize',)
 
 
 @final

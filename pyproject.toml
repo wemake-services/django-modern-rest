@@ -177,7 +177,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc", "mypy==1.20.1"]
+dependencies = ["hatch-mypyc", "mypy==1.20.2"]
 include = ["dmr/_compiled"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
@@ -443,7 +443,7 @@ venv = ".venv"
 
 [tool.pyrefly]
 # Docs: https://pyrefly.org
-project-includes = ["dmr", "typesafety"]
+project-includes = ["dmr", "typesafety", "tests"]
 
 
 [tool.codespell]

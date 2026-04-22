@@ -25,10 +25,10 @@ def test_validate_components_type_params(
 ) -> None:
     """Ensure that we need at least one type param for component."""
     with pytest.raises(TypeError):
-        component_cls[*()]  # pyright: ignore[reportIndexIssue]
+        component_cls[*()]  # pyright: ignore[reportIndexIssue]  # pyrefly: ignore[unsupported-operation]
 
     with pytest.raises(TypeError):
-        component_cls[int, str]  # pyright: ignore[reportIndexIssue]
+        component_cls[int, str]  # pyright: ignore[reportIndexIssue]  # pyrefly: ignore[unsupported-operation]
 
 
 @pytest.mark.parametrize(
