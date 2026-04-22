@@ -81,12 +81,11 @@ st.openapi.format(
 )
 def test_schemathesis(
     case: st.Case,
-    settings: LazySettings,
     tracecov_map: 'tracecov.CoverageMap | None',
 ) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
-    if settings.DEBUG or tracecov_map is None:
-        pytest.skip(reason='DEBUG=True or missing `tracecov`')
+    if tracecov_map is None:
+        pytest.skip(reason='Missing `tracecov`')
 
     from tracecov.schemathesis import helpers  # noqa: PLC0415
 
