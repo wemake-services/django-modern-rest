@@ -66,16 +66,20 @@ st.openapi.format(
 # responses that don't match the OpenAPI success-response schema.
 _ascii_local = strategies.text(
     string.ascii_letters + string.digits + '._%+-',
-    min_size=1, max_size=64,
+    min_size=1,
+    max_size=64,
 )
 _ascii_domain = strategies.text(
     string.ascii_letters + string.digits + '-',
-    min_size=1, max_size=63,
+    min_size=1,
+    max_size=63,
 )
 _ascii_tld = strategies.text(string.ascii_letters, min_size=2, max_size=10)
 st.openapi.format(
     'email',
-    strategies.builds(lambda l, d, t: f'{l}@{d}.{t}', _ascii_local, _ascii_domain, _ascii_tld),
+    strategies.builds(
+        lambda l, d, t: f'{l}@{d}.{t}', _ascii_local, _ascii_domain, _ascii_tld
+    ),
 )
 
 
