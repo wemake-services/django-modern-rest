@@ -8,7 +8,7 @@ DatabaseId: TypeAlias = Annotated[int, pydantic.Field(gt=0)]
 
 
 class SimpleUserCreateSchema(pydantic.BaseModel):
-    email: str
+    email: pydantic.EmailStr
     customer_service_uid: uuid.UUID
 
 

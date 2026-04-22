@@ -1,4 +1,5 @@
 import logging
+import string
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
@@ -57,6 +58,28 @@ schema = st.pytest.from_fixture('api_schema')
 st.openapi.format(
     'phone',
     strategies.from_regex(r'^\+7-495-[0-9]{3}-[0-9]{2}-[0-9]{2}$'),
+)
+
+# Use strict ASCII email strategy so generated values always pass pydantic.EmailStr
+# validation. The default schemathesis email strategy can produce internationalized
+# addresses (e.g. non-ASCII domain chars) that EmailStr rejects, causing 422
+# responses that don't match the OpenAPI success-response schema.
+_ascii_local = strategies.text(
+    string.ascii_letters + string.digits + '._%+-',
+    min_size=1,
+    max_size=64,
+)
+_ascii_domain = strategies.text(
+    string.ascii_letters + string.digits + '-',
+    min_size=1,
+    max_size=63,
+)
+_ascii_tld = strategies.text(string.ascii_letters, min_size=2, max_size=10)
+st.openapi.format(
+    'email',
+    strategies.builds(
+        lambda l, d, t: f'{l}@{d}.{t}', _ascii_local, _ascii_domain, _ascii_tld
+    ),
 )
 
 
