@@ -26,6 +26,7 @@ def tracecov_map() -> 'tracecov.CoverageMap | None':
 def _set_dmr_settings(settings: LazySettings) -> None:
     settings.DMR_SETTINGS = {
         Settings.openapi_examples_seed: 1,
+        # It might be already defined in some other place:
         **getattr(settings, 'DMR_SETTINGS', {}),
     }
 

@@ -76,9 +76,7 @@ st.openapi.format(
 
 
 @schema.parametrize()
-@h_settings(
-    max_examples=_MAX_EXAMPLES,
-)
+@h_settings(max_examples=_MAX_EXAMPLES)
 def test_schemathesis(
     case: st.Case,
     tracecov_map: 'tracecov.CoverageMap | None',
