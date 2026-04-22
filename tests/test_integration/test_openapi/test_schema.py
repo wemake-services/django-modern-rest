@@ -1,7 +1,7 @@
 import logging
 import os
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 import schemathesis as st
@@ -15,10 +15,8 @@ from schemathesis.specs.openapi.schemas import OpenApiSchema
 from django_test_app.server.wsgi import application
 from dmr.validation import ResponseValidator
 
-_LOCAL_MAX_EXAMPLES = 25
-_MAX_EXAMPLES = (
-    h_settings().max_examples if os.environ.get('CI') else _LOCAL_MAX_EXAMPLES
-)
+_LOCAL_MAX_EXAMPLES: Final = 25
+_MAX_EXAMPLES: Final = 100 if os.environ.get('CI') else _LOCAL_MAX_EXAMPLES
 
 if TYPE_CHECKING:
     import tracecov
