@@ -206,3 +206,31 @@ def test_schema_with_csrf_sessions(
     assert instance.security_requirement == snapshot({
         'django_session': [],
     })
+
+
+@pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
+def test_schema_with_custom_cookie_names(
+    settings: LazySettings,
+    *,
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
+) -> None:
+    """Ensures that custom cookie names from settings are respected."""
+    settings.SESSION_COOKIE_NAME = 'custom_session_id'
+    settings.CSRF_COOKIE_NAME = 'custom_csrf_token'
+    settings.CSRF_USE_SESSIONS = False
+    instance = typ()
+
+    assert instance.security_schemes == snapshot({
+        'django_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='custom_session_id',
+            security_scheme_in='cookie',
+        ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='custom_csrf_token',
+            security_scheme_in='cookie',
+        ),
+    })
