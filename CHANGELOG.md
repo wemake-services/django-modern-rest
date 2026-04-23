@@ -43,6 +43,11 @@ of requirements for an API to count as public.
 - Fixed a bug that `ObtainTokensAsyncController` was not setting
   the `request.auser` attribute, #953
 - Fixed a bug that `JWTSyncAuth` was not setting `request.auser`, #953
+- Fixed `ResponseNegotiator` raising `NotAcceptableError` on streaming
+  endpoints when `Accept: text/event-stream` was sent without
+  `application/json` (the default browser `EventSource` case), which
+  made 4xx/5xx error bodies and response validation crash with a 500
+  instead of rendering the configured non-streaming default, #962
 
 ### Misc
 
