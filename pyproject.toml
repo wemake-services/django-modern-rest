@@ -86,7 +86,9 @@ dmr = "dmr_pytest"
 # This is a special group, it has special rules.
 # It is installed in `cibuildwheel` and must be minimal.
 unit-test = [
-  "django>=5.2,<6.1",
+  # Pin to Django 5.2 (LTS): it supports Python 3.11+, while Django 6.0
+  # requires Python 3.12+. CI only tests Django 5.2
+  "django~=5.2.0",
   "django-csp>=4.0,<5.0",
   "pytest>=9.0,<10",
   "pytest-cov>=7.0,<8",

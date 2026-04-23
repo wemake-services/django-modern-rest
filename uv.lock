@@ -544,13 +544,10 @@ wheels = [
 name = "django"
 version = "5.2.13"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.12'",
-]
 dependencies = [
-    { name = "asgiref", marker = "python_full_version < '3.12'" },
-    { name = "sqlparse", marker = "python_full_version < '3.12'" },
-    { name = "tzdata", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
+    { name = "asgiref" },
+    { name = "sqlparse" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1f/c5/c69e338eb2959f641045802e5ea87ca4bf5ac90c5fd08953ca10742fad51/django-5.2.13.tar.gz", hash = "sha256:a31589db5188d074c63f0945c3888fad104627dfcc236fb2b97f71f89da33bc4", size = 10890368, upload-time = "2026-04-07T14:02:15.072Z" }
 wheels = [
@@ -558,30 +555,11 @@ wheels = [
 ]
 
 [[package]]
-name = "django"
-version = "6.0.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.15'",
-    "python_full_version >= '3.12' and python_full_version < '3.15'",
-]
-dependencies = [
-    { name = "asgiref", marker = "python_full_version >= '3.12'" },
-    { name = "sqlparse", marker = "python_full_version >= '3.12'" },
-    { name = "tzdata", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/60/b9/4155091ad1788b38563bd77a7258c0834e8c12a7f56f6975deaf54f8b61d/django-6.0.4.tar.gz", hash = "sha256:8cfa2572b3f2768b2e84983cf3c4811877a01edb64e817986ec5d60751c113ac", size = 10907407, upload-time = "2026-04-07T13:55:44.961Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/47/3d61d611609764aa71a37f7037b870e7bfb22937366974c4fd46cada7bab/django-6.0.4-py3-none-any.whl", hash = "sha256:14359c809fc16e8f81fd2b59d7d348e4d2d799da6840b10522b6edf7b8afc1da", size = 8368342, upload-time = "2026-04-07T13:55:37.999Z" },
-]
-
-[[package]]
 name = "django-csp"
 version = "4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "packaging" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/52/db/23567744dff2169aadb095f726088074476b24dfff5a759ffcf6389cf401/django_csp-4.0.tar.gz", hash = "sha256:b27010bb702eb20a3dad329178df2b61a2b82d338b70fbdc13c3a3bd28712833", size = 20028, upload-time = "2025-04-02T16:41:46.721Z" }
@@ -594,8 +572,7 @@ name = "django-filter"
 version = "25.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2c/e4/465d2699cd388c0005fb8d6ae6709f239917c6d8790ac35719676fffdcf3/django_filter-25.2.tar.gz", hash = "sha256:760e984a931f4468d096f5541787efb8998c61217b73006163bf2f9523fe8f23", size = 143818, upload-time = "2025-10-05T09:51:31.521Z" }
 wheels = [
@@ -609,8 +586,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "cattrs" },
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "django-readers" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/56/05/5fa7ab5f4114a6418353d48b84096ee8db41fe9fa87e7111ea1e31668235/django_mantle-26.6.tar.gz", hash = "sha256:db864739ed27abd3d0575ab4ca5c26b6a722de4eb6d3f68472cb76aa487d787e", size = 31308, upload-time = "2026-03-22T07:30:14.703Z" }
@@ -623,8 +599,7 @@ name = "django-modern-rest"
 version = "0.7.0"
 source = { editable = "." }
 dependencies = [
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "typing-extensions" },
 ]
 
@@ -658,8 +633,7 @@ dev = [
     { name = "covdefaults" },
     { name = "dennis" },
     { name = "dirty-equals" },
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "django-csp" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "faker" },
@@ -721,8 +695,7 @@ integration = [
 unit-test = [
     { name = "covdefaults" },
     { name = "dirty-equals" },
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "django-csp" },
     { name = "faker" },
     { name = "inline-snapshot" },
@@ -764,7 +737,7 @@ dev = [
     { name = "covdefaults", specifier = ">=2.3,<3" },
     { name = "dennis", specifier = ">=1.2,<2" },
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
-    { name = "django", specifier = ">=5.2,<6.1" },
+    { name = "django", specifier = "~=5.2.0" },
     { name = "django-csp", specifier = ">=4.0,<5.0" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.1" },
     { name = "faker", specifier = ">=40.1,<41" },
@@ -824,7 +797,7 @@ integration = [
 unit-test = [
     { name = "covdefaults", specifier = ">=2.3,<3" },
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
-    { name = "django", specifier = ">=5.2,<6.1" },
+    { name = "django", specifier = "~=5.2.0" },
     { name = "django-csp", specifier = ">=4.0,<5.0" },
     { name = "faker", specifier = ">=40.1,<41" },
     { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
@@ -846,8 +819,7 @@ name = "django-readers"
 version = "2.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d6/6d/b89717c06b3bc3b9ae157ae24a8b936b85960f6c60b8752f6ad9fc8aaad8/django_readers-2.5.1.tar.gz", hash = "sha256:b00529c73842b4af69d3e44f6c362dc4ce8122cbda9b85034216a1236c26a56a", size = 12584, upload-time = "2025-11-03T13:18:41.479Z" }
 wheels = [
@@ -859,8 +831,7 @@ name = "django-stubs"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "django-stubs-ext" },
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
@@ -880,8 +851,7 @@ name = "django-stubs-ext"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fb/e6/5dcdaa785ec3eed5fc196c7e68fb7ad9d9fe6d5acccea4690e65f2546417/django_stubs_ext-6.0.3.tar.gz", hash = "sha256:3307d42132bc295d5744de6276bc5fdf6896efc70f891e21c0ae8bdf529d2762", size = 6663, upload-time = "2026-04-18T15:10:53.667Z" }
