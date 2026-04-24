@@ -304,4 +304,4 @@ def test_login_schema_includes_csrf_cookie(
     csrf_spec = cookies[settings.CSRF_COOKIE_NAME]
     assert isinstance(csrf_spec, CookieSpec)
     assert csrf_spec.skip_validation is True
-    assert csrf_spec.required is False
+    assert csrf_spec.required is True

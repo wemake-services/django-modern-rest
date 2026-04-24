@@ -66,7 +66,6 @@ class DjangoSessionSyncController(
                 else {
                     settings.CSRF_COOKIE_NAME: CookieSpec(
                         skip_validation=True,
-                        required=False,
                         description='CSRF protection.',
                     ),
                 }
@@ -138,7 +137,6 @@ class DjangoSessionAsyncController(
                 else {
                     settings.CSRF_COOKIE_NAME: CookieSpec(
                         skip_validation=True,
-                        required=False,
                         description='CSRF protection.',
                     ),
                 }
