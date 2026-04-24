@@ -7,14 +7,22 @@ from django.conf import LazySettings
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 from inline_snapshot import snapshot
+from typing_extensions import override
 
 from dmr import Controller, modify
+from dmr.cookies import CookieSpec
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import request_auth
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
+)
+from dmr.security.django_session.views import (
+    DjangoSessionAsyncController,
+    DjangoSessionPayload,
+    DjangoSessionResponse,
+    DjangoSessionSyncController,
 )
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
@@ -234,3 +242,67 @@ def test_schema_with_custom_cookie_names(
             security_scheme_in='cookie',
         ),
     })
+
+
+@final
+class _SyncLoginController(  # pragma: no cover
+    DjangoSessionSyncController[
+        PydanticSerializer,
+        DjangoSessionPayload,
+        DjangoSessionResponse,
+    ],
+):
+    @override
+    def convert_auth_payload(
+        self,
+        payload: DjangoSessionPayload,
+    ) -> DjangoSessionPayload:
+        return payload
+
+    @override
+    def make_api_response(self) -> DjangoSessionResponse:
+        return {'user_id': str(self.request.user.pk)}
+
+
+@final
+class _AsyncLoginController(  # pragma: no cover
+    DjangoSessionAsyncController[
+        PydanticSerializer,
+        DjangoSessionPayload,
+        DjangoSessionResponse,
+    ],
+):
+    @override
+    async def convert_auth_payload(
+        self,
+        payload: DjangoSessionPayload,
+    ) -> DjangoSessionPayload:
+        return payload
+
+    @override
+    async def make_api_response(self) -> DjangoSessionResponse:
+        return {'user_id': str((await self.request.auser()).pk)}
+
+
+@pytest.mark.parametrize(
+    'controller_cls',
+    [_SyncLoginController, _AsyncLoginController],
+)
+def test_login_schema_includes_csrf_cookie(
+    settings: LazySettings,
+    *,
+    controller_cls: type[_SyncLoginController] | type[_AsyncLoginController],
+) -> None:
+    """Ensures the 200 response schema declares session and CSRF cookies."""
+    settings.CSRF_USE_SESSIONS = False
+    endpoint = controller_cls.api_endpoints['POST']
+    cookies = endpoint.metadata.responses[HTTPStatus.OK].cookies
+
+    assert cookies is not None
+    assert settings.SESSION_COOKIE_NAME in cookies
+    assert settings.CSRF_COOKIE_NAME in cookies
+
+    csrf_spec = cookies[settings.CSRF_COOKIE_NAME]
+    assert isinstance(csrf_spec, CookieSpec)
+    assert csrf_spec.skip_validation is True
+    assert csrf_spec.required is False

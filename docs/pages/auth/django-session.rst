@@ -67,6 +67,28 @@ To use them, you will need to:
 Any further customizations are also possible.
 
 
+CSRF
+~~~~
+
+When a user logs in through these controllers, Django automatically rotates
+the CSRF token and includes a ``csrftoken`` cookie in the login response
+(alongside the session cookie).
+
+Clients making subsequent non-safe requests (``POST``, ``PUT``, ``PATCH``,
+``DELETE``) to session-protected endpoints must send this token back via the
+``X-CSRFToken`` request header.
+
+.. note::
+
+  When ``CSRF_USE_SESSIONS`` is ``True``, Django stores the CSRF token
+  in the session instead of a cookie.  In that case no ``csrftoken`` cookie
+  appears in the login response — the token is already embedded in the
+  session used for authentication.
+
+  See also:
+    https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-CSRF_USE_SESSIONS
+
+
 API Reference
 -------------
 
