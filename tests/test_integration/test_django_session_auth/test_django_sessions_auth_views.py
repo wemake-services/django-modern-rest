@@ -169,8 +169,10 @@ def test_login_sends_csrf_cookie(
     )
 
     assert response.status_code == HTTPStatus.OK, response.content
-    assert response.cookies[settings.SESSION_COOKIE_NAME]
-    assert response.cookies[settings.CSRF_COOKIE_NAME]
+    assert response.cookies.keys() == {
+        settings.SESSION_COOKIE_NAME,
+        settings.CSRF_COOKIE_NAME,
+    }
 
 
 @pytest.mark.django_db

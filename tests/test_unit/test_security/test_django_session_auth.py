@@ -245,7 +245,7 @@ def test_schema_with_custom_cookie_names(
 
 
 @final
-class _SyncLoginController(  # pragma: no cover
+class _SyncLoginController(
     DjangoSessionSyncController[
         PydanticSerializer,
         DjangoSessionPayload,
@@ -257,15 +257,15 @@ class _SyncLoginController(  # pragma: no cover
         self,
         payload: DjangoSessionPayload,
     ) -> DjangoSessionPayload:
-        return payload
+        raise NotImplementedError
 
     @override
     def make_api_response(self) -> DjangoSessionResponse:
-        return {'user_id': str(self.request.user.pk)}
+        raise NotImplementedError
 
 
 @final
-class _AsyncLoginController(  # pragma: no cover
+class _AsyncLoginController(
     DjangoSessionAsyncController[
         PydanticSerializer,
         DjangoSessionPayload,
@@ -277,11 +277,11 @@ class _AsyncLoginController(  # pragma: no cover
         self,
         payload: DjangoSessionPayload,
     ) -> DjangoSessionPayload:
-        return payload
+        raise NotImplementedError
 
     @override
     async def make_api_response(self) -> DjangoSessionResponse:
-        return {'user_id': str((await self.request.auser()).pk)}
+        raise NotImplementedError
 
 
 @pytest.mark.parametrize(
@@ -294,7 +294,6 @@ def test_login_schema_includes_csrf_cookie(
     controller_cls: type[_SyncLoginController] | type[_AsyncLoginController],
 ) -> None:
     """Ensures the 200 response schema declares session and CSRF cookies."""
-    settings.CSRF_USE_SESSIONS = False
     endpoint = controller_cls.api_endpoints['POST']
     cookies = endpoint.metadata.responses[HTTPStatus.OK].cookies
 
