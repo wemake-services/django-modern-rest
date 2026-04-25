@@ -100,8 +100,13 @@ Backends
 
 Backends are used to define where we store throttling data.
 
-By default we use :class:`dmr.throttling.backends.DjangoCache` as the backend.
-You can customize which cache name is used. For example:
+By default we use:
+
+- :class:`dmr.throttling.backends.DjangoSyncCache` for sync endpoints
+- :class:`dmr.throttling.backends.DjangoAsyncCache` for async endpoints
+
+By default we store all the data in the ``'default'`` Django cache.
+You can customize which Django cache name is used. For example:
 
 .. literalinclude:: /examples/throttling/cache_customization.py
   :caption: views.py
@@ -109,14 +114,16 @@ You can customize which cache name is used. For example:
   :language: python
 
 You can also write your own backends, for example,
-to store throttling information in memory or somewhere else.
+to store throttling information in memory, filesystem, or somewhere else.
 To do so, you would need to subclass
-:class:`dmr.throttling.backends.BaseThrottleBackend`
+:class:`dmr.throttling.backends.BaseThrottleSyncBackend`
+or :class:`dmr.throttling.backends.BaseThrottleAsyncBackend`
 and override 4 methods.
 
 Full list of backends that we ship in ``django-modern-rest``:
 
-- :class:`~dmr.throttling.backends.DjangoCache`, default
+- :class:`~dmr.throttling.backends.DjangoSyncCache`
+  and :class:`~dmr.throttling.backends.DjangoAsyncCache`, default
 
 Algorithms
 ~~~~~~~~~~
@@ -443,10 +450,16 @@ Backends
   :members:
   :show-inheritance:
 
-.. autoclass:: dmr.throttling.backends.BaseThrottleBackend
+.. autoclass:: dmr.throttling.backends.BaseThrottleSyncBackend
   :members:
 
-.. autoclass:: dmr.throttling.backends.DjangoCache
+.. autoclass:: dmr.throttling.backends.BaseThrottleAsyncBackend
+  :members:
+
+.. autoclass:: dmr.throttling.backends.DjangoSyncCache
+  :members:
+
+.. autoclass:: dmr.throttling.backends.DjangoAsyncCache
   :members:
 
 Algorithms

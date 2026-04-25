@@ -132,6 +132,7 @@ nitpick_ignore = [
     (_PY_CLASS, '_MethodAsyncHandler'),
     (_PY_CLASS, 'BlocklistedJWToken'),
     (_PY_CLASS, '_BaseThrottle'),
+    (_PY_CLASS, 'dmr.throttling.base._BackendT'),
     (_PY_CLASS, '_StrOrPromise'),
     (_PY_CLASS, 'dmr.validation.endpoint_metadata._ResponseListValidator'),
     (_PY_CLASS, 'dmr.validation.response._ResponseT'),

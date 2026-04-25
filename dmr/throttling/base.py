@@ -3,8 +3,9 @@ import dataclasses
 import enum
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from http import HTTPStatus
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Any, Generic, TypeAlias, TypeVar, final
 
 from typing_extensions import override
 
@@ -13,7 +14,12 @@ from dmr.headers import HeaderSpec
 from dmr.internal.endpoint import request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.throttling.algorithms import BaseThrottleAlgorithm, SimpleRate
-from dmr.throttling.backends import BaseThrottleBackend, DjangoCache
+from dmr.throttling.backends import (
+    BaseThrottleAsyncBackend,
+    BaseThrottleSyncBackend,
+    DjangoAsyncCache,
+    DjangoSyncCache,
+)
 from dmr.throttling.cache_keys import BaseThrottleCacheKey, RemoteAddr
 from dmr.throttling.headers import (
     BaseResponseHeadersProvider,
@@ -25,6 +31,9 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
+
+_AnyBackend: TypeAlias = BaseThrottleSyncBackend | BaseThrottleAsyncBackend
+_BackendT = TypeVar('_BackendT', bound=_AnyBackend)
 
 
 @final
@@ -47,7 +56,7 @@ class Rate(enum.IntEnum):
     day = 24 * hour
 
 
-class _BaseThrottle(ResponseSpecProvider):
+class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
     __slots__ = (
         '_algorithm',
         '_async_lock',
@@ -59,13 +68,15 @@ class _BaseThrottle(ResponseSpecProvider):
         'max_requests',
     )
 
+    _backend: _BackendT
+
     def __init__(
         self,
         max_requests: int,
         duration_in_seconds: Rate | int,
         *,
         cache_key: BaseThrottleCacheKey | None = None,
-        backend: BaseThrottleBackend | None = None,
+        backend: _BackendT | None = None,
         algorithm: BaseThrottleAlgorithm | None = None,
         response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
     ) -> None:
@@ -78,7 +89,10 @@ class _BaseThrottle(ResponseSpecProvider):
             cache_key: Cache key to use.
                 Defaults to :class:`~dmr.throttling.cache_keys.RemoteAddr`.
             backend: Storage backend to use.
-                Defaults to :class:`~dmr.throttling.backends.DjangoCache`.
+                Defaults to :class:`~dmr.throttling.backends.DjangoSyncCache`
+                for sync endpoints or
+                to :class:`~dmr.throttling.backends.DjangoAsyncCache`
+                for async endpoints.
             algorithm: Algorithm to use.
                 Defaults to :class:`~dmr.throttling.algorithms.SimpleRate`.
             response_headers: Iterable of response headers to use.
@@ -98,7 +112,13 @@ class _BaseThrottle(ResponseSpecProvider):
         self.duration_in_seconds = int(duration_in_seconds)
         # Default implementations of the logical parts:
         self.cache_key = cache_key or RemoteAddr()
-        self._backend = backend or DjangoCache()
+
+        default_backend = (
+            DjangoSyncCache()
+            if isinstance(self, SyncThrottle)
+            else DjangoAsyncCache()
+        )
+        self._backend = backend or default_backend  # type: ignore[assignment]
         self._algorithm = algorithm or SimpleRate()
         self._response_headers = (
             [XRateLimit(), RetryAfter()]
@@ -120,6 +140,7 @@ class _BaseThrottle(ResponseSpecProvider):
         backend_name = type(self._backend).__qualname__
         algorithm_name = type(self._algorithm).__qualname__
         cache_key_name = type(self.cache_key).__qualname__
+        # This must ensure that endpoint key is unique:
         return (
             f'{metadata.operation_id}::{metadata.method}::'
             f'{backend_name}::{algorithm_name}::'
@@ -176,7 +197,7 @@ class _BaseThrottle(ResponseSpecProvider):
         return headers_spec
 
 
-class SyncThrottle(_BaseThrottle):
+class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
     """
     Sync throttle type for sync endpoints.
 
@@ -189,6 +210,7 @@ class SyncThrottle(_BaseThrottle):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
+        lock: AbstractContextManager[Any, Any],
     ) -> None:
         """
         Put your throttle business logic here.
@@ -203,7 +225,8 @@ class SyncThrottle(_BaseThrottle):
         cache_key = self.full_cache_key(endpoint, controller)
         if cache_key is None:
             return
-        self.check(endpoint, controller, cache_key)
+        with lock:
+            self.check(endpoint, controller, cache_key)
 
     def check(
         self,
@@ -249,7 +272,7 @@ class SyncThrottle(_BaseThrottle):
         )
 
 
-class AsyncThrottle(_BaseThrottle):
+class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
     """
     Async throttle type for async endpoints.
 
@@ -262,6 +285,7 @@ class AsyncThrottle(_BaseThrottle):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
+        lock: AbstractAsyncContextManager[Any, Any],
     ) -> None:
         """
         Put your throttle business logic here.
@@ -276,7 +300,8 @@ class AsyncThrottle(_BaseThrottle):
         cache_key = self.full_cache_key(endpoint, controller)
         if cache_key is None:
             return
-        await self.check(endpoint, controller, cache_key)
+        async with lock:
+            await self.check(endpoint, controller, cache_key)
 
     async def check(
         self,

@@ -1,7 +1,7 @@
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.throttling import Rate, SyncThrottle
-from dmr.throttling.backends import DjangoCache
+from dmr.throttling.backends import DjangoSyncCache
 
 
 class SyncController(Controller[PydanticSerializer]):
@@ -9,7 +9,7 @@ class SyncController(Controller[PydanticSerializer]):
         SyncThrottle(
             max_requests=1,
             duration_in_seconds=Rate.minute,
-            backend=DjangoCache(cache_name='throttling'),
+            backend=DjangoSyncCache(cache_name='throttling'),
         ),
     )
 

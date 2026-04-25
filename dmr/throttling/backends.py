@@ -24,7 +24,7 @@ class CachedRateLimit(TypedDict):
     history: list[int]
 
 
-class BaseThrottleBackend:
+class BaseThrottleSyncBackend:
     """
     Base class for all throttling backends.
 
@@ -44,16 +44,6 @@ class BaseThrottleBackend:
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def aget(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> CachedRateLimit | None:
-        """Async get the cached rate limit state."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def set(
         self,
         endpoint: 'Endpoint',
@@ -64,6 +54,26 @@ class BaseThrottleBackend:
         ttl_seconds: int,
     ) -> None:
         """Sync set the cached rate limit state."""
+        raise NotImplementedError
+
+
+class BaseThrottleAsyncBackend:
+    """
+    Base class for all throttling backends.
+
+    It must provide sync and async API for sync and async throttling classes.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    async def aget(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> CachedRateLimit | None:
+        """Async get the cached rate limit state."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -81,16 +91,7 @@ class BaseThrottleBackend:
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
-class DjangoCache(BaseThrottleBackend):
-    """
-    Uses Django cache framework for storing the rate limiting state.
-
-    .. seealso::
-
-        https://docs.djangoproject.com/en/stable/topics/cache/
-
-    """
-
+class _DjangoCache:
     cache_name: str = DEFAULT_CACHE_ALIAS
     _cache: BaseCache = dataclasses.field(init=False)
 
@@ -99,62 +100,6 @@ class DjangoCache(BaseThrottleBackend):
     ) -> None:
         """Initialize the cache backend."""
         object.__setattr__(self, '_cache', caches[self.cache_name])
-
-    @override
-    def get(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> CachedRateLimit | None:
-        """Sync get the cached rate limit state."""
-        stored_cache = self._cache.get(cache_key)
-        return self._load_cache(controller, stored_cache)
-
-    @override
-    async def aget(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> CachedRateLimit | None:
-        """Async get the cached rate limit state."""
-        stored_cache = await self._cache.aget(cache_key)
-        return self._load_cache(controller, stored_cache)
-
-    @override
-    def set(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-        cache_object: CachedRateLimit,
-        *,
-        ttl_seconds: int,
-    ) -> None:
-        """Sync set the cached rate limit state."""
-        self._cache.set(
-            cache_key,
-            self._dump_cache(controller, cache_object),
-            timeout=ttl_seconds,
-        )
-
-    @override
-    async def aset(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-        cache_object: CachedRateLimit,
-        *,
-        ttl_seconds: int,
-    ) -> None:
-        """Async set the cached rate limit state."""
-        await self._cache.aset(
-            cache_key,
-            self._dump_cache(controller, cache_object),
-            timeout=ttl_seconds,
-        )
 
     def _load_cache(
         self,
@@ -179,4 +124,84 @@ class DjangoCache(BaseThrottleBackend):
         return controller.serializer.serialize(
             cache_object,
             renderer=default_renderer,
+        )
+
+
+@dataclasses.dataclass(slots=True, frozen=True)
+class DjangoSyncCache(_DjangoCache, BaseThrottleSyncBackend):
+    """
+    Uses Django sync cache framework for storing the rate limiting state.
+
+    .. seealso::
+
+        https://docs.djangoproject.com/en/stable/topics/cache/
+
+    """
+
+    @override
+    def get(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> CachedRateLimit | None:
+        """Sync get the cached rate limit state."""
+        stored_cache = self._cache.get(cache_key)
+        return self._load_cache(controller, stored_cache)
+
+    @override
+    def set(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+        cache_object: CachedRateLimit,
+        *,
+        ttl_seconds: int,
+    ) -> None:
+        """Sync set the cached rate limit state."""
+        self._cache.set(
+            cache_key,
+            self._dump_cache(controller, cache_object),
+            timeout=ttl_seconds,
+        )
+
+
+@dataclasses.dataclass(slots=True, frozen=True)
+class DjangoAsyncCache(_DjangoCache, BaseThrottleAsyncBackend):
+    """
+    Uses Django async cache framework for storing the rate limiting state.
+
+    .. seealso::
+
+        https://docs.djangoproject.com/en/stable/topics/cache/
+
+    """
+
+    @override
+    async def aget(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> CachedRateLimit | None:
+        """Async get the cached rate limit state."""
+        stored_cache = await self._cache.aget(cache_key)
+        return self._load_cache(controller, stored_cache)
+
+    @override
+    async def aset(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+        cache_object: CachedRateLimit,
+        *,
+        ttl_seconds: int,
+    ) -> None:
+        """Async set the cached rate limit state."""
+        await self._cache.aset(
+            cache_key,
+            self._dump_cache(controller, cache_object),
+            timeout=ttl_seconds,
         )

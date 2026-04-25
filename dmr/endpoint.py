@@ -430,8 +430,7 @@ class Endpoint:  # noqa: WPS214
             return
         for throttle in self.metadata.throttling_before_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
-            with self._sync_lock:
-                throttle(self, controller)
+            throttle(self, controller, self._sync_lock)
 
     def _run_auth(self, controller: 'Controller[BaseSerializer]') -> None:
         if self.metadata.auth is None:
@@ -452,8 +451,7 @@ class Endpoint:  # noqa: WPS214
             return
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
-            with self._sync_lock:
-                throttle(self, controller)
+            throttle(self, controller, self._sync_lock)
 
     # Async checks:
 
@@ -479,8 +477,7 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_before_auth:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
-            async with self._async_lock:
-                await throttle(self, controller)  # noqa: WPS476
+            await throttle(self, controller, self._async_lock)  # noqa: WPS476
 
     async def _run_async_auth(
         self,
@@ -505,8 +502,7 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
-            async with self._async_lock:
-                await throttle(self, controller)  # noqa: WPS476
+            await throttle(self, controller, self._async_lock)  # noqa: WPS476
 
     # Utils:
 

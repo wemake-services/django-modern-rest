@@ -22,10 +22,13 @@ of requirements for an API to count as public.
 
 ### Features
 
+- *Breaking*: Renamed `APIRedirectError` to `RedirectTo`, #922
+- *Breaking*: Splited `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
+  and `BaseThrottleSyncBackend`, #942
+- *Breaking*: Renamed `DjangoCache` into `DjangoSyncCache`,
+  added `DjangoAsyncCache`, #942
 - Added `RefreshTokenSyncController` and `RefreshTokenAsyncController`
   to issue new access/refresh token pairs from a valid refresh token, #907
-
-- *Breaking*: Renamed `APIRedirectError` to `RedirectTo`
 - Added `validate_negotiation` metadata flag, so we can explicitly validate,
   that returned response followed the negotiation process, #711
 - Added `accepted_header` as a faster alternative
@@ -55,7 +58,9 @@ of requirements for an API to count as public.
 
 ### Misc
 
-- Optimized `dmr_client` and `dmr_rf` test fixtures to use `msgspec` for JSON encoding when available, #889
+- Optimized `dmr_client` and `dmr_rf` test fixtures to use `msgspec`
+  for JSON encoding when available, #889
+- Optimized how per-endpoint throttle locks are used, #942
 
 
 ## Version 0.7.0 (2026-04-14)
