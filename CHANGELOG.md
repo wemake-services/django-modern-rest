@@ -23,7 +23,7 @@ of requirements for an API to count as public.
 ### Features
 
 - *Breaking*: Renamed `APIRedirectError` to `RedirectTo`, #922
-- *Breaking*: Splited `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
+- *Breaking*: Split `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
   and `BaseThrottleSyncBackend`, #942
 - *Breaking*: Renamed `DjangoCache` into `DjangoSyncCache`,
   added `DjangoAsyncCache`, #942
