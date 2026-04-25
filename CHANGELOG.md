@@ -50,6 +50,8 @@ of requirements for an API to count as public.
   `application/json` (the default browser `EventSource` case), which
   made 4xx/5xx error bodies and response validation crash with a 500
   instead of rendering the configured non-streaming default, #962
+- Fixed that original traceback was not shown
+  for `BaseSchemaGenerator.get_schema`, #961
 
 ### Misc
 

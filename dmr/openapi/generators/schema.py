@@ -82,21 +82,22 @@ class SchemaGenerator:
         if existing_reference is not None:
             return existing_reference
 
-        schemas = serializer.schema_generator.get_schema(
-            annotation,
-            ref_template=self._context.registries.schema.schema_prefix,
-            used_for_response=used_for_response,
-        )
-        if schemas is not None:
-            return self._maybe_generate_reference(
+        try:
+            schemas = serializer.schema_generator.get_schema(
                 annotation,
-                *schemas,
-                serializer,
-                skip_registration=skip_registration,
+                ref_template=self._context.registries.schema.schema_prefix,
+                used_for_response=used_for_response,
             )
-        raise UnsolvableAnnotationsError(
-            f'Cannot generate OpenAPI schema from {annotation}, '
-            'consider registering it as described in your serializer',
+        except Exception as exc:
+            raise UnsolvableAnnotationsError(
+                f'Cannot generate OpenAPI schema from {annotation}, '
+                'consider registering it as described in your serializer',
+            ) from exc
+        return self._maybe_generate_reference(
+            annotation,
+            *schemas,
+            serializer,
+            skip_registration=skip_registration,
         )
 
     def _resolve_schema_override(
