@@ -5,7 +5,9 @@ repos:
       - id: check-dependabot
       - id: check-github-workflows
       - id: check-github-actions
-      - id: check-readthedocs
+      # TODO: re-enable after
+      # https://github.com/python-jsonschema/check-jsonschema/issues/678
+      # - id: check-readthedocs
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12

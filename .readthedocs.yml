@@ -2,7 +2,8 @@ version: 2
 
 build:
   os: ubuntu-lts-latest
-  tools: {python: "3.12"}
+  tools:
+    python: '3.13'
   jobs:
     pre_install:
       - uv export
@@ -16,7 +17,7 @@ python:
   install:
     - method: uv
       command: pip
-      path: .
+      path: requirements.txt
 
 sphinx:
   configuration: 'docs/conf.py'
