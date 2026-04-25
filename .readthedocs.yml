@@ -8,7 +8,7 @@ build:
 python:
   install:
     - method: uv
-      command: sync
+      command: sync --no-emit-project
       extras: all
       groups:
         - docs
