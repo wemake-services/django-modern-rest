@@ -4,6 +4,7 @@ import pydantic
 import pytest
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema as cs
+from typing_extensions import override
 
 from dmr import Controller
 from dmr.exceptions import UnsolvableAnnotationsError
@@ -18,7 +19,8 @@ class _NotModel(pydantic.BaseModel):
     email: str
 
     @classmethod
-    def __get_pydantic_json_schema__(  # noqa: PLW3201
+    @override
+    def __get_pydantic_json_schema__(
         cls,
         core_schema: cs.CoreSchema,
         handler: pydantic.GetJsonSchemaHandler,  # noqa: WPS110
