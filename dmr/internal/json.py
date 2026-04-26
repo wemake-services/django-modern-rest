@@ -98,10 +98,10 @@ try:
     import msgspec
 except ImportError:  # pragma: no cover
     _json_dumps: Callable[[Any], str] = _compact_json_dumps
-    _json_loads: Callable[['str | Raw'], Any] = NativeJson.loads
+    json_loads: Callable[['str | Raw'], Any] = NativeJson.loads
 else:
     _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
-    _json_loads = msgspec.json.decode
+    json_loads = msgspec.json.decode
 
 
 def json_dump(schema: Any) -> str:
@@ -116,17 +116,3 @@ def json_dump(schema: Any) -> str:
 
     """
     return _json_dumps(schema)
-
-
-def json_loads(raw: 'str | Raw') -> Any:
-    """
-    Deserialize JSON input into a Python object.
-
-    Args:
-        raw: JSON data to deserialize.
-
-    Returns:
-        Deserialized Python object.
-
-    """
-    return _json_loads(raw)

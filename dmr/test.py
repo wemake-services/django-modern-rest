@@ -20,6 +20,17 @@ class _DMRMixin:  # noqa: WPS338
         return json_dump(data) if should_encode else data
 
     def _parse_json(self, response: HttpResponse, **extra: Any) -> Any:
+        # This implementation mirrors Django's response JSON parsing
+        # behavior instead of introducing a cleaner local abstraction.
+        #
+        # We keep it close to Django on purpose:
+        # - it caches the parsed value on `response._json`
+        # - it validates the response `Content-Type` before parsing
+        # - it parses `response.text`, not `response.content`, so decoding is
+        #   performed using the response charset before JSON deserialization
+        #
+        # It preserving Django-compatible behavior here is
+        # more important than improving the internal style of this helper.
         if not hasattr(response, '_json'):
             if response.get('Content-Type') != self.default_content_type:
                 raise ValueError(  # pragma: no cover
