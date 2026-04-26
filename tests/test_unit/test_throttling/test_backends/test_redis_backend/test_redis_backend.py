@@ -3,7 +3,12 @@ from http import HTTPStatus
 from typing import Any, Final
 
 import pytest
-import redis
+
+try:
+    import redis
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='redis is not installed', allow_module_level=True)
+
 from dirty_equals import IsOneOf
 from django.http import HttpResponse
 from inline_snapshot import snapshot
@@ -17,7 +22,7 @@ from dmr.throttling.algorithms import (
     LeakyBucket,
     SimpleRate,
 )
-from dmr.throttling.backends.redis import RedisAsync, RedisSync
+from dmr.throttling.backends.redis import AsyncRedis, SyncRedis
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter
 
 _ATTEMPTS: Final = 2
@@ -36,7 +41,7 @@ def test_redis_sync_simple_rate(
                 SyncThrottle(
                     _ATTEMPTS,
                     _RATE,
-                    backend=RedisSync(redis_client),
+                    backend=SyncRedis(redis_client),
                     algorithm=SimpleRate(),
                 ),
             ],
@@ -83,7 +88,7 @@ def test_redis_sync_leaky_bucket(
                 SyncThrottle(
                     _ATTEMPTS,
                     _RATE,
-                    backend=RedisSync(redis_client),
+                    backend=SyncRedis(redis_client),
                     algorithm=LeakyBucket(),
                 ),
             ],
@@ -131,7 +136,7 @@ async def test_redis_async_simple_rate(
                 _ATTEMPTS,
                 _RATE,
                 algorithm=SimpleRate(),
-                backend=RedisAsync(redis_async_client),
+                backend=AsyncRedis(redis_async_client),
                 response_headers=[RateLimitIETFDraft(), RetryAfter()],
             ),
         ]
@@ -173,7 +178,7 @@ async def test_redis_async_leaky_bucket(
                 _ATTEMPTS,
                 _RATE,
                 algorithm=LeakyBucket(),
-                backend=RedisAsync(redis_async_client),
+                backend=AsyncRedis(redis_async_client),
                 response_headers=[RateLimitIETFDraft(), RetryAfter()],
             ),
         ]

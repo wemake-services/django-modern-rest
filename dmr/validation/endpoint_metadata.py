@@ -185,7 +185,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     type_annotations: dict[str, Any]
 
     # Internal fields:
-    endpoint_name: str = dataclasses.field(init=False)
+    endpoint_name: str = dataclasses.field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
 
     def __call__(self) -> EndpointMetadata:
         """Do the validation."""

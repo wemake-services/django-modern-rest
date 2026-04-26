@@ -57,7 +57,7 @@ class _DjangoCache:
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
-class DjangoSyncCache(_DjangoCache, BaseThrottleSyncBackend):
+class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
     """
     Uses Django sync cache framework for storing the rate limiting state.
 
@@ -124,7 +124,7 @@ class DjangoSyncCache(_DjangoCache, BaseThrottleSyncBackend):
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
-class DjangoAsyncCache(_DjangoCache, BaseThrottleAsyncBackend):
+class AsyncDjangoCache(_DjangoCache, BaseThrottleAsyncBackend):
     """
     Uses Django async cache framework for storing the rate limiting state.
 

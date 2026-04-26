@@ -6,8 +6,8 @@ from dmr.throttling.backends.base import (
 )
 from dmr.throttling.backends.base import CachedRateLimit as CachedRateLimit
 from dmr.throttling.backends.django_cache import (
-    DjangoAsyncCache as DjangoAsyncCache,
+    AsyncDjangoCache as AsyncDjangoCache,
 )
 from dmr.throttling.backends.django_cache import (
-    DjangoSyncCache as DjangoSyncCache,
+    SyncDjangoCache as SyncDjangoCache,
 )

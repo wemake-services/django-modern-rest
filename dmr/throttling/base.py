@@ -15,10 +15,10 @@ from dmr.internal.endpoint import request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.throttling.algorithms import BaseThrottleAlgorithm, SimpleRate
 from dmr.throttling.backends import (
+    AsyncDjangoCache,
     BaseThrottleAsyncBackend,
     BaseThrottleSyncBackend,
-    DjangoAsyncCache,
-    DjangoSyncCache,
+    SyncDjangoCache,
 )
 from dmr.throttling.cache_keys import BaseThrottleCacheKey, RemoteAddr
 from dmr.throttling.headers import (
@@ -89,9 +89,9 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
             cache_key: Cache key to use.
                 Defaults to :class:`~dmr.throttling.cache_keys.RemoteAddr`.
             backend: Storage backend to use.
-                Defaults to :class:`~dmr.throttling.backends.DjangoSyncCache`
+                Defaults to :class:`~dmr.throttling.backends.SyncDjangoCache`
                 for sync endpoints or
-                to :class:`~dmr.throttling.backends.DjangoAsyncCache`
+                to :class:`~dmr.throttling.backends.AsyncDjangoCache`
                 for async endpoints.
             algorithm: Algorithm to use.
                 Defaults to :class:`~dmr.throttling.algorithms.SimpleRate`.
@@ -114,9 +114,9 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         self.cache_key = cache_key or RemoteAddr()
 
         default_backend = (
-            DjangoSyncCache()
+            SyncDjangoCache()
             if isinstance(self, SyncThrottle)
-            else DjangoAsyncCache()
+            else AsyncDjangoCache()
         )
         self._backend = backend or default_backend  # type: ignore[assignment]
         self._algorithm = algorithm or SimpleRate()

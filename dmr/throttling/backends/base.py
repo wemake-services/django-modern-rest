@@ -32,23 +32,26 @@ class _BaseThrottleBackend:
 
     __slots__ = ()
 
-    def is_supported(self, algorithm: 'BaseThrottleAlgorithm') -> bool:
+    def unsupported_format(
+        self,
+        algorithm: 'BaseThrottleAlgorithm',
+    ) -> str | None:
         """Check whether this algorithm is supported by this backend."""
-        if self.needs_transaction_script:
-            return (
-                algorithm.transaction_script(self.needs_transaction_script)
-                is not None
-            )
-        return True
+        if self.needs_transaction_script and (
+            algorithm.transaction_script(self.needs_transaction_script) is None
+        ):
+            return self.needs_transaction_script
+        return None
 
     def initialize_algorithm(self, algorithm: 'BaseThrottleAlgorithm') -> None:
         """Initialize and prepare backend for the algorithm."""
         # Do the validation:
-        if not self.is_supported(algorithm):
+        script_format = self.unsupported_format(algorithm)
+        if script_format:
             raise EndpointMetadataError(
                 f'Cannot use backend {self!r} with {algorithm!r}, '
-                'because backend requires Lua scripts support, '
-                'while algorithm does not provide one',
+                f'because backend requires {script_format} transactional '
+                'script support, while algorithm does not provide it',
             )
 
 

@@ -25,6 +25,21 @@ jobs:
           - python-version: '3.14t'
             force_free_gil: true
 
+    services:
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis:8-alpine
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps port 6379 on service container to the host
+          - 6379:6379
+
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
@@ -54,9 +69,11 @@ jobs:
         uv pip install orjson || true
 
     - name: Run checks
+      run: just test
       env:
         PYTHON_GIL: ${{ matrix.force_free_gil && '0' || '1' }}
-      run: just test
+        REDIS_HOST: redis
+        REDIS_PORT: 6379
 
     # Upload coverage to codecov: https://codecov.io/
     - name: Upload coverage to Codecov

@@ -6,7 +6,7 @@ import pytest
 
 try:
     import redis
-except ImportError:
+except ImportError:  # pragma: no cover
     pytest.skip(reason='redis is not installed', allow_module_level=True)
 
 from redis import asyncio as aioredis

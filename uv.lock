@@ -646,7 +646,6 @@ dev = [
     { name = "django-csp" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "faker" },
-    { name = "httpx" },
     { name = "import-linter" },
     { name = "inline-snapshot" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'" },
@@ -677,12 +676,17 @@ dev = [
     { name = "wemake-python-styleguide" },
     { name = "xmltodict-rs" },
 ]
+dev-and-docs = [
+    { name = "punq" },
+    { name = "redis" },
+]
 docs = [
     { name = "django-filter" },
     { name = "django-mantle" },
     { name = "docutils" },
     { name = "myst-parser" },
     { name = "punq" },
+    { name = "redis" },
     { name = "shibuya" },
     { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -752,13 +756,12 @@ dev = [
     { name = "django-csp", specifier = ">=4.0,<5.0" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.1" },
     { name = "faker", specifier = ">=40.1,<41" },
-    { name = "httpx", specifier = ">=0.28,<0.29" },
     { name = "import-linter", specifier = ">=2.5,<3" },
     { name = "inline-snapshot", specifier = ">=0.32,<0.33" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'", specifier = ">=3.11,<4" },
     { name = "phonenumbers", specifier = ">=9.0,<10" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
-    { name = "punq", specifier = ">=0.7,<0.8" },
+    { name = "punq", specifier = ">=0.7,<1" },
     { name = "pyrefly", specifier = ">=0.60,<0.62" },
     { name = "pyright", specifier = ">=1.1,<2" },
     { name = "pytest", specifier = ">=9.0,<10" },
@@ -784,12 +787,17 @@ dev = [
     { name = "wemake-python-styleguide", specifier = ">=1.6,<2" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
+dev-and-docs = [
+    { name = "punq", specifier = ">=0.7,<1" },
+    { name = "redis", specifier = ">=7.4,<8" },
+]
 docs = [
     { name = "django-filter", specifier = ">=25.2,<26" },
     { name = "django-mantle", specifier = ">=26.6,<27" },
     { name = "docutils", specifier = ">=0.22,<0.23" },
     { name = "myst-parser", specifier = ">=5.0,<6" },
     { name = "punq", specifier = ">=0.7,<1" },
+    { name = "redis", specifier = ">=7.4,<8" },
     { name = "shibuya", specifier = ">=2026.1,<2027" },
     { name = "sphinx", specifier = ">=9.0,<10" },
     { name = "sphinx-autodoc-typehints", specifier = ">=3.0,<4" },
@@ -1120,14 +1128,14 @@ wheels = [
 
 [[package]]
 name = "hypothesis"
-version = "6.152.2"
+version = "6.152.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "sortedcontainers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/7f/67a06c5f19368e0fa04612bbc446c535bf45b0b51bc6aa56055b112f7604/hypothesis-6.152.2.tar.gz", hash = "sha256:11fd5725958fe75597d1b831f703fdf7e636b7cf1f249117f381ad5cee4d888f", size = 466358, upload-time = "2026-04-24T04:26:18.917Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/90/fc0b263b6f2622e5f8d2aa93f2e95ba79718a5faa7d2a74bfab10d6b0905/hypothesis-6.152.3.tar.gz", hash = "sha256:c4e5300d3755b6c8a270a28fe5abff40153e927328e89d2bb0229c1384618998", size = 466478, upload-time = "2026-04-26T17:31:07.657Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/ed/77eed094bceae845a994f936721293afae40a346c0005d85208407fd40e8/hypothesis-6.152.2-py3-none-any.whl", hash = "sha256:1ad5b87f0e6c0ab7a9a35b1378cc4963d23eaf0cb1e47e94f1d574b41155907a", size = 532034, upload-time = "2026-04-24T04:26:16.394Z" },
+    { url = "https://files.pythonhosted.org/packages/90/38/15475b91a4c12721d2be3349e9d6cf8649c76ed9bc1287e2de7c8d06c261/hypothesis-6.152.3-py3-none-any.whl", hash = "sha256:4b47f00916c858ed49cf870a2f08b04e5fff5afae0bb78f3b4a6d9c74fd6c7bc", size = 532154, upload-time = "2026-04-26T17:31:04.42Z" },
 ]
 
 [[package]]

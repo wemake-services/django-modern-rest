@@ -102,16 +102,33 @@ Backends are used to define where we store throttling data.
 
 By default we use:
 
-- :class:`dmr.throttling.backends.DjangoSyncCache` for sync endpoints
-- :class:`dmr.throttling.backends.DjangoAsyncCache` for async endpoints
+- :class:`dmr.throttling.backends.SyncDjangoCache` for sync endpoints
+- :class:`dmr.throttling.backends.AsyncDjangoCache` for async endpoints
 
-By default we store all the data in the ``'default'`` Django cache.
-You can customize which Django cache name is used. For example:
+All backends that we support can be further customized.
 
-.. literalinclude:: /examples/throttling/cache_customization.py
-  :caption: views.py
-  :linenos:
-  :language: python
+.. tabs::
+
+  .. tab:: DjangoCache
+
+    By default we store all the data in the ``'default'`` Django cache.
+    You can customize which Django cache name is used. For example:
+
+    .. literalinclude:: /examples/throttling/cache_customization.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Redis
+
+    Any Redis-compliant tool is supported, including: Valkey, KeyDB, etc.
+
+    You can customize the
+
+    .. literalinclude:: /examples/throttling/redis_backend.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
 You can also write your own backends, for example,
 to store throttling information in memory, filesystem, or somewhere else.
@@ -122,8 +139,47 @@ and override 2 methods.
 
 Full list of backends that we ship in ``django-modern-rest``:
 
-- :class:`~dmr.throttling.backends.DjangoSyncCache`
-  and :class:`~dmr.throttling.backends.DjangoAsyncCache`, default
+- :class:`~dmr.throttling.backends.SyncDjangoCache`
+  and :class:`~dmr.throttling.backends.AsyncDjangoCache`, default
+- :class:`~dmr.throttling.backends.redis.SyncRedis`
+  and :class:`~dmr.throttling.backends.redis.AsyncRedis`
+
+.. warning::
+
+  When using :class:`~dmr.throttling.backends.SyncDjangoCache`
+  or :class:`~dmr.throttling.backends.AsyncDjangoCache`
+  the final behavior will depend on the cache that you use.
+
+  Some Django cache backends like
+  ``django.core.cache.backends.locmem.LocMemCache``
+  store cache in memory per-process. So, any multiprocess environments
+  with ``N`` processes will allow to use ``N * max_request`` requests.
+  Using such cache backends is not safe.
+
+  Some like ``django.core.cache.backends.dummy.DummyCache`` do nothing at all.
+
+Choosing a backend
+^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 18 12 24 24
+
+   * - Backend
+     - Atomicity
+     - Overhead
+     - Supported algorithms
+     - Best suited for
+   * - ``DjangoCache``
+     - Per-process: multiprocess deployments may face problems
+     - Very low (depends on the cache type)
+     - All
+     - Non-critical IP based checks with not-strict windows and limits
+   * - ``Redis``
+     - Full
+     - Low
+     - All builtin ones, but requires ``lua`` scripting support
+     - Strict distributed limits
 
 Algorithms
 ~~~~~~~~~~
@@ -456,10 +512,16 @@ Backends
 .. autoclass:: dmr.throttling.backends.BaseThrottleAsyncBackend
   :members:
 
-.. autoclass:: dmr.throttling.backends.DjangoSyncCache
+.. autoclass:: dmr.throttling.backends.SyncDjangoCache
   :members:
 
-.. autoclass:: dmr.throttling.backends.DjangoAsyncCache
+.. autoclass:: dmr.throttling.backends.AsyncDjangoCache
+  :members:
+
+.. autoclass:: dmr.throttling.backends.redis.SyncRedis
+  :members:
+
+.. autoclass:: dmr.throttling.backends.redis.AsyncRedis
   :members:
 
 Algorithms

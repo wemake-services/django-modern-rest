@@ -82,6 +82,7 @@ LEAKY_BUCKET: Final = """
 local key          = KEYS[1]
 local max_requests = tonumber(ARGV[1])
 local duration     = tonumber(ARGV[2])
+local view_only    = tonumber(ARGV[3])
 local capacity     = max_requests * duration
 
 -- Use Redis server clock so the timestamp is always consistent
@@ -105,13 +106,17 @@ if level >= capacity then
     return {0, level, capacity}
 end
 
--- ── fill (+duration_in_seconds scaled units) ──────────────────────────────
-level = level + duration
+-- Only update values, when non-viewing:
+if view_only == 0 then
+    -- ── fill (+duration_in_seconds scaled units) ───────────────────────────
+    level = level + duration
 
--- Persist level and the current timestamp.
--- TTL: after 2x the window of total inactivity the key expires automatically.
-redis.call("HSET", key, "level", level, "last_time", now)
-redis.call("EXPIRE", key, duration * 2)
+    -- Persist level and the current timestamp.
+    redis.call("HSET", key, "level", level, "last_time", now)
+    -- TTL: after 2x the window of total inactivity
+    -- the key expires automatically.
+    redis.call("EXPIRE", key, duration * 2)
+end
 
 return {1, level, capacity}
 """

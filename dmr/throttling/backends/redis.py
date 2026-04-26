@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
-class RedisSync(BaseThrottleSyncBackend):
+class SyncRedis(BaseThrottleSyncBackend):
     """
     Uses sync Redis client for multiproccess safe rate-limiting.
 
@@ -41,7 +41,7 @@ class RedisSync(BaseThrottleSyncBackend):
     """
 
     client: 'redis.Redis[Any]'
-    _script: Script = dataclasses.field(init=False)
+    _script: Script = dataclasses.field(init=False, repr=False, compare=False)
 
     needs_transaction_script: ClassVar[str] = 'lua'  # pyright: ignore[reportIncompatibleVariableOverride]
 
@@ -114,7 +114,7 @@ class RedisSync(BaseThrottleSyncBackend):
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
-class RedisAsync(BaseThrottleAsyncBackend):
+class AsyncRedis(BaseThrottleAsyncBackend):
     """
     Uses async Redis client for multiproccess safe rate-limiting.
 
@@ -125,7 +125,11 @@ class RedisAsync(BaseThrottleAsyncBackend):
     """
 
     client: 'aioredis.Redis[Any]'
-    _script: AsyncScript = dataclasses.field(init=False)
+    _script: AsyncScript = dataclasses.field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
 
     needs_transaction_script: ClassVar[str] = 'lua'  # pyright: ignore[reportIncompatibleVariableOverride]
 
