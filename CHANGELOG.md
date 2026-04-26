@@ -18,9 +18,9 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## Version 0.8.0 (2026-04-26)
 
-### Features
+### Breaking changes
 
 - *Breaking*: Renamed `APIRedirectError` to `RedirectTo`, #922
 - *Breaking*: Split `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
@@ -33,6 +33,21 @@ of requirements for an API to count as public.
 - *Breaking*: Removed `BaseThrottleAlgorithm.record` method,
   now `BaseThrottleAlgorithm.access` must also record accesses.
   This will help to make throttling more atomic, #942
+
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Apply this change to the code that uses `django-modern-rest`:
+1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
+2. Replace `dmr.throttling.backend.DjangoCache`
+   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles 
+   and with `dmr.throttling.backend.AsyncDjangoCache` for async throttles
+```
+
+### Features
+
 - Added `SyncRedis` and `AsyncRedis` throttling backends, #977
 - Added `RefreshTokenSyncController` and `RefreshTokenAsyncController`
   to issue new access/refresh token pairs from a valid refresh token, #907
