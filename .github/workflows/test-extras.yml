@@ -84,7 +84,7 @@ jobs:
         uv pip install "${{ matrix.django-version }}"
 
     - name: Run checks
-      run: just smoke unit
+      run: just smoke unit --cov-fail-under=98
 
 
   build-no-msgspec:

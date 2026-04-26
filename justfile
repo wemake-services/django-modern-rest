@@ -41,8 +41,8 @@ type-check:
 
 # Run unit tests
 [group('testing')]
-unit:
-    uv run pytest --inline-snapshot=disable
+unit *args='':
+    uv run pytest --inline-snapshot=disable {{ args }}
 
 # Check package imports without django.setup()
 [group('testing')]
