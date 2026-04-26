@@ -123,12 +123,18 @@ All backends that we support can be further customized.
 
     Any Redis-compliant tool is supported, including: Valkey, KeyDB, etc.
 
-    You can customize the
+    You can fully customize the client:
 
     .. literalinclude:: /examples/throttling/redis_backend.py
       :caption: views.py
       :linenos:
       :language: python
+
+    .. note::
+
+      Make sure that `redis <https://pypi.org/project/redis/>`_ client
+      library is installed, we don't ship
+      it together with ``django-modern-rest``.
 
 You can also write your own backends, for example,
 to store throttling information in memory, filesystem, or somewhere else.

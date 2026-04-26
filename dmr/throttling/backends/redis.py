@@ -34,6 +34,15 @@ class SyncRedis(BaseThrottleSyncBackend):
     """
     Uses sync Redis client for multiproccess safe rate-limiting.
 
+    This backend requires ``redis`` client library to be installed.
+    We don't ship it with the ``django-modern-rest``.
+
+    You would have to install it separatelly:
+
+    .. code:: bash
+
+        pip install redis
+
     .. seealso::
 
         https://redis.readthedocs.io
@@ -117,6 +126,15 @@ class SyncRedis(BaseThrottleSyncBackend):
 class AsyncRedis(BaseThrottleAsyncBackend):
     """
     Uses async Redis client for multiproccess safe rate-limiting.
+
+    This backend requires ``redis`` client library to be installed.
+    We don't ship it with the ``django-modern-rest``.
+
+    You would have to install it separatelly:
+
+    .. code:: bash
+
+        pip install redis
 
     .. seealso::
 
