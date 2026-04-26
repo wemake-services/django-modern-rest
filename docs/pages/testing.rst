@@ -27,7 +27,9 @@ What is the difference between the default ones? Not much:
 - Default ``Content-Type`` header is set to ``application/json``
 - It is now easier to change ``Content-Type`` header as simple as specifying
   ``headers={'Content-Type': 'application/xml'}`` to change the content type
-  for XML requests and responses
+  for XML (or any other) requests and responses
+- Our test clients are faster, because they use ``msgspec``
+  if it is available to dump and parse json, instead of a regular :mod:`json`
 
 
 Testing styles support

@@ -18,6 +18,8 @@ class _DMRMixin:  # noqa: WPS338
         )
         return json_dump(data) if should_encode else data
 
+    # TODO: add `def _parse_json` for `client`
+
     if TYPE_CHECKING:  # noqa: WPS604  # pragma: no cover
 
         def _encode_data(

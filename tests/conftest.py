@@ -5,6 +5,8 @@ from django.utils import translation
 
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
+
+# This import is required to always clean the settings cache:
 from dmr_pytest import settings  # noqa: F401
 
 

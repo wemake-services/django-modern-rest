@@ -3,6 +3,17 @@ Django Session Auth
 
 Docs: https://docs.djangoproject.com/en/dev/topics/auth
 
+For this auth to work, you will need to:
+
+1. Properly add and configure
+   :class:`django.contrib.sessions.middleware.SessionMiddleware` middleware
+2. Properly add and configure
+   :class:`django.contrib.auth.middleware.AuthenticationMiddleware` middleware
+3. Set correct auth settings, like enabling ``django.contrib.auth`` app
+
+Make sure to follow the default Django's guide on setting up
+the regular Django auth before going further.
+
 
 Requiring auth
 --------------

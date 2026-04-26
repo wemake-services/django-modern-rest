@@ -68,16 +68,110 @@ def test_correct_django_session(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.cookies[settings.SESSION_COOKIE_NAME]
+    assert response.cookies.keys() == {
+        settings.SESSION_COOKIE_NAME,
+        settings.CSRF_COOKIE_NAME,
+    }
+    assert dmr_client.cookies.keys() == response.cookies.keys()
 
-    response = dmr_client.get(
-        check_url,
-        cookies=response.cookies,
-    )
+    response = dmr_client.get(check_url)
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {'user_id': str(user.pk)}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'check_url',
+    [
+        reverse('api:django_session_auth:user_session_sync'),
+        reverse('api:django_session_auth:user_session_async'),
+    ],
+)
+def test_django_session_new_client(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    check_url: str,
+) -> None:
+    """Ensures that correct auth params with different clients."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies.keys() == {
+        settings.SESSION_COOKIE_NAME,
+        settings.CSRF_COOKIE_NAME,
+    }
+    assert dmr_client.cookies.keys() == response.cookies.keys()
+
+    second_client = DMRClient()
+    second_client.cookies.update(response.cookies)
+
+    response = second_client.get(check_url)
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == {'user_id': str(user.pk)}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'check_url',
+    [
+        reverse('api:django_session_auth:user_session_sync'),
+        reverse('api:django_session_auth:user_session_async'),
+    ],
+)
+def test_just_csrf_cookie(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    check_url: str,
+) -> None:
+    """Ensures that just csrf cookie is not enough to login."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies[settings.SESSION_COOKIE_NAME]
+
+    second_client = DMRClient()
+    # Just one cookie is not enough:
+    second_client.cookies[settings.CSRF_COOKIE_NAME] = response.cookies[
+        settings.CSRF_COOKIE_NAME
+    ]
+
+    response = second_client.get(check_url)
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies.get(settings.SESSION_COOKIE_NAME) is None
 
 
 @pytest.mark.django_db

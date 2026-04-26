@@ -1,6 +1,8 @@
 import logging
 import os
 from collections.abc import Iterator
+from http import HTTPStatus
+from http.cookies import SimpleCookie
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -13,6 +15,7 @@ from hypothesis import strategies
 from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 from django_test_app.server.wsgi import application
+from dmr.test import DMRClient
 from dmr.validation import ResponseValidator
 
 _LOCAL_MAX_EXAMPLES: Final = 25
@@ -72,12 +75,46 @@ st.openapi.format(
     strategies.from_regex(r'^\+7-495-[0-9]{3}-[0-9]{2}-[0-9]{2}$'),
 )
 
+# Register custom auth:
+
+
+@st.auth().apply_to(st.openapi.require_security_scheme('django_session'))
+class _DjangoSessionAuth:
+    def get(
+        self,
+        case: st.Case,
+        ctx: st.AuthContext,
+    ) -> SimpleCookie:
+        dmr_client = DMRClient()
+        response = dmr_client.post(
+            reverse('api:django_session_auth:django_session_sync'),
+            # Username and password are taken from `admin_user` fixture,
+            # which is defined in `pytest-django`:
+            data={'username': 'admin', 'password': 'password'},
+        )
+        assert response.status_code == HTTPStatus.OK, response.content
+        return response.cookies
+
+    def set(
+        self,
+        case: st.Case,
+        data: SimpleCookie,
+        ctx: st.AuthContext,
+    ) -> None:
+        # Set to the case itself:
+        case.cookies.update({
+            cookie_name: cookie.coded_value
+            for cookie_name, cookie in data.items()
+        })
+        assert case.cookies, ctx
+
 
 @schema.parametrize()
 @h_settings(max_examples=_MAX_EXAMPLES)
 def test_schemathesis(
-    case: st.Case,
     tracecov_map: 'tracecov.CoverageMap | None',
+    *,
+    case: st.Case,
 ) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
     if tracecov_map is None:  # pragma: no cover
