@@ -98,6 +98,7 @@ unit-test = [
   "pytest-asyncio>=1.2,<2",
   "pytest-custom-exit-code>=0.3,<0.4",
   "pytest-freezer>=0.4,<0.5",
+  "pytest-asyncio>=1.3,<2",
   "dirty-equals>=0.11,<0.12",
   "faker>=40.1,<41",
   "inline-snapshot>=0.32,<0.33",
@@ -120,6 +121,7 @@ dev = [
   "types-setuptools>=82,<83",
   "types-pyyaml>=6.0,<7",
   "types-django-filter>=25.2,<26",
+  "types-redis>=4.6,<5",
   "pyright>=1.1,<2",
   "pyrefly>=0.60,<0.62",
   "wemake-python-styleguide>=1.6,<2",
@@ -131,6 +133,7 @@ dev = [
   "httpx>=0.28,<0.29",
   "punq>=0.7,<0.8",
   "phonenumbers>=9.0,<10",
+  "redis>=7.4,<8",
 ]
 build = [
   "cibuildwheel==3.4.1",
@@ -339,6 +342,10 @@ DJANGO_SETTINGS_MODULE = "server.settings"
 
 # PYTHONPATH configuration:
 pythonpath = ["django_test_app"]
+
+# pytest-asyncio configuration:
+# https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html
+asyncio_mode = 'auto'
 
 addopts = [
   "--strict-config",

@@ -125,6 +125,8 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
             if response_headers is None
             else response_headers
         )
+        # Run check and early initializations:
+        self._backend.initialize_algorithm(self._algorithm)
 
     def full_cache_key(
         self,
@@ -242,7 +244,6 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
             self,
             cache_key=cache_key,
             algorithm=self._algorithm,
-            ttl_seconds=self.duration_in_seconds,
         )
 
     def report_usage(
@@ -258,7 +259,7 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
             endpoint,
             controller,
             self,
-            self._backend.get(endpoint, controller, cache_key),
+            self._backend.get(endpoint, controller, self, cache_key=cache_key),
         )
 
 
@@ -307,7 +308,6 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
             self,
             cache_key=cache_key,
             algorithm=self._algorithm,
-            ttl_seconds=self.duration_in_seconds,
         )
 
     async def report_usage(
@@ -323,7 +323,12 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
             endpoint,
             controller,
             self,
-            await self._backend.get(endpoint, controller, cache_key),
+            await self._backend.get(
+                endpoint,
+                controller,
+                self,
+                cache_key=cache_key,
+            ),
         )
 
 

@@ -1,11 +1,15 @@
-import abc
 import dataclasses
 from typing import TYPE_CHECKING
 
 from django.core.cache import DEFAULT_CACHE_ALIAS, BaseCache, caches
-from typing_extensions import TypedDict, override
+from typing_extensions import override
 
 from dmr.settings import default_parser, default_renderer
+from dmr.throttling.backends.base import (
+    BaseThrottleAsyncBackend,
+    BaseThrottleSyncBackend,
+    CachedRateLimit,
+)
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -13,89 +17,6 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
-
-
-class CachedRateLimit(TypedDict):
-    """Representation of a cached object's metadata."""
-
-    # We usually store `int(time.time())` result here:
-    time: int
-    # We overly complicate the storage a bit, because this design
-    # allows future potential algorithms to store requests as lists,
-    # if it is needed.
-    history: list[int]
-
-
-class BaseThrottleSyncBackend:
-    """
-    Base class for all throttling backends.
-
-    It must provide sync and async API for sync and async throttling classes.
-    """
-
-    __slots__ = ()
-
-    @abc.abstractmethod
-    def incr(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle',
-        *,
-        cache_key: str,
-        algorithm: 'BaseThrottleAlgorithm',
-        ttl_seconds: int,
-    ) -> CachedRateLimit:
-        """
-        Sync increment cached rate limit state.
-
-        Can be atomic, can be non atomic. Atomicity needs to be documented.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> CachedRateLimit | None:
-        """Sync get the state with no increments."""
-        raise NotImplementedError
-
-
-class BaseThrottleAsyncBackend:
-    """
-    Base class for all throttling backends.
-
-    It must provide sync and async API for sync and async throttling classes.
-    """
-
-    __slots__ = ()
-
-    @abc.abstractmethod
-    async def incr(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'AsyncThrottle',
-        *,
-        cache_key: str,
-        algorithm: 'BaseThrottleAlgorithm',
-        ttl_seconds: int,
-    ) -> CachedRateLimit:
-        """Async increment cached rate limit state."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def get(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> CachedRateLimit | None:
-        """Sync get the state with no increments."""
-        raise NotImplementedError
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
@@ -155,21 +76,20 @@ class DjangoSyncCache(_DjangoCache, BaseThrottleSyncBackend):
         *,
         cache_key: str,
         algorithm: 'BaseThrottleAlgorithm',
-        ttl_seconds: int,
     ) -> CachedRateLimit:
         # It is not atomic, but this is fine, we document this:
         cache_object = algorithm.access(
             endpoint,
             controller,
             throttle,
-            self.get(endpoint, controller, cache_key),
+            self.get(endpoint, controller, throttle, cache_key=cache_key),
         )
         self._set(
             endpoint,
             controller,
             cache_key,
             cache_object,
-            ttl_seconds=ttl_seconds,
+            ttl_seconds=throttle.duration_in_seconds,
         )
         return cache_object
 
@@ -178,6 +98,8 @@ class DjangoSyncCache(_DjangoCache, BaseThrottleSyncBackend):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle',
+        *,
         cache_key: str,
     ) -> CachedRateLimit | None:
         """Sync get the cached rate limit state."""
@@ -221,21 +143,20 @@ class DjangoAsyncCache(_DjangoCache, BaseThrottleAsyncBackend):
         *,
         cache_key: str,
         algorithm: 'BaseThrottleAlgorithm',
-        ttl_seconds: int,
     ) -> CachedRateLimit:
         # It is not atomic, but this is fine, we document this:
         cache_object = algorithm.access(
             endpoint,
             controller,
             throttle,
-            await self.get(endpoint, controller, cache_key),
+            await self.get(endpoint, controller, throttle, cache_key=cache_key),
         )
         await self._set(
             endpoint,
             controller,
             cache_key,
             cache_object,
-            ttl_seconds=ttl_seconds,
+            ttl_seconds=throttle.duration_in_seconds,
         )
         return cache_object
 
@@ -244,6 +165,8 @@ class DjangoAsyncCache(_DjangoCache, BaseThrottleAsyncBackend):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
+        throttle: 'AsyncThrottle',
+        *,
         cache_key: str,
     ) -> CachedRateLimit | None:
         """Async get the cached rate limit state."""

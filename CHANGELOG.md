@@ -65,7 +65,7 @@ of requirements for an API to count as public.
 ### Misc
 
 - Optimized `dmr_client` and `dmr_rf` test fixtures to use `msgspec`
-  for JSON encoding when available, #889
+  for JSON encoding and decoding when available, #889 and #976
 - Optimized how per-endpoint throttle locks are used, #942
 
 
