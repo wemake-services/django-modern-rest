@@ -27,6 +27,9 @@ of requirements for an API to count as public.
   and `BaseThrottleSyncBackend`, #942
 - *Breaking*: Renamed `DjangoCache` into `DjangoSyncCache`,
   added `DjangoAsyncCache`, #942
+- *Breaking*: Changed `BaseThrottleBackend` API: now it requires
+  `.incr` and `.get` methods, the first one should ideally
+  be an atomic increment, the second one is for reading objects only, #942
 - *Breaking*: Removed `BaseThrottleAlgorithm.record` method,
   now `BaseThrottleAlgorithm.access` must also record accesses.
   This will help to make throttling more atomic, #942

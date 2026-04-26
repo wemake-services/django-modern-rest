@@ -236,17 +236,12 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
     ) -> None:
         """Check whether this request has rate limiting quota left."""
         # NOTE: this is locked on endpoint.py level, don't worry:
-        cache_object = self._algorithm.access(
+        self._backend.incr(
             endpoint,
             controller,
             self,
-            self._backend.get(endpoint, controller, cache_key),
-        )
-        self._backend.set(
-            endpoint,
-            controller,
-            cache_key,
-            cache_object,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
             ttl_seconds=self.duration_in_seconds,
         )
 
@@ -306,17 +301,12 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
     ) -> None:
         """Check whether this request has rate limiting quota left."""
         # NOTE: this is locked on endpoint.py level, don't worry:
-        cache_object = self._algorithm.access(
+        await self._backend.incr(
             endpoint,
             controller,
             self,
-            await self._backend.aget(endpoint, controller, cache_key),
-        )
-        await self._backend.aset(
-            endpoint,
-            controller,
-            cache_key,
-            cache_object,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
             ttl_seconds=self.duration_in_seconds,
         )
 
@@ -333,7 +323,7 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
             endpoint,
             controller,
             self,
-            await self._backend.aget(endpoint, controller, cache_key),
+            await self._backend.get(endpoint, controller, cache_key),
         )
 
 

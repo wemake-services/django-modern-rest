@@ -57,7 +57,7 @@ def _modify_integration_settings(settings: LazySettings) -> None:
 # The `transactional_db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
-# The `admin_user` fixture is required here so that `JWTAuth` can use
+# The `admin_user` fixture is required here so that auth can use
 # its credentials (username and password) for authentication.
 # This follows the `pytest-django` pattern for creating user fixtures:
 # https://github.com/pytest-dev/pytest-django/blob/main/pytest_django/fixtures.py#L483

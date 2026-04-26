@@ -3,6 +3,8 @@
 fail-on = true
 
 [auth.openapi.http_basic]
+# Our own credentials from
+# django_test_app/server/apps/controllers/auth.py
 username = 'test'
 password = 'pass'
 
