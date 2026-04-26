@@ -42,7 +42,7 @@ User-facing changes:
 Apply this change to the code that uses `django-modern-rest`:
 1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
 2. Replace `dmr.throttling.backend.DjangoCache`
-   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles 
+   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles
    and with `dmr.throttling.backend.AsyncDjangoCache` for async throttles
 ```
 
