@@ -246,12 +246,7 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
             endpoint,
             controller,
             cache_key,
-            self._algorithm.record(
-                endpoint,
-                controller,
-                self,
-                cache_object,
-            ),
+            cache_object,
             ttl_seconds=self.duration_in_seconds,
         )
 
@@ -321,12 +316,7 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
             endpoint,
             controller,
             cache_key,
-            self._algorithm.record(
-                endpoint,
-                controller,
-                self,
-                cache_object,
-            ),
+            cache_object,
             ttl_seconds=self.duration_in_seconds,
         )
 

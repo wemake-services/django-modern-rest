@@ -145,7 +145,7 @@ Here's how you can customize the algorithm for a throttling:
 You can also write your own algorithms.
 To do so, you would need to subclass
 :class:`dmr.throttling.algorithms.BaseThrottleAlgorithm`
-and override 3 methods.
+and override 2 required methods.
 
 Full list of algorithms that we ship in ``django-modern-rest``:
 

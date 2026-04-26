@@ -43,17 +43,6 @@ class BaseThrottleAlgorithm:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def record(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle | AsyncThrottle',
-        cache_object: CachedRateLimit,
-    ) -> CachedRateLimit:
-        """Records successful access."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def report_usage(
         self,
         endpoint: 'Endpoint',
@@ -95,17 +84,6 @@ class SimpleRate(BaseThrottleAlgorithm):
                     now,
                 ),
             )
-        return cache_object
-
-    @override
-    def record(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle | AsyncThrottle',
-        cache_object: CachedRateLimit,
-    ) -> CachedRateLimit:
-        """Record successful access."""
         cache_object['history'][0] += 1
         return cache_object
 
@@ -211,17 +189,6 @@ class LeakyBucket(BaseThrottleAlgorithm):
                     cache_object['time'],
                 ),
             )
-        return cache_object
-
-    @override
-    def record(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle | AsyncThrottle',
-        cache_object: CachedRateLimit,
-    ) -> CachedRateLimit:
-        """Record access by adding request to the bucket."""
         # One scaled unit of a request:
         cache_object['history'][0] += throttle.duration_in_seconds
         return cache_object
