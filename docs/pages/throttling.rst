@@ -118,7 +118,7 @@ to store throttling information in memory, filesystem, or somewhere else.
 To do so, you would need to subclass
 :class:`dmr.throttling.backends.BaseThrottleSyncBackend`
 or :class:`dmr.throttling.backends.BaseThrottleAsyncBackend`
-and override 4 methods.
+and override 2 methods.
 
 Full list of backends that we ship in ``django-modern-rest``:
 
