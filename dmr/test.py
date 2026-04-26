@@ -1,9 +1,10 @@
 from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+from django.http import HttpResponse
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
 
-from dmr.internal.json import json_dump
+from dmr.internal.json import json_dump, json_loads
 
 _ThingT = TypeVar('_ThingT')
 
@@ -18,7 +19,16 @@ class _DMRMixin:  # noqa: WPS338
         )
         return json_dump(data) if should_encode else data
 
-    # TODO: add `def _parse_json` for `client`
+    def _parse_json(self, response: HttpResponse, **extra: Any) -> Any:
+        if not hasattr(response, '_json'):
+            if response.get('Content-Type') != self.default_content_type:
+                raise ValueError(  # pragma: no cover
+                    f'Content-Type header is "{response.get("Content-Type")}", '
+                    f'not "{self.default_content_type}"',
+                )
+
+            response._json = json_loads(response.text, **extra)  # type: ignore[attr-defined]  # noqa: SLF001
+        return response._json  # type: ignore[attr-defined]  # noqa: SLF001
 
     if TYPE_CHECKING:  # noqa: WPS604  # pragma: no cover
 
