@@ -37,7 +37,7 @@ class SyncRedis(BaseThrottleSyncBackend):
     This backend requires ``redis`` client library to be installed.
     We don't ship it with the ``django-modern-rest``.
 
-    You would have to install it separatelly:
+    You would have to install it separately:
 
     .. code:: bash
 
@@ -130,7 +130,7 @@ class AsyncRedis(BaseThrottleAsyncBackend):
     This backend requires ``redis`` client library to be installed.
     We don't ship it with the ``django-modern-rest``.
 
-    You would have to install it separatelly:
+    You would have to install it separately:
 
     .. code:: bash
 
