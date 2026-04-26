@@ -1,0 +1,14 @@
+---
+version: '3.8'
+
+services:
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: redis-cli --raw incr ping
+      interval: 2s
+      timeout: 30s
+      retries: 5
+      start_period: 1s

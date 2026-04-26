@@ -5,7 +5,10 @@ repos:
       - id: check-dependabot
       - id: check-github-workflows
       - id: check-github-actions
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
       - id: check-readthedocs
+      - id: check-compose-spec
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
