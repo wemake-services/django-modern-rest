@@ -1,3 +1,5 @@
+"""This counts as an integration test, because it needs real Redis database."""
+
 import os
 from collections.abc import AsyncIterator, Iterator
 from typing import Any
@@ -9,7 +11,13 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip(reason='redis is not installed', allow_module_level=True)
 
+from django.core.cache import cache
 from redis import asyncio as aioredis
+
+
+@pytest.fixture(autouse=True)
+def _clean_cache() -> None:
+    cache.clear()
 
 
 @pytest.fixture
