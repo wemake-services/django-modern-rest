@@ -26,6 +26,8 @@ jobs:
           - python-version: '3.14t'
             force_free_gil: true
             docker-compose-services: 'redis'
+          - python-version: '3.13'
+            docker-compose-services: 'valkey'
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -61,7 +63,7 @@ jobs:
         # No way to exclude the platform on a file level.
         uv pip install orjson || true
 
-    - name: Wait for Redis to come online
+    - name: Wait for database to come online
       if: ${{ matrix.docker-compose-services }}
       run: wait-for-it --host='localhost' --port=6379 --timeout=30 --strict
 

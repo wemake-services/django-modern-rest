@@ -6,15 +6,19 @@
 We use [uv](https://github.com/astral-sh/uv) to manage the dependencies
 and [just](https://github.com/casey/just) as a command runner.
 
-To install them you would need to run `uv sync --all-groups --all-extras`
-command or:
+To install project dependencies via `uv` run:
+
+```bash
+uv sync --all-groups --all-extras`
+```
+
 To install `just` run:
 
 ```bash
 uv tool install rust-just
 ```
 
-To install project dependencies run:
+To install project dependencies via `just` run:
 
 ```bash
 just install
@@ -22,8 +26,11 @@ just install
 
 ### venv
 
-To activate your `virtualenv`
-run `source .venv/bin/activate`.
+To activate your `virtualenv` run:
+
+```bash
+source .venv/bin/activate
+```
 
 ### Compilation with mypyc, building a wheel
 
@@ -40,7 +47,7 @@ with [`mypyc`](https://mypyc.readthedocs.io/en/latest/).
 
 ## One magic command
 
-After you installed the deps, run `just test` to run everything we have!
+After you installed the deps, run `just test` to run all the checks we have!
 
 To see all available commands:
 
