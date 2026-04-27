@@ -30,11 +30,7 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-<<<<<<< pre-commit
     rev: 6fec9b7edb08fd9989088709d864a7826dc74e80  # frozen: v0.15.12
-=======
-    rev: v0.15.12
->>>>>>> master
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
