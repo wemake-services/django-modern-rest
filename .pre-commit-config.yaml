@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.1
+    rev: ed81924a8b1cecdaa570b072528fa80c9c4d6ccd  # frozen: 0.37.1
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -11,58 +11,58 @@ repos:
       - id: check-compose-spec
 
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.12
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
     hooks:
       - id: actionlint
         additional_dependencies:
           - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.24.1
+    rev: a4727cbbcd26d7098e96b9cb738169b59711ae51  # frozen: v1.24.1
     hooks:
       - id: zizmor
         args: ["--no-progress", "--fix"]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
     hooks:
       - id: shellcheck
         args: ["--severity=style"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.11
+    rev: 6fec9b7edb08fd9989088709d864a7826dc74e80  # frozen: v0.15.12
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
       - id: ruff-format
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
-    rev: v1.0.2
+    rev: c883505f64b59c3c5c9375191e4ad9f98e727ccd  # frozen: v1.0.2
     hooks:
       - id: sphinx-lint
         args: ["--enable=all", "--disable=line-too-long"]
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1
+    rev: c96c46fae465ab9e3607401d9ce93d75e7998023  # frozen: v1
     hooks:
       - id: typos
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a  # frozen: v2.4.2
     hooks:
     - id: codespell
       additional_dependencies:
         - tomli
 
   - repo: https://github.com/instrumentl/pre-commit-just
-    rev: v0.1
+    rev: 9afb27e76938eca22c92ad1d8a6f4b9e1c29bb6b  # frozen: v0.1
     hooks:
       - id: format-justfile
 
   # Should be applied after all autofixes:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
