@@ -20,6 +20,10 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Features
+
+- Added `--no-ensure-ascii` flag to `dmr_export_schema` management command
+
 ### Bugfixes
 
 - Fixed how `msgspec` generates `null` in `anyOf`,
@@ -63,6 +67,7 @@ Apply this change to the code that uses `django-modern-rest`:
   that returned response followed the negotiation process, #711
 - Added `accepted_header` as a faster alternative
   to `django`'s `HttpRequest.accepts`, #854
+- Added `dmr_export_schema` management command to export OpenAPI schemas, #909
 
 ### Bugfixes
 

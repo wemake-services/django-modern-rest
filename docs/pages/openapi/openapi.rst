@@ -180,8 +180,9 @@ using a colon to separate the module from the attribute name
 Available options:
 
 - ``--format`` — ``json`` (default) or ``yaml``
-- ``--indent`` — number of spaces
+- ``--indent`` — number of spaces, default: ``2``
 - ``--sort-keys`` — sort keys alphabetically in the output
+- ``--no-ensure-ascii`` — do not quote all non-ascii chars
 
 
 Customizing OpenAPI config

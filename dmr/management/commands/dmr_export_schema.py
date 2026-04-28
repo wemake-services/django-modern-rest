@@ -8,7 +8,14 @@ from typing_extensions import override
 
 @final
 class Command(BaseCommand):
-    """Management command to export an OpenAPI schema as JSON or YAML."""
+    """
+    Management command to export an OpenAPI schema as JSON or YAML.
+
+    .. versionadded:: 0.8.0
+    .. versionchanged:: 0.9.0
+        Added ``--no-ensure-ascii`` option.
+
+    """
 
     help = 'Export an OpenAPI schema.'
 
@@ -24,24 +31,38 @@ class Command(BaseCommand):
             choices=['json', 'yaml'],
             default='json',
             dest='format',
+            help='Desired output format. Default: %(default)s',
         )
+        # All defaults match the `json.dumps` defaults:
         parser.add_argument(
             '--indent',
             type=int,
-            default=None,
+            default=0,
+            dest='indent',
+            help=(
+                'How many spaces we should use for pretty print indentation. '
+                'Default: %(default)s'
+            ),
         )
         parser.add_argument(
             '--sort-keys',
             action='store_true',
             default=False,
+            dest='sort_keys',
+            help='Should we sort dictionaries based on keys.',
+        )
+        parser.add_argument(
+            '--no-ensure-ascii',
+            action='store_true',
+            default=False,
+            dest='no_ensure_ascii',
+            help='Should we properly escape all non-ascii symbols.',
         )
 
     @override
     def handle(self, *args: Any, **options: Any) -> None:  # noqa: WPS110
         """Load schema by import path and write it to stdout as JSON or YAML."""
         schema_path = options['schema']
-        indent = options['indent']
-        sort_keys = options['sort_keys']
 
         converted_schema = import_string(
             schema_path.replace(':', '.'),
@@ -59,15 +80,16 @@ class Command(BaseCommand):
             self.stdout.write(
                 yaml.safe_dump(
                     converted_schema,
-                    sort_keys=sort_keys,
-                    indent=indent,
+                    indent=options['indent'],
+                    sort_keys=options['sort_keys'],
                 ),
             )
         else:
             self.stdout.write(
                 json.dumps(
                     converted_schema,
-                    indent=indent,
-                    sort_keys=sort_keys,
+                    indent=options['indent'],
+                    sort_keys=options['sort_keys'],
+                    ensure_ascii=not options['no_ensure_ascii'],
                 ),
             )

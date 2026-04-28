@@ -12,7 +12,8 @@ def get_config() -> OpenAPIConfig:
         version='1.0.0',
         summary='Demo API for framework features',
         description=(
-            'Test application showcasing core functionality of the framework.'
+            'Test application showcasing core functionality of the framework. '
+            'Не АСКИИ текст'  # noqa: RUF001
         ),
         terms_of_service='Usage is intended for testing purposes only.',
         contact=Contact(name='Core Developer', email='mail@sobolevn.me'),
