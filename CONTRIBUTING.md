@@ -9,7 +9,7 @@ and [just](https://github.com/casey/just) as a command runner.
 To install project dependencies via `uv` run:
 
 ```bash
-uv sync --all-groups --all-extras`
+uv sync --all-groups --all-extras
 ```
 
 To install `just` run:
