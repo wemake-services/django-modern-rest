@@ -18,6 +18,14 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Bugfixes
+
+- Fixed how `msgspec` generates `null` in `anyOf`,
+  it is now always the last item, #990
+
+
 ## Version 0.8.0 (2026-04-26)
 
 ### Breaking changes

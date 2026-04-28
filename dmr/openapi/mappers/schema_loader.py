@@ -64,8 +64,8 @@ def load_schema(
 
     return Schema(
         all_of=_try_sequence(raw_data.get('allOf')),
-        any_of=_try_sequence(raw_data.get('anyOf')),
-        one_of=_try_sequence(raw_data.get('oneOf')),
+        any_of=_sort_null_last(_try_sequence(raw_data.get('anyOf'))),
+        one_of=_sort_null_last(_try_sequence(raw_data.get('oneOf'))),
         schema_not=_try_optional_type(raw_data.get('not')),
         schema_if=_try_optional_type(raw_data.get('if')),
         then=_try_optional_type(raw_data.get('then')),
@@ -223,5 +223,34 @@ def _try_xml(raw_value: Any) -> XML | None:
             prefix=raw_value.get('prefix'),
             attribute=raw_value.get('attribute', False),
             wrapped=raw_value.get('wrapped', False),
+        )
+    )
+
+
+def _sort_null_last(
+    sequence: list[Reference | Schema] | None,
+) -> list[Reference | Schema] | None:
+    # See https://github.com/wemake-services/django-modern-rest/issues/990
+    # TODO: remove once solved: https://github.com/jcrist/msgspec/issues/1027
+    return (
+        None
+        if sequence is None
+        else (
+            [
+                schema
+                for schema in sequence
+                if (
+                    not isinstance(schema, Schema)
+                    or schema.type != OpenAPIType.NULL
+                )
+            ]
+            + [
+                schema
+                for schema in sequence
+                if (
+                    isinstance(schema, Schema)
+                    and schema.type == OpenAPIType.NULL
+                )
+            ]
         )
     )

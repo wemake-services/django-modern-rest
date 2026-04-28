@@ -1,6 +1,6 @@
 import enum
 import json
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 import pytest
 from django.conf import LazySettings
@@ -30,9 +30,7 @@ class _UserModel(msgspec.Struct):
     email: str
 
 
-class _UserController(
-    Controller[MsgspecSerializer],
-):
+class _UserController(Controller[MsgspecSerializer]):
     summary = 'Handles users'
 
     def post(self, parsed_body: Body[dict[str, int]]) -> _UserModel:
@@ -60,9 +58,7 @@ class _CookieModel(msgspec.Struct):
     csrf: str = msgspec.field(name='CSRF')
 
 
-class _AuthedAndCookiesController(
-    Controller[MsgspecSerializer],
-):
+class _AuthedAndCookiesController(Controller[MsgspecSerializer]):
     auth = (JWTAsyncAuth(),)
 
     async def get(self, parsed_cookies: Cookies[_CookieModel]) -> list[int]:
@@ -95,9 +91,7 @@ class _SeveralFiles(msgspec.Struct):
     second_file: _FileModel
 
 
-class _FileController(
-    Controller[MsgspecSerializer],
-):
+class _FileController(Controller[MsgspecSerializer]):
     parsers = (MultiPartParser(),)
 
     async def get(
@@ -158,6 +152,38 @@ def test_example_schema(
                 Router(
                     'api/v1/',
                     [path('/example', _ExampleController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _TailsSchema(msgspec.Struct):
+    id: int
+    name: str
+
+
+class _UserCreateModel(msgspec.Struct):
+    # See https://github.com/wemake-services/django-modern-rest/issues/990
+    tails: _TailsSchema | None = None
+    tails_optional: Optional[_TailsSchema] = None  # noqa: UP045
+
+
+class _Issue990Controller(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: Body[_UserCreateModel]) -> str:
+        raise NotImplementedError
+
+
+def test_issue990(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema with nullable fields are correctly generated."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('/issue990', _Issue990Controller.as_view())],
                 ),
             ).convert(),
             indent=2,

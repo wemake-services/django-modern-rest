@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 import pydantic
 from django.urls import path
@@ -97,6 +97,38 @@ def test_generic_schema(snapshot: SnapshotAssertion) -> None:
                     [
                         path('/generic', _GenericController.as_view()),
                     ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _TailsSchema(pydantic.BaseModel):
+    id: int
+    name: str
+
+
+class _UserCreateModel(pydantic.BaseModel):
+    # See https://github.com/wemake-services/django-modern-rest/issues/990
+    tails: _TailsSchema | None = None
+    tails_optional: Optional[_TailsSchema] = None  # noqa: UP045
+
+
+class _ExampleController(Controller[PydanticFastSerializer]):
+    def post(self, parsed_body: Body[_UserCreateModel]) -> str:
+        raise NotImplementedError
+
+
+def test_issue990(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema with examples is correctly generated."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('/issue990', _ExampleController.as_view())],
                 ),
             ).convert(),
             indent=2,

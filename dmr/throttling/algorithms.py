@@ -15,9 +15,6 @@ if TYPE_CHECKING:
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
-# TODO: This file is pure logic. Maybe compile it?
-
-
 class BaseThrottleAlgorithm:
     """Base class for all throttling algorithms."""
 
