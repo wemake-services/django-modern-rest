@@ -110,7 +110,7 @@ unit-test = [
   "orjson>=3.11,<4; python_version < '3.14' and implementation_name == 'cpython'",
 ]
 integration = [
-  "tracecov>=0.19,<0.20",
+  "tracecov>=0.19,<0.21",
   "pytest-codspeed>=4.3,<5",
 ]
 dev-and-docs = [
