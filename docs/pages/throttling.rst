@@ -169,7 +169,7 @@ Full list of backends that we ship in ``django-modern-rest``:
   when detecting an unsafe cache backend for throttling.
   To suppress this check and run at your own risk,
   set ``allow_unsafe_throttle_cache`` to ``True`` in
-  :ref:`DMR_SETTINGS <dmr-settings>`:
+  ``DMR_SETTINGS``:
 
   .. code-block:: python
 
