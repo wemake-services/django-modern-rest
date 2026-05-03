@@ -281,6 +281,7 @@ select = [
 ]
 ignore = [
   "A005",   # allow to shadow stdlib and builtin module names
+  "COM812", # trailing commas — conflicts with ruff formatter
   # Different doc rules that we don't really care about:
   "D100",
   "D104",
@@ -336,7 +337,10 @@ isort.known-first-party = ["server", "examples"]
 # Strict `@xfail` by default:
 xfail_strict = true
 # Fail on warnings:
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    "always::UserWarning:dmr.throttling.backends._cache_safety",
+]
 
 # Django options:
 # https://pytest-django.readthedocs.io/en/latest/

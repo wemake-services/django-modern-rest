@@ -164,6 +164,22 @@ Full list of backends that we ship in ``django-modern-rest``:
 
   Some like ``django.core.cache.backends.dummy.DummyCache`` do nothing at all.
 
+  By default, **django-modern-rest** raises
+  :exc:`~django.core.exceptions.ImproperlyConfigured`
+  when detecting an unsafe cache backend for throttling.
+  To suppress this check and run at your own risk,
+  set ``allow_unsafe_throttle_cache`` to ``True`` in
+  :ref:`DMR_SETTINGS <dmr-settings>`:
+
+  .. code-block:: python
+
+    DMR_SETTINGS = {
+        'allow_unsafe_throttle_cache': True,
+    }
+
+  When explicitly allowed, a :class:`UserWarning` is emitted on each use.
+  Always prefer a shared backend like Redis or Memcached in production.
+
 Choosing a backend
 ^^^^^^^^^^^^^^^^^^
 
