@@ -30,6 +30,16 @@ class _DjangoCache:
         """Initialize the cache backend."""
         object.__setattr__(self, '_cache', caches[self.cache_name])
 
+    def _ensure_safety(self) -> None:
+        from dmr.throttling.backends._cache_safety import (  # noqa: PLC0415
+            check_throttle_cache_safety,
+            is_cache_checked,
+        )
+
+        if is_cache_checked(self.cache_name):
+            return
+        check_throttle_cache_safety(self.cache_name)
+
     def _load_cache(
         self,
         controller: 'Controller[BaseSerializer]',
@@ -77,6 +87,7 @@ class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
         cache_key: str,
         algorithm: 'BaseThrottleAlgorithm',
     ) -> CachedRateLimit:
+        self._ensure_safety()
         # It is not atomic, but this is fine, we document this:
         cache_object = algorithm.access(
             endpoint,
@@ -103,6 +114,7 @@ class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
         cache_key: str,
     ) -> CachedRateLimit | None:
         """Sync get the cached rate limit state."""
+        self._ensure_safety()
         stored_cache = self._cache.get(cache_key)
         return self._load_cache(controller, stored_cache)
 
@@ -144,6 +156,7 @@ class AsyncDjangoCache(_DjangoCache, BaseThrottleAsyncBackend):
         cache_key: str,
         algorithm: 'BaseThrottleAlgorithm',
     ) -> CachedRateLimit:
+        self._ensure_safety()
         # It is not atomic, but this is fine, we document this:
         cache_object = algorithm.access(
             endpoint,
@@ -170,6 +183,7 @@ class AsyncDjangoCache(_DjangoCache, BaseThrottleAsyncBackend):
         cache_key: str,
     ) -> CachedRateLimit | None:
         """Async get the cached rate limit state."""
+        self._ensure_safety()
         stored_cache = await self._cache.aget(cache_key)
         return self._load_cache(controller, stored_cache)
 

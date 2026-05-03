@@ -213,6 +213,7 @@ async def test_throttle_async_per_settings(
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
         Settings.throttling: [AsyncThrottle(_ATTEMPTS, Rate.second)],
+        Settings.allow_unsafe_throttle_cache: True,
     }
 
     class _AsyncController(
@@ -270,6 +271,7 @@ def test_throttle_sync_multiple_sources(
     """Ensures that sync throttling from settings work."""
     settings.DMR_SETTINGS = {
         Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
+        Settings.allow_unsafe_throttle_cache: True,
     }
 
     class _SyncController(

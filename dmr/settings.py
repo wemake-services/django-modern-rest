@@ -69,6 +69,7 @@ class Settings(enum.StrEnum):
     openapi_examples_seed = 'openapi_examples_seed'
     django_treat_as_post = 'django_treat_as_post'
     openapi_static_cdn = 'openapi_static_cdn'
+    allow_unsafe_throttle_cache = 'allow_unsafe_throttle_cache'
 
 
 @final
@@ -119,6 +120,7 @@ class SettingsDict(TypedDict, total=False):
     openapi_examples_seed: int | None
     django_treat_as_post: Set[str]
     openapi_static_cdn: dict[str, str]
+    allow_unsafe_throttle_cache: bool
 
 
 assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -155,6 +157,9 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
     # OpenAPI static CDN configuration:
     Settings.openapi_static_cdn: {},
+    # When True, allows using unsafe cache backends for throttling
+    # in production (LocMemCache, DummyCache). Not recommended.
+    Settings.allow_unsafe_throttle_cache: False,
 }
 
 assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
