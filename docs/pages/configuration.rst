@@ -321,6 +321,29 @@ Throttling
   All throttle types must be importable in settings.
 
 
+.. data:: dmr.settings.Settings.allow_unsafe_throttle_cache
+
+  Default: False
+
+  When False (the default), **django-modern-rest** raises
+  :exc:`~django.core.exceptions.ImproperlyConfigured` at startup
+  if an unsafe cache backend is detected for throttling
+  (``LocMemCache``, ``DummyCache``).
+  These backends do not share state between processes,
+  so throttling counters are not consistent in multi-process deployments.
+
+  Set to True to suppress the error and emit
+  :class:`~dmr.throttling.backends._cache_safety.UnsafeCacheBackendWarning`
+  instead:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.allow_unsafe_throttle_cache: True,
+    ... }
+
+
 HTTP Spec validation
 --------------------
 

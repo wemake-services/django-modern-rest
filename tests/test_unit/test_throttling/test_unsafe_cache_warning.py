@@ -1,5 +1,4 @@
 import warnings
-from collections.abc import Generator
 from types import MappingProxyType
 from typing import Final
 
@@ -7,10 +6,9 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
-from dmr.internal.cache import clear_settings_cache
 from dmr.throttling.backends._cache_safety import (
+    UnsafeCacheBackendWarning,
     check_throttle_cache_safety,
-    clear_safety_checks,
 )
 
 LOCMEM_CACHES: Final = MappingProxyType({
@@ -32,13 +30,10 @@ REDIS_CACHES: Final = MappingProxyType({
 
 
 @pytest.fixture(autouse=True)
-def _reset_settings_cache() -> Generator[None, None, None]:
-    """Reset DMR settings cache and safety checks before/after each test."""
-    clear_settings_cache()
-    clear_safety_checks()
-    yield
-    clear_settings_cache()
-    clear_safety_checks()
+def _reset_settings_cache(
+    dmr_clean_settings: None,
+) -> None:
+    """Reset DMR settings cache."""
 
 
 @override_settings(CACHES=LOCMEM_CACHES, DMR_SETTINGS={})
@@ -67,7 +62,10 @@ def test_raises_by_default_with_dummy() -> None:
 )
 def test_warns_when_allow_unsafe_with_locmem() -> None:
     """Warning is emitted when allow_unsafe_throttle_cache=True."""
-    with pytest.warns(UserWarning, match='not safe for production'):
+    with pytest.warns(
+        UnsafeCacheBackendWarning,
+        match='not safe for production',
+    ):
         check_throttle_cache_safety('default')
 
 
@@ -77,7 +75,10 @@ def test_warns_when_allow_unsafe_with_locmem() -> None:
 )
 def test_warns_when_allow_unsafe_with_dummy() -> None:
     """Warning is emitted when allow_unsafe_throttle_cache=True."""
-    with pytest.warns(UserWarning, match='not safe for production'):
+    with pytest.warns(
+        UnsafeCacheBackendWarning,
+        match='not safe for production',
+    ):
         check_throttle_cache_safety('default')
 
 

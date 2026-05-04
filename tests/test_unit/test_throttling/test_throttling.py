@@ -11,7 +11,7 @@ from inline_snapshot import snapshot
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.settings import Settings
+from dmr.settings import Settings, clear_settings_cache
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 
@@ -211,9 +211,12 @@ async def test_throttle_async_per_settings(
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures that async throttling from settings work."""
+    settings.DMR_SETTINGS = {Settings.allow_unsafe_throttle_cache: True}
+    throttle = [AsyncThrottle(_ATTEMPTS, Rate.second)]
+    clear_settings_cache()
     settings.DMR_SETTINGS = {
-        Settings.throttling: [AsyncThrottle(_ATTEMPTS, Rate.second)],
         Settings.allow_unsafe_throttle_cache: True,
+        Settings.throttling: throttle,
     }
 
     class _AsyncController(
@@ -269,9 +272,12 @@ def test_throttle_sync_multiple_sources(
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures that sync throttling from settings work."""
+    settings.DMR_SETTINGS = {Settings.allow_unsafe_throttle_cache: True}
+    throttle = [SyncThrottle(_ATTEMPTS, Rate.second)]
+    clear_settings_cache()
     settings.DMR_SETTINGS = {
-        Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
         Settings.allow_unsafe_throttle_cache: True,
+        Settings.throttling: throttle,
     }
 
     class _SyncController(

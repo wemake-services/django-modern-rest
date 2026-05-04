@@ -339,7 +339,7 @@ xfail_strict = true
 # Fail on warnings:
 filterwarnings = [
     "error",
-    "always::UserWarning:dmr.throttling.backends._cache_safety",
+    "always::dmr.throttling.backends._cache_safety.UnsafeCacheBackendWarning",
 ]
 
 # Django options:
