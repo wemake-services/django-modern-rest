@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: ed81924a8b1cecdaa570b072528fa80c9c4d6ccd  # frozen: 0.37.1
+    rev: 943377262562a12b57292fc98fabd7dbf81451fe  # frozen: 0.37.2
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -44,7 +44,7 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: c96c46fae465ab9e3607401d9ce93d75e7998023  # frozen: v1
+    rev: a90d2a917d59472bef788897931c1a5a5d12870a  # frozen: v1
     hooks:
       - id: typos
 
