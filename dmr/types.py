@@ -13,7 +13,12 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import Format, get_original_bases, get_type_hints
+from typing_extensions import (
+    Format,
+    Sentinel,
+    get_original_bases,
+    get_type_hints,
+)
 
 from dmr.exceptions import UnsolvableAnnotationsError
 
@@ -52,7 +57,7 @@ class Empty:
 
 
 #: Default singleton for empty values.
-EmptyObj: Final = Empty()
+EMPTY: Final = Sentinel('EMPTY')
 
 
 def infer_type_args(

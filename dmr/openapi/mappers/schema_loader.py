@@ -13,7 +13,7 @@ from dmr.openapi.objects import (
     Reference,
     Schema,
 )
-from dmr.types import Empty, EmptyObj
+from dmr.types import EMPTY, Empty
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -43,7 +43,7 @@ def load_schema(
     raw_data: dict[str, Any],
     *,
     should_generate_example: bool = False,
-    annotation: Any | Empty = EmptyObj,
+    annotation: Any | Empty = EMPTY,
     serializer: type['BaseSerializer'] | None = None,
 ) -> Schema:
     """

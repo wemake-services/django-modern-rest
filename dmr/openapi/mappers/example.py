@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any
 
 from dmr.openapi.objects import Example
-from dmr.types import EmptyObj
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -32,7 +32,7 @@ else:
         serializer: type['BaseSerializer'],
     ) -> Any | None:
         """Generates examples based on the type annotation."""
-        if annotation is EmptyObj:  # pragma: no cover
+        if annotation is EMPTY:  # pragma: no cover
             return None
 
         # Import cycle:

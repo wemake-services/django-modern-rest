@@ -25,7 +25,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import EmptyObj, infer_annotation, is_safe_subclass
+from dmr.types import EMPTY, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
@@ -871,8 +871,8 @@ def _resolve_return_annotation(
     controller_cls: type['Controller[BaseSerializer]'],
     endpoint_func: Callable[..., Any],
 ) -> Any:
-    return_annotation = type_annotations.get('return', EmptyObj)
-    if return_annotation is EmptyObj:
+    return_annotation = type_annotations.get('return', EMPTY)
+    if return_annotation is EMPTY:
         raise UnsolvableAnnotationsError(
             f'Function {endpoint_func!r} is missing return type annotation',
         )

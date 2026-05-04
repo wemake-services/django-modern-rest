@@ -19,7 +19,7 @@ from dmr.internal.negotiation import (
 from dmr.metadata import EndpointMetadata, ResponseSpec
 from dmr.negotiation import get_conditional_types, request_renderer
 from dmr.serializer import BaseSerializer
-from dmr.types import EmptyObj
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -214,8 +214,8 @@ class ResponseValidator:  # noqa: WPS214
 
         content_types = get_conditional_types(schema.return_type, ())
         if content_types:
-            model = content_types.get(content_type, EmptyObj)
-            if model is EmptyObj:
+            model = content_types.get(content_type, EMPTY)
+            if model is EMPTY:
                 hint = [str(ct) for ct in content_types]
                 raise ResponseSchemaError(
                     f'Content-Type {content_type!r} is not '

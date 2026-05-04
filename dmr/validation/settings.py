@@ -15,7 +15,7 @@ from dmr.settings import (
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import EmptyObj
+from dmr.types import EMPTY
 
 
 class _SettingsModel(SettingsDict, total=False):
@@ -131,8 +131,8 @@ class SettingsValidator:
                 'Settings.responses must all be ResponseSpec instances',
             )
 
-        openapi_config = settings.get('openapi_config', EmptyObj)
-        if openapi_config is not EmptyObj and not isinstance(
+        openapi_config = settings.get('openapi_config', EMPTY)
+        if openapi_config is not EMPTY and not isinstance(
             openapi_config,
             OpenAPIConfig,
         ):
@@ -140,8 +140,8 @@ class SettingsValidator:
                 'Settings.openapi_config must be an OpenAPIConfig instance',
             )
 
-        global_error_handler = settings.get('global_error_handler', EmptyObj)
-        if global_error_handler is not EmptyObj and not (
+        global_error_handler = settings.get('global_error_handler', EMPTY)
+        if global_error_handler is not EMPTY and not (
             isinstance(global_error_handler, str)
             or callable(global_error_handler)
         ):
