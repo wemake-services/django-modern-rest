@@ -155,7 +155,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # DMR settings for the test application:
 DMR_SETTINGS = {
     # Allow unsafe cache backends (LocMemCache) for testing:
-    'allow_unsafe_throttle_cache': True,
+    'throttle_allow_unsafe_cache': True,
 }
 
 # Content Security Policy:

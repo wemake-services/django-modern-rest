@@ -1,4 +1,3 @@
-import warnings
 from types import MappingProxyType
 from typing import Final
 
@@ -6,9 +5,9 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
-from dmr.throttling.backends._cache_safety import (
+from dmr.throttling.backends.django_cache import (
+    SyncDjangoCache,
     UnsafeCacheBackendWarning,
-    check_throttle_cache_safety,
 )
 
 LOCMEM_CACHES: Final = MappingProxyType({
@@ -41,9 +40,9 @@ def test_raises_by_default_with_locmem() -> None:
     """ImproperlyConfigured is raised for LocMemCache by default."""
     with pytest.raises(
         ImproperlyConfigured,
-        match='allow_unsafe_throttle_cache',
+        match='throttle_allow_unsafe_cache',
     ):
-        check_throttle_cache_safety('default')
+        SyncDjangoCache()
 
 
 @override_settings(CACHES=DUMMY_CACHES, DMR_SETTINGS={})
@@ -51,50 +50,47 @@ def test_raises_by_default_with_dummy() -> None:
     """ImproperlyConfigured is raised for DummyCache by default."""
     with pytest.raises(
         ImproperlyConfigured,
-        match='allow_unsafe_throttle_cache',
+        match='throttle_allow_unsafe_cache',
     ):
-        check_throttle_cache_safety('default')
+        SyncDjangoCache()
 
 
 @override_settings(
     CACHES=LOCMEM_CACHES,
-    DMR_SETTINGS={'allow_unsafe_throttle_cache': True},
+    DMR_SETTINGS={'throttle_allow_unsafe_cache': True},
 )
 def test_warns_when_allow_unsafe_with_locmem() -> None:
-    """Warning is emitted when allow_unsafe_throttle_cache=True."""
+    """Warning is emitted when throttle_allow_unsafe_cache=True."""
     with pytest.warns(
         UnsafeCacheBackendWarning,
         match='not safe for production',
     ):
-        check_throttle_cache_safety('default')
+        SyncDjangoCache()
 
 
 @override_settings(
     CACHES=DUMMY_CACHES,
-    DMR_SETTINGS={'allow_unsafe_throttle_cache': True},
+    DMR_SETTINGS={'throttle_allow_unsafe_cache': True},
 )
 def test_warns_when_allow_unsafe_with_dummy() -> None:
-    """Warning is emitted when allow_unsafe_throttle_cache=True."""
+    """Warning is emitted when throttle_allow_unsafe_cache=True."""
     with pytest.warns(
         UnsafeCacheBackendWarning,
         match='not safe for production',
     ):
-        check_throttle_cache_safety('default')
+        SyncDjangoCache()
 
 
 @override_settings(
     CACHES=REDIS_CACHES,
-    DMR_SETTINGS={'allow_unsafe_throttle_cache': True},
+    DMR_SETTINGS={'throttle_allow_unsafe_cache': True},
 )
 def test_no_warning_for_safe_backend() -> None:
     """No warning or error for safe backends like Redis."""
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter('always')
-        check_throttle_cache_safety('default')
-    assert len(record) == 0
+    SyncDjangoCache()
 
 
 @override_settings(CACHES=REDIS_CACHES, DMR_SETTINGS={})
 def test_no_error_for_safe_backend_default() -> None:
     """No error for safe backends with default settings."""
-    check_throttle_cache_safety('default')
+    SyncDjangoCache()

@@ -211,11 +211,11 @@ async def test_throttle_async_per_settings(
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures that async throttling from settings work."""
-    settings.DMR_SETTINGS = {Settings.allow_unsafe_throttle_cache: True}
+    settings.DMR_SETTINGS = {Settings.throttle_allow_unsafe_cache: True}
     throttle = [AsyncThrottle(_ATTEMPTS, Rate.second)]
     clear_settings_cache()
     settings.DMR_SETTINGS = {
-        Settings.allow_unsafe_throttle_cache: True,
+        Settings.throttle_allow_unsafe_cache: True,
         Settings.throttling: throttle,
     }
 
@@ -272,11 +272,11 @@ def test_throttle_sync_multiple_sources(
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures that sync throttling from settings work."""
-    settings.DMR_SETTINGS = {Settings.allow_unsafe_throttle_cache: True}
+    settings.DMR_SETTINGS = {Settings.throttle_allow_unsafe_cache: True}
     throttle = [SyncThrottle(_ATTEMPTS, Rate.second)]
     clear_settings_cache()
     settings.DMR_SETTINGS = {
-        Settings.allow_unsafe_throttle_cache: True,
+        Settings.throttle_allow_unsafe_cache: True,
         Settings.throttling: throttle,
     }
 

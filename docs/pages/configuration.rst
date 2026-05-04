@@ -321,7 +321,7 @@ Throttling
   All throttle types must be importable in settings.
 
 
-.. data:: dmr.settings.Settings.allow_unsafe_throttle_cache
+.. data:: dmr.settings.Settings.throttle_allow_unsafe_cache
 
   Default: ``False``
 
@@ -340,7 +340,7 @@ Throttling
     :caption: settings.py
 
     >>> DMR_SETTINGS = {
-    ...     Settings.allow_unsafe_throttle_cache: True,
+    ...     Settings.throttle_allow_unsafe_cache: True,
     ... }
 
 

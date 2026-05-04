@@ -22,7 +22,7 @@ of requirements for an API to count as public.
 
 ### Features
 
-- Added `allow_unsafe_throttle_cache` setting to control whether unsafe
+- Added `throttle_allow_unsafe_cache` setting to control whether unsafe
   cache backends (`LocMemCache`, `DummyCache`) are allowed for throttling.
   Raises `ImproperlyConfigured` by default; when explicitly set to `True`,
   emits `UnsafeCacheBackendWarning` on each use, #978
