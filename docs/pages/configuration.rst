@@ -323,7 +323,7 @@ Throttling
 
 .. data:: dmr.settings.Settings.allow_unsafe_throttle_cache
 
-  Default: False
+  Default: ``False``
 
   When False (the default), **django-modern-rest** raises
   :exc:`~django.core.exceptions.ImproperlyConfigured` at startup
@@ -333,7 +333,7 @@ Throttling
   so throttling counters are not consistent in multi-process deployments.
 
   Set to True to suppress the error and emit
-  :class:`~dmr.throttling.backends._cache_safety.UnsafeCacheBackendWarning`
+  ``UnsafeCacheBackendWarning``
   instead:
 
   .. code-block:: python
