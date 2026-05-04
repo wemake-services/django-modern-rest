@@ -177,7 +177,7 @@ Full list of backends that we ship in ``django-modern-rest``:
         'allow_unsafe_throttle_cache': True,
     }
 
-  When explicitly allowed, a :class:`UserWarning` is emitted on each use.
+  When explicitly allowed, an ``UnsafeCacheBackendWarning`` is emitted on each use.
   Always prefer a shared backend like Redis or Memcached in production.
 
 Choosing a backend
