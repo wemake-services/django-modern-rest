@@ -60,56 +60,121 @@ NONE_STRING = '::None'
 
 
 class SyncCursorPaginator(Protocol, Generic[_ModelT]):
-    """
-    Protocol for synchronous cursor pagination.
-
-    It was created to replace `django-cursor-pagination` with our own API.
-    """
+    """Protocol for synchronous cursor pagination."""
 
     def page(
         self,
         per_page: int,
         cursor: str | None = None,
-    ) -> CursorPaginated[_ModelT]: ...
+    ) -> CursorPaginated[_ModelT]:
+        """Get page with provided cursor."""
+        raise NotImplementedError
 
     def prev_page(
         self,
         per_page: int,
         cursor: str,
-    ) -> CursorPaginated[_ModelT]: ...
+    ) -> CursorPaginated[_ModelT]:
+        """Get the page that was before the page of the provided cursor."""
+        raise NotImplementedError
 
 
 class AsyncCursorPaginator(Protocol, Generic[_ModelT]):
-    """
-    Protocol for asynchronous cursor pagination.
-
-    It was created to replace `django-cursor-pagination` with our own API.
-    """
+    """Protocol for asynchronous cursor pagination."""
 
     async def page(
         self,
         per_page: int,
         cursor: str | None = None,
-    ) -> CursorPaginated[_ModelT]: ...
+    ) -> CursorPaginated[_ModelT]:
+        """Get page with provided cursor."""
+        raise NotImplementedError
 
     async def prev_page(
         self,
         per_page: int,
         cursor: str,
-    ) -> CursorPaginated[_ModelT]: ...
+    ) -> CursorPaginated[_ModelT]:
+        """Get the page that was before the page of the provided cursor."""
+        raise NotImplementedError
 
 
 class DjangoCursorPaginator(
     AsyncCursorPaginator[_DjangoModelT],
     Generic[_DjangoModelT],
 ):
+    """
+    The default implementation of the asynchronous cursor for django.
+
+    It was based on the implementation from `django-cursor-pagination`, but with
+    our own API and a bit refactoring.
+    """
+
     def __init__(
         self,
         ordering_fields: tuple[str, ...],
         query_set: QuerySet[_DjangoModelT],
     ) -> None:
+        """
+        Create a paginator.
+
+        Args:
+            ordering_fields: Fields to order by.
+            query_set: QuerySet which will used to paginate.
+        """
         self.ordering_fields = ordering_fields
         self.query_set = query_set
+
+    async def page(
+        self,
+        per_page: int,
+        cursor: str | None = None,
+    ) -> CursorPaginated[_DjangoModelT]:
+        """
+        Get page with provided cursor.
+
+        If `cursor == None`, the first page will be received by default.
+        """
+        if not self.query_set.exists():
+            return CursorPaginated(
+                next_cursor=None,
+                prev_cursor=None,
+                items=[],
+            )
+
+        query_set = self.query_set.order_by(
+            *self._get_ordering(self.ordering_fields),
+        )
+
+        if cursor is not None:
+            query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
+
+        return await self._paginated(query_set, per_page)
+
+    async def prev_page(
+        self,
+        per_page: int,
+        cursor: str,
+    ) -> CursorPaginated[_DjangoModelT]:
+        """Get the page that was before the page of the provided cursor."""
+        if not self.query_set.exists():
+            return CursorPaginated(
+                next_cursor=None,
+                prev_cursor=None,
+                items=[],
+            )
+
+        query_set = self.query_set.order_by(
+            *self._get_reverse_ordering(
+                self._reverse_ordering(self.ordering_fields),
+            ),
+        )
+        query_set = self._apply_reverse_cursor(
+            cursor,
+            query_set,
+        )[: per_page + 1]
+
+        return await self._paginated(query_set, per_page)
 
     def _get_ordering(
         self,
@@ -289,51 +354,6 @@ class DjangoCursorPaginator(
             )
         except (TypeError, ValueError):
             raise InvalidCursorError from None
-
-    async def page(
-        self,
-        per_page: int,
-        cursor: str | None = None,
-    ) -> CursorPaginated[_DjangoModelT]:
-        if not self.query_set.exists():
-            return CursorPaginated(
-                next_cursor=None,
-                prev_cursor=None,
-                items=[],
-            )
-
-        query_set = self.query_set.order_by(
-            *self._get_ordering(self.ordering_fields),
-        )
-
-        if cursor is not None:
-            query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
-
-        return await self._paginated(query_set, per_page)
-
-    async def prev_page(
-        self,
-        per_page: int,
-        cursor: str,
-    ) -> CursorPaginated[_DjangoModelT]:
-        if not self.query_set.exists():
-            return CursorPaginated(
-                next_cursor=None,
-                prev_cursor=None,
-                items=[],
-            )
-
-        query_set = self.query_set.order_by(
-            *self._get_reverse_ordering(
-                self._reverse_ordering(self.ordering_fields),
-            ),
-        )
-        query_set = self._apply_reverse_cursor(
-            cursor,
-            query_set,
-        )[: per_page + 1]
-
-        return await self._paginated(query_set, per_page)
 
     async def _paginated(
         self,
