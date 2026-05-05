@@ -42,7 +42,7 @@ _EventsType: TypeAlias = SSEvent[dict[str, str] | bytes]
 
 async def _valid_events() -> AsyncIterator[_EventsType]:
     yield SSEvent({'email': 'first@example.com'})
-    yield SSEvent(b'multiline\nbyte\nstring', serialize=False)  # pyrefly: ignore[no-matching-overload]
+    yield SSEvent(b'multiline\nbyte\nstring', serialize=False)
 
 
 @pytest.mark.asyncio
