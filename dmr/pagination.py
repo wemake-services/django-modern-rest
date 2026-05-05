@@ -122,7 +122,7 @@ class DjangoCursorPaginator(
             nulls_ordering.append(F(column).asc(nulls_last=True))
         return nulls_ordering
 
-    def _get_ordering_reverse(
+    def _get_reverse_ordering(
         self,
         ordering_fields: tuple[str, ...],
     ) -> list[OrderBy]:
@@ -251,20 +251,69 @@ class DjangoCursorPaginator(
         per_page: int,
         cursor: str | None = None,
     ) -> CursorPaginated[_DjangoModelT]:
+        if not self.query_set.exists():
+            return CursorPaginated(
+                next_cursor=None,
+                prev_cursor=None,
+                items=[],
+            )
+
         query_set = self.query_set.order_by(
             *self._get_ordering(self.ordering_fields),
         )
 
         if cursor is not None:
-            query_set = self._apply_cursor(cursor, query_set)
+            query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
 
-        items = list(query_set[: per_page + 1])
+        return await self._paginated(query_set, per_page)
+
+    async def prev_page(
+        self,
+        per_page: int,
+        cursor: str,
+    ) -> CursorPaginated[_DjangoModelT]:
+        if not self.query_set.exists():
+            return CursorPaginated(
+                next_cursor=None,
+                prev_cursor=None,
+                items=[],
+            )
+
+        query_set = self.query_set.order_by(
+            *self._get_reverse_ordering(
+                self._reverse_ordering(self.ordering_fields),
+            ),
+        )
+        query_set = self._apply_cursor(
+            cursor,
+            query_set,
+            from_last=True,
+            reverse=True,
+        )[: per_page + 1]
+
+        return await self._paginated(query_set, per_page)
+
+    def _reverse_ordering(
+        self,
+        ordering_fields: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        def invert(x: str) -> str:
+            return x[1:] if (x.startswith('-')) else '-' + x
+
+        return tuple(invert(field) for field in ordering_fields)
+
+    async def _paginated(
+        self,
+        query_set: QuerySet[_DjangoModelT],
+        per_page: int,
+    ) -> CursorPaginated[_DjangoModelT]:
+        items = [item async for item in query_set.aiterator()]
         has_next = len(items) > per_page
 
         items = items[:per_page]
+        items.reverse()
         next_cursor = self._cursor(items[-1]) if has_next else None
         prev_cursor = self._cursor(items[0]) if items else None
-
         return CursorPaginated(
             next_cursor=next_cursor,
             prev_cursor=prev_cursor,
