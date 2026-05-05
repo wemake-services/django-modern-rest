@@ -60,45 +60,49 @@ NONE_STRING = '::None'
 
 
 class SyncCursorPaginator(Protocol, Generic[_ModelT]):
-    """Protocol for cursor pagination."""
+    """
+    Protocol for synchronous cursor pagination.
+
+    It was created to replace `django-cursor-pagination` with our own API.
+    """
 
     def page(
         self,
         per_page: int,
         cursor: str | None = None,
-    ) -> CursorPaginated[_ModelT]:
-        """A."""
-        raise NotImplementedError
+    ) -> CursorPaginated[_ModelT]: ...
 
-    def prev_page(self, per_page: int, cursor: str) -> CursorPaginated[_ModelT]:
-        """A."""
-        raise NotImplementedError
+    def prev_page(
+        self,
+        per_page: int,
+        cursor: str,
+    ) -> CursorPaginated[_ModelT]: ...
 
 
 class AsyncCursorPaginator(Protocol, Generic[_ModelT]):
-    """Protocol for cursor pagination."""
+    """
+    Protocol for asynchronous cursor pagination.
+
+    It was created to replace `django-cursor-pagination` with our own API.
+    """
 
     async def page(
         self,
         per_page: int,
         cursor: str | None = None,
-    ) -> CursorPaginated[_ModelT]:
-        raise NotImplementedError
+    ) -> CursorPaginated[_ModelT]: ...
 
     async def prev_page(
         self,
         per_page: int,
         cursor: str,
-    ) -> CursorPaginated[_ModelT]:
-        raise NotImplementedError
+    ) -> CursorPaginated[_ModelT]: ...
 
 
 class DjangoCursorPaginator(
-    AsyncCursorPaginator[Model],
+    AsyncCursorPaginator[_DjangoModelT],
     Generic[_DjangoModelT],
 ):
-    """Cursor Paginator."""
-
     def __init__(
         self,
         ordering_fields: tuple[str, ...],
@@ -141,8 +145,6 @@ class DjangoCursorPaginator(
         self,
         ordering_fields: tuple[str, ...],
         cursor_values: tuple[str | None, ...],
-        from_last: bool = False,
-        reverse: bool = False,
     ) -> Q:
         if not ordering_fields or not cursor_values:
             return Q()
@@ -164,21 +166,55 @@ class DjangoCursorPaginator(
 
             if value is None:
                 key = f'{ord_field}__isnull'
-                if from_last:
-                    q = {key: False}
-                    q.update(q_equality)
-                    filtering |= Q(**q)
 
                 q_equality.update({key: True})
                 continue
             comparison_key = (
-                f'{ord_field}__lt'
-                if reverse != is_reversed
-                else f'{ord_field}__gt'
+                f'{ord_field}__gt' if is_reversed else f'{ord_field}__lt'
             )
             q = Q(**{comparison_key: value})
-            if not from_last:
-                q |= Q(**{f'{ord_field}__isnull': True})
+            q |= Q(**{f'{ord_field}__isnull': True})
+            filtering |= (q) & Q(**q_equality)
+
+            equality_key = f'{ord_field}__exact'
+            q_equality.update({equality_key: value})
+        return filtering
+
+    def _reverse_filter(
+        self,
+        ordering_fields: tuple[str, ...],
+        cursor_values: tuple[str | None, ...],
+    ) -> Q:
+        if not ordering_fields or not cursor_values:
+            return Q()
+        if len(ordering_fields) != len(cursor_values):
+            raise ValueError('Ordering and cursor values must match length')
+
+        position_values = [
+            Value(pos, output_field=TextField()) if pos is not None else None
+            for pos in cursor_values
+        ]
+
+        filtering = Q()
+        q_equality: dict[str, Any] = {}
+
+        # We just checked above that length of ordering_fields == cursor_values
+        for ordering_field, value in zip(ordering_fields, position_values):  # noqa: B905
+            is_reversed = ordering_field.startswith('-')
+            ord_field = ordering_field.lstrip('-')
+
+            if value is None:
+                key = f'{ord_field}__isnull'
+                q = {key: False}
+                q.update(q_equality)
+                filtering |= Q(**q)
+
+                q_equality.update({key: True})
+                continue
+            comparison_key = (
+                f'{ord_field}__lt' if is_reversed else f'{ord_field}__gt'
+            )
+            q = Q(**{comparison_key: value})
             filtering |= (q) & Q(**q_equality)
 
             equality_key = f'{ord_field}__exact'
@@ -189,15 +225,23 @@ class DjangoCursorPaginator(
         self,
         cursor: str,
         query_set: QuerySet[_DjangoModelT],
-        from_last: bool = False,
-        reverse: bool = False,
     ) -> QuerySet[_DjangoModelT]:
         return query_set.filter(
             self._filter(
                 ordering_fields=self.ordering_fields,
                 cursor_values=self._decode_cursor(cursor),
-                from_last=from_last,
-                reverse=reverse,
+            ),
+        )
+
+    def _apply_reverse_cursor(
+        self,
+        cursor: str,
+        query_set: QuerySet[_DjangoModelT],
+    ) -> QuerySet[_DjangoModelT]:
+        return query_set.filter(
+            self._reverse_filter(
+                ordering_fields=self.ordering_fields,
+                cursor_values=self._decode_cursor(cursor),
             ),
         )
 
@@ -284,23 +328,12 @@ class DjangoCursorPaginator(
                 self._reverse_ordering(self.ordering_fields),
             ),
         )
-        query_set = self._apply_cursor(
+        query_set = self._apply_reverse_cursor(
             cursor,
             query_set,
-            from_last=True,
-            reverse=True,
         )[: per_page + 1]
 
         return await self._paginated(query_set, per_page)
-
-    def _reverse_ordering(
-        self,
-        ordering_fields: tuple[str, ...],
-    ) -> tuple[str, ...]:
-        def invert(x: str) -> str:
-            return x[1:] if (x.startswith('-')) else '-' + x
-
-        return tuple(invert(field) for field in ordering_fields)
 
     async def _paginated(
         self,
@@ -319,3 +352,12 @@ class DjangoCursorPaginator(
             prev_cursor=prev_cursor,
             items=items,
         )
+
+    def _reverse_ordering(
+        self,
+        ordering_fields: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        def invert(x: str) -> str:
+            return x[1:] if (x.startswith('-')) else '-' + x
+
+        return tuple(invert(field) for field in ordering_fields)
