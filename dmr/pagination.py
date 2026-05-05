@@ -1,9 +1,9 @@
 import dataclasses
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Protocol, TypeVar
 
-from django.db.models import Model, Q, QuerySet, TextField, Value
+from django.db.models import F, Model, OrderBy, Q, QuerySet, TextField, Value
 
 _ModelT = TypeVar('_ModelT')
 _DjangoModelT = TypeVar('_DjangoModelT', bound=Model)
@@ -44,10 +44,9 @@ class Paginated(Generic[_ModelT]):
 class CursorPaginated(Generic[_ModelT]):
     """Cursor Paginated."""
 
-    total: int
     next_cursor: str | None = None
     prev_cursor: str | None = None
-    page: Page[_ModelT]
+    items: Sequence[_ModelT]
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -60,7 +59,44 @@ class InvalidCursorError(Exception):
 NONE_STRING = '::None'
 
 
-class CursorPaginator(Generic[_DjangoModelT]):
+class SyncCursorPaginator(Protocol, Generic[_ModelT]):
+    """Protocol for cursor pagination."""
+
+    def page(
+        self,
+        per_page: int,
+        cursor: str | None = None,
+    ) -> CursorPaginated[_ModelT]:
+        """A."""
+        raise NotImplementedError
+
+    def prev_page(self, per_page: int, cursor: str) -> CursorPaginated[_ModelT]:
+        """A."""
+        raise NotImplementedError
+
+
+class AsyncCursorPaginator(Protocol, Generic[_ModelT]):
+    """Protocol for cursor pagination."""
+
+    async def page(
+        self,
+        per_page: int,
+        cursor: str | None = None,
+    ) -> CursorPaginated[_ModelT]:
+        raise NotImplementedError
+
+    async def prev_page(
+        self,
+        per_page: int,
+        cursor: str,
+    ) -> CursorPaginated[_ModelT]:
+        raise NotImplementedError
+
+
+class DjangoCursorPaginator(
+    AsyncCursorPaginator[Model],
+    Generic[_DjangoModelT],
+):
     """Cursor Paginator."""
 
     def __init__(
@@ -71,30 +107,35 @@ class CursorPaginator(Generic[_DjangoModelT]):
         self.ordering_fields = ordering_fields
         self.query_set = query_set
 
-    def _decode_cursor(
+    def _get_ordering(
         self,
-        cursor: str,
-        delimiter: str = ',',
-    ) -> tuple[str | None, ...]:
-        try:
-            cursor_values = b64decode(cursor.encode('ascii')).decode('utf-8')
-            return tuple(
-                value if value != NONE_STRING else None
-                for value in cursor_values.split(delimiter)
-            )
-        except (TypeError, ValueError):
-            raise InvalidCursorError from None
+        ordering_fields: tuple[str, ...],
+    ) -> list[OrderBy]:
+        nulls_ordering: list[OrderBy] = []
+        for field in ordering_fields:
+            reverse = field.startswith('-')
+            column = field.lstrip('-')
 
-    def _encode_cursor(
+            if reverse:
+                nulls_ordering.append(F(column).desc(nulls_last=True))
+                continue
+            nulls_ordering.append(F(column).asc(nulls_last=True))
+        return nulls_ordering
+
+    def _get_ordering_reverse(
         self,
-        cursor_values: tuple[str, ...],
-        delimiter: str = ',',
-    ) -> str:
-        return b64encode(
-            delimiter.join(cursor_values).encode('utf-8'),
-        ).decode(
-            'ascii',
-        )
+        ordering_fields: tuple[str, ...],
+    ) -> list[OrderBy]:
+        nulls_ordering: list[OrderBy] = []
+        for field in ordering_fields:
+            reverse = field.startswith('-')
+            column = field.lstrip('-')
+
+            if reverse:
+                nulls_ordering.append(F(column).asc(nulls_first=True))
+                continue
+            nulls_ordering.append(F(column).desc(nulls_first=True))
+        return nulls_ordering
 
     def _filter(
         self,
@@ -148,22 +189,84 @@ class CursorPaginator(Generic[_DjangoModelT]):
         self,
         cursor: str,
         query_set: QuerySet[_DjangoModelT],
-        from_last: bool,
+        from_last: bool = False,
         reverse: bool = False,
     ) -> QuerySet[_DjangoModelT]:
-        cursor_values = self._decode_cursor(cursor)
         return query_set.filter(
             self._filter(
                 ordering_fields=self.ordering_fields,
-                cursor_values=cursor_values,
+                cursor_values=self._decode_cursor(cursor),
                 from_last=from_last,
                 reverse=reverse,
             ),
         )
 
-    def page(
+    def _cursor(self, instance: _DjangoModelT | None) -> str:
+        return self._encode_cursor(self._position_from_instance(instance))
+
+    def _position_from_instance(
+        self,
+        instance: _DjangoModelT | None,
+    ) -> list[str]:
+        position: list[str] = []
+        for order in self.ordering_fields:
+            parts = order.lstrip('-').split('__')
+            attr = instance
+            while parts:
+                attr = getattr(attr, parts[0])
+                parts.pop(0)
+            if attr is None:
+                position.append(NONE_STRING)
+            else:
+                position.append(str(attr))
+        return position
+
+    def _encode_cursor(
+        self,
+        cursor_values: list[str],
+        delimiter: str = ',',
+    ) -> str:
+        return b64encode(
+            delimiter.join(cursor_values).encode('utf-8'),
+        ).decode(
+            'ascii',
+        )
+
+    def _decode_cursor(
+        self,
+        cursor: str,
+        delimiter: str = ',',
+    ) -> tuple[str | None, ...]:
+        try:
+            cursor_values = b64decode(cursor.encode('ascii')).decode('utf-8')
+            return tuple(
+                value if value != NONE_STRING else None
+                for value in cursor_values.split(delimiter)
+            )
+        except (TypeError, ValueError):
+            raise InvalidCursorError from None
+
+    async def page(
         self,
         per_page: int,
         cursor: str | None = None,
     ) -> CursorPaginated[_DjangoModelT]:
-        raise NotImplementedError
+        query_set = self.query_set.order_by(
+            *self._get_ordering(self.ordering_fields),
+        )
+
+        if cursor is not None:
+            query_set = self._apply_cursor(cursor, query_set)
+
+        items = list(query_set[: per_page + 1])
+        has_next = len(items) > per_page
+
+        items = items[:per_page]
+        next_cursor = self._cursor(items[-1]) if has_next else None
+        prev_cursor = self._cursor(items[0]) if items else None
+
+        return CursorPaginated(
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            items=items,
+        )
