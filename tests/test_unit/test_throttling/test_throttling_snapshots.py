@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 from typing import Annotated
 
+import pytest
 from django.http import HttpResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -13,43 +14,53 @@ from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
+with pytest.warns(UnsafeCacheBackendWarning):
 
-class _DefaultController(Controller[PydanticSerializer]):
-    throttling = [
-        SyncThrottle(1, Rate.second),
-    ]
+    class _DefaultController(Controller[PydanticSerializer]):
+        throttling = [
+            SyncThrottle(1, Rate.second),
+        ]
 
-    def get(self) -> str:
-        raise NotImplementedError
-
-
-class _AllHeadersController(Controller[PydanticSerializer]):
-    throttling = [
-        SyncThrottle(
-            1,
-            Rate.second,
-            response_headers=(XRateLimit(), RateLimitIETFDraft(), RetryAfter()),
-        ),
-    ]
-
-    def get(self) -> str:
-        raise NotImplementedError
+        def get(self) -> str:
+            raise NotImplementedError
 
 
-class _NoHeadersController(Controller[PydanticSerializer]):
-    throttling = [
-        SyncThrottle(
-            1,
-            Rate.second,
-            response_headers=(),
-        ),
-    ]
+with pytest.warns(UnsafeCacheBackendWarning):
 
-    def get(self) -> str:
-        raise NotImplementedError
+    class _AllHeadersController(Controller[PydanticSerializer]):
+        throttling = [
+            SyncThrottle(
+                1,
+                Rate.second,
+                response_headers=(
+                    XRateLimit(),
+                    RateLimitIETFDraft(),
+                    RetryAfter(),
+                ),
+            ),
+        ]
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+
+with pytest.warns(UnsafeCacheBackendWarning):
+
+    class _NoHeadersController(Controller[PydanticSerializer]):
+        throttling = [
+            SyncThrottle(
+                1,
+                Rate.second,
+                response_headers=(),
+            ),
+        ]
+
+        def get(self) -> str:
+            raise NotImplementedError
 
 
 def test_throttled_schema(snapshot: SnapshotAssertion) -> None:
@@ -72,31 +83,33 @@ def test_throttled_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _AllReportsController(Controller[PydanticSerializer]):
-    error_model = Annotated[
-        ErrorModel,
-        ResponseSpecMetadata(
-            headers=RateLimitIETFDraft().provide_headers_specs(),
-        ),
-    ]
+with pytest.warns(UnsafeCacheBackendWarning):
 
-    @validate(
-        ResponseSpec(
-            str,
-            status_code=HTTPStatus.OK,
-            headers=RateLimitIETFDraft().provide_headers_specs(),
-        ),
-        throttling=[
-            SyncThrottle(
-                1,
-                Rate.second,
-                response_headers=[RateLimitIETFDraft()],
-                cache_key=RemoteAddr(name='per-second'),
+    class _AllReportsController(Controller[PydanticSerializer]):
+        error_model = Annotated[
+            ErrorModel,
+            ResponseSpecMetadata(
+                headers=RateLimitIETFDraft().provide_headers_specs(),
             ),
-        ],
-    )
-    def get(self) -> HttpResponse:
-        raise NotImplementedError
+        ]
+
+        @validate(
+            ResponseSpec(
+                str,
+                status_code=HTTPStatus.OK,
+                headers=RateLimitIETFDraft().provide_headers_specs(),
+            ),
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    response_headers=[RateLimitIETFDraft()],
+                    cache_key=RemoteAddr(name='per-second'),
+                ),
+            ],
+        )
+        def get(self) -> HttpResponse:
+            raise NotImplementedError
 
 
 def test_throttled_schema_with_errors(snapshot: SnapshotAssertion) -> None:

@@ -13,25 +13,18 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import JWToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 from dmr.throttling.cache_keys import JwtToken
 
+with pytest.warns(UnsafeCacheBackendWarning):
 
-class _SyncController(Controller[PydanticSerializer]):
-    throttling = [
-        SyncThrottle(1, Rate.second, cache_key=JwtToken()),
-    ]
+    class _SyncController(Controller[PydanticSerializer]):
+        throttling = [
+            SyncThrottle(1, Rate.second, cache_key=JwtToken()),
+        ]
 
-    def get(self) -> str:
-        return 'inside'
-
-
-class _AsyncController(Controller[PydanticSerializer]):
-    throttling = [
-        AsyncThrottle(1, Rate.second, cache_key=JwtToken()),
-    ]
-
-    async def get(self) -> str:
-        return 'inside'
+        def get(self) -> str:
+            return 'inside'
 
 
 _JWT_THROTTLE_CASES: Final = (
@@ -92,6 +85,16 @@ async def test_async_throttle_jwt_token_cases(
     expected_second: HTTPStatus,
 ) -> None:
     """Ensures `JwtToken` cache key behavior in async controllers."""
+    with pytest.warns(UnsafeCacheBackendWarning):
+
+        class _AsyncController(Controller[PydanticSerializer]):
+            throttling = [
+                AsyncThrottle(1, Rate.second, cache_key=JwtToken()),
+            ]
+
+            async def get(self) -> str:
+                return 'inside'
+
     request = dmr_async_rf.get('/whatever/')
     if set_jwt:
         request.__dmr_jwt__ = jwt_value  # type: ignore[attr-defined]

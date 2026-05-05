@@ -10,13 +10,8 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
-
-
-class _SyncEndpointController(Controller[PydanticSerializer]):
-    @modify(throttling=[SyncThrottle(1, Rate.second)])
-    def get(self) -> str:
-        return 'inside'
 
 
 def test_throttle_sync_x_prefix(
@@ -24,7 +19,13 @@ def test_throttle_sync_x_prefix(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures custom throttle prefix."""
-    # First will pass:
+    with pytest.warns(UnsafeCacheBackendWarning):
+
+        class _SyncEndpointController(Controller[PydanticSerializer]):
+            @modify(throttling=[SyncThrottle(1, Rate.second)])
+            def get(self) -> str:
+                return 'inside'
+
     request = dmr_rf.get('/whatever/')
     response = _SyncEndpointController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -32,7 +33,6 @@ def test_throttle_sync_x_prefix(
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
 
-    # This will fail:
     request = dmr_rf.get('/whatever/')
     response = _SyncEndpointController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -49,13 +49,6 @@ def test_throttle_sync_x_prefix(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
     })
-
-
-class _AsyncController(Controller[PydanticSerializer]):
-    throttling = [AsyncThrottle(1, Rate.second)]
-
-    async def get(self) -> str:
-        return 'inside'
 
 
 @pytest.mark.asyncio
@@ -64,7 +57,14 @@ async def test_throttle_async_x_prefix(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures custom throttle prefix async."""
-    # This will pass:
+    with pytest.warns(UnsafeCacheBackendWarning):
+
+        class _AsyncController(Controller[PydanticSerializer]):
+            throttling = [AsyncThrottle(1, Rate.second)]
+
+            async def get(self) -> str:
+                return 'inside'
+
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
     assert isinstance(response, HttpResponse)
@@ -72,7 +72,6 @@ async def test_throttle_async_x_prefix(
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
 
-    # This will fail:
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
     assert isinstance(response, HttpResponse)
@@ -91,18 +90,20 @@ async def test_throttle_async_x_prefix(
     })
 
 
-class _SyncNoHeadersController(Controller[PydanticSerializer]):
-    @modify(throttling=[SyncThrottle(1, Rate.second, response_headers=())])
-    def get(self) -> str:
-        return 'inside'
-
-
 def test_throttle_sync_no_headers(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures custom headers rules."""
-    # First will pass:
+    with pytest.warns(UnsafeCacheBackendWarning):
+
+        class _SyncNoHeadersController(Controller[PydanticSerializer]):
+            @modify(
+                throttling=[SyncThrottle(1, Rate.second, response_headers=())],
+            )
+            def get(self) -> str:
+                return 'inside'
+
     request = dmr_rf.get('/whatever/')
     response = _SyncNoHeadersController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -110,7 +111,6 @@ def test_throttle_sync_no_headers(
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
 
-    # This will fail:
     request = dmr_rf.get('/whatever/')
     response = _SyncNoHeadersController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -123,30 +123,30 @@ def test_throttle_sync_no_headers(
     })
 
 
-class _SyncAllHeadersController(Controller[PydanticSerializer]):
-    @modify(
-        throttling=[
-            SyncThrottle(
-                1,
-                Rate.second,
-                response_headers=[
-                    RetryAfter(),
-                    XRateLimit(),
-                    RateLimitIETFDraft(),
-                ],
-            ),
-        ],
-    )
-    def get(self) -> str:
-        return 'inside'
-
-
 def test_throttle_sync_all_headers(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures all header rules."""
-    # First will pass:
+    with pytest.warns(UnsafeCacheBackendWarning):
+
+        class _SyncAllHeadersController(Controller[PydanticSerializer]):
+            @modify(
+                throttling=[
+                    SyncThrottle(
+                        1,
+                        Rate.second,
+                        response_headers=[
+                            RetryAfter(),
+                            XRateLimit(),
+                            RateLimitIETFDraft(),
+                        ],
+                    ),
+                ],
+            )
+            def get(self) -> str:
+                return 'inside'
+
     request = dmr_rf.get('/whatever/')
     response = _SyncAllHeadersController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -154,7 +154,6 @@ def test_throttle_sync_all_headers(
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
 
-    # This will fail:
     request = dmr_rf.get('/whatever/')
     response = _SyncAllHeadersController.as_view()(request)
     assert isinstance(response, HttpResponse)

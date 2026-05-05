@@ -44,9 +44,11 @@ We can define throttling on three different levels:
       :caption: settings.py
       :linenos:
 
+      >>> import warnings
+      >>> from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
       >>> from dmr.settings import Settings, DMR_SETTINGS
       >>> from dmr.throttling import SyncThrottle, Rate
-
+      >>> warnings.filterwarnings('ignore', category=UnsafeCacheBackendWarning)
       >>> DMR_SETTINGS = {Settings.throttling: [SyncThrottle(5, Rate.minute)]}
 
 Providing several throttling instances means that all of them must succeed.

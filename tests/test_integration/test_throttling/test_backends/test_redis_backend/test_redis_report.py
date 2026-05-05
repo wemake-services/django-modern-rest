@@ -4,6 +4,8 @@ from typing import Any, Final
 
 import pytest
 
+from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
+
 try:
     import redis
 except ImportError:  # pragma: no cover
@@ -94,6 +96,11 @@ def test_throttle_sync_leaky_bucket(
     backend_cls: type[SyncDjangoCache | SyncRedis],
 ) -> None:
     """Ensures that throttle information can be served on success."""
+    if issubclass(backend_cls, SyncRedis):
+        backend = backend_cls(redis_client)
+    else:
+        with pytest.warns(UnsafeCacheBackendWarning):
+            backend = backend_cls()  # type: ignore[assignment]
 
     class _Controller(Controller[PydanticSerializer]):
         @validate(
@@ -107,11 +114,7 @@ def test_throttle_sync_leaky_bucket(
                     2,
                     Rate.minute,
                     response_headers=[_draft_headers],
-                    backend=(
-                        backend_cls(redis_client)
-                        if issubclass(backend_cls, SyncRedis)
-                        else backend_cls()
-                    ),
+                    backend=backend,
                     algorithm=LeakyBucket(),
                 ),
             ],
