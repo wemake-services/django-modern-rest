@@ -614,7 +614,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             ):
                 continue
 
-            cache = (throttle._backend._cache,)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            cache = throttle._backend._cache  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             backend = type(cache).__qualname__
             msg = (
                 f'Throttling is using {backend!r} cache backend '
