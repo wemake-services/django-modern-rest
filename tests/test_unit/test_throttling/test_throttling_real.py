@@ -10,20 +10,18 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
+
+
+class _SyncEndpointController(Controller[PydanticFastSerializer]):
+    @modify(throttling=[SyncThrottle(1, Rate.hour)])
+    def get(self) -> str:
+        return 'inside'
 
 
 def test_throttle_sync_real_time(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures sync per endpoint throttle."""
-    with pytest.warns(UnsafeCacheBackendWarning):
-
-        class _SyncEndpointController(Controller[PydanticFastSerializer]):
-            @modify(throttling=[SyncThrottle(1, Rate.hour)])
-            def get(self) -> str:
-                return 'inside'
-
     # First will pass:
     request = dmr_rf.get('/whatever/')
     response = _SyncEndpointController.as_view()(request)
@@ -42,7 +40,7 @@ def test_throttle_sync_real_time(
     assert response.headers == {
         'X-RateLimit-Limit': '1',
         'X-RateLimit-Remaining': '0',
-        'X-RateLimit-Reset': IsStr(),
+        'X-RateLimit-Reset': IsStr(),  # it might be around 3600
         'Retry-After': IsStr(),
         'Content-Type': 'application/json',
     }
@@ -51,19 +49,18 @@ def test_throttle_sync_real_time(
     })
 
 
+class _AsyncController(Controller[PydanticFastSerializer]):
+    throttling = [AsyncThrottle(1, Rate.hour)]
+
+    async def get(self) -> str:
+        return 'inside'
+
+
 @pytest.mark.asyncio
 async def test_throttle_async_per_controller(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that async controllers work with throttling."""
-    with pytest.warns(UnsafeCacheBackendWarning):
-
-        class _AsyncController(Controller[PydanticFastSerializer]):
-            throttling = [AsyncThrottle(1, Rate.hour)]
-
-            async def get(self) -> str:
-                return 'inside'
-
     # First will pass:
     request = dmr_async_rf.get('/whatever/')
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
@@ -82,7 +79,7 @@ async def test_throttle_async_per_controller(
     assert response.headers == {
         'X-RateLimit-Limit': '1',
         'X-RateLimit-Remaining': '0',
-        'X-RateLimit-Reset': IsStr(),
+        'X-RateLimit-Reset': IsStr(),  # it might be around 3600
         'Retry-After': IsStr(),
         'Content-Type': 'application/json',
     }

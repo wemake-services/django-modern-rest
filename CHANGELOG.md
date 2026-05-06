@@ -22,10 +22,10 @@ of requirements for an API to count as public.
 
 ### Features
 
-- Added `throttle_allow_unsafe_cache` setting to control whether unsafe
+- Added `throttling_allow_unsafe_cache` setting to control whether unsafe
   cache backends (`LocMemCache`, `DummyCache`) are allowed for throttling.
-  Raises `ImproperlyConfigured` by default; when explicitly set to `True`,
-  emits `UnsafeCacheBackendWarning` on each use, #978
+  Emits `UnsafeCacheBackendWarning` by default, 
+  raises `ImproperlyConfigured` when explicitly set to `False`, #978
 - Added `--no-ensure-ascii` flag to `dmr_export_schema` management command
 
 ### Bugfixes

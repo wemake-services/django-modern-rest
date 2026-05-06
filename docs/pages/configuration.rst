@@ -310,44 +310,40 @@ Throttling
   .. code-block:: python
     :caption: settings.py
 
-    >>> import warnings
-    >>> from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
-    >>> from dmr.settings import Settings, DMR_SETTINGS
+    >>> from dmr.settings import Settings
     >>> from dmr.throttling import SyncThrottle, Rate
-    >>> warnings.filterwarnings('ignore', category=UnsafeCacheBackendWarning)
+
     >>> DMR_SETTINGS = {
-    ...     Settings.throttle_allow_unsafe_cache: True,
     ...     Settings.throttling: [SyncThrottle(10, Rate.second)],
     ... }
 
   All throttle types must be importable in settings.
 
 
-.. data:: dmr.settings.Settings.throttle_allow_unsafe_cache
+.. data:: dmr.settings.Settings.throttling_allow_unsafe_cache
 
-  Default: ``False``
+  Default: ``True``
 
-  When False (the default), **django-modern-rest** raises
-  :exc:`~django.core.exceptions.ImproperlyConfigured` at startup
-  if an unsafe cache backend is detected for throttling
-  (``LocMemCache``, ``DummyCache``).
+  By default we emit
+  :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
+  at startup if an unsafe cache backend is detected
+  for throttling backend instance (``LocMemCache``, ``DummyCache``).
   These backends do not share state between processes,
   so throttling counters are not consistent in multi-process deployments.
 
-  Set to True to suppress the error and emit
-  ``UnsafeCacheBackendWarning``
-  instead:
+  When set to ``False``,
+  we raise :exc:`~django.core.exceptions.ImproperlyConfigured` instead.
+
+  Set to ``None`` to completely disable this check:
+  no warnings or errors will be produced.
 
   .. code-block:: python
     :caption: settings.py
 
-    >>> import warnings
-    >>> from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
-    >>> from dmr.settings import Settings, DMR_SETTINGS
-    >>> from dmr.throttling import SyncThrottle, Rate
-    >>> warnings.filterwarnings('ignore', category=UnsafeCacheBackendWarning)
+    >>> from dmr.settings import Settings
+
     >>> DMR_SETTINGS = {
-    ...     Settings.throttling: [SyncThrottle(5, Rate.minute)],
+    ...     Settings.throttling_allow_unsafe_cache: False,
     ... }
 
 

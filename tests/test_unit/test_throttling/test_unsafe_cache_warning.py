@@ -1,26 +1,34 @@
+import warnings
+from http import HTTPStatus
 from types import MappingProxyType
-from typing import Final
+from typing import Any, Final
 
 import pytest
-from django.core.exceptions import ImproperlyConfigured
-from django.test import override_settings
+from django.conf import LazySettings
+from django.http import HttpResponse
 
+from dmr import Controller, ResponseSpec, modify, validate
+from dmr.exceptions import EndpointMetadataError
+from dmr.plugins.pydantic import PydanticFastSerializer
+from dmr.settings import Settings
+from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.backends.django_cache import (
+    AsyncDjangoCache,
     SyncDjangoCache,
     UnsafeCacheBackendWarning,
 )
 
-LOCMEM_CACHES: Final = MappingProxyType({
+_LOCMEM_CACHES: Final = MappingProxyType({
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
 })
-DUMMY_CACHES: Final = MappingProxyType({
+_DUMMY_CACHES: Final = MappingProxyType({
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     },
 })
-REDIS_CACHES: Final = MappingProxyType({
+_REDIS_CACHES: Final = MappingProxyType({
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': 'redis://localhost:6379',
@@ -28,69 +36,121 @@ REDIS_CACHES: Final = MappingProxyType({
 })
 
 
-@pytest.fixture(autouse=True)
-def _reset_settings_cache(
-    dmr_clean_settings: None,
+@pytest.mark.parametrize('backend', [_LOCMEM_CACHES, _DUMMY_CACHES])
+def test_unsafe_cache_raises(
+    settings: LazySettings,
+    *,
+    backend: dict[str, Any],
 ) -> None:
-    """Reset DMR settings cache."""
+    """Test that unsafe cache raises."""
+    settings.DMR_SETTINGS = {
+        **settings.DMR_SETTINGS,
+        Settings.throttling_allow_unsafe_cache: False,
+    }
+    settings.CACHES = dict(backend)
 
-
-@override_settings(CACHES=LOCMEM_CACHES, DMR_SETTINGS={})
-def test_raises_by_default_with_locmem() -> None:
-    """ImproperlyConfigured is raised for LocMemCache by default."""
     with pytest.raises(
-        ImproperlyConfigured,
-        match='throttle_allow_unsafe_cache',
+        EndpointMetadataError,
+        match='not safe for production',
     ):
-        SyncDjangoCache()
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [
+                SyncThrottle(10, Rate.minute, backend=SyncDjangoCache()),
+            ]
+
+            def get(self) -> str:
+                raise NotImplementedError
 
 
-@override_settings(CACHES=DUMMY_CACHES, DMR_SETTINGS={})
-def test_raises_by_default_with_dummy() -> None:
-    """ImproperlyConfigured is raised for DummyCache by default."""
-    with pytest.raises(
-        ImproperlyConfigured,
-        match='throttle_allow_unsafe_cache',
-    ):
-        SyncDjangoCache()
+@pytest.mark.parametrize('backend', [_LOCMEM_CACHES, _DUMMY_CACHES])
+def test_unsafe_cache_warns(
+    settings: LazySettings,
+    *,
+    backend: dict[str, Any],
+) -> None:
+    """Test that unsafe cache warns."""
+    settings.DMR_SETTINGS = {}
+    settings.CACHES = dict(backend)
 
-
-@override_settings(
-    CACHES=LOCMEM_CACHES,
-    DMR_SETTINGS={'throttle_allow_unsafe_cache': True},
-)
-def test_warns_when_allow_unsafe_with_locmem() -> None:
-    """Warning is emitted when throttle_allow_unsafe_cache=True."""
     with pytest.warns(
         UnsafeCacheBackendWarning,
         match='not safe for production',
     ):
-        SyncDjangoCache()
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling_allow_unsafe_cache = True
+            throttling = [
+                AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache()),
+            ]
+
+            async def get(self) -> str:
+                raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.throttling_allow_unsafe_cache is True
 
 
-@override_settings(
-    CACHES=DUMMY_CACHES,
-    DMR_SETTINGS={'throttle_allow_unsafe_cache': True},
+@pytest.mark.parametrize(
+    'backend',
+    [_LOCMEM_CACHES, _DUMMY_CACHES, _REDIS_CACHES],
 )
-def test_warns_when_allow_unsafe_with_dummy() -> None:
-    """Warning is emitted when throttle_allow_unsafe_cache=True."""
-    with pytest.warns(
-        UnsafeCacheBackendWarning,
-        match='not safe for production',
-    ):
-        SyncDjangoCache()
+def test_unsafe_cache_disabled(
+    settings: LazySettings,
+    *,
+    backend: dict[str, Any],
+) -> None:
+    """Test that unsafe cache can be disabled."""
+    settings.DMR_SETTINGS = {}
+    settings.CACHES = dict(backend)
+
+    with warnings.catch_warnings(record=True) as captured:
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [
+                AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache()),
+            ]
+
+            @modify(throttling_allow_unsafe_cache=None)
+            async def get(self) -> str:
+                raise NotImplementedError
+
+            @validate(
+                ResponseSpec(str, status_code=HTTPStatus.OK),
+                throttling_allow_unsafe_cache=None,
+            )
+            async def post(self) -> HttpResponse:
+                raise NotImplementedError
+
+    assert len(captured) == 0
+    endpoints = _Controller.api_endpoints
+    assert endpoints['GET'].metadata.throttling_allow_unsafe_cache is None
+    assert endpoints['POST'].metadata.throttling_allow_unsafe_cache is None
 
 
-@override_settings(
-    CACHES=REDIS_CACHES,
-    DMR_SETTINGS={'throttle_allow_unsafe_cache': True},
+@pytest.mark.parametrize(
+    'backend',
+    [_REDIS_CACHES],
 )
-def test_no_warning_for_safe_backend() -> None:
-    """No warning or error for safe backends like Redis."""
-    SyncDjangoCache()
+def test_safe_cache(
+    settings: LazySettings,
+    *,
+    backend: dict[str, Any],
+) -> None:
+    """Test that unsafe cache can be disabled."""
+    settings.DMR_SETTINGS = {}
+    settings.CACHES = dict(backend)
 
+    with warnings.catch_warnings(record=True) as captured:
 
-@override_settings(CACHES=REDIS_CACHES, DMR_SETTINGS={})
-def test_no_error_for_safe_backend_default() -> None:
-    """No error for safe backends with default settings."""
-    SyncDjangoCache()
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [
+                AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache()),
+            ]
+
+            async def get(self) -> str:
+                raise NotImplementedError
+
+    assert len(captured) == 0
+    metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.throttling_allow_unsafe_cache

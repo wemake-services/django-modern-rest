@@ -136,7 +136,7 @@ class ComponentParserGenerator:
         # `re_path()` and `RegexPattern`:
         regex = pattern.pattern.regex
         schema = dict.fromkeys(
-            regex.groupindex,  # pyrefly: ignore[missing-attribute]
+            regex.groupindex,
             str,
         )
         if schema:

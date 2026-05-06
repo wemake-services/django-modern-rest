@@ -10,33 +10,29 @@ from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
-from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 from dmr.throttling.cache_keys import UserPk
 
-with pytest.warns(UnsafeCacheBackendWarning):
 
-    class _SyncController(Controller[PydanticSerializer]):
-        throttling = [
-            SyncThrottle(1, Rate.second, cache_key=UserPk()),
-        ]
+class _SyncController(Controller[PydanticSerializer]):
+    throttling = [
+        SyncThrottle(1, Rate.second, cache_key=UserPk()),
+    ]
 
-        def get(self) -> str:
-            return 'inside'
+    def get(self) -> str:
+        return 'inside'
 
 
-with pytest.warns(UnsafeCacheBackendWarning):
+class _NoExclusionsController(Controller[PydanticSerializer]):
+    throttling = [
+        SyncThrottle(
+            1,
+            Rate.minute,
+            cache_key=UserPk(exclude_superuser=False, exclude_stuff=False),
+        ),
+    ]
 
-    class _NoExclusionsController(Controller[PydanticSerializer]):
-        throttling = [
-            SyncThrottle(
-                1,
-                Rate.minute,
-                cache_key=UserPk(exclude_superuser=False, exclude_stuff=False),
-            ),
-        ]
-
-        def get(self) -> str:
-            return 'inside'
+    def get(self) -> str:
+        return 'inside'
 
 
 @pytest.mark.parametrize(
@@ -59,7 +55,7 @@ with pytest.warns(UnsafeCacheBackendWarning):
         ),
         (
             _SyncController,
-            AnonymousUser(),
+            AnonymousUser(),  # never rate limited
             HTTPStatus.OK,
         ),
         (

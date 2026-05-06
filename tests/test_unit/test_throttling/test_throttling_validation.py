@@ -3,33 +3,35 @@ import pytest
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.test import DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 
 
-def test_throttle_sync_mix() -> None:
+def test_throttle_sync_mix(
+    dmr_rf: DMRRequestFactory,
+) -> None:
     """Ensures sync validation works."""
-    with pytest.warns(UnsafeCacheBackendWarning):
-        bad_throttle = AsyncThrottle(1, Rate.second)
-
     with pytest.raises(EndpointMetadataError, match='SyncThrottle'):
 
-        class _SyncEndpointController(Controller[PydanticSerializer]):
-            throttling = (bad_throttle,)
+        class _SyncEndpointController(
+            Controller[PydanticSerializer],
+        ):
+            throttling = (AsyncThrottle(1, Rate.second),)
 
             def get(self) -> str:
-                return 'inside'  # pragma: no cover
+                raise NotImplementedError
 
 
-def test_throttle_async_mix() -> None:
+def test_throttle_async_mix(
+    dmr_rf: DMRRequestFactory,
+) -> None:
     """Ensures async validation works."""
-    with pytest.warns(UnsafeCacheBackendWarning):
-        bad_throttle = SyncThrottle(1, Rate.second)
-
     with pytest.raises(EndpointMetadataError, match='AsyncThrottle'):
 
-        class _AsyncEndpointController(Controller[PydanticSerializer]):
-            throttling = (bad_throttle,)
+        class _AsyncEndpointController(
+            Controller[PydanticSerializer],
+        ):
+            throttling = (SyncThrottle(1, Rate.second),)
 
             async def get(self) -> str:
-                return 'inside'  # pragma: no cover
+                raise NotImplementedError

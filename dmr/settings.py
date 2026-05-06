@@ -58,6 +58,7 @@ class Settings(enum.StrEnum):
     validate_negotiation = 'validate_negotiation'
     auth = 'auth'
     throttling = 'throttling'
+    throttling_allow_unsafe_cache = 'throttling_allow_unsafe_cache'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     semantic_responses = 'semantic_responses'
@@ -67,9 +68,8 @@ class Settings(enum.StrEnum):
     global_error_handler = 'global_error_handler'
     openapi_config = 'openapi_config'
     openapi_examples_seed = 'openapi_examples_seed'
-    django_treat_as_post = 'django_treat_as_post'
     openapi_static_cdn = 'openapi_static_cdn'
-    throttle_allow_unsafe_cache = 'throttle_allow_unsafe_cache'
+    django_treat_as_post = 'django_treat_as_post'
 
 
 @final
@@ -109,6 +109,7 @@ class SettingsDict(TypedDict, total=False):
     validate_negotiation: bool | None
     auth: Sequence['AsyncAuth | SyncAuth']
     throttling: Sequence['AsyncThrottle | SyncThrottle']
+    throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     semantic_responses: bool
@@ -118,9 +119,8 @@ class SettingsDict(TypedDict, total=False):
     global_error_handler: Callable[[Any, Any, Any], Any] | str
     openapi_config: 'OpenAPIConfig'
     openapi_examples_seed: int | None
-    django_treat_as_post: Set[str]
     openapi_static_cdn: dict[str, str]
-    throttle_allow_unsafe_cache: bool
+    django_treat_as_post: Set[str]
 
 
 assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -136,12 +136,15 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.validate_negotiation: None,
     Settings.auth: [],
     Settings.throttling: [],
+    Settings.throttling_allow_unsafe_cache: True,
     # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
         title='Django Modern Rest',
         version='0.1.0',
     ),
     Settings.openapi_examples_seed: None,  # turned off by default
+    # OpenAPI static CDN configuration:
+    Settings.openapi_static_cdn: {},
     # We validate some HTTP spec things by default to be strict,
     # can be disabled:
     Settings.no_validate_http_spec: frozenset(),
@@ -155,11 +158,6 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
-    # OpenAPI static CDN configuration:
-    Settings.openapi_static_cdn: {},
-    # When True, allows using unsafe cache backends for throttling
-    # in production (LocMemCache, DummyCache). Not recommended.
-    Settings.throttle_allow_unsafe_cache: False,
 }
 
 assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
