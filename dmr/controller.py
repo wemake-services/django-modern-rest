@@ -33,7 +33,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import AnnotationsContext, infer_type_args
+from dmr.types import AnnotationsContext, Empty, EmptyObj, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
@@ -110,6 +110,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Async controllers must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this controller.
+        throttling_allow_unsafe_cache: Should this controller allow
+            unsafe throttle Django cache backends?
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
@@ -160,6 +162,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     throttling: ClassVar[
         Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
     ] = ()
+    throttling_allow_unsafe_cache: ClassVar[bool | Empty | None] = EmptyObj
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found

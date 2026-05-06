@@ -44,7 +44,7 @@ We can define throttling on three different levels:
       :caption: settings.py
       :linenos:
 
-      >>> from dmr.settings import Settings, DMR_SETTINGS
+      >>> from dmr.settings import Settings
       >>> from dmr.throttling import SyncThrottle, Rate
 
       >>> DMR_SETTINGS = {Settings.throttling: [SyncThrottle(5, Rate.minute)]}
@@ -186,6 +186,27 @@ Choosing a backend
      - Low
      - All builtin ones, but requires ``lua`` scripting support
      - Strict distributed limits
+
+Unsafe backend warning
+^^^^^^^^^^^^^^^^^^^^^^
+
+By default, ``django-modern-rest`` emits
+a :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
+warning when detecting an unsafe cache backend for throttling.
+
+You can configure this check on three levels as usual:
+
+1. Per endpoint: pass ``throttling_allow_unsafe_cache`` parameter
+2. Per controller: by setting ``throttling_allow_unsafe_cache`` attribute
+3. In settings, see :data:`~dmr.settings.Settings.throttling_allow_unsafe_cache`
+
+When ``throttling_allow_unsafe_cache`` is set to ``False``,
+we raise a :exc:`dmr.exceptions.EndpointMetadataError`
+exception instead of a warning. This setting will ensure the maximum safety.
+
+To suppress this check completely and run throttling at your own risk,
+set :data:`~dmr.settings.Settings.throttling_allow_unsafe_cache` to ``None``.
+
 
 Algorithms
 ~~~~~~~~~~
@@ -522,6 +543,9 @@ Backends
   :members:
 
 .. autoclass:: dmr.throttling.backends.AsyncDjangoCache
+  :members:
+
+.. autoclass:: dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning
   :members:
 
 .. autoclass:: dmr.throttling.backends.redis.SyncRedis

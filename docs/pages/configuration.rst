@@ -310,15 +310,41 @@ Throttling
   .. code-block:: python
     :caption: settings.py
 
+    >>> from dmr.settings import Settings
     >>> from dmr.throttling import SyncThrottle, Rate
 
     >>> DMR_SETTINGS = {
-    ...     Settings.throttling: [
-    ...         SyncThrottle(10, Rate.second),
-    ...     ],
+    ...     Settings.throttling: [SyncThrottle(10, Rate.second)],
     ... }
 
   All throttle types must be importable in settings.
+
+
+.. data:: dmr.settings.Settings.throttling_allow_unsafe_cache
+
+  Default: ``True``
+
+  By default we emit
+  :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
+  at startup if an unsafe cache backend is detected
+  for throttling backend instance (``LocMemCache``, ``DummyCache``).
+  These backends do not share state between processes,
+  so throttling counters are not consistent in multi-process deployments.
+
+  When set to ``False``,
+  we raise :exc:`~django.core.exceptions.ImproperlyConfigured` instead.
+
+  Set to ``None`` to completely disable this check:
+  no warnings or errors will be produced.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from dmr.settings import Settings
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.throttling_allow_unsafe_cache: False,
+    ... }
 
 
 HTTP Spec validation

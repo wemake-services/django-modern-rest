@@ -46,6 +46,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.types import Empty, EmptyObj
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
@@ -607,6 +608,7 @@ def validate(  # noqa: WPS234
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -637,6 +639,7 @@ def validate(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -667,6 +670,7 @@ def validate(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -696,6 +700,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -786,6 +791,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this endpoint.
+        throttling_allow_unsafe_cache: Should this controller allow
+            unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -822,6 +829,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             validate_negotiation=validate_negotiation,
             auth=auth,
             throttling=throttling,
+            throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
             summary=summary,
             description=description,
             tags=tags,
@@ -853,6 +861,7 @@ def modify(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -883,6 +892,7 @@ def modify(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -914,6 +924,7 @@ def modify(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -944,6 +955,7 @@ def modify(  # noqa: WPS211
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -1018,6 +1030,8 @@ def modify(  # noqa: WPS211
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this endpoint.
+        throttling_allow_unsafe_cache: Should this endpoint allow
+            unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -1060,6 +1074,7 @@ def modify(  # noqa: WPS211
             validate_negotiation=validate_negotiation,
             auth=auth,
             throttling=throttling,
+            throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
             summary=summary,
             description=description,
             tags=tags,

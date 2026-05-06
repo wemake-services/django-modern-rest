@@ -1,10 +1,13 @@
 import dataclasses
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 from django.core.cache import DEFAULT_CACHE_ALIAS, BaseCache, caches
 from typing_extensions import override
 
-from dmr.settings import default_parser, default_renderer
+from dmr.settings import (
+    default_parser,
+    default_renderer,
+)
 from dmr.throttling.backends.base import (
     BaseThrottleAsyncBackend,
     BaseThrottleSyncBackend,
@@ -17,6 +20,11 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
+
+
+@final
+class UnsafeCacheBackendWarning(UserWarning):
+    """Warning emitted when an unsafe cache backend is used for throttling."""
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
