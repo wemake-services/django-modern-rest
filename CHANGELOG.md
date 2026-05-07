@@ -18,16 +18,22 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## Version 0.9.0 (2026-05-07)
 
 ### Features
 
+- Added `throttling_allow_unsafe_cache` setting to control whether unsafe
+  cache backends (`LocMemCache`, `DummyCache`) are allowed for throttling.
+  Emits `UnsafeCacheBackendWarning` by default,
+  raises `ImproperlyConfigured` when explicitly set to `False`, #978
 - Added `--no-ensure-ascii` flag to `dmr_export_schema` management command
 
 ### Bugfixes
 
 - Fixed how `msgspec` generates `null` in `anyOf`,
   it is now always the last item, #990
+- Fixed minimum allowed django version, #1008
+- Fixed `ImportError` while using with `django==5.2.0`, #1006
 
 
 ## Version 0.8.0 (2026-04-26)

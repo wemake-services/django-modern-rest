@@ -61,6 +61,7 @@ def test_throttle_sync_per_endpoint(
     assert metadata.throttling_before_auth
     assert len(metadata.throttling_before_auth) == 1
     assert metadata.throttling_after_auth is None
+    assert metadata.throttling_allow_unsafe_cache is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
@@ -127,6 +128,7 @@ async def test_throttle_async_per_controller(
     assert metadata.throttling_before_auth
     assert len(metadata.throttling_before_auth) == 1
     assert metadata.throttling_after_auth is None
+    assert metadata.throttling_allow_unsafe_cache is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
@@ -173,6 +175,7 @@ async def test_throttle_settings_override(
 ) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
+        **settings.DMR_SETTINGS,
         Settings.throttling: [AsyncThrottle(1, Rate.second)],
     }
 
@@ -212,6 +215,7 @@ async def test_throttle_async_per_settings(
 ) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
+        **settings.DMR_SETTINGS,
         Settings.throttling: [AsyncThrottle(_ATTEMPTS, Rate.second)],
     }
 
@@ -269,6 +273,7 @@ def test_throttle_sync_multiple_sources(
 ) -> None:
     """Ensures that sync throttling from settings work."""
     settings.DMR_SETTINGS = {
+        **settings.DMR_SETTINGS,
         Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
     }
 
@@ -284,8 +289,11 @@ def test_throttle_sync_multiple_sources(
             return 'inside'
 
     metadata = _SyncController.api_endpoints['GET'].metadata
+    assert not metadata.throttling_after_auth
     assert metadata.throttling_before_auth
-    assert len(metadata.throttling_before_auth) == 3
+    assert len(metadata.throttling_before_auth) == 3, (
+        metadata.throttling_before_auth
+    )
     assert metadata.throttling_after_auth is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 

@@ -113,12 +113,14 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         # Default implementations of the logical parts:
         self.cache_key = cache_key or RemoteAddr()
 
-        default_backend = (
-            SyncDjangoCache()
-            if isinstance(self, SyncThrottle)
-            else AsyncDjangoCache()
-        )
-        self._backend = backend or default_backend  # type: ignore[assignment]
+        if backend is None:
+            self._backend = (
+                SyncDjangoCache()  # type: ignore[assignment]
+                if isinstance(self, SyncThrottle)
+                else AsyncDjangoCache()
+            )
+        else:
+            self._backend = backend
         self._algorithm = algorithm or SimpleRate()
         self._response_headers = (
             [XRateLimit(), RetryAfter()]

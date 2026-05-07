@@ -152,6 +152,12 @@ STATIC_ROOT = Path(tempfile.gettempdir()) / 'dmr-example-staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# DMR settings for the test application:
+DMR_SETTINGS = {
+    # Allow unsafe cache backends (LocMemCache) for testing:
+    'throttling_allow_unsafe_cache': None,
+}
+
 # Content Security Policy:
 # https://django-csp.readthedocs.io/en/latest/configuration.html
 
