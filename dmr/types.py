@@ -50,12 +50,6 @@ else:
     """
 
 
-@final
-@dataclasses.dataclass(slots=True, frozen=True)
-class Empty:
-    """Special value for empty defaults."""
-
-
 #: Default singleton for empty values.
 EMPTY: Final = Sentinel('EMPTY')
 
