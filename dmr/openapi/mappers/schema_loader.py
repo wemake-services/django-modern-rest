@@ -3,6 +3,8 @@
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
+from typing_extensions import Sentinel
+
 from dmr.openapi.mappers.example import generate_example
 from dmr.openapi.objects import (
     XML,
@@ -13,7 +15,7 @@ from dmr.openapi.objects import (
     Reference,
     Schema,
 )
-from dmr.types import EMPTY, Empty
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
@@ -43,7 +45,7 @@ def load_schema(
     raw_data: dict[str, Any],
     *,
     should_generate_example: bool = False,
-    annotation: Any | Empty = EMPTY,
+    annotation: Any | Sentinel = EMPTY,
     serializer: type['BaseSerializer'] | None = None,
 ) -> Schema:
     """

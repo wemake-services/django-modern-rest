@@ -1,7 +1,9 @@
 from typing import Any, ClassVar, Protocol
 
+from typing_extensions import Sentinel
+
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
-from dmr.types import EMPTY, Empty
+from dmr.types import EMPTY
 
 
 class SchemaCallback(Protocol):
@@ -65,7 +67,7 @@ class SchemaRegistry:
         self,
         schema_name: str,
         schema: Schema,
-        annotation: Any | Empty = EMPTY,
+        annotation: Any | Sentinel = EMPTY,
     ) -> Reference:
         """Register Schema in registry."""
         existing_schema = self._schemas.get(schema_name)
@@ -83,7 +85,7 @@ class SchemaRegistry:
     def get_reference(
         self,
         schema_name: str | None,
-        annotation: Any | Empty = EMPTY,
+        annotation: Any | Sentinel = EMPTY,
     ) -> Reference | None:
         """Get registered reference."""
         if schema_name:
@@ -136,7 +138,7 @@ class SecuritySchemeRegistry:
 
 def _check_hashes(
     schema_name: str,
-    annotation: Any | Empty,
+    annotation: Any | Sentinel,
     other_hash: int | None,
 ) -> None:
     if annotation is EMPTY:
