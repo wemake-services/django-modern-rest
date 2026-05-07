@@ -9,7 +9,7 @@ from django.utils.encoding import iri_to_uri
 
 try:
     from django.utils.http import MAX_URL_REDIRECT_LENGTH
-except ImportError:
+except ImportError:  # pragma: no cover
     MAX_URL_REDIRECT_LENGTH = 16384  # Django 5.2 compat
 from typing_extensions import TypeVar
 
