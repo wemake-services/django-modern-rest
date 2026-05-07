@@ -1,4 +1,3 @@
-import dataclasses
 from collections.abc import Callable, Iterator, Mapping
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
@@ -8,7 +7,6 @@ from typing import (  # noqa: WPS235
     Generic,
     TypeAlias,
     TypeVar,
-    final,
     get_args,
     get_origin,
 )

@@ -27,13 +27,12 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import EMPTY, infer_annotation, is_safe_subclass
 from dmr.throttling.backends.django_cache import (
     AsyncDjangoCache,
     SyncDjangoCache,
     UnsafeCacheBackendWarning,
 )
-from dmr.types import Empty, EmptyObj, infer_annotation, is_safe_subclass
+from dmr.types import EMPTY, Empty, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
