@@ -10,7 +10,8 @@ from django.utils.encoding import iri_to_uri
 try:
     from django.utils.http import MAX_URL_REDIRECT_LENGTH
 except ImportError:  # pragma: no cover
-    MAX_URL_REDIRECT_LENGTH = 16384  # Django 5.2 compat
+    # Django 5.2.0 compat:
+    MAX_URL_REDIRECT_LENGTH = 16384  # pyright: ignore[reportConstantRedefinition]
 from typing_extensions import TypeVar
 
 from dmr.cookies import NewCookie, set_cookies
