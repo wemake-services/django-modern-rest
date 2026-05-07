@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
 from django.utils.encoding import iri_to_uri
+
 try:
     from django.utils.http import MAX_URL_REDIRECT_LENGTH
 except ImportError:
