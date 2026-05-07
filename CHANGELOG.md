@@ -32,6 +32,7 @@ of requirements for an API to count as public.
 
 - Fixed how `msgspec` generates `null` in `anyOf`,
   it is now always the last item, #990
+- Fixed ImportError while using with `django==5.2.0`
 
 
 ## Version 0.8.0 (2026-04-26)
