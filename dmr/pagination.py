@@ -3,10 +3,10 @@ from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from typing import Any, Generic, Protocol, TypeVar
 
-from django.db.models import F, Model, OrderBy, Q, QuerySet, TextField, Value
+from django.db import models
 
 _ModelT = TypeVar('_ModelT')
-_DjangoModelT = TypeVar('_DjangoModelT', bound=Model)
+_DjangoModelT = TypeVar('_DjangoModelT', bound=models.Model)
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -46,7 +46,7 @@ class CursorPaginated(Generic[_ModelT]):
 
     next_cursor: str | None = None
     prev_cursor: str | None = None
-    items: Sequence[_ModelT]
+    object_list: Sequence[_ModelT]
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -57,6 +57,7 @@ class InvalidCursorError(Exception):
 
 
 NONE_STRING = '::None'
+REWERSE_ORDER_PREFIX = '-'
 
 
 class SyncCursorPaginator(Protocol, Generic[_ModelT]):
@@ -99,7 +100,7 @@ class AsyncCursorPaginator(Protocol, Generic[_ModelT]):
         raise NotImplementedError
 
 
-class DjangoCursorPaginator(
+class DjangoCursorPaginator(  # noqa: WPS214
     AsyncCursorPaginator[_DjangoModelT],
     Generic[_DjangoModelT],
 ):
@@ -113,7 +114,7 @@ class DjangoCursorPaginator(
     def __init__(
         self,
         ordering_fields: tuple[str, ...],
-        query_set: QuerySet[_DjangoModelT],
+        query_set: models.QuerySet[_DjangoModelT],
     ) -> None:
         """
         Create a paginator.
@@ -133,21 +134,21 @@ class DjangoCursorPaginator(
         """
         Get page with provided cursor.
 
-        If `cursor == None`, the first page will be received by default.
+        If `cursor == None`, the first page will be returned by default.
         """
         if not self.query_set.exists():
             return CursorPaginated(
                 next_cursor=None,
                 prev_cursor=None,
-                items=[],
+                object_list=[],
             )
 
         query_set = self.query_set.order_by(
             *self._get_ordering(self.ordering_fields),
-        )
+        )[: per_page + 1]
 
         if cursor is not None:
-            query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
+            query_set = self._apply_cursor(cursor, query_set)
 
         return await self._paginated(query_set, per_page)
 
@@ -161,138 +162,157 @@ class DjangoCursorPaginator(
             return CursorPaginated(
                 next_cursor=None,
                 prev_cursor=None,
-                items=[],
+                object_list=[],
             )
 
         query_set = self.query_set.order_by(
             *self._get_reverse_ordering(
-                self._reverse_ordering(self.ordering_fields),
+                self._reverse_fields_ordering(self.ordering_fields),
             ),
-        )
+        )[: per_page + 1]
         query_set = self._apply_reverse_cursor(
             cursor,
             query_set,
-        )[: per_page + 1]
+        )
 
         return await self._paginated(query_set, per_page)
+
+    async def _paginated(
+        self,
+        query_set: models.QuerySet[_DjangoModelT],
+        per_page: int,
+    ) -> CursorPaginated[_DjangoModelT]:
+        page_objects = [instance async for instance in query_set.aiterator()]
+        has_next = len(page_objects) > per_page
+
+        page_objects = page_objects[:per_page]
+        page_objects.reverse()
+
+        next_cursor = self._cursor(page_objects[-1]) if has_next else None
+        prev_cursor = self._cursor(page_objects[0]) if page_objects else None
+        return CursorPaginated(
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            object_list=page_objects,
+        )
 
     def _get_ordering(
         self,
         ordering_fields: tuple[str, ...],
-    ) -> list[OrderBy]:
-        nulls_ordering: list[OrderBy] = []
+    ) -> list[models.OrderBy]:
+        nulls_ordering: list[models.OrderBy] = []
         for field in ordering_fields:
-            reverse = field.startswith('-')
-            column = field.lstrip('-')
+            column = field.lstrip(REWERSE_ORDER_PREFIX)
 
-            if reverse:
-                nulls_ordering.append(F(column).desc(nulls_last=True))
+            if field.startswith(REWERSE_ORDER_PREFIX):
+                nulls_ordering.append(models.F(column).desc(nulls_last=True))
                 continue
-            nulls_ordering.append(F(column).asc(nulls_last=True))
+            nulls_ordering.append(models.F(column).asc(nulls_last=True))
         return nulls_ordering
 
     def _get_reverse_ordering(
         self,
         ordering_fields: tuple[str, ...],
-    ) -> list[OrderBy]:
-        nulls_ordering: list[OrderBy] = []
+    ) -> list[models.OrderBy]:
+        nulls_ordering: list[models.OrderBy] = []
         for field in ordering_fields:
-            reverse = field.startswith('-')
-            column = field.lstrip('-')
+            column = field.lstrip(REWERSE_ORDER_PREFIX)
 
-            if reverse:
-                nulls_ordering.append(F(column).asc(nulls_first=True))
+            if field.lstrip(REWERSE_ORDER_PREFIX):
+                nulls_ordering.append(models.F(column).asc(nulls_first=True))
                 continue
-            nulls_ordering.append(F(column).desc(nulls_first=True))
+            nulls_ordering.append(models.F(column).desc(nulls_first=True))
         return nulls_ordering
 
-    def _filter(
+    def _common_filter(  # noqa: WPS210
         self,
         ordering_fields: tuple[str, ...],
         cursor_values: tuple[str | None, ...],
-    ) -> Q:
+    ) -> models.Q:
         if not ordering_fields or not cursor_values:
-            return Q()
+            return models.Q()
         if len(ordering_fields) != len(cursor_values):
             raise ValueError('Ordering and cursor values must match length')
 
         position_values = [
-            Value(pos, output_field=TextField()) if pos is not None else None
+            None
+            if pos is None
+            else models.Value(pos, output_field=models.TextField())
             for pos in cursor_values
         ]
 
-        filtering = Q()
-        q_equality: dict[str, Any] = {}
+        filtering = models.Q()
+        filtering_equality: dict[str, Any] = {}
 
         # We just checked above that length of ordering_fields == cursor_values
-        for ordering_field, value in zip(ordering_fields, position_values):  # noqa: B905
-            is_reversed = ordering_field.startswith('-')
-            ord_field = ordering_field.lstrip('-')
+        for ordering_field, position_value in zip(  # noqa: B905
+            ordering_fields,
+            position_values,
+        ):
+            is_reversed = ordering_field.startswith(REWERSE_ORDER_PREFIX)
+            order = ordering_field.lstrip(REWERSE_ORDER_PREFIX)
 
-            if value is None:
-                key = f'{ord_field}__isnull'
-
-                q_equality.update({key: True})
+            if position_value is None:
+                filtering_equality.update({f'{order}__isnull': True})
                 continue
-            comparison_key = (
-                f'{ord_field}__gt' if is_reversed else f'{ord_field}__lt'
-            )
-            q = Q(**{comparison_key: value})
-            q |= Q(**{f'{ord_field}__isnull': True})
-            filtering |= (q) & Q(**q_equality)
 
-            equality_key = f'{ord_field}__exact'
-            q_equality.update({equality_key: value})
+            comparison_key = f'{order}__gt' if is_reversed else f'{order}__lt'
+            node = models.Q(**{comparison_key: position_value})
+            node |= models.Q(**{f'{order}__isnull': True})
+            filtering |= (node) & models.Q(**filtering_equality)
+
+            filtering_equality.update({f'{order}__exact': position_value})
         return filtering
 
-    def _reverse_filter(
+    def _reverse_filter(  # noqa: WPS210
         self,
         ordering_fields: tuple[str, ...],
         cursor_values: tuple[str | None, ...],
-    ) -> Q:
+    ) -> models.Q:
         if not ordering_fields or not cursor_values:
-            return Q()
+            return models.Q()
         if len(ordering_fields) != len(cursor_values):
             raise ValueError('Ordering and cursor values must match length')
 
         position_values = [
-            Value(pos, output_field=TextField()) if pos is not None else None
-            for pos in cursor_values
+            None
+            if pos_value is None
+            else models.Value(pos_value, output_field=models.TextField())
+            for pos_value in cursor_values
         ]
 
-        filtering = Q()
+        filtering = models.Q()
         q_equality: dict[str, Any] = {}
 
         # We just checked above that length of ordering_fields == cursor_values
-        for ordering_field, value in zip(ordering_fields, position_values):  # noqa: B905
-            is_reversed = ordering_field.startswith('-')
-            ord_field = ordering_field.lstrip('-')
+        for ordering_field, pos_value in zip(  # noqa: B905
+            ordering_fields,
+            position_values,
+        ):
+            is_reversed = ordering_field.startswith(REWERSE_ORDER_PREFIX)
+            order = ordering_field.lstrip(REWERSE_ORDER_PREFIX)
 
-            if value is None:
-                key = f'{ord_field}__isnull'
-                q = {key: False}
-                q.update(q_equality)
-                filtering |= Q(**q)
+            if pos_value is None:
+                node = {f'{order}__isnull': False}
+                node.update(q_equality)
+                filtering |= models.Q(**node)
 
-                q_equality.update({key: True})
+                q_equality.update({f'{order}__isnull': True})
                 continue
-            comparison_key = (
-                f'{ord_field}__lt' if is_reversed else f'{ord_field}__gt'
-            )
-            q = Q(**{comparison_key: value})
-            filtering |= (q) & Q(**q_equality)
+            comparison_key = f'{order}__lt' if is_reversed else f'{order}__gt'
+            node = models.Q(**{comparison_key: pos_value})
+            filtering |= (node) & models.Q(**q_equality)
 
-            equality_key = f'{ord_field}__exact'
-            q_equality.update({equality_key: value})
+            q_equality.update({f'{order}__exact': pos_value})
         return filtering
 
     def _apply_cursor(
         self,
         cursor: str,
-        query_set: QuerySet[_DjangoModelT],
-    ) -> QuerySet[_DjangoModelT]:
+        query_set: models.QuerySet[_DjangoModelT],
+    ) -> models.QuerySet[_DjangoModelT]:
         return query_set.filter(
-            self._filter(
+            self._common_filter(
                 ordering_fields=self.ordering_fields,
                 cursor_values=self._decode_cursor(cursor),
             ),
@@ -301,8 +321,8 @@ class DjangoCursorPaginator(
     def _apply_reverse_cursor(
         self,
         cursor: str,
-        query_set: QuerySet[_DjangoModelT],
-    ) -> QuerySet[_DjangoModelT]:
+        query_set: models.QuerySet[_DjangoModelT],
+    ) -> models.QuerySet[_DjangoModelT]:
         return query_set.filter(
             self._reverse_filter(
                 ordering_fields=self.ordering_fields,
@@ -319,15 +339,12 @@ class DjangoCursorPaginator(
     ) -> list[str]:
         position: list[str] = []
         for order in self.ordering_fields:
-            parts = order.lstrip('-').split('__')
+            field_path = order.lstrip(REWERSE_ORDER_PREFIX).split('__')
+
             attr = instance
-            while parts:
-                attr = getattr(attr, parts[0])
-                parts.pop(0)
-            if attr is None:
-                position.append(NONE_STRING)
-            else:
-                position.append(str(attr))
+            for field in field_path:
+                attr = getattr(attr, field, None)
+            position.append(NONE_STRING if attr is None else str(attr))
         return position
 
     def _encode_cursor(
@@ -347,37 +364,23 @@ class DjangoCursorPaginator(
         delimiter: str = ',',
     ) -> tuple[str | None, ...]:
         try:
-            cursor_values = b64decode(cursor.encode('ascii')).decode('utf-8')
             return tuple(
-                value if value != NONE_STRING else None
-                for value in cursor_values.split(delimiter)
+                None if cursor_value == NONE_STRING else cursor_value
+                for cursor_value in b64decode(cursor.encode('ascii'))
+                .decode('utf-8')
+                .split(delimiter)
             )
         except (TypeError, ValueError):
             raise InvalidCursorError from None
 
-    async def _paginated(
-        self,
-        query_set: QuerySet[_DjangoModelT],
-        per_page: int,
-    ) -> CursorPaginated[_DjangoModelT]:
-        items = [item async for item in query_set.aiterator()]
-        has_next = len(items) > per_page
-
-        items = items[:per_page]
-        items.reverse()
-        next_cursor = self._cursor(items[-1]) if has_next else None
-        prev_cursor = self._cursor(items[0]) if items else None
-        return CursorPaginated(
-            next_cursor=next_cursor,
-            prev_cursor=prev_cursor,
-            items=items,
-        )
-
-    def _reverse_ordering(
+    def _reverse_fields_ordering(
         self,
         ordering_fields: tuple[str, ...],
     ) -> tuple[str, ...]:
-        def invert(x: str) -> str:
-            return x[1:] if (x.startswith('-')) else '-' + x
-
-        return tuple(invert(field) for field in ordering_fields)
+        # Convert '-created_at' to 'created_at' and vice versa
+        return tuple(
+            field[1:]
+            if field.startswith(REWERSE_ORDER_PREFIX)
+            else f'{REWERSE_ORDER_PREFIX}{field}'
+            for field in ordering_fields
+        )
