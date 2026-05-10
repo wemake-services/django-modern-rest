@@ -29,7 +29,7 @@ class _ValidateSpecProto(Protocol):
         self,
         spec: 'Schema',
         base_uri: str = '',
-        cls: 'SpecValidatorType | None' = None,
+        cls: 'SpecValidatorType | None' = None,  # noqa: WPS117
     ) -> None: ...
 
 
