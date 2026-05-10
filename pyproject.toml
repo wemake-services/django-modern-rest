@@ -409,8 +409,7 @@ exclude-modules = '''
 [tool.mypy]
 # The mypy configurations: http://bit.ly/2zEl9WI
 strict = true
-strict_bytes = true
-local_partial_types = true
+strict_equality_for_none = true
 warn_unreachable = true
 
 exclude = [
@@ -423,16 +422,17 @@ exclude = [
 ]
 
 enable_error_code = [
-  "truthy-bool",
-  "truthy-iterable",
-  "redundant-expr",
-  "unused-awaitable",
-  "ignore-without-code",
-  "possibly-undefined",
-  "redundant-self",
-  "explicit-override",
-  "unimported-reveal",
-  "deprecated",
+  'deprecated',
+  'exhaustive-match',
+  'explicit-override',
+  'ignore-without-code',
+  'possibly-undefined',
+  'redundant-expr',
+  'redundant-self',
+  'truthy-bool',
+  'truthy-iterable',
+  'unimported-reveal',
+  'unused-awaitable',
 ]
 
 plugins = [

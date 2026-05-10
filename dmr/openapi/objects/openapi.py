@@ -1,15 +1,12 @@
 from collections.abc import Callable
 from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, TypeAlias, cast
-
-try:
-    from openapi_spec_validator import validate as _validate_spec
-except ImportError:  # pragma: no cover
-    _validate_spec = None  # type: ignore[assignment]
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
+    from jsonschema_path.typing import Schema
+    from openapi_spec_validator.validation.types import SpecValidatorType
 
     from dmr.openapi.objects.components import Components
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
@@ -25,6 +22,23 @@ ConvertedSchema: TypeAlias = dict[str, Any]
 _ConverterFunc: TypeAlias = Callable[['DataclassInstance'], ConvertedSchema]
 _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
+
+
+class _ValidateSpecProto(Protocol):
+    def __call__(
+        self,
+        spec: 'Schema',
+        base_uri: str = '',
+        cls: 'SpecValidatorType | None' = None,
+    ) -> None: ...
+
+
+_validate_spec: _ValidateSpecProto | None
+
+try:
+    from openapi_spec_validator import validate as _validate_spec
+except ImportError:  # pragma: no cover
+    _validate_spec = None
 
 
 @dataclass(kw_only=True, slots=True)
