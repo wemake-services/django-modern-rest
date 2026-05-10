@@ -184,7 +184,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc", "mypy==1.20.2"]
+dependencies = ["hatch-mypyc", "mypy==2.0.0"]
 include = ["dmr/_compiled"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
@@ -408,9 +408,9 @@ exclude-modules = '''
 
 [tool.mypy]
 # The mypy configurations: http://bit.ly/2zEl9WI
+extra_checks = true
 strict = true
-strict_bytes = true
-local_partial_types = true
+strict_equality_for_none = true
 warn_unreachable = true
 
 exclude = [
@@ -423,16 +423,17 @@ exclude = [
 ]
 
 enable_error_code = [
-  "truthy-bool",
-  "truthy-iterable",
-  "redundant-expr",
-  "unused-awaitable",
-  "ignore-without-code",
-  "possibly-undefined",
-  "redundant-self",
-  "explicit-override",
-  "unimported-reveal",
-  "deprecated",
+  'deprecated',
+  'exhaustive-match',
+  'explicit-override',
+  'ignore-without-code',
+  'possibly-undefined',
+  'redundant-expr',
+  'redundant-self',
+  'truthy-bool',
+  'truthy-iterable',
+  'unimported-reveal',
+  'unused-awaitable',
 ]
 
 plugins = [

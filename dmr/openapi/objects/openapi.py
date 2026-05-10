@@ -1,15 +1,12 @@
+import dataclasses
 from collections.abc import Callable
-from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, TypeAlias, cast
-
-try:
-    from openapi_spec_validator import validate as _validate_spec
-except ImportError:  # pragma: no cover
-    _validate_spec = None  # type: ignore[assignment]
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
+    from jsonschema_path.typing import Schema
+    from openapi_spec_validator.validation.types import SpecValidatorType
 
     from dmr.openapi.objects.components import Components
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
@@ -27,7 +24,28 @@ _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
 
-@dataclass(kw_only=True, slots=True)
+class _ValidateSpecProto(Protocol):
+    def __call__(
+        self,
+        spec: 'Schema',
+        base_uri: str = '',
+        cls: 'SpecValidatorType | None' = None,  # noqa: WPS117
+    ) -> None: ...
+
+
+_validate_spec: _ValidateSpecProto | None
+
+try:
+    # There's a mismatch of checks with mypyc and mypy,
+    # so we use `unused-ignore` here:
+    from openapi_spec_validator import (  # type: ignore[no-redef, unused-ignore]
+        validate as _validate_spec,
+    )
+except ImportError:  # pragma: no cover
+    _validate_spec = None
+
+
+@dataclasses.dataclass(kw_only=True, slots=True)
 class OpenAPI:
     """This is the root object of the OpenAPI document."""
 
@@ -42,7 +60,13 @@ class OpenAPI:
     tags: list['Tag'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
 
-    _validated: bool = False
+    _validated: bool = dataclasses.field(
+        default=False,
+        init=False,
+        repr=False,
+        hash=False,
+        compare=False,
+    )
 
     def convert(self, *, skip_validation: bool = False) -> ConvertedSchema:
         """
@@ -67,7 +91,7 @@ def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:  # noqa: WPS231
     """Converts any dataclass object into a JSON schema."""
     schema: ConvertedSchema = {}
 
-    for field in fields(to_convert):
+    for field in dataclasses.fields(to_convert):
         schema_value = getattr(to_convert, field.name, None)
         if field.name.startswith('_') or schema_value is None:
             continue
@@ -142,7 +166,7 @@ def normalize_value(to_normalize: Any, converter: _ConverterFunc) -> Any:
     - None values (should be filtered out by caller)
 
     """
-    if is_dataclass(to_normalize):
+    if dataclasses.is_dataclass(to_normalize):
         return converter(cast('DataclassInstance', to_normalize))
 
     if isinstance(to_normalize, list):
