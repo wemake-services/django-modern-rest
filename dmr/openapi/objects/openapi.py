@@ -1,5 +1,5 @@
+import dataclasses
 from collections.abc import Callable
-from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 
@@ -41,7 +41,7 @@ except ImportError:  # pragma: no cover
     _validate_spec = None
 
 
-@dataclass(kw_only=True, slots=True)
+@dataclasses.dataclass(kw_only=True, slots=True)
 class OpenAPI:
     """This is the root object of the OpenAPI document."""
 
@@ -56,7 +56,13 @@ class OpenAPI:
     tags: list['Tag'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
 
-    _validated: bool = False
+    _validated: bool = dataclasses.field(
+        default=False,
+        init=False,
+        repr=False,
+        hash=False,
+        compare=False,
+    )
 
     def convert(self, *, skip_validation: bool = False) -> ConvertedSchema:
         """
@@ -81,7 +87,7 @@ def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:  # noqa: WPS231
     """Converts any dataclass object into a JSON schema."""
     schema: ConvertedSchema = {}
 
-    for field in fields(to_convert):
+    for field in dataclasses.fields(to_convert):
         schema_value = getattr(to_convert, field.name, None)
         if field.name.startswith('_') or schema_value is None:
             continue
@@ -156,7 +162,7 @@ def normalize_value(to_normalize: Any, converter: _ConverterFunc) -> Any:
     - None values (should be filtered out by caller)
 
     """
-    if is_dataclass(to_normalize):
+    if dataclasses.is_dataclass(to_normalize):
         return converter(cast('DataclassInstance', to_normalize))
 
     if isinstance(to_normalize, list):
