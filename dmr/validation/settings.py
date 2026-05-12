@@ -9,6 +9,7 @@ from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
+from dmr.internal.enums import stringify
 from dmr.settings import (
     Settings,
     SettingsDict,
@@ -63,7 +64,7 @@ class SettingsValidator:
             self.serializer.from_python(
                 {
                     # msgspec does not like `StrEnum` keys:
-                    str(setting_key): (
+                    stringify(setting_key): (
                         # For some reason `pydantic` does not validate
                         # `set[str]` against `collections.abc.Set[str]`
                         frozenset(setting_value)  # pyright: ignore[reportUnknownArgumentType]

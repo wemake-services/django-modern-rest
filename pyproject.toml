@@ -128,7 +128,7 @@ dev = [
   "types-django-filter>=25.2,<26",
   "types-redis>=4.6,<5",
   "pyright>=1.1,<2",
-  "pyrefly>=0.60,<0.64",
+  "pyrefly>=1,<2",
   "wemake-python-styleguide>=1.6,<2",
   "ruff>=0.15,<0.16",
   "import-linter>=2.5,<3",
@@ -456,6 +456,12 @@ venv = ".venv"
 [tool.pyrefly]
 # Docs: https://pyrefly.org
 project-includes = ["dmr", "typesafety", "tests"]
+preset = 'strict'
+min-severity = 'warn'
+
+[tool.pyrefly.errors]
+implicit-any-attribute = false
+implicit-any-empty-container = false
 
 
 [tool.codespell]

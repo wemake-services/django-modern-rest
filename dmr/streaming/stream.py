@@ -7,6 +7,7 @@ from django.conf import settings
 from django.http import HttpResponseBase
 from typing_extensions import override
 
+from dmr.internal.enums import stringify
 from dmr.internal.io import aiter_to_iter, maybe_aclosing
 from dmr.renderers import Renderer
 from dmr.streaming.exceptions import StreamingCloseError
@@ -64,7 +65,7 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
         # to use str type.
         headers.update({
             'Cache-Control': 'no-cache',
-            'Content-Type': str(streaming_renderer.content_type),
+            'Content-Type': stringify(streaming_renderer.content_type),
             'X-Accel-Buffering': 'no',
         })
         if not settings.DEBUG:

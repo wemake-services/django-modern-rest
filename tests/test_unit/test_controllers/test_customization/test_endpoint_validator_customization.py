@@ -79,8 +79,8 @@ def test_endpoint_metadata_validator() -> None:
 
 def test_endpoint_response_validator(dmr_rf: DMRRequestFactory) -> None:
     """Ensures custom response validator is called during request processing."""
-    assert _CustomResponseValidator.was_called is False
+    assert not _CustomResponseValidator.was_called
 
     request = dmr_rf.get('/whatever/')
     _CustomController.as_view()(request)
-    assert _CustomResponseValidator.was_called is True
+    assert _CustomResponseValidator.was_called
