@@ -3,13 +3,13 @@ from collections.abc import Sequence
 from typing import Any, ClassVar, cast
 
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.enums import stringify
 from dmr.metadata import ResponseSpec
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
-from dmr.internal.enums import stringify
 from dmr.settings import (
     Settings,
     SettingsDict,
