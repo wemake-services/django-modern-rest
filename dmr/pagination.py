@@ -1,7 +1,7 @@
 import dataclasses
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Any, Generic, Protocol, TypeVar, override
 
 from django.db import models
 
@@ -126,6 +126,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         self.ordering_fields = ordering_fields
         self.query_set = query_set
 
+    @override
     async def page(
         self,
         per_page: int,
@@ -152,6 +153,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
 
         return await self._paginated(query_set, per_page)
 
+    @override
     async def prev_page(
         self,
         per_page: int,
@@ -175,21 +177,28 @@ class DjangoCursorPaginator(  # noqa: WPS214
             query_set,
         )
 
-        return await self._paginated(query_set, per_page)
+        return await self._paginated(query_set, per_page, prev_page=True)
 
     async def _paginated(
         self,
         query_set: models.QuerySet[_DjangoModelT],
         per_page: int,
+        prev_page: bool = False,  # noqa: FBT001, FBT002
     ) -> CursorPaginated[_DjangoModelT]:
-        page_objects = [instance async for instance in query_set.aiterator()]
-        has_next = len(page_objects) > per_page
+        page_objects: list[_DjangoModelT] = []
+        async for instance in query_set.aiterator():
+            page_objects.append(instance)
+            if len(page_objects) == per_page + 1:
+                break
 
+        has_next = len(page_objects) > per_page
         page_objects = page_objects[:per_page]
-        page_objects.reverse()
+        if prev_page:
+            page_objects.reverse()
 
         next_cursor = self._cursor(page_objects[-1]) if has_next else None
         prev_cursor = self._cursor(page_objects[0]) if page_objects else None
+
         return CursorPaginated(
             next_cursor=next_cursor,
             prev_cursor=prev_cursor,
@@ -300,8 +309,12 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 q_equality.update({f'{order}__isnull': True})
                 continue
             comparison_key = f'{order}__lt' if is_reversed else f'{order}__gt'
-            node = models.Q(**{comparison_key: pos_value})
-            filtering |= (node) & models.Q(**q_equality)
+            # Mypy warns that variable `node` has different type than
+            # the type from the `if` statement above, but it is normal
+            # because we don't reuse this variable, we only assing a new
+            # value at each iteration.
+            node = {comparison_key: pos_value}  # type: ignore[dict-item]
+            filtering |= models.Q(**node) & models.Q(**q_equality)
 
             q_equality.update({f'{order}__exact': pos_value})
         return filtering
