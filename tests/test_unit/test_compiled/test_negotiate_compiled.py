@@ -1,6 +1,6 @@
 import os
 import sys
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from contextlib import AbstractContextManager, contextmanager
 from types import BuiltinFunctionType, FunctionType, ModuleType
 from typing import TypeAlias
@@ -18,7 +18,7 @@ def clean_modules() -> _CleanModules:
     """Fixture to clean required modules."""
 
     @contextmanager
-    def factory(names: set[str]) -> Iterator[dict[str, ModuleType]]:
+    def factory(names: set[str]) -> Generator[dict[str, ModuleType]]:
         orig_modules = {}
         prefixes = tuple(f'{name}.' for name in names)
         for modname in list(sys.modules):

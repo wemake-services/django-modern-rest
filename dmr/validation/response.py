@@ -12,6 +12,7 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.files import FileBody
+from dmr.internal.enums import stringify
 from dmr.internal.negotiation import (
     media_by_precedence,
     negotiatiate_response_validation,
@@ -216,7 +217,7 @@ class ResponseValidator:  # noqa: WPS214
         if content_types:
             model = content_types.get(content_type, EmptyObj)
             if model is EmptyObj:
-                hint = [str(ct) for ct in content_types]
+                hint = [stringify(ct) for ct in content_types]
                 raise ResponseSchemaError(
                     f'Content-Type {content_type!r} is not '
                     f'listed in supported content types {hint!r}',

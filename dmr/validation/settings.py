@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import Any, ClassVar, cast
 
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.enums import stringify
 from dmr.metadata import ResponseSpec
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
@@ -63,7 +64,7 @@ class SettingsValidator:
             self.serializer.from_python(
                 {
                     # msgspec does not like `StrEnum` keys:
-                    str(setting_key): (
+                    stringify(setting_key): (
                         # For some reason `pydantic` does not validate
                         # `set[str]` against `collections.abc.Set[str]`
                         frozenset(setting_value)  # pyright: ignore[reportUnknownArgumentType]
