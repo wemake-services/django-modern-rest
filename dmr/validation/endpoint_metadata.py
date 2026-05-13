@@ -14,6 +14,7 @@ from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.enums import stringify
 from dmr.metadata import (
     ComponentParserSpec,
     EndpointMetadata,
@@ -910,7 +911,7 @@ class EndpointMetadataValidator:
         should not have a request body. If a controller uses Body component
         with these methods, an EndpointMetadataError will be raised.
         """
-        method = str(self.metadata.method).upper()
+        method = stringify(self.metadata.method).upper()
         if method not in _HTTP_METHODS_WITHOUT_BODY:
             return
 

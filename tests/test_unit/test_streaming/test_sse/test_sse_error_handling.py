@@ -26,7 +26,7 @@ class _ClassBasedSSE(SSEController[PydanticSerializer]):
     async def _valid_events(self) -> AsyncIterator[SSEvent[float]]:
         yield SSEvent(1)
         # Error here:
-        yield SSEvent(1 / 0)  # noqa: WPS344
+        yield SSEvent(1 / 0)  # noqa: WPS344  # pyrefly: ignore[division-by-zero]
         # Won't be sent:
         yield SSEvent(2)  # pragma: no cover
 

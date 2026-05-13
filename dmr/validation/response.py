@@ -12,6 +12,7 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.files import FileBody
+from dmr.internal.enums import stringify
 from dmr.internal.negotiation import (
     media_by_precedence,
     negotiatiate_response_validation,
