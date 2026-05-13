@@ -11,7 +11,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_test_app.server.apps.model_simple import models
+from server.apps.model_simple import models  # type: ignore[import-not-found]
 
 try:
     # These tests do not work with raw python renderer.

@@ -60,8 +60,6 @@ INSTALLED_APPS = [
     # DMR:
     'dmr',
     'dmr.security.jwt.blocklist',
-    # We need it to use Django ORM models in tests
-    'django_test_app',
     # Third party:
     'csp',
 ]
