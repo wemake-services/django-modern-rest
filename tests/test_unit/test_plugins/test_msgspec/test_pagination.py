@@ -7,12 +7,11 @@ from typing import Final, NotRequired, final
 
 import pytest
 from django.core.paginator import Paginator
-from django.db import connection
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from django_test_app.server.apps.model_simple.models import User
+from django_test_app.server.apps.model_simple import models
 
 try:
     # These tests do not work with raw python renderer.
@@ -253,20 +252,25 @@ def test_pagination_empty_dataset(dmr_rf: DMRRequestFactory) -> None:
     })
 
 
-@pytest.mark.asyncio
-@pytest.mark.django_db
-async def test_async_cursor_pagination() -> None:
-    """Test."""
-    with connection.schema_editor() as schema_editor:
-        schema_editor.create_model(User)
-
+@pytest.fixture
+async def setup_users() -> None:
+    """Fill database with test fields."""
     users = [
-        User(email=f'mail{idx}@example.com', customer_service_uid=uuid.uuid4())
+        models.User(
+            email=f'mail{idx}@example.com',
+            customer_service_uid=uuid.uuid4(),
+        )
         for idx in range(5)
     ]
-    User.objects.bulk_create(users)
+    await models.User.objects.abulk_create(users)
 
-    paginator = DjangoCursorPaginator(('email',), User.objects.all())
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+@pytest.mark.usefixtures('setup_users')
+async def test_django_cursor_paginator() -> None:
+    """Test getting of next and previous pages with cursor paginator."""
+    paginator = DjangoCursorPaginator(('email',), models.User.objects.all())
 
     page = await paginator.page(2)
     assert len(page.object_list) == 2
@@ -281,4 +285,12 @@ async def test_async_cursor_pagination() -> None:
         'mail2@example.com',
         'mail3@example.com',
         'mail4@example.com',
+    ]
+    assert page.prev_cursor is not None
+
+    page = await paginator.prev_page(2, cursor=page.prev_cursor)
+    assert len(page.object_list) == 2
+    assert [obj.email for obj in page.object_list] == [  # noqa: WPS110
+        'mail1@example.com',
+        'mail0@example.com',
     ]
