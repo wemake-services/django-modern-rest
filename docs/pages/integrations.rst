@@ -98,6 +98,21 @@ your own metadata / models and use them with our framework.
 Cursor pagination
 ~~~~~~~~~~~~~~~~~
 
+We provide our own cursor pagination implementation:
+:class:`dmr.pagination.DjangoCursorPaginator`.
+
+It exposes a minimal API with only two methods:
+
+- ``page(per_page: int, cursor: str | None = None)`` —
+  returns a page of objects starting from the given cursor.
+  If ``cursor`` is ``None``, the first page is returned.
+
+- ``prev_page(per_page: int, cursor: str)`` —
+  returns the page of objects located before the given cursor.
+
+This allows navigating through result sets in both forward and backward 
+directions using cursor-based pagination.
+
 We also support any other pagination library.
 
 Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_

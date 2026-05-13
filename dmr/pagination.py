@@ -120,7 +120,8 @@ class DjangoCursorPaginator(  # noqa: WPS214
         Create a paginator.
 
         Args:
-            ordering_fields: Fields to order by.
+            ordering_fields: Fields to order by. To reverse the order, use the
+            `-` symbol sign before the field names (for example, `-created_at`).
             query_set: QuerySet which will used to paginate.
         """
         self.ordering_fields = ordering_fields
