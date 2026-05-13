@@ -308,7 +308,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
             comparison_key = f'{order}__gt' if is_reversed else f'{order}__lt'
             # Mypy warns that variable `node` has different type than
             # the type from the `if` statement above, but it is normal
-            # because we don't reuse this variable, we only assing a new
+            # because we don't reuse this variable, we only assign a new
             # value at each iteration.
             node = {comparison_key: pos_value}  # type: ignore[dict-item]
             filtering |= models.Q(**node) & models.Q(**q_equality)

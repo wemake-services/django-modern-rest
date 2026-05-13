@@ -110,7 +110,7 @@ It exposes a minimal API with only two methods:
 - ``prev_page(per_page: int, cursor: str)`` —
   returns the page of objects located before the given cursor.
 
-This allows navigating through result sets in both forward and backward 
+This allows navigating through result sets in both forward and backward
 directions using cursor-based pagination.
 
 We also support any other pagination library.
