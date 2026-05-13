@@ -137,7 +137,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
 
         If `cursor == None`, the first page will be returned by default.
         """
-        if not self.query_set.exists():
+        if not await self.query_set.aexists():
             return CursorPaginated(
                 next_cursor=None,
                 prev_cursor=None,
@@ -160,7 +160,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         cursor: str,
     ) -> CursorPaginated[_DjangoModelT]:
         """Get the page that was before the page of the provided cursor."""
-        if not self.query_set.exists():
+        if not await self.query_set.aexists():
             return CursorPaginated(
                 next_cursor=None,
                 prev_cursor=None,
@@ -185,11 +185,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         per_page: int,
         prev_page: bool = False,  # noqa: FBT001, FBT002
     ) -> CursorPaginated[_DjangoModelT]:
-        page_objects: list[_DjangoModelT] = []
-        async for instance in query_set.aiterator():
-            page_objects.append(instance)
-            if len(page_objects) == per_page + 1:
-                break
+        page_objects = [obj async for obj in query_set[: per_page + 1]]  # noqa: WPS110
 
         has_next = len(page_objects) > per_page
         page_objects = page_objects[:per_page]
