@@ -1,14 +1,18 @@
 """Unit tests for pagination functionality."""
 
 import json
+import uuid
 from http import HTTPStatus
 from typing import Final, NotRequired, final
 
 import pytest
 from django.core.paginator import Paginator
+from django.db import connection
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
+
+from django_test_app.server.apps.model_simple.models import User
 
 try:
     # These tests do not work with raw python renderer.
@@ -17,7 +21,7 @@ except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 from dmr import Controller, Query
-from dmr.pagination import Page, Paginated
+from dmr.pagination import DjangoCursorPaginator, Page, Paginated
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -247,3 +251,34 @@ def test_pagination_empty_dataset(dmr_rf: DMRRequestFactory) -> None:
         'per_page': 10,
         'page': {'number': 1, 'object_list': []},
     })
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_async_cursor_pagination() -> None:
+    """Test."""
+    with connection.schema_editor() as schema_editor:
+        schema_editor.create_model(User)
+
+    users = [
+        User(email=f'mail{idx}@example.com', customer_service_uid=uuid.uuid4())
+        for idx in range(5)
+    ]
+    User.objects.bulk_create(users)
+
+    paginator = DjangoCursorPaginator(('email',), User.objects.all())
+
+    page = await paginator.page(2)
+    assert len(page.object_list) == 2
+    assert [obj.email for obj in page.object_list] == [  # noqa: WPS110
+        'mail0@example.com',
+        'mail1@example.com',
+    ]
+
+    page = await paginator.page(3, cursor=page.next_cursor)
+    assert len(page.object_list) == 3
+    assert [obj.email for obj in page.object_list] == [  # noqa: WPS110
+        'mail2@example.com',
+        'mail3@example.com',
+        'mail4@example.com',
+    ]

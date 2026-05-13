@@ -146,10 +146,10 @@ class DjangoCursorPaginator(  # noqa: WPS214
 
         query_set = self.query_set.order_by(
             *self._get_ordering(self.ordering_fields),
-        )[: per_page + 1]
+        )
 
         if cursor is not None:
-            query_set = self._apply_cursor(cursor, query_set)
+            query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
 
         return await self._paginated(query_set, per_page)
 
@@ -171,11 +171,11 @@ class DjangoCursorPaginator(  # noqa: WPS214
             *self._get_reverse_ordering(
                 self._reverse_fields_ordering(self.ordering_fields),
             ),
-        )[: per_page + 1]
+        )
         query_set = self._apply_reverse_cursor(
             cursor,
             query_set,
-        )
+        )[: per_page + 1]
 
         return await self._paginated(query_set, per_page, prev_page=True)
 
@@ -265,7 +265,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 filtering_equality.update({f'{order}__isnull': True})
                 continue
 
-            comparison_key = f'{order}__gt' if is_reversed else f'{order}__lt'
+            comparison_key = f'{order}__lt' if is_reversed else f'{order}__gt'
             node = models.Q(**{comparison_key: position_value})
             node |= models.Q(**{f'{order}__isnull': True})
             filtering |= (node) & models.Q(**filtering_equality)
@@ -308,7 +308,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
 
                 q_equality.update({f'{order}__isnull': True})
                 continue
-            comparison_key = f'{order}__lt' if is_reversed else f'{order}__gt'
+            comparison_key = f'{order}__gt' if is_reversed else f'{order}__lt'
             # Mypy warns that variable `node` has different type than
             # the type from the `if` statement above, but it is normal
             # because we don't reuse this variable, we only assing a new
