@@ -22,6 +22,16 @@ It can also accept a specific ``content_type`` to render:
   :linenos:
   :emphasize-lines: 16, 17
 
+If you don't pass ``filename`` or ``as_attachment=True`` to Django's
+``FileResponse``, it will be returned inline and ``Content-Disposition``
+won't be required:
+
+.. literalinclude:: /examples/using_controller/inline_file_response.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 12, 13
+
 
 API Reference
 -------------
