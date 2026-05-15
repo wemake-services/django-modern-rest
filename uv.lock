@@ -3350,14 +3350,14 @@ wheels = [
 
 [[package]]
 name = "zapros"
-version = "0.11.0"
+version = "0.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "h11" },
     { name = "pywhatwgurl" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3a/6a/c3500043e720b1e817994a6903ea4f06feee923127862ec1817d70156018/zapros-0.11.0.tar.gz", hash = "sha256:9339bdea37b83cca8079aa6319c32553ff2afe916dd10ee41b1de135f28c2162", size = 928614, upload-time = "2026-05-05T09:23:44.045Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/47/42c85e3eaa4e2cdabe22a2f3d4255e135c975f725c169bae4ba9ef4ec0c0/zapros-0.11.1.tar.gz", hash = "sha256:cfb8da486d2d68ff37b3c2c647cd7a0329e64e228f5e8f929856f4a4a5c41f38", size = 928904, upload-time = "2026-05-07T06:48:00.022Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/b1/39896fddd0bbcd6c0099a6cb92a4304a8914b051c9dd7c830e8a16699bd8/zapros-0.11.0-py3-none-any.whl", hash = "sha256:7b610d9be528a5c621e99d98d66153dd2198e5f5eeba0837a496a4feccb14e6a", size = 96465, upload-time = "2026-05-05T09:23:42.457Z" },
+    { url = "https://files.pythonhosted.org/packages/49/f8/1c40af1077b23de28d669e3389f6e75150c671b743c00e498408acceb036/zapros-0.11.1-py3-none-any.whl", hash = "sha256:600119d063377b5eb7136572dbadbe6c6e8233eda5cb895b82eec7386e793c08", size = 96468, upload-time = "2026-05-07T06:47:58.802Z" },
 ]
