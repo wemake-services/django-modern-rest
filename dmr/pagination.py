@@ -1,9 +1,10 @@
 import dataclasses
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
-from typing import Any, Generic, Protocol, TypeVar, override
+from typing import Any, Generic, Protocol, TypeVar
 
 from django.db import models
+from typing_extensions import override
 
 _ModelT = TypeVar('_ModelT')
 _DjangoModelT = TypeVar('_DjangoModelT', bound=models.Model)
