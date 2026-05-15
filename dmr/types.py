@@ -7,12 +7,16 @@ from typing import (  # noqa: WPS235
     Generic,
     TypeAlias,
     TypeVar,
-    final,
     get_args,
     get_origin,
 )
 
-from typing_extensions import Format, Sentinel, get_original_bases, get_type_hints
+from typing_extensions import (
+    Format,
+    Sentinel,
+    get_original_bases,
+    get_type_hints,
+)
 
 from dmr.exceptions import UnsolvableAnnotationsError
 

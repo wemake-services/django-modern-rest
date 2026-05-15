@@ -6,11 +6,10 @@ from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
 
-from typing_extensions import Sentinel
-
 from django.contrib.admindocs.utils import parse_docstring
 from django.core.cache.backends import dummy, locmem
 from django.http import HttpResponseBase
+from typing_extensions import Sentinel
 
 from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
