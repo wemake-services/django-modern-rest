@@ -59,7 +59,7 @@ classifiers = [
 dynamic = ["readme"]
 
 dependencies = [
-  "typing_extensions>=4",
+  "typing_extensions>=4.12",
   "django>=4.2,<6.1",
 ]
 

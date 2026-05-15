@@ -6,6 +6,8 @@ from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
 
+from typing_extensions import Sentinel
+
 from django.contrib.admindocs.utils import parse_docstring
 from django.core.cache.backends import dummy, locmem
 from django.http import HttpResponseBase
@@ -33,7 +35,7 @@ from dmr.throttling.backends.django_cache import (
     SyncDjangoCache,
     UnsafeCacheBackendWarning,
 )
-from dmr.types import Empty, EmptyObj, infer_annotation, is_safe_subclass
+from dmr.types import EMPTY, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
@@ -583,12 +585,12 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _build_throttling_allow_unsafe_cache(self) -> bool | None:
         if self.payload and not isinstance(
             self.payload.throttling_allow_unsafe_cache,
-            Empty,
+            Sentinel,
         ):
             return self.payload.throttling_allow_unsafe_cache
         if not isinstance(
             self.controller_cls.throttling_allow_unsafe_cache,
-            Empty,
+            Sentinel,
         ):
             return self.controller_cls.throttling_allow_unsafe_cache
         return resolve_setting(  # type: ignore[no-any-return]
@@ -948,8 +950,8 @@ def _resolve_return_annotation(
     controller_cls: type['Controller[BaseSerializer]'],
     endpoint_func: Callable[..., Any],
 ) -> Any:
-    return_annotation = type_annotations.get('return', EmptyObj)
-    if return_annotation is EmptyObj:
+    return_annotation = type_annotations.get('return', EMPTY)
+    if return_annotation is EMPTY:
         raise UnsolvableAnnotationsError(
             f'Function {endpoint_func!r} is missing return type annotation',
         )
