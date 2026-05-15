@@ -1,7 +1,6 @@
 """Unit tests for pagination functionality."""
 
 import json
-import uuid
 from http import HTTPStatus
 from typing import Final, NotRequired, final
 
@@ -11,7 +10,9 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from server.apps.model_simple import models  # type: ignore[import-not-found]
+from server.apps.model_simple import (  # type: ignore[import-not-found]
+    models,
+)
 
 try:
     # These tests do not work with raw python renderer.
@@ -256,13 +257,10 @@ def test_pagination_empty_dataset(dmr_rf: DMRRequestFactory) -> None:
 async def setup_users() -> None:
     """Fill database with test fields."""
     users = [
-        models.User(
-            email=f'mail{idx}@example.com',
-            customer_service_uid=uuid.uuid4(),
-        )
+        models.CursorPaginatedTestModel(increment_id=idx)
         for idx in reversed(range(5))
     ]
-    await models.User.objects.abulk_create(users)
+    await models.CursorPaginatedTestModel.objects.abulk_create(users)
 
 
 @pytest.mark.asyncio
@@ -270,27 +268,20 @@ async def setup_users() -> None:
 @pytest.mark.usefixtures('setup_users')
 async def test_django_cursor_paginator() -> None:
     """Test getting of next and previous pages with cursor paginator."""
-    paginator = DjangoCursorPaginator(('email',), models.User.objects.all())
+    paginator = DjangoCursorPaginator(
+        ('increment_id',),
+        models.CursorPaginatedTestModel.objects.all(),
+    )
 
     page = await paginator.page(2)
     assert len(page.object_list) == 2
-    assert [obj.email for obj in page.object_list] == [  # noqa: WPS110
-        'mail0@example.com',
-        'mail1@example.com',
-    ]
+    assert [obj.increment_id for obj in page.object_list] == [0, 1]  # noqa: WPS110
 
     page = await paginator.page(3, cursor=page.next_cursor)
     assert len(page.object_list) == 3
-    assert [obj.email for obj in page.object_list] == [  # noqa: WPS110
-        'mail2@example.com',
-        'mail3@example.com',
-        'mail4@example.com',
-    ]
+    assert [obj.increment_id for obj in page.object_list] == [2, 3, 4]  # noqa: WPS110
     assert page.prev_cursor is not None
 
     page = await paginator.prev_page(2, cursor=page.prev_cursor)
     assert len(page.object_list) == 2
-    assert [obj.email for obj in page.object_list] == [  # noqa: WPS110
-        'mail1@example.com',
-        'mail0@example.com',
-    ]
+    assert [obj.increment_id for obj in page.object_list] == [1, 0]  # noqa: WPS110

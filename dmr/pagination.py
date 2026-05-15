@@ -1,6 +1,5 @@
 import dataclasses
 from base64 import b64decode, b64encode
-from binascii import Error as BinasciiError
 from collections.abc import Sequence
 from typing import Any, Generic, Protocol, TypeVar
 
@@ -387,9 +386,8 @@ class DjangoCursorPaginator(  # noqa: WPS214
             )
         except (
             TypeError,
-            ValueError,
             UnicodeDecodeError,
-            BinasciiError,
+            ValueError,
         ) as exc:
             raise InvalidCursorError from exc
 
