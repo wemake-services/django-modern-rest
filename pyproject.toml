@@ -462,6 +462,7 @@ min-severity = 'warn'
 [tool.pyrefly.errors]
 implicit-any-attribute = false
 implicit-any-empty-container = false
+unused-ignore = true
 
 
 [tool.codespell]
