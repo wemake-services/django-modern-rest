@@ -129,6 +129,11 @@ Interface
 .. autoclass:: dmr.pagination.Page
   :members:
 
+.. autoclass:: dmr.pagination.DjangoCursorPaginator
+  :members:
+  
+.. autoclass:: dmr.pagination.CursorPaginated
+  :members:
 
 Filters
 -------
