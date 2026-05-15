@@ -260,7 +260,7 @@ async def setup_users() -> None:
             email=f'mail{idx}@example.com',
             customer_service_uid=uuid.uuid4(),
         )
-        for idx in range(5)
+        for idx in reversed(range(5))
     ]
     await models.User.objects.abulk_create(users)
 
