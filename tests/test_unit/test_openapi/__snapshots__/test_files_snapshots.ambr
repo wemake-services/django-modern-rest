@@ -359,8 +359,7 @@
                 "Content-Disposition": {
                   "schema": {
                     "type": "string"
-                  },
-                  "required": true
+                  }
                 }
               },
               "content": {

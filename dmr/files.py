@@ -118,7 +118,7 @@ class FileResponseSpec(ResponseSpec):
         kw_only=True,
         default_factory=lambda: {
             'Content-Length': HeaderSpec(),
-            'Content-Disposition': HeaderSpec(),
+            'Content-Disposition': HeaderSpec(required=False),
         },
     )
     file_body: type[FileBody] = dataclasses.field(

@@ -1,3 +1,4 @@
+import io
 import pathlib
 from collections.abc import Iterator
 from contextlib import closing
@@ -38,6 +39,19 @@ class _FileSyncController(Controller[PydanticSerializer]):
         )
 
 
+@final
+class _InlineFileSyncController(Controller[PydanticSerializer]):
+    @validate(
+        FileResponseSpec(),
+        renderers=[FileRenderer('text/plain')],
+    )
+    def get(self) -> FileResponse:
+        return FileResponse(
+            io.BytesIO(b'Hello'),
+            content_type='text/plain',
+        )
+
+
 @pytest.mark.django_db
 def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
     """Ensures we can return files from a sync endpoint."""
@@ -56,6 +70,26 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
         }
         assert isinstance(response.streaming_content, Iterator)
         assert response.getvalue() == _FILE_CONTENT
+
+
+@pytest.mark.django_db
+def test_return_file_without_attachment_sync(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures file responses do not require ``as_attachment``."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _InlineFileSyncController.as_view()(request)
+
+    with closing(response):
+        assert isinstance(response, FileResponse)
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers == {
+            'Content-Type': 'text/plain',
+            'Content-Length': '5',
+        }
+        assert isinstance(response.streaming_content, Iterator)
+        assert response.getvalue() == b'Hello'
 
 
 @final
