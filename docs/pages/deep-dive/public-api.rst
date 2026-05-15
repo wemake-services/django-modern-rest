@@ -165,10 +165,7 @@ Utilities
 
 .. autodata:: dmr.types.Json
 
-.. autoclass:: dmr.types.Empty
-  :members:
-
-.. autodata:: dmr.types.EmptyObj
+.. autodata:: dmr.types.EMPTY
 
 .. autoclass:: dmr.types.AnnotationsContext
   :members:
