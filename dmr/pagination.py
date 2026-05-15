@@ -1,5 +1,6 @@
 import dataclasses
 from base64 import b64decode, b64encode
+from binascii import Error as BinasciiError
 from collections.abc import Sequence
 from typing import Any, Generic, Protocol, TypeVar
 
@@ -43,22 +44,16 @@ class Paginated(Generic[_ModelT]):
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class CursorPaginated(Generic[_ModelT]):
-    """Cursor Paginated."""
+    """
+    Container for results returned from cursor paginator.
+
+    It is returned from `page()` and `prev_page()` methods of
+    :class:`SyncCursorPaginator` and :class:`AsyncCursorPaginator` protocols.
+    """
 
     next_cursor: str | None = None
     prev_cursor: str | None = None
     object_list: Sequence[_ModelT]
-
-
-@dataclasses.dataclass(frozen=True, kw_only=True)
-class InvalidCursorError(Exception):
-    """Invalid cursor."""
-
-    message: str = 'Invalid cursor'
-
-
-NONE_STRING = '::None'
-REWERSE_ORDER_PREFIX = '-'
 
 
 class SyncCursorPaginator(Protocol, Generic[_ModelT]):
@@ -99,6 +94,17 @@ class AsyncCursorPaginator(Protocol, Generic[_ModelT]):
     ) -> CursorPaginated[_ModelT]:
         """Get the page that was before the page of the provided cursor."""
         raise NotImplementedError
+
+
+NONE_STRING = '::None'
+REWERSE_ORDER_PREFIX = '-'
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class InvalidCursorError(Exception):
+    """This error raises during the cursor decoding if it invalid."""
+
+    message: str = 'Invalid cursor'
 
 
 class DjangoCursorPaginator(  # noqa: WPS214
@@ -365,9 +371,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> str:
         return b64encode(
             delimiter.join(cursor_values).encode('utf-8'),
-        ).decode(
-            'ascii',
-        )
+        ).decode('ascii')
 
     def _decode_cursor(
         self,
@@ -381,8 +385,13 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 .decode('utf-8')
                 .split(delimiter)
             )
-        except (TypeError, ValueError):
-            raise InvalidCursorError from None
+        except (
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            BinasciiError,
+        ) as exc:
+            raise InvalidCursorError from exc
 
     def _reverse_fields_ordering(
         self,
