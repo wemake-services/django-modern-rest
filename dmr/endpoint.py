@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
-from typing_extensions import ParamSpec, TypeVar
+from typing_extensions import ParamSpec, Sentinel, TypeVar
 
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
