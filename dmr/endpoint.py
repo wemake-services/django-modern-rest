@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
-from typing_extensions import ParamSpec, TypeVar
+from typing_extensions import ParamSpec, Sentinel, TypeVar
 
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
@@ -46,7 +46,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import Empty, EmptyObj
+from dmr.types import EMPTY
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
@@ -608,7 +608,7 @@ def validate(  # noqa: WPS234
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -639,7 +639,7 @@ def validate(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -670,7 +670,7 @@ def validate(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -700,7 +700,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -861,7 +861,7 @@ def modify(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -892,7 +892,7 @@ def modify(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -924,7 +924,7 @@ def modify(
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -955,7 +955,7 @@ def modify(  # noqa: WPS211
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
-    throttling_allow_unsafe_cache: bool | Empty | None = EmptyObj,
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,

@@ -15,7 +15,7 @@ from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from typing_extensions import deprecated, override
+from typing_extensions import Sentinel, deprecated, override
 
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
@@ -33,7 +33,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import AnnotationsContext, Empty, EmptyObj, infer_type_args
+from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
@@ -162,7 +162,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     throttling: ClassVar[
         Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
     ] = ()
-    throttling_allow_unsafe_cache: ClassVar[bool | Empty | None] = EmptyObj
+    throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
