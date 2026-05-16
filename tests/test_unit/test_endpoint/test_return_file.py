@@ -97,7 +97,10 @@ def test_file_attachment_headers() -> None:
     """Ensures attachment responses require ``Content-Disposition``."""
     spec = FileResponseSpec(as_attachment=True, headers=None)
 
-    assert spec.headers == {'Content-Disposition': HeaderSpec()}
+    assert spec.headers == {
+        'Content-Length': HeaderSpec(),
+        'Content-Disposition': HeaderSpec(),
+    }
 
 
 @final

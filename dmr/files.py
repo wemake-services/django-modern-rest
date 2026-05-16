@@ -26,19 +26,19 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
-def _response_headers(
+def file_response_headers(
     headers: Mapping[str, HeaderSpec] | None,
     *,
     as_attachment: bool,
-) -> Mapping[str, HeaderSpec] | None:
+) -> Mapping[str, HeaderSpec]:
     """Build headers expected from ``FileResponse``."""
-    if not as_attachment:
-        return headers
-
-    return {
+    response_headers = {
+        'Content-Length': HeaderSpec(),
         **(headers or {}),
-        'Content-Disposition': HeaderSpec(),
     }
+    if as_attachment:
+        response_headers['Content-Disposition'] = HeaderSpec()
+    return response_headers
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
@@ -133,9 +133,7 @@ class FileResponseSpec(ResponseSpec):
     )
     headers: Mapping[str, HeaderSpec] | None = dataclasses.field(
         kw_only=True,
-        default_factory=lambda: {
-            'Content-Length': HeaderSpec(),
-        },
+        default=None,
     )
     as_attachment: bool = dataclasses.field(kw_only=True, default=False)
     file_body: type[FileBody] = dataclasses.field(
@@ -150,7 +148,7 @@ class FileResponseSpec(ResponseSpec):
         object.__setattr__(
             self,
             'headers',
-            _response_headers(
+            file_response_headers(
                 self.headers,
                 as_attachment=self.as_attachment,
             ),
