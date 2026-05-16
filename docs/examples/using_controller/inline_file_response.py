@@ -21,3 +21,4 @@ class InlineFileController(Controller[PydanticSerializer]):
 
 
 # run: {"controller": "InlineFileController", "method": "get", "url": "/api/file/", "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
+# openapi: {"controller": "InlineFileController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

@@ -14,7 +14,9 @@ We support file and other binary responses.
 To do so, you indicate that you will return a file with
 :class:`dmr.files.FileResponseSpec` and specify a file renderer.
 We provide :class:`dmr.renderers.FileRenderer` for this case.
-It can also accept a specific ``content_type`` to render:
+It can also accept a specific ``content_type`` to render.
+Set ``as_attachment=True`` when Django's ``FileResponse`` is returned as
+an attachment:
 
 .. literalinclude:: /examples/using_controller/file_response.py
   :caption: views.py
@@ -23,8 +25,8 @@ It can also accept a specific ``content_type`` to render:
   :emphasize-lines: 16, 17
 
 If you don't pass ``filename`` or ``as_attachment=True`` to Django's
-``FileResponse``, it will be returned inline and ``Content-Disposition``
-won't be required:
+``FileResponse``, use the default ``FileResponseSpec()``. It will be returned
+inline and ``Content-Disposition`` won't be required:
 
 .. literalinclude:: /examples/using_controller/inline_file_response.py
   :caption: views.py

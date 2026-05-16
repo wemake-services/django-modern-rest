@@ -10,6 +10,7 @@ from django.http import FileResponse
 
 from dmr import Controller, validate
 from dmr.files import FileResponseSpec
+from dmr.headers import HeaderSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
@@ -27,7 +28,7 @@ _CONTENT_LENGTH: Final = str(len(_FILE_CONTENT))
 @final
 class _FileSyncController(Controller[PydanticSerializer]):
     @validate(
-        FileResponseSpec(),
+        FileResponseSpec(as_attachment=True),
         renderers=[FileRenderer()],
     )
     def get(self) -> FileResponse:
@@ -92,11 +93,18 @@ def test_return_file_without_attachment_sync(
         assert response.getvalue() == b'Hello'
 
 
+def test_file_attachment_headers() -> None:
+    """Ensures attachment responses require ``Content-Disposition``."""
+    spec = FileResponseSpec(as_attachment=True, headers=None)
+
+    assert spec.headers == {'Content-Disposition': HeaderSpec()}
+
+
 @final
 class _FileAsyncController(Controller[PydanticSerializer]):
     renderers = (FileRenderer('text/plain'),)
 
-    @validate(FileResponseSpec())
+    @validate(FileResponseSpec(as_attachment=True))
     async def get(self) -> FileResponse:
         return FileResponse(
             # We don't care that it is sync:

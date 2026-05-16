@@ -355,11 +355,6 @@
                     "type": "string"
                   },
                   "required": true
-                },
-                "Content-Disposition": {
-                  "schema": {
-                    "type": "string"
-                  }
                 }
               },
               "content": {
