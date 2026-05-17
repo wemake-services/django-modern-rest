@@ -274,6 +274,7 @@ select = [
   "SLF",  # flake8-self
   "SLOT", # flake8-slots
   "T100", # flake8-debugger
+  "TID",  # flake8-tidy-imports
   "TRY",  # tryceratops
   "UP",   # pyupgrade
   "W",    # pycodestyle
@@ -311,6 +312,9 @@ pydocstyle.convention = "google"
 
 # For `django_test_app` and `docs` only:
 isort.known-first-party = ["server", "examples"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.TypedDict".msg = "Use typing_extensions.TypedDict instead."
 
 [tool.ruff.lint.per-file-ignores]
 # Allow imports inside fixtures:

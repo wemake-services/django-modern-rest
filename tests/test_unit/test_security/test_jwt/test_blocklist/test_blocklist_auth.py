@@ -3,7 +3,7 @@ import json
 import secrets
 from collections.abc import Sequence
 from http import HTTPStatus
-from typing import Any, Final, Protocol, TypedDict, Unpack, final
+from typing import Any, Final, Protocol, Unpack, final
 
 import pytest
 from django.apps import apps
@@ -11,6 +11,7 @@ from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from inline_snapshot import snapshot
+from typing_extensions import TypedDict
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic.serializer import PydanticSerializer

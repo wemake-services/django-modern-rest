@@ -1,7 +1,8 @@
-from typing import Final, NotRequired, TypedDict
+from typing import Final, NotRequired
 
 import pydantic
 from django.core.paginator import Paginator
+from typing_extensions import TypedDict
 
 from dmr import Controller, Query
 from dmr.pagination import Page, Paginated

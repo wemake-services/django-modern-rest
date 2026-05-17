@@ -2,13 +2,14 @@ import datetime as dt
 import secrets
 from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import Any, Final, TypeAlias, TypedDict, Unpack, final
+from typing import Any, Final, TypeAlias, Unpack, final
 
 import pytest
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from freezegun.api import FrozenDateTimeFactory
+from typing_extensions import TypedDict
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer

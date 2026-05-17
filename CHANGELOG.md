@@ -27,6 +27,12 @@ of requirements for an API to count as public.
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
 
+### Misc
+
+- Use `typing_extensions.Sentinel` for `dmr.types.EMPTY`, #995
+- `pyright@1.0` official support, #1015
+- `mypy@2.0` official support, #1013
+
 
 ## Version 0.9.0 (2026-05-07)
 
