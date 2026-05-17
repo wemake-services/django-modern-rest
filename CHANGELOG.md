@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## Version 0.9.0 (2026-05-07)
+## WIP
 
 ### Breaking changes
 
@@ -26,6 +26,9 @@ of requirements for an API to count as public.
   and does not include `Content-Disposition` by default. Use
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
+
+
+## Version 0.9.0 (2026-05-07)
 
 ### Features
 
