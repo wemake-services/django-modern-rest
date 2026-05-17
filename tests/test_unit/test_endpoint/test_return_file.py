@@ -1,3 +1,4 @@
+import io
 import pathlib
 from collections.abc import Iterator
 from contextlib import closing
@@ -9,6 +10,7 @@ from django.http import FileResponse
 
 from dmr import Controller, validate
 from dmr.files import FileResponseSpec
+from dmr.headers import HeaderSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
@@ -26,7 +28,7 @@ _CONTENT_LENGTH: Final = str(len(_FILE_CONTENT))
 @final
 class _FileSyncController(Controller[PydanticSerializer]):
     @validate(
-        FileResponseSpec(),
+        FileResponseSpec(as_attachment=True),
         renderers=[FileRenderer()],
     )
     def get(self) -> FileResponse:
@@ -34,6 +36,19 @@ class _FileSyncController(Controller[PydanticSerializer]):
             pathlib.Path(_FILEPATH).open(mode='rb'),
             filename='receipt.txt',
             as_attachment=True,
+            content_type='text/plain',
+        )
+
+
+@final
+class _InlineFileSyncController(Controller[PydanticSerializer]):
+    @validate(
+        FileResponseSpec(),
+        renderers=[FileRenderer('text/plain')],
+    )
+    def get(self) -> FileResponse:
+        return FileResponse(
+            io.BytesIO(b'Hello'),
             content_type='text/plain',
         )
 
@@ -58,11 +73,41 @@ def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
         assert response.getvalue() == _FILE_CONTENT
 
 
+@pytest.mark.django_db
+def test_return_file_without_attachment_sync(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures file responses do not require ``as_attachment``."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _InlineFileSyncController.as_view()(request)
+
+    with closing(response):
+        assert isinstance(response, FileResponse)
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers == {
+            'Content-Type': 'text/plain',
+            'Content-Length': '5',
+        }
+        assert isinstance(response.streaming_content, Iterator)
+        assert response.getvalue() == b'Hello'
+
+
+def test_file_attachment_headers() -> None:
+    """Ensures attachment responses require ``Content-Disposition``."""
+    spec = FileResponseSpec(as_attachment=True, headers=None)
+
+    assert spec.headers == {
+        'Content-Length': HeaderSpec(),
+        'Content-Disposition': HeaderSpec(),
+    }
+
+
 @final
 class _FileAsyncController(Controller[PydanticSerializer]):
     renderers = (FileRenderer('text/plain'),)
 
-    @validate(FileResponseSpec())
+    @validate(FileResponseSpec(as_attachment=True))
     async def get(self) -> FileResponse:
         return FileResponse(
             # We don't care that it is sync:

@@ -68,6 +68,15 @@ class _FileResponseController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
+class _AttachmentFileResponseController(Controller[PydanticSerializer]):
+    @validate(
+        FileResponseSpec(as_attachment=True),
+        renderers=[FileRenderer('image/png')],
+    )
+    async def get(self) -> FileResponse:
+        raise NotImplementedError
+
+
 def test_file_response_schema(snapshot: SnapshotAssertion) -> None:
     """Ensure that schema is correct for file response controller."""
     assert (
@@ -76,6 +85,29 @@ def test_file_response_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     '',
                     [path('file-response/', _FileResponseController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+def test_attachment_file_response_schema(
+    snapshot: SnapshotAssertion,
+) -> None:
+    """Ensure attachment file response schema has disposition header."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    '',
+                    [
+                        path(
+                            'file-attachment-response/',
+                            _AttachmentFileResponseController.as_view(),
+                        ),
+                    ],
                 ),
             ).convert(),
             indent=2,

@@ -26,6 +26,21 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
+def file_response_headers(
+    headers: Mapping[str, HeaderSpec] | None,
+    *,
+    as_attachment: bool,
+) -> Mapping[str, HeaderSpec]:
+    """Build headers expected from ``FileResponse``."""
+    response_headers = {
+        'Content-Length': HeaderSpec(),
+        **(headers or {}),
+    }
+    if as_attachment:
+        response_headers['Content-Disposition'] = HeaderSpec()
+    return response_headers
+
+
 @dataclasses.dataclass(slots=True, frozen=True)
 class FileBody:
     """Special type that indicates that response returns a file body."""
@@ -105,6 +120,8 @@ class FileResponseSpec(ResponseSpec):
     Special :class:`~dmr.metadata.ResponseSpec` subclass for files.
 
     Attributes:
+        as_attachment: Marks responses with ``Content-Disposition`` header
+            as required. Use together with ``FileResponse(as_attachment=True)``.
         file_body: Model to be used for file body schema generation.
 
     """
@@ -116,15 +133,26 @@ class FileResponseSpec(ResponseSpec):
     )
     headers: Mapping[str, HeaderSpec] | None = dataclasses.field(
         kw_only=True,
-        default_factory=lambda: {
-            'Content-Length': HeaderSpec(),
-            'Content-Disposition': HeaderSpec(),
-        },
+        default=None,
     )
+    as_attachment: bool = dataclasses.field(kw_only=True, default=False)
     file_body: type[FileBody] = dataclasses.field(
         kw_only=True,
         default=FileBody,
     )
+
+    @override
+    def __post_init__(self) -> None:
+        """Set required headers depending on how files are returned."""
+        ResponseSpec.__post_init__(self)
+        object.__setattr__(
+            self,
+            'headers',
+            file_response_headers(
+                self.headers,
+                as_attachment=self.as_attachment,
+            ),
+        )
 
     @override
     def get_schema(

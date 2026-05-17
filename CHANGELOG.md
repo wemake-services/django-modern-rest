@@ -20,6 +20,13 @@ of requirements for an API to count as public.
 
 ## Version 0.9.0 (2026-05-07)
 
+### Breaking changes
+
+- *Breaking*: `FileResponseSpec()` now describes inline file responses
+  and does not include `Content-Disposition` by default. Use
+  `FileResponseSpec(as_attachment=True)` when returning Django's
+  `FileResponse(..., as_attachment=True)`, #1020
+
 ### Features
 
 - Added `throttling_allow_unsafe_cache` setting to control whether unsafe
