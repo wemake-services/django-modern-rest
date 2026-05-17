@@ -49,3 +49,5 @@ API Reference
 
 .. autoclass:: dmr.files.FileResponseSpec
   :members:
+
+.. autofunction:: dmr.files.file_response_headers
