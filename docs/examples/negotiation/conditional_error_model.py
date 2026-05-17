@@ -1,7 +1,7 @@
-from typing import Annotated, TypedDict
+from typing import Annotated
 
 import pydantic
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from dmr import Body, Controller
 from dmr.errors import ErrorModel, ErrorType
