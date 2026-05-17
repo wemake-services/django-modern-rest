@@ -35,7 +35,7 @@ is always set and usually contains the filename sent to the client:
   :linenos:
   :emphasize-lines: 16-17, 22-23
 
-The difference comes from the``Content-Disposition``:
+The difference comes from the ``Content-Disposition`` HTTP header:
 it tells clients whether the response body is expected to be displayed inline
 or downloaded as an attachment.
 
