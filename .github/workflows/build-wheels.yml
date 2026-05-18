@@ -44,6 +44,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       - name: Install dependencies
         run: |
@@ -80,6 +82,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       # Keep cibuildwheel version in sync with pyproject.toml
       - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
@@ -107,6 +111,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       - name: Build sdist and pure-Python wheel
         run: uv build --sdist --wheel
