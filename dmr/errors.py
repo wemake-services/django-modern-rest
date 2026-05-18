@@ -16,9 +16,10 @@ from django.http import HttpResponse
 from django.utils.encoding import force_str
 from typing_extensions import TypedDict
 
-from dmr.exceptions import (
+from dmr.exceptions import (  # noqa: WPS235
     DataRenderingError,
     InternalServerError,
+    InvalidPaginationCursorError,
     NotAcceptableError,
     NotAuthenticatedError,
     RequestSerializationError,
@@ -116,6 +117,7 @@ def format_error(  # noqa: C901, WPS231
             NotAcceptableError,
             NotAuthenticatedError,
             TooManyRequestsError,
+            InvalidPaginationCursorError,
         ),
     ):
         error_type = getattr(error, 'error_type', ErrorType.value_error)
