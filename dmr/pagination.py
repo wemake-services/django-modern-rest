@@ -6,6 +6,8 @@ from typing import Any, Generic, Protocol, TypeVar
 from django.db import models
 from typing_extensions import override
 
+from dmr.exceptions import InvalidPaginationCursorError
+
 _ModelT = TypeVar('_ModelT')
 _DjangoModelT = TypeVar('_DjangoModelT', bound=models.Model)
 
@@ -43,12 +45,7 @@ class Paginated(Generic[_ModelT]):
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class CursorPaginated(Generic[_ModelT]):
-    """
-    Container for results returned from cursor paginator.
-
-    It is returned from `page()` and `prev_page()` methods of
-    :class:`SyncCursorPaginator` and :class:`AsyncCursorPaginator` protocols.
-    """
+    """Container for results returned from cursor paginator."""
 
     next_cursor: str | None = None
     prev_cursor: str | None = None
@@ -99,23 +96,11 @@ NONE_STRING = '::None'
 REWERSE_ORDER_PREFIX = '-'
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
-class InvalidCursorError(Exception):
-    """This error raises during the cursor decoding if it invalid."""
-
-    message: str = 'Invalid cursor'
-
-
 class DjangoCursorPaginator(  # noqa: WPS214
     AsyncCursorPaginator[_DjangoModelT],
     Generic[_DjangoModelT],
 ):
-    """
-    The default implementation of the asynchronous cursor for django.
-
-    It was based on the implementation from `django-cursor-pagination`, but with
-    our own API and a bit refactoring.
-    """
+    """Async cursor paginator to be used with Django ``QuerySet``."""
 
     def __init__(
         self,
@@ -123,12 +108,13 @@ class DjangoCursorPaginator(  # noqa: WPS214
         query_set: models.QuerySet[_DjangoModelT],
     ) -> None:
         """
-        Create a paginator.
+        Initialize a paginator ordering fields and with query set.
 
         Args:
-            ordering_fields: Fields to order by. To reverse the order, use the
-            `-` symbol sign before the field names (for example, `-created_at`).
-            query_set: QuerySet which will used to paginate.
+            ordering_fields: Fields to order by. To reverse the order for the
+                field, use the `-` symbol sign before the field name
+                (for example, `-created_at`).
+            query_set: `QuerySet` to be used for pagination.
         """
         self.ordering_fields = ordering_fields
         self.query_set = query_set
@@ -142,23 +128,23 @@ class DjangoCursorPaginator(  # noqa: WPS214
         """
         Get page with provided cursor.
 
-        If `cursor == None`, the first page will be returned by default.
-        """
-        if not await self.query_set.aexists():
-            return CursorPaginated(
-                next_cursor=None,
-                prev_cursor=None,
-                object_list=[],
-            )
+        Args:
+            per_page: Maximum number of objects to be returned in this page.
+            cursor: Cursor to get the page. Note that if ``cursor`` is ``None``,
+                the first page will be returned by default.
 
+        To navigate forward again, just use
+        :meth:`~dmr.pagination.DjangoCursorPaginator.page` with ``next_cursor``.
+        """
         query_set = self.query_set.order_by(
             *self._get_ordering(self.ordering_fields),
         )
 
-        if cursor is not None:
-            query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
+        if cursor is None:
+            return await self._paginated(query_set, per_page, first_page=True)
 
-        return await self._paginated(query_set, per_page)
+        query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
+        return await self._paginated(query_set, per_page, first_page=False)
 
     @override
     async def prev_page(
@@ -166,14 +152,13 @@ class DjangoCursorPaginator(  # noqa: WPS214
         per_page: int,
         cursor: str,
     ) -> CursorPaginated[_DjangoModelT]:
-        """Get the page that was before the page of the provided cursor."""
-        if not await self.query_set.aexists():
-            return CursorPaginated(
-                next_cursor=None,
-                prev_cursor=None,
-                object_list=[],
-            )
+        """
+        Get the page that was before the provided cursor.
 
+        To continue navigating backwards, just pass
+        ``prev_cursor`` returned by the previous
+        :meth:`~dmr.pagination.DjangoCursorPaginator.prev_page` call.
+        """
         query_set = self.query_set.order_by(
             *self._get_reverse_ordering(
                 self._reverse_fields_ordering(self.ordering_fields),
@@ -184,23 +169,45 @@ class DjangoCursorPaginator(  # noqa: WPS214
             query_set,
         )[: per_page + 1]
 
-        return await self._paginated(query_set, per_page, prev_page=True)
+        return await self._reversed_paginated(query_set, per_page)
 
     async def _paginated(
         self,
         query_set: models.QuerySet[_DjangoModelT],
         per_page: int,
-        prev_page: bool = False,  # noqa: FBT001, FBT002
+        first_page: bool,  # noqa: FBT001
     ) -> CursorPaginated[_DjangoModelT]:
         page_objects = [obj async for obj in query_set[: per_page + 1]]  # noqa: WPS110
 
         has_next = len(page_objects) > per_page
         page_objects = page_objects[:per_page]
-        if prev_page:
-            page_objects.reverse()
 
         next_cursor = self._cursor(page_objects[-1]) if has_next else None
-        prev_cursor = self._cursor(page_objects[0]) if page_objects else None
+        prev_cursor = (
+            self._cursor(page_objects[0])
+            if page_objects and not first_page
+            else None
+        )
+
+        return CursorPaginated(
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            object_list=page_objects,
+        )
+
+    async def _reversed_paginated(
+        self,
+        query_set: models.QuerySet[_DjangoModelT],
+        per_page: int,
+    ) -> CursorPaginated[_DjangoModelT]:
+        page_objects = [obj async for obj in query_set[: per_page + 1]]  # noqa: WPS110
+
+        has_next = len(page_objects) > per_page
+        page_objects = page_objects[:per_page]
+        page_objects.reverse()
+
+        next_cursor = self._cursor(page_objects[0]) if page_objects else None
+        prev_cursor = self._cursor(page_objects[-1]) if has_next else None
 
         return CursorPaginated(
             next_cursor=next_cursor,
@@ -230,7 +237,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         for field in ordering_fields:
             column = field.lstrip(REWERSE_ORDER_PREFIX)
 
-            if field.lstrip(REWERSE_ORDER_PREFIX):
+            if field.startswith(REWERSE_ORDER_PREFIX):
                 nulls_ordering.append(models.F(column).asc(nulls_first=True))
                 continue
             nulls_ordering.append(models.F(column).desc(nulls_first=True))
@@ -242,9 +249,11 @@ class DjangoCursorPaginator(  # noqa: WPS214
         cursor_values: tuple[str | None, ...],
     ) -> models.Q:
         if not ordering_fields or not cursor_values:
-            return models.Q()
+            return models.Q()  # pragma: no cover
         if len(ordering_fields) != len(cursor_values):
-            raise ValueError('Ordering and cursor values must match length')
+            raise ValueError(  # pragma: no cover
+                'Ordering and cursor values must match length',
+            )
 
         position_values = [
             None
@@ -282,9 +291,11 @@ class DjangoCursorPaginator(  # noqa: WPS214
         cursor_values: tuple[str | None, ...],
     ) -> models.Q:
         if not ordering_fields or not cursor_values:
-            return models.Q()
+            return models.Q()  # pragma: no cover
         if len(ordering_fields) != len(cursor_values):
-            raise ValueError('Ordering and cursor values must match length')
+            raise ValueError(  # pragma: no cover
+                'Ordering and cursor values must match length',
+            )
 
         position_values = [
             None
@@ -384,12 +395,8 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 .decode('utf-8')
                 .split(delimiter)
             )
-        except (
-            TypeError,
-            UnicodeDecodeError,
-            ValueError,
-        ) as exc:
-            raise InvalidCursorError from exc
+        except (UnicodeError, ValueError) as exc:
+            raise InvalidPaginationCursorError from exc
 
     def _reverse_fields_ordering(
         self,
