@@ -98,25 +98,30 @@ your own metadata / models and use them with our framework.
 Cursor pagination
 ~~~~~~~~~~~~~~~~~
 
-We provide our own cursor pagination implementation:
-:class:`dmr.pagination.DjangoCursorPaginator`.
+To support it we have :class:`~dmr.pagination.SyncCursorPaginator` and :class:`~dmr.pagination.AsyncCursorPaginator`
+protocols. It's exposts minimal API with only 2 methods:
 
-It exposes a minimal API with only two methods:
+- :meth:`~dmr.pagination.SyncCursorPaginator.page` — returns the page with provided cursor
+- :meth:`~dmr.pagination.SyncCursorPaginator.prev_page` — returns the page that was before the provided cursor
 
-- ``page(per_page: int, cursor: str | None = None)`` —
-  returns a page of objects starting from the given cursor.
-  If ``cursor`` is ``None``, the first page is returned.
+This allows navigating through result sets in both forward and backward directions.
 
-- ``prev_page(per_page: int, cursor: str)`` —
-  returns the page of objects located before the given cursor.
+Both of it returns :class:`~dmr.pagination.CursorPaginated`, which contains:
 
-This allows navigating through result sets in both forward and backward
-directions using cursor-based pagination.
+- ``object_list`` — current page objects
 
-We also support any other pagination library.
+- ``next_cursor`` — cursor for the next page
 
-Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_
-or even your custom implementation.
+- ``prev_cursor`` — cursor for the previous page
+
+
+We provide a built-in async cursor paginator implementation:
+:class:`~dmr.pagination.DjangoCursorPaginator`.
+It implements the
+:class:`~dmr.pagination.AsyncCursorPaginator`
+protocol and works with Django ``QuerySet``.
+
+Other pagination libraries are supported as well.
 
 Any Django-compatible tool should work out of the box.
 
@@ -129,6 +134,9 @@ Interface
 .. autoclass:: dmr.pagination.Page
   :members:
 
+.. autoclass:: dmr.pagination.CursorPaginated
+  :members:
+
 .. autoclass:: dmr.pagination.SyncCursorPaginator
   :members:
 
@@ -136,9 +144,6 @@ Interface
   :members:
 
 .. autoclass:: dmr.pagination.DjangoCursorPaginator
-  :members:
-
-.. autoclass:: dmr.pagination.CursorPaginated
   :members:
 
 Filters
