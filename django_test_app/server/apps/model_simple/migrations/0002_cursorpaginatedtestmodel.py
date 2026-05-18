@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                         verbose_name='ID',
                     ),
                 ),
-                ('increment_id', models.IntegerField()),
+                ('order_field', models.IntegerField(null=True)),
             ],
         ),
     ]

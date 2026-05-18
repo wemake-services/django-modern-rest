@@ -13,4 +13,4 @@ class User(models.Model):
 
 
 class CursorPaginatedTestModel(models.Model):
-    increment_id = models.IntegerField()
+    order_field = models.IntegerField(null=True)
