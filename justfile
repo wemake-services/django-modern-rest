@@ -89,7 +89,7 @@ package:
     # TODO: remove `-` once we can support `orjson` in `pyproject.toml`
     -uv sync --all-groups --all-extras --locked --check
     uv pip check
-    # TODO: Temp fix, whilehttps://github.com/pypa/advisory-database/issues/284
+    # TODO: Temp fix, while https://github.com/pypa/advisory-database/issues/284
     # is open
     uv --preview-features audit audit --no-extra jwt
 
