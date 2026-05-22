@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from dmr.exceptions import InvalidPaginationCursorError
+from dmr.pagination import InvalidPaginationCursorError
 from server.apps.model_simple import (  # type: ignore[import-not-found]
     models,
 )

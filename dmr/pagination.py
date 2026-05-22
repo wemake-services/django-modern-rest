@@ -1,12 +1,20 @@
 import dataclasses
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
-from typing import Any, Generic, Protocol, TypeVar
+from http import HTTPStatus
+from typing import (
+    Any,
+    ClassVar,
+    Generic,
+    Protocol,
+    TypeVar,
+    final,
+)
 
 from django.db import models
+from django.utils.functional import Promise
+from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
-
-from dmr.exceptions import InvalidPaginationCursorError
 
 _ModelT = TypeVar('_ModelT')
 _DjangoModelT = TypeVar('_DjangoModelT', bound=models.Model)
@@ -90,6 +98,22 @@ class AsyncCursorPaginator(Protocol, Generic[_ModelT]):
     ) -> CursorPaginated[_ModelT]:
         """Get the page that was before the page of the provided cursor."""
         raise NotImplementedError
+
+
+@final
+class InvalidPaginationCursorError(Exception):
+    """Raised when the cursor passed for pagination is invalid."""
+
+    default_message: ClassVar[str | Promise] = _('Invalid cursor')
+    status_code: ClassVar[HTTPStatus] = HTTPStatus.BAD_REQUEST
+
+    def __init__(self, msg: str | Promise | None = None) -> None:
+        """Provides default error message."""
+        # Circular import:
+        from dmr.errors import ErrorType  # noqa: PLC0415
+
+        super().__init__(msg or self.default_message)
+        self.error_type = ErrorType.value_error
 
 
 NONE_STRING = '::None'

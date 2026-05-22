@@ -19,7 +19,6 @@ from typing_extensions import TypedDict
 from dmr.exceptions import (  # noqa: WPS235
     DataRenderingError,
     InternalServerError,
-    InvalidPaginationCursorError,
     NotAcceptableError,
     NotAuthenticatedError,
     RequestSerializationError,
@@ -27,6 +26,7 @@ from dmr.exceptions import (  # noqa: WPS235
     TooManyRequestsError,
     ValidationError,
 )
+from dmr.pagination import InvalidPaginationCursorError
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -235,6 +235,7 @@ _default_handled_excs: Final = (
     InternalServerError,
     DataRenderingError,
     TooManyRequestsError,
+    InvalidPaginationCursorError,
 )
 
 
