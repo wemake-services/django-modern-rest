@@ -32,8 +32,9 @@ def clean_modules() -> CleanModules:
             if modname in names or modname.startswith(prefixes):
                 orig_modules[modname] = sys.modules.pop(modname)
 
-        yield orig_modules
-
-        sys.modules.update(orig_modules)
+        try:
+            yield orig_modules
+        finally:
+            sys.modules.update(orig_modules)
 
     return factory

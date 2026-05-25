@@ -3,7 +3,7 @@ import os
 from collections.abc import Iterator
 from http import HTTPStatus
 from http.cookies import SimpleCookie
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 import schemathesis as st
@@ -82,7 +82,7 @@ st.openapi.format(
 class _DjangoSessionAuth:
     def get(
         self,
-        case: st.Case,
+        case: st.Case[Any],
         ctx: st.AuthContext,
     ) -> SimpleCookie:
         dmr_client = DMRClient()
@@ -97,7 +97,7 @@ class _DjangoSessionAuth:
 
     def set(
         self,
-        case: st.Case,
+        case: st.Case[Any],
         data: SimpleCookie,
         ctx: st.AuthContext,
     ) -> None:
@@ -114,7 +114,7 @@ class _DjangoSessionAuth:
 def test_schemathesis(
     tracecov_map: 'tracecov.CoverageMap | None',
     *,
-    case: st.Case,
+    case: st.Case[Any],
 ) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
     if tracecov_map is None:  # pragma: no cover
