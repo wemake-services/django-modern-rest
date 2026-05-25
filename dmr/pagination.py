@@ -55,9 +55,9 @@ class Paginated(Generic[_ModelT]):
 class CursorPaginated(Generic[_ModelT]):
     """Container for results returned from cursor paginator."""
 
+    object_list: Sequence[_ModelT]
     next_cursor: str | None = None
     prev_cursor: str | None = None
-    object_list: Sequence[_ModelT]
 
 
 class SyncCursorPaginator(Protocol, Generic[_ModelT]):
@@ -117,7 +117,7 @@ class InvalidPaginationCursorError(Exception):
 
 
 NONE_STRING = '::None'
-REWERSE_ORDER_PREFIX = '-'
+REVERSE_ORDER_PREFIX = '-'
 
 
 class DjangoCursorPaginator(  # noqa: WPS214
@@ -129,7 +129,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
     def __init__(
         self,
         ordering_fields: tuple[str, ...],
-        query_set: models.QuerySet[_DjangoModelT],
+        queryset: models.QuerySet[_DjangoModelT],
     ) -> None:
         """
         Initialize a paginator ordering fields and with query set.
@@ -138,10 +138,10 @@ class DjangoCursorPaginator(  # noqa: WPS214
             ordering_fields: Fields to order by. To reverse the order for the
                 field, use the `-` symbol sign before the field name
                 (for example, `-created_at`).
-            query_set: `QuerySet` to be used for pagination.
+            queryset: `QuerySet` to be used for pagination.
         """
         self.ordering_fields = ordering_fields
-        self.query_set = query_set
+        self.queryset = queryset
 
     @override
     async def page(
@@ -157,18 +157,19 @@ class DjangoCursorPaginator(  # noqa: WPS214
             cursor: Cursor to get the page. Note that if ``cursor`` is ``None``,
                 the first page will be returned by default.
 
-        To navigate forward again, just use
-        :meth:`~dmr.pagination.DjangoCursorPaginator.page` with ``next_cursor``.
+        To continue navigating forward, just use
+        :meth:`~dmr.pagination.DjangoCursorPaginator.page`
+        again with ``next_cursor``.
         """
-        query_set = self.query_set.order_by(
+        queryset = self.queryset.order_by(
             *self._get_ordering(self.ordering_fields),
         )
 
         if cursor is None:
-            return await self._paginated(query_set, per_page, first_page=True)
+            return await self._paginated(queryset, per_page, first_page=True)
 
-        query_set = self._apply_cursor(cursor, query_set)[: per_page + 1]
-        return await self._paginated(query_set, per_page, first_page=False)
+        queryset = self._apply_cursor(cursor, queryset)[: per_page + 1]
+        return await self._paginated(queryset, per_page, first_page=False)
 
     @override
     async def prev_page(
@@ -183,25 +184,25 @@ class DjangoCursorPaginator(  # noqa: WPS214
         ``prev_cursor`` returned by the previous
         :meth:`~dmr.pagination.DjangoCursorPaginator.prev_page` call.
         """
-        query_set = self.query_set.order_by(
+        queryset = self.queryset.order_by(
             *self._get_reverse_ordering(
                 self._reverse_fields_ordering(self.ordering_fields),
             ),
         )
-        query_set = self._apply_reverse_cursor(
+        queryset = self._apply_reverse_cursor(
             cursor,
-            query_set,
+            queryset,
         )[: per_page + 1]
 
-        return await self._reversed_paginated(query_set, per_page)
+        return await self._reversed_paginated(queryset, per_page)
 
     async def _paginated(
         self,
-        query_set: models.QuerySet[_DjangoModelT],
+        queryset: models.QuerySet[_DjangoModelT],
         per_page: int,
         first_page: bool,  # noqa: FBT001
     ) -> CursorPaginated[_DjangoModelT]:
-        page_objects = [obj async for obj in query_set[: per_page + 1]]  # noqa: WPS110
+        page_objects = [obj async for obj in queryset[: per_page + 1]]  # noqa: WPS110
 
         has_next = len(page_objects) > per_page
         page_objects = page_objects[:per_page]
@@ -221,10 +222,10 @@ class DjangoCursorPaginator(  # noqa: WPS214
 
     async def _reversed_paginated(
         self,
-        query_set: models.QuerySet[_DjangoModelT],
+        queryset: models.QuerySet[_DjangoModelT],
         per_page: int,
     ) -> CursorPaginated[_DjangoModelT]:
-        page_objects = [obj async for obj in query_set[: per_page + 1]]  # noqa: WPS110
+        page_objects = [obj async for obj in queryset[: per_page + 1]]  # noqa: WPS110
 
         has_next = len(page_objects) > per_page
         page_objects = page_objects[:per_page]
@@ -245,9 +246,9 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> list[models.OrderBy]:
         nulls_ordering: list[models.OrderBy] = []
         for field in ordering_fields:
-            column = field.lstrip(REWERSE_ORDER_PREFIX)
+            column = field.lstrip(REVERSE_ORDER_PREFIX)
 
-            if field.startswith(REWERSE_ORDER_PREFIX):
+            if field.startswith(REVERSE_ORDER_PREFIX):
                 nulls_ordering.append(models.F(column).desc(nulls_last=True))
                 continue
             nulls_ordering.append(models.F(column).asc(nulls_last=True))
@@ -259,9 +260,9 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> list[models.OrderBy]:
         nulls_ordering: list[models.OrderBy] = []
         for field in ordering_fields:
-            column = field.lstrip(REWERSE_ORDER_PREFIX)
+            column = field.lstrip(REVERSE_ORDER_PREFIX)
 
-            if field.startswith(REWERSE_ORDER_PREFIX):
+            if field.startswith(REVERSE_ORDER_PREFIX):
                 nulls_ordering.append(models.F(column).asc(nulls_first=True))
                 continue
             nulls_ordering.append(models.F(column).desc(nulls_first=True))
@@ -294,8 +295,8 @@ class DjangoCursorPaginator(  # noqa: WPS214
             ordering_fields,
             position_values,
         ):
-            is_reversed = ordering_field.startswith(REWERSE_ORDER_PREFIX)
-            order = ordering_field.lstrip(REWERSE_ORDER_PREFIX)
+            is_reversed = ordering_field.startswith(REVERSE_ORDER_PREFIX)
+            order = ordering_field.lstrip(REVERSE_ORDER_PREFIX)
 
             if position_value is None:
                 filtering_equality.update({f'{order}__isnull': True})
@@ -336,8 +337,8 @@ class DjangoCursorPaginator(  # noqa: WPS214
             ordering_fields,
             position_values,
         ):
-            is_reversed = ordering_field.startswith(REWERSE_ORDER_PREFIX)
-            order = ordering_field.lstrip(REWERSE_ORDER_PREFIX)
+            is_reversed = ordering_field.startswith(REVERSE_ORDER_PREFIX)
+            order = ordering_field.lstrip(REVERSE_ORDER_PREFIX)
 
             if pos_value is None:
                 node = {f'{order}__isnull': False}
@@ -360,9 +361,9 @@ class DjangoCursorPaginator(  # noqa: WPS214
     def _apply_cursor(
         self,
         cursor: str,
-        query_set: models.QuerySet[_DjangoModelT],
+        queryset: models.QuerySet[_DjangoModelT],
     ) -> models.QuerySet[_DjangoModelT]:
-        return query_set.filter(
+        return queryset.filter(
             self._common_filter(
                 ordering_fields=self.ordering_fields,
                 cursor_values=self._decode_cursor(cursor),
@@ -372,9 +373,9 @@ class DjangoCursorPaginator(  # noqa: WPS214
     def _apply_reverse_cursor(
         self,
         cursor: str,
-        query_set: models.QuerySet[_DjangoModelT],
+        queryset: models.QuerySet[_DjangoModelT],
     ) -> models.QuerySet[_DjangoModelT]:
-        return query_set.filter(
+        return queryset.filter(
             self._reverse_filter(
                 ordering_fields=self.ordering_fields,
                 cursor_values=self._decode_cursor(cursor),
@@ -390,7 +391,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> list[str]:
         position: list[str] = []
         for order in self.ordering_fields:
-            field_path = order.lstrip(REWERSE_ORDER_PREFIX).split('__')
+            field_path = order.lstrip(REVERSE_ORDER_PREFIX).split('__')
 
             attr = instance
             for field in field_path:
@@ -429,7 +430,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         # Convert '-created_at' to 'created_at' and vice versa
         return tuple(
             field[1:]
-            if field.startswith(REWERSE_ORDER_PREFIX)
-            else f'{REWERSE_ORDER_PREFIX}{field}'
+            if field.startswith(REVERSE_ORDER_PREFIX)
+            else f'{REVERSE_ORDER_PREFIX}{field}'
             for field in ordering_fields
         )
