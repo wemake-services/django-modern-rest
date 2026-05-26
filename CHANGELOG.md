@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## Version 0.10.0 (2026-05-26)
 
 ### Breaking changes
 
@@ -26,6 +26,15 @@ of requirements for an API to count as public.
   and does not include `Content-Disposition` by default. Use
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
+
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Change all existing ``dmr.files.FileResponseSpec`` usages
+to include ``as_attachment=True`` parameter.
+```
 
 ### Features
 
@@ -37,8 +46,8 @@ of requirements for an API to count as public.
 ### Misc
 
 - Use `typing_extensions.Sentinel` for `dmr.types.EMPTY`, #995
-- `pyright@1.0` official support, #1015
-- `mypy@2.0` official support, #1013
+- `pyrefly@1.0` official support, #1015
+- `mypy@2.0` and `mypy@2.1` official support, #1013
 
 
 ## Version 0.9.0 (2026-05-07)
