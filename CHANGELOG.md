@@ -31,7 +31,7 @@ of requirements for an API to count as public.
 
 - Added support for JSON Schema 2020-12 dynamic reference keywords
   (`$dynamicRef`, `$dynamicAnchor`, `$defs`) in OpenAPI schema generation.
-  These can now be propagated through `extra_json_schema` 
+  These can now be propagated through `extra_json_schema`
   for generic type definitions, #1039
 
 ### Misc
