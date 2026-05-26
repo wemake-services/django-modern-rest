@@ -134,8 +134,8 @@ def normalize_key(key: str) -> str:
         'contentMediaType'
 
     """
-    if key == 'ref':
-        return '$ref'
+    if key in {'ref', 'defs'}:
+        return f'${key}'
 
     if key in {'param_in', 'security_scheme_in'}:
         return 'in'
@@ -145,9 +145,12 @@ def normalize_key(key: str) -> str:
 
     if '_' in key:
         components = key.split('_')
-        return components[0].lower() + ''.join(
+        camel_case_component = components[0].lower() + ''.join(
             component.title() for component in components[1:]
         )
+        if camel_case_component in {'dynamicAnchor', 'dynamicRef'}:
+            return f'${camel_case_component}'
+        return camel_case_component
 
     return key
 

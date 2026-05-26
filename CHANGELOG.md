@@ -27,6 +27,13 @@ of requirements for an API to count as public.
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
 
+### Features
+
+- Added support for JSON Schema 2020-12 dynamic reference keywords
+  (`$dynamicRef`, `$dynamicAnchor`, `$defs`) in OpenAPI schema generation.
+  These can now be propagated through `extra_json_schema`
+  for generic type definitions, #1039
+
 ### Misc
 
 - Use `typing_extensions.Sentinel` for `dmr.types.EMPTY`, #995
