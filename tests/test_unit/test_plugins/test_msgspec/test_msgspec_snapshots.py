@@ -190,3 +190,44 @@ def test_issue990(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+class _DynamicRefsModel(msgspec.Struct):
+    # See https://github.com/wemake-services/django-modern-rest/issues/1039
+    anchored: Annotated[
+        str,
+        msgspec.Meta(extra_json_schema={'$dynamicAnchor': 'T'}),
+    ]
+    referenced: Annotated[
+        str,
+        msgspec.Meta(extra_json_schema={'$dynamicRef': '#T'}),
+    ]
+    with_defs: Annotated[
+        str,
+        msgspec.Meta(
+            extra_json_schema={
+                '$defs': {'helper': {'type': 'integer'}},
+            },
+        ),
+    ]
+
+
+class _DynamicRefsController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: Body[_DynamicRefsModel]) -> str:
+        raise NotImplementedError
+
+
+def test_dynamic_refs_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure $dynamicRef, $dynamicAnchor and $defs propagate."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('/dynamic-refs', _DynamicRefsController.as_view())],
+                ),
+            ).convert(skip_validation=True),
+            indent=2,
+        )
+        == snapshot
+    )

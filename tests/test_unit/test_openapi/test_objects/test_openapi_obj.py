@@ -3,7 +3,13 @@ from typing import Any
 
 import pytest
 
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema, Tag
+from dmr.openapi.objects import (
+    OpenAPIFormat,
+    OpenAPIType,
+    Reference,
+    Schema,
+    Tag,
+)
 from dmr.openapi.objects.openapi import convert, normalize_key, normalize_value
 
 
@@ -12,6 +18,9 @@ from dmr.openapi.objects.openapi import convert, normalize_key, normalize_value
     [
         # Special cases for reserved keywords
         ('ref', '$ref'),
+        ('defs', '$defs'),
+        ('dynamic_ref', '$dynamicRef'),
+        ('dynamic_anchor', '$dynamicAnchor'),
         ('param_in', 'in'),
         # Schema prefix removal
         ('schema_not', 'not'),
@@ -189,6 +198,44 @@ def test_normalize_value_dict(
             {
                 'not': {'type': 'string'},
                 'allOf': [{'type': 'object'}],
+            },
+        ),
+        # Generic List<T> base schema
+        (
+            Schema(
+                type=OpenAPIType.ARRAY,
+                defs={
+                    'content': Schema(dynamic_anchor='T'),
+                },
+                items=Schema(dynamic_ref='#T'),
+            ),
+            {
+                'type': 'array',
+                '$defs': {
+                    'content': {'$dynamicAnchor': 'T'},
+                },
+                'items': {'$dynamicRef': '#T'},
+            },
+        ),
+        # Concrete List<string> referencing the generic via Reference
+        (
+            Schema(
+                defs={
+                    'string-items': Schema(
+                        dynamic_anchor='T',
+                        type=OpenAPIType.STRING,
+                    ),
+                },
+                all_of=[Reference(ref='list-of-t')],
+            ),
+            {
+                '$defs': {
+                    'string-items': {
+                        '$dynamicAnchor': 'T',
+                        'type': 'string',
+                    },
+                },
+                'allOf': [{'$ref': 'list-of-t'}],
             },
         ),
     ],
