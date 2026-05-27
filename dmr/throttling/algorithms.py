@@ -194,6 +194,7 @@ class LeakyBucket(BaseThrottleAlgorithm):
     ) -> CachedRateLimit:
         """Check access; raise when the bucket is full."""
         cache_object, now = self._process_cache(throttle, cache_object)
+        # First, decrease the usage level for the elapsed time:
         elapsed = now - cache_object['time']
         level = max(
             0,
@@ -201,7 +202,7 @@ class LeakyBucket(BaseThrottleAlgorithm):
             cache_object['history'][0] - elapsed * throttle.max_requests,
         )
         cache_object = CachedRateLimit(history=[level], time=now)
-
+        # Do the check:
         if cache_object['history'][0] + throttle.duration_in_seconds > (
             throttle.max_requests * throttle.duration_in_seconds
         ):
@@ -214,7 +215,7 @@ class LeakyBucket(BaseThrottleAlgorithm):
                     cache_object['time'],
                 ),
             )
-        # One scaled unit of a request:
+        # Add one scaled unit for the performed request:
         cache_object['history'][0] += throttle.duration_in_seconds
         return cache_object
 
