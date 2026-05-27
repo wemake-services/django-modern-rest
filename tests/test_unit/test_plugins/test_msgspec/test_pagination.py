@@ -443,3 +443,18 @@ async def test_django_paginator_reverse_order() -> None:
         4,
         5,
     ]
+
+
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_position_from_instance_breaks_on_none() -> None:
+    """Test nested attribute traversal stops on ``None``."""
+    paginator = DjangoCursorPaginator(
+        ('order_field__id',),
+        models.CursorPaginatedTestModel.objects.none(),
+    )
+
+    position = paginator._position_from_instance(
+        models.CursorPaginatedTestModel(),
+    )
+
+    assert position == [None]
