@@ -121,7 +121,7 @@ It implements the
 :class:`~dmr.pagination.AsyncCursorPaginator`
 protocol and works with Django's ``QuerySet``.
 
-If an invalid cursor is passed to a :class:`~dmr.pagination.DjangoCursorPaginator` page methods, 
+If an invalid cursor is passed to a :class:`~dmr.pagination.DjangoCursorPaginator` page methods,
 :class:`dmr.pagination.InvalidPaginationCursorError` is raised and returned as a ``BAD_REQUEST`` response."
 
 Other pagination libraries are supported as well.
