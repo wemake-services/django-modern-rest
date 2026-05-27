@@ -132,7 +132,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         queryset: models.QuerySet[_DjangoModelT],
     ) -> None:
         """
-        Initialize a paginator ordering fields and with query set.
+        Initialize a paginator with ordering fields and a queryset.
 
         Args:
             ordering_fields: Fields to order by. To reverse the order for the
@@ -180,9 +180,12 @@ class DjangoCursorPaginator(  # noqa: WPS214
         """
         Get the page that was before the provided cursor.
 
-        To continue navigating backwards, just pass
-        ``prev_cursor`` returned by the previous
-        :meth:`~dmr.pagination.DjangoCursorPaginator.prev_page` call.
+        To continue navigating backwards, call
+        :meth:`~dmr.pagination.DjangoCursorPaginator.prev_page`
+        again with the ``prev_cursor`` returned by the previous
+        ``prev_page`` result. To navigate forward again from that
+        result, call :meth:`~dmr.pagination.DjangoCursorPaginator.page`
+        with its ``next_cursor``.
         """
         queryset = self.queryset.order_by(
             *self._get_reverse_ordering(

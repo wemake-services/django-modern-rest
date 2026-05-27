@@ -99,14 +99,14 @@ Cursor pagination
 ~~~~~~~~~~~~~~~~~
 
 To support it we have :class:`~dmr.pagination.SyncCursorPaginator` and :class:`~dmr.pagination.AsyncCursorPaginator`
-protocols. It's exposes a minimal API with only 2 methods:
+protocols. It exposes a minimal API with only 2 methods:
 
 - :meth:`~dmr.pagination.SyncCursorPaginator.page` — returns the page with provided cursor
 - :meth:`~dmr.pagination.SyncCursorPaginator.prev_page` — returns the page that was before the provided cursor
 
 This allows navigating through result sets in both forward and backward directions.
 
-Both of it returns :class:`~dmr.pagination.CursorPaginated`, which contains:
+Both of them returns :class:`~dmr.pagination.CursorPaginated`, which contains:
 
 - ``object_list`` — current page objects
 
@@ -121,8 +121,8 @@ It implements the
 :class:`~dmr.pagination.AsyncCursorPaginator`
 protocol and works with Django's ``QuerySet``.
 
-If you manually passed (or received from client) an invalid cursor to a :class:`~dmr.pagination.DjangoCursorPaginator` page methods,
-the :class:`~dmr.pagination.InvalidPaginationCursorError` will be raised as a ``BAD_REQUEST``.
+If an invalid cursor is passed to a :class:`~dmr.pagination.DjangoCursorPaginator` page methods, 
+:class:`dmr.pagination.InvalidPaginationCursorError` is raised and returned as a ``BAD_REQUEST`` response."
 
 Other pagination libraries are supported as well.
 
