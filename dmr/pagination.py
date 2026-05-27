@@ -248,7 +248,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> list[models.OrderBy]:
         nulls_ordering: list[models.OrderBy] = []
         for field in ordering_fields:
-            column = field.lstrip(REVERSE_ORDER_PREFIX)
+            column = field.removeprefix(REVERSE_ORDER_PREFIX)
 
             if field.startswith(REVERSE_ORDER_PREFIX):
                 nulls_ordering.append(models.F(column).desc(nulls_last=True))
@@ -262,7 +262,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> list[models.OrderBy]:
         nulls_ordering: list[models.OrderBy] = []
         for field in ordering_fields:
-            column = field.lstrip(REVERSE_ORDER_PREFIX)
+            column = field.removeprefix(REVERSE_ORDER_PREFIX)
 
             if field.startswith(REVERSE_ORDER_PREFIX):
                 nulls_ordering.append(models.F(column).asc(nulls_first=True))
@@ -291,7 +291,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
             cursor_values,
         ):
             is_reversed = ordering_field.startswith(REVERSE_ORDER_PREFIX)
-            order = ordering_field.lstrip(REVERSE_ORDER_PREFIX)
+            order = ordering_field.removeprefix(REVERSE_ORDER_PREFIX)
 
             if position_value is None:
                 filtering_equality.update({f'{order}__isnull': True})
@@ -326,7 +326,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
             cursor_values,
         ):
             is_reversed = ordering_field.startswith(REVERSE_ORDER_PREFIX)
-            order = ordering_field.lstrip(REVERSE_ORDER_PREFIX)
+            order = ordering_field.removeprefix(REVERSE_ORDER_PREFIX)
 
             if pos_value is None:
                 node = {f'{order}__isnull': False}
@@ -379,7 +379,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
     ) -> list[str | None]:
         position: list[str | None] = []
         for order in self.ordering_fields:
-            field_path = order.lstrip(REVERSE_ORDER_PREFIX).split('__')
+            field_path = order.removeprefix(REVERSE_ORDER_PREFIX).split('__')
 
             attr: Any = instance
             for field in field_path:
