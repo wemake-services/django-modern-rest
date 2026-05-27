@@ -18,6 +18,13 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Bugfixes
+
+- Fixes `LeakyBucket` throttling algorithm corner cases, #1044
+
+
 ## Version 0.10.0 (2026-05-26)
 
 ### Breaking changes
