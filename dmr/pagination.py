@@ -189,7 +189,7 @@ class DjangoCursorPaginator(  # noqa: WPS214
         """
         queryset = self.queryset.order_by(
             *self._get_reverse_ordering(
-                self._reverse_fields_ordering(self.ordering_fields),
+                self.ordering_fields,
             ),
         )
         queryset = self._apply_reverse_cursor(
@@ -232,7 +232,6 @@ class DjangoCursorPaginator(  # noqa: WPS214
 
         has_next = len(page_objects) > per_page
         page_objects = page_objects[:per_page]
-        page_objects.reverse()
 
         next_cursor = self._cursor(page_objects[0]) if page_objects else None
         prev_cursor = self._cursor(page_objects[-1]) if has_next else None
@@ -425,15 +424,3 @@ class DjangoCursorPaginator(  # noqa: WPS214
             )
         except (UnicodeError, ValueError) as exc:
             raise InvalidPaginationCursorError from exc
-
-    def _reverse_fields_ordering(
-        self,
-        ordering_fields: tuple[str, ...],
-    ) -> tuple[str, ...]:
-        # Convert '-created_at' to 'created_at' and vice versa
-        return tuple(
-            field[1:]
-            if field.startswith(REVERSE_ORDER_PREFIX)
-            else f'{REVERSE_ORDER_PREFIX}{field}'
-            for field in ordering_fields
-        )

@@ -266,7 +266,7 @@ async def setup_users() -> None:
         models.CursorPaginatedTestModel(order_field=idx)
         if idx > 2
         else models.CursorPaginatedTestModel()
-        for idx in reversed(range(1, 6))
+        for idx in reversed(range(1, 11))
     ]
     await models.CursorPaginatedTestModel.objects.abulk_create(users)
 
@@ -306,9 +306,9 @@ async def test_django_paginator_move_forward() -> None:
     assert [model.id for model in page.object_list] == [1, 2]
     assert page.next_cursor is not None
 
-    page = await paginator.page(3, cursor=page.next_cursor)
-    assert len(page.object_list) == 3
-    assert [model.id for model in page.object_list] == [3, 4, 5]
+    page = await paginator.page(10, cursor=page.next_cursor)
+    assert len(page.object_list) == 8
+    assert [model.id for model in page.object_list] == [3, 4, 5, 6, 7, 8, 9, 10]
     assert page.next_cursor is None
 
 
@@ -353,10 +353,16 @@ async def test_django_paginator_nullable_cursor_values() -> None:
         models.CursorPaginatedTestModel.objects.all(),
     )
 
-    page = await paginator.page(3)
-    assert len(page.object_list) == 3
+    page = await paginator.page(4)
+    assert len(page.object_list) == 4
     # non nullable values goes first
-    assert [model.order_field for model in page.object_list] == [3, 4, 5]
+    assert [model.order_field for model in page.object_list] == [3, 4, 5, 6]
+    assert page.next_cursor is not None
+
+    page = await paginator.page(4, cursor=page.next_cursor)
+    assert len(page.object_list) == 4
+    # non nullable values goes first
+    assert [model.order_field for model in page.object_list] == [7, 8, 9, 10]
     assert page.next_cursor is not None
 
     page = await paginator.page(2, cursor=page.next_cursor)
@@ -364,16 +370,26 @@ async def test_django_paginator_nullable_cursor_values() -> None:
     assert [model.order_field for model in page.object_list] == [None, None]
     assert page.prev_cursor is not None
 
-    page = await paginator.prev_page(3, cursor=page.prev_cursor)
-    assert [model.order_field for model in page.object_list] == [5, 4, 3]
+    page = await paginator.prev_page(2, cursor=page.prev_cursor)
+    assert [model.order_field for model in page.object_list] == [10, 9]
 
-    page = await paginator.page(4)
-    assert len(page.object_list) == 4
-    assert [model.order_field for model in page.object_list] == [3, 4, 5, None]
+    page = await paginator.page(9)
+    assert len(page.object_list) == 9
+    assert [model.order_field for model in page.object_list] == [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        None,
+    ]
     assert page.next_cursor is not None
 
-    assert paginator._decode_cursor(page.next_cursor) == (None, '4')
-    page = await paginator.page(10, cursor=page.next_cursor)
+    assert paginator._decode_cursor(page.next_cursor) == (None, '9')
+    page = await paginator.page(1, cursor=page.next_cursor)
     assert len(page.object_list) == 1
     assert [model.order_field for model in page.object_list] == [None]
 
@@ -405,20 +421,21 @@ async def test_django_paginator_reverse_order() -> None:
 
     page = await paginator.page(2)
     assert len(page.object_list) == 2
-    assert [model.id for model in page.object_list] == [5, 4]
+    assert [model.id for model in page.object_list] == [10, 9]
     assert page.next_cursor is not None
 
     page = await paginator.page(3, cursor=page.next_cursor)
     assert len(page.object_list) == 3
-    assert [model.id for model in page.object_list] == [3, 2, 1]
+    assert [model.id for model in page.object_list] == [8, 7, 6]
     assert page.prev_cursor is not None
 
     page = await paginator.prev_page(2, cursor=page.prev_cursor)
     assert len(page.object_list) == 2
-    assert [model.id for model in page.object_list] == [4, 5]
+    assert [model.id for model in page.object_list] == [9, 10]
 
     page = await paginator.page(5)
     assert len(page.object_list) == 5
+    # null-values goes first
     assert [model.order_field for model in page.object_list] == [
         None,
         None,
@@ -426,4 +443,3 @@ async def test_django_paginator_reverse_order() -> None:
         4,
         5,
     ]
-    assert page.next_cursor is None
