@@ -385,20 +385,22 @@ class DjangoCursorPaginator(  # noqa: WPS214
             ),
         )
 
-    def _cursor(self, instance: _DjangoModelT | None) -> str:
+    def _cursor(self, instance: _DjangoModelT) -> str:
         return self._encode_cursor(self._position_from_instance(instance))
 
     def _position_from_instance(
         self,
-        instance: _DjangoModelT | None,
+        instance: _DjangoModelT,
     ) -> list[str]:
         position: list[str] = []
         for order in self.ordering_fields:
             field_path = order.lstrip(REVERSE_ORDER_PREFIX).split('__')
 
-            attr = instance
+            attr: Any = instance
             for field in field_path:
-                attr = getattr(attr, field, None)
+                if attr is None:
+                    break
+                attr = getattr(attr, field)
             position.append(NONE_STRING if attr is None else str(attr))
         return position
 
