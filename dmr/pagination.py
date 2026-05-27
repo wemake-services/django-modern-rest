@@ -282,20 +282,13 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 'Ordering and cursor values must match length',
             )
 
-        position_values = [
-            None
-            if pos is None
-            else models.Value(pos, output_field=models.TextField())
-            for pos in cursor_values
-        ]
-
         filtering = models.Q()
         filtering_equality: dict[str, Any] = {}
 
         # We just checked above that length of ordering_fields == cursor_values
         for ordering_field, position_value in zip(  # noqa: B905
             ordering_fields,
-            position_values,
+            cursor_values,
         ):
             is_reversed = ordering_field.startswith(REVERSE_ORDER_PREFIX)
             order = ordering_field.lstrip(REVERSE_ORDER_PREFIX)
@@ -324,20 +317,13 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 'Ordering and cursor values must match length',
             )
 
-        position_values = [
-            None
-            if pos_value is None
-            else models.Value(pos_value, output_field=models.TextField())
-            for pos_value in cursor_values
-        ]
-
         filtering = models.Q()
         q_equality: dict[str, Any] = {}
 
         # We just checked above that length of ordering_fields == cursor_values
         for ordering_field, pos_value in zip(  # noqa: B905
             ordering_fields,
-            position_values,
+            cursor_values,
         ):
             is_reversed = ordering_field.startswith(REVERSE_ORDER_PREFIX)
             order = ordering_field.lstrip(REVERSE_ORDER_PREFIX)
