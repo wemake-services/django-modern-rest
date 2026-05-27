@@ -202,14 +202,8 @@ class LeakyBucket(BaseThrottleAlgorithm):
             cache_object['history'][0] - elapsed * throttle.max_requests,
         )
         cache_object = CachedRateLimit(history=[level], time=now)
-<<<<<<< Updated upstream
-
-        if cache_object['history'][0] + throttle.duration_in_seconds > (
-=======
-        print(cache_object, throttle.max_requests * throttle.duration_in_seconds)
         # Do the check:
-        if cache_object['history'][0] >= (
->>>>>>> Stashed changes
+        if cache_object['history'][0] + throttle.duration_in_seconds > (
             throttle.max_requests * throttle.duration_in_seconds
         ):
             raise TooManyRequestsError(
