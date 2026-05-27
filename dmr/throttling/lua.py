@@ -100,16 +100,16 @@ local last_time = tonumber(raw[2]) or now
 local elapsed = math.max(0, now - last_time)
 level         = math.max(0, level - elapsed * max_requests)
 
--- ── check capacity (mirrors `>= max_requests * duration_in_seconds`) ───────
-if level >= capacity then
-    -- Do NOT update stored state — the bucket is full, nothing changes.
-    return {0, level, capacity}
-end
-
 -- Only update values, when non-viewing:
 if view_only == 0 then
+    local next_level = level + duration
+    if next_level > capacity then
+        -- Do NOT update stored state — the bucket is full, nothing changes.
+        return {0, level, capacity}
+    end
+
     -- ── fill (+duration_in_seconds scaled units) ───────────────────────────
-    level = level + duration
+    level = next_level
 
     -- Persist level and the current timestamp.
     redis.call("HSET", key, "level", level, "last_time", now)
