@@ -261,12 +261,12 @@ def test_pagination_empty_dataset(dmr_rf: DMRRequestFactory) -> None:
 @pytest.fixture
 async def setup_users() -> None:
     """Fill database with test fields."""
-    # only 1, 2 and 3 models will have non-null order fields
+    # only first 2 models will have null order fields
     users = [
         models.CursorPaginatedTestModel(order_field=idx)
         if idx > 2
         else models.CursorPaginatedTestModel()
-        for idx in reversed(range(1, 11))
+        for idx in reversed(range(1, 11))  # noqa: WPS432
     ]
     await models.CursorPaginatedTestModel.objects.abulk_create(users)
 
@@ -301,14 +301,14 @@ async def test_django_paginator_move_forward() -> None:
         models.CursorPaginatedTestModel.objects.all(),
     )
 
-    page = await paginator.page(2)
-    assert len(page.object_list) == 2
-    assert [model.id for model in page.object_list] == [1, 2]
+    page = await paginator.page(5)
+    assert len(page.object_list) == 5
+    assert [model.id for model in page.object_list] == [1, 2, 3, 4, 5]
     assert page.next_cursor is not None
 
-    page = await paginator.page(10, cursor=page.next_cursor)
-    assert len(page.object_list) == 8
-    assert [model.id for model in page.object_list] == [3, 4, 5, 6, 7, 8, 9, 10]
+    page = await paginator.page(5, cursor=page.next_cursor)
+    assert len(page.object_list) == 5
+    assert [model.id for model in page.object_list] == [6, 7, 8, 9, 10]
     assert page.next_cursor is None
 
 
@@ -346,7 +346,7 @@ async def test_django_paginator_move_back() -> None:
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True, reset_sequences=True)
 @pytest.mark.usefixtures('setup_users')
-async def test_django_paginator_nullable_cursor_values() -> None:
+async def test_django_paginator_nullable_cursor_values() -> None:  # noqa: WPS217
     """Test pagination when cursor contains nullable field values."""
     paginator = DjangoCursorPaginator(
         ('order_field', 'id'),
