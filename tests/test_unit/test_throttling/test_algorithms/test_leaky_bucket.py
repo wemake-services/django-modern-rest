@@ -95,6 +95,35 @@ def test_leaky_bucket_smooth_drain(
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
+def test_leaky_bucket_waits_for_full_slot(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Reject requests until enough capacity drains for a whole request."""
+    # Fill the bucket:
+    for _ in range(_ATTEMPTS):
+        request = dmr_rf.get('/whatever/')
+        response = _SyncController.as_view()(request)
+        assert response.status_code == HTTPStatus.OK
+
+    # A partial drain is not enough for another full request:
+    freezer.tick(delta=1)
+
+    request = dmr_rf.get('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+
+    # This is the `>` vs `>=` boundary: an exactly full bucket is allowed
+    # when the drained capacity leaves room for one whole request.
+    freezer.tick(delta=(_RATE // _ATTEMPTS) - 1)
+
+    request = dmr_rf.get('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+
+
 def test_leaky_bucket_full_drain(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,

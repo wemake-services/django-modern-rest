@@ -103,6 +103,11 @@ def test_redis_sync_leaky_bucket(
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK
 
+    keys = list(redis_client.scan_iter())
+    assert len(keys) == 1
+    # Simulate one elapsed Redis-server second without sleeping.
+    redis_client.hincrby(keys[0], 'last_time', -1)
+
     # Third is rejected:
     request = dmr_rf.get('/whatever/')
     response = _SyncController.as_view()(request)
@@ -121,6 +126,54 @@ def test_redis_sync_leaky_bucket(
             {'msg': 'Too many requests', 'type': 'ratelimit'},
         ],
     })
+
+
+def test_redis_bucket_full_slot(
+    dmr_rf: DMRRequestFactory,
+    redis_client: 'redis.Redis[Any]',
+) -> None:
+    """Redis leaky bucket rejects partial drains, but allows exact capacity."""
+
+    class _SyncController(Controller[PydanticFastSerializer]):
+        @modify(
+            throttling=[
+                SyncThrottle(
+                    _ATTEMPTS,
+                    _RATE,
+                    backend=SyncRedis(redis_client),
+                    algorithm=LeakyBucket(),
+                ),
+            ],
+        )
+        def get(self) -> str:
+            return 'inside'
+
+    # Two requests fill the bucket:
+    for _ in range(_ATTEMPTS):
+        request = dmr_rf.get('/whatever/')
+        response = _SyncController.as_view()(request)
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.OK
+
+    keys = list(redis_client.scan_iter())
+    assert len(keys) == 1
+    # Simulate one elapsed Redis-server second without sleeping.
+    redis_client.hincrby(keys[0], 'last_time', -1)
+
+    # A partial drain is not enough for another full request:
+    request = dmr_rf.get('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+
+    # This is the `>` vs `>=` boundary: an exactly full bucket is allowed
+    # when the drained capacity leaves room for one whole request.
+    redis_client.hincrby(keys[0], 'last_time', -((_RATE // _ATTEMPTS) - 1))
+
+    request = dmr_rf.get('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
 
 
 @pytest.mark.asyncio
