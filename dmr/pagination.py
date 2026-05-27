@@ -1,4 +1,5 @@
 import dataclasses
+import json
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from http import HTTPStatus
@@ -116,7 +117,6 @@ class InvalidPaginationCursorError(Exception):
         self.error_type = ErrorType.value_error
 
 
-NONE_STRING = '::None'
 REVERSE_ORDER_PREFIX = '-'
 
 
@@ -391,8 +391,8 @@ class DjangoCursorPaginator(  # noqa: WPS214
     def _position_from_instance(
         self,
         instance: _DjangoModelT,
-    ) -> list[str]:
-        position: list[str] = []
+    ) -> list[str | None]:
+        position: list[str | None] = []
         for order in self.ordering_fields:
             field_path = order.lstrip(REVERSE_ORDER_PREFIX).split('__')
 
@@ -401,29 +401,27 @@ class DjangoCursorPaginator(  # noqa: WPS214
                 if attr is None:
                     break
                 attr = getattr(attr, field)
-            position.append(NONE_STRING if attr is None else str(attr))
+            position.append(None if attr is None else str(attr))
         return position
 
     def _encode_cursor(
         self,
-        cursor_values: list[str],
-        delimiter: str = ',',
+        cursor_values: list[str | None],
     ) -> str:
         return b64encode(
-            delimiter.join(cursor_values).encode('utf-8'),
+            json.dumps(cursor_values, separators=(',', ':')).encode('utf-8'),
         ).decode('ascii')
 
     def _decode_cursor(
         self,
         cursor: str,
-        delimiter: str = ',',
     ) -> tuple[str | None, ...]:
         try:
             return tuple(
-                None if cursor_value == NONE_STRING else cursor_value
-                for cursor_value in b64decode(cursor.encode('ascii'))
-                .decode('utf-8')
-                .split(delimiter)
+                cursor_val
+                for cursor_val in json.loads(
+                    b64decode(cursor.encode('ascii')).decode('utf-8'),
+                )
             )
         except (UnicodeError, ValueError) as exc:
             raise InvalidPaginationCursorError from exc
