@@ -230,23 +230,7 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
         if cache_key is None:
             return
         with lock:
-            self.check(endpoint, controller, cache_key)
-
-    def check(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> None:
-        """Check whether this request has rate limiting quota left."""
-        # NOTE: this is locked on endpoint.py level, don't worry:
-        self._backend.incr(
-            endpoint,
-            controller,
-            self,
-            cache_key=cache_key,
-            algorithm=self._algorithm,
-        )
+            self._check(endpoint, controller, cache_key)
 
     def report_usage(
         self,
@@ -262,6 +246,22 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
             controller,
             self,
             self._backend.get(endpoint, controller, self, cache_key=cache_key),
+        )
+
+    def _check(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> None:
+        """Check whether this request has rate limiting quota left."""
+        # NOTE: this is locked inside `__call__`, don't worry:
+        self._backend.incr(
+            endpoint,
+            controller,
+            self,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
         )
 
 
@@ -294,23 +294,7 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
         if cache_key is None:
             return
         async with lock:
-            await self.check(endpoint, controller, cache_key)
-
-    async def check(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> None:
-        """Check whether this request has rate limiting quota left."""
-        # NOTE: this is locked on endpoint.py level, don't worry:
-        await self._backend.incr(
-            endpoint,
-            controller,
-            self,
-            cache_key=cache_key,
-            algorithm=self._algorithm,
-        )
+            await self._check(endpoint, controller, cache_key)
 
     async def report_usage(
         self,
@@ -331,6 +315,22 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
                 self,
                 cache_key=cache_key,
             ),
+        )
+
+    async def _check(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> None:
+        """Check whether this request has rate limiting quota left."""
+        # NOTE: this is locked on endpoint.py level, don't worry:
+        await self._backend.incr(
+            endpoint,
+            controller,
+            self,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
         )
 
 

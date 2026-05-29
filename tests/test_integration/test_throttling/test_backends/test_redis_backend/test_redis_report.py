@@ -136,6 +136,65 @@ def test_throttle_sync_leaky_bucket(
     assert json.loads(response.content) == 'inside'
 
 
+@pytest.mark.parametrize(
+    'backend_cls',
+    [
+        SyncDjangoCache,
+        SyncRedis,
+    ],
+)
+def test_throttle_sync_leaky_bucket_limit_reached(
+    dmr_rf: DMRRequestFactory,
+    redis_client: 'redis.Redis[Any]',
+    *,
+    backend_cls: type[SyncDjangoCache | SyncRedis],
+) -> None:
+    """Ensures that throttle information can be served on limit."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        @validate(
+            ResponseSpec(
+                str,
+                status_code=HTTPStatus.OK,
+                headers=_draft_headers.provide_headers_specs(),
+            ),
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.hour,
+                    response_headers=[_draft_headers],
+                    backend=(
+                        backend_cls(redis_client)
+                        if issubclass(backend_cls, SyncRedis)
+                        else backend_cls()
+                    ),
+                    algorithm=LeakyBucket(),
+                ),
+            ],
+        )
+        def get(self) -> HttpResponse:
+            return self.to_response(
+                'inside',
+                headers=ThrottlingReport(self).report(),
+            )
+
+    request = dmr_rf.get('/whatever/')
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=3600;name="RemoteAddr"',
+        'RateLimit': IsOneOf(
+            '"RemoteAddr";r=0;t=3600',
+            '"RemoteAddr";r=0;t=3599',
+        ),
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == 'inside'
+
+
 @pytest.mark.asyncio
 async def test_throttle_multiple_headers_async(
     dmr_async_rf: DMRAsyncRequestFactory,
