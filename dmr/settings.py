@@ -1,3 +1,4 @@
+import datetime as dt
 import enum
 import importlib
 from collections.abc import Callable, Mapping, Sequence, Set
@@ -11,6 +12,7 @@ from typing_extensions import TypedDict
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.internal.cache import clear_settings_cache as clear_settings_cache
 from dmr.openapi.config import OpenAPIConfig
+from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY_DAYS
 
 if TYPE_CHECKING:
     from dmr.metadata import ResponseSpec
@@ -70,6 +72,7 @@ class Settings(enum.StrEnum):
     openapi_examples_seed = 'openapi_examples_seed'
     openapi_static_cdn = 'openapi_static_cdn'
     django_treat_as_post = 'django_treat_as_post'
+    token_default_expiry = 'token_default_expiry'  # noqa: S105
 
 
 @final
@@ -121,6 +124,7 @@ class SettingsDict(TypedDict, total=False):
     openapi_examples_seed: int | None
     openapi_static_cdn: dict[str, str]
     django_treat_as_post: Set[str]
+    token_default_expiry: dt.timedelta | None
 
 
 assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -158,6 +162,8 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
+    # Token auth settings:
+    Settings.token_default_expiry: dt.timedelta(days=TOKEN_DEFAULT_EXPIRY_DAYS),
 }
 
 assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
