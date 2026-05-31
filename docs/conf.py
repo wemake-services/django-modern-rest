@@ -192,6 +192,9 @@ nitpick_ignore = [
 
 qualname_overrides = {
     # Django documents these classes under re-exported path names:
+    'django.contrib.auth.base_user.AbstractBaseUser': (
+        'django:django.contrib.auth.models.AbstractBaseUser'
+    ),
     'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
     'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
     'django.http.response.HttpResponseRedirect': (
