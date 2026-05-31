@@ -1,3 +1,6 @@
+set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+set dotenv-load := false
+
 # List all available recipes
 _default:
     @just --list --unsorted --list-submodules
