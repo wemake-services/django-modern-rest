@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any, Final, TypeAlias
 
 import pytest
@@ -6,6 +7,7 @@ from django.conf import LazySettings
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
+from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY_DAYS
 from dmr.serializer import BaseSerializer
 from dmr.validation import SettingsValidator
 
@@ -44,6 +46,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'openapi_config': []},
         {'global_error_handler': None},
         {'exclude_semantic_responses': 1},
+        {'token_default_expiry': '30 days'},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)
@@ -74,6 +77,8 @@ def test_wrong_settings_validation(
         {'no_validate_http_spec': frozenset()},
         {'exclude_semantic_responses': set()},
         {'exclude_semantic_responses': frozenset()},
+        {'token_default_expiry': dt.timedelta(days=TOKEN_DEFAULT_EXPIRY_DAYS)},
+        {'token_default_expiry': None},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)
