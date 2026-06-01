@@ -30,7 +30,7 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 0c7b6c989466a93942def1f84baf36ddfcd60c83  # frozen: v0.15.14
+    rev: 0671d8ab202c4ac093b78433ae5baf74f3fc7246  # frozen: v0.15.15
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
@@ -44,7 +44,7 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: 36e31b0923b6cebbbed30598877a994b2dd56df8  # frozen: v1
+    rev: 0758ccd3261dc7b0594e9b698113eb08d3ba25b5  # frozen: v1
     hooks:
       - id: typos
 
