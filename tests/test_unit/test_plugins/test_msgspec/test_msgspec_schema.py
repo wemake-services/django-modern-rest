@@ -7,12 +7,17 @@ from typing import Annotated, Any, Final, Literal, Optional, Union
 import pytest
 from typing_extensions import TypedDict
 
+from dmr import Controller, Query
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
 from dmr.openapi.objects import OpenAPIType, Reference, Schema
+from dmr.routing import Router, path
 
 try:
+    import msgspec
+
     from dmr.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
@@ -35,6 +40,19 @@ class _TestTypedDict(TypedDict):
 class _TestEnum(enum.IntEnum):
     height = 1
     width = 2
+
+
+class _TestStrEnum(enum.StrEnum):
+    none = 'None'
+
+
+class _StrEnumQuery(msgspec.Struct, kw_only=True):
+    e: _TestStrEnum = _TestStrEnum.none
+
+
+class _StrEnumQueryController(Controller[MsgspecSerializer]):
+    async def get(self, parsed_query: Query[_StrEnumQuery]) -> None:
+        raise NotImplementedError
 
 
 _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
@@ -272,6 +290,27 @@ def test_enum(
         reference,
     )
     assert schema == Schema(enum=[1, 2], title=_TestEnum.__qualname__)
+
+
+def test_str_enum_query_schema() -> None:
+    """Ensure StrEnum query fields register referenced schemas."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [path('test/', _StrEnumQueryController.as_view(), name='test')],
+        ),
+    ).convert()
+
+    parameter = schema['paths']['/api/test/']['get']['parameters'][0]
+    assert parameter['name'] == 'e'
+    assert parameter['in'] == 'query'
+    assert parameter['schema'] == {
+        '$ref': '#/components/schemas/_TestStrEnum',
+    }
+    assert schema['components']['schemas']['_TestStrEnum'] == {
+        'enum': ['None'],
+        'title': '_TestStrEnum',
+    }
 
 
 @pytest.mark.parametrize(
