@@ -8,7 +8,7 @@ import pydantic
 import pytest
 from typing_extensions import TypedDict
 
-from dmr import Controller, Query
+from dmr import Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
@@ -267,46 +267,64 @@ def test_enum(
     )
 
 
-def _assert_enum_query_schema(
+def _assert_enum_parameter_schema(
     *,
     controller: type[Controller[PydanticSerializer]],
     component_name: str,
     expected_schema: dict[str, Any],
 ) -> None:
-    """Ensure enum query fields register referenced schemas."""
+    """Ensure enum parameter fields register referenced schemas."""
     schema = build_schema(
         Router(
             'api/',
-            [path('test/', controller.as_view(), name='test')],
+            [path('test/<str:enum_value>/', controller.as_view(), name='test')],
         ),
     ).convert()
 
-    operation = schema['paths']['/api/test/']['get']
-    parameter = operation['parameters'][0]
-
-    assert parameter['name'] == 'enum_value'
-    assert parameter['in'] == 'query'
-    assert parameter['schema'] == {
-        '$ref': f'#/components/schemas/{component_name}',
+    operation = schema['paths']['/api/test/{enum_value}/']['get']
+    parameter_specs = {
+        (parameter['name'], parameter['in']): parameter
+        for parameter in operation['parameters']
     }
+
+    for parameter_location in ('path', 'query', 'header', 'cookie'):
+        parameter = parameter_specs['enum_value', parameter_location]
+        assert parameter['schema'] == {
+            '$ref': f'#/components/schemas/{component_name}',
+        }
     assert schema['components']['schemas'][component_name] == expected_schema
 
 
-def test_query_schema_with_enum() -> None:
-    """Ensure enum query fields register referenced schemas."""
+def test_parameter_schema_with_enum() -> None:
+    """Ensure enum parameter fields register referenced schemas."""
 
     class _QueryEnum(enum.Enum):
         alpha = 'alpha'
         beta = 'beta'
 
+    class _EnumPath(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
     class _EnumQuery(pydantic.BaseModel):
         enum_value: _QueryEnum = _QueryEnum.alpha
 
+    class _EnumHeaders(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
+    class _EnumCookies(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
     class _EnumQueryController(Controller[PydanticSerializer]):
-        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+        async def get(
+            self,
+            parsed_path: Path[_EnumPath],
+            parsed_query: Query[_EnumQuery],
+            parsed_headers: Headers[_EnumHeaders],
+            parsed_cookies: Cookies[_EnumCookies],
+        ) -> None:
             raise NotImplementedError
 
-    _assert_enum_query_schema(
+    _assert_enum_parameter_schema(
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_schema={
@@ -317,21 +335,36 @@ def test_query_schema_with_enum() -> None:
     )
 
 
-def test_query_schema_with_int_enum() -> None:
-    """Ensure int enum query fields register referenced schemas."""
+def test_parameter_schema_with_int_enum() -> None:
+    """Ensure int enum parameter fields register referenced schemas."""
 
     class _QueryEnum(enum.IntEnum):
         alpha = 1
         beta = 2
 
+    class _EnumPath(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
     class _EnumQuery(pydantic.BaseModel):
         enum_value: _QueryEnum = _QueryEnum.alpha
 
+    class _EnumHeaders(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
+    class _EnumCookies(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
     class _EnumQueryController(Controller[PydanticSerializer]):
-        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+        async def get(
+            self,
+            parsed_path: Path[_EnumPath],
+            parsed_query: Query[_EnumQuery],
+            parsed_headers: Headers[_EnumHeaders],
+            parsed_cookies: Cookies[_EnumCookies],
+        ) -> None:
             raise NotImplementedError
 
-    _assert_enum_query_schema(
+    _assert_enum_parameter_schema(
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_schema={
@@ -342,21 +375,36 @@ def test_query_schema_with_int_enum() -> None:
     )
 
 
-def test_query_schema_with_str_enum() -> None:
-    """Ensure str enum query fields register referenced schemas."""
+def test_parameter_schema_with_str_enum() -> None:
+    """Ensure str enum parameter fields register referenced schemas."""
 
     class _QueryEnum(enum.StrEnum):
         alpha = 'alpha'
         beta = 'beta'
 
+    class _EnumPath(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
     class _EnumQuery(pydantic.BaseModel):
         enum_value: _QueryEnum = _QueryEnum.alpha
 
+    class _EnumHeaders(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
+    class _EnumCookies(pydantic.BaseModel):
+        enum_value: _QueryEnum
+
     class _EnumQueryController(Controller[PydanticSerializer]):
-        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+        async def get(
+            self,
+            parsed_path: Path[_EnumPath],
+            parsed_query: Query[_EnumQuery],
+            parsed_headers: Headers[_EnumHeaders],
+            parsed_cookies: Cookies[_EnumCookies],
+        ) -> None:
             raise NotImplementedError
 
-    _assert_enum_query_schema(
+    _assert_enum_parameter_schema(
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_schema={
