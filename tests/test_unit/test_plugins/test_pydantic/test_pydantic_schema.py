@@ -267,52 +267,22 @@ def test_enum(
     )
 
 
-@pytest.mark.parametrize(
-    ('enum_base', 'enum_values', 'expected_schema'),
-    [
-        (
-            enum.Enum,
-            {'alpha': 'alpha', 'beta': 'beta'},
-            {'enum': ['alpha', 'beta'], 'title': '_TestEnum', 'type': 'string'},
-        ),
-        (
-            enum.IntEnum,
-            {'alpha': 1, 'beta': 2},
-            {'enum': [1, 2], 'title': '_TestEnum', 'type': 'integer'},
-        ),
-        (
-            enum.StrEnum,
-            {'alpha': 'alpha', 'beta': 'beta'},
-            {'enum': ['alpha', 'beta'], 'title': '_TestEnum', 'type': 'string'},
-        ),
-    ],
-)
-def test_enum_query_schema(
+def _assert_enum_query_schema(
     *,
-    enum_base: type[enum.Enum],
-    enum_values: dict[str, Any],
+    controller: type[Controller[PydanticSerializer]],
+    component_name: str,
     expected_schema: dict[str, Any],
 ) -> None:
     """Ensure enum query fields register referenced schemas."""
-    enum_type = enum_base('_TestEnum', enum_values)
-
-    class _EnumQuery(pydantic.BaseModel):
-        enum_value: enum_type = enum_type.alpha  # type: ignore[valid-type]
-
-    class _EnumQueryController(Controller[PydanticSerializer]):
-        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
-            raise NotImplementedError
-
     schema = build_schema(
         Router(
             'api/',
-            [path('test/', _EnumQueryController.as_view(), name='test')],
+            [path('test/', controller.as_view(), name='test')],
         ),
     ).convert()
 
     operation = schema['paths']['/api/test/']['get']
     parameter = operation['parameters'][0]
-    component_name = enum_type.__qualname__
 
     assert parameter['name'] == 'enum_value'
     assert parameter['in'] == 'query'
@@ -320,6 +290,81 @@ def test_enum_query_schema(
         '$ref': f'#/components/schemas/{component_name}',
     }
     assert schema['components']['schemas'][component_name] == expected_schema
+
+
+def test_query_schema_with_enum() -> None:
+    """Ensure enum query fields register referenced schemas."""
+
+    class _QueryEnum(enum.Enum):
+        alpha = 'alpha'
+        beta = 'beta'
+
+    class _EnumQuery(pydantic.BaseModel):
+        enum_value: _QueryEnum = _QueryEnum.alpha
+
+    class _EnumQueryController(Controller[PydanticSerializer]):
+        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+            raise NotImplementedError
+
+    _assert_enum_query_schema(
+        controller=_EnumQueryController,
+        component_name=_QueryEnum.__name__,
+        expected_schema={
+            'enum': ['alpha', 'beta'],
+            'title': _QueryEnum.__name__,
+            'type': 'string',
+        },
+    )
+
+
+def test_query_schema_with_int_enum() -> None:
+    """Ensure int enum query fields register referenced schemas."""
+
+    class _QueryEnum(enum.IntEnum):
+        alpha = 1
+        beta = 2
+
+    class _EnumQuery(pydantic.BaseModel):
+        enum_value: _QueryEnum = _QueryEnum.alpha
+
+    class _EnumQueryController(Controller[PydanticSerializer]):
+        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+            raise NotImplementedError
+
+    _assert_enum_query_schema(
+        controller=_EnumQueryController,
+        component_name=_QueryEnum.__name__,
+        expected_schema={
+            'enum': [1, 2],
+            'title': _QueryEnum.__name__,
+            'type': 'integer',
+        },
+    )
+
+
+def test_query_schema_with_str_enum() -> None:
+    """Ensure str enum query fields register referenced schemas."""
+
+    class _QueryEnum(enum.StrEnum):
+        alpha = 'alpha'
+        beta = 'beta'
+
+    class _EnumQuery(pydantic.BaseModel):
+        enum_value: _QueryEnum = _QueryEnum.alpha
+
+    class _EnumQueryController(Controller[PydanticSerializer]):
+        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+            raise NotImplementedError
+
+    _assert_enum_query_schema(
+        controller=_EnumQueryController,
+        component_name=_QueryEnum.__name__,
+        expected_schema={
+            'enum': ['alpha', 'beta'],
+            'title': _QueryEnum.__name__,
+            'type': 'string',
+        },
+    )
 
 
 def test_root_model(
