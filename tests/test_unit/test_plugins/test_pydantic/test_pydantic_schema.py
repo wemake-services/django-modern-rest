@@ -8,11 +8,14 @@ import pydantic
 import pytest
 from typing_extensions import TypedDict
 
+from dmr import Controller, Query
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
 from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.routing import Router, path
 
 
 @pytest.fixture
@@ -262,6 +265,61 @@ def test_enum(
         enum=[1, 2],
         title=_TestEnum.__qualname__,
     )
+
+
+@pytest.mark.parametrize(
+    ('enum_base', 'enum_values', 'expected_schema'),
+    [
+        (
+            enum.Enum,
+            {'alpha': 'alpha', 'beta': 'beta'},
+            {'enum': ['alpha', 'beta'], 'title': '_TestEnum', 'type': 'string'},
+        ),
+        (
+            enum.IntEnum,
+            {'alpha': 1, 'beta': 2},
+            {'enum': [1, 2], 'title': '_TestEnum', 'type': 'integer'},
+        ),
+        (
+            enum.StrEnum,
+            {'alpha': 'alpha', 'beta': 'beta'},
+            {'enum': ['alpha', 'beta'], 'title': '_TestEnum', 'type': 'string'},
+        ),
+    ],
+)
+def test_enum_query_schema(
+    *,
+    enum_base: type[enum.Enum],
+    enum_values: dict[str, Any],
+    expected_schema: dict[str, Any],
+) -> None:
+    """Ensure enum query fields register referenced schemas."""
+    enum_type = enum_base('_TestEnum', enum_values)
+
+    class _EnumQuery(pydantic.BaseModel):
+        enum_value: enum_type = enum_type.alpha  # type: ignore[valid-type]
+
+    class _EnumQueryController(Controller[PydanticSerializer]):
+        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [path('test/', _EnumQueryController.as_view(), name='test')],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/test/']['get']
+    parameter = operation['parameters'][0]
+    component_name = enum_type.__qualname__
+
+    assert parameter['name'] == 'enum_value'
+    assert parameter['in'] == 'query'
+    assert parameter['schema'] == {
+        '$ref': f'#/components/schemas/{component_name}',
+    }
+    assert schema['components']['schemas'][component_name] == expected_schema
 
 
 def test_root_model(

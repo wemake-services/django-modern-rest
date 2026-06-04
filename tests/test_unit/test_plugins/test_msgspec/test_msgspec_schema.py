@@ -42,19 +42,6 @@ class _TestEnum(enum.IntEnum):
     width = 2
 
 
-class _TestStrEnum(enum.StrEnum):
-    none = 'None'
-
-
-class _StrEnumQuery(msgspec.Struct, kw_only=True):
-    enum_value: _TestStrEnum = _TestStrEnum.none
-
-
-class _StrEnumQueryController(Controller[MsgspecSerializer]):
-    async def get(self, parsed_query: Query[_StrEnumQuery]) -> None:
-        raise NotImplementedError
-
-
 _TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
 
 
@@ -292,27 +279,49 @@ def test_enum(
     assert schema == Schema(enum=[1, 2], title=_TestEnum.__qualname__)
 
 
-def test_str_enum_query_schema() -> None:
-    """Ensure StrEnum query fields register referenced schemas."""
+@pytest.mark.parametrize(
+    ('enum_base', 'enum_values', 'expected_values'),
+    [
+        (enum.Enum, {'alpha': 'alpha', 'beta': 'beta'}, ['alpha', 'beta']),
+        (enum.IntEnum, {'alpha': 1, 'beta': 2}, [1, 2]),
+        (enum.StrEnum, {'alpha': 'alpha', 'beta': 'beta'}, ['alpha', 'beta']),
+    ],
+)
+def test_enum_query_schema(
+    *,
+    enum_base: type[enum.Enum],
+    enum_values: dict[str, Any],
+    expected_values: list[str | int],
+) -> None:
+    """Ensure enum query fields register referenced schemas."""
+    enum_type = enum_base('_TestEnum', enum_values)
+
+    class _EnumQuery(msgspec.Struct, kw_only=True):
+        enum_value: enum_type = enum_type.alpha  # type: ignore[valid-type]
+
+    class _EnumQueryController(Controller[MsgspecSerializer]):
+        async def get(self, parsed_query: Query[_EnumQuery]) -> None:
+            raise NotImplementedError
+
     schema = build_schema(
         Router(
             'api/',
-            [path('test/', _StrEnumQueryController.as_view(), name='test')],
+            [path('test/', _EnumQueryController.as_view(), name='test')],
         ),
     ).convert()
 
-    paths = schema['paths']
-    path_item = paths['/api/test/']
-    operation = path_item['get']
+    operation = schema['paths']['/api/test/']['get']
     parameter = operation['parameters'][0]
+    component_name = enum_type.__qualname__
+
     assert parameter['name'] == 'enum_value'
     assert parameter['in'] == 'query'
     assert parameter['schema'] == {
-        '$ref': '#/components/schemas/_TestStrEnum',
+        '$ref': f'#/components/schemas/{component_name}',
     }
-    assert schema['components']['schemas']['_TestStrEnum'] == {
-        'enum': ['None'],
-        'title': '_TestStrEnum',
+    assert schema['components']['schemas'][component_name] == {
+        'enum': expected_values,
+        'title': component_name,
     }
 
 

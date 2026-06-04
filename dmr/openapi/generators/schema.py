@@ -139,35 +139,57 @@ class SchemaGenerator:
         skip_registration: bool = False,
         register_referenced_components: bool = False,
     ) -> Schema | Reference:
-        _register_components(
-            self._context,
-            components,
-            skip_registration=skip_registration,
-        )
+        if not skip_registration:
+            for component_name, component in components.items():
+                self._context.registries.schema.register(
+                    schema_name=component_name,
+                    schema=load_schema(component),
+                )
 
         reference = schema.get('$ref')
         if reference:
-            # We got a reference back, return it. It is registered already.
-            reference = Reference(
+            reference_obj = Reference(
                 ref=reference,
                 summary=schema.get('summary'),
                 description=schema.get('description'),
             )
-            if not skip_registration:
-                # If we got a reference from the start,
-                # it might still miss the examples:
-                self._maybe_generate_example(reference, annotation, serializer)
-
-            # When skip registration is requested, we need
-            # real schemas back, not references,
-            # because there's no registered schema under the reference.
             if skip_registration:
                 return self._resolve_skipped_reference(
-                    reference,
+                    reference_obj,
                     components,
-                    register_referenced_components=register_referenced_components,
+                    register_referenced_components=(
+                        register_referenced_components
+                    ),
                 )
-            return reference
+            # If we got a reference from the start,
+            # it might still miss the examples:
+            self._maybe_generate_example(reference_obj, annotation, serializer)
+            return reference_obj
+        return self._resolve_generated_schema(
+            annotation,
+            schema,
+            components,
+            serializer,
+            skip_registration=skip_registration,
+            register_referenced_components=register_referenced_components,
+        )
+
+    def _resolve_generated_schema(
+        self,
+        annotation: Any,
+        schema: dict[str, Any],
+        components: dict[str, Any],
+        serializer: type['BaseSerializer'],
+        *,
+        skip_registration: bool,
+        register_referenced_components: bool,
+    ) -> Schema | Reference:
+        if skip_registration and register_referenced_components:
+            for component_name, component in components.items():
+                self._context.registries.schema.register(
+                    schema_name=component_name,
+                    schema=load_schema(component),
+                )
 
         # Register the final schema:
         schema_obj = load_schema(
@@ -205,8 +227,7 @@ class SchemaGenerator:
     ) -> Schema:
         resolution_context = _build_resolution_context(components)
         if register_referenced_components:
-            _register_nested_components(
-                self._context,
+            self._register_nested_components(
                 reference,
                 resolution_context,
             )
@@ -215,20 +236,20 @@ class SchemaGenerator:
             resolution_context=resolution_context,
         )
 
-
-def _register_components(
-    context: 'OpenAPIContext',
-    components: dict[str, Any],
-    *,
-    skip_registration: bool,
-) -> None:
-    if skip_registration:
-        return
-    for component_name, component in components.items():
-        context.registries.schema.register(
-            schema_name=component_name,
-            schema=load_schema(component),
+    def _register_nested_components(
+        self,
+        reference: Reference,
+        components: dict[str, Schema],
+    ) -> None:
+        skipped_component = reference.ref.removeprefix(
+            self._context.registries.schema.schema_prefix,
         )
+        for component_name, component in components.items():
+            if component_name != skipped_component:
+                self._context.registries.schema.register(
+                    component_name,
+                    component,
+                )
 
 
 def _build_resolution_context(
@@ -238,16 +259,3 @@ def _build_resolution_context(
         component_name: load_schema(component)
         for component_name, component in components.items()
     }
-
-
-def _register_nested_components(
-    context: 'OpenAPIContext',
-    reference: Reference,
-    components: dict[str, Schema],
-) -> None:
-    skipped_component = reference.ref.removeprefix(
-        context.registries.schema.schema_prefix,
-    )
-    for component_name, component in components.items():
-        if component_name != skipped_component:
-            context.registries.schema.register(component_name, component)
