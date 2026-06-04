@@ -23,6 +23,8 @@ of requirements for an API to count as public.
 ### Bugfixes
 
 - Fixes `LeakyBucket` throttling algorithm corner cases, #1044
+- Fixed OpenAPI schema generation for enum values used
+  in path, query, header, and cookie parameters, #1059
 
 
 ## Version 0.10.0 (2026-05-26)
