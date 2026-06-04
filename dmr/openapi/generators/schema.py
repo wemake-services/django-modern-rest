@@ -139,12 +139,11 @@ class SchemaGenerator:
         skip_registration: bool = False,
         register_referenced_components: bool = False,
     ) -> Schema | Reference:
-        if not skip_registration:
-            for component_name, component in components.items():
-                self._context.registries.schema.register(
-                    schema_name=component_name,
-                    schema=load_schema(component),
-                )
+        _register_components(
+            self._context,
+            components,
+            skip_registration=skip_registration,
+        )
 
         reference = schema.get('$ref')
         if reference:
@@ -163,16 +162,10 @@ class SchemaGenerator:
             # real schemas back, not references,
             # because there's no registered schema under the reference.
             if skip_registration:
-                resolution_context = _build_resolution_context(components)
-                if register_referenced_components:
-                    _register_nested_components(
-                        self._context,
-                        reference,
-                        resolution_context,
-                    )
-                return self._context.registries.schema.maybe_resolve_reference(
+                return self._resolve_skipped_reference(
                     reference,
-                    resolution_context=resolution_context,
+                    components,
+                    register_referenced_components=register_referenced_components,
                 )
             return reference
 
@@ -202,6 +195,40 @@ class SchemaGenerator:
         )
         if not schema.example and not schema.examples:  # pragma: no branch
             schema.example = generate_example(annotation, serializer)
+
+    def _resolve_skipped_reference(
+        self,
+        reference: Reference,
+        components: dict[str, Any],
+        *,
+        register_referenced_components: bool,
+    ) -> Schema:
+        resolution_context = _build_resolution_context(components)
+        if register_referenced_components:
+            _register_nested_components(
+                self._context,
+                reference,
+                resolution_context,
+            )
+        return self._context.registries.schema.maybe_resolve_reference(
+            reference,
+            resolution_context=resolution_context,
+        )
+
+
+def _register_components(
+    context: 'OpenAPIContext',
+    components: dict[str, Any],
+    *,
+    skip_registration: bool,
+) -> None:
+    if skip_registration:
+        return
+    for component_name, component in components.items():
+        context.registries.schema.register(
+            schema_name=component_name,
+            schema=load_schema(component),
+        )
 
 
 def _build_resolution_context(
