@@ -17,10 +17,10 @@ from dmr.routing import Router, path
 
 try:
     import msgspec
-
-    from dmr.plugins.msgspec import MsgspecSerializer
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ class _TestStrEnum(enum.StrEnum):
 
 
 class _StrEnumQuery(msgspec.Struct, kw_only=True):
-    e: _TestStrEnum = _TestStrEnum.none
+    enum_value: _TestStrEnum = _TestStrEnum.none
 
 
 class _StrEnumQueryController(Controller[MsgspecSerializer]):
@@ -301,8 +301,11 @@ def test_str_enum_query_schema() -> None:
         ),
     ).convert()
 
-    parameter = schema['paths']['/api/test/']['get']['parameters'][0]
-    assert parameter['name'] == 'e'
+    paths = schema['paths']
+    path_item = paths['/api/test/']
+    operation = path_item['get']
+    parameter = operation['parameters'][0]
+    assert parameter['name'] == 'enum_value'
     assert parameter['in'] == 'query'
     assert parameter['schema'] == {
         '$ref': '#/components/schemas/_TestStrEnum',
