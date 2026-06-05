@@ -115,7 +115,7 @@ integration = [
 ]
 dev-and-docs = [
   "punq>=0.7,<1",
-  "redis>=7.4,<8",
+  "redis>=7.4,<9",
 ]
 dev = [
   { include-group = "unit-test" },
