@@ -40,4 +40,6 @@ the time to ensure it reflects your own voice and ideas. If using AI for
 translation, we recommend writing in your native language and including the AI
 translation in a quote block.
 
+`wemake-services` organisation will block any users that abuse our AI policy.
+
 P.S. Respectfully copied from [Astral](https://github.com/astral-sh/.github/blob/main/AI_POLICY.md) team.
