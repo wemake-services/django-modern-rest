@@ -81,7 +81,7 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'django': ('https://docs.djangoproject.com/en/stable/', None),
     'pydantic': ('https://docs.pydantic.dev/latest/', None),
-    'msgspec': ('https://jcristharif.com/msgspec/', None),
+    'msgspec': ('https://msgspec.dev/', None),
     'jwt': ('https://pyjwt.readthedocs.io/en/latest/', None),
     'typing_extensions': (
         'https://typing-extensions.readthedocs.io/en/stable/',
