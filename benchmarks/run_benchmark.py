@@ -135,7 +135,7 @@ def run_benchmark() -> None:
         for is_async in modes:
             local_timings = (0, 0)
             print(f'Starting {app} {is_async=}')
-            try:  # noqa: PLW0717
+            try:
                 process = _run_app(app, is_async=is_async)
                 container = _ASYNC_ENDPOINTS if is_async else _SYNC_ENDPOINTS
                 assert container
