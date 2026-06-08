@@ -816,7 +816,7 @@ dev = [
     { name = "redis", specifier = ">=7.4,<9" },
     { name = "ruff", specifier = ">=0.15,<0.16" },
     { name = "schemathesis", specifier = ">=4.14,<5" },
-    { name = "slotscheck", specifier = ">=0.19,<0.20" },
+    { name = "slotscheck", specifier = ">=0.19,<0.21" },
     { name = "syrupy", specifier = ">=5.1,<6" },
     { name = "tracecov", specifier = ">=0.19,<0.22" },
     { name = "types-django-filter", specifier = ">=25.2,<26" },
@@ -2708,14 +2708,14 @@ wheels = [
 
 [[package]]
 name = "slotscheck"
-version = "0.19.1"
+version = "0.20.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/57/6fcb8df11e7c76eb87b23bfa931408e47f051c6161749c531b4060a45516/slotscheck-0.19.1.tar.gz", hash = "sha256:6146b7747f8db335a00a66b782f86011b74b995f61746dc5b36a9e77d5326013", size = 16050, upload-time = "2024-10-19T13:30:53.369Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/da/1e6218819012774a34c0cde0074f4e217e1e8511f9d8b693a2a13572428c/slotscheck-0.20.0.tar.gz", hash = "sha256:7069653d51578c08239fabe26cb55fa81acfd17ce72cb404e6b957874058a5bd", size = 16410, upload-time = "2026-05-29T08:48:24.737Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/32/bd569256267f80b76b87d21a09795741a175778b954bee1d7b1a89852b6f/slotscheck-0.19.1-py3-none-any.whl", hash = "sha256:bff9926f8d6408ea21b6c6bbaa4389cea1682962e73ee4f30084b6d2b89260ee", size = 16995, upload-time = "2024-10-19T13:30:51.23Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/18/bcd02d55073eeffd7a9ae75e78a6a6043fea9e204fecb11b2ae186dc3a40/slotscheck-0.20.0-py3-none-any.whl", hash = "sha256:8d994ca932b651d5a93be6ed3215cb6114e433aef8ddb79e051d68c0b32eafb5", size = 17770, upload-time = "2026-05-29T08:48:23.521Z" },
 ]
 
 [[package]]
