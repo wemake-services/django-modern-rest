@@ -128,7 +128,7 @@ dev = [
   "types-django-filter>=25.2,<26",
   "types-redis>=4.6,<5",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
-  "pyright>=1.1,<1.1.410",
+  "pyright>=1.1,<1.1.411",
   "pyrefly>=1,<2",
   "wemake-python-styleguide>=1.6,<2",
   "ruff>=0.15,<0.16",
