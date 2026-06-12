@@ -6,14 +6,14 @@ from dmr.security import AuthenticatedHttpRequest
 from dmr.security.token import QueryTokenSyncAuth
 
 
-class APIController(Controller[PydanticSerializer]):
+# Custom query parameter name (default is `?token=`):
+class CustomQueryParamController(Controller[PydanticSerializer]):
     request: AuthenticatedHttpRequest[User]
-    auth = (QueryTokenSyncAuth(),)
+    auth = (QueryTokenSyncAuth(query_param='api_key'),)
 
     def get(self) -> str:
-        # Let's test that `User` has the correct type:
         assert self.request.user.username
         return 'authed'
 
 
-# openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
+# openapi: {"controller": "CustomQueryParamController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
