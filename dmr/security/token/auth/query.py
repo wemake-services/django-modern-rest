@@ -1,10 +1,12 @@
+from typing import Final
+
 from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.token.auth.header import TokenAsyncAuth, TokenSyncAuth
 
-_DEFAULT_PARAM = 'token'
+_DEFAULT_PARAM: Final = 'token'
 
 
 class QueryTokenSyncAuth(TokenSyncAuth):
