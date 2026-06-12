@@ -6,14 +6,14 @@ from dmr.security import AuthenticatedHttpRequest
 from dmr.security.token import TokenSyncAuth
 
 
-class APIController(Controller[PydanticSerializer]):
+# Custom header name (default is `X-API-Token`):
+class CustomHeaderController(Controller[PydanticSerializer]):
     request: AuthenticatedHttpRequest[User]
-    auth = (TokenSyncAuth(),)
+    auth = (TokenSyncAuth(header_name='Authorization', prefix='Token'),)
 
     def get(self) -> str:
-        # Let's test that `User` has the correct type:
         assert self.request.user.username
         return 'authed'
 
 
-# openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
+# openapi: {"controller": "CustomHeaderController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
