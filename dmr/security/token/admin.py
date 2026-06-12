@@ -1,12 +1,23 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Generic, TypeVar
+
 from django.contrib import admin
+from django.db.models import Model
 
 from dmr.security.token.models import Token
 
+_ModelT = TypeVar('_ModelT', bound=Model)
+
+if TYPE_CHECKING:
+    ModelAdmin = admin.ModelAdmin
+else:
+
+    class ModelAdmin(admin.ModelAdmin, Generic[_ModelT]): ...  # noqa: D101, WPS604
+
 
 @admin.register(Token)
-class TokenAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class TokenAdmin(ModelAdmin[Token]):
     """Admin configuration for opaque auth tokens."""
 
     list_display = (
@@ -25,6 +36,7 @@ class TokenAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         'expires_at',
         'revoked_at',
     )
+    list_select_related = ('user',)
     search_fields = ('name', 'user__username', 'user__email', 'token_hash')
     readonly_fields = ('token_hash', 'created_at', 'updated_at', 'last_used_at')
     autocomplete_fields = ('user',)
