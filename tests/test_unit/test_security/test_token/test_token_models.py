@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Final
 
 import pytest
 from django.conf import LazySettings
@@ -7,7 +8,7 @@ from django.contrib.auth.models import User
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY_DAYS
 from dmr.security.token.models import Token
 
-_CUSTOM_EXPIRY_DAYS = 90
+_CUSTOM_EXPIRY_DAYS: Final = 90
 
 
 @pytest.mark.django_db
