@@ -16,4 +16,4 @@ class CustomHeaderController(Controller[PydanticSerializer]):
         return 'authed'
 
 
-# openapi: {"controller": "CustomHeaderController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
+# openapi: {"controller": "CustomHeaderController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001 E501
