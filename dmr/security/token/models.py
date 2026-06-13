@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import ClassVar, Final, TypeAlias
+from typing import ClassVar, TypeAlias
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -11,9 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from typing_extensions import Sentinel, override
 
 from dmr.settings import Settings, resolve_setting
-
-_UNSET: Final = Sentinel('_UNSET')
-"""Sentinel for unset *expires_at* — triggers global settings default."""
+from dmr.types import EMPTY
 
 _BaseFkData: TypeAlias = int | str | Combinable
 _ForeignKey: TypeAlias = (
@@ -51,7 +49,7 @@ class TokenManager(models.Manager['Token']):
         *,
         user: AbstractBaseUser,
         name: str,
-        expires_at: dt.datetime | Sentinel | None = _UNSET,
+        expires_at: dt.datetime | Sentinel | None = EMPTY,
     ) -> 'tuple[Token, str]':
         """
         Create a new token, returning ``(Token instance, raw token string)``.
@@ -60,7 +58,7 @@ class TokenManager(models.Manager['Token']):
         ``DMR_SETTINGS[Settings.token_default_expiry]``.
         Pass ``None`` explicitly to create a non-expiring token.
         """
-        if expires_at is _UNSET:
+        if expires_at is EMPTY:
             default_expiry = resolve_setting(Settings.token_default_expiry)
             if default_expiry is None:
                 expires_at = None
@@ -80,7 +78,7 @@ class TokenManager(models.Manager['Token']):
         *,
         user: AbstractBaseUser,
         name: str,
-        expires_at: dt.datetime | Sentinel | None = _UNSET,
+        expires_at: dt.datetime | Sentinel | None = EMPTY,
     ) -> 'tuple[Token, str]':
         """
         Async version of :meth:`create_token`.
@@ -89,7 +87,7 @@ class TokenManager(models.Manager['Token']):
         ``DMR_SETTINGS[Settings.token_default_expiry]``.
         Pass ``None`` explicitly to create a non-expiring token.
         """
-        if expires_at is _UNSET:
+        if expires_at is EMPTY:
             default_expiry = resolve_setting(Settings.token_default_expiry)
             if default_expiry is None:
                 expires_at = None
