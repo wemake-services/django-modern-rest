@@ -352,6 +352,7 @@ class DynamicThrottle(_BaseThrottle):
         algorithm: BaseThrottleAlgorithm | None = None,
         response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
     ) -> None:
+        """Initialize the dynamic throttle."""
         self.max_requests = max_requests
         self.duration_in_seconds = int(duration_in_seconds)
         self.cache_key = cache_key or RemoteAddr()

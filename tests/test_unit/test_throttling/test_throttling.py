@@ -14,7 +14,6 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, DynamicThrottle, Rate, SyncThrottle
-from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
