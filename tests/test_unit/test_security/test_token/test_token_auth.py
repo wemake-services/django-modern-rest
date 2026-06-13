@@ -574,3 +574,44 @@ async def test_async_cookie_token_auth_success(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
+
+
+# -- Unit tests for auth class methods --
+
+
+def test_token_model_returns_token_class() -> None:
+    """token_model() returns the Token model for both sync and async auth."""
+    assert TokenSyncAuth().token_model() is Token
+    assert TokenAsyncAuth().token_model() is Token
+
+
+def test_sync_check_token_passes_for_active_token() -> None:
+    """check_token() does not raise when the token is active."""
+    token = Token(expires_at=None, revoked_at=None)
+    TokenSyncAuth().check_token(token)  # must not raise
+
+
+def test_sync_check_token_raises_inactive() -> None:
+    """check_token() raises NotAuthenticatedError when the token is inactive."""
+    from dmr.exceptions import NotAuthenticatedError
+
+    token = Token(revoked_at=dt.datetime.now(dt.UTC))
+    with pytest.raises(NotAuthenticatedError):
+        TokenSyncAuth().check_token(token)
+
+
+@pytest.mark.asyncio
+async def test_async_check_token_passes_active() -> None:
+    """async check_token() does not raise when the token is active."""
+    token = Token(expires_at=None, revoked_at=None)
+    await TokenAsyncAuth().check_token(token)  # must not raise
+
+
+@pytest.mark.asyncio
+async def test_async_check_token_raises_inactive() -> None:
+    """async check_token() raises NotAuthenticatedError for inactive tokens."""
+    from dmr.exceptions import NotAuthenticatedError
+
+    token = Token(revoked_at=dt.datetime.now(dt.UTC))
+    with pytest.raises(NotAuthenticatedError):
+        await TokenAsyncAuth().check_token(token)
