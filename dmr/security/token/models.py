@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import ClassVar, TypeAlias
+from typing import ClassVar, TypeAlias, cast
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -44,6 +44,20 @@ class TokenManager(models.Manager['Token']):
             algorithm='sha256',
         ).hexdigest()
 
+    def get_expires_at(
+        self,
+        expires_at: dt.datetime | Sentinel | None = EMPTY,
+    ) -> dt.datetime | None:
+        """Resolve the expiry datetime, falling back to the global default."""
+        if expires_at is EMPTY:
+            default_expiry: dt.timedelta | None = resolve_setting(
+                Settings.token_default_expiry,
+            )
+            if default_expiry is None:
+                return None
+            return dt.datetime.now(dt.UTC) + default_expiry
+        return cast(dt.datetime | None, expires_at)
+
     def create_token(
         self,
         *,
@@ -58,18 +72,12 @@ class TokenManager(models.Manager['Token']):
         ``DMR_SETTINGS[Settings.token_default_expiry]``.
         Pass ``None`` explicitly to create a non-expiring token.
         """
-        if expires_at is EMPTY:
-            default_expiry = resolve_setting(Settings.token_default_expiry)
-            if default_expiry is None:
-                expires_at = None
-            else:
-                expires_at = dt.datetime.now(dt.UTC) + default_expiry
         raw_token = secrets.token_urlsafe(32)
         token = self.create(
             user=user,
             name=name,
             token_hash=self.hash_token(raw_token),
-            expires_at=expires_at,
+            expires_at=self.get_expires_at(expires_at),
         )
         return token, raw_token
 
@@ -87,18 +95,12 @@ class TokenManager(models.Manager['Token']):
         ``DMR_SETTINGS[Settings.token_default_expiry]``.
         Pass ``None`` explicitly to create a non-expiring token.
         """
-        if expires_at is EMPTY:
-            default_expiry = resolve_setting(Settings.token_default_expiry)
-            if default_expiry is None:
-                expires_at = None
-            else:
-                expires_at = dt.datetime.now(dt.UTC) + default_expiry
         raw_token = secrets.token_urlsafe(32)
         token = await self.acreate(
             user=user,
             name=name,
             token_hash=self.hash_token(raw_token),
-            expires_at=expires_at,
+            expires_at=self.get_expires_at(expires_at),
         )
         return token, raw_token
 
