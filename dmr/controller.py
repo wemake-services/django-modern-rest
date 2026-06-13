@@ -32,8 +32,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.throttling.base import DynamicThrottle
+from dmr.throttling import AsyncThrottle, SyncThrottle , DynamicThrottle
 from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
