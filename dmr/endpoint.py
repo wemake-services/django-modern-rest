@@ -45,7 +45,7 @@ from dmr.response import APIError, RedirectTo
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
-from dmr.throttling import AsyncThrottle, SyncThrottle , DynamicThrottle
+from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
 from dmr.types import EMPTY
 from dmr.validation import (
     EndpointMetadataBuilder,
