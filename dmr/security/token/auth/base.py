@@ -59,14 +59,22 @@ class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
 
         .. code-block:: python
 
+            >>> from dmr.security.token.auth.header import TokenSyncAuth
+
             # Default — custom header, no prefix
-            >>> TokenSyncAuth()  # X-API-Token: <token>
+            >>> auth = TokenSyncAuth()  # X-API-Token: <token>
 
             # DRF-compatible
-            >>> TokenSyncAuth(header_name='Authorization', prefix='Token')
+            >>> auth = TokenSyncAuth(
+            ...     header_name='Authorization',
+            ...     prefix='Token'
+            ... )
 
             # Bearer style
-            >>> TokenSyncAuth(header_name='Authorization', prefix='Bearer')
+            >>> auth = TokenSyncAuth(
+            ...     header_name='Authorization',
+            ...     prefix='Bearer'
+            ... )
         """
         self.header_name = header_name
         self.prefix = prefix
