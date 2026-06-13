@@ -113,7 +113,9 @@ class SettingsValidator:
 
         # Throttling:
         if not all(
-            isinstance(throttling, (SyncThrottle, AsyncThrottle, DynamicThrottle))
+            isinstance(
+                throttling, (SyncThrottle, AsyncThrottle, DynamicThrottle)
+            )
             for throttling in settings.get('throttling', [])
         ):
             raise EndpointMetadataError(
