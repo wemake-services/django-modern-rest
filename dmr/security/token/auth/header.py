@@ -167,9 +167,14 @@ class TokenAsyncAuth(_BaseTokenAuth, AsyncAuth):
     async def mark_token_used(self, token: 'Token') -> None:
         """Persist token usage timestamp after successful authentication."""
         now = dt.datetime.now(dt.UTC)
-        await self.token_model().objects.filter(pk=token.pk).aupdate(
-            last_used_at=now,
-            updated_at=now,
+        await (
+            self
+            .token_model()
+            .objects.filter(pk=token.pk)
+            .aupdate(
+                last_used_at=now,
+                updated_at=now,
+            )
         )
         token.last_used_at = now
 

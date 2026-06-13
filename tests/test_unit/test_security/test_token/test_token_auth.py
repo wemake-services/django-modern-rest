@@ -602,14 +602,14 @@ def test_sync_check_token_raises_inactive() -> None:
 
 @pytest.mark.asyncio
 async def test_async_check_token_passes_active() -> None:
-    """async check_token() does not raise when the token is active."""
+    """Async check_token() does not raise when the token is active."""
     token = Token(expires_at=None, revoked_at=None)
     await TokenAsyncAuth().check_token(token)  # must not raise
 
 
 @pytest.mark.asyncio
 async def test_async_check_token_raises_inactive() -> None:
-    """async check_token() raises NotAuthenticatedError for inactive tokens."""
+    """Async check_token() raises NotAuthenticatedError for inactive tokens."""
     from dmr.exceptions import NotAuthenticatedError
 
     token = Token(revoked_at=dt.datetime.now(dt.UTC))
