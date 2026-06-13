@@ -24,7 +24,7 @@ from dmr.response import infer_status_code
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
-from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
 from dmr.types import EmptyObj, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
@@ -505,19 +505,24 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         )
 
-        # We use tuple and not a list, because we expose `__dmr_throttling__`
-        # to each request, so it would not be possible to mutate it by accident.
-        throttling = [
-            *payload_throttling,
-            *(self.controller_cls.throttling or ()),
-            *settings_throttling,
-        ]
         # Validate that throttling matches the sync / async endpoints:
         base_type = (
             AsyncThrottle
             if inspect.iscoroutinefunction(self.func)
             else SyncThrottle
         )
+
+        # We use tuple and not a list, because we expose `__dmr_throttling__`
+        # to each request, so it would not be possible to mutate it by accident.
+        # We resolve `DynamicThrottle` to get the actual throttle instance.
+        throttling = [
+            t.resolve(base_type) if isinstance(t, DynamicThrottle) else t
+            for t in [
+                *payload_throttling,
+                *(self.controller_cls.throttling or ()),
+                *settings_throttling,
+            ]
+        ]
         if not all(
             isinstance(throttling_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
             for throttling_instance in throttling

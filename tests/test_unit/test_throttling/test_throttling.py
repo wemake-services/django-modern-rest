@@ -13,7 +13,7 @@ from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling import AsyncThrottle, DynamicThrottle, Rate, SyncThrottle
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
@@ -132,7 +132,9 @@ async def test_throttle_async_per_controller(
     for _ in range(_ATTEMPTS):
         freezer.tick(delta=1)  # seconds
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}
@@ -226,7 +228,9 @@ async def test_throttle_async_per_settings(
 
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}
@@ -369,3 +373,322 @@ def test_throttle_sync_rates(
     assert response.status_code == HTTPStatus.OK, response.headers
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
+
+
+@pytest.mark.parametrize('serializer', serializers)
+def test_dynamic_throttle_per_endpoint_sync(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures DynamicThrottle resolves to SyncThrottle for sync endpoints."""
+
+    class _SyncController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        @modify(throttling=[DynamicThrottle(1, Rate.second)])
+        def get(self) -> str:
+            return 'inside'
+
+        @validate(
+            ResponseSpec(str, status_code=HTTPStatus.OK),
+            throttling=[DynamicThrottle(1, Rate.second)],
+        )
+        def put(self) -> HttpResponse:
+            return self.to_response('inside')
+
+    metadata = _SyncController.api_endpoints[str(HTTPMethod.GET)].metadata
+    assert metadata.throttling_before_auth
+    assert len(metadata.throttling_before_auth) == 1
+    assert isinstance(metadata.throttling_before_auth[0], SyncThrottle)
+    assert metadata.throttling_after_auth is None
+    assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
+
+    for _ in range(_ATTEMPTS):
+        freezer.tick(delta=1)
+        request = dmr_rf.get('/whatever/')
+        response = _SyncController.as_view()(request)
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.OK, response.content
+        assert response.headers == {'Content-Type': 'application/json'}
+        assert json.loads(response.content) == 'inside'
+
+    # This will fail:
+    request = dmr_rf.get('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers == {
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
+    })
+
+    # PUT is still fine:
+    request = dmr_rf.put('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_dynamic_throttle_per_controller_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures DynamicThrottle resolves to AsyncThrottle for async."""
+
+    class _AsyncController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        throttling = [DynamicThrottle(1, Rate.second)]
+
+        async def get(self) -> str:
+            return 'inside'
+
+        async def put(self) -> str:
+            return 'inside'
+
+    metadata = _AsyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    assert len(metadata.throttling_before_auth) == 1
+    assert isinstance(metadata.throttling_before_auth[0], AsyncThrottle)
+    assert metadata.throttling_after_auth is None
+    assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
+
+    for _ in range(_ATTEMPTS):
+        freezer.tick(delta=1)
+        request = dmr_async_rf.get('/whatever/')
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.OK, response.content
+        assert response.headers == {'Content-Type': 'application/json'}
+        assert json.loads(response.content) == 'inside'
+
+    # This will fail:
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers == {
+        'X-RateLimit-Limit': '1',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
+    })
+
+    # But, `PUT` is still fine:
+    request = dmr_async_rf.put('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_dynamic_throttle_per_settings(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+    settings: LazySettings,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures DynamicThrottle in global settings works for async."""
+    settings.DMR_SETTINGS = {
+        Settings.throttling: [DynamicThrottle(_ATTEMPTS, Rate.second)],
+    }
+
+    class _AsyncController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        async def get(self) -> str:
+            return 'inside'
+
+        async def put(self) -> str:
+            return 'inside'
+
+    metadata = _AsyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth is not None
+    assert isinstance(metadata.throttling_before_auth[0], AsyncThrottle)
+
+    for _ in range(_ATTEMPTS):
+        request = dmr_async_rf.get('/whatever/')
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.OK, response.content
+        assert response.headers == {'Content-Type': 'application/json'}
+        assert json.loads(response.content) == 'inside'
+
+    # This will now fail:
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers == {
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
+    })
+
+    # But, `PUT` is fine:
+    request = dmr_async_rf.put('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'inside'
+
+
+@pytest.mark.parametrize('serializer', serializers)
+def test_dynamic_throttle_multiple_sources(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+    settings: LazySettings,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures DynamicThrottle in settings merges with SyncThrottle."""
+    settings.DMR_SETTINGS = {
+        Settings.throttling: [DynamicThrottle(_ATTEMPTS, Rate.second)],
+    }
+
+    class _SyncController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        throttling = [
+            SyncThrottle(10, Rate.minute),
+            SyncThrottle(10, Rate.hour),
+        ]
+
+        def get(self) -> str:
+            return 'inside'
+
+    metadata = _SyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    # controller(2) + global dynamic resolved to SyncThrottle(1) = 3:
+    assert len(metadata.throttling_before_auth) == 3
+    assert all(
+        isinstance(t, SyncThrottle) for t in metadata.throttling_before_auth
+    )
+    assert metadata.throttling_after_auth is None
+    assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
+
+    for _ in range(_ATTEMPTS):
+        request = dmr_rf.get('/whatever/')
+        response = _SyncController.as_view()(request)
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.OK, response.headers
+        assert response.headers == {'Content-Type': 'application/json'}
+        assert json.loads(response.content) == 'inside'
+
+    request = dmr_rf.get('/whatever/')
+    response = _SyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.headers
+    )
+    assert response.headers == {
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
+    })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_dynamic_throttle_multiple_sources_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+    settings: LazySettings,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures DynamicThrottle in settings merges with AsyncThrottle."""
+    settings.DMR_SETTINGS = {
+        Settings.throttling: [DynamicThrottle(_ATTEMPTS, Rate.second)],
+    }
+
+    class _AsyncController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        throttling = [
+            AsyncThrottle(10, Rate.minute),
+            AsyncThrottle(10, Rate.hour),
+        ]
+
+        async def get(self) -> str:
+            return 'inside'
+
+    metadata = _AsyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    # controller(2) + global dynamic resolved to AsyncThrottle(1) = 3:
+    assert len(metadata.throttling_before_auth) == 3
+    assert all(
+        isinstance(t, AsyncThrottle) for t in metadata.throttling_before_auth
+    )
+    assert metadata.throttling_after_auth is None
+    assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
+
+    for _ in range(_ATTEMPTS):
+        request = dmr_async_rf.get('/whatever/')
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.OK, response.headers
+        assert response.headers == {'Content-Type': 'application/json'}
+        assert json.loads(response.content) == 'inside'
+
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.headers
+    )
+    assert response.headers == {
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '1',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
+    })

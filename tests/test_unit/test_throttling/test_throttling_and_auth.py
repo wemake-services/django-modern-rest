@@ -15,7 +15,7 @@ from dmr.security.django_session import (
     DjangoSessionSyncAuth,
 )
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling import AsyncThrottle, DynamicThrottle, Rate, SyncThrottle
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
@@ -246,6 +246,191 @@ def test_throttle_sync_before_auth(
     request = dmr_rf.get('/whatever/')
     request.user = User()
     response = _SyncBothController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers['RateLimit'] == '"per-minute";r=0;t=59'
+
+
+# DynamicThrottle
+
+
+class _DynamicSyncController(Controller[PydanticSerializer]):
+    throttling = [
+        DynamicThrottle(
+            1,
+            Rate.second,
+            response_headers=[RateLimitIETFDraft()],
+        ),
+        DynamicThrottle(
+            1,
+            Rate.minute,
+            cache_key=RemoteAddr(runs_before_auth=False, name='per-minute'),
+            response_headers=[RateLimitIETFDraft()],
+        ),
+    ]
+
+    auth = [DjangoSessionSyncAuth()]
+
+    def get(self) -> str:
+        return 'inside'
+
+
+def test_dynamic_throttle_resolves_to_sync_with_auth(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures DynamicThrottle resolves to SyncThrottle for sync controllers."""
+    metadata = _DynamicSyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    assert metadata.throttling_after_auth
+    assert all(
+        isinstance(t, SyncThrottle)
+        for t in metadata.throttling  # type: ignore
+    )
+    assert (
+        metadata.throttling
+        == metadata.throttling_before_auth + metadata.throttling_after_auth
+    )
+
+    # This will trigger first `1/s` response:
+    request = dmr_rf.get('/whatever/')
+    response = _DynamicSyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+
+    # This will fail the `1/s` throttle:
+    request = dmr_rf.get('/whatever/')
+    response = _DynamicSyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers['RateLimit'] == '"RemoteAddr";r=0;t=1'
+
+    # Now, go forward a second and clear `1/s` rule:
+    freezer.tick(delta=1)
+
+    # Now, provide auth and make a request, it will trigger `1/m`:
+    request = dmr_rf.get('/whatever/')
+    request.user = User()
+    response = _DynamicSyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.headers
+
+    # The same request will fail `1/s` rule again:
+    request = dmr_rf.get('/whatever/')
+    request.user = User()
+    response = _DynamicSyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers['RateLimit'] == '"RemoteAddr";r=0;t=1'
+
+    # Now, go forward a second and clear `1/s` rule:
+    freezer.tick(delta=1)
+
+    # This will now fail due to `1/m` rule:
+    request = dmr_rf.get('/whatever/')
+    request.user = User()
+    response = _DynamicSyncController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers['RateLimit'] == '"per-minute";r=0;t=59'
+
+
+class _DynamicAsyncController(Controller[PydanticSerializer]):
+    throttling = [
+        DynamicThrottle(
+            1,
+            Rate.second,
+            response_headers=[RateLimitIETFDraft()],
+        ),
+        DynamicThrottle(
+            1,
+            Rate.minute,
+            cache_key=RemoteAddr(runs_before_auth=False, name='per-minute'),
+            response_headers=[RateLimitIETFDraft()],
+        ),
+    ]
+
+    auth = [DjangoSessionAsyncAuth()]
+
+    async def get(self) -> str:
+        return 'inside'
+
+
+@pytest.mark.asyncio
+async def test_dynamic_throttle_resolves_to_async_with_auth(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures DynamicThrottle resolves to AsyncThrottle for async."""
+    metadata = _DynamicAsyncController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth
+    assert metadata.throttling_after_auth
+    assert all(isinstance(t, AsyncThrottle) for t in metadata.throttling)
+    assert (
+        metadata.throttling
+        == metadata.throttling_before_auth + metadata.throttling_after_auth
+    )
+
+    # This will trigger first `1/s` response:
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(
+        _DynamicAsyncController.as_view()(request),
+    )
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+
+    # This will fail the `1/s` throttle:
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(
+        _DynamicAsyncController.as_view()(request),
+    )
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers['RateLimit'] == '"RemoteAddr";r=0;t=1'
+
+    # Now, go forward a second and clear `1/s` rule:
+    freezer.tick(delta=1)
+
+    # Now, provide auth and make a request, it will trigger `1/m`:
+    request = dmr_async_rf.get('/whatever/')
+    request.auser = lambda: _resolve(User())
+    response = await dmr_async_rf.wrap(
+        _DynamicAsyncController.as_view()(request),
+    )
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.headers
+
+    # The same request will fail `1/s` rule again:
+    request = dmr_async_rf.get('/whatever/')
+    request.auser = lambda: _resolve(User())
+    response = await dmr_async_rf.wrap(
+        _DynamicAsyncController.as_view()(request),
+    )
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers['RateLimit'] == '"RemoteAddr";r=0;t=1'
+
+    # Now, go forward a second and clear `1/s` rule:
+    freezer.tick(delta=1)
+
+    # This will now fail due to `1/m` rule:
+    request = dmr_async_rf.get('/whatever/')
+    request.auser = lambda: _resolve(User())
+    response = await dmr_async_rf.wrap(
+        _DynamicAsyncController.as_view()(request),
+    )
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
         response.content

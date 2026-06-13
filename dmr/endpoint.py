@@ -46,6 +46,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling.base import DynamicThrottle
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
@@ -610,7 +611,10 @@ def validate(  # noqa: WPS234
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -640,7 +644,10 @@ def validate(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -670,7 +677,10 @@ def validate(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -699,7 +709,10 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -856,7 +869,10 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -886,7 +902,10 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -917,7 +936,10 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -947,7 +969,10 @@ def modify(  # noqa: WPS211
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: Sequence[AsyncThrottle]
+    | Sequence[SyncThrottle]
+    | Sequence[DynamicThrottle]
+    | None = (),
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,

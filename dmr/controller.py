@@ -33,6 +33,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling.base import DynamicThrottle
 from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -158,7 +159,10 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     validate_negotiation: ClassVar[bool | None] = None
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     throttling: ClassVar[
-        Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
+        Sequence[SyncThrottle]
+        | Sequence[AsyncThrottle]
+        | Sequence[DynamicThrottle]
+        | None
     ] = ()
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True

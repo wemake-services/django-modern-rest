@@ -322,6 +322,43 @@ class AsyncThrottle(_BaseThrottle):
         )
 
 
+class DynamicThrottle(_BaseThrottle):
+    """Throttle that resolves to SyncThrottle or AsyncThrottle.
+
+    Automatically resolves based on the endpoint it is applied to.
+    Use this in global settings to avoid manually matching
+    sync and async endpoints with their respective throttle types.
+    """
+
+    def resolve(
+        self,
+        throttle_cls: type[SyncThrottle] | type[AsyncThrottle],
+    ) -> SyncThrottle | AsyncThrottle:
+        """
+        Resolve to the correct throttle type for this endpoint.
+
+        Parameters:
+            throttle_cls: The concrete throttle class to instantiate.
+                Pass ``SyncThrottle`` for sync endpoints and
+                ``AsyncThrottle`` for async endpoints.
+                This is derived from ``base_type`` in ``_build_throttling``.
+
+        Returns:
+            A concrete :class:`SyncThrottle` or :class:`AsyncThrottle`
+            instance with the same configuration as this
+            :class:`DynamicThrottle`.
+
+        """
+        return throttle_cls(
+            self.max_requests,
+            self.duration_in_seconds,
+            cache_key=self.cache_key,
+            backend=self._backend,
+            algorithm=self._algorithm,
+            response_headers=self._response_headers,
+        )
+
+
 @dataclasses.dataclass(slots=True, frozen=True)
 class ThrottlingReport:
     """

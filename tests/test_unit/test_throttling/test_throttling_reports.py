@@ -16,7 +16,13 @@ from dmr.metadata import ResponseSpecMetadata
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
+from dmr.throttling import (
+    AsyncThrottle,
+    DynamicThrottle,
+    Rate,
+    SyncThrottle,
+    ThrottlingReport,
+)
 from dmr.throttling.algorithms import LeakyBucket
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
@@ -426,6 +432,261 @@ async def test_leaky_bucket_async(
 
     response = await dmr_async_rf.wrap(
         _AsyncLeakyBucketController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit': '"one";r=0;t=1, "two";r=4;t=12',
+        'Retry-After': '1',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == 'inside'
+
+
+class _DynamicReportsController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.OK,
+            headers={
+                **_draft_headers.provide_headers_specs(),
+                **_ratelimit_headers.provide_headers_specs(),
+            },
+        ),
+        throttling=[
+            DynamicThrottle(1, Rate.second, response_headers=[_draft_headers]),
+            DynamicThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_ratelimit_headers],
+            ),
+        ],
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(
+            'inside',
+            headers=ThrottlingReport(self).report(),
+        )
+
+
+def test_dynamic_throttle_multiple_headers_sync(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensure DynamicThrottle report headers work correctly (sync)."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _DynamicReportsController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=1;name="RemoteAddr"',
+        'RateLimit': '"RemoteAddr";r=0;t=1',
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '4',
+        'X-RateLimit-Reset': '60',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == 'inside'
+
+
+class _AsyncDynamicReportsController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.OK,
+            headers={
+                **_draft_headers.provide_headers_specs(),
+                **_ratelimit_headers.provide_headers_specs(),
+            },
+        ),
+        throttling=[
+            DynamicThrottle(1, Rate.second, response_headers=[_draft_headers]),
+            DynamicThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_ratelimit_headers],
+            ),
+        ],
+    )
+    async def get(self) -> HttpResponse:
+        return self.to_response(
+            'inside',
+            headers=await ThrottlingReport(self).areport(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_dynamic_throttle_multiple_headers_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensure DynamicThrottle report headers work correctly (async)."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(
+        _AsyncDynamicReportsController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=1;name="RemoteAddr"',
+        'RateLimit': '"RemoteAddr";r=0;t=1',
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': '4',
+        'X-RateLimit-Reset': '60',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == 'inside'
+
+
+class _DynamicMultipleThrottlesController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.OK,
+            headers=_draft_headers.provide_headers_specs(),
+        ),
+        throttling=[
+            DynamicThrottle(
+                1,
+                Rate.second,
+                response_headers=[_draft_headers],
+                cache_key=RemoteAddr(name='one'),
+            ),
+            DynamicThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_draft_headers],
+                cache_key=RemoteAddr(name='two'),
+            ),
+        ],
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(
+            'inside',
+            headers=ThrottlingReport(self).report(),
+        )
+
+
+def test_dynamic_throttle_multiple_throttles_sync(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensure DynamicThrottle multiple throttle reports work (sync)."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _DynamicMultipleThrottlesController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit': '"one";r=0;t=1, "two";r=4;t=60',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == 'inside'
+
+
+class _AsyncDynamicMultipleThrottlesController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.OK,
+            headers=_draft_headers.provide_headers_specs(),
+        ),
+        throttling=[
+            DynamicThrottle(
+                1,
+                Rate.second,
+                response_headers=[_draft_headers],
+                cache_key=RemoteAddr(name='one'),
+            ),
+            DynamicThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_draft_headers],
+                cache_key=RemoteAddr(name='two'),
+            ),
+        ],
+    )
+    async def get(self) -> HttpResponse:
+        return self.to_response(
+            'inside',
+            headers=await ThrottlingReport(self).areport(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_dynamic_throttle_multiple_throttles_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensure DynamicThrottle multiple throttle reports work (async)."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(
+        _AsyncDynamicMultipleThrottlesController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit': '"one";r=0;t=1, "two";r=4;t=60',
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == 'inside'
+
+
+class _DynamicLeakyBucketController(Controller[PydanticSerializer]):
+    @validate(
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.OK,
+            headers={
+                **_draft_headers.provide_headers_specs(),
+                **_retry_after.provide_headers_specs(),
+            },
+        ),
+        throttling=[
+            DynamicThrottle(
+                1,
+                Rate.second,
+                response_headers=[_draft_headers, _retry_after],
+                cache_key=RemoteAddr(name='one'),
+                algorithm=LeakyBucket(),
+            ),
+            DynamicThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_draft_headers],
+                cache_key=RemoteAddr(name='two'),
+                algorithm=LeakyBucket(),
+            ),
+        ],
+    )
+    async def get(self) -> HttpResponse:
+        return self.to_response(
+            'inside',
+            headers=await ThrottlingReport(self).areport(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_dynamic_leaky_bucket_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures DynamicThrottle reports are correct for leaky bucket algo."""
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(
+        _DynamicLeakyBucketController.as_view()(request),
     )
 
     assert isinstance(response, HttpResponse)
