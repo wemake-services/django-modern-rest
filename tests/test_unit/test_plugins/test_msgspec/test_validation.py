@@ -119,7 +119,7 @@ class _OutputController(Controller[MsgspecSerializer]):
 
     @validate(ResponseSpec(list[int], status_code=HTTPStatus.CREATED))
     def patch(self) -> HttpResponse:
-        return self.to_response(['1', '2'], status_code=HTTPStatus.CREATED)
+        return self.to_response(['1', 'a'], status_code=HTTPStatus.CREATED)
 
 
 @pytest.mark.parametrize(

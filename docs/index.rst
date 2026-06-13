@@ -14,31 +14,39 @@
    :name: badges
 
    .. image:: https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D
-      :alt: Developed by
+      :alt: wemake.services
       :target: https://github.com/wemake-services
+
+   .. image:: https://img.shields.io/badge/Modern%20REST-0C4B33?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4MCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTA4MCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMiA3MDQuMDJMMTQ1LjQ1OSA0NjYuMTlMMjc3Ljg4MyA3MDQuMDJMMTQ1LjQ1OSA5NDEuODQ5TDIgNzA0LjAyWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE0NS40NTkgOTQxLjg0OUwyIDcwNC4wMkgyNzcuODgzTDE0NS40NTkgOTQxLjg0OVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik02NzguOTQ4IDcwNC4wMzVMMzQxLjIzIDEzOEwyMjcuMDcxIDMyOC4yNjRMNDM2LjM2MiA3MDQuMDM1TDMwMy4xNzcgOTQxLjg2NEg1MzYuMjVMNjc4Ljk0OCA3MDQuMDM1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTY3OC45MzcgNzA0LjAyNkg0MzYuMzVMMzAzLjE2NiA5NDEuODU2SDUzNi4yMzlMNjc4LjkzNyA3MDQuMDI2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEwNzguMTcgNzA0LjAzNUw3NDAuNDUxIDEzOEw2MjYuMjkzIDMyOC4yNjRMODM1LjU4MyA3MDQuMDM1TDcwMi4zOTkgOTQxLjg2NEg5MzUuNDcyTDEwNzguMTcgNzA0LjAzNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMDc4LjE3IDcwNC4wMzVIODM1LjU4M0w3MDIuMzk5IDk0MS44NjRIOTM1LjQ3MkwxMDc4LjE3IDcwNC4wMzVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K&color=35544A
+      :alt: Modern REST
+      :target: https://github.com/wemake-services/django-modern-rest
 
    .. image:: https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml/badge.svg?event=push
       :alt: Tests result
       :target: https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml
 
    .. image:: https://codecov.io/gh/wemake-services/django-modern-rest/branch/master/graph/badge.svg
-      :alt: Coverage
+      :alt: Codecov
       :target: https://codecov.io/gh/wemake-services/django-modern-rest
 
    .. image:: https://img.shields.io/badge/no-slop-purple.svg
       :alt: No AI slop
       :target: https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md
 
+   .. image:: https://static.pepy.tech/personalized-badge/django-modern-rest?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=BRIGHTGREEN&left_text=downloads
+      :alt: PyPI Downloads
+      :target: https://pepy.tech/projects/django-modern-rest
+
    .. image:: https://img.shields.io/pypi/pyversions/django-modern-rest.svg
-      :alt: Supported Python versions
-      :target: https://pypi.org/project/django-modern-rest
+      :alt: Supported Python Version
+      :target: https://pypi.org/project/django-modern-rest/
 
    .. image:: https://img.shields.io/badge/style-wemake-000000.svg
-      :alt: Code style
+      :alt: Code Style
       :target: https://github.com/wemake-services/wemake-python-styleguide
 
    .. image:: https://deepwiki.com/badge.svg
-      :alt: DeepWiki
+      :alt: Ask DeepWiki
       :target: https://deepwiki.com/wemake-services/django-modern-rest
 
    .. image:: https://img.shields.io/badge/chat-join-blue.svg?logo=telegram
@@ -64,22 +72,22 @@ and extend ``django-modern-rest`` framework.
 
 .. container:: testimonials
 
-   .. epigraph::
+  .. epigraph::
 
-      The one thing I really love about ``django-modern-rest`` is its pluggable
-      serializers and validators. Frameworks that are tightly coupled
-      with ``pydantic`` can be really painful to work with.
+    The one thing I really love about ``django-modern-rest`` is its pluggable
+    serializers and validators. Frameworks that are tightly coupled
+    with ``pydantic`` can be really painful to work with.
 
-      -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
+    -- `Kirill Podoprigora <https://github.com/Eclips4>`_, CPython core developer
 
-   .. epigraph::
+  .. epigraph::
 
-      Using ``django-modern-rest`` has been a game-changer
-      for my productivity. The strict type safety and schema validation
-      for both requests and responses mean I spend less time debugging
-      and more time building.
+    Using ``django-modern-rest`` has been a game-changer
+    for my productivity. The strict type safety and schema validation
+    for both requests and responses mean I spend less time debugging
+    and more time building.
 
-      -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
+    -- `Josiah Kaviani <https://github.com/proofit404>`_, Django core developer
 
   .. epigraph::
 

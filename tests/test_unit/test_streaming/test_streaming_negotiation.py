@@ -3,8 +3,12 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
+from django.http import HttpResponse
 from typing_extensions import override
 
+from dmr import APIError, ResponseSpec, modify
+from dmr.errors import ErrorModel, format_error
+from dmr.exceptions import NotAcceptableError
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -13,7 +17,7 @@ from dmr.streaming import StreamingController, StreamingResponse
 from dmr.streaming.jsonl.renderer import JsonLinesRenderer
 from dmr.streaming.jsonl.validation import JsonLinesStreamingValidator
 from dmr.streaming.renderer import StreamingRenderer
-from dmr.streaming.sse import SSEvent
+from dmr.streaming.sse import SSEController, SSEvent
 from dmr.streaming.sse.renderer import SSERenderer
 from dmr.streaming.sse.validation import SSEStreamingValidator
 from dmr.test import DMRAsyncRequestFactory
@@ -102,3 +106,87 @@ async def test_valid_sse_different_methods(
         'Connection': 'keep-alive',
     }
     assert await get_streaming_content(response) == expected_data
+
+
+def test_stream_only_accept_fallback(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensure the ``EventSource`` accept header still negotiates a fallback.
+
+    ``Accept: text/event-stream`` without ``application/json`` — the
+    real-world browser ``EventSource`` case — must still populate
+    ``__dmr_nonstreaming_renderer__`` with the non-streaming default so
+    error bodies and response validation can serialize dict error bodies.
+    """
+    endpoint = _ClassBasedStreaming.api_endpoints['GET']
+    negotiator = endpoint.response_negotiator
+
+    request = dmr_async_rf.get(
+        '/sse/',
+        headers={'Accept': str(ContentType.event_stream)},
+    )
+    renderer = negotiator(request)
+
+    assert isinstance(renderer, SSERenderer)
+    assert request.__dmr_renderer__ is renderer  # type: ignore[attr-defined]
+    assert (
+        request.__dmr_nonstreaming_renderer__  # type: ignore[attr-defined]
+        is negotiator._non_streaming_default
+    )
+
+
+def test_stream_no_match_raises_not_acceptable(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensure the fallback only applies when the main negotiation succeeded.
+
+    An ``Accept`` that matches **no** renderer on a streaming endpoint
+    must still raise ``NotAcceptableError``.
+    """
+    endpoint = _ClassBasedStreaming.api_endpoints['GET']
+    negotiator = endpoint.response_negotiator
+
+    request = dmr_async_rf.get(
+        '/sse/',
+        headers={'Accept': 'application/xml'},
+    )
+    with pytest.raises(NotAcceptableError):
+        negotiator(request)
+
+
+class _SSEWithAPIError(SSEController[PydanticSerializer]):
+    responses = (
+        ResponseSpec(
+            return_type=ErrorModel,
+            status_code=HTTPStatus.NOT_FOUND,
+        ),
+    )
+
+    @modify(validate_responses=True)
+    async def get(self) -> AsyncIterator[SSEvent[str]]:
+        raise APIError(
+            format_error('nope'),
+            status_code=HTTPStatus.NOT_FOUND,
+        )
+
+
+@pytest.mark.asyncio
+async def test_sse_api_error_with_stream_only_accept(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """End-to-end regression for the browser ``EventSource`` case.
+
+    A request with ``Accept: text/event-stream`` only that hits an
+    ``APIError`` before the first yield must render the JSON error
+    body instead of crashing with ``DataRenderingError`` and a 500.
+    """
+    request = dmr_async_rf.get(
+        '/sse-errors/',
+        headers={'Accept': str(ContentType.event_stream)},
+    )
+
+    response = await dmr_async_rf.wrap(_SSEWithAPIError.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.content
+    assert response.headers == {'Content-Type': 'application/json'}

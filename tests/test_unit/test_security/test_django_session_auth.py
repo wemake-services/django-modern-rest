@@ -7,14 +7,22 @@ from django.conf import LazySettings
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 from inline_snapshot import snapshot
+from typing_extensions import override
 
 from dmr import Controller, modify
+from dmr.cookies import CookieSpec
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import request_auth
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
+)
+from dmr.security.django_session.views import (
+    DjangoSessionAsyncController,
+    DjangoSessionPayload,
+    DjangoSessionResponse,
+    DjangoSessionSyncController,
 )
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
@@ -156,11 +164,13 @@ def test_global_settings_override(
 
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
-def test_schema(
+def test_schema_with_csrf_cookie(
+    settings: LazySettings,
     *,
     typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for django session auth."""
+    settings.CSRF_USE_SESSIONS = False
     instance = typ()
 
     assert instance.security_schemes == snapshot({
@@ -181,3 +191,117 @@ def test_schema(
         'django_session': [],
         'csrf': [],
     })
+
+
+@pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
+def test_schema_with_csrf_sessions(
+    settings: LazySettings,
+    *,
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
+) -> None:
+    """Ensures that CSRF cookie schema is omitted for session-backed CSRF."""
+    settings.CSRF_USE_SESSIONS = True
+    instance = typ()
+
+    assert instance.security_schemes == snapshot({
+        'django_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='sessionid',
+            security_scheme_in='cookie',
+        ),
+    })
+    assert instance.security_requirement == snapshot({
+        'django_session': [],
+    })
+
+
+@pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
+def test_schema_with_custom_cookie_names(
+    settings: LazySettings,
+    *,
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
+) -> None:
+    """Ensures that custom cookie names from settings are respected."""
+    settings.SESSION_COOKIE_NAME = 'custom_session_id'
+    settings.CSRF_COOKIE_NAME = 'custom_csrf_token'
+    settings.CSRF_USE_SESSIONS = False
+    instance = typ()
+
+    assert instance.security_schemes == snapshot({
+        'django_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='custom_session_id',
+            security_scheme_in='cookie',
+        ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='custom_csrf_token',
+            security_scheme_in='cookie',
+        ),
+    })
+
+
+@final
+class _SyncLoginController(
+    DjangoSessionSyncController[
+        PydanticSerializer,
+        DjangoSessionPayload,
+        DjangoSessionResponse,
+    ],
+):
+    @override
+    def convert_auth_payload(
+        self,
+        payload: DjangoSessionPayload,
+    ) -> DjangoSessionPayload:
+        raise NotImplementedError
+
+    @override
+    def make_api_response(self) -> DjangoSessionResponse:
+        raise NotImplementedError
+
+
+@final
+class _AsyncLoginController(
+    DjangoSessionAsyncController[
+        PydanticSerializer,
+        DjangoSessionPayload,
+        DjangoSessionResponse,
+    ],
+):
+    @override
+    async def convert_auth_payload(
+        self,
+        payload: DjangoSessionPayload,
+    ) -> DjangoSessionPayload:
+        raise NotImplementedError
+
+    @override
+    async def make_api_response(self) -> DjangoSessionResponse:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    'controller_cls',
+    [_SyncLoginController, _AsyncLoginController],
+)
+def test_login_schema_includes_csrf_cookie(
+    settings: LazySettings,
+    *,
+    controller_cls: type[_SyncLoginController] | type[_AsyncLoginController],
+) -> None:
+    """Ensures the 200 response schema declares session and CSRF cookies."""
+    endpoint = controller_cls.api_endpoints['POST']
+    cookies = endpoint.metadata.responses[HTTPStatus.OK].cookies
+
+    assert cookies is not None
+    assert settings.SESSION_COOKIE_NAME in cookies
+    assert settings.CSRF_COOKIE_NAME in cookies
+
+    csrf_spec = cookies[settings.CSRF_COOKIE_NAME]
+    assert isinstance(csrf_spec, CookieSpec)
+    assert csrf_spec.skip_validation is True
+    assert csrf_spec.required is True

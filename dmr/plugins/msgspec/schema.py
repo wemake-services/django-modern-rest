@@ -17,15 +17,12 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
         ref_template: str,
         *,
         used_for_response: bool = False,
-    ) -> SchemaDef | None:
+    ) -> SchemaDef:
         """Proxies the JSON schema generation to msgspec itself."""
-        try:
-            out = schema(
-                model,
-                ref_template=ref_template + '{name}',  # noqa: WPS336
-            )
-        except Exception:
-            return None
+        out = schema(
+            model,
+            ref_template=ref_template + '{name}',  # noqa: WPS336
+        )
         components = out.pop('$defs', {})
         return out, components
 
@@ -33,5 +30,8 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     @classmethod
     def schema_name(cls, model: Any) -> str | None:
         """Return a schema name for a model, if it exists."""
-        schema = cls.get_schema(model, ref_template='')
-        return schema[0].get('title') if schema else None
+        try:
+            schema = cls.get_schema(model, ref_template='')
+        except Exception:
+            return None
+        return schema[0].get('title')

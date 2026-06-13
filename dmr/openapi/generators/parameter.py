@@ -32,6 +32,7 @@ class ParameterGenerator:
                 model,
                 serializer,
                 skip_registration=True,
+                register_referenced_components=True,
             ),
         )
         metadata = get_annotated_metadata(model, model_meta, ParameterMetadata)

@@ -3,6 +3,8 @@ from collections.abc import Mapping, Sequence, Set
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypeAlias
 
+from typing_extensions import Sentinel
+
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.headers import HeaderSpec, NewHeader
@@ -10,6 +12,7 @@ from dmr.metadata import ResponseSpec
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.settings import HttpSpec
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects import (
@@ -49,6 +52,7 @@ class _BasePayload:
     validate_negotiation: bool | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
     throttling: Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | None = ()
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

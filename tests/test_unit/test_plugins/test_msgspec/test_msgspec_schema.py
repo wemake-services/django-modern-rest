@@ -7,15 +7,20 @@ from typing import Annotated, Any, Final, Literal, Optional, Union
 import pytest
 from typing_extensions import TypedDict
 
+from dmr import Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
 from dmr.openapi.objects import OpenAPIType, Reference, Schema
+from dmr.routing import Router, path
 
 try:
-    from dmr.plugins.msgspec import MsgspecSerializer
+    import msgspec
 except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
+
+from dmr.plugins.msgspec import MsgspecSerializer
 
 
 @pytest.fixture
@@ -272,6 +277,145 @@ def test_enum(
         reference,
     )
     assert schema == Schema(enum=[1, 2], title=_TestEnum.__qualname__)
+
+
+def _assert_enum_parameter_schema(
+    *,
+    controller: type[Controller[MsgspecSerializer]],
+    component_name: str,
+    expected_values: list[str | int],
+) -> None:
+    """Ensure enum parameter fields register referenced schemas."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [path('test/<str:enum_value>/', controller.as_view(), name='test')],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/test/{enum_value}/']['get']
+    parameter_specs = {
+        (parameter['name'], parameter['in']): parameter
+        for parameter in operation['parameters']
+    }
+
+    for parameter_location in ('path', 'query', 'header', 'cookie'):
+        parameter = parameter_specs['enum_value', parameter_location]
+        assert parameter['schema'] == {
+            '$ref': f'#/components/schemas/{component_name}',
+        }
+    assert schema['components']['schemas'][component_name] == {
+        'enum': expected_values,
+        'title': component_name,
+    }
+
+
+def test_parameter_schema_with_enum() -> None:
+    """Ensure enum parameter fields register referenced schemas."""
+
+    class _QueryEnum(enum.Enum):
+        alpha = 'alpha'
+        beta = 'beta'
+
+    class _EnumPath(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumQuery(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum = _QueryEnum.alpha
+
+    class _EnumHeaders(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumCookies(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumQueryController(Controller[MsgspecSerializer]):
+        async def get(
+            self,
+            parsed_path: Path[_EnumPath],
+            parsed_query: Query[_EnumQuery],
+            parsed_headers: Headers[_EnumHeaders],
+            parsed_cookies: Cookies[_EnumCookies],
+        ) -> None:
+            raise NotImplementedError
+
+    _assert_enum_parameter_schema(
+        controller=_EnumQueryController,
+        component_name=_QueryEnum.__name__,
+        expected_values=['alpha', 'beta'],
+    )
+
+
+def test_parameter_schema_with_int_enum() -> None:
+    """Ensure int enum parameter fields register referenced schemas."""
+
+    class _QueryEnum(enum.IntEnum):
+        alpha = 1
+        beta = 2
+
+    class _EnumPath(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumQuery(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum = _QueryEnum.alpha
+
+    class _EnumHeaders(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumCookies(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumQueryController(Controller[MsgspecSerializer]):
+        async def get(
+            self,
+            parsed_path: Path[_EnumPath],
+            parsed_query: Query[_EnumQuery],
+            parsed_headers: Headers[_EnumHeaders],
+            parsed_cookies: Cookies[_EnumCookies],
+        ) -> None:
+            raise NotImplementedError
+
+    _assert_enum_parameter_schema(
+        controller=_EnumQueryController,
+        component_name=_QueryEnum.__name__,
+        expected_values=[1, 2],
+    )
+
+
+def test_parameter_schema_with_str_enum() -> None:
+    """Ensure str enum parameter fields register referenced schemas."""
+
+    class _QueryEnum(enum.StrEnum):
+        alpha = 'alpha'
+        beta = 'beta'
+
+    class _EnumPath(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumQuery(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum = _QueryEnum.alpha
+
+    class _EnumHeaders(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumCookies(msgspec.Struct, kw_only=True):
+        enum_value: _QueryEnum
+
+    class _EnumQueryController(Controller[MsgspecSerializer]):
+        async def get(
+            self,
+            parsed_path: Path[_EnumPath],
+            parsed_query: Query[_EnumQuery],
+            parsed_headers: Headers[_EnumHeaders],
+            parsed_cookies: Cookies[_EnumCookies],
+        ) -> None:
+            raise NotImplementedError
+
+    _assert_enum_parameter_schema(
+        controller=_EnumQueryController,
+        component_name=_QueryEnum.__name__,
+        expected_values=['alpha', 'beta'],
+    )
 
 
 @pytest.mark.parametrize(

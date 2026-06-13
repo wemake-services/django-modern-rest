@@ -16,12 +16,12 @@ class PageQuery(pydantic.BaseModel):
 
 @final
 class TagSchema(pydantic.BaseModel):
-    name: str
+    name: str = pydantic.Field(max_length=100)
 
 
 @final
 class RoleSchema(pydantic.BaseModel):
-    name: str
+    name: str = pydantic.Field(max_length=100)
 
 
 class UserCreateSchema(pydantic.BaseModel):

@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any, Final, TypedDict
+from typing import Any, Final
 
 import pytest
 from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
+from typing_extensions import TypedDict
 
 from dmr.test import DMRAsyncClient, DMRClient
 

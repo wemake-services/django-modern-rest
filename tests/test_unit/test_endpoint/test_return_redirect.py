@@ -4,7 +4,7 @@ from typing import Final, final
 import pytest
 from django.http import HttpResponse, HttpResponseRedirect
 
-from dmr import APIRedirectError, Controller, HeaderSpec, modify, validate
+from dmr import Controller, HeaderSpec, RedirectTo, modify, validate
 from dmr.metadata import ResponseSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
@@ -21,7 +21,7 @@ _REDIRECT_SPEC: Final = ResponseSpec(
 class _RedirectController(Controller[PydanticSerializer]):
     @validate(_REDIRECT_SPEC)
     def get(self) -> HttpResponse:
-        raise APIRedirectError(
+        raise RedirectTo(
             _REDIRECT_URL,
             status_code=HTTPStatus.FOUND,
         )
@@ -35,7 +35,7 @@ class _RedirectController(Controller[PydanticSerializer]):
 
     @modify(extra_responses=[_REDIRECT_SPEC])
     def put(self) -> dict[str, str]:
-        raise APIRedirectError(
+        raise RedirectTo(
             _REDIRECT_URL,
             status_code=HTTPStatus.FOUND,
         )
@@ -50,7 +50,7 @@ class _RedirectController(Controller[PydanticSerializer]):
     ],
 )
 def test_api_redirect(dmr_rf: DMRRequestFactory, *, method: HTTPMethod) -> None:
-    """Ensures we can raise ``APIRedirectError`` in sync endpoint."""
+    """Ensures we can raise ``RedirectTo`` in sync endpoint."""
     request = dmr_rf.generic(str(method), '/whatever/')
 
     response = _RedirectController.as_view()(request)
@@ -68,7 +68,7 @@ def test_api_redirect(dmr_rf: DMRRequestFactory, *, method: HTTPMethod) -> None:
 class _AsyncRedirectController(Controller[PydanticSerializer]):
     @validate(_REDIRECT_SPEC)
     async def get(self) -> HttpResponse:
-        raise APIRedirectError(
+        raise RedirectTo(
             _REDIRECT_URL,
             status_code=HTTPStatus.FOUND,
         )
@@ -82,7 +82,7 @@ class _AsyncRedirectController(Controller[PydanticSerializer]):
 
     @modify(extra_responses=[_REDIRECT_SPEC])
     async def put(self) -> dict[str, str]:
-        raise APIRedirectError(
+        raise RedirectTo(
             _REDIRECT_URL,
             status_code=HTTPStatus.FOUND,
         )
@@ -102,7 +102,7 @@ async def test_async_api_redirect(
     *,
     method: HTTPMethod,
 ) -> None:
-    """Ensures we can raise ``APIRedirectError`` in async endpoint."""
+    """Ensures we can raise ``RedirectTo`` in async endpoint."""
     request = dmr_async_rf.generic(str(method), '/whatever/')
 
     response = await dmr_async_rf.wrap(

@@ -1,7 +1,7 @@
 from http import HTTPStatus
-from typing import TypedDict
 
 from django.http import JsonResponse
+from typing_extensions import TypedDict
 
 from dmr import Body, Controller, ResponseSpec, validate
 from dmr.plugins.msgspec import MsgspecSerializer

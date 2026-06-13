@@ -13,7 +13,7 @@ _FILEPATH: Final = pathlib.Path('examples/components/receipt.txt')
 
 class FileController(Controller[PydanticSerializer]):
     @validate(
-        FileResponseSpec(),
+        FileResponseSpec(as_attachment=True),
         renderers=[FileRenderer('text/plain')],
     )
     def get(self) -> FileResponse:

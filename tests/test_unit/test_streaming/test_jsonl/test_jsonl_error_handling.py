@@ -25,7 +25,7 @@ class _JsonLinesEvents(JsonLinesController[PydanticSerializer]):
     async def _valid_events(self) -> AsyncIterator[Json]:
         yield 1
         # Error here:
-        yield 1 / 0  # noqa: WPS344
+        yield 1 / 0  # noqa: WPS344  # pyrefly: ignore[division-by-zero]
         # Won't be sent:
         yield 2  # pragma: no cover
 

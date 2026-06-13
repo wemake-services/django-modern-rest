@@ -98,6 +98,40 @@ We want to be sure that this class is at the same time:
 3. Always type safe
 
 
+Refreshing tokens
+~~~~~~~~~~~~~~~~~
+
+Once a user has a refresh token, they can use it to obtain a new pair
+of access and refresh tokens without re-authenticating.
+We provide two :ref:`reusable-controllers` for this:
+
+1. :class:`~dmr.security.jwt.views.RefreshTokenSyncController`
+   for sync controllers
+2. :class:`~dmr.security.jwt.views.RefreshTokenAsyncController`
+   for async controllers
+
+To use them, you only need to:
+
+1. Provide actual types for serializer, request payload, and response body
+2. Redefine
+   :meth:`~dmr.security.jwt.views.RefreshTokenSyncController.convert_refresh_payload`
+   to extract the refresh token string from your request payload
+3. Redefine
+   :meth:`~dmr.security.jwt.views.RefreshTokenSyncController.make_api_response`
+   to return the new token pair in the format of your choice
+
+The controller validates that the submitted token:
+
+- Is a valid, non-expired JWT signed with the configured secret
+- Has ``extras.type == 'refresh'`` (i.e. it is a refresh token, not an access token)
+- Belongs to an existing, active user
+
+.. literalinclude:: /examples/auth/jwt/jwt_refresh_tokens.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+
 Blocklisting tokens
 -------------------
 
@@ -158,6 +192,16 @@ Pre-defined views to fetch JWT tokens
   :show-inheritance:
 
 .. autoclass:: dmr.security.jwt.views.ObtainTokensResponse
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.security.jwt.views.RefreshTokenSyncController
+  :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.RefreshTokenAsyncController
+  :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.RefreshTokenPayload
   :members:
   :show-inheritance:
 

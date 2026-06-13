@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from dmr.exceptions import EndpointMetadataError, RequestSerializationError
+from dmr.exceptions import (
+    EndpointMetadataError,
+    NotAcceptableError,
+    RequestSerializationError,
+)
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
 from dmr.internal.negotiation import media_by_precedence
 from dmr.internal.negotiation import negotiate_renderer as _negotiate_renderer
@@ -188,11 +192,21 @@ class ResponseNegotiator:
         )
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
         if self._streaming:
-            request.__dmr_nonstreaming_renderer__ = _negotiate_renderer(  # type: ignore[attr-defined]
-                request,
-                self._non_streaming_renderers,
-                default=self._non_streaming_default,
-            )
+            try:
+                non_streaming = _negotiate_renderer(
+                    request,
+                    self._non_streaming_renderers,
+                    default=self._non_streaming_default,
+                )
+            except NotAcceptableError:
+                # Main (streaming) negotiation already succeeded.
+                # A non-streaming renderer is only needed for 4xx/5xx
+                # error bodies and response validation — fall back to
+                # the configured default so those paths keep working
+                # for clients that only accept the streaming media
+                # type (e.g. browser ``EventSource``).
+                non_streaming = self._non_streaming_default
+            request.__dmr_nonstreaming_renderer__ = non_streaming  # type: ignore[attr-defined]
         return renderer
 
 

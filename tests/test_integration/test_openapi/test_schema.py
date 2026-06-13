@@ -1,17 +1,25 @@
 import logging
+import os
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from http import HTTPStatus
+from http.cookies import SimpleCookie
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 import schemathesis as st
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.urls import reverse
+from hypothesis import settings as h_settings
 from hypothesis import strategies
 from schemathesis.specs.openapi.schemas import OpenApiSchema
 
 from django_test_app.server.wsgi import application
+from dmr.test import DMRClient
 from dmr.validation import ResponseValidator
+
+_LOCAL_MAX_EXAMPLES: Final = 25
+_MAX_EXAMPLES: Final = 100 if os.environ.get('CI') else _LOCAL_MAX_EXAMPLES
 
 if TYPE_CHECKING:
     import tracecov
@@ -38,10 +46,18 @@ def _disable_logging(settings: LazySettings) -> Iterator[None]:
     logging.disable(logging.NOTSET)
 
 
+@pytest.fixture(autouse=True)
+def _modify_integration_settings(settings: LazySettings) -> None:
+    # Schemathesis tests only run meaningfully with DEBUG=False (the test
+    # explicitly skips when DEBUG=True), so there is no value in running
+    # the full suite twice via the parent conftest parametrisation.
+    settings.DEBUG = False
+
+
 # The `transactional_db` fixture is required to enable database access.
 # When `st.openapi.from_wsgi()` makes a WSGI request, Django's request
 # lifecycle triggers database operations.
-# The `admin_user` fixture is required here so that `JWTAuth` can use
+# The `admin_user` fixture is required here so that auth can use
 # its credentials (username and password) for authentication.
 # This follows the `pytest-django` pattern for creating user fixtures:
 # https://github.com/pytest-dev/pytest-django/blob/main/pytest_django/fixtures.py#L483
@@ -59,16 +75,50 @@ st.openapi.format(
     strategies.from_regex(r'^\+7-495-[0-9]{3}-[0-9]{2}-[0-9]{2}$'),
 )
 
+# Register custom auth:
+
+
+@st.auth().apply_to(st.openapi.require_security_scheme('django_session'))
+class _DjangoSessionAuth:
+    def get(
+        self,
+        case: st.Case[Any],
+        ctx: st.AuthContext,
+    ) -> SimpleCookie:
+        dmr_client = DMRClient()
+        response = dmr_client.post(
+            reverse('api:django_session_auth:django_session_sync'),
+            # Username and password are taken from `admin_user` fixture,
+            # which is defined in `pytest-django`:
+            data={'username': 'admin', 'password': 'password'},
+        )
+        assert response.status_code == HTTPStatus.OK, response.content
+        return response.cookies
+
+    def set(
+        self,
+        case: st.Case[Any],
+        data: SimpleCookie,
+        ctx: st.AuthContext,
+    ) -> None:
+        # Set to the case itself:
+        case.cookies.update({
+            cookie_name: cookie.coded_value
+            for cookie_name, cookie in data.items()
+        })
+        assert case.cookies, ctx
+
 
 @schema.parametrize()
+@h_settings(max_examples=_MAX_EXAMPLES)
 def test_schemathesis(
-    case: st.Case,
-    settings: LazySettings,
     tracecov_map: 'tracecov.CoverageMap | None',
+    *,
+    case: st.Case[Any],
 ) -> None:
     """Ensure that API implementation matches the OpenAPI schema."""
-    if settings.DEBUG or tracecov_map is None:
-        pytest.skip(reason='DEBUG=True or missing `tracecov`')
+    if tracecov_map is None:  # pragma: no cover
+        pytest.skip(reason='missing `tracecov`')
 
     from tracecov.schemathesis import helpers  # noqa: PLC0415
 

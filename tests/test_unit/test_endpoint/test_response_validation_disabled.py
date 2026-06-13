@@ -152,7 +152,10 @@ def test_override_endpoint_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'Input should be a valid integer',
+                'msg': (
+                    'Input should be a valid integer, '
+                    'unable to parse string as an integer'
+                ),
                 'loc': ['0'],
                 'type': 'value_error',
             },
@@ -206,7 +209,10 @@ def test_override_controller_validation(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'Input should be a valid integer',
+                'msg': (
+                    'Input should be a valid integer, '
+                    'unable to parse string as an integer'
+                ),
                 'loc': ['0'],
                 'type': 'value_error',
             },

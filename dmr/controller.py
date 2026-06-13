@@ -15,7 +15,7 @@ from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from typing_extensions import deprecated, override
+from typing_extensions import Sentinel, deprecated, override
 
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
@@ -33,7 +33,7 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.throttling import AsyncThrottle, SyncThrottle , DynamicThrottle
-from dmr.types import AnnotationsContext, infer_type_args
+from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
@@ -110,6 +110,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             Async controllers must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this controller.
+        throttling_allow_unsafe_cache: Should this controller allow
+            unsafe throttle Django cache backends?
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
@@ -163,6 +165,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         | Sequence[DynamicThrottle]
         | None
     ] = ()
+    throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
@@ -535,7 +538,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     @classproperty
     @override
-    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
+    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override, missing-override-decorator]
         """We already know this in advance, no need to recalculate."""
         # This is a part of the `django.View` API, so it must be there.
         return cls.is_async is True

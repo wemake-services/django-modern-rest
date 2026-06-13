@@ -21,10 +21,9 @@ We start with settings validation.
 We only validate settings once per application,
 we do it when the first :class:`~dmr.controller.Controller` is created.
 
-.. autoclass:: dmr.validation.settings.SettingsValidator
-  :members:
-
 We also validate our own default values to be correct.
+
+See :class:`~dmr.validation.settings.SettingsValidator` for the API.
 
 
 Endpoint validation
@@ -38,6 +37,10 @@ Here we can detect all kinds of problems with how endpoints are defined:
 - Invalid :func:`~dmr.endpoint.modify`
   or :func:`~dmr.endpoint.validate` usage
 - Or invalid :class:`~dmr.settings.HttpSpec` usage
+
+See :class:`~dmr.validation.endpoint_metadata.EndpointMetadataBuilder`
+and :class:`~dmr.validation.endpoint_metadata.EndpointMetadataBuilder`
+for the API.
 
 HttpSpec validation
 ~~~~~~~~~~~~~~~~~~~
@@ -56,33 +59,28 @@ per-controller, and globally.
 
 .. tabs::
 
-    .. tab:: :octicon:`checklist` The right way
+  .. tab:: :octicon:`checklist` The right way
 
-      .. literalinclude:: /examples/validation/httpspec/right_way.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/validation/httpspec/right_way.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: Per endpoint
+  .. tab:: Per endpoint
 
-      .. literalinclude:: /examples/validation/httpspec/per_endpoint.py
-        :language: python
-        :caption: views.py
-        :linenos:
-        :emphasize-lines: 11
+    .. literalinclude:: /examples/validation/httpspec/per_endpoint.py
+      :language: python
+      :caption: views.py
+      :linenos:
+      :emphasize-lines: 11
 
-    .. tab:: Per controller
+  .. tab:: Per controller
 
-      .. literalinclude:: /examples/validation/httpspec/per_controller.py
-        :language: python
-        :caption: views.py
-        :linenos:
-        :emphasize-lines: 9
-
-
-.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataBuilder
-
-.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataValidator
+    .. literalinclude:: /examples/validation/httpspec/per_controller.py
+      :language: python
+      :caption: views.py
+      :linenos:
+      :emphasize-lines: 9
 
 
 Controller validation
@@ -99,8 +97,7 @@ Here we validate:
 - That all endpoints are either sync or async
 - All per-controller and per-endpoint error handling
 
-.. autoclass:: dmr.validation.controller.ControllerValidator
-  :members:
+See :class:`~dmr.validation.controller.ControllerValidator` for the API.
 
 
 Response validation
@@ -111,6 +108,36 @@ it from the endpoint in runtime.
 We need this to make sure that API responses always match response schemas.
 
 It can be :ref:`turned off <response_validation>`.
+
+See :class:`~dmr.validation.response.ResponseValidator` for the API.
+
+
+API Reference
+-------------
+
+Settings
+~~~~~~~~
+
+.. autoclass:: dmr.validation.settings.SettingsValidator
+  :members:
+
+Endpoint
+~~~~~~~~
+
+.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataBuilder
+  :members:
+
+.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataValidator
+  :members:
+
+Controller
+~~~~~~~~~~
+
+.. autoclass:: dmr.validation.controller.ControllerValidator
+  :members:
+
+Response
+~~~~~~~~
 
 .. autoclass:: dmr.validation.response.ResponseValidator
   :members:

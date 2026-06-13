@@ -6,11 +6,12 @@
 import dataclasses
 import datetime as dt
 import secrets
-from typing import Any, TypedDict
+from typing import Any
 
 import jwt
 import pytest
 from faker import Faker
+from typing_extensions import TypedDict
 
 from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.jwt import JWToken
@@ -162,6 +163,12 @@ def test_strict_audience_single_value() -> None:
         (
             '',
             '1',
+        ),
+        # RS256 expects a PEM private key; passing an HMAC secret raises
+        # jwt.exceptions.InvalidKeyError (a PyJWTError, not a DecodeError).
+        (
+            'RS256',
+            'hmac-secret',
         ),
     ],
 )

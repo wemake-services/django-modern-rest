@@ -97,6 +97,9 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
     check according to your needs.
     This class is used for sync endpoints.
 
+    Note that this class does not set ``request.user`` by design.
+    Because many users might use the same auth parameters.
+
     .. warning::
 
         HTTP Basic Auth is not really secure and should
@@ -141,6 +144,9 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
     Subclass this type to provide actual username/password
     check according to your needs.
     This class is used for async endpoints.
+
+    Note that this class does not set ``request.user`` by design.
+    Because many users might use the same auth parameters.
 
     .. warning::
 

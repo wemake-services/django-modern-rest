@@ -1,13 +1,45 @@
 from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+from django.http import HttpResponse
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
+
+from dmr.internal.json import json_dump, json_loads
 
 _ThingT = TypeVar('_ThingT')
 
 
 class _DMRMixin:  # noqa: WPS338
     default_content_type: ClassVar[str] = 'application/json'
+
+    def _encode_json(self, data: Any, content_type: str) -> Any:
+        should_encode = (
+            content_type == self.default_content_type
+            and not isinstance(data, (str, bytes))
+        )
+        return json_dump(data) if should_encode else data
+
+    def _parse_json(self, response: HttpResponse, **extra: Any) -> Any:
+        # This implementation mirrors Django's response JSON parsing
+        # behavior instead of introducing a cleaner local abstraction.
+        #
+        # We keep it close to Django on purpose:
+        # - it caches the parsed value on `response._json`
+        # - it validates the response `Content-Type` before parsing
+        # - it parses `response.text`, not `response.content`, so decoding is
+        #   performed using the response charset before JSON deserialization
+        #
+        # It preserving Django-compatible behavior here is
+        # more important than improving the internal style of this helper.
+        if not hasattr(response, '_json'):
+            if response.get('Content-Type') != self.default_content_type:
+                raise ValueError(  # pragma: no cover
+                    f'Content-Type header is "{response.get("Content-Type")}", '
+                    f'not "{self.default_content_type}"',
+                )
+
+            response._json = json_loads(response.text, **extra)  # type: ignore[attr-defined]  # noqa: SLF001
+        return response._json  # type: ignore[attr-defined]  # noqa: SLF001
 
     if TYPE_CHECKING:  # noqa: WPS604  # pragma: no cover
 

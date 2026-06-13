@@ -44,7 +44,7 @@ We can define throttling on three different levels:
       :caption: settings.py
       :linenos:
 
-      >>> from dmr.settings import Settings, DMR_SETTINGS
+      >>> from dmr.settings import Settings
       >>> from dmr.throttling import SyncThrottle, Rate
 
       >>> DMR_SETTINGS = {Settings.throttling: [SyncThrottle(5, Rate.minute)]}
@@ -100,23 +100,113 @@ Backends
 
 Backends are used to define where we store throttling data.
 
-By default we use :class:`dmr.throttling.backends.DjangoCache` as the backend.
-You can customize which cache name is used. For example:
+By default we use:
 
-.. literalinclude:: /examples/throttling/cache_customization.py
-  :caption: views.py
-  :linenos:
-  :language: python
+- :class:`dmr.throttling.backends.SyncDjangoCache` for sync endpoints
+- :class:`dmr.throttling.backends.AsyncDjangoCache` for async endpoints
+
+All backends that we support can be further customized.
+
+.. tabs::
+
+  .. tab:: DjangoCache
+
+    By default we store all the data in the ``'default'`` Django cache.
+    You can customize which Django cache name is used. For example:
+
+    .. literalinclude:: /examples/throttling/cache_customization.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Redis
+
+    Any Redis-compliant tool is supported, including: Valkey, KeyDB, etc.
+
+    You can fully customize the client:
+
+    .. literalinclude:: /examples/throttling/redis_backend.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+    .. note::
+
+      Make sure that `redis <https://pypi.org/project/redis/>`_ client
+      library is installed, we don't ship
+      it together with ``django-modern-rest``.
 
 You can also write your own backends, for example,
-to store throttling information in memory or somewhere else.
+to store throttling information in memory, filesystem, or somewhere else.
 To do so, you would need to subclass
-:class:`dmr.throttling.backends.BaseThrottleBackend`
-and override 4 methods.
+:class:`dmr.throttling.backends.BaseThrottleSyncBackend`
+or :class:`dmr.throttling.backends.BaseThrottleAsyncBackend`
+and override 2 methods.
 
 Full list of backends that we ship in ``django-modern-rest``:
 
-- :class:`~dmr.throttling.backends.DjangoCache`, default
+- :class:`~dmr.throttling.backends.SyncDjangoCache`
+  and :class:`~dmr.throttling.backends.AsyncDjangoCache`, default
+- :class:`~dmr.throttling.backends.redis.SyncRedis`
+  and :class:`~dmr.throttling.backends.redis.AsyncRedis`
+
+.. warning::
+
+  When using :class:`~dmr.throttling.backends.SyncDjangoCache`
+  or :class:`~dmr.throttling.backends.AsyncDjangoCache`
+  the final behavior will depend on the cache that you use.
+
+  Some Django cache backends like
+  ``django.core.cache.backends.locmem.LocMemCache``
+  store cache in memory per-process. So, any multiprocess environments
+  with ``N`` processes will allow to use ``N * max_request`` requests.
+  Using such cache backends is not safe.
+
+  Some like ``django.core.cache.backends.dummy.DummyCache`` do nothing at all.
+
+Choosing a backend
+^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 18 12 24 24
+
+   * - Backend
+     - Atomicity
+     - Overhead
+     - Supported algorithms
+     - Best suited for
+   * - ``DjangoCache``
+     - Per-process: multiprocess deployments may face problems
+     - Very low (depends on the cache type)
+     - All
+     - Non-critical IP based checks with not-strict windows and limits
+   * - ``Redis``
+     - Full
+     - Low
+     - All builtin ones, but requires ``lua`` scripting support
+     - Strict distributed limits
+
+Unsafe backend warning
+^^^^^^^^^^^^^^^^^^^^^^
+
+By default, ``django-modern-rest`` emits
+a :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
+warning when detecting an unsafe cache backend for throttling.
+
+You can configure this check on three levels as usual:
+
+1. Per endpoint: pass ``throttling_allow_unsafe_cache`` parameter
+2. Per controller: by setting ``throttling_allow_unsafe_cache`` attribute
+3. In settings, see :data:`~dmr.settings.Settings.throttling_allow_unsafe_cache`
+
+When ``throttling_allow_unsafe_cache`` is set to ``False``,
+we raise a :exc:`dmr.exceptions.EndpointMetadataError`
+exception instead of a warning. This setting will ensure the maximum safety.
+
+To suppress this check completely and run throttling at your own risk,
+set :data:`~dmr.settings.Settings.throttling_allow_unsafe_cache` to ``None``.
+
 
 Algorithms
 ~~~~~~~~~~
@@ -138,7 +228,7 @@ Here's how you can customize the algorithm for a throttling:
 You can also write your own algorithms.
 To do so, you would need to subclass
 :class:`dmr.throttling.algorithms.BaseThrottleAlgorithm`
-and override 3 methods.
+and override 2 required methods.
 
 Full list of algorithms that we ship in ``django-modern-rest``:
 
@@ -147,6 +237,49 @@ Full list of algorithms that we ship in ``django-modern-rest``:
   the bucket; tokens leak at a steady rate. Unlike ``SimpleRate``,
   drains continuously providing smoother rate-limiting
   without allowing bursts at window boundaries.
+
+.. warning::
+
+  :class:`~dmr.throttling.algorithms.SimpleRate` uses a **fixed window**
+  that resets when the window expires. This allows a boundary burst pattern:
+  a client can send ``N`` requests right before the window resets and ``N``
+  more right after, effectively firing ``2N`` requests in a short interval
+  while remaining within the configured per-window limit.
+
+  For abuse-sensitive endpoints (login, OTP, password reset) prefer
+  :class:`~dmr.throttling.algorithms.LeakyBucket`, which drains
+  continuously and eliminates this burst window.
+
+Choosing an algorithm
+^^^^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 18 12 24 24
+
+   * - Algorithm
+     - Window type
+     - Overhead
+     - Boundary burst risk
+     - Best suited for
+   * - :class:`~dmr.throttling.algorithms.SimpleRate`
+     - Fixed — resets after ``duration``
+     - Very low
+     - Yes — up to ``2N`` requests in a short burst
+     - General-purpose, internal, and admin endpoints
+   * - :class:`~dmr.throttling.algorithms.LeakyBucket`
+     - Continuous drain
+     - Low
+     - No — traffic is smoothed regardless of timing
+     - Auth endpoints (login, OTP, password reset), public APIs
+
+For auth and abuse-sensitive endpoints, use
+:class:`~dmr.throttling.algorithms.LeakyBucket`:
+
+.. literalinclude:: /examples/throttling/auth_leaky_bucket.py
+  :caption: views.py
+  :linenos:
+  :language: python
 
 Cache keys
 ~~~~~~~~~~
@@ -183,6 +316,11 @@ Full list of cache keys that we ship in ``django-modern-rest``:
   to also limit ``is_stuff`` users,
   or you can pass ``exclude_superuser`` argument as ``False``
   to also limit super users
+- :class:`~dmr.throttling.cache_keys.JwtToken`, based on
+  ``request.__dmr_jwt__``.
+  Uses ``jti`` claim when present and falls back to ``sub`` claim.
+  Raw value is hashed before being used as a cache key.
+  Returns ``None`` when ``request.__dmr_jwt__`` is not set.
 
 When throttling is executed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -395,10 +533,25 @@ Backends
   :members:
   :show-inheritance:
 
-.. autoclass:: dmr.throttling.backends.BaseThrottleBackend
+.. autoclass:: dmr.throttling.backends.BaseThrottleSyncBackend
   :members:
 
-.. autoclass:: dmr.throttling.backends.DjangoCache
+.. autoclass:: dmr.throttling.backends.BaseThrottleAsyncBackend
+  :members:
+
+.. autoclass:: dmr.throttling.backends.SyncDjangoCache
+  :members:
+
+.. autoclass:: dmr.throttling.backends.AsyncDjangoCache
+  :members:
+
+.. autoclass:: dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning
+  :members:
+
+.. autoclass:: dmr.throttling.backends.redis.SyncRedis
+  :members:
+
+.. autoclass:: dmr.throttling.backends.redis.AsyncRedis
   :members:
 
 Algorithms
@@ -423,6 +576,9 @@ Cache keys
   :members:
 
 .. autoclass:: dmr.throttling.cache_keys.UserPk
+  :members:
+
+.. autoclass:: dmr.throttling.cache_keys.JwtToken
   :members:
 
 Headers

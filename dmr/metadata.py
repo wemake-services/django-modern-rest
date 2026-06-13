@@ -382,6 +382,12 @@ class EndpointMetadata:
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this endpoint.
+        throttling_before_auth: Sequence of throttle instances
+            to be used before auth checks.
+        throttling_after_auth: Sequence of throttle instances
+            to be used after auth checks.
+        throttling_allow_unsafe_cache: Should this endpoint allow
+            unsafe throttle Django cache backends?
         no_validate_http_spec: Set of checks that user wants
             to disable for validation in this endpoint.
         allowed_http_methods: Set of extra HTTP methods
@@ -442,6 +448,7 @@ class EndpointMetadata:
     throttling_before_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
     # Second line of throttling:
     throttling_after_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+    throttling_allow_unsafe_cache: bool | None
 
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]

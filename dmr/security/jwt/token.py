@@ -135,7 +135,7 @@ class JWToken:
                 algorithm=algorithm,
                 headers=headers,
             )
-        except (jwt.DecodeError, NotImplementedError):
+        except (jwt.exceptions.PyJWTError, NotImplementedError):
             raise InternalServerError('Failed to encode token') from None
 
     @classmethod

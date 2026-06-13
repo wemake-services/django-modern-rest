@@ -20,18 +20,129 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Bugfixes
+
+- Fixes `LeakyBucket` throttling algorithm corner cases, #1044
+- Fixed OpenAPI schema generation for enum values used
+  in path, query, header, and cookie parameters, #1059
+
+
+## Version 0.10.0 (2026-05-26)
+
+### Breaking changes
+
+- *Breaking*: `FileResponseSpec()` now describes inline file responses
+  and does not include `Content-Disposition` by default. Use
+  `FileResponseSpec(as_attachment=True)` when returning Django's
+  `FileResponse(..., as_attachment=True)`, #1020
+
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Change all existing ``dmr.files.FileResponseSpec`` usages
+to include ``as_attachment=True`` parameter.
+```
+
 ### Features
 
-- Added `validate_negotiation` metadata flag, so we can explicitly validate,
-  that returned response followed the negotiation process, #711
+- Added support for JSON Schema 2020-12 dynamic reference keywords
+  (`$dynamicRef`, `$dynamicAnchor`, `$defs`) in OpenAPI schema generation.
+  These can now be propagated through `extra_json_schema`
+  for generic type definitions, #1039
+
+### Misc
+
+- Use `typing_extensions.Sentinel` for `dmr.types.EMPTY`, #995
+- `pyrefly@1.0` official support, #1015
+- `mypy@2.0` and `mypy@2.1` official support, #1013
+
+
+## Version 0.9.0 (2026-05-07)
+
+### Features
+
+- Added `throttling_allow_unsafe_cache` setting to control whether unsafe
+  cache backends (`LocMemCache`, `DummyCache`) are allowed for throttling.
+  Emits `UnsafeCacheBackendWarning` by default,
+  raises `ImproperlyConfigured` when explicitly set to `False`, #978
+- Added `--no-ensure-ascii` flag to `dmr_export_schema` management command
 
 ### Bugfixes
 
+- Fixed how `msgspec` generates `null` in `anyOf`,
+  it is now always the last item, #990
+- Fixed minimum allowed django version, #1008
+- Fixed `ImportError` while using with `django==5.2.0`, #1006
+
+
+## Version 0.8.0 (2026-04-26)
+
+### Breaking changes
+
+- *Breaking*: Renamed `APIRedirectError` to `RedirectTo`, #922
+- *Breaking*: Split `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
+  and `BaseThrottleSyncBackend`, #942
+- *Breaking*: Renamed `DjangoCache` into `SyncDjangoCache`,
+  added `AsyncDjangoCache`, #942
+- *Breaking*: Changed `BaseThrottleBackend` API: now it requires
+  `.incr` and `.get` methods, the first one should ideally
+  be an atomic increment, the second one is for reading objects only, #942
+- *Breaking*: Removed `BaseThrottleAlgorithm.record` method,
+  now `BaseThrottleAlgorithm.access` must also record accesses.
+  This will help to make throttling more atomic, #942
+
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Apply this change to the code that uses `django-modern-rest`:
+1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
+2. Replace `dmr.throttling.backend.DjangoCache`
+   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles
+   and with `dmr.throttling.backend.AsyncDjangoCache` for async throttles
+```
+
+### Features
+
+- Added `SyncRedis` and `AsyncRedis` throttling backends, #977
+- Added `RefreshTokenSyncController` and `RefreshTokenAsyncController`
+  to issue new access/refresh token pairs from a valid refresh token, #907
+- Added `validate_negotiation` metadata flag, so we can explicitly validate,
+  that returned response followed the negotiation process, #711
+- Added `accepted_header` as a faster alternative
+  to `django`'s `HttpRequest.accepts`, #854
+- Added `dmr_export_schema` management command to export OpenAPI schemas, #909
+
+### Bugfixes
+
+- Fixed OpenAPI schema for Django session auth
+  when `CSRF_USE_SESSIONS=True`, #674
 - Fixed that `itemSchema` was possible to be rendered
   in OpenAPI `3.0.0` and `3.1.0`, #908
 - Fixed response validation when global error handler returns
   `HttpResponse` with a different content type than the negotiated
   renderer, #711
+- Fixed `collectstatic` failure when using `ManifestStaticFilesStorage`, #927
+- Fixed `datetime` validation when using `.to_response`, #938
+- Fixed a bug that `ObtainTokensAsyncController` was not setting
+  the `request.auser` attribute, #953
+- Fixed a bug that `JWTSyncAuth` was not setting `request.auser`, #953
+- Fixed `ResponseNegotiator` raising `NotAcceptableError` on streaming
+  endpoints when `Accept: text/event-stream` was sent without
+  `application/json` (the default browser `EventSource` case), which
+  made 4xx/5xx error bodies and response validation crash with a 500
+  instead of rendering the configured non-streaming default, #962
+- Fixed that original traceback was not shown
+  for `BaseSchemaGenerator.get_schema`, #961
+
+### Misc
+
+- Optimized `dmr_client` and `dmr_rf` test fixtures to use `msgspec`
+  for JSON encoding and decoding when available, #889 and #976
+- Optimized how per-endpoint throttle locks are used, #942
 
 
 ## Version 0.7.0 (2026-04-14)

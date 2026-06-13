@@ -3,6 +3,17 @@ Django Session Auth
 
 Docs: https://docs.djangoproject.com/en/dev/topics/auth
 
+For this auth to work, you will need to:
+
+1. Properly add and configure
+   :class:`django.contrib.sessions.middleware.SessionMiddleware` middleware
+2. Properly add and configure
+   :class:`django.contrib.auth.middleware.AuthenticationMiddleware` middleware
+3. Set correct auth settings, like enabling ``django.contrib.auth`` app
+
+Make sure to follow the default Django's guide on setting up
+the regular Django auth before going further.
+
 
 Requiring auth
 --------------
@@ -65,6 +76,28 @@ To use them, you will need to:
   :language: python
 
 Any further customizations are also possible.
+
+
+CSRF
+~~~~
+
+When a user logs in through these controllers, Django automatically rotates
+the CSRF token and includes a ``csrftoken`` cookie in the login response
+(alongside the session cookie).
+
+Clients making subsequent non-safe requests (``POST``, ``PUT``, ``PATCH``,
+``DELETE``) to session-protected endpoints must send this token back via the
+``X-CSRFToken`` request header.
+
+.. note::
+
+  When ``CSRF_USE_SESSIONS`` is ``True``, Django stores the CSRF token
+  in the session instead of a cookie.  In that case no ``csrftoken`` cookie
+  appears in the login response — the token is already embedded in the
+  session used for authentication.
+
+  See also:
+    https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-CSRF_USE_SESSIONS
 
 
 API Reference

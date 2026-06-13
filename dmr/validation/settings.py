@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import Any, ClassVar, cast
 
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.enums import stringify
 from dmr.metadata import ResponseSpec
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
@@ -15,7 +16,7 @@ from dmr.settings import (
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.throttling import AsyncThrottle, SyncThrottle
-from dmr.types import EmptyObj
+from dmr.types import EMPTY
 
 
 class _SettingsModel(SettingsDict, total=False):
@@ -63,7 +64,7 @@ class SettingsValidator:
             self.serializer.from_python(
                 {
                     # msgspec does not like `StrEnum` keys:
-                    str(setting_key): (
+                    stringify(setting_key): (
                         # For some reason `pydantic` does not validate
                         # `set[str]` against `collections.abc.Set[str]`
                         frozenset(setting_value)  # pyright: ignore[reportUnknownArgumentType]
@@ -131,8 +132,8 @@ class SettingsValidator:
                 'Settings.responses must all be ResponseSpec instances',
             )
 
-        openapi_config = settings.get('openapi_config', EmptyObj)
-        if openapi_config is not EmptyObj and not isinstance(
+        openapi_config = settings.get('openapi_config', EMPTY)
+        if openapi_config is not EMPTY and not isinstance(
             openapi_config,
             OpenAPIConfig,
         ):
@@ -140,8 +141,8 @@ class SettingsValidator:
                 'Settings.openapi_config must be an OpenAPIConfig instance',
             )
 
-        global_error_handler = settings.get('global_error_handler', EmptyObj)
-        if global_error_handler is not EmptyObj and not (
+        global_error_handler = settings.get('global_error_handler', EMPTY)
+        if global_error_handler is not EMPTY and not (
             isinstance(global_error_handler, str)
             or callable(global_error_handler)
         ):

@@ -80,9 +80,10 @@ ignore_imports =
   dmr.openapi.mappers.example -> polyfactory
   # Yaml:
   dmr.openapi.views.yaml -> yaml
+  dmr.management.commands.dmr_export_schema -> yaml
   # Optional json support from msgspec:
   dmr.settings -> msgspec
-  dmr.openapi.dump -> msgspec
+  dmr.internal.json -> msgspec
 
 [importlinter:contract:plugins-independence]
 name = All `plugins` must be independent

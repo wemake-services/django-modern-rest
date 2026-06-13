@@ -9,6 +9,12 @@ Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication
   It is better than nothing, but is not enough for nearly all real use-cases.
   Please, consider using :doc:`jwt` instead.
 
+  The only reasonable use-case for this auth is to use HTTP Basic auth
+  for protecting some public things like API status dashboards.
+
+Note that this auth type does not set ``request.user`` by design.
+Because many users might use the same auth parameters.
+
 
 Requiring auth
 --------------

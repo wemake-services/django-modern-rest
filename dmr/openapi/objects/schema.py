@@ -74,3 +74,6 @@ class Schema:
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
     example: Any | None = None
+    dynamic_anchor: str | None = None
+    dynamic_ref: str | None = None
+    defs: dict[str, 'Reference | Schema'] | None = None

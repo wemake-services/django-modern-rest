@@ -10,10 +10,14 @@ from typing import TYPE_CHECKING
 from dmr.envs import USE_COMPILED
 
 if TYPE_CHECKING:
+    from dmr._compiled.negotiation import accepted_header as accepted_header
     from dmr._compiled.negotiation import accepted_type as accepted_type
 
 if USE_COMPILED:
-    from dmr._compiled.negotiation import accepted_type  # noqa: WPS474
+    from dmr._compiled.negotiation import (  # noqa: WPS474
+        accepted_header,
+        accepted_type,
+    )
 else:
     import sys
     import types
@@ -44,5 +48,6 @@ else:
     # Add new objects here:
     _mod = _import_pure('negotiation')
     accepted_type = _mod.accepted_type
+    accepted_header = _mod.accepted_header
 
     del sys, types, _import_pure, _mod  # noqa: WPS420

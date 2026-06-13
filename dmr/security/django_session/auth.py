@@ -9,7 +9,11 @@ from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
+from dmr.metadata import (
+    EndpointMetadata,
+    ResponseSpec,
+    ResponseSpecProvider,
+)
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.response import APIError
 from dmr.security.base import AsyncAuth, SyncAuth
@@ -56,26 +60,30 @@ class _DjangoSessionAuth(ResponseSpecProvider):
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        return {
+        schemes: dict[str, SecurityScheme | Reference] = {
             self.security_scheme_name: SecurityScheme(
                 type='apiKey',
                 name=settings.SESSION_COOKIE_NAME,
                 security_scheme_in='cookie',
                 description='Reusing standard Django auth flow for API',
             ),
-            # TODO: this is not right if `CSRF_USE_SESSIONS` is used:
-            self.csrf_scheme_name: SecurityScheme(
+        }
+        if self._uses_csrf_cookie():
+            schemes[self.csrf_scheme_name] = SecurityScheme(
                 type='apiKey',
                 name=settings.CSRF_COOKIE_NAME,
                 security_scheme_in='cookie',
                 description='CSRF protection',
-            ),
-        }
+            )
+        return schemes
 
     @property
     def security_requirement(self) -> SecurityRequirement:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: [], self.csrf_scheme_name: []}
+        requirement: SecurityRequirement = {self.security_scheme_name: []}
+        if self._uses_csrf_cookie():
+            requirement[self.csrf_scheme_name] = []
+        return requirement
 
     @override
     def provide_response_specs(
@@ -103,6 +111,9 @@ class _DjangoSessionAuth(ResponseSpecProvider):
                 existing_responses,
             ),
         ]
+
+    def _uses_csrf_cookie(self) -> bool:
+        return not settings.CSRF_USE_SESSIONS
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         reason = _get_csrf_failure_reason(controller.request)

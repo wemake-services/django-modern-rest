@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
-from typing_extensions import ParamSpec, TypeVar
+from typing_extensions import ParamSpec, Sentinel, TypeVar
 
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
@@ -41,11 +41,12 @@ from dmr.openapi.objects import (
 )
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
-from dmr.response import APIError, APIRedirectError
+from dmr.response import APIError, RedirectTo
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle , DynamicThrottle
+from dmr.types import EMPTY
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
@@ -360,7 +361,7 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = await func(controller, **context)
-            except (APIError, APIRedirectError) as exc:
+            except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
@@ -396,7 +397,7 @@ class Endpoint:  # noqa: WPS214
 
                 # Return response:
                 func_result = func(controller, **context)
-            except (APIError, APIRedirectError) as exc:
+            except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
                     status_code=exc.status_code,
@@ -430,8 +431,7 @@ class Endpoint:  # noqa: WPS214
             return
         for throttle in self.metadata.throttling_before_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
-            with self._sync_lock:
-                throttle(self, controller)
+            throttle(self, controller, self._sync_lock)
 
     def _run_auth(self, controller: 'Controller[BaseSerializer]') -> None:
         if self.metadata.auth is None:
@@ -452,8 +452,7 @@ class Endpoint:  # noqa: WPS214
             return
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
-            with self._sync_lock:
-                throttle(self, controller)
+            throttle(self, controller, self._sync_lock)
 
     # Async checks:
 
@@ -479,8 +478,7 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_before_auth:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
-            async with self._async_lock:
-                await throttle(self, controller)  # noqa: WPS476
+            await throttle(self, controller, self._async_lock)  # noqa: WPS476
 
     async def _run_async_auth(
         self,
@@ -505,8 +503,7 @@ class Endpoint:  # noqa: WPS214
         for throttle in self.metadata.throttling_after_auth:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
-            async with self._async_lock:
-                await throttle(self, controller)  # noqa: WPS476
+            await throttle(self, controller, self._async_lock)  # noqa: WPS476
 
     # Utils:
 
@@ -614,6 +611,7 @@ def validate(  # noqa: WPS234
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -647,6 +645,7 @@ def validate(
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -680,6 +679,7 @@ def validate(
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -712,6 +712,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -802,6 +803,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this endpoint.
+        throttling_allow_unsafe_cache: Should this controller allow
+            unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -838,6 +841,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             validate_negotiation=validate_negotiation,
             auth=auth,
             throttling=throttling,
+            throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
             summary=summary,
             description=description,
             tags=tags,
@@ -872,6 +876,7 @@ def modify(
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -905,6 +910,7 @@ def modify(
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -939,6 +945,7 @@ def modify(
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -972,6 +979,7 @@ def modify(  # noqa: WPS211
     | Sequence[SyncThrottle]
     | Sequence[DynamicThrottle]
     | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
@@ -1046,6 +1054,8 @@ def modify(  # noqa: WPS211
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
             Set it to ``None`` to disable throttling of this endpoint.
+        throttling_allow_unsafe_cache: Should this endpoint allow
+            unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -1088,6 +1098,7 @@ def modify(  # noqa: WPS211
             validate_negotiation=validate_negotiation,
             auth=auth,
             throttling=throttling,
+            throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
             summary=summary,
             description=description,
             tags=tags,

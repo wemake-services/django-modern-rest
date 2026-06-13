@@ -8,6 +8,7 @@ from typing_extensions import override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.exceptions import DataParsingError
+from dmr.internal.enums import stringify
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.renderers import Renderer
 
@@ -66,7 +67,9 @@ class MsgspecJsonRenderer(Renderer):
 
     def __init__(self, content_type: str = 'application/json') -> None:
         """Initialize the default content type."""
-        self.content_type = str(content_type)  # might be a string subclass
+        self.content_type = stringify(
+            content_type,
+        )  # might be a string subclass
 
     @override
     def render(

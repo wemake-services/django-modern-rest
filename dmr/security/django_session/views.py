@@ -60,6 +60,16 @@ class DjangoSessionSyncController(
         status_code=HTTPStatus.OK,
         cookies={
             settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+            **(
+                {}
+                if settings.CSRF_USE_SESSIONS
+                else {
+                    settings.CSRF_COOKIE_NAME: CookieSpec(
+                        skip_validation=True,
+                        description='CSRF protection.',
+                    ),
+                }
+            ),
         },
     )
     def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseT:
@@ -121,6 +131,16 @@ class DjangoSessionAsyncController(
         status_code=HTTPStatus.OK,
         cookies={
             settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+            **(
+                {}
+                if settings.CSRF_USE_SESSIONS
+                else {
+                    settings.CSRF_COOKIE_NAME: CookieSpec(
+                        skip_validation=True,
+                        description='CSRF protection.',
+                    ),
+                }
+            ),
         },
     )
     async def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseT:

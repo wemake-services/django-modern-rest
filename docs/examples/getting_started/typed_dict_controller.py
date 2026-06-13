@@ -1,5 +1,6 @@
 import uuid
-from typing import TypedDict
+
+from typing_extensions import TypedDict
 
 from dmr import Body, Controller
 from dmr.plugins.msgspec import MsgspecSerializer

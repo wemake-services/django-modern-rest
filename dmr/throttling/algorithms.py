@@ -6,15 +6,13 @@ from typing_extensions import override
 
 from dmr.exceptions import TooManyRequestsError
 from dmr.throttling.backends import CachedRateLimit
+from dmr.throttling.lua import LEAKY_BUCKET, SIMPLE_RATE
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
-
-
-# TODO: This file is pure logic. Maybe compile it?
 
 
 class BaseThrottleAlgorithm:
@@ -43,17 +41,6 @@ class BaseThrottleAlgorithm:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def record(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle | AsyncThrottle',
-        cache_object: CachedRateLimit,
-    ) -> CachedRateLimit:
-        """Records successful access."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def report_usage(
         self,
         endpoint: 'Endpoint',
@@ -63,6 +50,13 @@ class BaseThrottleAlgorithm:
     ) -> dict[str, str]:
         """Reports the throttling usage, but does not additionally increment."""
         raise NotImplementedError
+
+    def transaction_script(self, script_format: str) -> str | None:
+        """
+        Optionally dump the transaction script for backends that support it.
+
+        It can be ``.lua`` or ``.sql``.
+        """
 
 
 class SimpleRate(BaseThrottleAlgorithm):
@@ -74,6 +68,12 @@ class SimpleRate(BaseThrottleAlgorithm):
     """
 
     __slots__ = ()
+
+    @override
+    def transaction_script(self, script_format: str) -> str | None:
+        if script_format == 'lua':
+            return SIMPLE_RATE
+        return super().transaction_script(script_format)
 
     @override
     def access(
@@ -95,17 +95,6 @@ class SimpleRate(BaseThrottleAlgorithm):
                     now,
                 ),
             )
-        return cache_object
-
-    @override
-    def record(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle | AsyncThrottle',
-        cache_object: CachedRateLimit,
-    ) -> CachedRateLimit:
-        """Record successful access."""
         cache_object['history'][0] += 1
         return cache_object
 
@@ -190,6 +179,12 @@ class LeakyBucket(BaseThrottleAlgorithm):
     __slots__ = ()
 
     @override
+    def transaction_script(self, script_format: str) -> str | None:
+        if script_format == 'lua':
+            return LEAKY_BUCKET
+        return super().transaction_script(script_format)
+
+    @override
     def access(
         self,
         endpoint: 'Endpoint',
@@ -198,8 +193,17 @@ class LeakyBucket(BaseThrottleAlgorithm):
         cache_object: CachedRateLimit | None,
     ) -> CachedRateLimit:
         """Check access; raise when the bucket is full."""
-        cache_object = self._process_cache(throttle, cache_object)
-        if cache_object['history'][0] >= (
+        cache_object, now = self._process_cache(throttle, cache_object)
+        # First, decrease the usage level for the elapsed time:
+        elapsed = now - cache_object['time']
+        level = max(
+            0,
+            # Scaled level:
+            cache_object['history'][0] - elapsed * throttle.max_requests,
+        )
+        cache_object = CachedRateLimit(history=[level], time=now)
+        # Do the check:
+        if cache_object['history'][0] + throttle.duration_in_seconds > (
             throttle.max_requests * throttle.duration_in_seconds
         ):
             raise TooManyRequestsError(
@@ -211,18 +215,7 @@ class LeakyBucket(BaseThrottleAlgorithm):
                     cache_object['time'],
                 ),
             )
-        return cache_object
-
-    @override
-    def record(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        throttle: 'SyncThrottle | AsyncThrottle',
-        cache_object: CachedRateLimit,
-    ) -> CachedRateLimit:
-        """Record access by adding request to the bucket."""
-        # One scaled unit of a request:
+        # Add one scaled unit for the performed request:
         cache_object['history'][0] += throttle.duration_in_seconds
         return cache_object
 
@@ -235,13 +228,13 @@ class LeakyBucket(BaseThrottleAlgorithm):
         cache_object: CachedRateLimit | None,
     ) -> dict[str, str]:
         """Report throttling usage without incrementing."""
-        cache_object = self._process_cache(throttle, cache_object)
+        cache_object, now = self._process_cache(throttle, cache_object)
         return self._report_usage(
             endpoint,
             controller,
             throttle,
             cache_object,
-            cache_object['time'],
+            now=now,
             report_all=False,
         )
 
@@ -249,17 +242,11 @@ class LeakyBucket(BaseThrottleAlgorithm):
         self,
         throttle: 'SyncThrottle | AsyncThrottle',
         cache_object: CachedRateLimit | None,
-    ) -> CachedRateLimit:
+    ) -> tuple[CachedRateLimit, int]:
         now = int(time.time())
         if cache_object is None:
-            return CachedRateLimit(history=[0], time=now)
-        elapsed = now - cache_object['time']
-        level = max(
-            0,
-            # Scaled level:
-            cache_object['history'][0] - elapsed * throttle.max_requests,
-        )
-        return CachedRateLimit(history=[level], time=now)
+            return CachedRateLimit(history=[0], time=now), now
+        return cache_object, now
 
     def _report_usage(
         self,

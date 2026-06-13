@@ -1,5 +1,5 @@
 import abc
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
@@ -16,7 +16,69 @@ _CANNOT_DESERIALIZE_MSG: Final = _(
     'Value {value} of type {type} is not supported for {target_type}',
 )
 
-_ModelT = TypeVar('_ModelT')
+SchemaDef: TypeAlias = tuple[
+    dict[str, Any],
+    dict[str, Any],
+]
+
+
+class BaseEndpointOptimizer:
+    """
+    Plugins might often need to run some specific preparations for endpoints.
+
+    To achieve that we provide an explicit API for that.
+    """
+
+    @classmethod
+    @abc.abstractmethod
+    def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
+        """
+        Optimize the endpoint.
+
+        Args:
+            metadata: Endpoint metadata to optimize.
+
+        """
+        raise NotImplementedError
+
+
+class BaseSchemaGenerator:
+    """Generates JSON schema by the native serializer API."""
+
+    @classmethod
+    @abc.abstractmethod
+    def get_schema(
+        cls,
+        model: Any,
+        ref_template: str,
+        *,
+        used_for_response: bool = False,
+    ) -> SchemaDef:
+        """
+        Provide JSON schema / OpenAPI spec for the given model.
+
+        Args:
+            model: Model to generate JSON schema for.
+            ref_template: Reference template to use for the references.
+            used_for_response: Is this schema used for the response or request.
+
+        Raises:
+            Exception: when schema cannot be built.
+                Can be any :exc:`Exception` subclass instance.
+
+        """
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def schema_name(cls, model: Any) -> str | None:
+        """
+        Return a schema name for a model, if it exists.
+
+        It is done directly by the serializer,
+        we don't store any specific logic for it.
+        """
+        raise NotImplementedError
 
 
 class BaseSerializer:  # noqa: WPS214
@@ -41,7 +103,7 @@ class BaseSerializer:  # noqa: WPS214
         optimizer: Endpoint optimizer.
             Type that pre-compiles / creates / caches models in import time.
             Required to be set in subclasses.
-        openapi:
+        schema_generator: Generates schema and schema names for the OpenAPI.
 
     """
 
@@ -49,8 +111,8 @@ class BaseSerializer:  # noqa: WPS214
 
     # API that needs to be set in subclasses:
     validation_error: ClassVar[type[Exception]]
-    optimizer: ClassVar[type['BaseEndpointOptimizer']]
-    schema_generator: ClassVar[type['BaseSchemaGenerator']]
+    optimizer: ClassVar[type[BaseEndpointOptimizer]]
+    schema_generator: ClassVar[type[BaseSchemaGenerator]]
 
     @classmethod
     @abc.abstractmethod
@@ -190,64 +252,3 @@ class BaseSerializer:  # noqa: WPS214
         will raise an import-time validation error.
         """
         return True  # By default all are supported
-
-
-class BaseEndpointOptimizer:
-    """
-    Plugins might often need to run some specific preparations for endpoints.
-
-    To achieve that we provide an explicit API for that.
-    """
-
-    @classmethod
-    @abc.abstractmethod
-    def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
-        """
-        Optimize the endpoint.
-
-        Args:
-            metadata: Endpoint metadata to optimize.
-
-        """
-        raise NotImplementedError
-
-
-SchemaDef: TypeAlias = tuple[
-    dict[str, Any],
-    dict[str, Any],
-]
-
-
-class BaseSchemaGenerator:
-    """Generates JSON schema by the native serializer API."""
-
-    @classmethod
-    @abc.abstractmethod
-    def get_schema(
-        cls,
-        model: Any,
-        ref_template: str,
-        *,
-        used_for_response: bool = False,
-    ) -> SchemaDef | None:
-        """
-        Provide JSON schema / OpenAPI spec for the given model.
-
-        Args:
-            model: Model to generate JSON schema for.
-            ref_template: Reference template to use for the references.
-            used_for_response: Is this schema used for the response or request.
-
-        """
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
-    def schema_name(cls, model: Any) -> str | None:
-        """
-        Return a schema name for a model, if it exists.
-
-        It is done directly by the serializer,
-        we don't store any specific logic for it.
-        """
-        raise NotImplementedError

@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 import pytest
-from django.conf import settings
+from django.conf import LazySettings, settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from faker import Faker
@@ -20,9 +20,20 @@ def password(faker: Faker) -> str:
 def user(faker: Faker, password: str) -> User:
     """Create fake user for tests."""
     return User.objects.create_user(
-        faker.unique.user_name(),
-        faker.unique.email(),
-        password,
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=password,
+    )
+
+
+@pytest.fixture
+def inactive_user(faker: Faker, password: str) -> User:
+    """Create inactive fake user for tests."""
+    return User.objects.create_user(
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=password,
+        is_active=False,
     )
 
 
@@ -57,16 +68,136 @@ def test_correct_django_session(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.cookies[settings.SESSION_COOKIE_NAME]
+    assert response.cookies.keys() == {
+        settings.SESSION_COOKIE_NAME,
+        settings.CSRF_COOKIE_NAME,
+    }
+    assert dmr_client.cookies.keys() == response.cookies.keys()
 
-    response = dmr_client.get(
-        check_url,
-        cookies=response.cookies,
-    )
+    response = dmr_client.get(check_url)
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {'user_id': str(user.pk)}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'check_url',
+    [
+        reverse('api:django_session_auth:user_session_sync'),
+        reverse('api:django_session_auth:user_session_async'),
+    ],
+)
+def test_django_session_new_client(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    check_url: str,
+) -> None:
+    """Ensures that correct auth params with different clients."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies.keys() == {
+        settings.SESSION_COOKIE_NAME,
+        settings.CSRF_COOKIE_NAME,
+    }
+    assert dmr_client.cookies.keys() == response.cookies.keys()
+
+    second_client = DMRClient()
+    second_client.cookies.update(response.cookies)
+
+    response = second_client.get(check_url)
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == {'user_id': str(user.pk)}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'check_url',
+    [
+        reverse('api:django_session_auth:user_session_sync'),
+        reverse('api:django_session_auth:user_session_async'),
+    ],
+)
+def test_just_csrf_cookie(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    check_url: str,
+) -> None:
+    """Ensures that just csrf cookie is not enough to login."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies[settings.SESSION_COOKIE_NAME]
+
+    second_client = DMRClient()
+    # Just one cookie is not enough:
+    second_client.cookies[settings.CSRF_COOKIE_NAME] = response.cookies[
+        settings.CSRF_COOKIE_NAME
+    ]
+
+    response = second_client.get(check_url)
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies.get(settings.SESSION_COOKIE_NAME) is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+def test_inactive_user(
+    dmr_client: DMRClient,
+    inactive_user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures that inactive users can't get in."""
+    response = dmr_client.post(
+        url,
+        data={'username': inactive_user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.cookies.get(settings.SESSION_COOKIE_NAME) is None
 
 
 @pytest.mark.django_db
@@ -108,3 +239,60 @@ def test_wrong_auth_params(
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+def test_login_sends_csrf_cookie(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures the login response sets the CSRF cookie and session cookie."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.cookies.keys() == {
+        settings.SESSION_COOKIE_NAME,
+        settings.CSRF_COOKIE_NAME,
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:django_session_auth:django_session_sync'),
+        reverse('api:django_session_auth:django_session_async'),
+    ],
+)
+def test_login_with_csrf_use_sessions(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    settings: LazySettings,
+    *,
+    url: str,
+) -> None:
+    """Ensures with CSRF_USE_SESSIONS=True, CSRF_COOKIE is not set."""
+    settings.CSRF_USE_SESSIONS = True
+
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.cookies[settings.SESSION_COOKIE_NAME]
+    assert settings.CSRF_COOKIE_NAME not in response.cookies

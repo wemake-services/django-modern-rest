@@ -1,3 +1,6 @@
+set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+set dotenv-load := false
+
 # List all available recipes
 _default:
     @just --list --unsorted --list-submodules
@@ -37,12 +40,12 @@ test: lint type-check example benchmarks-type-check package smoke translations u
 type-check:
     uv run mypy .
     uv run pyright
-    uv run pyrefly check
+    uv run pyrefly check --remove-unused-ignores
 
 # Run unit tests
 [group('testing')]
-unit:
-    uv run pytest --inline-snapshot=disable
+unit *args='':
+    uv run pytest --inline-snapshot=disable {{ args }}
 
 # Check package imports without django.setup()
 [group('testing')]
@@ -70,7 +73,8 @@ smoke:
 example:
     cd django_test_app \
       && uv run mypy --config-file mypy.ini \
-      && uv run python manage.py makemigrations --dry-run --check
+      && uv run python manage.py makemigrations --dry-run --check \
+      && uv run python manage.py collectstatic --no-input --dry-run
     PYTHONPATH='docs/' uv run pytest -o addopts='' \
       --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
@@ -81,13 +85,6 @@ example:
 [group('testing')]
 example-run:
     cd django_test_app && uv run python manage.py runserver
-
-# Run translation QA
-[group('testing')]
-translations:
-    uv run dennis-cmd lint dmr/locale
-    uv run django-admin compilemessages --ignore dmr || true
-    uv run django-admin compilemessages
 
 # Validate package dependencies and run security audit
 [group('testing')]
@@ -130,3 +127,10 @@ makemessages:
     uv run django-admin makemessages -l "$(basename "$target")" \
       --add-location never
   done
+
+# Run translation QA
+[group('i18n')]
+translations:
+    uv run dennis-cmd lint dmr/locale
+    uv run django-admin compilemessages --ignore dmr || true
+    uv run django-admin compilemessages

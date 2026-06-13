@@ -1,17 +1,21 @@
 import dataclasses
 import inspect
+import warnings
 from collections.abc import Callable, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
 
 from django.contrib.admindocs.utils import parse_docstring
+from django.core.cache.backends import dummy, locmem
 from django.http import HttpResponseBase
+from typing_extensions import Sentinel
 
 from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.enums import stringify
 from dmr.metadata import (
     ComponentParserSpec,
     EndpointMetadata,
@@ -25,7 +29,12 @@ from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
-from dmr.types import EmptyObj, infer_annotation, is_safe_subclass
+from dmr.throttling.backends.django_cache import (
+    AsyncDjangoCache,
+    SyncDjangoCache,
+    UnsafeCacheBackendWarning,
+)
+from dmr.types import EMPTY, infer_annotation, is_safe_subclass
 from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
@@ -185,7 +194,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     type_annotations: dict[str, Any]
 
     # Internal fields:
-    endpoint_name: str = dataclasses.field(init=False)
+    endpoint_name: str = dataclasses.field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
 
     def __call__(self) -> EndpointMetadata:
         """Do the validation."""
@@ -243,7 +256,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         summary, description = self._build_description()
-        throttling_before_auth, throttling_after_auth = self._build_throttling()
+        throttling_before_auth, throttling_after_auth, allow_cache = (
+            self._build_throttling()
+        )
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -259,6 +274,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(),
             throttling_before_auth=throttling_before_auth,
             throttling_after_auth=throttling_after_auth,
+            throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -274,7 +290,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_modify(
+    def _from_modify(  # noqa: WPS210
         self,
         payload: ModifyEndpointPayload,
         method: str,
@@ -300,7 +316,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             links=payload.links,
         )
         summary, description = self._build_description()
-        throttling_before_auth, throttling_after_auth = self._build_throttling()
+        throttling_before_auth, throttling_after_auth, allow_cache = (
+            self._build_throttling()
+        )
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -316,6 +334,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(),
             throttling_before_auth=throttling_before_auth,
             throttling_after_auth=throttling_after_auth,
+            throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -331,7 +350,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             servers=payload.servers,
         )
 
-    def _from_raw_data(
+    def _from_raw_data(  # noqa: WPS210
         self,
         method: str,
         return_annotation: Any,
@@ -351,7 +370,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             links=None,
         )
         summary, description = self._build_description()
-        throttling_before_auth, throttling_after_auth = self._build_throttling()
+        throttling_before_auth, throttling_after_auth, allow_cache = (
+            self._build_throttling()
+        )
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -367,6 +388,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(),
             throttling_before_auth=throttling_before_auth,
             throttling_after_auth=throttling_after_auth,
+            throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             semantic_responses=self._build_semantic_responses(),
@@ -495,6 +517,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> tuple[
         tuple[SyncThrottle | AsyncThrottle, ...] | None,
         tuple[SyncThrottle | AsyncThrottle, ...] | None,
+        bool | None,
     ]:
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
@@ -531,6 +554,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'All throttling instances must be subtypes of {base_type!r} '
                 f'for {self.endpoint_name=}',
             )
+        allow_cache = self._build_throttling_allow_unsafe_cache()
+        self._validate_throttling(throttling, allow_cache=allow_cache)
         # We are doing this as late as possible to still
         # have the full validation logic even if some value is None.
         if (
@@ -540,21 +565,78 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             # and it is just None.
             or not throttling
         ):
-            return (None, None)
+            return (None, None, allow_cache)
         return (
-            tuple(
-                throttling
-                for throttling in throttling
-                if throttling.cache_key.runs_before_auth
-            )
-            or None,
-            tuple(
-                throttling
-                for throttling in throttling
-                if not throttling.cache_key.runs_before_auth
-            )
-            or None,
+            (
+                tuple(
+                    throttling
+                    for throttling in throttling
+                    if throttling.cache_key.runs_before_auth
+                )
+                or None
+            ),
+            (
+                tuple(
+                    throttling
+                    for throttling in throttling
+                    if not throttling.cache_key.runs_before_auth
+                )
+                or None
+            ),
+            allow_cache,
         )
+
+    def _build_throttling_allow_unsafe_cache(self) -> bool | None:
+        if self.payload and not isinstance(
+            self.payload.throttling_allow_unsafe_cache,
+            Sentinel,
+        ):
+            return self.payload.throttling_allow_unsafe_cache
+        if not isinstance(
+            self.controller_cls.throttling_allow_unsafe_cache,
+            Sentinel,
+        ):
+            return self.controller_cls.throttling_allow_unsafe_cache
+        return resolve_setting(  # type: ignore[no-any-return]
+            Settings.throttling_allow_unsafe_cache,
+        )
+
+    def _validate_throttling(
+        self,
+        throttling: Sequence[SyncThrottle | AsyncThrottle],
+        *,
+        allow_cache: bool | None,
+    ) -> None:
+        for throttle in throttling:
+            if (
+                allow_cache is None
+                or not isinstance(
+                    throttle._backend,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                    (SyncDjangoCache, AsyncDjangoCache),
+                )
+                or not isinstance(
+                    throttle._backend._cache,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                    (locmem.LocMemCache, dummy.DummyCache),
+                )
+            ):
+                continue
+
+            cache = throttle._backend._cache  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            backend = type(cache).__qualname__
+            msg = (
+                f'Throttling is using {backend!r} cache backend '
+                f'in {self.endpoint_name!r} which is not safe for production: '
+                'counters are NOT shared between processes/instances. '
+                'Use Redis or Memcached backends instead.'
+            )
+            if allow_cache:
+                warnings.warn(
+                    msg,
+                    category=UnsafeCacheBackendWarning,
+                    stacklevel=1,
+                )
+            else:
+                raise EndpointMetadataError(msg)
 
     def _build_validate_responses(self) -> bool:
         if self.payload and self.payload.validate_responses is not None:
@@ -835,7 +917,7 @@ class EndpointMetadataValidator:
         should not have a request body. If a controller uses Body component
         with these methods, an EndpointMetadataError will be raised.
         """
-        method = str(self.metadata.method).upper()
+        method = stringify(self.metadata.method).upper()
         if method not in _HTTP_METHODS_WITHOUT_BODY:
             return
 
@@ -872,8 +954,8 @@ def _resolve_return_annotation(
     controller_cls: type['Controller[BaseSerializer]'],
     endpoint_func: Callable[..., Any],
 ) -> Any:
-    return_annotation = type_annotations.get('return', EmptyObj)
-    if return_annotation is EmptyObj:
+    return_annotation = type_annotations.get('return', EMPTY)
+    if return_annotation is EMPTY:
         raise UnsolvableAnnotationsError(
             f'Function {endpoint_func!r} is missing return type annotation',
         )

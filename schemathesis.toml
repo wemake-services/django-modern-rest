@@ -1,12 +1,10 @@
-[generation]
-# Limit the number of generated examples per API operation to keep tests fast.
-max-examples = 100
-
 [warnings]
 # Fail on any warning:
 fail-on = true
 
 [auth.openapi.http_basic]
+# Our own credentials from
+# django_test_app/server/apps/controllers/auth.py
 username = 'test'
 password = 'pass'
 

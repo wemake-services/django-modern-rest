@@ -142,6 +142,8 @@ class ParseHeadersController(Controller[PydanticSerializer]):
     auth = (HttpBasicSync(),)
 
     def post(self, parsed_headers: Headers[_CustomHeaders]) -> _CustomHeaders:
+        # HTTP Basic auth does not set user:
+        assert not self.request.user.is_authenticated  # noqa: S101
         return parsed_headers
 
 
@@ -152,6 +154,8 @@ class AsyncParseHeadersController(Controller[PydanticSerializer]):
         self,
         parsed_headers: Headers[_CustomHeaders],
     ) -> _CustomHeaders:
+        # HTTP Basic auth does not set user:
+        assert not (await self.request.auser()).is_authenticated  # noqa: S101
         return parsed_headers
 
 

@@ -13,7 +13,7 @@ from dmr.openapi.objects import (  # noqa: WPS235
     Tag,
 )
 
-_SupportedOpenAPIVersions: TypeAlias = Literal['3.1.0', '3.2.0']
+_SupportedOpenAPIVersions: TypeAlias = Literal['3.0.0', '3.1.0', '3.2.0']
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

@@ -1,5 +1,5 @@
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from typing_extensions import override
 
@@ -27,7 +27,7 @@ class BaseResponseHeadersProvider:
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-        throttle: '_BaseThrottle',
+        throttle: '_BaseThrottle[Any]',
         remaining: int,
         reset: int,
         *,
@@ -68,7 +68,7 @@ class RetryAfter(BaseResponseHeadersProvider):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-        throttle: '_BaseThrottle',
+        throttle: '_BaseThrottle[Any]',
         remaining: int,
         reset: int,
         *,
@@ -125,7 +125,7 @@ class XRateLimit(BaseResponseHeadersProvider):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-        throttle: '_BaseThrottle',
+        throttle: '_BaseThrottle[Any]',
         remaining: int,
         reset: int,
         *,
@@ -169,7 +169,7 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-        throttle: '_BaseThrottle',
+        throttle: '_BaseThrottle[Any]',
         remaining: int,
         reset: int,
         *,
