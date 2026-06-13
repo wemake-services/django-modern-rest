@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 
 from dmr import Controller
+from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
 from dmr.security.token import (
@@ -593,8 +594,6 @@ def test_sync_check_token_passes_for_active_token() -> None:
 
 def test_sync_check_token_raises_inactive() -> None:
     """check_token() raises NotAuthenticatedError when the token is inactive."""
-    from dmr.exceptions import NotAuthenticatedError
-
     token = Token(revoked_at=dt.datetime.now(dt.UTC))
     with pytest.raises(NotAuthenticatedError):
         TokenSyncAuth().check_token(token)
@@ -610,8 +609,6 @@ async def test_async_check_token_passes_active() -> None:
 @pytest.mark.asyncio
 async def test_async_check_token_raises_inactive() -> None:
     """Async check_token() raises NotAuthenticatedError for inactive tokens."""
-    from dmr.exceptions import NotAuthenticatedError
-
     token = Token(revoked_at=dt.datetime.now(dt.UTC))
     with pytest.raises(NotAuthenticatedError):
         await TokenAsyncAuth().check_token(token)
