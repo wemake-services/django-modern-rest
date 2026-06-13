@@ -15,7 +15,7 @@ from dmr.settings import (
     SettingsDict,
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
-from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
 from dmr.types import EMPTY
 
 
@@ -113,13 +113,13 @@ class SettingsValidator:
 
         # Throttling:
         if not all(
-            isinstance(throttling, (SyncThrottle, AsyncThrottle))
+            isinstance(throttling, (SyncThrottle, AsyncThrottle, DynamicThrottle))
             for throttling in settings.get('throttling', [])
         ):
             raise EndpointMetadataError(
                 (
-                    'Settings.throttling must all be SyncThrottle '
-                    'or AsyncThrottle instances'
+                    'Settings.throttling must all be SyncThrottle, AsyncThrottle, '
+                    'or DynamicThrottle instances'
                 ),
             )
 

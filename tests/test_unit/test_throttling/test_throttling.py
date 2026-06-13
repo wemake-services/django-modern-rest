@@ -14,6 +14,7 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, DynamicThrottle, Rate, SyncThrottle
+from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
@@ -517,6 +518,7 @@ async def test_dynamic_throttle_per_controller_async(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('serializer', serializers)
+@pytest.mark.filterwarnings('ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning')
 async def test_dynamic_throttle_per_settings(
     dmr_async_rf: DMRAsyncRequestFactory,
     freezer: FrozenDateTimeFactory,
@@ -580,6 +582,7 @@ async def test_dynamic_throttle_per_settings(
 
 
 @pytest.mark.parametrize('serializer', serializers)
+@pytest.mark.filterwarnings('ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning')
 def test_dynamic_throttle_multiple_sources(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
@@ -641,6 +644,7 @@ def test_dynamic_throttle_multiple_sources(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('serializer', serializers)
+@pytest.mark.filterwarnings('ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning')
 async def test_dynamic_throttle_multiple_sources_async(
     dmr_async_rf: DMRAsyncRequestFactory,
     freezer: FrozenDateTimeFactory,

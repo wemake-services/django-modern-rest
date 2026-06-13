@@ -342,6 +342,28 @@ class DynamicThrottle(_BaseThrottle):
     sync and async endpoints with their respective throttle types.
     """
 
+    def __init__(
+        self,
+        max_requests: int,
+        duration_in_seconds: Rate | int,
+        *,
+        cache_key: BaseThrottleCacheKey | None = None,
+        backend: _AnyBackend | None = None,
+        algorithm: BaseThrottleAlgorithm | None = None,
+        response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
+    ) -> None:
+        self.max_requests = max_requests
+        self.duration_in_seconds = int(duration_in_seconds)
+        self.cache_key = cache_key or RemoteAddr()
+        self._backend = backend or SyncDjangoCache()  # type: ignore[assignment]
+        self._algorithm = algorithm or SimpleRate()
+        self._response_headers = (
+            [XRateLimit(), RetryAfter()]
+            if response_headers is None
+            else response_headers
+        )
+        self._backend.initialize_algorithm(self._algorithm)
+
     def resolve(
         self,
         throttle_cls: type[SyncThrottle] | type[AsyncThrottle],
@@ -365,7 +387,7 @@ class DynamicThrottle(_BaseThrottle):
             self.max_requests,
             self.duration_in_seconds,
             cache_key=self.cache_key,
-            backend=self._backend,
+            backend=None,
             algorithm=self._algorithm,
             response_headers=self._response_headers,
         )
