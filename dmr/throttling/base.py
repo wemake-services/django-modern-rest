@@ -334,7 +334,7 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
         )
 
 
-class DynamicThrottle(_BaseThrottle):
+class DynamicThrottle(_BaseThrottle[Any]):
     """Throttle that resolves to SyncThrottle or AsyncThrottle.
 
     Automatically resolves based on the endpoint it is applied to.
@@ -356,7 +356,7 @@ class DynamicThrottle(_BaseThrottle):
         self.max_requests = max_requests
         self.duration_in_seconds = int(duration_in_seconds)
         self.cache_key = cache_key or RemoteAddr()
-        self._backend = backend or SyncDjangoCache()  # type: ignore[assignment]
+        self._backend = backend or SyncDjangoCache()  
         self._algorithm = algorithm or SimpleRate()
         self._response_headers = (
             [XRateLimit(), RetryAfter()]
