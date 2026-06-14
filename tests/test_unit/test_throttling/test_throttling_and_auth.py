@@ -277,7 +277,7 @@ class _DynamicSyncController(Controller[PydanticSerializer]):
         return 'inside'
 
 
-def test_dynamic_throttle_resolves_to_sync_with_auth(
+def test_dynamic_to_sync_with_auth(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:
@@ -286,8 +286,8 @@ def test_dynamic_throttle_resolves_to_sync_with_auth(
     assert metadata.throttling_before_auth
     assert metadata.throttling_after_auth
     assert all(
-        isinstance(t, SyncThrottle)
-        for t in metadata.throttling  # type: ignore
+        isinstance(throttle, SyncThrottle)
+        for throttle in metadata.throttling  # type: ignore
     )
     assert (
         metadata.throttling
@@ -365,7 +365,7 @@ class _DynamicAsyncController(Controller[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-async def test_dynamic_throttle_resolves_to_async_with_auth(
+async def test_dynamic_to_async_with_auth(
     dmr_async_rf: DMRAsyncRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:
@@ -373,7 +373,9 @@ async def test_dynamic_throttle_resolves_to_async_with_auth(
     metadata = _DynamicAsyncController.api_endpoints['GET'].metadata
     assert metadata.throttling_before_auth
     assert metadata.throttling_after_auth
-    assert all(isinstance(t, AsyncThrottle) for t in metadata.throttling)
+    assert all(
+        isinstance(throttle, AsyncThrottle) for throttle in metadata.throttling
+    )
     assert (
         metadata.throttling
         == metadata.throttling_before_auth + metadata.throttling_after_auth

@@ -614,7 +614,8 @@ def test_dynamic_throttle_multiple_sources(
     # controller(2) + global dynamic resolved to SyncThrottle(1) = 3:
     assert len(metadata.throttling_before_auth) == 3
     assert all(
-        isinstance(t, SyncThrottle) for t in metadata.throttling_before_auth
+        isinstance(throttle, SyncThrottle)
+        for throttle in metadata.throttling_before_auth
     )
     assert metadata.throttling_after_auth is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
@@ -678,7 +679,8 @@ async def test_dynamic_throttle_multiple_sources_async(
     # controller(2) + global dynamic resolved to AsyncThrottle(1) = 3:
     assert len(metadata.throttling_before_auth) == 3
     assert all(
-        isinstance(t, AsyncThrottle) for t in metadata.throttling_before_auth
+        isinstance(throttle, AsyncThrottle)
+        for throttle in metadata.throttling_before_auth
     )
     assert metadata.throttling_after_auth is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses

@@ -114,7 +114,8 @@ class SettingsValidator:
         # Throttling:
         if not all(
             isinstance(
-                throttling, (SyncThrottle, AsyncThrottle, DynamicThrottle),
+                throttling,
+                (SyncThrottle, AsyncThrottle, DynamicThrottle),
             )
             for throttling in settings.get('throttling', [])
         ):

@@ -622,7 +622,7 @@ class _AsyncDynamicMultipleThrottlesController(Controller[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-async def test_dynamic_throttle_multiple_throttles_async(
+async def test_multi_dyn_throttles_async(
     dmr_async_rf: DMRAsyncRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:

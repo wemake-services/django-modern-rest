@@ -539,12 +539,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         # to each request, so it would not be possible to mutate it by accident.
         # We resolve `DynamicThrottle` to get the actual throttle instance.
         throttling = [
-            t.resolve(base_type) if isinstance(t, DynamicThrottle) else t
-            for t in [
+            throttle.resolve(base_type)
+            if isinstance(throttle, DynamicThrottle)
+            else throttle
+            for throttle in (
                 *payload_throttling,
                 *(self.controller_cls.throttling or ()),
                 *settings_throttling,
-            ]
+            )
         ]
         if not all(
             isinstance(throttling_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]

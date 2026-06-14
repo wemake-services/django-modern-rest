@@ -149,7 +149,7 @@ class _DynamicAsyncController(Controller[PydanticSerializer]):
 
 
 @pytest.mark.asyncio
-async def test_dynamic_throttle_before_negotiation_async(
+async def test_dyn_throttle_pre_negotiate_async(
     dmr_async_rf: DMRAsyncRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:

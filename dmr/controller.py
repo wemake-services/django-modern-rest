@@ -17,6 +17,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import Sentinel, deprecated, override
 
+from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
@@ -32,7 +33,6 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
 from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -160,9 +160,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     validate_negotiation: ClassVar[bool | None] = None
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     throttling: ClassVar[
-        Sequence[SyncThrottle]
-        | Sequence[AsyncThrottle]
-        | Sequence[DynamicThrottle]
+        Sequence[dmr_throttling.SyncThrottle]
+        | Sequence[dmr_throttling.AsyncThrottle]
+        | Sequence[dmr_throttling.DynamicThrottle]
         | None
     ] = ()
     throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
