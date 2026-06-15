@@ -203,7 +203,7 @@ Supported platforms
 Wheels are available for:
 
 - Linux (via both the manylinux and musllinux standards)
-- macOS (both x86_64 and aarch64)
+- macOS (arm64 only)
 - 64-bit versions of Windows (AMD only, ARM is not supported at the moment)
 
 We support wheels for all supported Python versions.

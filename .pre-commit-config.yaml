@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 943377262562a12b57292fc98fabd7dbf81451fe  # frozen: 0.37.2
+    rev: 8ef330cbb7204d388aa7a620f9549bcea8009663  # frozen: 0.37.3
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -30,7 +30,7 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 22f0422809455ec89ffdcf5a00170ba816e42ddb  # frozen: v0.15.16
+    rev: 3b3f7c3f57fe9925356faf5fe6230835138be230  # frozen: v0.15.17
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]

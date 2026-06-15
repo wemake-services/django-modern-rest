@@ -20,9 +20,13 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Breaking changes
+
+- Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
+
 ### Bugfixes
 
-- Fixes `LeakyBucket` throttling algorithm corner cases, #1044
+- Fixed `LeakyBucket` throttling algorithm corner cases, #1044
 - Fixed OpenAPI schema generation for enum values used
   in path, query, header, and cookie parameters, #1059
 
