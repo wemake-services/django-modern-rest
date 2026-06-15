@@ -200,6 +200,7 @@ build-verbosity = 1
 skip = [
   "cp313t-*",
   "*-win32",
+  "*-macosx_x86_64",  # cryptography does not support it anymore
 ]
 
 before-test = [
