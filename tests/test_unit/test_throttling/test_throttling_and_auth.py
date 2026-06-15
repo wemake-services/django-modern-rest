@@ -374,7 +374,8 @@ async def test_dynamic_to_async_with_auth(
     assert metadata.throttling_before_auth
     assert metadata.throttling_after_auth
     assert all(
-        isinstance(throttle, AsyncThrottle) for throttle in (metadata.throttling or ())
+        isinstance(throttle, AsyncThrottle)
+        for throttle in (metadata.throttling or ())
     )
     assert (
         metadata.throttling
