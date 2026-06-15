@@ -38,14 +38,14 @@ from dmr.internal.django import convert_multi_value_dict
             {'name': 'b', 'empty': []},
         ),
         (
-            MultiValueDict({'name': ['a', 'b'], 'other': [], 'single': [1]}),  # type: ignore[arg-type]
+            MultiValueDict({'name': ['a', 'b'], 'other': [], 'single': [1]}),  # type: ignore[list-item, arg-type]
             frozenset(('name',)),
             frozenset(),
             frozenset(),
             {'name': ['a', 'b'], 'other': [], 'single': 1},
         ),
         (
-            MultiValueDict({'name': ['a', 'b'], 'other': [], 'single': [1]}),  # type: ignore[arg-type]
+            MultiValueDict({'name': ['a', 'b'], 'other': [], 'single': [1]}),  # type: ignore[arg-type, list-item]
             frozenset(('name', 'other', 'single')),
             frozenset(),
             frozenset(),

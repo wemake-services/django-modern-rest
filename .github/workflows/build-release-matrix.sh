@@ -3,7 +3,7 @@
 set -euo pipefail
 
 export CIBW_ARCHS_LINUX='x86_64'
-export CIBW_ARCHS_MACOS='x86_64 arm64'
+export CIBW_ARCHS_MACOS='arm64'
 export CIBW_ARCHS_WINDOWS='AMD64'
 
 {

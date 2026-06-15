@@ -200,6 +200,7 @@ build-verbosity = 1
 skip = [
   "cp313t-*",
   "*-win32",
+  "*-macosx_x86_64",  # cryptography does not support it anymore
 ]
 
 before-test = [
@@ -304,6 +305,7 @@ ignore = [
   "TRY003",  # long exception messages from `tryceratops`
   "RUF029",  # we decide `async` functions based on API, not `await` usage
   "RUF067",  # wps handles `__init__.py` logic better
+  "RUF076",  # `autouse=True` is a valid pattern
 ]
 external = [ "WPS" ]
 
