@@ -22,7 +22,7 @@ of requirements for an API to count as public.
 
 ### Breaking changes
 
-- Droped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
+- Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
 
 ### Bugfixes
 
