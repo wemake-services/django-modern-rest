@@ -24,7 +24,7 @@ if TYPE_CHECKING:
         Server,
     )
     from dmr.security.base import AsyncAuth, SyncAuth
-    from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
@@ -51,12 +51,7 @@ class _BasePayload:
     renderers: Sequence[Renderer] | None = None
     validate_negotiation: bool | None = None
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
-    throttling: (
-        Sequence['SyncThrottle']
-        | Sequence['AsyncThrottle']
-        | Sequence['DynamicThrottle']
-        | None
-    ) = ()
+    throttling: Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | None = ()
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY
 
 

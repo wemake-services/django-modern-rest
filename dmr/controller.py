@@ -162,7 +162,6 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     throttling: ClassVar[
         Sequence[dmr_throttling.SyncThrottle]
         | Sequence[dmr_throttling.AsyncThrottle]
-        | Sequence[dmr_throttling.DynamicThrottle]
         | None
     ] = ()
     throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY

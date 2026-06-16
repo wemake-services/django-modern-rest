@@ -49,6 +49,30 @@ We can define throttling on three different levels:
 
       >>> DMR_SETTINGS = {Settings.throttling: [SyncThrottle(5, Rate.minute)]}
 
+When your project mixes sync and async endpoints,
+use :class:`~dmr.throttling.SyncOrAsyncThrottle` in settings:
+
+.. code-block:: python
+   :caption: settings.py
+
+   >>> from dmr.settings import Settings
+   >>> from dmr.throttling import AsyncThrottle, Rate, SyncOrAsyncThrottle, SyncThrottle
+
+   >>> DMR_SETTINGS = {
+   ...     Settings.throttling: [
+   ...         SyncOrAsyncThrottle(
+   ...             SyncThrottle(5, Rate.minute),
+   ...             AsyncThrottle(5, Rate.minute),
+   ...         ),
+   ...     ],
+   ... }
+
+.. note::
+
+   :class:`~dmr.throttling.SyncOrAsyncThrottle` is only allowed
+   in ``DMR_SETTINGS``. Using it on a controller or endpoint
+   raises :exc:`~dmr.exceptions.EndpointMetadataError`.
+
 Providing several throttling instances means that all of them must succeed.
 When multiple throttling rules are defined
 on different levels, their rules are joined.
@@ -519,6 +543,9 @@ Base
 .. autoclass:: dmr.throttling.AsyncThrottle
   :members:
   :inherited-members:
+
+.. autoclass:: dmr.throttling.SyncOrAsyncThrottle
+  :members:
 
 .. autoclass:: dmr.throttling.Rate
   :members:

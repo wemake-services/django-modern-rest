@@ -28,7 +28,7 @@ from dmr.response import infer_status_code
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
-from dmr.throttling import AsyncThrottle, DynamicThrottle, SyncThrottle
+from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 from dmr.throttling.backends.django_cache import (
     AsyncDjangoCache,
     SyncDjangoCache,
@@ -522,11 +522,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
-        settings_throttling: Sequence[SyncThrottle | AsyncThrottle] = (
-            resolve_setting(
-                Settings.throttling,
-            )
-        )
+        settings_throttling: Sequence[
+            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle
+        ] = resolve_setting(Settings.throttling)
 
         # Validate that throttling matches the sync / async endpoints:
         base_type = (
@@ -535,18 +533,32 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             else SyncThrottle
         )
 
+        # We need to check that there are no `SyncOrAsyncThrottle`
+        # instances in payload and controller throttling,
+        # because they are only allowed in settings.
+        for throttle in (
+            *payload_throttling,
+            *(self.controller_cls.throttling or ()),
+        ):
+            if isinstance(throttle, SyncOrAsyncThrottle):
+                raise EndpointMetadataError(
+                    'SyncOrAsyncThrottle can only be used in settings, '
+                    'not at controller or endpoint level '
+                    f'for {self.endpoint_name=}',
+                )
+
         # We use tuple and not a list, because we expose `__dmr_throttling__`
         # to each request, so it would not be possible to mutate it by accident.
-        # We resolve `DynamicThrottle` to get the actual throttle instance.
+        # We resolve `SyncOrAsyncThrottle` from settings to the actual instance.
         throttling = [
-            throttle.resolve(base_type)
-            if isinstance(throttle, DynamicThrottle)
-            else throttle
-            for throttle in (
-                *payload_throttling,
-                *(self.controller_cls.throttling or ()),
-                *settings_throttling,
-            )
+            *payload_throttling,
+            *(self.controller_cls.throttling or ()),
+            *(
+                throttle.resolve(base_type)
+                if isinstance(throttle, SyncOrAsyncThrottle)
+                else throttle
+                for throttle in settings_throttling
+            ),
         ]
         if not all(
             isinstance(throttling_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]

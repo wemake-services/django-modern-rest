@@ -334,64 +334,34 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
         )
 
 
-class DynamicThrottle(_BaseThrottle[Any]):
-    """Throttle that resolves to SyncThrottle or AsyncThrottle.
+class SyncOrAsyncThrottle:
+    """Throttle that selects between a sync and async instance.
 
-    Automatically resolves based on the endpoint it is applied to.
-    Use this in global settings to avoid manually matching
-    sync and async endpoints with their respective throttle types.
+    Use in global settings to apply a single throttling rule to both
+    sync and async endpoints. Not allowed on controller or endpoint level.
+
+    .. versionadded:: 0.10.0
     """
+
+    __slots__ = ('_async', '_sync')
 
     def __init__(
         self,
-        max_requests: int,
-        duration_in_seconds: Rate | int,
-        *,
-        cache_key: BaseThrottleCacheKey | None = None,
-        backend: _AnyBackend | None = None,
-        algorithm: BaseThrottleAlgorithm | None = None,
-        response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
+        sync: SyncThrottle,
+        async_: AsyncThrottle,
     ) -> None:
-        """Initialize the dynamic throttle."""
-        self.max_requests = max_requests
-        self.duration_in_seconds = int(duration_in_seconds)
-        self.cache_key = cache_key or RemoteAddr()
-        self._backend = backend or SyncDjangoCache()
-        self._algorithm = algorithm or SimpleRate()
-        self._response_headers = (
-            [XRateLimit(), RetryAfter()]
-            if response_headers is None
-            else response_headers
-        )
-        self._backend.initialize_algorithm(self._algorithm)
+        """Initialize with pre-built sync and async throttle instances."""
+        self._sync = sync
+        self._async = async_
 
     def resolve(
         self,
         throttle_cls: type[SyncThrottle] | type[AsyncThrottle],
     ) -> SyncThrottle | AsyncThrottle:
-        """
-        Resolve to the correct throttle type for this endpoint.
-
-        Parameters:
-            throttle_cls: The concrete throttle class to instantiate.
-                Pass ``SyncThrottle`` for sync endpoints and
-                ``AsyncThrottle`` for async endpoints.
-                This is derived from ``base_type`` in ``_build_throttling``.
-
-        Returns:
-            A concrete :class:`SyncThrottle` or :class:`AsyncThrottle`
-            instance with the same configuration as this
-            :class:`DynamicThrottle`.
-
-        """
-        return throttle_cls(
-            self.max_requests,
-            self.duration_in_seconds,
-            cache_key=self.cache_key,
-            backend=None,
-            algorithm=self._algorithm,
-            response_headers=self._response_headers,
-        )
+        """Return the throttle instance matching *throttle_cls*."""
+        if issubclass(throttle_cls, SyncThrottle):
+            return self._sync
+        return self._async
 
 
 @dataclasses.dataclass(slots=True, frozen=True)

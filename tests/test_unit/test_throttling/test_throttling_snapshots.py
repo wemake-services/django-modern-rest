@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 from typing import Annotated
 
+from django.conf import LazySettings
 from django.http import HttpResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -12,7 +13,13 @@ from dmr.metadata import ResponseSpecMetadata
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.throttling import DynamicThrottle, Rate, SyncThrottle
+from dmr.settings import Settings
+from dmr.throttling import (
+    AsyncThrottle,
+    Rate,
+    SyncOrAsyncThrottle,
+    SyncThrottle,
+)
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
@@ -118,101 +125,30 @@ def test_throttled_schema_with_errors(snapshot: SnapshotAssertion) -> None:
 
 
 class _DynamicDefaultController(Controller[PydanticSerializer]):
-    throttling = [
-        DynamicThrottle(1, Rate.second),
-    ]
-
     def get(self) -> str:
         raise NotImplementedError
 
 
-class _DynamicAllHeadersController(Controller[PydanticSerializer]):
-    throttling = [
-        DynamicThrottle(
-            1,
-            Rate.second,
-            response_headers=(XRateLimit(), RateLimitIETFDraft(), RetryAfter()),
-        ),
-    ]
-
-    def get(self) -> str:
-        raise NotImplementedError
-
-
-class _DynamicNoHeadersController(Controller[PydanticSerializer]):
-    throttling = [
-        DynamicThrottle(
-            1,
-            Rate.second,
-            response_headers=(),
-        ),
-    ]
-
-    def get(self) -> str:
-        raise NotImplementedError
-
-
-def test_dynamic_throttle_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is correct for controller with DynamicThrottle."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/v1/',
-                    [
-                        path('/default', _DynamicDefaultController.as_view()),
-                        path('/all', _DynamicAllHeadersController.as_view()),
-                        path('/no', _DynamicNoHeadersController.as_view()),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-class _DynamicAllReportsController(Controller[PydanticSerializer]):
-    error_model = Annotated[
-        ErrorModel,
-        ResponseSpecMetadata(
-            headers=RateLimitIETFDraft().provide_headers_specs(),
-        ),
-    ]
-
-    @validate(
-        ResponseSpec(
-            str,
-            status_code=HTTPStatus.OK,
-            headers=RateLimitIETFDraft().provide_headers_specs(),
-        ),
-        throttling=[
-            DynamicThrottle(
-                1,
-                Rate.second,
-                response_headers=[RateLimitIETFDraft()],
-                cache_key=RemoteAddr(name='per-second'),
+def test_throttled_schema_with_sync_or_async(
+    snapshot: SnapshotAssertion,
+    settings: LazySettings,
+) -> None:
+    """Ensure schema is correct when SyncOrAsyncThrottle is used in settings."""
+    settings.DMR_SETTINGS = {
+        Settings.throttling: [
+            SyncOrAsyncThrottle(
+                SyncThrottle(1, Rate.second),
+                AsyncThrottle(1, Rate.second),
             ),
         ],
-    )
-    def get(self) -> HttpResponse:
-        raise NotImplementedError
-
-
-def test_dynamic_throttle_schema_with_errors(
-    snapshot: SnapshotAssertion,
-) -> None:
-    """Ensure schema is correct for DynamicThrottle with custom errors."""
+    }
     assert (
         json.dumps(
             build_schema(
                 Router(
                     'api/v1/',
                     [
-                        path(
-                            '/with-errors',
-                            _DynamicAllReportsController.as_view(),
-                        ),
+                        path('/dynamic', _DynamicDefaultController.as_view()),
                     ],
                 ),
             ).convert(),
