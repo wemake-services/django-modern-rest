@@ -129,12 +129,14 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(  # noqa: WPS118
         class _SyncEndpointController(
             Controller[PydanticSerializer],
         ):
-            @modify(throttling=[  # type: ignore[arg-type]
-                SyncOrAsyncThrottle(
-                    SyncThrottle(1, Rate.second),
-                    AsyncThrottle(1, Rate.second),
-                ),
-            ])
+            @modify(
+                throttling=[  # type: ignore[arg-type]
+                    SyncOrAsyncThrottle(
+                        SyncThrottle(1, Rate.second),
+                        AsyncThrottle(1, Rate.second),
+                    ),
+                ]
+            )
             def get(self) -> str:
                 raise NotImplementedError
 
