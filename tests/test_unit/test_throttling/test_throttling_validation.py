@@ -134,7 +134,7 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(
                     SyncOrAsyncThrottle(  # type: ignore[arg-type]
                         SyncThrottle(1, Rate.second),
                         AsyncThrottle(1, Rate.second),
-                    )
+                    ),
                 ],
             )
             def get(self) -> str:
