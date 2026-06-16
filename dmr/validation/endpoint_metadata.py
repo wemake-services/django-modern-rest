@@ -512,7 +512,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return None
         return auth
 
-    def _build_throttling(  # noqa: WPS231
+    def _build_throttling(  # noqa: WPS210, WPS231
         self,
     ) -> tuple[
         tuple[SyncThrottle | AsyncThrottle, ...] | None,
@@ -554,10 +554,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *payload_throttling,
             *(self.controller_cls.throttling or ()),
             *(
-                throttle.resolve(base_type)
-                if isinstance(throttle, SyncOrAsyncThrottle)
-                else throttle
-                for throttle in settings_throttling
+                setting_throttle.resolve(base_type)
+                if isinstance(setting_throttle, SyncOrAsyncThrottle)
+                else setting_throttle
+                for setting_throttle in settings_throttling
             ),
         ]
         if not all(

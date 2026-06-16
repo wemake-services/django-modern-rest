@@ -47,7 +47,7 @@ def test_throttle_async_mix(
 @pytest.mark.filterwarnings(
     'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
 )
-def test_sync_or_async_throttle_resolves_to_sync_via_settings(
+def test_sync_or_async_throttle_resolves_to_sync_via_settings(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
     settings: LazySettings,
 ) -> None:
@@ -75,7 +75,7 @@ def test_sync_or_async_throttle_resolves_to_sync_via_settings(
 @pytest.mark.filterwarnings(
     'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
 )
-def test_sync_or_async_throttle_resolves_to_async_via_settings(
+def test_sync_or_async_throttle_resolves_to_async_via_settings(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
     settings: LazySettings,
 ) -> None:
@@ -100,7 +100,7 @@ def test_sync_or_async_throttle_resolves_to_async_via_settings(
     assert isinstance(metadata.throttling_before_auth[0], AsyncThrottle)
 
 
-def test_sync_or_async_throttle_not_allowed_at_controller_level(
+def test_sync_or_async_throttle_not_allowed_at_controller_level(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures SyncOrAsyncThrottle raises an error at controller level."""
@@ -120,7 +120,7 @@ def test_sync_or_async_throttle_not_allowed_at_controller_level(
                 raise NotImplementedError
 
 
-def test_sync_or_async_throttle_not_allowed_at_endpoint_level(
+def test_sync_or_async_throttle_not_allowed_at_endpoint_level(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures SyncOrAsyncThrottle raises an error at endpoint level."""
@@ -134,7 +134,7 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(
                     SyncOrAsyncThrottle(  # type: ignore[arg-type]
                         SyncThrottle(1, Rate.second),
                         AsyncThrottle(1, Rate.second),
-                    )
+                    ),
                 ],
             )
             def get(self) -> str:
@@ -144,7 +144,7 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(
 @pytest.mark.filterwarnings(
     'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
 )
-def test_endpoint_metadata_never_has_sync_or_async_throttle_instance(
+def test_endpoint_metadata_never_has_sync_or_async_throttle_instance(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
     settings: LazySettings,
 ) -> None:
