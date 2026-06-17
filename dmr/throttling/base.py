@@ -349,6 +349,7 @@ class SyncOrAsyncThrottle:
         self,
         sync: SyncThrottle,
         async_: AsyncThrottle,
+        /,
     ) -> None:
         """Initialize with pre-built sync and async throttle instances."""
         self._sync = sync

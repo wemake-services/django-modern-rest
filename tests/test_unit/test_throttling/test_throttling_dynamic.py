@@ -35,6 +35,10 @@ else:  # pragma: no cover
 
 
 _ATTEMPTS: Final = 5
+_THROTTLE: Final = SyncOrAsyncThrottle(
+    SyncThrottle(_ATTEMPTS, Rate.second),
+    AsyncThrottle(_ATTEMPTS, Rate.second),
+)
 
 
 @pytest.mark.parametrize('serializer', serializers)
@@ -49,14 +53,7 @@ def test_sync_or_async_throttle_settings_sync(
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensures SyncOrAsyncThrottle in settings resolves and rate-limits sync."""
-    settings.DMR_SETTINGS = {
-        Settings.throttling: [
-            SyncOrAsyncThrottle(
-                SyncThrottle(_ATTEMPTS, Rate.second),
-                AsyncThrottle(_ATTEMPTS, Rate.second),
-            ),
-        ],
-    }
+    settings.DMR_SETTINGS = {Settings.throttling: [_THROTTLE]}
 
     class _SyncController(
         Controller[serializer],  # type: ignore[valid-type]
@@ -122,14 +119,7 @@ async def test_sync_or_async_throttle_settings_async(
 
     Uses async controller.
     """
-    settings.DMR_SETTINGS = {
-        Settings.throttling: [
-            SyncOrAsyncThrottle(
-                SyncThrottle(_ATTEMPTS, Rate.second),
-                AsyncThrottle(_ATTEMPTS, Rate.second),
-            ),
-        ],
-    }
+    settings.DMR_SETTINGS = {Settings.throttling: [_THROTTLE]}
 
     class _AsyncController(
         Controller[serializer],  # type: ignore[valid-type]
