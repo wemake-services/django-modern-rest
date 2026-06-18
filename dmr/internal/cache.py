@@ -11,6 +11,10 @@ def clear_settings_cache() -> None:
         'dmr.plugins.pydantic.serializer': [
             '_get_cached_type_adapter',
         ],
+        'dmr.plugins.msgspec.msgpack': [
+            '_get_serializer',
+            '_get_deserializer',
+        ],
         'dmr.plugins.msgspec.json': [
             '_get_serializer',
             '_get_deserializer',

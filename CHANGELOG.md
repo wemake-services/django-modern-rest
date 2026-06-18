@@ -29,6 +29,8 @@ of requirements for an API to count as public.
 - Fixed `LeakyBucket` throttling algorithm corner cases, #1044
 - Fixed OpenAPI schema generation for enum values used
   in path, query, header, and cookie parameters, #1059
+- Fixed that `dmr.plugins.msgspec.msgpack` cache was not cleared
+  on `clear_settings_cache` calls
 
 
 ## Version 0.10.0 (2026-05-26)
