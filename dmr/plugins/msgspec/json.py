@@ -67,9 +67,8 @@ class MsgspecJsonRenderer(Renderer):
 
     def __init__(self, content_type: str = 'application/json') -> None:
         """Initialize the default content type."""
-        self.content_type = stringify(
-            content_type,
-        )  # might be a string subclass
+        # Might be a string subclass:
+        self.content_type = stringify(content_type)
 
     @override
     def render(
