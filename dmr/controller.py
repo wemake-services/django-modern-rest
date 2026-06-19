@@ -537,7 +537,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     @classproperty
     @override
-    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override, missing-override-decorator]
+    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
         # This is a part of the `django.View` API, so it must be there.
         return cls.is_async is True

@@ -294,6 +294,7 @@ ignore = [
   "D404",
   "D405",
   "D418",  # We should be able to add docstrings to `@overload` decorators
+  "D421",
   "ASYNC119",  # `contextlib.aclosing` is not detected
   "ISC001",  # implicit string concat conflicts with `ruff format`
   "ISC003",  # prefer explicit string concat over implicit concat
