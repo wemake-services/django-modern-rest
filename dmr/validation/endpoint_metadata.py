@@ -540,7 +540,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *payload_throttling,
             *(self.controller_cls.throttling or ()),
         ):
-            if isinstance(throttle, SyncOrAsyncThrottle):
+            if isinstance(throttle, SyncOrAsyncThrottle):  # pyright: ignore[reportUnnecessaryIsInstance]
                 raise EndpointMetadataError(
                     'SyncOrAsyncThrottle can only be used in settings, '
                     'not at controller or endpoint level '
