@@ -334,6 +334,37 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
         )
 
 
+class SyncOrAsyncThrottle:
+    """Throttle that selects between a sync and async instance.
+
+    Use in global settings to apply a single throttling rule to both
+    sync and async endpoints. Not allowed on controller or endpoint level.
+
+    .. versionadded:: 0.10.0
+    """
+
+    __slots__ = ('_async', '_sync')
+
+    def __init__(
+        self,
+        sync: SyncThrottle,
+        async_: AsyncThrottle,
+        /,
+    ) -> None:
+        """Initialize with pre-built sync and async throttle instances."""
+        self._sync = sync
+        self._async = async_
+
+    def resolve(
+        self,
+        throttle_cls: type[SyncThrottle] | type[AsyncThrottle],
+    ) -> SyncThrottle | AsyncThrottle:
+        """Return the throttle instance matching *throttle_cls*."""
+        if issubclass(throttle_cls, SyncThrottle):
+            return self._sync
+        return self._async
+
+
 @dataclasses.dataclass(slots=True, frozen=True)
 class ThrottlingReport:
     """

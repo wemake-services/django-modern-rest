@@ -16,7 +16,12 @@ from dmr.metadata import ResponseSpecMetadata
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import Renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
+from dmr.throttling import (
+    AsyncThrottle,
+    Rate,
+    SyncThrottle,
+    ThrottlingReport,
+)
 from dmr.throttling.algorithms import LeakyBucket
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit

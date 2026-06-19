@@ -4,7 +4,7 @@ import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -61,6 +61,10 @@ if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.routing import Router
     from dmr.validation.response import ValidatedModification
+
+_ThrottlingDef: TypeAlias = (
+    Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
+)
 
 
 class Endpoint:  # noqa: WPS214
@@ -607,7 +611,7 @@ def validate(  # noqa: WPS234
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -638,7 +642,7 @@ def validate(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -669,7 +673,7 @@ def validate(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -699,7 +703,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -860,7 +864,7 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -891,7 +895,7 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -923,7 +927,7 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -954,7 +958,7 @@ def modify(  # noqa: WPS211
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,

@@ -15,7 +15,7 @@ from dmr.settings import (
     SettingsDict,
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
-from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 from dmr.types import EMPTY
 
 
@@ -78,7 +78,7 @@ class SettingsValidator:
             )
         except self.serializer.validation_error as exc:
             raise EndpointMetadataError('Settings validation failed') from exc
-        return cast(_SettingsModel, settings)
+        return cast('_SettingsModel', settings)
 
     def _validate_types(  # noqa: C901, WPS231, WPS238
         self,
@@ -113,13 +113,17 @@ class SettingsValidator:
 
         # Throttling:
         if not all(
-            isinstance(throttling, (SyncThrottle, AsyncThrottle))
+            isinstance(
+                throttling,
+                (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
+            )
             for throttling in settings.get('throttling', [])
         ):
             raise EndpointMetadataError(
                 (
-                    'Settings.throttling must all be SyncThrottle '
-                    'or AsyncThrottle instances'
+                    'Settings.throttling must all be '
+                    'SyncThrottle, AsyncThrottle, or '
+                    'SyncOrAsyncThrottle instances'
                 ),
             )
 
