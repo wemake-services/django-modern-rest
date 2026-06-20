@@ -109,9 +109,7 @@ def test_file_renderer_render_error(
 
     with pytest.raises(
         NotImplementedError,
-        match=(
-            'FileRenderer cannot serialize regular response bodies'
-        ),
+        match=('FileRenderer cannot serialize regular response bodies'),
     ):
         _RegularBodyWithFileRendererController.as_view()(request)
 
