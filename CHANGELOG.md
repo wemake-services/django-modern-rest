@@ -24,6 +24,11 @@ of requirements for an API to count as public.
 
 - Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
 
+### Features
+
+- Added `SyncOrAsyncThrottle` class to apply a single throttle rule
+  to both sync and async endpoints via global settings, #1075
+
 ### Bugfixes
 
 - Fixed `LeakyBucket` throttling algorithm corner cases, #1044
