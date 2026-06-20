@@ -53,6 +53,14 @@ class _InlineFileSyncController(Controller[PydanticSerializer]):
         )
 
 
+@final
+class _RegularBodyWithFileRendererController(Controller[PydanticSerializer]):
+    renderers = (FileRenderer(),)
+
+    def get(self) -> dict[str, str]:
+        return {'detail': 'not a file'}
+
+
 @pytest.mark.django_db
 def test_return_file_sync(dmr_rf: DMRRequestFactory) -> None:
     """Ensures we can return files from a sync endpoint."""
@@ -91,6 +99,21 @@ def test_return_file_without_attachment_sync(
         }
         assert isinstance(response.streaming_content, Iterator)
         assert response.getvalue() == b'Hello'
+
+
+def test_file_renderer_render_error(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures file renderer errors explain how to return regular data."""
+    request = dmr_rf.get('/whatever/')
+
+    with pytest.raises(
+        NotImplementedError,
+        match=(
+            'FileRenderer cannot serialize regular response bodies'
+        ),
+    ):
+        _RegularBodyWithFileRendererController.as_view()(request)
 
 
 def test_file_attachment_headers() -> None:
