@@ -17,16 +17,9 @@ def test_user_create_models_example(
     """Ensure that model route works."""
     request_data = {
         'email': faker.email(),
-        'role': {'name': faker.name()},
-        'tags': [{'name': faker.name()}, {'name': faker.name()}],
+        'role': {'name': faker.unique.name()},
+        'tags': [{'name': faker.unique.name()}, {'name': faker.unique.name()}],
     }
-
-    seen: set[str] = set()
-    request_data['tags'] = [
-        tag
-        for tag in request_data['tags']
-        if tag['name'] not in seen and not seen.add(tag['name'])
-    ]
 
     response = dmr_client.post(
         reverse('api:model_fk:user'),
