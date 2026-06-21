@@ -47,7 +47,9 @@ class MsgspecJsonParser(Parser):
         """
         try:
             return _get_deserializer(
-                model,
+                # Passing `model` here won't work, because it will raise
+                # errors on some valid cases that we would handle later.
+                Any,
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
