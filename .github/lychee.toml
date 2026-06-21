@@ -1,5 +1,5 @@
 require_https = true
-include_fragments = true
+include_fragments = "full"
 cache = true
 remap = [
   # TODO: remove when this is fixed https://github.com/lycheeverse/lychee/issues/1729
