@@ -96,7 +96,7 @@ def test_export_schema_yaml(
     ('schema_path', 'expected_exception'),
     [
         ('does.not.exist:schema', ImportError),
-        ('server.urls:urlpatterns', AttributeError),  # type: ignore[list-item]
+        ('server.urls:urlpatterns', AttributeError),
     ],
 )
 def test_export_schema_invalid_input(

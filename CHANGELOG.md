@@ -20,6 +20,10 @@ of requirements for an API to count as public.
 
 ## WIP
 
+In this release we significantly improved the DX of defining common
+auth and throttling types in the settings that could be used
+for both sync and async controllers at the same time.
+
 ### Breaking changes
 
 - Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
