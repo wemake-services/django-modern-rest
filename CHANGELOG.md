@@ -30,7 +30,7 @@ for both sync and async controllers at the same time.
 
 ### Features
 
-- Improved `MsgspecJsonParser` and `PydanticFastSerializer` performance 
+- Improved `MsgspecJsonParser` performance
   by providing the actual model type, #1086
 - Added `SyncOrAsyncThrottle` class to apply a single throttle rule
   to both sync and async endpoints via global settings, #1075
