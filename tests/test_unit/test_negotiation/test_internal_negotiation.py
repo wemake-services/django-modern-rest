@@ -9,15 +9,24 @@ from dmr.internal import negotiation
 @final
 class _Django50MediaType:
     def __init__(self, media_type: str) -> None:
+        full_type, media_params = parse_header_parameters(media_type)
+        main_type, sub_type = full_type.split('/', maxsplit=1)
+
         self.raw = media_type
-        full_type, self.params = parse_header_parameters(media_type)
-        self.main_type, _, self.sub_type = full_type.partition('/')
+        self.main_type = main_type
+        self.sub_type = sub_type
+        self._media_params = media_params
+
+    def __getattr__(self, attr_name: str) -> object:
+        if attr_name == 'params':
+            return self._media_params
+        raise AttributeError(attr_name)
 
     def __str__(self) -> str:
         return self.raw
 
 
-def test_media_by_precedence_supports_django50_media_type(
+def test_django50_media_type_support(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Ensures media ordering works with Django 5.0 ``MediaType``."""
