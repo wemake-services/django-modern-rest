@@ -27,7 +27,7 @@ def test_user_create_models_example(
         for tag in request_data['tags']
         if tag['name'] not in seen and not seen.add(tag['name'])
     ]
-    
+
     response = dmr_client.post(
         reverse('api:model_fk:user'),
         data=request_data,
