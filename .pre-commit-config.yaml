@@ -60,8 +60,8 @@ repos:
     hooks:
       - id: lychee
         args: ["--config", ".github/lychee.toml"]
-    additional_dependencies:
-      - lychee
+        additional_dependencies:
+          - lychee
 
   - repo: https://github.com/instrumentl/pre-commit-just
     rev: 9afb27e76938eca22c92ad1d8a6f4b9e1c29bb6b # frozen: v0.1
