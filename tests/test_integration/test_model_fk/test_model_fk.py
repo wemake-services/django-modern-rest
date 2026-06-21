@@ -17,9 +17,10 @@ def test_user_create_models_example(
     """Ensure that model route works."""
     request_data = {
         'email': faker.email(),
-        'role': {'name': faker.name()},
-        'tags': [{'name': faker.name()}, {'name': faker.name()}],
+        'role': {'name': faker.unique.name()},
+        'tags': [{'name': faker.unique.name()}, {'name': faker.unique.name()}],
     }
+
     response = dmr_client.post(
         reverse('api:model_fk:user'),
         data=request_data,
