@@ -320,7 +320,7 @@ class PydanticFastSerializer(PydanticSerializer):
         *parser* parameter is always ignored.
         """
         try:
-            return _get_cached_type_adapter(Any).validate_json(
+            return _get_cached_type_adapter(model).validate_json(
                 buffer,
                 **cls.to_model_kwargs,
             )

@@ -8,8 +8,9 @@ import pydantic
 from faker import Faker
 from pytest_codspeed import BenchmarkFixture
 
-from dmr.plugins.msgspec import MsgspecJsonRenderer
+from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
+from dmr.test import DMRRequestFactory
 
 faker: Final = Faker()
 
@@ -46,6 +47,30 @@ _TO_SERIALIZE: Final = [
 ]
 
 
+def test_pyndatic_with_parser(
+    benchmark: BenchmarkFixture,
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Test regular implementation with a parser."""
+
+    parser = MsgspecJsonParser()
+    body = pydantic.TypeAdapter(list[User]).dump_json(_TO_SERIALIZE)
+    request = dmr_rf.post(
+        '/test',
+        data=body,
+        headers={'Content-Type': 'application/json'},
+    )
+
+    @benchmark
+    def factory() -> None:
+        PydanticSerializer.deserialize(
+            body,
+            parser=parser,
+            request=request,
+            model=list[User],
+        )
+
+
 def test_pyndatic_with_renderer(
     benchmark: BenchmarkFixture,
 ) -> None:
@@ -58,10 +83,34 @@ def test_pyndatic_with_renderer(
         PydanticSerializer.serialize(_TO_SERIALIZE, renderer=renderer)
 
 
-def test_pydantic_fast(
+def test_pyndatic_fast_deserialize(
+    benchmark: BenchmarkFixture,
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Test optimized version with a single deserialize call."""
+
+    parser = MsgspecJsonParser()
+    body = pydantic.TypeAdapter(list[User]).dump_json(_TO_SERIALIZE)
+    request = dmr_rf.post(
+        '/test',
+        data=body,
+        headers={'Content-Type': 'application/json'},
+    )
+
+    @benchmark
+    def factory() -> None:
+        PydanticFastSerializer.deserialize(
+            body,
+            parser=parser,
+            request=request,
+            model=list[User],
+        )
+
+
+def test_pydantic_fast_serialize(
     benchmark: BenchmarkFixture,
 ) -> None:
-    """Test optimized version with a single call."""
+    """Test optimized version with a single serialize call."""
 
     renderer = MsgspecJsonRenderer()
 

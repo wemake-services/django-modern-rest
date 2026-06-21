@@ -20,12 +20,18 @@ of requirements for an API to count as public.
 
 ## WIP
 
+In this release we significantly improved the DX of defining common
+auth and throttling types in the settings that could be used
+for both sync and async controllers at the same time.
+
 ### Breaking changes
 
 - Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
 
 ### Features
 
+- Improved `MsgspecJsonParser` and `PydanticFastSerializer` performance 
+  by providing the actual model type, #1086
 - Added `SyncOrAsyncThrottle` class to apply a single throttle rule
   to both sync and async endpoints via global settings, #1075
 
