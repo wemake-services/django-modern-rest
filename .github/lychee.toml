@@ -10,4 +10,18 @@ exclude = [
   '^https://toml.io/.*',
   # TODO: remove when this is fixed https://github.com/pradyunsg/furo/issues/907
   '^http://github\.com/cferdinandi/gumshoe$',
+  "^http://localhost",
+  "^https://localhost",
+  "^mailto:",
 ]
+
+exclude_path = ["CHANGELOG.md"]
+
+accept = [200, 403, 429]
+
+max_retries = 3
+retry_wait_time = 2
+timeout = 20
+insecure = false
+verbose = true
+scheme = ["https"]
