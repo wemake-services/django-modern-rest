@@ -32,7 +32,7 @@ def media_specificity(media: MediaType) -> float:  # pragma: no cover
     try:
         return media.specificity
     except AttributeError:
-        if media.main_type == '*':
+        if media.main_type == '*':  # noqa: WPS226
             return 0
         if media.sub_type == '*':
             return 1
@@ -53,7 +53,7 @@ def media_range_params(
         return range_params
 
 
-def media_match(  # pragma: no cover  # noqa: C901
+def media_match(  # pragma: no cover  # noqa: C901, WPS210
     media: MediaType,
     content_type: str,
 ) -> bool:
@@ -86,9 +86,9 @@ def media_match(  # pragma: no cover  # noqa: C901
     if bool(media_range) == bool(other_range):
         # If both have params or neither have params, they must be
         # identical.
-        result = media_range == other_range
+        result = media_range == other_range  # noqa: WPS110
     else:
         # If self has params and other does not, it's a match.
         # If other has params and self does not, don't match.
-        result = bool(media_range or not other_range)
+        result = bool(media_range or not other_range)  # noqa: WPS110
     return result
