@@ -1,4 +1,4 @@
-from typing import final
+from typing import final, override
 
 import pytest
 from django.utils.http import parse_header_parameters
@@ -21,7 +21,8 @@ class _Django50MediaType:
         if attr_name == 'params':
             return self._media_params
         raise AttributeError(attr_name)
-
+    
+    @override
     def __str__(self) -> str:
         return self.raw
 
