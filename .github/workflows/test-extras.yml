@@ -12,6 +12,7 @@ on:
       - ".github/workflows/test-extras.yml"
       - "pyproject.toml"
       - "uv.lock"
+      - "justfile"
   workflow_dispatch:
 
 concurrency:
