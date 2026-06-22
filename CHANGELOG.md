@@ -35,6 +35,7 @@ for both sync and async controllers at the same time.
 
 ### Bugfixes
 
+- Fixed several compatibility issues on older Django versions, #1096
 - Fixed `LeakyBucket` throttling algorithm corner cases, #1044
 - Fixed OpenAPI schema generation for enum values used
   in path, query, header, and cookie parameters, #1059

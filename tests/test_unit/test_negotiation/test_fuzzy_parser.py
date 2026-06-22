@@ -1,4 +1,4 @@
-from typing import Any, final
+from typing import Any
 
 import pytest
 from django.http import HttpRequest
@@ -10,72 +10,43 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 
 
-class _MainStar(Parser):
+class _RaisingTestParser(Parser):
+    __slots__ = ()
+
+    @override
+    def parse(
+        self,
+        to_deserialize: Raw,
+        deserializer_hook: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+        model: Any,
+    ) -> Any:
+        raise RuntimeError(type(self).__name__)
+
+
+class _MainStar(_RaisingTestParser):
     __slots__ = ()
 
     content_type = '*/whatever'
 
-    @override
-    def parse(
-        self,
-        to_deserialize: Raw,
-        deserializer_hook: DeserializeFunc | None = None,
-        *,
-        request: HttpRequest,
-        model: Any,
-    ) -> Any:
-        raise RuntimeError(type(self).__name__)
 
-
-class _SubStar(Parser):
+class _SubStar(_RaisingTestParser):
     __slots__ = ()
 
     content_type = 'application/*'
 
-    @override
-    def parse(
-        self,
-        to_deserialize: Raw,
-        deserializer_hook: DeserializeFunc | None = None,
-        *,
-        request: HttpRequest,
-        model: Any,
-    ) -> Any:
-        raise RuntimeError(type(self).__name__)
 
-
-class _AllStar(Parser):
+class _AllStar(_RaisingTestParser):
     __slots__ = ()
 
     content_type = '*/*'
 
-    @override
-    def parse(
-        self,
-        to_deserialize: Raw,
-        deserializer_hook: DeserializeFunc | None = None,
-        *,
-        request: HttpRequest,
-        model: Any,
-    ) -> Any:
-        raise RuntimeError(type(self).__name__)
 
-
-class _JsonExact(Parser):
+class _JsonExact(_RaisingTestParser):
     __slots__ = ()
 
     content_type = 'application/json'
-
-    @override
-    def parse(
-        self,
-        to_deserialize: Raw,
-        deserializer_hook: DeserializeFunc | None = None,
-        *,
-        request: HttpRequest,
-        model: Any,
-    ) -> Any:
-        raise RuntimeError(type(self).__name__)
 
 
 @pytest.mark.parametrize(
@@ -107,7 +78,6 @@ def test_correct_parser_selected(
 ) -> None:
     """Ensures we can select correct fuzzy parsers."""
 
-    @final
     class _Controller(
         Controller[PydanticSerializer],
     ):
