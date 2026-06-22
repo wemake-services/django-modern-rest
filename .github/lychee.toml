@@ -1,6 +1,5 @@
 require_https = true
 include_fragments = "full"
-cache = true
 
 accept = [200, 403, 429]
 
