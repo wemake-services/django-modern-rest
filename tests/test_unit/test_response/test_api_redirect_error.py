@@ -2,9 +2,9 @@ from http import HTTPStatus
 
 import pytest
 from django.core.exceptions import DisallowedRedirect
-from django.utils.http import MAX_URL_REDIRECT_LENGTH
 
 from dmr import RedirectTo
+from dmr.response import MAX_URL_REDIRECT_LENGTH
 
 
 def test_invalid_redirect_length() -> None:
