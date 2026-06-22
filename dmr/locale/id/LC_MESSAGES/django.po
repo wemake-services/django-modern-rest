@@ -1,0 +1,91 @@
+# django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-17 09:00+0300\n"
+"PO-Revision-Date: 2026-06-22 00:00+0700\n"
+"Last-Translator: \n"
+"Language-Team: Indonesian\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"Path {cls} dengan field_model={field_model} tidak mengizinkan parameter "
+"path tanpa nama args={args}"
+
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"Mencoba mengurai file dengan {parser_name} yang tidak mendukung "
+"protokol SupportsFileParsing"
+
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "Metode {method} tidak diizinkan, yang diizinkan: {allowed}"
+
+msgid "Not authenticated"
+msgstr "Tidak terautentikasi"
+
+msgid "Too many requests"
+msgstr "Terlalu banyak permintaan"
+
+msgid "Internal server error"
+msgstr "Kesalahan server internal"
+
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"Permintaan HTTP dengan tipe konten 'application/x-www-form-urlencoded' harus "
+"dienkode dalam UTF-8."
+
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"Renderer yang dinegosiasikan {renderer_type} tidak cocok dengan content-type "
+"yang dikembalikan {content_type}"
+
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Tidak dapat melakukan serialisasi isi respons dengan tipe yang diterima {accepted_types}, "
+"yang didukung={supported}"
+
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"Tidak dapat mengurai isi permintaan dengan tipe konten {content_type}, "
+"yang diharapkan={expected}"
+
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF Gagal: {reason}"
+
+msgid "BlocklistedJWToken"
+msgstr "JWT Token yang Diblokir"
+
+msgid "BlocklistedJWTokens"
+msgstr "JWT Token-token yang Diblokir"
+
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "Nilai {value} dengan tipe {type} tidak didukung untuk {target_type}"
