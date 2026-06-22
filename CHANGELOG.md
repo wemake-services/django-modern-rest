@@ -27,6 +27,7 @@ for both sync and async controllers at the same time.
 ### Breaking changes
 
 - Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
+- Dropped Django 4.2 support
 
 ### Features
 

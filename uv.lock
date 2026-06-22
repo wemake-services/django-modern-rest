@@ -749,7 +749,7 @@ unit-test = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", marker = "extra == 'attrs'", specifier = ">=26.0" },
-    { name = "django", specifier = ">=4.2,<6.1" },
+    { name = "django", specifier = ">=5.0,<6.1" },
     { name = "msgspec", marker = "extra == 'attrs'", specifier = ">=0.21.1" },
     { name = "msgspec", marker = "extra == 'msgspec'", specifier = ">=0.21.1" },
     { name = "openapi-spec-validator", marker = "extra == 'openapi'", specifier = ">=0.8" },
