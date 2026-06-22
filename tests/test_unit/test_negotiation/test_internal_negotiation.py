@@ -21,7 +21,7 @@ class _Django50MediaType:
         if attr_name == 'params':
             return self._media_params
         raise AttributeError(attr_name)
-    
+
     @override
     def __str__(self) -> str:
         return self.raw
