@@ -1,4 +1,8 @@
 repos:
+  - repo: https://github.com/GoodHatsLLC/no-ai-coauthors
+    rev: c5b3dd7d242c96d6a337f8355e80ebfd3284bb76  # frozen: 1.0.0
+    hooks:
+      - id: no-ai-coauthors
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 8ef330cbb7204d388aa7a620f9549bcea8009663  # frozen: 0.37.3
     hooks:
