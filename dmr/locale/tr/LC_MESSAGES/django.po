@@ -1,0 +1,91 @@
+# django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the django-modern-rest package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-modern-rest 0.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-17 08:59+0300\n"
+"PO-Revision-Date: 2026-06-23 12:00+0300\n"
+"Last-Translator: \n"
+"Language-Team: Turkish <tr@li.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"field_model={field_model} olan {cls} yolu, adsız yol parametrelerine "
+"(args={args}) izin vermez"
+
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"SupportsFileParsing protokolünü desteklemeyen {parser_name} ile dosyalar "
+"ayrıştırılmaya çalışılıyor"
+
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "{method} metoduna izin verilmiyor, izin verilenler: {allowed}"
+
+msgid "Not authenticated"
+msgstr "Kimlik doğrulaması yapılmadı"
+
+msgid "Too many requests"
+msgstr "Çok fazla istek"
+
+msgid "Internal server error"
+msgstr "Sunucu iç hatası"
+
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"'application/x-www-form-urlencoded' içerik tipine sahip HTTP istekleri UTF-8 "
+"ile kodlanmış olmalıdır."
+
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"Anlaşılan oluşturucu (renderer) {renderer_type}, döndürülen içerik tipi "
+"{content_type} ile eşleşmiyor"
+
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Yanıt gövdesi kabul edilen {accepted_types} tipleriyle serileştirilemiyor, "
+"desteklenenler={supported}"
+
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"İstek gövdesi {content_type} içerik tipiyle ayrıştırılamıyor, "
+"beklenen={expected}"
+
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF doğrulaması başarısız oldu: {reason}"
+
+msgid "BlocklistedJWToken"
+msgstr "Engellenen JWT Belirteci"
+
+msgid "BlocklistedJWTokens"
+msgstr "Engellenen JWT Belirteçleri"
+
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "{type} tipindeki {value} değeri {target_type} için desteklenmiyor"
