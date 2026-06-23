@@ -80,7 +80,7 @@ msgid "BlocklistedJWToken"
 msgstr "已加入黑名单的 JWT 令牌"
 
 msgid "BlocklistedJWTokens"
-msgstr "已加入黑名单的 JWT 令牌"
+msgstr "已加入黑名单的多个 JWT 令牌"
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
