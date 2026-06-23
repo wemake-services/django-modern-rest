@@ -10,6 +10,7 @@ from dmr.exceptions import (
     NotAcceptableError,
     RequestSerializationError,
 )
+from dmr.internal.media_compat import media_match
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
 from dmr.internal.negotiation import media_by_precedence
 from dmr.internal.negotiation import negotiate_renderer as _negotiate_renderer
@@ -96,7 +97,8 @@ class RequestNegotiator:
 
         # Now, try to find parser types based on `*/*` patterns, O(n):
         for media in self._media_by_precedence:
-            if media.match(request.content_type):
+            # TODO: replace this with a compiled implementation:
+            if media_match(media, request.content_type):
                 return self._parsers[str(media)]
 
         # No parsers found, raise an error:

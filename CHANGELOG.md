@@ -27,6 +27,7 @@ for both sync and async controllers at the same time.
 ### Breaking changes
 
 - Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
+- Dropped Django 4.2 support
 
 ### Features
 
@@ -35,6 +36,7 @@ for both sync and async controllers at the same time.
 
 ### Bugfixes
 
+- Fixed several compatibility issues on older Django versions, #1096
 - Fixed `LeakyBucket` throttling algorithm corner cases, #1044
 - Fixed OpenAPI schema generation for enum values used
   in path, query, header, and cookie parameters, #1059

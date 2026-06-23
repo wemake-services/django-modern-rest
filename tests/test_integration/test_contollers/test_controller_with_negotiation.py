@@ -62,7 +62,7 @@ def test_negotiation_xml_to_xml(
 
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response['Content-Type'] == ContentType.xml
-    assert response.text == snapshot("""\
+    assert response.content == snapshot(b"""\
 <?xml version="1.0" encoding="utf-8"?>
 <_RequestModel><payment_method_id>card</payment_method_id><payment_amount>big</payment_amount></_RequestModel>\
 """)
@@ -87,7 +87,7 @@ def test_negotiation_empty_xml_to_xml(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response['Content-Type'] == ContentType.xml
-    assert response.text == snapshot("""\
+    assert response.content == snapshot(b"""\
 <?xml version="1.0" encoding="utf-8"?>
 <dict><detail><msg>Input should be a valid dictionary \
 or instance of _RequestModel</msg><loc>parsed_body</loc>\
@@ -114,7 +114,7 @@ def test_negotiation_json_to_xml(
 
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response['Content-Type'] == ContentType.xml
-    assert response.text == snapshot("""\
+    assert response.content == snapshot(b"""\
 <?xml version="1.0" encoding="utf-8"?>
 <_RequestModel><payment_method_id>card</payment_method_id><payment_amount>big</payment_amount></_RequestModel>\
 """)

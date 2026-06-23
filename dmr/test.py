@@ -26,8 +26,8 @@ class _DMRMixin:  # noqa: WPS338
         # We keep it close to Django on purpose:
         # - it caches the parsed value on `response._json`
         # - it validates the response `Content-Type` before parsing
-        # - it parses `response.text`, not `response.content`, so decoding is
-        #   performed using the response charset before JSON deserialization
+        # - it parses `response.content` and decodes it
+        #   using the response charset before JSON deserialization
         #
         # It preserving Django-compatible behavior here is
         # more important than improving the internal style of this helper.
@@ -38,7 +38,11 @@ class _DMRMixin:  # noqa: WPS338
                     f'not "{self.default_content_type}"',
                 )
 
-            response._json = json_loads(response.text, **extra)  # type: ignore[attr-defined]  # noqa: SLF001
+            response._json = json_loads(  # type: ignore[attr-defined]  # noqa: SLF001
+                # Copies Django<5.2 behavior for older versions of Django:
+                response.content.decode(response.charset or 'utf8'),
+                **extra,
+            )
         return response._json  # type: ignore[attr-defined]  # noqa: SLF001
 
     if TYPE_CHECKING:  # noqa: WPS604  # pragma: no cover

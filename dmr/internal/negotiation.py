@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
+from dmr.internal.media_compat import media_quality, media_specificity
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
@@ -90,9 +91,9 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
         (
             media_type
             for content_type in content_types
-            if (media_type := MediaType(content_type)).quality != 0
+            if media_quality((media_type := MediaType(content_type))) != 0
         ),
-        key=lambda media: (media.specificity, media.quality),
+        key=lambda media: (media_specificity(media), media_quality(media)),
         reverse=True,
     )
 

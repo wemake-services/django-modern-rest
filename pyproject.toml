@@ -49,7 +49,6 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
   "Framework :: AsyncIO",
   "Framework :: Django",
-  "Framework :: Django :: 4.2",
   "Framework :: Django :: 5.0",
   "Framework :: Django :: 5.1",
   "Framework :: Django :: 5.2",
@@ -60,7 +59,7 @@ dynamic = ["readme"]
 
 dependencies = [
   "typing_extensions>=4.12",
-  "django>=4.2,<6.1",
+  "django>=5.0,<6.1",
 ]
 
 [project.optional-dependencies]
