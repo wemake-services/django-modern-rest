@@ -1,0 +1,86 @@
+# Traditional Chinese (zh_Hant) translation for django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as the django-modern-rest package.
+# Maier Yan <cozysweets101@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-23 08:59-0500\n"
+"PO-Revision-Date: 2026-06-24 11:00-0500\n"
+"Last-Translator: Maier Yan <cozysweets101@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_Hant\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"路徑 {cls}（field_model={field_model}）不允許使用未命名的路徑參數 args={args}"
+
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"嘗試使用不支援 SupportsFileParsing 協定的 {parser_name} 解析檔案"
+
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "不允許使用 {method} 方法，允許的方法：{allowed}"
+
+msgid "Not authenticated"
+msgstr "未通過身分驗證"
+
+msgid "Too many requests"
+msgstr "請求過多"
+
+msgid "Internal server error"
+msgstr "伺服器內部錯誤"
+
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"內容類型為 'application/x-www-form-urlencoded' 的 HTTP 請求必須使用 UTF-8 編碼。"
+
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"協商得到的渲染器 {renderer_type} 與回傳的內容類型 {content_type} 不相符"
+
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"無法使用可接受類型 {accepted_types} 序列化回應主體，支援的類型={supported}"
+
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"無法使用內容類型 {content_type} 解析請求主體，預期類型={expected}"
+
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF 驗證失敗：{reason}"
+
+msgid "BlocklistedJWToken"
+msgstr "已加入黑名單的 JWT 令牌"
+
+msgid "BlocklistedJWTokens"
+msgstr "已加入黑名單的多個 JWT 令牌"
+
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "類型為 {type} 的值 {value} 不支援用於 {target_type}"
