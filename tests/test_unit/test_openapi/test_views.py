@@ -33,7 +33,7 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
     assert response['Content-Type'] == 'application/json'
     assert json.loads(response.content.decode('utf-8')) == snapshot({
         'openapi': '3.1.0',
-        'info': {'title': 'Django Modern Rest', 'version': '0.1.0'},
+        'info': {'title': 'Your Awesome Project', 'version': '0.1.0'},
         'paths': {},
         'components': {'schemas': {}, 'securitySchemes': {}},
     })
@@ -51,7 +51,7 @@ def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
     assert response['Content-Type'] == 'application/yaml'
     assert yaml.safe_load(response.content) == snapshot({
         'components': {'schemas': {}, 'securitySchemes': {}},
-        'info': {'title': 'Django Modern Rest', 'version': '0.1.0'},
+        'info': {'title': 'Your Awesome Project', 'version': '0.1.0'},
         'openapi': '3.1.0',
         'paths': {},
     })

@@ -43,6 +43,12 @@ for both sync and async controllers at the same time.
 - Fixed that `dmr.plugins.msgspec.msgpack` cache was not cleared
   on `clear_settings_cache` calls
 
+### Misc
+
+- Renamed the default OpenAPI title from `Django Modern Rest`
+  to `Your Awesome Project` and documented all `OpenAPIConfig`
+  fields, #1021
+
 
 ## Version 0.10.0 (2026-05-26)
 
