@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import ClassVar, TypeAlias, cast
+from typing import ClassVar, TypeAlias
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -56,7 +56,7 @@ class TokenManager(models.Manager['Token']):
             if default_expiry is None:
                 return None
             return dt.datetime.now(dt.UTC) + default_expiry
-        return cast(dt.datetime | None, expires_at)
+        return expires_at  # type: ignore[return-value]
 
     def create_token(
         self,

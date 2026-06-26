@@ -34,7 +34,7 @@ def _raw_token_from_header(
     return header_value
 
 
-class TokenSyncAuth(_BaseTokenSyncAuth):
+class HeaderTokenSyncAuth(_BaseTokenSyncAuth):
     """Sync opaque token auth; reads from ``X-API-Token`` by default."""
 
     __slots__ = ('header_name', 'prefix')
@@ -64,19 +64,19 @@ class TokenSyncAuth(_BaseTokenSyncAuth):
 
         .. code-block:: python
 
-            >>> from dmr.security.token.auth.header import TokenSyncAuth
+            >>> from dmr.security.token.auth.header import HeaderTokenSyncAuth
 
             # Default - custom header, no prefix
-            >>> auth = TokenSyncAuth()  # X-API-Token: <token>
+            >>> auth = HeaderTokenSyncAuth()  # X-API-Token: <token>
 
             # DRF-compatible
-            >>> auth = TokenSyncAuth(
+            >>> auth = HeaderTokenSyncAuth(
             ...     header_name='Authorization',
             ...     prefix='Token',
             ... )
 
             # Bearer style
-            >>> auth = TokenSyncAuth(
+            >>> auth = HeaderTokenSyncAuth(
             ...     header_name='Authorization',
             ...     prefix='Bearer',
             ... )
@@ -121,7 +121,7 @@ class TokenSyncAuth(_BaseTokenSyncAuth):
         )
 
 
-class TokenAsyncAuth(_BaseTokenAsyncAuth):
+class HeaderTokenAsyncAuth(_BaseTokenAsyncAuth):
     """Async opaque token auth; reads from ``X-API-Token`` by default."""
 
     __slots__ = ('header_name', 'prefix')
@@ -134,7 +134,7 @@ class TokenAsyncAuth(_BaseTokenAsyncAuth):
         security_scheme_name: str = 'token',
         update_last_used: bool = True,
     ) -> None:
-        """Apply possible customizations. See :class:`TokenSyncAuth`."""
+        """Apply possible customizations. See :class:`HeaderTokenSyncAuth`."""
         super().__init__(
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,

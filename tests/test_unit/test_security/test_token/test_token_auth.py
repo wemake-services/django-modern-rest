@@ -16,10 +16,10 @@ from dmr.security import request_auth
 from dmr.security.token import (
     CookieTokenAsyncAuth,
     CookieTokenSyncAuth,
+    HeaderTokenAsyncAuth,
+    HeaderTokenSyncAuth,
     QueryTokenAsyncAuth,
     QueryTokenSyncAuth,
-    TokenAsyncAuth,
-    TokenSyncAuth,
     request_token,
 )
 from dmr.security.token.models import Token
@@ -28,7 +28,7 @@ from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 @final
 class _SyncController(Controller[PydanticFastSerializer]):
-    auth = (TokenSyncAuth(),)
+    auth = (HeaderTokenSyncAuth(),)
 
     def get(self) -> str:
         assert self.request.user.is_authenticated
@@ -60,8 +60,8 @@ def test_sync_token_auth_success(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert isinstance(request_auth(request), TokenSyncAuth)
-    assert isinstance(request_auth(request, strict=True), TokenSyncAuth)
+    assert isinstance(request_auth(request), HeaderTokenSyncAuth)
+    assert isinstance(request_auth(request, strict=True), HeaderTokenSyncAuth)
     assert request_token(request) == token
     token.refresh_from_db()
     assert token.last_used_at is not None
@@ -77,7 +77,7 @@ def test_sync_token_auth_custom_header_e2e(
 
     @final
     class _CustomHeaderController(Controller[PydanticFastSerializer]):
-        auth = (TokenSyncAuth(header_name='X-Api-Key'),)
+        auth = (HeaderTokenSyncAuth(header_name='X-Api-Key'),)
 
         def get(self) -> str:
             return 'authed'
@@ -151,7 +151,9 @@ def test_sync_token_auth_prefix_stripping(
 
     @final
     class _PrefixController(Controller[PydanticFastSerializer]):
-        auth = (TokenSyncAuth(header_name='Authorization', prefix='Token'),)
+        auth = (
+            HeaderTokenSyncAuth(header_name='Authorization', prefix='Token'),
+        )
 
         def get(self) -> str:
             return 'authed'
@@ -249,7 +251,7 @@ def test_sync_token_auth_inactive_user(
 
 @final
 class _AsyncController(Controller[PydanticFastSerializer]):
-    auth = (TokenAsyncAuth(),)
+    auth = (HeaderTokenAsyncAuth(),)
 
     async def get(self) -> str:
         auser = await self.request.auser()
@@ -282,8 +284,8 @@ async def test_async_token_auth_success(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert isinstance(request_auth(request), TokenAsyncAuth)
-    assert isinstance(request_auth(request, strict=True), TokenAsyncAuth)
+    assert isinstance(request_auth(request), HeaderTokenAsyncAuth)
+    assert isinstance(request_auth(request, strict=True), HeaderTokenAsyncAuth)
     assert request_token(request) == token
     await token.arefresh_from_db()
     assert token.last_used_at is not None
@@ -464,7 +466,7 @@ def test_sync_token_auth_no_last_used_update(
 
     @final
     class _NoUpdateController(Controller[PydanticFastSerializer]):
-        auth = (TokenSyncAuth(update_last_used=False),)
+        auth = (HeaderTokenSyncAuth(update_last_used=False),)
 
         def get(self) -> str:
             return 'authed'
@@ -496,7 +498,7 @@ async def test_async_token_auth_no_last_used_update(
 
     @final
     class _NoUpdateAsyncController(Controller[PydanticFastSerializer]):
-        auth = (TokenAsyncAuth(update_last_used=False),)
+        auth = (HeaderTokenAsyncAuth(update_last_used=False),)
 
         async def get(self) -> str:
             return 'authed'
@@ -582,28 +584,28 @@ async def test_async_cookie_token_auth_success(
 
 def test_token_model_returns_token_class() -> None:
     """token_model() returns the Token model for both sync and async auth."""
-    assert TokenSyncAuth().token_model() is Token
-    assert TokenAsyncAuth().token_model() is Token
+    assert HeaderTokenSyncAuth().token_model() is Token
+    assert HeaderTokenAsyncAuth().token_model() is Token
 
 
 def test_sync_check_token_passes_for_active_token() -> None:
     """check_token() does not raise when the token is active."""
     token = Token(expires_at=None, revoked_at=None)
-    TokenSyncAuth().check_token(token)  # must not raise
+    HeaderTokenSyncAuth().check_token(token)  # must not raise
 
 
 def test_sync_check_token_raises_inactive() -> None:
     """check_token() raises NotAuthenticatedError when the token is inactive."""
     token = Token(revoked_at=dt.datetime.now(dt.UTC))
     with pytest.raises(NotAuthenticatedError):
-        TokenSyncAuth().check_token(token)
+        HeaderTokenSyncAuth().check_token(token)
 
 
 @pytest.mark.asyncio
 async def test_async_check_token_passes_active() -> None:
     """Async check_token() does not raise when the token is active."""
     token = Token(expires_at=None, revoked_at=None)
-    await TokenAsyncAuth().check_token(token)  # must not raise
+    await HeaderTokenAsyncAuth().check_token(token)  # must not raise
 
 
 @pytest.mark.asyncio
@@ -611,4 +613,4 @@ async def test_async_check_token_raises_inactive() -> None:
     """Async check_token() raises NotAuthenticatedError for inactive tokens."""
     token = Token(revoked_at=dt.datetime.now(dt.UTC))
     with pytest.raises(NotAuthenticatedError):
-        await TokenAsyncAuth().check_token(token)
+        await HeaderTokenAsyncAuth().check_token(token)

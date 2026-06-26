@@ -3,13 +3,13 @@ from django.contrib.auth.models import User
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
-from dmr.security.token import TokenSyncAuth
+from dmr.security.token import HeaderTokenSyncAuth
 
 
 # Custom header name (default is `X-API-Token`):
 class CustomHeaderController(Controller[PydanticSerializer]):
     request: AuthenticatedHttpRequest[User]
-    auth = (TokenSyncAuth(header_name='Authorization', prefix='Token'),)
+    auth = (HeaderTokenSyncAuth(header_name='Authorization', prefix='Token'),)
 
     def get(self) -> str:
         assert self.request.user.username
