@@ -1,192 +1,176 @@
-import datetime as dt
-from typing import TYPE_CHECKING, Literal, Self, overload
+from typing import TYPE_CHECKING, Final, Literal, overload
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.exceptions import NotAuthenticatedError
-from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.token.auth.base import (
-    _BaseTokenAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    _BaseTokenAsyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
 )
 
 if TYPE_CHECKING:
-    from django.contrib.auth.base_user import AbstractBaseUser
-
-    from dmr.controller import Controller
-    from dmr.endpoint import Endpoint
     from dmr.security.token.models import Token
-    from dmr.serializer import BaseSerializer
 
 
-def _set_request_attrs(
+_AUTH_DESCRIPTION: Final = 'Opaque token authentication'
+
+
+def _raw_token_from_header(
     request: HttpRequest,
-    user: 'AbstractBaseUser',
     *,
-    token: 'Token',
-) -> None:
-    """Set all required properties to the authed request."""
-    request.user = user
+    header_name: str,
+    prefix: str,
+) -> str | None:
+    """Read token from a header and strip expected prefix when configured."""
+    header_value = request.headers.get(header_name)
+    if header_value is None:
+        return None
+    if prefix:
+        expected = f'{prefix} '
+        if not header_value.startswith(expected):
+            return None
+        return header_value[len(expected) :]
+    return header_value
 
-    async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
-        return user
 
-    request.auser = auser
-    request.__dmr_token__ = token  # type: ignore[attr-defined]
-
-
-class TokenSyncAuth(_BaseTokenAuth, SyncAuth):
+class TokenSyncAuth(_BaseTokenSyncAuth):
     """Sync opaque token auth; reads from ``X-API-Token`` by default."""
 
-    __slots__ = ()
+    __slots__ = ('header_name', 'prefix')
+
+    def __init__(
+        self,
+        *,
+        header_name: str = 'X-API-Token',
+        prefix: str = '',
+        security_scheme_name: str = 'token',
+        update_last_used: bool = True,
+    ) -> None:
+        """
+        Apply possible customizations.
+
+        - *header_name* - which header carries the raw token (default
+          ``X-API-Token``).  Use ``'Authorization'`` for RFC 7235-style
+          bearer auth (see *prefix* below).
+        - *prefix* - scheme prefix expected before the token in the header
+          value (default ``''``, i.e. the header value is used verbatim).
+          Set to ``'Token'`` or ``'Bearer'`` when *header_name* is
+          ``'Authorization'`` - e.g. ``prefix='Token'`` requires the client
+          to send ``Authorization: Token <raw-token>``.
+        - *security_scheme_name* - name used in OpenAPI security scheme map.
+
+        **Common configurations:**
+
+        .. code-block:: python
+
+            >>> from dmr.security.token.auth.header import TokenSyncAuth
+
+            # Default - custom header, no prefix
+            >>> auth = TokenSyncAuth()  # X-API-Token: <token>
+
+            # DRF-compatible
+            >>> auth = TokenSyncAuth(
+            ...     header_name='Authorization',
+            ...     prefix='Token',
+            ... )
+
+            # Bearer style
+            >>> auth = TokenSyncAuth(
+            ...     header_name='Authorization',
+            ...     prefix='Bearer',
+            ... )
+        """
+        super().__init__(
+            security_scheme_name=security_scheme_name,
+            update_last_used=update_last_used,
+        )
+        self.header_name = header_name
+        self.prefix = prefix
+
+    @property
+    @override
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
+        if self.header_name == 'Authorization':
+            # RFC 7235 reserves the Authorization header for the `http` scheme.
+            # Using `apiKey` + `name: Authorization` is invalid in OpenAPI 3.x.
+            return {
+                self.security_scheme_name: SecurityScheme(
+                    type='http',
+                    scheme='bearer',
+                    description=_AUTH_DESCRIPTION,
+                ),
+            }
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=self.header_name,
+                security_scheme_in='header',
+                description=_AUTH_DESCRIPTION,
+            ),
+        }
 
     @override
-    def __call__(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-    ) -> Self | None:
-        """Authenticate via opaque token."""
-        raw_token = self.get_raw_token(controller.request)
-        if raw_token is None:
-            return None
-        self.authenticate(controller.request, raw_token)
-        return self
-
-    def authenticate(
-        self,
-        request: HttpRequest,
-        raw_token: str,
-    ) -> 'AbstractBaseUser':
-        """Run all auth pipeline."""
-        token = self.get_token(raw_token)
-        self.check_token(token)
-        self.check_user(token.user)
-        if self.update_last_used:
-            self.mark_token_used(token)
-        self.set_request_attrs(request, token.user, token=token)
-        return token.user
-
-    def get_token(self, raw_token: str) -> 'Token':
-        """Look up and validate the token from the DB."""
-        model = self.token_model()
-        token_hash = model.objects.hash_token(raw_token)
-        try:
-            token = model.objects.select_related('user').get(
-                token_hash=token_hash,
-            )
-        except ObjectDoesNotExist:
-            raise NotAuthenticatedError from None
-        return token
-
-    def check_token(self, token: 'Token') -> None:
-        """Raise NotAuthenticatedError if the token is not active."""
-        if not token.is_active:
-            raise NotAuthenticatedError
-
-    def check_user(self, user: 'AbstractBaseUser') -> None:
-        """Raise NotAuthenticatedError if user account is not active."""
-        if not user.is_active:
-            raise NotAuthenticatedError
-
-    def mark_token_used(self, token: 'Token') -> None:
-        """Persist token usage timestamp after successful authentication."""
-        now = dt.datetime.now(dt.UTC)
-        self.token_model().objects.filter(pk=token.pk).update(
-            last_used_at=now,
-            updated_at=now,
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Read the raw token from the request header, stripping any prefix."""
+        return _raw_token_from_header(
+            request,
+            header_name=self.header_name,
+            prefix=self.prefix,
         )
-        token.last_used_at = now
-
-    def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: 'AbstractBaseUser',
-        *,
-        token: 'Token',
-    ) -> None:
-        """Set current user as authed for this request."""
-        _set_request_attrs(request, user, token=token)
 
 
-class TokenAsyncAuth(_BaseTokenAuth, AsyncAuth):
+class TokenAsyncAuth(_BaseTokenAsyncAuth):
     """Async opaque token auth; reads from ``X-API-Token`` by default."""
 
-    __slots__ = ()
+    __slots__ = ('header_name', 'prefix')
+
+    def __init__(
+        self,
+        *,
+        header_name: str = 'X-API-Token',
+        prefix: str = '',
+        security_scheme_name: str = 'token',
+        update_last_used: bool = True,
+    ) -> None:
+        """Apply possible customizations. See :class:`TokenSyncAuth`."""
+        super().__init__(
+            security_scheme_name=security_scheme_name,
+            update_last_used=update_last_used,
+        )
+        self.header_name = header_name
+        self.prefix = prefix
+
+    @property
+    @override
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
+        if self.header_name == 'Authorization':
+            return {
+                self.security_scheme_name: SecurityScheme(
+                    type='http',
+                    scheme='bearer',
+                    description=_AUTH_DESCRIPTION,
+                ),
+            }
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=self.header_name,
+                security_scheme_in='header',
+                description=_AUTH_DESCRIPTION,
+            ),
+        }
 
     @override
-    async def __call__(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-    ) -> Self | None:
-        """Authenticate via opaque token."""
-        raw_token = self.get_raw_token(controller.request)
-        if raw_token is None:
-            return None
-        await self.authenticate(controller.request, raw_token)
-        return self
-
-    async def authenticate(
-        self,
-        request: HttpRequest,
-        raw_token: str,
-    ) -> 'AbstractBaseUser':
-        """Run all auth pipeline."""
-        token = await self.get_token(raw_token)
-        await self.check_token(token)
-        await self.check_user(token.user)
-        if self.update_last_used:
-            await self.mark_token_used(token)
-        await self.set_request_attrs(request, token.user, token=token)
-        return token.user
-
-    async def get_token(self, raw_token: str) -> 'Token':
-        """Look up and validate the token from the DB."""
-        model = self.token_model()
-        token_hash = model.objects.hash_token(raw_token)
-        try:
-            token = await model.objects.select_related('user').aget(
-                token_hash=token_hash,
-            )
-        except ObjectDoesNotExist:
-            raise NotAuthenticatedError from None
-        return token
-
-    async def check_token(self, token: 'Token') -> None:
-        """Raise NotAuthenticatedError if the token is not active."""
-        if not token.is_active:
-            raise NotAuthenticatedError
-
-    async def check_user(self, user: 'AbstractBaseUser') -> None:
-        """Raise NotAuthenticatedError if user account is not active."""
-        if not user.is_active:
-            raise NotAuthenticatedError
-
-    async def mark_token_used(self, token: 'Token') -> None:
-        """Persist token usage timestamp after successful authentication."""
-        now = dt.datetime.now(dt.UTC)
-        await (
-            self
-            .token_model()
-            .objects.filter(pk=token.pk)
-            .aupdate(
-                last_used_at=now,
-                updated_at=now,
-            )
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Read the raw token from the request header, stripping any prefix."""
+        return _raw_token_from_header(
+            request,
+            header_name=self.header_name,
+            prefix=self.prefix,
         )
-        token.last_used_at = now
-
-    async def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: 'AbstractBaseUser',
-        *,
-        token: 'Token',
-    ) -> None:
-        """Set current user as authed for this request."""
-        _set_request_attrs(request, user, token=token)
 
 
 @overload

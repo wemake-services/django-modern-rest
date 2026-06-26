@@ -4,12 +4,15 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.token.auth.header import TokenAsyncAuth, TokenSyncAuth
+from dmr.security.token.auth.base import (
+    _BaseTokenAsyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+)
 
 _DEFAULT_PARAM: Final = 'token'
 
 
-class CookieTokenSyncAuth(TokenSyncAuth):
+class CookieTokenSyncAuth(_BaseTokenSyncAuth):
     """
     Sync opaque token auth reading from a cookie.
 
@@ -20,7 +23,7 @@ class CookieTokenSyncAuth(TokenSyncAuth):
         this auth class is used in a browser-facing application.
     """
 
-    __slots__ = ()
+    __slots__ = ('cookie_name',)
 
     def __init__(
         self,
@@ -31,10 +34,10 @@ class CookieTokenSyncAuth(TokenSyncAuth):
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
-            cookie_name=cookie_name,
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
         )
+        self.cookie_name = cookie_name
 
     @property
     @override
@@ -55,7 +58,7 @@ class CookieTokenSyncAuth(TokenSyncAuth):
         return request.COOKIES.get(self.cookie_name)
 
 
-class CookieTokenAsyncAuth(TokenAsyncAuth):
+class CookieTokenAsyncAuth(_BaseTokenAsyncAuth):
     """
     Async opaque token auth reading from a cookie.
 
@@ -66,7 +69,7 @@ class CookieTokenAsyncAuth(TokenAsyncAuth):
         this auth class is used in a browser-facing application.
     """
 
-    __slots__ = ()
+    __slots__ = ('cookie_name',)
 
     def __init__(
         self,
@@ -77,10 +80,10 @@ class CookieTokenAsyncAuth(TokenAsyncAuth):
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
-            cookie_name=cookie_name,
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
         )
+        self.cookie_name = cookie_name
 
     @property
     @override
