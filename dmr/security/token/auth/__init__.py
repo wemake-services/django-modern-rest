@@ -10,10 +10,10 @@ from dmr.security.token.auth.header import (
 from dmr.security.token.auth.header import (
     HeaderTokenSyncAuth as HeaderTokenSyncAuth,
 )
-from dmr.security.token.auth.header import request_token as request_token
 from dmr.security.token.auth.query import (
     QueryTokenAsyncAuth as QueryTokenAsyncAuth,
 )
 from dmr.security.token.auth.query import (
     QueryTokenSyncAuth as QueryTokenSyncAuth,
 )
+from dmr.security.token.auth.request import request_token as request_token

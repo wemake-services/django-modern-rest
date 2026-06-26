@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING, Final, Literal, overload
-
 from django.http import HttpRequest
 from typing_extensions import override
 
@@ -9,11 +7,7 @@ from dmr.security.token.auth.base import (
     _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
 )
 
-if TYPE_CHECKING:
-    from dmr.security.token.models import Token
-
-
-_AUTH_DESCRIPTION: Final = 'Opaque token authentication'
+_AUTH_DESCRIPTION = 'Opaque token authentication'
 
 
 def _raw_token_from_header(
@@ -171,36 +165,3 @@ class HeaderTokenAsyncAuth(_BaseTokenAsyncAuth):
             header_name=self.header_name,
             prefix=self.prefix,
         )
-
-
-@overload
-def request_token(
-    request: HttpRequest,
-    *,
-    strict: Literal[True],
-) -> 'Token': ...
-
-
-@overload
-def request_token(
-    request: HttpRequest,
-    *,
-    strict: bool = False,
-) -> 'Token | None': ...
-
-
-def request_token(
-    request: HttpRequest,
-    *,
-    strict: bool = False,
-) -> 'Token | None':
-    """
-    Return the Token from request, if it was authed with one.
-
-    When *strict* is passed and *request* has no token,
-    we raise :exc:`AttributeError`.
-    """
-    token = getattr(request, '__dmr_token__', None)
-    if token is None and strict:
-        raise AttributeError('__dmr_token__')
-    return token
