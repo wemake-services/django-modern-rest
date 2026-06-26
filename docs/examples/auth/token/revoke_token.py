@@ -14,7 +14,8 @@ class RevokeTokenController(Controller[PydanticSerializer]):
     auth = (HeaderTokenSyncAuth(),)
 
     def delete(self) -> None:
-        token_revoke(request_token(self.request, strict=True))
+        token = request_token(self.request, strict=True)
+        token_revoke(token)
 
 
 # openapi: {"controller": "RevokeTokenController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
