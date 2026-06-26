@@ -51,7 +51,7 @@ class TokenManager(models.Manager['Token']):
         """Resolve the expiry datetime, falling back to the global default."""
         if expires_at is EMPTY:
             default_expiry: dt.timedelta | None = resolve_setting(
-                Settings.token_default_expiry,
+                Settings.auth_token_default_expiry,
             )
             if default_expiry is None:
                 return None
@@ -69,7 +69,7 @@ class TokenManager(models.Manager['Token']):
         Create a new token, returning ``(Token instance, raw token string)``.
 
         If *expires_at* is not provided the token expires after
-        ``DMR_SETTINGS[Settings.token_default_expiry]``.
+        ``DMR_SETTINGS[Settings.auth_token_default_expiry]``.
         Pass ``None`` explicitly to create a non-expiring token.
         """
         raw_token = secrets.token_urlsafe(32)
@@ -92,7 +92,7 @@ class TokenManager(models.Manager['Token']):
         Async version of :meth:`create_token`.
 
         If *expires_at* is not provided the token expires after
-        ``DMR_SETTINGS[Settings.token_default_expiry]``.
+        ``DMR_SETTINGS[Settings.auth_token_default_expiry]``.
         Pass ``None`` explicitly to create a non-expiring token.
         """
         raw_token = secrets.token_urlsafe(32)

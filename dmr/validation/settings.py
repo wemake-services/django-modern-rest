@@ -34,7 +34,7 @@ class _SettingsModel(SettingsDict, total=False):
     responses: Sequence[Any]  # type: ignore[misc]
     openapi_config: Any  # type: ignore[misc]
     global_error_handler: Any  # type: ignore[misc]
-    token_default_expiry: Any  # type: ignore[misc]
+    auth_token_default_expiry: Any  # type: ignore[misc]
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -163,14 +163,17 @@ class SettingsValidator:
                 'Settings.global_error_handler must be a string or callable',
             )
 
-        token_default_expiry = settings.get('token_default_expiry', EMPTY)
-        if token_default_expiry is not EMPTY and not (
-            token_default_expiry is None
-            or isinstance(token_default_expiry, dt.timedelta)
+        auth_token_default_expiry = settings.get(
+            'auth_token_default_expiry',
+            EMPTY,
+        )
+        if auth_token_default_expiry is not EMPTY and not (
+            auth_token_default_expiry is None
+            or isinstance(auth_token_default_expiry, dt.timedelta)
         ):
             raise EndpointMetadataError(
                 (
-                    'Settings.token_default_expiry must be '
+                    'Settings.auth_token_default_expiry must be '
                     'datetime.timedelta or None'
                 ),
             )
