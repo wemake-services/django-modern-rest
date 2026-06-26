@@ -24,7 +24,7 @@ class _SyncAuth(HttpBasicSyncAuth):
         username: str,
         password: str,
     ) -> Self | None:
-        return self
+        return self  # pragma: no cover
 
 
 class _AsyncAuth(HttpBasicAsyncAuth):
@@ -36,7 +36,7 @@ class _AsyncAuth(HttpBasicAsyncAuth):
         username: str,
         password: str,
     ) -> Self | None:
-        return self
+        return self  # pragma: no cover
 
 
 _AUTH: Final = SyncOrAsyncAuth(_SyncAuth(), _AsyncAuth())

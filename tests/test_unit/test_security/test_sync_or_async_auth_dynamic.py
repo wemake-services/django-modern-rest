@@ -27,9 +27,7 @@ class _SyncAuth(HttpBasicSyncAuth):
         username: str,
         password: str,
     ) -> Self | None:
-        if username == 'test' and password == 'pass':  # noqa: S105
-            return self
-        return None
+        return self
 
 
 class _AsyncAuth(HttpBasicAsyncAuth):
@@ -41,9 +39,7 @@ class _AsyncAuth(HttpBasicAsyncAuth):
         username: str,
         password: str,
     ) -> Self | None:
-        if username == 'test' and password == 'pass':  # noqa: S105
-            return self
-        return None
+        return self
 
 
 _AUTH: Final = SyncOrAsyncAuth(_SyncAuth(), _AsyncAuth())
