@@ -8,6 +8,7 @@ from typing_extensions import override
 from dmr.exceptions import NotAuthenticatedError
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.security.token.logic import token_hash, token_is_active
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
@@ -110,10 +111,10 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
     def get_token(self, raw_token: str) -> 'Token':
         """Look up and validate the token from the DB."""
         model = self.token_model()
-        token_hash = model.objects.hash_token(raw_token)
+        hashed_token = token_hash(raw_token)
         try:
             token = model.objects.select_related('user').get(
-                token_hash=token_hash,
+                token_hash=hashed_token,
             )
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
@@ -121,7 +122,7 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
 
     def check_token(self, token: 'Token') -> None:
         """Raise NotAuthenticatedError if the token is not active."""
-        if not token.is_active:
+        if not token_is_active(token):
             raise NotAuthenticatedError
 
     def check_user(self, user: 'AbstractBaseUser') -> None:
@@ -189,10 +190,10 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
     async def get_token(self, raw_token: str) -> 'Token':
         """Look up and validate the token from the DB."""
         model = self.token_model()
-        token_hash = model.objects.hash_token(raw_token)
+        hashed_token = token_hash(raw_token)
         try:
             token = await model.objects.select_related('user').aget(
-                token_hash=token_hash,
+                token_hash=hashed_token,
             )
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
@@ -200,7 +201,7 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
 
     async def check_token(self, token: 'Token') -> None:
         """Raise NotAuthenticatedError if the token is not active."""
-        if not token.is_active:
+        if not token_is_active(token):
             raise NotAuthenticatedError
 
     async def check_user(self, user: 'AbstractBaseUser') -> None:

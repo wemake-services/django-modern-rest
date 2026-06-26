@@ -7,7 +7,7 @@ from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 from dmr.security.token import HeaderTokenSyncAuth
-from dmr.security.token.models import Token
+from dmr.security.token.logic import token_create
 
 
 class TokenOut(BaseModel):
@@ -24,7 +24,7 @@ class IssueTokenController(Controller[PydanticSerializer]):
     auth = (HeaderTokenSyncAuth(),)
 
     def post(self) -> TokenOut:
-        token, raw_token = Token.objects.create_token(
+        token, raw_token = token_create(
             user=self.request.user,
             name='api-key',
         )
