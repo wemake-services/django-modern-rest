@@ -1,17 +1,45 @@
-from typing import Any, Final
+from typing import Any, Final, Self
 
 import pytest
 from django.conf import LazySettings
+from typing_extensions import override
 
 from dmr import Controller, modify
+from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncOrAsyncAuth
 from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
+from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.test import DMRRequestFactory
 
-_AUTH: Final = SyncOrAsyncAuth(HttpBasicSyncAuth(), HttpBasicAsyncAuth())
+
+class _SyncAuth(HttpBasicSyncAuth):
+    @override
+    def authenticate(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
+        username: str,
+        password: str,
+    ) -> Self | None:
+        return self
+
+
+class _AsyncAuth(HttpBasicAsyncAuth):
+    @override
+    async def authenticate(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
+        username: str,
+        password: str,
+    ) -> Self | None:
+        return self
+
+
+_AUTH: Final = SyncOrAsyncAuth(_SyncAuth(), _AsyncAuth())
 
 
 def test_sync_or_async_auth_resolves_to_sync_via_settings(  # noqa: WPS118
@@ -94,8 +122,8 @@ def test_same_instance_reused_for_sync_and_async(
     settings: LazySettings,
 ) -> None:
     """Ensures the same SyncOrAsyncAuth yields the same inner instances."""
-    sync_auth = HttpBasicSyncAuth()
-    async_auth = HttpBasicAsyncAuth()
+    sync_auth = _SyncAuth()
+    async_auth = _AsyncAuth()
     instance = SyncOrAsyncAuth(sync_auth, async_auth)
     settings.DMR_SETTINGS = {Settings.auth: [instance]}
 
@@ -121,7 +149,7 @@ def test_sync_auth_in_settings_raises_for_async_endpoint(  # noqa: WPS118
     settings: LazySettings,
 ) -> None:
     """Ensures sync auth in settings raises for async endpoints."""
-    settings.DMR_SETTINGS = {Settings.auth: [HttpBasicSyncAuth()]}
+    settings.DMR_SETTINGS = {Settings.auth: [_SyncAuth()]}
 
     with pytest.raises(EndpointMetadataError, match='AsyncAuth'):
 
@@ -135,7 +163,7 @@ def test_async_auth_in_settings_raises_for_sync_endpoint(  # noqa: WPS118
     settings: LazySettings,
 ) -> None:
     """Ensures async auth in settings raises for sync endpoints."""
-    settings.DMR_SETTINGS = {Settings.auth: [HttpBasicAsyncAuth()]}
+    settings.DMR_SETTINGS = {Settings.auth: [_AsyncAuth()]}
 
     with pytest.raises(EndpointMetadataError, match='SyncAuth'):
 
