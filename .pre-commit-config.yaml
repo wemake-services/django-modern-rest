@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 8ef330cbb7204d388aa7a620f9549bcea8009663  # frozen: 0.37.3
+    rev: 8ef330cbb7204d388aa7a620f9549bcea8009663 # frozen: 0.37.3
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -11,7 +11,7 @@ repos:
       - id: check-compose-spec
 
   - repo: https://github.com/rhysd/actionlint
-    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
     hooks:
       - id: actionlint
         additional_dependencies:
@@ -24,45 +24,51 @@ repos:
         args: ["--no-progress", "--fix"]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95 # frozen: v0.11.0.1
     hooks:
       - id: shellcheck
         args: ["--severity=style"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 77039ccbba72c8aede339c5f8ae29b42aced0a2e  # frozen: v0.15.18
+    rev: 77039ccbba72c8aede339c5f8ae29b42aced0a2e # frozen: v0.15.18
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
       - id: ruff-format
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
-    rev: c883505f64b59c3c5c9375191e4ad9f98e727ccd  # frozen: v1.0.2
+    rev: c883505f64b59c3c5c9375191e4ad9f98e727ccd # frozen: v1.0.2
     hooks:
       - id: sphinx-lint
         args: ["--enable=all", "--disable=line-too-long"]
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: d80b8e26878e372a041833cd67163dbdb6a4336e  # frozen: v1
+    rev: d80b8e26878e372a041833cd67163dbdb6a4336e # frozen: v1
     hooks:
       - id: typos
 
   - repo: https://github.com/codespell-project/codespell
-    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a  # frozen: v2.4.2
+    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # frozen: v2.4.2
     hooks:
-    - id: codespell
-      additional_dependencies:
-        - tomli
+      - id: codespell
+        additional_dependencies:
+          - tomli
+
+  - repo: https://github.com/lycheeverse/lychee
+    rev: "2bba271688c1abb1503097a064e6c3bc1d1b6a9b" # frozen: v0.24.2
+    hooks:
+      - id: lychee
+        args: ["--config", ".github/lychee.toml"]
 
   - repo: https://github.com/instrumentl/pre-commit-just
-    rev: 9afb27e76938eca22c92ad1d8a6f4b9e1c29bb6b  # frozen: v0.1
+    rev: 9afb27e76938eca22c92ad1d8a6f4b9e1c29bb6b # frozen: v0.1
     hooks:
       - id: format-justfile
 
   # Should be applied after all autofixes:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
