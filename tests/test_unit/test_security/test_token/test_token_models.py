@@ -59,7 +59,7 @@ def test_create_token_uses_custom_default_expiry(
 ) -> None:
     """Test create_token respects configurable default token expiry."""
     settings.DMR_SETTINGS = {
-        'token_default_expiry': dt.timedelta(days=_CUSTOM_EXPIRY_DAYS),
+        'auth_token_default_expiry': dt.timedelta(days=_CUSTOM_EXPIRY_DAYS),
     }
 
     before = dt.datetime.now(dt.UTC)
@@ -80,7 +80,7 @@ def test_create_token_uses_none_default_expiry(
     admin_user: User,
 ) -> None:
     """Test create_token uses non-expiring default when configured with None."""
-    settings.DMR_SETTINGS = {'token_default_expiry': None}
+    settings.DMR_SETTINGS = {'auth_token_default_expiry': None}
 
     token, _ = Token.objects.create_token(user=admin_user, name='custom-none')
     assert token.expires_at is None
@@ -188,7 +188,7 @@ async def test_acreate_token_uses_none_default_expiry(
     admin_user: User,
 ) -> None:
     """Test acreate_token respects None default expiry setting (async)."""
-    settings.DMR_SETTINGS = {'token_default_expiry': None}
+    settings.DMR_SETTINGS = {'auth_token_default_expiry': None}
 
     token, _ = await Token.objects.acreate_token(
         user=admin_user,

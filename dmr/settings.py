@@ -72,7 +72,7 @@ class Settings(enum.StrEnum):
     openapi_examples_seed = 'openapi_examples_seed'
     openapi_static_cdn = 'openapi_static_cdn'
     django_treat_as_post = 'django_treat_as_post'
-    token_default_expiry = 'token_default_expiry'  # noqa: S105
+    auth_token_default_expiry = 'auth_token_default_expiry'  # noqa: S105
 
 
 @final
@@ -124,7 +124,7 @@ class SettingsDict(TypedDict, total=False):
     openapi_examples_seed: int | None
     openapi_static_cdn: dict[str, str]
     django_treat_as_post: Set[str]
-    token_default_expiry: dt.timedelta | None
+    auth_token_default_expiry: dt.timedelta | None
 
 
 assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -163,7 +163,9 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     # Settings for middleware:
     Settings.django_treat_as_post: frozenset(('PUT', 'PATCH')),
     # Token auth settings:
-    Settings.token_default_expiry: dt.timedelta(days=TOKEN_DEFAULT_EXPIRY_DAYS),
+    Settings.auth_token_default_expiry: dt.timedelta(
+        days=TOKEN_DEFAULT_EXPIRY_DAYS,
+    ),
 }
 
 assert all(setting_key in _DEFAULTS for setting_key in Settings), (  # noqa: S101
