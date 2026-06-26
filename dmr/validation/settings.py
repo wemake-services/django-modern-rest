@@ -8,7 +8,7 @@ from dmr.metadata import ResponseSpec
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
-from dmr.security import AsyncAuth, SyncAuth
+from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
     Settings,
@@ -104,11 +104,12 @@ class SettingsValidator:
 
         # Auth:
         if not all(
-            isinstance(auth, (SyncAuth, AsyncAuth))
+            isinstance(auth, (SyncAuth, AsyncAuth, SyncOrAsyncAuth))
             for auth in settings.get('auth', [])
         ):
             raise EndpointMetadataError(
-                'Settings.auth must all be SyncAuth or AsyncAuth instances',
+                'Settings.auth must all be SyncAuth, AsyncAuth, '
+                'or SyncOrAsyncAuth instances',
             )
 
         # Throttling:
