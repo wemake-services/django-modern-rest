@@ -4,12 +4,15 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.token.auth.header import TokenAsyncAuth, TokenSyncAuth
+from dmr.security.token.auth.base import (
+    _BaseTokenAsyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+)
 
 _DEFAULT_PARAM: Final = 'token'
 
 
-class QueryTokenSyncAuth(TokenSyncAuth):
+class QueryTokenSyncAuth(_BaseTokenSyncAuth):
     """
     Sync opaque token auth reading from a query string parameter.
 
@@ -19,7 +22,7 @@ class QueryTokenSyncAuth(TokenSyncAuth):
         context where security is a concern.
     """
 
-    __slots__ = ()
+    __slots__ = ('query_param',)
 
     def __init__(
         self,
@@ -30,10 +33,10 @@ class QueryTokenSyncAuth(TokenSyncAuth):
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
-            query_param=query_param,
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
         )
+        self.query_param = query_param
 
     @property
     @override
@@ -54,7 +57,7 @@ class QueryTokenSyncAuth(TokenSyncAuth):
         return request.GET.get(self.query_param)
 
 
-class QueryTokenAsyncAuth(TokenAsyncAuth):
+class QueryTokenAsyncAuth(_BaseTokenAsyncAuth):
     """
     Async opaque token auth reading from a query string parameter.
 
@@ -64,7 +67,7 @@ class QueryTokenAsyncAuth(TokenAsyncAuth):
         context where security is a concern.
     """
 
-    __slots__ = ()
+    __slots__ = ('query_param',)
 
     def __init__(
         self,
@@ -75,10 +78,10 @@ class QueryTokenAsyncAuth(TokenAsyncAuth):
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
-            query_param=query_param,
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
         )
+        self.query_param = query_param
 
     @property
     @override
