@@ -22,6 +22,12 @@ from dmr.security.token import (
     QueryTokenSyncAuth,
     request_token,
 )
+from dmr.security.token.logic import (
+    token_acreate,
+    token_arevoke,
+    token_create,
+    token_revoke,
+)
 from dmr.security.token.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -46,7 +52,7 @@ def test_sync_token_auth_success(
     admin_user: User,
 ) -> None:
     """Ensures sync controllers work with token auth."""
-    token, raw_token = Token.objects.create_token(
+    token, raw_token = token_create(
         user=admin_user,
         name='test',
     )
@@ -82,7 +88,7 @@ def test_sync_token_auth_custom_header_e2e(
         def get(self) -> str:
             return 'authed'
 
-    _, raw_token = Token.objects.create_token(
+    _, raw_token = token_create(
         user=admin_user,
         name='custom-header',
     )
@@ -158,7 +164,7 @@ def test_sync_token_auth_prefix_stripping(
         def get(self) -> str:
             return 'authed'
 
-    _, raw_token = Token.objects.create_token(
+    _, raw_token = token_create(
         user=admin_user,
         name='prefix-test',
         expires_at=None,
@@ -186,11 +192,11 @@ def test_sync_token_auth_revoked(
     admin_user: User,
 ) -> None:
     """Ensures a revoked token returns 401."""
-    token, raw_token = Token.objects.create_token(
+    token, raw_token = token_create(
         user=admin_user,
         name='to-revoke',
     )
-    token.revoke()
+    token_revoke(token)
 
     request = dmr_rf.get(
         '/whatever/',
@@ -209,7 +215,7 @@ def test_sync_token_auth_expired(
     admin_user: User,
 ) -> None:
     """Ensures an expired token returns 401."""
-    _, raw_token = Token.objects.create_token(
+    _, raw_token = token_create(
         user=admin_user,
         name='expired',
         expires_at=dt.datetime.now(dt.UTC) - dt.timedelta(seconds=1),
@@ -234,7 +240,7 @@ def test_sync_token_auth_inactive_user(
     admin_user.is_active = False
     admin_user.save(update_fields=['is_active'])
 
-    _, raw_token = Token.objects.create_token(
+    _, raw_token = token_create(
         user=admin_user,
         name='inactive-user',
     )
@@ -270,7 +276,7 @@ async def test_async_token_auth_success(
     admin_user: User,
 ) -> None:
     """Ensures async controllers work with token auth."""
-    token, raw_token = await Token.objects.acreate_token(
+    token, raw_token = await token_acreate(
         user=admin_user,
         name='async-test',
     )
@@ -322,11 +328,11 @@ async def test_async_token_auth_revoked(
     admin_user: User,
 ) -> None:
     """Ensures a revoked token returns 401 in async flow."""
-    token, raw_token = await Token.objects.acreate_token(
+    token, raw_token = await token_acreate(
         user=admin_user,
         name='async-revoked',
     )
-    await token.arevoke()
+    await token_arevoke(token)
 
     request = dmr_async_rf.get(
         '/whatever/',
@@ -363,7 +369,7 @@ async def test_async_token_auth_expired(
     admin_user: User,
 ) -> None:
     """Ensures an expired token returns 401 in async flow."""
-    _, raw_token = await Token.objects.acreate_token(
+    _, raw_token = await token_acreate(
         user=admin_user,
         name='async-expired',
         expires_at=dt.datetime.now(dt.UTC) - dt.timedelta(seconds=1),
@@ -389,7 +395,7 @@ async def test_async_token_auth_inactive_user(
     admin_user.is_active = False
     await admin_user.asave(update_fields=['is_active'])
 
-    _, raw_token = await Token.objects.acreate_token(
+    _, raw_token = await token_acreate(
         user=admin_user,
         name='async-inactive-user',
     )
@@ -418,7 +424,7 @@ def test_query_token_sync_auth_success(
         def get(self) -> str:
             return 'authed'
 
-    _, raw_token = Token.objects.create_token(
+    _, raw_token = token_create(
         user=admin_user,
         name='query-test',
     )
@@ -444,7 +450,7 @@ def test_cookie_token_sync_auth_success(
         def get(self) -> str:
             return 'authed'
 
-    _, raw_token = Token.objects.create_token(
+    _, raw_token = token_create(
         user=admin_user,
         name='cookie-test',
     )
@@ -471,7 +477,7 @@ def test_sync_token_auth_no_last_used_update(
         def get(self) -> str:
             return 'authed'
 
-    token, raw_token = Token.objects.create_token(
+    token, raw_token = token_create(
         user=admin_user,
         name='no-update-test',
     )
@@ -503,7 +509,7 @@ async def test_async_token_auth_no_last_used_update(
         async def get(self) -> str:
             return 'authed'
 
-    token, raw_token = await Token.objects.acreate_token(
+    token, raw_token = await token_acreate(
         user=admin_user,
         name='async-no-update-test',
     )
@@ -537,7 +543,7 @@ async def test_async_query_token_auth_success(
         async def get(self) -> str:
             return 'authed'
 
-    _, raw_token = await Token.objects.acreate_token(
+    _, raw_token = await token_acreate(
         user=admin_user,
         name='async-query-test',
     )
@@ -564,7 +570,7 @@ async def test_async_cookie_token_auth_success(
         async def get(self) -> str:
             return 'authed'
 
-    _, raw_token = await Token.objects.acreate_token(
+    _, raw_token = await token_acreate(
         user=admin_user,
         name='async-cookie-test',
     )

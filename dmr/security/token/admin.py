@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from django.contrib import admin
 from django.db.models import Model
 
+from dmr.security.token.logic import token_is_active
 from dmr.security.token.models import Token
 
 _ModelT = TypeVar('_ModelT', bound=Model)
@@ -24,7 +25,7 @@ class TokenAdmin(ModelAdmin[Token]):
         'id',
         'name',
         'user',
-        'is_active',
+        'display_is_active',
         'last_used_at',
         'expires_at',
         'revoked_at',
@@ -41,3 +42,8 @@ class TokenAdmin(ModelAdmin[Token]):
     readonly_fields = ('token_hash', 'created_at', 'updated_at', 'last_used_at')
     autocomplete_fields = ('user',)
     ordering = ('-created_at',)
+
+    @admin.display(boolean=True, description='Is active')
+    def display_is_active(self, token: Token) -> bool:
+        """Display token active state in admin list."""
+        return token_is_active(token)
