@@ -25,7 +25,7 @@ from dmr.metadata import (
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import infer_status_code
-from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.security.base import AsyncAuth, SyncAuth, SyncOrAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
@@ -479,19 +479,34 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
     ) -> list[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
-        settings_auth: Sequence[SyncAuth | AsyncAuth] = resolve_setting(
-            Settings.auth,
+        settings_auth: Sequence[SyncAuth | AsyncAuth | SyncOrAsyncAuth] = (
+            resolve_setting(Settings.auth)
         )
-
-        auth = [
+        # SyncOrAsyncAuth is settings-only — reject controller/endpoint usage:
+        for candidate_auth in (
             *payload_auth,
             *(self.controller_cls.auth or ()),
-            *settings_auth,
-        ]
-        # Validate that auth matches the sync / async endpoints:
+        ):
+            if isinstance(candidate_auth, SyncOrAsyncAuth):  # pyright: ignore[reportUnnecessaryIsInstance]
+                raise EndpointMetadataError(
+                    'SyncOrAsyncAuth can only be used in settings, '
+                    'not at controller or endpoint level '
+                    f'for {self.endpoint_name=}',
+                )
         base_type = (
             AsyncAuth if inspect.iscoroutinefunction(self.func) else SyncAuth
         )
+        auth = [
+            *payload_auth,
+            *(self.controller_cls.auth or ()),
+            *(
+                setting_auth.resolve(base_type)
+                if isinstance(setting_auth, SyncOrAsyncAuth)
+                else setting_auth
+                for setting_auth in settings_auth
+            ),
+        ]
+        # Validate that auth matches the sync / async endpoints:
         if not all(
             isinstance(auth_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
             for auth_instance in auth

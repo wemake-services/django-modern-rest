@@ -76,6 +76,31 @@ There are 4 ways to provide auth classes for an endpoint:
 
       >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
 
+When your project mixes sync and async endpoints,
+use :class:`~dmr.security.SyncOrAsyncAuth` in settings:
+
+.. code-block:: python
+   :caption: settings.py
+
+   >>> from dmr.settings import Settings
+   >>> from dmr.security import SyncOrAsyncAuth
+   >>> from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
+
+   >>> DMR_SETTINGS = {
+   ...     Settings.auth: [
+   ...         SyncOrAsyncAuth(
+   ...             HttpBasicSyncAuth(),
+   ...             HttpBasicAsyncAuth(),
+   ...         ),
+   ...     ],
+   ... }
+
+.. note::
+
+   :class:`~dmr.security.SyncOrAsyncAuth` is only allowed
+   in ``DMR_SETTINGS``. Using it on a controller or endpoint
+   raises :exc:`~dmr.exceptions.EndpointMetadataError`.
+
 Providing several auth instances means that at least one of them must succeed.
 
 
@@ -160,6 +185,9 @@ API Reference
 .. autoclass:: dmr.security.AsyncAuth
   :members:
   :inherited-members:
+
+.. autoclass:: dmr.security.SyncOrAsyncAuth
+  :members:
 
 .. autofunction:: dmr.security.request_auth
 

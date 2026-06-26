@@ -33,6 +33,8 @@ for both sync and async controllers at the same time.
 
 - Added `SyncOrAsyncThrottle` class to apply a single throttle rule
   to both sync and async endpoints via global settings, #1075
+- Added `SyncOrAsyncAuth` class to apply a single auth rule
+  to both sync and async endpoints via global settings, #1102
 
 ### Bugfixes
 
