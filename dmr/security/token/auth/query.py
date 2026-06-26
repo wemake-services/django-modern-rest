@@ -18,7 +18,8 @@ class QueryTokenSyncAuth(_BaseTokenSyncAuth):
 
     .. warning::
         Tokens in query strings appear in server access logs, browser history,
-        and HTTP ``Referer`` headers.  Prefer :class:`TokenSyncAuth` for any
+        and HTTP ``Referer`` headers.  Prefer
+        :class:`HeaderTokenSyncAuth` for any
         context where security is a concern.
     """
 
@@ -63,7 +64,8 @@ class QueryTokenAsyncAuth(_BaseTokenAsyncAuth):
 
     .. warning::
         Tokens in query strings appear in server access logs, browser history,
-        and HTTP ``Referer`` headers.  Prefer :class:`TokenAsyncAuth` for any
+        and HTTP ``Referer`` headers.  Prefer
+        :class:`HeaderTokenAsyncAuth` for any
         context where security is a concern.
     """
 

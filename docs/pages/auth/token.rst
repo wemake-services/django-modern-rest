@@ -20,8 +20,8 @@ Requiring auth
 
 We provide several classes to require token auth in your API:
 
-- :class:`~dmr.security.token.TokenSyncAuth` for sync views
-- :class:`~dmr.security.token.TokenAsyncAuth` for async views
+- :class:`~dmr.security.token.HeaderTokenSyncAuth` for sync views
+- :class:`~dmr.security.token.HeaderTokenAsyncAuth` for async views
 - :class:`~dmr.security.token.QueryTokenSyncAuth` and
   :class:`~dmr.security.token.QueryTokenAsyncAuth`
   for query-param based auth
@@ -90,8 +90,8 @@ Use these auth classes for each transport:
 
 - Query param: :class:`~dmr.security.token.QueryTokenSyncAuth` /
   :class:`~dmr.security.token.QueryTokenAsyncAuth`
-- Header: :class:`~dmr.security.token.TokenSyncAuth` /
-  :class:`~dmr.security.token.TokenAsyncAuth`
+- Header: :class:`~dmr.security.token.HeaderTokenSyncAuth` /
+  :class:`~dmr.security.token.HeaderTokenAsyncAuth`
 - Cookie: :class:`~dmr.security.token.CookieTokenSyncAuth` /
   :class:`~dmr.security.token.CookieTokenAsyncAuth`
 
@@ -102,8 +102,8 @@ By default, header auth expects:
 You can customize behavior per auth instance,
 for example to support ``Authorization`` header styles:
 
-- ``TokenSyncAuth(header_name='Authorization', prefix='Token')``
-- ``TokenSyncAuth(header_name='Authorization', prefix='Bearer')``
+- ``HeaderTokenSyncAuth(header_name='Authorization', prefix='Token')``
+- ``HeaderTokenSyncAuth(header_name='Authorization', prefix='Bearer')``
 
 .. warning::
 
@@ -119,11 +119,11 @@ for example to support ``Authorization`` header styles:
 API Reference
 -------------
 
-.. autoclass:: dmr.security.token.TokenSyncAuth
+.. autoclass:: dmr.security.token.HeaderTokenSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.token.TokenAsyncAuth
+.. autoclass:: dmr.security.token.HeaderTokenAsyncAuth
   :members:
   :inherited-members:
 

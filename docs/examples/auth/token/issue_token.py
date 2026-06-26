@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
-from dmr.security.token import TokenSyncAuth
+from dmr.security.token import HeaderTokenSyncAuth
 from dmr.security.token.models import Token
 
 
@@ -21,7 +21,7 @@ class IssueTokenController(Controller[PydanticSerializer]):
     """Issue a new token for the authenticated user."""
 
     request: AuthenticatedHttpRequest[User]
-    auth = (TokenSyncAuth(),)
+    auth = (HeaderTokenSyncAuth(),)
 
     def post(self) -> TokenOut:
         token, raw_token = Token.objects.create_token(

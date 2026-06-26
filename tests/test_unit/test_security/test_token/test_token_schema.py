@@ -5,17 +5,17 @@ from dmr.openapi.objects import SecurityScheme
 from dmr.security.token import (
     CookieTokenAsyncAuth,
     CookieTokenSyncAuth,
+    HeaderTokenAsyncAuth,
+    HeaderTokenSyncAuth,
     QueryTokenAsyncAuth,
     QueryTokenSyncAuth,
-    TokenAsyncAuth,
-    TokenSyncAuth,
 )
 
 
-@pytest.mark.parametrize('typ', [TokenSyncAuth, TokenAsyncAuth])
+@pytest.mark.parametrize('typ', [HeaderTokenSyncAuth, HeaderTokenAsyncAuth])
 def test_default_schema(
     *,
-    typ: type[TokenSyncAuth] | type[TokenAsyncAuth],
+    typ: type[HeaderTokenSyncAuth] | type[HeaderTokenAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for token auth."""
     instance = typ()
@@ -31,10 +31,10 @@ def test_default_schema(
     assert instance.security_requirement == snapshot({'token': []})
 
 
-@pytest.mark.parametrize('typ', [TokenSyncAuth, TokenAsyncAuth])
+@pytest.mark.parametrize('typ', [HeaderTokenSyncAuth, HeaderTokenAsyncAuth])
 def test_authorization_header_schema(
     *,
-    typ: type[TokenSyncAuth] | type[TokenAsyncAuth],
+    typ: type[HeaderTokenSyncAuth] | type[HeaderTokenAsyncAuth],
 ) -> None:
     """Ensures Authorization header emits the OpenAPI `http` bearer scheme."""
     instance = typ(header_name='Authorization', security_scheme_name='token')
@@ -49,10 +49,10 @@ def test_authorization_header_schema(
     assert instance.security_requirement == snapshot({'token': []})
 
 
-@pytest.mark.parametrize('typ', [TokenSyncAuth, TokenAsyncAuth])
+@pytest.mark.parametrize('typ', [HeaderTokenSyncAuth, HeaderTokenAsyncAuth])
 def test_custom_header_schema(
     *,
-    typ: type[TokenSyncAuth] | type[TokenAsyncAuth],
+    typ: type[HeaderTokenSyncAuth] | type[HeaderTokenAsyncAuth],
 ) -> None:
     """Ensures that a custom header is reflected in the schema."""
     instance = typ(header_name='X-Api-Token', security_scheme_name='apiToken')
