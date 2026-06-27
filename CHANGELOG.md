@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## Version 0.11.0 (2026-06-27)
 
 In this release we significantly improved the DX of defining common
 auth and throttling types in the settings that could be used
