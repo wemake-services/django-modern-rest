@@ -174,6 +174,12 @@ Select auth backend that fits your needs:
 
       Support for JWT tokens based auth.
 
+    .. grid-item-card:: Opaque Tokens
+      :link: token
+      :link-type: doc
+
+      Database-backed opaque token auth with revocation support.
+
 
 API Reference
 -------------
