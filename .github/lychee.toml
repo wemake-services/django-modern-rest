@@ -1,0 +1,11 @@
+require_https = true
+include_fragments = "full"
+
+accept = [200, 403, 429]
+
+max_retries = 3
+retry_wait_time = 2
+timeout = 20
+insecure = false
+verbose = true
+scheme = ["https"]
