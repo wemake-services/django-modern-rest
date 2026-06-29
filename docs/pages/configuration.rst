@@ -408,7 +408,7 @@ OpenAPI
 
 .. data:: dmr.settings.Settings.openapi_config
 
-  Default: ``OpenAPIConfig(title='Django Modern Rest', version='0.1.0')``
+  Default: ``OpenAPIConfig(title='Your Awesome Project', version='0.1.0')``
 
   Metadata to be used in the OpenAPI schema.
 

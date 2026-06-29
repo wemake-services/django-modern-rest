@@ -343,7 +343,7 @@ class SyncOrAsyncThrottle:
     Use in global settings to apply a single throttling rule to both
     sync and async endpoints. Not allowed on controller or endpoint level.
 
-    .. versionadded:: 0.10.0
+    .. versionadded:: 0.11.0
     """
 
     _sync_throttle: SyncThrottle

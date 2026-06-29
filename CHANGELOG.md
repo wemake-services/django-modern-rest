@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## Version 0.11.0 (2026-06-27)
 
 In this release we significantly improved the DX of defining common
 auth and throttling types in the settings that could be used
@@ -33,15 +33,23 @@ for both sync and async controllers at the same time.
 
 - Added `SyncOrAsyncThrottle` class to apply a single throttle rule
   to both sync and async endpoints via global settings, #1075
+- Added `SyncOrAsyncAuth` class to apply a single auth rule
+  to both sync and async endpoints via global settings, #1102
 
 ### Bugfixes
 
-- Fixed several compatibility issues on older Django versions, #1096
+- Fixed several compatibility issues on older Django 5.x versions, #1096
 - Fixed `LeakyBucket` throttling algorithm corner cases, #1044
 - Fixed OpenAPI schema generation for enum values used
   in path, query, header, and cookie parameters, #1059
 - Fixed that `dmr.plugins.msgspec.msgpack` cache was not cleared
   on `clear_settings_cache` calls
+
+### Misc
+
+- Renamed the default OpenAPI title from `Django Modern Rest`
+  to `Your Awesome Project` and documented all `OpenAPIConfig`
+  fields, #1021
 
 
 ## Version 0.10.0 (2026-05-26)
