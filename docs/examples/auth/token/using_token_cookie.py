@@ -11,8 +11,8 @@ class APIController(Controller[PydanticSerializer]):
     auth = (CookieTokenSyncAuth(),)
 
     def get(self) -> str:
-        # Let's test that `User` has the correct type:
-        assert self.request.user.username
+        # Let's test that `User` is authenticated:
+        assert self.request.user.is_authenticated
         return 'authed'
 
 

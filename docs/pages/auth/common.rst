@@ -181,6 +181,47 @@ Select auth backend that fits your needs:
       Database-backed opaque token auth with revocation support.
 
 
+JWT vs Opaque Tokens
+~~~~~~~~~~~~~~~~~~~~
+
+Both are valid token-based auth strategies.
+The right pick mostly comes down to how you feel
+about revocation vs a database lookup on every request.
+
+.. list-table::
+  :header-rows: 1
+  :widths: 20 40 40
+
+  * -
+    - JWT
+    - Opaque Token
+  * - Storage
+    - Stateless, no database lookup
+    - Row in the database, looked up per request
+  * - Revocation
+    - Hard: valid until expiry,
+      needs a blocklist to revoke early
+    - Easy: ``revoked_at`` is set, token is dead instantly
+  * - Token size
+    - Larger, carries claims in the payload
+    - Small, just a random string
+  * - Per-request cost
+    - Signature verification, no I/O
+    - One DB read per request, plus an optional write
+      if last-use tracking is enabled
+  * - Good fit for
+    - High-throughput / distributed services
+      where a DB round-trip per request is too costly
+    - APIs that need instant logout,
+      audit trails, or per-token metadata
+
+If you need instant revocation or per-token state
+(last used, scopes, device info), use :doc:`Opaque Tokens <token>`.
+If you need to skip a database lookup on every request
+and can tolerate tokens staying valid until they expire,
+use :doc:`JWT <jwt>`.
+
+
 API Reference
 -------------
 

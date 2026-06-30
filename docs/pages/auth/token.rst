@@ -37,83 +37,194 @@ both ``self.request.user`` and the current token:
   :linenos:
   :language: python
 
-
 Token lifecycle
 ---------------
 
-Tokens are created via :class:`~dmr.security.token.models.Token`
-manager methods:
+Tokens are issued and revoked via dedicated helper functions
+from :mod:`dmr.security.token.logic`:
 
-- :meth:`~dmr.security.token.models.TokenManager.create_token`
-- :meth:`~dmr.security.token.models.TokenManager.acreate_token`
+- :func:`~dmr.security.token.logic.token_create`
+- :func:`~dmr.security.token.logic.token_acreate`
+- :func:`~dmr.security.token.logic.token_revoke`
+- :func:`~dmr.security.token.logic.token_arevoke`
 
-Both methods return ``(token_instance, raw_token)``.
-Only token hash is stored in the database.
+Creation helpers return ``(token_instance, raw_token)``.
+Only the token hash is stored in the database,
+the raw token is returned exactly once and never persisted.
 
-You can revoke tokens with:
+:class:`~dmr.security.token.models.Token` has two
+:class:`~django.db.models.DateTimeField` fields that gate validity:
+
+- :attr:`~dmr.security.token.models.Token.expires_at` — set once,
+  at creation
+- :attr:`~dmr.security.token.models.Token.revoked_at` — ``None``
+  until :meth:`~dmr.security.token.models.Token.revoke` is called
+
+On each authenticated request, the auth backend:
+
+1. Hashes the incoming raw token and looks up the matching row.
+   If no row matches, authentication fails with a ``401``
+2. Checks that the token is still active (neither revoked nor expired)
+3. Checks that the associated user account is still active
+   (:attr:`~django.contrib.auth.models.AbstractBaseUser.is_active`)
+
+If any check fails, authentication fails with a ``401``
+and no token state is changed.
+
+.. note::
+
+  Revoking a token is a write: it sets ``revoked_at`` on the row.
+  Expiry needs no write at all, ``expires_at`` is set once up front
+  and simply compared against the clock on every lookup from then on.
+
+  Successful authentication can *also* write to the row,
+  see :ref:`tracking-last-use` below.
+
+.. mermaid::
+  :caption: Token states
+  :config: {"theme": "forest"}
+
+  stateDiagram-v2
+      [*] --> Active: token_create / token_acreate
+      Active --> Revoked: token_revoke / token_arevoke
+      Revoked --> [*]
+
+Issuing a token
+~~~~~~~~~~~~~~~
+
+Issuing a token has to be gated by some pre-existing trust,
+not by the token itself, otherwise a client would need a token
+to get a token. That pre-existing trust is specific to your
+application, so we don't ship a built-in way to issue tokens.
+Call :func:`~dmr.security.token.logic.token_create` directly,
+for example from a Django shell:
+
+.. literalinclude:: /examples/auth/token/issue_token.py
+  :caption: issue_token.py
+  :linenos:
+  :language: python
+
+.. important::
+
+  ``raw_token`` is only available here, right after creation.
+  Only its hash is stored, so save it now, it cannot be recovered later.
+
+.. note::
+
+  If you want to issue tokens from an HTTP endpoint, for example
+  a "generate API key" button in a dashboard, gate it behind
+  an auth method other than the token being issued.
+  :class:`~dmr.security.django_session.DjangoSessionSyncAuth`
+  is a common choice, since the user already has a session
+  from logging in.
+
+Revoking a token
+~~~~~~~~~~~~~~~~
+
+Tokens can also be revoked directly from the model instance:
 
 - :meth:`~dmr.security.token.models.Token.revoke`
 - :meth:`~dmr.security.token.models.Token.arevoke`
 
-.. literalinclude:: /examples/auth/token/token_lifecycle.py
-  :caption: token_lifecycle.py
+.. literalinclude:: /examples/auth/token/revoke_token.py
+  :caption: revoke_token.py
   :linenos:
   :language: python
 
 
-Configuration notes
--------------------
+.. _tracking-last-use:
 
-Opaque tokens can be sent by clients in three common ways:
+Tracking last use
+------------------
 
-1. Query parameter
-2. Header
-3. Cookie
+Auth classes accept an ``update_last_used`` flag for tracking
+when a token was last successfully used. It is opt-in,
+defaulting to ``False``:
 
-Example request shapes:
+.. code-block:: python
 
-.. code-block:: text
+  HeaderTokenSyncAuth(update_last_used=True)
 
-  GET /api/thing?token=abc123
+When enabled, every successful authentication writes
+``last_used_at`` and ``updated_at`` back to the token's row.
+
+.. warning::
+
+  Enabling this turns every authenticated request into a database
+  write, not just token creation and revocation. On high-traffic
+  endpoints this can meaningfully increase database load.
+
+  If you need last-used tracking but want to control the write cost,
+  consider:
+
+  - throttling writes to at most once per interval
+    (for example, only updating if the existing ``last_used_at``
+    is older than a few minutes)
+  - writing out-of-band, for example via a task queue,
+    instead of inline in the request path
+  - leaving it disabled (the default) and relying
+    on application-level logging or analytics instead
+
+
+Choosing a transport
+---------------------
+
+Opaque tokens can be sent by clients in three ways.
+Pick the transport that matches your client.
+
+Header
+~~~~~~
 
 .. code-block:: text
 
   GET /api/thing HTTP/1.1
   X-API-Token: abc123
 
+Classes: :class:`~dmr.security.token.HeaderTokenSyncAuth` /
+:class:`~dmr.security.token.HeaderTokenAsyncAuth`.
+
+By default, header auth expects ``X-API-Token: <raw_token>``.
+You can customize the header name and prefix to match
+other conventions, for example:
+
+.. code-block:: python
+
+  # DRF-compatible token auth: Authorization: Token <raw_token>
+  HeaderTokenSyncAuth(header_name='Authorization', prefix='Token')
+
+  # Bearer-style auth: Authorization: Bearer <raw_token>
+  HeaderTokenSyncAuth(header_name='Authorization', prefix='Bearer')
+
+Cookie
+~~~~~~
+
 .. code-block:: text
 
   GET /api/thing HTTP/1.1
   Cookie: token=abc123
 
-Use these auth classes for each transport:
-
-- Query param: :class:`~dmr.security.token.QueryTokenSyncAuth` /
-  :class:`~dmr.security.token.QueryTokenAsyncAuth`
-- Header: :class:`~dmr.security.token.HeaderTokenSyncAuth` /
-  :class:`~dmr.security.token.HeaderTokenAsyncAuth`
-- Cookie: :class:`~dmr.security.token.CookieTokenSyncAuth` /
-  :class:`~dmr.security.token.CookieTokenAsyncAuth`
-
-By default, header auth expects:
-
-- ``X-API-Token: <raw_token>``
-
-You can customize behavior per auth instance,
-for example to support ``Authorization`` header styles:
-
-- ``HeaderTokenSyncAuth(header_name='Authorization', prefix='Token')``
-- ``HeaderTokenSyncAuth(header_name='Authorization', prefix='Bearer')``
-
-.. warning::
-
-  Query param auth leaks tokens into logs, browser history,
-  and ``Referer`` headers. Prefer header-based auth.
+Classes: :class:`~dmr.security.token.CookieTokenSyncAuth` /
+:class:`~dmr.security.token.CookieTokenAsyncAuth`.
 
 .. warning::
 
   Cookie auth is CSRF-sensitive in browser-facing contexts.
   Ensure ``django.middleware.csrf.CsrfViewMiddleware`` is enabled.
+
+Query parameter
+~~~~~~~~~~~~~~~~
+
+.. code-block:: text
+
+  GET /api/thing?token=abc123
+
+Classes: :class:`~dmr.security.token.QueryTokenSyncAuth` /
+:class:`~dmr.security.token.QueryTokenAsyncAuth`.
+
+.. warning::
+
+  Query param auth leaks tokens into server logs, browser history,
+  and ``Referer`` headers. Prefer header-based auth whenever possible.
 
 
 API Reference
@@ -145,8 +256,13 @@ API Reference
 
 .. autofunction:: dmr.security.token.request_token
 
-.. autoclass:: dmr.security.token.models.TokenManager
-  :members:
+.. autofunction:: dmr.security.token.logic.token_create
+
+.. autofunction:: dmr.security.token.logic.token_acreate
+
+.. autofunction:: dmr.security.token.logic.token_revoke
+
+.. autofunction:: dmr.security.token.logic.token_arevoke
 
 .. autoclass:: dmr.security.token.models.Token
   :members:
