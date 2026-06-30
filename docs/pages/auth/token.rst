@@ -41,7 +41,7 @@ Token lifecycle
 ---------------
 
 Tokens are issued and revoked via dedicated helper functions
-from :mod:`dmr.security.token.logic`:
+from ``dmr.security.token.logic``:
 
 - :func:`~dmr.security.token.logic.token_create`
 - :func:`~dmr.security.token.logic.token_acreate`
@@ -55,10 +55,10 @@ the raw token is returned exactly once and never persisted.
 :class:`~dmr.security.token.models.Token` has two
 :class:`~django.db.models.DateTimeField` fields that gate validity:
 
-- :attr:`~dmr.security.token.models.Token.expires_at` — set once,
+- ``expires_at`` — set once,
   at creation
-- :attr:`~dmr.security.token.models.Token.revoked_at` — ``None``
-  until :meth:`~dmr.security.token.models.Token.revoke` is called
+- ``revoked_at`` — ``None``
+  until :func:`~dmr.security.token.logic.token_revoke` is called
 
 On each authenticated request, the auth backend:
 
@@ -66,7 +66,7 @@ On each authenticated request, the auth backend:
    If no row matches, authentication fails with a ``401``
 2. Checks that the token is still active (neither revoked nor expired)
 3. Checks that the associated user account is still active
-   (:attr:`~django.contrib.auth.models.AbstractBaseUser.is_active`)
+    (``is_active``)
 
 If any check fails, authentication fails with a ``401``
 and no token state is changed.
@@ -114,17 +114,17 @@ for example from a Django shell:
   If you want to issue tokens from an HTTP endpoint, for example
   a "generate API key" button in a dashboard, gate it behind
   an auth method other than the token being issued.
-  :class:`~dmr.security.django_session.DjangoSessionSyncAuth`
+  :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
   is a common choice, since the user already has a session
   from logging in.
 
 Revoking a token
 ~~~~~~~~~~~~~~~~
 
-Tokens can also be revoked directly from the model instance:
+Tokens can be revoked via helper functions:
 
-- :meth:`~dmr.security.token.models.Token.revoke`
-- :meth:`~dmr.security.token.models.Token.arevoke`
+- :func:`~dmr.security.token.logic.token_revoke`
+- :func:`~dmr.security.token.logic.token_arevoke`
 
 .. literalinclude:: /examples/auth/token/revoke_token.py
   :caption: revoke_token.py
