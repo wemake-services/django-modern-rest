@@ -40,10 +40,11 @@ class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
 
     .. note::
 
-        By default every successful authentication performs an extra
-        ``UPDATE`` to persist ``last_used_at``.  Pass
-        ``update_last_used=False`` to skip this write for high-traffic
-        endpoints where tracking last-use is not required.
+        ``update_last_used`` is opt-in and defaults to ``False``.
+        Pass ``update_last_used=True`` to persist ``last_used_at``
+        on every successful authentication. This adds an extra
+        ``UPDATE`` per request, so only enable it where last-use
+        tracking is actually needed.
     """
 
     __slots__ = (
@@ -55,7 +56,7 @@ class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
         self,
         *,
         security_scheme_name: str = 'token',
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         self.security_scheme_name = security_scheme_name
         self.update_last_used = update_last_used
