@@ -23,4 +23,5 @@ class IssueTokenController(Controller[PydanticSerializer]):
         # In production, include token.pk, token.name, token.expires_at,
         # and raw_token in a typed response model.
 
+
 # openapi: {"controller": "IssueTokenController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
