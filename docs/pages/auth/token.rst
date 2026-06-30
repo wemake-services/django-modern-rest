@@ -132,6 +132,26 @@ Tokens can also be revoked directly from the model instance:
   :language: python
 
 
+Django admin
+~~~~~~~~~~~~
+
+When ``'dmr.security.token'`` is in ``INSTALLED_APPS``, tokens are
+accessible from the Django admin for viewing, searching, filtering,
+and revocation.
+
+.. note::
+
+  Token creation is intentionally disabled in the admin.
+  :func:`~dmr.security.token.logic.token_create` returns the raw
+  token exactly once and an admin form has no way to surface
+  that value. Use :func:`~dmr.security.token.logic.token_create`
+  directly to issue tokens instead.
+
+Active tokens can be revoked individually from the change form,
+or in bulk using the **Revoke selected tokens** action from the
+change list.
+
+
 .. _tracking-last-use:
 
 Tracking last use
