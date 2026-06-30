@@ -1,3 +1,5 @@
+from typing import Final
+
 from django.http import HttpRequest
 from typing_extensions import override
 
@@ -7,7 +9,7 @@ from dmr.security.token.auth.base import (
     _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
 )
 
-_AUTH_DESCRIPTION = 'Opaque token authentication'
+_AUTH_DESCRIPTION: Final = 'Opaque token authentication'
 
 
 def _raw_token_from_header(

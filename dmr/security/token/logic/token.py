@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from django.conf import settings
 from django.utils.crypto import salted_hmac
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
     from dmr.security.token.models import Token
 
-_RAW_TOKEN_SIZE = 32
+_RAW_TOKEN_SIZE: Final = 32
 
 
 def token_hash(raw_token: str) -> str:
