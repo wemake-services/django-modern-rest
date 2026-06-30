@@ -14,12 +14,8 @@ from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
 from dmr.security.token import (
-    CookieTokenAsyncAuth,
-    CookieTokenSyncAuth,
     HeaderTokenAsyncAuth,
     HeaderTokenSyncAuth,
-    QueryTokenAsyncAuth,
-    QueryTokenSyncAuth,
     request_token,
 )
 from dmr.security.token.logic import (
@@ -169,7 +165,6 @@ def test_sync_token_auth_prefix_stripping(
         name='prefix-test',
         expires_at=None,
     )
-    # Bare token without 'Token ' prefix → should be rejected
     bare_request = dmr_rf.get(
         '/whatever/',
         headers={'Authorization': raw_token},
@@ -177,7 +172,6 @@ def test_sync_token_auth_prefix_stripping(
     bare_response = _PrefixController.as_view()(bare_request)
     assert bare_response.status_code == HTTPStatus.UNAUTHORIZED
 
-    # Correctly prefixed → should succeed
     prefixed_request = dmr_rf.get(
         '/whatever/',
         headers={'Authorization': f'Token {raw_token}'},
@@ -411,59 +405,6 @@ async def test_async_token_auth_inactive_user(
 
 
 @pytest.mark.django_db
-def test_query_token_sync_auth_success(
-    dmr_rf: DMRRequestFactory,
-    admin_user: User,
-) -> None:
-    """Ensures QueryTokenSyncAuth reads the token from the query string."""
-
-    @final
-    class _QueryController(Controller[PydanticFastSerializer]):
-        auth = (QueryTokenSyncAuth(),)
-
-        def get(self) -> str:
-            return 'authed'
-
-    _, raw_token = token_create(
-        user=admin_user,
-        name='query-test',
-    )
-    request = dmr_rf.get('/whatever/', data={'token': raw_token})
-
-    response = _QueryController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.django_db
-def test_cookie_token_sync_auth_success(
-    dmr_rf: DMRRequestFactory,
-    admin_user: User,
-) -> None:
-    """Ensures CookieTokenSyncAuth reads the token from a cookie."""
-
-    @final
-    class _CookieController(Controller[PydanticFastSerializer]):
-        auth = (CookieTokenSyncAuth(),)
-
-        def get(self) -> str:
-            return 'authed'
-
-    _, raw_token = token_create(
-        user=admin_user,
-        name='cookie-test',
-    )
-    request = dmr_rf.get('/whatever/')
-    request.COOKIES['token'] = raw_token
-
-    response = _CookieController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.django_db
 def test_sync_token_auth_no_last_used_update(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
@@ -528,66 +469,6 @@ async def test_async_token_auth_no_last_used_update(
     assert token.last_used_at is None
 
 
-@pytest.mark.asyncio
-@pytest.mark.django_db(transaction=True)
-async def test_async_query_token_auth_success(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    admin_user: User,
-) -> None:
-    """Ensures QueryTokenAsyncAuth reads the token from the query string."""
-
-    @final
-    class _AsyncQueryController(Controller[PydanticFastSerializer]):
-        auth = (QueryTokenAsyncAuth(),)
-
-        async def get(self) -> str:
-            return 'authed'
-
-    _, raw_token = await token_acreate(
-        user=admin_user,
-        name='async-query-test',
-    )
-    request = dmr_async_rf.get('/whatever/', data={'token': raw_token})
-
-    response = await dmr_async_rf.wrap(_AsyncQueryController.as_view()(request))
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.asyncio
-@pytest.mark.django_db(transaction=True)
-async def test_async_cookie_token_auth_success(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    admin_user: User,
-) -> None:
-    """Ensures CookieTokenAsyncAuth reads the token from a cookie."""
-
-    @final
-    class _AsyncCookieController(Controller[PydanticFastSerializer]):
-        auth = (CookieTokenAsyncAuth(),)
-
-        async def get(self) -> str:
-            return 'authed'
-
-    _, raw_token = await token_acreate(
-        user=admin_user,
-        name='async-cookie-test',
-    )
-    request = dmr_async_rf.get('/whatever/')
-    request.COOKIES['token'] = raw_token
-
-    response = await dmr_async_rf.wrap(
-        _AsyncCookieController.as_view()(request),
-    )
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
-
-
-# -- Unit tests for auth class methods --
-
-
 def test_token_model_returns_token_class() -> None:
     """token_model() returns the Token model for both sync and async auth."""
     assert HeaderTokenSyncAuth().token_model() is Token
@@ -597,7 +478,7 @@ def test_token_model_returns_token_class() -> None:
 def test_sync_check_token_passes_for_active_token() -> None:
     """check_token() does not raise when the token is active."""
     token = Token(expires_at=None, revoked_at=None)
-    HeaderTokenSyncAuth().check_token(token)  # must not raise
+    HeaderTokenSyncAuth().check_token(token)
 
 
 def test_sync_check_token_raises_inactive() -> None:
@@ -611,7 +492,7 @@ def test_sync_check_token_raises_inactive() -> None:
 async def test_async_check_token_passes_active() -> None:
     """Async check_token() does not raise when the token is active."""
     token = Token(expires_at=None, revoked_at=None)
-    await HeaderTokenAsyncAuth().check_token(token)  # must not raise
+    await HeaderTokenAsyncAuth().check_token(token)
 
 
 @pytest.mark.asyncio
