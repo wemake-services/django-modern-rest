@@ -112,9 +112,14 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
         """Look up and validate the token from the DB."""
         model = self.token_model()
         hashed_token = token_hash(raw_token)
-        token = model.objects.select_related('user').filter(
-            token_hash=hashed_token,
-        ).first()
+        token = (
+            model.objects
+            .select_related('user')
+            .filter(
+                token_hash=hashed_token,
+            )
+            .first()
+        )
         if token is None:
             raise NotAuthenticatedError
         return token
@@ -190,9 +195,14 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
         """Look up and validate the token from the DB."""
         model = self.token_model()
         hashed_token = token_hash(raw_token)
-        token = await model.objects.select_related('user').filter(
-            token_hash=hashed_token,
-        ).afirst()
+        token = (
+            await model.objects
+            .select_related('user')
+            .filter(
+                token_hash=hashed_token,
+            )
+            .afirst()
+        )
         if token is None:
             raise NotAuthenticatedError
         return token
