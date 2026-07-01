@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, override
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+from typing_extensions import override
 
 from django.contrib import admin
 from django.db.models import Model
