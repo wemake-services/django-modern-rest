@@ -1,4 +1,5 @@
 import dataclasses
+import datetime as dt
 from collections.abc import Sequence
 from typing import Any, ClassVar, cast
 
@@ -33,6 +34,7 @@ class _SettingsModel(SettingsDict, total=False):
     responses: Sequence[Any]  # type: ignore[misc]
     openapi_config: Any  # type: ignore[misc]
     global_error_handler: Any  # type: ignore[misc]
+    auth_token_default_expiry: Any  # type: ignore[misc]
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -80,12 +82,19 @@ class SettingsValidator:
             raise EndpointMetadataError('Settings validation failed') from exc
         return cast('_SettingsModel', settings)
 
-    def _validate_types(  # noqa: C901, WPS231, WPS238
+    def _validate_types(
         self,
         settings: _SettingsModel,
     ) -> None:
         # Some types are not compatible with pydantic / msgspec validation.
         # So, we validate them by hands.
+        self._validate_sequence_types(settings)
+        self._validate_scalar_types(settings)
+
+    def _validate_sequence_types(  # noqa: WPS231, WPS238
+        self,
+        settings: _SettingsModel,
+    ) -> None:
         if not all(
             isinstance(parser, Parser) for parser in settings.get('parsers', [])
         ):
@@ -137,6 +146,10 @@ class SettingsValidator:
                 'Settings.responses must all be ResponseSpec instances',
             )
 
+    def _validate_scalar_types(
+        self,
+        settings: _SettingsModel,
+    ) -> None:
         openapi_config = settings.get('openapi_config', EMPTY)
         if openapi_config is not EMPTY and not isinstance(
             openapi_config,
@@ -153,4 +166,19 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.global_error_handler must be a string or callable',
+            )
+
+        auth_token_default_expiry = settings.get(
+            'auth_token_default_expiry',
+            EMPTY,
+        )
+        if auth_token_default_expiry is not EMPTY and not (
+            auth_token_default_expiry is None
+            or isinstance(auth_token_default_expiry, dt.timedelta)
+        ):
+            raise EndpointMetadataError(
+                (
+                    'Settings.auth_token_default_expiry must be '
+                    'datetime.timedelta or None'
+                ),
             )
