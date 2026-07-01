@@ -1,7 +1,6 @@
 import datetime as dt
 from typing import TYPE_CHECKING, Self
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from typing_extensions import override
 
@@ -113,12 +112,11 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
         """Look up and validate the token from the DB."""
         model = self.token_model()
         hashed_token = token_hash(raw_token)
-        try:
-            token = model.objects.select_related('user').get(
-                token_hash=hashed_token,
-            )
-        except ObjectDoesNotExist:
-            raise NotAuthenticatedError from None
+        token = model.objects.select_related('user').filter(
+            token_hash=hashed_token,
+        ).first()
+        if token is None:
+            raise NotAuthenticatedError
         return token
 
     def check_token(self, token: 'Token') -> None:
@@ -192,12 +190,11 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
         """Look up and validate the token from the DB."""
         model = self.token_model()
         hashed_token = token_hash(raw_token)
-        try:
-            token = await model.objects.select_related('user').aget(
-                token_hash=hashed_token,
-            )
-        except ObjectDoesNotExist:
-            raise NotAuthenticatedError from None
+        token = await model.objects.select_related('user').filter(
+            token_hash=hashed_token,
+        ).afirst()
+        if token is None:
+            raise NotAuthenticatedError
         return token
 
     async def check_token(self, token: 'Token') -> None:
