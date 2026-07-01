@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Final
 
 from django.conf import settings
 from django.utils.crypto import salted_hmac
+from typing_extensions import Sentinel
 
 from dmr.types import EMPTY
 
@@ -29,7 +30,7 @@ def token_create(
     *,
     user: 'AbstractBaseUser',
     name: str,
-    expires_at: object = EMPTY,
+    expires_at: dt.datetime | Sentinel | None = EMPTY,
 ) -> 'tuple[Token, str]':
     """Create a new token, returning ``(Token instance, raw token string)``."""
     from dmr.security.token.models import Token  # noqa: PLC0415
@@ -61,7 +62,7 @@ async def token_acreate(
     *,
     user: 'AbstractBaseUser',
     name: str,
-    expires_at: object = EMPTY,
+    expires_at: dt.datetime | Sentinel | None = EMPTY,
 ) -> 'tuple[Token, str]':
     """Async version of :func:`token_create`."""
     from dmr.security.token.models import Token  # noqa: PLC0415
