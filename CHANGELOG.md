@@ -93,6 +93,7 @@ to include ``as_attachment=True`` parameter.
   Emits `UnsafeCacheBackendWarning` by default,
   raises `ImproperlyConfigured` when explicitly set to `False`, #978
 - Added `--no-ensure-ascii` flag to `dmr_export_schema` management command
+- Added `DjangoCursorPaginator`, our own implementation of cursor pagination, #984
 
 ### Bugfixes
 
