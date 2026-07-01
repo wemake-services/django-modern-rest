@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from typing_extensions import override
-
 from django.contrib import admin
 from django.db.models import Model
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
+from typing_extensions import override
 
 from dmr.security.token.logic import token_is_active, token_revoke
 from dmr.security.token.models import Token
