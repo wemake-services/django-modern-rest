@@ -18,10 +18,12 @@ Requiring auth
 
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
-We provide several classes to require token auth in your API:
+We provide several classes to require token auth in your API
+for both sync and async endpoints:
 
-- :class:`~dmr.security.token.HeaderTokenSyncAuth` for sync views
-- :class:`~dmr.security.token.HeaderTokenAsyncAuth` for async views
+- :class:`~dmr.security.token.HeaderTokenSyncAuth` and
+  :class:`~dmr.security.token.HeaderTokenAsyncAuth`
+  for header-based auth
 - :class:`~dmr.security.token.QueryTokenSyncAuth` and
   :class:`~dmr.security.token.QueryTokenAsyncAuth`
   for query-param based auth
@@ -40,13 +42,13 @@ both ``self.request.user`` and the current token:
 Token lifecycle
 ---------------
 
-Tokens are issued and revoked via dedicated helper functions
-from ``dmr.security.token.logic``:
+:class:`dmr.security.token.models.Token` instances
+are issued and revoked via dedicated functions sync and async functions:
 
-- :func:`~dmr.security.token.logic.token_create`
-- :func:`~dmr.security.token.logic.token_acreate`
-- :func:`~dmr.security.token.logic.token_revoke`
-- :func:`~dmr.security.token.logic.token_arevoke`
+- :func:`dmr.security.token.logic.token_create` /
+  :func:`dmr.security.token.logic.token_acreate` to create tokens
+- :func:`dmr.security.token.logic.token_revoke` /
+  :func:`dmr.security.token.logic.token_arevoke` to revoke tokens
 
 Creation helpers return ``(token_instance, raw_token)``.
 Only the token hash is stored in the database,
