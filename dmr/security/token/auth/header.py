@@ -39,6 +39,24 @@ class _BaseHeaderTokenAuth:
             ),
         }
 
+    def _raw_token_from_header(
+        self,
+        request: HttpRequest,
+        *,
+        header_name: str,
+        prefix: str,
+    ) -> str | None:
+        """Read token from header and strip expected prefix when configured."""
+        header_value = request.headers.get(header_name)
+        if header_value is None:
+            return None
+        if prefix:
+            expected = f'{prefix} '
+            if not header_value.startswith(expected):
+                return None
+            return header_value[len(expected) :]
+        return header_value
+
 
 class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, _BaseTokenSyncAuth):
     """Sync opaque token auth; reads from ``X-API-Token`` by default."""
@@ -97,7 +115,7 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, _BaseTokenSyncAuth):
     @override
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from the request header, stripping any prefix."""
-        return _raw_token_from_header(
+        return self._raw_token_from_header(
             request,
             header_name=self.header_name,
             prefix=self.prefix,
@@ -128,26 +146,8 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, _BaseTokenAsyncAuth):
     @override
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from the request header, stripping any prefix."""
-        return _raw_token_from_header(
+        return self._raw_token_from_header(
             request,
             header_name=self.header_name,
             prefix=self.prefix,
         )
-
-
-def _raw_token_from_header(
-    request: HttpRequest,
-    *,
-    header_name: str,
-    prefix: str,
-) -> str | None:
-    """Read token from a header and strip expected prefix when configured."""
-    header_value = request.headers.get(header_name)
-    if header_value is None:
-        return None
-    if prefix:
-        expected = f'{prefix} '
-        if not header_value.startswith(expected):
-            return None
-        return header_value[len(expected) :]
-    return header_value
