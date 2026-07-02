@@ -181,7 +181,7 @@ going back to the less specific:
 
     Set :data:`~dmr.settings.Settings.parsers`
     and :data:`~dmr.settings.Settings.renderers`
-    to controll the negotiation process.
+    to control the negotiation process.
 
     .. literalinclude:: /examples/negotiation/settings.py
       :caption: settings.py
