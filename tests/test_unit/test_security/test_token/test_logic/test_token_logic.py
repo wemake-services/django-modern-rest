@@ -146,8 +146,9 @@ def test_token_revoke(admin_user: User) -> None:
     """Test that revoking a token marks it as revoked."""
     token, _ = token_create(user=admin_user, name='to-revoke')
 
-    token_revoke(token)
+    updated_token = token_revoke(token)
 
+    assert updated_token is token
     assert token.revoked_at is not None
     assert not token_is_active(token)
 
@@ -161,8 +162,9 @@ async def test_token_arevoke(admin_user: User) -> None:
         name='to-arevoke',
     )
 
-    await token_arevoke(token)
+    updated_token = await token_arevoke(token)
 
+    assert updated_token is token
     assert token.revoked_at is not None
     assert not token_is_active(token)
 

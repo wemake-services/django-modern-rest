@@ -18,6 +18,13 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Features
+
+- Adds "Opaque Token" auth backend, #1051
+
+
 ## Version 0.11.0 (2026-06-27)
 
 In this release we significantly improved the DX of defining common

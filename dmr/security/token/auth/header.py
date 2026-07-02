@@ -12,25 +12,35 @@ from dmr.security.token.auth.base import (
 _AUTH_DESCRIPTION: Final = 'Opaque token authentication'
 
 
-def _raw_token_from_header(
-    request: HttpRequest,
-    *,
-    header_name: str,
-    prefix: str,
-) -> str | None:
-    """Read token from a header and strip expected prefix when configured."""
-    header_value = request.headers.get(header_name)
-    if header_value is None:
-        return None
-    if prefix:
-        expected = f'{prefix} '
-        if not header_value.startswith(expected):
-            return None
-        return header_value[len(expected) :]
-    return header_value
+class _BaseHeaderTokenAuth:
+    __slots__ = ()
+
+    header_name: str
+    prefix: str
+    security_scheme_name: str
+
+    @property
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
+        if self.header_name == 'Authorization':
+            return {
+                self.security_scheme_name: SecurityScheme(
+                    type='http',
+                    scheme='bearer',
+                    description=_AUTH_DESCRIPTION,
+                ),
+            }
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=self.header_name,
+                security_scheme_in='header',
+                description=_AUTH_DESCRIPTION,
+            ),
+        }
 
 
-class HeaderTokenSyncAuth(_BaseTokenSyncAuth):
+class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, _BaseTokenSyncAuth):
     """Sync opaque token auth; reads from ``X-API-Token`` by default."""
 
     __slots__ = ('header_name', 'prefix')
@@ -84,29 +94,6 @@ class HeaderTokenSyncAuth(_BaseTokenSyncAuth):
         self.header_name = header_name
         self.prefix = prefix
 
-    @property
-    @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        if self.header_name == 'Authorization':
-            # RFC 7235 reserves the Authorization header for the `http` scheme.
-            # Using `apiKey` + `name: Authorization` is invalid in OpenAPI 3.x.
-            return {
-                self.security_scheme_name: SecurityScheme(
-                    type='http',
-                    scheme='bearer',
-                    description=_AUTH_DESCRIPTION,
-                ),
-            }
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.header_name,
-                security_scheme_in='header',
-                description=_AUTH_DESCRIPTION,
-            ),
-        }
-
     @override
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from the request header, stripping any prefix."""
@@ -117,7 +104,7 @@ class HeaderTokenSyncAuth(_BaseTokenSyncAuth):
         )
 
 
-class HeaderTokenAsyncAuth(_BaseTokenAsyncAuth):
+class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, _BaseTokenAsyncAuth):
     """Async opaque token auth; reads from ``X-API-Token`` by default."""
 
     __slots__ = ('header_name', 'prefix')
@@ -138,27 +125,6 @@ class HeaderTokenAsyncAuth(_BaseTokenAsyncAuth):
         self.header_name = header_name
         self.prefix = prefix
 
-    @property
-    @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        if self.header_name == 'Authorization':
-            return {
-                self.security_scheme_name: SecurityScheme(
-                    type='http',
-                    scheme='bearer',
-                    description=_AUTH_DESCRIPTION,
-                ),
-            }
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.header_name,
-                security_scheme_in='header',
-                description=_AUTH_DESCRIPTION,
-            ),
-        }
-
     @override
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from the request header, stripping any prefix."""
@@ -167,3 +133,21 @@ class HeaderTokenAsyncAuth(_BaseTokenAsyncAuth):
             header_name=self.header_name,
             prefix=self.prefix,
         )
+
+
+def _raw_token_from_header(
+    request: HttpRequest,
+    *,
+    header_name: str,
+    prefix: str,
+) -> str | None:
+    """Read token from a header and strip expected prefix when configured."""
+    header_value = request.headers.get(header_name)
+    if header_value is None:
+        return None
+    if prefix:
+        expected = f'{prefix} '
+        if not header_value.startswith(expected):
+            return None
+        return header_value[len(expected) :]
+    return header_value

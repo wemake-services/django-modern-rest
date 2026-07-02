@@ -24,7 +24,53 @@ if TYPE_CHECKING:
 _DEFAULT_PARAM: Final = 'token'
 
 
-class CookieTokenSyncAuth(_BaseTokenSyncAuth, ResponseSpecProvider):
+class _BaseCookieTokenAuth(ResponseSpecProvider):
+    __slots__ = ()
+
+    security_scheme_name: str
+    cookie_name: str
+
+    @property
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=self.cookie_name,
+                security_scheme_in='cookie',
+                description='Opaque token authentication via cookie',
+            ),
+        }
+
+    @override
+    def provide_response_specs(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
+        """Declare extra responses for cookie auth + CSRF checks."""
+        return [
+            *self._add_new_response(
+                ResponseSpec(
+                    controller_cls.error_model,
+                    status_code=NotAuthenticatedError.status_code,
+                    description='Raised when auth was not successful',
+                ),
+                existing_responses,
+            ),
+            *self._add_new_response(
+                ResponseSpec(
+                    controller_cls.error_model,
+                    status_code=HTTPStatus.FORBIDDEN,
+                    description='Raised when CSRF check failed',
+                ),
+                existing_responses,
+            ),
+        ]
+
+
+class CookieTokenSyncAuth(_BaseCookieTokenAuth, _BaseTokenSyncAuth):
     """
     Sync opaque token auth reading from a cookie.
 
@@ -66,53 +112,13 @@ class CookieTokenSyncAuth(_BaseTokenSyncAuth, ResponseSpecProvider):
         ensure_csrf(controller)
         return auth
 
-    @property
-    @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.cookie_name,
-                security_scheme_in='cookie',
-                description='Opaque token authentication via cookie',
-            ),
-        }
-
     @override
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from a cookie."""
         return request.COOKIES.get(self.cookie_name)
 
-    @override
-    def provide_response_specs(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-        existing_responses: Mapping[HTTPStatus, ResponseSpec],
-    ) -> list[ResponseSpec]:
-        """Declare extra responses for cookie auth + CSRF checks."""
-        return [
-            *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=NotAuthenticatedError.status_code,
-                    description='Raised when auth was not successful',
-                ),
-                existing_responses,
-            ),
-            *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=HTTPStatus.FORBIDDEN,
-                    description='Raised when CSRF check failed',
-                ),
-                existing_responses,
-            ),
-        ]
 
-
-class CookieTokenAsyncAuth(_BaseTokenAsyncAuth, ResponseSpecProvider):
+class CookieTokenAsyncAuth(_BaseCookieTokenAuth, _BaseTokenAsyncAuth):
     """
     Async opaque token auth reading from a cookie.
 
@@ -154,47 +160,7 @@ class CookieTokenAsyncAuth(_BaseTokenAsyncAuth, ResponseSpecProvider):
         ensure_csrf(controller)
         return auth
 
-    @property
-    @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.cookie_name,
-                security_scheme_in='cookie',
-                description='Opaque token authentication via cookie',
-            ),
-        }
-
     @override
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from a cookie."""
         return request.COOKIES.get(self.cookie_name)
-
-    @override
-    def provide_response_specs(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-        existing_responses: Mapping[HTTPStatus, ResponseSpec],
-    ) -> list[ResponseSpec]:
-        """Declare extra responses for cookie auth + CSRF checks."""
-        return [
-            *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=NotAuthenticatedError.status_code,
-                    description='Raised when auth was not successful',
-                ),
-                existing_responses,
-            ),
-            *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=HTTPStatus.FORBIDDEN,
-                    description='Raised when CSRF check failed',
-                ),
-                existing_responses,
-            ),
-        ]
