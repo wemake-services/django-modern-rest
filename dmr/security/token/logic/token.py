@@ -106,17 +106,19 @@ def token_revoke(
     token: 'Token',
     *,
     at: dt.datetime | None = None,
-) -> None:
+) -> 'Token':
     """Mark this token as revoked."""
     token.revoked_at = at or dt.datetime.now(dt.UTC)
     token.save(update_fields=['revoked_at', 'updated_at'])
+    return token
 
 
 async def token_arevoke(
     token: 'Token',
     *,
     at: dt.datetime | None = None,
-) -> None:
+) -> 'Token':
     """Async version of :func:`token_revoke`."""
     token.revoked_at = at or dt.datetime.now(dt.UTC)
     await token.asave(update_fields=['revoked_at', 'updated_at'])
+    return token
