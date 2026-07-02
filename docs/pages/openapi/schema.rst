@@ -87,7 +87,8 @@ First non ``None`` value wins:
 
     .. tab:: per settings
 
-      Disable semantic responses globally:
+      Disable semantic responses globally
+      via :data:`~dmr.settings.Settings.semantic_responses` setting.
 
       .. code-block:: python
         :caption: settings.py

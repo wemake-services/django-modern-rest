@@ -67,6 +67,9 @@ There are 4 ways to provide auth classes for an endpoint:
 
   .. tab:: per settings
 
+    Set :data:`~dmr.settings.Settings.auth` setting
+    to enable auth for all controllers.
+
     .. code-block:: python
       :caption: settings.py
       :linenos:
@@ -76,30 +79,30 @@ There are 4 ways to provide auth classes for an endpoint:
 
       >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
 
-When your project mixes sync and async endpoints,
-use :class:`~dmr.security.SyncOrAsyncAuth` in settings:
+    When your project mixes sync and async endpoints,
+    use :class:`~dmr.security.SyncOrAsyncAuth` in settings:
 
-.. code-block:: python
-   :caption: settings.py
+    .. code-block:: python
+      :caption: settings.py
 
-   >>> from dmr.settings import Settings
-   >>> from dmr.security import SyncOrAsyncAuth
-   >>> from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
+      >>> from dmr.settings import Settings
+      >>> from dmr.security import SyncOrAsyncAuth
+      >>> from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
 
-   >>> DMR_SETTINGS = {
-   ...     Settings.auth: [
-   ...         SyncOrAsyncAuth(
-   ...             HttpBasicSyncAuth(),
-   ...             HttpBasicAsyncAuth(),
-   ...         ),
-   ...     ],
-   ... }
+      >>> DMR_SETTINGS = {
+      ...     Settings.auth: [
+      ...         SyncOrAsyncAuth(
+      ...             HttpBasicSyncAuth(),
+      ...             HttpBasicAsyncAuth(),
+      ...         ),
+      ...     ],
+      ... }
 
-.. note::
+    .. note::
 
-   :class:`~dmr.security.SyncOrAsyncAuth` is only allowed
-   in ``DMR_SETTINGS``. Using it on a controller or endpoint
-   raises :exc:`~dmr.exceptions.EndpointMetadataError`.
+      :class:`~dmr.security.SyncOrAsyncAuth` is only allowed
+      in ``DMR_SETTINGS``. Using it on a controller or endpoint
+      raises :exc:`~dmr.exceptions.EndpointMetadataError`.
 
 Providing several auth instances means that at least one of them must succeed.
 
