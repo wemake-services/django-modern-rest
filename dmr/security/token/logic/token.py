@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 
 _RAW_TOKEN_SIZE: Final = 32
 
+# TODO(blocking): all these functions break abstraction on the auth class.
+# they work with the specific `Token` model, not `Auth.token_model()` type.
+# We need to refactor this before shipping a new release.
+
 
 def token_hash(raw_token: str) -> str:
     """Return HMAC-SHA256 hex digest of raw_token."""

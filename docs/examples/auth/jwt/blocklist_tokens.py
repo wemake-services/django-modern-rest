@@ -19,7 +19,7 @@ class APIController(Controller[PydanticSerializer]):
     auth = (jwt_blocklist_auth,)
 
     async def get(self) -> str:
-        # Disable tokens for users with old domain emails
+        # Disable tokens for users with old domain emails:
         if self.request.user.email.endswith('@old-domain.com'):
             assert request_auth(self.request) is jwt_blocklist_auth
             await jwt_blocklist_auth.blocklist(
