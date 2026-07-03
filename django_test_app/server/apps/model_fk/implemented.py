@@ -22,7 +22,7 @@ class HasContainer:
         self._container = self._create_container()
 
     def resolve(self, thing: type[_ItemT]) -> _ItemT:
-        return self._container.resolve(thing)  # type: ignore[no-any-return]
+        return self._container.resolve(thing)
 
     def _create_container(self) -> punq.Container:
         container = punq.Container()
