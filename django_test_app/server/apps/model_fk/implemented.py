@@ -1,7 +1,6 @@
 from typing import Any, TypeVar
 
-# TODO(sobolevn): release new `punq` version:
-import punq  # type: ignore[import-untyped]
+import punq
 
 from server.apps.model_fk.mappers import RoleMap, TagMap, UserMap
 from server.apps.model_fk.services import (
