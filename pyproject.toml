@@ -113,7 +113,7 @@ integration = [
   "pytest-codspeed>=4.3,<6",
 ]
 dev-and-docs = [
-  "punq>=0.7,<1",
+  "punq>=0.8,<1",
   "redis>=7.4,<9",
 ]
 dev = [
