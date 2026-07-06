@@ -1,94 +1,105 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# Mexican Spanish (es_MX) translation for django-modern-rest.
+# Copyright (C) 2026 THE django-modern-rest authors
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# George Alvarado-Salinas <georgepitcher11@gmail.com>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-27 20:47-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2026-06-27 20:47-0700\n"
+"Last-Translator: George Alvarado-Salinas <georgepitcher11@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: es_MX\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-#: dmr/components.py:54
+
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
 "parameters args={args}"
 msgstr ""
+"La ruta {cls} con field_model={field_model} no permite parámetros de ruta "
+"sin nombre args={args}"
 
-#: dmr/components.py:59
+
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
+"Se intentó analizar archivos con {parser_name}, que no es compatible con el "
+"protocolo SupportsFileParsing"
 
-#: dmr/controller.py:43
+
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
-msgstr ""
+msgstr "El método {method} no está permitido, permitidos: {allowed}"
 
-#: dmr/exceptions.py:10
+
 msgid "Not authenticated"
-msgstr ""
+msgstr "No autenticado"
 
-#: dmr/exceptions.py:11
+
 msgid "Too many requests"
-msgstr ""
+msgstr "Demasiadas solicitudes"
 
-#: dmr/exceptions.py:49
+
 msgid "Internal server error"
-msgstr ""
+msgstr "Error interno del servidor"
 
-#: dmr/internal/django.py:49
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
+"Las solicitudes HTTP con el tipo de contenido "
+"'application/x-www-form-urlencoded' deben estar codificadas en UTF-8."
 
-#: dmr/internal/negotiation.py:19
+
 #, python-brace-format
 msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
 "{content_type}"
 msgstr ""
+"El renderer negociado {renderer_type} no coincide con el content-type "
+"devuelto {content_type}"
 
-#: dmr/internal/negotiation.py:24
+
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
+"No se puede serializar el cuerpo de la respuesta con los tipos aceptados "
+"{accepted_types}, admitidos={supported}"
 
-#: dmr/negotiation.py:25
+
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
+"No se puede analizar el cuerpo de la solicitud con el content type "
+"{content_type}, esperado={expected}"
 
-#: dmr/security/django_session/auth.py:26
+
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
-msgstr ""
+msgstr "Fallo de CSRF: {reason}"
 
-#: dmr/security/jwt/blocklist/models.py:44
+
 msgid "BlocklistedJWToken"
-msgstr ""
+msgstr "JWToken en lista de bloqueo"
 
-#: dmr/security/jwt/blocklist/models.py:45
+
 msgid "BlocklistedJWTokens"
-msgstr ""
+msgstr "JWTokens en lista de bloqueo"
 
-#: dmr/serializer.py:16
+
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
-msgstr ""
+msgstr "El valor {value} de tipo {type} no es compatible con {target_type}"
