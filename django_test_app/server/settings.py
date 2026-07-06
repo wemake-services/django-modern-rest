@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     # DMR:
     'dmr',
     'dmr.security.jwt.blocklist',
+    'dmr.security.token',
     # Third party:
     'csp',
 ]

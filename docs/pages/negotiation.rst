@@ -179,6 +179,10 @@ going back to the less specific:
 
   .. tab:: per settings
 
+    Set :data:`~dmr.settings.Settings.parsers`
+    and :data:`~dmr.settings.Settings.renderers`
+    to control the negotiation process.
+
     .. literalinclude:: /examples/negotiation/settings.py
       :caption: settings.py
       :language: python
@@ -321,6 +325,9 @@ We support several layers of configuration:
       :linenos:
 
   .. tab:: per settings
+
+    Set :data:`~dmr.settings.Settings.validate_negotiation` setting
+    to disable the content negotiation validation.
 
     .. literalinclude:: /examples/negotiation/validate_negotiation_settings.py
       :caption: settings.py

@@ -246,7 +246,8 @@ Rules:
 
   .. tab:: per settings
 
-    See :data:`~dmr.settings.Settings.validate_events` setting.
+    Use :data:`~dmr.settings.Settings.validate_events` setting
+    to globally disable events validation.
 
     .. code-block:: python
       :caption: settings.py
