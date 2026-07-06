@@ -132,6 +132,7 @@ LANGUAGES = (
     ('en-us', 'English'),
     ('ru-ru', 'Russian'),
     ('kk-kz', 'Kazakh'),
+    ('es-mx', 'Mexican Spanish'),
 )
 
 TIME_ZONE = 'UTC'

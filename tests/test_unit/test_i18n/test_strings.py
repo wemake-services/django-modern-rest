@@ -36,3 +36,20 @@ def test_default_message_resolves(
     """Ensure `default_message` correct resolution and fallback."""
     with override(language_code):
         assert str(exception_cls.default_message) == expected_msg
+
+
+@pytest.mark.parametrize(
+    ('exception_cls', 'expected_msg'),
+    [
+        (InternalServerError, 'Error interno del servidor'),
+        (NotAuthenticatedError, 'No autenticado'),
+    ],
+)
+def test_default_message_resolves_es_mx(
+    *,
+    exception_cls: _ExceptionClass,
+    expected_msg: str,
+) -> None:
+    """Ensure `default_message` resolves to the es-MX translation."""
+    with override('es-mx'):
+        assert str(exception_cls.default_message) == expected_msg
