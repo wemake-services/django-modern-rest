@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, TypeVar
 
 from django.conf import settings
 from django.utils.crypto import salted_hmac
@@ -14,10 +14,7 @@ if TYPE_CHECKING:
     from dmr.security.token.models import Token
 
 _RAW_TOKEN_SIZE: Final = 32
-
-# TODO(blocking): all these functions break abstraction on the auth class.
-# they work with the specific `Token` model, not `Auth.token_model()` type.
-# We need to refactor this before shipping a new release.
+_TokenT = TypeVar('_TokenT', bound='Token')
 
 
 def token_hash(raw_token: str) -> str:
@@ -35,11 +32,13 @@ def token_create(
     user: 'AbstractBaseUser',
     name: str,
     expires_at: dt.datetime | Sentinel | None = EMPTY,
+    token_model: 'type[Token] | None' = None,
 ) -> 'tuple[Token, str]':
     """Create a new token, returning ``(Token instance, raw token string)``."""
     from dmr.security.token.models import Token  # noqa: PLC0415
     from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
+    model = token_model or Token
     resolved_expires_at: dt.datetime | None
     if expires_at is EMPTY:
         default_expiry: dt.timedelta | None = resolve_setting(
@@ -53,7 +52,7 @@ def token_create(
         resolved_expires_at = expires_at  # type: ignore[assignment]
 
     raw_token = secrets.token_urlsafe(_RAW_TOKEN_SIZE)
-    token = Token.objects.create(
+    token = model.objects.create(
         user=user,
         name=name,
         token_hash=token_hash(raw_token),
@@ -67,11 +66,13 @@ async def token_acreate(
     user: 'AbstractBaseUser',
     name: str,
     expires_at: dt.datetime | Sentinel | None = EMPTY,
+    token_model: 'type[Token] | None' = None,
 ) -> 'tuple[Token, str]':
     """Async version of :func:`token_create`."""
     from dmr.security.token.models import Token  # noqa: PLC0415
     from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
+    model = token_model or Token
     resolved_expires_at: dt.datetime | None
     if expires_at is EMPTY:
         default_expiry: dt.timedelta | None = resolve_setting(
@@ -85,7 +86,7 @@ async def token_acreate(
         resolved_expires_at = expires_at  # type: ignore[assignment]
 
     raw_token = secrets.token_urlsafe(_RAW_TOKEN_SIZE)
-    token = await Token.objects.acreate(
+    token = await model.objects.acreate(
         user=user,
         name=name,
         token_hash=token_hash(raw_token),
@@ -107,10 +108,10 @@ def token_is_active(token: 'Token') -> bool:
 
 
 def token_revoke(
-    token: 'Token',
+    token: '_TokenT',
     *,
     at: dt.datetime | None = None,
-) -> 'Token':
+) -> '_TokenT':
     """Mark this token as revoked."""
     token.revoked_at = at or dt.datetime.now(dt.UTC)
     token.save(update_fields=['revoked_at', 'updated_at'])
@@ -118,10 +119,10 @@ def token_revoke(
 
 
 async def token_arevoke(
-    token: 'Token',
+    token: '_TokenT',
     *,
     at: dt.datetime | None = None,
-) -> 'Token':
+) -> '_TokenT':
     """Async version of :func:`token_revoke`."""
     token.revoked_at = at or dt.datetime.now(dt.UTC)
     await token.asave(update_fields=['revoked_at', 'updated_at'])

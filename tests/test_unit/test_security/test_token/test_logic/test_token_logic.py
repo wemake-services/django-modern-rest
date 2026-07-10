@@ -198,3 +198,38 @@ async def test_acreate_token_uses_none_default_expiry(
         name='async-custom-none',
     )
     assert token.expires_at is None
+
+
+@pytest.mark.django_db
+def test_create_token_with_explicit_token_model(admin_user: User) -> None:
+    """Test token_create accepts an explicit token_model and uses it."""
+    token, raw_token = token_create(
+        user=admin_user,
+        name='explicit-model',
+        token_model=Token,
+    )
+
+    assert isinstance(token, Token)
+    assert isinstance(raw_token, str)
+    assert token.user == admin_user
+    assert token.name == 'explicit-model'
+    assert token_is_active(token)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_acreate_token_with_explicit_token_model(
+    admin_user: User,
+) -> None:
+    """token_acreate accepts an explicit token_model and uses it (async)."""
+    token, raw_token = await token_acreate(
+        user=admin_user,
+        name='async-explicit-model',
+        token_model=Token,
+    )
+
+    assert isinstance(token, Token)
+    assert isinstance(raw_token, str)
+    assert token.user == admin_user
+    assert token.name == 'async-explicit-model'
+    assert token_is_active(token)
