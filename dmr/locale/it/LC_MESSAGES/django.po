@@ -1,0 +1,141 @@
+# Italian translations for django-modern-rest.
+# Copyright (C) 2026 django-modern-rest authors
+# This file is distributed under the same license as the django-modern-rest package.
+# Stefano Fusai <stefanofusai@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-modern-rest\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-11 19:25+0200\n"
+"PO-Revision-Date: 2026-07-11 19:25+0200\n"
+"Last-Translator: Stefano Fusai <stefanofusai@gmail.com>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: dmr/components.py:54
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"Il percorso {cls} con field_model={field_model} non consente parametri di "
+"percorso senza nome args={args}"
+
+#: dmr/components.py:59
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"Tentativo di analizzare file con {parser_name}, che non supporta il "
+"protocollo SupportsFileParsing"
+
+#: dmr/controller.py:43
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "Il metodo {method} non è consentito; metodi consentiti: {allowed}"
+
+#: dmr/exceptions.py:10
+msgid "Not authenticated"
+msgstr "Non autenticato"
+
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr "Troppe richieste"
+
+#: dmr/exceptions.py:49
+msgid "Internal server error"
+msgstr "Errore interno del server"
+
+#: dmr/internal/django.py:49
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"Le richieste HTTP con tipo di contenuto 'application/x-www-form-urlencoded' "
+"devono essere codificate in UTF-8."
+
+#: dmr/internal/negotiation.py:19
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"Il renderer negoziato {renderer_type} non corrisponde al tipo di contenuto "
+"restituito {content_type}"
+
+#: dmr/internal/negotiation.py:24
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Impossibile serializzare il corpo della risposta con i tipi accettati "
+"{accepted_types}; tipi supportati: {supported}"
+
+#: dmr/negotiation.py:25
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"Impossibile analizzare il corpo della richiesta con tipo di contenuto "
+"{content_type}; tipo previsto: {expected}"
+
+#: dmr/security/_csrf.py:12
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "Verifica CSRF non riuscita: {reason}"
+
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr "Token JWT bloccato"
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr "Token JWT bloccati"
+
+#: dmr/security/token/models.py:32
+msgid "Name"
+msgstr "Nome"
+
+#: dmr/security/token/models.py:37
+msgid "Token hash"
+msgstr "Hash del token"
+
+#: dmr/security/token/models.py:42
+msgid "Expires at"
+msgstr "Scadenza"
+
+#: dmr/security/token/models.py:47
+msgid "Revoked at"
+msgstr "Data di revoca"
+
+#: dmr/security/token/models.py:52
+msgid "Last used at"
+msgstr "Data dell'ultimo utilizzo"
+
+#: dmr/security/token/models.py:56
+msgid "Created at"
+msgstr "Data di creazione"
+
+#: dmr/security/token/models.py:60
+msgid "Updated at"
+msgstr "Data di aggiornamento"
+
+#: dmr/security/token/models.py:65
+msgid "Token"
+msgstr "Token di autenticazione"
+
+#: dmr/security/token/models.py:66
+msgid "Tokens"
+msgstr "Token di autenticazione"
+
+#: dmr/serializer.py:16
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "Il valore {value} di tipo {type} non è supportato per {target_type}"
