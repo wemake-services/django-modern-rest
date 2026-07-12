@@ -1,0 +1,119 @@
+# Italian translations for django-modern-rest.
+# Copyright (C) 2026 django-modern-rest authors
+# This file is distributed under the same license as the django-modern-rest package.
+# Stefano Fusai <stefanofusai@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-modern-rest\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-12 16:52+0200\n"
+"PO-Revision-Date: 2026-07-11 19:25+0200\n"
+"Last-Translator: Stefano Fusai <stefanofusai@gmail.com>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"Il percorso {cls} con field_model={field_model} non consente parametri di "
+"percorso senza nome args={args}"
+
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"Tentativo di analizzare file con {parser_name}, che non supporta il "
+"protocollo SupportsFileParsing"
+
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "Il metodo {method} non è consentito; metodi consentiti: {allowed}"
+
+msgid "Not authenticated"
+msgstr "Non autenticato"
+
+msgid "Too many requests"
+msgstr "Troppe richieste"
+
+msgid "Internal server error"
+msgstr "Errore interno del server"
+
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"Le richieste HTTP con tipo di contenuto 'application/x-www-form-urlencoded' "
+"devono essere codificate in UTF-8."
+
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"Il renderer negoziato {renderer_type} non corrisponde al tipo di contenuto "
+"restituito {content_type}"
+
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"Impossibile serializzare il corpo della risposta con i tipi accettati "
+"{accepted_types}; tipi supportati: {supported}"
+
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"Impossibile analizzare il corpo della richiesta con tipo di contenuto "
+"{content_type}; tipo previsto: {expected}"
+
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "Verifica CSRF non riuscita: {reason}"
+
+msgid "BlocklistedJWToken"
+msgstr "Token JWT bloccato"
+
+msgid "BlocklistedJWTokens"
+msgstr "Token JWT bloccati"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Token hash"
+msgstr "Hash del token"
+
+msgid "Expires at"
+msgstr "Scadenza"
+
+msgid "Revoked at"
+msgstr "Data di revoca"
+
+msgid "Last used at"
+msgstr "Data dell'ultimo utilizzo"
+
+msgid "Created at"
+msgstr "Data di creazione"
+
+msgid "Updated at"
+msgstr "Data di aggiornamento"
+
+msgid "Token"
+msgstr "Token di autenticazione"
+
+msgid "Tokens"
+msgstr "Token di autenticazione"
+
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "Il valore {value} di tipo {type} non è supportato per {target_type}"
