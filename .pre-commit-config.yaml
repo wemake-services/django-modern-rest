@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 6b63472e72e1a91ed8a2f6d483790dfb644fa1d3  # frozen: 0.37.4
+    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -30,7 +30,7 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56  # frozen: v0.15.20
+    rev: 01a675ea018f2fb714478a5ffb83fcea8374bb06  # frozen: v0.15.21
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
@@ -44,7 +44,7 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: bee27e3a4fd1ea2111cf90ab89cd076c870fce14  # frozen: v1
+    rev: 96d9af6217dc2855210655af7e1ff19d23d4e593  # frozen: v1
     hooks:
       - id: typos
 
