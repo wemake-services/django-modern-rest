@@ -55,12 +55,6 @@ repos:
       additional_dependencies:
         - tomli
 
-  - repo: https://github.com/lycheeverse/lychee
-    rev: "2bba271688c1abb1503097a064e6c3bc1d1b6a9b"  # frozen: v0.24.2
-    hooks:
-      - id: lychee
-        args: ["--config", ".github/lychee.toml"]
-
   - repo: https://github.com/instrumentl/pre-commit-just
     rev: 0340ee8d7f8341d6b9b03e086ab937f7fa38134c  # frozen: v0.2
     hooks:

@@ -1,0 +1,40 @@
+name: lychee
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "**/*.md"
+      - "**/*.rst"
+      - "**/*.py"
+      - "docs/**"
+      - ".github/lychee.toml"
+      - ".github/workflows/lychee.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        persist-credentials: false
+
+    - name: Check links
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+      with:
+        args: --config .github/lychee.toml .
+        fail: true
+        jobSummary: true
