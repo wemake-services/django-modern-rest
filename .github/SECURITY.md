@@ -10,14 +10,14 @@
 3. We update our dependencies regularly, however, we use a cooldown of 7 days
    to limit the chances of a 0 day vulnerability
 4. We check for known CVEs in our dependencies using [`uv audit`](https://docs.astral.sh/uv/reference/cli/#uv-audit)
-   tool and GitHub's [Dependabot security audit](https://docs.github.com/en/code-security/concepts/security-at-scale/auditing-security-alerts)
+   tool and GitHub's [Dependabot security audit](https://docs.github.com/en/code-security/concepts/security-at-scale/audit-security-alerts)
    feature
 5. We do not allow AI generated slop to pollute the repository
 6. We follow all RFCs and guidelines for the features we expose
 7. We don't write anything from scratch, if we use JWT feature,
    we use `pyjwt` as a trusted dependency
 8. We minimize the number of runtime dependencies
-9. We use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers)
+9. We use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
 10. We use strict analysis of our CI jobs with [`zizmor`](https://docs.zizmor.sh),
     we pin all the actions to exact hashes
 11. We do not disclose 0 day security issues publicly
@@ -43,7 +43,7 @@ I do consulting for 10+ years now, so I can surely help your company.
 
 We take security vulnerabilities very seriously.
 To reach the response team, fill in our vulnerability form at
-https://github.com/wemake-services/django-modern-rest/security/advisories/new
+https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fwemake-services%2Fdjango-modern-rest%2Fsecurity%2Fadvisories%2Fnew
 
 Only the response team members will see your report,
 and it will be treated confidentially.

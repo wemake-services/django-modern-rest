@@ -1175,7 +1175,7 @@ def test_get_users_invalid(dmr_client: DMRClient) -> None:
 ```
 
 Correct: use `schemathesis`. Check its official docs for more details.
-https://schemathesis.readthedocs.io
+https://schemathesis.readthedocs.io/en/stable/
 
 **Limitations:** `schemathesis` is not bundled with `django-modern-rest` — install it separately with `uv add --group dev schemathesis`.
 
