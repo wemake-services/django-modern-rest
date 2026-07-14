@@ -8,13 +8,6 @@ verbose = "warn"
 # Keep concurrency low enough to avoid connection resets and rate limiting on
 # public documentation hosts.
 max_concurrency = 4
-# Allow enough time for slower documentation and badge services without making
-# failed requests stall the entire CI job for too long.
-timeout = 20
-# Retry transient network failures before reporting a broken link.
-max_retries = 5
-# Wait briefly between retries to avoid repeating the same transient failure.
-retry_wait_time = 5
 
 
 # Require all checked web links to use HTTPS.
@@ -24,16 +17,15 @@ insecure = false
 # Check only HTTPS links. Other schemes, such as HTTP, mailto, file, and data,
 # are not sent as network requests.
 scheme = ["https"]
-
+# Do not skip hidden directories and files
+hidden = true
+# User agent to send with each request.
+user_agent = "curl/8.7.1"
 
 # Validate URL fragments, such as "#configuration", against the target page.
 include_fragments = "full"
-
-
-# Skip hidden directories and files
-hidden = false
-# Skip files that are ignored
-no_ignore = false
+# Fail on any redirect
+max_redirects = 0
 
 
 exclude_path = [
@@ -70,14 +62,3 @@ exclude = [
   # reachable in regular browsers.
   "^https://t\\.me/.*$",
 ]
-
-
-# These hosts reject lychee's default User-Agent with a 403 response even when
-# the requested pages are reachable. Override the User-Agent only for these
-# hosts instead of accepting 403 responses globally.
-
-[hosts."codepen.io"]
-headers = { "User-Agent" = "curl/8.7.1" }
-
-[hosts."codesandbox.io"]
-headers = { "User-Agent" = "curl/8.7.1" }
