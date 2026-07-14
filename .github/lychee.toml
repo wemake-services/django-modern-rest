@@ -1,0 +1,83 @@
+# Configuration for checking this repository's own links.
+
+# Show warning-level output and suppress informational messages for successful
+# link checks.
+verbose = "warn"
+
+
+# Keep concurrency low enough to avoid connection resets and rate limiting on
+# public documentation hosts.
+max_concurrency = 4
+# Allow enough time for slower documentation and badge services without making
+# failed requests stall the entire CI job for too long.
+timeout = 20
+# Retry transient network failures before reporting a broken link.
+max_retries = 5
+# Wait briefly between retries to avoid repeating the same transient failure.
+retry_wait_time = 5
+
+
+# Require all checked web links to use HTTPS.
+require_https = true
+# Reject invalid or untrusted TLS certificates.
+insecure = false
+# Check only HTTPS links. Other schemes, such as HTTP, mailto, file, and data,
+# are not sent as network requests.
+scheme = ["https"]
+
+
+# Validate URL fragments, such as "#configuration", against the target page.
+include_fragments = "full"
+
+
+# Skip hidden directories and files
+hidden = false
+# Skip files that are ignored
+no_ignore = false
+
+
+exclude_path = [
+  # Git ignore templates can contain informational links that reject automated
+  # requests and are not part of the project's public documentation.
+  "^\\.gitignore$",
+  # Minified files contain embedded URLs and URL-like strings from vendored
+  # dependencies. These files are generated artifacts and should not be
+  # link-checked.
+  "dmr/static/dmr/swagger/",
+  "dmr/static/dmr/scalar/",
+  "dmr/static/dmr/stoplight/",
+  "dmr/static/dmr/redoc/",
+  # Generated snapshots contain serialized strings and escaped line breaks that
+  # can be misinterpreted as parts of URLs.
+  ".*/__snapshots__/",
+  ".*\\.msgpack$",
+]
+
+# Local documentation examples point to a development server that is not
+# expected to be running during automated link checks.
+exclude = [
+  # Exclude localhost urls from checking
+  "^https://localhost(?::[0-9]+)?(?:/.*)?$",
+  # These URLs are templates whose placeholders are resolved by Sphinx or at
+  # runtime, so their literal values are not valid links.
+  "^https://github\\.com/wemake-services/django-modern-rest/issues/%s$",
+  "^https://github\\.com/%7Bsource_user%7D/%7Bsource_repo%7D/?$",
+  # These public resources consistently reject automated link-checking
+  # requests, even with a browser-like or curl User-Agent.
+  "^https://codecov\\.io/.*$",
+  "^https://cdn\\.redoc\\.ly/redoc/2\\.5\\.2/bundles/redoc\\.standalone\\.js$",
+  # Telegram terminates automated requests even when public channel links are
+  # reachable in regular browsers.
+  "^https://t\\.me/.*$",
+]
+
+
+# These hosts reject lychee's default User-Agent with a 403 response even when
+# the requested pages are reachable. Override the User-Agent only for these
+# hosts instead of accepting 403 responses globally.
+
+[hosts."codepen.io"]
+headers = { "User-Agent" = "curl/8.7.1" }
+
+[hosts."codesandbox.io"]
+headers = { "User-Agent" = "curl/8.7.1" }

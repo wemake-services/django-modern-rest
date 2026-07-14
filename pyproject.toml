@@ -449,7 +449,7 @@ plugins = [
 
 
 [tool.pyright]
-# Docs: https://microsoft.github.io/pyright/#/configuration
+# Docs: https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 include = ["dmr", "typesafety", "tests"]
 exclude = [
   # It has a lot of ugly code:

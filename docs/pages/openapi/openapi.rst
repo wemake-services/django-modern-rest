@@ -221,7 +221,7 @@ To customize a schema, use the native methods.
 
   .. tab:: msgspec
 
-    Docs: https://jcristharif.com/msgspec/jsonschema.html
+    Docs: https://msgspec.dev/jsonschema
 
     .. literalinclude:: /examples/openapi/msgspec_customization.py
       :caption: dtos.py

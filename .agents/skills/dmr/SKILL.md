@@ -259,7 +259,7 @@ class UserController(Controller[MsgspecSerializer]):
         )
 ```
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/using-controller/index.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/index.html
 
 ### Use `APIError` for error responses instead of manually building `HttpResponse`
 
@@ -309,7 +309,7 @@ class UserController(Controller[MsgspecSerializer]):
 
 You can also use `self.to_error` when using `@validate` endpoints.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/error-handling.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/error-handling.html
 
 
 ## Routing
@@ -342,7 +342,7 @@ urlpatterns = [
 
 **Limitations:** no API changes required — it is a full drop-in replacement for `django.urls.path`.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/routing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/routing.html
 
 ### Use `build_404_handler` for API-style 404 responses
 
@@ -394,7 +394,7 @@ handler404 = build_404_handler(router.prefix, serializer=MsgspecSerializer)
 
 **Limitations:** overriding `handler404` has no effect while `DEBUG = True` — this is Django's default behavior.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/routing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/routing.html
 
 ### Use `build_500_handler` for API-style 500 responses
 
@@ -446,7 +446,7 @@ handler500 = build_500_handler(router.prefix, serializer=MsgspecSerializer)
 
 **Limitations:** overriding `handler500` has no effect while `DEBUG = True` — this is Django's default behavior.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/routing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/routing.html
 
 
 ## Error handling
@@ -517,7 +517,7 @@ class MyController(Controller[MsgspecSerializer]):
 
 **Limitations:** the same rule applies to controller-level `handle_error` (sync) and `handle_async_error` (async) — don't define sync handlers for async controllers and vice versa.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/error-handling.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/error-handling.html
 
 ### Don't catch `APIError` explicitly in error handlers
 
@@ -583,7 +583,7 @@ class MyController(Controller[MsgspecSerializer]):
 
 **Limitations:** only catch specific errors you know how to handle — always re-raise unfamiliar errors to let the next handler level deal with them.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/error-handling.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/error-handling.html
 
 ### Customize error messages with `error_model` and `format_error` on the controller
 
@@ -662,7 +662,7 @@ class MyController(Controller[MsgspecSerializer]):
 
 **Limitations:** `error_model` and `format_error` are per-controller — you can't customize error format per-endpoint, only per-controller or globally.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/error-handling.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/error-handling.html
 
 ### Do not handle errors in the endpoints body
 
@@ -759,7 +759,7 @@ DMR_SETTINGS = {
 
 **Limitations:** only disable for production — fix schema errors during development instead of turning off validation.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/validation.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/validation.html
 
 ### Do not disable response validation when retuning extra data
 
@@ -854,7 +854,7 @@ class JobController(Controller[PydanticSerializer]):
 
 **Limitations:** override `no_validate_http_spec` only when implementing old legacy APIs that cannot follow HTTP spec properly.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/validation.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/validation.html
 
 
 ## Authentication
@@ -902,7 +902,7 @@ class APIController(Controller[MsgspecSerializer]):
 
 **Limitations:** the typed request annotation is for type checking only — it does not enforce the user type at runtime.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/auth/django-session.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/auth/django-session.html
 
 
 ## Throttling
@@ -963,7 +963,7 @@ class LoginController(Controller[PydanticSerializer]):
 
 **Limitations:** `runs_before_auth=True` is the default for `RemoteAddr`, so you only need to be explicit when switching it off for non-auth endpoints.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/throttling.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/throttling.html
 
 
 ## Testing
@@ -1060,7 +1060,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** for async controllers, use `DMRAsyncRequestFactory` and `DMRAsyncClient` instead.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
 
 ### Use `DMRRequestFactory` for faster unit tests
 
@@ -1105,7 +1105,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** `DMRRequestFactory` tests skip URL routing and middleware — use `DMRClient` when you need to test the full request/response cycle.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
 
 ### Use `Polyfactory` for structured test data generation
 
@@ -1148,7 +1148,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** `Polyfactory` supports `pydantic`, `msgspec`, `@dataclass`, and `TypedDict` models — check its docs for your specific model type.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
 
 ### Use `schemathesis` for property-based API testing
 
@@ -1179,7 +1179,7 @@ https://schemathesis.readthedocs.io
 
 **Limitations:** `schemathesis` is not bundled with `django-modern-rest` — install it separately with `uv add --group dev schemathesis`.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
 
 
 ## Middleware
@@ -1243,7 +1243,7 @@ class ProtectedController(Controller[MsgspecSerializer]):
 
 **Limitations:** `wrap_middleware` handles both sync and async automatically — always add `responses = wrapped_func.responses` to the controller for OpenAPI docs.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/middleware.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/middleware.html
 
 
 ## Configuration
@@ -1267,7 +1267,7 @@ Correct: do not override this setting, unless 100% required.
 
 **Limitations:** you can exclude specific status codes from semantic responses using `Settings.exclude_semantic_responses` if they don't apply to your API.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/configuration.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/configuration.html
 
 ### Always have at least one default parser and renderer in settings
 
@@ -1299,7 +1299,7 @@ DMR_SETTINGS = {
 
 **Limitations:** custom parsers and renderers can be added per-controller or per-endpoint on top of the global defaults.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/configuration.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/configuration.html
 
 
 ## Project structure
@@ -1350,7 +1350,7 @@ urlpatterns = [
 
 **Limitations:** this pattern is only beneficial for larger applications — small apps with few endpoints can safely mix sync and async in one instance.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/structure/sync-and-async.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/structure/sync-and-async.html
 
 
 ## Components
@@ -1413,7 +1413,7 @@ class UserController(Controller[MsgspecSerializer]):
 
 **Limitations:** this naming convention also applies to `parsed_headers: Headers[...]`, `parsed_path: Path[...]`, and `parsed_cookies: Cookies[...]`.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/components/index.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/components/index.html
 
 
 ## OpenAPI
@@ -1458,4 +1458,4 @@ class UserController(Controller[PydanticSerializer]):
 
 **Limitations:** docstrings only populate the `description` field in OpenAPI — use `@modify` or `@validate` for operation-level customization of other OpenAPI fields.
 
-Docs: https://django-modern-rest.rtfd.io/en/latest/pages/openapi/openapi.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/openapi/openapi.html

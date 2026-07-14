@@ -123,7 +123,7 @@ and extend ``django-modern-rest`` framework.
       only one validation per request, best ``json`` parsing tools in class.
 
       And ``msgspec`` support allows users to have
-      `x5-15 times faster <https://jcristharif.com/msgspec/benchmarks.html>`_
+      `x5-15 times faster <https://msgspec.dev/benchmarks>`_
       APIs than the alternatives.
 
     .. grid-item-card:: :octicon:`star` Sync and Async support

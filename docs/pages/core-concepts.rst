@@ -55,7 +55,7 @@ Async vs Sync
 -------------
 
 We support both Django modes: sync and async, the same way regular Django
-`supports <https://docs.djangoproject.com/en/latest/topics/async/>`_ them.
+`supports <https://docs.djangoproject.com/en/6.0/topics/async/>`_ them.
 
 We don't do anything special with the async mode, so any existing
 guides, tools, deployment strategies should

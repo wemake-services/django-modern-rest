@@ -53,7 +53,7 @@ def load_schema(
 
     Sadly, we can't use ``serializer.from_python`` until
     this problem with ``msgspec`` is fixed:
-    https://github.com/jcrist/msgspec/issues/982
+    https://github.com/msgspec/msgspec/issues/982
 
     After that we will just use the serializer and remove this code.
     """
@@ -236,7 +236,7 @@ def _sort_null_last(
     sequence: list[Reference | Schema] | None,
 ) -> list[Reference | Schema] | None:
     # See https://github.com/wemake-services/django-modern-rest/issues/990
-    # TODO: remove once solved: https://github.com/jcrist/msgspec/issues/1027
+    # TODO: remove once solved: https://github.com/msgspec/msgspec/issues/1027
     return (
         None
         if sequence is None
