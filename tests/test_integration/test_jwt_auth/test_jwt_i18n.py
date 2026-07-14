@@ -63,7 +63,8 @@ def test_missing_auth_with_accept_language(
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
 
-    # Fourth request in the same context, it is important:
+    # Last request in the same context, order is very important,
+    # last test must not set the default `en` locale:
     response = dmr_client.post(
         url,
         data='{}',
@@ -74,18 +75,4 @@ def test_missing_auth_with_accept_language(
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == snapshot({
         'detail': [{'msg': 'Аутентификация жасалмаған', 'type': 'security'}],
-    })
-
-    # Last request in the same context, order is very important,
-    # last test must not set the default `en` locale:
-    response = dmr_client.post(
-        url,
-        data='{}',
-        headers={'Accept-Language': 'es-MX'},
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
-    assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == snapshot({
-        'detail': [{'msg': 'No autenticado', 'type': 'security'}],
     })
