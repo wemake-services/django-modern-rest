@@ -153,7 +153,7 @@ Done! Now you have your shiny API with 100% type
 safe validation and interactive docs.
 
 Next steps:
-- [The full documentation](https://django-modern-rest.readthedocs.io) has everything you need to get started!
+- [The full documentation](https://django-modern-rest.readthedocs.io/en/latest/) has everything you need to get started!
 - [wemake-django-template](https://github.com/wemake-services/wemake-django-template) can be used to jump-start your new project with `django-modern-rest`!
 - [awesome-django-modern-rest](https://github.com/kondratevdev/awesome-django-modern-rest) - a curated list of resources related to `django-modern-rest`!
 
