@@ -6,8 +6,8 @@ Built-in testing tools
 
 Django has really good testing tools:
 
-- https://docs.djangoproject.com/en/6.0/topics/testing/tools
-- https://docs.djangoproject.com/en/6.0/topics/testing/advanced
+- https://docs.djangoproject.com/en/stable/topics/testing/tools
+- https://docs.djangoproject.com/en/stable/topics/testing/advanced
 
 Just like Django itself, we provide several built-in utilities for testing.
 

@@ -43,7 +43,7 @@ I do consulting for 10+ years now, so I can surely help your company.
 
 We take security vulnerabilities very seriously.
 To reach the response team, fill in our vulnerability form at
-https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fwemake-services%2Fdjango-modern-rest%2Fsecurity%2Fadvisories%2Fnew
+https://github.com/wemake-services/django-modern-rest/security/advisories/new
 
 Only the response team members will see your report,
 and it will be treated confidentially.

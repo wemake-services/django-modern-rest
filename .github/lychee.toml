@@ -24,14 +24,11 @@ user_agent = "curl/8.7.1"
 
 # Validate URL fragments, such as "#configuration", against the target page.
 include_fragments = "full"
-# Fail on any redirect
-max_redirects = 0
+# Allow one redirect by default:
+max_redirects = 1
 
 
 exclude_path = [
-  # Git ignore templates can contain informational links that reject automated
-  # requests and are not part of the project's public documentation.
-  "^\\.gitignore$",
   # Minified files contain embedded URLs and URL-like strings from vendored
   # dependencies. These files are generated artifacts and should not be
   # link-checked.
@@ -48,8 +45,6 @@ exclude_path = [
 # Local documentation examples point to a development server that is not
 # expected to be running during automated link checks.
 exclude = [
-  # Exclude localhost urls from checking
-  "^https://localhost(?::[0-9]+)?(?:/.*)?$",
   # These URLs are templates whose placeholders are resolved by Sphinx or at
   # runtime, so their literal values are not valid links.
   "^https://github\\.com/wemake-services/django-modern-rest/issues/%s$",

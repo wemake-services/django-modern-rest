@@ -321,7 +321,7 @@ Cache keys is what defines how requests are identified.
 
 By default we use :func:`dmr.throttling.cache_keys.RemoteAddr` cache key,
 which identifies requests by IP taken from
-`REMOTE_ADDR <https://docs.djangoproject.com/en/6.0/ref/request-response/#django.http.HttpRequest.META>`_
+`REMOTE_ADDR <https://docs.djangoproject.com/en/stable/ref/request-response/#django.http.HttpRequest.META>`_
 value from ``request.META``.
 
 .. warning::
