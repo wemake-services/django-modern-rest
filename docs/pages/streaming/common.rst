@@ -118,7 +118,7 @@ Choose the one that fits your needs, or create your own format!
 .. important::
 
   All streaming modes require Django to run
-  in `ASGI mode in production <https://docs.djangoproject.com/en/6.0/howto/deployment/asgi>`_.
+  in `ASGI mode in production <https://docs.djangoproject.com/en/stable/howto/deployment/asgi>`_.
 
 
 OpenAPI

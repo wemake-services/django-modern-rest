@@ -127,7 +127,8 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
 
 ### Contributing a new language
 
-1. Generate a `.po` file for your [locale](https://docs.djangoproject.com/en/stable/topics/i18n/#term-locale-name):
+1. Generate a `.po` file for your [locale](https://docs.djangoproject.com/en/stable/topics/i18n/
+#term-locale-name):
    ```bash
    uv run django-admin makemessages --locale <lang>
    ```

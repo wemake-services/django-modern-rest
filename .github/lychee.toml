@@ -1,0 +1,59 @@
+# Configuration for checking this repository's own links.
+
+# Show warning-level output and suppress informational messages for successful
+# link checks.
+verbose = "warn"
+
+
+# Keep concurrency low enough to avoid connection resets and rate limiting on
+# public documentation hosts.
+max_concurrency = 4
+
+
+# Require all checked web links to use HTTPS.
+require_https = true
+# Reject invalid or untrusted TLS certificates.
+insecure = false
+# Check only HTTPS links. Other schemes, such as HTTP, mailto, file, and data,
+# are not sent as network requests.
+scheme = ["https"]
+# Do not skip hidden directories and files
+hidden = true
+# User agent to send with each request.
+user_agent = "curl/8.7.1"
+
+# Validate URL fragments, such as "#configuration", against the target page.
+include_fragments = "full"
+# Allow one redirect by default:
+max_redirects = 1
+
+
+exclude_path = [
+  # Minified files contain embedded URLs and URL-like strings from vendored
+  # dependencies. These files are generated artifacts and should not be
+  # link-checked.
+  "dmr/static/dmr/swagger/",
+  "dmr/static/dmr/scalar/",
+  "dmr/static/dmr/stoplight/",
+  "dmr/static/dmr/redoc/",
+  # Generated snapshots contain serialized strings and escaped line breaks that
+  # can be misinterpreted as parts of URLs.
+  ".*/__snapshots__/",
+  ".*\\.msgpack$",
+]
+
+# Local documentation examples point to a development server that is not
+# expected to be running during automated link checks.
+exclude = [
+  # These URLs are templates whose placeholders are resolved by Sphinx or at
+  # runtime, so their literal values are not valid links.
+  "^https://github\\.com/wemake-services/django-modern-rest/issues/%s$",
+  "^https://github\\.com/%7Bsource_user%7D/%7Bsource_repo%7D/?$",
+  # These public resources consistently reject automated link-checking
+  # requests, even with a browser-like or curl User-Agent.
+  "^https://codecov\\.io/.*$",
+  "^https://cdn\\.redoc\\.ly/redoc/2\\.5\\.2/bundles/redoc\\.standalone\\.js$",
+  # Telegram terminates automated requests even when public channel links are
+  # reachable in regular browsers.
+  "^https://t\\.me/.*$",
+]

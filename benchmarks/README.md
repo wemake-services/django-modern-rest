@@ -1,6 +1,6 @@
 # Benchmarks!
 
-[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/wemake-services/django-modern-rest?utm_source=badge)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/wemake-services/django-modern-rest?utm_source=badge)
 
 
 ## Important Notice
@@ -94,7 +94,7 @@ ab -c 20 -n 1000 -l -p payload.json \
 We also benchmark several our features that can be used independently.
 
 We run tests in `./tests/` using https://github.com/CodSpeedHQ/pytest-codspeed
-and upload results to https://codspeed.io/wemake-services/django-modern-rest
+and upload results to https://app.codspeed.io/wemake-services/django-modern-rest
 
 See [`codspeed.yml`](https://github.com/wemake-services/django-modern-rest/blob/master/.github/workflows/codspeed.yml) workflow.
 

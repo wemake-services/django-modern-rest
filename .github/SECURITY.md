@@ -10,14 +10,14 @@
 3. We update our dependencies regularly, however, we use a cooldown of 7 days
    to limit the chances of a 0 day vulnerability
 4. We check for known CVEs in our dependencies using [`uv audit`](https://docs.astral.sh/uv/reference/cli/#uv-audit)
-   tool and GitHub's [Dependabot security audit](https://docs.github.com/en/code-security/concepts/security-at-scale/auditing-security-alerts)
+   tool and GitHub's [Dependabot security audit](https://docs.github.com/en/code-security/concepts/security-at-scale/audit-security-alerts)
    feature
 5. We do not allow AI generated slop to pollute the repository
 6. We follow all RFCs and guidelines for the features we expose
 7. We don't write anything from scratch, if we use JWT feature,
    we use `pyjwt` as a trusted dependency
 8. We minimize the number of runtime dependencies
-9. We use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers)
+9. We use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
 10. We use strict analysis of our CI jobs with [`zizmor`](https://docs.zizmor.sh),
     we pin all the actions to exact hashes
 11. We do not disclose 0 day security issues publicly

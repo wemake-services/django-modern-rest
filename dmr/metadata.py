@@ -427,7 +427,7 @@ class EndpointMetadata:
 
     .. seealso::
 
-        https://httpwg.org/http-extensions/draft-ietf-httpbis-safe-method-w-body.html
+        https://www.ietf.org/archive/id/draft-ietf-httpbis-safe-method-w-body-05.html
 
     """
 

@@ -295,7 +295,7 @@ def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:
             with the "canonical" directive
         * https://github.com/pyca/cryptography/pull/7938 - where this
             was fixed for cryptography
-        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events
+        * https://www.sphinx-doc.org/en/master/extdev/event_callbacks.html
         * https://stackoverflow.com/a/62301461 - source of this hack
 
     """
