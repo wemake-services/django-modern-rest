@@ -132,6 +132,40 @@ The controller validates that the submitted token:
   :language: python
 
 
+Verifying tokens
+~~~~~~~~~~~~~~~~
+
+Sometimes you need a dedicated endpoint to check whether an access token
+is still valid, without accessing any protected resource.
+We provide two :ref:`reusable-controllers` for this:
+
+1. :class:`~dmr.security.jwt.views.VerifyTokenSyncController`
+   for sync controllers
+2. :class:`~dmr.security.jwt.views.VerifyTokenAsyncController`
+   for async controllers
+
+To use them, you only need to:
+
+1. Provide actual types for serializer and request payload
+2. Redefine
+   :meth:`~dmr.security.jwt.views.VerifyTokenSyncController.convert_verify_payload`
+   to extract the access token string from your request payload
+
+The controller validates that the submitted token:
+
+- Is a valid, non-expired JWT signed with the configured secret
+- Has ``extras.type == 'access'`` (i.e. it is an access token, not a refresh one)
+- Belongs to an existing, active user
+
+On success it returns an empty ``204 No Content`` response.
+On any validation failure it returns ``401 Unauthorized``.
+
+.. literalinclude:: /examples/auth/jwt/jwt_verify_tokens.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+
 Blocklisting tokens
 -------------------
 
@@ -202,6 +236,16 @@ Pre-defined views to fetch JWT tokens
   :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenPayload
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.security.jwt.views.VerifyTokenSyncController
+  :members: post, verify, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.VerifyTokenAsyncController
+  :members: post, verify, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.VerifyTokenPayload
   :members:
   :show-inheritance:
 

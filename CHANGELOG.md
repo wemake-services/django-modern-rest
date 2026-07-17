@@ -23,6 +23,8 @@ of requirements for an API to count as public.
 ### Features
 
 - Adds "Opaque Token" auth backend, #1051
+- Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
+  reusable controllers to verify JWT access tokens, #1129
 
 
 ## Version 0.11.0 (2026-06-27)

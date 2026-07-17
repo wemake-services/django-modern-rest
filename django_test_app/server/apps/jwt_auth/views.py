@@ -8,7 +8,7 @@ from typing_extensions import override
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
-from dmr.security.jwt.views import (
+from dmr.security.jwt.views import (  # noqa: WPS235
     ObtainTokensAsyncController,
     ObtainTokensPayload,
     ObtainTokensResponse,
@@ -16,6 +16,9 @@ from dmr.security.jwt.views import (
     RefreshTokenAsyncController,
     RefreshTokenPayload,
     RefreshTokenSyncController,
+    VerifyTokenAsyncController,
+    VerifyTokenPayload,
+    VerifyTokenSyncController,
 )
 
 
@@ -156,6 +159,33 @@ class RefreshAsyncController(
                 token_type='refresh',  # noqa: S106
             ),
         }
+
+
+@final
+class VerifySyncController(
+    VerifyTokenSyncController[
+        PydanticSerializer,
+        VerifyTokenPayload,
+    ],
+):
+    @override
+    def convert_verify_payload(self, payload: VerifyTokenPayload) -> str:
+        return payload['access_token']
+
+
+@final
+class VerifyAsyncController(
+    VerifyTokenAsyncController[
+        PydanticSerializer,
+        VerifyTokenPayload,
+    ],
+):
+    @override
+    async def convert_verify_payload(
+        self,
+        payload: VerifyTokenPayload,
+    ) -> str:
+        return payload['access_token']
 
 
 @final

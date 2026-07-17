@@ -450,3 +450,215 @@ def test_refresh_inactive_user(
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'obtain_url',
+    [
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
+    ],
+)
+def test_verify_valid_token(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    obtain_url: str,
+) -> None:
+    """Ensures that a valid access token returns an empty 204 response."""
+    obtain_response = dmr_client.post(
+        obtain_url,
+        data={'username': user.username, 'password': password},
+    )
+    assert obtain_response.status_code == HTTPStatus.OK
+    access_token = obtain_response.json()['access_token']
+
+    response = dmr_client.post(url, data={'access_token': access_token})
+
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.content
+    assert response.content == b''
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+def test_verify_with_refresh_token(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures posting a refresh token to the verify endpoint raises 401."""
+    obtain_response = dmr_client.post(
+        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+        data={'username': user.username, 'password': password},
+    )
+    assert obtain_response.status_code == HTTPStatus.OK
+    refresh_token = obtain_response.json()['refresh_token']
+
+    response = dmr_client.post(url, data={'access_token': refresh_token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+def test_verify_expired_token(
+    dmr_client: DMRClient,
+    user: User,
+    freezer: FrozenDateTimeFactory,
+    *,
+    url: str,
+) -> None:
+    """Ensures that an expired access token raises 401."""
+    expired_token = JWToken(
+        sub=str(user.pk),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(seconds=1),
+        extras={'type': 'access'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+
+    next_day = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+    freezer.move_to(next_day)
+
+    response = dmr_client.post(url, data={'access_token': expired_token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+def test_verify_malformed_token(
+    dmr_client: DMRClient,
+    *,
+    url: str,
+) -> None:
+    """Ensures that a malformed token raises 401."""
+    response = dmr_client.post(url, data={'access_token': 'not-a-jwt'})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+@pytest.mark.parametrize(
+    'body',
+    [
+        {'wrong_key': 'value'},
+        {'access': 'value'},
+        {},
+    ],
+)
+def test_verify_wrong_structure(
+    dmr_client: DMRClient,
+    *,
+    url: str,
+    body: dict[str, str],
+) -> None:
+    """Ensures that incorrect body raises 400."""
+    response = dmr_client.post(url, data=body)
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['detail']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+def test_verify_deleted_user(
+    dmr_client: DMRClient,
+    user: User,
+    *,
+    url: str,
+) -> None:
+    """Ensures that an access token for a deleted user raises 401."""
+    token = JWToken(
+        sub=str(user.pk),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+    user.delete()
+
+    response = dmr_client.post(url, data={'access_token': token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+def test_verify_inactive_user(
+    dmr_client: DMRClient,
+    inactive_user: User,
+    *,
+    url: str,
+) -> None:
+    """Ensures that an access token for an inactive user raises 401."""
+    token = JWToken(
+        sub=str(inactive_user.pk),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+
+    response = dmr_client.post(url, data={'access_token': token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
