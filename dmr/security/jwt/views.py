@@ -21,6 +21,7 @@ from dmr.serializer import BaseSerializer
 
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
 _RefreshTokensT = TypeVar('_RefreshTokensT', bound=Mapping[str, Any])
+_VerifyTokenT = TypeVar('_VerifyTokenT', bound=Mapping[str, Any])
 _TokensResponseT = TypeVar('_TokensResponseT')
 _SerializerT = TypeVar(
     '_SerializerT',
@@ -432,4 +433,156 @@ class RefreshTokenAsyncController(
     @abstractmethod
     async def make_api_response(self) -> _TokensResponseT:
         """Build the token pair response after a successful refresh."""
+        raise NotImplementedError
+
+
+class VerifyTokenPayload(TypedDict):
+    """Default request body type for the verify token endpoint."""
+
+    access_token: str
+
+
+class _BaseVerifyTokenController(_BaseTokenController[_SerializerT]):
+    jwt_user_id_field: ClassVar[str] = 'pk'
+
+    def _decode_and_validate_access_token(self, encoded_token: str) -> JWToken:
+        token = self.jwt_token_cls.decode(
+            encoded_token=encoded_token,
+            secret=self.jwt_secret or settings.SECRET_KEY,
+            algorithm=self.jwt_algorithm,
+            accepted_audiences=self.jwt_audiences,
+            accepted_issuers=self.jwt_issuer,
+        )
+        if token.extras.get('type') != 'access':
+            raise NotAuthenticatedError
+        return token
+
+
+class VerifyTokenSyncController(
+    _BaseVerifyTokenController[_SerializerT],
+    Generic[_SerializerT, _VerifyTokenT],
+):
+    """
+    Sync controller to verify an access token.
+
+    Accepts an access token in the request body, decodes and validates it,
+    ensures it is an access token (not a refresh token), and confirms that
+    the token subject belongs to an existing, active user.
+
+    Returns an empty ``204 No Content`` response when the token is valid.
+
+    Attributes:
+        jwt_user_id_field: User model field matched against ``token.sub``.
+            Defaults to ``'pk'``.
+        jwt_audiences: String or sequence of string of audiences for JWT token.
+        jwt_issuer: String of who issued this JWT token.
+        jwt_algorithm: Default algorithm to use for token signing.
+        jwt_expiration: Default token expiration timedelta.
+        jwt_refresh_expiration: Default refresh token expiration timedelta.
+        jwt_secret: Alternative token secret for signing.
+            By default uses ``secret.SECRET_KEY``
+        jwt_token_cls: Possible custom JWT token class.
+
+    """
+
+    responses = (
+        ResponseSpec(
+            return_type=ErrorModel,
+            status_code=HTTPStatus.UNAUTHORIZED,
+        ),
+    )
+
+    @modify(status_code=HTTPStatus.NO_CONTENT)
+    def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
+        """Verify the token on POST."""
+        self.verify(parsed_body)
+
+    def verify(self, parsed_body: _VerifyTokenT) -> None:
+        """Validate the access token and load its user."""
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
+
+        token = self._decode_and_validate_access_token(
+            self.convert_verify_payload(parsed_body),
+        )
+        try:
+            user = get_user_model().objects.get(**{
+                self.jwt_user_id_field: token.sub,
+            })
+        except ObjectDoesNotExist:
+            raise NotAuthenticatedError from None
+        self.check_auth(user)
+
+    def check_auth(self, user: Any) -> None:
+        """Run extra checks on the token's user, raise if something is off."""
+        if not user.is_active:
+            raise NotAuthenticatedError
+
+    @abstractmethod
+    def convert_verify_payload(self, payload: _VerifyTokenT) -> str:
+        """Extract the access token string from the request payload."""
+        raise NotImplementedError
+
+
+class VerifyTokenAsyncController(
+    _BaseVerifyTokenController[_SerializerT],
+    Generic[_SerializerT, _VerifyTokenT],
+):
+    """
+    Async controller to verify an access token.
+
+    Accepts an access token in the request body, decodes and validates it,
+    ensures it is an access token (not a refresh token), and confirms that
+    the token subject belongs to an existing, active user.
+
+    Returns an empty ``204 No Content`` response when the token is valid.
+
+    Attributes:
+        jwt_user_id_field: User model field matched against ``token.sub``.
+            Defaults to ``'pk'``.
+        jwt_audiences: String or sequence of string of audiences for JWT token.
+        jwt_issuer: String of who issued this JWT token.
+        jwt_algorithm: Default algorithm to use for token signing.
+        jwt_expiration: Default token expiration timedelta.
+        jwt_refresh_expiration: Default refresh token expiration timedelta.
+        jwt_secret: Alternative token secret for signing.
+            By default uses ``secret.SECRET_KEY``
+        jwt_token_cls: Possible custom JWT token class.
+
+    """
+
+    responses = (
+        ResponseSpec(
+            return_type=ErrorModel,
+            status_code=HTTPStatus.UNAUTHORIZED,
+        ),
+    )
+
+    @modify(status_code=HTTPStatus.NO_CONTENT)
+    async def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
+        """Verify the token on POST."""
+        await self.verify(parsed_body)
+
+    async def verify(self, parsed_body: _VerifyTokenT) -> None:
+        """Validate the access token and load its user."""
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
+
+        token = self._decode_and_validate_access_token(
+            await self.convert_verify_payload(parsed_body),
+        )
+        try:
+            user = await get_user_model().objects.aget(**{
+                self.jwt_user_id_field: token.sub,
+            })
+        except ObjectDoesNotExist:
+            raise NotAuthenticatedError from None
+        await self.check_auth(user)
+
+    async def check_auth(self, user: Any) -> None:
+        """Run extra checks on the token's user, raise if something is off."""
+        if not user.is_active:
+            raise NotAuthenticatedError
+
+    @abstractmethod
+    async def convert_verify_payload(self, payload: _VerifyTokenT) -> str:
+        """Extract the access token string from the request payload."""
         raise NotImplementedError
