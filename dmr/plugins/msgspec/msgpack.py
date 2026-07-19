@@ -49,7 +49,7 @@ class MsgpackParser(Parser):
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
-        except msgspec.DecodeError as exc:
+        except (msgspec.DecodeError, UnicodeDecodeError) as exc:
             # Corner case: when deserializing an empty body,
             # return `None` instead.
             # We do this here, because we don't want

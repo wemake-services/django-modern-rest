@@ -30,6 +30,9 @@ of requirements for an API to count as public.
 
 - Streaming with `streaming_ping_seconds` no longer leaves the pending
   ping timer task behind on every produced event, #1046
+- Fixes `500` error on request bodies containing invalid `utf-8` bytes
+  inside `msgspec`'s json and msgpack parsers,
+  now `400` is correctly returned, #1135
 
 
 ## Version 0.11.0 (2026-06-27)
