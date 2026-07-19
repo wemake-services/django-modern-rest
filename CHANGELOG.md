@@ -26,6 +26,11 @@ of requirements for an API to count as public.
 - Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
   reusable controllers to verify JWT access tokens, #1129
 
+### Bugfixes
+
+- Streaming with `streaming_ping_seconds` no longer leaves the pending
+  ping timer task behind on every produced event, #1046
+
 
 ## Version 0.11.0 (2026-06-27)
 
