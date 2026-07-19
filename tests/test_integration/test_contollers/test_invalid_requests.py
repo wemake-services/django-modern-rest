@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 import pytest
+from dirty_equals import IsStr
 from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
@@ -112,6 +113,41 @@ async def test_parse_headers_ignored_async_content_type(
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == {'X-API-Token': '123'}
+
+
+@pytest.mark.parametrize(
+    'body',
+    [
+        b'"\xff"',
+        b'{"username": "\xff"}',
+    ],
+)
+def test_body_with_invalid_utf8(dmr_client: DMRClient, *, body: bytes) -> None:
+    """Ensure that non-utf8 bytes inside json strings are caught."""
+    response = dmr_client.post(
+        reverse('api:controllers:constrained_user_create'),
+        data=body,
+        content_type='application/json',
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    # The reported position differs between parsers, `msgspec` reports it
+    # relative to the string being decoded, while `json` reports
+    # the absolute one:
+    assert response.json() == {
+        'detail': [
+            {
+                'msg': IsStr(
+                    regex=(
+                        r"'utf-8' codec can't decode byte 0xff "
+                        r'in position \d+: invalid start byte'
+                    ),
+                ),
+                'type': 'value_error',
+            },
+        ],
+    }
 
 
 def test_single_view_sync405(
