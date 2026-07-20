@@ -115,6 +115,8 @@ integration = [
 dev-and-docs = [
   "punq>=0.8,<1",
   "redis>=7.4,<9",
+  # Needed for the micro-framework examples:
+  "nanodjango>=0.16,<0.17",
 ]
 dev = [
   { include-group = "unit-test" },
@@ -446,6 +448,12 @@ enable_error_code = [
 plugins = [
   "pydantic.mypy",
 ]
+
+[[tool.mypy.overrides]]
+# `nanodjango` does not ship a `py.typed` marker,
+# it is only used in the micro-framework docs example:
+module = ["nanodjango.*"]
+ignore_missing_imports = true
 
 
 [tool.pyright]

@@ -23,6 +23,8 @@ of requirements for an API to count as public.
 ### Features
 
 - Adds "Opaque Token" auth backend, #1051
+- Adds `nanodjango` and µDjango examples
+  to the micro-framework docs page, #1049
 - Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
   reusable controllers to verify JWT access tokens, #1129
 
