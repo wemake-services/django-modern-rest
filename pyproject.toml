@@ -109,7 +109,7 @@ unit-test = [
   "orjson>=3.11,<4; python_version < '3.14' and implementation_name == 'cpython'",
 ]
 integration = [
-  "tracecov>=0.19,<0.22",
+  "tracecov>=0.23,<0.25",
   "pytest-codspeed>=4.3,<6",
 ]
 dev-and-docs = [
@@ -382,7 +382,7 @@ addopts = [
   "--tracecov-fail-under-examples=100",
   # TODO: set value to 100
   "--tracecov-fail-under-parameters=90",
-  "--tracecov-fail-under-keywords=90",
+  "--tracecov-fail-under-keywords=95",
   "--tracecov-fail-under-responses=50",
   # Ignores benchmarks:
   "--ignore=benchmarks/",
