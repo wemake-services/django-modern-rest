@@ -184,7 +184,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc", "mypy==2.1.0"]
+dependencies = ["hatch-mypyc", "mypy==2.3.0"]
 include = ["dmr/_compiled"]
 require-runtime-dependencies = true
 mypy-args = ["--ignore-missing-imports"]
@@ -292,9 +292,9 @@ ignore = [
   "D401",
   "D404",
   "D405",
-  "D418",  # We should be able to add docstrings to `@overload` decorators
+  "D418",    # We should be able to add docstrings to `@overload` decorators
   "D421",
-  "ASYNC119",  # `contextlib.aclosing` is not detected
+  "ASYNC119", # `contextlib.aclosing` is not detected
   "ISC001",  # implicit string concat conflicts with `ruff format`
   "ISC003",  # prefer explicit string concat over implicit concat
   "PLR09",   # we have our own complexity rules
@@ -305,6 +305,9 @@ ignore = [
   "TRY003",  # long exception messages from `tryceratops`
   "RUF029",  # we decide `async` functions based on API, not `await` usage
   "RUF067",  # wps handles `__init__.py` logic better
+  "RUF105",  # we prefer `# noqa`, over `# ruff` comments
+  "RUF106",  #
+  "RUF201",  #
 ]
 external = [ "WPS" ]
 
