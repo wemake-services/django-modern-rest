@@ -12,7 +12,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, path
 
 app = Django(
-    # `dmr` must be in `INSTALLED_APPS` to serve its templates and statics:
+    # `dmr` must be in `INSTALLED_APPS` for its templates and static files:
     EXTRA_APPS=['dmr'],
     ALLOWED_HOSTS=['*'],
     # Secret key for tests, will be new on each run,
