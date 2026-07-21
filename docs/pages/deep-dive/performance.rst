@@ -10,56 +10,127 @@ Sync
 .. chartjs::
 
   {
-    "type": "bar",
-    "data": {
-      "labels": ["Requests Per Second"],
-      "datasets": [
-        {
-          "label": "dmr",
-          "data": [5774.94],
-          "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
-          "borderColor": ["rgba(53, 84, 74, 1)"],
-          "borderWidth": 2
-        },
-        {
-          "label": "ninja",
-          "data": [3888.13],
-          "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
-          "borderColor": ["rgba(53, 84, 74, 0.7)"],
-          "borderWidth": 2
-        },
-        {
-          "label": "drf",
-          "data": [3024.24],
-          "backgroundColor": ["rgba(53, 84, 74, 0.3)"],
-          "borderColor": ["rgba(53, 84, 74, 0.6)"],
-          "borderWidth": 2
-        }
-      ]
-    },
-    "options": {
-      "responsive": true,
-      "maintainAspectRatio": true,
-      "scales": {
-        "y": {
-          "beginAtZero": true,
-          "title": {
-            "display": true,
-            "text": "higher is better"
+    "light": {
+      "type": "bar",
+      "data": {
+        "labels": ["Requests Per Second"],
+        "datasets": [
+          {
+            "label": "dmr",
+            "data": [5774.94],
+            "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "ninja",
+            "data": [3888.13],
+            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "drf",
+            "data": [3024.24],
+            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
+            "borderWidth": 2
           }
-        },
-        "x": {
-          "grid": {
-            "display": false
-          }
-        }
+        ]
       },
-      "plugins": {
-        "legend": {
-          "display": true,
-          "position": "top",
-          "labels": {
-            "usePointStyle": true
+      "options": {
+        "responsive": true,
+        "maintainAspectRatio": true,
+        "scales": {
+          "y": {
+            "beginAtZero": true,
+            "title": {
+              "display": true,
+              "text": "higher is better"
+            }
+          },
+          "x": {
+            "grid": {
+              "display": false
+            }
+          }
+        },
+        "plugins": {
+          "legend": {
+            "display": true,
+            "position": "top",
+            "labels": {
+              "usePointStyle": true
+            }
+          }
+        }
+      }
+    },
+    "dark": {
+      "type": "bar",
+      "data": {
+        "labels": ["Requests Per Second"],
+        "datasets": [
+          {
+            "label": "dmr",
+            "data": [5774.94],
+            "backgroundColor": ["rgba(255, 255, 255, 0.7)"],
+            "borderColor": ["rgba(255, 255, 255, 1)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "ninja",
+            "data": [3888.13],
+            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
+            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "drf",
+            "data": [3024.24],
+            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
+            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "borderWidth": 2
+          }
+        ]
+      },
+      "options": {
+        "responsive": true,
+        "maintainAspectRatio": true,
+        "color": "#FFFFFF",
+        "borderColor": "rgba(186, 197, 196, 0.25)",
+        "scales": {
+          "y": {
+            "beginAtZero": true,
+            "grid": {
+              "color": "rgba(186, 197, 196, 0.14)"
+            },
+            "ticks": {
+              "color": "#FFFFFF"
+            },
+            "title": {
+              "display": true,
+              "text": "higher is better",
+              "color": "#FFFFFF"
+            }
+          },
+          "x": {
+            "grid": {
+              "display": false
+            },
+            "ticks": {
+              "color": "#FFFFFF"
+            }
+          }
+        },
+        "plugins": {
+          "legend": {
+            "display": true,
+            "position": "top",
+            "labels": {
+              "usePointStyle": true,
+              "color": "#FFFFFF"
+            }
           }
         }
       }
@@ -92,15 +163,16 @@ Async
 .. chartjs::
 
   {
-    "type": "bar",
-    "data": {
-      "labels": ["Requests Per Second"],
-      "datasets": [
+    "light": {
+      "type": "bar",
+      "data": {
+        "labels": ["Requests Per Second"],
+        "datasets": [
           {
             "label": "fastapi",
             "data": [10854.6],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
-            "borderColor": ["rgba(53, 84, 74, 0.7)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
@@ -113,35 +185,105 @@ Async
           {
             "label": "ninja",
             "data": [4359.12],
-            "backgroundColor": ["rgba(53, 84, 74, 0.3)"],
-            "borderColor": ["rgba(53, 84, 74, 0.6)"],
+            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           }
         ]
-    },
-    "options": {
-      "responsive": true,
-      "maintainAspectRatio": true,
-      "scales": {
-        "y": {
-          "beginAtZero": true,
-          "title": {
-            "display": true,
-            "text": "higher is better"
+      },
+      "options": {
+        "responsive": true,
+        "maintainAspectRatio": true,
+        "scales": {
+          "y": {
+            "beginAtZero": true,
+            "title": {
+              "display": true,
+              "text": "higher is better"
+            }
+          },
+          "x": {
+            "grid": {
+              "display": false
+            }
           }
         },
-        "x": {
-          "grid": {
-            "display": false
+        "plugins": {
+          "legend": {
+            "display": true,
+            "position": "top",
+            "labels": {
+              "usePointStyle": true
+            }
           }
         }
+      }
+    },
+    "dark": {
+      "type": "bar",
+      "data": {
+        "labels": ["Requests Per Second"],
+        "datasets": [
+          {
+            "label": "fastapi",
+            "data": [10854.6],
+            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
+            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "dmr",
+            "data": [7026.27],
+            "backgroundColor": ["rgba(255, 255, 255, 0.7)"],
+            "borderColor": ["rgba(255, 255, 255, 1)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "ninja",
+            "data": [4359.12],
+            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
+            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "borderWidth": 2
+          }
+        ]
       },
-      "plugins": {
-        "legend": {
-          "display": true,
-          "position": "top",
-          "labels": {
-            "usePointStyle": true
+      "options": {
+        "responsive": true,
+        "maintainAspectRatio": true,
+        "color": "#FFFFFF",
+        "borderColor": "rgba(186, 197, 196, 0.25)",
+        "scales": {
+          "y": {
+            "beginAtZero": true,
+            "grid": {
+              "color": "rgba(186, 197, 196, 0.14)"
+            },
+            "ticks": {
+              "color": "#FFFFFF"
+            },
+            "title": {
+              "display": true,
+              "text": "higher is better",
+              "color": "#FFFFFF"
+            }
+          },
+          "x": {
+            "grid": {
+              "display": false
+            },
+            "ticks": {
+              "color": "#FFFFFF"
+            }
+          }
+        },
+        "plugins": {
+          "legend": {
+            "display": true,
+            "position": "top",
+            "labels": {
+              "usePointStyle": true,
+              "color": "#FFFFFF"
+            }
           }
         }
       }
