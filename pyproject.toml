@@ -124,7 +124,7 @@ dev = [
   "types-docutils>=0.22,<0.23",
   "types-setuptools>=82,<84",
   "types-pyyaml>=6.0,<7",
-  "types-django-filter>=25.2,<26",
+  "types-django-filter>=25.2,<27",
   "types-redis>=4.6,<5",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<1.1.410",
