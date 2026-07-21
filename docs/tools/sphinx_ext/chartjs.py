@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from docutils import nodes
 from sphinx.application import Sphinx
@@ -8,30 +8,6 @@ from typing_extensions import override
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
-
-_SCRIPT: Final = """
-<script>
-(function() {{
-    const chartId = '{chart_id}';
-    const canvas = document.getElementById(chartId);
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const config = {chart_config};
-
-    // Wait for Chart.js to be loaded
-    if (typeof Chart !== 'undefined') {{
-        new Chart(ctx, config);
-    }} else {{
-        window.addEventListener('load', function() {{
-            if (typeof Chart !== 'undefined') {{
-                new Chart(ctx, config);
-            }}
-        }});
-    }}
-}})();
-</script>
-"""
 
 
 class ChartJSNode(nodes.General, nodes.Element):
@@ -46,9 +22,16 @@ class ChartJSDirective(SphinxDirective):
         .. chartjs:: Chart Title
 
             {
-              "type": "bar",
-              "data": {...},
-              "options": {...}
+              "light": {
+                "type": "bar",
+                "data": {...},
+                "options": {...}
+              },
+              "dark": {
+                "type": "bar",
+                "data": {...},
+                "options": {...}
+              }
             }
     """
 
@@ -86,14 +69,11 @@ def _visit_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
     title = node.get('title', '')
     if title:
         self.body.append(f'<h3>{self.encode(title)}</h3>\n')
-    canvas = f'<canvas id="{node["chart_id"]}"></canvas>\n'
-
-    self.body.append(canvas)
+    self.body.append(f'<canvas id="{node["chart_id"]}"></canvas>\n')
     self.body.append(
-        _SCRIPT.format(
-            chart_id=node['chart_id'],
-            chart_config=node['chart_config'],
-        ),
+        '<script type="application/json" data-chartjs-config '
+        f'data-chartjs-target="{node["chart_id"]}">'
+        f'{node["chart_config"]}</script>\n',
     )
 
 
@@ -104,3 +84,4 @@ def _depart_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
 def setup(app: Sphinx) -> None:
     """Setup Chart.js directive."""
     app.add_node(ChartJSNode, html=(_visit_chartjs_html, _depart_chartjs_html))
+    app.add_js_file('js/chartjs.js')
