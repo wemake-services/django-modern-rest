@@ -74,22 +74,22 @@ Sync
           {
             "label": "dmr",
             "data": [5774.94],
-            "backgroundColor": ["rgba(255, 255, 255, 0.7)"],
-            "borderColor": ["rgba(255, 255, 255, 1)"],
+            "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
+            "borderColor": ["rgba(168, 211, 187, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
             "data": [3888.13],
-            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
-            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
+            "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           },
           {
             "label": "drf",
             "data": [3024.24],
-            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
-            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
+            "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           }
         ]
@@ -98,12 +98,12 @@ Sync
         "responsive": true,
         "maintainAspectRatio": true,
         "color": "#FFFFFF",
-        "borderColor": "rgba(186, 197, 196, 0.25)",
+        "borderColor": "rgba(168, 211, 187, 0.25)",
         "scales": {
           "y": {
             "beginAtZero": true,
             "grid": {
-              "color": "rgba(186, 197, 196, 0.14)"
+              "color": "rgba(168, 211, 187, 0.14)"
             },
             "ticks": {
               "color": "#FFFFFF"
@@ -227,22 +227,22 @@ Async
           {
             "label": "fastapi",
             "data": [10854.6],
-            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
-            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
+            "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           },
           {
             "label": "dmr",
             "data": [7026.27],
-            "backgroundColor": ["rgba(255, 255, 255, 0.7)"],
-            "borderColor": ["rgba(255, 255, 255, 1)"],
+            "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
+            "borderColor": ["rgba(168, 211, 187, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
             "data": [4359.12],
-            "backgroundColor": ["rgba(186, 197, 196, 0.4)"],
-            "borderColor": ["rgba(186, 197, 196, 0.7)"],
+            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
+            "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           }
         ]
@@ -251,12 +251,12 @@ Async
         "responsive": true,
         "maintainAspectRatio": true,
         "color": "#FFFFFF",
-        "borderColor": "rgba(186, 197, 196, 0.25)",
+        "borderColor": "rgba(168, 211, 187, 0.25)",
         "scales": {
           "y": {
             "beginAtZero": true,
             "grid": {
-              "color": "rgba(186, 197, 196, 0.14)"
+              "color": "rgba(168, 211, 187, 0.14)"
             },
             "ticks": {
               "color": "#FFFFFF"
