@@ -48,6 +48,22 @@ class _WrongTypedDictBodyController(
 
 
 @final
+class _CustomStatusBodyController(
+    Controller[PydanticSerializer],
+):
+    """Overrides the status code returned on request validation errors."""
+
+    request_validation_error_status = HTTPStatus.UNPROCESSABLE_ENTITY
+
+    def post(
+        self,
+        parsed_body: Body[_MyPydanticModel],
+    ) -> str:  # pragma: no cover
+        """Does not respect a body type."""
+        return 'done'  # not an exception for a better test clarity
+
+
+@final
 class _WrongPydanticQueryController(
     Controller[PydanticSerializer],
 ):
@@ -112,6 +128,27 @@ def test_validate_typed_dict_request_body(dmr_rf: DMRRequestFactory) -> None:
             {
                 'msg': 'Field required',
                 'loc': ['parsed_body', 'name'],
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+def test_validate_request_body_custom_status(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures a controller can customize the validation error status code."""
+    request = dmr_rf.post('/whatever/', data={})
+
+    response = _CustomStatusBodyController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Field required',
+                'loc': ['parsed_body', 'age'],
                 'type': 'value_error',
             },
         ],

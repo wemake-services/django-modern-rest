@@ -114,6 +114,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
             unsafe throttle Django cache backends?
         error_model: Schema type that represents
             and validates common error responses.
+        request_validation_error_status: HTTP status code returned when an
+            incoming request fails validation. Defaults to ``400``.
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type or exact ``api_endpoints`` instances.
@@ -145,6 +147,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     csrf_exempt: ClassVar[bool] = True
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
+    request_validation_error_status: ClassVar[HTTPStatus] = (
+        HTTPStatus.BAD_REQUEST
+    )
     no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
     validate_responses: ClassVar[bool | None] = None
     semantic_responses: ClassVar[bool | None] = None

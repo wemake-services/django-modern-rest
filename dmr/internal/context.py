@@ -1,6 +1,5 @@
 from collections import defaultdict
 from collections.abc import Callable
-from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 from typing_extensions import TypedDict
@@ -195,5 +194,5 @@ class SerializerContext:
         except serializer.validation_error as exc:
             raise ValidationError(
                 serializer.serialize_validation_error(exc),
-                status_code=HTTPStatus.BAD_REQUEST,
+                status_code=controller.request_validation_error_status,
             ) from None
