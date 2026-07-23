@@ -205,6 +205,29 @@ This can also be used to attach ``RateLimit`` headers
 and other :doc:`throttling` information.
 
 
+Customizing request validation status code
+-------------------------------------------
+
+When an incoming request fails validation
+(an invalid body, query, headers, and so on),
+``django-modern-rest`` returns a ``400 Bad Request`` response by default.
+
+Some APIs prefer a different status code for this case,
+for example ``422 Unprocessable Entity``.
+You can change it per-controller
+via the :attr:`~dmr.controller.Controller.request_validation_error_status`
+attribute:
+
+.. literalinclude:: /examples/error_handling/request_validation_status.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 16
+
+This only affects errors raised while validating the incoming request.
+Response and streaming validation errors are unaffected.
+
+
 Problem Details
 ---------------
 
