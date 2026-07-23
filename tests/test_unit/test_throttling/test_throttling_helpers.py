@@ -21,6 +21,7 @@ from dmr.throttling.algorithms import (
     SimpleRate,
 )
 from dmr.throttling.backends import CachedRateLimit
+from dmr.throttling.headers import RateLimitIETFDraft
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -307,6 +308,30 @@ def test_assert_throttled_matcher_header(dmr_rf: DMRRequestFactory) -> None:
     response = _SyncController.as_view()(dmr_rf.get('/whatever/'))
     assert isinstance(response, HttpResponse)
     assert_throttled(response, reset=IsStr())
+
+
+def test_assert_throttled_missing_header(dmr_rf: DMRRequestFactory) -> None:
+    """A missing expected header fails with a clear error, not `KeyError`."""
+
+    class _Ctrl(Controller[PydanticFastSerializer]):
+        # This provider emits `RateLimit`, not `X-RateLimit-Limit`:
+        throttling = (
+            SyncThrottle(
+                1,
+                Rate.minute,
+                response_headers=[RateLimitIETFDraft()],
+            ),
+        )
+
+        def get(self) -> str:
+            return 'inside'
+
+    throttle_state(_Ctrl).exhaust(dmr_rf.get('/whatever/'))
+    response = _Ctrl.as_view()(dmr_rf.get('/whatever/'))
+    assert isinstance(response, HttpResponse)
+    with pytest.raises(AssertionError, match=r'X-RateLimit-Limit.*missing'):
+        assert_throttled(response, limit=1)
+    _cover_handler_sync(_Ctrl, dmr_rf)
 
 
 def test_assert_throttled_rejects_ok_response(
