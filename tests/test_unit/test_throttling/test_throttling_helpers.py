@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import pytest
 from dirty_equals import IsStr
 from django.http import HttpResponse
+from freezegun.api import FrozenDateTimeFactory
 from typing_extensions import override
 
 from dmr import Controller, modify
@@ -125,7 +126,10 @@ async def _cover_handler_async(
     _assert_ok(await dmr_async_rf.wrap(controller.as_view()(request)))
 
 
-def test_exhaust_sync(dmr_rf: DMRRequestFactory) -> None:
+def test_exhaust_sync(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
     """`exhaust` saturates all throttles so the next request is throttled."""
     throttle_state(_SyncController).exhaust(dmr_rf.get('/whatever/'))
 
@@ -219,7 +223,10 @@ def test_exhaust_large_rate_is_cheap(dmr_rf: DMRRequestFactory) -> None:
     _cover_handler_sync(_BigController, dmr_rf)
 
 
-def test_exhaust_multiple_throttles(dmr_rf: DMRRequestFactory) -> None:
+def test_exhaust_multiple_throttles(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
     """`exhaust` pre-fills every throttle on the endpoint in one call."""
     endpoint = _MultiController.api_endpoints['GET']
     assert len(endpoint.metadata.throttling or ()) == 2
