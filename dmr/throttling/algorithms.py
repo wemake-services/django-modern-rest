@@ -58,7 +58,7 @@ class BaseThrottleAlgorithm:
         """
         Return a state that guarantees the next :meth:`access` is rejected.
 
-        Used by test helpers (see :func:`dmr.test.throttle_state`) to seed a
+        Used by test helpers (see ``dmr.test.throttle_state``) to seed a
         throttle to its limit in O(1) instead of replaying ``max_requests``
         calls. Returns ``None`` when this algorithm cannot describe a saturated
         state directly; callers then fall back to repeatedly incrementing

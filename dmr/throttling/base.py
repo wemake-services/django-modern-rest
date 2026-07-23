@@ -257,7 +257,7 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
         Seed this throttle's stored state to its limit.
 
         After this call the next request resolving to the same cache key is
-        rejected. Intended for tests; see :func:`dmr.test.throttle_state`.
+        rejected. Intended for tests; see ``dmr.test.throttle_state``.
         Does nothing when the cache key cannot be computed for the request.
         """
         cache_key = self.full_cache_key(endpoint, controller)

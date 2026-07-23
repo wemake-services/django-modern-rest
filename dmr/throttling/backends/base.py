@@ -106,7 +106,7 @@ class BaseThrottleSyncBackend(_BaseThrottleBackend):
         """
         Seed the stored state so the next :meth:`incr` is rejected.
 
-        Used by test helpers (see :func:`dmr.test.throttle_state`).
+        Used by test helpers (see ``throttle_state``).
         Assumes a fresh (unthrottled) starting state, as when seeding in tests.
         This default replays ``incr`` ``max_requests`` times, which works for
         any backend. Backends that can persist a :class:`CachedRateLimit`

@@ -11,6 +11,8 @@ except ImportError:  # pragma: no cover
 
 if TYPE_CHECKING:
     # We can't import it directly, because it will ruin our coverage measures.
+    from collections.abc import Callable
+
     from django.conf import LazySettings
 
     from dmr.test import (
@@ -18,6 +20,7 @@ if TYPE_CHECKING:
         DMRAsyncRequestFactory,
         DMRClient,
         DMRRequestFactory,
+        _ThrottleState,  # noqa: WPS450
     )
 
 
@@ -57,6 +60,23 @@ def dmr_async_rf() -> 'DMRAsyncRequestFactory':
     from dmr.test import DMRAsyncRequestFactory
 
     return DMRAsyncRequestFactory()
+
+
+@pytest.fixture
+def dmr_throttle_state() -> 'Callable[..., _ThrottleState]':
+    """
+    Factory to exhaust a controller's throttles in tests.
+
+    Returns :func:`dmr.test.throttle_state`::
+
+        def test_throttled(dmr_rf, dmr_throttle_state):
+            dmr_throttle_state(MyController).exhaust(dmr_rf.get('/whatever/'))
+            response = MyController.as_view()(dmr_rf.get('/whatever/'))
+            assert_throttled(response)
+    """
+    from dmr.test import throttle_state
+
+    return throttle_state
 
 
 @pytest.fixture
