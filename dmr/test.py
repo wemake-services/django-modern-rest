@@ -360,7 +360,14 @@ def _assert_header(
         return
     if isinstance(expected, int):
         expected = str(expected)
-    assert headers[name] == expected, {name: headers.get(name)}  # noqa: S101
+    present = dict(headers)
+    assert name in headers, (  # noqa: S101
+        f'Header {name!r} is missing, present headers: {present!r}'
+    )
+    actual = headers[name]
+    assert actual == expected, (  # noqa: S101
+        f'Header {name!r}: expected {expected!r}, got {actual!r}'
+    )
 
 
 def _assert_ratelimit_detail(response: HttpResponse) -> None:
