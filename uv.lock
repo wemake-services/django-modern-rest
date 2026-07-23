@@ -790,7 +790,7 @@ dev = [
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.0,<6.1" },
     { name = "faker", specifier = ">=40.1,<41" },
     { name = "import-linter", specifier = ">=2.5,<3" },
-    { name = "inline-snapshot", specifier = ">=0.32,<0.35" },
+    { name = "inline-snapshot", specifier = ">=0.32,<0.36" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'", specifier = ">=3.11,<4" },
     { name = "phonenumbers", specifier = ">=9.0,<10" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
@@ -855,7 +855,7 @@ unit-test = [
     { name = "django", specifier = "~=5.2.0" },
     { name = "django-csp", specifier = ">=4.0,<5.0" },
     { name = "faker", specifier = ">=40.1,<41" },
-    { name = "inline-snapshot", specifier = ">=0.32,<0.35" },
+    { name = "inline-snapshot", specifier = ">=0.32,<0.36" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'", specifier = ">=3.11,<4" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
     { name = "pytest", specifier = ">=9.0,<10" },
@@ -1257,7 +1257,7 @@ wheels = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.34.2"
+version = "0.35.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asttokens" },
@@ -1266,9 +1266,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/c3/b5c36ab59e355b8d7c59205b8903fa74458c6938c9691f7d7730404f94c9/inline_snapshot-0.34.2.tar.gz", hash = "sha256:d160cb6059e00916c2e846abc014ead6f01fb24479f13696fb8670d7a7937f67", size = 2641142, upload-time = "2026-06-19T21:17:27.338Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/db/c72dcff365970f7668b1b944138894c794ebc3e39ac338dfd27b6c866ecf/inline_snapshot-0.35.0.tar.gz", hash = "sha256:7351b4692106e970777c54c5e5d264b9406555cfc2619321b8e9a3447eb06361", size = 2534481, upload-time = "2026-07-15T17:37:10.746Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/2a/84fe7ef052ac666e95e7cabdf0905aa3f2c90b5a117419760b39b577602a/inline_snapshot-0.34.2-py3-none-any.whl", hash = "sha256:743a514a08ffd0d2d62878b0208d4def5041585affa7db6b89f0ca2e23552361", size = 90717, upload-time = "2026-06-19T21:17:25.629Z" },
+    { url = "https://files.pythonhosted.org/packages/90/03/7bd4d7dd9749b53565d0e2ced233afa32736a51aaa7fb0be54479bdd83cb/inline_snapshot-0.35.0-py3-none-any.whl", hash = "sha256:ef63c1d997d7cd8e5f773fb2ea120144d067899d3c25cf1dbe0f70a0fa206e81", size = 94602, upload-time = "2026-07-15T17:37:09.016Z" },
 ]
 
 [[package]]
