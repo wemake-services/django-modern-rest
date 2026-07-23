@@ -51,6 +51,20 @@ class BaseThrottleAlgorithm:
         """Reports the throttling usage, but does not additionally increment."""
         raise NotImplementedError
 
+    def saturated_state(
+        self,
+        throttle: 'SyncThrottle | AsyncThrottle',
+    ) -> CachedRateLimit | None:
+        """
+        Return a state that guarantees the next :meth:`access` is rejected.
+
+        Used by test helpers (see :func:`dmr.test.throttle_state`) to seed a
+        throttle to its limit in O(1) instead of replaying ``max_requests``
+        calls. Returns ``None`` when this algorithm cannot describe a saturated
+        state directly; callers then fall back to repeatedly incrementing
+        through the backend.
+        """
+
     def transaction_script(self, script_format: str) -> str | None:
         """
         Optionally dump the transaction script for backends that support it.
@@ -115,6 +129,17 @@ class SimpleRate(BaseThrottleAlgorithm):
             cache_object,
             now,
             report_all=False,
+        )
+
+    @override
+    def saturated_state(
+        self,
+        throttle: 'SyncThrottle | AsyncThrottle',
+    ) -> CachedRateLimit:
+        """Return a full fixed window: the request count is at the maximum."""
+        return CachedRateLimit(
+            history=[throttle.max_requests],
+            time=int(time.time()) + throttle.duration_in_seconds,
         )
 
     def _process_cache(
@@ -236,6 +261,17 @@ class LeakyBucket(BaseThrottleAlgorithm):
             cache_object,
             now=now,
             report_all=False,
+        )
+
+    @override
+    def saturated_state(
+        self,
+        throttle: 'SyncThrottle | AsyncThrottle',
+    ) -> CachedRateLimit:
+        """Return a full bucket: the level is at capacity as of now."""
+        return CachedRateLimit(
+            history=[throttle.max_requests * throttle.duration_in_seconds],
+            time=int(time.time()),
         )
 
     def _process_cache(

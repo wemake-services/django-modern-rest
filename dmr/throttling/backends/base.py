@@ -93,6 +93,35 @@ class BaseThrottleSyncBackend(_BaseThrottleBackend):
         """Sync get the state with no increments."""
         raise NotImplementedError
 
+    def seed(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle',
+        *,
+        cache_key: str,
+        algorithm: 'BaseThrottleAlgorithm',
+        state: CachedRateLimit | None,
+    ) -> None:
+        """
+        Seed the stored state so the next :meth:`incr` is rejected.
+
+        Used by test helpers (see :func:`dmr.test.throttle_state`).
+        Assumes a fresh (unthrottled) starting state, as when seeding in tests.
+        This default replays ``incr`` ``max_requests`` times, which works for
+        any backend. Backends that can persist a :class:`CachedRateLimit`
+        directly should override this for an O(1) seed using ``state``
+        (see :class:`~dmr.throttling.backends.SyncDjangoCache`).
+        """
+        for _ in range(throttle.max_requests):
+            self.incr(
+                endpoint,
+                controller,
+                throttle,
+                cache_key=cache_key,
+                algorithm=algorithm,
+            )
+
 
 class BaseThrottleAsyncBackend(_BaseThrottleBackend):
     """
@@ -127,3 +156,30 @@ class BaseThrottleAsyncBackend(_BaseThrottleBackend):
     ) -> CachedRateLimit | None:
         """Sync get the state with no increments."""
         raise NotImplementedError
+
+    async def seed(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'AsyncThrottle',
+        *,
+        cache_key: str,
+        algorithm: 'BaseThrottleAlgorithm',
+        state: CachedRateLimit | None,
+    ) -> None:
+        """
+        Async version of :meth:`BaseThrottleSyncBackend.seed`.
+
+        Assumes a fresh (unthrottled) starting state, as when seeding in tests.
+        This default replays ``incr`` ``max_requests`` times. Backends that can
+        persist a :class:`CachedRateLimit` directly should override this for an
+        O(1) seed (see :class:`~dmr.throttling.backends.AsyncDjangoCache`).
+        """
+        for _ in range(throttle.max_requests):
+            await self.incr(  # noqa: WPS476
+                endpoint,
+                controller,
+                throttle,
+                cache_key=cache_key,
+                algorithm=algorithm,
+            )
