@@ -159,6 +159,8 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         Everything else (window, cache key, backend, algorithm, headers) is
         preserved. Handy in tests to lower a rate so that throttling can be
         reached with only a few requests instead of the configured amount.
+
+        .. versionadded:: 0.12.0
         """
         return type(self)(
             max_requests,
