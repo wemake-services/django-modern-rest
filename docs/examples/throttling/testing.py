@@ -10,7 +10,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory, assert_throttling
 from dmr.throttling import Rate, SyncThrottle
 
-_URL = '/reports/'
+_URL: Final = '/reports/'
 
 
 class ReportsController(Controller[PydanticSerializer]):
