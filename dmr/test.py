@@ -16,10 +16,12 @@ if TYPE_CHECKING:
 
 _ThingT = TypeVar('_ThingT')
 
-#: Value we compare a response header against: an ``int`` (compared as its
-#: ``str`` form), a plain ``str``, or any object with a custom ``__eq__``
-#: such as ``dirty_equals.IsStr`` for real-time (non-frozen) assertions.
-_HeaderValue = int | str | object
+#: Expected value for a header checked by ``assert_throttled``: an ``int``
+#: (rendered to its ``str`` form), a ``str``, or a matcher like
+#: ``dirty_equals.IsStr``. Typed as ``object`` because the header is compared
+#: with ``==``, so no narrower static type is correct -- matchers like
+#: ``IsStr`` are deliberately unhashable, so a ``Protocol`` won't help.
+_HeaderValue = object
 
 
 class _DMRMixin:  # noqa: WPS338
