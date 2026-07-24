@@ -334,6 +334,8 @@ isort.known-first-party = ["server", "examples"]
 "django_test_app/server/apps/*/migrations/*.py" = ["D101", "E501", "RUF012"]
 # Allow asserts and private name imports and access for tests:
 "tests/*.py" = ["S101", "SLF001", "PLC2701", "RUF012"]
+# Our test utilities are built on asserts:
+"dmr/test.py" = ["S101"]
 # Allow examples to be a bit less strict:
 "docs/examples/**/*.py" = ["D1", "S1"]
 # Allow benchmarks to not have docs and do scripting:
