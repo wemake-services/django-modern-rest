@@ -202,7 +202,7 @@ def reduced_throttling(
     *,
     method: str = 'GET',
     max_requests: int = 2,
-) -> 'Generator[SyncThrottle | AsyncThrottle, None, None]':
+) -> Generator[SyncThrottle | AsyncThrottle, None, None]:
     """
     Temporarily lower an endpoint's first throttle to ``max_requests``.
 
