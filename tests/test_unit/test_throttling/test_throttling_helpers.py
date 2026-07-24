@@ -11,7 +11,7 @@ from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import (
     DMRAsyncRequestFactory,
     DMRRequestFactory,
-    aassert_throttling,
+    assert_async_throttling,
     assert_throttled,
     assert_throttling,
     reduced_throttling,
@@ -167,11 +167,11 @@ def test_assert_throttling_sync(dmr_rf: DMRRequestFactory) -> None:
 
 
 @pytest.mark.asyncio
-async def test_aassert_throttling_async(
+async def test_assert_async_throttling(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """The async all-in-one driver reduces, drives requests, asserts 429."""
-    response = await aassert_throttling(
+    response = await assert_async_throttling(
         _AsyncController,
         dmr_async_rf,
         _URL,

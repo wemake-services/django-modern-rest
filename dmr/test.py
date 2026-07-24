@@ -367,7 +367,7 @@ def assert_throttling(
     return throttled
 
 
-async def aassert_throttling(
+async def assert_async_throttling(
     controller_cls: 'type[Controller[BaseSerializer]]',
     request_factory: DMRAsyncRequestFactory,
     path: str,

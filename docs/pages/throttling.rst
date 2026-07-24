@@ -550,7 +550,12 @@ Instead, use ``assert_throttling`` from ``dmr.test``: it temporarily lowers the
 endpoint's first throttle to a small ``max_requests`` (``2`` by default), drives
 that many allowed requests plus one more, and asserts the ``429`` — exercising
 the full request cycle with a genuine response and headers. It returns the
-rejected response so you can make further header assertions:
+rejected response so you can make further header assertions. Use
+``assert_async_throttling`` for async controllers.
+
+For finer control -- custom bodies or auth, or asserting exact headers -- pair
+the underlying ``reduced_throttling`` context manager with ``assert_throttled``.
+Both forms are shown here (the second test uses the context manager):
 
 .. literalinclude:: /examples/throttling/testing.py
   :caption: test_reports.py
@@ -558,21 +563,6 @@ rejected response so you can make further header assertions:
   :language: python
 
 Only the endpoint under test is affected; its throttling is restored afterwards.
-Use ``aassert_throttling`` for async controllers.
-
-For finer control -- custom bodies or auth, or asserting exact headers -- use
-the underlying ``reduced_throttling`` context manager and pair it with
-``assert_throttled``:
-
-.. code-block:: python
-
-    with reduced_throttling(MyController) as throttle:
-        for _ in range(throttle.max_requests):
-            response = MyController.as_view()(dmr_rf.get('/whatever/'))
-            assert response.status_code == 200
-        response = MyController.as_view()(dmr_rf.get('/whatever/'))
-
-    assert_throttled(response, limit=2)
 
 
 API Reference

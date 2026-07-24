@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Final
 
 from django.core.cache import cache
 from django.http import HttpResponse
@@ -7,7 +8,12 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.test import DMRRequestFactory, assert_throttling
+from dmr.test import (
+    DMRRequestFactory,
+    assert_throttled,
+    assert_throttling,
+    reduced_throttling,
+)
 from dmr.throttling import Rate, SyncThrottle
 
 _URL: Final = '/reports/'
@@ -39,3 +45,17 @@ class TestReportsThrottling(TestCase):
 
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+
+    def test_endpoint_is_throttled_manually(self) -> None:
+        # Finer control: drive the requests yourself through the reduced
+        # throttle, then check the rejected response with `assert_throttled`.
+        view = ReportsController.as_view()
+        with reduced_throttling(ReportsController) as throttle:
+            for _ in range(throttle.max_requests):
+                allowed = view(self.dmr_rf.get(_URL))
+                assert allowed.status_code == HTTPStatus.OK
+
+            rejected = view(self.dmr_rf.get(_URL))
+
+        assert isinstance(rejected, HttpResponse)
+        assert_throttled(rejected, limit=2)

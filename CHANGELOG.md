@@ -26,9 +26,9 @@ of requirements for an API to count as public.
 - Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
   reusable controllers to verify JWT access tokens, #1129
 - Added test helpers in `dmr.test` for asserting that endpoints are
-  throttled: `assert_throttling` / `aassert_throttling`, `reduced_throttling`,
-  and `assert_throttled`, plus `SyncThrottle.replace` /
-  `AsyncThrottle.replace`, #1167
+  throttled: `assert_throttling` / `assert_async_throttling`,
+  `reduced_throttling`, and `assert_throttled`, plus `SyncThrottle.replace`
+  / `AsyncThrottle.replace`, #1167
 
 ### Bugfixes
 
