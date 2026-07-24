@@ -248,6 +248,30 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
             self._backend.get(endpoint, controller, self, cache_key=cache_key),
         )
 
+    def seed(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        """
+        Seed this throttle's stored state to its limit.
+
+        After this call the next request resolving to the same cache key is
+        rejected. Intended for tests; see ``dmr.test.throttle_state``.
+        Does nothing when the cache key cannot be computed for the request.
+        """
+        cache_key = self.full_cache_key(endpoint, controller)
+        if cache_key is None:
+            return
+        self._backend.seed(
+            endpoint,
+            controller,
+            self,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
+            state=self._algorithm.saturated_state(self),
+        )
+
     def _check(
         self,
         endpoint: 'Endpoint',
@@ -315,6 +339,24 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
                 self,
                 cache_key=cache_key,
             ),
+        )
+
+    async def aseed(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> None:
+        """Async version of :meth:`SyncThrottle.seed`."""
+        cache_key = self.full_cache_key(endpoint, controller)
+        if cache_key is None:
+            return
+        await self._backend.seed(
+            endpoint,
+            controller,
+            self,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
+            state=self._algorithm.saturated_state(self),
         )
 
     async def _check(

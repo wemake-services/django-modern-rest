@@ -539,6 +539,35 @@ This way both your successful responses
 and error responses will have the needed ratelimiting headers.
 
 
+Testing
+-------
+
+Testing that an endpoint is throttled usually means driving it to its limit
+first. Sending ``max_requests`` real requests in a loop is verbose, and it gets
+slow for large rates such as ``1000/hour``.
+
+Instead, use ``throttle_state`` from ``dmr.test`` to pre-fill every throttle
+configured for an endpoint -- controller-level and endpoint-level, per-minute
+and per-hour alike -- to its limit in a single call. The next real request is
+then guaranteed to be rejected. Pair it with ``assert_throttled``, which checks
+the ``429`` status, the rate-limiting headers, and the error body at once:
+
+.. literalinclude:: /examples/throttling/testing.py
+  :caption: test_reports.py
+  :linenos:
+  :language: python
+
+Both helpers work with any backend or algorithm, without knowing the exact
+rate. For async controllers, ``await`` the async variant instead:
+
+.. code-block:: python
+
+    await throttle_state(MyController).aexhaust(request)
+
+The bundled ``dmr_throttle_state`` pytest fixture exposes the same factory, so
+you can inject it instead of importing ``throttle_state`` directly.
+
+
 API Reference
 -------------
 

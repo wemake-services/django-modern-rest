@@ -1,12 +1,24 @@
 from collections.abc import Awaitable
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
 
 from dmr.internal.json import json_dump, json_loads
+from dmr.throttling import AsyncThrottle, SyncThrottle
+
+if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
+    from dmr.serializer import BaseSerializer
 
 _ThingT = TypeVar('_ThingT')
+
+#: Value we compare a response header against: an ``int`` (compared as its
+#: ``str`` form), a plain ``str``, or any object with a custom ``__eq__``
+#: such as ``dirty_equals.IsStr`` for real-time (non-frozen) assertions.
+_HeaderValue = int | str | object
 
 
 class _DMRMixin:  # noqa: WPS338
@@ -179,3 +191,191 @@ class DMRAsyncClient(_DMRMixin, AsyncClient):
     Uses ``async`` API.
     Requires you to ``await`` calls to ``.get``, ``.post``, etc.
     """
+
+
+class _ThrottleState:
+    """
+    Test helper to drive a controller's throttles to their limit.
+
+    Obtain it via :func:`throttle_state`. It removes the need to manually
+    loop ``max_requests`` requests before asserting that throttling triggers,
+    and works with any backend or algorithm without knowing the exact rate.
+
+    See :meth:`exhaust` / :meth:`aexhaust` for usage.
+    """
+
+    __slots__ = ('_controller_cls',)
+
+    def __init__(
+        self,
+        controller_cls: 'type[Controller[BaseSerializer]]',
+    ) -> None:
+        self._controller_cls = controller_cls
+
+    def exhaust(self, request: HttpRequest) -> None:
+        """
+        Drive every throttle of a sync endpoint up to its limit.
+
+        After this call, the next real request built with the same identity
+        (same cache key, e.g. ``REMOTE_ADDR`` / user / JWT) is guaranteed to
+        be throttled::
+
+            request = dmr_rf.get('/whatever/')
+            throttle_state(MyController).exhaust(request)
+
+            response = MyController.as_view()(dmr_rf.get('/whatever/'))
+            assert_throttled(response)
+
+        Use :meth:`aexhaust` for async controllers.
+
+        .. note::
+
+            The saturated state is computed for the current instant.
+            When your throttle uses a time window (anything but the smallest
+            rates), freeze time (e.g. with ``freezegun``) or send the
+            follow-up request immediately so the window does not reset.
+        """
+        endpoint, controller = self._prepare(request)
+        for throttle in self._throttles(endpoint):
+            if not isinstance(throttle, SyncThrottle):
+                raise TypeError(
+                    'Use `aexhaust` for async controllers, '
+                    f'got an async throttle {throttle!r}',
+                )
+            throttle.seed(endpoint, controller)
+
+    async def aexhaust(self, request: HttpRequest) -> None:
+        """
+        Async version of :meth:`exhaust` for async controllers.
+
+        .. code:: python
+
+            request = dmr_async_rf.get('/whatever/')
+            await throttle_state(MyController).aexhaust(request)
+        """
+        endpoint, controller = self._prepare(request)
+        for throttle in self._throttles(endpoint):
+            if not isinstance(throttle, AsyncThrottle):
+                raise TypeError(
+                    'Use `exhaust` for sync controllers, '
+                    f'got a sync throttle {throttle!r}',
+                )
+            await throttle.aseed(endpoint, controller)  # noqa: WPS476
+
+    def _prepare(
+        self,
+        request: HttpRequest,
+    ) -> 'tuple[Endpoint, Controller[BaseSerializer]]':
+        method = request.method or ''
+        endpoint = self._controller_cls.api_endpoints.get(method)
+        if endpoint is None:
+            name = self._controller_cls.__qualname__
+            raise ValueError(
+                f'{name} has no endpoint for method {method!r}, '
+                'cannot exhaust throttles',
+            )
+        controller = self._controller_cls()
+        controller.setup(request)
+        return endpoint, controller
+
+    def _throttles(
+        self,
+        endpoint: 'Endpoint',
+    ) -> 'tuple[SyncThrottle | AsyncThrottle, ...]':
+        throttles = endpoint.metadata.throttling
+        if not throttles:
+            operation_id = endpoint.metadata.operation_id
+            raise ValueError(
+                f'Endpoint {operation_id} has no throttling configured, '
+                'there is nothing to exhaust',
+            )
+        return throttles
+
+
+def throttle_state(
+    controller_cls: 'type[Controller[BaseSerializer]]',
+) -> _ThrottleState:
+    """
+    Return a :class:`_ThrottleState` helper for a controller.
+
+    Use it to pre-fill throttle state in tests so the next request is
+    throttled, without manually looping requests up to the rate limit::
+
+        throttle_state(MyController).exhaust(dmr_rf.get('/whatever/'))
+
+    .. seealso:: :func:`assert_throttled`.
+
+    .. versionadded:: 0.12.0
+    """
+    return _ThrottleState(controller_cls)
+
+
+def assert_throttled(
+    response: HttpResponse,
+    *,
+    limit: _HeaderValue | None = None,
+    reset: _HeaderValue | None = None,
+    retry_after: _HeaderValue | None = None,
+    detail: bool = True,
+) -> None:
+    """
+    Assert that a response was rejected by throttling.
+
+    Collapses the repeated ``429`` status, header and error-body checks into
+    a single call::
+
+        assert_throttled(response)  # just the status + `ratelimit` error
+        assert_throttled(response, limit=5, reset=1, retry_after=1)
+
+    Parameters:
+        response: The response to check.
+        limit: Expected ``X-RateLimit-Limit`` header, when given.
+        reset: Expected ``X-RateLimit-Reset`` header, when given.
+        retry_after: Expected ``Retry-After`` header, when given.
+        detail: Also assert the body is a ``ratelimit`` error. ``True``
+            by default; set to ``False`` for custom error models.
+
+    Header expectations accept an ``int`` (matched as its string form), a
+    ``str``, or any matcher object (e.g. ``dirty_equals.IsStr()``) for
+    real-time tests where the exact reset value is unknown.
+
+    .. versionadded:: 0.12.0
+    """
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (  # noqa: S101
+        response.content
+    )
+    _assert_header(response.headers, 'X-RateLimit-Limit', limit)
+    _assert_header(response.headers, 'X-RateLimit-Reset', reset)
+    _assert_header(response.headers, 'Retry-After', retry_after)
+    if detail:
+        _assert_ratelimit_detail(response)
+
+
+def _assert_header(
+    headers: Any,
+    name: str,
+    expected: _HeaderValue | None,
+) -> None:
+    if expected is None:
+        return
+    if isinstance(expected, int):
+        expected = str(expected)
+    present = dict(headers)
+    assert name in headers, (  # noqa: S101
+        f'Header {name!r} is missing, present headers: {present!r}'
+    )
+    actual = headers[name]
+    assert actual == expected, (  # noqa: S101
+        f'Header {name!r}: expected {expected!r}, got {actual!r}'
+    )
+
+
+def _assert_ratelimit_detail(response: HttpResponse) -> None:
+    body = json_loads(response.content.decode(response.charset or 'utf8'))
+    problems = body['detail']
+    assert problems, (  # noqa: S101
+        f'Expected a non-empty `detail` in throttled response, got {body!r}'
+    )
+    assert all(  # noqa: S101
+        problem.get('type') == 'ratelimit' for problem in problems
+    ), body

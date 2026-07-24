@@ -83,7 +83,8 @@ example:
       --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
       docs/examples/testing/django_builtin_client.py \
-      docs/examples/testing/dmr_helpers.py
+      docs/examples/testing/dmr_helpers.py \
+      docs/examples/throttling/testing.py
 
 # Start Django + DRM example app
 [group('testing')]

@@ -114,6 +114,38 @@ class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
         stored_cache = self._cache.get(cache_key)
         return self._load_cache(controller, stored_cache)
 
+    @override
+    def seed(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'SyncThrottle',
+        *,
+        cache_key: str,
+        algorithm: 'BaseThrottleAlgorithm',
+        state: CachedRateLimit | None,
+    ) -> None:
+        """Seed the saturated state in O(1) by writing the blob directly."""
+        if state is None:
+            # Algorithm does not describe a saturated state, replay `incr`:
+            BaseThrottleSyncBackend.seed(
+                self,
+                endpoint,
+                controller,
+                throttle,
+                cache_key=cache_key,
+                algorithm=algorithm,
+                state=state,
+            )
+            return
+        self._set(
+            endpoint,
+            controller,
+            cache_key,
+            state,
+            ttl_seconds=throttle.duration_in_seconds,
+        )
+
     def _set(
         self,
         endpoint: 'Endpoint',
@@ -180,6 +212,38 @@ class AsyncDjangoCache(_DjangoCache, BaseThrottleAsyncBackend):
         """Async get the cached rate limit state."""
         stored_cache = await self._cache.aget(cache_key)
         return self._load_cache(controller, stored_cache)
+
+    @override
+    async def seed(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        throttle: 'AsyncThrottle',
+        *,
+        cache_key: str,
+        algorithm: 'BaseThrottleAlgorithm',
+        state: CachedRateLimit | None,
+    ) -> None:
+        """Seed the saturated state in O(1) by writing the blob directly."""
+        if state is None:
+            # Algorithm does not describe a saturated state, replay `incr`:
+            await BaseThrottleAsyncBackend.seed(
+                self,
+                endpoint,
+                controller,
+                throttle,
+                cache_key=cache_key,
+                algorithm=algorithm,
+                state=state,
+            )
+            return
+        await self._set(
+            endpoint,
+            controller,
+            cache_key,
+            state,
+            ttl_seconds=throttle.duration_in_seconds,
+        )
 
     async def _set(
         self,
