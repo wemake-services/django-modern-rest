@@ -1,52 +1,32 @@
+import contextlib
 from http import HTTPStatus
-from typing import TYPE_CHECKING
 
 import pytest
 from dirty_equals import IsStr
 from django.http import HttpResponse
 from freezegun.api import FrozenDateTimeFactory
-from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import (
     DMRAsyncRequestFactory,
     DMRRequestFactory,
+    aassert_throttling,
     assert_throttled,
-    throttle_state,
+    assert_throttling,
+    reduced_throttling,
 )
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.algorithms import (
-    BaseThrottleAlgorithm,
-    LeakyBucket,
-    SimpleRate,
-)
-from dmr.throttling.backends import CachedRateLimit
 from dmr.throttling.headers import RateLimitIETFDraft
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from dmr.test import _ThrottleState  # noqa: WPS450
-
-
-class _NoSaturateRate(SimpleRate):
-    """SimpleRate that reports no saturated state, forcing the `incr` seed."""
-
-    @override
-    def saturated_state(  # type: ignore[override]
-        self,
-        throttle: SyncThrottle | AsyncThrottle,
-    ) -> CachedRateLimit | None:
-        # Exercises the base default (returns `None`) and forces the fallback:
-        return BaseThrottleAlgorithm.saturated_state(self, throttle)
+_URL = '/whatever/'
 
 
 class _SyncController(Controller[PydanticFastSerializer]):
-    throttling = [
+    throttling = (
         SyncThrottle(5, Rate.minute),
         SyncThrottle(10, Rate.hour),
-    ]
+    )
 
     def get(self) -> str:
         return 'inside'
@@ -57,296 +37,185 @@ class _SyncController(Controller[PydanticFastSerializer]):
 
 
 class _AsyncController(Controller[PydanticFastSerializer]):
-    throttling = [AsyncThrottle(3, Rate.hour)]
+    throttling = (AsyncThrottle(3, Rate.hour),)
 
     async def get(self) -> str:
         return 'inside'
 
 
-class _LeakyController(Controller[PydanticFastSerializer]):
-    throttling = [SyncThrottle(3, Rate.minute, algorithm=LeakyBucket())]
+class _IETFController(Controller[PydanticFastSerializer]):
+    # Emits `RateLimit`, not `X-RateLimit-Limit`:
+    throttling = (
+        SyncThrottle(5, Rate.minute, response_headers=[RateLimitIETFDraft()]),
+    )
 
     def get(self) -> str:
         return 'inside'
 
 
-class _BigController(Controller[PydanticFastSerializer]):
-    throttling = [SyncThrottle(1000, Rate.hour)]
-
-    def get(self) -> str:
-        return 'inside'
-
-
-class _MultiController(Controller[PydanticFastSerializer]):
-    # A coarse per-hour limit on the controller joined with a stricter
-    # per-minute limit on the endpoint. Both must pass.
-    throttling = (SyncThrottle(5, Rate.hour),)
-
-    @modify(throttling=[SyncThrottle(1, Rate.minute)])
-    def get(self) -> str:
-        return 'inside'
-
-
-class _NoSaturateSync(Controller[PydanticFastSerializer]):
-    throttling = [SyncThrottle(2, Rate.minute, algorithm=_NoSaturateRate())]
-
-    def get(self) -> str:
-        return 'inside'
-
-
-class _NoSaturateAsync(Controller[PydanticFastSerializer]):
-    throttling = [AsyncThrottle(2, Rate.minute, algorithm=_NoSaturateRate())]
-
-    async def get(self) -> str:
-        return 'inside'
-
-
-def _assert_ok(response: object) -> None:
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK, response.content
-
-
-def _cover_handler_sync(
-    controller: type[Controller[PydanticFastSerializer]],
+def _throttled_response(
+    controller_cls: type[Controller[PydanticFastSerializer]],
     dmr_rf: DMRRequestFactory,
-) -> None:
-    # A request without `REMOTE_ADDR` has no cache key, so throttling is
-    # skipped and the handler runs regardless of the seeded state.
-    request = dmr_rf.get('/whatever/')
-    request.META.pop('REMOTE_ADDR', None)
-    _assert_ok(controller.as_view()(request))
+) -> HttpResponse:
+    view = controller_cls.as_view()
+    with reduced_throttling(controller_cls) as throttle:
+        for _ in range(throttle.max_requests):
+            ok = view(dmr_rf.get(_URL))
+            assert isinstance(ok, HttpResponse)
+            assert ok.status_code == HTTPStatus.OK, ok.content
+        throttled = view(dmr_rf.get(_URL))
+    assert isinstance(throttled, HttpResponse)
+    return throttled
 
 
-async def _cover_handler_async(
-    controller: type[Controller[PydanticFastSerializer]],
-    dmr_async_rf: DMRAsyncRequestFactory,
-) -> None:
-    request = dmr_async_rf.get('/whatever/')
-    request.META.pop('REMOTE_ADDR', None)
-    _assert_ok(await dmr_async_rf.wrap(controller.as_view()(request)))
-
-
-def test_exhaust_sync(
+def test_reduced_throttling_sync(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
 ) -> None:
-    """`exhaust` saturates all throttles so the next request is throttled."""
-    throttle_state(_SyncController).exhaust(dmr_rf.get('/whatever/'))
+    """The endpoint is throttled after `max_requests` real requests."""
+    view = _SyncController.as_view()
+    with reduced_throttling(_SyncController) as throttle:
+        assert throttle.max_requests == 2
+        for _ in range(throttle.max_requests):
+            ok = view(dmr_rf.get(_URL))
+            assert isinstance(ok, HttpResponse)
+            assert ok.status_code == HTTPStatus.OK, ok.content
+        throttled = view(dmr_rf.get(_URL))
 
-    response = _SyncController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
+    assert isinstance(throttled, HttpResponse)
     assert_throttled(
-        response,
-        limit=5,
+        throttled,
+        limit=2,
         reset=Rate.minute,
         retry_after=Rate.minute,
     )
-    _cover_handler_sync(_SyncController, dmr_rf)
 
 
-def test_exhaust_sync_via_fixture(
-    dmr_rf: DMRRequestFactory,
-    dmr_throttle_state: 'Callable[..., _ThrottleState]',
+def test_reduced_throttling_restores() -> None:
+    """The endpoint's throttling is left untouched after the block."""
+    endpoint = _SyncController.api_endpoints['GET']
+    before = endpoint.metadata.throttling
+    assert before is not None
+    assert before[0].max_requests == 5
+
+    with reduced_throttling(_SyncController):
+        assert endpoint.metadata.throttling is not None
+        assert endpoint.metadata.throttling[0].max_requests == 2
+
+    assert endpoint.metadata.throttling is before
+    assert endpoint.metadata.throttling[0].max_requests == 5
+
+
+@pytest.mark.asyncio
+async def test_reduced_throttling_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
-    """The `dmr_throttle_state` fixture exposes the same factory."""
-    dmr_throttle_state(_SyncController).exhaust(dmr_rf.get('/whatever/'))
+    """`reduced_throttling` works for async controllers too."""
+    view = _AsyncController.as_view()
+    with reduced_throttling(_AsyncController) as throttle:
+        for _ in range(throttle.max_requests):
+            ok = await dmr_async_rf.wrap(view(dmr_async_rf.get(_URL)))
+            assert isinstance(ok, HttpResponse)
+            assert ok.status_code == HTTPStatus.OK, ok.content
+        throttled = await dmr_async_rf.wrap(view(dmr_async_rf.get(_URL)))
 
-    response = _SyncController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response)
+    assert isinstance(throttled, HttpResponse)
+    assert_throttled(throttled, limit=2)
 
 
-def test_exhaust_no_throttling(dmr_rf: DMRRequestFactory) -> None:
-    """Exhausting an endpoint without throttling is a clear error."""
+def test_reduced_throttling_custom_max_requests(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """`max_requests` controls how many requests are needed."""
+    view = _SyncController.as_view()
+    with reduced_throttling(_SyncController, max_requests=1) as throttle:
+        assert throttle.max_requests == 1
+        ok = view(dmr_rf.get(_URL))
+        assert isinstance(ok, HttpResponse)
+        assert ok.status_code == HTTPStatus.OK, ok.content
+        throttled = view(dmr_rf.get(_URL))
+
+    assert isinstance(throttled, HttpResponse)
+    assert_throttled(throttled, limit=1)
+
+
+def test_reduced_throttling_no_throttling(dmr_rf: DMRRequestFactory) -> None:
+    """Reducing an endpoint without throttling is a clear error."""
+    stack = contextlib.ExitStack()
     with pytest.raises(ValueError, match='no throttling'):
-        throttle_state(_SyncController).exhaust(dmr_rf.put('/whatever/'))
+        stack.enter_context(reduced_throttling(_SyncController, method='put'))
 
     # The `put` endpoint itself works fine (covers the handler):
-    _assert_ok(_SyncController.as_view()(dmr_rf.put('/whatever/')))
+    allowed = _SyncController.as_view()(dmr_rf.put(_URL))
+    assert isinstance(allowed, HttpResponse)
+    assert allowed.status_code == HTTPStatus.OK
 
 
-def test_exhaust_unknown_method(dmr_rf: DMRRequestFactory) -> None:
-    """Exhausting a method the controller does not serve is a clear error."""
+def test_reduced_throttling_unknown_method() -> None:
+    """Reducing a method the controller does not serve is a clear error."""
+    stack = contextlib.ExitStack()
     with pytest.raises(ValueError, match='no endpoint'):
-        throttle_state(_SyncController).exhaust(dmr_rf.delete('/whatever/'))
-
-
-def test_exhaust_wrong_flavor(dmr_rf: DMRRequestFactory) -> None:
-    """Using `exhaust` on async throttles raises a helpful error."""
-    with pytest.raises(TypeError, match='aexhaust'):
-        throttle_state(_AsyncController).exhaust(dmr_rf.get('/whatever/'))
-
-
-@pytest.mark.asyncio
-async def test_aexhaust_wrong_flavor(
-    dmr_async_rf: DMRAsyncRequestFactory,
-) -> None:
-    """Using `aexhaust` on sync throttles raises a helpful error."""
-    with pytest.raises(TypeError, match='for sync controllers'):
-        await throttle_state(_SyncController).aexhaust(
-            dmr_async_rf.get('/whatever/'),
+        stack.enter_context(
+            reduced_throttling(_SyncController, method='delete'),
         )
 
 
-@pytest.mark.asyncio
-async def test_aexhaust_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
-    """`aexhaust` saturates async throttles."""
-    await throttle_state(_AsyncController).aexhaust(
-        dmr_async_rf.get('/whatever/'),
-    )
-
-    response = await dmr_async_rf.wrap(
-        _AsyncController.as_view()(dmr_async_rf.get('/whatever/')),
-    )
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, limit=3)
-    await _cover_handler_async(_AsyncController, dmr_async_rf)
-
-
-def test_exhaust_leaky_bucket(dmr_rf: DMRRequestFactory) -> None:
-    """`saturated_state` for `LeakyBucket` also seeds a full bucket."""
-    throttle_state(_LeakyController).exhaust(dmr_rf.get('/whatever/'))
-
-    response = _LeakyController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, limit=3)
-    _cover_handler_sync(_LeakyController, dmr_rf)
-
-
-def test_exhaust_large_rate_is_cheap(dmr_rf: DMRRequestFactory) -> None:
-    """A big rate seeds in O(1): no 1000 requests to reach the limit."""
-    throttle_state(_BigController).exhaust(dmr_rf.get('/whatever/'))
-
-    response = _BigController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, limit=1000)
-    _cover_handler_sync(_BigController, dmr_rf)
-
-
-def test_exhaust_multiple_throttles(
-    dmr_rf: DMRRequestFactory,
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    """`exhaust` pre-fills every throttle on the endpoint in one call."""
-    endpoint = _MultiController.api_endpoints['GET']
-    assert len(endpoint.metadata.throttling or ()) == 2
-
-    throttle_state(_MultiController).exhaust(dmr_rf.get('/whatever/'))
-
-    # Both the per-minute and the per-hour rule are at their limit now:
-    controller = _MultiController()
-    controller.setup(dmr_rf.get('/whatever/'))
-    for throttle in endpoint.metadata.throttling or ():
-        assert isinstance(throttle, SyncThrottle)
-        usage = throttle.report_usage(endpoint, controller)
-        assert usage['X-RateLimit-Remaining'] == '0', usage
-
-    # The endpoint is rejected, reporting the stricter per-minute rule first:
-    response = _MultiController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(
-        response,
-        limit=1,
-        reset=Rate.minute,
-        retry_after=Rate.minute,
-    )
-    _cover_handler_sync(_MultiController, dmr_rf)
-
-
-def test_exhaust_fallback_incr_loop(dmr_rf: DMRRequestFactory) -> None:
-    """When the algorithm has no saturated state, seeding replays `incr`."""
-    throttle_state(_NoSaturateSync).exhaust(dmr_rf.get('/whatever/'))
-
-    response = _NoSaturateSync.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, limit=2)
-    _cover_handler_sync(_NoSaturateSync, dmr_rf)
+def test_assert_throttling_sync(dmr_rf: DMRRequestFactory) -> None:
+    """The all-in-one driver reduces, drives requests, and asserts the 429."""
+    response = assert_throttling(_SyncController, dmr_rf, _URL, limit=2)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
 @pytest.mark.asyncio
-async def test_aexhaust_fallback_incr_loop(
+async def test_aassert_throttling_async(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
-    """Async seeding also falls back to replaying `incr`."""
-    await throttle_state(_NoSaturateAsync).aexhaust(
-        dmr_async_rf.get('/whatever/'),
+    """The async all-in-one driver reduces, drives requests, asserts 429."""
+    response = await aassert_throttling(
+        _AsyncController,
+        dmr_async_rf,
+        _URL,
+        limit=2,
     )
-
-    response = await dmr_async_rf.wrap(
-        _NoSaturateAsync.as_view()(dmr_async_rf.get('/whatever/')),
-    )
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, limit=2)
-    await _cover_handler_async(_NoSaturateAsync, dmr_async_rf)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
-def test_exhaust_skips_without_cache_key(dmr_rf: DMRRequestFactory) -> None:
-    """A throttle whose cache key is `None` is silently skipped."""
-    request = dmr_rf.get('/whatever/')
-    request.META.pop('REMOTE_ADDR', None)  # `RemoteAddr` now returns `None`
-    throttle_state(_SyncController).exhaust(request)
+def test_throttle_replace() -> None:
+    """`replace` copies a throttle with a new `max_requests`."""
+    original = SyncThrottle(1000, Rate.minute)
+    reduced = original.replace(max_requests=2)
 
-    other = dmr_rf.get('/whatever/')
-    other.META.pop('REMOTE_ADDR', None)
-    _assert_ok(_SyncController.as_view()(other))  # nothing was seeded
-
-
-@pytest.mark.asyncio
-async def test_aexhaust_skips_without_cache_key(
-    dmr_async_rf: DMRAsyncRequestFactory,
-) -> None:
-    """Async: a throttle whose cache key is `None` is silently skipped."""
-    request = dmr_async_rf.get('/whatever/')
-    request.META.pop('REMOTE_ADDR', None)
-    await throttle_state(_AsyncController).aexhaust(request)  # does not raise
-
-
-def test_assert_throttled_detail_false(dmr_rf: DMRRequestFactory) -> None:
-    """`detail=False` skips the error-body check; headers accept `str`."""
-    throttle_state(_SyncController).exhaust(dmr_rf.get('/whatever/'))
-    response = _SyncController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, limit='5', detail=False)
-
-
-def test_assert_throttled_matcher_header(dmr_rf: DMRRequestFactory) -> None:
-    """Header expectations accept matcher objects for real-time tests."""
-    throttle_state(_SyncController).exhaust(dmr_rf.get('/whatever/'))
-    response = _SyncController.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    assert_throttled(response, reset=IsStr())
-
-
-def test_assert_throttled_missing_header(dmr_rf: DMRRequestFactory) -> None:
-    """A missing expected header fails with a clear error, not `KeyError`."""
-
-    class _Ctrl(Controller[PydanticFastSerializer]):
-        # This provider emits `RateLimit`, not `X-RateLimit-Limit`:
-        throttling = (
-            SyncThrottle(
-                1,
-                Rate.minute,
-                response_headers=[RateLimitIETFDraft()],
-            ),
-        )
-
-        def get(self) -> str:
-            return 'inside'
-
-    throttle_state(_Ctrl).exhaust(dmr_rf.get('/whatever/'))
-    response = _Ctrl.as_view()(dmr_rf.get('/whatever/'))
-    assert isinstance(response, HttpResponse)
-    with pytest.raises(AssertionError, match=r'X-RateLimit-Limit.*missing'):
-        assert_throttled(response, limit=1)
-    _cover_handler_sync(_Ctrl, dmr_rf)
+    assert reduced.max_requests == 2
+    assert original.max_requests == 1000  # original untouched
+    assert reduced.duration_in_seconds == original.duration_in_seconds
+    assert reduced.cache_key is original.cache_key
 
 
 def test_assert_throttled_rejects_ok_response(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """`assert_throttled` fails on a non-throttled response."""
-    response = _SyncController.as_view()(dmr_rf.get('/whatever/'))
+    response = _SyncController.as_view()(dmr_rf.get(_URL))
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     with pytest.raises(AssertionError):
         assert_throttled(response)
+
+
+def test_assert_throttled_missing_header(dmr_rf: DMRRequestFactory) -> None:
+    """A missing expected header fails with a clear error, not `KeyError`."""
+    response = _throttled_response(_IETFController, dmr_rf)
+    with pytest.raises(AssertionError, match=r'X-RateLimit-Limit.*missing'):
+        assert_throttled(response, limit=2)
+
+
+def test_assert_throttled_detail_false(dmr_rf: DMRRequestFactory) -> None:
+    """`detail=False` skips the error-body check; headers accept `str`."""
+    response = _throttled_response(_SyncController, dmr_rf)
+    assert_throttled(response, limit='2', detail=False)
+
+
+def test_assert_throttled_matcher_header(dmr_rf: DMRRequestFactory) -> None:
+    """Header expectations accept matcher objects for real-time tests."""
+    response = _throttled_response(_SyncController, dmr_rf)
+    assert_throttled(response, reset=IsStr())

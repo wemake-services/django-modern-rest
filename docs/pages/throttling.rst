@@ -543,29 +543,36 @@ Testing
 -------
 
 Testing that an endpoint is throttled usually means driving it to its limit
-first. Sending ``max_requests`` real requests in a loop is verbose, and it gets
-slow for large rates such as ``1000/hour``.
+first. Sending the configured ``max_requests`` in a loop is slow for large
+rates such as ``1000/hour``.
 
-Instead, use ``throttle_state`` from ``dmr.test`` to pre-fill every throttle
-configured for an endpoint -- controller-level and endpoint-level, per-minute
-and per-hour alike -- to its limit in a single call. The next real request is
-then guaranteed to be rejected. Pair it with ``assert_throttled``, which checks
-the ``429`` status, the rate-limiting headers, and the error body at once:
+Instead, use ``assert_throttling`` from ``dmr.test``: it temporarily lowers the
+endpoint's first throttle to a small ``max_requests`` (``2`` by default), drives
+that many allowed requests plus one more, and asserts the ``429`` — exercising
+the full request cycle with a genuine response and headers. It returns the
+rejected response so you can make further header assertions:
 
 .. literalinclude:: /examples/throttling/testing.py
   :caption: test_reports.py
   :linenos:
   :language: python
 
-Both helpers work with any backend or algorithm, without knowing the exact
-rate. For async controllers, ``await`` the async variant instead:
+Only the endpoint under test is affected; its throttling is restored afterwards.
+Use ``aassert_throttling`` for async controllers.
+
+For finer control -- custom bodies or auth, or asserting exact headers -- use
+the underlying ``reduced_throttling`` context manager and pair it with
+``assert_throttled``:
 
 .. code-block:: python
 
-    await throttle_state(MyController).aexhaust(request)
+    with reduced_throttling(MyController) as throttle:
+        for _ in range(throttle.max_requests):
+            response = MyController.as_view()(dmr_rf.get('/whatever/'))
+            assert response.status_code == 200
+        response = MyController.as_view()(dmr_rf.get('/whatever/'))
 
-The bundled ``dmr_throttle_state`` pytest fixture exposes the same factory, so
-you can inject it instead of importing ``throttle_state`` directly.
+    assert_throttled(response, limit=2)
 
 
 API Reference

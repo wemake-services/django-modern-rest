@@ -1,8 +1,10 @@
-from collections.abc import Awaitable
+import contextlib
+import dataclasses
+from collections.abc import Awaitable, Generator
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse, HttpResponseBase
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
 
 from dmr.internal.json import json_dump, json_loads
@@ -10,7 +12,6 @@ from dmr.throttling import AsyncThrottle, SyncThrottle
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
-    from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
 _ThingT = TypeVar('_ThingT')
@@ -193,121 +194,64 @@ class DMRAsyncClient(_DMRMixin, AsyncClient):
     """
 
 
-class _ThrottleState:
-    """
-    Test helper to drive a controller's throttles to their limit.
-
-    Obtain it via :func:`throttle_state`. It removes the need to manually
-    loop ``max_requests`` requests before asserting that throttling triggers,
-    and works with any backend or algorithm without knowing the exact rate.
-
-    See :meth:`exhaust` / :meth:`aexhaust` for usage.
-    """
-
-    __slots__ = ('_controller_cls',)
-
-    def __init__(
-        self,
-        controller_cls: 'type[Controller[BaseSerializer]]',
-    ) -> None:
-        self._controller_cls = controller_cls
-
-    def exhaust(self, request: HttpRequest) -> None:
-        """
-        Drive every throttle of a sync endpoint up to its limit.
-
-        After this call, the next real request built with the same identity
-        (same cache key, e.g. ``REMOTE_ADDR`` / user / JWT) is guaranteed to
-        be throttled::
-
-            request = dmr_rf.get('/whatever/')
-            throttle_state(MyController).exhaust(request)
-
-            response = MyController.as_view()(dmr_rf.get('/whatever/'))
-            assert_throttled(response)
-
-        Use :meth:`aexhaust` for async controllers.
-
-        .. note::
-
-            The saturated state is computed for the current instant.
-            When your throttle uses a time window (anything but the smallest
-            rates), freeze time (e.g. with ``freezegun``) or send the
-            follow-up request immediately so the window does not reset.
-        """
-        endpoint, controller = self._prepare(request)
-        for throttle in self._throttles(endpoint):
-            if not isinstance(throttle, SyncThrottle):
-                raise TypeError(
-                    'Use `aexhaust` for async controllers, '
-                    f'got an async throttle {throttle!r}',
-                )
-            throttle.seed(endpoint, controller)
-
-    async def aexhaust(self, request: HttpRequest) -> None:
-        """
-        Async version of :meth:`exhaust` for async controllers.
-
-        .. code:: python
-
-            request = dmr_async_rf.get('/whatever/')
-            await throttle_state(MyController).aexhaust(request)
-        """
-        endpoint, controller = self._prepare(request)
-        for throttle in self._throttles(endpoint):
-            if not isinstance(throttle, AsyncThrottle):
-                raise TypeError(
-                    'Use `exhaust` for sync controllers, '
-                    f'got a sync throttle {throttle!r}',
-                )
-            await throttle.aseed(endpoint, controller)  # noqa: WPS476
-
-    def _prepare(
-        self,
-        request: HttpRequest,
-    ) -> 'tuple[Endpoint, Controller[BaseSerializer]]':
-        method = request.method or ''
-        endpoint = self._controller_cls.api_endpoints.get(method)
-        if endpoint is None:
-            name = self._controller_cls.__qualname__
-            raise ValueError(
-                f'{name} has no endpoint for method {method!r}, '
-                'cannot exhaust throttles',
-            )
-        controller = self._controller_cls()
-        controller.setup(request)
-        return endpoint, controller
-
-    def _throttles(
-        self,
-        endpoint: 'Endpoint',
-    ) -> 'tuple[SyncThrottle | AsyncThrottle, ...]':
-        throttles = endpoint.metadata.throttling
-        if not throttles:
-            operation_id = endpoint.metadata.operation_id
-            raise ValueError(
-                f'Endpoint {operation_id} has no throttling configured, '
-                'there is nothing to exhaust',
-            )
-        return throttles
-
-
-def throttle_state(
+@contextlib.contextmanager
+def reduced_throttling(
     controller_cls: 'type[Controller[BaseSerializer]]',
-) -> _ThrottleState:
+    *,
+    method: str = 'GET',
+    max_requests: int = 2,
+) -> 'Generator[SyncThrottle | AsyncThrottle, None, None]':
     """
-    Return a :class:`_ThrottleState` helper for a controller.
+    Temporarily lower an endpoint's first throttle to ``max_requests``.
 
-    Use it to pre-fill throttle state in tests so the next request is
-    throttled, without manually looping requests up to the rate limit::
-
-        throttle_state(MyController).exhaust(dmr_rf.get('/whatever/'))
-
-    .. seealso:: :func:`assert_throttled`.
+    A few real requests then reach the limit instead of the configured rate.
+    Only the endpoint under test is affected; throttling is restored on exit.
 
     .. versionadded:: 0.12.0
     """
-    return _ThrottleState(controller_cls)
+    endpoint = controller_cls.api_endpoints.get(method.upper())
+    if endpoint is None:
+        raise ValueError(
+            f'{controller_cls.__qualname__} has no endpoint '
+            f'for method {method!r}',
+        )
+    metadata = endpoint.metadata
+    throttles = metadata.throttling
+    if not throttles:
+        raise ValueError(
+            f'Endpoint {metadata.operation_id} has no throttling to test',
+        )
+
+    original = throttles[0]
+    reduced = original.replace(max_requests=max_requests)
+    # Swap the throttle in a fresh metadata; restored in `finally` below:
+    endpoint.metadata = dataclasses.replace(
+        metadata,
+        throttling_before_auth=_swap(
+            metadata.throttling_before_auth,
+            original,
+            reduced,
+        ),
+        throttling_after_auth=_swap(
+            metadata.throttling_after_auth,
+            original,
+            reduced,
+        ),
+    )
+    try:
+        yield reduced
+    finally:
+        endpoint.metadata = metadata
+
+
+def _swap(
+    throttles: 'tuple[SyncThrottle | AsyncThrottle, ...] | None',
+    old: 'SyncThrottle | AsyncThrottle',
+    new: 'SyncThrottle | AsyncThrottle',
+) -> 'tuple[SyncThrottle | AsyncThrottle, ...] | None':
+    if not throttles:
+        return throttles
+    return tuple(new if throttle is old else throttle for throttle in throttles)
 
 
 def assert_throttled(
@@ -341,7 +285,7 @@ def assert_throttled(
 
     .. versionadded:: 0.12.0
     """
-    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (  # noqa: S101
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
         response.content
     )
     _assert_header(response.headers, 'X-RateLimit-Limit', limit)
@@ -361,11 +305,11 @@ def _assert_header(
     if isinstance(expected, int):
         expected = str(expected)
     present = dict(headers)
-    assert name in headers, (  # noqa: S101
+    assert name in headers, (
         f'Header {name!r} is missing, present headers: {present!r}'
     )
     actual = headers[name]
-    assert actual == expected, (  # noqa: S101
+    assert actual == expected, (
         f'Header {name!r}: expected {expected!r}, got {actual!r}'
     )
 
@@ -373,9 +317,77 @@ def _assert_header(
 def _assert_ratelimit_detail(response: HttpResponse) -> None:
     body = json_loads(response.content.decode(response.charset or 'utf8'))
     problems = body['detail']
-    assert problems, (  # noqa: S101
+    assert problems, (
         f'Expected a non-empty `detail` in throttled response, got {body!r}'
     )
-    assert all(  # noqa: S101
-        problem.get('type') == 'ratelimit' for problem in problems
-    ), body
+    assert all(problem.get('type') == 'ratelimit' for problem in problems), body
+
+
+def _as_response(candidate: HttpResponseBase) -> HttpResponse:
+    assert isinstance(candidate, HttpResponse), candidate
+    return candidate
+
+
+def _assert_ok(candidate: HttpResponseBase) -> None:
+    response = _as_response(candidate)
+    assert response.status_code == HTTPStatus.OK, response.content
+
+
+def assert_throttling(
+    controller_cls: 'type[Controller[BaseSerializer]]',
+    request_factory: DMRRequestFactory,
+    path: str,
+    *,
+    method: str = 'GET',
+    max_requests: int = 2,
+    limit: _HeaderValue | None = None,
+) -> HttpResponse:
+    """
+    Reduce the first throttle, drive requests, and assert the ``429``.
+
+    Sends ``max_requests`` allowed requests, then one that is rejected, and
+    checks it with :func:`assert_throttled`. Returns the ``429`` response so
+    you can make further header assertions on it.
+
+    .. versionadded:: 0.12.0
+    """
+    view = controller_cls.as_view()
+    build = getattr(request_factory, method.lower())
+    with reduced_throttling(
+        controller_cls,
+        method=method.upper(),
+        max_requests=max_requests,
+    ):
+        for _ in range(max_requests):
+            _assert_ok(view(build(path)))
+        throttled = _as_response(view(build(path)))
+    assert_throttled(throttled, limit=limit)
+    return throttled
+
+
+async def aassert_throttling(
+    controller_cls: 'type[Controller[BaseSerializer]]',
+    request_factory: DMRAsyncRequestFactory,
+    path: str,
+    *,
+    method: str = 'GET',
+    max_requests: int = 2,
+    limit: _HeaderValue | None = None,
+) -> HttpResponse:
+    """
+    Async version of :func:`assert_throttling`.
+
+    .. versionadded:: 0.12.0
+    """
+    view = controller_cls.as_view()
+    build = getattr(request_factory, method.lower())
+    with reduced_throttling(
+        controller_cls,
+        method=method.upper(),
+        max_requests=max_requests,
+    ):
+        for _ in range(max_requests):
+            _assert_ok(await request_factory.wrap(view(build(path))))  # noqa: WPS476
+        throttled = _as_response(await request_factory.wrap(view(build(path))))
+    assert_throttled(throttled, limit=limit)
+    return throttled
