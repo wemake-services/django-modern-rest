@@ -1,5 +1,5 @@
 import contextlib
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 
 import pytest
 from dirty_equals import IsStr
@@ -143,7 +143,9 @@ def test_reduced_throttling_no_throttling(dmr_rf: DMRRequestFactory) -> None:
     """Reducing an endpoint without throttling is a clear error."""
     stack = contextlib.ExitStack()
     with pytest.raises(ValueError, match='no throttling'):
-        stack.enter_context(reduced_throttling(_SyncController, method='put'))
+        stack.enter_context(
+            reduced_throttling(_SyncController, method=HTTPMethod.PUT),
+        )
 
     # The `put` endpoint itself works fine (covers the handler):
     allowed = _SyncController.as_view()(dmr_rf.put(_URL))
@@ -156,7 +158,7 @@ def test_reduced_throttling_unknown_method() -> None:
     stack = contextlib.ExitStack()
     with pytest.raises(ValueError, match='no endpoint'):
         stack.enter_context(
-            reduced_throttling(_SyncController, method='delete'),
+            reduced_throttling(_SyncController, method=HTTPMethod.DELETE),
         )
 
 

@@ -1,7 +1,7 @@
 import contextlib
 import dataclasses
 from collections.abc import Awaitable, Generator
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from django.http import HttpResponse, HttpResponseBase
@@ -200,7 +200,7 @@ class DMRAsyncClient(_DMRMixin, AsyncClient):
 def reduced_throttling(
     controller_cls: 'type[Controller[BaseSerializer]]',
     *,
-    method: str = 'GET',
+    method: HTTPMethod = HTTPMethod.GET,
     max_requests: int = 2,
 ) -> Generator[SyncThrottle | AsyncThrottle, None, None]:
     """
@@ -340,7 +340,7 @@ def assert_throttling(
     request_factory: DMRRequestFactory,
     path: str,
     *,
-    method: str = 'GET',
+    method: HTTPMethod = HTTPMethod.GET,
     max_requests: int = 2,
     limit: _HeaderValue | None = None,
 ) -> HttpResponse:
@@ -357,7 +357,7 @@ def assert_throttling(
     build = getattr(request_factory, method.lower())
     with reduced_throttling(
         controller_cls,
-        method=method.upper(),
+        method=method,
         max_requests=max_requests,
     ):
         for _ in range(max_requests):
@@ -372,7 +372,7 @@ async def assert_async_throttling(
     request_factory: DMRAsyncRequestFactory,
     path: str,
     *,
-    method: str = 'GET',
+    method: HTTPMethod = HTTPMethod.GET,
     max_requests: int = 2,
     limit: _HeaderValue | None = None,
 ) -> HttpResponse:
@@ -385,7 +385,7 @@ async def assert_async_throttling(
     build = getattr(request_factory, method.lower())
     with reduced_throttling(
         controller_cls,
-        method=method.upper(),
+        method=method,
         max_requests=max_requests,
     ):
         for _ in range(max_requests):
