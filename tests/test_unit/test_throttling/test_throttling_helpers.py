@@ -17,6 +17,7 @@ from dmr.test import (
     reduced_throttling,
 )
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
 _URL = '/whatever/'
@@ -40,6 +41,21 @@ class _AsyncController(Controller[PydanticFastSerializer]):
     throttling = (AsyncThrottle(3, Rate.hour),)
 
     async def get(self) -> str:
+        return 'inside'
+
+
+class _AfterAuthController(Controller[PydanticFastSerializer]):
+    # `runs_before_auth=False` puts this throttle in the after-auth line,
+    # while its `REMOTE_ADDR` key still resolves for anonymous requests.
+    throttling = (
+        SyncThrottle(
+            5,
+            Rate.minute,
+            cache_key=RemoteAddr(runs_before_auth=False),
+        ),
+    )
+
+    def get(self) -> str:
         return 'inside'
 
 
@@ -159,6 +175,44 @@ def test_reduced_throttling_unknown_method() -> None:
     with pytest.raises(ValueError, match='no endpoint'):
         stack.enter_context(
             reduced_throttling(_SyncController, method=HTTPMethod.DELETE),
+        )
+
+
+def test_reduced_throttling_before_auth(dmr_rf: DMRRequestFactory) -> None:
+    """`line='before_auth'` targets the before-auth throttle line."""
+    view = _SyncController.as_view()
+    with reduced_throttling(_SyncController, line='before_auth') as throttle:
+        for _ in range(throttle.max_requests):
+            allowed = view(dmr_rf.get(_URL))
+            assert allowed.status_code == HTTPStatus.OK
+        rejected = view(dmr_rf.get(_URL))
+
+    assert isinstance(rejected, HttpResponse)
+    assert_throttled(rejected, limit=2)
+
+
+def test_reduced_throttling_after_auth(dmr_rf: DMRRequestFactory) -> None:
+    """`line='after_auth'` targets the after-auth throttle line."""
+    view = _AfterAuthController.as_view()
+    with reduced_throttling(
+        _AfterAuthController,
+        line='after_auth',
+    ) as throttle:
+        for _ in range(throttle.max_requests):
+            allowed = view(dmr_rf.get(_URL))
+            assert allowed.status_code == HTTPStatus.OK
+        rejected = view(dmr_rf.get(_URL))
+
+    assert isinstance(rejected, HttpResponse)
+    assert_throttled(rejected, limit=2)
+
+
+def test_reduced_throttling_line_empty() -> None:
+    """Selecting a line with no throttles is a clear error."""
+    stack = contextlib.ExitStack()
+    with pytest.raises(ValueError, match='no throttling'):
+        stack.enter_context(
+            reduced_throttling(_SyncController, line='after_auth'),
         )
 
 

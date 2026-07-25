@@ -2,7 +2,7 @@ import contextlib
 import dataclasses
 from collections.abc import Awaitable, Generator
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 from django.http import HttpResponse, HttpResponseBase
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
@@ -202,6 +202,7 @@ def reduced_throttling(
     *,
     method: HTTPMethod = HTTPMethod.GET,
     max_requests: int = 2,
+    line: Literal['any', 'before_auth', 'after_auth'] = 'any',
 ) -> Generator[SyncThrottle | AsyncThrottle, None, None]:
     """
     Temporarily lower an endpoint's first throttle to ``max_requests``.
@@ -209,19 +210,30 @@ def reduced_throttling(
     A few real requests then reach the limit instead of the configured rate.
     Only the endpoint under test is affected; throttling is restored on exit.
 
+    ``line`` chooses which throttles to consider: ``'before_auth'`` (checked
+    before authentication, e.g. by IP) or ``'after_auth'`` (per-user, needs an
+    authenticated request); ``'any'`` (default) uses the first one checked.
+
     .. versionadded:: 0.12.0
     """
-    endpoint = controller_cls.api_endpoints.get(method.upper())
+    endpoint = controller_cls.api_endpoints.get(method)
     if endpoint is None:
         raise ValueError(
             f'{controller_cls.__qualname__} has no endpoint '
             f'for method {method!r}',
         )
     metadata = endpoint.metadata
-    throttles = metadata.throttling
+    match line:
+        case 'before_auth':
+            throttles = metadata.throttling_before_auth
+        case 'after_auth':
+            throttles = metadata.throttling_after_auth
+        case _:
+            throttles = metadata.throttling
     if not throttles:
         raise ValueError(
-            f'Endpoint {metadata.operation_id} has no throttling to test',
+            f'Endpoint {metadata.operation_id} has no throttling '
+            f'to test for line {line!r}',
         )
 
     original = throttles[0]
