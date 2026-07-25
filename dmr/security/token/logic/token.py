@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import TYPE_CHECKING, Final, TypeVar
+from typing import TYPE_CHECKING, Final, TypeVar, overload
 
 from django.conf import settings
 from django.utils.crypto import salted_hmac
@@ -25,6 +25,26 @@ def token_hash(raw_token: str) -> str:
         secret=settings.SECRET_KEY,
         algorithm='sha256',
     ).hexdigest()
+
+
+@overload
+def token_create(
+    *,
+    user: 'AbstractBaseUser',
+    name: str,
+    expires_at: dt.datetime | Sentinel | None = ...,
+    token_model: 'type[_TokenT]',
+) -> 'tuple[_TokenT, str]': ...
+
+
+@overload
+def token_create(
+    *,
+    user: 'AbstractBaseUser',
+    name: str,
+    expires_at: dt.datetime | Sentinel | None = ...,
+    token_model: None = ...,
+) -> 'tuple[Token, str]': ...
 
 
 def token_create(
@@ -59,6 +79,26 @@ def token_create(
         expires_at=resolved_expires_at,
     )
     return token, raw_token
+
+
+@overload
+async def token_acreate(
+    *,
+    user: 'AbstractBaseUser',
+    name: str,
+    expires_at: dt.datetime | Sentinel | None = ...,
+    token_model: 'type[_TokenT]',
+) -> 'tuple[_TokenT, str]': ...
+
+
+@overload
+async def token_acreate(
+    *,
+    user: 'AbstractBaseUser',
+    name: str,
+    expires_at: dt.datetime | Sentinel | None = ...,
+    token_model: None = ...,
+) -> 'tuple[Token, str]': ...
 
 
 async def token_acreate(
