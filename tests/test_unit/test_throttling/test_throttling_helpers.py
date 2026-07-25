@@ -17,6 +17,8 @@ from dmr.test import (
     reduced_throttling,
 )
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.algorithms import LeakyBucket
+from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
@@ -237,14 +239,33 @@ async def test_assert_async_throttling(
 
 
 def test_throttle_replace() -> None:
-    """`replace` copies a throttle with a new `max_requests`."""
+    """`replace` overrides the given fields and keeps the rest."""
     original = SyncThrottle(1000, Rate.minute)
-    reduced = original.replace(max_requests=2)
 
+    # Override just `max_requests`; everything else is preserved:
+    reduced = original.replace(max_requests=2)
     assert reduced.max_requests == 2
     assert original.max_requests == 1000  # original untouched
     assert reduced.duration_in_seconds == original.duration_in_seconds
     assert reduced.cache_key is original.cache_key
+
+    # No arguments -> an equivalent copy:
+    copied = original.replace()
+    assert copied.max_requests == 1000
+    assert copied.duration_in_seconds == original.duration_in_seconds
+
+    # Override every field:
+    other = original.replace(
+        max_requests=7,
+        duration_in_seconds=Rate.hour,
+        cache_key=RemoteAddr(runs_before_auth=False),
+        backend=SyncDjangoCache(),
+        algorithm=LeakyBucket(),
+        response_headers=[RateLimitIETFDraft()],
+    )
+    assert other.max_requests == 7
+    assert other.duration_in_seconds == Rate.hour
+    assert other.cache_key.runs_before_auth is False
 
 
 def test_assert_throttled_rejects_ok_response(

@@ -152,24 +152,44 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
             f'{self.max_requests}::{self.duration_in_seconds}'
         )
 
-    def replace(self, *, max_requests: int) -> Self:
+    def replace(
+        self,
+        *,
+        max_requests: int | None = None,
+        duration_in_seconds: Rate | int | None = None,
+        cache_key: BaseThrottleCacheKey | None = None,
+        backend: _BackendT | None = None,
+        algorithm: BaseThrottleAlgorithm | None = None,
+        response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
+    ) -> Self:
         """
-        Return a copy of this throttle with a different ``max_requests``.
+        Return a copy of this throttle, overriding only the given fields.
 
-        Everything else (window, cache key, backend, algorithm, headers) is
-        preserved. Handy in tests to lower a rate so that throttling can be
-        reached with only a few requests instead of the configured amount.
+        Any argument left as ``None`` keeps this throttle's current value, so
+        ``replace(max_requests=2)`` changes just the limit. Also backs
+        ``copy.replace`` (Python 3.13+) through ``__replace__``.
 
         .. versionadded:: 0.12.0
         """
         return type(self)(
-            max_requests,
-            self.duration_in_seconds,
-            cache_key=self.cache_key,
-            backend=self._backend,
-            algorithm=self._algorithm,
-            response_headers=self._response_headers,
+            self.max_requests if max_requests is None else max_requests,
+            (
+                self.duration_in_seconds
+                if duration_in_seconds is None
+                else duration_in_seconds
+            ),
+            cache_key=self.cache_key if cache_key is None else cache_key,
+            backend=self._backend if backend is None else backend,
+            algorithm=self._algorithm if algorithm is None else algorithm,
+            response_headers=(
+                self._response_headers
+                if response_headers is None
+                else response_headers
+            ),
         )
+
+    #: Enables ``copy.replace(throttle, ...)`` on Python 3.13+.
+    __replace__ = replace
 
     @override
     def provide_response_specs(

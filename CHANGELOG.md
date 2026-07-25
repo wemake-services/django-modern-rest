@@ -27,8 +27,9 @@ of requirements for an API to count as public.
   reusable controllers to verify JWT access tokens, #1129
 - Added test helpers in `dmr.test` for asserting that endpoints are
   throttled: `assert_throttling` / `assert_async_throttling`,
-  `reduced_throttling`, and `assert_throttled`, plus `SyncThrottle.replace`
-  / `AsyncThrottle.replace`, #1167
+  `reduced_throttling`, and `assert_throttled`, #1167
+- Added `SyncThrottle.replace` / `AsyncThrottle.replace` to copy a throttle
+  with overridden fields; also supports `copy.replace` on Python 3.13+, #1167
 
 ### Bugfixes
 
