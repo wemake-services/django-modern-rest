@@ -368,10 +368,10 @@ async def assert_async_throttling(
 
 
 def _swap(
-    throttles: 'tuple[SyncThrottle | AsyncThrottle, ...] | None',
-    old: 'SyncThrottle | AsyncThrottle',
-    new: 'SyncThrottle | AsyncThrottle',
-) -> 'tuple[SyncThrottle | AsyncThrottle, ...] | None':
+    throttles: tuple[SyncThrottle | AsyncThrottle, ...] | None,
+    old: SyncThrottle | AsyncThrottle,
+    new: SyncThrottle | AsyncThrottle,
+) -> tuple[SyncThrottle | AsyncThrottle, ...] | None:
     if not throttles:
         return throttles
     return tuple(new if throttle is old else throttle for throttle in throttles)

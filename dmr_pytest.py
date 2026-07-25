@@ -11,7 +11,11 @@ except ImportError:  # pragma: no cover
 
 if TYPE_CHECKING:
     # We can't import it directly, because it will ruin our coverage measures.
+    from collections.abc import Awaitable, Callable
+    from contextlib import AbstractContextManager
+
     from django.conf import LazySettings
+    from django.http import HttpResponse
 
     from dmr.test import (
         DMRAsyncClient,
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
         DMRClient,
         DMRRequestFactory,
     )
+    from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
 @pytest.fixture
@@ -57,6 +62,40 @@ def dmr_async_rf() -> 'DMRAsyncRequestFactory':
     from dmr.test import DMRAsyncRequestFactory
 
     return DMRAsyncRequestFactory()
+
+
+@pytest.fixture
+def dmr_reduced_throttling() -> (
+    'Callable[..., AbstractContextManager[SyncThrottle | AsyncThrottle]]'
+):
+    """Provides :func:`dmr.test.reduced_throttling`."""
+    from dmr.test import reduced_throttling
+
+    return reduced_throttling
+
+
+@pytest.fixture
+def dmr_assert_throttled() -> 'Callable[..., None]':
+    """Provides :func:`dmr.test.assert_throttled`."""
+    from dmr.test import assert_throttled
+
+    return assert_throttled
+
+
+@pytest.fixture
+def dmr_assert_throttling() -> 'Callable[..., HttpResponse]':
+    """Provides :func:`dmr.test.assert_throttling`."""
+    from dmr.test import assert_throttling
+
+    return assert_throttling
+
+
+@pytest.fixture
+def dmr_assert_async_throttling() -> 'Callable[..., Awaitable[HttpResponse]]':
+    """Provides :func:`dmr.test.assert_async_throttling`."""
+    from dmr.test import assert_async_throttling
+
+    return assert_async_throttling
 
 
 @pytest.fixture
