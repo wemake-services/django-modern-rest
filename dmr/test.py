@@ -2,7 +2,7 @@ import contextlib
 import dataclasses
 from collections.abc import Awaitable, Generator
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias, TypeVar
 
 from django.http import HttpResponse, HttpResponseBase
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
@@ -21,7 +21,7 @@ _ThingT = TypeVar('_ThingT')
 #: ``dirty_equals.IsStr``. Typed as ``object`` because the header is compared
 #: with ``==``, so no narrower static type is correct -- matchers like
 #: ``IsStr`` are deliberately unhashable, so a ``Protocol`` won't help.
-_HeaderValue = object
+_HeaderValue: TypeAlias = object
 
 
 class _DMRMixin:  # noqa: WPS338
