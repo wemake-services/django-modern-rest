@@ -300,9 +300,10 @@ def assert_throttled(
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
         response.content
     )
-    _assert_header(response.headers, 'X-RateLimit-Limit', limit)
-    _assert_header(response.headers, 'X-RateLimit-Reset', reset)
-    _assert_header(response.headers, 'Retry-After', retry_after)
+    headers = response.headers
+    _assert_header(headers, 'X-RateLimit-Limit', limit)
+    _assert_header(headers, 'X-RateLimit-Reset', reset)
+    _assert_header(headers, 'Retry-After', retry_after)
     if detail:
         _assert_ratelimit_detail(response)
 
