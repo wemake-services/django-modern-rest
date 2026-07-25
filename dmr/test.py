@@ -205,14 +205,22 @@ def reduced_throttling(
     line: Literal['any', 'before_auth', 'after_auth'] = 'any',
 ) -> Generator[SyncThrottle | AsyncThrottle, None, None]:
     """
-    Temporarily lower an endpoint's first throttle to ``max_requests``.
+    Temporarily lower an endpoint's first throttle so a test can reach it.
 
-    A few real requests then reach the limit instead of the configured rate.
-    Only the endpoint under test is affected; throttling is restored on exit.
+    Replaces the first throttle of the chosen ``line`` with a copy limited to
+    ``max_requests``, so a few real requests trip it instead of the configured
+    rate. Only the endpoint under test is affected; the original throttling is
+    restored on exit. Yields the reduced throttle, whose ``max_requests`` tells
+    you how many allowed requests to send before the next one is rejected.
 
-    ``line`` chooses which throttles to consider: ``'before_auth'`` (checked
-    before authentication, e.g. by IP) or ``'after_auth'`` (per-user, needs an
-    authenticated request); ``'any'`` (default) uses the first one checked.
+    Parameters:
+        controller_cls: Controller whose endpoint is under test.
+        method: HTTP method of the endpoint to target.
+        max_requests: Limit the throttle is lowered to (``2`` by default).
+        line: Which line to take the throttle from -- ``'before_auth'``
+            (checked before auth, e.g. by IP), ``'after_auth'`` (per-user,
+            needs an authenticated request), or ``'any'`` (default, the first
+            one checked).
 
     .. versionadded:: 0.12.0
     """
@@ -258,16 +266,6 @@ def reduced_throttling(
         endpoint.metadata = metadata
 
 
-def _swap(
-    throttles: 'tuple[SyncThrottle | AsyncThrottle, ...] | None',
-    old: 'SyncThrottle | AsyncThrottle',
-    new: 'SyncThrottle | AsyncThrottle',
-) -> 'tuple[SyncThrottle | AsyncThrottle, ...] | None':
-    if not throttles:
-        return throttles
-    return tuple(new if throttle is old else throttle for throttle in throttles)
-
-
 def assert_throttled(
     response: HttpResponse,
     *,
@@ -307,44 +305,6 @@ def assert_throttled(
     _assert_header(response.headers, 'Retry-After', retry_after)
     if detail:
         _assert_ratelimit_detail(response)
-
-
-def _assert_header(
-    headers: Any,
-    name: str,
-    expected: _HeaderValue | None,
-) -> None:
-    if expected is None:
-        return
-    if isinstance(expected, int):
-        expected = str(expected)
-    present = dict(headers)
-    assert name in headers, (
-        f'Header {name!r} is missing, present headers: {present!r}'
-    )
-    actual = headers[name]
-    assert actual == expected, (
-        f'Header {name!r}: expected {expected!r}, got {actual!r}'
-    )
-
-
-def _assert_ratelimit_detail(response: HttpResponse) -> None:
-    body = json_loads(response.content.decode(response.charset or 'utf8'))
-    problems = body['detail']
-    assert problems, (
-        f'Expected a non-empty `detail` in throttled response, got {body!r}'
-    )
-    assert all(problem.get('type') == 'ratelimit' for problem in problems), body
-
-
-def _as_response(candidate: HttpResponseBase) -> HttpResponse:
-    assert isinstance(candidate, HttpResponse), candidate
-    return candidate
-
-
-def _assert_ok(candidate: HttpResponseBase) -> None:
-    response = _as_response(candidate)
-    assert response.status_code == HTTPStatus.OK, response.content
 
 
 def assert_throttling(
@@ -405,3 +365,51 @@ async def assert_async_throttling(
         throttled = _as_response(await request_factory.wrap(view(build(path))))
     assert_throttled(throttled, limit=limit)
     return throttled
+
+
+def _swap(
+    throttles: 'tuple[SyncThrottle | AsyncThrottle, ...] | None',
+    old: 'SyncThrottle | AsyncThrottle',
+    new: 'SyncThrottle | AsyncThrottle',
+) -> 'tuple[SyncThrottle | AsyncThrottle, ...] | None':
+    if not throttles:
+        return throttles
+    return tuple(new if throttle is old else throttle for throttle in throttles)
+
+
+def _assert_header(
+    headers: Any,
+    name: str,
+    expected: _HeaderValue | None,
+) -> None:
+    if expected is None:
+        return
+    if isinstance(expected, int):
+        expected = str(expected)
+    present = dict(headers)
+    assert name in headers, (
+        f'Header {name!r} is missing, present headers: {present!r}'
+    )
+    actual = headers[name]
+    assert actual == expected, (
+        f'Header {name!r}: expected {expected!r}, got {actual!r}'
+    )
+
+
+def _assert_ratelimit_detail(response: HttpResponse) -> None:
+    body = json_loads(response.content.decode(response.charset or 'utf8'))
+    problems = body['detail']
+    assert problems, (
+        f'Expected a non-empty `detail` in throttled response, got {body!r}'
+    )
+    assert all(problem.get('type') == 'ratelimit' for problem in problems), body
+
+
+def _as_response(candidate: HttpResponseBase) -> HttpResponse:
+    assert isinstance(candidate, HttpResponse), candidate
+    return candidate
+
+
+def _assert_ok(candidate: HttpResponseBase) -> None:
+    response = _as_response(candidate)
+    assert response.status_code == HTTPStatus.OK, response.content
