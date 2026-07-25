@@ -120,6 +120,45 @@ for example from a Django shell:
   is a common choice, since the user already has a session
   from logging in.
 
+Using a custom token model
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The built-in :class:`~dmr.security.token.models.Token` model covers most
+use cases, but you may need to store extra fields alongside a token, for
+example a project, workspace, or organisation that the key belongs to.
+The cleanest way to do this is to subclass ``Token`` and register that
+subclass with both the auth class and the creation helpers so they
+always read from and write to the same token model.
+
+**Step 1: Define your model.** Subclass
+:class:`~dmr.security.token.models.Token` to add the extra columns your app
+needs, then override :meth:`~dmr.security.token.HeaderTokenSyncAuth.token_model`
+on your auth class so every lookup uses your table:
+
+.. literalinclude:: /examples/auth/token/custom_token_model.py
+  :caption: models.py
+  :linenos:
+  :language: python
+  :no-run:
+
+**Step 2: Issue tokens with the same model.** Pass the identical class to
+:func:`~dmr.security.token.logic.token_create` (or
+:func:`~dmr.security.token.logic.token_acreate`) via ``token_model`` so
+that newly created rows land in the right table:
+
+.. literalinclude:: /examples/auth/token/issue_custom_token.py
+  :caption: issue_token.py
+  :linenos:
+  :language: python
+  :no-run:
+
+.. important::
+
+  Always pass the same model class to both ``token_model()`` and
+  ``token_create``/``token_acreate``. Mismatching them means tokens are
+  written to one table and looked up in another, causing every
+  authenticated request to fail with a ``401``.
+
 Revoking a token
 ~~~~~~~~~~~~~~~~
 
