@@ -1,6 +1,7 @@
 import contextlib
 from collections.abc import Callable
 from http import HTTPMethod, HTTPStatus
+from typing import Final
 
 import pytest
 from dirty_equals import IsStr
@@ -23,7 +24,7 @@ from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
-_URL = '/whatever/'
+_URL: Final = '/whatever/'
 
 # Each `assert_throttled` header kwarg and the response header it checks:
 _HEADERS = (
