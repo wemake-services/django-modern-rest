@@ -544,7 +544,8 @@ Testing
 
 .. note::
 
-  ``dmr.test`` ships helpers to drive an endpoint to its limit and assert the
+  ``dmr.test`` and our ``pytest`` plugin 
+   ship helpers to drive an endpoint to its limit and assert the
   ``429`` -- ``assert_throttling``, ``reduced_throttling`` and
   ``assert_throttled``. See :ref:`testing-throttling` for details.
 
