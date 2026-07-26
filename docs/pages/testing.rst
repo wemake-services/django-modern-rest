@@ -43,12 +43,20 @@ We support both:
 
 For ``pytest`` we also have a bundled plugin with several different fixtures:
 
-.. literalinclude:: ../../dmr_pytest.py
-  :caption: dmr_pytest.py
+.. literalinclude:: ../../dmr_pytest/__init__.py
+  :caption: dmr_pytest/__init__.py
   :language: python
   :linenos:
 
 No need to configure anything, just use these fixtures by names in your tests.
+
+The fixtures that return callables also have public types in ``dmr_pytest``,
+so you can annotate them in your own tests: ``ReducedThrottlingFixture``,
+``AssertThrottledFixture``, ``AssertThrottlingFixture``, and
+``AssertAsyncThrottlingFixture``. They are protocols that spell out the full
+signature of the helper they provide, so calls are fully type-checked.
+Fixtures returning objects, like ``dmr_client``, are annotated
+with their regular types from ``dmr.test``.
 
 You can use plain Django test primitives:
 
@@ -82,16 +90,61 @@ the full request cycle with a genuine response and headers. It returns the
 rejected response so you can make further header assertions. Use
 ``assert_async_throttling`` for async controllers.
 
+Both drivers take ``line`` to target the before-auth or after-auth throttle
+line, and ``detail=False`` to skip the ``ratelimit`` body check when your
+project uses a custom error model.
+
 For finer control -- custom bodies or auth, or asserting exact headers -- pair
 the underlying ``reduced_throttling`` context manager with ``assert_throttled``.
 Both forms are shown here (the second test uses the context manager):
 
-.. literalinclude:: /examples/throttling/testing.py
-  :caption: test_reports.py
-  :linenos:
-  :language: python
+.. tabs::
+
+  .. tab:: :iconify:`devicon:python` unittest
+
+    .. literalinclude:: /examples/throttling/testing.py
+      :caption: test_reports.py
+      :linenos:
+      :language: python
+
+  .. tab:: :iconify:`devicon:pytest` pytest
+
+    Our bundled plugin ships the same helpers as ``dmr_*`` fixtures, and
+    ``dmr_pytest`` exports their types, so the fixtures can be annotated:
+
+    .. literalinclude:: /examples/throttling/testing_pytest.py
+      :caption: test_reports.py
+      :linenos:
+      :language: python
 
 Only the endpoint under test is affected; its throttling is restored afterwards.
+
+Header names are never hardcoded. Which headers are reported depends on the
+throttle's :class:`~dmr.throttling.headers.BaseResponseHeadersProvider`
+instances, so ``assert_throttled`` takes the ``throttle`` itself and checks
+that every header its providers report is present -- be it
+:class:`~dmr.throttling.headers.XRateLimit`,
+:class:`~dmr.throttling.headers.RateLimitIETFDraft`, or your own provider.
+The drivers pass the reduced throttle for you. Expected values go
+into ``headers`` by name, as an ``int``, a ``str``, or a matcher::
+
+    assert_throttled(response, headers={'RateLimit': IsStr()})
+
+.. note::
+
+  Lowering ``max_requests`` alone would not be enough for short windows: a
+  ``2/second`` throttle resets between the driven requests, so the endpoint
+  would never be rejected. That is why the reduced copy also gets an
+  hour-long window -- every request a test sends lands inside the same
+  window, whatever the endpoint's configured rate is.
+
+  Mind this when asserting headers: ``X-RateLimit-Reset`` and ``Retry-After``
+  report the widened window, not the rate you configured. And since they are
+  computed from the current time, freeze it -- with
+  `freezegun <https://github.com/spulec/freezegun>`_ or the ``freezer``
+  fixture of `pytest-freezer <https://github.com/pytest-dev/pytest-freezer>`_
+  -- when you assert their exact values; otherwise use a matcher such as
+  ``dirty_equals.IsStr()``.
 
 
 Structured data generation

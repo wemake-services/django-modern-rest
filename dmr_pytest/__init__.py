@@ -1,5 +1,6 @@
-from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from collections.abc import Iterator, Mapping
+from http import HTTPMethod
+from typing import TYPE_CHECKING, Protocol
 
 try:
     import pytest
@@ -11,19 +12,90 @@ except ImportError:  # pragma: no cover
 
 if TYPE_CHECKING:
     # We can't import it directly, because it will ruin our coverage measures.
-    from collections.abc import Awaitable, Callable
     from contextlib import AbstractContextManager
 
     from django.conf import LazySettings
     from django.http import HttpResponse
 
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
     from dmr.test import (
         DMRAsyncClient,
         DMRAsyncRequestFactory,
         DMRClient,
         DMRRequestFactory,
+        HeaderValue,
+        ThrottlingLine,
     )
     from dmr.throttling import AsyncThrottle, SyncThrottle
+
+
+class ReducedThrottlingFixture(Protocol):
+    """Type of the ``dmr_reduced_throttling`` fixture."""
+
+    def __call__(
+        self,
+        controller_cls: 'type[Controller[BaseSerializer]]',
+        *,
+        method: HTTPMethod = HTTPMethod.GET,
+        max_requests: int = 2,
+        line: 'ThrottlingLine' = 'any',
+    ) -> 'AbstractContextManager[SyncThrottle | AsyncThrottle]':
+        """Same as :func:`dmr.test.reduced_throttling`."""
+        ...
+
+
+class AssertThrottledFixture(Protocol):
+    """Type of the ``dmr_assert_throttled`` fixture."""
+
+    def __call__(
+        self,
+        response: 'HttpResponse',
+        *,
+        throttle: 'SyncThrottle | AsyncThrottle | None' = None,
+        headers: 'Mapping[str, HeaderValue] | None' = None,
+        detail: bool = True,
+    ) -> None:
+        """Same as :func:`dmr.test.assert_throttled`."""
+        ...
+
+
+class AssertThrottlingFixture(Protocol):
+    """Type of the ``dmr_assert_throttling`` fixture."""
+
+    def __call__(
+        self,
+        controller_cls: 'type[Controller[BaseSerializer]]',
+        request_factory: 'DMRRequestFactory',
+        path: str,
+        *,
+        method: HTTPMethod = HTTPMethod.GET,
+        max_requests: int = 2,
+        line: 'ThrottlingLine' = 'any',
+        headers: 'Mapping[str, HeaderValue] | None' = None,
+        detail: bool = True,
+    ) -> 'HttpResponse':
+        """Same as :func:`dmr.test.assert_throttling`."""
+        ...
+
+
+class AssertAsyncThrottlingFixture(Protocol):
+    """Type of the ``dmr_assert_async_throttling`` fixture."""
+
+    async def __call__(
+        self,
+        controller_cls: 'type[Controller[BaseSerializer]]',
+        request_factory: 'DMRAsyncRequestFactory',
+        path: str,
+        *,
+        method: HTTPMethod = HTTPMethod.GET,
+        max_requests: int = 2,
+        line: 'ThrottlingLine' = 'any',
+        headers: 'Mapping[str, HeaderValue] | None' = None,
+        detail: bool = True,
+    ) -> 'HttpResponse':
+        """Same as :func:`dmr.test.assert_async_throttling`."""
+        ...
 
 
 @pytest.fixture
@@ -65,9 +137,7 @@ def dmr_async_rf() -> 'DMRAsyncRequestFactory':
 
 
 @pytest.fixture
-def dmr_reduced_throttling() -> (
-    'Callable[..., AbstractContextManager[SyncThrottle | AsyncThrottle]]'
-):
+def dmr_reduced_throttling() -> ReducedThrottlingFixture:
     """Provides :func:`dmr.test.reduced_throttling`."""
     from dmr.test import reduced_throttling
 
@@ -75,7 +145,7 @@ def dmr_reduced_throttling() -> (
 
 
 @pytest.fixture
-def dmr_assert_throttled() -> 'Callable[..., None]':
+def dmr_assert_throttled() -> AssertThrottledFixture:
     """Provides :func:`dmr.test.assert_throttled`."""
     from dmr.test import assert_throttled
 
@@ -83,7 +153,7 @@ def dmr_assert_throttled() -> 'Callable[..., None]':
 
 
 @pytest.fixture
-def dmr_assert_throttling() -> 'Callable[..., HttpResponse]':
+def dmr_assert_throttling() -> AssertThrottlingFixture:
     """Provides :func:`dmr.test.assert_throttling`."""
     from dmr.test import assert_throttling
 
@@ -91,7 +161,7 @@ def dmr_assert_throttling() -> 'Callable[..., HttpResponse]':
 
 
 @pytest.fixture
-def dmr_assert_async_throttling() -> 'Callable[..., Awaitable[HttpResponse]]':
+def dmr_assert_async_throttling() -> AssertAsyncThrottlingFixture:
     """Provides :func:`dmr.test.assert_async_throttling`."""
     from dmr.test import assert_async_throttling
 

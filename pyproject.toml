@@ -173,13 +173,13 @@ fragments = [{ path = "README.md" }]
 [tool.hatch.build.targets.sdist]
 include = [
   "dmr/",
-  "dmr_pytest.py",
+  "dmr_pytest/",
   "LICENSE",
   "licenses/*.txt",
 ]
 
 [tool.hatch.build.targets.wheel]
-only-include = ["dmr", "dmr_pytest.py"]
+only-include = ["dmr", "dmr_pytest"]
 macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
@@ -324,7 +324,7 @@ isort.known-first-party = ["server", "examples"]
 
 [tool.ruff.lint.per-file-ignores]
 # Allow imports inside fixtures:
-"dmr_pytest.py" = ["PLC0415"]
+"dmr_pytest/*.py" = ["PLC0415"]
 # Allow internals access in `django`:
 "dmr/internal/django.py" = ["SLF001"]
 # Do not require docstrings in test project:
@@ -335,7 +335,7 @@ isort.known-first-party = ["server", "examples"]
 # Allow asserts and private name imports and access for tests:
 "tests/*.py" = ["S101", "SLF001", "PLC2701", "RUF012"]
 # Our test utilities are built on asserts:
-"dmr/test.py" = ["S101"]
+"dmr/test/*.py" = ["S101"]
 # Allow examples to be a bit less strict:
 "docs/examples/**/*.py" = ["D1", "S1"]
 # Allow benchmarks to not have docs and do scripting:
@@ -455,19 +455,19 @@ plugins = [
 
 [tool.pyright]
 # Docs: https://microsoft.github.io/pyright/#/configuration
-include = ["dmr", "typesafety", "tests"]
+include = ["dmr", "dmr_pytest", "typesafety", "tests"]
 exclude = [
   # It has a lot of ugly code:
   "dmr/internal/django.py",
 ]
-strict = ["dmr/**/*", "typesafety/**/*"]
+strict = ["dmr/**/*", "dmr_pytest/**/*", "typesafety/**/*"]
 venvPath = "."
 venv = ".venv"
 
 
 [tool.pyrefly]
 # Docs: https://pyrefly.org
-project-includes = ["dmr", "typesafety", "tests"]
+project-includes = ["dmr", "dmr_pytest", "typesafety", "tests"]
 preset = 'strict'
 min-severity = 'warn'
 

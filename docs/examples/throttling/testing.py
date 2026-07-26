@@ -40,7 +40,7 @@ class TestReportsThrottling(TestCase):
             ReportsController,
             self.dmr_rf,
             _URL,
-            limit=2,
+            headers={'X-RateLimit-Limit': 2},
         )
 
         assert isinstance(response, HttpResponse)
@@ -56,6 +56,9 @@ class TestReportsThrottling(TestCase):
                 assert allowed.status_code == HTTPStatus.OK
 
             rejected = view(self.dmr_rf.get(_URL))
-
-        assert isinstance(rejected, HttpResponse)
-        assert_throttled(rejected, limit=2)
+            assert isinstance(rejected, HttpResponse)
+            assert_throttled(
+                rejected,
+                throttle=throttle,  # every header it reports must be there
+                headers={'X-RateLimit-Limit': 2},
+            )

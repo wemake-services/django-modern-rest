@@ -130,6 +130,18 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         # Run check and early initializations:
         self._backend.initialize_algorithm(self._algorithm)
 
+    @property
+    def response_headers(self) -> tuple[BaseResponseHeadersProvider, ...]:
+        """
+        Response headers providers of this throttle.
+
+        Use it to learn which headers this throttle reports,
+        instead of hardcoding their names.
+
+        .. versionadded:: 0.12.0
+        """
+        return tuple(self._response_headers)
+
     def full_cache_key(
         self,
         endpoint: 'Endpoint',
