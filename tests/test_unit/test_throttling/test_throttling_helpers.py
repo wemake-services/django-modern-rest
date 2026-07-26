@@ -1,4 +1,5 @@
 import contextlib
+from collections.abc import Callable
 from http import HTTPMethod, HTTPStatus
 
 import pytest
@@ -23,6 +24,13 @@ from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
 _URL = '/whatever/'
+
+# Each `assert_throttled` header kwarg and the response header it checks:
+_HEADERS = (
+    ('limit', 'X-RateLimit-Limit'),
+    ('reset', 'X-RateLimit-Reset'),
+    ('retry_after', 'Retry-After'),
+)
 
 
 class _SyncController(Controller[PydanticFastSerializer]):
@@ -279,6 +287,59 @@ def test_assert_throttled_rejects_ok_response(
         assert_throttled(response)
 
 
+@pytest.mark.parametrize(('kwarg', 'header_name'), _HEADERS)
+@pytest.mark.parametrize(
+    'to_expected',
+    [
+        int,  # `int`, matched as its string form
+        str,  # `str`, matched as-is
+        lambda _actual: IsStr(regex=r'\d+'),  # any matcher object
+    ],
+)
+def test_assert_throttled_header_formats(
+    dmr_rf: DMRRequestFactory,
+    kwarg: str,
+    header_name: str,
+    to_expected: Callable[[str], object],
+) -> None:
+    """Every header assertion accepts every documented format."""
+    response = _throttled_response(_SyncController, dmr_rf)
+    expected = to_expected(response.headers[header_name])
+    assert_throttled(
+        response,
+        limit=expected if kwarg == 'limit' else None,
+        reset=expected if kwarg == 'reset' else None,
+        retry_after=expected if kwarg == 'retry_after' else None,
+    )
+
+
+@pytest.mark.parametrize(('kwarg', 'header_name'), _HEADERS)
+@pytest.mark.parametrize(
+    'to_expected',
+    [
+        lambda actual: int(actual) + 1,  # wrong `int`
+        lambda actual: str(int(actual) + 1),  # wrong `str`
+        lambda _actual: IsStr(regex=r'[a-z]+'),  # matcher that cannot match
+    ],
+)
+def test_assert_throttled_header_mismatch(
+    dmr_rf: DMRRequestFactory,
+    kwarg: str,
+    header_name: str,
+    to_expected: Callable[[str], object],
+) -> None:
+    """A header that does not match its expectation fails clearly."""
+    response = _throttled_response(_SyncController, dmr_rf)
+    expected = to_expected(response.headers[header_name])
+    with pytest.raises(AssertionError, match=header_name):
+        assert_throttled(
+            response,
+            limit=expected if kwarg == 'limit' else None,
+            reset=expected if kwarg == 'reset' else None,
+            retry_after=expected if kwarg == 'retry_after' else None,
+        )
+
+
 def test_assert_throttled_missing_header(dmr_rf: DMRRequestFactory) -> None:
     """A missing expected header fails with a clear error, not `KeyError`."""
     response = _throttled_response(_IETFController, dmr_rf)
@@ -287,12 +348,6 @@ def test_assert_throttled_missing_header(dmr_rf: DMRRequestFactory) -> None:
 
 
 def test_assert_throttled_detail_false(dmr_rf: DMRRequestFactory) -> None:
-    """`detail=False` skips the error-body check; headers accept `str`."""
+    """`detail=False` skips the error-body check."""
     response = _throttled_response(_SyncController, dmr_rf)
-    assert_throttled(response, limit='2', detail=False)
-
-
-def test_assert_throttled_matcher_header(dmr_rf: DMRRequestFactory) -> None:
-    """Header expectations accept matcher objects for real-time tests."""
-    response = _throttled_response(_SyncController, dmr_rf)
-    assert_throttled(response, reset=IsStr())
+    assert_throttled(response, detail=False)
