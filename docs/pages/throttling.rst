@@ -542,27 +542,11 @@ and error responses will have the needed ratelimiting headers.
 Testing
 -------
 
-Testing that an endpoint is throttled usually means driving it to its limit
-first. Sending the configured ``max_requests`` in a loop is slow for large
-rates such as ``1000/hour``.
+.. note::
 
-Instead, use ``assert_throttling`` from ``dmr.test``: it temporarily lowers the
-endpoint's first throttle to a small ``max_requests`` (``2`` by default), drives
-that many allowed requests plus one more, and asserts the ``429`` — exercising
-the full request cycle with a genuine response and headers. It returns the
-rejected response so you can make further header assertions. Use
-``assert_async_throttling`` for async controllers.
-
-For finer control -- custom bodies or auth, or asserting exact headers -- pair
-the underlying ``reduced_throttling`` context manager with ``assert_throttled``.
-Both forms are shown here (the second test uses the context manager):
-
-.. literalinclude:: /examples/throttling/testing.py
-  :caption: test_reports.py
-  :linenos:
-  :language: python
-
-Only the endpoint under test is affected; its throttling is restored afterwards.
+  ``dmr.test`` ships helpers to drive an endpoint to its limit and assert the
+  ``429`` -- ``assert_throttling``, ``reduced_throttling`` and
+  ``assert_throttled``. See :ref:`testing-throttling` for details.
 
 
 API Reference
