@@ -1,5 +1,6 @@
 import copy
 import sys
+from typing import Any
 
 import pytest
 
@@ -64,12 +65,12 @@ def test_throttle_copy_replace(
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`copy.replace` works through the `__replace__` alias."""
-    original = throttle_cls(1000, Rate.minute)
+    # This is a hack to work around `copy.replace` typing:
+    original: Any = throttle_cls(1000, Rate.minute)
 
     if sys.version_info >= (3, 13):
         # `typeshed` wants `__replace__(**kwargs: Any)`, our alias is stricter:
-        payload = {'max_requests': 2, 'algorithm': LeakyBucket()}
-        copied = copy.replace(original, **payload)
+        copied = copy.replace(original, max_requests=2, algorithm=LeakyBucket())
 
         assert type(copied) is throttle_cls  # noqa: WPS516
         assert copied is not original
