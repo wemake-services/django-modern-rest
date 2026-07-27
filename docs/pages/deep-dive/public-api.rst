@@ -199,6 +199,9 @@ Testing
 .. autoclass:: dmr.test.DMRAsyncClient
   :members:
 
+Throttling
+~~~~~~~~~~
+
 .. autofunction:: dmr.test.reduced_throttling
 
 .. autofunction:: dmr.test.assert_throttled
@@ -207,20 +210,14 @@ Testing
 
 .. autofunction:: dmr.test.assert_async_throttling
 
-.. autodata:: dmr.test.HeaderValue
-
-.. autodata:: dmr.test.ThrottlingLine
-
 Types of our ``pytest`` fixtures, use them to annotate the fixtures
 in your own tests:
 
-.. autoclass:: dmr_pytest.ReducedThrottlingFixture
+.. autoclass:: dmr.test.types.AssertThrottlingFixture
+  :members:
 
-.. autoclass:: dmr_pytest.AssertThrottledFixture
-
-.. autoclass:: dmr_pytest.AssertThrottlingFixture
-
-.. autoclass:: dmr_pytest.AssertAsyncThrottlingFixture
+.. autoclass:: dmr.test.types.AssertAsyncThrottlingFixture
+  :members:
 
 
 Plugins

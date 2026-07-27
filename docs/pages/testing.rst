@@ -17,19 +17,20 @@ for sync and async requests. Use them for faster and simpler unit-tests:
 - :class:`~dmr.test.DMRRequestFactory` for sync cases
 - :class:`~dmr.test.DMRAsyncRequestFactory` for async ones
 
-We also have two subclasses of :class:`django.test.Client`
+We also have two subclasses of :class:`django.test.Client` for slower tests,
+but that do more real work (for example, they execute middleware steps):
 
 - :class:`~dmr.test.DMRClient` for sync cases
 - :class:`~dmr.test.DMRAsyncClient` for async ones
 
-What is the difference between the default ones? Not much:
+What is the difference between our utils and the default ones? Not much:
 
 - Default ``Content-Type`` header is set to ``application/json``
 - It is now easier to change ``Content-Type`` header as simple as specifying
   ``headers={'Content-Type': 'application/xml'}`` to change the content type
   for XML (or any other) requests and responses
 - Our test clients are faster, because they use ``msgspec``
-  if it is available to dump and parse json, instead of a regular :mod:`json`
+  if it is available to dump and parse JSON, instead of a regular :mod:`json`
 
 
 Testing styles support
@@ -43,108 +44,32 @@ We support both:
 
 For ``pytest`` we also have a bundled plugin with several different fixtures:
 
-.. literalinclude:: ../../dmr_pytest/__init__.py
-  :caption: dmr_pytest/__init__.py
-  :language: python
-  :linenos:
-
-No need to configure anything, just use these fixtures by names in your tests.
-
-The fixtures that return callables also have public types in ``dmr_pytest``,
-so you can annotate them in your own tests: ``ReducedThrottlingFixture``,
-``AssertThrottledFixture``, ``AssertThrottlingFixture``, and
-``AssertAsyncThrottlingFixture``. They are protocols that spell out the full
-signature of the helper they provide, so calls are fully type-checked.
-Fixtures returning objects, like ``dmr_client``, are annotated
-with their regular types from ``dmr.test``.
-
-You can use plain Django test primitives:
-
-.. literalinclude:: /examples/testing/django_builtin_client.py
-  :caption: django_builtin_client.py
-  :language: python
-  :linenos:
-
-Or use ``dmr.test`` helpers when you want JSON defaults and controller-level
-testing with request factories:
-
-.. literalinclude:: /examples/testing/dmr_helpers.py
-  :caption: dmr_helpers.py
-  :language: python
-  :linenos:
-
-
-.. _testing-throttling:
-
-Testing throttling
-------------------
-
-Testing that an endpoint is throttled usually means driving it to its limit
-first. Sending the configured ``max_requests`` in a loop is slow for large
-rates such as ``1000/hour``.
-
-Instead, use ``assert_throttling`` from ``dmr.test``: it temporarily lowers the
-endpoint's first throttle to a small ``max_requests`` (``2`` by default), drives
-that many allowed requests plus one more, and asserts the ``429`` -- exercising
-the full request cycle with a genuine response and headers. It returns the
-rejected response so you can make further header assertions. Use
-``assert_async_throttling`` for async controllers.
-
-Both drivers take ``line`` to target the before-auth or after-auth throttle
-line, and ``detail=False`` to skip the ``ratelimit`` body check when your
-project uses a custom error model.
-
-For finer control -- custom bodies or auth, or asserting exact headers -- pair
-the underlying ``reduced_throttling`` context manager with ``assert_throttled``.
-Both forms are shown here (the second test uses the context manager):
-
 .. tabs::
 
-  .. tab:: :iconify:`devicon:python` unittest
+  .. tab:: :iconify:`devicon:python` unittest with Django primitives
 
-    .. literalinclude:: /examples/throttling/testing.py
-      :caption: test_reports.py
-      :linenos:
+    .. literalinclude:: /examples/testing/django_builtin_client.py
+      :caption: django_builtin_client.py
       :language: python
+      :linenos:
+
+  .. tab:: :iconify:`devicon:python` unittest with DMR primitives
+
+    .. literalinclude:: /examples/testing/dmr_helpers.py
+      :caption: dmr_helpers.py
+      :language: python
+      :linenos:
 
   .. tab:: :iconify:`devicon:pytest` pytest
 
-    Our bundled plugin ships the same helpers as ``dmr_*`` fixtures, and
-    ``dmr_pytest`` exports their types, so the fixtures can be annotated:
+    Requires `pytest-django`_ to be installed as well.
 
-    .. literalinclude:: /examples/throttling/testing_pytest.py
-      :caption: test_reports.py
-      :linenos:
+    .. literalinclude:: /examples/testing/pytest_plugin.py
+      :caption: test_pytest_plugin.py
       :language: python
+      :linenos:
 
-Only the endpoint under test is affected; its throttling is restored afterwards.
-
-Header names are never hardcoded. Which headers are reported depends on the
-throttle's :class:`~dmr.throttling.headers.BaseResponseHeadersProvider`
-instances, so ``assert_throttled`` takes the ``throttle`` itself and checks
-that every header its providers report is present -- be it
-:class:`~dmr.throttling.headers.XRateLimit`,
-:class:`~dmr.throttling.headers.RateLimitIETFDraft`, or your own provider.
-The drivers pass the reduced throttle for you. Expected values go
-into ``headers`` by name, as an ``int``, a ``str``, or a matcher::
-
-    assert_throttled(response, headers={'RateLimit': IsStr()})
-
-.. note::
-
-  Lowering ``max_requests`` alone would not be enough for short windows: a
-  ``2/second`` throttle resets between the driven requests, so the endpoint
-  would never be rejected. That is why the reduced copy also gets an
-  hour-long window -- every request a test sends lands inside the same
-  window, whatever the endpoint's configured rate is.
-
-  Mind this when asserting headers: ``X-RateLimit-Reset`` and ``Retry-After``
-  report the widened window, not the rate you configured. And since they are
-  computed from the current time, freeze it -- with
-  `freezegun <https://github.com/spulec/freezegun>`_ or the ``freezer``
-  fixture of `pytest-freezer <https://github.com/pytest-dev/pytest-freezer>`_
-  -- when you assert their exact values; otherwise use a matcher such as
-  ``dirty_equals.IsStr()``.
+No need to configure anything.
 
 
 Structured data generation
@@ -175,6 +100,8 @@ Let's reuse the models for data generation in tests!
 
 Which will make your tests simple, fast,
 and will help you find unexpected corner cases.
+
+You can use any library of your choice for data generation for your models.
 
 
 Property-based API testing
@@ -346,8 +273,7 @@ and ``dmr_async_client`` automatically register requests in ``tracecov``.
   :language: python
   :linenos:
   :no-imports-spoiler:
-  :lines: 1-13
-  :emphasize-lines: 2, 13
+  :lines: 12-22
 
 To enable TraceCov recording for ``schemathesis`` runs, make sure your
 ``schemathesis`` test explicitly records validated interactions into
@@ -358,8 +284,7 @@ To enable TraceCov recording for ``schemathesis`` runs, make sure your
   :language: python
   :linenos:
   :no-imports-spoiler:
-  :lines: 24-44
-  :emphasize-lines: 5, 17
+  :lines: 112-
 
 What will happen here?
 
@@ -393,3 +318,94 @@ docs for details on the generated coverage report.
 
 In short: run ``schemathesis`` and regular integration tests together and get
 one unified TraceCov view of what your test suite actually exercised.
+
+
+.. _testing-throttling:
+
+Testing throttling
+------------------
+
+We believe that throttling is a part of the business requirements,
+so it must be tested. To help users with it, we provide several utilities:
+
+- For sync controllers: :func:`dmr.test.assert_throttling`
+- For async controllers: :func:`dmr.test.assert_async_throttling`
+
+Which are also available as ``pytest`` fixtures:
+
+- :func:`~dmr_pytest.dmr_assert_throttling` typed
+  as :class:`dmr.test.types.AssertThrottlingFixture`
+- :func:`~dmr_pytest.dmr_assert_async_throttling` typed
+  as :class:`dmr.test.types.AssertAsyncThrottlingFixture`
+
+Testing that an endpoint is throttled usually means driving it to its limit
+first. Sending the configured ``max_requests`` in a loop is slow for large
+rates such as ``1000/hour``. What do we do instead?
+
+1. We lower the ``max_requests`` value for the first throttle
+   and increase the rate to be a hour. This way we can reliably
+   and fastly test the expected behavior
+2. Next, we send several requests (``max_requests`` controlls this)
+   that will hit the endpoint,
+   assert that the response status matches ``success_status`` code
+3. Lastly, we assert that the final request hits the rate limit,
+   we also assert that the headers match our modified rate limit
+
+Examples:
+
+.. tabs::
+
+  .. tab:: :iconify:`devicon:python` unittest
+
+    Default Python's testing framework.
+
+    .. literalinclude:: /examples/testing/throttling_unittest.py
+      :caption: tests/test_throttling.py
+      :linenos:
+      :language: python
+
+  .. tab:: :iconify:`devicon:pytest` pytest
+
+    Our bundled plugin ships the same helpers as ``dmr_*`` fixtures, and
+    ``dmr.test.types`` exports their types, so the fixtures can be annotated:
+
+    .. literalinclude:: /examples/testing/throttling_pytest.py
+      :caption: test_reports.py
+      :linenos:
+      :language: python
+
+Only the endpoint under test is affected; its throttling is restored afterwards.
+
+There's also a lower level API:
+
+- :func:`dmr.test.reduced_throttling` to reduce the throttle number manually
+- :func:`dmr.test.assert_throttled` to assert that the response
+  object is from throttling middleware
+
+
+API Reference
+-------------
+
+pytest plugin
+~~~~~~~~~~~~~
+
+.. autofunction:: dmr_pytest.dmr_client
+
+.. autofunction:: dmr_pytest.dmr_async_client
+
+.. autofunction:: dmr_pytest.dmr_rf
+
+.. autofunction:: dmr_pytest.dmr_async_rf
+
+.. autofunction:: dmr_pytest.dmr_assert_throttling
+
+.. autofunction:: dmr_pytest.dmr_assert_async_throttling
+
+.. autofunction:: dmr_pytest.dmr_clean_settings
+
+This fixture shadows the default one from
+`pytest-django`_.
+
+.. autofunction:: dmr_pytest.settings
+
+.. pytest-django: https://github.com/pytest-dev/pytest-django

@@ -61,11 +61,11 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         '_algorithm',
         '_async_lock',
         '_backend',
-        '_response_headers',
         '_sync_lock',
         'cache_key',
         'duration_in_seconds',
         'max_requests',
+        'response_headers',
     )
 
     _backend: _BackendT
@@ -122,25 +122,13 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         else:
             self._backend = backend
         self._algorithm = algorithm or SimpleRate()
-        self._response_headers = (
+        self.response_headers = (
             [XRateLimit(), RetryAfter()]
             if response_headers is None
             else response_headers
         )
         # Run check and early initializations:
         self._backend.initialize_algorithm(self._algorithm)
-
-    @property
-    def response_headers(self) -> tuple[BaseResponseHeadersProvider, ...]:
-        """
-        Response headers providers of this throttle.
-
-        Use it to learn which headers this throttle reports,
-        instead of hardcoding their names.
-
-        .. versionadded:: 0.12.0
-        """
-        return tuple(self._response_headers)
 
     def full_cache_key(
         self,
@@ -194,7 +182,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
             backend=self._backend if backend is None else backend,
             algorithm=self._algorithm if algorithm is None else algorithm,
             response_headers=(
-                self._response_headers
+                self.response_headers
                 if response_headers is None
                 else response_headers
             ),
@@ -232,7 +220,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
     ) -> dict[str, str]:
         """Collects response headers for all ``response_headers`` classes."""
         response_headers: dict[str, str] = {}
-        for header_provider in self._response_headers:
+        for header_provider in self.response_headers:
             response_headers.update(
                 header_provider.response_headers(
                     endpoint,
@@ -247,7 +235,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
 
     def _headers_spec(self) -> dict[str, HeaderSpec]:
         headers_spec: dict[str, HeaderSpec] = {}
-        for header_provider in self._response_headers:
+        for header_provider in self.response_headers:
             headers_spec.update(header_provider.provide_headers_specs())
         return headers_spec
 

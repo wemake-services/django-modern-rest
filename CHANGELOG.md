@@ -22,7 +22,7 @@ of requirements for an API to count as public.
 
 ### Features
 
-- Adds "Opaque Token" auth backend, #1051
+- Added "Opaque Token" auth backend, #1051
 - Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
   reusable controllers to verify JWT access tokens, #1129
 - Added test helpers in `dmr.test` for asserting that endpoints are
@@ -44,9 +44,15 @@ of requirements for an API to count as public.
 
 - Streaming with `streaming_ping_seconds` no longer leaves the pending
   ping timer task behind on every produced event, #1046
-- Fixes `500` error on request bodies containing invalid `utf-8` bytes
+- Fixed `500` error on request bodies containing invalid `utf-8` bytes
   inside `msgspec`'s json and msgpack parsers,
   now `400` is correctly returned, #1135
+- Properly warn users that use our `pytest` plugin,
+  but do not have `pytest_django` installed
+
+### Misc
+
+- Improved `pytest` plugin docs
 
 
 ## Version 0.11.0 (2026-06-27)
