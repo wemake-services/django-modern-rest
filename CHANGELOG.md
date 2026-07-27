@@ -30,15 +30,6 @@ of requirements for an API to count as public.
   `reduced_throttling`, and `assert_throttled`,
   together with the `HeaderValue` and `ThrottlingLine` types
   used in their signatures, #1167
-- Added `SyncThrottle.response_headers` / `AsyncThrottle.response_headers`
-  to inspect which headers a throttle reports, #1167
-- Added `dmr_reduced_throttling`, `dmr_assert_throttled`,
-  `dmr_assert_throttling`, and `dmr_assert_async_throttling` pytest fixtures
-  with public protocols in `dmr_pytest` to annotate them:
-  `ReducedThrottlingFixture`, `AssertThrottledFixture`,
-  `AssertThrottlingFixture`, and `AssertAsyncThrottlingFixture`, #1167
-- Added `SyncThrottle.replace` / `AsyncThrottle.replace` to copy a throttle
-  with overridden fields; also supports `copy.replace` on Python 3.13+, #1167
 
 ### Bugfixes
 
@@ -48,7 +39,7 @@ of requirements for an API to count as public.
   inside `msgspec`'s json and msgpack parsers,
   now `400` is correctly returned, #1135
 - Properly warn users that use our `pytest` plugin,
-  but do not have `pytest_django` installed
+  but do not have `pytest_django` installed, #1167
 
 ### Misc
 
