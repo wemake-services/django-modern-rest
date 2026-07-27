@@ -90,7 +90,7 @@ def test_reduced_throttling_restores() -> None:
     assert endpoint.metadata.throttling_before_auth is before
     assert endpoint.metadata.throttling_before_auth[0].max_requests == 5
 
-    # But, it raises when no trottling is given:
+    # But, it raises when no throttling is given:
     with pytest.raises(ValueError, match='no throttling'):
         reduced_throttling(  # noqa: PLC2801
             _SyncController,
