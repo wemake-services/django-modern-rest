@@ -345,7 +345,7 @@ rates such as ``1000/hour``. What do we do instead?
 1. We lower the ``max_requests`` value for the first throttle
    and increase the rate to be a hour. This way we can reliably
    and fastly test the expected behavior
-2. Next, we send several requests (``max_requests`` controlls this)
+2. Next, we send several requests (``max_requests`` controls this)
    that will hit the endpoint,
    assert that the response status matches ``success_status`` code
 3. Lastly, we assert that the final request hits the rate limit,

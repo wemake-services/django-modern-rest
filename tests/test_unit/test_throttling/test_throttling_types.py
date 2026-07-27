@@ -68,7 +68,8 @@ def test_throttle_copy_replace(
 
     if sys.version_info >= (3, 13):
         # `typeshed` wants `__replace__(**kwargs: Any)`, our alias is stricter:
-        copied = copy.replace(original, max_requests=2, algorithm=LeakyBucket())
+        payload = {'max_requests': 2, 'algorithm': LeakyBucket()}
+        copied = copy.replace(original, **payload)
 
         assert type(copied) is throttle_cls  # noqa: WPS516
         assert copied is not original
