@@ -42,7 +42,7 @@ class _SyncController(Controller[PydanticFastSerializer]):
 
     @modify(throttling=None)
     def put(self) -> str:
-        return 'inside'
+        raise NotImplementedError
 
 
 @pytest.mark.parametrize('rate', [Rate.minute, Rate.hour, Rate.day])
