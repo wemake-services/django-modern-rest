@@ -94,13 +94,12 @@ unit-test = [
   "covdefaults>=2.3,<3",
   "pytest-randomly>=4.0,<5",
   "pytest-django>=4.8,<5",
-  "pytest-asyncio>=1.2,<2",
   "pytest-custom-exit-code>=0.3,<0.4",
   "pytest-freezer>=0.4,<0.5",
   "pytest-asyncio>=1.3,<2",
   "dirty-equals>=0.11,<0.12",
-  "faker>=40.1,<41",
-  "inline-snapshot>=0.32,<0.36",
+  "faker>=40.36,<41",
+  "inline-snapshot>=0.35,<0.36",
   "syrupy>=5.1,<6",
   "polyfactory>=3.2,<4",
   "xmltodict-rs>=0.13,<0.14",
@@ -129,7 +128,7 @@ dev = [
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<1.1.410",
   "pyrefly>=1,<2",
-  "wemake-python-styleguide>=1.6,<2",
+  "wemake-python-styleguide>=1.7,<2",
   "ruff>=0.15,<0.16",
   "import-linter>=2.5,<3",
   "slotscheck>=0.19,<0.21",
@@ -138,7 +137,8 @@ dev = [
   "phonenumbers>=9.0,<10",
 ]
 build = [
-  "cibuildwheel==4.1.0",
+  # NOTE: Keep cibuildwheel in sync with action version in build-wheels.yml
+  "cibuildwheel==4.1.1",
   "pypyp>=1.3,<2",
 ]
 docs = [
@@ -168,7 +168,6 @@ docs = [
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
 fragments = [{ path = "README.md" }]
-
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -248,6 +247,7 @@ select = [
   "COM",  # flake8-commas
   "D",    # pydocstyle
   "DTZ",  # flake8-datetimez
+  "DJ",   # flake8-django
   "E",    # pycodestyle
   "ERA",  # flake8-eradicate
   "EXE",  # flake8-executable
@@ -258,6 +258,7 @@ select = [
   "G",    # flake8-logging-format
   "I",    # isort
   "ICN",  # flake8-import-conventions
+  "INT",  # flake8-gettext
   "ISC",  # flake8-implicit-str-concat
   "LOG",  # flake8-logging
   "N",    # pep8-naming
@@ -294,6 +295,7 @@ ignore = [
   "D405",
   "D418",    # We should be able to add docstrings to `@overload` decorators
   "D421",
+  "DJ008",   # we don't need `__str__` in models in tests
   "ASYNC119", # `contextlib.aclosing` is not detected
   "ISC001",  # implicit string concat conflicts with `ruff format`
   "ISC003",  # prefer explicit string concat over implicit concat
@@ -315,6 +317,7 @@ external = [ "WPS" ]
 flake8-quotes.inline-quotes = "single"
 mccabe.max-complexity = 6
 pydocstyle.convention = "google"
+flake8-gettext.extend-function-names = ["_"]
 
 # For `django_test_app` and `docs` only:
 isort.known-first-party = ["server", "examples"]
