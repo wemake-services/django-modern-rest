@@ -80,10 +80,12 @@ example:
       && uv run python manage.py makemigrations --dry-run --check \
       && uv run python manage.py collectstatic --no-input --dry-run
     PYTHONPATH='docs/' uv run pytest -o addopts='' \
-      --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
       docs/examples/testing/django_builtin_client.py \
-      docs/examples/testing/dmr_helpers.py
+      docs/examples/testing/dmr_helpers.py \
+      docs/examples/testing/pytest_plugin.py \
+      docs/examples/testing/throttling_unittest.py \
+      docs/examples/testing/throttling_pytest.py
 
 # Start Django + DRM example app
 [group('testing')]

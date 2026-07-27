@@ -22,17 +22,37 @@ of requirements for an API to count as public.
 
 ### Features
 
-- Adds "Opaque Token" auth backend, #1051
+- Added "Opaque Token" auth backend, #1051
 - Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
   reusable controllers to verify JWT access tokens, #1129
+- Added test helpers in `dmr.test` for asserting that endpoints are
+  throttled: `assert_throttling` / `assert_async_throttling`,
+  `reduced_throttling`, and `assert_throttled`,
+  together with the `HeaderValue` and `ThrottlingLine` types
+  used in their signatures, #1167
+- Added `SyncThrottle.response_headers` / `AsyncThrottle.response_headers`
+  to inspect which headers a throttle reports, #1167
+- Added `dmr_reduced_throttling`, `dmr_assert_throttled`,
+  `dmr_assert_throttling`, and `dmr_assert_async_throttling` pytest fixtures
+  with public protocols in `dmr_pytest` to annotate them:
+  `ReducedThrottlingFixture`, `AssertThrottledFixture`,
+  `AssertThrottlingFixture`, and `AssertAsyncThrottlingFixture`, #1167
+- Added `SyncThrottle.replace` / `AsyncThrottle.replace` to copy a throttle
+  with overridden fields; also supports `copy.replace` on Python 3.13+, #1167
 
 ### Bugfixes
 
 - Streaming with `streaming_ping_seconds` no longer leaves the pending
   ping timer task behind on every produced event, #1046
-- Fixes `500` error on request bodies containing invalid `utf-8` bytes
+- Fixed `500` error on request bodies containing invalid `utf-8` bytes
   inside `msgspec`'s json and msgpack parsers,
   now `400` is correctly returned, #1135
+- Properly warn users that use our `pytest` plugin,
+  but do not have `pytest_django` installed
+
+### Misc
+
+- Improved `pytest` plugin docs
 
 
 ## Version 0.11.0 (2026-06-27)

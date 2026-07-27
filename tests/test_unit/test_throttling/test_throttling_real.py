@@ -8,7 +8,7 @@ from inline_snapshot import snapshot
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticFastSerializer
-from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory, assert_throttled
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 
 
@@ -47,6 +47,7 @@ def test_throttle_sync_real_time(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
     })
+    assert_throttled(response)
 
 
 class _AsyncController(Controller[PydanticFastSerializer]):
@@ -86,3 +87,4 @@ async def test_throttle_async_per_controller(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
     })
+    assert_throttled(response)
