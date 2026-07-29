@@ -102,7 +102,11 @@ class JwtToken(BaseThrottleCacheKey):
     """
     Uses a hash of JWT claims from ``request.__dmr_jwt__`` as a cache key.
 
-    Requires JWT extras to be installed.
+    Requires JWT extra to be installed with:
+
+    .. code:: bash
+
+        pip install 'django-modern-rest[jwt]'
 
     1. Never use a full token string for cache key generation.
     2. Prefer ``jti`` claim, fallback to ``sub`` claim.
