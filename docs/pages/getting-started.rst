@@ -62,8 +62,8 @@ Extras for different features:
 
 .. note::
 
-  You don't need to add ``'dmr'`` to the ``INSTALLED_APPS``,
-  unless you want to serve static files for the OpenAPI.
+  You don't need to add ``'dmr'`` to ``INSTALLED_APPS``,
+  unless you want to serve static files for OpenAPI.
 
 
 LLMs support
