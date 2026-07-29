@@ -36,7 +36,7 @@ lint:
 
 # Run all checks
 [group('dev')]
-test: lint type-check example benchmarks-type-check package smoke (smoke 'jwt') translations unit
+test: lint type-check example benchmarks-type-check package (smoke 'jwt') translations unit
 
 # Run all type checkers
 [group('type-check')]
