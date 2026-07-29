@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import override
 
-from dmr.security.jwt.auth import request_jwt
-
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
@@ -124,6 +122,10 @@ class JwtToken(BaseThrottleCacheKey):
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
         """Return a hash of JWT ``jti`` / ``sub`` claims as a cache key."""
+        from dmr.security.jwt.auth import (  # noqa: PLC0415
+            request_jwt,
+        )
+
         jwt_token = request_jwt(controller.request)
         if jwt_token is None:
             return None
