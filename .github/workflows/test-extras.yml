@@ -182,8 +182,7 @@ jobs:
       run: uv sync --extra jwt
 
     - name: Run checks
-      run: |
-        just smoke jwt
+      run: just smoke jwt
 
   build-no-extras:
     runs-on: ubuntu-latest
