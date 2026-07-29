@@ -1,0 +1,141 @@
+# Persian (Iran) translation.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-29 01:21+0330\n"
+"PO-Revision-Date: 2026-07-29 01:21+0330\n"
+"Last-Translator: Sadra Aghajanloo aghajanlo.sadra@gmail.com>\n"
+"Language-Team: Persian <fa@li.org>\n"
+"Language: fa_FA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: dmr/components.py:54
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"مسیر {cls} با field_model={field_model} پارامترهای مسیر بدون‌نام "
+"args={args} را مجاز نمی‌داند"
+
+#: dmr/components.py:59
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"تلاش برای تجزیه فایل‌ها با {parser_name} که از پروتکل SupportsFileParsing "
+"پشتیبانی نمی‌کند"
+
+#: dmr/controller.py:43
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "متد {method} مجاز نیست، متدهای مجاز: {allowed}"
+
+#: dmr/exceptions.py:10
+msgid "Not authenticated"
+msgstr "احراز هویت نشده است"
+
+#: dmr/exceptions.py:11
+msgid "Too many requests"
+msgstr "تعداد درخواست‌ها بیش از حد مجاز است"
+
+#: dmr/exceptions.py:49
+msgid "Internal server error"
+msgstr "خطای داخلی سرور"
+
+#: dmr/internal/django.py:49
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"درخواست‌های HTTP با نوع محتوای 'application/x-www-form-urlencoded' باید با "
+"کدگذاری UTF-8 ارسال شوند."
+
+#: dmr/internal/negotiation.py:19
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"رندرر مذاکره‌شده {renderer_type} با نوع محتوای بازگشتی {content_type} "
+"مطابقت ندارد"
+
+#: dmr/internal/negotiation.py:24
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"امکان سریالایز کردن بدنه پاسخ با انواع پذیرفته‌شده {accepted_types} وجود "
+"ندارد، پشتیبانی‌شده={supported}"
+
+#: dmr/negotiation.py:25
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"امکان تجزیه بدنه درخواست با نوع محتوای {content_type} وجود ندارد، مورد "
+"انتظار={expected}"
+
+#: dmr/security/_csrf.py:12
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "خطای CSRF: {reason}"
+
+#: dmr/security/jwt/blocklist/models.py:44
+msgid "BlocklistedJWToken"
+msgstr "توکن JWT مسدودشده"
+
+#: dmr/security/jwt/blocklist/models.py:45
+msgid "BlocklistedJWTokens"
+msgstr "توکن‌های JWT مسدودشده"
+
+#: dmr/security/token/models.py:32
+msgid "Name"
+msgstr "نام"
+
+#: dmr/security/token/models.py:37
+msgid "Token hash"
+msgstr "هش توکن"
+
+#: dmr/security/token/models.py:42
+msgid "Expires at"
+msgstr "تاریخ انقضا"
+
+#: dmr/security/token/models.py:47
+msgid "Revoked at"
+msgstr "تاریخ ابطال"
+
+#: dmr/security/token/models.py:52
+msgid "Last used at"
+msgstr "آخرین زمان استفاده"
+
+#: dmr/security/token/models.py:56
+msgid "Created at"
+msgstr "تاریخ ایجاد"
+
+#: dmr/security/token/models.py:60
+msgid "Updated at"
+msgstr "تاریخ به‌روزرسانی"
+
+#: dmr/security/token/models.py:65
+msgid "Token"
+msgstr "توکن"
+
+#: dmr/security/token/models.py:66
+msgid "Tokens"
+msgstr "توکن‌ها"
+
+#: dmr/serializer.py:16
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr "مقدار {value} از نوع {type} برای {target_type} پشتیبانی نمی‌شود"
