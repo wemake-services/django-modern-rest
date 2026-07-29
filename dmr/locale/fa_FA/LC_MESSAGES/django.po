@@ -139,4 +139,3 @@ msgstr "توکن‌ها"
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr "مقدار {value} از نوع {type} برای {target_type} پشتیبانی نمی‌شود"
-
