@@ -11,7 +11,7 @@ from inline_snapshot import snapshot
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.token import CookieTokenAsyncAuth, CookieTokenSyncAuth
-from dmr.security.token.logic import token_acreate, token_create
+from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -29,7 +29,7 @@ def test_cookie_token_sync_auth_success(
         def get(self) -> str:
             return 'authed'
 
-    _, raw_token = token_create(
+    _, raw_token = Token.issue(
         user=admin_user,
         name='cookie-test',
     )
@@ -78,7 +78,7 @@ async def test_async_cookie_token_auth_success(
         async def get(self) -> str:
             return 'authed'
 
-    _, raw_token = await token_acreate(
+    _, raw_token = await Token.aissue(
         user=admin_user,
         name='async-cookie-test',
     )
@@ -132,7 +132,7 @@ def test_sync_cookie_token_auth_csrf_enforced(
             # This method should never be reached on CSRF-invalid requests.
             return 'authed'
 
-    _, raw_token = token_create(
+    _, raw_token = Token.issue(
         user=admin_user,
         name='cookie-csrf-test',
     )
@@ -170,7 +170,7 @@ async def test_async_cookie_token_auth_csrf_enforced(
             # This method should never be reached on CSRF-invalid requests.
             return 'authed'
 
-    _, raw_token = await token_acreate(
+    _, raw_token = await Token.aissue(
         user=admin_user,
         name='async-cookie-csrf-test',
     )
@@ -209,13 +209,13 @@ def test_sync_cookie_token_auth_with_valid_csrf(
         def post(self) -> str:
             return 'authed'
 
-    _, raw_token = token_create(
+    _, raw_token = Token.issue(
         user=admin_user,
         name='cookie-csrf-valid-test',
     )
 
     monkeypatch.setattr(
-        'dmr.security._csrf._get_csrf_failure_reason',
+        'dmr.internal.csrf._get_csrf_failure_reason',
         lambda _: None,
     )
 
@@ -245,13 +245,13 @@ async def test_async_cookie_token_auth_with_valid_csrf(
         async def post(self) -> str:
             return 'authed'
 
-    _, raw_token = await token_acreate(
+    _, raw_token = await Token.aissue(
         user=admin_user,
         name='async-cookie-csrf-valid-test',
     )
 
     monkeypatch.setattr(
-        'dmr.security._csrf._get_csrf_failure_reason',
+        'dmr.internal.csrf._get_csrf_failure_reason',
         lambda _: None,
     )
 

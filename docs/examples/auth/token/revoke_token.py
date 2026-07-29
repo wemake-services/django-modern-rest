@@ -4,7 +4,6 @@ from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 from dmr.security.token import HeaderTokenSyncAuth, request_token
-from dmr.security.token.logic import token_revoke
 
 
 class RevokeTokenController(Controller[PydanticSerializer]):
@@ -15,7 +14,7 @@ class RevokeTokenController(Controller[PydanticSerializer]):
 
     def delete(self) -> None:
         token = request_token(self.request, strict=True)
-        token_revoke(token)
+        token.revoke()
 
 
 # openapi: {"controller": "RevokeTokenController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

@@ -40,6 +40,7 @@ of requirements for an API to count as public.
   now `400` is correctly returned, #1135
 - Properly warn users that use our `pytest` plugin,
   but do not have `pytest_django` installed, #1167
+- CSRF is now ensured before any other actions in Django-Session auth
 
 ### Misc
 

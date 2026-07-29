@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'server.apps.negotiations',
     'server.apps.jwt_auth',
     'server.apps.django_session_auth',
+    'server.apps.token_auth',
     'server.apps.etag',
     # Django:
     'django.contrib.admin',
@@ -60,7 +61,7 @@ INSTALLED_APPS = [
     # DMR:
     'dmr',
     'dmr.security.jwt.blocklist',
-    'dmr.security.token',
+    'dmr.security.token.app',
     # Third party:
     'csp',
 ]

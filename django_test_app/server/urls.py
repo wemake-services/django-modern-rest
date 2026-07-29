@@ -20,6 +20,7 @@ from server.apps.model_fk import urls as model_fk_urls
 from server.apps.model_simple import urls as model_simple_urls
 from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.config import get_config
+from server.apps.token_auth import urls as token_auth_urls
 
 router = Router(
     prefix='api/',
@@ -71,6 +72,13 @@ router = Router(
             include(
                 (django_session_auth_urls.router.urls, 'django_session_auth'),
                 namespace='django_session_auth',
+            ),
+        ),
+        path(
+            token_auth_urls.router.prefix,
+            include(
+                (token_auth_urls.router.urls, 'token_auth'),
+                namespace='token_auth',
             ),
         ),
         path(

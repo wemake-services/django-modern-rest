@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 08:59+0300\n"
+"POT-Creation-Date: 2026-07-29 16:42+0300\n"
 "PO-Revision-Date: 2026-04-17 01:15+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Azerbaijani <az@li.org>\n"
@@ -46,6 +46,10 @@ msgstr "Çox sayda sorğu göndərilib"
 msgid "Internal server error"
 msgstr "Daxili server xətası"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF xətası: {reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -77,15 +81,38 @@ msgstr ""
 "{content_type} məzmun tipli sorğu gövdəsi təhlil edilə bilmir, "
 "gözlənilən={expected}"
 
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF xətası: {reason}"
-
 msgid "BlocklistedJWToken"
 msgstr "Bloklanmış JWT Token"
 
 msgid "BlocklistedJWTokens"
 msgstr "Bloklanmış JWT Tokenləri"
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"

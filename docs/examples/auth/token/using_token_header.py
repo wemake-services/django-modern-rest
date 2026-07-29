@@ -11,7 +11,6 @@ class APIController(Controller[PydanticSerializer]):
     auth = (HeaderTokenSyncAuth(),)
 
     def get(self) -> str:
-        # Let's test that `User` is authenticated:
         assert self.request.user.is_authenticated
         return 'authed'
 

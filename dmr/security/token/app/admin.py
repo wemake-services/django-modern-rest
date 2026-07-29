@@ -1,23 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
-
 from django.contrib import admin
-from django.db.models import Model
+from django.db import transaction
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.security.token.logic import token_is_active, token_revoke
-from dmr.security.token.models import Token
-
-_ModelT = TypeVar('_ModelT', bound=Model)
-
-if TYPE_CHECKING:
-    ModelAdmin = admin.ModelAdmin
-else:
-
-    class ModelAdmin(admin.ModelAdmin, Generic[_ModelT]): ...  # noqa: D101, WPS604
+from dmr.internal.admin import ModelAdmin
+from dmr.security.token.app.models import Token
 
 
 @admin.register(Token)
@@ -57,7 +47,7 @@ class TokenAdmin(ModelAdmin[Token]):
     @admin.display(boolean=True, description='Is active')
     def display_is_active(self, token: Token) -> bool:
         """Display token active state in admin list."""
-        return token_is_active(token)
+        return token.is_active
 
     @override
     def has_add_permission(self, request: HttpRequest) -> bool:
@@ -72,8 +62,8 @@ class TokenAdmin(ModelAdmin[Token]):
     ) -> None:
         """Revoke all active tokens in the selected queryset."""
         revoked = 0
-        for token in queryset:
-            if token_is_active(token):
-                token_revoke(token)
+        with transaction.atomic():
+            for token in queryset.select_for_update():
+                token.revoke()
                 revoked += 1
         self.message_user(request, f'Revoked {revoked} token(s).')

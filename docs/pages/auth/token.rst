@@ -1,12 +1,18 @@
 Token Auth
 ==========
 
-Opaque token authentication backed by database records.
+Opaque token authentication backed by database hashed records.
 
 .. note::
 
-  To use token auth, add ``'dmr.security.token'`` to ``INSTALLED_APPS``
-  and run migrations.
+  To use token auth with the default
+  :class:`~dmr.security.token.app.models.Token` model,
+  add ``'dmr.security.token.app'`` to ``INSTALLED_APPS``
+  and run migrations with ``manage.py migrate``.
+
+  You can subclass all classes, change ``token_model`` property
+  and substitute the token model for your own one.
+  More on that later.
 
 
 Requiring auth
@@ -19,114 +25,86 @@ Requiring auth
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
 We provide several classes to require token auth in your API
-for both sync and async endpoints:
-
-- :class:`~dmr.security.token.HeaderTokenSyncAuth` and
-  :class:`~dmr.security.token.HeaderTokenAsyncAuth`
-  for header-based auth
-- :class:`~dmr.security.token.QueryTokenSyncAuth` and
-  :class:`~dmr.security.token.QueryTokenAsyncAuth`
-  for query-param based auth
-- :class:`~dmr.security.token.CookieTokenSyncAuth` and
-  :class:`~dmr.security.token.CookieTokenAsyncAuth`
-  for cookie-based auth
+for both sync and async endpoints.
 
 Example of requiring token auth and accessing
 both ``self.request.user`` and the current token:
 
-.. literalinclude:: /examples/auth/token/using_token_header.py
-  :caption: views.py
-  :linenos:
-  :language: python
+.. tabs::
+
+  .. tab:: Token in headers
+
+    Use :class:`~dmr.security.token.HeaderTokenSyncAuth` and
+    :class:`~dmr.security.token.HeaderTokenAsyncAuth`
+    for header-based auth.
+
+    .. literalinclude:: /examples/auth/token/using_token_header.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Token in cookies
+
+    Use :class:`~dmr.security.token.CookieTokenSyncAuth` and
+    :class:`~dmr.security.token.CookieTokenAsyncAuth`
+    for cookie-based auth.
+
+    .. note::
+
+      We enforce CSRF for this auth as well.
+      See also: https://docs.djangoproject.com/en/6.0/ref/csrf
+
+    .. literalinclude:: /examples/auth/token/using_token_cookie.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Token in query string
+
+    Use :class:`~dmr.security.token.QueryTokenSyncAuth` and
+    :class:`~dmr.security.token.QueryTokenAsyncAuth`
+    for query-param based auth.
+
+    .. warning::
+
+      Sending tokens via query string is not really safe,
+      because they can show up in access logs.
+
+    .. literalinclude:: /examples/auth/token/using_token_query.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
 
 Token lifecycle
 ---------------
-
-:class:`dmr.security.token.models.Token` instances
-are issued and revoked via dedicated functions sync and async functions:
-
-- :func:`dmr.security.token.logic.token_create` /
-  :func:`dmr.security.token.logic.token_acreate` to create tokens
-- :func:`dmr.security.token.logic.token_revoke` /
-  :func:`dmr.security.token.logic.token_arevoke` to revoke tokens
-
-Creation helpers return ``(token_instance, raw_token)``.
-Only the token hash is stored in the database,
-the raw token is returned exactly once and never persisted.
-
-:class:`~dmr.security.token.models.Token` has two
-:class:`~django.db.models.DateTimeField` fields that gate validity:
-
-- ``expires_at`` — set once,
-  at creation
-- ``revoked_at`` — ``None``
-  until :func:`~dmr.security.token.logic.token_revoke` is called
-
-On each authenticated request, the auth backend:
-
-1. Hashes the incoming raw token and looks up the matching row.
-   If no row matches, authentication fails with a ``401``
-2. Checks that the token is still active (neither revoked nor expired)
-3. Checks that the associated user account is still active
-    (``is_active``)
-
-If any check fails, authentication fails with a ``401``
-and no token state is changed.
-
-.. note::
-
-  Revoking a token is a write: it sets ``revoked_at`` on the row.
-  Expiry needs no write at all, ``expires_at`` is set once up front
-  and simply compared against the clock on every lookup from then on.
-
-  Successful authentication can *also* write to the row,
-  see :ref:`tracking-last-use` below.
 
 .. mermaid::
   :caption: Token states
   :config: {"theme": "forest"}
 
   stateDiagram-v2
-      [*] --> Active: token_create / token_acreate
-      Active --> Revoked: token_revoke / token_arevoke
+      [*] --> Active: TokenLike.issue / TokenLike.aissue
+      Active --> Revoked: TokenLike.revoke / TokenLike.arevoke
       Revoked --> [*]
+      Active --> Expired
+      Expired --> [*]
 
-Issuing a token
-~~~~~~~~~~~~~~~
+All token instances are issued and revoked
+via :class:`dmr.security.token.auth.base.TokenLike` interface.
 
-Issuing a token has to be gated by some pre-existing trust,
-not by the token itself, otherwise a client would need a token
-to get a token. That pre-existing trust is specific to your
-application, so we don't ship a built-in way to issue tokens.
-Call :func:`~dmr.security.token.logic.token_create` directly,
-for example from a Django shell:
-
-.. literalinclude:: /examples/auth/token/issue_token.py
-  :caption: issue_token.py
-  :linenos:
-  :language: python
-
-.. important::
-
-  ``raw_token`` is only available here, right after creation.
-  Only its hash is stored, so save it now, it cannot be recovered later.
-
-.. note::
-
-  If you want to issue tokens from an HTTP endpoint, for example
-  a "generate API key" button in a dashboard, gate it behind
-  an auth method other than the token being issued.
-  :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
-  is a common choice, since the user already has a session
-  from logging in.
+Our default implementation :class:`dmr.security.token.app.models.Token`
+strictly follows the interface.
 
 Revoking a token
 ~~~~~~~~~~~~~~~~
 
-Tokens can be revoked via helper functions:
+Tokens can be revoked via helper methods:
 
-- :func:`~dmr.security.token.logic.token_revoke`
-- :func:`~dmr.security.token.logic.token_arevoke`
+- :meth:`~dmr.security.token.auth.base.TokenLike.revoke`
+- :meth:`~dmr.security.token.auth.base.TokenLike.arevoke`
+
+Here's an example with the default model:
 
 .. literalinclude:: /examples/auth/token/revoke_token.py
   :caption: revoke_token.py
@@ -137,8 +115,9 @@ Tokens can be revoked via helper functions:
 Django admin
 ~~~~~~~~~~~~
 
-When ``'dmr.security.token'`` is in ``INSTALLED_APPS``, tokens are
-accessible from the Django admin for viewing, searching, filtering,
+When ``'dmr.security.token.app'`` is in ``INSTALLED_APPS``,
+default :class:`~dmr.security.token.app.models.Token` model entries
+are accessible from the Django admin for viewing, searching, filtering,
 and revocation.
 
 .. note::
@@ -232,6 +211,8 @@ Classes: :class:`~dmr.security.token.CookieTokenSyncAuth` /
 
   Cookie auth is CSRF-sensitive in browser-facing contexts.
   Ensure ``django.middleware.csrf.CsrfViewMiddleware`` is enabled.
+  We automatically enforce CSRF checks before any other actions are taken.
+  Using cookie-based auth without CSRF is not secure.
 
 Query parameter
 ~~~~~~~~~~~~~~~~
@@ -286,5 +267,8 @@ API Reference
 
 .. autofunction:: dmr.security.token.logic.token_arevoke
 
-.. autoclass:: dmr.security.token.models.Token
+Default app
+~~~~~~~~~~~
+
+.. autoclass:: dmr.security.token.app.models.Token
   :members:

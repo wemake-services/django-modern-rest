@@ -6,15 +6,13 @@ from django.conf import settings
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import (
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
 )
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
-from dmr.security._csrf import (
-    ensure_csrf,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
-)
 from dmr.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
@@ -128,11 +126,10 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
 
         For example: checking that user is staff / superuser.
         """
+        self._ensure_csrf(controller)
         user = getattr(controller.request, 'user', None)
         if not user or not user.is_authenticated or not user.is_active:
             return None
-
-        self._ensure_csrf(controller)
         return self
 
 
@@ -168,12 +165,11 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
 
         For example: checking that user is staff / superuser.
         """
+        self._ensure_csrf(controller)
         auser = getattr(controller.request, 'auser', None)
         if auser is None:
             return None
         user = await auser()
         if not user.is_authenticated or not user.is_active:
             return None
-
-        self._ensure_csrf(controller)
         return self

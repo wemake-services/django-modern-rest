@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 09:00+0300\n"
+"POT-Creation-Date: 2026-07-29 16:43+0300\n"
 "PO-Revision-Date: 2026-06-22 00:00+0700\n"
 "Last-Translator: \n"
 "Language-Team: Indonesian\n"
@@ -21,16 +21,16 @@ msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
 "parameters args={args}"
 msgstr ""
-"Path {cls} dengan field_model={field_model} tidak mengizinkan parameter "
-"path tanpa nama args={args}"
+"Path {cls} dengan field_model={field_model} tidak mengizinkan parameter path "
+"tanpa nama args={args}"
 
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"Mencoba mengurai file dengan {parser_name} yang tidak mendukung "
-"protokol SupportsFileParsing"
+"Mencoba mengurai file dengan {parser_name} yang tidak mendukung protokol "
+"SupportsFileParsing"
 
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
@@ -44,6 +44,10 @@ msgstr "Terlalu banyak permintaan"
 
 msgid "Internal server error"
 msgstr "Kesalahan server internal"
+
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF Gagal: {reason}"
 
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
@@ -65,26 +69,49 @@ msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
-"Tidak dapat melakukan serialisasi isi respons dengan tipe yang diterima {accepted_types}, "
-"yang didukung={supported}"
+"Tidak dapat melakukan serialisasi isi respons dengan tipe yang diterima "
+"{accepted_types}, yang didukung={supported}"
 
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"Tidak dapat mengurai isi permintaan dengan tipe konten {content_type}, "
-"yang diharapkan={expected}"
-
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF Gagal: {reason}"
+"Tidak dapat mengurai isi permintaan dengan tipe konten {content_type}, yang "
+"diharapkan={expected}"
 
 msgid "BlocklistedJWToken"
 msgstr "JWT Token yang Diblokir"
 
 msgid "BlocklistedJWTokens"
 msgstr "JWT Token-token yang Diblokir"
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"

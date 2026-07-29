@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-23 08:59-0500\n"
+"POT-Creation-Date: 2026-07-29 16:42+0300\n"
 "PO-Revision-Date: 2026-06-23 10:00-0500\n"
 "Last-Translator: Maier Yan <cozysweets101@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,13 +24,11 @@ msgid ""
 msgstr ""
 "路径 {cls}（field_model={field_model}）不允许使用未命名的路径参数 args={args}"
 
-
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
-msgstr ""
-"尝试使用不支持 SupportsFileParsing 协议的 {parser_name} 解析文件"
+msgstr "尝试使用不支持 SupportsFileParsing 协议的 {parser_name} 解析文件"
 
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
@@ -45,11 +43,16 @@ msgstr "请求过多"
 msgid "Internal server error"
 msgstr "服务器内部错误"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF 验证失败：{reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"内容类型为 'application/x-www-form-urlencoded' 的 HTTP 请求必须使用 UTF-8 编码。"
+"内容类型为 'application/x-www-form-urlencoded' 的 HTTP 请求必须使用 UTF-8 编"
+"码。"
 
 #, python-brace-format
 msgid ""
@@ -69,18 +72,40 @@ msgstr ""
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
-msgstr ""
-"无法使用内容类型 {content_type} 解析请求体，期望类型={expected}"
-
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF 验证失败：{reason}"
+msgstr "无法使用内容类型 {content_type} 解析请求体，期望类型={expected}"
 
 msgid "BlocklistedJWToken"
 msgstr "已加入黑名单的 JWT 令牌"
 
 msgid "BlocklistedJWTokens"
 msgstr "已加入黑名单的多个 JWT 令牌"
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
