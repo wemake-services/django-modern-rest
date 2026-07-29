@@ -58,7 +58,7 @@ Extras for different features:
 
   We also recommend to always install
   `django-stubs <https://github.com/typeddjango/django-stubs>`_
-  for typing the Django itself.
+  for typing Django itself.
 
 .. note::
 
