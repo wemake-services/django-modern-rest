@@ -34,7 +34,7 @@ def test_client(dmr_client: DMRClient) -> None:
 
 
 def test_request_factory(dmr_rf: DMRRequestFactory) -> None:
-    # NOTE: learn how to generate structure random data in the next section:
+    # NOTE: learn how to generate structured random data in the next section:
     request_data = {'email': 'test@example.com', 'age': 43}
     request = dmr_rf.post('/url/', data=request_data)
 

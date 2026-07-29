@@ -83,7 +83,7 @@ Pagination
 Limit Offset pagination
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-We support built-in :class:`django.core.paginator.Paginator`.
+We support the built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 

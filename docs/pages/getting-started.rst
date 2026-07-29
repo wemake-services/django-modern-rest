@@ -58,12 +58,12 @@ Extras for different features:
 
   We also recommend to always install
   `django-stubs <https://github.com/typeddjango/django-stubs>`_
-  for typing the Django itself.
+  for typing Django itself.
 
 .. note::
 
-  You don't need to add ``'dmr'`` to the ``INSTALLED_APPS``,
-  unless you want to serve static files for the OpenAPI.
+  You don't need to add ``'dmr'`` to ``INSTALLED_APPS``,
+  unless you want to serve static files for OpenAPI.
 
 
 LLMs support
