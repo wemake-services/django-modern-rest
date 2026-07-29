@@ -50,9 +50,9 @@ type-check:
 unit *args='':
     uv run pytest --inline-snapshot=disable {{ args }}
 
-# Check package imports without django.setup()
+# Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
-smoke extras='':
+smoke *extras='':
     uv run python -c 'from dmr import Controller'
     # Checks that renderers and parsers can be imported
     # from settings without `.setup()` call:
@@ -61,9 +61,11 @@ smoke extras='':
     # Checks that auth can be imported from settings without `.setup()` call:
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
-    if [ "{{ extras }}" = "jwt" ]; then \
-      uv run python -c 'from dmr.security.jwt import *'; \
-    fi
+    for extra in {{ extras }}; do \
+      case "$extra" in \
+        jwt) uv run python -c 'from dmr.security.jwt import *' ;; \
+      esac; \
+    done
     uv run python -c 'from dmr.security.token import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
