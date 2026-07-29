@@ -85,7 +85,10 @@ jobs:
         uv pip install "${{ matrix.django-version }}"
 
     - name: Run checks
-      run: just smoke unit --cov-fail-under=98
+      run: |
+        just smoke
+        just smoke jwt
+        just unit --cov-fail-under=98
 
 
   build-no-msgspec:
@@ -116,7 +119,9 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke example
+        just smoke
+        just smoke jwt
+        just example
         uv run pytest --cov-fail-under=90
 
 
@@ -149,6 +154,7 @@ jobs:
     - name: Run checks
       run: |
         just smoke
+        just smoke jwt
         uv run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
 
 
@@ -179,7 +185,9 @@ jobs:
       run: uv sync --extra jwt
 
     - name: Run checks
-      run: just smoke
+      run: |
+        just smoke
+        just smoke jwt
 
   build-no-extras:
     runs-on: ubuntu-latest

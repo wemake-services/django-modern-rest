@@ -36,7 +36,7 @@ lint:
 
 # Run all checks
 [group('dev')]
-test: lint type-check example benchmarks-type-check package smoke translations unit
+test: lint type-check example benchmarks-type-check package smoke (smoke 'jwt') translations unit
 
 # Run all type checkers
 [group('type-check')]
@@ -52,7 +52,7 @@ unit *args='':
 
 # Check package imports without django.setup()
 [group('testing')]
-smoke:
+smoke extras='':
     uv run python -c 'from dmr import Controller'
     # Checks that renderers and parsers can be imported
     # from settings without `.setup()` call:
@@ -61,7 +61,9 @@ smoke:
     # Checks that auth can be imported from settings without `.setup()` call:
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
-    uv run python -c 'from dmr.security.jwt import *'
+    if [ "{{ extras }}" = "jwt" ]; then \
+      uv run python -c 'from dmr.security.jwt import *'; \
+    fi
     uv run python -c 'from dmr.security.token import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
