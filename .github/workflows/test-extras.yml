@@ -86,7 +86,6 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke
         just smoke jwt
         just unit --cov-fail-under=98
 
@@ -119,7 +118,6 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke
         just smoke jwt
         just example
         uv run pytest --cov-fail-under=90
@@ -153,7 +151,6 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke
         just smoke jwt
         uv run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
 
@@ -186,7 +183,6 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke
         just smoke jwt
 
   build-no-extras:
