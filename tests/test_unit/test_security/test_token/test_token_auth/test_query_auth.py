@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import final
 
 import pytest
 from django.contrib.auth.models import User
@@ -8,7 +7,7 @@ from django.http import HttpResponse
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.token import QueryTokenAsyncAuth, QueryTokenSyncAuth
-from dmr.security.token.logic import token_acreate, token_create
+from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -19,14 +18,13 @@ def test_query_token_sync_auth_success(
 ) -> None:
     """Ensures QueryTokenSyncAuth reads the token from the query string."""
 
-    @final
     class _QueryController(Controller[PydanticFastSerializer]):
         auth = (QueryTokenSyncAuth(),)
 
         def get(self) -> str:
             return 'authed'
 
-    _, raw_token = token_create(
+    _, raw_token = Token.issue(
         user=admin_user,
         name='query-test',
     )
@@ -46,14 +44,13 @@ async def test_async_query_token_auth_success(
 ) -> None:
     """Ensures QueryTokenAsyncAuth reads the token from the query string."""
 
-    @final
     class _AsyncQueryController(Controller[PydanticFastSerializer]):
         auth = (QueryTokenAsyncAuth(),)
 
         async def get(self) -> str:
             return 'authed'
 
-    _, raw_token = await token_acreate(
+    _, raw_token = await Token.aissue(
         user=admin_user,
         name='async-query-test',
     )

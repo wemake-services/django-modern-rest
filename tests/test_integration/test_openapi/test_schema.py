@@ -78,6 +78,7 @@ st.openapi.format(
 # Register custom auth:
 
 
+# TODO: provide `Token` auth as well
 @st.auth().apply_to(st.openapi.require_security_scheme('django_session'))
 class _DjangoSessionAuth:
     def get(

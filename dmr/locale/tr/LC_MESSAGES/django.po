@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-modern-rest 0.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 08:59+0300\n"
+"POT-Creation-Date: 2026-07-29 16:43+0300\n"
 "PO-Revision-Date: 2026-06-23 12:00+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -45,6 +45,10 @@ msgstr "Çok fazla istek"
 msgid "Internal server error"
 msgstr "Sunucu iç hatası"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF doğrulaması başarısız oldu: {reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -76,15 +80,38 @@ msgstr ""
 "İstek gövdesi {content_type} içerik tipiyle ayrıştırılamıyor, "
 "beklenen={expected}"
 
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF doğrulaması başarısız oldu: {reason}"
-
 msgid "BlocklistedJWToken"
 msgstr "Engellenen JWT Belirteci"
 
 msgid "BlocklistedJWTokens"
 msgstr "Engellenen JWT Belirteçleri"
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"

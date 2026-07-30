@@ -70,6 +70,7 @@ smoke *extras='':
     uv run python -c 'from dmr.openapi.objects import *'
     # Settings itself can be imported with `.setup()`:
     uv run python -c 'from dmr import settings'
+    # Requires extras:
     for extra in {{ extras }}; do \
       case "$extra" in \
         jwt) uv run python -c 'from dmr.security.jwt import *' ;; \

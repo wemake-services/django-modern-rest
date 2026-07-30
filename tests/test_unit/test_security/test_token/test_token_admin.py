@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 from typing import Any, cast
 from unittest.mock import Mock
 
@@ -8,9 +9,8 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.test import RequestFactory
 
-from dmr.security.token.admin import TokenAdmin
-from dmr.security.token.logic import token_create, token_is_active
-from dmr.security.token.models import Token
+from dmr.security.token.app.admin import TokenAdmin
+from dmr.security.token.app.models import Token
 
 
 @pytest.mark.django_db
@@ -31,25 +31,24 @@ def test_token_admin_has_no_add_permission(admin_user: User) -> None:
 @pytest.mark.django_db
 def test_token_admin_display_is_active(admin_user: User) -> None:
     """Test the admin active-state column mirrors token state."""
-    token, _ = token_create(user=admin_user, name='active-token')
+    token, _ = Token.issue(user=admin_user, name='active-token')
     token_admin = TokenAdmin(Token, admin.site)
 
     assert token_admin.display_is_active(token)
 
-    token.revoked_at = token.created_at
-    token.save(update_fields=['revoked_at', 'updated_at'])
+    token.revoke()
 
     assert not token_admin.display_is_active(token)
-    assert not token_is_active(token)
+    assert not token.is_active
+    assert isinstance(token.updated_at, dt.datetime)
 
 
 @pytest.mark.django_db
 def test_token_admin_revoke_selected(admin_user: User) -> None:
     """Test the admin bulk action revokes only active tokens."""
-    active_token, _ = token_create(user=admin_user, name='active-token')
-    revoked_token, _ = token_create(user=admin_user, name='revoked-token')
-    revoked_token.revoked_at = revoked_token.created_at
-    revoked_token.save(update_fields=['revoked_at', 'updated_at'])
+    active_token, _ = Token.issue(user=admin_user, name='active-token')
+    revoked_token, _ = Token.issue(user=admin_user, name='revoked-token')
+    revoked_token.revoke()
 
     token_admin = TokenAdmin(Token, admin.site)
     message_user = Mock()
@@ -65,9 +64,9 @@ def test_token_admin_revoke_selected(admin_user: User) -> None:
     revoked_token.refresh_from_db()
 
     assert active_token.revoked_at is not None
-    assert not token_is_active(active_token)
-    assert not token_is_active(revoked_token)
+    assert not active_token.is_active
+    assert not revoked_token.is_active
     message_user.assert_called_once_with(
         request,
-        'Revoked 1 token(s).',
+        'Revoked 2 token(s).',
     )

@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from dmr.internal.admin import ModelAdmin
 from dmr.security.jwt.blocklist.models import BlocklistedJWToken
 
 
 @admin.register(BlocklistedJWToken)
-class BlocklistedJWTokenAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class BlocklistedJWTokenAdmin(ModelAdmin[BlocklistedJWToken]):
     """Admin configuration for blocklisted JWT tokens."""
 
     list_display = (

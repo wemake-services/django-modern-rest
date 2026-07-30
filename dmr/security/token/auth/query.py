@@ -1,12 +1,11 @@
 from typing import Final
 
 from django.http import HttpRequest
-from typing_extensions import override
 
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.token.auth.base import (
-    _BaseTokenAsyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
-    _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    BaseTokenAsyncAuth,
+    BaseTokenSyncAuth,
 )
 
 _DEFAULT_PARAM: Final = 'token'
@@ -30,16 +29,22 @@ class _BaseQueryTokenAuth:
             ),
         }
 
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Read the raw token from the query string."""
+        return request.GET.get(self.query_param)
 
-class QueryTokenSyncAuth(_BaseQueryTokenAuth, _BaseTokenSyncAuth):
+
+class QueryTokenSyncAuth(_BaseQueryTokenAuth, BaseTokenSyncAuth):
     """
     Sync opaque token auth reading from a query string parameter.
 
     .. warning::
+
         Tokens in query strings appear in server access logs, browser history,
         and HTTP ``Referer`` headers.  Prefer
         :class:`HeaderTokenSyncAuth` for any
         context where security is a concern.
+
     """
 
     __slots__ = ('query_param',)
@@ -49,7 +54,7 @@ class QueryTokenSyncAuth(_BaseQueryTokenAuth, _BaseTokenSyncAuth):
         *,
         query_param: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
@@ -58,13 +63,8 @@ class QueryTokenSyncAuth(_BaseQueryTokenAuth, _BaseTokenSyncAuth):
         )
         self.query_param = query_param
 
-    @override
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Read the raw token from the query string."""
-        return request.GET.get(self.query_param)
 
-
-class QueryTokenAsyncAuth(_BaseQueryTokenAuth, _BaseTokenAsyncAuth):
+class QueryTokenAsyncAuth(_BaseQueryTokenAuth, BaseTokenAsyncAuth):
     """
     Async opaque token auth reading from a query string parameter.
 
@@ -82,7 +82,7 @@ class QueryTokenAsyncAuth(_BaseQueryTokenAuth, _BaseTokenAsyncAuth):
         *,
         query_param: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
@@ -90,8 +90,3 @@ class QueryTokenAsyncAuth(_BaseQueryTokenAuth, _BaseTokenAsyncAuth):
             update_last_used=update_last_used,
         )
         self.query_param = query_param
-
-    @override
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Read the raw token from the query string."""
-        return request.GET.get(self.query_param)

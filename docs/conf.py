@@ -153,6 +153,7 @@ nitpick_ignore = [
         'dmr.security.django_session.views._RequestModelT',
     ),
     (_PY_CLASS, 'dmr.security.django_session.views._ResponseT'),
+    (_PY_CLASS, 'dmr.security.token.token._UserT'),
     (_PY_OBJ, 'dmr.components._HeadersT'),
     (_PY_OBJ, 'dmr.components._QueryT'),
     (_PY_OBJ, 'dmr.components._PathT'),
