@@ -277,11 +277,15 @@ async def test_async_cookie_token_auth_update_last_used(
         async def get(self) -> str:
             return 'authed'
 
-    token, raw_token = await Token.aissue(user=admin_user, name='async-cookie-update-used')
+    token, raw_token = await Token.aissue(
+        user=admin_user, name='async-cookie-update-used'
+    )
     request = dmr_async_rf.get('/whatever/')
     request.COOKIES['token'] = raw_token
 
-    response = await dmr_async_rf.wrap(_AsyncUpdateController.as_view()(request))
+    response = await dmr_async_rf.wrap(
+        _AsyncUpdateController.as_view()(request)
+    )
 
     await token.arefresh_from_db()
     assert isinstance(response, HttpResponse)

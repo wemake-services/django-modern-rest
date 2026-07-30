@@ -29,7 +29,9 @@ class _SyncObtainController(
     token_cls = Token
 
     @override
-    def convert_auth_payload(self, payload: ObtainTokenPayload) -> ObtainTokenPayload:
+    def convert_auth_payload(
+        self, payload: ObtainTokenPayload
+    ) -> ObtainTokenPayload:
         return payload
 
     @override
@@ -99,7 +101,9 @@ def test_issue_token_with_custom_salt_and_algorithm(
         token_algorithm=token_algorithm,
     )
 
-    assert Token.find_raw(raw_token, token_salt=token_salt, token_algorithm=token_algorithm)
+    assert Token.find_raw(
+        raw_token, token_salt=token_salt, token_algorithm=token_algorithm
+    )
     assert Token.find_raw(raw_token) is None
 
 
@@ -115,7 +119,9 @@ def test_issue_token_with_custom_secret(admin_user: User) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('token_size', [16, 32])
-def test_issue_token_with_custom_size(admin_user: User, *, token_size: int) -> None:
+def test_issue_token_with_custom_size(
+    admin_user: User, *, token_size: int
+) -> None:
     """issue_token() with a custom token_size produces a raw token of the expected length."""
     ctrl = _SyncObtainController()
     raw_token = ctrl.issue_token(user=admin_user, token_size=token_size)
@@ -145,7 +151,9 @@ def test_issue_token_uses_class_salt_and_algorithm(admin_user: User) -> None:
     ctrl = _CustomController()
     raw_token = ctrl.issue_token(user=admin_user)
 
-    assert Token.find_raw(raw_token, token_salt='class_salt', token_algorithm='sha512')
+    assert Token.find_raw(
+        raw_token, token_salt='class_salt', token_algorithm='sha512'
+    )
     assert Token.find_raw(raw_token) is None
 
 
@@ -163,7 +171,10 @@ def test_issue_token_uses_class_token_expiration(admin_user: User) -> None:
     token = Token.find_raw(raw_token)
     assert token is not None
     assert token.expires_at is not None
-    assert abs((token.expires_at - (now + dt.timedelta(hours=1))).total_seconds()) < 5
+    assert (
+        abs((token.expires_at - (now + dt.timedelta(hours=1))).total_seconds())
+        < 5
+    )
 
 
 @pytest.mark.django_db
@@ -202,13 +213,17 @@ async def test_async_issue_token_with_custom_salt_and_algorithm(
         token_algorithm=token_algorithm,
     )
 
-    assert await Token.afind_raw(raw_token, token_salt=token_salt, token_algorithm=token_algorithm)
+    assert await Token.afind_raw(
+        raw_token, token_salt=token_salt, token_algorithm=token_algorithm
+    )
     assert await Token.afind_raw(raw_token) is None
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_async_issue_token_uses_class_salt_and_algorithm(admin_user: User) -> None:
+async def test_async_issue_token_uses_class_salt_and_algorithm(
+    admin_user: User,
+) -> None:
     """Class-level token_salt and token_algorithm are used in async issue_token()."""
 
     class _CustomController(_AsyncObtainController):
@@ -218,13 +233,17 @@ async def test_async_issue_token_uses_class_salt_and_algorithm(admin_user: User)
     ctrl = _CustomController()
     raw_token = await ctrl.issue_token(user=admin_user)
 
-    assert await Token.afind_raw(raw_token, token_salt='class_salt', token_algorithm='sha512')
+    assert await Token.afind_raw(
+        raw_token, token_salt='class_salt', token_algorithm='sha512'
+    )
     assert await Token.afind_raw(raw_token) is None
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_async_issue_token_uses_class_token_expiration(admin_user: User) -> None:
+async def test_async_issue_token_uses_class_token_expiration(
+    admin_user: User,
+) -> None:
     """Class-level token_expiration controls the default token lifetime in async controller."""
 
     class _CustomController(_AsyncObtainController):
@@ -237,12 +256,17 @@ async def test_async_issue_token_uses_class_token_expiration(admin_user: User) -
     token = await Token.afind_raw(raw_token)
     assert token is not None
     assert token.expires_at is not None
-    assert abs((token.expires_at - (now + dt.timedelta(hours=1))).total_seconds()) < 5
+    assert (
+        abs((token.expires_at - (now + dt.timedelta(hours=1))).total_seconds())
+        < 5
+    )
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_async_set_request_attrs_sets_user_on_request(admin_user: User) -> None:
+async def test_async_set_request_attrs_sets_user_on_request(
+    admin_user: User,
+) -> None:
     """set_request_attrs() sets request.user to the given user (async controller)."""
     ctrl = _AsyncObtainController()
     request = HttpRequest()

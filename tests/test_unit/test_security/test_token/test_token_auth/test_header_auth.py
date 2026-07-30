@@ -542,7 +542,9 @@ def test_sync_token_auth_custom_salt_and_algorithm(
 
     class _CustomParamsController(Controller[PydanticFastSerializer]):
         auth = (
-            HeaderTokenSyncAuth(token_salt=auth_salt, token_algorithm=auth_algorithm),
+            HeaderTokenSyncAuth(
+                token_salt=auth_salt, token_algorithm=auth_algorithm
+            ),
         )
 
         def get(self) -> str:
@@ -617,7 +619,9 @@ async def test_async_token_auth_custom_salt_and_algorithm(
 
     class _CustomParamsController(Controller[PydanticFastSerializer]):
         auth = (
-            HeaderTokenAsyncAuth(token_salt=auth_salt, token_algorithm=auth_algorithm),
+            HeaderTokenAsyncAuth(
+                token_salt=auth_salt, token_algorithm=auth_algorithm
+            ),
         )
 
         async def get(self) -> str:
@@ -631,7 +635,9 @@ async def test_async_token_auth_custom_salt_and_algorithm(
     )
     request = dmr_async_rf.get('/whatever/', headers={'X-API-Token': raw_token})
 
-    response = await dmr_async_rf.wrap(_CustomParamsController.as_view()(request))
+    response = await dmr_async_rf.wrap(
+        _CustomParamsController.as_view()(request)
+    )
 
     assert response.status_code == expected_status
 
@@ -667,6 +673,8 @@ async def test_async_token_auth_custom_secret(
     )
     request = dmr_async_rf.get('/whatever/', headers={'X-API-Token': raw_token})
 
-    response = await dmr_async_rf.wrap(_CustomSecretController.as_view()(request))
+    response = await dmr_async_rf.wrap(
+        _CustomSecretController.as_view()(request)
+    )
 
     assert response.status_code == expected_status
