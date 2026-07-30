@@ -1,5 +1,4 @@
 import dataclasses
-import datetime as dt
 from collections.abc import Sequence
 from typing import Any, ClassVar, cast
 
@@ -34,7 +33,6 @@ class _SettingsModel(SettingsDict, total=False):
     responses: Sequence[Any]
     openapi_config: Any
     global_error_handler: Any
-    auth_token_default_expiry: Any
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -166,19 +164,4 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.global_error_handler must be a string or callable',
-            )
-
-        auth_token_default_expiry = settings.get(
-            'auth_token_default_expiry',
-            EMPTY,
-        )
-        if auth_token_default_expiry is not EMPTY and not (
-            auth_token_default_expiry is None
-            or isinstance(auth_token_default_expiry, dt.timedelta)
-        ):
-            raise EndpointMetadataError(
-                (
-                    'Settings.auth_token_default_expiry must be '
-                    'datetime.timedelta or None'
-                ),
             )

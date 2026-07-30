@@ -2,10 +2,10 @@ import abc
 import datetime as dt
 from typing import TYPE_CHECKING, Final, Generic, Self
 
-from django.conf import settings
 from django.utils.crypto import salted_hmac
 from typing_extensions import Sentinel, TypeVar
 
+from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
@@ -76,19 +76,48 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
 
     @classmethod
     @abc.abstractmethod
-    def issue(
+    def issue(  # noqa: WPS211
         cls,
         *,
         user: _UserT,
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
+        token_size: int | None = None,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
     ) -> tuple[Self, str]:
-        """Create new token."""
+        """
+        Create new token.
+
+        Parameters:
+            user: ``User`` instance to store. Type annotation
+                can be customized via generic type arguments.
+            name: Name of the token.
+            expires_at: When this token expires?
+                Can be one of three: a specific date,
+                ``None`` for tokens that do not expire at all,
+                ``EMPTY`` to calculate the exiry relative to the current date.
+            token_size: Size of the raw token in chars.
+            token_secret: Secret key to be used for the token hash.
+                Defaults to ``settings.SECRET_KEY``.
+            token_salt: Salt to be used for the token hash.
+            token_algorithm: Salt to be used for the token hash.
+                Defaults to ``sha256``.
+
+        """
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def find_raw(cls, raw_token: str) -> Self | None:
+    def find_raw(
+        cls,
+        raw_token: str,
+        *,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
+    ) -> Self | None:
         """Find token by its hash."""
         raise NotImplementedError
 
@@ -138,52 +167,75 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
 
     @classmethod
     @abc.abstractmethod
-    async def aissue(
+    async def aissue(  # noqa: WPS211
         cls,
         *,
         user: _UserT,
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
+        token_size: int | None = None,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
     ) -> tuple[Self, str]:
-        """Async create new token."""
+        """Async version of :meth:`TokenLikeSync.issue`."""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    async def afind_raw(cls, raw_token: str) -> Self | None:
+    async def afind_raw(
+        cls,
+        raw_token: str,
+        *,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
+    ) -> Self | None:
         """Async find token by its hash."""
         raise NotImplementedError
 
 
 # TODO: make easily customizable
-RAW_TOKEN_SIZE: Final = 32
+_RAW_TOKEN_SIZE: Final = 32
+DEFAULT_TOKEN_SALT: Final = 'dmr.security.token'  # noqa: S105
+DEFAULT_TOKEN_ALGORITHM: Final = 'sha256'  # noqa: S105
 
 
-def get_token_hash(raw_token: str) -> str:
-    """Hash the token value with the secret key."""
+def get_token_hash(
+    raw_token: str,
+    *,
+    secret: str | None,
+    salt: str | None = None,
+    algorithm: str | None = None,
+) -> str:
+    """
+    Hash the token value with the secret key.
+
+    Parameters:
+        raw_token: Raw string to be hashed.
+        secret: What secret should we use for token hash?
+            Default to ``settings.SECRET_KEY``.
+        salt: What salt should we use for token hash?
+        algorithm: What algorithm should we use for token hash?
+
+    """
     return salted_hmac(
-        'dmr.security.token.app',
+        salt or DEFAULT_TOKEN_SALT,
         raw_token,
-        # TODO: make `secret` customizable with the `SECRET_KEY` as the default
-        secret=settings.SECRET_KEY,
-        algorithm='sha256',
+        secret=secret,
+        algorithm=algorithm or DEFAULT_TOKEN_ALGORITHM,
     ).hexdigest()
 
 
 def resolve_expiry(
     expires_at: dt.datetime | Sentinel | None,
+    *,
+    expiration: dt.timedelta | None = None,
 ) -> dt.datetime | None:
     """Resolve expiery for optional value."""
-    # Import cycle:
-    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
-
     # TODO: fix after sentinels are fully supported
     if not isinstance(expires_at, Sentinel):
         return expires_at
 
-    default_expiry: dt.timedelta | None = resolve_setting(
-        Settings.auth_token_default_expiry,
-    )
-    if default_expiry is None:
-        return None
-    return dt.datetime.now(dt.UTC) + default_expiry
+    resolved_expiration = expiration or TOKEN_DEFAULT_EXPIRY
+    return dt.datetime.now(dt.UTC) + resolved_expiration
