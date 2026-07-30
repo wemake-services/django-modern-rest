@@ -172,7 +172,7 @@ defaulting to ``False``:
 
 .. code-block:: python
 
-  >>> from dmr.security.token.token import HeaderTokenSyncAuth
+  >>> from dmr.security.token import HeaderTokenSyncAuth
 
   >>> HeaderTokenSyncAuth(update_last_used=True)
   <dmr.security.token.auth.header.HeaderTokenSyncAuth object at ...>
