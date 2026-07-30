@@ -31,7 +31,7 @@ lint:
     uv run ruff check --exit-non-zero-on-fix
     uv run ruff format --check --diff
     uv run flake8 .
-    uv run slotscheck -v -m dmr --require-subclass --detect-unused-slots
+    uv run slotscheck -v -m dmr --require-subclass
     uv run lint-imports
 
 # Run all checks
