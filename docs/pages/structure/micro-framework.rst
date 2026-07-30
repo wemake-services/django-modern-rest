@@ -15,7 +15,7 @@ Django is a microframework itself. With the only difference: it scales!
 µDjango style
 -------------
 
-`µDjango <https://github.com/pauloxnet/uDjango>`_ by Paolo Melchiorre
+`µDjango <https://github.com/pauloxnet/uDjango>`_ 
 is a demo of exactly this idea: a whole Django app in a single file,
 exposed as a plain ``ASGIHandler``
 and served by any ASGI server.
