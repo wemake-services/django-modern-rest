@@ -93,7 +93,7 @@ modules =
   dmr.plugins.*
 
 [importlinter:contract:security-token-no-direct-model-import]
-name = All `dmr.security.token` logic must be idependent from the Token model
+name = All `dmr.security.token` logic must be independent from the Token model
 type = forbidden
 
 source_modules =
