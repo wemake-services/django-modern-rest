@@ -29,6 +29,18 @@ Example, how to use the auth class and how to get ``self.request.user``:
   :linenos:
   :language: python
 
+Custom user models are automatically supported.
+
+Customizing auth
+~~~~~~~~~~~~~~~~
+
+JWT Auth supports a lot of customization options:
+starting from ``leeway`` and ``claim`` verification
+up to the secret key customization.
+
+See :meth:`~dmr.security.jwt.token.JWTToken.decode`
+for more info on all configuration options.
+
 
 Reusing pre-existing views
 --------------------------
@@ -97,7 +109,6 @@ We want to be sure that this class is at the same time:
    can be affected by existing business rules
 3. Always type safe
 
-
 Refreshing tokens
 ~~~~~~~~~~~~~~~~~
 
@@ -130,7 +141,6 @@ The controller validates that the submitted token:
   :caption: views.py
   :linenos:
   :language: python
-
 
 Verifying tokens
 ~~~~~~~~~~~~~~~~

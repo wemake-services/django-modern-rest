@@ -65,42 +65,6 @@ def test_sync_token_auth_success(
 
 
 @pytest.mark.django_db
-def test_sync_token_auth_custom_header_e2e(
-    dmr_rf: DMRRequestFactory,
-    admin_user: User,
-) -> None:
-    """Ensures custom header auth works end-to-end."""
-
-    @final
-    class _CustomHeaderController(Controller[PydanticFastSerializer]):
-        auth = (HeaderTokenSyncAuth(header_name='X-Api-Key'),)
-
-        def get(self) -> str:
-            return 'authed'
-
-    _, raw_token = Token.issue(
-        user=admin_user,
-        name='custom-header',
-    )
-
-    wrong_header_request = dmr_rf.get(
-        '/whatever/',
-        headers={'X-API-Token': raw_token},
-    )
-    wrong_header_response = _CustomHeaderController.as_view()(
-        wrong_header_request,
-    )
-    assert wrong_header_response.status_code == HTTPStatus.UNAUTHORIZED
-
-    request = dmr_rf.get(
-        '/whatever/',
-        headers={'X-Api-Key': raw_token},
-    )
-    response = _CustomHeaderController.as_view()(request)
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.django_db
 def test_sync_token_auth_missing_header(
     dmr_rf: DMRRequestFactory,
 ) -> None:
@@ -139,13 +103,29 @@ def test_sync_token_auth_unknown_token(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('header_name', 'header_value', 'expected_status'),
+    [
+        ('X-API-Token', 'not-a-token', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', 'Token {0}', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', 'not-a-token', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', 'Token {0}', HTTPStatus.OK),
+    ],
+)
 def test_sync_token_auth_prefix_stripping(
-    dmr_rf: DMRRequestFactory,
+    dmr_rf: DMRAsyncRequestFactory,
     admin_user: User,
+    *,
+    header_name: str,
+    header_value: str,
+    expected_status: HTTPStatus,
 ) -> None:
     """Ensures a custom prefix is required for `Authorization` auth."""
 
-    @final
     class _PrefixController(Controller[PydanticFastSerializer]):
         auth = (
             HeaderTokenSyncAuth(header_name='Authorization', prefix='Token'),
@@ -159,19 +139,14 @@ def test_sync_token_auth_prefix_stripping(
         name='prefix-test',
         expires_at=None,
     )
-    bare_request = dmr_rf.get(
-        '/whatever/',
-        headers={'Authorization': raw_token},
-    )
-    bare_response = _PrefixController.as_view()(bare_request)
-    assert bare_response.status_code == HTTPStatus.UNAUTHORIZED
 
-    prefixed_request = dmr_rf.get(
+    request = dmr_rf.get(
         '/whatever/',
-        headers={'Authorization': f'Token {raw_token}'},
+        headers={header_name: header_value.format(raw_token)},
     )
-    prefixed_response = _PrefixController.as_view()(prefixed_request)
-    assert prefixed_response.status_code == HTTPStatus.OK
+    response = _PrefixController.as_view()(request)
+
+    assert response.status_code == expected_status
 
 
 @pytest.mark.django_db
@@ -396,6 +371,53 @@ async def test_async_token_auth_inactive_user(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ('header_name', 'header_value', 'expected_status'),
+    [
+        ('X-API-Token', 'not-a-token', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', 'Token {0}', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', 'not-a-token', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', 'Token {0}', HTTPStatus.OK),
+    ],
+)
+async def test_async_token_auth_prefix_stripping(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    admin_user: User,
+    *,
+    header_name: str,
+    header_value: str,
+    expected_status: HTTPStatus,
+) -> None:
+    """Ensures a custom prefix is required for `Authorization` auth."""
+
+    class _PrefixController(Controller[PydanticFastSerializer]):
+        auth = (
+            HeaderTokenAsyncAuth(header_name='Authorization', prefix='Token'),
+        )
+
+        async def get(self) -> str:
+            return 'authed'
+
+    _, raw_token = await Token.aissue(
+        user=admin_user,
+        name='prefix-test',
+        expires_at=None,
+    )
+
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={header_name: header_value.format(raw_token)},
+    )
+    response = await dmr_async_rf.wrap(_PrefixController.as_view()(request))
+    assert response.status_code == expected_status
 
 
 @pytest.mark.django_db

@@ -1,6 +1,8 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 import pytest
+from django.http import HttpRequest
+from django.middleware.csrf import get_token
 from django.utils import translation
 
 from dmr.openapi.config import OpenAPIConfig
@@ -21,3 +23,16 @@ def reset_language() -> Iterator[None]:
     """Deactivate the i18n after the request."""
     yield
     translation.deactivate()
+
+
+@pytest.fixture
+def fill_csrf() -> Callable[[HttpRequest], HttpRequest]:
+    """Fill CSRF parameters for the prepared request."""
+
+    def factory(request: HttpRequest) -> HttpRequest:
+        csrf_token = get_token(request)
+        request.META['HTTP_X_CSRFTOKEN'] = csrf_token
+        request.COOKIES['csrftoken'] = csrf_token
+        return request
+
+    return factory

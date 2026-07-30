@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Literal, overload
 from django.http import HttpRequest
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser
+
     from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 
 
@@ -77,3 +79,20 @@ def request_token(
             'Token interface does not match the requested sync mode',
         )
     return token  # type: ignore[no-any-return]
+
+
+def set_request_attrs(
+    request: HttpRequest,
+    user: 'AbstractBaseUser',
+    *,
+    token: 'TokenLikeSync | TokenLikeAsync | None' = None,
+) -> None:
+    """Set all required properties to the authed request."""
+    request.user = user
+
+    async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
+        return user
+
+    request.auser = auser
+    if token is not None:
+        request.__dmr_token__ = token  # type: ignore[attr-defined]

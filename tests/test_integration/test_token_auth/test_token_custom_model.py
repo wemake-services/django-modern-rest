@@ -10,7 +10,7 @@ from django.urls import reverse
 from inline_snapshot import snapshot
 
 from dmr.security.token import request_token
-from dmr.security.token.token import RAW_TOKEN_SIZE, TokenLikeSync
+from dmr.security.token.token import TokenLikeSync
 from dmr.test import DMRClient
 from dmr.types import EMPTY
 
@@ -36,7 +36,7 @@ def _get_token_model() -> type[TokenLikeSync]:
         {'X-API-Token': ''},
         {'X-API-Token': ' '},
         {'X-API-Token': 'Bearer'},
-        {'X-API-Token': secrets.token_urlsafe(RAW_TOKEN_SIZE)},
+        {'X-API-Token': secrets.token_urlsafe(32)},
         {'X-API-Token': 'Bearer token'},
         {'X-API-Token': 'NotBearer token'},
         {'X-API-Token': 'not a token'},

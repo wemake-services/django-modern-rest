@@ -7,6 +7,7 @@ from dmr.security.token.auth.base import (
     BaseTokenAsyncAuth,
     BaseTokenSyncAuth,
 )
+from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
 _AUTH_DESCRIPTION: Final = 'Opaque token authentication'
 
@@ -63,6 +64,9 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
         prefix: str = '',
         security_scheme_name: str = 'token',
         update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
     ) -> None:
         """
         Apply possible customizations.
@@ -101,6 +105,9 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
         super().__init__(
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
         self.header_name = header_name
         self.prefix = prefix
@@ -118,11 +125,17 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
         prefix: str = '',
         security_scheme_name: str = 'token',
         update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
     ) -> None:
         """Apply possible customizations. See :class:`HeaderTokenSyncAuth`."""
         super().__init__(
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
         self.header_name = header_name
         self.prefix = prefix

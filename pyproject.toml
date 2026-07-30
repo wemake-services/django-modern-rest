@@ -413,12 +413,14 @@ plugins = ["covdefaults"]
 
 [tool.slotscheck]
 # https://slotscheck.readthedocs.io/en/latest/configuration.html
-strict-imports = false
+strict-imports = true
+require-subclass = true
 exclude-modules = '''
 (
   dmr\.security\.jwt\.blocklist
   |dmr\.security\.django_session\.views
   |dmr\.security\.jwt\.views
+  |dmr\.security\.token\.views
   |dmr\.security\.token\.app
   |dmr\.internal\.model_fields
 )
