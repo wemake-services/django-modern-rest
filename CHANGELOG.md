@@ -46,6 +46,8 @@ of requirements for an API to count as public.
 ### Misc
 
 - Improved `pytest` plugin docs
+- Added `nanodjango` and µDjango examples
+  to the micro-framework docs page, #1049
 
 
 ## Version 0.11.0 (2026-06-27)
