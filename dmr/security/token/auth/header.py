@@ -57,7 +57,7 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
 
     __slots__ = ('header_name', 'prefix')
 
-    def __init__(
+    def __init__(  # noqa: WPS211
         self,
         *,
         header_name: str = 'X-API-Token',
@@ -118,7 +118,7 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
 
     __slots__ = ('header_name', 'prefix')
 
-    def __init__(
+    def __init__(  # noqa: WPS211
         self,
         *,
         header_name: str = 'X-API-Token',

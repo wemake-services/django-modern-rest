@@ -1,7 +1,7 @@
 import datetime as dt
 import json
 from http import HTTPStatus
-from typing import final
+from typing import Final, final
 
 import pytest
 from asgiref.sync import async_to_sync
@@ -20,6 +20,8 @@ from dmr.security.token import (
 )
 from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+
+_CORRECT_TEMPLATE: Final = '{0}'
 
 
 @final
@@ -107,11 +109,11 @@ def test_sync_token_auth_unknown_token(
     ('header_name', 'header_value', 'expected_status'),
     [
         ('X-API-Token', 'not-a-token', HTTPStatus.UNAUTHORIZED),
-        ('X-API-Token', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', _CORRECT_TEMPLATE, HTTPStatus.UNAUTHORIZED),
         ('X-API-Token', 'Token {0}', HTTPStatus.UNAUTHORIZED),
         ('X-API-Token', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
         ('Authorization', 'not-a-token', HTTPStatus.UNAUTHORIZED),
-        ('Authorization', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', _CORRECT_TEMPLATE, HTTPStatus.UNAUTHORIZED),
         ('Authorization', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
         ('Authorization', 'Token {0}', HTTPStatus.OK),
     ],
@@ -379,11 +381,11 @@ async def test_async_token_auth_inactive_user(
     ('header_name', 'header_value', 'expected_status'),
     [
         ('X-API-Token', 'not-a-token', HTTPStatus.UNAUTHORIZED),
-        ('X-API-Token', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('X-API-Token', _CORRECT_TEMPLATE, HTTPStatus.UNAUTHORIZED),
         ('X-API-Token', 'Token {0}', HTTPStatus.UNAUTHORIZED),
         ('X-API-Token', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
         ('Authorization', 'not-a-token', HTTPStatus.UNAUTHORIZED),
-        ('Authorization', '{0}', HTTPStatus.UNAUTHORIZED),
+        ('Authorization', _CORRECT_TEMPLATE, HTTPStatus.UNAUTHORIZED),
         ('Authorization', 'Bearer {0}', HTTPStatus.UNAUTHORIZED),
         ('Authorization', 'Token {0}', HTTPStatus.OK),
     ],

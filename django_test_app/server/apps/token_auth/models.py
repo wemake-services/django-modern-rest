@@ -66,7 +66,7 @@ class CustomToken(TokenLikeSync[User], models.Model):
 
     @classmethod
     @override
-    def issue(
+    def issue(  # noqa: WPS211
         cls,
         *,
         user: User,

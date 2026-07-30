@@ -36,7 +36,7 @@ def _get_token_model() -> type[TokenLikeSync]:
         {'X-API-Token': ''},
         {'X-API-Token': ' '},
         {'X-API-Token': 'Bearer'},
-        {'X-API-Token': secrets.token_urlsafe(32)},
+        {'X-API-Token': secrets.token_urlsafe(32)},  # noqa: WPS432
         {'X-API-Token': 'Bearer token'},
         {'X-API-Token': 'NotBearer token'},
         {'X-API-Token': 'not a token'},

@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Final
 
 import pytest
 from django.contrib.auth.models import User
@@ -10,6 +11,8 @@ from dmr.security.token import QueryTokenAsyncAuth, QueryTokenSyncAuth
 from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
+_CORRECT_TEMPLATE: Final = '{0}'
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -17,8 +20,8 @@ from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
     [
         ('token', 'not-a-token', HTTPStatus.UNAUTHORIZED),
         ('token', 'Prefix {0}', HTTPStatus.UNAUTHORIZED),
-        ('wrong', '{0}', HTTPStatus.UNAUTHORIZED),
-        ('token', '{0}', HTTPStatus.OK),
+        ('wrong', _CORRECT_TEMPLATE, HTTPStatus.UNAUTHORIZED),
+        ('token', _CORRECT_TEMPLATE, HTTPStatus.OK),
     ],
 )
 def test_query_token_sync_auth(
@@ -97,8 +100,8 @@ def test_query_token_sync_auth_custom_query_param(
     [
         ('token', 'not-a-token', HTTPStatus.UNAUTHORIZED),
         ('token', 'Prefix {0}', HTTPStatus.UNAUTHORIZED),
-        ('wrong', '{0}', HTTPStatus.UNAUTHORIZED),
-        ('token', '{0}', HTTPStatus.OK),
+        ('wrong', _CORRECT_TEMPLATE, HTTPStatus.UNAUTHORIZED),
+        ('token', _CORRECT_TEMPLATE, HTTPStatus.OK),
     ],
 )
 async def test_async_query_token_auth(

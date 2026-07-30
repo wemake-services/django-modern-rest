@@ -76,7 +76,7 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
 
     @classmethod
     @abc.abstractmethod
-    def issue(
+    def issue(  # noqa: WPS211
         cls,
         *,
         user: _UserT,
@@ -165,7 +165,7 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
 
     @classmethod
     @abc.abstractmethod
-    async def aissue(
+    async def aissue(  # noqa: WPS211
         cls,
         *,
         user: _UserT,

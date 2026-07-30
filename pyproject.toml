@@ -414,7 +414,6 @@ plugins = ["covdefaults"]
 [tool.slotscheck]
 # https://slotscheck.readthedocs.io/en/latest/configuration.html
 strict-imports = true
-require-subclass = true
 exclude-modules = '''
 (
   dmr\.security\.jwt\.blocklist

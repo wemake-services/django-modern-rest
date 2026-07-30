@@ -137,7 +137,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
-    def issue(
+    def issue(  # noqa: WPS211
         cls,
         *,
         user: 'AbstractBaseUser',
@@ -165,7 +165,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
-    async def aissue(
+    async def aissue(  # noqa: WPS211
         cls,
         *,
         user: 'AbstractBaseUser',
