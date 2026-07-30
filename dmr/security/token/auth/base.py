@@ -8,7 +8,13 @@ from typing_extensions import TypeVar, override
 from dmr.exceptions import NotAuthenticatedError
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
+from dmr.security.token.request import set_request_attrs
+from dmr.security.token.token import (
+    DEFAULT_TOKEN_ALGORITHM,
+    DEFAULT_TOKEN_SALT,
+    TokenLikeAsync,
+    TokenLikeSync,
+)
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
@@ -26,7 +32,14 @@ _TokenLikeT = TypeVar(
 
 class _BaseTokenAuth(Generic[_TokenLikeT]):
     """
-    Base class for DB-backed opaque token authentication.
+    Token auth.
+
+    Attributes:
+        security_scheme_name: Security scheme name for OpenAPI.
+        token_secret: What secret should we use for token hash?
+            Default to ``settings.SECRET_KEY``.
+        token_salt: What salt should we use for token hash?
+        token_algorithm: What algorithm should we use for token hash?
 
     .. note::
 
@@ -52,6 +65,9 @@ class _BaseTokenAuth(Generic[_TokenLikeT]):
         '_token_model',
         '_update_last_used',
         'security_scheme_name',
+        'token_algorithm',
+        'token_salt',
+        'token_secret',
     )
 
     def __init__(
@@ -59,9 +75,16 @@ class _BaseTokenAuth(Generic[_TokenLikeT]):
         *,
         security_scheme_name: str = 'token',
         update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
     ) -> None:
         self.security_scheme_name = security_scheme_name
         self._update_last_used = update_last_used
+        self.token_secret = token_secret
+        self.token_secret = token_secret
+        self.token_salt = token_salt
+        self.token_algorithm = token_algorithm
         self._token_model: type[_TokenLikeT] | None = None
 
     @abc.abstractmethod
@@ -128,7 +151,12 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
 
     def get_token(self, raw_token: str) -> TokenLikeSync:
         """Look up and validate the token from the DB."""
-        token = self.token_model.find_raw(raw_token)
+        token = self.token_model.find_raw(
+            raw_token,
+            token_secret=self.token_secret,
+            token_salt=self.token_salt,
+            token_algorithm=self.token_algorithm,
+        )
         if token is None:
             raise NotAuthenticatedError
         return token
@@ -151,7 +179,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
         token: TokenLikeSync,
     ) -> None:
         """Set current user as authed for this request."""
-        _set_request_attrs(request, user, token=token)
+        set_request_attrs(request, user, token=token)
 
 
 class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noqa: WPS214
@@ -201,7 +229,12 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
 
     async def get_token(self, raw_token: str) -> TokenLikeAsync:
         """Look up and validate the token from the DB."""
-        token = await self.token_model.afind_raw(raw_token)
+        token = await self.token_model.afind_raw(
+            raw_token,
+            token_secret=self.token_secret,
+            token_salt=self.token_salt,
+            token_algorithm=self.token_algorithm,
+        )
         if token is None:
             raise NotAuthenticatedError
         return token
@@ -224,23 +257,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
         token: TokenLikeAsync,
     ) -> None:
         """Set current user as authed for this request."""
-        _set_request_attrs(request, user, token=token)
-
-
-def _set_request_attrs(
-    request: HttpRequest,
-    user: 'AbstractBaseUser',
-    *,
-    token: TokenLikeSync | TokenLikeAsync,
-) -> None:
-    """Set all required properties to the authed request."""
-    request.user = user
-
-    async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
-        return user
-
-    request.auser = auser
-    request.__dmr_token__ = token  # type: ignore[attr-defined]
+        set_request_attrs(request, user, token=token)
 
 
 def _load_default_model() -> Any:

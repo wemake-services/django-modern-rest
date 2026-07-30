@@ -45,6 +45,7 @@ both ``self.request.user`` and the current token:
     - Security scheme name, default: ``token``
     - Header name, default: ``X-API-Token``
     - Header value prefix, default: ``''``
+    - :meth:`Advanced token parameters <dmr.security.token.token.TokenLikeSync.issue>`
 
     .. literalinclude:: /examples/auth/token/using_token_header.py
       :caption: views.py
@@ -66,6 +67,7 @@ both ``self.request.user`` and the current token:
 
     - Security scheme name, default: ``token``
     - Cookie name, default: ``token``
+    - :meth:`Advanced token parameters <dmr.security.token.token.TokenLikeSync.issue>`
 
     .. literalinclude:: /examples/auth/token/using_token_cookie.py
       :caption: views.py
@@ -87,11 +89,21 @@ both ``self.request.user`` and the current token:
 
     - Security scheme name, default: ``token``
     - Query parameter name, default: ``token``
+    - :meth:`Advanced token parameters <dmr.security.token.token.TokenLikeSync.issue>`
 
     .. literalinclude:: /examples/auth/token/using_token_query.py
       :caption: views.py
       :linenos:
       :language: python
+
+Customizing auth
+~~~~~~~~~~~~~~~~
+
+Token Auth supports a lot of customization options:
+starting from ``token_size`` up to the secret key customization.
+
+See :meth:`~dmr.security.token.token.TokenLikeSync.issue`
+for more info on all configuration options.
 
 
 Token lifecycle
@@ -123,7 +135,52 @@ strictly follows both interfaces.
 Issuing a token
 ~~~~~~~~~~~~~~~
 
-TODO
+To issue a token one can use two main strategies:
+
+1. Manually call:
+
+   - :meth:`~dmr.security.token.token.TokenLikeSync.issue`
+   - :meth:`~dmr.security.token.token.TokenLikeAsync.aissue`
+
+   methods and copy the token.
+   This might be useful if you only want to have just a couple of clients.
+
+2. Provide an API view for users to obtain tokens when they need them.
+   To do so, we provide two :ref:`reusable-controllers`:
+
+   - :class:`~dmr.security.token.views.ObtainTokenSyncController`
+   - :class:`~dmr.security.token.views.ObtainTokenAsyncController`
+
+To use a pre-defined controller, you will need to:
+
+1. Provide actual types for serializer, request model, and response body.
+   Optionally you can also provide a ``User`` model type
+   as the 4th type argument, by default it is ``AbstractBaseUser``
+2. Redefine
+   :meth:`~dmr.security.token.views.ObtainTokenSyncController.convert_auth_payload`
+   to convert your request model into the kwargs
+   of :func:`django.contrib.auth.authenticate` to authenticate your request
+3. Redefine
+   :meth:`~dmr.security.token.views.ObtainTokenSyncController.make_api_response`
+   to return the response in the format of your choice
+
+.. literalinclude:: /examples/auth/token/token_obtain.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+In this example we utilize pre-defined types of request model and response body,
+only doing the bare minimum with no customizations.
+
+Things that you can customize:
+
+- Request body format
+- Response body format
+- Token settings, like ``expiration``, ``algorithm``, ``salt``, and ``secret``
+- Token class itself
+- Error messages, see :ref:`customizing-error-messages`
+- Error handling, see :doc:`../error-handling`
+- Response status code and any other regular controller or endpoint features
 
 Revoking a token
 ~~~~~~~~~~~~~~~~
@@ -288,7 +345,7 @@ Next, let's define an auth class with a different model type:
 
 And protect your views with this new auth type:
 
-.. literalinclude:: ../../../django_test_app/server/apps/token_auth/views.py
+.. literalinclude:: ../../../django_test_app/server/apps/token_auth/views/example.py
   :caption: views.py
   :language: python
   :linenos:
@@ -352,6 +409,23 @@ Interfaces
 
 .. autoclass:: dmr.security.token.token.TokenLikeAsync
   :members:
+
+Pre-defined views to fetch opaque tokens
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.token.views.ObtainTokenSyncController
+  :members: post, login, make_api_response, issue_token, convert_auth_payload, make_token_name
+
+.. autoclass:: dmr.security.token.views.ObtainTokenAsyncController
+  :members: post, login, make_api_response, issue_token, convert_auth_payload, make_token_name
+
+.. autoclass:: dmr.security.token.views.ObtainTokenPayload
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.security.token.views.ObtainTokenResponse
+  :members:
+  :show-inheritance:
 
 Default app
 ~~~~~~~~~~~

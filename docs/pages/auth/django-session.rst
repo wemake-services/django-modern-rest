@@ -45,6 +45,8 @@ Example, how to use the auth class and how to get ``self.request.user``:
   session auth without ``CSRF`` checks.
   We automatically enforce CSRF checks before any other actions are taken.
 
+Custom user models are automatically supported.
+
 
 Reusing pre-existing views
 --------------------------

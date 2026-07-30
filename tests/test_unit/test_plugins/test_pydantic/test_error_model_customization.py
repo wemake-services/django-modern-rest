@@ -1,11 +1,11 @@
 import json
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import final
 
 from dirty_equals import IsStr
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest, HttpResponse
-from django.middleware.csrf import get_token
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
@@ -14,13 +14,6 @@ from dmr.errors import ErrorType, format_error
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
 from dmr.test import DMRRequestFactory
-
-
-def _fill_csrf(request: HttpRequest) -> HttpRequest:
-    csrf_token = get_token(request)
-    request.META['HTTP_X_CSRFTOKEN'] = csrf_token
-    request.COOKIES['csrftoken'] = csrf_token
-    return request
 
 
 @final
@@ -79,6 +72,7 @@ class _CustomErrorModelController(
 
 def test_error_message_controller_customization(
     dmr_rf: DMRRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
     """Ensures we can customize error message via controller."""
     metadata = _CustomErrorModelController.api_endpoints['POST'].metadata
@@ -120,7 +114,7 @@ def test_error_message_controller_customization(
     })
 
     request = dmr_rf.post('/whatever/', data={})
-    _fill_csrf(request)
+    fill_csrf(request)
     request.user = User()
     response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -130,7 +124,7 @@ def test_error_message_controller_customization(
     })
 
     request = dmr_rf.post('/whatever/', data=[])
-    _fill_csrf(request)
+    fill_csrf(request)
     request.user = User()
     response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
@@ -149,7 +143,7 @@ def test_error_message_controller_customization(
     })
 
     request = dmr_rf.post('/whatever/', data={})
-    _fill_csrf(request)
+    fill_csrf(request)
     request.user = AnonymousUser()
     response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)

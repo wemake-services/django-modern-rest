@@ -15,7 +15,6 @@ from dmr.internal.model_fields import (
     UserForeignKey,
 )
 from dmr.security.token.token import (
-    RAW_TOKEN_SIZE,
     TokenLikeAsync,
     TokenLikeSync,
     get_token_hash,
@@ -25,6 +24,7 @@ from dmr.types import EMPTY
 
 _REVOKE_FIELDS: Final = ('revoked_at', 'updated_at')
 _LAST_USED_FIELDS: Final = ('last_used_at', 'updated_at')
+_MAX_HASH_LENGTH: Final = 256
 
 
 @final
@@ -37,11 +37,11 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
         related_name='dmr_tokens',
     )
     name: CharField = models.CharField(
-        max_length=255,
+        max_length=_MAX_HASH_LENGTH,
         verbose_name=_('Name'),
     )
     token_hash: CharField = models.CharField(
-        max_length=64,
+        max_length=_MAX_HASH_LENGTH,
         unique=True,
         verbose_name=_('Token hash'),
     )
@@ -137,61 +137,105 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
-    def issue(
+    def issue(  # noqa: WPS211
         cls,
         *,
         user: 'AbstractBaseUser',
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
+        token_size: int | None = None,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
     ) -> tuple[Self, str]:
         """Create a new token, returning the token model and raw token data."""
-        raw_token = secrets.token_urlsafe(RAW_TOKEN_SIZE)
+        raw_token = secrets.token_urlsafe(token_size)
         token = cls.objects.create(
             user=user,
             name=name,
-            token_hash=get_token_hash(raw_token),
+            token_hash=get_token_hash(
+                raw_token,
+                secret=token_secret,
+                salt=token_salt,
+                algorithm=token_algorithm,
+            ),
             expires_at=resolve_expiry(expires_at),
         )
         return token, raw_token
 
     @classmethod
     @override
-    async def aissue(
+    async def aissue(  # noqa: WPS211
         cls,
         *,
         user: 'AbstractBaseUser',
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
+        token_size: int | None = None,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
     ) -> 'tuple[Token, str]':
         """Async version of :meth:`Token.issue`."""
-        raw_token = secrets.token_urlsafe(RAW_TOKEN_SIZE)
+        raw_token = secrets.token_urlsafe(token_size)
         token = await cls.objects.acreate(
             user=user,
             name=name,
-            token_hash=get_token_hash(raw_token),
+            token_hash=get_token_hash(
+                raw_token,
+                secret=token_secret,
+                salt=token_salt,
+                algorithm=token_algorithm,
+            ),
             expires_at=resolve_expiry(expires_at),
         )
         return token, raw_token
 
     @classmethod
     @override
-    def find_raw(cls, raw_token: str) -> Self | None:
+    def find_raw(
+        cls,
+        raw_token: str,
+        *,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
+    ) -> Self | None:
         """Find token by its hash."""
+        token_hash = get_token_hash(
+            raw_token,
+            secret=token_secret,
+            salt=token_salt,
+            algorithm=token_algorithm,
+        )
         return (
             cls.objects
             .select_related('user')
-            .filter(token_hash=get_token_hash(raw_token))
+            .filter(token_hash=token_hash)
             .first()
         )
 
     @classmethod
     @override
-    async def afind_raw(cls, raw_token: str) -> Self | None:
+    async def afind_raw(
+        cls,
+        raw_token: str,
+        *,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
+    ) -> Self | None:
         """Async find token by its hash."""
+        token_hash = get_token_hash(
+            raw_token,
+            secret=token_secret,
+            salt=token_salt,
+            algorithm=token_algorithm,
+        )
         return (
             await cls.objects
             .select_related('user')
-            .filter(token_hash=get_token_hash(raw_token))
+            .filter(token_hash=token_hash)
             .afirst()
         )
 

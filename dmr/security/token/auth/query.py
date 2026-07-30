@@ -7,6 +7,7 @@ from dmr.security.token.auth.base import (
     BaseTokenAsyncAuth,
     BaseTokenSyncAuth,
 )
+from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
 _DEFAULT_PARAM: Final = 'token'
 
@@ -55,11 +56,17 @@ class QueryTokenSyncAuth(_BaseQueryTokenAuth, BaseTokenSyncAuth):
         query_param: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
         update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
         self.query_param = query_param
 
@@ -83,10 +90,16 @@ class QueryTokenAsyncAuth(_BaseQueryTokenAuth, BaseTokenAsyncAuth):
         query_param: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
         update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
             security_scheme_name=security_scheme_name,
             update_last_used=update_last_used,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
         self.query_param = query_param

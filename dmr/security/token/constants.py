@@ -1,5 +1,5 @@
+import datetime as dt
 from typing import Final
 
-#: Default token expiry in days, used as the
-#: ``auth_token_default_expiry`` setting.
-TOKEN_DEFAULT_EXPIRY_DAYS: Final = 30
+#: Default token expiry:
+TOKEN_DEFAULT_EXPIRY: Final = dt.timedelta(days=30)  # noqa: WPS432

@@ -7,7 +7,6 @@ from django.db import models
 from typing_extensions import Sentinel, override
 
 from dmr.security.token.token import (
-    RAW_TOKEN_SIZE,
     TokenLikeSync,
     get_token_hash,
     resolve_expiry,
@@ -67,29 +66,51 @@ class CustomToken(TokenLikeSync[User], models.Model):
 
     @classmethod
     @override
-    def issue(
+    def issue(  # noqa: WPS211
         cls,
         *,
         user: User,
         name: str,  # unused
         expires_at: dt.datetime | Sentinel | None = EMPTY,
+        token_size: int | None = None,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
     ) -> tuple[Self, str]:
         """Create a new token, returning the token model and raw token data."""
-        raw_token = secrets.token_urlsafe(RAW_TOKEN_SIZE)
+        raw_token = secrets.token_urlsafe(token_size)
         token = CustomToken.objects.create(
             owner=user,
-            token_hash=get_token_hash(raw_token),
+            token_hash=get_token_hash(
+                raw_token,
+                secret=token_secret,
+                salt=token_salt,
+                algorithm=token_algorithm,
+            ),
             expires_at=resolve_expiry(expires_at),
         )
         return token, raw_token
 
     @classmethod
     @override
-    def find_raw(cls, raw_token: str) -> Self | None:
+    def find_raw(
+        cls,
+        raw_token: str,
+        *,
+        token_secret: str | None = None,
+        token_salt: str | None = None,
+        token_algorithm: str | None = None,
+    ) -> Self | None:
         """Find token by its hash."""
+        token_hash = get_token_hash(
+            raw_token,
+            secret=token_secret,
+            salt=token_salt,
+            algorithm=token_algorithm,
+        )
         return (
             CustomToken.objects
             .select_related('owner')
-            .filter(token_hash=get_token_hash(raw_token))
+            .filter(token_hash=token_hash)
             .first()
         )
