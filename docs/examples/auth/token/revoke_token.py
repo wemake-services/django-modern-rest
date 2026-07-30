@@ -20,4 +20,5 @@ class RevokeTokenController(Controller[PydanticSerializer]):
         token.revoke()
 
 
+# run: {"controller": "RevokeTokenController", "method": "delete", "url": "/api/users/", "headers": {"X-API-Token": "$X_API_TOKEN"}, "populate_db": true}  # noqa: ERA001, E501
 # openapi: {"controller": "RevokeTokenController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

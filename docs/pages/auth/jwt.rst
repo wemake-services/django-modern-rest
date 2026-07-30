@@ -38,7 +38,7 @@ JWT Auth supports a lot of customization options:
 starting from ``leeway`` and ``claim`` verification
 up to the secret key customization.
 
-See :meth:`~dmr.security.jwt.token.JWTToken.decode`
+See :meth:`~dmr.security.jwt.token.JWToken.decode`
 for more info on all configuration options.
 
 
@@ -205,6 +205,8 @@ We provide two mixin types:
 - :class:`~dmr.security.jwt.blocklist.auth.JWTokenBlocklistSyncMixin`
   for sync auth
 
+If this app is installed, we would provide an admin panel by default.
+
 
 API Reference
 -------------
@@ -266,4 +268,7 @@ Blocklist app
   :members:
 
 .. autoclass:: dmr.security.jwt.blocklist.auth.JWTokenBlocklistAsyncMixin
+  :members:
+
+.. autoclass:: dmr.security.jwt.blocklist.admin.BlocklistedJWTokenAdmin
   :members:

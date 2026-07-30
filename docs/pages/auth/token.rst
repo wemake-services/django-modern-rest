@@ -151,7 +151,7 @@ To issue a token one can use two main strategies:
    - :class:`~dmr.security.token.views.ObtainTokenSyncController`
    - :class:`~dmr.security.token.views.ObtainTokenAsyncController`
 
-To a pre-defined controller, you will need to:
+To use a pre-defined controller, you will need to:
 
 1. Provide actual types for serializer, request model, and response body.
    Optionally you can also provide a ``User`` model type
@@ -345,7 +345,7 @@ Next, let's define an auth class with a different model type:
 
 And protect your views with this new auth type:
 
-.. literalinclude:: ../../../django_test_app/server/apps/token_auth/views.py
+.. literalinclude:: ../../../django_test_app/server/apps/token_auth/views/example.py
   :caption: views.py
   :language: python
   :linenos:
