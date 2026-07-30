@@ -45,3 +45,5 @@ urlpatterns = [
 
 # Use `uvicorn udjango_style_asgi:app --reload` to run the example.
 app = ASGIHandler()
+
+# run: {"controller": "UserController", "method": "post", "body": {"email": "djangomodernrest@wemake.services"}, "url": "/user/", "use_urlpatterns": true}  # noqa: ERA001, E501
