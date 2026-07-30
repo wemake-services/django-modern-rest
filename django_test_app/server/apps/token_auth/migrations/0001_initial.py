@@ -40,6 +40,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            bases=(dmr.security.token.auth.base.TokenLikeSync, models.Model),
+            bases=(dmr.security.token.token.TokenLikeSync, models.Model),
         ),
     ]

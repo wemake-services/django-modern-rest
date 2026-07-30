@@ -6,9 +6,9 @@ from django.contrib.auth.models import User
 from django.db import models
 from typing_extensions import Sentinel, override
 
-from dmr.security.token.auth.base import TokenLikeSync
 from dmr.security.token.token import (
     RAW_TOKEN_SIZE,
+    TokenLikeSync,
     get_token_hash,
     resolve_expiry,
 )

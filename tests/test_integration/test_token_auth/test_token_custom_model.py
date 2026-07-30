@@ -9,8 +9,8 @@ from django.http import HttpRequest
 from django.urls import reverse
 from inline_snapshot import snapshot
 
-from dmr.security.token import TokenLikeSync, request_token
-from dmr.security.token.token import RAW_TOKEN_SIZE
+from dmr.security.token import request_token
+from dmr.security.token.token import RAW_TOKEN_SIZE, TokenLikeSync
 from dmr.test import DMRClient
 from dmr.types import EMPTY
 

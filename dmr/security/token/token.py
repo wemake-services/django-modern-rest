@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils.crypto import salted_hmac
 from typing_extensions import Sentinel, TypeVar
 
-from dmr.settings import Settings, resolve_setting
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
@@ -173,6 +172,9 @@ def resolve_expiry(
     expires_at: dt.datetime | Sentinel | None,
 ) -> dt.datetime | None:
     """Resolve expiery for optional value."""
+    # Import cycle:
+    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
     # TODO: fix after sentinels are fully supported
     if not isinstance(expires_at, Sentinel):
         return expires_at

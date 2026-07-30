@@ -17,5 +17,3 @@ from dmr.security.token.auth.query import (
     QueryTokenSyncAuth as QueryTokenSyncAuth,
 )
 from dmr.security.token.request import request_token as request_token
-from dmr.security.token.token import TokenLikeAsync as TokenLikeAsync
-from dmr.security.token.token import TokenLikeSync as TokenLikeSync

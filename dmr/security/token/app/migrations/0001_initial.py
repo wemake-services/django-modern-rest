@@ -4,7 +4,7 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import dmr.security.token.auth.base
+import dmr.security.token.token
 
 
 class Migration(migrations.Migration):
@@ -89,8 +89,8 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
             bases=(
-                dmr.security.token.TokenLikeSync,
-                dmr.security.token.TokenLikeAsync,
+                dmr.security.token.token.TokenLikeSync,
+                dmr.security.token.token.TokenLikeAsync,
                 models.Model,
             ),
         ),

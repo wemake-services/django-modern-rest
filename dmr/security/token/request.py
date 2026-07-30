@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Literal, overload
 from django.http import HttpRequest
 
 if TYPE_CHECKING:
-    from dmr.security.token import TokenLikeAsync, TokenLikeSync
+    from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 
 
 @overload
@@ -56,7 +56,7 @@ def request_token(
         TypeError: When *sync* boolean does not match the token interface.
 
     """
-    from dmr.security.token import (  # noqa: PLC0415
+    from dmr.security.token.token import (  # noqa: PLC0415
         TokenLikeAsync,
         TokenLikeSync,
     )

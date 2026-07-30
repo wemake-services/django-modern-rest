@@ -113,9 +113,9 @@ Token lifecycle
       Active --> Expired
 
 All token instances are issued and revoked in sync mode
-via :class:`dmr.security.token.auth.base.TokenLikeSync`
+via :class:`dmr.security.token.token.TokenLikeSync`
 and in async mode via
-:class:`dmr.security.token.auth.base.TokenLikeAsync` interfaces.
+:class:`dmr.security.token.token.TokenLikeAsync` interfaces.
 
 Our default implementation :class:`dmr.security.token.app.models.Token`
 strictly follows both interfaces.
@@ -340,13 +340,17 @@ Helpers
 
 .. autofunction:: dmr.security.token.request_token
 
+.. autofunction:: dmr.security.token.token.get_token_hash
+
+.. autofunction:: dmr.security.token.token.resolve_expiry
+
 Interfaces
 ~~~~~~~~~~
 
-.. autoclass:: dmr.security.token.TokenLikeSync
+.. autoclass:: dmr.security.token.token.TokenLikeSync
   :members:
 
-.. autoclass:: dmr.security.token.TokenLikeAsync
+.. autoclass:: dmr.security.token.token.TokenLikeAsync
   :members:
 
 Default app

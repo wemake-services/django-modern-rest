@@ -4,8 +4,9 @@ from typing import assert_type
 from django.contrib.auth.models import AbstractBaseUser
 from django.http import HttpRequest
 
-from dmr.security.token import TokenLikeAsync, TokenLikeSync, request_token
+from dmr.security.token import request_token
 from dmr.security.token.app.models import Token
+from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 
 
 def accepts_token(token: Token) -> None:

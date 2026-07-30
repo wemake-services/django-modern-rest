@@ -14,9 +14,10 @@ from dmr.internal.model_fields import (
     DateTimeFieldNullable,
     UserForeignKey,
 )
-from dmr.security.token import TokenLikeAsync, TokenLikeSync
 from dmr.security.token.token import (
     RAW_TOKEN_SIZE,
+    TokenLikeAsync,
+    TokenLikeSync,
     get_token_hash,
     resolve_expiry,
 )
