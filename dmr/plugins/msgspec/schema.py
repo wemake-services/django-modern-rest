@@ -9,6 +9,8 @@ from dmr.serializer import BaseSchemaGenerator, SchemaDef
 class MsgspecSchemaGenerator(BaseSchemaGenerator):
     """Generates JSON schema for msgspec objects."""
 
+    __slots__ = ()
+
     @override
     @classmethod
     def get_schema(

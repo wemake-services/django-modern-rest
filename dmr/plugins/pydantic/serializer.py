@@ -74,6 +74,8 @@ class ToModelKwargs(TypedDict, total=False):
 class PydanticEndpointOptimizer(BaseEndpointOptimizer):
     """Optimize endpoints that are parsed with pydantic."""
 
+    __slots__ = ()
+
     @override
     @classmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
@@ -286,6 +288,8 @@ class PydanticFastSerializer(PydanticSerializer):
         See :issue:`830`.
 
     """
+
+    __slots__ = ()
 
     @classmethod
     @override

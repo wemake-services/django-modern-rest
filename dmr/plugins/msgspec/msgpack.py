@@ -15,6 +15,8 @@ from dmr.renderers import Renderer
 class MsgpackParser(Parser):
     """Parsers ``msgpack`` bodies using ``msgspec``."""
 
+    __slots__ = ()
+
     content_type = 'application/msgpack'
     strict: ClassVar[bool] = True
 
@@ -61,6 +63,8 @@ class MsgpackParser(Parser):
 
 class MsgpackRenderer(Renderer):
     """Renders ``msgpack`` bodies using ``msgspec``."""
+
+    __slots__ = ()
 
     content_type = 'application/msgpack'
 

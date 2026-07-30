@@ -32,6 +32,8 @@ class ToJsonKwargs(ToModelKwargs, total=False):
 class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
     """Optimize endpoints that are parsed with Msgspec."""
 
+    __slots__ = ()
+
     @override
     @classmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:

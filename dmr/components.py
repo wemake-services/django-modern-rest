@@ -77,7 +77,7 @@ class ComponentParserBuilder:
     type vars as models at this point.
     """
 
-    __slots__ = ('_controller_cls', '_func', '_type_annotations')
+    __slots__ = ('_controller_cls', '_func')
 
     type_var_inference_cls: ClassVar[type[TypeVarInference]] = TypeVarInference
 

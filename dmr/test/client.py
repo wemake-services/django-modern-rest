@@ -10,6 +10,8 @@ _ThingT = TypeVar('_ThingT')
 
 
 class _DMRMixin:  # noqa: WPS338
+    __slots__ = ()
+
     default_content_type: ClassVar[str] = 'application/json'
 
     def _encode_json(self, data: Any, content_type: str) -> Any:

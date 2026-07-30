@@ -144,6 +144,8 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
 
     """
 
+    __slots__ = ()
+
     @abc.abstractmethod
     async def aget_user(self) -> _UserT:
         """Async get user that this token belongs to."""
