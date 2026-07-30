@@ -1,5 +1,5 @@
 import sys
-from collections.abc import Callable, Iterator, Set
+from collections.abc import Callable, Generator, Set
 from contextlib import AbstractContextManager, contextmanager
 from types import ModuleType
 from typing import Final, TypeAlias
@@ -25,7 +25,7 @@ def clean_modules() -> CleanModules:
     @contextmanager
     def factory(
         names: Set[str] = _COMPILED_MODULES,
-    ) -> Iterator[dict[str, ModuleType]]:
+    ) -> Generator[dict[str, ModuleType]]:
         orig_modules = {}
         prefixes = tuple(f'{name}.' for name in names)
         for modname in list(sys.modules):
