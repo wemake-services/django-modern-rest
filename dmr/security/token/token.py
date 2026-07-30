@@ -51,6 +51,7 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
         ...     class Meta:  # Just needed for the doctest example
         ...         app_label = 'token_auth'
 
+    .. versionadded:: 0.12.0
     """
 
     __slots__ = ()
@@ -142,6 +143,7 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
         ...     class Meta:  # Just needed for the doctest example
         ...         app_label = 'token_auth'
 
+    .. versionadded:: 0.12.0
     """
 
     __slots__ = ()
@@ -218,6 +220,7 @@ def get_token_hash(
         salt: What salt should we use for token hash?
         algorithm: What algorithm should we use for token hash?
 
+    .. versionadded:: 0.12.0
     """
     return salted_hmac(
         salt or DEFAULT_TOKEN_SALT,
@@ -232,7 +235,11 @@ def resolve_expiry(
     *,
     expiration: dt.timedelta | None = None,
 ) -> dt.datetime | None:
-    """Resolve expiery for optional value."""
+    """
+    Resolve expiery for optional value.
+
+    .. versionadded:: 0.12.0
+    """
     # TODO: fix after sentinels are fully supported
     if not isinstance(expires_at, Sentinel):
         return expires_at

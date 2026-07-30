@@ -18,10 +18,7 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.algorithms import (
-    LeakyBucket,
-    SimpleRate,
-)
+from dmr.throttling.algorithms import LeakyBucket, SimpleRate
 from dmr.throttling.backends.redis import AsyncRedis, SyncRedis
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter
 

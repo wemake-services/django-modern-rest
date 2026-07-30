@@ -38,8 +38,8 @@ _validate_spec: _ValidateSpecProto | None
 try:
     # There's a mismatch of checks with mypyc and mypy,
     # so we use `unused-ignore` here:
-    from openapi_spec_validator import (  # type: ignore[no-redef, unused-ignore]
-        validate as _validate_spec,
+    from openapi_spec_validator import (
+        validate as _validate_spec,  # type: ignore[no-redef, unused-ignore]
     )
 except ImportError:  # pragma: no cover
     _validate_spec = None

@@ -3,10 +3,7 @@ from typing import Final
 from django.http import HttpRequest
 
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.token.auth.base import (
-    BaseTokenAsyncAuth,
-    BaseTokenSyncAuth,
-)
+from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
 _DEFAULT_PARAM: Final = 'token'
@@ -46,6 +43,7 @@ class QueryTokenSyncAuth(_BaseQueryTokenAuth, BaseTokenSyncAuth):
         :class:`HeaderTokenSyncAuth` for any
         context where security is a concern.
 
+    .. versionadded:: 0.12.0
     """
 
     __slots__ = ('query_param',)
@@ -80,6 +78,8 @@ class QueryTokenAsyncAuth(_BaseQueryTokenAuth, BaseTokenAsyncAuth):
         and HTTP ``Referer`` headers.  Prefer
         :class:`HeaderTokenAsyncAuth` for any
         context where security is a concern.
+
+    .. versionadded:: 0.12.0
     """
 
     __slots__ = ('query_param',)

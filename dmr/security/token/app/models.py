@@ -29,7 +29,11 @@ _MAX_HASH_LENGTH: Final = 256
 
 @final
 class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
-    """Model representing a DB-backed opaque auth token."""
+    """
+    Model representing a DB-backed opaque auth token.
+
+    .. versionadded:: 0.12.0
+    """
 
     user: UserForeignKey = models.ForeignKey(
         settings.AUTH_USER_MODEL,

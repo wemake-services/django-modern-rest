@@ -3,10 +3,7 @@ from typing import Final
 from django.http import HttpRequest
 
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.token.auth.base import (
-    BaseTokenAsyncAuth,
-    BaseTokenSyncAuth,
-)
+from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
 _AUTH_DESCRIPTION: Final = 'Opaque token authentication'
@@ -53,7 +50,11 @@ class _BaseHeaderTokenAuth:
 
 
 class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
-    """Sync opaque token auth; reads from ``X-API-Token`` by default."""
+    """
+    Sync opaque token auth; reads from ``X-API-Token`` by default.
+
+    .. versionadded:: 0.12.0
+    """
 
     __slots__ = ('header_name', 'prefix')
 
@@ -114,7 +115,11 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
 
 
 class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
-    """Async opaque token auth; reads from ``X-API-Token`` by default."""
+    """
+    Async opaque token auth; reads from ``X-API-Token`` by default.
+
+    .. versionadded:: 0.12.0
+    """
 
     __slots__ = ('header_name', 'prefix')
 

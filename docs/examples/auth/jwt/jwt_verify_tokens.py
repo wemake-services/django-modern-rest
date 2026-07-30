@@ -1,10 +1,7 @@
 from typing_extensions import override
 
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt.views import (
-    VerifyTokenPayload,
-    VerifyTokenSyncController,
-)
+from dmr.security.jwt.views import VerifyTokenPayload, VerifyTokenSyncController
 
 
 # You can also use `VerifyTokenAsyncController` if needed:
