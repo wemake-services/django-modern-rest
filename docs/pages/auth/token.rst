@@ -130,8 +130,8 @@ Revoking a token
 
 Tokens can be revoked via helper methods:
 
-- :meth:`~dmr.security.token.TokenLikeSync.revoke`
-- :meth:`~dmr.security.token.TokenLikeAsync.arevoke`
+- :meth:`~dmr.security.token.token.TokenLikeSync.revoke`
+- :meth:`~dmr.security.token.token.TokenLikeAsync.arevoke`
 
 Here's an example with the default model:
 
@@ -152,10 +152,10 @@ and revocation.
 .. note::
 
   Token creation is intentionally disabled in the admin.
-  :func:`~dmr.security.token.TokenLikeSync.issue` returns the raw
+  :func:`~dmr.security.token.token.TokenLikeSync.issue` returns the raw
   token exactly once and an admin form has no way to surface
-  that value. Use :func:`~dmr.security.token.TokenLikeSync.issue`
-  or :func:`~dmr.security.token.TokenLikeAsync.aissue`
+  that value. Use :func:`~dmr.security.token.token.TokenLikeSync.issue`
+  or :func:`~dmr.security.token.token.TokenLikeAsync.aissue`
   directly to issue tokens instead.
 
 Active tokens can be revoked individually from the change form,
@@ -242,8 +242,8 @@ This old model might have a completely different structure,
 different fields, user models, etc.
 What we care about is that you implement:
 
-- :class:`~dmr.security.token.TokenLikeSync` interface for sync auth
-- :class:`~dmr.security.token.TokenLikeAsync` interface for async auth
+- :class:`~dmr.security.token.token.TokenLikeSync` interface for sync auth
+- :class:`~dmr.security.token.token.TokenLikeAsync` interface for async auth
 - Both of them, if you need a model that works with sync and async auth,
   like our default :class:`~dmr.security.token.app.models.Token` does
 
