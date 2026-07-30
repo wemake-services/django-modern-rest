@@ -269,6 +269,3 @@ Blocklist app
 
 .. autoclass:: dmr.security.jwt.blocklist.auth.JWTokenBlocklistAsyncMixin
   :members:
-
-.. autoclass:: dmr.security.jwt.blocklist.admin.BlocklistedJWTokenAdmin
-  :members:
