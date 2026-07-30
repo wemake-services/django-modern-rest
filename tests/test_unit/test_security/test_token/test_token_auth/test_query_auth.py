@@ -1,3 +1,4 @@
+import datetime as dt
 from http import HTTPStatus
 from typing import Final
 
@@ -172,3 +173,52 @@ async def test_async_query_token_custom_query_param(
     response = await dmr_async_rf.wrap(_AsyncQueryController.as_view()(request))
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_sync_query_token_auth_update_last_used(
+    dmr_rf: DMRRequestFactory,
+    admin_user: User,
+) -> None:
+    """Ensures update_last_used=True sets last_used_at on successful query auth (sync)."""
+
+    class _UpdateController(Controller[PydanticFastSerializer]):
+        auth = (QueryTokenSyncAuth(update_last_used=True),)
+
+        def get(self) -> str:
+            return 'authed'
+
+    token, raw_token = Token.issue(user=admin_user, name='query-update-used')
+    request = dmr_rf.get('/whatever/', data={'token': raw_token})
+
+    response = _UpdateController.as_view()(request)
+
+    token.refresh_from_db()
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert isinstance(token.last_used_at, dt.datetime)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_async_query_token_auth_update_last_used(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    admin_user: User,
+) -> None:
+    """Ensures update_last_used=True sets last_used_at on successful query auth (async)."""
+
+    class _AsyncUpdateController(Controller[PydanticFastSerializer]):
+        auth = (QueryTokenAsyncAuth(update_last_used=True),)
+
+        async def get(self) -> str:
+            return 'authed'
+
+    token, raw_token = await Token.aissue(user=admin_user, name='async-query-update-used')
+    request = dmr_async_rf.get('/whatever/', data={'token': raw_token})
+
+    response = await dmr_async_rf.wrap(_AsyncUpdateController.as_view()(request))
+
+    await token.arefresh_from_db()
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert isinstance(token.last_used_at, dt.datetime)

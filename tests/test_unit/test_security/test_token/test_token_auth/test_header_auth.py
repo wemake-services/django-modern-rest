@@ -19,6 +19,7 @@ from dmr.security.token import (
     request_token,
 )
 from dmr.security.token.app.models import Token
+from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _CORRECT_TEMPLATE: Final = '{0}'
@@ -519,3 +520,153 @@ async def test_async_check_token_raises_inactive() -> None:
     token = Token(revoked_at=dt.datetime.now(dt.UTC))
     with pytest.raises(NotAuthenticatedError):
         await HeaderTokenAsyncAuth().check_token(token)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('auth_salt', 'auth_algorithm', 'expected_status'),
+    [
+        ('custom_salt', 'sha512', HTTPStatus.OK),
+        (DEFAULT_TOKEN_SALT, DEFAULT_TOKEN_ALGORITHM, HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_sync_token_auth_custom_salt_and_algorithm(
+    dmr_rf: DMRRequestFactory,
+    admin_user: User,
+    *,
+    auth_salt: str,
+    auth_algorithm: str,
+    expected_status: HTTPStatus,
+) -> None:
+    """Ensures auth with matching custom salt/algorithm succeeds; mismatched params fail."""
+
+    class _CustomParamsController(Controller[PydanticFastSerializer]):
+        auth = (
+            HeaderTokenSyncAuth(token_salt=auth_salt, token_algorithm=auth_algorithm),
+        )
+
+        def get(self) -> str:
+            return 'authed'
+
+    _, raw_token = Token.issue(
+        user=admin_user,
+        name='custom-params',
+        token_salt='custom_salt',
+        token_algorithm='sha512',
+    )
+    request = dmr_rf.get('/whatever/', headers={'X-API-Token': raw_token})
+
+    response = _CustomParamsController.as_view()(request)
+
+    assert response.status_code == expected_status
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('auth_secret', 'expected_status'),
+    [
+        ('custom-secret', HTTPStatus.OK),
+        (None, HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_sync_token_auth_custom_secret(
+    dmr_rf: DMRRequestFactory,
+    admin_user: User,
+    *,
+    auth_secret: str | None,
+    expected_status: HTTPStatus,
+) -> None:
+    """Ensures auth with matching custom secret succeeds; wrong secret fails."""
+
+    class _CustomSecretController(Controller[PydanticFastSerializer]):
+        auth = (HeaderTokenSyncAuth(token_secret=auth_secret),)
+
+        def get(self) -> str:
+            return 'authed'
+
+    _, raw_token = Token.issue(
+        user=admin_user,
+        name='custom-secret',
+        token_secret='custom-secret',
+    )
+    request = dmr_rf.get('/whatever/', headers={'X-API-Token': raw_token})
+
+    response = _CustomSecretController.as_view()(request)
+
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ('auth_salt', 'auth_algorithm', 'expected_status'),
+    [
+        ('custom_salt', 'sha512', HTTPStatus.OK),
+        (DEFAULT_TOKEN_SALT, DEFAULT_TOKEN_ALGORITHM, HTTPStatus.UNAUTHORIZED),
+    ],
+)
+async def test_async_token_auth_custom_salt_and_algorithm(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    admin_user: User,
+    *,
+    auth_salt: str,
+    auth_algorithm: str,
+    expected_status: HTTPStatus,
+) -> None:
+    """Ensures async auth with matching custom salt/algorithm succeeds; mismatched params fail."""
+
+    class _CustomParamsController(Controller[PydanticFastSerializer]):
+        auth = (
+            HeaderTokenAsyncAuth(token_salt=auth_salt, token_algorithm=auth_algorithm),
+        )
+
+        async def get(self) -> str:
+            return 'authed'
+
+    _, raw_token = await Token.aissue(
+        user=admin_user,
+        name='async-custom-params',
+        token_salt='custom_salt',
+        token_algorithm='sha512',
+    )
+    request = dmr_async_rf.get('/whatever/', headers={'X-API-Token': raw_token})
+
+    response = await dmr_async_rf.wrap(_CustomParamsController.as_view()(request))
+
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ('auth_secret', 'expected_status'),
+    [
+        ('custom-secret', HTTPStatus.OK),
+        (None, HTTPStatus.UNAUTHORIZED),
+    ],
+)
+async def test_async_token_auth_custom_secret(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    admin_user: User,
+    *,
+    auth_secret: str | None,
+    expected_status: HTTPStatus,
+) -> None:
+    """Ensures async auth with matching custom secret succeeds; wrong secret fails."""
+
+    class _CustomSecretController(Controller[PydanticFastSerializer]):
+        auth = (HeaderTokenAsyncAuth(token_secret=auth_secret),)
+
+        async def get(self) -> str:
+            return 'authed'
+
+    _, raw_token = await Token.aissue(
+        user=admin_user,
+        name='async-custom-secret',
+        token_secret='custom-secret',
+    )
+    request = dmr_async_rf.get('/whatever/', headers={'X-API-Token': raw_token})
+
+    response = await dmr_async_rf.wrap(_CustomSecretController.as_view()(request))
+
+    assert response.status_code == expected_status
