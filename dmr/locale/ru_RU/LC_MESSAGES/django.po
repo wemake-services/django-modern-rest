@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 09:00+0300\n"
+"POT-Creation-Date: 2026-07-29 16:43+0300\n"
 "PO-Revision-Date: 2026-03-22 13:58+0000\n"
 "Last-Translator: \n"
 "Language-Team: Russian\n"
@@ -47,6 +47,10 @@ msgstr "Слишком много запросов"
 msgid "Internal server error"
 msgstr "Внутренняя ошибка сервера"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "Проверка CSRF не пройдена: {reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -76,15 +80,38 @@ msgstr ""
 "Невозможно распарсить тело запроса с типом содержимого {content_type}, "
 "ожидаемые={expected}"
 
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "Проверка CSRF не пройдена: {reason}"
-
 msgid "BlocklistedJWToken"
 msgstr "Заблокированный JWT токен"
 
 msgid "BlocklistedJWTokens"
 msgstr "Заблокированные JWT токены"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "Token hash"
+msgstr "Хеш токена"
+
+msgid "Expires at"
+msgstr "Годен до"
+
+msgid "Revoked at"
+msgstr "Отозван"
+
+msgid "Last used at"
+msgstr "Последее использование"
+
+msgid "Created at"
+msgstr "Создан"
+
+msgid "Updated at"
+msgstr "Обновлен"
+
+msgid "Token"
+msgstr "Токен"
+
+msgid "Tokens"
+msgstr "Токены"
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"

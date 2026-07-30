@@ -1,12 +1,18 @@
 Token Auth
 ==========
 
-Opaque token authentication backed by database records.
+Opaque token authentication backed by database hashed records.
 
 .. note::
 
-  To use token auth, add ``'dmr.security.token'`` to ``INSTALLED_APPS``
-  and run migrations.
+  To use token auth with the default
+  :class:`~dmr.security.token.app.models.Token` model,
+  add ``'dmr.security.token.app'`` to ``INSTALLED_APPS``
+  and run migrations with ``manage.py migrate``.
+
+  You can subclass all classes, change ``token_model`` property
+  and substitute the token model for your own one.
+  More on that :ref:`later <swapping-token-model>`.
 
 
 Requiring auth
@@ -19,114 +25,115 @@ Requiring auth
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
 We provide several classes to require token auth in your API
-for both sync and async endpoints:
-
-- :class:`~dmr.security.token.HeaderTokenSyncAuth` and
-  :class:`~dmr.security.token.HeaderTokenAsyncAuth`
-  for header-based auth
-- :class:`~dmr.security.token.QueryTokenSyncAuth` and
-  :class:`~dmr.security.token.QueryTokenAsyncAuth`
-  for query-param based auth
-- :class:`~dmr.security.token.CookieTokenSyncAuth` and
-  :class:`~dmr.security.token.CookieTokenAsyncAuth`
-  for cookie-based auth
+for both sync and async endpoints.
 
 Example of requiring token auth and accessing
 both ``self.request.user`` and the current token:
 
-.. literalinclude:: /examples/auth/token/using_token_header.py
-  :caption: views.py
-  :linenos:
-  :language: python
+.. tabs::
+
+  .. tab:: Token in headers
+
+    When in doubt, use this as the default way to receive tokens.
+
+    Use :class:`~dmr.security.token.HeaderTokenSyncAuth` and
+    :class:`~dmr.security.token.HeaderTokenAsyncAuth`
+    for header-based auth.
+
+    You can customize:
+
+    - Security scheme name, default: ``token``
+    - Header name, default: ``X-API-Token``
+    - Header value prefix, default: ``''``
+
+    .. literalinclude:: /examples/auth/token/using_token_header.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Token in cookies
+
+    Use :class:`~dmr.security.token.CookieTokenSyncAuth` and
+    :class:`~dmr.security.token.CookieTokenAsyncAuth`
+    for cookie-based auth.
+
+    .. note::
+
+      We enforce CSRF for this auth as well.
+      See also: https://docs.djangoproject.com/en/6.0/ref/csrf
+
+    You can customize:
+
+    - Security scheme name, default: ``token``
+    - Cookie name, default: ``token``
+
+    .. literalinclude:: /examples/auth/token/using_token_cookie.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Token in query string
+
+    Use :class:`~dmr.security.token.QueryTokenSyncAuth` and
+    :class:`~dmr.security.token.QueryTokenAsyncAuth`
+    for query-param based auth.
+
+    .. warning::
+
+      Sending tokens via query string is not really safe,
+      because they will show up in access logs.
+
+    You can customize:
+
+    - Security scheme name, default: ``token``
+    - Query parameter name, default: ``token``
+
+    .. literalinclude:: /examples/auth/token/using_token_query.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
 
 Token lifecycle
 ---------------
 
-:class:`dmr.security.token.models.Token` instances
-are issued and revoked via dedicated functions sync and async functions:
+.. important::
 
-- :func:`dmr.security.token.logic.token_create` /
-  :func:`dmr.security.token.logic.token_acreate` to create tokens
-- :func:`dmr.security.token.logic.token_revoke` /
-  :func:`dmr.security.token.logic.token_arevoke` to revoke tokens
-
-Creation helpers return ``(token_instance, raw_token)``.
-Only the token hash is stored in the database,
-the raw token is returned exactly once and never persisted.
-
-:class:`~dmr.security.token.models.Token` has two
-:class:`~django.db.models.DateTimeField` fields that gate validity:
-
-- ``expires_at`` — set once,
-  at creation
-- ``revoked_at`` — ``None``
-  until :func:`~dmr.security.token.logic.token_revoke` is called
-
-On each authenticated request, the auth backend:
-
-1. Hashes the incoming raw token and looks up the matching row.
-   If no row matches, authentication fails with a ``401``
-2. Checks that the token is still active (neither revoked nor expired)
-3. Checks that the associated user account is still active
-    (``is_active``)
-
-If any check fails, authentication fails with a ``401``
-and no token state is changed.
-
-.. note::
-
-  Revoking a token is a write: it sets ``revoked_at`` on the row.
-  Expiry needs no write at all, ``expires_at`` is set once up front
-  and simply compared against the clock on every lookup from then on.
-
-  Successful authentication can *also* write to the row,
-  see :ref:`tracking-last-use` below.
+  Token text itself can only be obtained once.
+  This is an important security limitation by design.
+  Why? Because we never store the token text itself, we only store its hash.
 
 .. mermaid::
-  :caption: Token states
+  :caption: Default token model states
   :config: {"theme": "forest"}
 
   stateDiagram-v2
-      [*] --> Active: token_create / token_acreate
-      Active --> Revoked: token_revoke / token_arevoke
-      Revoked --> [*]
+      [*] --> Active: TokenLike.issue / TokenLike.aissue
+      Active --> Revoked: TokenLike.revoke / TokenLike.arevoke
+      Active --> Expired
+
+All token instances are issued and revoked in sync mode
+via :class:`dmr.security.token.token.TokenLikeSync`
+and in async mode via
+:class:`dmr.security.token.token.TokenLikeAsync` interfaces.
+
+Our default implementation :class:`dmr.security.token.app.models.Token`
+strictly follows both interfaces.
 
 Issuing a token
 ~~~~~~~~~~~~~~~
 
-Issuing a token has to be gated by some pre-existing trust,
-not by the token itself, otherwise a client would need a token
-to get a token. That pre-existing trust is specific to your
-application, so we don't ship a built-in way to issue tokens.
-Call :func:`~dmr.security.token.logic.token_create` directly,
-for example from a Django shell:
-
-.. literalinclude:: /examples/auth/token/issue_token.py
-  :caption: issue_token.py
-  :linenos:
-  :language: python
-
-.. important::
-
-  ``raw_token`` is only available here, right after creation.
-  Only its hash is stored, so save it now, it cannot be recovered later.
-
-.. note::
-
-  If you want to issue tokens from an HTTP endpoint, for example
-  a "generate API key" button in a dashboard, gate it behind
-  an auth method other than the token being issued.
-  :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
-  is a common choice, since the user already has a session
-  from logging in.
+TODO
 
 Revoking a token
 ~~~~~~~~~~~~~~~~
 
-Tokens can be revoked via helper functions:
+Tokens can be revoked via helper methods:
 
-- :func:`~dmr.security.token.logic.token_revoke`
-- :func:`~dmr.security.token.logic.token_arevoke`
+- :meth:`~dmr.security.token.token.TokenLikeSync.revoke`
+- :meth:`~dmr.security.token.token.TokenLikeAsync.arevoke`
+
+Here's an example with the default model:
 
 .. literalinclude:: /examples/auth/token/revoke_token.py
   :caption: revoke_token.py
@@ -135,18 +142,20 @@ Tokens can be revoked via helper functions:
 
 
 Django admin
-~~~~~~~~~~~~
+------------
 
-When ``'dmr.security.token'`` is in ``INSTALLED_APPS``, tokens are
-accessible from the Django admin for viewing, searching, filtering,
+When ``'dmr.security.token.app'`` is in ``INSTALLED_APPS``,
+default :class:`~dmr.security.token.app.models.Token` model entries
+are accessible from the Django admin for viewing, searching, filtering,
 and revocation.
 
 .. note::
 
   Token creation is intentionally disabled in the admin.
-  :func:`~dmr.security.token.logic.token_create` returns the raw
+  :func:`~dmr.security.token.token.TokenLikeSync.issue` returns the raw
   token exactly once and an admin form has no way to surface
-  that value. Use :func:`~dmr.security.token.logic.token_create`
+  that value. Use :func:`~dmr.security.token.token.TokenLikeSync.issue`
+  or :func:`~dmr.security.token.token.TokenLikeAsync.aissue`
   directly to issue tokens instead.
 
 Active tokens can be revoked individually from the change form,
@@ -154,10 +163,8 @@ or in bulk using the **Revoke selected tokens** action from the
 change list.
 
 
-.. _tracking-last-use:
-
 Tracking last use
-------------------
+-----------------
 
 Auth classes accept an ``update_last_used`` flag for tracking
 when a token was last successfully used. It is opt-in,
@@ -165,7 +172,10 @@ defaulting to ``False``:
 
 .. code-block:: python
 
-  HeaderTokenSyncAuth(update_last_used=True)
+  >>> from dmr.security.token import HeaderTokenSyncAuth
+
+  >>> HeaderTokenSyncAuth(update_last_used=True)
+  <dmr.security.token.auth.header.HeaderTokenSyncAuth object at ...>
 
 When enabled, every successful authentication writes
 ``last_used_at`` and ``updated_at`` back to the token's row.
@@ -187,66 +197,115 @@ When enabled, every successful authentication writes
   - leaving it disabled (the default) and relying
     on application-level logging or analytics instead
 
+.. warning::
 
-Choosing a transport
----------------------
+  Token's ``last_used_at`` is not updated atomically.
+  If you need a transaction, you should override ``authenticate`` method
+  and wrap it in ``transaction.atomic()``,
+  but it would make the process even slower.
 
-Opaque tokens can be sent by clients in three ways.
-Pick the transport that matches your client.
 
-Header
-~~~~~~
+Customizing the User model
+--------------------------
 
-.. code-block:: text
-
-  GET /api/thing HTTP/1.1
-  X-API-Token: abc123
-
-Classes: :class:`~dmr.security.token.HeaderTokenSyncAuth` /
-:class:`~dmr.security.token.HeaderTokenAsyncAuth`.
-
-By default, header auth expects ``X-API-Token: <raw_token>``.
-You can customize the header name and prefix to match
-other conventions, for example:
+Our :class:`~dmr.security.token.app.models.Token` model
+links to the ``User`` type
+via customizable setting value:
 
 .. code-block:: python
 
-  # DRF-compatible token auth: Authorization: Token <raw_token>
-  HeaderTokenSyncAuth(header_name='Authorization', prefix='Token')
+  models.ForeignKey(settings.AUTH_USER_MODEL, related_name='dmr_tokens')
 
-  # Bearer-style auth: Authorization: Bearer <raw_token>
-  HeaderTokenSyncAuth(header_name='Authorization', prefix='Bearer')
+So, if you configure your ``settings.AUTH_USER_MODEL``
+to be something else than the default user
+(but, still a subclass of :class:`django.contrib.auth.models.AbstractBaseUser`),
+it would just work out of the box.
 
-Cookie
-~~~~~~
 
-.. code-block:: text
+.. _swapping-token-model:
 
-  GET /api/thing HTTP/1.1
-  Cookie: token=abc123
+Swapping the token model
+------------------------
 
-Classes: :class:`~dmr.security.token.CookieTokenSyncAuth` /
-:class:`~dmr.security.token.CookieTokenAsyncAuth`.
+.. note::
 
-.. warning::
+  Swapping the model is an advanced feature,
+  using the default :class:`~dmr.security.token.app.models.Token` model
+  is the correct way in most cases.
 
-  Cookie auth is CSRF-sensitive in browser-facing contexts.
-  Ensure ``django.middleware.csrf.CsrfViewMiddleware`` is enabled.
+Let's say that you already have some token auth mechanism
+from `some other API framework <https://github.com/encode/django-rest-framework/blob/main/rest_framework/authtoken/models.py>`_
+with existing ``CustomToken`` model that you want to continue using,
+so nothing would change for your users.
 
-Query parameter
-~~~~~~~~~~~~~~~~
+This old model might have a completely different structure,
+different fields, user models, etc.
+What we care about is that you implement:
 
-.. code-block:: text
+- :class:`~dmr.security.token.token.TokenLikeSync` interface for sync auth
+- :class:`~dmr.security.token.token.TokenLikeAsync` interface for async auth
+- Both of them, if you need a model that works with sync and async auth,
+  like our default :class:`~dmr.security.token.app.models.Token` does
 
-  GET /api/thing?token=abc123
+.. note::
 
-Classes: :class:`~dmr.security.token.QueryTokenSyncAuth` /
-:class:`~dmr.security.token.QueryTokenAsyncAuth`.
+  Custom token models can support custom user models as well.
+  Our interfaces are even generic on the ``User`` type.
 
-.. warning::
+  If you want to customize the ``User`` object that you are working with,
+  just inherit from a generic version, like so:
 
-  Query param auth leaks tokens into server logs, browser history,
-  and ``Referer`` headers. Prefer header-based auth whenever possible.
+  .. code:: python
+
+      >>> from django.db import models
+      >>> from django.contrib.auth.models import User as CustomUser
+      >>> from dmr.security.token.token import TokenLikeSync
+
+      >>> class YourToken(TokenLikeSync[CustomUser], models.Model):
+      ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+      ...
+      ...     class Meta:  # Just needed for the doctest example
+      ...         app_label = 'token_auth'
+
+  Otherwise, you would be required to work with
+  :class:`~django.contrib.auth.models.AbstractBaseUser`
+  which is :pep:`the default type parameter <696>`
+  for ``TokenLikeSync`` and ``TokenLikeAsync``.
+
+Here's an example of a custom model with sync interface only:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_auth/models.py
+  :caption: models.py
+  :language: python
+  :linenos:
+
+Next, let's define an auth class with a different model type:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_auth/auth.py
+  :caption: auth.py
+  :language: python
+  :linenos:
+
+And protect your views with this new auth type:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_auth/views.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+This way you can keep old tokens and old model for your existing users.
+API stability is important!
+
+.. note::
+
+  This way you can also have different auth classes
+  that work with different models types,
+  if this is a business requirement you have.
+
+.. seealso::
+
+  - https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+  - https://django-ninja.dev/guides/authentication/?h=#api-key
 
 
 API Reference
@@ -276,15 +335,26 @@ API Reference
   :members:
   :inherited-members:
 
+Helpers
+~~~~~~~
+
 .. autofunction:: dmr.security.token.request_token
 
-.. autofunction:: dmr.security.token.logic.token_create
+.. autofunction:: dmr.security.token.token.get_token_hash
 
-.. autofunction:: dmr.security.token.logic.token_acreate
+.. autofunction:: dmr.security.token.token.resolve_expiry
 
-.. autofunction:: dmr.security.token.logic.token_revoke
+Interfaces
+~~~~~~~~~~
 
-.. autofunction:: dmr.security.token.logic.token_arevoke
+.. autoclass:: dmr.security.token.token.TokenLikeSync
+  :members:
 
-.. autoclass:: dmr.security.token.models.Token
+.. autoclass:: dmr.security.token.token.TokenLikeAsync
+  :members:
+
+Default app
+~~~~~~~~~~~
+
+.. autoclass:: dmr.security.token.app.models.Token
   :members:

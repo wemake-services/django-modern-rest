@@ -36,7 +36,7 @@ lint:
 
 # Run all checks
 [group('dev')]
-test: lint type-check example benchmarks-type-check package smoke translations unit
+test: lint type-check example benchmarks-type-check package (smoke 'jwt') translations unit
 
 # Run all type checkers
 [group('type-check')]
@@ -50,9 +50,9 @@ type-check:
 unit *args='':
     uv run pytest --inline-snapshot=disable {{ args }}
 
-# Check package imports without django.setup()
+# Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
-smoke:
+smoke *extras='':
     uv run python -c 'from dmr import Controller'
     # Checks that renderers and parsers can be imported
     # from settings without `.setup()` call:
@@ -61,7 +61,6 @@ smoke:
     # Checks that auth can be imported from settings without `.setup()` call:
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
-    uv run python -c 'from dmr.security.jwt import *'
     uv run python -c 'from dmr.security.token import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
@@ -71,6 +70,12 @@ smoke:
     uv run python -c 'from dmr.openapi.objects import *'
     # Settings itself can be imported with `.setup()`:
     uv run python -c 'from dmr import settings'
+    # Requires extras:
+    for extra in {{ extras }}; do \
+      case "$extra" in \
+        jwt) uv run python -c 'from dmr.security.jwt import *' ;; \
+      esac; \
+    done
 
 # Run QA tools on example code
 [group('testing')]
@@ -80,10 +85,12 @@ example:
       && uv run python manage.py makemigrations --dry-run --check \
       && uv run python manage.py collectstatic --no-input --dry-run
     PYTHONPATH='docs/' uv run pytest -o addopts='' \
-      --suppress-no-test-exit-code \
       docs/examples/testing/polyfactory_usage.py \
       docs/examples/testing/django_builtin_client.py \
-      docs/examples/testing/dmr_helpers.py
+      docs/examples/testing/dmr_helpers.py \
+      docs/examples/testing/pytest_plugin.py \
+      docs/examples/testing/throttling_unittest.py \
+      docs/examples/testing/throttling_pytest.py
 
 # Start Django + DRM example app
 [group('testing')]

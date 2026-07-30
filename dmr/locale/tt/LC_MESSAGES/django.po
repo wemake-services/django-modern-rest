@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 09:00+0300\n"
+"POT-Creation-Date: 2026-07-29 16:43+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -46,6 +46,10 @@ msgstr ""
 msgid "Internal server error"
 msgstr "Эчке сервер хатасы"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF уңышсыз: {reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -75,14 +79,37 @@ msgstr ""
 "{content_type} эчтәлек типы белән сорау гәүдәсен сүтеп булмый, көтелгән "
 "тип={expected}"
 
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF уңышсыз: {reason}"
-
 msgid "BlocklistedJWToken"
 msgstr ""
 
 msgid "BlocklistedJWTokens"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
 msgstr ""
 
 #, python-brace-format

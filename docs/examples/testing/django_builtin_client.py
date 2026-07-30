@@ -1,30 +1,58 @@
 import json
+import uuid
 from http import HTTPStatus
 
-from django.test import TestCase
-from django.test.utils import override_settings
-from django.urls import path
+from dirty_equals import IsDatetime, IsInt, IsUUID
+from django.http import HttpResponse
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
 
 from examples.testing.pydantic_controller import UserController
 
-urlpatterns = [
-    path('users/', UserController.as_view(), name='users'),
-]
 
-
-@override_settings(ROOT_URLCONF=__name__)
 class TestDjangoBuiltinClient(TestCase):
-    def test_post_user(self) -> None:
-        payload = {'email': 'user@example.com', 'age': 20}
+    def test_client(self) -> None:
+        # See `django_test_app/server/apps/model_simple/views/minimalistic.py`
+        request_data = {
+            'email': 'test@example.com',
+            'customer_service_uid': str(uuid.uuid4()),
+        }
 
         response = self.client.post(
-            '/users/',
-            data=json.dumps(payload),
+            reverse('api:model_simple:user_minimalistic'),
+            data=request_data,
             content_type='application/json',
         )
 
-        assert response.status_code == HTTPStatus.CREATED
-        response_data = json.loads(response.content)
-        assert response_data['email'] == payload['email']
-        assert response_data['age'] == payload['age']
-        assert isinstance(response_data['uid'], str)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        self.assertEqual(response.headers['Content-Type'], 'application/json')
+        self.assertEqual(
+            response.json(),
+            {
+                'id': IsInt(),
+                'created_at': IsDatetime(iso_string=True),
+                **request_data,
+            },
+        )
+
+    def test_request_factory(self) -> None:
+        rf = RequestFactory()
+        payload = {'email': 'user@example.com', 'age': 20}
+
+        request = rf.post(
+            '/users/',
+            data=payload,
+            content_type='application/json',
+        )
+        response = UserController.as_view()(request)
+
+        assert isinstance(response, HttpResponse)
+        self.assertEqual(request.content_type, 'application/json')
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        self.assertEqual(
+            json.loads(response.content),
+            {
+                'uid': IsUUID,
+                **payload,
+            },
+        )

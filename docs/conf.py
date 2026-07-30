@@ -88,6 +88,7 @@ intersphinx_mapping = {
         None,
     ),
     'attrs': ('https://www.attrs.org/en/stable/', None),
+    'pytest': ('https://docs.pytest.org/en/stable/', None),
 }
 
 # Extlinks:
@@ -114,6 +115,7 @@ nitpicky = True
 
 _PY_CLASS: Final = 'py:class'
 _PY_OBJ: Final = 'py:obj'
+_PY_FUNC: Final = 'py:func'
 
 nitpick_ignore = [
     # internal type helpers
@@ -151,6 +153,7 @@ nitpick_ignore = [
         'dmr.security.django_session.views._RequestModelT',
     ),
     (_PY_CLASS, 'dmr.security.django_session.views._ResponseT'),
+    (_PY_CLASS, 'dmr.security.token.token._UserT'),
     (_PY_OBJ, 'dmr.components._HeadersT'),
     (_PY_OBJ, 'dmr.components._QueryT'),
     (_PY_OBJ, 'dmr.components._PathT'),
@@ -186,6 +189,9 @@ nitpick_ignore = [
     (_PY_CLASS, 'Reference'),
     (_PY_CLASS, 'Paths'),
     (_PY_CLASS, 'Responses'),
+    # Test fixtures:
+    (_PY_FUNC, 'pytest_django.fixtures.settings'),
+    (_PY_CLASS, 'LazySettings'),
     # Looks like a bug:
     (_PY_CLASS, 'dict[str'),
     (_PY_CLASS, 'collections.abc.Mapping[str'),

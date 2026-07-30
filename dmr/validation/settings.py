@@ -27,14 +27,14 @@ class _SettingsModel(SettingsDict, total=False):
     We redefine all unsupported fields with ``Any`` types here.
     """
 
-    parsers: Sequence[Any]  # type: ignore[misc]
-    renderers: Sequence[Any]  # type: ignore[misc]
-    auth: Sequence[Any]  # type: ignore[misc]
-    throttling: Sequence[Any]  # type: ignore[misc]
-    responses: Sequence[Any]  # type: ignore[misc]
-    openapi_config: Any  # type: ignore[misc]
-    global_error_handler: Any  # type: ignore[misc]
-    auth_token_default_expiry: Any  # type: ignore[misc]
+    parsers: Sequence[Any]
+    renderers: Sequence[Any]
+    auth: Sequence[Any]
+    throttling: Sequence[Any]
+    responses: Sequence[Any]
+    openapi_config: Any
+    global_error_handler: Any
+    auth_token_default_expiry: Any
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101

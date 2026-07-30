@@ -1,12 +1,11 @@
 from typing import Final
 
 from django.http import HttpRequest
-from typing_extensions import override
 
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.token.auth.base import (
-    _BaseTokenAsyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
-    _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    BaseTokenAsyncAuth,
+    BaseTokenSyncAuth,
 )
 
 _AUTH_DESCRIPTION: Final = 'Opaque token authentication'
@@ -39,26 +38,20 @@ class _BaseHeaderTokenAuth:
             ),
         }
 
-    def _raw_token_from_header(
-        self,
-        request: HttpRequest,
-        *,
-        header_name: str,
-        prefix: str,
-    ) -> str | None:
-        """Read token from header and strip expected prefix when configured."""
-        header_value = request.headers.get(header_name)
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Read the raw token from the request header, stripping any prefix."""
+        header_value = request.headers.get(self.header_name)
         if header_value is None:
             return None
-        if prefix:
-            expected = f'{prefix} '
+        if self.prefix:
+            expected = f'{self.prefix} '
             if not header_value.startswith(expected):
                 return None
             return header_value[len(expected) :]
         return header_value
 
 
-class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, _BaseTokenSyncAuth):
+class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
     """Sync opaque token auth; reads from ``X-API-Token`` by default."""
 
     __slots__ = ('header_name', 'prefix')
@@ -69,7 +62,7 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, _BaseTokenSyncAuth):
         header_name: str = 'X-API-Token',
         prefix: str = '',
         security_scheme_name: str = 'token',
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         """
         Apply possible customizations.
@@ -112,17 +105,8 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, _BaseTokenSyncAuth):
         self.header_name = header_name
         self.prefix = prefix
 
-    @override
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Read the raw token from the request header, stripping any prefix."""
-        return self._raw_token_from_header(
-            request,
-            header_name=self.header_name,
-            prefix=self.prefix,
-        )
 
-
-class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, _BaseTokenAsyncAuth):
+class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
     """Async opaque token auth; reads from ``X-API-Token`` by default."""
 
     __slots__ = ('header_name', 'prefix')
@@ -133,7 +117,7 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, _BaseTokenAsyncAuth):
         header_name: str = 'X-API-Token',
         prefix: str = '',
         security_scheme_name: str = 'token',
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         """Apply possible customizations. See :class:`HeaderTokenSyncAuth`."""
         super().__init__(
@@ -142,12 +126,3 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, _BaseTokenAsyncAuth):
         )
         self.header_name = header_name
         self.prefix = prefix
-
-    @override
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Read the raw token from the request header, stripping any prefix."""
-        return self._raw_token_from_header(
-            request,
-            header_name=self.header_name,
-            prefix=self.prefix,
-        )

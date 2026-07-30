@@ -1,19 +1,17 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Self
 
 from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security._csrf import (
-    ensure_csrf,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
-)
 from dmr.security.token.auth.base import (
-    _BaseTokenAsyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
-    _BaseTokenSyncAuth,  # noqa: WPS450  # pyright: ignore[reportPrivateUsage]
+    BaseTokenAsyncAuth,
+    BaseTokenSyncAuth,
 )
 
 if TYPE_CHECKING:
@@ -69,18 +67,27 @@ class _BaseCookieTokenAuth(ResponseSpecProvider):
             ),
         ]
 
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Read the raw token from a cookie."""
+        return request.COOKIES.get(self.cookie_name)
 
-class CookieTokenSyncAuth(_BaseCookieTokenAuth, _BaseTokenSyncAuth):
+    def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
+        ensure_csrf(controller)
+
+
+class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
     """
     Sync opaque token auth reading from a cookie.
 
-    CSRF is enforced automatically after a successful token look-up.
+    CSRF is automatically enforced before any other actions.
 
     .. warning::
+
         Cookie-based authentication is vulnerable to CSRF attacks in
-        browser-facing contexts.  Ensure that
+        browser-facing contexts. Ensure that
         ``django.middleware.csrf.CsrfViewMiddleware`` is active whenever
         this auth class is used in a browser-facing application.
+
     """
 
     __slots__ = ('cookie_name',)
@@ -90,7 +97,7 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, _BaseTokenSyncAuth):
         *,
         cookie_name: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
@@ -104,31 +111,25 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, _BaseTokenSyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> 'CookieTokenSyncAuth | None':
-        """Authenticate via cookie token, then enforce CSRF."""
-        auth = super().__call__(endpoint, controller)
-        if auth is None:
-            return None
-        ensure_csrf(controller)
-        return auth
-
-    @override
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Read the raw token from a cookie."""
-        return request.COOKIES.get(self.cookie_name)
+    ) -> Self | None:
+        """Enforce CSRF, then authenticate via cookie token."""
+        self._ensure_csrf(controller)
+        return super().__call__(endpoint, controller)
 
 
-class CookieTokenAsyncAuth(_BaseCookieTokenAuth, _BaseTokenAsyncAuth):
+class CookieTokenAsyncAuth(_BaseCookieTokenAuth, BaseTokenAsyncAuth):
     """
     Async opaque token auth reading from a cookie.
 
-    CSRF is enforced automatically after a successful token look-up.
+    CSRF is automatically enforced before any other actions.
 
     .. warning::
+
         Cookie-based authentication is vulnerable to CSRF attacks in
-        browser-facing contexts.  Ensure that
+        browser-facing contexts. Ensure that
         ``django.middleware.csrf.CsrfViewMiddleware`` is active whenever
         this auth class is used in a browser-facing application.
+
     """
 
     __slots__ = ('cookie_name',)
@@ -138,7 +139,7 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, _BaseTokenAsyncAuth):
         *,
         cookie_name: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
-        update_last_used: bool = True,
+        update_last_used: bool = False,
     ) -> None:
         """Apply possible customizations."""
         super().__init__(
@@ -152,15 +153,7 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, _BaseTokenAsyncAuth):
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
-    ) -> 'CookieTokenAsyncAuth | None':
-        """Authenticate via cookie token, then enforce CSRF."""
-        auth = await super().__call__(endpoint, controller)
-        if auth is None:
-            return None
-        ensure_csrf(controller)
-        return auth
-
-    @override
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Read the raw token from a cookie."""
-        return request.COOKIES.get(self.cookie_name)
+    ) -> Self | None:
+        """Enforce CSRF, then authenticate via cookie token."""
+        self._ensure_csrf(controller)
+        return await super().__call__(endpoint, controller)

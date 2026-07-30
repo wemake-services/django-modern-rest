@@ -22,21 +22,31 @@ of requirements for an API to count as public.
 
 ### Features
 
-- Adds "Opaque Token" auth backend, #1051
+- Added "Opaque Token" auth backend, #1051
 - Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
   reusable controllers to verify JWT access tokens, #1129
+- Added test helpers in `dmr.test` for asserting that endpoints are
+  throttled: `assert_throttling` / `assert_async_throttling`,
+  `reduced_throttling`, and `assert_throttled`,
+  together with the `HeaderValue` and `ThrottlingLine` types
+  used in their signatures, #1167
 
 ### Bugfixes
 
 - Streaming with `streaming_ping_seconds` no longer leaves the pending
   ping timer task behind on every produced event, #1046
-- Fixes `500` error on request bodies containing invalid `utf-8` bytes
+- Fixed `500` error on request bodies containing invalid `utf-8` bytes
   inside `msgspec`'s json and msgpack parsers,
   now `400` is correctly returned, #1135
+- Properly warn users that use our `pytest` plugin,
+  but do not have `pytest_django` installed, #1167
+- CSRF is now ensured before any other actions in Django-Session auth, #1180,
+- Fixed that `jwt` extra was required in `throttling` code, #1178
 
 ### Misc
 
-- Adds `nanodjango` and µDjango examples
+- Improved `pytest` plugin docs
+- Added `nanodjango` and µDjango examples
   to the micro-framework docs page, #1049
 
 

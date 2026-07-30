@@ -1,41 +1,32 @@
-import datetime as dt
-from typing import TYPE_CHECKING, Self
+import abc
+import importlib
+from typing import TYPE_CHECKING, Any, Generic, Self
 
 from django.http import HttpRequest
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.security.token.logic import token_hash, token_is_active
+from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
 
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
-    from dmr.security.token.models import Token
     from dmr.serializer import BaseSerializer
 
 
-def _set_request_attrs(
-    request: HttpRequest,
-    user: 'AbstractBaseUser',
-    *,
-    token: 'Token',
-) -> None:
-    """Set all required properties to the authed request."""
-    request.user = user
-
-    async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
-        return user
-
-    request.auser = auser
-    request.__dmr_token__ = token  # type: ignore[attr-defined]
+_TokenLikeT = TypeVar(
+    '_TokenLikeT',
+    bound=TokenLikeSync[Any] | TokenLikeAsync[Any],
+)
 
 
-class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
-    """Base class for DB-backed opaque token authentication.
+class _BaseTokenAuth(Generic[_TokenLikeT]):
+    """
+    Base class for DB-backed opaque token authentication.
 
     .. note::
 
@@ -44,11 +35,23 @@ class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
         on every successful authentication. This adds an extra
         ``UPDATE`` per request, so only enable it where last-use
         tracking is actually needed.
+
+        It is not a transactional atomic update. Why?
+        1. For speed
+        2. Because Django does not suppoer natice async
+           transactions without a theadpool
+
+        If you need a transaction for this, you can subclass the auth class
+        and modify the ``authenticate`` and ``get_token``
+        methods to work inside a transaction with ``.select_for_update()``
+        on token instance.
+
     """
 
     __slots__ = (
+        '_token_model',
+        '_update_last_used',
         'security_scheme_name',
-        'update_last_used',
     )
 
     def __init__(
@@ -58,13 +61,19 @@ class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
         update_last_used: bool = False,
     ) -> None:
         self.security_scheme_name = security_scheme_name
-        self.update_last_used = update_last_used
+        self._update_last_used = update_last_used
+        self._token_model: type[_TokenLikeT] | None = None
 
-    def token_model(self) -> 'type[Token]':
+    @abc.abstractmethod
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Extract the raw token string from the request. Must be overridden."""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def token_model(self) -> type[_TokenLikeT]:
         """Returns the Token model. Override to use a custom model."""
-        from dmr.security.token.models import Token  # noqa: PLC0415
-
-        return Token
+        raise NotImplementedError
 
     @property
     def security_requirement(self) -> SecurityRequirement:
@@ -72,7 +81,7 @@ class _BaseTokenAuth:  # pyright: ignore[reportUnusedClass]
         return {self.security_scheme_name: []}
 
 
-class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: ignore[reportUnusedClass]
+class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: WPS214
     """Shared sync authentication pipeline for single-source token auth."""
 
     __slots__ = ()
@@ -90,10 +99,6 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
         self.authenticate(controller.request, raw_token)
         return self
 
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Extract the raw token string from the request. Must be overridden."""
-        raise NotImplementedError
-
     def authenticate(
         self,
         request: HttpRequest,
@@ -102,31 +107,35 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
         """Run all auth pipeline."""
         token = self.get_token(raw_token)
         self.check_token(token)
-        self.check_user(token.user)
-        if self.update_last_used:
-            self.mark_token_used(token)
-        self.set_request_attrs(request, token.user, token=token)
-        return token.user
+        user = token.get_user()
+        self.check_user(user)
+        if self._update_last_used:
+            token.mark_used()
+        self.set_request_attrs(request, user, token=token)
+        return user
 
-    def get_token(self, raw_token: str) -> 'Token':
+    @property
+    @override
+    def token_model(self) -> type[TokenLikeSync[Any]]:  # `Any` for subtyping
+        """Return sync token model."""
+        if self._token_model is not None:
+            return self._token_model
+        token_module = _load_default_model()
+        self._token_model = token_module
+        # for mypy: it can't be none at this point
+        assert self._token_model  # noqa: S101
+        return self._token_model
+
+    def get_token(self, raw_token: str) -> TokenLikeSync:
         """Look up and validate the token from the DB."""
-        model = self.token_model()
-        hashed_token = token_hash(raw_token)
-        token = (
-            model.objects
-            .select_related('user')
-            .filter(
-                token_hash=hashed_token,
-            )
-            .first()
-        )
+        token = self.token_model.find_raw(raw_token)
         if token is None:
             raise NotAuthenticatedError
         return token
 
-    def check_token(self, token: 'Token') -> None:
+    def check_token(self, token: TokenLikeSync) -> None:
         """Raise NotAuthenticatedError if the token is not active."""
-        if not token_is_active(token):
+        if not token.is_active:
             raise NotAuthenticatedError
 
     def check_user(self, user: 'AbstractBaseUser') -> None:
@@ -134,28 +143,18 @@ class _BaseTokenSyncAuth(_BaseTokenAuth, SyncAuth):  # noqa: WPS214 # pyright: i
         if not user.is_active:
             raise NotAuthenticatedError
 
-    def mark_token_used(self, token: 'Token') -> None:
-        """Persist token usage timestamp after successful authentication."""
-        now = dt.datetime.now(dt.UTC)
-        self.token_model().objects.filter(pk=token.pk).update(
-            last_used_at=now,
-            updated_at=now,
-        )
-        token.last_used_at = now
-        token.updated_at = now
-
     def set_request_attrs(
         self,
         request: HttpRequest,
         user: 'AbstractBaseUser',
         *,
-        token: 'Token',
+        token: TokenLikeSync,
     ) -> None:
         """Set current user as authed for this request."""
         _set_request_attrs(request, user, token=token)
 
 
-class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright: ignore[reportUnusedClass]
+class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noqa: WPS214
     """Shared async authentication pipeline for single-source token auth."""
 
     __slots__ = ()
@@ -173,11 +172,7 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
         await self.authenticate(controller.request, raw_token)
         return self
 
-    def get_raw_token(self, request: HttpRequest) -> str | None:
-        """Extract the raw token string from the request. Must be overridden."""
-        raise NotImplementedError
-
-    async def authenticate(
+    async def authenticate(  # noqa: WPS217
         self,
         request: HttpRequest,
         raw_token: str,
@@ -185,31 +180,35 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
         """Run all auth pipeline."""
         token = await self.get_token(raw_token)
         await self.check_token(token)
-        await self.check_user(token.user)
-        if self.update_last_used:
-            await self.mark_token_used(token)
-        await self.set_request_attrs(request, token.user, token=token)
-        return token.user
+        user = await token.aget_user()
+        await self.check_user(user)
+        if self._update_last_used:
+            await token.amark_used()
+        await self.set_request_attrs(request, user, token=token)
+        return user
 
-    async def get_token(self, raw_token: str) -> 'Token':
+    @property
+    @override
+    def token_model(self) -> type[TokenLikeAsync[Any]]:  # `Any` for subtyping
+        """Return sync token model."""
+        if self._token_model is not None:
+            return self._token_model
+        token_module = _load_default_model()
+        self._token_model = token_module
+        # for mypy: it can't be none at this point
+        assert self._token_model  # noqa: S101
+        return self._token_model
+
+    async def get_token(self, raw_token: str) -> TokenLikeAsync:
         """Look up and validate the token from the DB."""
-        model = self.token_model()
-        hashed_token = token_hash(raw_token)
-        token = (
-            await model.objects
-            .select_related('user')
-            .filter(
-                token_hash=hashed_token,
-            )
-            .afirst()
-        )
+        token = await self.token_model.afind_raw(raw_token)
         if token is None:
             raise NotAuthenticatedError
         return token
 
-    async def check_token(self, token: 'Token') -> None:
+    async def check_token(self, token: TokenLikeAsync) -> None:
         """Raise NotAuthenticatedError if the token is not active."""
-        if not token_is_active(token):
+        if not token.is_active:
             raise NotAuthenticatedError
 
     async def check_user(self, user: 'AbstractBaseUser') -> None:
@@ -217,27 +216,35 @@ class _BaseTokenAsyncAuth(_BaseTokenAuth, AsyncAuth):  # noqa: WPS214 # pyright:
         if not user.is_active:
             raise NotAuthenticatedError
 
-    async def mark_token_used(self, token: 'Token') -> None:
-        """Persist token usage timestamp after successful authentication."""
-        now = dt.datetime.now(dt.UTC)
-        await (
-            self
-            .token_model()
-            .objects.filter(pk=token.pk)
-            .aupdate(
-                last_used_at=now,
-                updated_at=now,
-            )
-        )
-        token.last_used_at = now
-        token.updated_at = now
-
     async def set_request_attrs(
         self,
         request: HttpRequest,
         user: 'AbstractBaseUser',
         *,
-        token: 'Token',
+        token: TokenLikeAsync,
     ) -> None:
         """Set current user as authed for this request."""
         _set_request_attrs(request, user, token=token)
+
+
+def _set_request_attrs(
+    request: HttpRequest,
+    user: 'AbstractBaseUser',
+    *,
+    token: TokenLikeSync | TokenLikeAsync,
+) -> None:
+    """Set all required properties to the authed request."""
+    request.user = user
+
+    async def auser() -> 'AbstractBaseUser':  # noqa: WPS430
+        return user
+
+    request.auser = auser
+    request.__dmr_token__ = token  # type: ignore[attr-defined]
+
+
+def _load_default_model() -> Any:
+    # This is needed, so we can trick the `import-linter`
+    # that these two modules are independent. This is the only
+    # place where they can really interact.
+    return importlib.import_module('dmr.security.token.app.models').Token

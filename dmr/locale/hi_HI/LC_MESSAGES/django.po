@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 08:59+0300\n"
+"POT-Creation-Date: 2026-07-29 16:42+0300\n"
 "PO-Revision-Date: 2026-03-22 16:38+0530\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hindi <hi@li.org>\n"
@@ -46,6 +46,10 @@ msgstr "बहुत अधिक अनुरोध"
 msgid "Internal server error"
 msgstr "आंतरिक सर्वर त्रुटि"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF विफल: {reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
@@ -58,7 +62,8 @@ msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
 "{content_type}"
 msgstr ""
-"निर्धारित renderer {renderer_type} लौटाए गए content-type {content_type} से मेल नहीं खाता"
+"निर्धारित renderer {renderer_type} लौटाए गए content-type {content_type} से मेल "
+"नहीं खाता"
 
 #, python-brace-format
 msgid ""
@@ -76,15 +81,38 @@ msgstr ""
 "content type {content_type} के साथ request body को parse नहीं किया जा सकता, "
 "अपेक्षित={expected}"
 
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF विफल: {reason}"
-
 msgid "BlocklistedJWToken"
 msgstr "ब्लॉकलिस्ट किया गया JWT टोकन"
 
 msgid "BlocklistedJWTokens"
 msgstr "ब्लॉकलिस्ट किए गए JWT टोकन"
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"

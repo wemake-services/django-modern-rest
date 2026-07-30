@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-23 08:59-0500\n"
+"POT-Creation-Date: 2026-07-29 16:42+0300\n"
 "PO-Revision-Date: 2026-06-24 11:00-0500\n"
 "Last-Translator: Maier Yan <cozysweets101@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,8 +28,7 @@ msgstr ""
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
-msgstr ""
-"嘗試使用不支援 SupportsFileParsing 協定的 {parser_name} 解析檔案"
+msgstr "嘗試使用不支援 SupportsFileParsing 協定的 {parser_name} 解析檔案"
 
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
@@ -44,11 +43,16 @@ msgstr "請求過多"
 msgid "Internal server error"
 msgstr "伺服器內部錯誤"
 
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF 驗證失敗：{reason}"
+
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"內容類型為 'application/x-www-form-urlencoded' 的 HTTP 請求必須使用 UTF-8 編碼。"
+"內容類型為 'application/x-www-form-urlencoded' 的 HTTP 請求必須使用 UTF-8 編"
+"碼。"
 
 #, python-brace-format
 msgid ""
@@ -68,18 +72,40 @@ msgstr ""
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
-msgstr ""
-"無法使用內容類型 {content_type} 解析請求主體，預期類型={expected}"
-
-#, python-brace-format
-msgid "CSRF Failed: {reason}"
-msgstr "CSRF 驗證失敗：{reason}"
+msgstr "無法使用內容類型 {content_type} 解析請求主體，預期類型={expected}"
 
 msgid "BlocklistedJWToken"
 msgstr "已加入黑名單的 JWT 令牌"
 
 msgid "BlocklistedJWTokens"
 msgstr "已加入黑名單的多個 JWT 令牌"
+
+msgid "Name"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Expires at"
+msgstr ""
+
+msgid "Revoked at"
+msgstr ""
+
+msgid "Last used at"
+msgstr ""
+
+msgid "Created at"
+msgstr ""
+
+msgid "Updated at"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
 
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"

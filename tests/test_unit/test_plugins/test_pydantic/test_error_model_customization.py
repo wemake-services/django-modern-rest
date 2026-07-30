@@ -149,6 +149,7 @@ def test_error_message_controller_customization(
     })
 
     request = dmr_rf.post('/whatever/', data={})
+    _fill_csrf(request)
     request.user = AnonymousUser()
     response = _CustomErrorModelController.as_view()(request)
     assert isinstance(response, HttpResponse)
