@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import override
 
-from dmr.security.jwt.auth import request_jwt
-
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
@@ -104,6 +102,12 @@ class JwtToken(BaseThrottleCacheKey):
     """
     Uses a hash of JWT claims from ``request.__dmr_jwt__`` as a cache key.
 
+    Requires JWT extra to be installed with:
+
+    .. code:: bash
+
+        pip install 'django-modern-rest[jwt]'
+
     1. Never use a full token string for cache key generation.
     2. Prefer ``jti`` claim, fallback to ``sub`` claim.
     3. Store only SHA-256 hash, never raw claim values.
@@ -124,6 +128,10 @@ class JwtToken(BaseThrottleCacheKey):
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
         """Return a hash of JWT ``jti`` / ``sub`` claims as a cache key."""
+        from dmr.security.jwt.auth import (  # noqa: PLC0415
+            request_jwt,
+        )
+
         jwt_token = request_jwt(controller.request)
         if jwt_token is None:
             return None

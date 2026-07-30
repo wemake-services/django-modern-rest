@@ -21,7 +21,7 @@ import socket
 import subprocess  # noqa: S404
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager, redirect_stderr, suppress
 from pathlib import Path
 from types import ModuleType
@@ -473,7 +473,7 @@ def _run_app(
     path: Path,
     config: _AppRunArgs,
     builder: type[_BaseBuilder],
-) -> Iterator[int]:
+) -> Generator[int]:
     """Start a Django app on an available port."""
     restart_duration = 0.2
     port = _get_available_port()
