@@ -10,6 +10,6 @@ from server.apps.token_auth.models import CustomToken
 @final
 class HeaderCustomTokenSyncAuth(HeaderTokenSyncAuth):
     @property
-    @override
+    @override  # Note, that we can also specify custom `User` model:
     def token_model(self) -> type[TokenLikeSync[User]]:
         return CustomToken

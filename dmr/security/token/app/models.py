@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import Self, final
+from typing import Final, Self, final
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -14,7 +14,7 @@ from dmr.internal.model_fields import (
     DateTimeFieldNullable,
     UserForeignKey,
 )
-from dmr.security.token.auth.base import TokenLikeAsync, TokenLikeSync
+from dmr.security.token import TokenLikeAsync, TokenLikeSync
 from dmr.security.token.token import (
     RAW_TOKEN_SIZE,
     get_token_hash,
@@ -22,9 +22,12 @@ from dmr.security.token.token import (
 )
 from dmr.types import EMPTY
 
+_REVOKE_FIELDS: Final = ('revoked_at', 'updated_at')
+_LAST_USED_FIELDS: Final = ('last_used_at', 'updated_at')
+
 
 @final
-class Token(TokenLikeSync, TokenLikeAsync, models.Model):
+class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
     """Model representing a DB-backed opaque auth token."""
 
     user: UserForeignKey = models.ForeignKey(
@@ -90,7 +93,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):
         return not self.is_expired and self.revoked_at is None
 
     @override
-    def get_user(self) -> 'AbstractBaseUser':
+    def get_user(self) -> 'AbstractBaseUser':  # noqa: WPS615
         """Get user that this token belongs to."""
         return self.user
 
@@ -99,25 +102,17 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):
         """Async get user that this token belongs to."""
         return self.user
 
-    def _update_used(self) -> None:
-        now = dt.datetime.now(dt.UTC)
-        self.last_used_at = now
-        self.updated_at = now
-
     @override
     def mark_used(self) -> None:
         """Mark this token as used."""
         self._update_used()
-        self.save(update_fields=['last_used_at', 'updated_at'])
+        self.save(update_fields=_LAST_USED_FIELDS)
 
     @override
     async def amark_used(self) -> None:
         """Async mark this token as used."""
         self._update_used()
-        await self.asave(update_fields=['last_used_at', 'updated_at'])
-
-    def _update_revoked(self, at: dt.datetime | None = None) -> None:
-        self.revoked_at = at or dt.datetime.now(dt.UTC)
+        await self.asave(update_fields=_LAST_USED_FIELDS)
 
     @override
     def revoke(
@@ -127,7 +122,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):
     ) -> None:
         """Mark this token as revoked."""
         self._update_revoked(at)
-        self.save(update_fields=['revoked_at', 'updated_at'])
+        self.save(update_fields=_REVOKE_FIELDS)
 
     @override
     async def arevoke(
@@ -135,9 +130,9 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):
         *,
         at: dt.datetime | None = None,
     ) -> None:
-        """Async version of :func:`token_revoke`."""
+        """Async mark this token as revoked."""
         self._update_revoked(at)
-        await self.asave(update_fields=['revoked_at', 'updated_at'])
+        await self.asave(update_fields=_REVOKE_FIELDS)
 
     @classmethod
     @override
@@ -198,3 +193,11 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):
             .filter(token_hash=get_token_hash(raw_token))
             .afirst()
         )
+
+    def _update_used(self) -> None:
+        now = dt.datetime.now(dt.UTC)
+        self.last_used_at = now
+        self.updated_at = now
+
+    def _update_revoked(self, at: dt.datetime | None = None) -> None:
+        self.revoked_at = at or dt.datetime.now(dt.UTC)

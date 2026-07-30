@@ -107,6 +107,10 @@ Choose one and record it before edits:
 ### 9. Port auth, permissions, and throttling with native batteries
 
 - Keep auth and permission expectations endpoint-by-endpoint.
+- If project is using Opaque Token auth from DRF or any 3rd party tools,
+  it might be a good idea to keep the same model,
+  swapping the DMR's default `Token` model with the existing one.
+  Ask user about this explicitly
 - Keep throttling behavior and headers (for example `Retry-After`) unless drift approved.
 - Preserve method-specific permission behavior and action-level differences.
 - Prefer existing project-native auth/throttle libraries through DMR hooks.

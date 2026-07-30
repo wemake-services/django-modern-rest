@@ -89,8 +89,8 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
             bases=(
-                dmr.security.token.auth.base.TokenLikeSync,
-                dmr.security.token.auth.base.TokenLikeAsync,
+                dmr.security.token.TokenLikeSync,
+                dmr.security.token.TokenLikeAsync,
                 models.Model,
             ),
         ),

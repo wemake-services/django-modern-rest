@@ -37,7 +37,8 @@ def test_create_token(admin_user: User) -> None:
     assert token.revoked_at is None
     assert token.is_active
     assert not token.is_expired
-    assert str(token) == f"Token '{token.name}' for user_id={token.user_id}"
+    # mypy plugin is not enabled for tests:
+    assert str(token) == f"Token '{token.name}' for user_id={token.user_id}"  # type: ignore[attr-defined]
 
 
 @pytest.mark.django_db

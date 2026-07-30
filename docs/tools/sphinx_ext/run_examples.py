@@ -82,6 +82,8 @@ _MP_CONTEXT: Final = _get_mp_context()
 _BASE_DIR: Final = Path(__file__).parent.parent.parent.parent
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
+_PATH_TO_TEST_TOKEN: Final = '_build/token.txt'  # noqa: S105
+_TOKEN_TEMPLATE: Final = '$X_API_TOKEN'  # noqa: S105
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 _RGX_OPENAPI: Final = re.compile(r'# +?openapi:(.*)')
@@ -258,8 +260,10 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
+                'dmr.security.token.app',
                 'server.apps.model_simple',
                 'server.apps.model_fk',
+                'server.apps.token_auth',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -317,17 +321,29 @@ class _BaseBuilder:  # noqa: WPS214
             return
 
         from django.core.management.commands import migrate  # noqa: PLC0415
+        from django.db import OperationalError  # noqa: PLC0415
 
-        migrate.Command().run_from_argv(['python', 'run_examples.py'])
+        with suppress(OperationalError):
+            migrate.Command().run_from_argv(['python', 'run_examples.py'])
 
         from django.contrib.auth.models import User  # noqa: PLC0415
 
+        from dmr.security.token.app.models import Token  # noqa: PLC0415
+
         with suppress(IntegrityError):
-            User.objects.create_user(
+            user = User.objects.create_user(
                 'test_user',
                 email='test@example.com',
                 password='password',  # noqa: S106
+                is_active=True,
             )
+
+            _, raw_token = Token.issue(
+                user=user,
+                name='doc-token',
+                expires_at=None,
+            )
+            _StoredToken.store(raw_token)
 
         db_populated = True
 
@@ -485,7 +501,7 @@ def _run_app(
         finally:
             _shutdown_process(proc)
         return
-    raise _StartupError(str(path))
+    raise _StartupError('Cannot find free port', str(path), config)
 
 
 def _run_app_worker(
@@ -512,6 +528,11 @@ def _shutdown_process(proc: multiprocessing.Process) -> None:
 
 def _get_module_name(file_path: Path) -> str:
     return str(file_path.with_suffix('')).replace(os.sep, '.')
+
+
+def _resolve_docs_dir() -> Path:
+    cwd = Path.cwd()
+    return cwd if cwd.name == 'docs' else cwd / 'docs'
 
 
 def _resolve_tmp_example_relative_path(
@@ -801,8 +822,12 @@ def _build_curl_request(
     url_path: str,
 ) -> tuple[_CurlArgs, _CurlCleanArgs]:
     query = run_args.pop('query', '')
-    if query and not query.startswith('?'):
-        raise ValueError(f'{query!r} must start with "?"')
+    if query:
+        if not query.startswith('?'):
+            raise ValueError(f'{query!r} must start with "?"')
+        if _TOKEN_TEMPLATE in query:
+            query = query.replace(_TOKEN_TEMPLATE, _StoredToken.load(run_args))
+
     args = [
         'curl',
         '-v',
@@ -908,6 +933,9 @@ def _add_headers(
     if isinstance(headers, dict):
         headers = headers.items()
     for header_name, header_value in headers:
+        if header_value == _TOKEN_TEMPLATE:
+            header_value = _StoredToken.load(run_args)
+
         args.extend([header_flag, f'{header_name}: {header_value}'])
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
 
@@ -921,8 +949,32 @@ def _add_cookies(
 
     cookies = run_args.get('cookies', {})
     for cookie_name, cookie_value in cookies.items():
+        if cookie_value == _TOKEN_TEMPLATE:
+            cookie_value = _StoredToken.load(run_args)
+
         args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
         clean_args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
+
+
+class _StoredToken:
+    @classmethod
+    def store(cls, token: str) -> None:
+        cls._resolve_path().write_text(token)
+
+    @classmethod
+    def load(cls, run_args: _AppRunArgs) -> str:
+        from dmr.security.token.app.models import Token  # noqa: PLC0415
+
+        path = cls._resolve_path()
+        assert path.exists(), f'{_PATH_TO_TEST_TOKEN} does not exist'  # noqa: S101
+        token = path.read_text().strip()
+
+        assert Token.find_raw(token), f'Token {token!r} is not found'  # noqa: S101
+        return token
+
+    @classmethod
+    def _resolve_path(cls) -> Path:
+        return _resolve_docs_dir() / _PATH_TO_TEST_TOKEN
 
 
 def _find_imports_block_end_line(file_content: str) -> int:
@@ -1262,8 +1314,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         file_path: Path,
         clean_content: str,
     ) -> None:
-        cwd = Path.cwd()
-        docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
+        docs_dir = _resolve_docs_dir()
         relative_example_path = _resolve_tmp_example_relative_path(
             file_path,
             docs_dir,

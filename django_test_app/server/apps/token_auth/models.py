@@ -1,6 +1,6 @@
 import datetime as dt
 import secrets
-from typing import Self, final
+from typing import Final, Self, final
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -14,6 +14,8 @@ from dmr.security.token.token import (
 )
 from dmr.types import EMPTY
 
+_SALTED_TOKEN_SIZE: Final = 64
+
 
 @final
 class CustomToken(TokenLikeSync[User], models.Model):
@@ -24,11 +26,10 @@ class CustomToken(TokenLikeSync[User], models.Model):
         on_delete=models.CASCADE,
         related_name='custom_tokens',
     )
-    token_hash = models.CharField(max_length=64, unique=True)
+    token_hash = models.CharField(max_length=_SALTED_TOKEN_SIZE, unique=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     @property
     @override
@@ -52,7 +53,7 @@ class CustomToken(TokenLikeSync[User], models.Model):
     @override
     def mark_used(self) -> None:
         """Mark this token as used."""
-        # Not supported, does nothing
+        # Not supported in this example, does nothing
 
     @override
     def revoke(
@@ -62,7 +63,7 @@ class CustomToken(TokenLikeSync[User], models.Model):
     ) -> None:
         """Mark this token as revoked."""
         self.revoked_at = at or dt.datetime.now(dt.UTC)
-        self.save(update_fields=['revoked_at', 'updated_at'])
+        self.save(update_fields=['revoked_at'])
 
     @classmethod
     @override

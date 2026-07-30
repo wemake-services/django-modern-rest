@@ -1,15 +1,14 @@
 import abc
-import datetime as dt
 import importlib
 from typing import TYPE_CHECKING, Any, Generic, Self
 
 from django.http import HttpRequest
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.types import EMPTY
+from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
@@ -17,105 +16,6 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
-
-
-class _TokenLikeBase:
-    @property
-    @abc.abstractmethod
-    def is_expired(self) -> bool:
-        """Is current token expired?"""
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def is_active(self) -> bool:
-        """Is current token active?"""
-        raise NotImplementedError
-
-
-_UserT = TypeVar('_UserT', bound='AbstractBaseUser', default='AbstractBaseUser')
-
-
-class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
-    """Base sync interface for all token models."""
-
-    @abc.abstractmethod
-    def get_user(self) -> _UserT:
-        """Get user that this token belongs to."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def mark_used(self) -> None:
-        """Mark this token as used."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def revoke(
-        self,
-        *,
-        at: dt.datetime | None = None,
-    ) -> None:
-        """Revoke this token."""
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
-    def issue(
-        cls,
-        *,
-        user: _UserT,
-        name: str,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
-    ) -> tuple[Self, str]:
-        """Create new token."""
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
-    def find_raw(cls, raw_token: str) -> Self | None:
-        """Find token by its hash."""
-        raise NotImplementedError
-
-
-class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
-    """Base async interface for all token models."""
-
-    @abc.abstractmethod
-    async def aget_user(self) -> _UserT:
-        """Async get user that this token belongs to."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def amark_used(self) -> None:
-        """Async mark this token as used."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def arevoke(
-        self,
-        *,
-        at: dt.datetime | None = None,
-    ) -> None:
-        """Async revoke this token."""
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
-    async def aissue(
-        cls,
-        *,
-        user: _UserT,
-        name: str,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
-    ) -> tuple[Self, str]:
-        """Async create new token."""
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
-    async def afind_raw(cls, raw_token: str) -> Self | None:
-        """Async find token by its hash."""
-        raise NotImplementedError
 
 
 _TokenLikeT = TypeVar(
@@ -272,7 +172,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
         await self.authenticate(controller.request, raw_token)
         return self
 
-    async def authenticate(
+    async def authenticate(  # noqa: WPS217
         self,
         request: HttpRequest,
         raw_token: str,
