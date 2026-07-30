@@ -85,7 +85,7 @@ class CustomToken(TokenLikeSync[User], models.Model):
                 raw_token,
                 secret=token_secret,
                 salt=token_salt,
-                algoritm=token_algorithm,
+                algorithm=token_algorithm,
             ),
             expires_at=resolve_expiry(expires_at),
         )
@@ -106,7 +106,7 @@ class CustomToken(TokenLikeSync[User], models.Model):
             raw_token,
             secret=token_secret,
             salt=token_salt,
-            algoritm=token_algorithm,
+            algorithm=token_algorithm,
         )
         return (
             CustomToken.objects

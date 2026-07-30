@@ -204,7 +204,7 @@ def get_token_hash(
     *,
     secret: str | None,
     salt: str | None = None,
-    algoritm: str | None = None,
+    algorithm: str | None = None,
 ) -> str:
     """
     Hash the token value with the secret key.
@@ -221,7 +221,7 @@ def get_token_hash(
         salt or DEFAULT_TOKEN_SALT,
         raw_token,
         secret=secret,
-        algorithm=algoritm or DEFAULT_TOKEN_ALGORITHM,
+        algorithm=algorithm or DEFAULT_TOKEN_ALGORITHM,
     ).hexdigest()
 
 

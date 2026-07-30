@@ -157,7 +157,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
                 raw_token,
                 secret=token_secret,
                 salt=token_salt,
-                algoritm=token_algorithm,
+                algorithm=token_algorithm,
             ),
             expires_at=resolve_expiry(expires_at),
         )
@@ -185,7 +185,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
                 raw_token,
                 secret=token_secret,
                 salt=token_salt,
-                algoritm=token_algorithm,
+                algorithm=token_algorithm,
             ),
             expires_at=resolve_expiry(expires_at),
         )
@@ -206,7 +206,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
             raw_token,
             secret=token_secret,
             salt=token_salt,
-            algoritm=token_algorithm,
+            algorithm=token_algorithm,
         )
         return (
             cls.objects
@@ -230,7 +230,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
             raw_token,
             secret=token_secret,
             salt=token_salt,
-            algoritm=token_algorithm,
+            algorithm=token_algorithm,
         )
         return (
             await cls.objects

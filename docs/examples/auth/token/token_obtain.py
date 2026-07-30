@@ -13,7 +13,7 @@ class ObtainTokenAsyncController(
         views.ObtainTokenResponse,
     ],
 ):
-    # Specifing token_cls is required:
+    # Specifying token_cls is required:
     token_cls = Token
     # And multiple optional configurations:
     token_algorithm = 'sha512'
