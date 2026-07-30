@@ -43,7 +43,7 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
 
         >>> from django.db import models
         >>> from django.contrib.auth.models import User as CustomUser
-        >>> from dmr.security.token import TokenLikeSync
+        >>> from dmr.security.token.token import TokenLikeSync
 
         >>> class YourSyncToken(TokenLikeSync[CustomUser], models.Model):
         ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -105,7 +105,7 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
 
         >>> from django.db import models
         >>> from django.contrib.auth.models import User as CustomUser
-        >>> from dmr.security.token import TokenLikeAsync
+        >>> from dmr.security.token.token import TokenLikeAsync
 
         >>> class YourAsyncToken(TokenLikeSync[CustomUser], models.Model):
         ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

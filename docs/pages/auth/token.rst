@@ -172,7 +172,7 @@ defaulting to ``False``:
 
 .. code-block:: python
 
-  >>> from dmr.security.token import HeaderTokenSyncAuth
+  >>> from dmr.security.token.token import HeaderTokenSyncAuth
 
   >>> HeaderTokenSyncAuth(update_last_used=True)
   <dmr.security.token.auth.header.HeaderTokenSyncAuth object at ...>
@@ -259,7 +259,7 @@ What we care about is that you implement:
 
       >>> from django.db import models
       >>> from django.contrib.auth.models import User as CustomUser
-      >>> from dmr.security.token import TokenLikeSync
+      >>> from dmr.security.token.token import TokenLikeSync
 
       >>> class YourToken(TokenLikeSync[CustomUser], models.Model):
       ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
