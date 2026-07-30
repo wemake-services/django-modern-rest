@@ -416,6 +416,7 @@ plugins = ["covdefaults"]
 [tool.slotscheck]
 # https://slotscheck.readthedocs.io/en/latest/configuration.html
 strict-imports = false
+require-subclass = true
 exclude-slots = '''
 dmr\.streaming\.sse\.metadata:(SSEvent|_SSEventSlots)\._serialize
 '''
