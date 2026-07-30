@@ -29,6 +29,8 @@ class BaseEndpointOptimizer:
     To achieve that we provide an explicit API for that.
     """
 
+    __slots__ = ()
+
     @classmethod
     @abc.abstractmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
@@ -44,6 +46,8 @@ class BaseEndpointOptimizer:
 
 class BaseSchemaGenerator:
     """Generates JSON schema by the native serializer API."""
+
+    __slots__ = ()
 
     @classmethod
     @abc.abstractmethod

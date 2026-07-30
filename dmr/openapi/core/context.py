@@ -51,6 +51,8 @@ class OpenAPIContext:
     generation process. Provides access to different generators.
     """
 
+    __slots__ = ('config', 'config_merger', 'generators', 'registries')
+
     def __init__(
         self,
         config: 'OpenAPIConfig',

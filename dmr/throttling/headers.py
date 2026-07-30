@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 class BaseResponseHeadersProvider:
     """Base class for all header providers."""
 
+    __slots__ = ()
+
     @abc.abstractmethod
     def provide_headers_specs(self) -> dict[str, HeaderSpec]:
         """Provide a spec for headers for the OpenAPI."""
@@ -50,6 +52,8 @@ class RetryAfter(BaseResponseHeadersProvider):
       `RFC-7231 <https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.3>`_
 
     """
+
+    __slots__ = ()
 
     @override
     def provide_headers_specs(self) -> dict[str, HeaderSpec]:
@@ -95,6 +99,8 @@ class XRateLimit(BaseResponseHeadersProvider):
         https://http.dev/x-ratelimit-limit
 
     """
+
+    __slots__ = ()
 
     @override
     def provide_headers_specs(self) -> dict[str, HeaderSpec]:
@@ -150,6 +156,8 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
         https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html
 
     """
+
+    __slots__ = ()
 
     @override
     def provide_headers_specs(self) -> dict[str, HeaderSpec]:

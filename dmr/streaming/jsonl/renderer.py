@@ -22,11 +22,7 @@ class JsonLinesRenderer(StreamingRenderer):
     Uses sub-renderer to render events' data into the correct format.
     """
 
-    __slots__ = (
-        '_encoding',
-        '_linebreak',
-        '_sep',
-    )
+    __slots__ = ('_sep',)
 
     content_type = ContentType.jsonl
 

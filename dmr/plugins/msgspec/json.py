@@ -16,6 +16,8 @@ from dmr.renderers import Renderer
 class MsgspecJsonParser(Parser):
     """Parsers json bodies using ``msgspec``."""
 
+    __slots__ = ()
+
     content_type = 'application/json'
     strict: ClassVar[bool] = True
 

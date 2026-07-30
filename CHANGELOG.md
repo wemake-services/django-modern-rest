@@ -45,6 +45,7 @@ of requirements for an API to count as public.
 
 ### Misc
 
+- Enabled stricter `__slots__` checks in CI, #1183
 - Improved `pytest` plugin docs
 - Added `nanodjango` and µDjango examples
   to the micro-framework docs page, #1049

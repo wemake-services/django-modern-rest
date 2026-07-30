@@ -28,6 +28,8 @@ class SchemaCallback(Protocol):
 class OperationIdRegistry:
     """Registry for OpenAPI operation IDs."""
 
+    __slots__ = ('_operation_ids',)
+
     def __init__(self) -> None:
         """Initialize an empty operation ID registry."""
         self._operation_ids: set[str] = set()
@@ -47,6 +49,8 @@ class OperationIdRegistry:
 
 class SchemaRegistry:
     """Registry for ``Schemas``."""
+
+    __slots__ = ('_schemas', 'overrides')
 
     schema_prefix: ClassVar[str] = '#/components/schemas/'
 
@@ -122,6 +126,8 @@ class SchemaRegistry:
 
 class SecuritySchemeRegistry:
     """Registry for ``SecuritySchemes``."""
+
+    __slots__ = ('schemes',)
 
     def __init__(self) -> None:
         """Initialize empty security schemes registry."""

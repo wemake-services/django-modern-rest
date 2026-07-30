@@ -59,9 +59,7 @@ class Rate(enum.IntEnum):
 class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
     __slots__ = (
         '_algorithm',
-        '_async_lock',
         '_backend',
-        '_sync_lock',
         'cache_key',
         'duration_in_seconds',
         'max_requests',
