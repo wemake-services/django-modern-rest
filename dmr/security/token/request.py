@@ -57,6 +57,7 @@ def request_token(
         AttributeError: When *strict* is passed and *request* has no token.
         TypeError: When *sync* boolean does not match the token interface.
 
+    .. versionadded:: 0.12.0
     """
     from dmr.security.token.token import (  # noqa: PLC0415
         TokenLikeAsync,

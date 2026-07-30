@@ -4,10 +4,7 @@ from typing import TYPE_CHECKING, final
 from django.core.cache import DEFAULT_CACHE_ALIAS, BaseCache, caches
 from typing_extensions import override
 
-from dmr.settings import (
-    default_parser,
-    default_renderer,
-)
+from dmr.settings import default_parser, default_renderer
 from dmr.throttling.backends.base import (
     BaseThrottleAsyncBackend,
     BaseThrottleSyncBackend,

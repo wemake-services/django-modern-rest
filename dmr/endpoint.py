@@ -26,9 +26,7 @@ from dmr.internal.endpoint import (
     ModifyAsyncCallable,
     ModifySyncCallable,
 )
-from dmr.internal.endpoint import (
-    request_endpoint as request_endpoint,
-)
+from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (

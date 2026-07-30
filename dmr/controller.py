@@ -1,13 +1,6 @@
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Final,
-    Generic,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Generic, TypeVar
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern

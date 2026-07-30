@@ -9,10 +9,7 @@ from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.token.auth.base import (
-    BaseTokenAsyncAuth,
-    BaseTokenSyncAuth,
-)
+from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
 if TYPE_CHECKING:
@@ -89,6 +86,7 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
         ``django.middleware.csrf.CsrfViewMiddleware`` is active whenever
         this auth class is used in a browser-facing application.
 
+    .. versionadded:: 0.12.0
     """
 
     __slots__ = ('cookie_name',)
@@ -137,6 +135,7 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, BaseTokenAsyncAuth):
         ``django.middleware.csrf.CsrfViewMiddleware`` is active whenever
         this auth class is used in a browser-facing application.
 
+    .. versionadded:: 0.12.0
     """
 
     __slots__ = ('cookie_name',)

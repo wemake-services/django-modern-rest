@@ -19,6 +19,8 @@ class TokenAdmin(ModelAdmin[Token]):
     raw token value exactly once. There is no way for an admin add-form
     to display that value back to whoever submitted it, so creation
     is disabled here by design, not by oversight.
+
+    .. versionadded:: 0.12.0
     """
 
     list_display = (

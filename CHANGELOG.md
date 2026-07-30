@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## 0.12.0
 
 ### Features
 
@@ -42,6 +42,7 @@ of requirements for an API to count as public.
   but do not have `pytest_django` installed, #1167
 - CSRF is now ensured before any other actions in Django-Session auth, #1180,
 - Fixed that `jwt` extra was required in `throttling` code, #1178
+- Fixed many places that were missing `__slots__`, #1185
 
 ### Misc
 

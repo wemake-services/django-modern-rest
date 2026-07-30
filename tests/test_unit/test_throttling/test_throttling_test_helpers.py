@@ -22,11 +22,7 @@ from dmr.test.types import (
 )
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.cache_keys import RemoteAddr
-from dmr.throttling.headers import (
-    RateLimitIETFDraft,
-    RetryAfter,
-    XRateLimit,
-)
+from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 _URL: Final = '/whatever/'
 

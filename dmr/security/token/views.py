@@ -79,6 +79,7 @@ class ObtainTokenSyncController(
             Defaults to ``sha256``.
         token_expiration: Default token expiration.
 
+    .. versionadded:: 0.12.0
     """
 
     token_cls: type[TokenLikeSync[_UserT]]
@@ -178,6 +179,7 @@ class ObtainTokenAsyncController(
         token_algorithm: Salt to be used for the token hash.
             Defaults to ``sha256``.
 
+    .. versionadded:: 0.12.0
     """
 
     token_cls: type[TokenLikeAsync[_UserT]]

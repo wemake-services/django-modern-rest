@@ -7,11 +7,7 @@ from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.csrf import ensure_csrf
-from dmr.metadata import (
-    EndpointMetadata,
-    ResponseSpec,
-    ResponseSpecProvider,
-)
+from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 
