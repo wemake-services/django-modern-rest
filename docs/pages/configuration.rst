@@ -293,6 +293,8 @@ Authentication
     ...     ],
     ... }
 
+  If you use both sync and async controllers in your app,
+  consider using :class:`~dmr.security.SyncOrAsyncAuth` for settings.
   All auth types must be importable in settings.
 
 
@@ -317,6 +319,8 @@ Throttling
     ...     Settings.throttling: [SyncThrottle(10, Rate.second)],
     ... }
 
+  If you use both sync and async controllers in your app,
+  consider using :class:`~dmr.throttling.SyncOrAsyncThrottle` for settings.
   All throttle types must be importable in settings.
 
 
