@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from typing import final
 
+import django
 import pytest
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, User
@@ -106,6 +107,10 @@ async def _resolve(user: User | AnonymousUser) -> User | AnonymousUser:
     return user
 
 
+@pytest.mark.skipif(
+    django.VERSION < (5, 1),
+    reason='Django 5.1 was first to support async @login_required',
+)
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('user', 'status_code'),
@@ -130,6 +135,11 @@ async def test_async_login_required_get(
     assert response.status_code == status_code, response.content
 
 
+@pytest.mark.skipif(
+    django.VERSION < (5, 1),
+    reason='Django 5.1 was first to support async @login_required',
+)
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('user', 'status_code'),
     [
