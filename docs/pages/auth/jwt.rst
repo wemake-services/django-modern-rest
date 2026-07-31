@@ -252,10 +252,10 @@ Pre-defined views to fetch JWT tokens
   :show-inheritance:
 
 .. autoclass:: dmr.security.jwt.views.VerifyTokenSyncController
-  :members: post, verify, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
+  :members: post, verify, get_user, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.VerifyTokenAsyncController
-  :members: post, verify, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
+  :members: post, verify, get_user, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.VerifyTokenPayload
   :members:
