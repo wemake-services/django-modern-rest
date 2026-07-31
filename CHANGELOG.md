@@ -22,10 +22,11 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
-- Added missing `@sensitive_post_parameters` decorator to several auth views
+- Added missing `@sensitive_post_parameters` decorator
+  to all auth views, #1189
 - Fixed `@endpoint_decorator` passing incorrect parameters
-  to the endpoint function
-- Fixed `@endpoint_decorator` not working properly with async endpoints
+  to the endpoint function, #1189
+- Fixed `@endpoint_decorator` not working properly with async endpoints, #1189
 
 
 ## 0.12.0
