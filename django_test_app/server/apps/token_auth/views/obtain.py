@@ -33,6 +33,7 @@ class CustomObtainTokenSyncController(
         self,
         payload: ObtainTokenPayload,
     ) -> ObtainTokenPayload:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload
 
     @override
@@ -59,6 +60,7 @@ class CustomObtainTokenAsyncController(
         self,
         payload: ObtainTokenPayload,
     ) -> ObtainTokenPayload:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload
 
     @override

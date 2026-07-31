@@ -18,6 +18,16 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Bugfixes
+
+- Added missing `@sensitive_post_parameters` decorator to several auth views
+- Fixed `@endpoint_decorator` passing incorrect parameters
+  to the endpoint function
+- Fixed `@endpoint_decorator` not working properly with async endpoints
+
+
 ## 0.12.0
 
 ### Features

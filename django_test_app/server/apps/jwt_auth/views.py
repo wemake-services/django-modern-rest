@@ -34,6 +34,7 @@ class ObtainAccessAndRefreshSyncController(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload
 
     @override
@@ -69,6 +70,7 @@ class ObtainAccessAndRefreshAsyncController(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload
 
     @override
@@ -102,6 +104,7 @@ class RefreshSyncController(
 ):
     @override
     def convert_refresh_payload(self, payload: RefreshTokenPayload) -> str:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload['refresh_token']
 
     @override
@@ -138,6 +141,7 @@ class RefreshAsyncController(
         self,
         payload: RefreshTokenPayload,
     ) -> str:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload['refresh_token']
 
     @override
@@ -170,6 +174,7 @@ class VerifySyncController(
 ):
     @override
     def convert_verify_payload(self, payload: VerifyTokenPayload) -> str:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload['access_token']
 
 
@@ -185,6 +190,7 @@ class VerifyAsyncController(
         self,
         payload: VerifyTokenPayload,
     ) -> str:
+        assert self.request.sensitive_post_parameters == '__ALL__'  # noqa: S101
         return payload['access_token']
 
 

@@ -231,6 +231,7 @@ before-all = [
 # Ruff config: https://docs.astral.sh/ruff/settings
 preview = true
 fix = true
+output-prefer-rule-codes = true
 target-version = "py311"
 line-length = 80
 

@@ -10,9 +10,11 @@ from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_post_parameters
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, ResponseSpec, modify
+from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.jwt.auth import set_request_attrs
@@ -134,6 +136,7 @@ class ObtainTokensSyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.OK)
     def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
@@ -209,6 +212,7 @@ class ObtainTokensAsyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.OK)
     async def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
@@ -307,6 +311,7 @@ class RefreshTokenSyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.OK)
     def post(self, parsed_body: Body[_RefreshTokensT]) -> _TokensResponseT:
         """Refresh tokens on POST."""
@@ -384,6 +389,7 @@ class RefreshTokenAsyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.OK)
     async def post(
         self,
@@ -492,6 +498,7 @@ class VerifyTokenSyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.NO_CONTENT)
     def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
         """Verify the token on POST."""
@@ -499,18 +506,22 @@ class VerifyTokenSyncController(
 
     def verify(self, parsed_body: _VerifyTokenT) -> None:
         """Validate the access token and load its user."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
         token = self._decode_and_validate_access_token(
             self.convert_verify_payload(parsed_body),
         )
+        user = self.get_user(token)
+        self.check_auth(user)
+
+    def get_user(self, token: JWToken) -> AbstractBaseUser:
+        """Fetch user by token."""
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
+
         try:
-            user = get_user_model().objects.get(**{
+            return get_user_model().objects.get(**{
                 self.jwt_user_id_field: token.sub,
             })
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
-        self.check_auth(user)
 
     def check_auth(self, user: Any) -> None:
         """Run extra checks on the token's user, raise if something is off."""
@@ -557,6 +568,7 @@ class VerifyTokenAsyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.NO_CONTENT)
     async def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
         """Verify the token on POST."""
@@ -564,18 +576,22 @@ class VerifyTokenAsyncController(
 
     async def verify(self, parsed_body: _VerifyTokenT) -> None:
         """Validate the access token and load its user."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
         token = self._decode_and_validate_access_token(
             await self.convert_verify_payload(parsed_body),
         )
+        user = await self.get_user(token)
+        await self.check_auth(user)
+
+    async def get_user(self, token: JWToken) -> AbstractBaseUser:
+        """Fetch user by token."""
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
+
         try:
-            user = await get_user_model().objects.aget(**{
+            return await get_user_model().objects.aget(**{
                 self.jwt_user_id_field: token.sub,
             })
         except ObjectDoesNotExist:
             raise NotAuthenticatedError from None
-        await self.check_auth(user)
 
     async def check_auth(self, user: Any) -> None:
         """Run extra checks on the token's user, raise if something is off."""
