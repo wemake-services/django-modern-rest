@@ -36,7 +36,8 @@ lint:
 
 # Run all checks
 [group('dev')]
-test: lint type-check example benchmarks-type-check package (smoke 'jwt') translations unit
+test: lint type-check example benchmarks-type-check package \
+  (smoke 'jwt' 'msgspec' 'pydantic') translations unit
 
 # Run all type checkers
 [group('type-check')]
@@ -74,6 +75,8 @@ smoke *extras='':
     for extra in {{ extras }}; do \
       case "$extra" in \
         jwt) uv run python -c 'from dmr.security.jwt import *' ;; \
+        msgspec) uv run python -c 'from dmr.plugins.msgspec import *' ;; \
+        pydantic) uv run python -c 'from dmr.plugins.pydantic import *' ;; \
       esac; \
     done
 
