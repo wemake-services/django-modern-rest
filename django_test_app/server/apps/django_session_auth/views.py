@@ -14,6 +14,7 @@ from dmr.security.django_session.views import (
     DjangoSessionResponse,
     DjangoSessionSyncController,
 )
+from server.common.assertions import check_sensitive_parameters
 
 _USER_ID: Final = 'user_id'
 
@@ -31,6 +32,7 @@ class SessionSyncController(
         self,
         payload: DjangoSessionPayload,
     ) -> DjangoSessionPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
@@ -51,6 +53,7 @@ class SessionAsyncController(
         self,
         payload: DjangoSessionPayload,
     ) -> DjangoSessionPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
