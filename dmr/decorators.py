@@ -1,8 +1,9 @@
+import inspect
 from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, TypeVar
 
-from django.http import HttpResponseBase
+from django.http import HttpRequest, HttpResponseBase
 from django.utils.decorators import method_decorator
 
 from dmr.internal.middleware_wrapper import (
@@ -154,6 +155,12 @@ def endpoint_decorator(
     """
     Apply regular Django-styled decorator to a single endpoint.
 
+    Use it with "raw" endpoints that return regular data,
+    not :class:`django.http.HttpResponse`.
+
+    Basically, all endpoints that can be decorated with
+    :func:`~dmr.endpoint.modify`.
+
     Example:
 
     .. code:: python
@@ -183,6 +190,7 @@ def endpoint_decorator(
     - :func:`django.contrib.auth.decorators.login_not_required`
     - :func:`django.contrib.auth.decorators.user_passes_test`
     - :func:`django.contrib.auth.decorators.permission_required`
+    - :func:`django.views.decorators.debug.sensitive_post_parameters`
     - and any other default or custom django decorator
 
     .. warning::
@@ -199,19 +207,72 @@ def endpoint_decorator(
     def factory(
         func: Callable[_ParamT, _ReturnT],
     ) -> Callable[_ParamT, _ReturnT]:
-        @wraps(func)
-        def decorator(
-            self: 'Controller[BaseSerializer]',
-            *args: _ParamT.args,
-            **kwargs: _ParamT.kwargs,
-        ) -> _ReturnT:
-            # There's no good way in telling what is going
-            # on with the decorated function :(
-            # So, we just keep the function type as-is.
-            return original_decorator(  # type: ignore[return-value]
-                func,  # type: ignore[arg-type]
-            )(self.request, *args, **kwargs)
+
+        # What happens here?
+        # 1. We decorate `endpoint that receives `Controller`
+        #    as the first argument
+        # 2. But, `original_decorator` needs `HttpRequest`
+        #    as the first argument, so we pass it here explicitly
+        # 3. Next, we `unwrap` the original function
+        #    and pass `controller` to it. It will ignore
+        #    the passed `request` and use the `controller` argument
+        # But, we can't explain this with types :)
+        if inspect.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def decorator(  # pyright: ignore[reportRedeclaration]
+                self: 'Controller[BaseSerializer]',
+                *args: _ParamT.args,
+                **kwargs: _ParamT.kwargs,
+            ) -> _ReturnT:
+                return await original_decorator(  # type: ignore[no-any-return, misc]
+                    _unwrap_request_param(func, self),  # type: ignore[arg-type]
+                )(self.request, *args, **kwargs)
+
+        else:
+
+            @wraps(func)
+            def decorator(
+                self: 'Controller[BaseSerializer]',
+                *args: _ParamT.args,
+                **kwargs: _ParamT.kwargs,
+            ) -> _ReturnT:
+                return original_decorator(  # type: ignore[return-value]
+                    _unwrap_request_param(func, self),  # type: ignore[arg-type]
+                )(self.request, *args, **kwargs)
 
         return decorator  # type: ignore[return-value]
 
     return factory
+
+
+def _unwrap_request_param(  # noqa: WPS234
+    func: Callable[
+        Concatenate['Controller[BaseSerializer]', _ParamT],
+        _ReturnT,
+    ],
+    controller: 'Controller[BaseSerializer]',
+) -> Callable[Concatenate[HttpRequest, _ParamT], _ReturnT]:
+    if inspect.iscoroutinefunction(func):
+
+        @wraps(func)
+        async def decorator(  # pyright: ignore[reportRedeclaration]
+            request: HttpRequest,
+            /,
+            *args: _ParamT.args,
+            **kwargs: _ParamT.kwargs,
+        ) -> _ReturnT:
+            return await func(controller, *args, **kwargs)  # type: ignore[no-any-return]
+
+    else:
+
+        @wraps(func)
+        def decorator(
+            request: HttpRequest,
+            /,
+            *args: _ParamT.args,
+            **kwargs: _ParamT.kwargs,
+        ) -> _ReturnT:
+            return func(controller, *args, **kwargs)
+
+    return decorator  # type: ignore[return-value]

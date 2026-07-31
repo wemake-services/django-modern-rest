@@ -15,6 +15,7 @@ from dmr.security.token.views import (
     ObtainTokenSyncController,
 )
 from server.apps.token_auth.models import CustomToken
+from server.common.assertions import check_sensitive_parameters
 
 
 @final
@@ -33,6 +34,7 @@ class CustomObtainTokenSyncController(
         self,
         payload: ObtainTokenPayload,
     ) -> ObtainTokenPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
@@ -59,6 +61,7 @@ class CustomObtainTokenAsyncController(
         self,
         payload: ObtainTokenPayload,
     ) -> ObtainTokenPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override

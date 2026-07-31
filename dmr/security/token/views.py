@@ -8,9 +8,11 @@ from typing import Any, Generic
 from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_post_parameters
 from typing_extensions import Sentinel, TypedDict, TypeVar
 
 from dmr import Body, Controller, ResponseSpec, modify
+from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
@@ -91,6 +93,7 @@ class ObtainTokenSyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.OK)
     def post(self, parsed_body: Body[_ObtainTokenT]) -> _TokenResponseT:
         """By default tokens are acquired on post."""
@@ -191,6 +194,7 @@ class ObtainTokenAsyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(status_code=HTTPStatus.OK)
     async def post(self, parsed_body: Body[_ObtainTokenT]) -> _TokenResponseT:
         """By default tokens are acquired on post."""

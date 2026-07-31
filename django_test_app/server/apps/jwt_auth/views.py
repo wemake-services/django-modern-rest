@@ -20,6 +20,7 @@ from dmr.security.jwt.views import (  # noqa: WPS235
     VerifyTokenPayload,
     VerifyTokenSyncController,
 )
+from server.common.assertions import check_sensitive_parameters
 
 
 class ObtainAccessAndRefreshSyncController(
@@ -34,6 +35,7 @@ class ObtainAccessAndRefreshSyncController(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
@@ -69,6 +71,7 @@ class ObtainAccessAndRefreshAsyncController(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
@@ -102,6 +105,7 @@ class RefreshSyncController(
 ):
     @override
     def convert_refresh_payload(self, payload: RefreshTokenPayload) -> str:
+        check_sensitive_parameters(self.request)
         return payload['refresh_token']
 
     @override
@@ -138,6 +142,7 @@ class RefreshAsyncController(
         self,
         payload: RefreshTokenPayload,
     ) -> str:
+        check_sensitive_parameters(self.request)
         return payload['refresh_token']
 
     @override
@@ -170,6 +175,7 @@ class VerifySyncController(
 ):
     @override
     def convert_verify_payload(self, payload: VerifyTokenPayload) -> str:
+        check_sensitive_parameters(self.request)
         return payload['access_token']
 
 
@@ -185,6 +191,7 @@ class VerifyAsyncController(
         self,
         payload: VerifyTokenPayload,
     ) -> str:
+        check_sensitive_parameters(self.request)
         return payload['access_token']
 
 
