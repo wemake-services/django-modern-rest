@@ -86,7 +86,7 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke jwt
+        just smoke jwt msgspec pydantic
         just unit --cov-fail-under=98
 
 
@@ -118,7 +118,7 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke jwt
+        just smoke jwt pydantic
         just example
         uv run pytest --cov-fail-under=90
 
@@ -151,7 +151,7 @@ jobs:
 
     - name: Run checks
       run: |
-        just smoke jwt
+        just smoke jwt msgspec
         uv run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
 
 
