@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## 0.12.1
 
 ### Bugfixes
 
