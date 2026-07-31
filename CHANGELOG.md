@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## 0.12.1
+## 0.12.1 (2026-07-31)
 
 ### Bugfixes
 
@@ -29,7 +29,7 @@ of requirements for an API to count as public.
 - Fixed `@endpoint_decorator` not working properly with async endpoints, #1189
 
 
-## 0.12.0
+## 0.12.0 (2026-07-30)
 
 ### Features
 
