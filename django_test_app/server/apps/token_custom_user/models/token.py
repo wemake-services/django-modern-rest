@@ -39,6 +39,8 @@ class ApiToken(  # noqa: WPS214
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Interfaces implementation
+
     @property
     @override
     def is_expired(self) -> bool:
@@ -173,6 +175,14 @@ class ApiToken(  # noqa: WPS214
             token_algorithm=token_algorithm,
         ).afirst()
 
+    def _update_used(self) -> None:
+        """Refresh the last used timestamp, ``updated_at`` is automatic."""
+        self.last_used_at = dt.datetime.now(dt.UTC)
+
+    def _update_revoked(self, at: dt.datetime | None) -> None:
+        """Refresh the revocation timestamp, ``updated_at`` is automatic."""
+        self.revoked_at = at or dt.datetime.now(dt.UTC)
+
     @classmethod
     def _build(  # noqa: WPS211
         cls,
@@ -215,11 +225,3 @@ class ApiToken(  # noqa: WPS214
             algorithm=token_algorithm,
         )
         return cls.objects.select_related('owner').filter(token_hash=token_hash)
-
-    def _update_used(self) -> None:
-        """Refresh the last used timestamp, ``updated_at`` is automatic."""
-        self.last_used_at = dt.datetime.now(dt.UTC)
-
-    def _update_revoked(self, at: dt.datetime | None) -> None:
-        """Refresh the revocation timestamp, ``updated_at`` is automatic."""
-        self.revoked_at = at or dt.datetime.now(dt.UTC)

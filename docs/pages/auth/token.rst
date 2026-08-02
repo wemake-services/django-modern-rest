@@ -353,7 +353,7 @@ Using a custom user model
 ``TokenLikeSync`` and ``TokenLikeAsync`` are generic on the ``User`` type,
 so a custom token model can point at any
 :class:`~django.contrib.auth.models.AbstractBaseUser` subclass,
-not just ``settings.AUTH_USER_MODEL``:
+not just the default ``User`` model or basic ``AbstractBaseUser``:
 
 .. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models/user.py
   :caption: models/user.py
@@ -367,9 +367,10 @@ that works with sync and async auth at the same time:
   :caption: models/token.py
   :language: python
   :linenos:
+  :end-at: # Interfaces implementation
 
 The auth classes then declare the custom model,
-and the ``User`` type is inferred from it:
+and the exact user type variable is inferred from it:
 
 .. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/auth.py
   :caption: auth.py

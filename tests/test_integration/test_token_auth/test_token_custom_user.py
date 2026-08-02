@@ -1,7 +1,8 @@
 import datetime as dt
 import secrets
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Final, TypeAlias
+from typing import Any, Final, TypeAlias
 
 import pytest
 from django.urls import reverse
@@ -11,10 +12,11 @@ from typing_extensions import Sentinel
 
 from dmr.test import DMRAsyncClient, DMRClient
 from dmr.types import EMPTY
-from server.apps.token_custom_user.models import (  # type: ignore[import-not-found]
-    ApiToken,
-    ApiUser,
-)
+
+# Can't really import these from `server`:
+_ApiToken: TypeAlias = Any
+_ApiUser: TypeAlias = Any
+_Response: TypeAlias = Any
 
 #: Header mapping where `None` means "generate a value in the test body".
 _AuthHeader: TypeAlias = dict[str, str | None]
@@ -34,6 +36,15 @@ _WRONG_HEADERS: Final[tuple[_AuthHeader, ...]] = (
 )
 
 
+def _get_models() -> tuple[_ApiToken, _ApiUser]:
+    from server.apps.token_custom_user.models import (  # type: ignore[import-not-found]  # noqa: PLC0415
+        ApiToken,
+        ApiUser,
+    )
+
+    return ApiToken, ApiUser
+
+
 def _resolve_headers(auth_header: _AuthHeader) -> dict[str, str]:
     """Replace `None` placeholders with a random unknown token."""
     unknown_token = secrets.token_urlsafe(_UNKNOWN_TOKEN_SIZE)
@@ -44,26 +55,41 @@ def _resolve_headers(auth_header: _AuthHeader) -> dict[str, str]:
 
 
 @pytest.fixture
-def api_user(faker: Faker) -> ApiUser:
+def api_user(faker: Faker) -> _ApiUser:
     """Create a user of the custom, non-`AUTH_USER_MODEL` type."""
-    return ApiUser.objects.create(username=faker.unique.user_name())
+    _, api_user_model = _get_models()
+    return api_user_model.objects.create(username=faker.unique.user_name())
+
+
+@pytest.fixture
+def assert_not_authenticated() -> Callable[[_Response], None]:
+    """Assert that the response is the regular `401` problem detail."""
+
+    def factory(response: _Response) -> None:
+        assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+        assert response.headers['Content-Type'] == 'application/json'
+        assert response.json() == snapshot({
+            'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+        })
+
+    return factory
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('expires_at', _EXPIRY_VALUES)
 def test_sync_valid_auth(
     dmr_client: DMRClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
     *,
     expires_at: dt.datetime | Sentinel | None,
 ) -> None:
     """Ensures that sync auth works with a custom user model."""
-    token, raw_token = ApiToken.issue(
+    token_model, _ = _get_models()
+    token, raw_token = token_model.issue(
         user=api_user,
         name='test',
         expires_at=expires_at,
     )
-    assert token.created_at is not None
 
     response = dmr_client.get(_SYNC_URL, headers={'X-API-Token': raw_token})
 
@@ -73,6 +99,9 @@ def test_sync_valid_auth(
         'username': api_user.username,
         'is_active': True,
     }
+    token.refresh_from_db()  # `update_last_used` is enabled for this view
+    assert token.last_used_at is not None
+    assert token.created_at < token.updated_at
 
 
 @pytest.mark.asyncio
@@ -80,17 +109,17 @@ def test_sync_valid_auth(
 @pytest.mark.parametrize('expires_at', _EXPIRY_VALUES)
 async def test_async_valid_auth(
     dmr_async_client: DMRAsyncClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
     *,
     expires_at: dt.datetime | Sentinel | None,
 ) -> None:
     """Ensures that async auth works with a custom user model."""
-    token, raw_token = await ApiToken.aissue(
+    token_model, _ = _get_models()
+    token, raw_token = await token_model.aissue(
         user=api_user,
         name='test',
         expires_at=expires_at,
     )
-    assert token.created_at is not None
 
     response = await dmr_async_client.get(
         _ASYNC_URL,
@@ -103,12 +132,16 @@ async def test_async_valid_auth(
         'username': api_user.username,
         'is_active': True,
     }
+    await token.arefresh_from_db()  # `update_last_used` is enabled here too
+    assert token.last_used_at is not None
+    assert token.created_at < token.updated_at
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('auth_header', _WRONG_HEADERS)
 def test_sync_wrong_token_header(
     dmr_client: DMRClient,
+    assert_not_authenticated: Callable[[_Response], None],
     *,
     auth_header: _AuthHeader,
 ) -> None:
@@ -118,10 +151,7 @@ def test_sync_wrong_token_header(
         headers=_resolve_headers(auth_header),
     )
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
-    assert response.json() == snapshot({
-        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
-    })
+    assert_not_authenticated(response)
 
 
 @pytest.mark.asyncio
@@ -129,6 +159,7 @@ def test_sync_wrong_token_header(
 @pytest.mark.parametrize('auth_header', _WRONG_HEADERS)
 async def test_async_wrong_token_header(
     dmr_async_client: DMRAsyncClient,
+    assert_not_authenticated: Callable[[_Response], None],
     *,
     auth_header: _AuthHeader,
 ) -> None:
@@ -138,34 +169,35 @@ async def test_async_wrong_token_header(
         headers=_resolve_headers(auth_header),
     )
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
-    assert response.json() == snapshot({
-        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
-    })
+    assert_not_authenticated(response)
 
 
 @pytest.mark.django_db
 def test_sync_revoked_token(
     dmr_client: DMRClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
+    assert_not_authenticated: Callable[[_Response], None],
 ) -> None:
     """Ensures that `revoke` invalidates the token."""
-    token, raw_token = ApiToken.issue(user=api_user, name='test')
+    token_model, _ = _get_models()
+    token, raw_token = token_model.issue(user=api_user, name='test')
     token.revoke()
 
     response = dmr_client.get(_SYNC_URL, headers={'X-API-Token': raw_token})
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert_not_authenticated(response)
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_async_revoked_token(
     dmr_async_client: DMRAsyncClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
+    assert_not_authenticated: Callable[[_Response], None],
 ) -> None:
     """Ensures that `arevoke` invalidates the token."""
-    token, raw_token = await ApiToken.aissue(user=api_user, name='test')
+    token_model, _ = _get_models()
+    token, raw_token = await token_model.aissue(user=api_user, name='test')
     await token.arevoke()
 
     response = await dmr_async_client.get(
@@ -173,16 +205,18 @@ async def test_async_revoked_token(
         headers={'X-API-Token': raw_token},
     )
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert_not_authenticated(response)
 
 
 @pytest.mark.django_db
 def test_sync_expired_token(
     dmr_client: DMRClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
+    assert_not_authenticated: Callable[[_Response], None],
 ) -> None:
     """Ensures that an expired token is rejected by sync auth."""
-    _, raw_token = ApiToken.issue(
+    token_model, _ = _get_models()
+    _, raw_token = token_model.issue(
         user=api_user,
         name='test',
         expires_at=dt.datetime.now(dt.UTC) - dt.timedelta(days=1),
@@ -190,17 +224,19 @@ def test_sync_expired_token(
 
     response = dmr_client.get(_SYNC_URL, headers={'X-API-Token': raw_token})
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert_not_authenticated(response)
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_async_expired_token(
     dmr_async_client: DMRAsyncClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
+    assert_not_authenticated: Callable[[_Response], None],
 ) -> None:
     """Ensures that an expired token is rejected by async auth."""
-    _, raw_token = await ApiToken.aissue(
+    token_model, _ = _get_models()
+    _, raw_token = await token_model.aissue(
         user=api_user,
         name='test',
         expires_at=dt.datetime.now(dt.UTC) - dt.timedelta(days=1),
@@ -211,32 +247,36 @@ async def test_async_expired_token(
         headers={'X-API-Token': raw_token},
     )
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert_not_authenticated(response)
 
 
 @pytest.mark.django_db
 def test_sync_inactive_user(
     dmr_client: DMRClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
+    assert_not_authenticated: Callable[[_Response], None],
 ) -> None:
     """Ensures that a token of an inactive user is rejected by sync auth."""
-    _, raw_token = ApiToken.issue(user=api_user, name='test')
+    token_model, _ = _get_models()
+    _, raw_token = token_model.issue(user=api_user, name='test')
     api_user.is_active = False
     api_user.save(update_fields=['is_active'])
 
     response = dmr_client.get(_SYNC_URL, headers={'X-API-Token': raw_token})
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert_not_authenticated(response)
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_async_inactive_user(
     dmr_async_client: DMRAsyncClient,
-    api_user: ApiUser,
+    api_user: _ApiUser,
+    assert_not_authenticated: Callable[[_Response], None],
 ) -> None:
     """Ensures that a token of an inactive user is rejected by async auth."""
-    _, raw_token = await ApiToken.aissue(user=api_user, name='test')
+    token_model, _ = _get_models()
+    _, raw_token = await token_model.aissue(user=api_user, name='test')
     api_user.is_active = False
     await api_user.asave(update_fields=['is_active'])
 
@@ -245,44 +285,4 @@ async def test_async_inactive_user(
         headers={'X-API-Token': raw_token},
     )
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
-
-
-@pytest.mark.django_db
-def test_sync_last_used_is_tracked(
-    dmr_client: DMRClient,
-    api_user: ApiUser,
-) -> None:
-    """Ensures that `mark_used` bumps both timestamps."""
-    token, raw_token = ApiToken.issue(user=api_user, name='test')
-    assert token.last_used_at is None
-
-    response = dmr_client.get(_SYNC_URL, headers={'X-API-Token': raw_token})
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    used_token = ApiToken.objects.get(pk=token.pk)
-    assert used_token.last_used_at is not None
-    assert used_token.created_at == token.created_at
-    assert used_token.updated_at > token.updated_at
-
-
-@pytest.mark.asyncio
-@pytest.mark.django_db(transaction=True)
-async def test_async_last_used_is_tracked(
-    dmr_async_client: DMRAsyncClient,
-    api_user: ApiUser,
-) -> None:
-    """Ensures that `amark_used` bumps both timestamps."""
-    token, raw_token = await ApiToken.aissue(user=api_user, name='test')
-    assert token.last_used_at is None
-
-    response = await dmr_async_client.get(
-        _ASYNC_URL,
-        headers={'X-API-Token': raw_token},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    used_token = await ApiToken.objects.aget(pk=token.pk)
-    assert used_token.last_used_at is not None
-    assert used_token.created_at == token.created_at
-    assert used_token.updated_at > token.updated_at
+    assert_not_authenticated(response)
