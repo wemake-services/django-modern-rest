@@ -106,6 +106,14 @@ Routing
 .. autofunction:: dmr.routing.path
 
 
+Adapters
+--------
+
+.. autofunction:: dmr.adapters.adapt_django_view
+
+.. autodata:: dmr.adapters.RawPathItem
+
+
 Meta mixins
 -----------
 

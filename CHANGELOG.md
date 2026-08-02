@@ -18,6 +18,20 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Features
+
+- Added `dmr.adapters.adapt_django_view` to document plain Django views
+  in the generated OpenAPI schema without rewriting them
+  as controllers, #1193
+
+### Bugfixes
+
+- Fixed `TokenLikeSync` and `TokenLikeAsync` doc examples
+  registering real models in the app registry, #1196
+
+
 ## 0.12.1 (2026-07-31)
 
 ### Bugfixes
