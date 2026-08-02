@@ -49,7 +49,7 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
         ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
         ...
         ...     class Meta:  # Just needed for the doctest example
-        ...         app_label = 'token_auth'
+        ...         abstract = True
 
     .. versionadded:: 0.12.0
     """
@@ -137,11 +137,11 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
         >>> from django.contrib.auth.models import User as CustomUser
         >>> from dmr.security.token.token import TokenLikeAsync
 
-        >>> class YourAsyncToken(TokenLikeSync[CustomUser], models.Model):
+        >>> class YourAsyncToken(TokenLikeAsync[CustomUser], models.Model):
         ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
         ...
         ...     class Meta:  # Just needed for the doctest example
-        ...         app_label = 'token_auth'
+        ...         abstract = True
 
     .. versionadded:: 0.12.0
     """

@@ -322,7 +322,7 @@ What we care about is that you implement:
       ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
       ...
       ...     class Meta:  # Just needed for the doctest example
-      ...         app_label = 'token_auth'
+      ...         abstract = True
 
   Otherwise, you would be required to work with
   :class:`~django.contrib.auth.models.AbstractBaseUser`
