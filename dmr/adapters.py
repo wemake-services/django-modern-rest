@@ -6,6 +6,7 @@ as it would under plain ``django.urls.path``. See :func:`adapt_django_view`.
 """
 
 import dataclasses
+import re
 from collections.abc import Mapping
 from types import MappingProxyType
 from typing import (
@@ -22,10 +23,16 @@ from typing import (
 from django.views import View
 
 from dmr.openapi.core.registry import ComponentRegistry
-from dmr.openapi.objects import Components, PathItem
+from dmr.openapi.objects import (
+    Components,
+    Discriminator,
+    PathItem,
+    Reference,
+)
 from dmr.openapi.objects.openapi import normalize_key
 
 if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
     from django.urls import URLPattern
 
     from dmr.openapi.core.context import OpenAPIContext
@@ -54,11 +61,23 @@ Maps a component category, such as ``responses``, to the components in it.
 #: The only path item key that is not a valid python identifier.
 _REF_KEY: Final = '$ref'
 
+#: Discriminator keys, the one place a reference has no ``$ref`` key.
+_DISCRIMINATOR_KEY: Final = 'discriminator'
+_MAPPING_KEY: Final = 'mapping'
+
 #: Contributable component categories, keyed by their document spelling.
 _COMPONENT_FIELDS: Final = MappingProxyType({
     normalize_key(category): category
     for category in ComponentRegistry.categories
 })
+
+#: Reference targets a prefix applies to, one per contributable category.
+_REF_BASES: Final = tuple(
+    f'#/components/{category}/' for category in _COMPONENT_FIELDS
+)
+
+#: The characters an OpenAPI component name is allowed to be spelled with.
+_COMPONENT_NAME_PATTERN: Final = re.compile(r'[a-zA-Z0-9._-]*')
 
 
 class _AdaptedView:
@@ -88,6 +107,7 @@ def adapt_django_view(
     *,
     openapi: 'PathItem | RawPathItem',
     components: 'Components | RawComponents | None' = None,
+    component_prefix: str = '',
 ) -> type[_ViewT]:
     """
     Document a plain Django view in the generated OpenAPI specification.
@@ -161,8 +181,39 @@ def adapt_django_view(
     Any other category is rejected rather than dropped, in either spelling.
 
     Contributed components share one document with the schemas the framework
-    generates from controllers, and a generated schema always wins a name
-    clash, so give them names of your own.
+    generates from controllers, and names imported from a foreign description
+    are rarely unique enough for that. Pass *component_prefix* to namespace
+    the whole description — the component names and every reference to them,
+    in the path item and nested inside other components alike:
+
+    .. code:: python
+
+        >>> LegacyExport = adapt_django_view(
+        ...     LegacyExportView,
+        ...     openapi={
+        ...         'get': {
+        ...             'responses': {
+        ...                 '200': {'$ref': '#/components/responses/Csv'},
+        ...             },
+        ...         },
+        ...     },
+        ...     components={
+        ...         'responses': {'Csv': {'description': 'CSV payload'}},
+        ...     },
+        ...     component_prefix='Legacy',
+        ... )
+
+    That view is documented under ``#/components/responses/LegacyCsv``,
+    leaving a ``Csv`` of the project's own untouched. The prefix describes
+    the view rather than its contribution, so a view that only references
+    what another view under the same prefix contributes takes it too.
+
+    Because the prefix is applied to every reference, a description that
+    points at a component the framework generates should not carry one.
+
+    Two definitions that end up under the same final name are reported as an
+    error rather than silently merged, whether they come from two adapted
+    views or from a view and the framework's own schemas.
 
     A mapping is used verbatim below its top level, so it must already be
     spelled the way OpenAPI spells it: ``operationId``, not ``operation_id``.
@@ -186,6 +237,9 @@ def adapt_django_view(
         components: Reusable components the path item references, either as
             :class:`~dmr.openapi.objects.components.Components`
             or as a plain mapping.
+        component_prefix: Namespace for the component names of this view and
+            for every reference to them. Empty by default, which documents
+            the view under the names it was given.
 
     Returns:
         A subclass of *view_class* that reports the given path item.
@@ -193,6 +247,7 @@ def adapt_django_view(
     Raises:
         TypeError: If a mapping contains a key that is not a path item field,
             or a component category that cannot be contributed.
+        ValueError: If *component_prefix* cannot spell a component name.
 
     Warning:
         Adapting a view does **not** enrol it into the ``dmr`` request
@@ -204,16 +259,27 @@ def adapt_django_view(
     .. versionadded:: 0.13.0
 
     """
+    _check_prefix(component_prefix)
+    path_item = (
+        openapi if isinstance(openapi, PathItem) else _build_path_item(openapi)
+    )
+    adapted_components = _adapt_components(components)
+    if component_prefix:
+        path_item = cast(
+            'PathItem',
+            _prefix_refs(path_item, component_prefix),
+        )
+        adapted_components = _prefix_components(
+            adapted_components,
+            component_prefix,
+        )
+
     namespace: dict[str, Any] = {
         '__doc__': view_class.__doc__,
         '__module__': view_class.__module__,
         '__qualname__': view_class.__qualname__,
-        '_openapi': (
-            openapi
-            if isinstance(openapi, PathItem)
-            else _build_path_item(openapi)
-        ),
-        '_openapi_components': _adapt_components(components),
+        '_openapi': path_item,
+        '_openapi_components': adapted_components,
     }
     return cast(
         'type[_ViewT]',
@@ -269,6 +335,125 @@ def _check_components(components: Components) -> Components:
             _reject_category(normalize_key(field.name))
 
     return components
+
+
+def _check_prefix(prefix: str) -> None:
+    if _COMPONENT_NAME_PATTERN.fullmatch(prefix) is None:
+        raise ValueError(
+            f'{prefix!r} cannot prefix an OpenAPI component name, which is '
+            'spelled with letters, digits, dots, dashes and underscores only',
+        )
+
+
+def _prefix_components(
+    components: Components | None,
+    prefix: str,
+) -> Components | None:
+    if components is None:
+        return None
+
+    namespaced: dict[str, Any] = {}
+    for category in ComponentRegistry.categories:
+        entries = getattr(components, category)
+        if entries is not None:
+            namespaced[category] = {
+                f'{prefix}{name}': _prefix_refs(component, prefix)
+                for name, component in entries.items()
+            }
+
+    return dataclasses.replace(components, **namespaced)
+
+
+def _prefix_refs(node: Any, prefix: str) -> Any:
+    if isinstance(node, Mapping):
+        return _prefix_mapping_refs(node, prefix)  # pyright: ignore[reportUnknownArgumentType]
+    if isinstance(node, list):
+        return _prefix_list_refs(node, prefix)  # pyright: ignore[reportUnknownArgumentType]
+    if dataclasses.is_dataclass(node) and not isinstance(node, type):
+        return _prefix_object_refs(node, prefix)
+    return node
+
+
+def _prefix_mapping_refs(
+    node: Mapping[str, Any],
+    prefix: str,
+) -> dict[str, Any]:
+    return {
+        key: _prefix_keyed_value(key, node_value, prefix)
+        for key, node_value in node.items()
+    }
+
+
+def _prefix_keyed_value(key: str, node_value: Any, prefix: str) -> Any:
+    if key == _REF_KEY and isinstance(node_value, str):
+        return _prefix_ref(node_value, prefix)
+    if key == _DISCRIMINATOR_KEY and isinstance(node_value, Mapping):
+        return _prefix_raw_discriminator(node_value, prefix)  # pyright: ignore[reportUnknownArgumentType]
+    return _prefix_refs(node_value, prefix)
+
+
+def _prefix_raw_discriminator(
+    node: Mapping[str, Any],
+    prefix: str,
+) -> dict[str, Any]:
+    return {
+        key: (
+            _prefix_discriminator_targets(node_value, prefix)
+            if key == _MAPPING_KEY
+            else node_value
+        )
+        for key, node_value in node.items()
+    }
+
+
+def _prefix_discriminator_targets(
+    mapping: Mapping[str, str] | None,
+    prefix: str,
+) -> dict[str, str] | None:
+    if mapping is None:
+        return None
+    return {
+        payload: _prefix_schema_target(target, prefix)
+        for payload, target in mapping.items()
+    }
+
+
+def _prefix_schema_target(target: str, prefix: str) -> str:
+    if '/' in target:
+        return _prefix_ref(target, prefix)
+    # A discriminator may also name a schema outright, which the
+    # specification resolves against `#/components/schemas/` for us:
+    return f'{prefix}{target}'
+
+
+def _prefix_list_refs(node: list[Any], prefix: str) -> list[Any]:
+    return [_prefix_refs(list_item, prefix) for list_item in node]
+
+
+def _prefix_object_refs(node: 'DataclassInstance', prefix: str) -> Any:
+    if isinstance(node, Reference):
+        return dataclasses.replace(node, ref=_prefix_ref(node.ref, prefix))
+    if isinstance(node, Discriminator):
+        return dataclasses.replace(
+            node,
+            mapping=_prefix_discriminator_targets(node.mapping, prefix),
+        )
+
+    return dataclasses.replace(
+        node,
+        **{
+            field.name: _prefix_refs(getattr(node, field.name), prefix)
+            for field in dataclasses.fields(node)
+            if field.init
+        },
+    )
+
+
+def _prefix_ref(ref: str, prefix: str) -> str:
+    for base in _REF_BASES:
+        if ref.startswith(base):
+            return f'{base}{prefix}{ref.removeprefix(base)}'
+    return ref
 
 
 def _reject_category(key: str) -> NoReturn:

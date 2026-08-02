@@ -29,6 +29,12 @@ of requirements for an API to count as public.
   so an adapted view can contribute the reusable `schemas`, `responses`,
   `parameters`, `examples` and `requestBodies` its path item
   references, #1193
+- Added the `component_prefix` argument to `dmr.adapters.adapt_django_view`,
+  which namespaces the components a view contributes and every reference
+  to them, so names imported from a foreign specification cannot displace
+  the project's own, #1193
+- Contributing two different definitions of one component name now raises,
+  instead of silently keeping one of them, #1193
 
 ### Bugfixes
 

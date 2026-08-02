@@ -1,0 +1,98 @@
+# serializer version: 1
+# name: test_prefixed_and_unprefixed_components
+  '''
+  {
+    "info": {
+      "title": "Your Awesome Project",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/report/": {
+        "get": {
+          "summary": "Build a report",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/LegacyFormat"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/LegacyFilter"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/LegacyBuilt"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/api/export/": {
+        "get": {
+          "summary": "Export a report",
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Exported"
+            }
+          },
+          "deprecated": false
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "LegacyErrorModel": {
+          "properties": {
+            "since": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "responses": {
+        "LegacyBuilt": {
+          "description": "The built report"
+        },
+        "Exported": {
+          "description": "The exported report"
+        }
+      },
+      "parameters": {
+        "LegacyFormat": {
+          "deprecated": false,
+          "examples": {
+            "csv": {
+              "$ref": "#/components/examples/LegacyCsv"
+            }
+          },
+          "name": "format",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "examples": {
+        "LegacyCsv": {
+          "summary": "Comma separated",
+          "value": "csv"
+        }
+      },
+      "requestBodies": {
+        "LegacyFilter": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegacyErrorModel"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "securitySchemes": {}
+    }
+  }
+  '''
+# ---

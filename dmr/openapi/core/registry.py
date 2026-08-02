@@ -12,6 +12,7 @@ from dmr.openapi.objects import (
     Schema,
     SecurityScheme,
 )
+from dmr.openapi.objects.openapi import normalize_key
 from dmr.types import EMPTY
 
 
@@ -188,12 +189,14 @@ class ComponentRegistry:
         self.request_bodies: dict[str, RequestBody | Reference] = {}
 
     def contribute(self, components: Components) -> None:
-        """Merge the given components into the registry."""
-        self.schemas.update(components.schemas or {})
-        self.responses.update(components.responses or {})
-        self.parameters.update(components.parameters or {})
-        self.examples.update(components.examples or {})
-        self.request_bodies.update(components.request_bodies or {})
+        """
+        Merge the given components into the registry.
+
+        Contributing the very same definition twice is allowed, because one
+        description is commonly shared by several adapted views.
+        """
+        for category in self.categories:
+            self._merge(category, getattr(components, category) or {})
 
     def build(
         self,
@@ -204,9 +207,17 @@ class ComponentRegistry:
         """
         Build the ``components`` section of the document.
 
-        Generated schemas win over contributed ones of the same name, so a
-        contribution can never replace what the pipeline produced.
+        Contributed schemas share the section with the ones the pipeline
+        generates, so a name carrying both definitions is reported here.
         """
+        for schema_name, generated in schemas.items():
+            _check_conflict(
+                'schemas',
+                schema_name,
+                self.schemas.get(schema_name),
+                generated,
+            )
+
         return Components(
             schemas=dict(sorted((self.schemas | schemas).items())),
             security_schemes=security_schemes,
@@ -214,6 +225,29 @@ class ComponentRegistry:
             parameters=self.parameters or None,
             examples=self.examples or None,
             request_bodies=self.request_bodies or None,
+        )
+
+    def _merge(self, category: str, contributed: dict[str, Any]) -> None:
+        registered: dict[str, Any] = getattr(self, category)
+        for name, component in contributed.items():
+            _check_conflict(category, name, registered.get(name), component)
+            registered[name] = component
+
+
+def _check_conflict(
+    category: str,
+    name: str,
+    existing: Any | None,
+    component: Any,
+) -> None:
+    if existing is not None and existing != component:
+        raise ValueError(
+            f'Component {name!r} is defined twice under '
+            f'{normalize_key(category)!r} in the OpenAPI specification, '
+            'with two different definitions. Components contributed by an '
+            'adapted view share one document with the ones the framework '
+            'generates, so rename the contribution or namespace it with the '
+            '`component_prefix` argument of `adapt_django_view`.',
         )
 
 
