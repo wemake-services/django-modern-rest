@@ -307,22 +307,8 @@ What we care about is that you implement:
 .. note::
 
   Custom token models can support custom user models as well.
-  Our interfaces are even generic on the ``User`` type.
-
-  If you want to customize the ``User`` object that you are working with,
-  just inherit from a generic version, like so:
-
-  .. code:: python
-
-      >>> from django.db import models
-      >>> from django.contrib.auth.models import User as CustomUser
-      >>> from dmr.security.token.token import TokenLikeSync
-
-      >>> class YourToken(TokenLikeSync[CustomUser], models.Model):
-      ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-      ...
-      ...     class Meta:  # Just needed for the doctest example
-      ...         abstract = True
+  Our interfaces are even generic on the ``User`` type,
+  see :ref:`custom-user-token-model` below.
 
   Otherwise, you would be required to work with
   :class:`~django.contrib.auth.models.AbstractBaseUser`
@@ -358,6 +344,47 @@ API stability is important!
   This way you can also have different auth classes
   that work with different models types,
   if this is a business requirement you have.
+
+.. _custom-user-token-model:
+
+Using a custom user model
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``TokenLikeSync`` and ``TokenLikeAsync`` are generic on the ``User`` type,
+so a custom token model can point at any
+:class:`~django.contrib.auth.models.AbstractBaseUser` subclass,
+not just ``settings.AUTH_USER_MODEL``:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models.py
+  :caption: models.py
+  :language: python
+  :pyobject: ApiUser
+
+Parametrize both interfaces with it to get a model
+that works with sync and async auth at the same time.
+The full implementation of the interface methods lives in
+``django_test_app/server/apps/token_custom_user/models.py``:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models.py
+  :caption: models.py
+  :language: python
+  :start-at: class ApiToken(
+  :end-at: last_used_at = models.DateTimeField(null=True, blank=True)
+
+The auth classes then declare the custom model,
+and the ``User`` type is inferred from it:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/auth.py
+  :caption: auth.py
+  :language: python
+  :linenos:
+
+Which is all that is needed to protect both sync and async views:
+
+.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/views.py
+  :caption: views.py
+  :language: python
+  :linenos:
 
 .. seealso::
 

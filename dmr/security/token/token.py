@@ -37,19 +37,14 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
 
     This type is generic on the user type.
     If you want to customize the ``User`` object that you are working with,
-    just inherit from a generic version, like so:
+    just inherit from a generic version: ``TokenLikeSync[CustomUser]``.
+    Otherwise, you would work with
+    :class:`~django.contrib.auth.models.AbstractBaseUser`,
+    which is the default type parameter.
 
-    .. code:: python
+    .. seealso::
 
-        >>> from django.db import models
-        >>> from django.contrib.auth.models import User as CustomUser
-        >>> from dmr.security.token.token import TokenLikeSync
-
-        >>> class YourSyncToken(TokenLikeSync[CustomUser], models.Model):
-        ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-        ...
-        ...     class Meta:  # Just needed for the doctest example
-        ...         abstract = True
+        :ref:`custom-user-token-model` for a complete example.
 
     .. versionadded:: 0.12.0
     """
@@ -129,19 +124,14 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
 
     This type is generic on the user type.
     If you want to customize the ``User`` object that you are working with,
-    just inherit from a generic version, like so:
+    just inherit from a generic version: ``TokenLikeAsync[CustomUser]``.
+    Otherwise, you would work with
+    :class:`~django.contrib.auth.models.AbstractBaseUser`,
+    which is the default type parameter.
 
-    .. code:: python
+    .. seealso::
 
-        >>> from django.db import models
-        >>> from django.contrib.auth.models import User as CustomUser
-        >>> from dmr.security.token.token import TokenLikeAsync
-
-        >>> class YourAsyncToken(TokenLikeAsync[CustomUser], models.Model):
-        ...     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-        ...
-        ...     class Meta:  # Just needed for the doctest example
-        ...         abstract = True
+        :ref:`custom-user-token-model` for a complete example.
 
     .. versionadded:: 0.12.0
     """
