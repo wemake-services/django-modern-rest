@@ -21,6 +21,7 @@ from server.apps.model_simple import urls as model_simple_urls
 from server.apps.negotiations import urls as negotiations_urls
 from server.apps.openapi.config import get_config
 from server.apps.token_auth import urls as token_auth_urls
+from server.apps.token_custom_user import urls as token_custom_user_urls
 
 router = Router(
     prefix='api/',
@@ -79,6 +80,13 @@ router = Router(
             include(
                 (token_auth_urls.router.urls, 'token_auth'),
                 namespace='token_auth',
+            ),
+        ),
+        path(
+            token_custom_user_urls.router.prefix,
+            include(
+                (token_custom_user_urls.router.urls, 'token_custom_user'),
+                namespace='token_custom_user',
             ),
         ),
         path(

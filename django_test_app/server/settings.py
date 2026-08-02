@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'server.apps.jwt_auth',
     'server.apps.django_session_auth',
     'server.apps.token_auth',
+    'server.apps.token_custom_user',
     'server.apps.etag',
     # Django:
     'django.contrib.admin',
