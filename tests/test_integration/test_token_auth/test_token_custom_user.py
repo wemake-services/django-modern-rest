@@ -1,10 +1,12 @@
 import datetime as dt
+import json
 import secrets
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any, Final, TypeAlias
 
 import pytest
+from django.http import HttpResponse, HttpResponseBase
 from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
@@ -16,7 +18,6 @@ from dmr.types import EMPTY
 # Can't really import these from `server`:
 _ApiToken: TypeAlias = Any
 _ApiUser: TypeAlias = Any
-_Response: TypeAlias = Any
 
 #: Header mapping where `None` means "generate a value in the test body".
 _AuthHeader: TypeAlias = dict[str, str | None]
@@ -62,13 +63,15 @@ def api_user(faker: Faker) -> _ApiUser:
 
 
 @pytest.fixture
-def assert_not_authenticated() -> Callable[[_Response], None]:
+def assert_not_authenticated() -> Callable[[HttpResponseBase], None]:
     """Assert that the response is the regular `401` problem detail."""
 
-    def factory(response: _Response) -> None:
+    def factory(response: HttpResponseBase) -> None:
+        # Test clients are only typed to return `HttpResponseBase`:
+        assert isinstance(response, HttpResponse), response
         assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
         assert response.headers['Content-Type'] == 'application/json'
-        assert response.json() == snapshot({
+        assert json.loads(response.content) == snapshot({
             'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
         })
 
@@ -90,6 +93,7 @@ def test_sync_valid_auth(
         name='test',
         expires_at=expires_at,
     )
+    saved_updated_at = token.updated_at
 
     response = dmr_client.get(_SYNC_URL, headers={'X-API-Token': raw_token})
 
@@ -101,7 +105,7 @@ def test_sync_valid_auth(
     }
     token.refresh_from_db()  # `update_last_used` is enabled for this view
     assert token.last_used_at is not None
-    assert token.created_at < token.updated_at
+    assert token.updated_at > saved_updated_at
 
 
 @pytest.mark.asyncio
@@ -120,6 +124,7 @@ async def test_async_valid_auth(
         name='test',
         expires_at=expires_at,
     )
+    saved_updated_at = token.updated_at
 
     response = await dmr_async_client.get(
         _ASYNC_URL,
@@ -134,14 +139,14 @@ async def test_async_valid_auth(
     }
     await token.arefresh_from_db()  # `update_last_used` is enabled here too
     assert token.last_used_at is not None
-    assert token.created_at < token.updated_at
+    assert token.updated_at > saved_updated_at
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('auth_header', _WRONG_HEADERS)
 def test_sync_wrong_token_header(
     dmr_client: DMRClient,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
     *,
     auth_header: _AuthHeader,
 ) -> None:
@@ -159,7 +164,7 @@ def test_sync_wrong_token_header(
 @pytest.mark.parametrize('auth_header', _WRONG_HEADERS)
 async def test_async_wrong_token_header(
     dmr_async_client: DMRAsyncClient,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
     *,
     auth_header: _AuthHeader,
 ) -> None:
@@ -176,7 +181,7 @@ async def test_async_wrong_token_header(
 def test_sync_revoked_token(
     dmr_client: DMRClient,
     api_user: _ApiUser,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
 ) -> None:
     """Ensures that `revoke` invalidates the token."""
     token_model, _ = _get_models()
@@ -193,7 +198,7 @@ def test_sync_revoked_token(
 async def test_async_revoked_token(
     dmr_async_client: DMRAsyncClient,
     api_user: _ApiUser,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
 ) -> None:
     """Ensures that `arevoke` invalidates the token."""
     token_model, _ = _get_models()
@@ -212,7 +217,7 @@ async def test_async_revoked_token(
 def test_sync_expired_token(
     dmr_client: DMRClient,
     api_user: _ApiUser,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
 ) -> None:
     """Ensures that an expired token is rejected by sync auth."""
     token_model, _ = _get_models()
@@ -232,7 +237,7 @@ def test_sync_expired_token(
 async def test_async_expired_token(
     dmr_async_client: DMRAsyncClient,
     api_user: _ApiUser,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
 ) -> None:
     """Ensures that an expired token is rejected by async auth."""
     token_model, _ = _get_models()
@@ -254,7 +259,7 @@ async def test_async_expired_token(
 def test_sync_inactive_user(
     dmr_client: DMRClient,
     api_user: _ApiUser,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
 ) -> None:
     """Ensures that a token of an inactive user is rejected by sync auth."""
     token_model, _ = _get_models()
@@ -272,7 +277,7 @@ def test_sync_inactive_user(
 async def test_async_inactive_user(
     dmr_async_client: DMRAsyncClient,
     api_user: _ApiUser,
-    assert_not_authenticated: Callable[[_Response], None],
+    assert_not_authenticated: Callable[[HttpResponseBase], None],
 ) -> None:
     """Ensures that a token of an inactive user is rejected by async auth."""
     token_model, _ = _get_models()
