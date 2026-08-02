@@ -113,6 +113,8 @@ Adapters
 
 .. autodata:: dmr.adapters.RawPathItem
 
+.. autodata:: dmr.adapters.RawComponents
+
 
 Meta mixins
 -----------

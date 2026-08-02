@@ -12,7 +12,7 @@ from typing_extensions import override
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
 from dmr.openapi.collector import controller_mapping_collector
-from dmr.openapi.objects import Components, OpenAPI, Paths
+from dmr.openapi.objects import OpenAPI, Paths
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -86,7 +86,7 @@ class Router:
                 router=self,
             )
 
-        components = Components(
+        components = context.registries.component.build(
             schemas=context.registries.schema.schemas,
             security_schemes=context.registries.security_scheme.schemes,
         )

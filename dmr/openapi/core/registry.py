@@ -2,7 +2,16 @@ from typing import Any, ClassVar, Protocol
 
 from typing_extensions import Sentinel
 
-from dmr.openapi.objects import Reference, Schema, SecurityScheme
+from dmr.openapi.objects import (
+    Components,
+    Example,
+    Parameter,
+    Reference,
+    RequestBody,
+    Response,
+    Schema,
+    SecurityScheme,
+)
 from dmr.types import EMPTY
 
 
@@ -140,6 +149,72 @@ class SecuritySchemeRegistry:
     ) -> None:
         """Register security scheme in registry."""
         self.schemes[name] = scheme
+
+
+class ComponentRegistry:
+    """
+    Registry for reusable components contributed from outside the pipeline.
+
+    The framework derives schemas and security schemes from controllers on its
+    own. Everything collected here comes from a description supplied by hand,
+    the typical source being an adapted plain Django view whose path item
+    references components the pipeline knows nothing about.
+    """
+
+    __slots__ = (
+        'examples',
+        'parameters',
+        'request_bodies',
+        'responses',
+        'schemas',
+    )
+
+    #: Component categories that can be contributed, as field names.
+    categories: ClassVar[tuple[str, ...]] = (
+        'schemas',
+        'responses',
+        'parameters',
+        'examples',
+        'request_bodies',
+    )
+
+    def __init__(self) -> None:
+        """Initialize empty registers for every contributed category."""
+        self.schemas: dict[str, Schema] = {}
+        self.responses: dict[str, Response | Reference] = {}
+        # An OpenAPI category name, not a variable name we chose:
+        self.parameters: dict[str, Parameter | Reference] = {}  # noqa: WPS110
+        self.examples: dict[str, Example | Reference] = {}
+        self.request_bodies: dict[str, RequestBody | Reference] = {}
+
+    def contribute(self, components: Components) -> None:
+        """Merge the given components into the registry."""
+        self.schemas.update(components.schemas or {})
+        self.responses.update(components.responses or {})
+        self.parameters.update(components.parameters or {})
+        self.examples.update(components.examples or {})
+        self.request_bodies.update(components.request_bodies or {})
+
+    def build(
+        self,
+        *,
+        schemas: dict[str, Schema],
+        security_schemes: dict[str, SecurityScheme | Reference],
+    ) -> Components:
+        """
+        Build the ``components`` section of the document.
+
+        Generated schemas win over contributed ones of the same name, so a
+        contribution can never replace what the pipeline produced.
+        """
+        return Components(
+            schemas=dict(sorted((self.schemas | schemas).items())),
+            security_schemes=security_schemes,
+            responses=self.responses or None,
+            parameters=self.parameters or None,
+            examples=self.examples or None,
+            request_bodies=self.request_bodies or None,
+        )
 
 
 def _check_hashes(

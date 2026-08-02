@@ -1,20 +1,38 @@
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Protocol, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
 if TYPE_CHECKING:
-    from dmr.controller import Controller
-    from dmr.serializer import BaseSerializer
+    from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.objects import PathItem
+    from dmr.routing import Router
+
+
+class SupportsPathItem(Protocol):
+    """
+    What the collector needs from a view to document it.
+
+    Both a :class:`~dmr.controller.Controller` and a plain Django view
+    adapted by :func:`~dmr.adapters.adapt_django_view` satisfy this.
+    """
+
+    @classmethod
+    def get_path_item(
+        cls,
+        path: str,
+        pattern: URLPattern,
+        context: 'OpenAPIContext',
+        router: 'Router',
+    ) -> 'PathItem':
+        """Describe the view as a single OpenAPI path item."""
+        ...
+
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
-_PathControllerSpec: TypeAlias = tuple[
-    str,
-    URLPattern,
-    'Controller[BaseSerializer]',
-]
+_PathControllerSpec: TypeAlias = tuple[str, URLPattern, type[SupportsPathItem]]
 
 
 def _process_pattern(
