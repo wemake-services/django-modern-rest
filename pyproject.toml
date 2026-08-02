@@ -306,12 +306,12 @@ ignore = [
   "PLR6301", # do not require classmethod / staticmethod when self not used
   "PLC0414", # do not raise on `as` re-exports
   "PLW2901", # allow to redefine iteration targets in for loops
-  "TRY003",  # long exception messages from `tryceratops`
   "RUF029",  # we decide `async` functions based on API, not `await` usage
   "RUF067",  # wps handles `__init__.py` logic better
-  "RUF105",  # we prefer `# noqa`, over `# ruff` comments
-  "RUF106",  #
-  "RUF201",  #
+  "RUF105",  # keep old `# noqa` comments style, not `# ruff` comments
+  "RUF106",  # we prefer old error codes
+  "RUF201",  # keep old rule codes instead of verbose names
+  "TRY003",  # long exception messages from `tryceratops`
 ]
 external = [ "WPS" ]
 
