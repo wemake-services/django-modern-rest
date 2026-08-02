@@ -2,7 +2,6 @@ import datetime as dt
 import secrets
 from typing import Final, Self, final
 
-from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from typing_extensions import Sentinel, override
 
@@ -13,19 +12,11 @@ from dmr.security.token.token import (
     resolve_expiry,
 )
 from dmr.types import EMPTY
+from server.apps.token_custom_user.models.user import ApiUser
 
 _TOKEN_HASH_SIZE: Final = 64
-_USERNAME_SIZE: Final = 150
-
-
-@final
-class ApiUser(AbstractBaseUser):
-    """Custom user model, it is not ``settings.AUTH_USER_MODEL``."""
-
-    username = models.CharField(max_length=_USERNAME_SIZE, unique=True)
-    is_active = models.BooleanField(default=True)
-
-    USERNAME_FIELD = 'username'  # noqa: WPS115
+_REVOKE_FIELDS: Final = ('revoked_at', 'updated_at')
+_LAST_USED_FIELDS: Final = ('last_used_at', 'updated_at')
 
 
 @final
@@ -45,6 +36,8 @@ class ApiToken(  # noqa: WPS214
     expires_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
     last_used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     @property
     @override
@@ -73,26 +66,26 @@ class ApiToken(  # noqa: WPS214
     @override
     def mark_used(self) -> None:
         """Mark this token as used."""
-        self.last_used_at = dt.datetime.now(dt.UTC)
-        self.save(update_fields=['last_used_at'])
+        self._update_used()
+        self.save(update_fields=_LAST_USED_FIELDS)
 
     @override
     async def amark_used(self) -> None:
         """Async mark this token as used."""
-        self.last_used_at = dt.datetime.now(dt.UTC)
-        await self.asave(update_fields=['last_used_at'])
+        self._update_used()
+        await self.asave(update_fields=_LAST_USED_FIELDS)
 
     @override
     def revoke(self, *, at: dt.datetime | None = None) -> None:
         """Mark this token as revoked."""
-        self.revoked_at = at or dt.datetime.now(dt.UTC)
-        self.save(update_fields=['revoked_at'])
+        self._update_revoked(at)
+        self.save(update_fields=_REVOKE_FIELDS)
 
     @override
     async def arevoke(self, *, at: dt.datetime | None = None) -> None:
         """Async mark this token as revoked."""
-        self.revoked_at = at or dt.datetime.now(dt.UTC)
-        await self.asave(update_fields=['revoked_at'])
+        self._update_revoked(at)
+        await self.asave(update_fields=_REVOKE_FIELDS)
 
     @classmethod
     @override
@@ -108,17 +101,15 @@ class ApiToken(  # noqa: WPS214
         token_algorithm: str | None = None,
     ) -> tuple[Self, str]:
         """Create a new token, returning the token model and raw token data."""
-        raw_token = secrets.token_urlsafe(token_size)
-        token = cls.objects.create(
-            owner=user,
-            token_hash=get_token_hash(
-                raw_token,
-                secret=token_secret,
-                salt=token_salt,
-                algorithm=token_algorithm,
-            ),
-            expires_at=resolve_expiry(expires_at),
+        token, raw_token = cls._build(
+            user=user,
+            expires_at=expires_at,
+            token_size=token_size,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
+        token.save()
         return token, raw_token
 
     @classmethod
@@ -135,17 +126,15 @@ class ApiToken(  # noqa: WPS214
         token_algorithm: str | None = None,
     ) -> tuple[Self, str]:
         """Async version of :meth:`ApiToken.issue`."""
-        raw_token = secrets.token_urlsafe(token_size)
-        token = await cls.objects.acreate(
-            owner=user,
-            token_hash=get_token_hash(
-                raw_token,
-                secret=token_secret,
-                salt=token_salt,
-                algorithm=token_algorithm,
-            ),
-            expires_at=resolve_expiry(expires_at),
+        token, raw_token = cls._build(
+            user=user,
+            expires_at=expires_at,
+            token_size=token_size,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
+        await token.asave()
         return token, raw_token
 
     @classmethod
@@ -159,18 +148,12 @@ class ApiToken(  # noqa: WPS214
         token_algorithm: str | None = None,
     ) -> Self | None:
         """Find token by its hash."""
-        token_hash = get_token_hash(
+        return cls._find(
             raw_token,
-            secret=token_secret,
-            salt=token_salt,
-            algorithm=token_algorithm,
-        )
-        return (
-            cls.objects
-            .select_related('owner')
-            .filter(token_hash=token_hash)
-            .first()
-        )
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
+        ).first()
 
     @classmethod
     @override
@@ -183,15 +166,60 @@ class ApiToken(  # noqa: WPS214
         token_algorithm: str | None = None,
     ) -> Self | None:
         """Async find token by its hash."""
+        return await cls._find(
+            raw_token,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
+        ).afirst()
+
+    @classmethod
+    def _build(  # noqa: WPS211
+        cls,
+        *,
+        user: ApiUser,
+        expires_at: dt.datetime | Sentinel | None,
+        token_size: int | None,
+        token_secret: str | None,
+        token_salt: str | None,
+        token_algorithm: str | None,
+    ) -> tuple[Self, str]:
+        """Build an unsaved token, shared by `issue` and `aissue`."""
+        raw_token = secrets.token_urlsafe(token_size)
+        token = cls(
+            owner=user,
+            token_hash=get_token_hash(
+                raw_token,
+                secret=token_secret,
+                salt=token_salt,
+                algorithm=token_algorithm,
+            ),
+            expires_at=resolve_expiry(expires_at),
+        )
+        return token, raw_token
+
+    @classmethod
+    def _find(
+        cls,
+        raw_token: str,
+        *,
+        token_secret: str | None,
+        token_salt: str | None,
+        token_algorithm: str | None,
+    ) -> models.QuerySet[Self]:
+        """Query by token hash, shared by `find_raw` and `afind_raw`."""
         token_hash = get_token_hash(
             raw_token,
             secret=token_secret,
             salt=token_salt,
             algorithm=token_algorithm,
         )
-        return (
-            await cls.objects
-            .select_related('owner')
-            .filter(token_hash=token_hash)
-            .afirst()
-        )
+        return cls.objects.select_related('owner').filter(token_hash=token_hash)
+
+    def _update_used(self) -> None:
+        """Refresh the last used timestamp, ``updated_at`` is automatic."""
+        self.last_used_at = dt.datetime.now(dt.UTC)
+
+    def _update_revoked(self, at: dt.datetime | None) -> None:
+        """Refresh the revocation timestamp, ``updated_at`` is automatic."""
+        self.revoked_at = at or dt.datetime.now(dt.UTC)

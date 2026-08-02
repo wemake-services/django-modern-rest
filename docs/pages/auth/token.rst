@@ -355,21 +355,18 @@ so a custom token model can point at any
 :class:`~django.contrib.auth.models.AbstractBaseUser` subclass,
 not just ``settings.AUTH_USER_MODEL``:
 
-.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models.py
-  :caption: models.py
+.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models/user.py
+  :caption: models/user.py
   :language: python
-  :pyobject: ApiUser
+  :linenos:
 
 Parametrize both interfaces with it to get a model
-that works with sync and async auth at the same time.
-The full implementation of the interface methods lives in
-``django_test_app/server/apps/token_custom_user/models.py``:
+that works with sync and async auth at the same time:
 
-.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models.py
-  :caption: models.py
+.. literalinclude:: ../../../django_test_app/server/apps/token_custom_user/models/token.py
+  :caption: models/token.py
   :language: python
-  :start-at: class ApiToken(
-  :end-at: last_used_at = models.DateTimeField(null=True, blank=True)
+  :linenos:
 
 The auth classes then declare the custom model,
 and the ``User`` type is inferred from it:
