@@ -13,6 +13,7 @@ from dmr.routing import path as dmr_path
 
 pytestmark = pytest.mark.timeout(0)
 
+
 def _a_view(request: HttpRequest) -> HttpResponse:
     return HttpResponse(b'')
 
