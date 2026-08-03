@@ -1,73 +1,79 @@
 [build-system]
-requires = ["hatchling", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
+requires = [ "hatch-fancy-pypi-readme", "hatchling" ]
 
 
 [project]
 name = "django-modern-rest"
-description = "Modern REST framework for Django with types and async support"
-license = "MIT"
 version = "0.12.1"
-
-authors = [
-  {name = "Nikita Sobolev", email = "mail@sobolevn.me"},
-  {name = "Alexander Kondratev", email = "mail@kondratev.dev"},
-  {name = "Alexey Potapov", email = "me@black-as-ink.ru"},
-]
-
-requires-python = ">=3.11"
-
+description = "Modern REST framework for Django with types and async support"
 keywords = [
+  "API",
   "django",
   "django plugin",
-  "djangorestframework",
   "django-api",
-  "API",
+  "djangorestframework",
   "REST",
   "wemake-python-package",
 ]
-
+license = "MIT"
+requires-python = ">=3.11"
 classifiers = [
-  'Programming Language :: Python',
-  'Programming Language :: Python :: Implementation :: CPython',
-  'Programming Language :: Python :: Implementation :: PyPy',
-  'Programming Language :: Python :: 3',
-  'Programming Language :: Python :: 3 :: Only',
-  'Programming Language :: Python :: 3.11',
-  'Programming Language :: Python :: 3.12',
-  'Programming Language :: Python :: 3.13',
-  'Programming Language :: Python :: 3.14',
   "Development Status :: 3 - Alpha",
   "Environment :: Web Environment",
-  "Typing :: Typed",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Software Development :: Libraries :: Application Frameworks",
-  "Topic :: Internet :: WWW/HTTP",
-  "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-  "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
   "Framework :: AsyncIO",
   "Framework :: Django",
   "Framework :: Django :: 5.0",
   "Framework :: Django :: 5.1",
   "Framework :: Django :: 5.2",
   "Framework :: Django :: 6.0",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+  "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
 ]
-
-dynamic = ["readme"]
-
+dynamic = [ "readme" ]
 dependencies = [
-  "typing_extensions>=4.12",
-  "django>=5.0,<6.1",
+  "django>=5,<6.1",
+  "typing-extensions>=4.12",
 ]
+
+[[project.authors]]
+name = "Nikita Sobolev"
+email = "mail@sobolevn.me"
+
+[[project.authors]]
+name = "Alexander Kondratev"
+email = "mail@kondratev.dev"
+
+[[project.authors]]
+name = "Alexey Potapov"
+email = "me@black-as-ink.ru"
+
+[project.entry-points.pytest11]
+# We need this structure because otherwise `pytest` ruins the coverage report.
+# This happens because we have imports in `dmr/__init__.py`
+dmr = "dmr_pytest"
 
 [project.optional-dependencies]
-pydantic = ["pydantic[email,timezone]>=2.12", "pydantic-extra-types"]
-msgspec = ["msgspec>=0.21.1"]
-attrs = ["msgspec>=0.21.1", "attrs>=26.0"]
-jwt = ["pyjwt[crypto]>=2.11"]
-openapi = ["openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml"]
+pydantic = [ "pydantic[email,timezone]>=2.12", "pydantic-extra-types" ]
+msgspec = [ "msgspec>=0.21.1" ]
+attrs = [ "attrs>=26", "msgspec>=0.21.1" ]
+jwt = [ "pyjwt[crypto]>=2.11" ]
+openapi = [ "openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml" ]
 
 [project.urls]
 Documentation = "https://django-modern-rest.readthedocs.io/en/latest/"
@@ -75,101 +81,92 @@ Changelog = "https://github.com/wemake-services/django-modern-rest/releases"
 GitHub = "https://github.com/wemake-services/django-modern-rest"
 Funding = "https://github.com/sponsors/wemake-services"
 
-[project.entry-points."pytest11"]
-# We need this structure because otherwise `pytest` ruins the coverage report.
-# This happens because we have imports in `dmr/__init__.py`
-dmr = "dmr_pytest"
-
 
 [dependency-groups]
-# This is a special group, it has special rules.
-# It is installed in `cibuildwheel` and must be minimal.
-unit-test = [
-  # Pin to Django 5.2 (LTS): it supports Python 3.11+, while Django 6.0
-  # requires Python 3.12+. CI runs different django versions as separate jobs
-  "django~=5.2.0",
-  "django-csp>=4.0,<5.0",
-  "pytest>=9.0,<10",
-  "pytest-cov>=7.0,<8",
-  "covdefaults>=2.3,<3",
-  "pytest-randomly>=4.0,<5",
-  "pytest-django>=4.8,<5",
-  "pytest-freezer>=0.4,<0.5",
-  "pytest-asyncio>=1.3,<2",
-  "pytest-timeout>=2.4,<3",
-  "dirty-equals>=0.11,<0.12",
-  "faker>=40.36,<41",
-  "inline-snapshot>=0.35,<0.36",
-  "syrupy>=5.1,<6",
-  "polyfactory>=3.2,<4",
-  "xmltodict-rs>=0.13,<0.14",
-  # We don't install `orjson` on 3.14, because we run `3.14t` as well,
-  # but no way to disable it specifically for `t` version :(
-  "orjson>=3.11,<4; python_version < '3.14' and implementation_name == 'cpython'",
-]
-integration = [
-  "tracecov>=0.23,<0.25",
-  "pytest-codspeed>=4.3,<6",
-]
-dev-and-docs = [
-  "punq>=0.8,<1",
-  "redis>=7.4,<9",
-  # Needed for the micro-framework examples:
-  "nanodjango>=0.16,<0.17",
-]
 dev = [
-  { include-group = "unit-test" },
-  { include-group = "integration" },
-  { include-group = "dev-and-docs" },
-  "django-stubs[compatible-mypy]>=6.0,<6.1",
-  "types-docutils>=0.22,<0.23",
-  "types-setuptools>=82,<84",
-  "types-pyyaml>=6.0,<7",
-  "types-django-filter>=25.2,<27",
-  "types-redis>=4.6,<5",
+  "dennis>=1.2,<2",
+  "django-stubs[compatible-mypy]>=6,<6.1",
+  "import-linter>=2.5,<3",
+  "phonenumbers>=9,<10",
+  "pyrefly>=1,<2",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<1.1.410",
-  "pyrefly>=1,<2",
-  "wemake-python-styleguide>=1.7,<2",
   "ruff>=0.15,<0.17",
-  "import-linter>=2.5,<3",
-  "slotscheck>=0.19,<0.21",
-  "dennis>=1.2,<2",
   "schemathesis>=4.14,<5",
-  "phonenumbers>=9.0,<10",
+  "slotscheck>=0.19,<0.21",
+  "types-django-filter>=25.2,<27",
+  "types-docutils>=0.22,<0.23",
+  "types-pyyaml>=6,<7",
+  "types-redis>=4.6,<5",
+  "types-setuptools>=82,<84",
+  "wemake-python-styleguide>=1.7,<2",
+  { include-group = "dev-and-docs" },
+  { include-group = "integration" },
+  { include-group = "unit-test" },
+]
+docs = [
+  "django-filter>=25.2,<27",
+  "django-mantle>=26.6,<27",
+  "docutils>=0.22,<0.23",
+  "myst-parser>=5,<6",
+  "shibuya>=2026.1,<2027",
+  "sphinx>=9,<10",
+  "sphinx-autodoc-typehints>=3,<4",
+  "sphinx-contributors>=0.2,<0.4",
+  "sphinx-copybutton>=0.5,<0.6",
+  "sphinx-design>=0.7,<0.8",
+  "sphinx-iconify>=0.3,<0.4",
+  "sphinx-llms-txt>=0.7,<0.8",
+  "sphinx-tabs>=3.5,<4",
+  "sphinxcontrib-mermaid>=2,<3",
+  # Needed for our extension:
+  "uvicorn>=0.41,<0.52",
+  # Needed for examples:
+  "xmltodict-rs>=0.13,<0.14",
+  "zapros>=0.15,<0.17",
+  { include-group = "dev-and-docs" },
 ]
 build = [
   # NOTE: Keep cibuildwheel in sync with action version in build-wheels.yml
   "cibuildwheel==4.1.1",
   "pypyp>=1.3,<2",
 ]
-docs = [
-  { include-group = "dev-and-docs" },
-  "sphinx>=9.0,<10",
-  "sphinx-autodoc-typehints>=3.0,<4",
-  "sphinx-iconify>=0.3,<0.4",
-  "sphinx-tabs>=3.5,<4",
-  "sphinx-contributors>=0.2,<0.4",
-  "sphinx-copybutton>=0.5,<0.6",
-  "sphinx-design>=0.7,<0.8",
-  "sphinxcontrib-mermaid>=2.0,<3",
-  "sphinx-llms-txt>=0.7,<0.8",
-  "myst-parser>=5.0,<6",
-  "shibuya>=2026.1,<2027",
-  "docutils>=0.22,<0.23",
-  # Needed for our extension:
-  "uvicorn>=0.41,<0.52",
-  "zapros>=0.15,<0.17",
-  # Needed for examples:
+dev-and-docs = [
+  # Needed for the micro-framework examples:
+  "nanodjango>=0.16,<0.17",
+  "punq>=0.8,<1",
+  "redis>=7.4,<9",
+]
+integration = [
+  "pytest-codspeed>=4.3,<6",
+  "tracecov>=0.23,<0.25",
+]
+# This is a special group, it has special rules.
+# It is installed in `cibuildwheel` and must be minimal.
+unit-test = [
+  "covdefaults>=2.3,<3",
+  "dirty-equals>=0.11,<0.12",
+  # Pin to Django 5.2 (LTS): it supports Python 3.11+, while Django 6.0
+  # requires Python 3.12+. CI runs different django versions as separate jobs
+  "django~=5.2.0",
+  "django-csp>=4,<5",
+  "faker>=40.36,<41",
+  "inline-snapshot>=0.35,<0.36",
+  # We don't install `orjson` on 3.14, because we run `3.14t` as well,
+  # but no way to disable it specifically for `t` version :(
+  "orjson>=3.11,<4; python_version<'3.14' and implementation_name=='cpython'",
+  "polyfactory>=3.2,<4",
+  "pytest>=9,<10",
+  "pytest-asyncio>=1.3,<2",
+  "pytest-cov>=7,<8",
+  "pytest-django>=4.8,<5",
+  "pytest-freezer>=0.4,<0.5",
+  "pytest-randomly>=4,<5",
+  "pytest-timeout>=2.4,<3",
+  "syrupy>=5.1,<6",
   "xmltodict-rs>=0.13,<0.14",
-  "django-mantle>=26.6,<27",
-  "django-filter>=25.2,<27",
 ]
 
-
-[tool.hatch.metadata.hooks.fancy-pypi-readme]
-content-type = "text/markdown"
-fragments = [{ path = "README.md" }]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -180,46 +177,52 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-only-include = ["dmr", "dmr_pytest.py"]
+only-include = [ "dmr", "dmr_pytest.py" ]
 macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc", "mypy==2.3.0"]
-include = ["dmr/_compiled"]
+dependencies = [ "hatch-mypyc", "mypy==2.3.0" ]
+include = [ "dmr/_compiled" ]
 require-runtime-dependencies = true
-mypy-args = ["--ignore-missing-imports"]
+mypy-args = [ "--ignore-missing-imports" ]
 options = { debug_level = "0", opt_level = "3" }
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+fragments = [ { path = "README.md" } ]
 
 
 [tool.cibuildwheel]
 # Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
 build = "cp3{11,12,13,14}-*"
-build-frontend = "uv"
-build-verbosity = 1
 skip = [
   "cp313t-*",
   "*-win32",
-  "*-macosx_x86_64",  # cryptography does not support it anymore
+  "*-macosx_x86_64", # cryptography does not support it anymore
 ]
-
+build-frontend = "uv"
+build-verbosity = 1
 before-test = [
-  'uv export --format requirements.txt --group unit-test --no-group dev --all-extras > _temp.txt',
-  'uv pip install -r _temp.txt',
+  """\
+  uv export --format requirements.txt --group unit-test --no-group dev \
+  --all-extras > _temp.txt\
+  """,
+  "uv pip install -r _temp.txt",
 ]
 test-command = 'pytest {project}/tests/test_unit -o addopts=""'
 
+[tool.cibuildwheel.environment]
+HATCH_BUILD_HOOKS_ENABLE = "1"
+CC = "clang"
+
 [tool.cibuildwheel.linux]
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
-musllinux-x86_64-image = "musllinux_1_2"
 before-all = [
   "yum install -y llvm-toolset || yum -v install -y llvm-toolset",
 ]
-
-[tool.cibuildwheel.environment]
-HATCH_BUILD_HOOKS_ENABLE = "1"
-CC="clang"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+musllinux-x86_64-image = "musllinux_1_2"
 
 [[tool.cibuildwheel.overrides]]
 select = "*musllinux*"
@@ -229,12 +232,12 @@ before-all = [
 
 
 [tool.ruff]
+target-version = "py311"
+line-length = 80
 # Ruff config: https://docs.astral.sh/ruff/settings
 preview = true
 fix = true
 output-prefer-rule-codes = true
-target-version = "py311"
-line-length = 80
 
 [tool.ruff.format]
 quote-style = "single"
@@ -242,51 +245,51 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = [
-  "A",    # flake8-builtins
-  "ASYNC",
-  "B",    # flake8-bugbear
-  "C4",   # flake8-comprehensions
-  "C90",  # mccabe
-  "COM",  # flake8-commas
-  "D",    # pydocstyle
-  "DTZ",  # flake8-datetimez
-  "DJ",   # flake8-django
-  "E",    # pycodestyle
-  "ERA",  # flake8-eradicate
-  "EXE",  # flake8-executable
-  "F",    # pyflakes
-  "FBT",  # flake8-boolean-trap
-  "FLY",  # pyflint
-  "FURB", # refurb
-  "G",    # flake8-logging-format
-  "I",    # isort
-  "ICN",  # flake8-import-conventions
-  "INT",  # flake8-gettext
-  "ISC",  # flake8-implicit-str-concat
-  "LOG",  # flake8-logging
-  "N",    # pep8-naming
-  "PERF", # perflint
-  "PIE",  # flake8-pie
-  "PL",   # pylint
-  "PT",   # flake8-pytest-style
-  "PTH",  # flake8-use-pathlib
-  "Q",    # flake8-quotes
-  "RET",  # flake8-return
-  "RSE",  # flake8-raise
-  "RUF",  # ruff
-  "S",    # flake8-bandit
-  "SIM",  # flake8-simplify
-  "SLF",  # flake8-self
-  "SLOT", # flake8-slots
-  "T100", # flake8-debugger
-  "TID",  # flake8-tidy-imports
-  "TRY",  # tryceratops
-  "UP",   # pyupgrade
-  "W",    # pycodestyle
-  "YTT",  # flake8-2020
+  "A",     # flake8-builtins
+  "ASYNC", # flake8-async
+  "B",     # flake8-bugbear
+  "C4",    # flake8-comprehensions
+  "C90",   # mccabe
+  "COM",   # flake8-commas
+  "D",     # pydocstyle
+  "DTZ",   # flake8-datetimez
+  "DJ",    # flake8-django
+  "E",     # pycodestyle
+  "ERA",   # flake8-eradicate
+  "EXE",   # flake8-executable
+  "F",     # pyflakes
+  "FBT",   # flake8-boolean-trap
+  "FLY",   # pyflint
+  "FURB",  # refurb
+  "G",     # flake8-logging-format
+  "I",     # isort
+  "ICN",   # flake8-import-conventions
+  "INT",   # flake8-gettext
+  "ISC",   # flake8-implicit-str-concat
+  "LOG",   # flake8-logging
+  "N",     # pep8-naming
+  "PERF",  # perflint
+  "PIE",   # flake8-pie
+  "PL",    # pylint
+  "PT",    # flake8-pytest-style
+  "PTH",   # flake8-use-pathlib
+  "Q",     # flake8-quotes
+  "RET",   # flake8-return
+  "RSE",   # flake8-raise
+  "RUF",   # ruff
+  "S",     # flake8-bandit
+  "SIM",   # flake8-simplify
+  "SLF",   # flake8-self
+  "SLOT",  # flake8-slots
+  "T100",  # flake8-debugger
+  "TID",   # flake8-tidy-imports
+  "TRY",   # tryceratops
+  "UP",    # pyupgrade
+  "W",     # pycodestyle
+  "YTT",   # flake8-2020
 ]
 ignore = [
-  "A005",   # allow to shadow stdlib and builtin module names
+  "A005",     # allow to shadow stdlib and builtin module names
   # Different doc rules that we don't really care about:
   "D100",
   "D104",
@@ -296,59 +299,169 @@ ignore = [
   "D401",
   "D404",
   "D405",
-  "D418",    # We should be able to add docstrings to `@overload` decorators
+  "D418",     # We should be able to add docstrings to `@overload` decorators
   "D421",
-  "DJ008",   # we don't need `__str__` in models in tests
+  "DJ008",    # we don't need `__str__` in models in tests
   "ASYNC119", # `contextlib.aclosing` is not detected
-  "ISC001",  # implicit string concat conflicts with `ruff format`
-  "ISC003",  # prefer explicit string concat over implicit concat
-  "PLR09",   # we have our own complexity rules
-  "PLR2004", # do not report magic numbers
-  "PLR6301", # do not require classmethod / staticmethod when self not used
-  "PLC0414", # do not raise on `as` re-exports
-  "PLW2901", # allow to redefine iteration targets in for loops
-  "RUF029",  # we decide `async` functions based on API, not `await` usage
-  "RUF067",  # wps handles `__init__.py` logic better
-  "RUF105",  # keep old `# noqa` comments style, not `# ruff` comments
-  "RUF106",  # we prefer old error codes
-  "RUF201",  # keep old rule codes instead of verbose names
-  "TRY003",  # long exception messages from `tryceratops`
+  "ISC001",   # implicit string concat conflicts with `ruff format`
+  "ISC003",   # prefer explicit string concat over implicit concat
+  "PLR09",    # we have our own complexity rules
+  "PLR2004",  # do not report magic numbers
+  "PLR6301",  # do not require classmethod / staticmethod when self not used
+  "PLC0414",  # do not raise on `as` re-exports
+  "PLW2901",  # allow to redefine iteration targets in for loops
+  "RUF029",   # we decide `async` functions based on API, not `await` usage
+  "RUF067",   # wps handles `__init__.py` logic better
+  "RUF105",   # keep old `# noqa` comments style, not `# ruff` comments
+  "RUF106",   # we prefer old error codes
+  "RUF201",   # keep old rule codes instead of verbose names
+  "TRY003",   # long exception messages from `tryceratops`
 ]
 external = [ "WPS" ]
-
 # Plugin configs:
 flake8-quotes.inline-quotes = "single"
 mccabe.max-complexity = 6
 pydocstyle.convention = "google"
-flake8-gettext.extend-function-names = ["_"]
-
+flake8-gettext.extend-function-names = [ "_" ]
 # For `django_test_app` and `docs` only:
-isort.known-first-party = ["server", "examples"]
+isort.known-first-party = [ "server", "examples" ]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.TypedDict".msg = "Use typing_extensions.TypedDict instead."
 
 [tool.ruff.lint.per-file-ignores]
 # Allow imports inside fixtures:
-"dmr_pytest.py" = ["PLC0415"]
+"dmr_pytest.py" = [ "PLC0415" ]
 # Allow internals access in `django`:
-"dmr/internal/django.py" = ["SLF001"]
+"dmr/internal/django.py" = [ "SLF001" ]
 # Our test utilities are built on asserts:
-"dmr/test/*.py" = ["S101"]
+"dmr/test/*.py" = [ "S101" ]
 # Do not require docstrings in test project:
-"django_test_app/**/*.py" = ["D10"]
+"django_test_app/**/*.py" = [ "D10" ]
 # Ignore many rules in autogenerated migrations:
-"dmr/security/*/migrations/*.py" = ["D101", "E501", "RUF012"]
-"django_test_app/server/apps/*/migrations/*.py" = ["D101", "E501", "RUF012"]
+"dmr/security/*/migrations/*.py" = [ "D101", "E501", "RUF012" ]
+"django_test_app/server/apps/*/migrations/*.py" = [ "D101", "E501", "RUF012" ]
 # Allow asserts and private name imports and access for tests:
-"tests/*.py" = ["S101", "SLF001", "PLC2701", "RUF012"]
+"tests/*.py" = [ "S101", "SLF001", "PLC2701", "RUF012" ]
 # Allow examples to be a bit less strict:
-"docs/examples/**/*.py" = ["D1", "S1"]
+"docs/examples/**/*.py" = [ "D1", "S1" ]
 # Unittest examples must use unittest features:
-"docs/examples/testing/*.py" = ["PT009"]
+"docs/examples/testing/*.py" = [ "PT009" ]
 # Allow benchmarks to not have docs and do scripting:
-"benchmarks/**/*.py" = ["D", "S"]
-"typesafety/**/*.py" = ["D"]
+"benchmarks/**/*.py" = [ "D", "S" ]
+"typesafety/**/*.py" = [ "D" ]
+
+
+[tool.codespell]
+# codespell configuration: https://github.com/codespell-project/codespell
+skip = [
+  "*.css",
+  "*.js",
+  "*.lock",
+  "*.min.*",
+  "*.msgpack",
+  ".mypy_cache",
+  "__pycache__",
+  "_build",
+  "benchmarks/*.json",
+  "dmr/locale/**",
+  "dmr/static/*",
+  "swagger-*.js",
+]
+
+
+[tool.pyproject-fmt]
+# Docs: https://pyproject-fmt.readthedocs.io/en/latest/configuration.html
+column_width = 80
+generate_python_version_classifiers = false
+table_format = "long"
+sub_table_spacing = "\n"
+separate_root_table = "\n\n"
+
+
+[tool.typos]
+
+# Docs: https://github.com/crate-ci/typos
+[tool.typos.default]
+extend-identifiers = { _SerT = "_SerT" }
+
+[tool.typos.files]
+extend-exclude = [
+  "__pycache__",
+  "_build",
+  ".mypy_cache",
+  "swagger-*.js",
+  "dmr/static",
+  "*.js",
+  "*.css",
+  "*.min.*",
+  "*.msgpack",
+  "dmr/locale",
+  "*.lock",
+  "benchmarks/*.json",
+]
+
+
+[tool.mypy]
+exclude = [
+  # We don't care about benchmark code:
+  "benchmarks/",
+  # It has its own type-checking setup, since uses django:
+  "django_test_app/",
+  # We don't care about built docs:
+  "docs/_build/",
+]
+warn_unreachable = true
+enable_error_code = [
+  "deprecated",
+  "exhaustive-match",
+  "explicit-override",
+  "ignore-without-code",
+  "possibly-undefined",
+  "redundant-expr",
+  "redundant-self",
+  "truthy-bool",
+  "truthy-iterable",
+  "unimported-reveal",
+  "unused-awaitable",
+]
+# The mypy configurations: http://bit.ly/2zEl9WI
+extra_checks = true
+strict_equality_for_none = true
+strict = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+# `nanodjango` does not ship a `py.typed` marker,
+# it is only used in the micro-framework docs example:
+module = [ "nanodjango.*" ]
+ignore_missing_imports = true
+
+
+[tool.pyrefly]
+min-severity = "warn"
+preset = "strict"
+# Docs: https://pyrefly.org
+project-includes = [ "dmr", "dmr_pytest.py", "typesafety", "tests" ]
+
+[tool.pyrefly.errors]
+implicit-any-attribute = false
+implicit-any-empty-container = false
+unused-ignore = true
+
+
+[tool.pyright]
+venv = ".venv"
+venvPath = "."
+strict = [ "dmr/**/*", "dmr_pytest.py", "typesafety/**/*" ]
+# Docs: https://microsoft.github.io/pyright/#/configuration
+include = [ "dmr", "dmr_pytest.py", "tests", "typesafety" ]
+exclude = [
+  # It has a lot of ugly code:
+  "dmr/internal/django.py",
+]
 
 
 [tool.pytest.ini_options]
@@ -356,24 +469,20 @@ isort.known-first-party = ["server", "examples"]
 # Strict `@xfail` by default:
 xfail_strict = true
 # Fail on warnings:
-filterwarnings = ["error"]
-
+filterwarnings = [ "error" ]
 # Django options:
 # https://pytest-django.readthedocs.io/en/latest/
 DJANGO_SETTINGS_MODULE = "server.settings"
-
 # PYTHONPATH configuration:
-pythonpath = ["django_test_app"]
-
+pythonpath = [ "django_test_app" ]
 # pytest-asyncio configuration:
 # https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html
-asyncio_mode = 'auto'
-
+asyncio_mode = "auto"
 # pytest-timeout configuration:
 # https://github.com/pytest-dev/pytest-timeout
 timeout = 5
 timeout_method = "thread"
-
+# Extra options:
 addopts = [
   "--strict-config",
   "--strict-markers",
@@ -417,7 +526,7 @@ addopts = [
 
 [tool.coverage.run]
 # Covdefaults: https://pypi.org/project/covdefaults
-plugins = ["covdefaults"]
+plugins = [ "covdefaults" ]
 
 
 [tool.slotscheck]
@@ -437,105 +546,3 @@ exclude-modules = '''
   |dmr\.internal\.model_fields
 )
 '''
-
-
-[tool.mypy]
-# The mypy configurations: http://bit.ly/2zEl9WI
-extra_checks = true
-strict = true
-strict_equality_for_none = true
-warn_unreachable = true
-
-exclude = [
-  # It has its own type-checking setup, since uses django:
-  "django_test_app/",
-  # We don't care about benchmark code:
-  "benchmarks/",
-  # We don't care about built docs:
-  "docs/_build/",
-]
-
-enable_error_code = [
-  'deprecated',
-  'exhaustive-match',
-  'explicit-override',
-  'ignore-without-code',
-  'possibly-undefined',
-  'redundant-expr',
-  'redundant-self',
-  'truthy-bool',
-  'truthy-iterable',
-  'unimported-reveal',
-  'unused-awaitable',
-]
-
-plugins = [
-  "pydantic.mypy",
-]
-
-[[tool.mypy.overrides]]
-# `nanodjango` does not ship a `py.typed` marker,
-# it is only used in the micro-framework docs example:
-module = ["nanodjango.*"]
-ignore_missing_imports = true
-
-
-[tool.pyright]
-# Docs: https://microsoft.github.io/pyright/#/configuration
-include = ["dmr", "dmr_pytest.py", "typesafety", "tests"]
-exclude = [
-  # It has a lot of ugly code:
-  "dmr/internal/django.py",
-]
-strict = ["dmr/**/*", "dmr_pytest.py", "typesafety/**/*"]
-venvPath = "."
-venv = ".venv"
-
-
-[tool.pyrefly]
-# Docs: https://pyrefly.org
-project-includes = ["dmr", "dmr_pytest.py", "typesafety", "tests"]
-preset = 'strict'
-min-severity = 'warn'
-
-[tool.pyrefly.errors]
-implicit-any-attribute = false
-implicit-any-empty-container = false
-unused-ignore = true
-
-
-[tool.codespell]
-# codespell configuration: https://github.com/codespell-project/codespell
-skip = [
-  "__pycache__",
-  "_build",
-  ".mypy_cache",
-  "swagger-*.js",
-  "dmr/static/*",
-  "*.js",
-  "*.css",
-  "*.min.*",
-  "*.msgpack",
-  "dmr/locale/**",
-  "*.lock",
-  "benchmarks/*.json",
-]
-
-
-[tool.typos]
-# typos configuration: https://github.com/crate-ci/typos/
-files.extend-exclude = [
-  "__pycache__",
-  "_build",
-  ".mypy_cache",
-  "swagger-*.js",
-  "dmr/static",
-  "*.js",
-  "*.css",
-  "*.min.*",
-  "*.msgpack",
-  "dmr/locale",
-  "*.lock",
-  "benchmarks/*.json",
-]
-default.extend-identifiers = { _SerT = "_SerT" }
