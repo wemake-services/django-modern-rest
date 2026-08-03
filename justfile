@@ -49,7 +49,7 @@ type-check:
 # Run unit tests
 [group('testing')]
 unit *args='':
-    uv run pytest --inline-snapshot=disable {{ args }}
+    uv run pytest -n auto --inline-snapshot=disable {{ args }}
 
 # Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
