@@ -449,6 +449,7 @@ project-includes = [ "dmr", "dmr_pytest.py", "typesafety", "tests" ]
 [tool.pyrefly.errors]
 implicit-any-attribute = false
 implicit-any-empty-container = false
+implicit-any-lambda = false
 unused-ignore = true
 
 
