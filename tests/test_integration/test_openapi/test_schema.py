@@ -112,6 +112,7 @@ class _DjangoSessionAuth:
 
 @schema.parametrize()
 @h_settings(max_examples=_MAX_EXAMPLES)
+@pytest.mark.timeout(60)
 def test_schemathesis(
     tracecov_map: 'tracecov.CoverageMap | None',
     *,
