@@ -31,30 +31,37 @@ def _get_token_model() -> type[TokenLikeSync]:
     ],
 )
 @pytest.mark.parametrize(
-    'auth_header',
+    ('auth_header', 'header_value'),
     [
-        {'X-API-Token': ''},
-        {'X-API-Token': ' '},
-        {'X-API-Token': 'Bearer'},
-        {'X-API-Token': secrets.token_urlsafe(32)},  # noqa: WPS432
-        {'X-API-Token': 'Bearer token'},
-        {'X-API-Token': 'NotBearer token'},
-        {'X-API-Token': 'not a token'},
-        {'Authorization': 'Bearer token'},
-        {},
+        ('X-API-Token', ''),
+        ('X-API-Token', ' '),
+        ('X-API-Token', 'Bearer'),
+        ('X-API-Token', None),
+        ('X-API-Token', 'Bearer token'),
+        ('X-API-Token', 'NotBearer token'),
+        ('X-API-Token', 'not a token'),
+        ('Authorization', 'Bearer token'),
+        ('Authorization', None),
     ],
 )
 def test_wrong_token_header(
     dmr_client: DMRClient,
     *,
     url: str,
-    auth_header: dict[str, str],
+    auth_header: str,
+    header_value: str | None,
 ) -> None:
     """Ensures that wrong auth params produces the right result."""
     response = dmr_client.post(
         url,
         data='{}',
-        headers={**auth_header},
+        headers={
+            auth_header: (
+                secrets.token_urlsafe(32)  # noqa: WPS432
+                if header_value is None
+                else header_value
+            ),
+        },
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content

@@ -120,7 +120,7 @@ jobs:
       run: |
         just smoke jwt pydantic
         just example
-        uv run pytest --cov-fail-under=90
+        uv run pytest -n auto --cov-fail-under=90
 
 
   build-no-pydantic:
