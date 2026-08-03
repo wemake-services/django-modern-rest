@@ -368,7 +368,7 @@ pythonpath = ["django_test_app"]
 # pytest-asyncio configuration:
 # https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html
 asyncio_mode = 'auto'
-timeout = 30
+timeout = 5
 timeout_method = "thread"
 addopts = [
   "--strict-config",
