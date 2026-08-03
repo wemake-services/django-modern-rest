@@ -2,7 +2,6 @@ from collections.abc import Callable
 from contextlib import suppress
 from typing import Final, Literal, assert_never
 
-import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import Resolver404, URLPattern, include
 from django.urls import path as django_path
@@ -10,8 +9,6 @@ from django.urls.resolvers import RegexPattern, URLResolver
 from pytest_codspeed import BenchmarkFixture
 
 from dmr.routing import path as dmr_path
-
-pytestmark = pytest.mark.timeout(0)
 
 
 def _a_view(request: HttpRequest) -> HttpResponse:
