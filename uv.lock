@@ -847,7 +847,7 @@ dev = [
     { name = "pytest-freezer", specifier = ">=0.4,<0.5" },
     { name = "pytest-randomly", specifier = ">=4,<5" },
     { name = "pytest-timeout", specifier = ">=2.4,<3" },
-    { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "redis", specifier = ">=7.4,<9" },
     { name = "ruff", specifier = ">=0.15,<0.17" },
     { name = "schemathesis", specifier = ">=4.14,<5" },
