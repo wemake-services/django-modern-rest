@@ -5,18 +5,14 @@ from collections.abc import AsyncIterator, Iterator
 from typing import Any
 
 import pytest
-
-try:
-    import redis
-except ImportError:  # pragma: no cover
-    pytest.skip(reason='redis is not installed', allow_module_level=True)
-
+import redis
 from django.core.cache import cache
 from redis import asyncio as aioredis
 
 
 @pytest.fixture(autouse=True)
 def _clean_cache() -> None:
+    # There are tests that use django-cache as well as redis:
     cache.clear()
 
 
@@ -32,30 +28,30 @@ def redis_url() -> str:
 @pytest.fixture
 def redis_client(
     redis_url: str,
-) -> Iterator['redis.Redis[Any]']:  # pragma: no cover
+) -> Iterator['redis.Redis[Any]']:
     """Sync redis client."""
     try:
         with redis.Redis.from_url(redis_url) as client:
-            client.flushall()
+            client.flushdb()
 
             yield client
-            client.flushall()
-    except redis.ConnectionError:
+            client.flushdb()
+    except redis.ConnectionError:  # pragma: no cover
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
 
 
 @pytest.fixture
-async def redis_async_client(  # pragma: no cover
+async def redis_async_client(
     redis_url: str,
 ) -> AsyncIterator['aioredis.Redis[Any]']:
     """Async redis client."""
     try:
         async with aioredis.Redis.from_url(redis_url) as client:
-            await client.flushall()
+            await client.flushdb()
 
             yield client
-            await client.flushall()
-    except redis.ConnectionError:
+            await client.flushdb()
+    except redis.ConnectionError:  # pragma: no cover
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')

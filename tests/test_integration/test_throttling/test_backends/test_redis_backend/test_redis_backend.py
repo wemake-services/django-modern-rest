@@ -3,12 +3,7 @@ from http import HTTPStatus
 from typing import Any, Final
 
 import pytest
-
-try:
-    import redis
-except ImportError:  # pragma: no cover
-    pytest.skip(reason='redis is not installed', allow_module_level=True)
-
+import redis
 from dirty_equals import IsOneOf
 from django.http import HttpResponse
 from inline_snapshot import snapshot
@@ -101,9 +96,9 @@ def test_redis_sync_leaky_bucket(
         assert response.status_code == HTTPStatus.OK
 
     keys = [
-        thrrotle_key
-        for thrrotle_key in redis_client.scan_iter()
-        if b'::' in thrrotle_key
+        throttle_key
+        for throttle_key in redis_client.scan_iter()
+        if b'::' in throttle_key
     ]
     assert len(keys) == 1
     # Simulate one elapsed Redis-server second without sleeping.
@@ -157,9 +152,9 @@ def test_redis_bucket_full_slot(
         assert response.status_code == HTTPStatus.OK
 
     keys = [
-        thrrotle_key
-        for thrrotle_key in redis_client.scan_iter()
-        if b'::' in thrrotle_key
+        throttle_key
+        for throttle_key in redis_client.scan_iter()
+        if b'::' in throttle_key
     ]
     assert len(keys) == 1
     # Simulate one elapsed Redis-server second without sleeping.
