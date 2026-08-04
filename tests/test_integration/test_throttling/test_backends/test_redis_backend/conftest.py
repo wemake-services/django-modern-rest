@@ -25,7 +25,8 @@ def redis_url() -> str:
     """Redis url to connect to during tests."""
     server = os.environ.get('REDIS_HOST', '127.0.0.1')
     port = os.environ.get('REDIS_PORT', '6379')
-    return f'redis://{server}:{port}'
+    db_number = os.environ.get('PYTEST_XDIST_WORKER', '0')
+    return f'redis://{server}:{port}/{db_number}'
 
 
 @pytest.fixture
