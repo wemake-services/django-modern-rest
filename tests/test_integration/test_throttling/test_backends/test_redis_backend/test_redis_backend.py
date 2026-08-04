@@ -96,9 +96,9 @@ def test_redis_sync_leaky_bucket(
         assert response.status_code == HTTPStatus.OK
 
     keys = [
-        thrrotle_key
-        for thrrotle_key in redis_client.scan_iter()
-        if b'::' in thrrotle_key
+        throttle_key
+        for throttle_key in redis_client.scan_iter()
+        if b'::' in throttle_key
     ]
     assert len(keys) == 1
     # Simulate one elapsed Redis-server second without sleeping.
@@ -152,9 +152,9 @@ def test_redis_bucket_full_slot(
         assert response.status_code == HTTPStatus.OK
 
     keys = [
-        thrrotle_key
-        for thrrotle_key in redis_client.scan_iter()
-        if b'::' in thrrotle_key
+        throttle_key
+        for throttle_key in redis_client.scan_iter()
+        if b'::' in throttle_key
     ]
     assert len(keys) == 1
     # Simulate one elapsed Redis-server second without sleeping.

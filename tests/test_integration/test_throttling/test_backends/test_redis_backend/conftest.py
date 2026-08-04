@@ -12,6 +12,7 @@ from redis import asyncio as aioredis
 
 @pytest.fixture(autouse=True)
 def _clean_cache() -> None:
+    # There are tests that use django-cache as well as redis:
     cache.clear()
 
 
@@ -31,10 +32,10 @@ def redis_client(
     """Sync redis client."""
     try:
         with redis.Redis.from_url(redis_url) as client:
-            client.flushall()
+            client.flushdb()
 
             yield client
-            client.flushall()
+            client.flushdb()
     except redis.ConnectionError:  # pragma: no cover
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
@@ -47,10 +48,10 @@ async def redis_async_client(
     """Async redis client."""
     try:
         async with aioredis.Redis.from_url(redis_url) as client:
-            await client.flushall()
+            await client.flushdb()
 
             yield client
-            await client.flushall()
+            await client.flushdb()
     except redis.ConnectionError:  # pragma: no cover
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
