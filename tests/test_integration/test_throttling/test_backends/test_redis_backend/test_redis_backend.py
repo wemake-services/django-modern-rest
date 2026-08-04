@@ -3,12 +3,7 @@ from http import HTTPStatus
 from typing import Any, Final
 
 import pytest
-
-try:
-    import redis
-except ImportError:  # pragma: no cover
-    pytest.skip(reason='redis is not installed', allow_module_level=True)
-
+import redis
 from dirty_equals import IsOneOf
 from django.http import HttpResponse
 from inline_snapshot import snapshot
