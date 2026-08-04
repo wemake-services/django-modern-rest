@@ -194,6 +194,11 @@ content-type = "text/markdown"
 fragments = [ { path = "README.md" } ]
 
 
+[tool.uv]
+# Docs: https://docs.astral.sh/uv/reference/settings
+add-bounds = "major"
+
+
 [tool.cibuildwheel]
 # Build CPython 3.11-3.14 only; skip 32-bit and musl targets.
 build = "cp3{11,12,13,14}-*"
