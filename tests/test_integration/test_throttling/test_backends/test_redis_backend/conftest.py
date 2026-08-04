@@ -34,7 +34,7 @@ def redis_client(
 
             yield client
             client.flushall()
-    except redis.ConnectionError:
+    except redis.ConnectionError:  # pragma: no cover
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
 
@@ -50,6 +50,6 @@ async def redis_async_client(
 
             yield client
             await client.flushall()
-    except redis.ConnectionError:
+    except redis.ConnectionError:  # pragma: no cover
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
