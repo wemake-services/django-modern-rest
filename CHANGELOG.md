@@ -18,6 +18,30 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Features
+
+- Added `dmr.adapters.adapt_django_view` to document plain Django views
+  in the generated OpenAPI schema without rewriting them
+  as controllers, #1193
+- Added the `components` argument to `dmr.adapters.adapt_django_view`,
+  so an adapted view can contribute the reusable `schemas`, `responses`,
+  `parameters`, `examples` and `requestBodies` its path item
+  references, #1193
+- Added the `component_prefix` argument to `dmr.adapters.adapt_django_view`,
+  which namespaces the components a view contributes and every reference
+  to them, so names imported from a foreign specification cannot displace
+  the project's own, #1193
+- Contributing two different definitions of one component name now raises,
+  instead of silently keeping one of them, #1193
+
+### Bugfixes
+
+- Fixed `TokenLikeSync` and `TokenLikeAsync` doc examples
+  registering real models in the app registry, #1196
+
+
 ## 0.12.1 (2026-07-31)
 
 ### Bugfixes

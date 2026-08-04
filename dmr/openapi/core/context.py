@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, get_origin
 
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
+    ComponentRegistry,
     OperationIdRegistry,
     SchemaCallback,
     SchemaRegistry,
@@ -29,6 +30,7 @@ class RegistryContainer:
     operation_id: OperationIdRegistry
     schema: SchemaRegistry
     security_scheme: SecuritySchemeRegistry
+    component: ComponentRegistry
 
 
 @dataclass(slots=True, frozen=True)
@@ -66,6 +68,7 @@ class OpenAPIContext:
             operation_id=OperationIdRegistry(),
             schema=SchemaRegistry(),
             security_scheme=SecuritySchemeRegistry(),
+            component=ComponentRegistry(),
         )
 
         # Initialize generators

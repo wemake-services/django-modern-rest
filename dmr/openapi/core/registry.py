@@ -2,7 +2,17 @@ from typing import Any, ClassVar, Protocol
 
 from typing_extensions import Sentinel
 
-from dmr.openapi.objects import Reference, Schema, SecurityScheme
+from dmr.openapi.objects import (
+    Components,
+    Example,
+    Parameter,
+    Reference,
+    RequestBody,
+    Response,
+    Schema,
+    SecurityScheme,
+)
+from dmr.openapi.objects.openapi import normalize_key
 from dmr.types import EMPTY
 
 
@@ -140,6 +150,105 @@ class SecuritySchemeRegistry:
     ) -> None:
         """Register security scheme in registry."""
         self.schemes[name] = scheme
+
+
+class ComponentRegistry:
+    """
+    Registry for reusable components contributed from outside the pipeline.
+
+    The framework derives schemas and security schemes from controllers on its
+    own. Everything collected here comes from a description supplied by hand,
+    the typical source being an adapted plain Django view whose path item
+    references components the pipeline knows nothing about.
+    """
+
+    __slots__ = (
+        'examples',
+        'parameters',
+        'request_bodies',
+        'responses',
+        'schemas',
+    )
+
+    #: Component categories that can be contributed, as field names.
+    categories: ClassVar[tuple[str, ...]] = (
+        'schemas',
+        'responses',
+        'parameters',
+        'examples',
+        'request_bodies',
+    )
+
+    def __init__(self) -> None:
+        """Initialize empty registers for every contributed category."""
+        self.schemas: dict[str, Schema] = {}
+        self.responses: dict[str, Response | Reference] = {}
+        # An OpenAPI category name, not a variable name we chose:
+        self.parameters: dict[str, Parameter | Reference] = {}  # noqa: WPS110
+        self.examples: dict[str, Example | Reference] = {}
+        self.request_bodies: dict[str, RequestBody | Reference] = {}
+
+    def contribute(self, components: Components) -> None:
+        """
+        Merge the given components into the registry.
+
+        Contributing the very same definition twice is allowed, because one
+        description is commonly shared by several adapted views.
+        """
+        for category in self.categories:
+            self._merge(category, getattr(components, category) or {})
+
+    def build(
+        self,
+        *,
+        schemas: dict[str, Schema],
+        security_schemes: dict[str, SecurityScheme | Reference],
+    ) -> Components:
+        """
+        Build the ``components`` section of the document.
+
+        Contributed schemas share the section with the ones the pipeline
+        generates, so a name carrying both definitions is reported here.
+        """
+        for schema_name, generated in schemas.items():
+            _check_conflict(
+                'schemas',
+                schema_name,
+                self.schemas.get(schema_name),
+                generated,
+            )
+
+        return Components(
+            schemas=dict(sorted((self.schemas | schemas).items())),
+            security_schemes=security_schemes,
+            responses=self.responses or None,
+            parameters=self.parameters or None,
+            examples=self.examples or None,
+            request_bodies=self.request_bodies or None,
+        )
+
+    def _merge(self, category: str, contributed: dict[str, Any]) -> None:
+        registered: dict[str, Any] = getattr(self, category)
+        for name, component in contributed.items():
+            _check_conflict(category, name, registered.get(name), component)
+            registered[name] = component
+
+
+def _check_conflict(
+    category: str,
+    name: str,
+    existing: Any | None,
+    component: Any,
+) -> None:
+    if existing is not None and existing != component:
+        raise ValueError(
+            f'Component {name!r} is defined twice under '
+            f'{normalize_key(category)!r} in the OpenAPI specification, '
+            'with two different definitions. Components contributed by an '
+            'adapted view share one document with the ones the framework '
+            'generates, so rename the contribution or namespace it with the '
+            '`component_prefix` argument of `adapt_django_view`.',
+        )
 
 
 def _check_hashes(
