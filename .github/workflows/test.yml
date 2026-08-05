@@ -57,6 +57,7 @@ jobs:
         uv pip install orjson || true
 
     - name: Prefetch the image
+      if: ${{ matrix.redis-image }}
       run: docker pull "${{ matrix.redis-image }}"
 
     - name: Run checks
