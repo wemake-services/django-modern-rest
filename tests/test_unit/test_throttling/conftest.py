@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from django.core.cache import cache
 
