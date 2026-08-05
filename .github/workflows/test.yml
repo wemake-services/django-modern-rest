@@ -21,13 +21,12 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.11', '3.12', '3.13', '3.14']
-        docker-compose-services: ['redis']
+        redis-image: 'redis:8-alpine'
         include:
           - python-version: '3.14t'
-            force_free_gil: true
-            docker-compose-services: 'redis'
+            force-free-gil: true
           - python-version: '3.13'
-            docker-compose-services: 'valkey'
+            redis-image: 'valkey/valkey:9-alpine'
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,12 +44,6 @@ jobs:
     - name: Install just
       run: uv tool install rust-just
 
-    - name: Pull and build docker compose services
-      if: ${{ matrix.docker-compose-services }}
-      run: |
-        docker compose pull ${{ matrix.docker-compose-services }}
-        docker compose up --detach ${{ matrix.docker-compose-services }}
-
     - name: Install dependencies
       run: |
         # System deps:
@@ -63,14 +56,14 @@ jobs:
         # No way to exclude the platform on a file level.
         uv pip install orjson || true
 
-    - name: Wait for database to come online
-      if: ${{ matrix.docker-compose-services }}
-      run: wait-for-it --host='localhost' --port=6379 --timeout=30 --strict
+    - name: Prefetch the image
+      run: docker pull "${{ matrix.redis-image }}"
 
     - name: Run checks
       run: just test
       env:
-        PYTHON_GIL: ${{ matrix.force_free_gil && '0' || '1' }}
+        PYTHON_GIL: ${{ matrix.force-free-gil && '0' || '1' }}
+        REDIS_IMAGE: ${{ matrix.redis-image }}
 
     # Upload coverage to codecov: https://codecov.io/
     - name: Upload coverage to Codecov
@@ -81,7 +74,3 @@ jobs:
 
     - name: Tracecov report
       run: cat tracecov-report.md >> "$GITHUB_STEP_SUMMARY"
-
-    - name: Stop docker compose services
-      if: ${{ always() && matrix.docker-compose-services }}
-      run: docker compose down || true

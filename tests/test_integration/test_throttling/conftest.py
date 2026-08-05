@@ -7,7 +7,9 @@ from typing import Any
 import pytest
 import redis
 from django.core.cache import cache
+from docker.errors import DockerException
 from redis import asyncio as aioredis
+from testcontainers.community.redis import AsyncRedisContainer, RedisContainer
 
 
 @pytest.fixture(autouse=True)
@@ -16,28 +18,23 @@ def _clean_cache() -> None:
     cache.clear()
 
 
-@pytest.fixture
-def redis_url() -> str:
-    """Redis url to connect to during tests."""
-    server = os.environ.get('REDIS_HOST', '127.0.0.1')
-    port = os.environ.get('REDIS_PORT', '6379')
-    # No other worker must use this redis db:
-    db_number = int(os.environ.get('PYTEST_XDIST_WORKER_COUNT', '0')) + 1
-    return f'redis://{server}:{port}/{db_number}'
+@pytest.fixture(scope='session')
+def redis_image() -> str:
+    """Return the name of the image for the redis tests."""
+    return os.environ.get('REDIS_IMAGE', 'redis:8-alpine')
 
 
 @pytest.fixture
 def redis_client(
-    redis_url: str,
+    redis_image: str,
 ) -> Iterator['redis.Redis[Any]']:
     """Sync redis client."""
     try:
-        with redis.Redis.from_url(redis_url) as client:
-            client.flushdb()
-
-            yield client
-            client.flushdb()
-    except redis.ConnectionError:  # pragma: no cover
+        with RedisContainer(redis_image) as container:
+            client = container.get_client()
+            with client:
+                yield client
+    except DockerException:  # pragma: no cover
         # `redis` can be missing in some `test-extras` envs:
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
@@ -45,15 +42,14 @@ def redis_client(
 
 @pytest.fixture
 async def redis_async_client(
-    redis_url: str,
+    redis_image: str,
 ) -> AsyncIterator['aioredis.Redis[Any]']:
     """Async redis client."""
     try:
-        async with aioredis.Redis.from_url(redis_url) as client:
-            await client.flushdb()
-
-            yield client
-            await client.flushdb()
+        with AsyncRedisContainer(redis_image) as container:
+            client = await container.get_async_client()
+            async with client:
+                yield client
     except redis.ConnectionError:  # pragma: no cover
         # `redis` can be missing in some `test-extras` envs:
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
@@ -66,6 +62,9 @@ def pytest_collection_modifyitems(
     items: list[pytest.Item],  # noqa: WPS110
 ) -> None:
     """Automatically run all throttling tests on a single worker."""
-    # Otherwise, there can be parallel cache access / cache clear operations.
     for test_item in items:
+        # Otherwise, there can be parallel
+        # cache access / cache clear operations:
         test_item.add_marker(pytest.mark.xdist_group('throttling'))
+        # Othewise, there can be flaky timout results:
+        test_item.add_marker(pytest.mark.timeout(15))
