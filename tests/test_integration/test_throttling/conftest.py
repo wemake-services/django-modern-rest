@@ -31,15 +31,11 @@ def redis_client(
     redis_url: str,
 ) -> Iterator['redis.Redis[Any]']:
     """Sync redis client."""
-    try:
-        with redis.Redis.from_url(redis_url) as client:
-            client.flushdb()
+    with redis.Redis.from_url(redis_url) as client:
+        client.flushdb()
 
-            yield client
-            client.flushdb()
-    except redis.ConnectionError:  # pragma: no cover
-        assert os.environ.get('CI'), 'Redis can be missing only in CI'
-        pytest.skip(reason='Redis server was not found')
+        yield client
+        client.flushdb()
 
 
 @pytest.fixture
@@ -47,15 +43,11 @@ async def redis_async_client(
     redis_url: str,
 ) -> AsyncIterator['aioredis.Redis[Any]']:
     """Async redis client."""
-    try:
-        async with aioredis.Redis.from_url(redis_url) as client:
-            await client.flushdb()
+    async with aioredis.Redis.from_url(redis_url) as client:
+        await client.flushdb()
 
-            yield client
-            await client.flushdb()
-    except redis.ConnectionError:  # pragma: no cover
-        assert os.environ.get('CI'), 'Redis can be missing only in CI'
-        pytest.skip(reason='Redis server was not found')
+        yield client
+        await client.flushdb()
 
 
 def pytest_collection_modifyitems(
