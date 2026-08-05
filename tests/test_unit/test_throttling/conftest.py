@@ -16,5 +16,8 @@ def pytest_collection_modifyitems(  # pragma: no cover
 ) -> None:
     """Automatically run all throttling tests on a single worker."""
     # Otherwise, there can be parallel cache access / cache clear operations.
+    has_xdist = os.environ.get('PYTEST_XDIST_WORKER', '')
+    if not has_xdist:
+        return
     for test_item in items:
         test_item.add_marker(pytest.mark.xdist_group('throttling'))
