@@ -25,6 +25,7 @@ jobs:
         include:
           - python-version: '3.14t'
             force-free-gil: true
+            redis-image: 'redis:7-alpine'
           - python-version: '3.13'
             redis-image: 'valkey/valkey:9-alpine'
 
