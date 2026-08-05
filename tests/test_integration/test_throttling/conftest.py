@@ -21,7 +21,8 @@ def redis_url() -> str:
     """Redis url to connect to during tests."""
     server = os.environ.get('REDIS_HOST', '127.0.0.1')
     port = os.environ.get('REDIS_PORT', '6379')
-    db_number = os.environ.get('PYTEST_XDIST_WORKER', '0')
+    # No other worker must use this redis db:
+    db_number = int(os.environ.get('PYTEST_XDIST_WORKER_COUNT', '0')) + 1
     return f'redis://{server}:{port}/{db_number}'
 
 
@@ -37,6 +38,7 @@ def redis_client(
             yield client
             client.flushdb()
     except redis.ConnectionError:  # pragma: no cover
+        # `redis` can be missing in some `test-extras` envs:
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
 
@@ -53,5 +55,17 @@ async def redis_async_client(
             yield client
             await client.flushdb()
     except redis.ConnectionError:  # pragma: no cover
+        # `redis` can be missing in some `test-extras` envs:
         assert os.environ.get('CI'), 'Redis can be missing only in CI'
         pytest.skip(reason='Redis server was not found')
+
+
+def pytest_collection_modifyitems(
+    session: pytest.Session,
+    config: pytest.Config,
+    items: list[pytest.Item],  # noqa: WPS110
+) -> None:
+    """Automatically run all throttling tests on a single worker."""
+    # Otherwise, there can be parallel cache access / cache clear operations.
+    for test_item in items:
+        test_item.add_marker(pytest.mark.xdist_group('throttling'))

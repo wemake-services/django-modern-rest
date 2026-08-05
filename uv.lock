@@ -797,6 +797,7 @@ unit-test = [
     { name = "pytest-freezer" },
     { name = "pytest-randomly" },
     { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
     { name = "syrupy" },
     { name = "xmltodict-rs" },
 ]
@@ -909,6 +910,7 @@ unit-test = [
     { name = "pytest-freezer", specifier = ">=0.4,<0.5" },
     { name = "pytest-randomly", specifier = ">=4,<5" },
     { name = "pytest-timeout", specifier = ">=2.4,<3" },
+    { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "syrupy", specifier = ">=5.1,<6" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
