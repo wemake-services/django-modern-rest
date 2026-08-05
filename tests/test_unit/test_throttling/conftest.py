@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from django.core.cache import cache
 
@@ -7,7 +9,7 @@ def _clean_cache() -> None:
     cache.clear()
 
 
-def pytest_collection_modifyitems(
+def pytest_collection_modifyitems(  # pragma: no cover
     session: pytest.Session,
     config: pytest.Config,
     items: list[pytest.Item],  # noqa: WPS110
