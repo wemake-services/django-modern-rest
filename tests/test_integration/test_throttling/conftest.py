@@ -66,5 +66,5 @@ def pytest_collection_modifyitems(
         # Otherwise, there can be parallel
         # cache access / cache clear operations:
         test_item.add_marker(pytest.mark.xdist_group('throttling'))
-        # Othewise, there can be flaky timout results:
+        # Otherwise, there can be flaky timeout results:
         test_item.add_marker(pytest.mark.timeout(15))
