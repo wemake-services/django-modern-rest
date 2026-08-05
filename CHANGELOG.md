@@ -18,6 +18,13 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Features
+
+- Django 6.1 official support
+
+
 ## 0.12.1 (2026-07-31)
 
 ### Bugfixes
