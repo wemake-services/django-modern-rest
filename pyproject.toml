@@ -122,7 +122,7 @@ docs = [
   "sphinx-tabs>=3.5,<4",
   "sphinxcontrib-mermaid>=2,<3",
   # Needed for our extension:
-  "uvicorn>=0.41,<0.52",
+  "uvicorn>=0.41,<0.53",
   # Needed for examples:
   "xmltodict-rs>=0.13,<0.14",
   "zapros>=0.15,<0.17",
