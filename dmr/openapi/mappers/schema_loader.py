@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 _EnumT = TypeVar('_EnumT', bound=Enum)
 
 
+# TODO: replace with Settings.schema_loader()
 @overload
 def load_schema(
     raw_data: dict[str, Any],

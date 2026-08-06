@@ -10,8 +10,15 @@ from django.views import defaults
 from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
-from dmr.exceptions import InternalServerError, NotAcceptableError
-from dmr.openapi.collector import controller_mapping_collector
+from dmr.exceptions import (
+    EndpointMetadataError,
+    InternalServerError,
+    NotAcceptableError,
+)
+from dmr.openapi.collector import (
+    controller_mapping_collector,
+    external_mapping_collector,
+)
 from dmr.openapi.objects import Components, OpenAPI, Paths
 
 if TYPE_CHECKING:
@@ -35,17 +42,20 @@ _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 class Router:
     """Collection of HTTP routes for REST framework."""
 
-    __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
+    __slots__ = ('deprecated', 'external_urls', 'prefix', 'tags', 'urls')
 
     def __init__(
         self,
         prefix: str,
         urls: Sequence[_AnyPattern],
         *,
+        external_urls: Sequence[tuple[_AnyPattern, _OpenAPIMetadata]]
+        | None = None,
         tags: list[str] | None = None,
         deprecated: bool = False,
     ) -> None:
-        """Initialize a router with routes and optional OpenAPI metadata.
+        """
+        Initialize a router with routes and optional OpenAPI metadata.
 
         Args:
             prefix: URL prefix for all routes (e.g., 'api/v1/').
@@ -58,9 +68,13 @@ class Router:
         .. versionchanged:: 0.7.0
             Added *tags* and *deprecated* parameters.
 
+        .. versionchanged:: 0.13.0
+            Added *external_urls* parameter.
+
         """
         self.prefix = prefix
         self.urls = urls
+        self.external_urls = external_urls
         self.tags = tags or []
         self.deprecated = deprecated
 
@@ -75,6 +89,20 @@ class Router:
         """
         paths_items: Paths = {}
 
+        self._collect_controller_paths(path_items, context)
+        self._collect_external_paths(path_items, context)
+
+        components = Components(
+            schemas=context.registries.schema.schemas,
+            security_schemes=context.registries.security_scheme.schemes,
+        )
+        return context.config_merger(paths_items, components)
+
+    def _collect_controller_paths(
+        self,
+        paths_items: Paths,
+        context: 'OpenAPIContext',
+    ) -> None:
         for path, pattern, controller in controller_mapping_collector(
             self.urls,
             base_path=self.prefix,
@@ -86,11 +114,23 @@ class Router:
                 router=self,
             )
 
-        components = Components(
-            schemas=context.registries.schema.schemas,
-            security_schemes=context.registries.security_scheme.schemes,
-        )
-        return context.config_merger(paths_items, components)
+    def _collect_external_paths(
+        self,
+        paths_items: Paths,
+        context: 'OpenAPIContenxt',
+    ) -> None:
+        if self.external_urls is None:
+            return
+
+        for path, metadata in external_mapping_collector(
+            self.external_urls,
+            base_path=self.prefix,
+        ):
+            if path in path_items:
+                raise EndpointMetadataError(
+                    f'Trying to override {path=} with {metadata=}',
+                )
+            paths_items[path] = metadata
 
 
 # We mimic django's name here:

@@ -1,6 +1,6 @@
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, TypeAlias, Any
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
+_OpenAPIMetadata: TypeAlias = dict[str, Any]
 _PathControllerSpec: TypeAlias = tuple[
     str,
     URLPattern,
@@ -43,7 +44,7 @@ def _normalize_path(path: str) -> str:
 
 def controller_mapping_collector(
     urls: Sequence[_AnyPattern],
-    base_path: str = '',
+    base_path: str,
 ) -> list[_PathControllerSpec]:
     """
     Collect all API controllers from a router for OpenAPI generation.
@@ -69,3 +70,17 @@ def controller_mapping_collector(
             )
 
     return controllers
+
+
+def external_mapping_collector(
+    external_urls: Sequence[tuple[_AnyPattern, _OpenAPIMetadata]],
+    base_path: str,
+) -> list[_PathExternalSpec]:
+    """
+    Collect all the metadata from the external paths specification.
+
+    Paths are specified as tuples of ``(path, openapi_metadata)``,
+    which we parse and validate to fit our format.
+
+    Any OpenAPI ``Path`` item specification can be passed.
+    """
