@@ -41,8 +41,7 @@ _CONTEXT.register_external_schemas(
     ),
 )
 
-with open('components.txt', 'w') as f:
-    f.write(str(_CONTEXT.get_components()))
+Path('components.txt').write_text(str(_CONTEXT.get_components()))
 
 _EXTERNAL_FUNC_OPENAPI: Final = load_openapi_schema(
     _EXTERNAL_OPENAPI['paths']['/_allauth/{client}/v1/config'],
@@ -61,8 +60,7 @@ _EXTERNAL_CLASS_OPENAPI: Final = load_openapi_schema(
     serializer=PydanticSerializer,
 )
 
-with open('filepath.txt', 'w') as f:
-    f.write(str(_EXTERNAL_CLASS_OPENAPI))
+Path('filepath.txt').write_text(str(_EXTERNAL_CLASS_OPENAPI))
 
 
 class _ExternalClass(View):
