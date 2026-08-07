@@ -22,17 +22,17 @@ install:
 # Format code with ruff
 [group('dev')]
 format:
-    uv run ruff format
-    uv run ruff check
+    uv run python -m ruff format
+    uv run python -m ruff check
 
 # Run all linters
 [group('dev')]
 lint:
-    uv run ruff check --exit-non-zero-on-fix
-    uv run ruff format --check --diff
-    uv run flake8 .
-    uv run slotscheck -v -m dmr
-    uv run lint-imports
+    uv run python -m ruff check --exit-non-zero-on-fix
+    uv run python -m ruff format --check --diff
+    uv run python -m flake8 .
+    uv run python -m slotscheck -v -m dmr
+    uv run import-linter lint
 
 # Run all checks
 [group('dev')]
@@ -42,14 +42,14 @@ test: lint type-check example benchmarks-type-check package \
 # Run all type checkers
 [group('type-check')]
 type-check:
-    uv run mypy .
-    uv run pyright
-    uv run pyrefly check --remove-unused-ignores
+    uv run python -m mypy .
+    uv run python -m pyright
+    uv run python -m pyrefly check --remove-unused-ignores
 
 # Run unit tests
 [group('testing')]
 unit *args='':
-    uv run pytest -n auto --inline-snapshot=disable {{ args }}
+    uv run python -m pytest -n auto --inline-snapshot=disable {{ args }}
 
 # Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
@@ -84,10 +84,10 @@ smoke *extras='':
 [group('testing')]
 example:
     cd django_test_app \
-      && uv run mypy --config-file mypy.ini \
+      && uv run python -m mypy --config-file mypy.ini \
       && uv run python manage.py makemigrations --dry-run --check \
       && uv run python manage.py collectstatic --no-input --dry-run
-    PYTHONPATH='docs/' uv run pytest -o addopts='' \
+    PYTHONPATH='docs/' uv run python -m pytest -o addopts='' \
       docs/examples/testing/polyfactory_usage.py \
       docs/examples/testing/django_builtin_client.py \
       docs/examples/testing/dmr_helpers.py \
@@ -111,12 +111,12 @@ package:
 # Type-check benchmark code
 [group('benchmarks')]
 benchmarks-type-check:
-    cd benchmarks && uv run mypy tests/
+    cd benchmarks && uv run python -m mypy tests/
 
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]
 benchmarks: mypyc
-    uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
+    uv run python -m pytest benchmarks/tests -o 'addopts="--codspeed"'
 
 # Compile code with mypyc
 [group('build')]

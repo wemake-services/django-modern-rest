@@ -14,7 +14,7 @@ _default: (sphinx 'help')
 sphinx +targets:
   #!/usr/bin/env bash
   for target in {{targets}}; do
-    uv run python -msphinx -M "$target" "{{sourcedir}}" \
+    uv run python -m sphinx -M "$target" "{{sourcedir}}" \
       "{{builddir}}" {{sphinxopts}}
   done
 
