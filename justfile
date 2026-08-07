@@ -32,7 +32,7 @@ lint:
     uv run python -m ruff format --check --diff
     uv run python -m flake8 .
     uv run python -m slotscheck -v -m dmr
-    uv run python -m lint-imports
+    uv run import-linter lint
 
 # Run all checks
 [group('dev')]
