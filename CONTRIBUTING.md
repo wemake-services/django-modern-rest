@@ -130,7 +130,7 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
 1. Generate a `.po` file for your [locale](https://docs.djangoproject.com/en/stable/topics/i18n/
 #term-locale-name):
    ```bash
-   uv run django-admin makemessages --locale <lang>
+   uv run python -m django-admin makemessages --locale <lang>
    ```
 2. Fill in the `msgstr` values in `dmr/locale/<lang>/LC_MESSAGES/django.po`
 3. Compile and validate all translations:

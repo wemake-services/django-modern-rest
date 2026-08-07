@@ -49,7 +49,7 @@ jobs:
           --no-extra msgspec --no-extra attrs --all-extras
 
     - name: Run checks
-      run: uv run --no-sync pytest tests/test_unit -o addopts=""
+      run: uv run --no-sync python -m pytest tests/test_unit -o addopts=""
 
 
   test-django-versions:
@@ -121,7 +121,7 @@ jobs:
       run: |
         just smoke jwt pydantic
         just example
-        uv run pytest -n auto --cov-fail-under=90
+        uv run python -m pytest -n auto --cov-fail-under=90
 
 
   build-no-pydantic:
@@ -153,7 +153,8 @@ jobs:
     - name: Run checks
       run: |
         just smoke jwt msgspec
-        uv run pytest tests/test_unit/test_plugins/test_msgspec --cov-fail-under=50
+        uv run python -m pytest tests/test_unit/test_plugins/test_msgspec \
+          --cov-fail-under=50
 
 
   build-no-serializers:

@@ -22,17 +22,17 @@ install:
 # Format code with ruff
 [group('dev')]
 format:
-    uv run ruff format
-    uv run ruff check
+    uv run python -m ruff format
+    uv run python -m ruff check
 
 # Run all linters
 [group('dev')]
 lint:
-    uv run ruff check --exit-non-zero-on-fix
-    uv run ruff format --check --diff
-    uv run flake8 .
-    uv run slotscheck -v -m dmr
-    uv run lint-imports
+    uv run python -m ruff check --exit-non-zero-on-fix
+    uv run python -m ruff format --check --diff
+    uv run python -m flake8 .
+    uv run python -m slotscheck -v -m dmr
+    uv run python -m lint-imports
 
 # Run all checks
 [group('dev')]
@@ -42,9 +42,9 @@ test: lint type-check example benchmarks-type-check package \
 # Run all type checkers
 [group('type-check')]
 type-check:
-    uv run mypy .
-    uv run pyright
-    uv run pyrefly check --remove-unused-ignores
+    uv run python -m mypy .
+    uv run python -m pyright
+    uv run python -m pyrefly check --remove-unused-ignores
 
 # Run unit tests
 [group('testing')]
@@ -84,7 +84,7 @@ smoke *extras='':
 [group('testing')]
 example:
     cd django_test_app \
-      && uv run mypy --config-file mypy.ini \
+      && uv run python -m mypy --config-file mypy.ini \
       && uv run python manage.py makemigrations --dry-run --check \
       && uv run python manage.py collectstatic --no-input --dry-run
     PYTHONPATH='docs/' uv run python -m pytest -o addopts='' \
@@ -111,7 +111,7 @@ package:
 # Type-check benchmark code
 [group('benchmarks')]
 benchmarks-type-check:
-    cd benchmarks && uv run mypy tests/
+    cd benchmarks && uv run python -m mypy tests/
 
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]
@@ -138,13 +138,13 @@ docs +targets='clean html': (_docs::build targets)
 makemessages:
   #!/usr/bin/env bash
   for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
-    uv run django-admin makemessages -l "$(basename "$target")" \
+    uv run python -m django-admin makemessages -l "$(basename "$target")" \
       --add-location never
   done
 
 # Run translation QA
 [group('i18n')]
 translations:
-    uv run dennis-cmd lint dmr/locale
-    uv run django-admin compilemessages --ignore dmr || true
-    uv run django-admin compilemessages
+    uv run python -m dennis-cmd lint dmr/locale
+    uv run python -m django-admin compilemessages --ignore dmr || true
+    uv run python -m django-admin compilemessages

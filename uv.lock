@@ -3392,14 +3392,14 @@ wheels = [
 
 [[package]]
 name = "types-django-filter"
-version = "26.1.0.20260713"
+version = "26.1.0.20260807"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django-stubs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/e0/33494d52df6f2d92da2aa41f82863baa5e2b4d284a8322002c89d11f1224/types_django_filter-26.1.0.20260713.tar.gz", hash = "sha256:f295ab0aea679fa8d183a832a4c02748f06f074a43b26ca25d167f7e775a3e26", size = 15887, upload-time = "2026-07-13T05:22:28.574Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/68/15c1a3d8a3a30c78446a46e8fe4fc825aa22e67dceae8beb755b46afadae/types_django_filter-26.1.0.20260807.tar.gz", hash = "sha256:3d46ae80506702f1f4e64795a7fb9e2aeff29e4a9adbe52a122aa3fcb94182df", size = 16030, upload-time = "2026-08-07T04:17:47.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/2b/383104be3c85aafe8695f3637b832e12509424f9bee199ea2609a0d82000/types_django_filter-26.1.0.20260713-py3-none-any.whl", hash = "sha256:a32e6f84685ca67ea7f7ce64e9d74d13d712857d4702e8d218e6570ab34d418a", size = 19332, upload-time = "2026-07-13T05:22:27.679Z" },
+    { url = "https://files.pythonhosted.org/packages/91/d2/ba553315d721d8c2d0c5ab058beaf900ac5ef9f8c7dd8fd72608d73c2663/types_django_filter-26.1.0.20260807-py3-none-any.whl", hash = "sha256:4baa9ce483a497fe8dfbb41b3d3aa77b5ec2505bb6d52f7c25ea3051cc02f5db", size = 19404, upload-time = "2026-08-07T04:17:47.071Z" },
 ]
 
 [[package]]
@@ -3473,11 +3473,11 @@ wheels = [
 
 [[package]]
 name = "types-setuptools"
-version = "83.0.0.20260724"
+version = "83.0.0.20260807"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9d/8c/e069673eb23a7a8242f6e28184ef6911849b2667a61b3bf298d86b807f33/types_setuptools-83.0.0.20260724.tar.gz", hash = "sha256:fe2801176b667f1e8209f8571b0839ca6c34318d743825aeacf3f29970c8d46f", size = 45746, upload-time = "2026-07-24T04:57:55.054Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/45/49789d4b7424504c99c33bcc0cbd50d84de4a905cd540f1f3eab32a04380/types_setuptools-83.0.0.20260807.tar.gz", hash = "sha256:1ed1a446914afe91658868a8fe8806d1e34ba89f8c3bf8926c7165a428b117a6", size = 45884, upload-time = "2026-08-07T04:16:58.048Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/5d/5c32313e6eb7298944ca0fad6486157e8ed549760a25598cddb8ac7e08c6/types_setuptools-83.0.0.20260724-py3-none-any.whl", hash = "sha256:eed1a91e1ed9d8ec9f3e71908e5bb17272e41e0852d37d1485ecd9cd33165e1a", size = 68758, upload-time = "2026-07-24T04:57:53.976Z" },
+    { url = "https://files.pythonhosted.org/packages/26/4b/810b27aa79700bf7e44c0e4415c221906138b50754d80d65a96f253442bd/types_setuptools-83.0.0.20260807-py3-none-any.whl", hash = "sha256:a3b07bc820b397a64f660bbbef5b3738296cac619a0b1ccab261b9ce9325f9b2", size = 68819, upload-time = "2026-08-07T04:16:56.954Z" },
 ]
 
 [[package]]

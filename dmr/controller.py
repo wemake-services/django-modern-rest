@@ -45,7 +45,7 @@ _SerializerT_co = TypeVar(
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 
-class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
+class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     """
     Defines API views as controllers.
 

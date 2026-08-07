@@ -246,7 +246,7 @@ install the ``django-modern-rest`` and run it with:
 
         .. code-block:: bash
 
-            uv run example.py runserver
+            uv run python example.py runserver
 
     .. tab:: :iconify:`devicon:poetry` poetry
 
