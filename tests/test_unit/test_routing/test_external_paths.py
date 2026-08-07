@@ -1,32 +1,73 @@
 import json
-from typing import Final
+from pathlib import Path
+from typing import Any, Final
 
+import yaml
 from django.http import HttpRequest, HttpResponse
 from django.urls import path
 from django.views import View
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
-from dmr.openapi import build_schema
-from dmr.openapi.objects import PathItem
+from dmr.openapi import OpenAPIContext, build_schema, default_config, objects
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
-_EXTERNAL_FUNC_OPENAPI: Final = PydanticSerializer.from_python(json.loads("""
 
-"""), PathItem, strict=True)
+def load_openapi_schema(
+    unstructured: Any,
+    model: type[Any],
+    serializer: type[PydanticSerializer],
+) -> Any:
+    return serializer.from_python(
+        unstructured,
+        model,
+        strict=False,
+        extra_namespace=objects.__dict__,
+    )
 
 
-def _external_func(request: HttpRequest) -> HttpResponse: ...
+_EXTERNAL_OPENAPI: Final = yaml.safe_load(
+    Path(__file__).parent.joinpath('django_allauth.yml').read_bytes(),
+)
+
+_CONTEXT: Final = OpenAPIContext(config=default_config())
+
+_CONTEXT.register_external_schemas(
+    load_openapi_schema(
+        _EXTERNAL_OPENAPI['components'],
+        objects.Components,
+        serializer=PydanticSerializer,
+    ),
+)
+
+with open('components.txt', 'w') as f:
+    f.write(str(_CONTEXT.get_components()))
+
+_EXTERNAL_FUNC_OPENAPI: Final = load_openapi_schema(
+    _EXTERNAL_OPENAPI['paths']['/_allauth/{client}/v1/config'],
+    objects.PathItem,
+    serializer=PydanticSerializer,
+)
 
 
-_EXTERNAL_CLASS_OPENAPI: Final = PydanticSerializer.from_python(json.loads("""
+def _external_func(request: HttpRequest) -> HttpResponse:
+    raise NotImplementedError
 
-"""), PathItem, strict=True)
+
+_EXTERNAL_CLASS_OPENAPI: Final = load_openapi_schema(
+    _EXTERNAL_OPENAPI['paths']['/_allauth/{client}/v1/auth/login'],
+    objects.PathItem,
+    serializer=PydanticSerializer,
+)
+
+with open('filepath.txt', 'w') as f:
+    f.write(str(_EXTERNAL_CLASS_OPENAPI))
 
 
 class _ExternalClass(View):
-    def post(self, request: HttpRequest, user_id: int) -> HttpResponse: ...
+    def post(self, request: HttpRequest, user_id: int) -> HttpResponse:
+        raise NotImplementedError
 
 
 class _AsyncController(Controller[PydanticSerializer]):
@@ -42,16 +83,17 @@ def test_external_paths_schema(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/v1/',
                     [path('/async', _AsyncController.as_view())],
-                    external_paths=[
+                    external_urls=[
                         (
-                            path('/external-func', _external_func),
+                            path(
+                                '/_allauth/<str:client>/v1/config',
+                                _external_func,
+                            ),
                             _EXTERNAL_FUNC_OPENAPI,
                         ),
                         (
-                            # Parameter must be explicit
-                            # in the routing's metadata:
                             path(
-                                '/external-class/<int:user_id>',
+                                '/_allauth/<str:client>/v1/auth/login',
                                 _ExternalClass.as_view(),
                             ),
                             _EXTERNAL_CLASS_OPENAPI,
@@ -59,7 +101,8 @@ def test_external_paths_schema(snapshot: SnapshotAssertion) -> None:
                     ],
                     tags=['custom'],
                 ),
-            ).convert(),
+                context=_CONTEXT,
+            ).convert(skip_validation=True),
             indent=2,
         )
         == snapshot

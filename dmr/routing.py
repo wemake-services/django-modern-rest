@@ -19,7 +19,7 @@ from dmr.openapi.collector import (
     controller_mapping_collector,
     external_mapping_collector,
 )
-from dmr.openapi.objects import Components, OpenAPI, Paths, PathItem
+from dmr.openapi.objects import OpenAPI, PathItem, Paths
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -41,7 +41,33 @@ _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
 
 class Router:
-    """Collection of HTTP routes for REST framework."""
+    """
+    Collection of HTTP routes for REST framework.
+
+    Attributes:
+        prefix: URL prefix for all routes (e.g., 'api/v1/').
+        urls: Sequence of URL patterns and resolvers.
+        external_urls: Optional sequence of pairs
+            of URL pattern and :class:`dmr.openapi.objects.PathItem`
+            OpenAPI spec, used to include non-DMR views into the API.
+        tags: Optional sequence of tags to group operations in OpenAPI.
+            These are merged with endpoint-level tags.
+        deprecated: Optional flag to mark all operations as deprecated.
+            Combines with endpoint-level deprecated flag using OR logic.
+
+    .. note::
+
+        *tags* and *deprecated* is not applied on *external_urls*
+        metadata. It is always included as-is.
+
+    .. versionchanged:: 0.7.0
+        Added *tags* and *deprecated* parameters.
+
+    .. versionchanged:: 0.13.0
+        Added *external_urls* parameter.
+        Also accept any :class:`collections.abc.Sequence` as *tags*.
+
+    """
 
     __slots__ = ('deprecated', 'external_urls', 'prefix', 'tags', 'urls')
 
@@ -54,30 +80,9 @@ class Router:
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
     ) -> None:
-        """
-        Initialize a router with routes and optional OpenAPI metadata.
-
-        Args:
-            prefix: URL prefix for all routes (e.g., 'api/v1/').
-            urls: Sequence of URL patterns and resolvers.
-            external_urls: Optional sequence of pairs
-                of URL pattern and :class:`dmr.openapi.objects.PathItem`
-                OpenAPI spec, used to include non-DMR views into the API.
-            tags: Optional sequence of tags to group operations in OpenAPI.
-                These are merged with endpoint-level tags.
-            deprecated: Optional flag to mark all operations as deprecated.
-                Combines with endpoint-level deprecated flag using OR logic.
-
-        .. versionchanged:: 0.7.0
-            Added *tags* and *deprecated* parameters.
-
-        .. versionchanged:: 0.13.0
-            Added *external_urls* parameter.
-            Also accept any :class:`collections.abc.Sequence` as *tags*.
-
-        """
+        """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
-        self.urls = urls
+        self.urls = tuple(urls)
         self.external_urls = external_urls
         self.tags = list(tags or [])
         self.deprecated = deprecated
@@ -96,10 +101,7 @@ class Router:
         self._collect_controller_paths(paths_items, context)
         self._collect_external_paths(paths_items, context)
 
-        components = Components(
-            schemas=context.registries.schema.schemas,
-            security_schemes=context.registries.security_scheme.schemes,
-        )
+        components = context.get_components()
         return context.config_merger(paths_items, components)
 
     def _collect_controller_paths(

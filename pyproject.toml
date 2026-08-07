@@ -544,7 +544,10 @@ plugins = [ "covdefaults" ]
 strict-imports = true
 require-subclass = true
 exclude-slots = '''
-dmr\.streaming\.sse\.metadata:(SSEvent|_SSEventSlots)\._serialize
+(
+  dmr\.streaming\.sse\.metadata:(SSEvent|_SSEventSlots)\._serialize
+  |dmr\._compiled\.negotiation:_MediaTypeHeader
+)
 '''
 exclude-modules = '''
 (
