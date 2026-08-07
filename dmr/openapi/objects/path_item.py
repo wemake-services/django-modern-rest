@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class PathItem:
     they will not know which operations and parameters are available.
     """
 
-    ref: str | None = None
+    ref: str | None = field(default=None, metadata={'alias': '$ref'})
     summary: str | None = None
     description: str | None = None
     get: 'Operation | None' = None

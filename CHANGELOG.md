@@ -20,6 +20,19 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Breaking changes
+
+- `Schema.then` is renamed to be `Schema.schema_then`
+  to be consistent with other similar names
+- `dmr.openapi.objects.openapi.convert` function is renamed and moved
+  to `dmr.openapi.mappers.schema_normalization.dump_schema`
+- `dmr.openapi.objects.openapi.normalize_key`
+  and `dmr.openapi.objects.openapi.normalize_value` functions are removed
+- `dmr.openapi.objects.openapi.ConvertedSchema` is renamed and moved 
+  to `dmr.openapi.mappers.schema_normalization.DumpedSchema`
+- `dmr.openapi.views.base.DumpedSchema` is removed,
+  it was just a `str` type alias
+
 ### Features
 
 - Django 6.1 official support

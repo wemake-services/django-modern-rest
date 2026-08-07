@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class Parameter(ParameterMetadata):
     """Describes a single operation parameter."""
 
     name: str
-    param_in: str
+    param_in: str = field(metadata={'alias': 'in'})
     schema: 'Schema | Reference | None' = None
     content: dict[str, 'MediaType'] | None = None
     required: bool = False

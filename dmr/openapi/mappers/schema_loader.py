@@ -70,7 +70,7 @@ def load_schema(
         one_of=_sort_null_last(_try_sequence(raw_data.get('oneOf'))),
         schema_not=_try_optional_type(raw_data.get('not')),
         schema_if=_try_optional_type(raw_data.get('if')),
-        then=_try_optional_type(raw_data.get('then')),
+        schema_then=_try_optional_type(raw_data.get('then')),
         schema_else=_try_optional_type(raw_data.get('else')),
         dependent_schemas=_try_dict(raw_data.get('dependentSchemas')),
         prefix_items=_try_sequence(raw_data.get('prefixItems')),
