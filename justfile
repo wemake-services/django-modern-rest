@@ -49,7 +49,7 @@ type-check:
 # Run unit tests
 [group('testing')]
 unit *args='':
-    uv run pytest -n auto --inline-snapshot=disable {{ args }}
+    uv run python -m pytest -n auto --inline-snapshot=disable {{ args }}
 
 # Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
@@ -87,7 +87,7 @@ example:
       && uv run mypy --config-file mypy.ini \
       && uv run python manage.py makemigrations --dry-run --check \
       && uv run python manage.py collectstatic --no-input --dry-run
-    PYTHONPATH='docs/' uv run pytest -o addopts='' \
+    PYTHONPATH='docs/' uv run python -m pytest -o addopts='' \
       docs/examples/testing/polyfactory_usage.py \
       docs/examples/testing/django_builtin_client.py \
       docs/examples/testing/dmr_helpers.py \
@@ -116,7 +116,7 @@ benchmarks-type-check:
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]
 benchmarks: mypyc
-    uv run pytest benchmarks/tests -o 'addopts="--codspeed"'
+    uv run python -m pytest benchmarks/tests -o 'addopts="--codspeed"'
 
 # Compile code with mypyc
 [group('build')]
