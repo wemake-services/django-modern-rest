@@ -28,7 +28,7 @@ of requirements for an API to count as public.
   to `dmr.openapi.mappers.schema_normalization.dump_schema`, #1221
 - `dmr.openapi.objects.openapi.normalize_key`
   and `dmr.openapi.objects.openapi.normalize_value` functions are removed, #1221
-- `dmr.openapi.objects.openapi.ConvertedSchema` is renamed and moved 
+- `dmr.openapi.objects.openapi.ConvertedSchema` is renamed and moved
   to `dmr.openapi.mappers.schema_normalization.DumpedSchema`, #1221
 - `dmr.openapi.views.base.DumpedSchema` is removed,
   it was just a `str` type alias, #1221
