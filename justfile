@@ -145,6 +145,6 @@ makemessages:
 # Run translation QA
 [group('i18n')]
 translations:
-    uv run python -m dennis-cmd lint dmr/locale
+    uv run dennis-cmd lint dmr/locale
     uv run python -m django-admin compilemessages --ignore dmr || true
     uv run python -m django-admin compilemessages
