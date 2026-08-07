@@ -138,7 +138,7 @@ docs +targets='clean html': (_docs::build targets)
 makemessages:
   #!/usr/bin/env bash
   for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
-    uv run python -m django-admin makemessages -l "$(basename "$target")" \
+    uv run django-admin makemessages -l "$(basename "$target")" \
       --add-location never
   done
 
@@ -146,5 +146,5 @@ makemessages:
 [group('i18n')]
 translations:
     uv run dennis-cmd lint dmr/locale
-    uv run python -m django-admin compilemessages --ignore dmr || true
-    uv run python -m django-admin compilemessages
+    uv run django-admin compilemessages --ignore dmr || true
+    uv run django-admin compilemessages
