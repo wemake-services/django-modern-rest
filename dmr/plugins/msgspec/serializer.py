@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import msgspec
@@ -110,6 +110,7 @@ class MsgspecSerializer(BaseSerializer):
         model: Any,
         *,
         strict: bool | None,
+        extra_namespace: Mapping[str, Any] | None = None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
@@ -123,12 +124,16 @@ class MsgspecSerializer(BaseSerializer):
                 For example, it is fine for a request validation
                 to be less strict in some cases and allow type coercition.
                 But, response types need to be strongly validated.
+            extra_namespace: Not used currently.
 
         Returns:
             Structured and validated data.
 
         Raises:
             msgspec.ValidationError: When parsing can't be done.
+
+        .. versionchanged:: 0.13.0
+            Added *extra_namespace* parameter.
 
         """
         return msgspec.convert(
