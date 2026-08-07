@@ -1,12 +1,11 @@
 import re
-from collections.abc import Sequence
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
 from dmr.openapi.objects import PathItem
-from dmr.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -23,7 +22,7 @@ _PathExternalSpec: TypeAlias = tuple[str, PathItem]
 
 
 def controller_mapping_collector(
-    urls: Sequence[_AnyPattern],
+    urls: Iterable[_AnyPattern],
     base_path: str,
 ) -> list[_PathControllerSpec]:
     """
@@ -53,7 +52,7 @@ def controller_mapping_collector(
 
 
 def external_mapping_collector(
-    external_paths: Sequence[tuple[_AnyPattern, _OpenAPIMetadata]],
+    external_paths: Iterable[tuple[_AnyPattern, PathItem]],
     base_path: str,
 ) -> list[_PathExternalSpec]:
     """
@@ -65,12 +64,11 @@ def external_mapping_collector(
     Any OpenAPI ``Path`` item specification can be passed.
     """
     external_spec: list[_PathExternalSpec] = []
-    for external_path in external_paths:
-        url_pattern, metadata = external_path
+    for url_pattern, openapi_spec in external_paths:
         path = _join_paths(base_path, str(url_pattern.pattern))
         external_spec.append((
             _normalize_path(path),
-            resolve_setting(Settings.openapi_schema_loader)(metadata, PathItem),
+            openapi_spec,
         ))
     return external_spec
 

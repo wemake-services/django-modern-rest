@@ -8,20 +8,21 @@ from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
 from dmr.openapi import build_schema
+from dmr.openapi.objects import PathItem
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
-_EXTERNAL_FUNC_OPENAPI: Final = """
+_EXTERNAL_FUNC_OPENAPI: Final = PydanticSerializer.from_python(json.loads("""
 
-"""
+"""), PathItem, strict=True)
 
 
 def _external_func(request: HttpRequest) -> HttpResponse: ...
 
 
-_EXTERNAL_CLASS_OPENAPI: Final = """
+_EXTERNAL_CLASS_OPENAPI: Final = PydanticSerializer.from_python(json.loads("""
 
-"""
+"""), PathItem, strict=True)
 
 
 class _ExternalClass(View):

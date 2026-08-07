@@ -1,4 +1,4 @@
-from collections.abc import Callable, Coroutine, Sequence
+from collections.abc import Callable, Coroutine, Iterable, Sequence
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
@@ -19,7 +19,7 @@ from dmr.openapi.collector import (
     controller_mapping_collector,
     external_mapping_collector,
 )
-from dmr.openapi.objects import Components, OpenAPI, Paths
+from dmr.openapi.objects import Components, OpenAPI, Paths, PathItem
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -48,12 +48,10 @@ class Router:
     def __init__(
         self,
         prefix: str,
-        urls: Sequence[_AnyPattern],
+        urls: Iterable[_AnyPattern],
         *,
-        external_urls: (
-            Sequence[tuple[_AnyPattern, _OpenAPIMetadata]] | None
-        ) = None,
-        tags: list[str] | None = None,
+        external_urls: Iterable[tuple[_AnyPattern, PathItem]] | None = None,
+        tags: Sequence[str] | None = None,
         deprecated: bool = False,
     ) -> None:
         """
@@ -63,9 +61,9 @@ class Router:
             prefix: URL prefix for all routes (e.g., 'api/v1/').
             urls: Sequence of URL patterns and resolvers.
             external_urls: Optional sequence of pairs
-                of URL pattern and OpenAPI metadata dict,
-                used as a way to include non-DMR views into the API.
-            tags: Optional list of tags to group operations in OpenAPI.
+                of URL pattern and :class:`dmr.openapi.objects.PathItem`
+                OpenAPI spec, used to include non-DMR views into the API.
+            tags: Optional sequence of tags to group operations in OpenAPI.
                 These are merged with endpoint-level tags.
             deprecated: Optional flag to mark all operations as deprecated.
                 Combines with endpoint-level deprecated flag using OR logic.
@@ -75,12 +73,13 @@ class Router:
 
         .. versionchanged:: 0.13.0
             Added *external_urls* parameter.
+            Also accept any :class:`collections.abc.Sequence` as *tags*.
 
         """
         self.prefix = prefix
         self.urls = urls
         self.external_urls = external_urls
-        self.tags = tags or []
+        self.tags = list(tags or [])
         self.deprecated = deprecated
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
@@ -124,7 +123,7 @@ class Router:
         paths_items: Paths,
         context: 'OpenAPIContext',
     ) -> None:
-        if self.external_urls is None:
+        if not self.external_urls:
             return
 
         for path, metadata in external_mapping_collector(

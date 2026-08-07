@@ -10,7 +10,6 @@ from dmr.openapi.objects import (
     XML,
     Discriminator,
     ExternalDocumentation,
-    OpenAPIFormat,
     OpenAPIType,
     Reference,
     Schema,
