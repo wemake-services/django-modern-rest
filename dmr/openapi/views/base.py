@@ -8,11 +8,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
 if TYPE_CHECKING:
+    from dmr.openapi.mappers.schema_normalization import DumpedSchema
     from dmr.openapi.objects import OpenAPI
-    from dmr.openapi.objects.openapi import ConvertedSchema
 
-DumpedSchema: TypeAlias = str
-SchemaDumper: TypeAlias = Callable[['ConvertedSchema'], DumpedSchema]
+SchemaDumper: TypeAlias = Callable[['DumpedSchema'], str]
 
 
 @method_decorator(

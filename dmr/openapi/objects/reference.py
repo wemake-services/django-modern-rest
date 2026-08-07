@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(kw_only=True, slots=True)
@@ -10,6 +10,6 @@ class Reference:
     the location of the value being referenced.
     """
 
-    ref: str
+    ref: str = field(metadata={'alias': '$ref'})
     summary: str | None = None
     description: str | None = None

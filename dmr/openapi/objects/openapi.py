@@ -1,10 +1,12 @@
 import dataclasses
-from collections.abc import Callable
-from enum import Enum
-from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
+from typing import TYPE_CHECKING, Protocol
+
+from dmr.openapi.mappers.schema_normalization import (
+    DumpedSchema,
+    dump_schema,
+)
 
 if TYPE_CHECKING:
-    from _typeshed import DataclassInstance
     from jsonschema_path.typing import Schema
     from openapi_spec_validator.validation.types import SpecValidatorType
 
@@ -17,11 +19,6 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.security_requirement import SecurityRequirement
     from dmr.openapi.objects.server import Server
     from dmr.openapi.objects.tag import Tag
-
-ConvertedSchema: TypeAlias = dict[str, Any]
-_ConverterFunc: TypeAlias = Callable[['DataclassInstance'], ConvertedSchema]
-_NormalizeKeyFunc: TypeAlias = Callable[[str], str]
-_NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
 
 class _ValidateSpecProto(Protocol):
@@ -68,14 +65,14 @@ class OpenAPI:
         compare=False,
     )
 
-    def convert(self, *, skip_validation: bool = False) -> ConvertedSchema:
+    def convert(self, *, skip_validation: bool = False) -> DumpedSchema:
         """
         Convert the object to OpenAPI schema dictionary.
 
         Runs validation if ``'django-modern-rest[openapi]'`` is installed
         and *skip_validation* is falsy.
         """
-        spec = convert(self)
+        spec = dump_schema(self)
         if (
             not skip_validation
             and not self._validated
@@ -85,108 +82,3 @@ class OpenAPI:
             # Do not revalidate the same spec.
             self._validated = True
         return spec
-
-
-def convert(to_convert: 'DataclassInstance') -> ConvertedSchema:  # noqa: WPS231
-    """Converts any dataclass object into a JSON schema."""
-    schema: ConvertedSchema = {}
-
-    for field in dataclasses.fields(to_convert):
-        schema_value = getattr(to_convert, field.name, None)
-        if field.name.startswith('_') or schema_value is None:
-            continue
-        if field.name == 'required' and not schema_value:
-            continue  # Skip empty `required` field
-
-        schema[normalize_key(field.name)] = normalize_value(
-            schema_value,
-            convert,
-        )
-
-    return schema
-
-
-def normalize_key(key: str) -> str:
-    """
-    Convert a Python field name to an OpenAPI-compliant key.
-
-    This function handles the conversion from Python naming conventions
-    (snake_case) to OpenAPI naming conventions (camelCase) with special
-    handling for reserved keywords and common patterns.
-
-    Args:
-        key: The Python field name to normalize
-
-    Returns:
-        The normalized key suitable for OpenAPI specification
-
-    For example:
-
-    .. code:: python
-
-        >>> normalize_key('param_in')
-        'in'
-        >>> normalize_key('schema_not')
-        'not'
-        >>> normalize_key('ref')
-        '$ref'
-        >>> normalize_key('content_media_type')
-        'contentMediaType'
-
-    """
-    if key in {'ref', 'defs'}:
-        return f'${key}'
-
-    if key in {'param_in', 'security_scheme_in'}:
-        return 'in'
-
-    if key.startswith('schema_'):
-        key = key.removeprefix('schema_')
-
-    if '_' in key:
-        components = key.split('_')
-        camel_case_component = components[0].lower() + ''.join(
-            component.title() for component in components[1:]
-        )
-        if camel_case_component in {'dynamicAnchor', 'dynamicRef'}:
-            return f'${camel_case_component}'
-        return camel_case_component
-
-    return key
-
-
-# pyright: reportUnknownVariableType=false
-def normalize_value(to_normalize: Any, converter: _ConverterFunc) -> Any:
-    """
-    Normalize a value for OpenAPI schema.
-
-    Handles:
-
-    - BaseObject instances (convert to schema dict)
-    - Lists and sequences (process elements recursively)
-    - Mappings (process keys and values recursively)
-    - Primitive values (return as-is)
-    - None values (should be filtered out by caller)
-
-    """
-    if dataclasses.is_dataclass(to_normalize):
-        return converter(cast('DataclassInstance', to_normalize))
-
-    if isinstance(to_normalize, list):
-        return [
-            normalize_value(list_item, converter) for list_item in to_normalize
-        ]
-
-    if isinstance(to_normalize, dict):
-        return {
-            normalize_value(dict_key, converter): normalize_value(
-                dict_val,
-                converter,
-            )
-            for dict_key, dict_val in to_normalize.items()
-        }
-
-    if isinstance(to_normalize, Enum):
-        return to_normalize.value
-
-    return to_normalize

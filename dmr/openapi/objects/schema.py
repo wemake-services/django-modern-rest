@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.discriminator import Discriminator
@@ -7,6 +7,9 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.xml import XML
+
+
+_ALIAS: Final = 'alias'
 
 
 @dataclass(kw_only=True, slots=True)
@@ -25,10 +28,22 @@ class Schema:
     all_of: list['Reference | Schema'] | None = None
     any_of: list['Reference | Schema'] | None = None
     one_of: list['Reference | Schema'] | None = None
-    schema_not: 'Reference | Schema | None' = None
-    schema_if: 'Reference | Schema | None' = None
-    then: 'Reference | Schema | None' = None
-    schema_else: 'Reference | Schema | None' = None
+    schema_not: 'Reference | Schema | None' = field(
+        default=None,
+        metadata={_ALIAS: 'not'},
+    )
+    schema_if: 'Reference | Schema | None' = field(
+        default=None,
+        metadata={_ALIAS: 'if'},
+    )
+    schema_then: 'Reference | Schema | None' = field(
+        default=None,
+        metadata={_ALIAS: 'then'},
+    )
+    schema_else: 'Reference | Schema | None' = field(
+        default=None,
+        metadata={_ALIAS: 'else'},
+    )
     dependent_schemas: dict[str, 'Reference | Schema'] | None = None
     prefix_items: list['Reference | Schema'] | None = None
     items: 'Reference | Schema | bool | None' = None
@@ -74,6 +89,15 @@ class Schema:
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
     example: Any | None = None
-    dynamic_anchor: str | None = None
-    dynamic_ref: str | None = None
-    defs: dict[str, 'Reference | Schema'] | None = None
+    dynamic_anchor: str | None = field(
+        default=None,
+        metadata={_ALIAS: '$dynamicAnchor'},
+    )
+    dynamic_ref: str | None = field(
+        default=None,
+        metadata={_ALIAS: '$dynamicRef'},
+    )
+    defs: dict[str, 'Reference | Schema'] | None = field(
+        default=None,
+        metadata={_ALIAS: '$defs'},
+    )

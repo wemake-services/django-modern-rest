@@ -3,6 +3,10 @@ from typing import Any
 
 import pytest
 
+from dmr.openapi.mappers.schema_normalization import (
+    _dump_field,
+    _dump_value,
+)
 from dmr.openapi.objects import (
     OpenAPIFormat,
     OpenAPIType,
@@ -10,31 +14,21 @@ from dmr.openapi.objects import (
     Schema,
     Tag,
 )
-from dmr.openapi.objects.openapi import convert, normalize_key, normalize_value
 
 
 @pytest.mark.parametrize(
     ('input_key', 'expected_output'),
     [
-        # Special cases for reserved keywords
-        ('ref', '$ref'),
-        ('defs', '$defs'),
-        ('dynamic_ref', '$dynamicRef'),
-        ('dynamic_anchor', '$dynamicAnchor'),
-        ('param_in', 'in'),
-        # Schema prefix removal
-        ('schema_not', 'not'),
-        ('schema_all_of', 'allOf'),
-        # Snake case to camel case conversion
+        # Snake case to camel case conversion:
         ('external_docs', 'externalDocs'),
         ('operation_id', 'operationId'),
         ('content_media_type', 'contentMediaType'),
         ('max_length', 'maxLength'),
         ('read_only', 'readOnly'),
-        # Single word keys (no change)
+        # Single word keys (no change):
         ('name', 'name'),
         ('type', 'type'),
-        # Edge cases
+        # Edge cases:
         ('', ''),
         ('a', 'a'),
         ('UPPER_CASE', 'upperCase'),
@@ -42,13 +36,18 @@ from dmr.openapi.objects.openapi import convert, normalize_key, normalize_value
         ('numbers_123', 'numbers123'),
     ],
 )
-def test_normalize_key(
+def test_dump_field(
     *,
     input_key: str,
     expected_output: str,
 ) -> None:
-    """Ensure that ``_normalize_key`` converts field names to OpenAPI keys."""
-    assert normalize_key(input_key) == expected_output
+    """Ensure that ``dump_field`` converts field names to OpenAPI keys."""
+    assert _dump_field(input_key, {}) == expected_output
+
+
+def test_dump_field_alias() -> None:
+    """Ensure that ``dump_field`` converts field names to aliases."""
+    assert _dump_field('whatever', {'alias': '$test'}) == '$test'
 
 
 class _TestEnum(enum.Enum):
@@ -75,13 +74,13 @@ class _TestEnum(enum.Enum):
         (_TestEnum.NONE_VALUE, None),
     ],
 )
-def test_normalize_value_primitives(
+def test_dump_value_primitives(
     *,
     input_value: Any,
     expected_output: Any,
 ) -> None:
-    """Ensure that ``_normalize_value`` returns primitive values as-is."""
-    assert normalize_value(input_value, convert) == expected_output
+    """Ensure that ``dump_value`` returns primitive values as-is."""
+    assert _dump_value(input_value) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -96,14 +95,13 @@ def test_normalize_value_primitives(
         ([_TestEnum.STR_VALUE, 'other'], ['first', 'other']),
     ],
 )
-def test_normalize_value_list(
+def test_dump_value_list(
     *,
     input_value: Any,
     expected_output: Any,
 ) -> None:
-    """Ensure that ``_normalize_value`` processes list recursively."""
-    normalized = normalize_value(input_value, convert)
-    assert normalized == expected_output
+    """Ensure that ``dump_value`` processes list recursively."""
+    assert _dump_value(input_value) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -115,20 +113,19 @@ def test_normalize_value_list(
         ({'key1': None, 'key2': 'value'}, {'key1': None, 'key2': 'value'}),
     ],
 )
-def test_normalize_value_dict(
+def test_dump_value_dict(
     *,
     input_value: Any,
     expected_output: Any,
 ) -> None:
-    """Ensure that ``_normalize_value`` processes dict recursively."""
-    normalized = normalize_value(input_value, convert)
-    assert normalized == expected_output
+    """Ensure that ``dump_value`` processes dict recursively."""
+    assert _dump_value(input_value) == expected_output
 
 
 @pytest.mark.parametrize(
     ('input_value', 'expected_output'),
     [
-        # Basic `BaseObject` with `None` values
+        # Basic `dataclass` instance with `None` values:
         (
             Tag(
                 name='test-tag',
@@ -137,12 +134,12 @@ def test_normalize_value_dict(
             ),
             {'name': 'test-tag', 'description': 'Test description'},
         ),
-        # `Enum` values conversion
+        # `Enum` values conversion:
         (
             Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.EMAIL),
             {'type': 'string', 'format': 'email'},
         ),
-        # Key normalization (snake_case to camelCase)
+        # Key normalization (snake_case to camelCase):
         (
             Schema(
                 type=OpenAPIType.OBJECT,
@@ -156,7 +153,7 @@ def test_normalize_value_dict(
                 'readOnly': True,
             },
         ),
-        # Sequence fields (enum as list)
+        # Sequence fields (enum as list):
         (
             Schema(
                 type=OpenAPIType.ARRAY,
@@ -167,7 +164,7 @@ def test_normalize_value_dict(
                 'enum': ['value1', 'value2', 'value3'],
             },
         ),
-        # Nested BaseObject (all_of with Schema)
+        # Nested `dataclass` instances (all_of with Schema):
         (
             Schema(
                 all_of=[Schema(type=OpenAPIType.STRING)],
@@ -200,7 +197,7 @@ def test_normalize_value_dict(
                 'allOf': [{'type': 'object'}],
             },
         ),
-        # Generic List<T> base schema
+        # Generic List<T> base schema:
         (
             Schema(
                 type=OpenAPIType.ARRAY,
@@ -217,7 +214,7 @@ def test_normalize_value_dict(
                 'items': {'$dynamicRef': '#T'},
             },
         ),
-        # Concrete List<string> referencing the generic via Reference
+        # Concrete List<string> referencing the generic via Reference:
         (
             Schema(
                 defs={
@@ -240,10 +237,10 @@ def test_normalize_value_dict(
         ),
     ],
 )
-def test_normalize_value_base_objects(
+def test_dump_value_base_objects(
     *,
     input_value: Any,
     expected_output: Any,
 ) -> None:
-    """Ensure that ``_normalize_value`` calls ``to_schema()`` correctly."""
-    assert normalize_value(input_value, convert) == expected_output
+    """Ensure that ``dump_value`` calls ``to_schema()`` correctly."""
+    assert _dump_value(input_value) == expected_output

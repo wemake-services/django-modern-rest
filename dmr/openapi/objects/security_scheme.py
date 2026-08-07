@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
@@ -23,7 +23,10 @@ class SecurityScheme:
     type: Literal['apiKey', 'http', 'mutualTLS', 'oauth2', 'openIdConnect']
     description: str | None = None
     name: str | None = None
-    security_scheme_in: Literal['query', 'header', 'cookie'] | None = None
+    security_scheme_in: Literal['query', 'header', 'cookie'] | None = field(
+        default=None,
+        metadata={'alias': 'in'},
+    )
     scheme: str | None = None
     bearer_format: str | None = None
     flows: 'OAuthFlows | None' = None
