@@ -47,10 +47,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # System deps:
-        sudo apt update && sudo apt install -y gettext wait-for-it
-
-        # Python deps:
         just install
         # We don't install `orjson` in `pyproject.toml`,
         # because we run `3.14t` as well and it cannot be installed there :(

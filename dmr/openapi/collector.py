@@ -1,9 +1,12 @@
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, TypeAlias, Any
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
+
+from dmr.openapi.objects import PathItem
+from dmr.settings import Settings, resolve_setting
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -16,30 +19,7 @@ _PathControllerSpec: TypeAlias = tuple[
     URLPattern,
     'Controller[BaseSerializer]',
 ]
-
-
-def _process_pattern(
-    url_pattern: URLPattern,
-    base_path: str = '',
-) -> _PathControllerSpec:
-    path = _join_paths(base_path, str(url_pattern.pattern))
-    controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
-    normalized = _normalize_path(path)
-    return normalized, url_pattern, controller
-
-
-def _join_paths(base_path: str, pattern_path: str) -> str:
-    if not pattern_path:
-        return base_path
-    base = base_path.rstrip('/')
-    pattern = pattern_path.lstrip('/')
-    return f'{base}/{pattern}' if base else pattern
-
-
-def _normalize_path(path: str) -> str:
-    path = simplify_regex(path)
-    pattern = re.compile(r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>')
-    return re.sub(pattern, r'{\g<parameter>}', path)
+_PathExternalSpec: TypeAlias = tuple[str, PathItem]
 
 
 def controller_mapping_collector(
@@ -73,7 +53,7 @@ def controller_mapping_collector(
 
 
 def external_mapping_collector(
-    external_urls: Sequence[tuple[_AnyPattern, _OpenAPIMetadata]],
+    external_paths: Sequence[tuple[_AnyPattern, _OpenAPIMetadata]],
     base_path: str,
 ) -> list[_PathExternalSpec]:
     """
@@ -84,3 +64,36 @@ def external_mapping_collector(
 
     Any OpenAPI ``Path`` item specification can be passed.
     """
+    external_spec: list[_PathExternalSpec] = []
+    for external_path in external_paths:
+        url_pattern, metadata = external_path
+        path = _join_paths(base_path, str(url_pattern.pattern))
+        external_spec.append((
+            _normalize_path(path),
+            resolve_setting(Settings.openapi_schema_loader)(metadata, PathItem),
+        ))
+    return external_spec
+
+
+def _process_pattern(
+    url_pattern: URLPattern,
+    base_path: str,
+) -> _PathControllerSpec:
+    path = _join_paths(base_path, str(url_pattern.pattern))
+    controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
+    normalized = _normalize_path(path)
+    return normalized, url_pattern, controller
+
+
+def _join_paths(base_path: str, pattern_path: str) -> str:
+    if not pattern_path:
+        return base_path
+    base = base_path.rstrip('/')
+    pattern = pattern_path.lstrip('/')
+    return f'{base}/{pattern}' if base else pattern
+
+
+def _normalize_path(path: str) -> str:
+    path = simplify_regex(path)
+    pattern = re.compile(r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>')
+    return re.sub(pattern, r'{\g<parameter>}', path)

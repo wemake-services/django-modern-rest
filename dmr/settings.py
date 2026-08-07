@@ -10,6 +10,7 @@ from typing_extensions import TypedDict
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.internal.cache import clear_settings_cache as clear_settings_cache
+from dmr.internal.schema_loader import load_openapi_part
 from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
@@ -69,6 +70,7 @@ class Settings(enum.StrEnum):
     openapi_config = 'openapi_config'
     openapi_examples_seed = 'openapi_examples_seed'
     openapi_static_cdn = 'openapi_static_cdn'
+    openapi_schema_loader = 'openapi_schema_loader'
     django_treat_as_post = 'django_treat_as_post'
 
 
@@ -120,6 +122,7 @@ class SettingsDict(TypedDict, total=False):
     openapi_config: 'OpenAPIConfig'
     openapi_examples_seed: int | None
     openapi_static_cdn: dict[str, str]
+    openapi_schema_loader: Callable[[Any, type[Any]], Any]
     django_treat_as_post: Set[str]
 
 
@@ -145,6 +148,8 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.openapi_examples_seed: None,  # turned off by default
     # OpenAPI static CDN configuration:
     Settings.openapi_static_cdn: {},
+    # Schema converter from primitive types to our OpenAPI dataclasses:
+    Settings.openapi_schema_loader: load_openapi_part,
     # We validate some HTTP spec things by default to be strict,
     # can be disabled:
     Settings.no_validate_http_spec: frozenset(),

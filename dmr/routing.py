@@ -35,6 +35,7 @@ _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
 _AnyPattern: TypeAlias = URLPattern | URLResolver
+_OpenAPIMetadata: TypeAlias = dict[str, Any]
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
@@ -49,8 +50,9 @@ class Router:
         prefix: str,
         urls: Sequence[_AnyPattern],
         *,
-        external_urls: Sequence[tuple[_AnyPattern, _OpenAPIMetadata]]
-        | None = None,
+        external_urls: (
+            Sequence[tuple[_AnyPattern, _OpenAPIMetadata]] | None
+        ) = None,
         tags: list[str] | None = None,
         deprecated: bool = False,
     ) -> None:
@@ -60,6 +62,9 @@ class Router:
         Args:
             prefix: URL prefix for all routes (e.g., 'api/v1/').
             urls: Sequence of URL patterns and resolvers.
+            external_urls: Optional sequence of pairs
+                of URL pattern and OpenAPI metadata dict,
+                used as a way to include non-DMR views into the API.
             tags: Optional list of tags to group operations in OpenAPI.
                 These are merged with endpoint-level tags.
             deprecated: Optional flag to mark all operations as deprecated.
@@ -89,8 +94,8 @@ class Router:
         """
         paths_items: Paths = {}
 
-        self._collect_controller_paths(path_items, context)
-        self._collect_external_paths(path_items, context)
+        self._collect_controller_paths(paths_items, context)
+        self._collect_external_paths(paths_items, context)
 
         components = Components(
             schemas=context.registries.schema.schemas,
@@ -117,7 +122,7 @@ class Router:
     def _collect_external_paths(
         self,
         paths_items: Paths,
-        context: 'OpenAPIContenxt',
+        context: 'OpenAPIContext',
     ) -> None:
         if self.external_urls is None:
             return
@@ -126,7 +131,7 @@ class Router:
             self.external_urls,
             base_path=self.prefix,
         ):
-            if path in path_items:
+            if path in paths_items:
                 raise EndpointMetadataError(
                     f'Trying to override {path=} with {metadata=}',
                 )
