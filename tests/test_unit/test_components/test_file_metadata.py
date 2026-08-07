@@ -357,7 +357,8 @@ def test_send_files_with_body_invalid(
         b'',
         headers={
             'Content-Type': MULTIPART_CONTENT,
-            'Content-Length': -1,  # <- invalid header is the cause
+            # Invalid header is the cause:
+            'Content-Length': -1,  # type: ignore[dict-item]
         },
     )
 

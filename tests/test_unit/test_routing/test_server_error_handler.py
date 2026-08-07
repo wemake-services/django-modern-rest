@@ -79,7 +79,10 @@ def test_renderers_parameter(dmr_rf: DMRRequestFactory) -> None:
 def test_no_accept_uses_default_renderer(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that missing Accept header uses first configured renderer."""
     view = build_500_handler('api/', serializer=PydanticSerializer)
-    request = dmr_rf.get('/api/existing/', headers={'Accept': None})
+    request = dmr_rf.get(
+        '/api/existing/',
+        headers={'Accept': None},  # type: ignore[dict-item]
+    )
 
     response = view(request)
 
