@@ -76,3 +76,16 @@ class OpenAPIConfig:
             'tuple[int, int, int]',
             tuple(map(int, self.openapi_version.split('.'))),
         )
+
+
+def default_config() -> OpenAPIConfig:
+    """Resolves the default config from settings."""
+    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
+    config = resolve_setting(Settings.openapi_config)
+    if not isinstance(config, OpenAPIConfig):
+        raise TypeError(
+            'OpenAPI config is not set. Please, set the '
+            f'{str(Settings.openapi_config)!r} setting.',
+        )
+    return config

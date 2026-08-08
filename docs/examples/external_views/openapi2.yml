@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  title: Random Number API
+  version: 1.0.0
+paths:
+  /api/random/{start}/{end}:
+    get:
+      operationId: getRandomNumber
+      parameters:
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A random number between start and end
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RandomNumber'
+components:
+  schemas:
+    RandomNumber:
+      type: object
+      properties:
+        value:
+          type: number
+      required:
+        - value

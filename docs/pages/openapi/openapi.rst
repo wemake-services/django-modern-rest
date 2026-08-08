@@ -470,8 +470,10 @@ This is the API every user needs:
 .. autoclass:: dmr.openapi.OpenAPIConfig
    :members:
 
+.. autofunction:: dmr.openapi.default_config
+
 .. autoclass:: dmr.openapi.OpenAPIContext
-  :members:
+   :members:
 
 .. autofunction:: dmr.openapi.load_schema
 

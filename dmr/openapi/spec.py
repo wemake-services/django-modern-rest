@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, overload
 
-from dmr.openapi.config import OpenAPIConfig
+from dmr.openapi.config import OpenAPIConfig, default_config
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.openapi import OpenAPI
 
@@ -41,16 +41,3 @@ def build_schema(
     if context is None:
         context = OpenAPIContext(config=config or default_config())
     return router.get_schema(context)
-
-
-def default_config() -> OpenAPIConfig:
-    """Resolves the default config from settings."""
-    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
-
-    config = resolve_setting(Settings.openapi_config)
-    if not isinstance(config, OpenAPIConfig):
-        raise TypeError(
-            'OpenAPI config is not set. Please, set the '
-            f'{str(Settings.openapi_config)!r} setting.',
-        )
-    return config
