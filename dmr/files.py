@@ -67,8 +67,8 @@ class FileBody:
         media_type_meta = (
             get_annotated_metadata(
                 conditional_models.get(parser.content_type, model),
-                model_meta,
                 MediaTypeMetadata,
+                model_meta=model_meta,
             )
             or MediaTypeMetadata()
         )

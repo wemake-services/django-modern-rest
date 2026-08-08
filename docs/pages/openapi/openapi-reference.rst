@@ -5,6 +5,13 @@ OpenAPI Reference
 Objects
 -------
 
+Main OpenAPI object:
+
+.. autoclass:: dmr.openapi.openapi.OpenAPI
+   :members:
+
+Parts:
+
 .. autoclass:: dmr.openapi.objects.Callback
    :members:
 
@@ -48,9 +55,6 @@ Objects
    :members:
 
 .. autoclass:: dmr.openapi.objects.OAuthFlows
-   :members:
-
-.. autoclass:: dmr.openapi.objects.OpenAPI
    :members:
 
 .. autoclass:: dmr.openapi.objects.OpenAPIFormat
@@ -165,3 +169,11 @@ Existing views
 
 .. autoclass:: dmr.openapi.views.yaml.OpenAPIYamlView
   :members:
+
+
+Mappers
+-------
+
+.. autofunction:: dmr.openapi.mappers.schema_normalization.load_schema
+
+.. autofunction:: dmr.openapi.mappers.schema_normalization.dump_schema

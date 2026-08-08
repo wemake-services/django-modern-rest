@@ -110,7 +110,6 @@ class ComponentParserBuilder:
 
             metadata = get_annotated_metadata(
                 component,
-                (),
                 ComponentParser,  # type: ignore[type-abstract]
             )
             if metadata is None:
@@ -454,8 +453,8 @@ class BodyComponent(ComponentParser):
             media_type_meta = (
                 get_annotated_metadata(
                     conditional_types.get(parser.content_type, model),
-                    model_meta,
                     MediaTypeMetadata,
+                    model_meta=model_meta,
                 )
                 or MediaTypeMetadata()
             )

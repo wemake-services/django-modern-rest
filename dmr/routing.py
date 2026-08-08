@@ -12,7 +12,8 @@ from typing_extensions import override
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
 from dmr.openapi.collector import controller_mapping_collector
-from dmr.openapi.objects import Components, OpenAPI, Paths
+from dmr.openapi.objects import Components, Paths
+from dmr.openapi.openapi import OpenAPI
 
 if TYPE_CHECKING:
     from django.utils.functional import (

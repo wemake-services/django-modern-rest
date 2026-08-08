@@ -10,7 +10,7 @@ class OpenAPIJsonView(OpenAPIView):
     """
     View for returning the OpenAPI schema as JSON.
 
-    Produces a JSON representation of the :class:`~dmr.openapi.objects.OpenAPI`
+    Produces a JSON representation of the :class:`~dmr.openapi.openapi.OpenAPI`
     specification that can be used by API documentation tools
     and client code generators.
 

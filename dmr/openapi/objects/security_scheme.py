@@ -1,5 +1,7 @@
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, Literal
+
+from dmr.internal.dataclass_aliases import Field
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.oauth_flows import OAuthFlows
@@ -23,10 +25,10 @@ class SecurityScheme:
     type: Literal['apiKey', 'http', 'mutualTLS', 'oauth2', 'openIdConnect']
     description: str | None = None
     name: str | None = None
-    security_scheme_in: Literal['query', 'header', 'cookie'] | None = field(
-        default=None,
-        metadata={'alias': 'in'},
-    )
+    security_scheme_in: Annotated[
+        Literal['query', 'header', 'cookie'] | None,
+        Field(alias='in'),
+    ] = None
     scheme: str | None = None
     bearer_format: str | None = None
     flows: 'OAuthFlows | None' = None

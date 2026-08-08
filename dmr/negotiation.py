@@ -373,7 +373,11 @@ def get_conditional_types(
     Conditional types are defined with :data:`typing.Annotated`
     and :func:`dmr.negotiation.conditional_type` helper.
     """
-    metadata = get_annotated_metadata(model, model_meta, _ConditionalType)
+    metadata = get_annotated_metadata(
+        model,
+        _ConditionalType,
+        model_meta=model_meta,
+    )
     if metadata:
         return metadata.computed
     return None
