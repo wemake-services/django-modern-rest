@@ -22,7 +22,7 @@ try:  # noqa: WPS229
     from pydantic.fields import (  # type: ignore[assignment, no-redef, unused-ignore]
         FieldInfo,  # pyright: ignore[reportUnusedImport, reportAssignmentType]
     )
-except ImportError:
+except ImportError:  # pragma: no cover
 
     @final
     @dataclasses.dataclass
