@@ -9,7 +9,7 @@ from typing_extensions import override
 
 if TYPE_CHECKING:
     from dmr.openapi.mappers.schema_normalization import DumpedSchema
-    from dmr.openapi.objects import OpenAPI
+    from dmr.openapi.openapi import OpenAPI
 
 SchemaDumper: TypeAlias = Callable[['DumpedSchema'], str]
 

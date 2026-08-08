@@ -42,6 +42,8 @@ ignore_imports =
   dmr.settings -> dmr.openapi.config
   # Response generation:
   dmr.openapi.generators.response -> dmr.negotiation
+  # Schema loading can call pydantic plugin:
+  dmr.openapi.mappers.schema_normalization -> dmr.plugins.pydantic
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins
@@ -60,22 +62,26 @@ forbidden_modules =
   yaml
   attrs
   attr
+  cattrs
   # internal modules:
   dmr_pytest
   django_test_app
 
 ignore_imports =
-  # Pydantic plugin:
-  dmr.plugins.pydantic -> pydantic
-  dmr.plugins.pydantic.* -> pydantic
   # Msgspec plugin:
   dmr.plugins.msgspec -> msgspec
   dmr.plugins.msgspec.* -> msgspec
+  # Pydantic plugin:
+  dmr.plugins.pydantic -> pydantic
+  dmr.plugins.pydantic.* -> pydantic
+  # Pydantic optional schema loading:
+  dmr.internal.dataclass_aliases -> pydantic
+  dmr.openapi.mappers.schema_normalization -> pydantic
   # jwt auth:
   dmr.security.jwt -> jwt
   dmr.security.jwt.* -> jwt
   # OpenAPI validation:
-  dmr.openapi.objects.openapi -> openapi_spec_validator
+  dmr.openapi.openapi -> openapi_spec_validator
   # Examples generation:
   dmr.openapi.mappers.example -> polyfactory
   # Yaml:
@@ -128,6 +134,7 @@ layers =
   spec
   views | core
   generators
+  openapi
   collector | config
   objects
 

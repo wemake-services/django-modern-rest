@@ -32,14 +32,18 @@ of requirements for an API to count as public.
   to `dmr.openapi.mappers.schema_normalization.DumpedSchema`, #1221
 - `dmr.openapi.views.base.DumpedSchema` is removed,
   it was just a `str` type alias, #1221
+- `dmr.openapi.objects.OpenAPI` is moved
+  to `dmr.openapi.openapi.OpenAPI`, #1222
 - `rebuild_namespace` parameter in `PydanticSerializer.from_python`
-  was renamed to `extra_namespace`
+  was renamed to `extra_namespace`, #1222
 
 ### Features
 
 - Django 6.1 official support, #1214
-- Added `extra_namespace` parameter was added to `BaseSerializer.from_python`
-  and all its existing subclasses
+- Added `extra_namespace` parameter to `BaseSerializer.from_python`
+  and all its existing subclasses, #1222
+- Added an ability to load external OpenAPI schemas
+  into our typed dataclasses, #1222
 
 
 ## 0.12.1 (2026-07-31)

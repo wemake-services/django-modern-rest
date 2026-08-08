@@ -1,13 +1,16 @@
 import dataclasses
-import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Final, TypeAlias, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeAlias,
+    TypeVar,
+    cast,
+)
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
-
-    from dmr.serializer import BaseSerializer
 
 
 DumpedSchema: TypeAlias = dict[str, Any]
@@ -15,10 +18,53 @@ _ConverterFunc: TypeAlias = Callable[['DataclassInstance'], DumpedSchema]
 _NormalizeKeyFunc: TypeAlias = Callable[[str], str]
 _NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
+_DataclassT = TypeVar('_DataclassT', bound='DataclassInstance')
+
+
+def load_schema(
+    unstructured: dict[str, Any],
+    model: type[_DataclassT],
+) -> _DataclassT:
+    """
+    Load *unstructured* schema into the *model* dataclass type.
+
+    Used to include external schemas into the DMR-based project.
+    Only works with ``pydantic`` installed:
+
+    .. bash::
+
+        pip install 'django-modern-rest[pydantic]'
+
+    .. versionadded:: 0.13.0
+    """
+    # So we can use it as a namespace:
+    from dmr.openapi import objects  # noqa: PLC0415, I001
+
+    # So it would have a nice error message:
+    from dmr.plugins.pydantic import PydanticFastSerializer  # noqa: PLC0415
+
+    # Must be after our import:
+    import pydantic  # noqa: PLC0415
+    from pydantic import alias_generators  # noqa: PLC0415, WPS458
+
+    # We define a model that will automatically convert all *needed* dicts's
+    # keys from camelCase into a snake_case. By default OpenAPI uses camelCase.
+    @pydantic.dataclasses.dataclass(
+        config=pydantic.ConfigDict(alias_generator=alias_generators.to_camel),
+    )
+    class CamelModel(model): ...  # type: ignore[valid-type, misc]  # noqa: WPS431, WPS604
+
+    return PydanticFastSerializer.from_python(  # type: ignore[no-any-return]
+        unstructured,
+        CamelModel,
+        strict=False,
+        extra_namespace=objects.__dict__,
+    )
+
 
 def dump_schema(to_convert: 'DataclassInstance') -> DumpedSchema:  # noqa: WPS231
     """
-    Converts any dataclass object into a JSON schema.
+    Converts any our dataclass OpenAPI object into a JSON schema.
 
     .. versionchanged:: 0.13.0
         It used to be named ``dmr.openapi.objects.openapi.convert``.
@@ -33,43 +79,14 @@ def dump_schema(to_convert: 'DataclassInstance') -> DumpedSchema:  # noqa: WPS23
         if field.name == 'required' and not schema_value:
             continue  # Skip empty `required` field
 
-        schema[_dump_field(field.name, field.metadata)] = _dump_value(
+        schema[_dump_field(field.name, field.type)] = _dump_value(
             schema_value,
         )
 
     return schema
 
 
-_ThingT = TypeVar('_ThingT', bound='DataclassInstance')
-
-
-def load_schema(
-    unstructured: dict[str, Any],
-    model: type[_ThingT],
-    serializer: type['BaseSerializer'],
-) -> _ThingT:
-    """
-    Load *unstructured* schema into the *model* dataclass type.
-
-    Used to include external schemas into the project.
-
-    .. versionadded:: 0.13.0
-    """
-    from dmr.openapi import objects  # noqa: PLC0415
-
-    updated = {}
-    for key, schema_value in unstructured.items():
-        updated[_load_field(key, model)] = _load_value(key, schema_value, model)
-
-    return serializer.from_python(
-        updated,
-        model=model,
-        strict=False,
-        extra_namespace=objects.__dict__,
-    )
-
-
-def _dump_field(key: str, metadata: Mapping[Any, Any]) -> str:
+def _dump_field(key: str, field_type: Any) -> str:
     """
     Convert a Python field name to an OpenAPI-compliant key.
 
@@ -79,16 +96,18 @@ def _dump_field(key: str, metadata: Mapping[Any, Any]) -> str:
 
     Args:
         key: The Python field name to normalize.
-        metadata: Metadata from the dataclass field if it is defined.
+        field_type: Field type that can contain ``Field()`` metadata.
 
     Returns:
         The normalized key suitable for OpenAPI specification
 
     """
-    alias = metadata.get('alias')
-    if alias:
-        assert isinstance(alias, str), alias  # noqa: S101
-        return alias
+    from dmr.internal.dataclass_aliases import FieldInfo  # noqa: PLC0415
+    from dmr.metadata import get_annotated_metadata  # noqa: PLC0415
+
+    field_meta = get_annotated_metadata(field_type, FieldInfo)
+    if field_meta:
+        return field_meta.alias
 
     if '_' in key:
         components = key.split('_')
@@ -109,7 +128,7 @@ def _dump_value(to_normalize: Any) -> Any:
     - Lists (process elements recursively)
     - Dicts (process keys and values recursively)
     - Primitive values (return as-is)
-    - Enums (value is returned)
+    - Enums (return value)
 
     """
     if dataclasses.is_dataclass(to_normalize):
@@ -128,30 +147,3 @@ def _dump_value(to_normalize: Any) -> Any:
         return to_normalize.value
 
     return to_normalize
-
-
-_FIRST_CAP_RE: Final = re.compile(r'(.)([A-Z][a-z]+)')
-_ALL_CAP_RE: Final = re.compile(r'([a-z0-9])([A-Z])')
-_REPLACEMENT_RE: Final = re.compile(r'\1_\2')
-
-
-def _load_field(
-    key: str,
-    model: type['DataclassInstance'],
-) -> str:
-    key = _ALL_CAP_RE.sub(
-        _REPLACEMENT_RE,
-        _FIRST_CAP_RE.sub(_REPLACEMENT_RE, key),
-    ).lower()
-    fields: dict[str, str] = {
-        field.metadata.get('alias', key): key
-        for field in dataclasses.fields(model)
-    }
-    return fields.get(key, key)
-
-
-def _load_value(
-    key: str,
-    schema_value: Any,
-    model: type['DataclassInstance'],
-) -> Any: ...

@@ -1,5 +1,7 @@
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated
+
+from dmr.internal.dataclass_aliases import Field
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.operation import Operation
@@ -18,7 +20,7 @@ class PathItem:
     they will not know which operations and parameters are available.
     """
 
-    ref: str | None = field(default=None, metadata={'alias': '$ref'})
+    ref: Annotated[str | None, Field(alias='$ref')] = None
     summary: str | None = None
     description: str | None = None
     get: 'Operation | None' = None

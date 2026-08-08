@@ -1,13 +1,16 @@
 import enum
-from typing import Any
+from typing import Annotated, Any
 
 import pytest
 
+from dmr.internal.dataclass_aliases import Field
 from dmr.openapi.mappers.schema_normalization import (
     _dump_field,
     _dump_value,
+    dump_schema,
 )
 from dmr.openapi.objects import (
+    Header,
     OpenAPIFormat,
     OpenAPIType,
     Reference,
@@ -47,7 +50,9 @@ def test_dump_field(
 
 def test_dump_field_alias() -> None:
     """Ensure that ``dump_field`` converts field names to aliases."""
-    assert _dump_field('whatever', {'alias': '$test'}) == '$test'
+    assert (
+        _dump_field('whatever', Annotated[str, Field(alias='$test')]) == '$test'
+    )
 
 
 class _TestEnum(enum.Enum):
@@ -190,11 +195,15 @@ def test_dump_value_dict(
         (
             Schema(
                 schema_not=Schema(type=OpenAPIType.STRING),
-                all_of=[Schema(type=OpenAPIType.OBJECT)],
+                schema_if=Schema(type=OpenAPIType.INTEGER),
+                schema_else=Schema(type=OpenAPIType.NUMBER),
+                schema_then=Schema(type=OpenAPIType.NULL),
             ),
             {
                 'not': {'type': 'string'},
-                'allOf': [{'type': 'object'}],
+                'if': {'type': 'integer'},
+                'else': {'type': 'number'},
+                'then': {'type': 'null'},
             },
         ),
         # Generic List<T> base schema:
@@ -223,7 +232,7 @@ def test_dump_value_dict(
                         type=OpenAPIType.STRING,
                     ),
                 },
-                all_of=[Reference(ref='list-of-t')],
+                any_of=[Reference(ref='list-of-t')],
             ),
             {
                 '$defs': {
@@ -232,15 +241,20 @@ def test_dump_value_dict(
                         'type': 'string',
                     },
                 },
-                'allOf': [{'$ref': 'list-of-t'}],
+                'anyOf': [{'$ref': 'list-of-t'}],
             },
+        ),
+        (
+            Header(description='test', required=False),
+            {'description': 'test'},
         ),
     ],
 )
-def test_dump_value_base_objects(
+def test_dump_schema_base_objects(
     *,
     input_value: Any,
     expected_output: Any,
 ) -> None:
-    """Ensure that ``dump_value`` calls ``to_schema()`` correctly."""
+    """Ensure that ``_dump_value`` calls ``dump_schema`` correctly."""
+    assert dump_schema(input_value) == expected_output
     assert _dump_value(input_value) == expected_output

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, overload
 
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import OpenAPI
+from dmr.openapi.openapi import OpenAPI
 
 if TYPE_CHECKING:
     from dmr.routing import Router

@@ -165,3 +165,11 @@ Existing views
 
 .. autoclass:: dmr.openapi.views.yaml.OpenAPIYamlView
   :members:
+
+
+Mappers
+-------
+
+.. autofunction:: dmr.openapi.schema_normalization.load_schema
+
+.. autofunction:: dmr.openapi.schema_normalization.dump_schema

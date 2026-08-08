@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from dmr.openapi.objects.contact import Contact
     from dmr.openapi.objects.license import License
+    from dmr.openapi.objects.reference import Reference
 
 
 @dataclass(kw_only=True, slots=True)
@@ -18,7 +19,7 @@ class Info:
     title: str
     version: str
     summary: str | None = None
-    description: str | None = None
+    description: 'Reference | str | None' = None
     terms_of_service: str | None = None
     contact: 'Contact | None' = None
     license: 'License | None' = None
