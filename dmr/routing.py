@@ -19,7 +19,8 @@ from dmr.openapi.collector import (
     controller_mapping_collector,
     external_mapping_collector,
 )
-from dmr.openapi.objects import OpenAPI, PathItem, Paths
+from dmr.openapi.objects import PathItem, Paths
+from dmr.openapi.openapi import OpenAPI
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -46,14 +47,20 @@ class Router:
 
     Attributes:
         prefix: URL prefix for all routes (e.g., 'api/v1/').
-        urls: Sequence of URL patterns and resolvers.
-        external_urls: Optional sequence of pairs
-            of URL pattern and :class:`dmr.openapi.objects.PathItem`
-            OpenAPI spec, used to include non-DMR views into the API.
         tags: Optional sequence of tags to group operations in OpenAPI.
             These are merged with endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
+
+    You can also pass:
+        urls: Sequence of URL patterns and resolvers.
+        external_urls: Optional sequence of pairs
+            of URL pattern and :class:`dmr.openapi.objects.PathItem`
+            OpenAPI spec, used to include non-DMR views into the API.
+
+    It will be possible to get all urls from router using :attr:`Router.urls`.
+    Including internal and external ones.
+    Internal urls go first, then external ones.
 
     .. note::
 
@@ -69,7 +76,7 @@ class Router:
 
     """
 
-    __slots__ = ('deprecated', 'external_urls', 'prefix', 'tags', 'urls')
+    __slots__ = ('deprecated', '_external_urls', 'prefix', 'tags', '_urls')
 
     def __init__(
         self,
@@ -82,10 +89,18 @@ class Router:
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
-        self.urls = tuple(urls)
-        self.external_urls = external_urls
+        self._urls = tuple(urls)
+        self._external_urls = tuple(external_urls or [])
         self.tags = list(tags or [])
         self.deprecated = deprecated
+
+    @property
+    def urls(self) -> Sequence[_AnyPattern]:
+        """Get all urls from router."""
+        urls = list(self._urls)  # a copy
+        if self._external_urls:
+            urls.extend(url for url, _ in self._external_urls)
+        return urls
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
         """
@@ -110,7 +125,7 @@ class Router:
         context: 'OpenAPIContext',
     ) -> None:
         for path, pattern, controller in controller_mapping_collector(
-            self.urls,
+            self._urls,
             base_path=self.prefix,
         ):
             paths_items[path] = controller.get_path_item(
@@ -125,11 +140,11 @@ class Router:
         paths_items: Paths,
         context: 'OpenAPIContext',
     ) -> None:
-        if not self.external_urls:
+        if not self._external_urls:
             return
 
         for path, metadata in external_mapping_collector(
-            self.external_urls,
+            self._external_urls,
             base_path=self.prefix,
         ):
             if path in paths_items:

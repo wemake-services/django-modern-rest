@@ -47,7 +47,7 @@ def test_forward_ref_rebuild_context() -> None:
         {'type': 'number'},
         Schema,
         strict=False,
-        rebuild_namespace={
+        extra_namespace={
             'Schema': Schema,
             'Reference': Reference,
             'Discriminator': Discriminator,
@@ -68,7 +68,7 @@ def test_forward_ref_implicit_context() -> None:
         {'type': 'number'},
         Schema,
         strict=False,
-        rebuild_namespace=globals(),  # noqa: WPS421
+        extra_namespace=globals(),  # noqa: WPS421
     )
 
     assert isinstance(schema, Schema)

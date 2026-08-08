@@ -1,7 +1,6 @@
-# This file is taken from
+# Copied from
 # https://github.com/pennersr/django-allauth/blob/main/allauth/headless/spec/doc/openapi.yaml
-# All credits go to the original authors,
-# we only use this for tests.
+# under MIT license.
 
 openapi: 3.0.3
 info:
@@ -34,7 +33,7 @@ tags:
       primary implies the previous primary email address is changed as
       well. Also, if django-allauth is configured with `ACCOUNT_CHANGE_EMAIL =
       True`, verifying the email address the user is changing to will cause the
-      previous email addres to be removed.
+      previous email address to be removed.
   - name: "Account: Phone"
     description: |
       The API used for manipulating the phone number attached to a given

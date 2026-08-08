@@ -1,6 +1,5 @@
 import json
-from pathlib import Path
-from typing import Any, Final
+from collections.abc import Callable
 
 import yaml
 from django.http import HttpRequest, HttpResponse
@@ -10,57 +9,13 @@ from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
 from dmr.openapi import OpenAPIContext, build_schema, default_config, objects
+from dmr.openapi.mappers.schema_normalization import load_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
 
-def load_openapi_schema(
-    unstructured: Any,
-    model: type[Any],
-    serializer: type[PydanticSerializer],
-) -> Any:
-    return serializer.from_python(
-        unstructured,
-        model,
-        strict=False,
-        extra_namespace=objects.__dict__,
-    )
-
-
-_EXTERNAL_OPENAPI: Final = yaml.safe_load(
-    Path(__file__).parent.joinpath('django_allauth.yml').read_bytes(),
-)
-
-_CONTEXT: Final = OpenAPIContext(config=default_config())
-
-_CONTEXT.register_external_schemas(
-    load_openapi_schema(
-        _EXTERNAL_OPENAPI['components'],
-        objects.Components,
-        serializer=PydanticSerializer,
-    ),
-)
-
-Path('components.txt').write_text(str(_CONTEXT.get_components()))
-
-_EXTERNAL_FUNC_OPENAPI: Final = load_openapi_schema(
-    _EXTERNAL_OPENAPI['paths']['/_allauth/{client}/v1/config'],
-    objects.PathItem,
-    serializer=PydanticSerializer,
-)
-
-
 def _external_func(request: HttpRequest) -> HttpResponse:
     raise NotImplementedError
-
-
-_EXTERNAL_CLASS_OPENAPI: Final = load_openapi_schema(
-    _EXTERNAL_OPENAPI['paths']['/_allauth/{client}/v1/auth/login'],
-    objects.PathItem,
-    serializer=PydanticSerializer,
-)
-
-Path('filepath.txt').write_text(str(_EXTERNAL_CLASS_OPENAPI))
 
 
 class _ExternalClass(View):
@@ -73,34 +28,65 @@ class _AsyncController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_external_paths_schema(snapshot: SnapshotAssertion) -> None:
+def test_external_paths_schema(
+    snapshot: SnapshotAssertion,
+    named_text_fixture: Callable[[str], str],
+) -> None:
     """Ensure that schema is correct for external paths."""
+    external_openapi = yaml.safe_load(
+        named_text_fixture('django-allauth.yml'),
+    )
+
+    context = OpenAPIContext(config=default_config())
+
+    context.register_external_schemas(
+        load_schema(
+            external_openapi['components'],
+            objects.Components,
+        ),
+    )
+
+    external_openapi_func = load_schema(
+        external_openapi['paths']['/_allauth/{client}/v1/config'],
+        objects.PathItem,
+    )
+
+    external_openapi_class = load_schema(
+        external_openapi['paths']['/_allauth/{client}/v1/auth/login'],
+        objects.PathItem,
+    )
+
+    router = Router(
+        'api/v1/',
+        [path('/async', _AsyncController.as_view())],
+        external_urls=[
+            (
+                path(
+                    '/allauth/<str:client>/config',
+                    _external_func,
+                ),
+                external_openapi_func,
+            ),
+            (
+                path(
+                    '/allauth/<str:client>/auth/login',
+                    _ExternalClass.as_view(),
+                ),
+                external_openapi_class,
+            ),
+        ],
+        tags=['custom'],
+    )
+
+    assert len(router._urls) == 1
+    assert len(router._external_urls) == 2
+    assert len(router.urls) == 3
     assert (
         json.dumps(
             build_schema(
-                Router(
-                    'api/v1/',
-                    [path('/async', _AsyncController.as_view())],
-                    external_urls=[
-                        (
-                            path(
-                                '/_allauth/<str:client>/v1/config',
-                                _external_func,
-                            ),
-                            _EXTERNAL_FUNC_OPENAPI,
-                        ),
-                        (
-                            path(
-                                '/_allauth/<str:client>/v1/auth/login',
-                                _ExternalClass.as_view(),
-                            ),
-                            _EXTERNAL_CLASS_OPENAPI,
-                        ),
-                    ],
-                    tags=['custom'],
-                ),
-                context=_CONTEXT,
-            ).convert(skip_validation=True),
+                router,
+                context=context,
+            ).convert(),
             indent=2,
         )
         == snapshot

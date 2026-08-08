@@ -173,7 +173,7 @@ version control, or automating client generation.
   python manage.py dmr_export_schema myapp.urls:schema --format yaml --indent 2 --sort-keys
 
 The positional argument is the import path to your
-:class:`~dmr.openapi.objects.OpenAPI` instance,
+:class:`~dmr.openapi.openapi.OpenAPI` instance,
 using a colon to separate the module from the attribute name
 (e.g. ``myapp.urls:schema``).
 
@@ -445,7 +445,7 @@ Useful APIs for users to override:
   how :class:`~dmr.openapi.OpenAPIConfig`
   and :class:`~dmr.openapi.OpenAPIContext` are generated
 - :meth:`dmr.routing.Router.get_schema` to change
-  how :class:`~dmr.openapi.objects.OpenAPI`
+  how :class:`~dmr.openapi.openapi.OpenAPI`
   and :class:`~dmr.openapi.objects.Components` are generated
 - :meth:`dmr.controller.Controller.get_path_item` to change how
   :class:`~dmr.openapi.objects.PathItem` objects are generated

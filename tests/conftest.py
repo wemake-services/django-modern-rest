@@ -1,3 +1,4 @@
+import pathlib
 from collections.abc import Callable, Iterator
 
 import pytest
@@ -34,5 +35,17 @@ def fill_csrf() -> Callable[[HttpRequest], HttpRequest]:
         request.META['HTTP_X_CSRFTOKEN'] = csrf_token
         request.COOKIES['csrftoken'] = csrf_token
         return request
+
+    return factory
+
+
+@pytest.fixture
+def named_text_fixture() -> Callable[[str], str]:
+    """Return an absolute file path to the fixture file."""
+
+    def factory(fixture_name: str) -> str:
+        return (
+            pathlib.Path(__file__).parent / 'fixtures' / fixture_name
+        ).read_text()
 
     return factory

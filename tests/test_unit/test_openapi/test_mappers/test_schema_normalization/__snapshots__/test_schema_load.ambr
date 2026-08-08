@@ -1,58 +1,24 @@
 # serializer version: 1
-# name: test_external_paths_schema
+# name: test_load_schema
   '''
   {
     "info": {
-      "title": "Your Awesome Project",
-      "version": "0.1.0"
-    },
-    "openapi": "3.1.0",
-    "paths": {
-      "/api/v1/async": {
-        "get": {
-          "tags": [
-            "custom"
-          ],
-          "operationId": "getAsynccontrollerApiV1Async",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "items": {
-                      "type": "integer"
-                    },
-                    "type": "array"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
+      "title": "django-allauth: Headless API",
+      "version": "1",
+      "description": {
+        "$ref": "./description.md"
       },
-      "/api/v1/allauth/{client}/config": {
+      "contact": {
+        "email": "info@allauth.org"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/license/mit"
+      }
+    },
+    "openapi": "3.0.3",
+    "paths": {
+      "/_allauth/{client}/v1/config": {
         "get": {
           "tags": [
             "Configuration"
@@ -72,7 +38,7 @@
           "deprecated": false
         }
       },
-      "/api/v1/allauth/{client}/auth/login": {
+      "/_allauth/{client}/v1/auth/login": {
         "post": {
           "tags": [
             "Authentication: Account"
@@ -140,59 +106,2103 @@
           },
           "deprecated": false
         }
+      },
+      "/_allauth/{client}/v1/auth/signup": {
+        "post": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Signup",
+          "description": "Whether or not `username`, `email`, `phone` or combination of those are\nrequired depends on the configuration of django-allauth. Additionally,\nif a custom signup form is used there may be other custom properties\nrequired.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/Signup"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByPassword"
+            },
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "pending_email": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingEmailVerification"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden. For example, when signup is closed.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. For example, when signing up while user is logged in.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/email/verify": {
+        "get": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Get email verification information",
+          "description": "Obtain email verification information, given the token that was sent to\nthe user by email.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/EmailVerificationKey"
+            },
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/EmailVerificationInfo"
+            },
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmailVerificationKey"
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. The email verification (by code) flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Verify an email",
+          "description": "Complete the email verification process. Depending on the configuration,\nemail addresses are either verified by opening a link that is sent to\ntheir email address, or, by inputting a code that is sent. On the API,\nboth cases are handled identically. Meaning, the required key is either\nthe one from the link, or, the code itself.\n\nNote that a status code of 401 does not imply failure. It indicates that\nthe email verification was successful, yet, the user is still not signed\nin. For example, in case `ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION` is set to\n`False`, a 401 is returned when verifying as part of login/signup.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/VerifyEmail"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmailVerificationKey"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthenticated"
+            },
+            "409": {
+              "description": "Conflict. The email verification (by code) flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/email/verify/resend": {
+        "post": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Resend email verification code",
+          "description": "Requests a new email verification code.\nRequires `ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True`.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "409": {
+              "description": "Conflict. The email verification (by code) flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/phone/verify": {
+        "post": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Verify a phone number",
+          "description": "Complete the phone number verification process. Note that a status code\nof 401 does not imply failure. It merely indicates that the phone number\nverification was successful, yet, the user is still not signed in.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/VerifyPhone"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthenticated"
+            },
+            "409": {
+              "description": "Conflict. The phone verification flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/phone/verify/resend": {
+        "post": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Resend phone number verification code",
+          "description": "Requests a new phone number verification code.\nRequires `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_RESEND = True`.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "409": {
+              "description": "Conflict. The phone verification flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/reauthenticate": {
+        "post": {
+          "tags": [
+            "Authentication: Account"
+          ],
+          "summary": "Reauthenticate",
+          "description": "In order to safeguard the account, some actions require the user to be\nrecently authenticated.  If you try to perform such an action without\nhaving been recently authenticated, a `401` status is returned, listing\nflows that can be performed to reauthenticate. One such flow is the flow\nwith ID `reauthenticate`, which allows for the user to input the\npassword. This is the endpoint related towards that flow.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/Reauthenticate"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByPassword"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/IncorrectPassword"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/password/request": {
+        "post": {
+          "tags": [
+            "Authentication: Password Reset"
+          ],
+          "summary": "Request password",
+          "description": "Initiates the password reset procedure. Depending on whether or not\n`ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED` is `True`, the procedure is\neither stateless or stateful.\n\nIn case codes are used, it is stateful, and a new\n`password_reset_by_code` flow is started. In this case, on a successful\npassword reset request, you will receive a 401 indicating the pending\nstatus of this flow.\n\nIn case password reset is configured to use (stateless) links, you will\nreceive a 200 on a successful password reset request.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/RequestPassword"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/password/reset": {
+        "get": {
+          "tags": [
+            "Authentication: Password Reset"
+          ],
+          "summary": "Get password reset information",
+          "description": "Used to obtain information on and validate a password reset key.  The\nkey passed is either the key encoded in the password reset URL that the\nuser has received per email, or, the password reset code in case of\n`ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED`. Note that in case of a code,\nthe number of requests you can make is limited (by\n`ACCOUNT_PASSWORD_RESET_BY_CODE_MAX_ATTEMPTS`).\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/PasswordResetKey"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/PasswordResetInfo"
+            },
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "password_reset_key_invalid": {
+                      "$ref": "#/components/examples/InvalidPasswordResetKey"
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. There is no password reset (by code) flow pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: Password Reset"
+          ],
+          "summary": "Reset password",
+          "description": "Perform the password reset, by handing over the password reset key and\nthe new password. After successfully completing the password reset, the\nuser is either logged in (in case `ACCOUNT_LOGIN_ON_PASSWORD_RESET` is\n`True`), or, the user will need to proceed to the login page.  In case\nof the former, a `200` status code is returned, in case of the latter a\n401.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ResetPassword"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByPassword"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            },
+            "409": {
+              "description": "Conflict. There is no password reset (by code) flow pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/browser/v1/auth/provider/redirect": {
+        "post": {
+          "tags": [
+            "Authentication: Providers"
+          ],
+          "summary": "Provider redirect",
+          "description": "Initiates the third-party provider authentication redirect flow. As calling\nthis endpoint results in a user facing redirect (302), this call is only\navailable in a browser, and must be called in a synchronous (non-XHR)\nmanner.\n",
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ProviderRedirect"
+          },
+          "responses": {
+            "302": {
+              "description": "The provider authorization URL to which the client should be redirected.",
+              "headers": {
+                "location": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "The redirect URL."
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/provider/token": {
+        "post": {
+          "tags": [
+            "Authentication: Providers"
+          ],
+          "summary": "Provider token",
+          "description": "Authenticates with a third-party provider using provider tokens received\nby other means. For example, in case of a mobile app, the authentication\nflow runs completely on the device itself, without any interaction with\nthe API. Then, when the (device) authentication completes and the mobile\napp receives an access and/or ID token, it can hand over these tokens\nvia this endpoint to authenticate on the server.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ProviderToken"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_token": {
+                      "$ref": "#/components/examples/InvalidProviderToken"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated, more steps are required to be completed.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "unauthenticated_pending_2fa": {
+                      "$ref": "#/components/examples/UnauthenticatedPending2FA"
+                    },
+                    "unauthenticated_pending_email_verification": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingEmailVerification"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden. For example, when signup is closed.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/provider/signup": {
+        "get": {
+          "tags": [
+            "Authentication: Providers"
+          ],
+          "summary": "Provider signup information",
+          "description": "If, while signing up using a third-party provider account, there is\ninsufficient information received from the provider to automatically\ncomplete the signup process, an additional step is needed to complete\nthe missing data before the user is fully signed up and authenticated.\nThe information available so far, such as the pending provider account,\ncan be retrieved via this endpoint.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/ProviderSignup"
+            },
+            "409": {
+              "description": "Conflict. The provider signup flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: Providers"
+          ],
+          "summary": "Provider signup",
+          "description": "If, while signing up using a third-party provider account, there is\ninsufficient information received from the provider to automatically\ncomplete the signup process, an additional step is needed to complete\nthe missing data before the user is fully signed up and authenticated.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ProviderSignup"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated, more steps are required to be completed.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "unauthenticated_pending_email_verification": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingEmailVerification"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden. For example, when signup is closed.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. The provider signup flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/2fa/authenticate": {
+        "post": {
+          "tags": [
+            "Authentication: 2FA"
+          ],
+          "summary": "Two-factor authentication",
+          "description": "If, during authentication,  a response with status 401 is encountered where one of the pending\nflows has ID `mfa_authenticate`, that indicates that the Two-Factor Authentication stage needs to\nbe completed.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/MFAAuthenticate"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByPasswordAnd2FA"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidAuthenticatorCode"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/2fa/reauthenticate": {
+        "post": {
+          "tags": [
+            "Authentication: 2FA"
+          ],
+          "summary": "Reauthenticate using 2FA",
+          "description": "In order to safeguard the account, some actions require the user to be\nrecently authenticated.  If you try to perform such an action without\nhaving been recently authenticated, a `401` status is returned, listing\nflows that can be performed to reauthenticate. One such flow is the flow\nwith ID `mfa_reauthenticate`, which allows for the user to input an\nauthenticator code (e.g. TOTP or recovery code). This is the endpoint\nrelated towards that flow.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/MFAAuthenticate"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByPasswordAnd2FA"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidAuthenticatorCode"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/browser/v1/auth/2fa/trust": {
+        "post": {
+          "tags": [
+            "Authentication: 2FA"
+          ],
+          "summary": "Trust this browser",
+          "description": "If \"Trust this browser?\" is enabled (`MFA_TRUST_ENABLED`), the\n`mfa_trust` flow activates after the user completes the MFA\nauthentication flow, offering to skip MFA for this particular\nbrowser. This endpoint is used to complete the `mfa_trust` flow.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/MFATrust"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByPasswordAnd2FA"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/webauthn/authenticate": {
+        "get": {
+          "tags": [
+            "Authentication: WebAuthn: Login"
+          ],
+          "summary": "Get WebAuthn credential request options for 2FA",
+          "description": "Returns the WebAuthn credential request options, that can be\nprocessed using `parseRequestOptionsFromJSON()` on the frontend.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: WebAuthn: Login"
+          ],
+          "summary": "Perform 2FA using WebAuthn",
+          "description": "Perform Two-Factor Authentication using a WebAuthn credential.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/AuthenticateWebAuthn"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/webauthn/reauthenticate": {
+        "get": {
+          "tags": [
+            "Authentication: WebAuthn: Login"
+          ],
+          "summary": "Get WebAuthn credential request options for reauthentication",
+          "description": "Returns the WebAuthn credential request options, that can be\nprocessed using `parseRequestOptionsFromJSON()` on the frontend.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: WebAuthn: Login"
+          ],
+          "summary": "Reauthenticate using WebAuthn",
+          "description": "Reauthenticate the user using a WebAuthn credential.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ReauthenticateWebAuthn"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/webauthn/login": {
+        "get": {
+          "tags": [
+            "Authentication: WebAuthn: Login"
+          ],
+          "summary": "Get WebAuthn credential request options for login",
+          "description": "Returns the WebAuthn credential request options, that can be\nprocessed using `parseRequestOptionsFromJSON()` on the frontend.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: WebAuthn: Login"
+          ],
+          "summary": "Login using WebAuthn",
+          "description": "Login using a WebAuthn credential (Passkey). Both 200 and 401 can be\nexpected after a successful request.  The 401 can, for example, occur\nwhen the credential passed was valid, but the email attached to the\naccount still requires verification.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/LoginWebAuthn"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "pending_email": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingEmailVerification"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/webauthn/signup": {
+        "get": {
+          "tags": [
+            "Authentication: WebAuthn: Signup"
+          ],
+          "summary": "Get passkey credential request options",
+          "description": "Returns the WebAuthn credential request options, that can be\nprocessed using `parseRequestOptionsFromJSON()` on the frontend.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
+            },
+            "409": {
+              "description": "Conflict. For example, when the passkey signup flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "put": {
+          "tags": [
+            "Authentication: WebAuthn: Signup"
+          ],
+          "summary": "Complete the passkey signup flow",
+          "description": "Complete the passkey signup flow by handing over the WebAuthn credential.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/AddWebAuthnAuthenticator"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "pending_email": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingEmailVerification"
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. For example, when the passkey signup flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Authentication: WebAuthn: Signup"
+          ],
+          "summary": "Initiate the passkey signup flow",
+          "description": "You initiate the passkey signup flow by inputting (`POST`) the required properties (e.g. email)\nsimilar to the regular account signup, except that the `password` is to be left out.\nThe user will then be required to verify the email address, after which WebAuthn credential\ncreation options can be retrieved (`GET`) and used to actually complete (`PUT`) the flow.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/PasskeySignup"
+          },
+          "responses": {
+            "400": {
+              "description": "An input error occurred.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated, email verification pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "pending_email": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingEmailVerification"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden. For example, when signup is closed.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. For example, when signing up while user is logged in.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/code/request": {
+        "post": {
+          "tags": [
+            "Authentication: Login By Code"
+          ],
+          "summary": "Request login code",
+          "description": "Request a \"special\" login code that is sent to the user by email.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/RequestLoginCode"
+          },
+          "responses": {
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_email": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "pending_login_by_code": {
+                      "$ref": "#/components/examples/UnauthenticatedPendingLoginByCode"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/code/confirm": {
+        "post": {
+          "tags": [
+            "Authentication: Login By Code"
+          ],
+          "summary": "Confirm login code",
+          "description": "Use this endpoint to pass along the received \"special\" login code.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ConfirmLoginCode"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AuthenticatedByCode"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidAuthenticatorCode"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Not authenticated.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationResponse"
+                  },
+                  "examples": {
+                    "unauthenticated_pending_2fa": {
+                      "$ref": "#/components/examples/UnauthenticatedPending2FA"
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict. The \"login by code\" flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/code/resend": {
+        "post": {
+          "tags": [
+            "Authentication: Login By Code"
+          ],
+          "summary": "Resend login code",
+          "description": "Requests a new login code.\nRequires `ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True`.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "409": {
+              "description": "Conflict. The login verification (by code) flow is not pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/providers": {
+        "get": {
+          "tags": [
+            "Account: Providers"
+          ],
+          "summary": "List the connected third-party provider accounts",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/ProviderAccounts"
+            }
+          },
+          "deprecated": false
+        },
+        "delete": {
+          "tags": [
+            "Account: Providers"
+          ],
+          "summary": "Disconnect a third-party provider account\n",
+          "description": "Disconnect a third-party provider account, returning the remaining\naccounts that are still connected. The disconnect is not allowed if it\nwould leave the account unusable. For example, if no password was\nset up yet.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ProviderAccount"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/ProviderAccounts"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "no_password": {
+                      "$ref": "#/components/examples/DisconnectNotAllowedNoPassword"
+                    },
+                    "no_email": {
+                      "$ref": "#/components/examples/DisconnectNotAllowedNoVerifiedEmail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/email": {
+        "get": {
+          "tags": [
+            "Account: Email"
+          ],
+          "summary": "List email addresses",
+          "description": "Retrieves the list of email addresses of the account.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/EmailAddresses"
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            }
+          },
+          "deprecated": false
+        },
+        "put": {
+          "tags": [
+            "Account: Email"
+          ],
+          "summary": "Request email verification",
+          "description": "Requests for (another) email verification email to be sent. Note that\nsending emails is rate limited, so when you send too many requests the\nemail will not be sent.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/Email"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Too many email verification mails were already sent.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Account: Email"
+          ],
+          "summary": "Add/Change email address\n",
+          "description": "The following functionality is available:\n\n  - Adding a new email address for an already signed in user (`ACCOUNT_CHANGE_EMAIL = False`).\n  - Change to a new email address for an already signed in user   (`ACCOUNT_CHANGE_EMAIL = True`).\n  - Change to a new email address during the email verification process at signup (`ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_CHANGE = True`).\n\nIn all cases, an email verification mail will be sent containing a link or code that needs to be verified.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/Email"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/EmailAddresses"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/AuthenticationOrReauthentication"
+            },
+            "409": {
+              "description": "Conflict. For example, when no user is authenticated and no email verification flow is pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "delete": {
+          "tags": [
+            "Account: Email"
+          ],
+          "summary": "Remove an email address",
+          "description": "Used to remove an email address.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/Email"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/EmailAddresses"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        },
+        "patch": {
+          "tags": [
+            "Account: Email"
+          ],
+          "summary": "Change primary email address",
+          "description": "Used to change primary email address to a different one. Note that only verified email addresses\ncan be marked as primary.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/MarkPrimaryEmail"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/EmailAddresses"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidEmail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/phone": {
+        "get": {
+          "tags": [
+            "Account: Phone"
+          ],
+          "summary": "Get the phone number",
+          "description": "Retrieves the phone number of the account, if any. Note that while the\nendpoint returns a list of phone numbers, at most one entry is returned.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/PhoneNumbers"
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Account: Phone"
+          ],
+          "summary": "Change the phone number\n",
+          "description": "The following functionality is available:\n\n- Initiate the phone number change process for signed in users.\n- Change to a new phone number during the phone number verification\n  process at signup for unauthenticated users. Note that this requires:\n  `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_CHANGE = True`.\n\nIn both cases, after posting a new phone number, proceed with the phone\nverification endpoint to confirm the change of the phone number by\nposting the verification code.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/Phone"
+          },
+          "responses": {
+            "202": {
+              "description": "Phone number change process initiated.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PhoneNumberChangeResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/AuthenticationOrReauthentication"
+            },
+            "409": {
+              "description": "Conflict. For example, when no user is authenticated and no phone verification flow is pending.\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/authenticators": {
+        "get": {
+          "tags": [
+            "Account: 2FA"
+          ],
+          "summary": "List authenticators",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticators"
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            },
+            "410": {
+              "$ref": "#/components/responses/SessionGone"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/authenticators/totp": {
+        "get": {
+          "tags": [
+            "Account: 2FA"
+          ],
+          "summary": "TOTP authenticator status",
+          "description": "Retrieve the information about the current TOTP authenticator, if any.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "404": {
+              "$ref": "#/components/responses/TOTPAuthenticatorNotFound"
+            },
+            "200": {
+              "$ref": "#/components/responses/TOTPAuthenticator"
+            },
+            "409": {
+              "$ref": "#/components/responses/AddAuthenticatorConflict"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Account: 2FA"
+          ],
+          "summary": "Activate TOTP",
+          "description": "The code should be provided from the consuming TOTP authenticator\napplication which was generated using the TOTP authenticator secret\nretrieved from the TOTP authenticator status endpoint.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/SetupTOTP"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/TOTPAuthenticator"
+            },
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/InvalidAuthenticatorCode"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            },
+            "409": {
+              "$ref": "#/components/responses/AddAuthenticatorConflict"
+            }
+          },
+          "deprecated": false
+        },
+        "delete": {
+          "tags": [
+            "Account: 2FA"
+          ],
+          "summary": "Deactivate TOTP",
+          "description": "Deactivates TOTP authentication. If the user authentication is not\nsufficiently recent, a reauthentication flow (`401`) will is presented.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/authenticators/recovery-codes": {
+        "get": {
+          "tags": [
+            "Account: 2FA"
+          ],
+          "summary": "List recovery codes",
+          "description": "List recovery codes.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/RecoveryCodes"
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Account: 2FA"
+          ],
+          "summary": "Regenerate recovery codes",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "400": {
+              "description": "An input error occurred.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalid_code": {
+                      "$ref": "#/components/examples/CannotGenerateRecoveryCodes"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/authenticators/webauthn": {
+        "get": {
+          "tags": [
+            "Account: WebAuthn"
+          ],
+          "summary": "Get WebAuthn credential creation options\n",
+          "description": "Returns the WebAuthn credential creation options, that can be\nprocessed using `parseCreationOptionsFromJSON()` on the frontend.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            },
+            {
+              "$ref": "#/components/parameters/PasswordLess"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/WebAuthnCreationOptionsResponse"
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            },
+            "409": {
+              "$ref": "#/components/responses/AddAuthenticatorConflict"
+            }
+          },
+          "deprecated": false
+        },
+        "put": {
+          "tags": [
+            "Account: WebAuthn"
+          ],
+          "summary": "Rename a WebAuthn credential\n",
+          "description": "You can alter the name of a WebAuthn credential by PUT'ting the ID and\nname of the authenticator representing that credential. You can obtain\nthe credentials via the \"List authenticators\" endpoint.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/UpdateWebAuthn"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/WebAuthnAuthenticator"
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            }
+          },
+          "deprecated": false
+        },
+        "post": {
+          "tags": [
+            "Account: WebAuthn"
+          ],
+          "summary": "Add a WebAuthn credential\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/AddWebAuthnAuthenticator"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/AddWebAuthnAuthenticator"
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            },
+            "409": {
+              "$ref": "#/components/responses/AddAuthenticatorConflict"
+            }
+          },
+          "deprecated": false
+        },
+        "delete": {
+          "tags": [
+            "Account: WebAuthn"
+          ],
+          "summary": "Delete a WebAuthn credential\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/DeleteWebAuthn"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/StatusOK"
+            },
+            "401": {
+              "$ref": "#/components/responses/ReauthenticationRequired"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/session": {
+        "get": {
+          "tags": [
+            "Authentication: Current Session"
+          ],
+          "summary": "Get authentication status\n",
+          "description": "Retrieve information about the authentication status for the current\nsession.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Authenticated"
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            },
+            "410": {
+              "$ref": "#/components/responses/SessionGone"
+            }
+          },
+          "deprecated": false
+        },
+        "delete": {
+          "tags": [
+            "Authentication: Current Session"
+          ],
+          "summary": "Logout",
+          "description": "Logs out the user from the current session.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "401": {
+              "$ref": "#/components/responses/Unauthenticated"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/app/v1/tokens/refresh": {
+        "post": {
+          "tags": [
+            "Tokens"
+          ],
+          "summary": "Refresh the access token\n",
+          "description": "Used to retrieve a new access token. Depending on `settings.HEADLESS_JWT_ROTATE_REFRESH_TOKEN`,\na new refresh token is returned as well.\n",
+          "requestBody": {
+            "$ref": "#/components/requestBodies/RefreshToken"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/RefreshToken"
+            },
+            "400": {
+              "description": "The refresh token is invalid or expired.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/account/password/change": {
+        "post": {
+          "tags": [
+            "Account: Password"
+          ],
+          "summary": "Change password",
+          "description": "In order to change the password of an account, the current and new\npassword must be provider.  However, accounts that were created by\nsigning up using a third-party provider do not have a password set. In\nthat case, the current password is not required.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/ChangePassword"
+          },
+          "responses": {
+            "400": {
+              "$ref": "#/components/responses/Error"
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            }
+          },
+          "deprecated": false
+        }
+      },
+      "/_allauth/{client}/v1/auth/sessions": {
+        "get": {
+          "tags": [
+            "Sessions"
+          ],
+          "summary": "List sessions",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Sessions"
+            }
+          },
+          "deprecated": false
+        },
+        "delete": {
+          "tags": [
+            "Sessions"
+          ],
+          "summary": "End one or more sessions",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            },
+            {
+              "$ref": "#/components/parameters/SessionToken"
+            }
+          ],
+          "requestBody": {
+            "$ref": "#/components/requestBodies/EndSessions"
+          },
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Sessions"
+            },
+            "401": {
+              "$ref": "#/components/responses/Authentication"
+            }
+          },
+          "deprecated": false
+        }
       }
     },
     "components": {
       "schemas": {
-        "ErrorDetail": {
-          "properties": {
-            "msg": {
-              "type": "string",
-              "title": "Msg"
-            },
-            "type": {
-              "type": "string",
-              "title": "Type"
-            },
-            "loc": {
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array",
-              "title": "Loc"
-            }
-          },
-          "type": "object",
-          "required": [
-            "msg"
-          ],
-          "title": "ErrorDetail",
-          "description": "Base schema for error details description."
-        },
-        "ErrorModel": {
-          "properties": {
-            "detail": {
-              "items": {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              "type": "array",
-              "title": "Detail"
-            }
-          },
-          "type": "object",
-          "required": [
-            "detail"
-          ],
-          "title": "ErrorModel",
-          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
-        },
         "Session": {
           "properties": {
             "user_agent": {
@@ -3314,6 +5324,40 @@
           "required": true
         }
       }
+    },
+    "tags": [
+      {
+        "name": "Configuration",
+        "description": "Exposes information on the configuration of django-allauth.\n"
+      },
+      {
+        "name": "Authentication: Account",
+        "description": "All functionality related towards authenticating regular\nusername/email-password based accounts.\n"
+      },
+      {
+        "name": "Account: Email",
+        "description": "The API used for manipulating the email addresses attached to a given\naccount. This is intentionally modeled as one endpoint, representing the\ncollection of all the email addresses. Note that manipulating one email\naddress may affect another.  For example, marking one email address as\nprimary implies the previous primary email address is changed as\nwell. Also, if django-allauth is configured with `ACCOUNT_CHANGE_EMAIL =\nTrue`, verifying the email address the user is changing to will cause the\nprevious email address to be removed.\n"
+      },
+      {
+        "name": "Account: Phone",
+        "description": "The API used for manipulating the phone number attached to a given\naccount.\n"
+      },
+      {
+        "name": "Account: Password",
+        "description": "Endpoints that can be used to alter the password for a given account.\n"
+      },
+      {
+        "name": "Account: Providers",
+        "description": "Management of third-party provider accounts that are connected to the\nauthenticated account.\n"
+      },
+      {
+        "name": "Authentication: 2FA",
+        "description": "Endpoints related towards completing the Two-Factor Authentication stage\nduring the authentication cycle.\n"
+      }
+    ],
+    "externalDocs": {
+      "url": "http://allauth.org",
+      "description": "The django-allauth project."
     }
   }
   '''

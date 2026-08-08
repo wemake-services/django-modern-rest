@@ -8,11 +8,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
 if TYPE_CHECKING:
-    from dmr.openapi.objects import OpenAPI
-    from dmr.openapi.objects.openapi import ConvertedSchema
+    from dmr.openapi.mappers.schema_normalization import DumpedSchema
+    from dmr.openapi.openapi import OpenAPI
 
-DumpedSchema: TypeAlias = str
-SchemaDumper: TypeAlias = Callable[['ConvertedSchema'], DumpedSchema]
+SchemaDumper: TypeAlias = Callable[['DumpedSchema'], str]
 
 
 @method_decorator(
@@ -24,7 +23,7 @@ class OpenAPIView(View):
     Base view for serving an OpenAPI schema.
 
     This view extends Django's :class:`django.views.View` to accept an
-    :class:`~dmr.openapi.objects.OpenAPI` instance via :meth:`as_view`.
+    :class:`~dmr.openapi.openapi.OpenAPI` instance via :meth:`as_view`.
     The passed schema is stored on the view class and can be rendered in
     any concrete subclass (for example, as JSON or YAML).
 
@@ -73,7 +72,7 @@ class OpenAPIView(View):
         Create a view function bound to the given OpenAPI schema.
 
         Extends Django's :meth:`django.views.View.as_view` to accept an
-        :class:`~dmr.openapi.objects.OpenAPI` instance, store it on the
+        :class:`~dmr.openapi.openapi.OpenAPI` instance, store it on the
         view class, and then return the configured view callable.
         """
         return super().as_view(

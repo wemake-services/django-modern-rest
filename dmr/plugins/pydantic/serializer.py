@@ -211,6 +211,10 @@ class PydanticSerializer(BaseSerializer):
         Raises:
             pydantic_core.ValidationError: When parsing can't be done.
 
+        .. versionchanged:: 0.13.0
+            Added *rebuild_namespace* parameter
+            was renamed to be *extra_namespace*.
+
         """
         # At this point `_get_cached_type_adapter(model)` was already called
         # during the optimizer stage, so it will be very fast to use in runtime.

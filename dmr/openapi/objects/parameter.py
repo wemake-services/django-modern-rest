@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
+
+from dmr.internal.dataclass_aliases import Field
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.example import Example
@@ -27,7 +29,7 @@ class Parameter(ParameterMetadata):
     """Describes a single operation parameter."""
 
     name: str
-    param_in: str
+    param_in: Annotated[str, Field(alias='in')]
     schema: 'Schema | Reference | None' = None
     content: dict[str, 'MediaType'] | None = None
     required: bool = False

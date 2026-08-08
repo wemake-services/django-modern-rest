@@ -103,7 +103,6 @@ class ResponseSpec:
         """If headers and cookies are not set, look for metadata and use it."""
         metadata = get_annotated_metadata(
             self.return_type,
-            None,
             ResponseSpecMetadata,
         )
         if metadata is not None:
@@ -563,13 +562,18 @@ _MetadataT = TypeVar('_MetadataT')
 
 def get_annotated_metadata(
     model: Any,
-    model_meta: tuple[Any, ...] | None,
     metadata_type: type[_MetadataT],
+    *,
+    model_meta: tuple[Any, ...] | None = None,
 ) -> _MetadataT | None:
     """
-    Find given *metadata_type* in :attr:`typing.Annotate.__metadata__`.
+    Find given *metadata_type* in *model*.
 
-    Or return ``None`` if it can't be found.
+    *model* can be :data:`typing.Annotate` object.
+    Or it can be a regular model, with *model_meta*,
+    which is the ``__metadata__`` field from ``Annotated``.
+
+    Or return ``None`` if nothing can be found.
     """
     if get_origin(model) is Annotated and model.__metadata__:
         for metadata in model.__metadata__:
