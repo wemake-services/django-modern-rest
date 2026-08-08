@@ -174,6 +174,6 @@ Existing views
 Mappers
 -------
 
-.. autofunction:: dmr.openapi.schema_normalization.load_schema
+.. autofunction:: dmr.openapi.mappers.schema_normalization.load_schema
 
-.. autofunction:: dmr.openapi.schema_normalization.dump_schema
+.. autofunction:: dmr.openapi.mappers.schema_normalization.dump_schema
