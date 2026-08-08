@@ -11,5 +11,3 @@ router = Router(
         ),
     ],
 )
-
-urlpatterns = router.urls

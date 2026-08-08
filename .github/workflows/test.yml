@@ -48,7 +48,7 @@ jobs:
     - name: Install dependencies
       run: |
         # System deps:
-        sudo apt update && sudo apt install -y gettext wait-for-it
+        sudo apt update && sudo apt install -y gettext
 
         # Python deps:
         just install

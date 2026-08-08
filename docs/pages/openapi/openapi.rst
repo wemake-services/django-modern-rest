@@ -473,5 +473,7 @@ This is the API every user needs:
 .. autoclass:: dmr.openapi.OpenAPIContext
   :members:
 
+.. autofunction:: dmr.openapi.load_schema
+
 All other objects that are only used if you decide to customize the schema
 are listed in :doc:`openapi-reference`.

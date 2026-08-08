@@ -181,7 +181,7 @@ def test_controller_mapping_collector_with_router() -> None:
         path('nested/', include([path('inner/', _PostController.as_view())])),
     ]
     router = Router('api/', patterns)
-    mappings = controller_mapping_collector(router.urls, router.prefix)
+    mappings = list(controller_mapping_collector(router.urls, router.prefix))
 
     assert len(mappings) == 2
     assert {path for path, _, _ in mappings} == {

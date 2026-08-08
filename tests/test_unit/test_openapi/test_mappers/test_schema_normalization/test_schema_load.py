@@ -4,7 +4,8 @@ from collections.abc import Callable
 import yaml
 from syrupy.assertion import SnapshotAssertion
 
-from dmr.openapi.mappers.schema_normalization import dump_schema, load_schema
+from dmr.openapi import load_schema
+from dmr.openapi.mappers.schema_normalization import dump_schema
 from dmr.openapi.openapi import OpenAPI
 
 
