@@ -21,7 +21,7 @@ import socket
 import subprocess  # noqa: S404
 import sys
 import time
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager, redirect_stderr, suppress
 from pathlib import Path
 from types import ModuleType
@@ -35,9 +35,9 @@ import zapros
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
+from django.http import HttpResponse
 from django.test import override_settings
 from django.urls import URLPattern, clear_url_caches, path
-from django.views import View
 from docutils.nodes import (
     Element,
     General,
@@ -359,7 +359,10 @@ class _BaseBuilder:  # noqa: WPS214
 
         return ASGIHandler()
 
-    def _find_controller(self, module: ModuleType) -> View:
+    def _find_controller(
+        self,
+        module: ModuleType,
+    ) -> Callable[..., HttpResponse]:
         controller_name = self.config.get('controller')
         if not controller_name:
             raise RuntimeError(
@@ -367,19 +370,18 @@ class _BaseBuilder:  # noqa: WPS214
                 self.file_path,
                 self.config,
             )
-        controller_cls: View | None = None
         for obj_name in module.__dict__:
             module_obj = getattr(module, obj_name)
-            if hasattr(module_obj, 'as_view') and obj_name == controller_name:
-                controller_cls = module_obj
-                break
+            if obj_name != controller_name:
+                continue
+            if hasattr(module_obj, 'as_view'):
+                return module_obj.as_view()  # type: ignore[no-any-return]
+            assert callable(module_obj), module_obj  # noqa: S101
+            return module_obj  # type: ignore[no-any-return]
 
-        if controller_cls is None:
-            raise RuntimeError(
-                f'Controller {controller_name} not found in {self.file_path}',
-            )
-
-        return controller_cls
+        raise RuntimeError(
+            f'Controller {controller_name} not found in {self.file_path}',
+        )
 
     def _create_urlpatterns(self, module: ModuleType) -> None:
         url_conf_module = ModuleType('url_conf')
@@ -400,13 +402,11 @@ class _BaseBuilder:  # noqa: WPS214
         if self.config.get('use_urlpatterns', False):
             return module.urlpatterns  # type: ignore[no-any-return]
 
-        controller_cls = self._find_controller(module)
+        controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
-        return [
-            path(url_path, controller_cls.as_view()),
-        ]
+        return [path(url_path, controller)]
 
 
 class _AppBuilder(_BaseBuilder):
@@ -426,7 +426,7 @@ class _OpenAPIBuilder(_BaseBuilder):
         if self.config.get('use_urlpatterns', False):
             return urlpatterns
 
-        controller_cls = self._find_controller(module)
+        controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
@@ -434,7 +434,7 @@ class _OpenAPIBuilder(_BaseBuilder):
         router = Router(
             '',
             [
-                path(url_path, controller_cls.as_view()),
+                path(url_path, controller),
             ],
         )
         schema = build_schema(router)

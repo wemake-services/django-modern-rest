@@ -204,6 +204,7 @@ Here are our amazing people who made this project possible.
   pages/middleware.rst
   pages/validation.rst
   pages/reusable-code.rst
+  pages/external-views.rst
   pages/integrations.rst
   pages/internationalization.rst
   pages/testing.rst

@@ -355,6 +355,8 @@ isort.known-first-party = [ "server", "examples" ]
 "docs/examples/**/*.py" = [ "D1", "S1" ]
 # Unittest examples must use unittest features:
 "docs/examples/testing/*.py" = [ "PT009" ]
+# Never ask for crypto safety in these example:
+"docs/examples/external_views/*.py" = [ "S311" ]
 # Allow benchmarks to not have docs and do scripting:
 "benchmarks/**/*.py" = [ "D", "S" ]
 "typesafety/**/*.py" = [ "D" ]

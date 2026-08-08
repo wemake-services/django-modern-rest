@@ -61,10 +61,12 @@ class OpenAPIContext:
 
     def __init__(
         self,
-        config: 'OpenAPIConfig',
+        config: 'OpenAPIConfig | None' = None,
     ) -> None:
         """Initialize the OpenAPI context."""
-        self.config = config
+        from dmr.openapi.config import default_config  # noqa: PLC0415
+
+        self.config = config or default_config()
         self.config_merger = ConfigMerger(self)
         self.external_components: Components | None = None
 
@@ -147,13 +149,6 @@ class OpenAPIContext:
         existing: Components | None,
         to_merge: Components,
     ) -> Components:
-        """
-        Merges two components together.
-
-        Also ensures that no schemas overwrite each other in both components.
-
-        .. versionadded:: 0.13.0
-        """
         if existing is None:
             return to_merge
         return Components(

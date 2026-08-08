@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: Number API
+  version: 1.0.0
+paths:
+  /api/number:
+    get:
+      operationId: getNumber
+      responses:
+        '200':
+          description: A number
+          content:
+            application/json:
+              schema:
+                type: number
