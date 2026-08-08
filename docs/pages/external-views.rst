@@ -107,5 +107,5 @@ For example, one can reuse:
 - ``django-allauth`` `headles views <https://github.com/pennersr/django-allauth/tree/main/allauth/headless>`_
   that are built to be used by the pure Django framework
 - Any ``APIView`` objects from ``django-rest-framework``
-- Any ``ControlerBase`` objects from ``django-ninja-extra``
+- Any ``ControllerBase`` objects from ``django-ninja-extra``
 - And many more!
