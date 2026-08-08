@@ -3313,7 +3313,8 @@
           },
           "required": true
         }
-      }
+      },
+      "securitySchemes": {}
     }
   }
   '''
