@@ -17,10 +17,10 @@ FieldInfo: type[_FieldLike]
 try:  # noqa: WPS229
     # mypy and mypyc raise different errors here, `unused-ignore` saves the day:
     from pydantic import (  # type: ignore[assignment, no-redef, unused-ignore]
-        Field,
+        Field,  # pyright: ignore[reportAssignmentType]
     )
     from pydantic.fields import (  # type: ignore[assignment, no-redef, unused-ignore]
-        FieldInfo,
+        FieldInfo,  # pyright: ignore[reportUnusedImport, reportAssignmentType]
     )
 except ImportError:
 
