@@ -15,8 +15,9 @@ Field: type[_FieldLike]  # pyright: ignore[reportRedeclaration]
 FieldInfo: type[_FieldLike]
 
 try:  # noqa: WPS229
-    from pydantic import Field  # type: ignore[assignment]
-    from pydantic.fields import FieldInfo  # type: ignore[assignment]
+    # mypy and mypyc raise different errors here, `unused-ignore` saves the day:
+    from pydantic import Field  # type: ignore[assignment, no-redef, unused-ignore]
+    from pydantic.fields import FieldInfo  # type: ignore[assignment, no-redef, unused-ignore]
 except ImportError:
 
     @final
