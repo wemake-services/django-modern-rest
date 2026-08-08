@@ -8,8 +8,13 @@ from django.views import View
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
-from dmr.openapi import OpenAPIContext, build_schema, default_config, objects
-from dmr.openapi.mappers.schema_normalization import load_schema
+from dmr.openapi import (
+    OpenAPIContext,
+    build_schema,
+    default_config,
+    load_schema,
+    objects,
+)
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
@@ -28,7 +33,7 @@ class _AsyncController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_external_paths_schema(
+def test_external_paths_schema(  # noqa: WPS210
     snapshot: SnapshotAssertion,
     named_text_fixture: Callable[[str], str],
 ) -> None:
@@ -39,12 +44,11 @@ def test_external_paths_schema(
 
     context = OpenAPIContext(config=default_config())
 
-    context.register_external_schemas(
-        load_schema(
-            external_openapi['components'],
-            objects.Components,
-        ),
+    external_components = load_schema(
+        external_openapi['components'],
+        objects.Components,
     )
+    context.register_external_components(external_components)
 
     external_openapi_func = load_schema(
         external_openapi['paths']['/_allauth/{client}/v1/config'],
@@ -78,8 +82,6 @@ def test_external_paths_schema(
         tags=['custom'],
     )
 
-    assert len(router._urls) == 1
-    assert len(router._external_urls) == 2
     assert len(router.urls) == 3
     assert (
         json.dumps(

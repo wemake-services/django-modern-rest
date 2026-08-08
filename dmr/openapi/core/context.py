@@ -131,7 +131,7 @@ class OpenAPIContext:
             raise ValueError(f'{real_type} is already registered')
         self.registries.schema.overrides[real_type] = schema
 
-    def register_external_schemas(self, components: Components) -> None:
+    def register_external_components(self, components: Components) -> None:
         """
         Register schemas from external OpenAPI definition.
 
@@ -186,7 +186,7 @@ def _merge_unique(
     if existing is None:
         return to_merge
     if to_merge is None:
-        return None
+        return existing
 
     shared_keys = existing.keys() & to_merge.keys()
     if shared_keys:

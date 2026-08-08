@@ -11,13 +11,12 @@ from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import (
-    EndpointMetadataError,
     InternalServerError,
     NotAcceptableError,
 )
 from dmr.openapi.collector import (
     controller_mapping_collector,
-    external_mapping_collector,
+    process_external,
 )
 from dmr.openapi.objects import PathItem, Paths
 from dmr.openapi.openapi import OpenAPI
@@ -47,13 +46,13 @@ class Router:
 
     Attributes:
         prefix: URL prefix for all routes (e.g., 'api/v1/').
+        urls: Sequence of URL patterns and resolvers.
         tags: Optional sequence of tags to group operations in OpenAPI.
             These are merged with endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
 
-    You can also pass:
-        urls: Sequence of URL patterns and resolvers.
+    Can also be passed:
         external_urls: Optional sequence of pairs
             of URL pattern and :class:`dmr.openapi.objects.PathItem`
             OpenAPI spec, used to include non-DMR views into the API.
@@ -64,7 +63,7 @@ class Router:
 
     .. note::
 
-        *tags* and *deprecated* is not applied on *external_urls*
+        *tags* and *deprecated* is not applied to *external_urls*
         metadata. It is always included as-is.
 
     .. versionchanged:: 0.7.0
@@ -76,31 +75,25 @@ class Router:
 
     """
 
-    __slots__ = ('deprecated', '_external_urls', 'prefix', 'tags', '_urls')
+    __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
 
     def __init__(
         self,
         prefix: str,
         urls: Iterable[_AnyPattern],
         *,
-        external_urls: Iterable[tuple[_AnyPattern, PathItem]] | None = None,
+        external_urls: Iterable[tuple[URLPattern, PathItem]] | None = None,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
-        self._urls = tuple(urls)
-        self._external_urls = tuple(external_urls or [])
+        self.urls = [
+            *urls,
+            *process_external(external_urls or []),
+        ]
         self.tags = list(tags or [])
         self.deprecated = deprecated
-
-    @property
-    def urls(self) -> Sequence[_AnyPattern]:
-        """Get all urls from router."""
-        urls = list(self._urls)  # a copy
-        if self._external_urls:
-            urls.extend(url for url, _ in self._external_urls)
-        return urls
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
         """
@@ -113,45 +106,25 @@ class Router:
         """
         paths_items: Paths = {}
 
-        self._collect_controller_paths(paths_items, context)
-        self._collect_external_paths(paths_items, context)
+        for path, pattern_or_meta, controller in controller_mapping_collector(
+            self.urls,
+            base_path=self.prefix,
+        ):
+            if isinstance(pattern_or_meta, PathItem):
+                paths_items[path] = pattern_or_meta
+            else:
+                # for mypy: it can't narrow down the `tuple` based on the
+                # the second item type :/
+                assert controller is not None  # noqa: S101
+                paths_items[path] = controller.get_path_item(
+                    path,
+                    pattern_or_meta,
+                    context,
+                    router=self,
+                )
 
         components = context.get_components()
         return context.config_merger(paths_items, components)
-
-    def _collect_controller_paths(
-        self,
-        paths_items: Paths,
-        context: 'OpenAPIContext',
-    ) -> None:
-        for path, pattern, controller in controller_mapping_collector(
-            self._urls,
-            base_path=self.prefix,
-        ):
-            paths_items[path] = controller.get_path_item(
-                path,
-                pattern,
-                context,
-                router=self,
-            )
-
-    def _collect_external_paths(
-        self,
-        paths_items: Paths,
-        context: 'OpenAPIContext',
-    ) -> None:
-        if not self._external_urls:
-            return
-
-        for path, metadata in external_mapping_collector(
-            self._external_urls,
-            base_path=self.prefix,
-        ):
-            if path in paths_items:
-                raise EndpointMetadataError(
-                    f'Trying to override {path=} with {metadata=}',
-                )
-            paths_items[path] = metadata
 
 
 # We mimic django's name here:

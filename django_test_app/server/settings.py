@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'server.apps.token_auth',
     'server.apps.token_custom_user',
     'server.apps.etag',
+    'server.apps.external_views',
     # Django:
     'django.contrib.admin',
     'django.contrib.auth',

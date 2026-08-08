@@ -1,5 +1,5 @@
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
@@ -13,18 +13,25 @@ if TYPE_CHECKING:
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
 _OpenAPIMetadata: TypeAlias = dict[str, Any]
-_PathControllerSpec: TypeAlias = tuple[
-    str,
-    URLPattern,
-    'Controller[BaseSerializer]',
-]
+_PathControllerSpec: TypeAlias = (
+    tuple[
+        str,
+        URLPattern,
+        'Controller[BaseSerializer]',
+    ]
+    | tuple[
+        str,
+        PathItem,
+        None,
+    ]
+)
 _PathExternalSpec: TypeAlias = tuple[str, PathItem]
 
 
 def controller_mapping_collector(
     urls: Iterable[_AnyPattern],
     base_path: str,
-) -> list[_PathControllerSpec]:
+) -> Iterable[_PathControllerSpec]:
     """
     Collect all API controllers from a router for OpenAPI generation.
 
@@ -37,40 +44,27 @@ def controller_mapping_collector(
     direct URL patterns and nested URL resolvers, to build a comprehensive
     list of all available API controllers.
     """
-    controllers: list[_PathControllerSpec] = []
-
     for url in urls:
         if isinstance(url, URLPattern):
-            controllers.append(_process_pattern(url, base_path))
+            yield _process_pattern(url, base_path)
         else:
             current_path = _join_paths(base_path, str(url.pattern))
-            controllers.extend(
-                controller_mapping_collector(url.url_patterns, current_path),
+            yield from controller_mapping_collector(
+                url.url_patterns,
+                current_path,
             )
 
-    return controllers
 
-
-def external_mapping_collector(
-    external_paths: Iterable[tuple[_AnyPattern, PathItem]],
-    base_path: str,
-) -> list[_PathExternalSpec]:
-    """
-    Collect all the metadata from the external paths specification.
-
-    Paths are specified as tuples of ``(path, openapi_metadata)``,
-    which we parse and validate to fit our format.
-
-    Any OpenAPI ``Path`` item specification can be passed.
-    """
-    external_spec: list[_PathExternalSpec] = []
-    for url_pattern, openapi_spec in external_paths:
-        path = _join_paths(base_path, str(url_pattern.pattern))
-        external_spec.append((
-            _normalize_path(path),
-            openapi_spec,
-        ))
-    return external_spec
+def process_external(
+    urls: Iterable[tuple[URLPattern, PathItem]],
+) -> Sequence[URLPattern]:
+    """Attach OpenAPI metadata to the view."""
+    result_urls: list[URLPattern] = []
+    for url, openapi in urls:
+        assert isinstance(url, URLPattern), url  # noqa: S101
+        url.callback.__dmr_external_openapi__ = openapi  # type: ignore[attr-defined]
+        result_urls.append(url)
+    return result_urls
 
 
 def _process_pattern(
@@ -78,9 +72,12 @@ def _process_pattern(
     base_path: str,
 ) -> _PathControllerSpec:
     path = _join_paths(base_path, str(url_pattern.pattern))
-    controller = url_pattern.callback.view_class  # type: ignore[attr-defined]
     normalized = _normalize_path(path)
-    return normalized, url_pattern, controller
+    try:
+        # Try the external url first, it is easier to detect:
+        return normalized, url_pattern.callback.__dmr_external_openapi__, None  # type: ignore[attr-defined]
+    except AttributeError:
+        return normalized, url_pattern, url_pattern.callback.view_class  # type: ignore[attr-defined]
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:

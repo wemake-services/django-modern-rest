@@ -1,6 +1,9 @@
+import json
+
 from django.urls import include
 
-from dmr.openapi import build_schema
+from dmr.openapi import OpenAPIContext, build_schema, load_schema
+from dmr.openapi.objects import Components
 from dmr.openapi.views import (
     OpenAPIJsonView,
     RedocView,
@@ -14,6 +17,8 @@ from dmr.routing import Router, build_404_handler, build_500_handler, path
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
 from server.apps.etag import urls as etag_urls
+from server.apps.external_views import urls as external_views_urls
+from server.apps.external_views.views import EXTERNAL_CLASS_COMPONENTS
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
 from server.apps.model_fk import urls as model_fk_urls
@@ -96,10 +101,21 @@ router = Router(
                 namespace='etag',
             ),
         ),
+        path(
+            external_views_urls.router.prefix,
+            include(
+                (external_views_urls.router.urls, 'external_views'),
+                namespace='external_views',
+            ),
+        ),
     ],
 )
 
-schema = build_schema(router, config=get_config())
+schema_context = OpenAPIContext(config=get_config())
+schema_context.register_external_components(
+    load_schema(json.loads(EXTERNAL_CLASS_COMPONENTS), Components),
+)
+schema = build_schema(router, context=schema_context)
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'server'), namespace='api')),
