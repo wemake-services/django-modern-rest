@@ -5336,7 +5336,7 @@
       },
       {
         "name": "Account: Email",
-        "description": "The API used for manipulating the email addresses attached to a given\naccount. This is intentionally modeled as one endpoint, representing the\ncollection of all the email addresses. Note that manipulating one email\naddress may affect another.  For example, marking one email address as\nprimary implies the previous primary email address is changed as\nwell. Also, if django-allauth is configured with `ACCOUNT_CHANGE_EMAIL =\nTrue`, verifying the email address the user is changing to will cause the\nprevious email addres to be removed.\n"
+        "description": "The API used for manipulating the email addresses attached to a given\naccount. This is intentionally modeled as one endpoint, representing the\ncollection of all the email addresses. Note that manipulating one email\naddress may affect another.  For example, marking one email address as\nprimary implies the previous primary email address is changed as\nwell. Also, if django-allauth is configured with `ACCOUNT_CHANGE_EMAIL =\nTrue`, verifying the email address the user is changing to will cause the\nprevious email address to be removed.\n"
       },
       {
         "name": "Account: Phone",
