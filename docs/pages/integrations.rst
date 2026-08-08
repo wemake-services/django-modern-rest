@@ -98,10 +98,33 @@ your own metadata / models and use them with our framework.
 Cursor pagination
 ~~~~~~~~~~~~~~~~~
 
-We also support any other pagination library.
+To support it we have :class:`~dmr.pagination.SyncCursorPaginator` and :class:`~dmr.pagination.AsyncCursorPaginator`
+protocols. It exposes a minimal API with only 2 methods:
 
-Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_
-or even your custom implementation.
+- :meth:`~dmr.pagination.SyncCursorPaginator.page` — returns the page with provided cursor
+- :meth:`~dmr.pagination.SyncCursorPaginator.prev_page` — returns the page that was before the provided cursor
+
+This allows navigating through result sets in both forward and backward directions.
+
+Both of them returns :class:`~dmr.pagination.CursorPaginated`, which contains:
+
+- ``object_list`` — current page objects
+
+- ``next_cursor`` — cursor for the next page
+
+- ``prev_cursor`` — cursor for the previous page
+
+
+We provide a built-in async cursor paginator implementation:
+:class:`~dmr.pagination.DjangoCursorPaginator`.
+It implements the
+:class:`~dmr.pagination.AsyncCursorPaginator`
+protocol and works with Django's ``QuerySet``.
+
+If an invalid cursor is passed to a :class:`~dmr.pagination.DjangoCursorPaginator` page methods,
+:class:`dmr.pagination.InvalidPaginationCursorError` is raised and returned as a ``BAD_REQUEST`` response."
+
+Other pagination libraries are supported as well.
 
 Any Django-compatible tool should work out of the box.
 
@@ -114,6 +137,20 @@ Interface
 .. autoclass:: dmr.pagination.Page
   :members:
 
+.. autoclass:: dmr.pagination.CursorPaginated
+  :members:
+
+.. autoclass:: dmr.pagination.SyncCursorPaginator
+  :members:
+
+.. autoclass:: dmr.pagination.AsyncCursorPaginator
+  :members:
+
+.. autoclass:: dmr.pagination.DjangoCursorPaginator
+  :members:
+
+.. autoclass:: dmr.pagination.InvalidPaginationCursorError
+  :members:
 
 Filters
 -------
