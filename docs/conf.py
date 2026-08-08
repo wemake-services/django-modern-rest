@@ -184,7 +184,12 @@ nitpick_ignore = [
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
     (_PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
     (_PY_CLASS, 'django.utils.functional.Promise'),
+    # OpenAPI:
+    (_PY_CLASS, 'dmr.openapi.mappers.schema_normalization._DataclassT'),
     # OpenAPI types used in TYPE_CHECKING blocks:
+    (_PY_CLASS, 'DataclassInstance'),
+    (_PY_CLASS, 'FieldInfo'),
+    (_PY_CLASS, 'NoneType'),
     (_PY_CLASS, 'SecurityRequirement'),
     (_PY_CLASS, 'ExternalDocumentation'),
     (_PY_CLASS, 'Callback'),
@@ -198,6 +203,10 @@ nitpick_ignore = [
     # Looks like a bug:
     (_PY_CLASS, 'dict[str'),
     (_PY_CLASS, 'collections.abc.Mapping[str'),
+]
+
+nitpick_ignore_regex = [
+    (_PY_OBJ, r'typing\.Annotated\[.*'),
 ]
 
 qualname_overrides = {

@@ -31,7 +31,7 @@ def load_schema(
     Used to include external schemas into the DMR-based project.
     Only works with ``pydantic`` installed:
 
-    .. bash::
+    .. code-block:: bash
 
         pip install 'django-modern-rest[pydantic]'
 
