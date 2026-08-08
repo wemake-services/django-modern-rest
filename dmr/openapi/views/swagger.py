@@ -12,7 +12,7 @@ class SwaggerView(OpenAPIView):
     View for rendering the OpenAPI schema with Swagger UI.
 
     Renders an interactive HTML page that allows exploring the
-    :class:`~dmr.openapi.objects.OpenAPI` specification using Swagger UI
+    :class:`~dmr.openapi.openapi.OpenAPI` specification using Swagger UI
     components.
 
     Attributes:

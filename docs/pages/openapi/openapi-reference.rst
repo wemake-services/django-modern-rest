@@ -5,6 +5,13 @@ OpenAPI Reference
 Objects
 -------
 
+Main OpenAPI object:
+
+.. autoclass:: dmr.openapi.openapi.OpenAPI
+   :members:
+
+Parts:
+
 .. autoclass:: dmr.openapi.objects.Callback
    :members:
 
@@ -48,9 +55,6 @@ Objects
    :members:
 
 .. autoclass:: dmr.openapi.objects.OAuthFlows
-   :members:
-
-.. autoclass:: dmr.openapi.objects.OpenAPI
    :members:
 
 .. autoclass:: dmr.openapi.objects.OpenAPIFormat

@@ -12,7 +12,7 @@ class RedocView(OpenAPIView):
     View for rendering the OpenAPI schema with Redoc.
 
     Renders an interactive HTML page that allows exploring the
-    :class:`~dmr.openapi.objects.OpenAPI` specification using Redoc
+    :class:`~dmr.openapi.openapi.OpenAPI` specification using Redoc
     components.
 
     Attributes:
