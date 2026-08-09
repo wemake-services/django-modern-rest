@@ -36,6 +36,8 @@ of requirements for an API to count as public.
   to `dmr.openapi.openapi.OpenAPI`, #1222
 - `rebuild_namespace` parameter in `PydanticSerializer.from_python`
   was renamed to `extra_namespace`, #1222
+- Changed ``skip_validation`` parameter to be kw-only
+  on ``OpenAPIView.as_view()`` and all its subclasses, #1229
 
 ### Features
 
@@ -45,6 +47,12 @@ of requirements for an API to count as public.
   and all its existing subclasses, #1222
 - Added an ability to load external OpenAPI schemas
   into our typed dataclasses, #1222
+
+### Bugfixes
+
+- Fixed a bug that `OpenAPIConfig.components` were silently
+  ignored when defined with custom user's data, #1229
+- Fixed `OpenAPIFormat.IRI` value, #1228
 
 
 ## 0.12.1 (2026-07-31)

@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'server.apps.model_fk',
     'server.apps.middlewares',
     'server.apps.controllers',
-    'server.apps.openapi',
     'server.apps.negotiations',
     'server.apps.jwt_auth',
     'server.apps.django_session_auth',

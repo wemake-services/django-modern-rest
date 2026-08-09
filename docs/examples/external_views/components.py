@@ -6,8 +6,8 @@ from django.http import HttpRequest, JsonResponse
 from django.urls import include
 from django.views.decorators.http import require_GET
 
-from dmr.openapi import OpenAPIContext, build_schema, load_schema
-from dmr.openapi.objects import Components, PathItem
+from dmr.openapi import OpenAPIConfig, build_schema, load_schema
+from dmr.openapi.objects import Components, PathItem, Tag
 from dmr.openapi.views import OpenAPIJsonView
 from dmr.routing import Router, path
 
@@ -25,11 +25,6 @@ raw_schema = yaml.safe_load(
     ),
 )
 
-external_schema = load_schema(
-    raw_schema['paths']['/api/random/{start}/{end}'],
-    PathItem,
-)
-
 # Create a router and URL patterns:
 
 router = Router(
@@ -42,18 +37,25 @@ router = Router(
                 number,
                 name='number',
             ),
-            external_schema,
+            load_schema(
+                raw_schema['paths']['/api/random/{start}/{end}'],
+                PathItem,
+            ),
         ),
     ],
 )
 
-# Register external components to the context:
+# Register external components to the config:
 
-context = OpenAPIContext()
-context.register_external_components(
-    load_schema(raw_schema['components'], Components),
+config = OpenAPIConfig(
+    title='New Random Number API',
+    version='0.0.1',
+    # Here you can pass any `OpenAPI` class parameters,
+    # not just components and tags:
+    components=load_schema(raw_schema['components'], Components),
+    tags=[load_schema(tag, Tag) for tag in raw_schema['tags']],
 )
-schema = build_schema(router, context=context)
+schema = build_schema(router, config=config)
 
 urlpatterns = [
     # Register our router in the final url patterns:
@@ -63,4 +65,5 @@ urlpatterns = [
 ]
 
 # run: {"controller": "number", "method": "get", "url": "/api/number/1/5/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# run: {"controller": "number", "method": "get", "url": "/api/number/regular-django/url-error/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "assert-error-text": "404", "fail-with-body": false}  # noqa: ERA001, E501
 # openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

@@ -19,13 +19,10 @@ class NumberView(View):
 
 # Now, load the schema:
 
-external_schema = load_schema(
-    yaml.safe_load(
-        pathlib.Path('examples/external_views/openapi.yml').read_text(
-            encoding='utf8',
-        ),
-    )['paths']['/api/number'],
-    PathItem,
+raw_schema = yaml.safe_load(
+    pathlib.Path('examples/external_views/openapi.yml').read_text(
+        encoding='utf8',
+    ),
 )
 
 # Create a router and URL patterns:
@@ -40,7 +37,10 @@ router = Router(
                 NumberView.as_view(),
                 name='number',
             ),
-            external_schema,
+            load_schema(
+                raw_schema['paths']['/api/number'],
+                PathItem,
+            ),
         ),
     ],
 )

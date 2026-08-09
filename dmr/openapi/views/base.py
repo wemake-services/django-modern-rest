@@ -2,44 +2,37 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 from django.http import HttpResponseBase
-from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
+from dmr.decorators import dispatch_decorator
+from dmr.openapi.openapi import OpenAPI
+
 if TYPE_CHECKING:
     from dmr.openapi.mappers.schema_normalization import DumpedSchema
-    from dmr.openapi.openapi import OpenAPI
 
 SchemaDumper: TypeAlias = Callable[['DumpedSchema'], str]
 
 
-@method_decorator(
-    ensure_csrf_cookie,
-    name='dispatch',
-)
+@dispatch_decorator(ensure_csrf_cookie)
 class OpenAPIView(View):
     """
     Base view for serving an OpenAPI schema.
 
-    This view extends Django's :class:`django.views.View` to accept an
-    :class:`~dmr.openapi.openapi.OpenAPI` instance via :meth:`as_view`.
+    This view extends Django's :class:`~django.views.generic.base.View`
+    to accept an :class:`~dmr.openapi.openapi.OpenAPI`
+    instance via :meth:`as_view`.
     The passed schema is stored on the view class and can be rendered in
     any concrete subclass (for example, as JSON or YAML).
-
-    Attributes:
-        dumps: Callable that converts a converted OpenAPI schema into a string.
-            Defaults to :func:`dmr.internal.json.json_dump_schema`.
-        schema: The OpenAPI schema associated with this view. Set when
-            :meth:`as_view` is called.
     """
 
     # Private API:
-    _schema: 'OpenAPI | None' = None
+    _schema: OpenAPI | None = None
     _skip_validation: bool | None = None
 
     @property
-    def schema(self) -> 'OpenAPI':
+    def schema(self) -> OpenAPI:
         """
         Return the OpenAPI schema bound to this view instance.
 
@@ -60,21 +53,16 @@ class OpenAPIView(View):
         assert self._skip_validation is not None  # noqa: S101
         return self._skip_validation
 
-    @override
     @classmethod
+    @override
     def as_view(  # type: ignore[override]
         cls,
-        schema: 'OpenAPI',
+        schema: OpenAPI,
+        *,
         skip_validation: bool = False,
         **initkwargs: Any,
-    ) -> Callable[..., 'HttpResponseBase']:
-        """
-        Create a view function bound to the given OpenAPI schema.
-
-        Extends Django's :meth:`django.views.View.as_view` to accept an
-        :class:`~dmr.openapi.openapi.OpenAPI` instance, store it on the
-        view class, and then return the configured view callable.
-        """
+    ) -> Callable[..., HttpResponseBase]:
+        """Create a view function bound to the given OpenAPI schema."""
         return super().as_view(
             _schema=schema,
             _skip_validation=skip_validation,
