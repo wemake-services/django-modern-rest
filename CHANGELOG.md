@@ -1,6 +1,6 @@
 # Version history
 
-We will follow [Semantic Versions](https://semver.org/) since ``1.0.0`` release.
+We will follow [Semantic Versions](https://semver.org/) since `1.0.0` release.
 While in `Development Status :: 3 - Alpha` - we will break
 all the things without any notices.
 
@@ -36,8 +36,8 @@ of requirements for an API to count as public.
   to `dmr.openapi.openapi.OpenAPI`, #1222
 - `rebuild_namespace` parameter in `PydanticSerializer.from_python`
   was renamed to `extra_namespace`, #1222
-- Changed ``skip_validation`` parameter to be kw-only
-  on ``OpenAPIView.as_view()`` and all its subclasses, #1229
+- Changed `skip_validation` parameter to be kw-only
+  on `OpenAPIView.as_view()` and all its subclasses, #1229
 - Renamed `dmr.controller.Controller.get_path_item` to
   `get_schema`, so all methods will be consistent, #1238
 
@@ -49,6 +49,7 @@ of requirements for an API to count as public.
   and all its existing subclasses, #1222
 - Added an ability to load external OpenAPI schemas
   into our typed dataclasses, #1222
+- Added `external_path()` function, so we can load external views, #1239
 - Added an option to skip some controllers / endpoints
   from the OpenAPI spec, #1238
 
@@ -149,8 +150,8 @@ for both sync and async controllers at the same time.
 User-facing changes:
 
 ```md
-Change all existing ``dmr.files.FileResponseSpec`` usages
-to include ``as_attachment=True`` parameter.
+Change all existing `dmr.files.FileResponseSpec` usages
+to include `as_attachment=True` parameter.
 ```
 
 ### Features
@@ -334,7 +335,7 @@ No breaking changes in this release.
 
 ### Features
 
-- Added `PydanticFastSerializer` to serialize and deserialize ``json``
+- Added `PydanticFastSerializer` to serialize and deserialize `json`
   objects directly, #830
 - Added support for complex `pydantic` fields inside
   `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
@@ -600,15 +601,15 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 
 ### Features
 
-- Added ``FileResponseSpec`` and improved ``FileResponse``
+- Added `FileResponseSpec` and improved `FileResponse`
   schema generation, #682
-- Added ``encoding:`` support for file media types in ``FileMetadata``, #682
+- Added `encoding:` support for file media types in `FileMetadata`, #682
 
 ### Bugfixes
 
 - Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
 - Fixed JWT claim validation and error handling in `JWToken.decode`, #675
-- Fixed incorrect OpenAPI schema for ``FileResponse``, #682
+- Fixed incorrect OpenAPI schema for `FileResponse`, #682
 - Fixed that `404` was not listed in the endpoint's metadata,
   when using `URLRoute` without `Path` component, #685
 - Fixed that `404` was not documented in the OpenAPI
@@ -641,9 +642,9 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   was raising an error. Now it returns 406 as it should, #656
 - Fixed fake examples generation, #638
 - Fixed OpenAPI schema for custom JWT auth parameters, #660
-- Fixed ``Body`` component was not able to properly parse lists
-  with ``multipart/form-data`` parser, #644
-- Fixed that not options were passed to ``JWToken._build_options``, #671
+- Fixed `Body` component was not able to properly parse lists
+  with `multipart/form-data` parser, #644
+- Fixed that not options were passed to `JWToken._build_options`, #671
 
 ### Misc
 
