@@ -86,7 +86,7 @@ def external_path(
     .. versionadded:: 0.13.0
     """
     return URLExternal(
-        _django_path(
+        _django_path(  # pyrefly: ignore[no-matching-overload]
             route,
             view,  # type: ignore[arg-type]
             kwargs=kwargs,
