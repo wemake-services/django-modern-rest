@@ -11,9 +11,8 @@ from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller
 from dmr.openapi import (
-    OpenAPIContext,
+    OpenAPIConfig,
     build_schema,
-    default_config,
     load_schema,
     objects,
 )
@@ -44,13 +43,14 @@ def test_external_paths_schema(  # noqa: WPS210
         named_text_fixture('django-allauth.yml'),
     )
 
-    context = OpenAPIContext(config=default_config())
-
-    external_components = load_schema(
-        external_openapi['components'],
-        objects.Components,
+    config = OpenAPIConfig(
+        title='Your Awesome Project',
+        version='0.1.0',
+        components=load_schema(
+            external_openapi['components'],
+            objects.Components,
+        ),
     )
-    context.register_external_components(external_components)
 
     external_openapi_func = load_schema(
         external_openapi['paths']['/_allauth/{client}/v1/config'],
@@ -89,7 +89,7 @@ def test_external_paths_schema(  # noqa: WPS210
         json.dumps(
             build_schema(
                 router,
-                context=context,
+                config=config,
             ).convert(),
             indent=2,
         )
@@ -113,9 +113,11 @@ def test_external_paths_schema_duplicate() -> None:
         [path('/user', _UserController.as_view())],
     )
 
-    context = OpenAPIContext(config=default_config())
-    context.register_external_components(
-        objects.Components(schemas={'_User': objects.Schema()}),
+    config = OpenAPIConfig(
+        title='Your Awesome Project',
+        version='0.1.0',
+        components=objects.Components(schemas={'_User': objects.Schema()}),
     )
+
     with pytest.raises(ValueError, match='_User'):
-        build_schema(router, context=context)
+        build_schema(router, config=config)

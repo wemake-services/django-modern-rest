@@ -2,8 +2,13 @@ import json
 
 from django.urls import include
 
-from dmr.openapi import OpenAPIContext, build_schema, load_schema
-from dmr.openapi.objects import Components
+from dmr.openapi import OpenAPIConfig, build_schema, load_schema
+from dmr.openapi.objects import (
+    Components,
+    Contact,
+    ExternalDocumentation,
+    License,
+)
 from dmr.openapi.views import (
     OpenAPIJsonView,
     RedocView,
@@ -24,7 +29,6 @@ from server.apps.middlewares import urls as middleware_urls
 from server.apps.model_fk import urls as model_fk_urls
 from server.apps.model_simple import urls as model_simple_urls
 from server.apps.negotiations import urls as negotiations_urls
-from server.apps.openapi.config import get_config
 from server.apps.token_auth import urls as token_auth_urls
 from server.apps.token_custom_user import urls as token_custom_user_urls
 
@@ -111,11 +115,25 @@ router = Router(
     ],
 )
 
-schema_context = OpenAPIContext(config=get_config())
-schema_context.register_external_components(
-    load_schema(json.loads(EXTERNAL_CLASS_COMPONENTS), Components),
+openapi_config = OpenAPIConfig(
+    title='Framework Demo API',
+    version='1.0.0',
+    summary='Demo API for framework features',
+    description=(
+        'Test application showcasing core functionality of the framework. '
+        'Не АСКИИ текст'  # noqa: RUF001
+    ),
+    terms_of_service='Usage is intended for testing purposes only.',
+    contact=Contact(name='Core Developer', email='mail@sobolevn.me'),
+    license=License(name='MIT License', identifier='MIT'),
+    external_docs=ExternalDocumentation(
+        url='https://django-modern-rest.readthedocs.io/',
+        description='Main documentation and guides',
+    ),
+    # Loading external components:
+    components=load_schema(json.loads(EXTERNAL_CLASS_COMPONENTS), Components),
 )
-schema = build_schema(router, context=schema_context)
+schema = build_schema(router, config=openapi_config)
 
 urlpatterns = [
     path(router.prefix, include((router.urls, 'server'), namespace='api')),

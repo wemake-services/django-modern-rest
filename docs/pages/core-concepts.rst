@@ -82,6 +82,9 @@ We support all existing decorators: because we have
 and :func:`~dmr.decorators.dispatch_decorator` utilities
 that can decorate endpoints and controllers.
 
+We even support all existing API :class:`~django.views.generic.base.View`
+objects from other frameworks. See :doc:`external-views`.
+
 Works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.
 Read next: our :doc:`integrations` guide.
 

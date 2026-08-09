@@ -60,7 +60,7 @@ class OpenAPIConfig:
     external_docs: ExternalDocumentation | None = None
     security: list[SecurityRequirement] | None = None
     license: License | None = None
-    components: Components | list[Components] | None = None
+    components: Components | None = None
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None

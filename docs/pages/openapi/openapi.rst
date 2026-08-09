@@ -478,4 +478,4 @@ This is the API every user needs:
 .. autofunction:: dmr.openapi.load_schema
 
 All other objects that are only used if you decide to customize the schema
-are listed in :doc:`openapi-reference`.
+are listed in :ref:`openapi-reference`.

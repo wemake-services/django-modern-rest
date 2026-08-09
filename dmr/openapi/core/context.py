@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeVar, get_origin
+from typing import TYPE_CHECKING, Any, get_origin
 
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
@@ -54,7 +54,6 @@ class OpenAPIContext:
     __slots__ = (
         'config',
         'config_merger',
-        'external_components',
         'generators',
         'registries',
     )
@@ -68,7 +67,6 @@ class OpenAPIContext:
 
         self.config = config or default_config()
         self.config_merger = ConfigMerger(self)
-        self.external_components: Components | None = None
 
         # Initialize registries:
         self.registries = RegistryContainer(
@@ -93,16 +91,10 @@ class OpenAPIContext:
 
         .. versionadded:: 0.13.0
         """
-        components = Components(
+        return Components(
             # TODO: support other components, not just `schema`:
             schemas=self.registries.schema.schemas,
             security_schemes=self.registries.security_scheme.schemes,
-        )
-        if self.external_components is None:
-            return components
-        return self._merge_components(
-            components,
-            self.external_components,
         )
 
     def register_schema(
@@ -132,60 +124,3 @@ class OpenAPIContext:
         if not override and real_type in self.registries.schema.overrides:
             raise ValueError(f'{real_type} is already registered')
         self.registries.schema.overrides[real_type] = schema
-
-    def register_external_components(self, components: Components) -> None:
-        """
-        Register schemas from external OpenAPI definition.
-
-        .. versionadded:: 0.13.0
-        """
-        self.external_components = self._merge_components(
-            self.external_components,
-            components,
-        )
-
-    def _merge_components(
-        self,
-        existing: Components | None,
-        to_merge: Components,
-    ) -> Components:
-        if existing is None:
-            return to_merge
-        return Components(
-            schemas=_merge_unique(existing.schemas, to_merge.schemas),
-            responses=_merge_unique(existing.responses, to_merge.responses),
-            parameters=_merge_unique(existing.parameters, to_merge.parameters),
-            examples=_merge_unique(existing.examples, to_merge.examples),
-            request_bodies=_merge_unique(
-                existing.request_bodies,
-                to_merge.request_bodies,
-            ),
-            headers=_merge_unique(existing.headers, to_merge.headers),
-            security_schemes=_merge_unique(
-                existing.security_schemes,
-                to_merge.security_schemes,
-            ),
-            links=_merge_unique(existing.links, to_merge.links),
-            callbacks=_merge_unique(existing.callbacks, to_merge.callbacks),
-            path_items=_merge_unique(existing.path_items, to_merge.path_items),
-        )
-
-
-_ThingT = TypeVar('_ThingT')
-
-
-def _merge_unique(
-    existing: dict[str, _ThingT] | None,
-    to_merge: dict[str, _ThingT] | None,
-) -> dict[str, _ThingT] | None:
-    if existing is None:
-        return to_merge
-    if to_merge is None:
-        return existing
-
-    shared_keys = existing.keys() & to_merge.keys()
-    if shared_keys:
-        raise ValueError(
-            f'Trying to merge components with shared keys: {shared_keys}',
-        )
-    return {**existing, **to_merge}
