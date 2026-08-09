@@ -40,18 +40,25 @@ class ConfigMerger:
             security=config.security,
             webhooks=config.webhooks,
             paths=paths,
-            components=self.merge_components(config.components, components),
+            components=self._merge_components(config.components, components),
         )
 
-    @classmethod
-    def merge_components(
-        cls,
-        existing: Components | None,
+    def _merge_components(
+        self,
+        existing: Components | list[Components] | None,
         to_merge: Components,
     ) -> Components:
         """Merge :class:`dmr.openapi.objects.Components` defs together."""
-        if existing is None:
+        if not existing:
             return to_merge
+        if isinstance(existing, list):
+            temporary: Components | None = None
+            for subcomponents in existing:
+                temporary = self._merge_components(temporary, subcomponents)
+            # for mypy: it can't be nothing but `Components` now:
+            assert isinstance(temporary, Components)  # noqa: S101
+            existing = temporary
+
         return Components(
             schemas=_merge_unique(existing.schemas, to_merge.schemas),
             responses=_merge_unique(existing.responses, to_merge.responses),

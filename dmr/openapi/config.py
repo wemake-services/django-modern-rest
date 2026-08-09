@@ -60,7 +60,8 @@ class OpenAPIConfig:
     external_docs: ExternalDocumentation | None = None
     security: list[SecurityRequirement] | None = None
     license: License | None = None
-    components: Components | None = None
+    # Components can't be a list in the final schema, so we merge them together:
+    components: Components | list[Components] | None = None
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None

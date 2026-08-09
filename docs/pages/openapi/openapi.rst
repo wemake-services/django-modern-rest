@@ -204,6 +204,11 @@ including the spec version:
   :language: python
   :linenos:
 
+You can also pass ``components`` and other parts of the OpenAPI spec
+from some other source, like pre-existing schemas.
+
+To learn more, see :doc:`../external-views` guide.
+
 
 Customizing OpenAPI generation
 ------------------------------

@@ -132,8 +132,8 @@ with the automatically generated one:
   even if some of them are not used
 
 If you have several :class:`~dmr.openapi.objects.Components` definitions,
-you can merge them using
-:meth:`dmr.openapi.core.merger.ConfigMerger.merge_components` method.
+you can pass a list of them to the :class:`dmr.openapi.OpenAPIConfig` instance.
+All of them will be merged into the final spec correctly.
 
 See :doc:`openapi/openapi` for more possible customizations.
 
