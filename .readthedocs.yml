@@ -14,12 +14,9 @@ build:
       --no-emit-project
       --format=requirements.txt
       --output-file=requirements.txt
-    - asdf which python
-    - export UV_LINK_MODE=copy
-    - uv venv $READTHEDOCS_VIRTUALENV_PATH --seed
-    - uv pip install . -r requirements.txt
-    - source .venv/bin/activate
-    - sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en . $READTHEDOCS_OUTPUT/html
+    - uv venv $READTHEDOCS_VIRTUALENV_PATH --seed --link-mode=copy
+    - uv pip install . -r requirements.txt --link-mode=copy
+    - $READTHEDOCS_VIRTUALENV_PATH/bin/sphinx-build -T -W --keep-going -b html -d _build/doctrees -D language=en . $READTHEDOCS_OUTPUT/html
 
 sphinx:
   configuration: "docs/conf.py"
