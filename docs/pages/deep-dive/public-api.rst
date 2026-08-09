@@ -105,6 +105,11 @@ Routing
 
 .. autofunction:: dmr.routing.path
 
+.. autoclass:: dmr.routing.URLExternal
+  :members:
+
+.. autofunction:: dmr.routing.external_path
+
 
 Meta mixins
 -----------

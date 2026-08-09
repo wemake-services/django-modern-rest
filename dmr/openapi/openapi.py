@@ -1,10 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING, Protocol
 
-from dmr.openapi.mappers.schema_normalization import (
-    DumpedSchema,
-    dump_schema,
-)
+from dmr.openapi.mappers.schema_normalization import DumpedSchema, dump_schema
 from dmr.openapi.objects.components import Components
 from dmr.openapi.objects.external_documentation import ExternalDocumentation
 from dmr.openapi.objects.info import Info

@@ -10,14 +10,9 @@ from django.views import View
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller
-from dmr.openapi import (
-    OpenAPIConfig,
-    build_schema,
-    load_schema,
-    objects,
-)
+from dmr.openapi import OpenAPIConfig, build_schema, load_schema, objects
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router
+from dmr.routing import Router, external_path
 
 
 def _external_func(request: HttpRequest) -> HttpResponse:
@@ -68,24 +63,21 @@ def test_external_paths_schema(  # noqa: WPS210
 
     router = Router(
         'api/v1/',
-        [path('/async', _AsyncController.as_view())],
-        external_urls=[
-            (
-                path(
-                    '/allauth/<str:client>/config',
-                    _external_func,
-                ),
-                external_openapi_func,
+        urls=[
+            # Order is important:
+            external_path(
+                '/allauth/<str:client>/config',
+                _external_func,
+                openapi=external_openapi_func,
             ),
-            (
-                path(
-                    '/allauth/<str:client>/auth/login',
-                    _ExternalClass.as_view(),
-                ),
-                external_openapi_class,
+            path('/async', _AsyncController.as_view()),
+            external_path(
+                '/allauth/<str:client>/auth/login',
+                _ExternalClass.as_view(),
+                openapi=external_openapi_class,
             ),
             # Won't be present in the final OpenAPI, because it is hidden:
-            (path('/hidden', _hidden_func), None),
+            external_path('/hidden', _hidden_func, openapi=None),
         ],
         tags=['custom'],
     )

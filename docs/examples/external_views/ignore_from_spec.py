@@ -6,7 +6,7 @@ from django.views.decorators.http import require_GET
 
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView
-from dmr.routing import Router, path
+from dmr.routing import Router, external_path, path
 
 
 @require_GET
@@ -17,13 +17,9 @@ def number(request: HttpRequest) -> JsonResponse:
 # Create a router and URL patterns:
 router = Router(
     'api/',
-    urls=[],
-    external_urls=[
-        (
-            # This function will still work, but be ignored from the spec:
-            path('number/', number, name='number'),
-            None,
-        ),
+    urls=[
+        # This function will still work, but be ignored from the spec:
+        external_path('number/', number, name='number', openapi=None),
     ],
 )
 schema = build_schema(router)

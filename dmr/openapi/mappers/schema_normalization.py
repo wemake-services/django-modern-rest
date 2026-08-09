@@ -1,13 +1,7 @@
 import dataclasses
 from collections.abc import Callable
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAlias,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
@@ -38,14 +32,14 @@ def load_schema(
     .. versionadded:: 0.13.0
     """
     # So we can use it as a namespace:
-    from dmr.openapi import objects  # noqa: PLC0415, I001
-
-    # So it would have a nice error message:
-    from dmr.plugins.pydantic import PydanticFastSerializer  # noqa: PLC0415
-
     # Must be after our import:
     import pydantic  # noqa: PLC0415
     from pydantic import alias_generators  # noqa: PLC0415, WPS458
+
+    from dmr.openapi import objects  # noqa: PLC0415
+
+    # So it would have a nice error message:
+    from dmr.plugins.pydantic import PydanticFastSerializer  # noqa: PLC0415
 
     # We define a model that will automatically convert all *needed* dicts's
     # keys from camelCase into a snake_case. By default OpenAPI uses camelCase.
