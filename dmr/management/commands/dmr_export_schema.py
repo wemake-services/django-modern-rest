@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
     @override
     def add_arguments(self, parser: CommandParser) -> None:
-        """Add schema, format, indent, and sort-keys arguments."""
+        """Add schema, format, validation, indent, and sort-keys arguments."""
         parser.add_argument(
             'schema',
             help='Import path to the OpenAPI schema.',
@@ -58,6 +58,13 @@ class Command(BaseCommand):
             dest='no_ensure_ascii',
             help='Should we properly escape all non-ascii symbols.',
         )
+        parser.add_argument(
+            '--skip-validation',
+            action='store_true',
+            default=False,
+            dest='skip_validation',
+            help='Skip schema validation before exporting.',
+        )
 
     @override
     def handle(self, *args: Any, **options: Any) -> None:  # noqa: WPS110
@@ -66,7 +73,7 @@ class Command(BaseCommand):
 
         converted_schema = import_string(
             schema_path.replace(':', '.'),
-        ).convert()
+        ).convert(skip_validation=options['skip_validation'])
 
         if options['format'] == 'yaml':
             try:

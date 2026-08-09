@@ -5,6 +5,8 @@ from typing import Any, Final
 import pytest
 from django.core.management import call_command
 
+from dmr.management.commands import dmr_export_schema
+
 # From the OpenAPI description:
 _NON_ASCII_TEXT: Final = 'Не АСКИИ текст'  # noqa: RUF001
 
@@ -106,3 +108,47 @@ def test_export_schema_invalid_input(
     """Invalid schema inputs raise the expected exception."""
     with pytest.raises(expected_exception):
         call_command('dmr_export_schema', schema_path)
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'expected_skip_validation'),
+    [
+        ({}, False),
+        ({'skip_validation': True}, True),
+    ],
+)
+def test_export_schema_passes_skip_validation_to_schema_converter(
+    *,
+    monkeypatch: pytest.MonkeyPatch,
+    kwargs: dict[str, Any],
+    expected_skip_validation: bool,
+) -> None:
+    """Pass the skip-validation flag to the schema converter.
+
+    This also verifies that the default remains false.
+    """
+    observed: list[bool] = []
+
+    class FakeSchema:
+        def convert(self, *, skip_validation: bool) -> dict[str, bool]:
+            observed.append(skip_validation)
+            return {'skip_validation': skip_validation}
+
+    monkeypatch.setattr(
+        dmr_export_schema,
+        'import_string',
+        lambda _: FakeSchema(),
+    )
+
+    out = StringIO()
+    call_command(
+        'dmr_export_schema',
+        'server.urls:schema',
+        stdout=out,
+        **kwargs,
+    )
+
+    assert observed == [expected_skip_validation]
+    assert json.loads(out.getvalue()) == {
+        'skip_validation': expected_skip_validation,
+    }
