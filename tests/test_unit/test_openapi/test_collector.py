@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from typing import final
 
 import pytest
@@ -176,7 +176,7 @@ def test_process_pattern_with_different_views(
 
 def test_controller_mapping_collector_with_router() -> None:
     """Test controller collection function with a ``Router`` instance."""
-    patterns: Sequence[URLPattern | URLResolver] = [
+    patterns: MutableSequence[URLPattern | URLResolver] = [
         path('direct/', _GetController.as_view()),
         path('nested/', include([path('inner/', _PostController.as_view())])),
     ]

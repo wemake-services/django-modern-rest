@@ -1,8 +1,9 @@
-from collections.abc import Callable, Coroutine, Sequence
+from collections.abc import Callable, Coroutine, MutableSequence, Sequence
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
+from django.urls import include
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from django.utils.encoding import force_str
@@ -41,7 +42,7 @@ class Router:
     def __init__(
         self,
         prefix: str,
-        urls: Sequence[_AnyPattern],
+        urls: MutableSequence[_AnyPattern] | None = None,
         *,
         tags: list[str] | None = None,
         deprecated: bool = False,
@@ -50,7 +51,7 @@ class Router:
 
         Args:
             prefix: URL prefix for all routes (e.g., 'api/v1/').
-            urls: Sequence of URL patterns and resolvers.
+            urls: MutableSequence of URL patterns and resolvers.
             tags: Optional list of tags to group operations in OpenAPI.
                 These are merged with endpoint-level tags.
             deprecated: Optional flag to mark all operations as deprecated.
@@ -61,7 +62,7 @@ class Router:
 
         """
         self.prefix = prefix
-        self.urls = urls
+        self.urls = urls or []
         self.tags = tags or []
         self.deprecated = deprecated
 
@@ -92,6 +93,20 @@ class Router:
             security_schemes=context.registries.security_scheme.schemes,
         )
         return context.config_merger(paths_items, components)
+
+    def include(
+        self,
+        router: 'Router',
+        app_name: str | None = None,
+        *,
+        namespace: str | None = None,
+    ) -> None:
+        """Include a router's URLs under a given app name and namespace."""
+        if app_name is None and namespace:
+            app_name = namespace
+
+        arg = router.urls if app_name is None else (router.urls, app_name)
+        self.urls.append(path(router.prefix, include(arg, namespace=namespace)))
 
 
 # We mimic django's name here:
