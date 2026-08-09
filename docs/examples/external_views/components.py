@@ -1,7 +1,5 @@
-import pathlib
 import random
 
-import yaml
 from django.http import HttpRequest, JsonResponse
 from django.urls import include
 from django.views.decorators.http import require_GET
@@ -10,6 +8,7 @@ from dmr.openapi import OpenAPIConfig, build_schema, load_schema
 from dmr.openapi.objects import Components, PathItem, Tag
 from dmr.openapi.views import OpenAPIJsonView
 from dmr.routing import Router, path
+from examples.external_views.read_openapi import read_openapi_yaml
 
 
 @require_GET
@@ -18,18 +17,12 @@ def number(request: HttpRequest, start: int, end: int) -> JsonResponse:
 
 
 # Now, load the schema:
-
-raw_schema = yaml.safe_load(
-    pathlib.Path('examples/external_views/openapi2.yml').read_text(
-        encoding='utf8',
-    ),
-)
+raw_schema = read_openapi_yaml('openapi2.yml')
 
 # Create a router and URL patterns:
-
 router = Router(
     'api/',
-    [],
+    urls=[],
     external_urls=[  # pass `(external_url, path_item_spec)` pairs:
         (
             path(

@@ -39,6 +39,7 @@ class _BasePayload:
     external_docs: 'ExternalDocumentation | None' = None
     callbacks: 'dict[str, Callback | Reference] | None' = None
     servers: list['Server'] | None = None
+    ignore_from_spec: bool | None = None
 
     # Common fields:
     validate_responses: bool | None = None

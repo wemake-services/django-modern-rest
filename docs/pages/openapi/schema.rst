@@ -60,9 +60,43 @@ Customizing schema generation
 -----------------------------
 
 All endpoints by default generate semantic responses.
-However, we allow 4 levels of customizations.
+However, we allow several customizations.
 
-First non ``None`` value wins:
+You can disable some specific semantic responses generation by status code:
+
+.. tabs::
+
+  .. tab:: exclude per endpoint
+    Pass ``exclude_semantic_responses`` parameter
+    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+
+    .. literalinclude:: /examples/openapi/exclude_per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: exclude per controller
+
+    Customize :attr:`~dmr.controller.Controller.exclude_semantic_responses` attribute.
+
+    .. literalinclude:: /examples/openapi/exclude_per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: exclude per settings
+
+    Exclude some semantic responses globally:
+
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
+
+      >>> from dmr.settings import Settings, DMR_SETTINGS
+
+      >>> DMR_SETTINGS = {Settings.exclude_semantic_responses: frozenset((422,))}
+
+Or disable semantic responses completely:
 
 .. tabs::
 
@@ -98,34 +132,12 @@ First non ``None`` value wins:
 
         >>> DMR_SETTINGS = {Settings.semantic_responses: False}
 
-  .. tabs::
 
-    .. tab:: exclude per endpoint
-      Pass ``exclude_semantic_responses`` parameter
-      to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+.. _openapi-exclude-views:
 
-      .. literalinclude:: /examples/openapi/exclude_per_endpoint.py
-        :caption: views.py
-        :linenos:
-        :language: python
+Excluding views from OpenAPI
+----------------------------
 
-    .. tab:: exclude per controller
+You can also disable some controllers or endpoints from OpenAPI.
+This would basically make them private, the will work
 
-      Customize :attr:`~dmr.controller.Controller.exclude_semantic_responses` attribute.
-
-      .. literalinclude:: /examples/openapi/exclude_per_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
-
-    .. tab:: exclude per settings
-
-      Exclude some semantic responses globally:
-
-      .. code-block:: python
-        :caption: settings.py
-        :linenos:
-
-        >>> from dmr.settings import Settings, DMR_SETTINGS
-
-        >>> DMR_SETTINGS = {Settings.exclude_semantic_responses: frozenset((422,))}

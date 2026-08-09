@@ -416,6 +416,8 @@ class EndpointMetadata:
         servers: An alternative servers array to service this operation.
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
+        ignore_from_spec: If set to ``True``, this endpoint
+            would not be added to the final OpenAPI spec.
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
@@ -464,6 +466,7 @@ class EndpointMetadata:
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
+    ignore_from_spec: bool
 
     # Pre-computed fields:
     throttling: tuple['SyncThrottle | AsyncThrottle', ...] | None = (

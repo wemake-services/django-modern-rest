@@ -288,6 +288,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
             servers=payload.servers,
+            ignore_from_spec=self._build_ignore_from_spec(),
         )
 
     def _from_modify(  # noqa: WPS210
@@ -348,6 +349,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
             servers=payload.servers,
+            ignore_from_spec=self._build_ignore_from_spec(),
         )
 
     def _from_raw_data(  # noqa: WPS210
@@ -402,6 +404,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=None,
             callbacks=None,
             servers=None,
+            ignore_from_spec=self._build_ignore_from_spec(),
         )
 
     def _build_endpoint_name(self) -> str:
@@ -685,6 +688,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if settings_value is not None:
             return settings_value  # type: ignore[no-any-return]
         return self._build_validate_responses()
+
+    def _build_ignore_from_spec(self) -> bool:
+        if self.payload and self.payload.ignore_from_spec is not None:
+            return self.payload.ignore_from_spec
+        return self.controller_cls.ignore_from_spec
 
     def _build_error_handler(
         self,

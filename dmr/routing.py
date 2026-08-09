@@ -36,6 +36,7 @@ _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
 _AnyPattern: TypeAlias = URLPattern | URLResolver
 _OpenAPIMetadata: TypeAlias = dict[str, Any]
+_ExternalSpec: TypeAlias = tuple[URLPattern, PathItem | None]
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
@@ -82,7 +83,7 @@ class Router:
         prefix: str,
         urls: Iterable[_AnyPattern],
         *,
-        external_urls: Iterable[tuple[URLPattern, PathItem]] | None = None,
+        external_urls: Iterable[_ExternalSpec] | None = None,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
     ) -> None:
@@ -95,7 +96,7 @@ class Router:
         self.tags = list(tags or [])
         self.deprecated = deprecated
 
-    def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
+    def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:  # noqa: WPS231
         """
         Builds OpenAPI specification.
 
@@ -110,25 +111,33 @@ class Router:
             self.urls,
             base_path=self.prefix,
         ):
+            if pattern_or_meta is None:
+                # You can also add external views without adding any OpenAPI,
+                # this way, it would be hidden from the docs:
+                continue
             if isinstance(pattern_or_meta, PathItem):
+                # Case for including extrnal views with OpenAPI:
                 paths_items[path] = pattern_or_meta
-            else:
-                # for mypy: it can't narrow down the `tuple` based on the
-                # the second item type :/
-                assert controller is not None  # noqa: S101
-                paths_items[path] = controller.get_path_item(
-                    path,
-                    pattern_or_meta,
-                    context,
-                    router=self,
-                )
+                continue
 
-        components = context.get_components()
-        return context.config_merger(paths_items, components)
+            # for mypy: it can't narrow down the `tuple` based on the
+            # the second item type :/
+            assert controller is not None  # noqa: S101
+            path_item = controller.get_path_item(
+                path,
+                pattern_or_meta,
+                context,
+                router=self,
+            )
+            if path_item is None:
+                continue  # It can be private for a reason.
+            paths_items[path] = path_item
+
+        return context.config_merger(paths_items, context.get_components())
 
 
 # We mimic django's name here:
-def build_404_handler(  # noqa: WPS114
+def build_404_handler(
     prefix: str,
     /,
     *prefixes: str,
@@ -210,7 +219,7 @@ def build_404_handler(  # noqa: WPS114
 
 
 # We mimic django's name here:
-def build_500_handler(  # noqa: WPS114
+def build_500_handler(
     prefix: str,
     /,
     *prefixes: str,

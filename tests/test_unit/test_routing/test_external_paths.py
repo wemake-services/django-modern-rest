@@ -24,6 +24,10 @@ def _external_func(request: HttpRequest) -> HttpResponse:
     raise NotImplementedError
 
 
+def _hidden_func(request: HttpRequest) -> HttpResponse:
+    raise NotImplementedError
+
+
 class _ExternalClass(View):
     def post(self, request: HttpRequest, user_id: int) -> HttpResponse:
         raise NotImplementedError
@@ -80,11 +84,13 @@ def test_external_paths_schema(  # noqa: WPS210
                 ),
                 external_openapi_class,
             ),
+            # Won't be present in the final OpenAPI, because it is hidden:
+            (path('/hidden', _hidden_func), None),
         ],
         tags=['custom'],
     )
 
-    assert len(router.urls) == 3
+    assert len(router.urls) == 4
     assert (
         json.dumps(
             build_schema(

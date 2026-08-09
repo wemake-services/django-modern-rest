@@ -4,11 +4,9 @@ from django.http import HttpRequest, JsonResponse
 from django.urls import include
 from django.views.decorators.http import require_GET
 
-from dmr.openapi import build_schema, load_schema
-from dmr.openapi.objects import PathItem
+from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView
 from dmr.routing import Router, path
-from examples.external_views.read_openapi import read_openapi_yaml
 
 
 @require_GET
@@ -16,17 +14,15 @@ def number(request: HttpRequest) -> JsonResponse:
     return JsonResponse(random.randint(1, 10), safe=False)
 
 
-# Now, load the schema:
-raw_schema = read_openapi_yaml('openapi.yml')
-
 # Create a router and URL patterns:
 router = Router(
     'api/',
     urls=[],
-    external_urls=[  # pass `(external_url, path_item_spec)` pairs:
+    external_urls=[
         (
+            # This function will still work, but be ignored from the spec:
             path('number/', number, name='number'),
-            load_schema(raw_schema['paths']['/api/number'], PathItem),
+            None,
         ),
     ],
 )
