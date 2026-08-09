@@ -93,3 +93,7 @@ class Schema:
         dict[str, 'Reference | Schema'] | None,
         Field(alias='$defs'),
     ] = None
+    ref: Annotated['str | None', Field(alias='$ref')] = None
+    anchor: Annotated['str | None', Field(alias='$anchor')] = None
+    comment: Annotated['str | None', Field(alias='$comment')] = None
+    schema_uri: Annotated['str | None', Field(alias='$schema')] = None
