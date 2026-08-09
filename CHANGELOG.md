@@ -37,7 +37,7 @@ of requirements for an API to count as public.
 - `rebuild_namespace` parameter in `PydanticSerializer.from_python`
   was renamed to `extra_namespace`, #1222
 - Changed ``skip_validation`` parameter to be kw-only
-  on ``OpenAPIView.as_view()`` and all its subclasses
+  on ``OpenAPIView.as_view()`` and all its subclasses, #1229
 
 ### Features
 
@@ -51,7 +51,8 @@ of requirements for an API to count as public.
 ### Bugfixes
 
 - Fixed a bug that `OpenAPIConfig.components` were silently
-  ignored when defined with custom user's data
+  ignored when defined with custom user's data, #1229
+- Fixed `OpenAPIFormat.IRI` value, #1228
 
 
 ## 0.12.1 (2026-07-31)
