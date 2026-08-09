@@ -103,7 +103,7 @@ Now, we have a new OpenAPI file. It has several changes from the first one:
 - It contains :class:`int` path parameters ``start`` and ``end``
 - It has a schema component with a ``$ref`` as a return,
   so we would have to register in the final spec
-- It has top-level tags definion that we also want to copy to the final spec
+- It has top-level tags definition that we also want to copy to the final spec
 
 It does the same thing,
 but has two path parameters and also defines OpenAPI schemas
