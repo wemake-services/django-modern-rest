@@ -3,6 +3,7 @@ from typing import final
 
 
 @final
+@enum.unique
 class OpenAPIFormat(enum.StrEnum):
     """
     OpenAPI format.
@@ -44,6 +45,7 @@ class OpenAPIFormat(enum.StrEnum):
 
 
 @final
+@enum.unique
 class OpenAPIType(enum.StrEnum):
     """OpenAPI types."""
 
