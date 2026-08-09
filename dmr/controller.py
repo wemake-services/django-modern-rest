@@ -505,20 +505,29 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         )
 
     @classmethod
-    def get_path_item(
+    def get_schema(
         cls,
         path: str,
         pattern: URLPattern,
         context: OpenAPIContext,
         router: 'Router',
     ) -> PathItem | None:
-        """Generate OpenAPI spec for path items."""
+        """
+        Generate OpenAPI spec for path items.
+
+        .. versionchanged:: 0.13.0
+
+            - Renamed from ``get_path_item`` to ``get_schema``
+            - Now allows to return ``None`` to ignore whole
+              path items from OpenAPI schema
+
+        """
         operations: dict[str, Any] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
 
-            schema = endpoint.get_operation(
+            schema = endpoint.get_schema(
                 path,
                 pattern,
                 cls.__qualname__,

@@ -123,7 +123,7 @@ class Router:
             # for mypy: it can't narrow down the `tuple` based on the
             # the second item type :/
             assert controller is not None  # noqa: S101
-            path_item = controller.get_path_item(
+            path_item = controller.get_schema(
                 path,
                 pattern_or_meta,
                 context,

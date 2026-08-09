@@ -100,37 +100,37 @@ Or disable semantic responses completely:
 
 .. tabs::
 
-    .. tab:: per endpoint
+  .. tab:: per endpoint
 
-      Pass ``semantic_responses`` parameter
-      to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+    Pass ``semantic_responses`` parameter
+    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
 
-      .. literalinclude:: /examples/openapi/per_endpoint.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/openapi/per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: per controller
+  .. tab:: per controller
 
-      Customize :attr:`~dmr.controller.Controller.semantic_responses` attribute.
+    Customize :attr:`~dmr.controller.Controller.semantic_responses` attribute.
 
-      .. literalinclude:: /examples/openapi/per_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/openapi/per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: per settings
+  .. tab:: per settings
 
-      Disable semantic responses globally
-      via :data:`~dmr.settings.Settings.semantic_responses` setting.
+    Disable semantic responses globally
+    via :data:`~dmr.settings.Settings.semantic_responses` setting.
 
-      .. code-block:: python
-        :caption: settings.py
-        :linenos:
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
 
-        >>> from dmr.settings import Settings, DMR_SETTINGS
+      >>> from dmr.settings import Settings, DMR_SETTINGS
 
-        >>> DMR_SETTINGS = {Settings.semantic_responses: False}
+      >>> DMR_SETTINGS = {Settings.semantic_responses: False}
 
 
 .. _openapi-exclude-views:
@@ -139,5 +139,31 @@ Excluding views from OpenAPI
 ----------------------------
 
 You can also disable some controllers or endpoints from OpenAPI.
-This would basically make them private, the will work
+This would basically make them private, the will work the same way
+(including the schema validation), but just not be visible to users.
+
+We support two levels of configuration with this feature:
+
+.. tabs::
+
+  .. tab:: per endpoint
+
+    Pass ``ignore_from_spec`` parameter
+    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`
+    on endpoints that you want to ignore.
+
+    .. literalinclude:: /examples/openapi/ignore_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: per controller
+
+    Customize :attr:`~dmr.controller.Controller.ignore_from_spec` attribute.
+    Endpoints can override this value with ``ignore_from_spec`` parameter.
+
+    .. literalinclude:: /examples/openapi/ignore_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
