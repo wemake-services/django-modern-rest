@@ -16,7 +16,7 @@ class Response:
     Including design-time, static links to operations based on the response.
     """
 
-    description: str
+    description: str | None = None
     headers: dict[str, 'Header | Reference'] | None = None
     content: dict[str, 'MediaType'] | None = None
     links: dict[str, 'Link | Reference'] | None = None

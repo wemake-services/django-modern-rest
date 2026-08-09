@@ -1,6 +1,7 @@
-from collections.abc import Callable, Coroutine, Sequence
+import dataclasses
+from collections.abc import Callable, Coroutine, Iterable, Sequence
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, final, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import path as _django_path
@@ -12,7 +13,8 @@ from typing_extensions import override
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
 from dmr.openapi.collector import controller_mapping_collector
-from dmr.openapi.objects import Components, OpenAPI, Paths
+from dmr.openapi.objects import PathItem, Paths
+from dmr.openapi.openapi import OpenAPI
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -28,43 +30,115 @@ _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
 _AnyPattern: TypeAlias = URLPattern | URLResolver
+_OpenAPIMetadata: TypeAlias = dict[str, Any]
+_ExternalSpec: TypeAlias = tuple[URLPattern, PathItem | None]
+_DjangoView: TypeAlias = Callable[
+    ...,
+    HttpResponseBase | Coroutine[Any, Any, HttpResponseBase],
+]
 
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
 
+@final
+@dataclasses.dataclass(slots=True, frozen=True)
+class URLExternal:
+    """
+    Represents an external URL that was added to the routing of DMR.
+
+    Prefer :func:`external_path` over using this class directly.
+    See :ref:`external-views` for more info.
+
+    .. versionadded:: 0.13.0
+    """
+
+    url: URLPattern
+    openapi: PathItem | None = dataclasses.field(kw_only=True)
+
+    def get_url_with_metadata(self) -> URLPattern:
+        """Get the url pattern with attached OpenAPI metadata."""
+        self.url.callback.__dmr_external_openapi__ = self.openapi  # type: ignore[attr-defined]
+        return self.url
+
+
+def external_path(
+    route: '_StrOrPromise',
+    view: _DjangoView,
+    *,
+    openapi: PathItem | None,
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLExternal:
+    """
+    Add an external path onto the DMR routing system.
+
+    Parameters:
+        route: String route for the view.
+        view: Function or class view, supports both sync and async callables.
+        openapi: OpenAPI metadata to show in the spec.
+            Or ``None`` to hide this endpoint.
+        kwargs: Init kwargs for the view.
+        name: Name to resolve this URL.
+
+    Prefer this function over using :class:`URLExternal` directly.
+    See :ref:`external-views` for more info.
+
+    .. versionadded:: 0.13.0
+    """
+    return URLExternal(
+        _django_path(  # pyrefly: ignore[no-matching-overload]
+            route,
+            view,  # type: ignore[arg-type]
+            kwargs=kwargs,
+            name=name,
+        ),
+        openapi=openapi,
+    )
+
+
 class Router:
-    """Collection of HTTP routes for REST framework."""
+    """
+    Collection of HTTP routes for REST framework.
+
+    Attributes:
+        prefix: URL prefix for all routes (e.g., 'api/v1/').
+        urls: Sequence of URL patterns and resolvers.
+        tags: Optional sequence of tags to group operations in OpenAPI.
+            These are merged with endpoint-level tags.
+        deprecated: Optional flag to mark all operations as deprecated.
+            Combines with endpoint-level deprecated flag using OR logic.
+
+    .. note::
+
+        *tags* and *deprecated* is not applied to external urls'
+        metadata. It is always included as-is.
+
+    .. versionchanged:: 0.7.0
+        Added *tags* and *deprecated* parameters.
+
+    .. versionchanged:: 0.13.0
+        Now you can pass :class:`URLExternal` objects in *urls*.
+        Also accept any :class:`collections.abc.Sequence` as *tags*.
+
+    """
 
     __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
 
     def __init__(
         self,
         prefix: str,
-        urls: Sequence[_AnyPattern],
+        urls: Iterable[_AnyPattern | URLExternal],
         *,
-        tags: list[str] | None = None,
+        tags: Sequence[str] | None = None,
         deprecated: bool = False,
     ) -> None:
-        """Initialize a router with routes and optional OpenAPI metadata.
-
-        Args:
-            prefix: URL prefix for all routes (e.g., 'api/v1/').
-            urls: Sequence of URL patterns and resolvers.
-            tags: Optional list of tags to group operations in OpenAPI.
-                These are merged with endpoint-level tags.
-            deprecated: Optional flag to mark all operations as deprecated.
-                Combines with endpoint-level deprecated flag using OR logic.
-
-        .. versionchanged:: 0.7.0
-            Added *tags* and *deprecated* parameters.
-
-        """
+        """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
-        self.urls = urls
-        self.tags = tags or []
+        self.urls = self._maybe_process_external(urls)
+        self.tags = list(tags or [])
         self.deprecated = deprecated
 
-    def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:
+    def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:  # noqa: WPS231
         """
         Builds OpenAPI specification.
 
@@ -75,26 +149,49 @@ class Router:
         """
         paths_items: Paths = {}
 
-        for path, pattern, controller in controller_mapping_collector(
+        for path, pattern_or_meta, controller in controller_mapping_collector(
             self.urls,
             base_path=self.prefix,
         ):
-            paths_items[path] = controller.get_path_item(
+            if pattern_or_meta is None:
+                # You can also add external views without adding any OpenAPI,
+                # this way, it would be hidden from the docs:
+                continue
+            if isinstance(pattern_or_meta, PathItem):
+                # Case for including extrnal views with OpenAPI:
+                paths_items[path] = pattern_or_meta
+                continue
+
+            # for mypy: it can't narrow down the `tuple` based on the
+            # the second item type :/
+            assert controller is not None  # noqa: S101
+            path_item = controller.get_schema(
                 path,
-                pattern,
+                pattern_or_meta,
                 context,
                 router=self,
             )
+            if path_item is None:
+                continue  # It can be private for a reason.
+            paths_items[path] = path_item
 
-        components = Components(
-            schemas=context.registries.schema.schemas,
-            security_schemes=context.registries.security_scheme.schemes,
-        )
-        return context.config_merger(paths_items, components)
+        return context.config_merger(paths_items, context.get_components())
+
+    def _maybe_process_external(
+        self,
+        urls: Iterable[_AnyPattern | URLExternal],
+    ) -> list[_AnyPattern]:
+        django_like_urls: list[_AnyPattern] = []
+        for url in urls:
+            if isinstance(url, URLExternal):
+                django_like_urls.append(url.get_url_with_metadata())
+            else:
+                django_like_urls.append(url)
+        return django_like_urls
 
 
 # We mimic django's name here:
-def build_404_handler(  # noqa: WPS114
+def build_404_handler(
     prefix: str,
     /,
     *prefixes: str,
@@ -176,7 +273,7 @@ def build_404_handler(  # noqa: WPS114
 
 
 # We mimic django's name here:
-def build_500_handler(  # noqa: WPS114
+def build_500_handler(
     prefix: str,
     /,
     *prefixes: str,
@@ -290,14 +387,7 @@ class _PrefixRoutePattern(RoutePattern):
 @overload
 def path(
     route: '_StrOrPromise',
-    view: Callable[..., HttpResponseBase],
-    kwargs: dict[str, Any] | None = None,
-    name: str | None = None,
-) -> URLPattern: ...
-@overload
-def path(
-    route: '_StrOrPromise',
-    view: Callable[..., Coroutine[Any, Any, HttpResponseBase]],
+    view: _DjangoView,
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
 ) -> URLPattern: ...
@@ -320,8 +410,7 @@ def path(
 def path(
     route: '_StrOrPromise',
     view: (
-        Callable[..., HttpResponseBase]
-        | Callable[..., Coroutine[Any, Any, HttpResponseBase]]
+        _DjangoView
         | tuple[Sequence[_AnyPattern], str | None, str | None]
         | Sequence[URLResolver | str]
     ),

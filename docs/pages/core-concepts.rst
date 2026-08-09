@@ -55,7 +55,7 @@ Async vs Sync
 -------------
 
 We support both Django modes: sync and async, the same way regular Django
-`supports <https://docs.djangoproject.com/en/latest/topics/async/>`_ them.
+`supports <https://docs.djangoproject.com/en/stable/topics/async/>`_ them.
 
 We don't do anything special with the async mode, so any existing
 guides, tools, deployment strategies should
@@ -81,6 +81,9 @@ We support all existing decorators: because we have
 :func:`~dmr.decorators.endpoint_decorator`
 and :func:`~dmr.decorators.dispatch_decorator` utilities
 that can decorate endpoints and controllers.
+
+We even support all existing API :class:`~django.views.generic.base.View`
+objects from other frameworks. See :doc:`external-views`.
 
 Works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.
 Read next: our :doc:`integrations` guide.

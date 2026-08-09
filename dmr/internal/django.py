@@ -186,7 +186,7 @@ _FileMetadata: TypeAlias = dict[str, Any]
 
 
 def extract_files_metadata(
-    request_files: MultiValueDict[str, UploadedFile],
+    request_files: MultiValueDict[str, 'UploadedFile[Any]'],
     force_list: frozenset[str],
 ) -> Mapping[str, _FileMetadata | list[_FileMetadata]]:
     """Extracts file metadata from ``request.FILES`` from Django."""
@@ -213,7 +213,7 @@ _FILE_ATTRS: Final = (
 
 
 def _process_files_metadata(
-    uploaded: UploadedFile | list[UploadedFile],
+    uploaded: 'UploadedFile[Any] | list[UploadedFile[Any]]',
 ) -> _FileMetadata | list[_FileMetadata]:
     if isinstance(uploaded, UploadedFile):
         return _process_file_metadata(uploaded)
@@ -221,7 +221,7 @@ def _process_files_metadata(
     return [_process_file_metadata(single_file) for single_file in uploaded]
 
 
-def _process_file_metadata(uploaded: UploadedFile) -> _FileMetadata:
+def _process_file_metadata(uploaded: 'UploadedFile[Any]') -> _FileMetadata:
     return {
         attr_name: getattr(uploaded, attr_name, None)
         for attr_name in _FILE_ATTRS

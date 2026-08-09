@@ -134,7 +134,9 @@ async def test_throttle_async_per_controller(
     for _ in range(_ATTEMPTS):
         freezer.tick(delta=1)  # seconds
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}
@@ -230,7 +232,9 @@ async def test_throttle_async_per_settings(
 
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
-        response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))  # noqa: WPS476
+        response = await dmr_async_rf.wrap(
+            _AsyncController.as_view()(request),  # noqa: WPS476
+        )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {'Content-Type': 'application/json'}

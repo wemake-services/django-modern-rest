@@ -8,7 +8,7 @@ Installation
 Works for:
 
 - CPython 3.11+ or PyPy 3.11+
-- Django 4.2+
+- Django 5.0+
 
 .. tabs::
 
@@ -53,17 +53,17 @@ Extras for different features:
   `msgspec <https://github.com/jcrist/msgspec>`_, even when using just
   `pydantic <https://github.com/pydantic/pydantic>`_ for APIs,
   because we use ``msgspec`` to parse ``json``, when it is available,
-  since it is `the fastest <https://jcristharif.com/msgspec/benchmarks.html>`_
+  since it is `the fastest <https://msgspec.dev/benchmarks>`_
   library out there for this task.
 
   We also recommend to always install
   `django-stubs <https://github.com/typeddjango/django-stubs>`_
-  for typing the Django itself.
+  for typing Django itself.
 
 .. note::
 
-  You don't need to add ``'dmr'`` to the ``INSTALLED_APPS``,
-  unless you want to serve static files for the OpenAPI.
+  You don't need to add ``'dmr'`` to ``INSTALLED_APPS``,
+  unless you want to serve static files for OpenAPI.
 
 
 LLMs support
@@ -140,7 +140,7 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
 
     We support :func:`attrs.define`
     via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
-    See `msgspec docs <https://jcristharif.com/msgspec/supported-types.html#attrs>`_
+    See `msgspec docs <https://msgspec.dev/supported-types#attrs>`_
     on ``attrs`` support.
 
     .. literalinclude:: /examples/getting_started/attrs_controller.py
@@ -246,7 +246,7 @@ install the ``django-modern-rest`` and run it with:
 
         .. code-block:: bash
 
-            uv run example.py runserver
+            uv run python example.py runserver
 
     .. tab:: :iconify:`devicon:poetry` poetry
 

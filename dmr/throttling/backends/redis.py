@@ -8,7 +8,7 @@ except ImportError:  # pragma: no cover
     raise
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Final, cast
 
 from redis import asyncio as aioredis
 from redis.commands.core import AsyncScript, Script
@@ -27,6 +27,10 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
+
+
+_WRITE: Final = 0
+_READ: Final = 1
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
@@ -80,7 +84,12 @@ class SyncRedis(BaseThrottleSyncBackend):
             tuple[int, int, int],
             self._script(
                 keys=[cache_key],
-                args=[throttle.max_requests, throttle.duration_in_seconds, 0],
+                # write request:
+                args=[
+                    throttle.max_requests,
+                    throttle.duration_in_seconds,
+                    _WRITE,
+                ],
             ),
         )
         cache_object = CachedRateLimit(
@@ -112,8 +121,12 @@ class SyncRedis(BaseThrottleSyncBackend):
             tuple[int, int, int],
             self._script(
                 keys=[cache_key],
-                # read-only request with the last `1`:
-                args=[throttle.max_requests, throttle.duration_in_seconds, 1],
+                # read-only request:
+                args=[
+                    throttle.max_requests,
+                    throttle.duration_in_seconds,
+                    _READ,
+                ],
             ),
         )
         return CachedRateLimit(

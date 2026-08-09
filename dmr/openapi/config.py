@@ -25,6 +25,28 @@ class OpenAPIConfig:
     specification that will be generated for your API documentation. It allows
     you to customize the API information, contact details, licensing, security
     requirements, and other metadata that appears in the generated OpenAPI spec.
+
+    Attributes:
+        title: Human-readable title of the API,
+            shown in the generated documentation.
+        version: Version of your API
+            (your application's own version, not the OpenAPI spec version).
+        openapi_version: Version of the OpenAPI specification to target.
+            Defaults to ``'3.1.0'``.
+        summary: Short, one-line summary of the API.
+        description: Longer description of the API. May use CommonMark syntax.
+        terms_of_service: URL to the terms of service for the API.
+        contact: Contact information for the exposed API.
+        external_docs: Link to additional external documentation.
+        security: Global security requirements applied across the API.
+            Each entry may be overridden per operation.
+        license: License information for the exposed API.
+        components: Reusable components (schemas, responses, parameters, etc.)
+            to include in the spec.
+        servers: Connectivity information for the target servers.
+        tags: Metadata tags used to group operations in the documentation.
+        webhooks: Webhook definitions that may be initiated by the API,
+            keyed by name.
     """
 
     title: str
@@ -38,6 +60,7 @@ class OpenAPIConfig:
     external_docs: ExternalDocumentation | None = None
     security: list[SecurityRequirement] | None = None
     license: License | None = None
+    # Components can't be a list in the final schema, so we merge them together:
     components: Components | list[Components] | None = None
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
@@ -54,3 +77,16 @@ class OpenAPIConfig:
             'tuple[int, int, int]',
             tuple(map(int, self.openapi_version.split('.'))),
         )
+
+
+def default_config() -> OpenAPIConfig:
+    """Resolves the default config from settings."""
+    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
+    config = resolve_setting(Settings.openapi_config)
+    if not isinstance(config, OpenAPIConfig):
+        raise TypeError(
+            'OpenAPI config is not set. Please, set the '
+            f'{str(Settings.openapi_config)!r} setting.',
+        )
+    return config

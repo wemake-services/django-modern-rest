@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any, Final
+
+from dmr.internal.dataclass_aliases import Field
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.discriminator import Discriminator
@@ -7,6 +9,9 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.xml import XML
+
+
+_ALIAS: Final = 'alias'
 
 
 @dataclass(kw_only=True, slots=True)
@@ -25,10 +30,16 @@ class Schema:
     all_of: list['Reference | Schema'] | None = None
     any_of: list['Reference | Schema'] | None = None
     one_of: list['Reference | Schema'] | None = None
-    schema_not: 'Reference | Schema | None' = None
-    schema_if: 'Reference | Schema | None' = None
-    then: 'Reference | Schema | None' = None
-    schema_else: 'Reference | Schema | None' = None
+    schema_not: Annotated['Reference | Schema | None', Field(alias='not')] = (
+        None
+    )
+    schema_if: Annotated['Reference | Schema | None', Field(alias='if')] = None
+    schema_then: Annotated['Reference | Schema | None', Field(alias='then')] = (
+        None
+    )
+    schema_else: Annotated['Reference | Schema | None', Field(alias='else')] = (
+        None
+    )
     dependent_schemas: dict[str, 'Reference | Schema'] | None = None
     prefix_items: list['Reference | Schema'] | None = None
     items: 'Reference | Schema | bool | None' = None
@@ -74,3 +85,11 @@ class Schema:
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
     example: Any | None = None
+    dynamic_anchor: Annotated['str | None', Field(alias='$dynamicAnchor')] = (
+        None
+    )
+    dynamic_ref: Annotated['str | None', Field(alias='$dynamicRef')] = None
+    defs: Annotated[
+        dict[str, 'Reference | Schema'] | None,
+        Field(alias='$defs'),
+    ] = None

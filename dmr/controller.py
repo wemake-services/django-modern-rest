@@ -1,13 +1,6 @@
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Final,
-    Generic,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Generic, TypeVar
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -17,6 +10,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import Sentinel, deprecated, override
 
+from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
@@ -32,7 +26,6 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -52,7 +45,7 @@ _SerializerT_co = TypeVar(
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
 
 
-class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
+class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     """
     Defines API views as controllers.
 
@@ -128,6 +121,8 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         summary: A short summary of what this path item does.
         description: A verbose explanation of the path item behavior.
         servers: An alternative servers array to service this path item.
+        ignore_from_spec: If set to ``True``, all endpoints from this controller
+            would not be added to the final OpenAPI spec.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -160,7 +155,9 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     validate_negotiation: ClassVar[bool | None] = None
     auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
     throttling: ClassVar[
-        Sequence[SyncThrottle] | Sequence[AsyncThrottle] | None
+        Sequence[dmr_throttling.SyncThrottle]
+        | Sequence[dmr_throttling.AsyncThrottle]
+        | None
     ] = ()
     throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
@@ -173,6 +170,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
     summary: ClassVar[str | None] = None
     description: ClassVar[str | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
+    ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:
     kwargs: dict[str, Any]
@@ -507,16 +505,29 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
         )
 
     @classmethod
-    def get_path_item(
+    def get_schema(
         cls,
         path: str,
         pattern: URLPattern,
         context: OpenAPIContext,
         router: 'Router',
-    ) -> PathItem:
-        """Generate OpenAPI spec for path items."""
-        operations: dict[str, Any] = {
-            method.lower(): endpoint.get_schema(
+    ) -> PathItem | None:
+        """
+        Generate OpenAPI spec for path items.
+
+        .. versionchanged:: 0.13.0
+
+            - Renamed from ``get_path_item`` to ``get_schema``
+            - Now allows to return ``None`` to ignore whole
+              path items from OpenAPI schema
+
+        """
+        operations: dict[str, Any] = {}
+        for method, endpoint in cls.api_endpoints.items():
+            if endpoint.metadata.ignore_from_spec:
+                continue
+
+            schema = endpoint.get_schema(
                 path,
                 pattern,
                 cls.__qualname__,
@@ -524,8 +535,12 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
                 context,
                 router,
             )
-            for method, endpoint in cls.api_endpoints.items()
-        }
+            operations.update({method.lower(): schema})
+
+        # If all operations are ignored, ignore the full controller:
+        if not operations:
+            return None
+
         return PathItem(
             **operations,
             summary=cls.summary,
@@ -535,7 +550,7 @@ class Controller(Generic[_SerializerT_co], View):  # noqa: WPS214
 
     @classproperty
     @override
-    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override, missing-override-decorator]
+    def view_is_async(cls) -> bool:  # noqa: N805  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
         """We already know this in advance, no need to recalculate."""
         # This is a part of the `django.View` API, so it must be there.
         return cls.is_async is True

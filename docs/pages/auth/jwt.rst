@@ -29,6 +29,18 @@ Example, how to use the auth class and how to get ``self.request.user``:
   :linenos:
   :language: python
 
+Custom user models are automatically supported.
+
+Customizing auth
+~~~~~~~~~~~~~~~~
+
+JWT Auth supports a lot of customization options:
+starting from ``leeway`` and ``claim`` verification
+up to the secret key customization.
+
+See :meth:`~dmr.security.jwt.token.JWToken.decode`
+for more info on all configuration options.
+
 
 Reusing pre-existing views
 --------------------------
@@ -97,7 +109,6 @@ We want to be sure that this class is at the same time:
    can be affected by existing business rules
 3. Always type safe
 
-
 Refreshing tokens
 ~~~~~~~~~~~~~~~~~
 
@@ -131,6 +142,39 @@ The controller validates that the submitted token:
   :linenos:
   :language: python
 
+Verifying tokens
+~~~~~~~~~~~~~~~~
+
+Sometimes you need a dedicated endpoint to check whether an access token
+is still valid, without accessing any protected resource.
+We provide two :ref:`reusable-controllers` for this:
+
+1. :class:`~dmr.security.jwt.views.VerifyTokenSyncController`
+   for sync controllers
+2. :class:`~dmr.security.jwt.views.VerifyTokenAsyncController`
+   for async controllers
+
+To use them, you only need to:
+
+1. Provide actual types for serializer and request payload
+2. Redefine
+   :meth:`~dmr.security.jwt.views.VerifyTokenSyncController.convert_verify_payload`
+   to extract the access token string from your request payload
+
+The controller validates that the submitted token:
+
+- Is a valid, non-expired JWT signed with the configured secret
+- Has ``extras.type == 'access'`` (i.e. it is an access token, not a refresh one)
+- Belongs to an existing, active user
+
+On success it returns an empty ``204 No Content`` response.
+On any validation failure it returns ``401 Unauthorized``.
+
+.. literalinclude:: /examples/auth/jwt/jwt_verify_tokens.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
 
 Blocklisting tokens
 -------------------
@@ -160,6 +204,8 @@ We provide two mixin types:
   for async auth
 - :class:`~dmr.security.jwt.blocklist.auth.JWTokenBlocklistSyncMixin`
   for sync auth
+
+If this app is installed, we would provide an admin panel by default.
 
 
 API Reference
@@ -202,6 +248,16 @@ Pre-defined views to fetch JWT tokens
   :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenPayload
+  :members:
+  :show-inheritance:
+
+.. autoclass:: dmr.security.jwt.views.VerifyTokenSyncController
+  :members: post, verify, get_user, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.VerifyTokenAsyncController
+  :members: post, verify, get_user, check_auth, convert_verify_payload, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.VerifyTokenPayload
   :members:
   :show-inheritance:
 

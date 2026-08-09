@@ -165,6 +165,8 @@ class SupportsFileParsing:
     :attr:`django.http.HttpRequest.FILES` and to not return anything.
     """
 
+    __slots__ = ()
+
     @abc.abstractmethod
     def parse(
         self,
@@ -198,6 +200,8 @@ class SupportsDjangoDefaultParsing:
     and :attr:`django.http.HttpRequest.FILES` if they were missing.
     """
 
+    __slots__ = ()
+
     @abc.abstractmethod
     def parse(
         self,
@@ -223,6 +227,8 @@ class MultiPartParser(
     there's no reason to duplicate its work.
     So, we return original Django's content.
     """
+
+    __slots__ = ()
 
     content_type = 'multipart/form-data'
     """Works with multipart data."""
@@ -275,6 +281,8 @@ class FormUrlEncodedParser(
     content natively, there's no reason to duplicate its work.
     So, we return original Django's content.
     """
+
+    __slots__ = ()
 
     content_type = 'application/x-www-form-urlencoded'
     """Works with urlencoded forms."""

@@ -25,6 +25,16 @@ router = Router(
             name='jwt_refresh_async',
         ),
         path(
+            'jwt-verify-sync/',
+            views.VerifySyncController.as_view(),
+            name='jwt_verify_sync',
+        ),
+        path(
+            'jwt-verify-async/',
+            views.VerifyAsyncController.as_view(),
+            name='jwt_verify_async',
+        ),
+        path(
             'jwt-sync-auth/',
             views.ControllerWithJWTSyncAuth.as_view(),
             name='jwt_sync_auth',

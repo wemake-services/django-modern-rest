@@ -8,7 +8,7 @@ class _BaseResponseHeader:
     Abstract base class that represents an HTTP header in the response.
 
     It will be later transformed into
-    https://spec.openapis.org/oas/v3.1.0#parameterObject for doc purposes.
+    https://spec.openapis.org/oas/v3.1.0#parameter-object for doc purposes.
     """
 
     description: str | None = None

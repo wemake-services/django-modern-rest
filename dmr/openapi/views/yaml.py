@@ -20,7 +20,7 @@ class OpenAPIYamlView(OpenAPIView):
 
     This view mirrors :class:`~dmr.openapi.views.json.OpenAPIJsonView`,
     but renders the converted schema using ``pyyaml``.
-    Produces a YAML representation of the :class:`~dmr.openapi.objects.OpenAPI`
+    Produces a YAML representation of the :class:`~dmr.openapi.openapi.OpenAPI`
     specification that can be used by API documentation tools
     and client code generators.
     """

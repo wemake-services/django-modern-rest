@@ -8,6 +8,8 @@ from dmr.serializer import BaseSchemaGenerator, SchemaDef
 class PydanticSchemaGenerator(BaseSchemaGenerator):
     """Generates JSON schema for pydantic objects."""
 
+    __slots__ = ()
+
     @override
     @classmethod
     def get_schema(

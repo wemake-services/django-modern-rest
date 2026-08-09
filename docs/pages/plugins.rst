@@ -187,7 +187,7 @@ attrs support
 
 We support :func:`attrs.define` via ``msgspec`` compatibility layer.
 It has its own limitations.
-See `msgspec docs <https://jcristharif.com/msgspec/supported-types.html#attrs>`_.
+See `msgspec docs <https://msgspec.dev/supported-types#attrs>`_.
 
 Native support of ``attrs`` can be implemented in the future
 with its own serializer.

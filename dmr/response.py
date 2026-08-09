@@ -6,16 +6,18 @@ from urllib.parse import urlsplit
 from django.core.exceptions import DisallowedRedirect
 from django.http import HttpResponse
 from django.utils.encoding import iri_to_uri
-
-try:
-    from django.utils.http import MAX_URL_REDIRECT_LENGTH
-except ImportError:  # pragma: no cover
-    # Django 5.2.0 compat:
-    MAX_URL_REDIRECT_LENGTH = 16384  # pyright: ignore[reportConstantRedefinition]
 from typing_extensions import TypeVar
 
 from dmr.cookies import NewCookie, set_cookies
 from dmr.settings import Settings, resolve_setting
+
+try:
+    from django.utils.http import (
+        MAX_URL_REDIRECT_LENGTH as MAX_URL_REDIRECT_LENGTH,
+    )
+except ImportError:  # pragma: no cover
+    # Django 5.2.0 compat:
+    MAX_URL_REDIRECT_LENGTH = 16384  # pyright: ignore[reportConstantRedefinition]
 
 if TYPE_CHECKING:
     from django.utils.functional import (

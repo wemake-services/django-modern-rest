@@ -53,7 +53,7 @@ def load_schema(
 
     Sadly, we can't use ``serializer.from_python`` until
     this problem with ``msgspec`` is fixed:
-    https://github.com/jcrist/msgspec/issues/982
+    https://github.com/msgspec/msgspec/issues/982
 
     After that we will just use the serializer and remove this code.
     """
@@ -70,7 +70,7 @@ def load_schema(
         one_of=_sort_null_last(_try_sequence(raw_data.get('oneOf'))),
         schema_not=_try_optional_type(raw_data.get('not')),
         schema_if=_try_optional_type(raw_data.get('if')),
-        then=_try_optional_type(raw_data.get('then')),
+        schema_then=_try_optional_type(raw_data.get('then')),
         schema_else=_try_optional_type(raw_data.get('else')),
         dependent_schemas=_try_dict(raw_data.get('dependentSchemas')),
         prefix_items=_try_sequence(raw_data.get('prefixItems')),
@@ -121,6 +121,9 @@ def load_schema(
         external_docs=_try_external_documentation(raw_data.get('externalDocs')),
         examples=examples,
         example=example,
+        dynamic_ref=raw_data.get('$dynamicRef'),
+        dynamic_anchor=raw_data.get('$dynamicAnchor'),
+        defs=_try_dict(raw_data.get('$defs')),
     )
 
 
@@ -233,7 +236,7 @@ def _sort_null_last(
     sequence: list[Reference | Schema] | None,
 ) -> list[Reference | Schema] | None:
     # See https://github.com/wemake-services/django-modern-rest/issues/990
-    # TODO: remove once solved: https://github.com/jcrist/msgspec/issues/1027
+    # TODO: remove once solved: https://github.com/msgspec/msgspec/issues/1027
     return (
         None
         if sequence is None

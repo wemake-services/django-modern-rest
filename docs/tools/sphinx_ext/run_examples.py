@@ -21,7 +21,7 @@ import socket
 import subprocess  # noqa: S404
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager, redirect_stderr, suppress
 from pathlib import Path
 from types import ModuleType
@@ -35,9 +35,9 @@ import zapros
 from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
+from django.http import HttpResponse
 from django.test import override_settings
 from django.urls import URLPattern, clear_url_caches, path
-from django.views import View
 from docutils.nodes import (
     Element,
     General,
@@ -82,6 +82,8 @@ _MP_CONTEXT: Final = _get_mp_context()
 _BASE_DIR: Final = Path(__file__).parent.parent.parent.parent
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
+_PATH_TO_TEST_TOKEN: Final = '_build/token.txt'  # noqa: S105
+_TOKEN_TEMPLATE: Final = '$X_API_TOKEN'  # noqa: S105
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 _RGX_OPENAPI: Final = re.compile(r'# +?openapi:(.*)')
@@ -258,8 +260,10 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.contrib.contenttypes',
                 'dmr',
                 'dmr.security.jwt.blocklist',
+                'dmr.security.token.app',
                 'server.apps.model_simple',
                 'server.apps.model_fk',
+                'server.apps.token_auth',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -317,17 +321,29 @@ class _BaseBuilder:  # noqa: WPS214
             return
 
         from django.core.management.commands import migrate  # noqa: PLC0415
+        from django.db import OperationalError  # noqa: PLC0415
 
-        migrate.Command().run_from_argv(['python', 'run_examples.py'])
+        with suppress(OperationalError):
+            migrate.Command().run_from_argv(['python', 'run_examples.py'])
 
         from django.contrib.auth.models import User  # noqa: PLC0415
 
+        from dmr.security.token.app.models import Token  # noqa: PLC0415
+
         with suppress(IntegrityError):
-            User.objects.create_user(
+            user = User.objects.create_user(
                 'test_user',
                 email='test@example.com',
                 password='password',  # noqa: S106
+                is_active=True,
             )
+
+            _, raw_token = Token.issue(
+                user=user,
+                name='doc-token',
+                expires_at=None,
+            )
+            _StoredToken.store(raw_token)
 
         db_populated = True
 
@@ -343,7 +359,10 @@ class _BaseBuilder:  # noqa: WPS214
 
         return ASGIHandler()
 
-    def _find_controller(self, module: ModuleType) -> View:
+    def _find_controller(
+        self,
+        module: ModuleType,
+    ) -> Callable[..., HttpResponse]:
         controller_name = self.config.get('controller')
         if not controller_name:
             raise RuntimeError(
@@ -351,19 +370,18 @@ class _BaseBuilder:  # noqa: WPS214
                 self.file_path,
                 self.config,
             )
-        controller_cls: View | None = None
         for obj_name in module.__dict__:
             module_obj = getattr(module, obj_name)
-            if hasattr(module_obj, 'as_view') and obj_name == controller_name:
-                controller_cls = module_obj
-                break
+            if obj_name != controller_name:
+                continue
+            if hasattr(module_obj, 'as_view'):
+                return module_obj.as_view()  # type: ignore[no-any-return]
+            assert callable(module_obj), module_obj  # noqa: S101
+            return module_obj  # type: ignore[no-any-return]
 
-        if controller_cls is None:
-            raise RuntimeError(
-                f'Controller {controller_name} not found in {self.file_path}',
-            )
-
-        return controller_cls
+        raise RuntimeError(
+            f'Controller {controller_name} not found in {self.file_path}',
+        )
 
     def _create_urlpatterns(self, module: ModuleType) -> None:
         url_conf_module = ModuleType('url_conf')
@@ -384,13 +402,11 @@ class _BaseBuilder:  # noqa: WPS214
         if self.config.get('use_urlpatterns', False):
             return module.urlpatterns  # type: ignore[no-any-return]
 
-        controller_cls = self._find_controller(module)
+        controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
-        return [
-            path(url_path, controller_cls.as_view()),
-        ]
+        return [path(url_path, controller)]
 
 
 class _AppBuilder(_BaseBuilder):
@@ -410,7 +426,7 @@ class _OpenAPIBuilder(_BaseBuilder):
         if self.config.get('use_urlpatterns', False):
             return urlpatterns
 
-        controller_cls = self._find_controller(module)
+        controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
@@ -418,7 +434,7 @@ class _OpenAPIBuilder(_BaseBuilder):
         router = Router(
             '',
             [
-                path(url_path, controller_cls.as_view()),
+                path(url_path, controller),
             ],
         )
         schema = build_schema(router)
@@ -457,7 +473,7 @@ def _run_app(
     path: Path,
     config: _AppRunArgs,
     builder: type[_BaseBuilder],
-) -> Iterator[int]:
+) -> Generator[int]:
     """Start a Django app on an available port."""
     restart_duration = 0.2
     port = _get_available_port()
@@ -485,7 +501,7 @@ def _run_app(
         finally:
             _shutdown_process(proc)
         return
-    raise _StartupError(str(path))
+    raise _StartupError('Cannot find free port', str(path), config)
 
 
 def _run_app_worker(
@@ -512,6 +528,11 @@ def _shutdown_process(proc: multiprocessing.Process) -> None:
 
 def _get_module_name(file_path: Path) -> str:
     return str(file_path.with_suffix('')).replace(os.sep, '.')
+
+
+def _resolve_docs_dir() -> Path:
+    cwd = Path.cwd()
+    return cwd if cwd.name == 'docs' else cwd / 'docs'
 
 
 def _resolve_tmp_example_relative_path(
@@ -801,8 +822,12 @@ def _build_curl_request(
     url_path: str,
 ) -> tuple[_CurlArgs, _CurlCleanArgs]:
     query = run_args.pop('query', '')
-    if query and not query.startswith('?'):
-        raise ValueError(f'{query!r} must start with "?"')
+    if query:
+        if not query.startswith('?'):
+            raise ValueError(f'{query!r} must start with "?"')
+        if _TOKEN_TEMPLATE in query:
+            query = query.replace(_TOKEN_TEMPLATE, _StoredToken.load(run_args))
+
     args = [
         'curl',
         '-v',
@@ -908,6 +933,9 @@ def _add_headers(
     if isinstance(headers, dict):
         headers = headers.items()
     for header_name, header_value in headers:
+        if header_value == _TOKEN_TEMPLATE:
+            header_value = _StoredToken.load(run_args)
+
         args.extend([header_flag, f'{header_name}: {header_value}'])
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
 
@@ -921,8 +949,32 @@ def _add_cookies(
 
     cookies = run_args.get('cookies', {})
     for cookie_name, cookie_value in cookies.items():
+        if cookie_value == _TOKEN_TEMPLATE:
+            cookie_value = _StoredToken.load(run_args)
+
         args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
         clean_args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
+
+
+class _StoredToken:
+    @classmethod
+    def store(cls, token: str) -> None:
+        cls._resolve_path().write_text(token)
+
+    @classmethod
+    def load(cls, run_args: _AppRunArgs) -> str:
+        from dmr.security.token.app.models import Token  # noqa: PLC0415
+
+        path = cls._resolve_path()
+        assert path.exists(), f'{_PATH_TO_TEST_TOKEN} does not exist'  # noqa: S101
+        token = path.read_text().strip()
+
+        assert Token.find_raw(token), f'Token {token!r} is not found'  # noqa: S101
+        return token
+
+    @classmethod
+    def _resolve_path(cls) -> Path:
+        return _resolve_docs_dir() / _PATH_TO_TEST_TOKEN
 
 
 def _find_imports_block_end_line(file_content: str) -> int:
@@ -1262,8 +1314,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         file_path: Path,
         clean_content: str,
     ) -> None:
-        cwd = Path.cwd()
-        docs_dir = cwd if cwd.name == 'docs' else cwd / 'docs'
+        docs_dir = _resolve_docs_dir()
         relative_example_path = _resolve_tmp_example_relative_path(
             file_path,
             docs_dir,

@@ -173,7 +173,7 @@ version control, or automating client generation.
   python manage.py dmr_export_schema myapp.urls:schema --format yaml --indent 2 --sort-keys
 
 The positional argument is the import path to your
-:class:`~dmr.openapi.objects.OpenAPI` instance,
+:class:`~dmr.openapi.openapi.OpenAPI` instance,
 using a colon to separate the module from the attribute name
 (e.g. ``myapp.urls:schema``).
 
@@ -204,6 +204,11 @@ including the spec version:
   :language: python
   :linenos:
 
+You can also pass ``components`` and other parts of the OpenAPI spec
+from some other source, like pre-existing schemas.
+
+To learn more, see :doc:`../external-views` guide.
+
 
 Customizing OpenAPI generation
 ------------------------------
@@ -221,7 +226,7 @@ To customize a schema, use the native methods.
 
   .. tab:: msgspec
 
-    Docs: https://jcristharif.com/msgspec/jsonschema.html
+    Docs: https://msgspec.dev/jsonschema
 
     .. literalinclude:: /examples/openapi/msgspec_customization.py
       :caption: dtos.py
@@ -412,7 +417,7 @@ This is how OpenAPI spec is generated, top level overview:
 
   graph
       Start[build_schema] --> Router[Router];
-      Router -->|for each controller| Controller[Controller.get_path_item];
+      Router -->|for each controller| Controller[Controller.get_schema];
       Router -->|for each defined auth| SecurityScheme[Auth.security_scheme];
       Controller -->|for each endpoint| Endpoint[Endpoint.get_schema];
       Endpoint -->|for each component| ComponentParser[ComponentParser.get_schema]
@@ -445,9 +450,9 @@ Useful APIs for users to override:
   how :class:`~dmr.openapi.OpenAPIConfig`
   and :class:`~dmr.openapi.OpenAPIContext` are generated
 - :meth:`dmr.routing.Router.get_schema` to change
-  how :class:`~dmr.openapi.objects.OpenAPI`
+  how :class:`~dmr.openapi.openapi.OpenAPI`
   and :class:`~dmr.openapi.objects.Components` are generated
-- :meth:`dmr.controller.Controller.get_path_item` to change how
+- :meth:`dmr.controller.Controller.get_schema` to change how
   :class:`~dmr.openapi.objects.PathItem` objects are generated
 - :meth:`dmr.endpoint.Endpoint.get_schema` to change how
   :class:`~dmr.openapi.objects.Operation` is generated
@@ -470,8 +475,12 @@ This is the API every user needs:
 .. autoclass:: dmr.openapi.OpenAPIConfig
    :members:
 
+.. autofunction:: dmr.openapi.default_config
+
 .. autoclass:: dmr.openapi.OpenAPIContext
-  :members:
+   :members:
+
+.. autofunction:: dmr.openapi.load_schema
 
 All other objects that are only used if you decide to customize the schema
-are listed in :doc:`openapi-reference`.
+are listed in :ref:`openapi-reference`.

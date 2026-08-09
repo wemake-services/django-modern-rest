@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from functools import lru_cache
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeVar
 
 import msgspec
 from django.http import HttpRequest
@@ -15,6 +15,8 @@ from dmr.renderers import Renderer
 
 class MsgspecJsonParser(Parser):
     """Parsers json bodies using ``msgspec``."""
+
+    __slots__ = ()
 
     content_type = 'application/json'
     strict: ClassVar[bool] = True
@@ -47,10 +49,13 @@ class MsgspecJsonParser(Parser):
         """
         try:
             return _get_deserializer(
+                # Passing `model` here won't work, because it will raise
+                # errors on some valid cases that we would handle later.
+                Any,
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
-        except msgspec.DecodeError as exc:
+        except (msgspec.DecodeError, UnicodeDecodeError) as exc:
             # Corner case: when deserializing an empty body,
             # return `None` instead.
             # We do this here, because we don't want
@@ -67,9 +72,8 @@ class MsgspecJsonRenderer(Renderer):
 
     def __init__(self, content_type: str = 'application/json') -> None:
         """Initialize the default content type."""
-        self.content_type = stringify(
-            content_type,
-        )  # might be a string subclass
+        # Might be a string subclass:
+        self.content_type = stringify(content_type)
 
     @override
     def render(
@@ -113,12 +117,16 @@ def _get_serializer(
     return msgspec.json.Encoder(enc_hook=serializer_hook)
 
 
+_ModelT = TypeVar('_ModelT')
+
+
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_deserializer(
+    model: _ModelT,
     deserializer_hook: DeserializeFunc | None,
     *,
     strict: bool,
-) -> msgspec.json.Decoder[Any]:
+) -> msgspec.json.Decoder[_ModelT]:
     """
     Returns cached deserializer.
 
@@ -129,4 +137,8 @@ def _get_deserializer(
         >>> _get_deserializer.cache_clear()
 
     """
-    return msgspec.json.Decoder(dec_hook=deserializer_hook, strict=strict)
+    return msgspec.json.Decoder(
+        model,
+        dec_hook=deserializer_hook,
+        strict=strict,
+    )

@@ -1,7 +1,6 @@
 from typing import Any, TypeVar
 
-# TODO(sobolevn): release new `punq` version:
-import punq  # type: ignore[import-untyped]
+import punq
 
 from server.apps.model_fk.mappers import RoleMap, TagMap, UserMap
 from server.apps.model_fk.services import (
@@ -23,7 +22,7 @@ class HasContainer:
         self._container = self._create_container()
 
     def resolve(self, thing: type[_ItemT]) -> _ItemT:
-        return self._container.resolve(thing)  # type: ignore[no-any-return]
+        return self._container.resolve(thing)
 
     def _create_container(self) -> punq.Container:
         container = punq.Container()

@@ -1,0 +1,105 @@
+from typing import Final
+
+from django.http import HttpRequest
+
+from dmr.openapi.objects import Reference, SecurityScheme
+from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
+from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
+
+_DEFAULT_PARAM: Final = 'token'
+
+
+class _BaseQueryTokenAuth:
+    __slots__ = ()
+
+    query_param: str
+    security_scheme_name: str
+
+    @property
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=self.query_param,
+                security_scheme_in='query',
+                description='Opaque token authentication via query string',
+            ),
+        }
+
+    def get_raw_token(self, request: HttpRequest) -> str | None:
+        """Read the raw token from the query string."""
+        return request.GET.get(self.query_param)
+
+
+class QueryTokenSyncAuth(_BaseQueryTokenAuth, BaseTokenSyncAuth):
+    """
+    Sync opaque token auth reading from a query string parameter.
+
+    .. warning::
+
+        Tokens in query strings appear in server access logs, browser history,
+        and HTTP ``Referer`` headers.  Prefer
+        :class:`HeaderTokenSyncAuth` for any
+        context where security is a concern.
+
+    .. versionadded:: 0.12.0
+    """
+
+    __slots__ = ('query_param',)
+
+    def __init__(
+        self,
+        *,
+        query_param: str = _DEFAULT_PARAM,
+        security_scheme_name: str = _DEFAULT_PARAM,
+        update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
+    ) -> None:
+        """Apply possible customizations."""
+        super().__init__(
+            security_scheme_name=security_scheme_name,
+            update_last_used=update_last_used,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
+        )
+        self.query_param = query_param
+
+
+class QueryTokenAsyncAuth(_BaseQueryTokenAuth, BaseTokenAsyncAuth):
+    """
+    Async opaque token auth reading from a query string parameter.
+
+    .. warning::
+        Tokens in query strings appear in server access logs, browser history,
+        and HTTP ``Referer`` headers.  Prefer
+        :class:`HeaderTokenAsyncAuth` for any
+        context where security is a concern.
+
+    .. versionadded:: 0.12.0
+    """
+
+    __slots__ = ('query_param',)
+
+    def __init__(
+        self,
+        *,
+        query_param: str = _DEFAULT_PARAM,
+        security_scheme_name: str = _DEFAULT_PARAM,
+        update_last_used: bool = False,
+        token_secret: str | None = None,
+        token_salt: str = DEFAULT_TOKEN_SALT,
+        token_algorithm: str = DEFAULT_TOKEN_ALGORITHM,
+    ) -> None:
+        """Apply possible customizations."""
+        super().__init__(
+            security_scheme_name=security_scheme_name,
+            update_last_used=update_last_used,
+            token_secret=token_secret,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
+        )
+        self.query_param = query_param

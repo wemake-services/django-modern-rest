@@ -1,7 +1,8 @@
+import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Literal, Self, overload
+from typing import TYPE_CHECKING, Literal, Self, final, overload
 
 from django.http import HttpRequest
 from typing_extensions import override
@@ -119,6 +120,31 @@ class AsyncAuth(_BaseAuth):
         if you want to change the return code, for example,
         when some data is missing or has wrong format.
         """
+
+
+@final
+@dataclasses.dataclass(slots=True, frozen=True)
+class SyncOrAsyncAuth:
+    """
+    Auth that selects between a sync and async instance.
+
+    Use in global settings to apply a single auth rule to both
+    sync and async endpoints. Not allowed on controller or endpoint level.
+
+    .. versionadded:: 0.11.0
+    """
+
+    _sync_auth: SyncAuth
+    _async_auth: AsyncAuth
+
+    def resolve(
+        self,
+        auth_cls: type[SyncAuth] | type[AsyncAuth],
+    ) -> SyncAuth | AsyncAuth:
+        """Return the auth instance matching *auth_cls*."""
+        if issubclass(auth_cls, SyncAuth):
+            return self._sync_auth
+        return self._async_auth
 
 
 @overload

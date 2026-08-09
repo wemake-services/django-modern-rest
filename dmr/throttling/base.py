@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Generic, TypeAlias, TypeVar, final
+from typing import TYPE_CHECKING, Any, Generic, Self, TypeAlias, TypeVar, final
 
 from typing_extensions import override
 
@@ -59,13 +59,11 @@ class Rate(enum.IntEnum):
 class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
     __slots__ = (
         '_algorithm',
-        '_async_lock',
         '_backend',
-        '_response_headers',
-        '_sync_lock',
         'cache_key',
         'duration_in_seconds',
         'max_requests',
+        'response_headers',
     )
 
     _backend: _BackendT
@@ -122,7 +120,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         else:
             self._backend = backend
         self._algorithm = algorithm or SimpleRate()
-        self._response_headers = (
+        self.response_headers = (
             [XRateLimit(), RetryAfter()]
             if response_headers is None
             else response_headers
@@ -151,6 +149,45 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
             f'{cache_key_name}::{cache_key}::'
             f'{self.max_requests}::{self.duration_in_seconds}'
         )
+
+    def replace(
+        self,
+        *,
+        max_requests: int | None = None,
+        duration_in_seconds: Rate | int | None = None,
+        cache_key: BaseThrottleCacheKey | None = None,
+        backend: _BackendT | None = None,
+        algorithm: BaseThrottleAlgorithm | None = None,
+        response_headers: Iterable[BaseResponseHeadersProvider] | None = None,
+    ) -> Self:
+        """
+        Return a copy of this throttle, overriding only the given fields.
+
+        Any argument left as ``None`` keeps this throttle's current value, so
+        ``replace(max_requests=2)`` changes just the limit. Also backs
+        ``copy.replace`` (Python 3.13+) through ``__replace__``.
+
+        .. versionadded:: 0.12.0
+        """
+        return type(self)(
+            self.max_requests if max_requests is None else max_requests,
+            (
+                self.duration_in_seconds
+                if duration_in_seconds is None
+                else duration_in_seconds
+            ),
+            cache_key=self.cache_key if cache_key is None else cache_key,
+            backend=self._backend if backend is None else backend,
+            algorithm=self._algorithm if algorithm is None else algorithm,
+            response_headers=(
+                self.response_headers
+                if response_headers is None
+                else response_headers
+            ),
+        )
+
+    #: Enables ``copy.replace(throttle, ...)`` on Python 3.13+.
+    __replace__ = replace
 
     @override
     def provide_response_specs(
@@ -181,7 +218,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
     ) -> dict[str, str]:
         """Collects response headers for all ``response_headers`` classes."""
         response_headers: dict[str, str] = {}
-        for header_provider in self._response_headers:
+        for header_provider in self.response_headers:
             response_headers.update(
                 header_provider.response_headers(
                     endpoint,
@@ -196,7 +233,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
 
     def _headers_spec(self) -> dict[str, HeaderSpec]:
         headers_spec: dict[str, HeaderSpec] = {}
-        for header_provider in self._response_headers:
+        for header_provider in self.response_headers:
             headers_spec.update(header_provider.provide_headers_specs())
         return headers_spec
 
@@ -230,23 +267,7 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
         if cache_key is None:
             return
         with lock:
-            self.check(endpoint, controller, cache_key)
-
-    def check(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> None:
-        """Check whether this request has rate limiting quota left."""
-        # NOTE: this is locked on endpoint.py level, don't worry:
-        self._backend.incr(
-            endpoint,
-            controller,
-            self,
-            cache_key=cache_key,
-            algorithm=self._algorithm,
-        )
+            self._check(endpoint, controller, cache_key)
 
     def report_usage(
         self,
@@ -262,6 +283,22 @@ class SyncThrottle(_BaseThrottle[BaseThrottleSyncBackend]):
             controller,
             self,
             self._backend.get(endpoint, controller, self, cache_key=cache_key),
+        )
+
+    def _check(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> None:
+        """Check whether this request has rate limiting quota left."""
+        # NOTE: this is locked inside `__call__`, don't worry:
+        self._backend.incr(
+            endpoint,
+            controller,
+            self,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
         )
 
 
@@ -294,23 +331,7 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
         if cache_key is None:
             return
         async with lock:
-            await self.check(endpoint, controller, cache_key)
-
-    async def check(
-        self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
-        cache_key: str,
-    ) -> None:
-        """Check whether this request has rate limiting quota left."""
-        # NOTE: this is locked on endpoint.py level, don't worry:
-        await self._backend.incr(
-            endpoint,
-            controller,
-            self,
-            cache_key=cache_key,
-            algorithm=self._algorithm,
-        )
+            await self._check(endpoint, controller, cache_key)
 
     async def report_usage(
         self,
@@ -332,6 +353,47 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
                 cache_key=cache_key,
             ),
         )
+
+    async def _check(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        cache_key: str,
+    ) -> None:
+        """Check whether this request has rate limiting quota left."""
+        # NOTE: this is locked on endpoint.py level, don't worry:
+        await self._backend.incr(
+            endpoint,
+            controller,
+            self,
+            cache_key=cache_key,
+            algorithm=self._algorithm,
+        )
+
+
+@final
+@dataclasses.dataclass(slots=True, frozen=True)
+class SyncOrAsyncThrottle:
+    """
+    Throttle that selects between a sync and async instance.
+
+    Use in global settings to apply a single throttling rule to both
+    sync and async endpoints. Not allowed on controller or endpoint level.
+
+    .. versionadded:: 0.11.0
+    """
+
+    _sync_throttle: SyncThrottle
+    _async_throttle: AsyncThrottle
+
+    def resolve(
+        self,
+        throttle_cls: type[SyncThrottle] | type[AsyncThrottle],
+    ) -> SyncThrottle | AsyncThrottle:
+        """Return the throttle instance matching *throttle_cls*."""
+        if issubclass(throttle_cls, SyncThrottle):
+            return self._sync_throttle
+        return self._async_throttle
 
 
 @dataclasses.dataclass(slots=True, frozen=True)

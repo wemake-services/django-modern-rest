@@ -5,9 +5,11 @@ from typing import Any, Generic, TypeVar
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, alogin, authenticate, login
+from django.views.decorators.debug import sensitive_post_parameters
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, CookieSpec, ResponseSpec, modify
+from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.serializer import BaseSerializer
@@ -56,6 +58,7 @@ class DjangoSessionSyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(
         status_code=HTTPStatus.OK,
         cookies={
@@ -127,6 +130,7 @@ class DjangoSessionAsyncController(
         ),
     )
 
+    @endpoint_decorator(sensitive_post_parameters())
     @modify(
         status_code=HTTPStatus.OK,
         cookies={

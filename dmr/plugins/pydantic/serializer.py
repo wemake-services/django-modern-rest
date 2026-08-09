@@ -74,6 +74,8 @@ class ToModelKwargs(TypedDict, total=False):
 class PydanticEndpointOptimizer(BaseEndpointOptimizer):
     """Optimize endpoints that are parsed with pydantic."""
 
+    __slots__ = ()
+
     @override
     @classmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
@@ -185,7 +187,7 @@ class PydanticSerializer(BaseSerializer):
         model: Any,
         *,
         strict: bool | None,
-        rebuild_namespace: Mapping[str, Any] | None = None,
+        extra_namespace: Mapping[str, Any] | None = None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
@@ -199,7 +201,7 @@ class PydanticSerializer(BaseSerializer):
                 For example, it is fine for a request validation
                 to be less strict in some cases and allow type coercition.
                 But, response types need to be strongly validated.
-            rebuild_namespace: Optional namespace to rebuild the type adapter.
+            extra_namespace: Optional namespace to rebuild the type adapter.
                 Should be used when there are forward references
                 that pydantic cannot solve by itself.
 
@@ -209,12 +211,16 @@ class PydanticSerializer(BaseSerializer):
         Raises:
             pydantic_core.ValidationError: When parsing can't be done.
 
+        .. versionchanged:: 0.13.0
+            Added *rebuild_namespace* parameter
+            was renamed to be *extra_namespace*.
+
         """
         # At this point `_get_cached_type_adapter(model)` was already called
         # during the optimizer stage, so it will be very fast to use in runtime.
         adapter = _get_cached_type_adapter(model)
-        if rebuild_namespace is not None:
-            adapter.rebuild(_types_namespace=rebuild_namespace)
+        if extra_namespace is not None:
+            adapter.rebuild(_types_namespace=extra_namespace)
         return adapter.validate_python(
             unstructured,
             strict=strict,
@@ -286,6 +292,8 @@ class PydanticFastSerializer(PydanticSerializer):
         See :issue:`830`.
 
     """
+
+    __slots__ = ()
 
     @classmethod
     @override

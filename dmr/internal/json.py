@@ -53,6 +53,8 @@ class _DMREncoder(DjangoJSONEncoder):
 class NativeJson:
     """Native json module implementation."""
 
+    __slots__ = ()
+
     @classmethod
     def dumps(
         cls,

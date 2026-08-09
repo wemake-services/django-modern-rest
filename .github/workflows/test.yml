@@ -20,41 +20,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        docker-compose-services: ['redis']
         python-version: ['3.11', '3.12', '3.13', '3.14']
+        redis-image: ['redis:8-alpine']
         include:
           - python-version: '3.14t'
-            force_free_gil: true
-            docker-compose-services: 'redis'
+            force-free-gil: true
+            redis-image: 'redis:7-alpine'
           - python-version: '3.13'
-            docker-compose-services: 'valkey'
+            redis-image: 'valkey/valkey:9-alpine'
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
 
     - name: Install just
       run: uv tool install rust-just
 
-    - name: Pull and build docker compose services
-      if: ${{ matrix.docker-compose-services }}
-      run: |
-        docker compose pull ${{ matrix.docker-compose-services }}
-        docker compose up --detach ${{ matrix.docker-compose-services }}
-
     - name: Install dependencies
       run: |
         # System deps:
-        sudo apt update && sudo apt install -y gettext wait-for-it
+        sudo apt update && sudo apt install -y gettext
 
         # Python deps:
         just install
@@ -63,25 +57,22 @@ jobs:
         # No way to exclude the platform on a file level.
         uv pip install orjson || true
 
-    - name: Wait for database to come online
-      if: ${{ matrix.docker-compose-services }}
-      run: wait-for-it --host='localhost' --port=6379 --timeout=30 --strict
+    - name: Prefetch the image
+      if: ${{ matrix.redis-image }}
+      run: docker pull "${{ matrix.redis-image }}"
 
     - name: Run checks
       run: just test
       env:
-        PYTHON_GIL: ${{ matrix.force_free_gil && '0' || '1' }}
+        PYTHON_GIL: ${{ matrix.force-free-gil && '0' || '1' }}
+        REDIS_IMAGE: ${{ matrix.redis-image }}
 
     # Upload coverage to codecov: https://codecov.io/
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
       with:
         files: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Tracecov report
       run: cat tracecov-report.md >> "$GITHUB_STEP_SUMMARY"
-
-    - name: Stop docker compose services
-      if: ${{ always() && matrix.docker-compose-services }}
-      run: docker compose down || true

@@ -37,7 +37,7 @@ def _get_project_meta() -> dict[str, str]:
 
 pkg_meta = _get_project_meta()
 project = str(pkg_meta['name'])
-copyright = '2025, wemake-services'  # noqa: A001
+copyright = '2025 - %Y, wemake-services'  # noqa: A001
 author = 'wemake-services'
 
 # The short X.Y version
@@ -81,13 +81,14 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'django': ('https://docs.djangoproject.com/en/stable/', None),
     'pydantic': ('https://docs.pydantic.dev/latest/', None),
-    'msgspec': ('https://jcristharif.com/msgspec/', None),
+    'msgspec': ('https://msgspec.dev/', None),
     'jwt': ('https://pyjwt.readthedocs.io/en/latest/', None),
     'typing_extensions': (
         'https://typing-extensions.readthedocs.io/en/stable/',
         None,
     ),
     'attrs': ('https://www.attrs.org/en/stable/', None),
+    'pytest': ('https://docs.pytest.org/en/stable/', None),
 }
 
 # Extlinks:
@@ -114,6 +115,7 @@ nitpicky = True
 
 _PY_CLASS: Final = 'py:class'
 _PY_OBJ: Final = 'py:obj'
+_PY_FUNC: Final = 'py:func'
 
 nitpick_ignore = [
     # internal type helpers
@@ -144,12 +146,17 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.internal.negotiation.ConditionalType'),
     (_PY_CLASS, 'dmr.security.jwt.views._ObtainTokensT'),
     (_PY_CLASS, 'dmr.security.jwt.views._RefreshTokensT'),
+    (_PY_CLASS, 'dmr.security.jwt.views._VerifyTokenT'),
     (_PY_CLASS, 'dmr.security.jwt.views._TokensResponseT'),
     (
         _PY_CLASS,
         'dmr.security.django_session.views._RequestModelT',
     ),
     (_PY_CLASS, 'dmr.security.django_session.views._ResponseT'),
+    (_PY_CLASS, 'dmr.security.token.token._UserT'),
+    (_PY_CLASS, 'dmr.security.token.views._ObtainTokenT'),
+    (_PY_CLASS, 'dmr.security.token.views._TokenResponseT'),
+    (_PY_CLASS, 'dmr.security.token.views._UserT'),
     (_PY_OBJ, 'dmr.components._HeadersT'),
     (_PY_OBJ, 'dmr.components._QueryT'),
     (_PY_OBJ, 'dmr.components._PathT'),
@@ -178,7 +185,12 @@ nitpick_ignore = [
     (_PY_CLASS, 'django.urls.resolvers.URLResolver'),
     (_PY_CLASS, 'django.utils.datastructures.MultiValueDict'),
     (_PY_CLASS, 'django.utils.functional.Promise'),
+    # OpenAPI:
+    (_PY_CLASS, 'dmr.openapi.mappers.schema_normalization._DataclassT'),
     # OpenAPI types used in TYPE_CHECKING blocks:
+    (_PY_CLASS, 'DataclassInstance'),
+    (_PY_CLASS, 'FieldInfo'),
+    (_PY_CLASS, 'NoneType'),
     (_PY_CLASS, 'SecurityRequirement'),
     (_PY_CLASS, 'ExternalDocumentation'),
     (_PY_CLASS, 'Callback'),
@@ -186,13 +198,23 @@ nitpick_ignore = [
     (_PY_CLASS, 'Reference'),
     (_PY_CLASS, 'Paths'),
     (_PY_CLASS, 'Responses'),
+    # Test fixtures:
+    (_PY_FUNC, 'pytest_django.fixtures.settings'),
+    (_PY_CLASS, 'LazySettings'),
     # Looks like a bug:
     (_PY_CLASS, 'dict[str'),
     (_PY_CLASS, 'collections.abc.Mapping[str'),
 ]
 
+nitpick_ignore_regex = [
+    (_PY_OBJ, r'typing\.Annotated\[.*'),
+]
+
 qualname_overrides = {
     # Django documents these classes under re-exported path names:
+    'django.contrib.auth.base_user.AbstractBaseUser': (
+        'django:django.contrib.auth.models.AbstractBaseUser'
+    ),
     'django.http.request.HttpRequest': 'django:django.http.HttpRequest',
     'django.http.response.HttpResponse': 'django:django.http.HttpResponse',
     'django.http.response.HttpResponseRedirect': (
@@ -293,7 +315,7 @@ def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:
             with the "canonical" directive
         * https://github.com/pyca/cryptography/pull/7938 - where this
             was fixed for cryptography
-        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events
+        * https://www.sphinx-doc.org/en/master/extdev/event_callbacks.html
         * https://stackoverflow.com/a/62301461 - source of this hack
 
     """

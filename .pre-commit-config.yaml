@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 943377262562a12b57292fc98fabd7dbf81451fe  # frozen: 0.37.2
+    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -18,7 +18,7 @@ repos:
           - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: 9257c6050c0261b8c57e712f632dc4a8010109a9  # frozen: v1.25.2
+    rev: 451b56af716f9f0d0c2b816503a3fd0cf8b036fa  # frozen: v1.29.0
     hooks:
       - id: zizmor
         args: ["--no-progress", "--fix"]
@@ -29,8 +29,13 @@ repos:
       - id: shellcheck
         args: ["--severity=style"]
 
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "d600c142bb19f521ae6a6a345f94a2efd7937759"  # frozen: v2.26.0
+    hooks:
+      - id: pyproject-fmt
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 0c7b6c989466a93942def1f84baf36ddfcd60c83  # frozen: v0.15.14
+    rev: 39d9ac5938dadb73df0564a45f163e25ff9fa6e2  # frozen: v0.16.1
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
@@ -44,19 +49,20 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: 36e31b0923b6cebbbed30598877a994b2dd56df8  # frozen: v1
+    rev: 12ffd4a04b4893ab75db66a59aaad2d996c3e982  # frozen: v1
     hooks:
       - id: typos
 
   - repo: https://github.com/codespell-project/codespell
-    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a  # frozen: v2.4.2
+    rev: 57b21406f092110c18776e39b0bda50d37c945c8  # frozen: v2.4.3
     hooks:
     - id: codespell
+      args: ["--write-changes"]
       additional_dependencies:
         - tomli
 
   - repo: https://github.com/instrumentl/pre-commit-just
-    rev: 9afb27e76938eca22c92ad1d8a6f4b9e1c29bb6b  # frozen: v0.1
+    rev: 0340ee8d7f8341d6b9b03e086ab937f7fa38134c  # frozen: v0.2
     hooks:
       - id: format-justfile
 

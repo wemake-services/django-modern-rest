@@ -112,6 +112,34 @@ def test_msgpack_missing_fields(
     })
 
 
+def test_msgpack_invalid_utf8(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures ``msgpack`` request with non-utf8 strings raise correctly."""
+    request = dmr_rf.post(
+        '/whatever/',
+        headers={'Content-Type': 'application/msgpack'},
+        data=msgspec.msgpack.encode({'username': 'x'}).replace(b'x', b'\xff'),
+    )
+
+    response = _MsgpackController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == {'Content-Type': 'application/msgpack'}
+    assert msgspec.msgpack.decode(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "'utf-8' codec can't decode byte 0xff "
+                    'in position 0: invalid start byte'
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 def test_msgpack_wrong_bytes(
     dmr_rf: DMRRequestFactory,
 ) -> None:

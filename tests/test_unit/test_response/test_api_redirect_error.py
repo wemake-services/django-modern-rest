@@ -2,9 +2,9 @@ from http import HTTPStatus
 
 import pytest
 from django.core.exceptions import DisallowedRedirect
-from django.utils.http import MAX_URL_REDIRECT_LENGTH
 
 from dmr import RedirectTo
+from dmr.response import MAX_URL_REDIRECT_LENGTH
 
 
 def test_invalid_redirect_length() -> None:
@@ -17,12 +17,12 @@ def test_invalid_redirect_length() -> None:
 def test_invalid_redirect_scheme() -> None:
     """We can't redirect to untrusted protocols."""
     with pytest.raises(DisallowedRedirect, match='with protocol'):
-        RedirectTo('custom://url.com')
+        RedirectTo('custom://example.com')
 
 
 def test_invalid_status_code() -> None:
     """We can't redirect with wrong status code."""
     with pytest.raises(DisallowedRedirect, match='3xx statuses'):
-        RedirectTo('https://url.com', status_code=HTTPStatus.BAD_REQUEST)
+        RedirectTo('https://example.com', status_code=HTTPStatus.BAD_REQUEST)
     with pytest.raises(DisallowedRedirect, match='3xx statuses'):
-        RedirectTo('https://url.com', status_code=HTTPStatus.IM_USED)
+        RedirectTo('https://example.com', status_code=HTTPStatus.IM_USED)

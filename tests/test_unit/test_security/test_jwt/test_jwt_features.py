@@ -1,5 +1,4 @@
 import datetime as dt
-import secrets
 from collections.abc import Callable, Sequence
 from http import HTTPStatus
 from typing import Any, Final, TypeAlias, Unpack, final
@@ -139,7 +138,7 @@ class _RequireClaimsController(Controller[PydanticSerializer]):
 @pytest.mark.parametrize(
     ('jti', 'response_code'),
     [
-        (secrets.token_hex(), HTTPStatus.OK),
+        ('some-random-string', HTTPStatus.OK),
         (None, HTTPStatus.UNAUTHORIZED),
     ],
 )

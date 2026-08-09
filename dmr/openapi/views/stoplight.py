@@ -12,7 +12,7 @@ class StoplightView(OpenAPIView):
     View for rendering the OpenAPI schema with Stoplight.
 
     Renders an interactive HTML page that allows exploring the
-    :class:`~dmr.openapi.objects.OpenAPI` specification using Stoplight
+    :class:`~dmr.openapi.openapi.OpenAPI` specification using Stoplight
     API Reference.
 
     Attributes:

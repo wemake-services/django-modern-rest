@@ -1,4 +1,5 @@
 import abc
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias
 
 from django.http import HttpRequest
@@ -29,6 +30,8 @@ class BaseEndpointOptimizer:
     To achieve that we provide an explicit API for that.
     """
 
+    __slots__ = ()
+
     @classmethod
     @abc.abstractmethod
     def optimize_endpoint(cls, metadata: 'EndpointMetadata') -> None:
@@ -44,6 +47,8 @@ class BaseEndpointOptimizer:
 
 class BaseSchemaGenerator:
     """Generates JSON schema by the native serializer API."""
+
+    __slots__ = ()
 
     @classmethod
     @abc.abstractmethod
@@ -181,6 +186,7 @@ class BaseSerializer:  # noqa: WPS214
         model: Any,
         *,
         strict: bool | None,
+        extra_namespace: Mapping[str, Any] | None = None,
     ) -> Any:
         """
         Parse *unstructured* data from python primitives into *model*.
@@ -196,9 +202,14 @@ class BaseSerializer:  # noqa: WPS214
                 For example, it is fine for a request validation
                 to be less strict in some cases and allow type coercition.
                 But, response types need to be strongly validated.
+            extra_namespace: Optional namespace to load type annotations from.
+                It is useful, when using stringified or lazy type annotations.
 
         Returns:
             Structured and validated data.
+
+        .. versionchanged:: 0.13.0
+            Added *extra_namespace* parameter.
 
         """
         raise NotImplementedError

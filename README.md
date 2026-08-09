@@ -1,5 +1,5 @@
 <p align="center">
-   <a href="https://django-modern-rest.readthedocs.io/">
+   <a href="https://django-modern-rest.readthedocs.io/en/latest/">
       <picture>
          <source srcset="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/logo-dark.svg" media="(prefers-color-scheme: dark)">
          <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/logo-light.svg#gh-light-mode-only" alt="Modern REST Logo - Light" width="100%" height="auto" />
@@ -15,20 +15,20 @@
 
 [![wemake.services](https://img.shields.io/badge/%20-wemake.services-green.svg?label=%20&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC%2FxhBQAAAAFzUkdCAK7OHOkAAAAbUExURQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP%2F%2F%2F5TvxDIAAAAIdFJOUwAjRA8xXANAL%2Bv0SAAAADNJREFUGNNjYCAIOJjRBdBFWMkVQeGzcHAwksJnAPPZGOGAASzPzAEHEGVsLExQwE7YswCb7AFZSF3bbAAAAABJRU5ErkJggg%3D%3D)](https://wemake-services.github.io)
 [![Modern REST](https://img.shields.io/badge/Modern%20REST-0C4B33?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4MCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTA4MCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMiA3MDQuMDJMMTQ1LjQ1OSA0NjYuMTlMMjc3Ljg4MyA3MDQuMDJMMTQ1LjQ1OSA5NDEuODQ5TDIgNzA0LjAyWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE0NS40NTkgOTQxLjg0OUwyIDcwNC4wMkgyNzcuODgzTDE0NS40NTkgOTQxLjg0OVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik02NzguOTQ4IDcwNC4wMzVMMzQxLjIzIDEzOEwyMjcuMDcxIDMyOC4yNjRMNDM2LjM2MiA3MDQuMDM1TDMwMy4xNzcgOTQxLjg2NEg1MzYuMjVMNjc4Ljk0OCA3MDQuMDM1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTY3OC45MzcgNzA0LjAyNkg0MzYuMzVMMzAzLjE2NiA5NDEuODU2SDUzNi4yMzlMNjc4LjkzNyA3MDQuMDI2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEwNzguMTcgNzA0LjAzNUw3NDAuNDUxIDEzOEw2MjYuMjkzIDMyOC4yNjRMODM1LjU4MyA3MDQuMDM1TDcwMi4zOTkgOTQxLjg2NEg5MzUuNDcyTDEwNzguMTcgNzA0LjAzNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMDc4LjE3IDcwNC4wMzVIODM1LjU4M0w3MDIuMzk5IDk0MS44NjRIOTM1LjQ3MkwxMDc4LjE3IDcwNC4wMzVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K&color=35544A)](https://github.com/wemake-services/django-modern-rest)
-[![test](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/wemake-services/django-modern-rest/branch/master/graph/badge.svg)](https://codecov.io/gh/wemake-services/django-modern-rest)
-[![No AI slop inside](https://img.shields.io/badge/no-slop-purple.svg)](https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md)
+[![Tests Result](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/wemake-services/django-modern-rest/actions/workflows/test.yml)
+[![Codecov](https://codecov.io/gh/wemake-services/django-modern-rest/branch/master/graph/badge.svg)](https://codecov.io/gh/wemake-services/django-modern-rest)
+[![No AI slop](https://img.shields.io/badge/no-slop-purple.svg)](https://github.com/wemake-services/django-modern-rest/blob/master/.github/AI_POLICY.md)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/django-modern-rest?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=BRIGHTGREEN&left_text=downloads)](https://pepy.tech/projects/django-modern-rest)
-[![Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
-[![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
+[![Supported Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
+[![Code Style](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wemake-services/django-modern-rest)
-[![Telegram chat](https://img.shields.io/badge/chat-join-blue.svg?logo=telegram)](https://t.me/django_modern_rest)
+[![Telegram Chat](https://img.shields.io/badge/chat-join-blue.svg?logo=telegram)](https://t.me/django_modern_rest)
 </div>
 
 ## Features
 
 - [x] [Blazingly fast](https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html)
-- [x] Supports `django>=4.2`
+- [x] Supports `django>=5.0`
 - [x] Supports `pydantic2`, `msgspec`, `attrs`, `dataclasses`, `TypedDict` as model schemas, but not bound to any of these libraries
 - [x] Supports async Django without any `sync_to_async` calls inside, tested to work with free-threading builds
 - [x] Fully typed and checked with `mypy`, `pyright`, and `pyrefly` in strict modes
@@ -78,7 +78,7 @@
 
 Works for:
 - CPython 3.11+ or PyPy 3.11+
-- Django 4.2+
+- Django 5.0+
 
 ```bash
 pip install django-modern-rest
@@ -153,7 +153,7 @@ Done! Now you have your shiny API with 100% type
 safe validation and interactive docs.
 
 Next steps:
-- [The full documentation](https://django-modern-rest.rtfd.io) has everything you need to get started!
+- [The full documentation](https://django-modern-rest.readthedocs.io/en/latest/) has everything you need to get started!
 - [wemake-django-template](https://github.com/wemake-services/wemake-django-template) can be used to jump-start your new project with `django-modern-rest`!
 - [awesome-django-modern-rest](https://github.com/kondratevdev/awesome-django-modern-rest) - a curated list of resources related to `django-modern-rest`!
 

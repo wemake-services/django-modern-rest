@@ -125,7 +125,7 @@ natively, you can translate them right in your own local project.
 Here's how to do it:
 
 1. Create a directory called ``locale/`` inside your project and add it to
-   `LOCALE_PATHS <https://docs.djangoproject.com/en/6.0/ref/settings/#locale-paths>`_
+   `LOCALE_PATHS <https://docs.djangoproject.com/en/stable/ref/settings/#locale-paths>`_
    setting in ``settings.py``
 2. Create a language directory inside ``locale/``,
    for example: ``locale/pt-br/``,

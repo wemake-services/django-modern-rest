@@ -192,8 +192,9 @@ class FileRenderer(Renderer):
     ) -> bytes:
         """Render a file."""
         raise NotImplementedError(
-            'FileRenderer.render() must not be called, '
-            'instead return a FileResponse directly',
+            'FileRenderer cannot serialize regular response bodies. '
+            'Return a FileResponse directly for file responses, or configure '
+            'a non-file renderer for responses that need serialization.',
         )
 
     @property

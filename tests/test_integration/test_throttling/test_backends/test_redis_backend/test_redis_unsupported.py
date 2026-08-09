@@ -1,12 +1,7 @@
 from typing import Any
 
 import pytest
-
-try:
-    import redis
-except ImportError:  # pragma: no cover
-    pytest.skip(reason='redis is not installed', allow_module_level=True)
-
+import redis
 from redis import asyncio as aioredis
 from typing_extensions import override
 

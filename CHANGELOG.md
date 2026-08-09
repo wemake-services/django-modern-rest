@@ -1,6 +1,6 @@
 # Version history
 
-We will follow [Semantic Versions](https://semver.org/) since ``1.0.0`` release.
+We will follow [Semantic Versions](https://semver.org/) since `1.0.0` release.
 While in `Development Status :: 3 - Alpha` - we will break
 all the things without any notices.
 
@@ -18,7 +18,125 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## 0.13.0 WIP
+
+### Breaking changes
+
+- `Schema.then` is renamed to be `Schema.schema_then`
+  to be consistent with other similar names, #1221
+- `dmr.openapi.objects.openapi.convert` function is renamed and moved
+  to `dmr.openapi.mappers.schema_normalization.dump_schema`, #1221
+- `dmr.openapi.objects.openapi.normalize_key`
+  and `dmr.openapi.objects.openapi.normalize_value` functions are removed, #1221
+- `dmr.openapi.objects.openapi.ConvertedSchema` is renamed and moved
+  to `dmr.openapi.mappers.schema_normalization.DumpedSchema`, #1221
+- `dmr.openapi.views.base.DumpedSchema` is removed,
+  it was just a `str` type alias, #1221
+- `dmr.openapi.objects.OpenAPI` is moved
+  to `dmr.openapi.openapi.OpenAPI`, #1222
+- `rebuild_namespace` parameter in `PydanticSerializer.from_python`
+  was renamed to `extra_namespace`, #1222
+- Changed `skip_validation` parameter to be kw-only
+  on `OpenAPIView.as_view()` and all its subclasses, #1229
+- Renamed `dmr.controller.Controller.get_path_item` to
+  `get_schema`, so all methods will be consistent, #1238
+
+### Features
+
+- Django 6.1 official support, #1214
+- Added `--skip-validation` to the `dmr_export_schema` management command, #1225
+- Added `extra_namespace` parameter to `BaseSerializer.from_python`
+  and all its existing subclasses, #1222
+- Added an ability to load external OpenAPI schemas
+  into our typed dataclasses, #1222
+- Added `external_path()` function, so we can load external views, #1239
+- Added an option to skip some controllers / endpoints
+  from the OpenAPI spec, #1238
+
+### Bugfixes
+
+- Fixed a bug that `OpenAPIConfig.components` were silently
+  ignored when defined with custom user's data, #1229
+- Fixed `OpenAPIFormat.IRI` value, #1228
+
+
+## 0.12.1 (2026-07-31)
+
+### Bugfixes
+
+- Added missing `@sensitive_post_parameters` decorator
+  to all auth views, #1189
+- Fixed `@endpoint_decorator` passing incorrect parameters
+  to the endpoint function, #1189
+- Fixed `@endpoint_decorator` not working properly with async endpoints, #1189
+
+
+## 0.12.0 (2026-07-30)
+
+### Features
+
+- Added "Opaque Token" auth backend, #1051
+- Added `VerifyTokenSyncController` and `VerifyTokenAsyncController`
+  reusable controllers to verify JWT access tokens, #1129
+- Added test helpers in `dmr.test` for asserting that endpoints are
+  throttled, #1167
+
+### Bugfixes
+
+- Streaming with `streaming_ping_seconds` no longer leaves the pending
+  ping timer task behind on every produced event, #1046
+- Fixed `500` error on request bodies containing invalid `utf-8` bytes
+  inside `msgspec`'s json and msgpack parsers,
+  now `400` is correctly returned, #1135
+- Properly warn users that use our `pytest` plugin,
+  but do not have `pytest_django` installed, #1167
+- CSRF is now ensured before any other actions in Django-Session auth, #1180,
+- Fixed that `jwt` extra was required in `throttling` code, #1178
+- Fixed many places that were missing `__slots__`, #1185
+
+### Misc
+
+- Enabled stricter `__slots__` checks in CI, #1183
+- Improved `pytest` plugin docs
+- Added `nanodjango` and µDjango examples
+  to the micro-framework docs page, #1049
+
+
+## Version 0.11.0 (2026-06-27)
+
+In this release we significantly improved the DX of defining common
+auth and throttling types in the settings that could be used
+for both sync and async controllers at the same time.
+
+### Breaking changes
+
+- Dropped macOS [x86_64 wheel support](https://github.com/pyca/cryptography/issues/13520)
+- Dropped Django 4.2 support
+
+### Features
+
+- Added `SyncOrAsyncThrottle` class to apply a single throttle rule
+  to both sync and async endpoints via global settings, #1075
+- Added `SyncOrAsyncAuth` class to apply a single auth rule
+  to both sync and async endpoints via global settings, #1102
+
+### Bugfixes
+
+- Fixed several compatibility issues on older Django 5.x versions, #1096
+- Fixed `LeakyBucket` throttling algorithm corner cases, #1044
+- Fixed OpenAPI schema generation for enum values used
+  in path, query, header, and cookie parameters, #1059
+- Fixed that `dmr.plugins.msgspec.msgpack` cache was not cleared
+  on `clear_settings_cache` calls
+
+### Misc
+
+- Renamed the default OpenAPI title from `Django Modern Rest`
+  to `Your Awesome Project` and documented all `OpenAPIConfig`
+  fields, #1021
+
+
+## Version 0.10.0 (2026-05-26)
 
 ### Breaking changes
 
@@ -27,11 +145,27 @@ of requirements for an API to count as public.
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
 
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Change all existing `dmr.files.FileResponseSpec` usages
+to include `as_attachment=True` parameter.
+```
+
+### Features
+
+- Added support for JSON Schema 2020-12 dynamic reference keywords
+  (`$dynamicRef`, `$dynamicAnchor`, `$defs`) in OpenAPI schema generation.
+  These can now be propagated through `extra_json_schema`
+  for generic type definitions, #1039
+
 ### Misc
 
 - Use `typing_extensions.Sentinel` for `dmr.types.EMPTY`, #995
-- `pyright@1.0` official support, #1015
-- `mypy@2.0` official support, #1013
+- `pyrefly@1.0` official support, #1015
+- `mypy@2.0` and `mypy@2.1` official support, #1013
 
 
 ## Version 0.9.0 (2026-05-07)
@@ -202,7 +336,7 @@ No breaking changes in this release.
 
 ### Features
 
-- Added `PydanticFastSerializer` to serialize and deserialize ``json``
+- Added `PydanticFastSerializer` to serialize and deserialize `json`
   objects directly, #830
 - Added support for complex `pydantic` fields inside
   `TypedDict`, `@dataclass`, etc models, when using `PydanticSerializer`
@@ -468,15 +602,15 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
 
 ### Features
 
-- Added ``FileResponseSpec`` and improved ``FileResponse``
+- Added `FileResponseSpec` and improved `FileResponse`
   schema generation, #682
-- Added ``encoding:`` support for file media types in ``FileMetadata``, #682
+- Added `encoding:` support for file media types in `FileMetadata`, #682
 
 ### Bugfixes
 
 - Fixed OpenAPI schema for custom HTTP Basic auth headers, #672
 - Fixed JWT claim validation and error handling in `JWToken.decode`, #675
-- Fixed incorrect OpenAPI schema for ``FileResponse``, #682
+- Fixed incorrect OpenAPI schema for `FileResponse`, #682
 - Fixed that `404` was not listed in the endpoint's metadata,
   when using `URLRoute` without `Path` component, #685
 - Fixed that `404` was not documented in the OpenAPI
@@ -509,9 +643,9 @@ To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
   was raising an error. Now it returns 406 as it should, #656
 - Fixed fake examples generation, #638
 - Fixed OpenAPI schema for custom JWT auth parameters, #660
-- Fixed ``Body`` component was not able to properly parse lists
-  with ``multipart/form-data`` parser, #644
-- Fixed that not options were passed to ``JWToken._build_options``, #671
+- Fixed `Body` component was not able to properly parse lists
+  with `multipart/form-data` parser, #644
+- Fixed that not options were passed to `JWToken._build_options`, #671
 
 ### Misc
 

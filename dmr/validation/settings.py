@@ -8,14 +8,14 @@ from dmr.metadata import ResponseSpec
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
-from dmr.security import AsyncAuth, SyncAuth
+from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
     Settings,
     SettingsDict,
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
-from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 from dmr.types import EMPTY
 
 
@@ -26,13 +26,13 @@ class _SettingsModel(SettingsDict, total=False):
     We redefine all unsupported fields with ``Any`` types here.
     """
 
-    parsers: Sequence[Any]  # type: ignore[misc]
-    renderers: Sequence[Any]  # type: ignore[misc]
-    auth: Sequence[Any]  # type: ignore[misc]
-    throttling: Sequence[Any]  # type: ignore[misc]
-    responses: Sequence[Any]  # type: ignore[misc]
-    openapi_config: Any  # type: ignore[misc]
-    global_error_handler: Any  # type: ignore[misc]
+    parsers: Sequence[Any]
+    renderers: Sequence[Any]
+    auth: Sequence[Any]
+    throttling: Sequence[Any]
+    responses: Sequence[Any]
+    openapi_config: Any
+    global_error_handler: Any
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -78,14 +78,21 @@ class SettingsValidator:
             )
         except self.serializer.validation_error as exc:
             raise EndpointMetadataError('Settings validation failed') from exc
-        return cast(_SettingsModel, settings)
+        return cast('_SettingsModel', settings)
 
-    def _validate_types(  # noqa: C901, WPS231, WPS238
+    def _validate_types(
         self,
         settings: _SettingsModel,
     ) -> None:
         # Some types are not compatible with pydantic / msgspec validation.
         # So, we validate them by hands.
+        self._validate_sequence_types(settings)
+        self._validate_scalar_types(settings)
+
+    def _validate_sequence_types(  # noqa: WPS231, WPS238
+        self,
+        settings: _SettingsModel,
+    ) -> None:
         if not all(
             isinstance(parser, Parser) for parser in settings.get('parsers', [])
         ):
@@ -104,22 +111,27 @@ class SettingsValidator:
 
         # Auth:
         if not all(
-            isinstance(auth, (SyncAuth, AsyncAuth))
+            isinstance(auth, (SyncAuth, AsyncAuth, SyncOrAsyncAuth))
             for auth in settings.get('auth', [])
         ):
             raise EndpointMetadataError(
-                'Settings.auth must all be SyncAuth or AsyncAuth instances',
+                'Settings.auth must all be SyncAuth, AsyncAuth, '
+                'or SyncOrAsyncAuth instances',
             )
 
         # Throttling:
         if not all(
-            isinstance(throttling, (SyncThrottle, AsyncThrottle))
+            isinstance(
+                throttling,
+                (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
+            )
             for throttling in settings.get('throttling', [])
         ):
             raise EndpointMetadataError(
                 (
-                    'Settings.throttling must all be SyncThrottle '
-                    'or AsyncThrottle instances'
+                    'Settings.throttling must all be '
+                    'SyncThrottle, AsyncThrottle, or '
+                    'SyncOrAsyncThrottle instances'
                 ),
             )
 
@@ -132,6 +144,10 @@ class SettingsValidator:
                 'Settings.responses must all be ResponseSpec instances',
             )
 
+    def _validate_scalar_types(
+        self,
+        settings: _SettingsModel,
+    ) -> None:
         openapi_config = settings.get('openapi_config', EMPTY)
         if openapi_config is not EMPTY and not isinstance(
             openapi_config,

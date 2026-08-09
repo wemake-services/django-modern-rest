@@ -12,7 +12,7 @@ class APIController(Controller[PydanticSerializer]):
 
     def get(self) -> str:
         # Let's test that `User` has the correct type:
-        assert self.request.user.username
+        assert self.request.user.is_authenticated
         return 'authed'
 
 

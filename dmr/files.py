@@ -67,8 +67,8 @@ class FileBody:
         media_type_meta = (
             get_annotated_metadata(
                 conditional_models.get(parser.content_type, model),
-                model_meta,
                 MediaTypeMetadata,
+                model_meta=model_meta,
             )
             or MediaTypeMetadata()
         )
@@ -123,6 +123,12 @@ class FileResponseSpec(ResponseSpec):
         as_attachment: Marks responses with ``Content-Disposition`` header
             as required. Use together with ``FileResponse(as_attachment=True)``.
         file_body: Model to be used for file body schema generation.
+
+    .. versionchanged:: 0.10.0
+        Added ``as_attachment`` parameter that can mark files
+        that should be sent via ``Content-Disposition`` header.
+        Similar to Django's ``as_attachment`` parameter
+        in :class:`django.http.FileResponse`.
 
     """
 

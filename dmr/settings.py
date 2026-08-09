@@ -139,7 +139,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.throttling_allow_unsafe_cache: True,
     # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
-        title='Django Modern Rest',
+        title='Your Awesome Project',
         version='0.1.0',
     ),
     Settings.openapi_examples_seed: None,  # turned off by default

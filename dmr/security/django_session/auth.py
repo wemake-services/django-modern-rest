@@ -1,49 +1,20 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final, Self, final
+from typing import TYPE_CHECKING, Self
 
 from django.conf import settings
-from django.http import HttpRequest
-from django.middleware.csrf import CsrfViewMiddleware
-from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.metadata import (
-    EndpointMetadata,
-    ResponseSpec,
-    ResponseSpecProvider,
-)
+from dmr.internal.csrf import ensure_csrf
+from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
-from dmr.response import APIError
 from dmr.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
-
-_CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
-
-
-@final
-class _EnsureCsrfToken(CsrfViewMiddleware):
-    """
-    CSRF check middleware that returns the rejection reason.
-
-    Used for checking CSRF tokens manually.
-    """
-
-    def _reject(self, request: HttpRequest, reason: str) -> str:
-        # Return the failure reason instead of an ``HttpResponse``.
-        return reason
-
-
-def _get_csrf_failure_reason(request: HttpRequest) -> str | None:
-    """Perform CSRF validation using ``_EnsureCsrfToken``."""
-    check = _EnsureCsrfToken(lambda _: None)  # type: ignore[arg-type]
-    check.process_request(request)
-    return check.process_view(request, None, (), {})  # type: ignore[arg-type, return-value]
 
 
 class _DjangoSessionAuth(ResponseSpecProvider):
@@ -116,12 +87,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         return not settings.CSRF_USE_SESSIONS
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
-        reason = _get_csrf_failure_reason(controller.request)
-        if reason:
-            raise APIError(
-                controller.format_error(_CSRF_FAILED_MSG.format(reason=reason)),
-                status_code=HTTPStatus.FORBIDDEN,
-            )
+        ensure_csrf(controller)
 
 
 class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
@@ -156,11 +122,10 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
 
         For example: checking that user is staff / superuser.
         """
+        self._ensure_csrf(controller)
         user = getattr(controller.request, 'user', None)
         if not user or not user.is_authenticated or not user.is_active:
             return None
-
-        self._ensure_csrf(controller)
         return self
 
 
@@ -196,12 +161,11 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
 
         For example: checking that user is staff / superuser.
         """
+        self._ensure_csrf(controller)
         auser = getattr(controller.request, 'auser', None)
         if auser is None:
             return None
         user = await auser()
         if not user.is_authenticated or not user.is_active:
             return None
-
-        self._ensure_csrf(controller)
         return self

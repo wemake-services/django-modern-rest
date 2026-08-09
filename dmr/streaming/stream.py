@@ -179,6 +179,10 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
                 return_when=asyncio.FIRST_COMPLETED,
             )
 
+            # The ping timer is recreated on each iteration,
+            # so a still pending one must not be left running.
+            ping_task.cancel()
+
             if ping_task in done and event_task not in done:
                 # Ping fired before the next real event: send the
                 # ping comment and do not touch the original task.

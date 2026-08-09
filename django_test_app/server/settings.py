@@ -45,11 +45,13 @@ INSTALLED_APPS = [
     'server.apps.model_fk',
     'server.apps.middlewares',
     'server.apps.controllers',
-    'server.apps.openapi',
     'server.apps.negotiations',
     'server.apps.jwt_auth',
     'server.apps.django_session_auth',
+    'server.apps.token_auth',
+    'server.apps.token_custom_user',
     'server.apps.etag',
+    'server.apps.external_views',
     # Django:
     'django.contrib.admin',
     'django.contrib.auth',
@@ -60,6 +62,7 @@ INSTALLED_APPS = [
     # DMR:
     'dmr',
     'dmr.security.jwt.blocklist',
+    'dmr.security.token.app',
     # Third party:
     'csp',
 ]

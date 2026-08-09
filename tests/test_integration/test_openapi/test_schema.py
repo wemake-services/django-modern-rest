@@ -78,6 +78,7 @@ st.openapi.format(
 # Register custom auth:
 
 
+# TODO: provide `Token` auth as well
 @st.auth().apply_to(st.openapi.require_security_scheme('django_session'))
 class _DjangoSessionAuth:
     def get(
@@ -111,6 +112,7 @@ class _DjangoSessionAuth:
 
 @schema.parametrize()
 @h_settings(max_examples=_MAX_EXAMPLES)
+@pytest.mark.timeout(0)
 def test_schemathesis(
     tracecov_map: 'tracecov.CoverageMap | None',
     *,

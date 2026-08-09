@@ -40,6 +40,9 @@ We can define throttling on three different levels:
 
   .. tab:: per settings
 
+    Set :data:`~dmr.settings.Settings.throttling` setting
+    to enable throttling for all controllers.
+
     .. code-block:: python
       :caption: settings.py
       :linenos:
@@ -48,6 +51,36 @@ We can define throttling on three different levels:
       >>> from dmr.throttling import SyncThrottle, Rate
 
       >>> DMR_SETTINGS = {Settings.throttling: [SyncThrottle(5, Rate.minute)]}
+
+    When your project mixes sync and async endpoints,
+    use :class:`~dmr.throttling.SyncOrAsyncThrottle`
+    in settings:
+
+    .. code-block:: python
+      :caption: settings.py
+
+      >>> from dmr.settings import Settings
+      >>> from dmr.throttling import (
+      ...     AsyncThrottle,
+      ...     Rate,
+      ...     SyncOrAsyncThrottle,
+      ...     SyncThrottle,
+      ... )
+
+      >>> DMR_SETTINGS = {
+      ...     Settings.throttling: [
+      ...         SyncOrAsyncThrottle(
+      ...             SyncThrottle(5, Rate.minute),
+      ...             AsyncThrottle(5, Rate.minute),
+      ...         ),
+      ...     ],
+      ... }
+
+    .. note::
+
+      :class:`~dmr.throttling.SyncOrAsyncThrottle` is only allowed
+      in ``DMR_SETTINGS``. Using it on a controller or endpoint
+      raises :exc:`~dmr.exceptions.EndpointMetadataError`.
 
 Providing several throttling instances means that all of them must succeed.
 When multiple throttling rules are defined
@@ -288,7 +321,7 @@ Cache keys is what defines how requests are identified.
 
 By default we use :func:`dmr.throttling.cache_keys.RemoteAddr` cache key,
 which identifies requests by IP taken from
-`REMOTE_ADDR <https://docs.djangoproject.com/en/6.0/ref/request-response/#django.http.HttpRequest.META>`_
+`REMOTE_ADDR <https://docs.djangoproject.com/en/stable/ref/request-response/#django.http.HttpRequest.META>`_
 value from ``request.META``.
 
 .. warning::
@@ -506,6 +539,17 @@ This way both your successful responses
 and error responses will have the needed ratelimiting headers.
 
 
+Testing
+-------
+
+.. note::
+
+  ``dmr.test`` and our ``pytest`` plugin ship helpers to drive an endpoint
+  to its limit and assert the ``429`` -- ``assert_throttling``,
+  ``reduced_throttling`` and ``assert_throttled``.
+  See :ref:`testing-throttling` for details.
+
+
 API Reference
 -------------
 
@@ -519,6 +563,9 @@ Base
 .. autoclass:: dmr.throttling.AsyncThrottle
   :members:
   :inherited-members:
+
+.. autoclass:: dmr.throttling.SyncOrAsyncThrottle
+  :members:
 
 .. autoclass:: dmr.throttling.Rate
   :members:

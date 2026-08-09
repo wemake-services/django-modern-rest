@@ -67,6 +67,9 @@ There are 4 ways to provide auth classes for an endpoint:
 
   .. tab:: per settings
 
+    Set :data:`~dmr.settings.Settings.auth` setting
+    to enable auth for all controllers.
+
     .. code-block:: python
       :caption: settings.py
       :linenos:
@@ -75,6 +78,31 @@ There are 4 ways to provide auth classes for an endpoint:
       >>> from dmr.security.django_session import DjangoSessionSyncAuth
 
       >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
+
+    When your project mixes sync and async endpoints,
+    use :class:`~dmr.security.SyncOrAsyncAuth` in settings:
+
+    .. code-block:: python
+      :caption: settings.py
+
+      >>> from dmr.settings import Settings
+      >>> from dmr.security import SyncOrAsyncAuth
+      >>> from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
+
+      >>> DMR_SETTINGS = {
+      ...     Settings.auth: [
+      ...         SyncOrAsyncAuth(
+      ...             HttpBasicSyncAuth(),
+      ...             HttpBasicAsyncAuth(),
+      ...         ),
+      ...     ],
+      ... }
+
+    .. note::
+
+      :class:`~dmr.security.SyncOrAsyncAuth` is only allowed
+      in ``DMR_SETTINGS``. Using it on a controller or endpoint
+      raises :exc:`~dmr.exceptions.EndpointMetadataError`.
 
 Providing several auth instances means that at least one of them must succeed.
 
@@ -149,6 +177,53 @@ Select auth backend that fits your needs:
 
       Support for JWT tokens based auth.
 
+    .. grid-item-card:: Opaque Tokens
+      :link: token
+      :link-type: doc
+
+      Database-backed opaque token auth with revocation support.
+
+
+JWT vs Opaque Tokens
+~~~~~~~~~~~~~~~~~~~~
+
+Both are valid token-based auth strategies.
+The right pick mostly comes down to how you feel
+about revocation vs a database lookup on every request.
+
+.. list-table::
+  :header-rows: 1
+  :widths: 20 40 40
+
+  * -
+    - JWT
+    - Opaque Token
+  * - Storage
+    - Stateless, no database lookup
+    - Row in the database, looked up per request
+  * - Revocation
+    - Hard: valid until expiry,
+      needs a blocklist to revoke early
+    - Easy: ``revoked_at`` is set, token is dead instantly
+  * - Token size
+    - Larger, carries claims in the payload
+    - Small, just a random string
+  * - Per-request cost
+    - Signature verification, no I/O
+    - One DB read per request, plus an optional write
+      if last-use tracking is enabled
+  * - Good fit for
+    - High-throughput / distributed services
+      where a DB round-trip per request is too costly
+    - APIs that need instant logout,
+      audit trails, or per-token metadata
+
+If you need instant revocation or per-token state
+(last used, scopes, device info), use :doc:`Opaque Tokens <token>`.
+If you need to skip a database lookup on every request
+and can tolerate tokens staying valid until they expire,
+use :doc:`JWT <jwt>`.
+
 
 API Reference
 -------------
@@ -160,6 +235,9 @@ API Reference
 .. autoclass:: dmr.security.AsyncAuth
   :members:
   :inherited-members:
+
+.. autoclass:: dmr.security.SyncOrAsyncAuth
+  :members:
 
 .. autofunction:: dmr.security.request_auth
 

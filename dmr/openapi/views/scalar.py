@@ -12,7 +12,7 @@ class ScalarView(OpenAPIView):
     View for rendering the OpenAPI schema with Scalar.
 
     Renders an interactive HTML page that allows exploring the
-    :class:`~dmr.openapi.objects.OpenAPI` specification using Scalar
+    :class:`~dmr.openapi.openapi.OpenAPI` specification using Scalar
     API Reference.
 
     Attributes:

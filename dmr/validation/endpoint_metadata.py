@@ -25,10 +25,10 @@ from dmr.metadata import (
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import infer_status_code
-from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.security.base import AsyncAuth, SyncAuth, SyncOrAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
-from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 from dmr.throttling.backends.django_cache import (
     AsyncDjangoCache,
     SyncDjangoCache,
@@ -288,6 +288,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
             servers=payload.servers,
+            ignore_from_spec=self._build_ignore_from_spec(),
         )
 
     def _from_modify(  # noqa: WPS210
@@ -348,6 +349,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
             servers=payload.servers,
+            ignore_from_spec=self._build_ignore_from_spec(),
         )
 
     def _from_raw_data(  # noqa: WPS210
@@ -402,6 +404,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=None,
             callbacks=None,
             servers=None,
+            ignore_from_spec=self._build_ignore_from_spec(),
         )
 
     def _build_endpoint_name(self) -> str:
@@ -479,19 +482,34 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
     ) -> list[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
-        settings_auth: Sequence[SyncAuth | AsyncAuth] = resolve_setting(
-            Settings.auth,
+        settings_auth: Sequence[SyncAuth | AsyncAuth | SyncOrAsyncAuth] = (
+            resolve_setting(Settings.auth)
         )
-
-        auth = [
+        # SyncOrAsyncAuth is settings-only — reject controller/endpoint usage:
+        for candidate_auth in (
             *payload_auth,
             *(self.controller_cls.auth or ()),
-            *settings_auth,
-        ]
-        # Validate that auth matches the sync / async endpoints:
+        ):
+            if isinstance(candidate_auth, SyncOrAsyncAuth):  # pyright: ignore[reportUnnecessaryIsInstance]
+                raise EndpointMetadataError(
+                    'SyncOrAsyncAuth can only be used in settings, '
+                    'not at controller or endpoint level '
+                    f'for {self.endpoint_name=}',
+                )
         base_type = (
             AsyncAuth if inspect.iscoroutinefunction(self.func) else SyncAuth
         )
+        auth = [
+            *payload_auth,
+            *(self.controller_cls.auth or ()),
+            *(
+                setting_auth.resolve(base_type)
+                if isinstance(setting_auth, SyncOrAsyncAuth)
+                else setting_auth
+                for setting_auth in settings_auth
+            ),
+        ]
+        # Validate that auth matches the sync / async endpoints:
         if not all(
             isinstance(auth_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
             for auth_instance in auth
@@ -512,7 +530,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return None
         return auth
 
-    def _build_throttling(  # noqa: WPS231
+    def _build_throttling(  # noqa: WPS210, WPS231
         self,
     ) -> tuple[
         tuple[SyncThrottle | AsyncThrottle, ...] | None,
@@ -522,25 +540,44 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
-        settings_throttling: Sequence[SyncThrottle | AsyncThrottle] = (
-            resolve_setting(
-                Settings.throttling,
-            )
-        )
+        settings_throttling: Sequence[
+            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle
+        ] = resolve_setting(Settings.throttling)
 
-        # We use tuple and not a list, because we expose `__dmr_throttling__`
-        # to each request, so it would not be possible to mutate it by accident.
-        throttling = [
-            *payload_throttling,
-            *(self.controller_cls.throttling or ()),
-            *settings_throttling,
-        ]
         # Validate that throttling matches the sync / async endpoints:
         base_type = (
             AsyncThrottle
             if inspect.iscoroutinefunction(self.func)
             else SyncThrottle
         )
+
+        # We need to check that there are no `SyncOrAsyncThrottle`
+        # instances in payload and controller throttling,
+        # because they are only allowed in settings.
+        for throttle in (
+            *payload_throttling,
+            *(self.controller_cls.throttling or ()),
+        ):
+            if isinstance(throttle, SyncOrAsyncThrottle):  # pyright: ignore[reportUnnecessaryIsInstance]
+                raise EndpointMetadataError(
+                    'SyncOrAsyncThrottle can only be used in settings, '
+                    'not at controller or endpoint level '
+                    f'for {self.endpoint_name=}',
+                )
+
+        # We use tuple and not a list, because we expose `__dmr_throttling__`
+        # to each request, so it would not be possible to mutate it by accident.
+        # We resolve `SyncOrAsyncThrottle` from settings to the actual instance.
+        throttling = [
+            *payload_throttling,
+            *(self.controller_cls.throttling or ()),
+            *(
+                setting_throttle.resolve(base_type)
+                if isinstance(setting_throttle, SyncOrAsyncThrottle)
+                else setting_throttle
+                for setting_throttle in settings_throttling
+            ),
+        ]
         if not all(
             isinstance(throttling_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
             for throttling_instance in throttling
@@ -651,6 +688,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if settings_value is not None:
             return settings_value  # type: ignore[no-any-return]
         return self._build_validate_responses()
+
+    def _build_ignore_from_spec(self) -> bool:
+        if self.payload and self.payload.ignore_from_spec is not None:
+            return self.payload.ignore_from_spec
+        return self.controller_cls.ignore_from_spec
 
     def _build_error_handler(
         self,

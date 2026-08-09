@@ -103,7 +103,6 @@ class ResponseSpec:
         """If headers and cookies are not set, look for metadata and use it."""
         metadata = get_annotated_metadata(
             self.return_type,
-            None,
             ResponseSpecMetadata,
         )
         if metadata is not None:
@@ -417,6 +416,8 @@ class EndpointMetadata:
         servers: An alternative servers array to service this operation.
             If a servers array is specified at the Path Item Object or
             OpenAPI Object level, it will be overridden by this value.
+        ignore_from_spec: If set to ``True``, this endpoint
+            would not be added to the final OpenAPI spec.
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
@@ -427,7 +428,7 @@ class EndpointMetadata:
 
     .. seealso::
 
-        https://httpwg.org/http-extensions/draft-ietf-httpbis-safe-method-w-body.html
+        https://www.ietf.org/archive/id/draft-ietf-httpbis-safe-method-w-body-05.html
 
     """
 
@@ -465,6 +466,7 @@ class EndpointMetadata:
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
+    ignore_from_spec: bool
 
     # Pre-computed fields:
     throttling: tuple['SyncThrottle | AsyncThrottle', ...] | None = (
@@ -563,13 +565,18 @@ _MetadataT = TypeVar('_MetadataT')
 
 def get_annotated_metadata(
     model: Any,
-    model_meta: tuple[Any, ...] | None,
     metadata_type: type[_MetadataT],
+    *,
+    model_meta: tuple[Any, ...] | None = None,
 ) -> _MetadataT | None:
     """
-    Find given *metadata_type* in :attr:`typing.Annotate.__metadata__`.
+    Find given *metadata_type* in *model*.
 
-    Or return ``None`` if it can't be found.
+    *model* can be :data:`typing.Annotate` object.
+    Or it can be a regular model, with *model_meta*,
+    which is the ``__metadata__`` field from ``Annotated``.
+
+    Or return ``None`` if nothing can be found.
     """
     if get_origin(model) is Annotated and model.__metadata__:
         for metadata in model.__metadata__:

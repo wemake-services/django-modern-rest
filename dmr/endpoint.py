@@ -4,7 +4,7 @@ import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -26,9 +26,7 @@ from dmr.internal.endpoint import (
     ModifyAsyncCallable,
     ModifySyncCallable,
 )
-from dmr.internal.endpoint import (
-    request_endpoint as request_endpoint,
-)
+from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
 from dmr.openapi.objects import (
@@ -61,6 +59,10 @@ if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.routing import Router
     from dmr.validation.response import ValidatedModification
+
+_ThrottlingDef: TypeAlias = (
+    Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
+)
 
 
 class Endpoint:  # noqa: WPS214
@@ -607,7 +609,7 @@ def validate(  # noqa: WPS234
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -617,6 +619,7 @@ def validate(  # noqa: WPS234
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponseBase]]],
     Callable[_ParamT, Awaitable[HttpResponseBase]],
@@ -638,7 +641,7 @@ def validate(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -648,6 +651,7 @@ def validate(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> Callable[
     [Callable[_ParamT, HttpResponseBase]],
     Callable[_ParamT, HttpResponseBase],
@@ -669,7 +673,7 @@ def validate(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -679,6 +683,7 @@ def validate(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
     Callable[_ParamT, _ResponseT],
@@ -699,7 +704,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -709,6 +714,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponseBase]]],
@@ -806,6 +812,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             a request that may be initiated by the API provider and the
             expected responses.
         servers: An alternative servers array to service this operation.
+        ignore_from_spec: If set to ``True``, this endpoint
+            would not be added to the final OpenAPI spec.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -838,6 +846,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,
+            ignore_from_spec=ignore_from_spec,
         ),
     )
 
@@ -860,7 +869,7 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -871,6 +880,7 @@ def modify(
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifyAsyncCallable: ...
 
 
@@ -891,7 +901,7 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -903,6 +913,7 @@ def modify(
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifySyncCallable: ...
 
 
@@ -923,7 +934,7 @@ def modify(
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -935,6 +946,7 @@ def modify(
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifyAnyCallable: ...
 
 
@@ -954,7 +966,7 @@ def modify(  # noqa: WPS211
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None = (),
+    throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: str | None = None,
     description: str | None = None,
@@ -966,6 +978,7 @@ def modify(  # noqa: WPS211
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -1047,6 +1060,8 @@ def modify(  # noqa: WPS211
         servers: An alternative servers array to service this operation.
         links: Possible links to other OpenAPI operations.
         response_description: Description for the generated response object.
+        ignore_from_spec: If set to ``True``, this endpoint
+            would not be added to the final OpenAPI spec.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -1085,6 +1100,7 @@ def modify(  # noqa: WPS211
             servers=servers,
             links=links,
             response_description=response_description,
+            ignore_from_spec=ignore_from_spec,
         ),
     )
 

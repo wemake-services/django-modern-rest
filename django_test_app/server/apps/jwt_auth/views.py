@@ -8,7 +8,7 @@ from typing_extensions import override
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
-from dmr.security.jwt.views import (
+from dmr.security.jwt.views import (  # noqa: WPS235
     ObtainTokensAsyncController,
     ObtainTokensPayload,
     ObtainTokensResponse,
@@ -16,7 +16,11 @@ from dmr.security.jwt.views import (
     RefreshTokenAsyncController,
     RefreshTokenPayload,
     RefreshTokenSyncController,
+    VerifyTokenAsyncController,
+    VerifyTokenPayload,
+    VerifyTokenSyncController,
 )
+from server.common.assertions import check_sensitive_parameters
 
 
 class ObtainAccessAndRefreshSyncController(
@@ -31,6 +35,7 @@ class ObtainAccessAndRefreshSyncController(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
@@ -66,6 +71,7 @@ class ObtainAccessAndRefreshAsyncController(
         self,
         payload: ObtainTokensPayload,
     ) -> ObtainTokensPayload:
+        check_sensitive_parameters(self.request)
         return payload
 
     @override
@@ -99,6 +105,7 @@ class RefreshSyncController(
 ):
     @override
     def convert_refresh_payload(self, payload: RefreshTokenPayload) -> str:
+        check_sensitive_parameters(self.request)
         return payload['refresh_token']
 
     @override
@@ -135,6 +142,7 @@ class RefreshAsyncController(
         self,
         payload: RefreshTokenPayload,
     ) -> str:
+        check_sensitive_parameters(self.request)
         return payload['refresh_token']
 
     @override
@@ -156,6 +164,35 @@ class RefreshAsyncController(
                 token_type='refresh',  # noqa: S106
             ),
         }
+
+
+@final
+class VerifySyncController(
+    VerifyTokenSyncController[
+        PydanticSerializer,
+        VerifyTokenPayload,
+    ],
+):
+    @override
+    def convert_verify_payload(self, payload: VerifyTokenPayload) -> str:
+        check_sensitive_parameters(self.request)
+        return payload['access_token']
+
+
+@final
+class VerifyAsyncController(
+    VerifyTokenAsyncController[
+        PydanticSerializer,
+        VerifyTokenPayload,
+    ],
+):
+    @override
+    async def convert_verify_payload(
+        self,
+        payload: VerifyTokenPayload,
+    ) -> str:
+        check_sensitive_parameters(self.request)
+        return payload['access_token']
 
 
 @final

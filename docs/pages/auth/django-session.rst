@@ -43,6 +43,9 @@ Example, how to use the auth class and how to get ``self.request.user``:
   Using any of these classes would also automatically enable ``CSRF`` checks
   for this view. Because it is not secure to use Django
   session auth without ``CSRF`` checks.
+  We automatically enforce CSRF checks before any other actions are taken.
+
+Custom user models are automatically supported.
 
 
 Reusing pre-existing views

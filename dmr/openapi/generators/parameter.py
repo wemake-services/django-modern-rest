@@ -32,9 +32,14 @@ class ParameterGenerator:
                 model,
                 serializer,
                 skip_registration=True,
+                register_referenced_components=True,
             ),
         )
-        metadata = get_annotated_metadata(model, model_meta, ParameterMetadata)
+        metadata = get_annotated_metadata(
+            model,
+            ParameterMetadata,
+            model_meta=model_meta,
+        )
         return [  # pyright: ignore[reportReturnType]
             Parameter(
                 name=property_name,

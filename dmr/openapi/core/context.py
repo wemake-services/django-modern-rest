@@ -16,7 +16,7 @@ from dmr.openapi.generators import (
     SchemaGenerator,
     SecuritySchemeGenerator,
 )
-from dmr.openapi.objects import Reference, Schema
+from dmr.openapi.objects import Components, Reference, Schema
 
 if TYPE_CHECKING:
     from dmr.openapi.config import OpenAPIConfig
@@ -51,22 +51,31 @@ class OpenAPIContext:
     generation process. Provides access to different generators.
     """
 
+    __slots__ = (
+        'config',
+        'config_merger',
+        'generators',
+        'registries',
+    )
+
     def __init__(
         self,
-        config: 'OpenAPIConfig',
+        config: 'OpenAPIConfig | None' = None,
     ) -> None:
         """Initialize the OpenAPI context."""
-        self.config = config
+        from dmr.openapi.config import default_config  # noqa: PLC0415
+
+        self.config = config or default_config()
         self.config_merger = ConfigMerger(self)
 
-        # Initialize registries
+        # Initialize registries:
         self.registries = RegistryContainer(
             operation_id=OperationIdRegistry(),
             schema=SchemaRegistry(),
             security_scheme=SecuritySchemeRegistry(),
         )
 
-        # Initialize generators
+        # Initialize generators:
         self.generators = GeneratorContainer(
             operation_id=OperationIdGenerator(self),
             schema=SchemaGenerator(self),
@@ -74,6 +83,18 @@ class OpenAPIContext:
             response=ResponseGenerator(self),
             security_scheme=SecuritySchemeGenerator(self),
             parameter=ParameterGenerator(self),
+        )
+
+    def get_components(self) -> Components:
+        """
+        Resolve all components from own and external schemas.
+
+        .. versionadded:: 0.13.0
+        """
+        return Components(
+            # TODO: support other components, not just `schema`:
+            schemas=self.registries.schema.schemas,
+            security_schemes=self.registries.security_scheme.schemes,
         )
 
     def register_schema(

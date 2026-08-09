@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 from typing import Annotated
 
+from django.conf import LazySettings
 from django.http import HttpResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -12,7 +13,13 @@ from dmr.metadata import ResponseSpecMetadata
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.throttling import Rate, SyncThrottle
+from dmr.settings import Settings
+from dmr.throttling import (
+    AsyncThrottle,
+    Rate,
+    SyncOrAsyncThrottle,
+    SyncThrottle,
+)
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
@@ -108,6 +115,40 @@ def test_throttled_schema_with_errors(snapshot: SnapshotAssertion) -> None:
                     'api/v1/',
                     [
                         path('/with-errors', _AllReportsController.as_view()),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _DynamicDefaultController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_throttled_schema_with_sync_or_async(
+    snapshot: SnapshotAssertion,
+    settings: LazySettings,
+) -> None:
+    """Ensure schema is correct when SyncOrAsyncThrottle is used in settings."""
+    settings.DMR_SETTINGS = {
+        Settings.throttling: [
+            SyncOrAsyncThrottle(
+                SyncThrottle(1, Rate.second),
+                AsyncThrottle(1, Rate.second),
+            ),
+        ],
+    }
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('/dynamic', _DynamicDefaultController.as_view()),
                     ],
                 ),
             ).convert(),

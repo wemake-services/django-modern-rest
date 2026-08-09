@@ -2,6 +2,7 @@ Integrations
 ============
 
 Big list of Django integrations: https://github.com/wsvincent/awesome-django
+Big list of ``django-modern-rest`` awesome things: https://github.com/kondratevdev/awesome-django-modern-rest
 
 .. warning::
 
@@ -10,6 +11,9 @@ Big list of Django integrations: https://github.com/wsvincent/awesome-django
 
   If you are interested in something:
   `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
+
+Also check out our :doc:`external-views`
+to learn how to integrate any existing views into ``django-modern-rest``.
 
 
 CSRF
@@ -83,7 +87,7 @@ Pagination
 Limit Offset pagination
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-We support built-in :class:`django.core.paginator.Paginator`.
+We support the built-in :class:`django.core.paginator.Paginator`.
 
 To do so, we only provide metadata for the default pagination:
 
