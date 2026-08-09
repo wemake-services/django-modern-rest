@@ -37,7 +37,7 @@ def _get_project_meta() -> dict[str, str]:
 
 pkg_meta = _get_project_meta()
 project = str(pkg_meta['name'])
-copyright = '2025, wemake-services'  # noqa: A001
+copyright = '2025 - %Y, wemake-services'  # noqa: A001
 author = 'wemake-services'
 
 # The short X.Y version
