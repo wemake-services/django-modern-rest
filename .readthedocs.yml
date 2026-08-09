@@ -18,8 +18,4 @@ build:
     - uv pip install -r requirements.txt --link-mode=copy
     - uv pip install . --link-mode=copy
     - cat docs/conf.py
-    - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en . $READTHEDOCS_OUTPUT/html
-
-sphinx:
-  configuration: "docs/conf.py"
-  fail_on_warning: true
+    - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
