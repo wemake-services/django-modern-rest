@@ -146,3 +146,13 @@ Simply replace Django's ``path`` with :func:`dmr.routing.path`:
     ]
 
 This is a drop-in replacement with no API changes required.
+
+
+External views
+--------------
+
+``django-modern-rest`` can include URLs from other frameworks.
+It can also re-use existing OpenAPI scheme.
+Giving you the most freedom possible.
+
+If you needs this advanced feature, see :doc:`external-views` guide.

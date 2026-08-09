@@ -1,10 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING, Protocol
 
-from dmr.openapi.mappers.schema_normalization import (
-    DumpedSchema,
-    dump_schema,
-)
+from dmr.openapi.mappers.schema_normalization import DumpedSchema, dump_schema
 from dmr.openapi.objects.components import Components
 from dmr.openapi.objects.external_documentation import ExternalDocumentation
 from dmr.openapi.objects.info import Info
@@ -32,8 +29,8 @@ if TYPE_CHECKING:
 try:
     # There's a mismatch of checks with mypyc and mypy,
     # so we use `unused-ignore` here:
-    from openapi_spec_validator import (  # type: ignore[no-redef, unused-ignore]
-        validate as _validate_spec,
+    from openapi_spec_validator import (
+        validate as _validate_spec,  # type: ignore[no-redef, unused-ignore]
     )
 except ImportError:  # pragma: no cover
     _validate_spec = None

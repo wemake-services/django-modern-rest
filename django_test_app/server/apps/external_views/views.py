@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from dmr.decorators import dispatch_decorator
 
-EXTERNAL_FUNCTION_OPENAPI: Final = """
+EXTERNAL_FUNC_OPENAPI: Final = """
 {
   "get": {
     "operationId": "externalViews_externalFunction",

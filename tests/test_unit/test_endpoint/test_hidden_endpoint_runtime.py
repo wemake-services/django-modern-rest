@@ -5,12 +5,7 @@ from typing import Final
 import pytest
 from django.http import HttpResponse
 
-from dmr import (
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRRequestFactory
 

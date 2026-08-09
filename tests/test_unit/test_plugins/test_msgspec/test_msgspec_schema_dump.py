@@ -2,15 +2,8 @@ from typing import Any
 
 import pytest
 
-from dmr.openapi.mappers.schema_normalization import (
-    _dump_value,
-    dump_schema,
-)
-from dmr.openapi.objects import (
-    Header,
-    OpenAPIType,
-    Schema,
-)
+from dmr.openapi.mappers.schema_normalization import _dump_value, dump_schema
+from dmr.openapi.objects import Header, OpenAPIType, Schema
 
 
 @pytest.mark.parametrize(

@@ -6,13 +6,7 @@ from django.http import HttpResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import (
-    Body,
-    Controller,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router

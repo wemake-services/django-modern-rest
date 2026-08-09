@@ -8,6 +8,26 @@
     },
     "openapi": "3.1.0",
     "paths": {
+      "/api/v1/allauth/{client}/config": {
+        "get": {
+          "tags": [
+            "Configuration"
+          ],
+          "summary": "Get configuration",
+          "description": "There are many configuration options that alter the functionality\nand behavior of django-allauth, some of which can also impact the\nfrontend. Therefore, relevant configuration options are exposed via\nthis endpoint. The data returned is not user/authentication\ndependent. Hence, it suffices to only fetch this data once at boot\ntime of your application.\n",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Client"
+            }
+          ],
+          "responses": {
+            "200": {
+              "$ref": "#/components/responses/Configuration"
+            }
+          },
+          "deprecated": false
+        }
+      },
       "/api/v1/async": {
         "get": {
           "tags": [
@@ -47,26 +67,6 @@
                   }
                 }
               }
-            }
-          },
-          "deprecated": false
-        }
-      },
-      "/api/v1/allauth/{client}/config": {
-        "get": {
-          "tags": [
-            "Configuration"
-          ],
-          "summary": "Get configuration",
-          "description": "There are many configuration options that alter the functionality\nand behavior of django-allauth, some of which can also impact the\nfrontend. Therefore, relevant configuration options are exposed via\nthis endpoint. The data returned is not user/authentication\ndependent. Hence, it suffices to only fetch this data once at boot\ntime of your application.\n",
-          "parameters": [
-            {
-              "$ref": "#/components/parameters/Client"
-            }
-          ],
-          "responses": {
-            "200": {
-              "$ref": "#/components/responses/Configuration"
             }
           },
           "deprecated": false

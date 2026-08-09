@@ -1,5 +1,9 @@
+.. _external-views:
+
 External views
 ==============
+
+.. versionadded:: 0.13.0
 
 ``django-modern-rest`` is build around several pure-Django concepts:
 
@@ -68,6 +72,11 @@ pure-Django API views, attach this to existing schema as:
   See :meth:`dmr.openapi.openapi.OpenAPI.convert`
   and :meth:`dmr.openapi.views.base.OpenAPIView.as_view`.
 
+The main feature that allows us to do this is :func:`dmr.routing.external_path`.
+It follows the same API design as :func:`django.urls.path`,
+but also requires ``openapi`` kw-only parameter
+to be passed together with other regular ``path()`` parameters.
+
 Functional example
 ~~~~~~~~~~~~~~~~~~
 
@@ -93,6 +102,24 @@ Now, the same, but with a class:
   :linenos:
 
 It can be any :class:`~django.views.generic.base.View` compatible class!
+
+
+Mixing URLs
+-----------
+
+Since we just work with regular Django URLs, you can mix
+:func:`django.urls.path` and :func:`dmr.routing.external_path` items.
+
+Order of passed urls is preserved:
+
+.. literalinclude:: /examples/external_views/urls_mix.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Note that :class:`dmr.controller.Controller` items will generate
+its own OpenAPI :class:`~dmr.openapi.objects.PathItem` schema.
+While ``external_path()`` would just insert the existing OpenAPI metadata as-is.
 
 
 Registering OpenAPI schemas

@@ -1,6 +1,6 @@
 import re
-from collections.abc import Iterable, Sequence
-from typing import TYPE_CHECKING, Any, TypeAlias
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
-_OpenAPIMetadata: TypeAlias = dict[str, Any]
 _PathControllerSpec: TypeAlias = (
     tuple[
         str,
@@ -53,18 +52,6 @@ def controller_mapping_collector(
                 url.url_patterns,
                 current_path,
             )
-
-
-def process_external(
-    urls: Iterable[_ExternalSpec],
-) -> Sequence[URLPattern]:
-    """Attach OpenAPI metadata to the view."""
-    result_urls: list[URLPattern] = []
-    for url, openapi in urls:
-        assert isinstance(url, URLPattern), url  # noqa: S101
-        url.callback.__dmr_external_openapi__ = openapi  # type: ignore[attr-defined]
-        result_urls.append(url)
-    return result_urls
 
 
 def _process_pattern(

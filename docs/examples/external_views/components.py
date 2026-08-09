@@ -7,7 +7,7 @@ from django.views.decorators.http import require_GET
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema
 from dmr.openapi.objects import Components, PathItem, Tag
 from dmr.openapi.views import OpenAPIJsonView
-from dmr.routing import Router, path
+from dmr.routing import Router, external_path, path
 from examples.external_views.read_openapi import read_openapi_yaml
 
 
@@ -22,15 +22,12 @@ raw_schema = read_openapi_yaml('openapi2.yml')
 # Create a router and URL patterns:
 router = Router(
     'api/',
-    urls=[],
-    external_urls=[  # pass `(external_url, path_item_spec)` pairs:
-        (
-            path(
-                'number/<int:start>/<int:end>/',
-                number,
-                name='number',
-            ),
-            load_schema(
+    urls=[
+        external_path(
+            'number/<int:start>/<int:end>/',
+            number,
+            name='number',
+            openapi=load_schema(
                 raw_schema['paths']['/api/random/{start}/{end}'],
                 PathItem,
             ),
