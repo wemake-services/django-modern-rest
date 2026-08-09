@@ -15,8 +15,9 @@ build:
       --format=requirements.txt
       --output-file=requirements.txt
     - uv venv $READTHEDOCS_VIRTUALENV_PATH --seed --link-mode=copy
-    - uv pip install setuptools -U
-    - uv pip install . -r requirements.txt --link-mode=copy
+    - uv pip install -r requirements.txt --link-mode=copy
+    - uv pip install . --link-mode=copy
+    - cat docs/conf.py
     - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en . $READTHEDOCS_OUTPUT/html
 
 sphinx:
