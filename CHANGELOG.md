@@ -39,7 +39,7 @@ of requirements for an API to count as public.
 - Changed ``skip_validation`` parameter to be kw-only
   on ``OpenAPIView.as_view()`` and all its subclasses, #1229
 - Renamed `dmr.controller.Controller.get_path_item` to
-  `get_schema`, so all methods will be consitent, #1238
+  `get_schema`, so all methods will be consistent, #1238
 
 ### Features
 

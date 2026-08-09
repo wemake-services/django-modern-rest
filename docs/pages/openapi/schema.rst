@@ -166,4 +166,3 @@ We support two levels of configuration with this feature:
       :caption: views.py
       :linenos:
       :language: python
-
