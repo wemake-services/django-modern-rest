@@ -40,14 +40,16 @@ class ConfigMerger:
             security=config.security,
             webhooks=config.webhooks,
             paths=paths,
-            components=self._merge_components(config.components, components),
+            components=self.merge_components(config.components, components),
         )
 
-    def _merge_components(
-        self,
+    @classmethod
+    def merge_components(
+        cls,
         existing: Components | None,
         to_merge: Components,
     ) -> Components:
+        """Merge :class:`dmr.openapi.objects.Components` defs together."""
         if existing is None:
             return to_merge
         return Components(

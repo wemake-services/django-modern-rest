@@ -131,6 +131,10 @@ with the automatically generated one:
 - We can't detect unused ones, so we merge all,
   even if some of them are not used
 
+If you have several :class:`~dmr.openapi.objects.Components` definitions,
+you can merge them using
+:meth:`dmr.openapi.core.merger.ConfigMerger.merge_components` method.
+
 See :doc:`openapi/openapi` for more possible customizations.
 
 
