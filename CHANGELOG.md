@@ -38,6 +38,8 @@ of requirements for an API to count as public.
   was renamed to `extra_namespace`, #1222
 - Changed ``skip_validation`` parameter to be kw-only
   on ``OpenAPIView.as_view()`` and all its subclasses, #1229
+- Renamed `dmr.controller.Controller.get_path_item` to
+  `get_schema`, so all methods will be consistent, #1238
 
 ### Features
 
@@ -47,6 +49,8 @@ of requirements for an API to count as public.
   and all its existing subclasses, #1222
 - Added an ability to load external OpenAPI schemas
   into our typed dataclasses, #1222
+- Added an option to skip some controllers / endpoints
+  from the OpenAPI spec, #1238
 
 ### Bugfixes
 

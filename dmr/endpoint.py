@@ -619,6 +619,7 @@ def validate(  # noqa: WPS234
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> Callable[
     [Callable[_ParamT, Awaitable[HttpResponseBase]]],
     Callable[_ParamT, Awaitable[HttpResponseBase]],
@@ -650,6 +651,7 @@ def validate(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> Callable[
     [Callable[_ParamT, HttpResponseBase]],
     Callable[_ParamT, HttpResponseBase],
@@ -681,6 +683,7 @@ def validate(
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> Callable[
     [Callable[_ParamT, _ResponseT]],
     Callable[_ParamT, _ResponseT],
@@ -711,6 +714,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     external_docs: ExternalDocumentation | None = None,
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> (
     Callable[
         [Callable[_ParamT, Awaitable[HttpResponseBase]]],
@@ -808,6 +812,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             a request that may be initiated by the API provider and the
             expected responses.
         servers: An alternative servers array to service this operation.
+        ignore_from_spec: If set to ``True``, this endpoint
+            would not be added to the final OpenAPI spec.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -840,6 +846,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             external_docs=external_docs,
             callbacks=callbacks,
             servers=servers,
+            ignore_from_spec=ignore_from_spec,
         ),
     )
 
@@ -873,6 +880,7 @@ def modify(
     callbacks: dict[str, Callback | Reference] | None = None,
     servers: list[Server] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifyAsyncCallable: ...
 
 
@@ -905,6 +913,7 @@ def modify(
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifySyncCallable: ...
 
 
@@ -937,6 +946,7 @@ def modify(
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifyAnyCallable: ...
 
 
@@ -968,6 +978,7 @@ def modify(  # noqa: WPS211
     servers: list[Server] | None = None,
     links: dict[str, Link | Reference] | None = None,
     response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
 ) -> ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable:
     """
     Decorator to modify endpoints that return raw model data.
@@ -1049,6 +1060,8 @@ def modify(  # noqa: WPS211
         servers: An alternative servers array to service this operation.
         links: Possible links to other OpenAPI operations.
         response_description: Description for the generated response object.
+        ignore_from_spec: If set to ``True``, this endpoint
+            would not be added to the final OpenAPI spec.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -1087,6 +1100,7 @@ def modify(  # noqa: WPS211
             servers=servers,
             links=links,
             response_description=response_description,
+            ignore_from_spec=ignore_from_spec,
         ),
     )
 

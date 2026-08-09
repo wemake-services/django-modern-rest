@@ -121,6 +121,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         summary: A short summary of what this path item does.
         description: A verbose explanation of the path item behavior.
         servers: An alternative servers array to service this path item.
+        ignore_from_spec: If set to ``True``, all endpoints from this controller
+            would not be added to the final OpenAPI spec.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -168,6 +170,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     summary: ClassVar[str | None] = None
     description: ClassVar[str | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
+    ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:
     kwargs: dict[str, Any]
@@ -502,16 +505,29 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         )
 
     @classmethod
-    def get_path_item(
+    def get_schema(
         cls,
         path: str,
         pattern: URLPattern,
         context: OpenAPIContext,
         router: 'Router',
-    ) -> PathItem:
-        """Generate OpenAPI spec for path items."""
-        operations: dict[str, Any] = {
-            method.lower(): endpoint.get_schema(
+    ) -> PathItem | None:
+        """
+        Generate OpenAPI spec for path items.
+
+        .. versionchanged:: 0.13.0
+
+            - Renamed from ``get_path_item`` to ``get_schema``
+            - Now allows to return ``None`` to ignore whole
+              path items from OpenAPI schema
+
+        """
+        operations: dict[str, Any] = {}
+        for method, endpoint in cls.api_endpoints.items():
+            if endpoint.metadata.ignore_from_spec:
+                continue
+
+            schema = endpoint.get_schema(
                 path,
                 pattern,
                 cls.__qualname__,
@@ -519,8 +535,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 context,
                 router,
             )
-            for method, endpoint in cls.api_endpoints.items()
-        }
+            operations.update({method.lower(): schema})
+
+        # If all operations are ignored, ignore the full controller:
+        if not operations:
+            return None
+
         return PathItem(
             **operations,
             summary=cls.summary,

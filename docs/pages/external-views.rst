@@ -138,6 +138,27 @@ All of them will be merged into the final spec correctly.
 See :doc:`openapi/openapi` for more possible customizations.
 
 
+Excluding external views from OpenAPI
+-------------------------------------
+
+It might be important to add a private API endpoint,
+without registering it in the final OpenAPI spec.
+
+Some endpoints might not even have OpenAPI in the first place!
+
+To achieve this, pass ``None`` instead of the ``PathItem`` schema:
+
+.. literalinclude:: /examples/external_views/ignore_from_spec.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+The view will still work as expected, but won't be present in the spec.
+
+See :ref:`openapi-exclude-views` for more details
+about excluding regular views from the OpenAPI.
+
+
 Real world use-cases
 --------------------
 

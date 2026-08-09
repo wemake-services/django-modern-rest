@@ -417,7 +417,7 @@ This is how OpenAPI spec is generated, top level overview:
 
   graph
       Start[build_schema] --> Router[Router];
-      Router -->|for each controller| Controller[Controller.get_path_item];
+      Router -->|for each controller| Controller[Controller.get_schema];
       Router -->|for each defined auth| SecurityScheme[Auth.security_scheme];
       Controller -->|for each endpoint| Endpoint[Endpoint.get_schema];
       Endpoint -->|for each component| ComponentParser[ComponentParser.get_schema]
@@ -452,7 +452,7 @@ Useful APIs for users to override:
 - :meth:`dmr.routing.Router.get_schema` to change
   how :class:`~dmr.openapi.openapi.OpenAPI`
   and :class:`~dmr.openapi.objects.Components` are generated
-- :meth:`dmr.controller.Controller.get_path_item` to change how
+- :meth:`dmr.controller.Controller.get_schema` to change how
   :class:`~dmr.openapi.objects.PathItem` objects are generated
 - :meth:`dmr.endpoint.Endpoint.get_schema` to change how
   :class:`~dmr.openapi.objects.Operation` is generated

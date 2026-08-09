@@ -21,11 +21,11 @@ _PathControllerSpec: TypeAlias = (
     ]
     | tuple[
         str,
-        PathItem,
+        PathItem | None,  # None used to disable external view from spec
         None,
     ]
 )
-_PathExternalSpec: TypeAlias = tuple[str, PathItem]
+_ExternalSpec: TypeAlias = tuple[URLPattern, PathItem | None]
 
 
 def controller_mapping_collector(
@@ -56,7 +56,7 @@ def controller_mapping_collector(
 
 
 def process_external(
-    urls: Iterable[tuple[URLPattern, PathItem]],
+    urls: Iterable[_ExternalSpec],
 ) -> Sequence[URLPattern]:
     """Attach OpenAPI metadata to the view."""
     result_urls: list[URLPattern] = []
