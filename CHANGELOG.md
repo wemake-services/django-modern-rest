@@ -42,6 +42,7 @@ of requirements for an API to count as public.
 ### Features
 
 - Django 6.1 official support, #1214
+- Added `--skip-validation` to the `dmr_export_schema` management command, #1225
 - Added `extra_namespace` parameter to `BaseSerializer.from_python`
   and all its existing subclasses, #1222
 - Added an ability to load external OpenAPI schemas
