@@ -37,7 +37,7 @@ without any logic or modifications.
   However, if you define top-level error handlers with
   :func:`~dmr.routing.build_404_handler`
   and :func:`~dmr.routing.build_500_handler`,
-  it would still affect the view, when these error happen.
+  it would still affect the view, when these errors happen.
 
 OpenAPI
 ~~~~~~~
@@ -55,7 +55,7 @@ Here's its spec:
   :linenos:
 
 Next, let's show how we can adapt existing
-pure-Django API views, attach this existing schemaas:
+pure-Django API views, attach this to existing schema as:
 
 - both functional,
 - and class-based.
@@ -144,7 +144,7 @@ Real world use-cases
 For example, one can reuse:
 
 - ``django-allauth``
-  `headles views <https://github.com/pennersr/django-allauth/tree/main/allauth/headless>`_
+  `headless views <https://github.com/pennersr/django-allauth/tree/main/allauth/headless>`_
   that are built to be used by the pure Django framework
 - Any ``APIView`` or ``GenericAPIView`` objects from ``django-rest-framework``
 - Any ``ControllerBase`` objects from ``django-ninja-extra``
