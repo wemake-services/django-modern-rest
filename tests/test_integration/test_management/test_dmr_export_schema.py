@@ -118,8 +118,8 @@ def test_export_schema_invalid_input(
     ],
 )
 def test_export_schema_passes_skip_validation_to_schema_converter(
-    *,
     monkeypatch: pytest.MonkeyPatch,
+    *,
     kwargs: dict[str, Any],
     expected_skip_validation: bool,
 ) -> None:
