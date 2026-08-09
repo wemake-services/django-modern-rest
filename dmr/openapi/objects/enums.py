@@ -30,7 +30,7 @@ class OpenAPIFormat(enum.StrEnum):
     URI_TEMPLATE = 'uri-template'
     JSON_POINTER = 'json-pointer'
     RELATIVE_JSON_POINTER = 'relative-json-pointer'
-    IRI = 'iri-reference'
+    IRI = 'iri'
     IRI_REFERENCE = 'iri-reference'
     UUID = 'uuid'
     REGEX = 'regex'
