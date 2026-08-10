@@ -399,13 +399,6 @@ so it must be tested. To help users with it, we provide several utilities:
 - For sync controllers: :func:`dmr.test.assert_throttling`
 - For async controllers: :func:`dmr.test.assert_async_throttling`
 
-Which are also available as ``pytest`` fixtures:
-
-- :func:`~dmr_pytest.dmr_assert_throttling` typed
-  as :class:`dmr.test.types.AssertThrottlingFixture`
-- :func:`~dmr_pytest.dmr_assert_async_throttling` typed
-  as :class:`dmr.test.types.AssertAsyncThrottlingFixture`
-
 Testing that an endpoint is throttled usually means driving it to its limit
 first. Sending the configured ``max_requests`` in a loop is slow for large
 rates such as ``1000/hour``. What do we do instead?
@@ -425,7 +418,7 @@ Examples:
 
   .. tab:: :iconify:`devicon:python` unittest
 
-    Default Python's testing framework.
+    Default Python's testing framework:
 
     .. literalinclude:: /examples/testing/throttling_unittest.py
       :caption: tests/test_throttling.py
@@ -434,8 +427,7 @@ Examples:
 
   .. tab:: :iconify:`devicon:pytest` pytest
 
-    Our bundled plugin ships the same helpers as ``dmr_*`` fixtures, and
-    ``dmr.test.types`` exports their types, so the fixtures can be annotated:
+    And more preferable ``pytest``:
 
     .. literalinclude:: /examples/testing/throttling_pytest.py
       :caption: test_reports.py
@@ -468,12 +460,6 @@ Request factories:
 .. autofunction:: dmr_pytest.dmr_rf
 
 .. autofunction:: dmr_pytest.dmr_async_rf
-
-Throttling:
-
-.. autofunction:: dmr_pytest.dmr_assert_throttling
-
-.. autofunction:: dmr_pytest.dmr_assert_async_throttling
 
 Settings:
 

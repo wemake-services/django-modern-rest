@@ -13,13 +13,11 @@ from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import (
     DMRAsyncRequestFactory,
     DMRRequestFactory,
+    assert_async_throttling,
+    assert_throttling,
     reduced_throttling,
 )
-from dmr.test.types import (
-    AssertAsyncThrottlingFixture,
-    AssertThrottlingFixture,
-    ThrottlingWhen,
-)
+from dmr.test.throttling import ThrottlingWhen
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
@@ -43,7 +41,6 @@ class _SyncController(Controller[PydanticFastSerializer]):
 
 @pytest.mark.parametrize('rate', [Rate.minute, Rate.hour, Rate.day])
 def test_reduced_throttling_sync_rate(
-    dmr_assert_throttling: AssertThrottlingFixture,
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
     *,
@@ -52,7 +49,7 @@ def test_reduced_throttling_sync_rate(
     """The endpoint is throttled after `max_requests` real requests."""
     max_requests = 3
 
-    response, throttle = dmr_assert_throttling(
+    response, throttle = assert_throttling(
         _SyncController,
         lambda: dmr_rf.get(_URL),
         rate=rate,
@@ -64,7 +61,7 @@ def test_reduced_throttling_sync_rate(
 
     with pytest.raises(ValueError, match='no throttling'):
         # But, `PUT` is not throttled:
-        dmr_assert_throttling(
+        assert_throttling(
             _SyncController,
             lambda: dmr_rf.put(_URL),
             rate=rate,
@@ -114,14 +111,13 @@ class _AsyncController(Controller[PydanticFastSerializer]):
 @pytest.mark.parametrize('rate', [Rate.minute, Rate.hour, Rate.day])
 async def test_reduced_throttling_async(
     dmr_async_rf: DMRAsyncRequestFactory,
-    dmr_assert_async_throttling: AssertAsyncThrottlingFixture,
     *,
     rate: Rate,
 ) -> None:
     """`reduced_throttling` works for async controllers too."""
     max_requests = 3
 
-    response, throttle = await dmr_assert_async_throttling(
+    response, throttle = await assert_async_throttling(
         _AsyncController,
         lambda: dmr_async_rf.post(
             _URL,
@@ -140,7 +136,7 @@ async def test_reduced_throttling_async(
 
     # But, sync controllers can't be used with async assert:
     with pytest.raises(AssertionError, match='SyncThrottle'):
-        await dmr_assert_async_throttling(
+        await assert_async_throttling(
             _SyncController,
             lambda: dmr_async_rf.get(
                 _URL,
@@ -175,14 +171,13 @@ class _AfterAuthController(Controller[PydanticFastSerializer]):
     ],
 )
 def test_reduced_throttling_when(
-    dmr_assert_throttling: AssertThrottlingFixture,
     dmr_rf: DMRRequestFactory,
     *,
     controller_cls: type[Controller[Any]],
     when: ThrottlingWhen,
 ) -> None:
     """`when='before_auth'` targets the before-auth throttle line."""
-    response, throttle = dmr_assert_throttling(
+    response, throttle = assert_throttling(
         controller_cls,
         lambda: dmr_rf.get(_URL),
         when=when,
@@ -196,12 +191,11 @@ def test_reduced_throttling_when(
 
 
 def test_reduced_throttling_when_incorrect(
-    dmr_assert_throttling: AssertThrottlingFixture,
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """`when='before_auth'` targets the before-auth throttle line."""
     with pytest.raises(AssertionError, match='wrong'):
-        dmr_assert_throttling(
+        assert_throttling(
             _SyncController,
             lambda: dmr_rf.get(_URL),
             when='wrong',  # type: ignore[arg-type]
@@ -209,12 +203,11 @@ def test_reduced_throttling_when_incorrect(
 
 
 def test_throttling_missing_endpoint(
-    dmr_assert_throttling: AssertThrottlingFixture,
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Missing endpoints raise."""
     with pytest.raises(ValueError, match='no endpoint'):
-        dmr_assert_throttling(
+        assert_throttling(
             _SyncController,
             lambda: dmr_rf.post(_URL),
         )
@@ -246,7 +239,6 @@ def test_reduced_throttling_when_empty() -> None:
 )
 def test_assert_throttling_header_provider(
     dmr_rf: DMRRequestFactory,
-    dmr_assert_throttling: AssertThrottlingFixture,
     *,
     headers: RetryAfter | XRateLimit | RateLimitIETFDraft,
 ) -> None:
@@ -258,7 +250,7 @@ def test_assert_throttling_header_provider(
         def get(self) -> str:
             return 'inside'
 
-    response, _ = dmr_assert_throttling(
+    response, _ = assert_throttling(
         _Controller,
         lambda: dmr_rf.get(_URL),
     )

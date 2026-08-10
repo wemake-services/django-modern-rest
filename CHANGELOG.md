@@ -40,6 +40,12 @@ of requirements for an API to count as public.
   on `OpenAPIView.as_view()` and all its subclasses, #1229
 - Renamed `dmr.controller.Controller.get_path_item` to
   `get_schema`, so all methods will be consistent, #1238
+- Removed `dmr_assert_throttling` and `dmr_assert_async_throttling`
+  fixtures from `pytest`, because there was ever no need to make them fixtures,
+  use regular functions instead, #1245
+- Removed `dmr.test.types` module, because it was only needed
+  for `dmr_pytest` throttling fixtures, #1245
+- Moved `dmr.test.types.ThrottlingWhen` to `dmr.test.throttling`, #1245
 
 ### Features
 

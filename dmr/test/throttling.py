@@ -2,20 +2,21 @@ import contextlib
 import dataclasses
 from collections.abc import Callable, Generator
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, Final, assert_never
+from typing import TYPE_CHECKING, Any, Final, Literal, TypeAlias, assert_never
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 
 from dmr.response import infer_status_code
 from dmr.test.client import DMRAsyncRequestFactory
-from dmr.test.types import ThrottlingWhen
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
 
-_DefaultAnyWhen: Final = 'any'
+ThrottlingWhen: TypeAlias = Literal['any', 'before_auth', 'after_auth']
+
+_default_any_when: Final = 'any'
 
 
 def assert_throttling(  # noqa: WPS210
@@ -24,7 +25,7 @@ def assert_throttling(  # noqa: WPS210
     *,
     max_requests: int = 2,
     rate: Rate = Rate.hour,
-    when: ThrottlingWhen = _DefaultAnyWhen,
+    when: ThrottlingWhen = _default_any_when,
     success_status: HTTPStatus | None = None,
 ) -> tuple[HttpResponse, SyncThrottle]:
     """
@@ -70,7 +71,7 @@ async def assert_async_throttling(  # noqa: WPS210
     *,
     max_requests: int = 2,
     rate: Rate = Rate.hour,
-    when: ThrottlingWhen = _DefaultAnyWhen,
+    when: ThrottlingWhen = _default_any_when,
     success_status: HTTPStatus | None = None,
 ) -> tuple[HttpResponse, AsyncThrottle]:
     """
@@ -112,7 +113,7 @@ def reduced_throttling(
     method: HTTPMethod | str,
     max_requests: int = 2,
     rate: Rate = Rate.hour,
-    when: ThrottlingWhen = _DefaultAnyWhen,
+    when: ThrottlingWhen = _default_any_when,
 ) -> Generator[SyncThrottle | AsyncThrottle]:
     """
     Temporarily lower an endpoint's first throttle so a test can reach it.

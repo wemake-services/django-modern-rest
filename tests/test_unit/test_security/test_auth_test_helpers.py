@@ -56,10 +56,6 @@ class _AsyncController(Controller[PydanticSerializer]):
         return 'authed'
 
 
-async def _resolve(user: User) -> User:
-    return user
-
-
 @pytest.mark.asyncio
 async def test_async_disabled_auth(
     dmr_async_rf: DMRAsyncRequestFactory,
